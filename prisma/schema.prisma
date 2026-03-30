@@ -30,7 +30,7 @@ model Appointment {
   times                           Json? // { time: string; date: string }
   createdAt                       DateTime                        @default(now()) @map("created_at")
   updatedAt                       DateTime                        @default(now()) @updatedAt @map("updated_at")
-  user                            User                            @relation(fields: [userId], references: [id])
+  user                            User?                            @relation(fields: [userId], references: [id], onDelete: Cascade) 
   company                         Company                         @relation(fields: [companyId], references: [id], onDelete: Cascade)
   appointmentUsers                AppointmentUser[]
   client                          Client?                         @relation(fields: [clientId], references: [id])
@@ -526,7 +526,7 @@ model Fleet {
 model FleetStatement {
   id        String    @id @default(cuid())
   fleetId   Int       @map("fleet_id")
-  Fleet     Fleet     @relation(fields: [fleetId], references: [id])
+  Fleet     Fleet     @relation(fields: [fleetId], references: [id], onDelete: Cascade )
   invoice   Invoice[]
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")

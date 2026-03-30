@@ -113,6 +113,14 @@ export async function GET(
       where: {
         companyId,
       },
+      include: {
+        company: {
+          select: {
+            tax: true,
+            serviceFee: true,
+          },
+        },
+      },
       orderBy: {
         createdAt: "desc",
       },

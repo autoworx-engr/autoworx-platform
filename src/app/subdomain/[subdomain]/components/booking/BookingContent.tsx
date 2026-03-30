@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { useBooking } from "../../context/BookingContext";
 import { ProgressBar } from "./ProgressBar";
@@ -29,6 +30,7 @@ const toNumber = (value: unknown) => {
 const BookingContent = ({ initialShop }: { initialShop?: any }) => {
   const {
     step,
+    setStep,
     setServices,
     currentPage,
     setCurrentPage,
@@ -39,6 +41,17 @@ const BookingContent = ({ initialShop }: { initialShop?: any }) => {
     setCategories,
     selectedCategory,
   } = useBooking();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const isPaymentReturn =
+      searchParams.get("success") === "true" ||
+      searchParams.get("cancel") === "true";
+
+    if (isPaymentReturn && step !== "checkout" && step !== "confirmation") {
+      setStep("checkout");
+    }
+  }, [searchParams, step, setStep]);
   const {
     shop,
     isPending: isShopLoading,

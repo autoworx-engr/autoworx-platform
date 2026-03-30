@@ -2,7 +2,6 @@ import { createStripePaymentLink } from "@/actions/payment/stripePayment";
 import { createAuthorizeNetPaymentLink } from "@/actions/payment/authorizeNetPayment";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
 
 import {
   Dialog,
@@ -38,27 +37,49 @@ export function PayNow({
   due,
   invoiceId,
   statementId,
+  shopBookingId,
+  paymentId,
+  giftCardSource,
+  giftCardCode,
+  giftCardId,
   mode = "invoice",
   companyId,
   open,
   setOpen,
   gatewayInfo,
+  onSuccess,
 }: {
   due: string;
   invoiceId?: string;
   statementId?: string;
-  mode?: "invoice" | "statement";
+  shopBookingId?: string;
+  paymentId?: string;
+  giftCardSource?: "purchase" | "reload";
+  giftCardCode?: string;
+  giftCardId?: number;
+  mode?: "invoice" | "statement" | "virtual_shop" | "virtual_shop_gift_card";
   companyId: number;
   open: boolean;
   setOpen: any;
   gatewayInfo?: PaymentGatewayInfo;
+  onSuccess?: () => void;
 }) {
-  const router = useRouter();
-
   const [amount, setAmount] = useState(due);
   const [isLoading, setIsLoading] = useState(false);
-  const [payType, setPayType] = useState<"payment" | "deposit" | "statement">(
-    () => (mode === "statement" ? "statement" : "payment"),
+  const [payType, setPayType] = useState<
+    | "payment"
+    | "deposit"
+    | "statement"
+    | "virtual_shop_deposit"
+    | "virtual_shop_gift_card"
+  >(() =>
+    mode === "statement"
+      ? "statement"
+      : mode === "virtual_shop"
+        ? "virtual_shop_deposit"
+        : mode === "virtual_shop_gift_card"
+          ? "virtual_shop_gift_card"
+          : "payment",
   );
   const [selectedGateway, setSelectedGateway] = useState<
     "STRIPE" | "AUTHORIZE_NET"
@@ -70,6 +91,22 @@ export function PayNow({
   const [showPaymentIframe, setShowPaymentIframe] = useState(false);
   const [isIframeLoading, setIsIframeLoading] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    setAmount(due);
+  }, [due]);
+
+  useEffect(() => {
+    if (mode === "statement") {
+      setPayType("statement");
+    } else if (mode === "virtual_shop") {
+      setPayType("virtual_shop_deposit");
+    } else if (mode === "virtual_shop_gift_card") {
+      setPayType("virtual_shop_gift_card");
+    } else {
+      setPayType("payment");
+    }
+  }, [mode]);
 
   // Determine available gateways based on company settings
   const availableGateways: Array<"STRIPE" | "AUTHORIZE_NET"> = [];
@@ -101,6 +138,11 @@ export function PayNow({
       if (gatewayInfo.hasAuthorizeNet) nextAvailable.push("AUTHORIZE_NET");
     }
 
+    // Keep the user's selected gateway if it is still available.
+    if (nextAvailable.includes(selectedGateway)) {
+      return;
+    }
+
     let defaultGateway: "STRIPE" | "AUTHORIZE_NET" | null = null;
 
     if (
@@ -122,7 +164,12 @@ export function PayNow({
     if (defaultGateway) {
       setSelectedGateway(defaultGateway);
     }
-  }, [gatewayInfo]);
+  }, [
+    gatewayInfo?.paymentGateway,
+    gatewayInfo?.hasStripe,
+    gatewayInfo?.hasAuthorizeNet,
+    selectedGateway,
+  ]);
 
   // Handle postMessage from Authorize.Net iframe / communicator
   useEffect(() => {
@@ -139,41 +186,40 @@ export function PayNow({
 
       if (!allowedOrigins.includes(event.origin)) return;
 
-      console.log("🔔 Received message from Authorize.Net:", event.data);
-
       // Check if the message contains a payment response
       if (typeof event.data === "string" && event.data.includes("response=")) {
         const responseData = event.data.split("response=")[1];
         try {
           const jsonObject = JSON.parse(responseData);
-          console.log("💳 Payment Response:", jsonObject);
 
           const transId = jsonObject?.transId;
           if (transId) {
-            console.log("✅ Transaction ID:", transId);
             successToast("Payment successful!");
             setShowPaymentIframe(false);
             setOpen(false);
-            // Reload page to show updated payment status
-            hardReload();
+            if (onSuccess) {
+              onSuccess();
+            } else {
+              // Reload page to show updated payment status
+              hardReload();
+            }
           } else if (jsonObject?.error) {
             errorToast(jsonObject.error.message || "Payment failed");
             setShowPaymentIframe(false);
           }
-        } catch (error) {
-          console.error("Error parsing payment response:", error);
+        } catch {
+          errorToast("Unable to verify payment response");
         }
       }
     };
 
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, [setOpen]);
+  }, [setOpen, onSuccess]);
 
   // Auto-submit form when token is set
   useEffect(() => {
     if (authorizeNetToken && formRef.current && showPaymentIframe) {
-      console.log("📤 Submitting payment form to iframe");
       formRef.current.submit();
     }
   }, [authorizeNetToken, showPaymentIframe]);
@@ -190,6 +236,25 @@ export function PayNow({
             statementId: statementId!,
             companyId,
             payType: "statement",
+          });
+        } else if (mode === "virtual_shop") {
+          result = await createStripePaymentLink({
+            amount,
+            shopBookingId: shopBookingId!,
+            companyId,
+            payType: "virtual_shop_deposit",
+            redirectUrl: window.location.href,
+          });
+        } else if (mode === "virtual_shop_gift_card") {
+          result = await createStripePaymentLink({
+            amount,
+            paymentId: paymentId!,
+            giftCardSource,
+            giftCardCode,
+            giftCardId,
+            companyId,
+            payType: "virtual_shop_gift_card",
+            redirectUrl: window.location.href,
           });
         } else {
           result = await createStripePaymentLink({
@@ -213,6 +278,23 @@ export function PayNow({
             companyId,
             payType: "statement",
           });
+        } else if (mode === "virtual_shop") {
+          result = await createAuthorizeNetPaymentLink({
+            amount,
+            shopBookingId: shopBookingId!,
+            companyId,
+            payType: "virtual_shop_deposit",
+          });
+        } else if (mode === "virtual_shop_gift_card") {
+          result = await createAuthorizeNetPaymentLink({
+            amount,
+            paymentId: paymentId!,
+            giftCardSource,
+            giftCardCode,
+            giftCardId,
+            companyId,
+            payType: "virtual_shop_gift_card",
+          });
         } else {
           result = await createAuthorizeNetPaymentLink({
             amount,
@@ -223,7 +305,6 @@ export function PayNow({
         }
 
         if (result.success && result.token) {
-          console.log("🎫 Received Authorize.Net token, opening iframe");
           setAuthorizeNetToken(result.token);
           if (result.url) {
             setAuthorizeNetUrl(result.url);
@@ -285,7 +366,7 @@ export function PayNow({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        ) : (
+        ) : mode === "statement" ? (
           <DialogTrigger asChild>
             <button
               type="button"
@@ -294,14 +375,18 @@ export function PayNow({
               Pay Now
             </button>
           </DialogTrigger>
-        )}
+        ) : null}
 
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>
               {mode === "statement"
                 ? "Make Statement Payment"
-                : `Make ${payType === "payment" ? "Payment" : "Deposit"}`}
+                : mode === "virtual_shop"
+                  ? "Pay Booking Deposit"
+                  : mode === "virtual_shop_gift_card"
+                    ? "Pay Gift Card"
+                    : `Make ${payType === "payment" ? "Payment" : "Deposit"}`}
             </DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -344,13 +429,17 @@ export function PayNow({
                   id="amount"
                   value={amount}
                   type="text"
-                  disabled={mode === "statement"}
+                  disabled={mode !== "invoice"}
                   placeholder={
                     mode === "statement"
                       ? "Statement amount"
-                      : payType === "deposit"
-                        ? "Enter deposit amount"
-                        : "Enter payment amount"
+                      : mode === "virtual_shop"
+                        ? "Booking deposit amount"
+                        : mode === "virtual_shop_gift_card"
+                          ? "Gift card amount"
+                          : payType === "deposit"
+                            ? "Enter deposit amount"
+                            : "Enter payment amount"
                   }
                   className="w-full rounded-lg border px-2 py-2"
                   onChange={(e) => {

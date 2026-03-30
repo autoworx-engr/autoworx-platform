@@ -1,45 +1,53 @@
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import axios from "axios";
+
 export const reviewService = {
   getReviews: async (companyId: number, currentCompanyId: number) => {
-    const res = await fetch(
-      `/api/reviews?companyId=${companyId}&currentCompanyId=${currentCompanyId}`,
-    );
+    try {
+      const res = await axios.get(
+        `/api/reviews?companyId=${companyId}&currentCompanyId=${currentCompanyId}`,
+      );
 
-    if (!res.ok) throw new Error("Failed to fetch reviews");
-
-    return await res.json();
+      return res.data;
+    } catch (error) {
+      const err = errorHandler(error);
+      throw err;
+    }
   },
 
   createReview: async (data: any) => {
-    const res = await fetch(`/api/reviews`, {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
+    try {
+      const res = await axios.post(`/api/reviews`, data);
 
-    if (!res.ok) throw new Error("Failed to create review");
-
-    return await res.json();
+      return res.data;
+    } catch (error) {
+      const err = errorHandler(error);
+      throw err;
+    }
   },
 
   updateReview: async ({ id, data }: any) => {
-    const res = await fetch(`/api/reviews/${id}`, {
-      method: "PATCH",
-      body: JSON.stringify(data),
-    });
+    try {
+      const response = await axios.patch(
+        `/api/reviews/${id}`,
+        JSON.stringify(data),
+      );
 
-    if (!res.ok) throw new Error("Failed to update review");
-
-    const resdata = await res.json();
-    console.log("resdata", resdata);
-    return resdata;
+      return response.data;
+    } catch (error) {
+      const err = errorHandler(error);
+      throw err;
+    }
   },
 
   deleteReview: async (id: number) => {
-    const res = await fetch(`/api/reviews/${id}`, {
-      method: "DELETE",
-    });
+    try {
+      const res = await axios.delete(`/api/reviews/${id}`);
 
-    if (!res.ok) throw new Error("Failed to delete review");
-
-    return await res.json();
+      return res.data;
+    } catch (error) {
+      const err = errorHandler(error);
+      throw err;
+    }
   },
 };

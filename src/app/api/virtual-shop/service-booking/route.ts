@@ -24,7 +24,7 @@ const searchParamsValidation = z.object({
     .string({
       invalid_type_error: "Date must be a string",
     })
-    .refine(value => {
+    .refine((value) => {
       if (!value) return true;
       const date = moment(value, "YYYY-MM-DD");
       if (!date.isValid()) {
@@ -35,7 +35,7 @@ const searchParamsValidation = z.object({
     .optional(),
   year: z
     .string({ invalid_type_error: "Year must be a string" })
-    .refine(value => {
+    .refine((value) => {
       if (!value) return true;
       const year = parseInt(value);
       if (isNaN(year)) {
@@ -67,7 +67,8 @@ const searchParamsValidation = z.object({
     .optional(),
   status: z
     .enum(["pending", "confirmed", "completed", "cancelled"], {
-      invalid_type_error: "Status must be pending, confirmed, completed, or cancelled",
+      invalid_type_error:
+        "Status must be pending, confirmed, completed, or cancelled",
     })
     .optional(),
   sortOrder: z
@@ -77,6 +78,32 @@ const searchParamsValidation = z.object({
     .optional(),
   page: z.number({ invalid_type_error: "Page must be a number" }).optional(),
   limit: z.number({ invalid_type_error: "Limit must be a number" }).optional(),
+  startDate: z
+    .string({
+      invalid_type_error: "Start date must be a string",
+    })
+    .refine(value => {
+      if (!value) return true;
+      const date = moment(value, "YYYY-MM-DD");
+      if (!date.isValid()) {
+        throw new Error("Invalid start date format");
+      }
+      return date.toDate();
+    }, "Invalid start date format")
+    .optional(),
+  endDate: z
+    .string({
+      invalid_type_error: "End date must be a string",
+    })
+    .refine(value => {
+      if (!value) return true;
+      const date = moment(value, "YYYY-MM-DD");
+      if (!date.isValid()) {
+        throw new Error("Invalid end date format");
+      }
+      return date.toDate();
+    }, "Invalid end date format")
+    .optional(),
 });
 
 const createServiceBookingSchema = z.object({
@@ -85,7 +112,7 @@ const createServiceBookingSchema = z.object({
       required_error: "Shop ID is required",
       invalid_type_error: "Shop ID must be a string or number",
     })
-    .transform(val => (typeof val === "string" ? parseInt(val, 10) : val)),
+    .transform((val) => (typeof val === "string" ? parseInt(val, 10) : val)),
   shopServices: z
     .array(
       z.object({
@@ -149,7 +176,7 @@ const createServiceBookingSchema = z.object({
       required_error: "Vehicle year is required",
       invalid_type_error: "Vehicle year must be a string or number",
     })
-    .transform(val => val.toString()),
+    .transform((val) => val.toString()),
   notes: z
     .string({
       invalid_type_error: "Notes must be a string",
@@ -202,6 +229,20 @@ const createServiceBookingSchema = z.object({
  *           type: string
  *           enum: [pending, confirmed, completed, cancelled]
  *         description: Filter bookings by status.
+ *       - in: query
+ *         name: startDate
+ *         required: false
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter bookings from this start date (YYYY-MM-DD).
+ *       - in: query
+ *         name: endDate
+ *         required: false
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter bookings until this end date (YYYY-MM-DD).
  *       - in: query
  *         name: sortOrder
  *         required: false
@@ -392,6 +433,8 @@ export async function GET(req: Request) {
     const month = searchParams.get("month") ?? undefined;
     const year = searchParams.get("year") ?? undefined;
     const status = searchParams.get("status") ?? undefined;
+    const startDate = searchParams.get("startDate") ?? undefined;
+    const endDate = searchParams.get("endDate") ?? undefined;
 
     const sortOrder = (
       searchParams.get("sortOrder") === "asc" ? "asc" : "desc"
@@ -410,6 +453,8 @@ export async function GET(req: Request) {
       page,
       limit,
       status,
+      startDate,
+      endDate,
     });
 
     const whereClause: Prisma.ShopBookingWhereInput = {
@@ -456,7 +501,11 @@ export async function GET(req: Request) {
       throw new AppError(400, "Month and year are required together");
     }
 
-    if (date || (month && year)) {
+    if ((startDate && !endDate) || (!startDate && endDate)) {
+      throw new AppError(400, "Start date and end date are required together for a range");
+    }
+
+    if (date || (month && year) || (startDate && endDate)) {
       let gte: Date | undefined;
       let lte: Date | undefined;
 
@@ -473,6 +522,13 @@ export async function GET(req: Request) {
         if (targetDate.isValid()) {
           gte = targetDate.clone().startOf("month").toDate();
           lte = targetDate.clone().endOf("month").toDate();
+        }
+      } else if (startDate && endDate) {
+        const start = moment(startDate, "YYYY-MM-DD");
+        const end = moment(endDate, "YYYY-MM-DD");
+        if (start.isValid() && end.isValid()) {
+          gte = start.clone().startOf("day").toDate();
+          lte = end.clone().endOf("day").toDate();
         }
       }
 
@@ -566,27 +622,38 @@ export async function GET(req: Request) {
           hasNextPage: page < totalPages,
           hasPrevPage: page > 1,
         },
-        data: shopBookings.map(sb => {
+        data: shopBookings.map((sb) => {
           const subtotal = Number(sb.invoice?.subtotal || 0);
           const taxRate = Number(sb.invoice?.tax || 0);
           const vehicleExtraCost = Number(sb.invoice?.vehicleExtraCost || 0);
           const serviceFeeAmount = Number(sb.invoice?.serviceFee || 0);
+          const grandTotal = Number(sb.invoice?.grandTotal || 0);
 
           const totalServiceCost = subtotal - vehicleExtraCost;
           const taxAmount = (totalServiceCost * taxRate) / 100;
 
           const { shop, ...rest } = sb;
+          const isDepositEnabled = Boolean(
+            shop?.bookingSettings?.isDepositEnabled,
+          );
+          const depositType = shop?.bookingSettings?.depositType;
+          const depositValue = Number(shop?.bookingSettings?.depositValue || 0);
+          const depositRequired = !isDepositEnabled
+            ? 0
+            : depositType === "PERCENTAGE"
+              ? Number(((grandTotal * depositValue) / 100).toFixed(2))
+              : depositValue;
 
           return {
             ...rest,
             subtotal: subtotal,
             tax: taxAmount,
             serviceFee: serviceFeeAmount,
-            total: Number(sb.invoice?.grandTotal || 0),
-            depositRequired: Number(shop?.bookingSettings?.depositValue || 0),
+            total: grandTotal,
+            depositRequired,
             depositPaid: Number(sb.invoice?.deposit || 0),
             balanceDue: Number(sb.invoice?.due || 0),
-            services: sb.services.map(srv => ({
+            services: sb.services.map((srv) => ({
               ...srv,
               price: Number(srv.price),
               modifierPrice: Number(srv.modifierPrice),
@@ -852,7 +919,7 @@ export async function POST(req: Request) {
     const firstName = fullName?.split(" ")[0] || "Guest";
     const lastName = fullName?.split(" ").slice(1).join(" ") || undefined;
 
-    return await db.$transaction(async tx => {
+    return await db.$transaction(async (tx) => {
       // 2. Validate Shop
       const shop = await tx.shop.findUnique({
         where: { id: Number(shopId) },
@@ -934,7 +1001,7 @@ export async function POST(req: Request) {
               companyId: shop.companyId,
               source: "Virtual Shop",
               vehicleInfo: `${year} ${make} ${model}`,
-              services: shopServiceIds.map(id => id).join(", "),
+              services: shopServiceIds.map((id) => id).join(", "),
               clientId: client.id,
               columnId: column?.id,
             },
@@ -997,7 +1064,7 @@ export async function POST(req: Request) {
         | "SUNDAY";
 
       const availability = bookingSettings.availabilities.find(
-        a => a.dayOfWeek === dayOfWeekKey,
+        (a) => a.dayOfWeek === dayOfWeekKey,
       );
 
       if (!availability || !availability.isOpen) {
@@ -1091,13 +1158,13 @@ export async function POST(req: Request) {
         throw new AppError(400, "No valid services selected for this shop.");
       }
 
-      const allInvoiceItems = selectedServices.flatMap(srv => {
+      const allInvoiceItems = selectedServices.flatMap((srv) => {
         return srv.invoiceItems;
       });
 
       const items = allInvoiceItems.map(({ id, ...item }) => ({
         ...item,
-        materials: item.materials.map(material => ({
+        materials: item.materials.map((material) => ({
           ...material,
           quantity: (Number(material.quantity) || 0) as any,
           cost: (Number(material.cost) || 0) as any,
@@ -1153,8 +1220,12 @@ export async function POST(req: Request) {
 
       const grandTotal = subtotal + taxAmount + serviceFeeAmount;
       const isDepositEnabled = bookingSettings.isDepositEnabled;
+      const depositType = bookingSettings.depositType;
+      const depositValue = Number(bookingSettings.depositValue || 0);
       const requiredDepositAmount = isDepositEnabled
-        ? Number(bookingSettings.depositValue)
+        ? depositType === "PERCENTAGE"
+          ? Number(((grandTotal * depositValue) / 100).toFixed(2))
+          : depositValue
         : 0;
 
       const shopBookingStatus = !isDepositEnabled ? "CONFIRMED" : "PENDING";
@@ -1222,10 +1293,10 @@ export async function POST(req: Request) {
         endTime,
         clientId: client?.id,
         vehicleId: vehicle?.id,
-        notes: notes || "",
+        notes: notes || undefined,
         draftEstimate: estimate.id,
         timezone: "UTC", // Defaulting, you might obtain from shop.company.timezone
-        assignedUsers: [], // Empty for guest bookings, unless specific logic is added
+        assignedUsers: [findCompanyAdminUser.id],
         forceCompanyId: companyId,
         forceUserId: findCompanyAdminUser?.id,
       });
@@ -1251,7 +1322,7 @@ export async function POST(req: Request) {
           appointmentId: appointment.id,
           invoiceId: estimate.id,
           status: shopBookingStatus,
-          customerNotes: notes || null,
+          customerNotes: notes || undefined,
         },
       });
 
@@ -1349,7 +1420,7 @@ export async function POST(req: Request) {
               make: vehicle?.make,
               model: vehicle?.model,
             },
-            services: selectedServices.map(srv => ({
+            services: selectedServices.map((srv) => ({
               title: srv.title,
               price: srv.price,
             })),
@@ -1374,25 +1445,29 @@ export async function POST(req: Request) {
     if (createdAppointmentId) {
       await db.appointment
         .delete({ where: { id: createdAppointmentId } })
-        .catch(e =>
+        .catch((e) =>
           console.error("Fallback deletion failed for Appointment:", e),
         );
     }
     if (createdEstimateId) {
       await db.invoice
         .delete({ where: { id: createdEstimateId } })
-        .catch(e => console.error("Fallback deletion failed for Estimate:", e));
+        .catch((e) =>
+          console.error("Fallback deletion failed for Estimate:", e),
+        );
     }
     if (createdVehicleId) {
       await db.vehicle
         .delete({ where: { id: createdVehicleId } })
-        .catch(e => console.error("Fallback deletion failed for Vehicle:", e));
+        .catch((e) =>
+          console.error("Fallback deletion failed for Vehicle:", e),
+        );
     }
     if (createdClientId) {
       // The shared addCustomer action also creates a Lead, let's delete the client (which cascades or we can rely on lead being created in tx normally, but if addCustomer does it, it's global)
       await db.client
         .delete({ where: { id: createdClientId } })
-        .catch(e => console.error("Fallback deletion failed for Client:", e));
+        .catch((e) => console.error("Fallback deletion failed for Client:", e));
     }
 
     const formattedError = errorHandler(error);

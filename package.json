@@ -73,7 +73,7 @@
     "clsx": "^2.1.1",
     "croner": "^9.0.0",
     "csv-parser": "^3.2.0",
-    "date-fns": "^4.1.0",
+    "date-fns": "2.30.0",
     "dayjs": "^1.11.13",
     "decimal.js": "^10.5.0",
     "email-validator": "^2.0.4",

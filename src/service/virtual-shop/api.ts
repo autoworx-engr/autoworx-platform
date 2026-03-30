@@ -7,6 +7,11 @@ export interface ThemeConfig {
   fontFamily?: string;
 }
 
+export interface ShopCompanyPricing {
+  tax?: number | string | null;
+  serviceFee?: number | string | null;
+}
+
 export interface ShopData {
   id?: number;
   storeName: string;
@@ -17,6 +22,8 @@ export interface ShopData {
   themeConfig?: ThemeConfig;
   companyId?: number;
   isActive?: boolean;
+  company?: ShopCompanyPricing | null;
+  bookingSettings?: ShopBookingSettingsData | null;
 }
 
 export type CreateShopServicePayload = TCreateShopServiceRequest & {
@@ -159,6 +166,9 @@ export interface CreateVirtualShopServiceBookingResponse {
       tax: number;
       serviceFee: number;
       grandTotal: number;
+      depositRequired?: number;
+      depositPaid?: number;
+      balanceDue?: number;
     };
   };
 }
@@ -255,6 +265,8 @@ export type GetVirtualShopServiceBookingsParams = {
   page?: number;
   limit?: number;
   date?: string;
+  startDate?: string;
+  endDate?: string;
   year?: string;
   month?: string;
   search?: string;
@@ -370,6 +382,9 @@ export interface CreateGiftCardTemplatePayload {
   isActive?: boolean;
   isDefault?: boolean;
 }
+
+export type UpdateGiftCardTemplatePayload =
+  Partial<CreateGiftCardTemplatePayload>;
 
 export type GiftCardPromoType = "Percentage" | "Fixed";
 
@@ -667,6 +682,8 @@ export const getVirtualShopServiceBookings = async function ({
   page = 1,
   limit = 10,
   date,
+  startDate,
+  endDate,
   year,
   month,
   search,
@@ -681,6 +698,8 @@ export const getVirtualShopServiceBookings = async function ({
           page,
           limit,
           date: date || undefined,
+          startDate: startDate || undefined,
+          endDate: endDate || undefined,
           year: year || undefined,
           month: month || undefined,
           search: search || undefined,
@@ -800,7 +819,27 @@ export const createGiftCardTemplate = async function (
   }
 };
 
+export const updateGiftCardTemplate = async function (
+  id: number,
+  payload: UpdateGiftCardTemplatePayload,
+  accessToken: string,
+) {
+  try {
+    const response = await axios.patch<{
+      success: boolean;
+      data: GiftCardTemplateData;
+    }>(`/api/virtual-shop/gift-card-templates/${id}`, payload, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
 
+    return response.data?.data;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
 
 export const getGiftCardTemplatesPublic = async function (companyId: number) {
   try {
@@ -818,9 +857,11 @@ export const getGiftCardTemplatesPublic = async function (companyId: number) {
   }
 };
 
-export const getGiftCardSettingsByCompanyId = async function (companyId: number) {
+export const getGiftCardSettingsByCompanyId = async function (
+  companyId: number,
+) {
   try {
-    const response = await axios.get<{  
+    const response = await axios.get<{
       success: boolean;
       data: GiftCardSettingsData;
     }>("/api/virtual-shop/gift-card-settings", {
@@ -864,7 +905,6 @@ export const buyGiftCard = async function (payload: BuyGiftCardPayload) {
     throw err;
   }
 };
-
 
 export const deleteGiftCardTemplate = async function (
   id: number,

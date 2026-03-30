@@ -4,45 +4,40 @@ import { materialModelSchemaValidation } from "../estimate/material/material.mod
 import { laborCreateValidationSchema } from "../estimate/labor/labor.validation";
 import { tagModelValidationSchema } from "../estimate/tags/tags.model.validation";
 
-const createItemValidationSchema = z.object({
-  id: z
-    .number({
-      invalid_type_error: "Item ID must be a number",
-    })
-    .optional(),
-  service: serviceModelDataValidationSchema.nullable(),
-  materials: z
-    .array(materialModelSchemaValidation.nullable().optional(), {
-      invalid_type_error: "Materials must be an array",
-    })
-    .nullable()
-    .optional(),
-  labor: laborCreateValidationSchema.optional().nullable(),
-  tags: z.array(tagModelValidationSchema.optional(), {
-    invalid_type_error: "Tags must be an array",
-  }),
-});
+// Shared item schema for both create and update
+const itemValidationSchema = z
+  .object({
+    id: z
+      .number({
+        invalid_type_error: "Item ID must be a number",
+      })
+      .optional(),
+    service: serviceModelDataValidationSchema.nullable(),
+    materials: z
+      .array(materialModelSchemaValidation.nullable().optional(), {
+        invalid_type_error: "Materials must be an array",
+      })
+      .nullable()
+      .optional(),
+    labor: laborCreateValidationSchema.optional().nullable(),
+    tags: z.array(tagModelValidationSchema.optional(), {
+      invalid_type_error: "Tags must be an array",
+    }),
+  })
+  .refine(
+    (data) => {
+      const hasLabor = !!data.labor;
+      const hasMaterials =
+        Array.isArray(data.materials) && data.materials.length > 0;
+      return hasLabor || hasMaterials;
+    },
+    {
+      message: "Each service item must have either labor or materials",
+    }
+  );
 
-const updateItemValidationSchema = z.object({
-  id: z
-    .number({
-      invalid_type_error: "Item ID must be a number",
-    })
-    .optional(),
-  service: serviceModelDataValidationSchema.nullable(),
-  materials: z
-    .array(materialModelSchemaValidation.nullable().optional(), {
-      invalid_type_error: "Materials must be an array",
-    })
-    .nullable()
-    .optional(),
-  labor: laborCreateValidationSchema.nullable().optional(),
-  tags: z.array(tagModelValidationSchema.optional(), {
-    invalid_type_error: "Tags must be an array",
-  }),
-});
-
-export const createShopServiceSchema = z.object({
+// Base shop service schema with common fields
+const baseShopServiceSchema = z.object({
   shopId: z
     .number({
       required_error: "Shop ID is required",
@@ -59,11 +54,11 @@ export const createShopServiceSchema = z.object({
     .string({ invalid_type_error: "Description must be a string" })
     .optional(),
   items: z
-    .array(createItemValidationSchema, {
+    .array(itemValidationSchema, {
       invalid_type_error: "Items must be an array",
+      required_error: "Items are required",
     })
-    .optional()
-    .default([]),
+    .min(1, "At least one service item is required"),
   imageUrl: z
     .string({ invalid_type_error: "Image URL must be a string" })
     .optional(),
@@ -92,58 +87,13 @@ export const createShopServiceSchema = z.object({
     .optional(),
 });
 
-export const updateShopServiceSchema = z.object({
+export const createShopServiceSchema = baseShopServiceSchema;
+
+export const updateShopServiceSchema = baseShopServiceSchema.extend({
   id: z.number({
     required_error: "Shop Service ID is required",
     invalid_type_error: "Shop Service ID must be a number",
   }),
-  shopId: z
-    .number({
-      required_error: "Shop ID is required",
-      invalid_type_error: "Shop ID must be a number",
-    })
-    .min(1, "Shop ID is required"),
-  title: z
-    .string({
-      required_error: "Title is required",
-      invalid_type_error: "Title must be a string",
-    })
-    .min(1, "Title is required"),
-  description: z
-    .string({ invalid_type_error: "Description must be a string" })
-    .optional(),
-  items: z
-    .array(updateItemValidationSchema, {
-      invalid_type_error: "Items must be an array",
-    })
-    .optional()
-    .default([]),
-  imageUrl: z
-    .string({ invalid_type_error: "Image URL must be a string" })
-    .optional(),
-  modifierCoupe: z
-    .union([z.string(), z.number()], {
-      invalid_type_error: "Modifier for Coupe must be a string or number",
-    })
-    .optional(),
-  modifierSedan: z
-    .union([z.string(), z.number()], {
-      invalid_type_error: "Modifier for Sedan must be a string or number",
-    })
-    .optional(),
-  modifierSUV: z
-    .union([z.string(), z.number()], {
-      invalid_type_error: "Modifier for SUV must be a string or number",
-    })
-    .optional(),
-  modifierTruck: z
-    .union([z.string(), z.number()], {
-      invalid_type_error: "Modifier for Truck must be a string or number",
-    })
-    .optional(),
-  isActive: z
-    .boolean({ invalid_type_error: "Active status must be a boolean value" })
-    .optional(),
 });
 
 export type TCreateShopServiceRequest = z.infer<typeof createShopServiceSchema>;

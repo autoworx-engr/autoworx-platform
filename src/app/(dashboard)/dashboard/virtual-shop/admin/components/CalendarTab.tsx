@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ElementType } from "react";
-import { useSession } from "next-auth/react";
+import { useMemo, useTransition, type ElementType } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Pagination } from "antd";
 import {
   ChevronLeft,
@@ -16,12 +16,9 @@ import {
   AlertCircle,
   Loader2,
 } from "lucide-react";
-import {
-  useGetVirtualShopServiceBookingCalendar,
-  useGetVirtualShopServiceBookings,
-} from "@/hooks/virtual-shop/service-booking/useShopServiceBooking";
 import type {
   VirtualShopBookingCalendarItem,
+  VirtualShopServiceBookingListResponse,
   VirtualShopServiceBookingItem,
 } from "@/service/virtual-shop/api";
 
@@ -86,21 +83,6 @@ const STATUS_DOT: Record<AppointmentStatus, string> = {
 };
 
 const PAGE_SIZE = 10;
-
-const CALENDAR_MONTH_NAMES = [
-  "january",
-  "february",
-  "march",
-  "april",
-  "may",
-  "june",
-  "july",
-  "august",
-  "september",
-  "october",
-  "november",
-  "december",
-] as const;
 
 function formatDateKey(year: number, month: number, day: number) {
   return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -197,6 +179,21 @@ const MONTH_NAMES = [
 ];
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+type CalendarTabProps = {
+  viewMode: "grid" | "list";
+  viewYear: number;
+  viewMonth: number;
+  selectedDate: string;
+  selectedDatePage: number;
+  listPage: number;
+  monthCalendarResponse: {
+    success: boolean;
+    data: VirtualShopBookingCalendarItem[];
+  };
+  selectedDateResponse: VirtualShopServiceBookingListResponse;
+  monthListResponse: VirtualShopServiceBookingListResponse;
+};
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -409,75 +406,40 @@ function ListView({ appointments }: { appointments: Appointment[] }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function CalendarTab() {
-  const now = new Date();
-  const { data: session } = useSession();
-  const accessToken = session?.accessToken || "";
+export default function CalendarTab({
+  viewMode,
+  viewYear,
+  viewMonth,
+  selectedDate,
+  selectedDatePage,
+  listPage,
+  monthCalendarResponse,
+  selectedDateResponse,
+  monthListResponse,
+}: CalendarTabProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
 
-  const [viewMonth, setViewMonth] = useState(now.getMonth());
-  const [viewYear, setViewYear] = useState(now.getFullYear());
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [selectedDate, setSelectedDate] = useState(
-    formatDateKey(now.getFullYear(), now.getMonth(), now.getDate())
-  );
-  const [selectedDatePage, setSelectedDatePage] = useState(1);
-  const [listPage, setListPage] = useState(1);
+  const pushWithParams = (
+    updates: Record<string, string>,
+    deleteKeys: string[] = [],
+  ) => {
+    const params = new URLSearchParams(searchParams.toString());
 
-  const calendarMonthName = CALENDAR_MONTH_NAMES[viewMonth];
+    deleteKeys.forEach((key) => {
+      params.delete(key);
+    });
 
-  const {
-    data: monthCalendarResponse,
-    isLoading: isMonthCalendarLoading,
-  } = useGetVirtualShopServiceBookingCalendar(
-    {
-      year: viewYear,
-      month: calendarMonthName,
-      accessToken,
-    },
-    Boolean(accessToken && viewMode === "grid"),
-  );
+    Object.entries(updates).forEach(([key, value]) => {
+      params.set(key, value);
+    });
 
-  const {
-    data: selectedDateResponse,
-    isLoading: isSelectedDateLoading,
-    isFetching: isSelectedDateFetching,
-  } = useGetVirtualShopServiceBookings(
-    {
-      accessToken,
-      date: selectedDate,
-      page: selectedDatePage,
-      limit: PAGE_SIZE,
-      sortOrder: "asc",
-    },
-    Boolean(accessToken && viewMode === "grid"),
-  );
-
-  const {
-    data: monthListResponse,
-    isLoading: isMonthListLoading,
-    isFetching: isMonthListFetching,
-  } = useGetVirtualShopServiceBookings(
-    {
-      accessToken,
-      year: String(viewYear),
-      month: String(viewMonth + 1),
-      page: listPage,
-      limit: PAGE_SIZE,
-      sortOrder: "asc",
-    },
-    Boolean(accessToken && viewMode === "list"),
-  );
-
-  useEffect(() => {
-    const today = new Date();
-    const isCurrentMonth =
-      viewYear === today.getFullYear() && viewMonth === today.getMonth();
-    const selectedDay = isCurrentMonth ? today.getDate() : 1;
-
-    setSelectedDate(formatDateKey(viewYear, viewMonth, selectedDay));
-    setSelectedDatePage(1);
-    setListPage(1);
-  }, [viewMonth, viewYear]);
+    startTransition(() => {
+      router.push(`${pathname}?${params.toString()}`);
+    });
+  };
 
   const calendarAppointments = useMemo(
     () =>
@@ -509,13 +471,67 @@ export default function CalendarTab() {
   const selectedDateTotal = selectedDateResponse?.meta?.totalRecords || 0;
   const monthTotal = monthListResponse?.meta?.totalRecords || 0;
 
-  const goToPrev = () => {
-    if (viewMonth === 0) { setViewMonth(11); setViewYear((y) => y - 1); }
-    else setViewMonth((m) => m - 1);
+  const getDefaultDateForMonth = (year: number, month: number) => {
+    const today = new Date();
+    const isCurrentMonth =
+      year === today.getFullYear() && month === today.getMonth();
+    const day = isCurrentMonth ? today.getDate() : 1;
+
+    return formatDateKey(year, month, day);
   };
+
+  const goToPrev = () => {
+    const nextMonth = viewMonth === 0 ? 11 : viewMonth - 1;
+    const nextYear = viewMonth === 0 ? viewYear - 1 : viewYear;
+
+    if (viewMode === "grid") {
+      pushWithParams(
+        {
+          year: String(nextYear),
+          month: String(nextMonth + 1),
+          date: getDefaultDateForMonth(nextYear, nextMonth),
+          selectedPage: "1",
+        },
+        ["listPage"],
+      );
+      return;
+    }
+
+    pushWithParams(
+      {
+        year: String(nextYear),
+        month: String(nextMonth + 1),
+        listPage: "1",
+      },
+      ["date", "selectedPage"],
+    );
+  };
+
   const goToNext = () => {
-    if (viewMonth === 11) { setViewMonth(0); setViewYear((y) => y + 1); }
-    else setViewMonth((m) => m + 1);
+    const nextMonth = viewMonth === 11 ? 0 : viewMonth + 1;
+    const nextYear = viewMonth === 11 ? viewYear + 1 : viewYear;
+
+    if (viewMode === "grid") {
+      pushWithParams(
+        {
+          year: String(nextYear),
+          month: String(nextMonth + 1),
+          date: getDefaultDateForMonth(nextYear, nextMonth),
+          selectedPage: "1",
+        },
+        ["listPage"],
+      );
+      return;
+    }
+
+    pushWithParams(
+      {
+        year: String(nextYear),
+        month: String(nextMonth + 1),
+        listPage: "1",
+      },
+      ["date", "selectedPage"],
+    );
   };
 
   const selectedDateLabel = (() => {
@@ -564,7 +580,15 @@ export default function CalendarTab() {
         {/* View toggle */}
         <div className="flex items-center gap-0 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden bg-white dark:bg-slate-800 shadow-sm">
           <button
-            onClick={() => setViewMode("grid")}
+            onClick={() =>
+              pushWithParams(
+                {
+                  mode: "grid",
+                  selectedPage: "1",
+                },
+                ["listPage"],
+              )
+            }
             className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold transition-all duration-200 ${viewMode === "grid"
               ? "bg-[#6571FF] text-white"
               : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
@@ -573,7 +597,15 @@ export default function CalendarTab() {
             <LayoutGrid size={14} /> Calendar
           </button>
           <button
-            onClick={() => setViewMode("list")}
+            onClick={() =>
+              pushWithParams(
+                {
+                  mode: "list",
+                  listPage: "1",
+                },
+                ["date", "selectedPage"],
+              )
+            }
             className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold transition-all duration-200 ${viewMode === "list"
               ? "bg-[#6571FF] text-white"
               : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
@@ -587,7 +619,7 @@ export default function CalendarTab() {
       {/* Content */}
       {viewMode === "list" ? (
         <>
-          {(isMonthListLoading || isMonthListFetching) && (
+          {isPending && (
             <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
               <Loader2 size={16} className="animate-spin" />
               Loading appointments...
@@ -603,42 +635,44 @@ export default function CalendarTab() {
                 total={monthTotal}
                 pageSize={PAGE_SIZE}
                 showSizeChanger={false}
-                onChange={(page) => setListPage(page)}
+                onChange={(page) =>
+                  pushWithParams(
+                    {
+                      mode: "list",
+                      listPage: String(page),
+                    },
+                    ["date", "selectedPage"],
+                  )
+                }
               />
             </div>
           )}
         </>
       ) : (
         <>
-          {isMonthCalendarLoading && (
-            <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-              <Loader2 size={16} className="animate-spin" />
-              Loading calendar...
-            </div>
-          )}
-
           <CalendarGrid
             year={viewYear}
             month={viewMonth}
             appointments={calendarAppointments}
             selectedDate={selectedDate}
             onSelectDate={(date) => {
-              setSelectedDate(date);
-              setSelectedDatePage(1);
+              pushWithParams({
+                mode: "grid",
+                date,
+                selectedPage: "1",
+              }, ["listPage"]);
             }}
           />
 
           {/* Selected day panel */}
           <div>
             <p className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 mb-2 sm:mb-3">{selectedDateLabel}</p>
-            {(isSelectedDateLoading || isSelectedDateFetching) && (
-              <div className="mb-3 flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+            {isPending && selectedAppts.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/30 text-slate-400 dark:text-slate-500">
                 <Loader2 size={16} className="animate-spin" />
                 Loading appointments...
               </div>
-            )}
-
-            {selectedAppts.length === 0 ? (
+            ) : selectedAppts.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/30 text-slate-400 dark:text-slate-500">
                 <p className="text-sm font-medium">No appointments on this day</p>
                 <p className="text-xs mt-1 opacity-70">Select a date with dots to view appointments</p>
@@ -658,7 +692,15 @@ export default function CalendarTab() {
                   total={selectedDateTotal}
                   pageSize={PAGE_SIZE}
                   showSizeChanger={false}
-                  onChange={(page) => setSelectedDatePage(page)}
+                  onChange={(page) =>
+                    pushWithParams(
+                      {
+                        mode: "grid",
+                        selectedPage: String(page),
+                      },
+                      ["listPage"],
+                    )
+                  }
                 />
               </div>
             )}

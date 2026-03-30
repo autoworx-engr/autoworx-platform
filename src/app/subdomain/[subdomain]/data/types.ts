@@ -1,4 +1,4 @@
-export type VehicleType = 'Coupe' | 'Sedan' | 'SUV' | 'Truck';
+export type VehicleType = "Coupe" | "Sedan" | "SUV" | "Truck";
 
 export interface VehicleTypePricing {
   coupe: number;
@@ -29,7 +29,7 @@ export interface CartItem {
 export interface TimeSlot {
   time: string;
   label: string;
-  period: 'Morning' | 'Afternoon' | 'Evening';
+  period: "Morning" | "Afternoon" | "Evening";
   available: boolean;
 }
 
@@ -40,13 +40,23 @@ export interface BookingData {
   customer: CustomerInfo | null;
 }
 
+export interface BookingTotals {
+  subtotal: number;
+  tax: number;
+  serviceFee: number;
+  grandTotal: number;
+  depositRequired?: number;
+  depositPaid?: number;
+  balanceDue?: number;
+}
+
 export interface BookedAppointment {
   id: string;
   customer: CustomerInfo;
   items: CartItem[];
   date: string; // ISO date string
   timeSlot: TimeSlot;
-  status: 'confirmed' | 'completed' | 'cancelled';
+  status: "confirmed" | "completed" | "cancelled";
   createdAt: string;
 }
 
@@ -62,7 +72,7 @@ export interface CustomerInfo {
 
 export interface ShopSettings {
   depositRequired: boolean;
-  depositType: 'fixed' | 'percentage';
+  depositType: "fixed" | "percentage";
   depositAmount: number;
   stackingEnabled: boolean;
   stackingLimit: number;
@@ -81,4 +91,4 @@ export interface DayAvailability {
   endTime: string;
 }
 
-export type BookingStep = 'services' | 'datetime' | 'checkout' | 'confirmation';
+export type BookingStep = "services" | "datetime" | "checkout" | "confirmation";

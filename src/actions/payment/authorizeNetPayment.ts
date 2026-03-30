@@ -14,12 +14,17 @@ export const createAuthorizeNetPaymentLink = async ({
   companyId,
   invoiceId,
   statementId,
+  shopBookingId,
+  paymentId,
+  giftCardSource,
+  giftCardCode,
+  giftCardId,
   amount,
   payType,
 }: PaymentParams): Promise<PaymentLink> => {
   try {
-    if (!invoiceId && !statementId) {
-      throw new Error("Invoice or Statement ID is required");
+    if (!invoiceId && !statementId && !shopBookingId && !paymentId) {
+      throw new Error("Invoice, Statement or Booking ID is required");
     }
 
     const company = await db.company.findFirst({
@@ -73,6 +78,15 @@ export const createAuthorizeNetPaymentLink = async ({
         })
       : null;
 
+    const shopBooking = shopBookingId
+      ? await db.shopBooking.findUnique({
+          where: { id: Number(shopBookingId) },
+          select: {
+            invoiceId: true,
+          },
+        })
+      : null;
+
     // Validate amount
     const paymentAmount = parseFloat(amount);
     if (isNaN(paymentAmount) || paymentAmount <= 0) {
@@ -108,7 +122,11 @@ export const createAuthorizeNetPaymentLink = async ({
     const orderType = new ApiContracts.OrderType();
     const productName = invoiceId
       ? `INVOICE-${invoiceId}`
-      : `STATEMENT-${statementId}`;
+      : statementId
+        ? `STATEMENT-${statementId}`
+        : shopBookingId
+          ? `BOOKING-${shopBookingId}`
+          : `GIFTCARD-${paymentId}`;
 
     // Encode payType into invoiceNumber so the webhook can
     // reliably distinguish deposits vs normal payments and
@@ -123,21 +141,42 @@ export const createAuthorizeNetPaymentLink = async ({
       }
     } else if (statementId) {
       invoiceNumberForGateway = `STM-${statementId}`;
+    } else if (shopBookingId) {
+      invoiceNumberForGateway = `VSB-DEP-${shopBookingId}`;
+    } else if (paymentId) {
+      invoiceNumberForGateway =
+        giftCardSource === "reload"
+          ? `VSGCR-${paymentId}`
+          : `VSGCP-${paymentId}`;
     }
+
+    if (invoiceNumberForGateway.length > 20) {
+      throw new Error("Payment reference is too long for Authorize.Net");
+    }
+
+    const isDepositPayment =
+      payType === "deposit" || payType === "virtual_shop_deposit";
+    const isGiftCardPayment = payType === "virtual_shop_gift_card";
 
     orderType.setInvoiceNumber(invoiceNumberForGateway);
     orderType.setDescription(
-      `${payType === "deposit" ? "Deposit" : "Payment"} for ${productName}`,
+      `${isGiftCardPayment ? "Gift Card" : isDepositPayment ? "Deposit" : "Payment"} for ${productName}`,
     );
     transactionRequestType.setOrder(orderType);
 
     // Add line items for the payment form to display properly
     const lineItemsArray = [];
     const lineItem = new ApiContracts.LineItemType();
-    lineItem.setItemId(invoiceId || statementId || "1");
+    lineItem.setItemId(
+      invoiceId || statementId || shopBookingId || paymentId || "1",
+    );
     lineItem.setName(productName);
     lineItem.setDescription(
-      payType === "deposit" ? "Deposit Payment" : "Payment",
+      isGiftCardPayment
+        ? "Gift Card Payment"
+        : isDepositPayment
+          ? "Deposit Payment"
+          : "Payment",
     );
     lineItem.setQuantity("1");
     lineItem.setUnitPrice(paymentAmount.toString());
@@ -185,6 +224,43 @@ export const createAuthorizeNetPaymentLink = async ({
       customField3.setName("statementId");
       customField3.setValue(statementId);
       userFieldsArray.push(customField3);
+    } else if (paymentId) {
+      const customField3 = new ApiContracts.UserField();
+      customField3.setName("paymentRef");
+      customField3.setValue(paymentId);
+      userFieldsArray.push(customField3);
+
+      if (giftCardSource) {
+        const customField4 = new ApiContracts.UserField();
+        customField4.setName("giftCardSource");
+        customField4.setValue(giftCardSource);
+        userFieldsArray.push(customField4);
+      }
+
+      if (giftCardCode) {
+        const customField5 = new ApiContracts.UserField();
+        customField5.setName("giftCardCode");
+        customField5.setValue(giftCardCode);
+        userFieldsArray.push(customField5);
+      }
+
+      if (Number.isInteger(giftCardId) && Number(giftCardId) > 0) {
+        const customField6 = new ApiContracts.UserField();
+        customField6.setName("giftCardId");
+        customField6.setValue(String(giftCardId));
+        userFieldsArray.push(customField6);
+      }
+    } else if (shopBookingId) {
+      const customField3 = new ApiContracts.UserField();
+      customField3.setName("shopBookingId");
+      customField3.setValue(shopBookingId);
+      userFieldsArray.push(customField3);
+      if (shopBooking?.invoiceId) {
+        const customField4 = new ApiContracts.UserField();
+        customField4.setName("invoiceId");
+        customField4.setValue(shopBooking.invoiceId);
+        userFieldsArray.push(customField4);
+      }
     }
 
     // Set user fields with proper structure

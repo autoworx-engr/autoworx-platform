@@ -5,13 +5,19 @@ import { jwtVerifyToken } from "./lib/jwtVerify";
 import { isDynamicPublicApiRoute } from "./utils/isDynamicPublicApiRoute";
 import { rootDomain } from "./lib/subdomains";
 
+const isProduction = process.env.NODE_ENV === "production";
+
 function extractSubdomain(request: NextRequest): string | null {
   const url = request.url;
+
   const host = request.headers.get("host") || "";
   const hostname = host.split(":")[0];
 
   // Local development environment
-  if (url.includes("localhost") || url.includes("127.0.0.1")) {
+  if (
+    !isProduction &&
+    (url.includes("localhost") || url.includes("127.0.0.1"))
+  ) {
     // Try to extract subdomain from the full URL
     const fullUrlMatch = url.match(/http:\/\/([^.]+)\.localhost/);
     if (fullUrlMatch && fullUrlMatch[1]) {
@@ -66,13 +72,9 @@ export async function middleware(request: NextRequest) {
 
     // Skip API routes so they can be handled by the main app API handlers
     if (!pathname.startsWith("/api/")) {
+      const rewriteUrl = `/subdomain/${subdomain}${pathname === "/" ? "" : pathname}`;
       // Rewrite all other paths to the subdomain folder
-      return NextResponse.rewrite(
-        new URL(
-          `/subdomain/${subdomain}${pathname === "/" ? "" : pathname}`,
-          request.url,
-        ),
-      );
+      return NextResponse.rewrite(new URL(rewriteUrl, request.url));
     }
   }
 

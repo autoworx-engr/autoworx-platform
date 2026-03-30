@@ -12,8 +12,10 @@ import {
   getShopBySlug,
   getAppointmentSlots,
   getGiftCardTemplatesPublic,
+  ShopServicesResponse,
 } from "@/service/virtual-shop/api";
 import {
+  keepPreviousData,
   useInfiniteQuery,
   useMutation,
   useQuery,
@@ -29,13 +31,19 @@ export const useGetShopCategories = (shopId?: number) => {
   });
 };
 
-export const useGetShopServices = ({
-  shopId,
-  page = 1,
-  limit = 10,
-  search,
-  category,
-}: Partial<GetShopServicesParams>) => {
+export const useGetShopServices = (
+  {
+    shopId,
+    page = 1,
+    limit = 10,
+    search,
+    category,
+  }: Partial<GetShopServicesParams>,
+  options?: {
+    enabled?: boolean;
+    initialData?: ShopServicesResponse;
+  },
+) => {
   return useQuery({
     queryKey: ["virtual-shop-services", shopId, page, limit, search, category],
     queryFn: () =>
@@ -46,7 +54,9 @@ export const useGetShopServices = ({
         search,
         category,
       }),
-    enabled: !!shopId,
+    enabled: options?.enabled ?? !!shopId,
+    initialData: options?.initialData,
+    placeholderData: keepPreviousData,
     staleTime: 1000 * 30,
   });
 };
