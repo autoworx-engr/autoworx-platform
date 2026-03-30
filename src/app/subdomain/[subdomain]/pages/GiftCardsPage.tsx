@@ -227,6 +227,17 @@ const GiftCardsPage = ({
           }
 
           const purchaseData = response.data.data;
+          const purchasedAmount = Number(purchaseData?.amount);
+
+          setData((prev) => ({
+            ...prev,
+            amount:
+              Number.isFinite(purchasedAmount) && purchasedAmount > 0
+                ? purchasedAmount
+                : Number(checkout.payload.amount || prev.amount),
+            recipientName: purchaseData?.recipientName || prev.recipientName,
+          }));
+
           setConfirmationData({
             number: purchaseData.confirmationNumber,
             code: purchaseData.maskedCode,
@@ -323,13 +334,18 @@ const GiftCardsPage = ({
 
         const confirmation = response.data.data;
         if (confirmation?.status === "issued") {
+          const confirmedAmount = Number(confirmation.amount);
+
           setConfirmationData({
             number: confirmation.confirmationNumber,
             code: confirmation.maskedCode,
           });
           setData((prev) => ({
             ...prev,
-            amount: Number(confirmation.amount || prev.amount),
+            amount:
+              Number.isFinite(confirmedAmount) && confirmedAmount > 0
+                ? confirmedAmount
+                : Number(checkout?.payload?.amount || prev.amount),
             recipientName: confirmation.recipientName || prev.recipientName,
           }));
           setBuyStep("confirmation");

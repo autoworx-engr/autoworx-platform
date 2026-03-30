@@ -161,7 +161,7 @@ export const Checkout = () => {
       setPhoneLookedUp(true);
     } catch (error) {
       console.error("Phone lookup failed:", error);
-      setPhoneLookedUp(true); 
+      setPhoneLookedUp(true);
     }
   }, [form.phone, shop?.id, lookupClient, setIsReturningClient]);
 
@@ -517,6 +517,8 @@ export const Checkout = () => {
       : Number(((grandTotal * depositValue) / 100).toFixed(2))
     : 0;
   const effectiveDepositDue = serverDepositRequired ?? depositAmount;
+  const hasPendingBookingPayment =
+    Boolean(createdBookingId) && effectiveDepositDue > 0;
 
   if (isResolvingBookingReturn) {
     return (
@@ -644,56 +646,57 @@ export const Checkout = () => {
       )}
 
       {/* Customer Form */}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Phone first — used to check returning client */}
-        <div className="space-y-1.5">
-          <Label htmlFor="phone" className="text-xs">
-            Phone Number <span className="text-red-500 ml-1">*</span>
-          </Label>
-          <div className="flex gap-2 items-center">
-            <Input
-              type="hidden"
-              id="phone"
-              value={form.phone}
-              onChange={() => {}}
-            />
-            <div className="flex-1">
-              <PhoneInput
-                label=""
-                placeholder="1234567890"
-                required
-                defaultIsoCode={selectedCountryCode}
-                onChange={(num, code, isoCode) => {
-                  update("phone", `${code}${num}`);
-                  setSelectedCountryCode(isoCode || "US");
-                }}
+      {!hasPendingBookingPayment && (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Phone first — used to check returning client */}
+          <div className="space-y-1.5">
+            <Label htmlFor="phone" className="text-xs">
+              Phone Number <span className="text-red-500 ml-1">*</span>
+            </Label>
+            <div className="flex gap-2 items-center">
+              <Input
+                type="hidden"
+                id="phone"
+                value={form.phone}
+                onChange={() => {}}
               />
-            </div>
-            {!phoneLookedUp && form.phone.length >= 7 && (
-              <Button
-                type="button"
-                variant="secondary"
-                size="lg"
-                onClick={handlePhoneLookup}
-                disabled={isLookingUp}
-              >
-                {isLookingUp ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  "Continue"
-                )}
-              </Button>
-            )}
-            {/* {phoneLookedUp && !isReturningClient && (
+              <div className="flex-1">
+                <PhoneInput
+                  label=""
+                  placeholder="1234567890"
+                  required
+                  defaultIsoCode={selectedCountryCode}
+                  onChange={(num, code, isoCode) => {
+                    update("phone", `${code}${num}`);
+                    setSelectedCountryCode(isoCode || "US");
+                  }}
+                />
+              </div>
+              {!phoneLookedUp && form.phone.length >= 7 && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="lg"
+                  onClick={handlePhoneLookup}
+                  disabled={isLookingUp}
+                >
+                  {isLookingUp ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    "Continue"
+                  )}
+                </Button>
+              )}
+              {/* {phoneLookedUp && !isReturningClient && (
               <span className="flex items-center  text-xs text-muted-foreground">
                 New client
               </span>
             )} */}
+            </div>
           </div>
-        </div>
 
-        {/* OTP for returning clients — shown right after phone lookup */}
-        {/* {isReturningClient && showOtp && !otpVerified && (
+          {/* OTP for returning clients — shown right after phone lookup */}
+          {/* {isReturningClient && showOtp && !otpVerified && (
           <div className="rounded-xl border bg-card p-4 space-y-3 text-center">
             <Shield className="w-8 h-8 mx-auto text-primary" />
             <p className="text-sm font-medium">
@@ -726,128 +729,129 @@ export const Checkout = () => {
           </div>
         )} */}
 
-        {/* Remaining fields — shown after phone lookup (or OTP verified for returning) */}
-        {phoneLookedUp && (true || !isReturningClient || otpVerified) && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <SlimInput
-                id="name"
-                name="fullName"
-                label="Full Name"
-                required
-                labelClassName="text-xs font-medium"
-                className="h-10 text-sm font-normal rounded-md border-input bg-background px-3 py-2"
-                value={form.fullName}
-                onChange={(e) => update("fullName", e.target.value)}
-                placeholder="John Doe"
-              />
+          {/* Remaining fields — shown after phone lookup (or OTP verified for returning) */}
+          {phoneLookedUp && (true || !isReturningClient || otpVerified) && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <SlimInput
+                  id="name"
+                  name="fullName"
+                  label="Full Name"
+                  required
+                  labelClassName="text-xs font-medium"
+                  className="h-10 text-sm font-normal rounded-md border-input bg-background px-3 py-2"
+                  value={form.fullName}
+                  onChange={(e) => update("fullName", e.target.value)}
+                  placeholder="John Doe"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <SlimInput
+                  id="email"
+                  name="email"
+                  label="Email"
+                  type="email"
+                  required
+                  labelClassName="text-xs font-medium"
+                  className="h-10 text-sm font-normal rounded-md border-input bg-background px-3 py-2"
+                  value={form.email}
+                  onChange={(e) => update("email", e.target.value)}
+                  placeholder="john@email.com"
+                />
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <SlimInput
-                id="email"
-                name="email"
-                label="Email"
-                type="email"
-                required
-                labelClassName="text-xs font-medium"
-                className="h-10 text-sm font-normal rounded-md border-input bg-background px-3 py-2"
-                value={form.email}
-                onChange={(e) => update("email", e.target.value)}
-                placeholder="john@email.com"
-              />
-            </div>
-          </div>
-        )}
+          )}
 
-        {phoneLookedUp && (true || !isReturningClient || otpVerified) && (
-          <>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pt-2">
-              Vehicle Information
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <Selector
-                name="vehicleYear"
-                label="Year"
-                placeholder="Year"
-                options={years?.data || []}
-                value={form.vehicleYear || ""}
-                onChange={(value: string) => update("vehicleYear", value)}
-                isSearch={true}
-                isClear={true}
-                required={true}
-              />
-              <Selector
-                name="vehicleMake"
-                label="Make"
-                placeholder="Make"
-                options={vehicleOptions || []}
-                value={form.vehicleMake || ""}
-                onChange={(value: string) => {
-                  update("vehicleMake", value);
-                  update("vehicleModel", "");
-                }}
-                isSearch={true}
-                isClear={true}
-                required={true}
-              />
-              <Selector
-                name="vehicleModel"
-                label="Model"
-                placeholder="Model"
-                options={vehicleModelOptions || []}
-                value={form.vehicleModel || ""}
-                onChange={(value: string) => update("vehicleModel", value)}
-                isSearch={true}
-                isClear={true}
-                required={true}
-                disabled={!form.vehicleMake}
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <SlimTextarea
-                id="notes"
-                name="notes"
-                label="Notes"
-                labelClassName="text-xs font-medium"
-                value={form.notes}
-                onChange={(e) => update("notes", e.target.value)}
-                placeholder="Any special requests..."
-                rows={3}
-                className="text-sm font-normal rounded-md"
-              />
-            </div>
-
-            {/* Policies */}
-            <div className="rounded-lg bg-muted/50 p-3 space-y-1.5 text-xs text-muted-foreground">
-              <p className="flex items-center gap-1.5">
-                <Shield className="w-3.5 h-3.5 text-primary" /> Your info is
-                secure and encrypted.
+          {phoneLookedUp && (true || !isReturningClient || otpVerified) && (
+            <>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pt-2">
+                Vehicle Information
               </p>
-              <p>
-                By confirming, an <strong>Autoworx client account</strong> will
-                be created automatically. Future bookings will use OTP
-                verification for faster checkout.
-              </p>
-              <p>
-                Free cancellation up to 24 hours before your appointment.{" "}
-                <a href="#" className="text-primary underline">
-                  Cancellation Policy
-                </a>
-              </p>
-            </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <Selector
+                  name="vehicleYear"
+                  label="Year"
+                  placeholder="Year"
+                  options={years?.data || []}
+                  value={form.vehicleYear || ""}
+                  onChange={(value: string) => update("vehicleYear", value)}
+                  isSearch={true}
+                  isClear={true}
+                  required={true}
+                />
+                <Selector
+                  name="vehicleMake"
+                  label="Make"
+                  placeholder="Make"
+                  options={vehicleOptions || []}
+                  value={form.vehicleMake || ""}
+                  onChange={(value: string) => {
+                    update("vehicleMake", value);
+                    update("vehicleModel", "");
+                  }}
+                  isSearch={true}
+                  isClear={true}
+                  required={true}
+                />
+                <Selector
+                  name="vehicleModel"
+                  label="Model"
+                  placeholder="Model"
+                  options={vehicleModelOptions || []}
+                  value={form.vehicleModel || ""}
+                  onChange={(value: string) => update("vehicleModel", value)}
+                  isSearch={true}
+                  isClear={true}
+                  required={true}
+                  disabled={!form.vehicleMake}
+                />
+              </div>
 
-            <Button
-              type="submit"
-              size="lg"
-              className="w-full"
-              disabled={isBookingSubmitting}
-            >
-              {isBookingSubmitting ? "Confirming..." : "Confirm Booking"}
-            </Button>
-          </>
-        )}
-      </form>
+              <div className="space-y-1.5">
+                <SlimTextarea
+                  id="notes"
+                  name="notes"
+                  label="Notes"
+                  labelClassName="text-xs font-medium"
+                  value={form.notes}
+                  onChange={(e) => update("notes", e.target.value)}
+                  placeholder="Any special requests..."
+                  rows={3}
+                  className="text-sm font-normal rounded-md"
+                />
+              </div>
+
+              {/* Policies */}
+              <div className="rounded-lg bg-muted/50 p-3 space-y-1.5 text-xs text-muted-foreground">
+                <p className="flex items-center gap-1.5">
+                  <Shield className="w-3.5 h-3.5 text-primary" /> Your info is
+                  secure and encrypted.
+                </p>
+                <p>
+                  By confirming, an <strong>Autoworx client account</strong>{" "}
+                  will be created automatically. Future bookings will use OTP
+                  verification for faster checkout.
+                </p>
+                <p>
+                  Free cancellation up to 24 hours before your appointment.{" "}
+                  <a href="#" className="text-primary underline">
+                    Cancellation Policy
+                  </a>
+                </p>
+              </div>
+
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full"
+                disabled={isBookingSubmitting}
+              >
+                {isBookingSubmitting ? "Confirming..." : "Confirm Booking"}
+              </Button>
+            </>
+          )}
+        </form>
+      )}
 
       {/* Timer Expired Dialog */}
       <Dialog open={timerExpired} onOpenChange={() => {}}>
