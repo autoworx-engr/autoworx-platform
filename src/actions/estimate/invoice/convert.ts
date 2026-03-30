@@ -14,7 +14,7 @@ import { InvoiceType } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 export async function convertInvoice(
-  id: string
+  id: string,
 ): Promise<ServerAction | TErrorHandler> {
   try {
     const companyId = await getCompanyId();
@@ -60,6 +60,39 @@ export async function convertInvoice(
         },
       });
 
+      if (updatedInvoiceData && updatedInvoiceData?.clientId) {
+        const client = await db.client.findUnique({
+          where: {
+            id: updatedInvoiceData?.clientId,
+          },
+        });
+
+        const column = await db.column.findFirst({
+          where: {
+            title: "Converted",
+            type: "sales",
+            companyId: client?.companyId,
+          },
+        });
+
+        if (client?.leadId && column) {
+          const existingLead = await db.lead.findFirst({
+            where: {
+              id: client?.leadId,
+            },
+          });
+          const lead = await db.lead.update({
+            where: {
+              id: client?.leadId,
+            },
+            data: {
+              columnId: column.id,
+              columnChangedAt: new Date(),
+            },
+          });
+        }
+      }
+
       // If estimate/invoice convert to invoice/estimate, invoice automation trigger
       updateInvoiceAutomationTrigger({
         companyId: updatedInvoiceData?.companyId!,
@@ -93,7 +126,7 @@ export async function convertInvoice(
             product.quantity > Number(findInventoryProduct.quantity || 0)
           ) {
             throw new Error(
-              `The quantity of "${product.name}" is not enough in the inventory, You need ${product.quantity} but only have ${findInventoryProduct.quantity} quantity`
+              `The quantity of "${product.name}" is not enough in the inventory, You need ${product.quantity} but only have ${findInventoryProduct.quantity} quantity`,
             );
           }
 
@@ -150,7 +183,7 @@ export async function convertInvoice(
           });
 
           return updatedInventoryProduct;
-        })
+        }),
       );
 
       const clientName = invoice.client?.firstName || "Client";
@@ -184,7 +217,7 @@ export async function convertInvoice(
 
 export async function convertInvoicePublic(
   id: string,
-  companyId: number
+  companyId: number,
 ): Promise<ServerAction | TErrorHandler> {
   try {
     const updatedInvoiceData = await db.$transaction(async (db) => {
@@ -254,7 +287,7 @@ export async function convertInvoicePublic(
             });
 
             throw new Error(
-              `The quantity of "${product.name}" is not enough in the inventory, You need ${product.quantity} but only have ${findInventoryProduct.quantity} quantity`
+              `The quantity of "${product.name}" is not enough in the inventory, You need ${product.quantity} but only have ${findInventoryProduct.quantity} quantity`,
             );
           }
 
@@ -311,7 +344,7 @@ export async function convertInvoicePublic(
           });
 
           return updatedInventoryProduct;
-        })
+        }),
       );
 
       const clientName = invoice.client?.firstName || "Client";
