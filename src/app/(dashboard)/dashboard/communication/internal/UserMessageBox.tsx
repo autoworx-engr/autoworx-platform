@@ -42,8 +42,10 @@ export default function UserMessageBox({
         }),
       );
     };
-    fetchMessages();
-  }, []);
+    if (session?.user?.id) {
+      fetchMessages();
+    }
+  }, [user.id, session?.user?.id]);
 
   // real-time message from pusher
   useEffect(() => {
@@ -86,7 +88,7 @@ export default function UserMessageBox({
     return () => {
       channel.unbind("message");
     };
-  }, [user]);
+  }, [user, session?.user?.id]);
 
   return (
     <MessageBox
