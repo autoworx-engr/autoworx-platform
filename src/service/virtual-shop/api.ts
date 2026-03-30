@@ -265,6 +265,8 @@ export type GetVirtualShopServiceBookingsParams = {
   page?: number;
   limit?: number;
   date?: string;
+  startDate?: string;
+  endDate?: string;
   year?: string;
   month?: string;
   search?: string;
@@ -680,6 +682,8 @@ export const getVirtualShopServiceBookings = async function ({
   page = 1,
   limit = 10,
   date,
+  startDate,
+  endDate,
   year,
   month,
   search,
@@ -694,6 +698,8 @@ export const getVirtualShopServiceBookings = async function ({
           page,
           limit,
           date: date || undefined,
+          startDate: startDate || undefined,
+          endDate: endDate || undefined,
           year: year || undefined,
           month: month || undefined,
           search: search || undefined,
