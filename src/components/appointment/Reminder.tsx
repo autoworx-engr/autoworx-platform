@@ -1,6 +1,5 @@
 import { deleteTemplate } from "@/actions/appointment/deleteTemplate";
 import { emailTemplateQueryKey } from "@/app/(dashboard)/dashboard/task/_constant";
-import FormError from "@/components/FormError";
 import NewTemplate from "@/components/Lists/NewTemplate";
 import Selector from "@/components/Selector";
 import { Switch } from "@/components/Switch";
@@ -8,9 +7,6 @@ import useTemplatesQuery from "@/hooks/query-hook/useTemplatesQuery";
 import { useFormErrorStore } from "@/stores/form-error";
 import type { Client, EmailTemplate, Vehicle } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
-import moment from "moment";
-import { useEffect, useRef, useState } from "react";
-import UpdateTemplate from "./UpdateTemplate";
 import {
   Bell,
   Calendar,
@@ -20,6 +16,9 @@ import {
   UserRoundX,
   X,
 } from "lucide-react";
+import moment from "moment";
+import { useEffect, useRef, useState } from "react";
+import UpdateTemplate from "./UpdateTemplate";
 
 type TReminderProps = {
   client: Partial<Client> | null;
@@ -103,10 +102,10 @@ export function Reminder({
     }
 
     const firstConfirmationTemplate = templates.find(
-      (template: EmailTemplate) => template.type === "Confirmation",
+      (template: EmailTemplate) => template.type === "Confirmation"
     );
     const firstReminderTemplate = templates.find(
-      (template: EmailTemplate) => template.type === "Reminder",
+      (template: EmailTemplate) => template.type === "Reminder"
     );
 
     setConfirmationTemplate(firstConfirmationTemplate ?? null);
@@ -127,8 +126,8 @@ export function Reminder({
     const currentTemplateId = confirmationTemplate?.id ?? null;
 
     if (
-      currentTemplateId !== null
-      && currentTemplateId !== previousConfirmationTemplateIdRef.current
+      currentTemplateId !== null &&
+      currentTemplateId !== previousConfirmationTemplateIdRef.current
     ) {
       setConfirmationTemplateStatus(true);
     }
@@ -140,8 +139,8 @@ export function Reminder({
     const currentTemplateId = reminderTemplate?.id ?? null;
 
     if (
-      currentTemplateId !== null
-      && currentTemplateId !== previousReminderTemplateIdRef.current
+      currentTemplateId !== null &&
+      currentTemplateId !== previousReminderTemplateIdRef.current
     ) {
       setReminderTemplateStatus(true);
     }
@@ -224,7 +223,7 @@ export function Reminder({
     // Check if reminder is before the appointment
     const appointmentDateTime = moment(
       `${date} ${startTime}`,
-      "YYYY-MM-DD HH:mm",
+      "YYYY-MM-DD HH:mm"
     );
     const reminderDateTime = moment(`${dateInput} ${time}`, "YYYY-MM-DD HH:mm");
 
@@ -308,7 +307,7 @@ export function Reminder({
             />
           }
           items={templates.filter(
-            (template: EmailTemplate) => template.type === "Confirmation",
+            (template: EmailTemplate) => template.type === "Confirmation"
           )}
           displayList={(template: EmailTemplate) => (
             <div className="group relative flex items-center justify-between">
@@ -355,11 +354,13 @@ export function Reminder({
             setOpenConfirmation(false);
           }}
           onSearch={(search: string) =>
-            templates.filter((template) =>
-              template.subject.toLowerCase().includes(search.toLowerCase()),
+            templates.filter(
+              (template) =>
+                template.type === "Confirmation" &&
+                template.subject.toLowerCase().includes(search.toLowerCase())
             )
           }
-        // openState={[openConfirmation, setOpenConfirmation]}
+          // openState={[openConfirmation, setOpenConfirmation]}
         />
       </div>
       <div className="min-w-[350px] space-y-4 p-2 md:w-full">
@@ -392,7 +393,7 @@ export function Reminder({
             />
           }
           items={templates.filter(
-            (template: EmailTemplate) => template.type === "Reminder",
+            (template: EmailTemplate) => template.type === "Reminder"
           )}
           displayList={(template: EmailTemplate) => (
             <div className="group relative flex items-center justify-between">
@@ -439,11 +440,13 @@ export function Reminder({
             setOpenReminder(false);
           }}
           onSearch={(search: string) =>
-            templates.filter((template) =>
-              template.subject.toLowerCase().includes(search.toLowerCase()),
+            templates.filter(
+              (template) =>
+                template.type === "Reminder" &&
+                template.subject.toLowerCase().includes(search.toLowerCase())
             )
           }
-        // openState={[openReminder, setOpenReminder]}
+          // openState={[openReminder, setOpenReminder]}
         />
       </div>
 
@@ -491,7 +494,7 @@ export function Reminder({
               {times.map((timeObj, index) => {
                 const timeObjMoment = moment(
                   `${timeObj.date} ${timeObj.time}`,
-                  "YYYY-MM-DD HH:mm",
+                  "YYYY-MM-DD HH:mm"
                 );
                 const formattedTime = timeObjMoment.format("MMM Do, YYYY");
                 const formattedHour = timeObjMoment.format("h:mm A");

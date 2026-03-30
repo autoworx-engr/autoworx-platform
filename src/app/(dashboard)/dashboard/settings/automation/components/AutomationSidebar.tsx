@@ -49,6 +49,12 @@ const items = [
     permissionName: companyPermissionModule.TAG_AUTOMATION,
     moduleKey: "tag" as AutomationModuleKey,
   },
+  {
+    name: "reporting",
+    path: "reporting",
+    permissionName: companyPermissionModule.REPORTING_AUTOMATION,
+    moduleKey: "reporting" as AutomationModuleKey,
+  },
 ];
 
 const AutomationSidebar = ({

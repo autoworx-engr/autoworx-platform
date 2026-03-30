@@ -77,7 +77,7 @@ export default function SmsContainer({ clientId, canUseSms = true }: TProps) {
     return () => {
       pusher.unbind("sms").unsubscribe(`sms-${user?.companyId}-${clientId}`);
     };
-  }, []);
+  }, [user?.companyId, clientId, queryClient]);
 
   // update client unread messages
   const updateSmsUnReadMessages = useCallback(async () => {
@@ -88,11 +88,11 @@ export default function SmsContainer({ clientId, canUseSms = true }: TProps) {
       const formattedError = errorHandler(err);
       errorToast(formattedError.message);
     }
-  }, [clientId]);
+  }, [clientId, setClientConversationTrack]);
 
   useEffect(() => {
     updateSmsUnReadMessages();
-  }, []);
+  }, [updateSmsUnReadMessages]);
 
   return (
     <div className="flex h-full flex-col gap-0">

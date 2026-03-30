@@ -311,6 +311,31 @@ model InventoryAutomationTeamMember {
   @@id([inventoryRuleId, userId])
 }
 
+model ReportingAutomationRule {
+  id          Int                             @id @default(autoincrement())
+  title       String
+  companyId   Int
+  frequency   ReportingAutomationFrequency
+  action      ReportingNotificationAction
+  day         DayOfWeek?
+  isPaused    Boolean                         @default(false)
+  createdBy   String?
+  createdAt   DateTime                        @default(now())
+  updatedAt   DateTime                        @updatedAt
+  company     Company                         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  teamMembers ReportingAutomationTeamMember[]
+
+  @@index([companyId])
+}
+model ReportingAutomationTeamMember {
+  reportingRuleId Int
+  userId          Int
+  reportingRule   ReportingAutomationRule @relation(fields: [reportingRuleId], references: [id], onDelete: Cascade)
+  user            User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([reportingRuleId, userId])
+}
+
 // TODO: Tag Automation Schema
 // tag automation rules
 model TagAutomationRule {
@@ -461,6 +486,18 @@ enum InventoryNotificationAction {
   BOTH
 }
 
+enum ReportingAutomationFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+enum ReportingNotificationAction {
+  EMAIL
+  SMS
+  BOTH
+}
 // Client of a company.
 // Client is just data, they can't login.
 model Client {
@@ -673,6 +710,7 @@ model Company {
   Refund                           Refund[]
   InvoiceAutomationRule            InvoiceAutomationRule[]
   inventoryAutomationRule          InventoryAutomationRule[]
+  reportingAutomationRule          ReportingAutomationRule[]
   companyPermissionModules         CompanyPermissionModule[]
   BugReport                        BugReport[]
   salaryHistory                    SalaryHistory[]
@@ -2204,6 +2242,7 @@ model User {
   resetToken                     PasswordResetToken?
   Refund                         Refund[]
   inventoryAutomationTeamMembers InventoryAutomationTeamMember[]
+  reportingAutomationTeamMembers ReportingAutomationTeamMember[]
   salaryHistory                  SalaryHistory[]
   shortLinks                     ShortLink[] // Links created by this user
   twoFactorConfirmation          TwoFactorConfirmation?
