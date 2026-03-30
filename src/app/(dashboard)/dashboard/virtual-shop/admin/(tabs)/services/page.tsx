@@ -10,13 +10,49 @@ import ServicesTab from "../../components/ServicesTab";
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 10;
+const PAGE_SIZE_OPTIONS = [10, 20, 50, 100] as const;
 
-export default async function VirtualShopServicesPage() {
+type VirtualShopServicesPageProps = {
+  searchParams?: {
+    page?: string;
+    limit?: string;
+    search?: string;
+  };
+};
+
+function parsePositiveInt(
+  value: string | undefined,
+  fallback: number,
+  allowedValues?: readonly number[],
+) {
+  const parsed = Number.parseInt(value ?? "", 10);
+
+  if (!Number.isFinite(parsed) || parsed < 1) {
+    return fallback;
+  }
+
+  if (allowedValues && !allowedValues.includes(parsed)) {
+    return fallback;
+  }
+
+  return parsed;
+}
+
+export default async function VirtualShopServicesPage({
+  searchParams,
+}: VirtualShopServicesPageProps) {
   const session = await getServerSession(authOptions);
   const companyId = session?.user?.companyId;
+  const search = searchParams?.search?.trim() ?? "";
+  const page = parsePositiveInt(searchParams?.page, DEFAULT_PAGE);
+  const limit = parsePositiveInt(
+    searchParams?.limit,
+    DEFAULT_LIMIT,
+    PAGE_SIZE_OPTIONS,
+  );
 
   let initialShopConfig: ShopData | null = null;
-  let initialServicesResponse: ShopServicesResponse | undefined;
+  let servicesResponse: ShopServicesResponse | undefined;
 
   if (companyId) {
     const shop = await db.shop.findUnique({
@@ -46,6 +82,24 @@ export default async function VirtualShopServicesPage() {
       const whereClause = {
         shopId: shop.id,
         isActive: true,
+        ...(search
+          ? {
+            OR: [
+              {
+                title: {
+                  contains: search,
+                  mode: "insensitive" as const,
+                },
+              },
+              {
+                description: {
+                  contains: search,
+                  mode: "insensitive" as const,
+                },
+              },
+            ],
+          }
+          : {}),
       };
 
       const [totalRecords, services] = await Promise.all([
@@ -55,12 +109,12 @@ export default async function VirtualShopServicesPage() {
           orderBy: {
             createdAt: "desc",
           },
-          skip: (DEFAULT_PAGE - 1) * DEFAULT_LIMIT,
-          take: DEFAULT_LIMIT,
+          skip: (page - 1) * limit,
+          take: limit,
         }),
       ]);
 
-      const totalPages = Math.ceil(totalRecords / DEFAULT_LIMIT);
+      const totalPages = Math.ceil(totalRecords / limit);
       const mappedServices: ShopServiceApi[] = services.map((service) => ({
         id: service.id,
         title: service.title,
@@ -75,15 +129,15 @@ export default async function VirtualShopServicesPage() {
         modifierTruck: Number(service.modifierTruck),
       }));
 
-      initialServicesResponse = {
+      servicesResponse = {
         success: true,
         meta: {
           totalRecords,
           totalPages,
-          page: DEFAULT_PAGE,
-          limit: DEFAULT_LIMIT,
-          hasNextPage: DEFAULT_PAGE < totalPages,
-          hasPrevPage: false,
+          page,
+          limit,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
         },
         data: mappedServices,
       };
@@ -92,8 +146,9 @@ export default async function VirtualShopServicesPage() {
 
   return (
     <ServicesTab
-      initialShopConfig={initialShopConfig}
-      initialServicesResponse={initialServicesResponse}
+      shopConfig={initialShopConfig}
+      servicesResponse={servicesResponse}
+      currentSearch={search}
     />
   );
 }
