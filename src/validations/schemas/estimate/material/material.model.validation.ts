@@ -19,6 +19,7 @@ export const materialModelSchemaValidation = z
     notes: z.string().nullable().optional(),
     quantity: z
       .number()
+      .max(99999999, "Quantity must be less than 100,000,000")
       .refine(
         val => {
           return !isNaN(val) && val >= 0;
@@ -31,15 +32,18 @@ export const materialModelSchemaValidation = z
     cost: z
       .number({ invalid_type_error: "Cost must be a valid number" })
       .nonnegative("Material cost must be a positive value")
+      .max(99999999, "Cost must be less than 100,000,000")
       .optional()
       .default(0), // For Decimal
     sell: z
       .number({ invalid_type_error: "Sell price must be a valid number" })
       .nonnegative("Material sell price must be a positive value")
+      .max(99999999, "Sell price must be less than 100,000,000")
       .optional()
       .default(0), // For Decimal
     discount: z
       .number({ invalid_type_error: "Discount must be a valid number" })
+      .max(99999999, "Discount must be less than 100,000,000")
       .optional()
       .default(0), // For Decimal
     companyId: z

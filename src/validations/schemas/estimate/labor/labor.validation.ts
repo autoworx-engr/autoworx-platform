@@ -24,16 +24,19 @@ export const laborCreateValidationSchema = z.object({
   hours: z
     .number({ invalid_type_error: "Hours must be a number" })
     .nonnegative("Hours must be a positive value")
+    .max(99999999, "Hours must be less than 100,000,000")
     .optional()
     .default(0),
   charge: z
     .number({ invalid_type_error: "Charge must be a number" })
     .nonnegative("Charge must be a positive value")
+    .max(99999999, "Charge must be less than 100,000,000")
     .optional()
     .default(0),
   discount: z
     .number({ invalid_type_error: "Discount must be a number" })
     .nonnegative("Discount must be a positive value")
+    .max(99999999, "Discount must be less than 100,000,000")
     .optional()
     .default(0),
   cannedLabor: z.boolean().optional().default(false),
