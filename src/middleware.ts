@@ -53,6 +53,7 @@ function extractSubdomain(request: NextRequest): string | null {
 export async function middleware(request: NextRequest) {
   const token = await getToken({ req: request });
   const { pathname } = request.nextUrl;
+  const isPublicAssetRequest = /\.[a-zA-Z0-9]+$/.test(pathname);
 
   const authHeader = request.headers.get("authorization");
   const isExternalApiRequest =
@@ -68,6 +69,12 @@ export async function middleware(request: NextRequest) {
     // Block access to admin page from subdomains
     if (pathname.startsWith("/dashboard")) {
       return NextResponse.redirect(new URL("/", request.url));
+    }
+
+    // Important: keep static/public files (e.g. /IFrameCommunicator.html)
+    // on the original path so third-party iframes can load them.
+    if (isPublicAssetRequest) {
+      return NextResponse.next();
     }
 
     // Skip API routes so they can be handled by the main app API handlers
