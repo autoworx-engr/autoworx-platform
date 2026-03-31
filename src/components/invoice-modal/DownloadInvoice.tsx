@@ -12,6 +12,14 @@ import {
   InvoicePhoto,
   Labor,
   Material,
+  Payment,
+  CardPayment,
+  CheckPayment,
+  CashPayment,
+  OtherPayment,
+  DepositPayment,
+  PaymentMethod,
+  Refund,
   Service,
   User,
   Vehicle,
@@ -32,6 +40,14 @@ type DownloadInvoiceProps = {
     })[];
     photos: InvoicePhoto[];
     user: User;
+    payments: (Payment & {
+      card: CardPayment | null;
+      check: CheckPayment | null;
+      cash: CashPayment | null;
+      other: (OtherPayment & { paymentMethod: PaymentMethod | null }) | null;
+      deposit: DepositPayment | null;
+      Refund: Refund[];
+    })[];
   };
   client: Client;
   vehicle: Vehicle;

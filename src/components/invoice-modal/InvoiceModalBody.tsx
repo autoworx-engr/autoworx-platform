@@ -32,8 +32,15 @@ import {
   InvoiceType,
   Labor,
   Material,
+  Payment,
+  PaymentMethod,
   Refund,
   Service,
+  CardPayment,
+  CheckPayment,
+  CashPayment,
+  OtherPayment,
+  DepositPayment,
   TwilioCredentials,
   User,
   Vehicle,
@@ -85,6 +92,14 @@ type InvoiceData = Invoice & {
   user: User;
   client: Client;
   vehicle: Vehicle;
+  payments: (Payment & {
+    card: CardPayment | null;
+    check: CheckPayment | null;
+    cash: CashPayment | null;
+    other: (OtherPayment & { paymentMethod: PaymentMethod | null }) | null;
+    deposit: DepositPayment | null;
+    Refund: Refund[];
+  })[];
 };
 
 export default function InvoiceModalBody({
@@ -250,6 +265,25 @@ export default function InvoiceModalBody({
   const company = invoice.company;
   const client = invoice.client;
   const vehicle = invoice.vehicle;
+  const paymentEntries = (invoice.payments ?? [])
+    .filter((payment) => payment.invoiceId === invoice.id)
+    .sort(
+      (a, b) =>
+        new Date(b.date || b.createdAt).getTime() -
+        new Date(a.date || a.createdAt).getTime(),
+    );
+
+  const getPaymentMethodText = (payment: InvoiceData["payments"][number]) => {
+    if (payment.type === "OTHER") {
+      return payment.other?.paymentMethod?.name || "OTHER";
+    }
+
+    if (payment.type === "CARD") {
+      return payment.card?.cardType || "CARD";
+    }
+
+    return payment.type;
+  };
 
   const handleEmail = async () => {
     let res = await sendInvoiceEmail({ invoiceId: invoice.id });
@@ -281,7 +315,7 @@ export default function InvoiceModalBody({
       shortLinkResult.success && shortLinkResult.shortUrl
         ? shortLinkResult.shortUrl
         : shortLinkResult.originalUrl ||
-          `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoiceId}`;
+        `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoiceId}`;
 
     try {
       // 2. Check if the Clipboard API is available AND the context is secure
@@ -392,14 +426,14 @@ export default function InvoiceModalBody({
                 {isShowEdit && (
                   <Tooltip title="Edit">
 
-                  
-                  <Link
-                    className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-2 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
-                    href={`/dashboard/estimate/edit/${invoice.id}?clientId=${invoice.clientId}`}
-                  >
-                    <SquarePen className="h-4 w-4 md:h-5 md:w-5" />
-                    {/* <span className="hidden md:inline">Edit</span> */}
-                  </Link>
+
+                    <Link
+                      className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-2 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
+                      href={`/dashboard/estimate/edit/${invoice.id}?clientId=${invoice.clientId}`}
+                    >
+                      <SquarePen className="h-4 w-4 md:h-5 md:w-5" />
+                      {/* <span className="hidden md:inline">Edit</span> */}
+                    </Link>
                   </Tooltip>
                 )}
 
@@ -424,19 +458,17 @@ export default function InvoiceModalBody({
                     <FileDown className="h-4 w-4" />
                     <span className="hidden md:inline">Export</span>
                     <ChevronDown
-                      className={`h-3.5 w-3.5 transition-transform duration-300 ease-in-out ${
-                        isExportOpen ? "rotate-180" : ""
-                      }`}
+                      className={`h-3.5 w-3.5 transition-transform duration-300 ease-in-out ${isExportOpen ? "rotate-180" : ""
+                        }`}
                     />
                   </button>
 
                   {/* Animated expand */}
                   <div
-                    className={`grid transition-all duration-300 ease-in-out ${
-                      isExportOpen
-                        ? "grid-cols-[1fr] opacity-100"
-                        : "grid-cols-[0fr] opacity-0"
-                    }`}
+                    className={`grid transition-all duration-300 ease-in-out ${isExportOpen
+                      ? "grid-cols-[1fr] opacity-100"
+                      : "grid-cols-[0fr] opacity-0"
+                      }`}
                   >
                     <div className="overflow-hidden">
                       <div className="flex items-center gap-1 pl-1">
@@ -485,18 +517,16 @@ export default function InvoiceModalBody({
                   >
                     Share
                     <ChevronDown
-                      className={`h-3.5 w-3.5 transition-transform duration-300 ease-in-out ${
-                        isShareOpen ? "rotate-180" : ""
-                      }`}
+                      className={`h-3.5 w-3.5 transition-transform duration-300 ease-in-out ${isShareOpen ? "rotate-180" : ""
+                        }`}
                     />
                   </button>
 
                   <div
-                    className={`grid transition-all duration-300 ease-in-out ${
-                      isShareOpen
-                        ? "grid-cols-[1fr] opacity-100"
-                        : "grid-cols-[0fr] opacity-0"
-                    }`}
+                    className={`grid transition-all duration-300 ease-in-out ${isShareOpen
+                      ? "grid-cols-[1fr] opacity-100"
+                      : "grid-cols-[0fr] opacity-0"
+                      }`}
                   >
                     <div className="overflow-hidden">
                       <div className="flex items-center gap-1 pl-2">
@@ -630,9 +660,8 @@ export default function InvoiceModalBody({
           </div>
 
           <DialogClose
-            className={`absolute right-2 top-2 z-50 flex h-8 w-8 items-center justify-center rounded-full bg-slate-100/50 text-slate-500 transition-all duration-300 hover:bg-red-50 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-red-200 active:scale-90 dark:bg-slate-800/50 dark:hover:bg-red-900/30 md:right-3 md:top-3 print:hidden ${
-              isPublic ? "hidden" : ""
-            }`}
+            className={`absolute right-2 top-2 z-50 flex h-8 w-8 items-center justify-center rounded-full bg-slate-100/50 text-slate-500 transition-all duration-300 hover:bg-red-50 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-red-200 active:scale-90 dark:bg-slate-800/50 dark:hover:bg-red-900/30 md:right-3 md:top-3 print:hidden ${isPublic ? "hidden" : ""
+              }`}
           >
             <X className="h-5 w-5 stroke-[2.5px]" />
             <span className="sr-only">Close</span>
@@ -654,11 +683,10 @@ export default function InvoiceModalBody({
                       key={tab.key}
                       onClick={() => setActiveTab(tab.key as typeof activeTab)}
                       data-active={isActive}
-                      className={`group relative flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-medium transition-all duration-300 ease-out shadow-sm ring-1 ring-transparent ${
-                        isActive
-                          ? "text-white shadow-indigo-500/30 ring-black/5 translate-y-[-1px]"
-                          : "text-slate-500 dark:text-slate-300 bg-white/70 dark:bg-slate-900/60"
-                      }`}
+                      className={`group relative flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-medium transition-all duration-300 ease-out shadow-sm ring-1 ring-transparent ${isActive
+                        ? "text-white shadow-indigo-500/30 ring-black/5 translate-y-[-1px]"
+                        : "text-slate-500 dark:text-slate-300 bg-white/70 dark:bg-slate-900/60"
+                        }`}
                     >
                       {isActive && (
                         <span className="absolute inset-0 -z-10 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee]" />
@@ -672,124 +700,124 @@ export default function InvoiceModalBody({
               {/* Estimate Tab Content */}
               {(activeTab === "estimate" ||
                 !window.matchMedia("(max-width: 768px)").matches) && (
-                <>
-                  <h1 className="col-span-full text-center text-xl font-bold uppercase text-slate-600 md:text-left md:text-3xl">
-                    {parseFloat(
-                      calculateDue(
-                        Number(invoice.grandTotal),
-                        Number(invoice.totalPayment),
-                        Number(invoice.deposit),
-                      ).toFixed(2),
-                    ) === 0
-                      ? "RECEIPT"
-                      : invoice?.type?.toUpperCase()}
-                  </h1>
-
-                  {/* Client Info */}
-                  <div className="overflow-hidden">
-                    <h2 className="font-bold text-slate-500">Estimate To:</h2>
-                    <p className="flex items-center gap-1 truncate">
-                      {client?.firstName} {client?.lastName}
-                    </p>
-
-                    <p className="truncate">
-                      <a
-                        href={`tel:${client?.mobile}`}
-                        className="cursor-pointer text-blue-500"
-                      >
-                        {client?.mobile}
-                      </a>
-                    </p>
-                    <p className="truncate">
-                      <a
-                        href={`mailto:${client?.email}`}
-                        className="text-blue-500"
-                      >
-                        {client?.email}
-                      </a>
-                    </p>
-                    <Tooltip
-                      title={invoice?.customerNotes}
-                      placement="top"
-                      trigger="click"
-                    >
-                      <span className="inline-flex cursor-pointer items-center rounded px-1 py-0.5 text-xs border border-slate-200">
-                        Note
-                      </span>
-                    </Tooltip>
-                  </div>
-
-                  {/* Vehicle Info */}
-                  <div>
-                    <h2 className="font-bold text-slate-500">
-                      Vehicle Details:
-                    </h2>
-                    <div className="flex flex-row flex-wrap gap-2">
-                      <p>{vehicle?.year || ""}</p>
-                      <p>{vehicle?.make}</p>
-                      <p>{vehicle?.model}</p>
-                      {vehicle?.other && <p>{vehicle?.other}</p>}
-                    </div>
-                    <p>{vehicle?.submodel}</p>
-                    <p>{vehicle?.type}</p>
-                    {vehicle?.vin && (
-                      <>
-                        <p>Vin Number</p>
-                        <p>{vehicle?.vin}</p>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Estimate Details */}
-                  <div>
-                    <h2 className="font-bold text-slate-500">
-                      Estimate Details:
-                    </h2>
-                    <p>{invoice.id}</p>
-                    <p>{moment(invoice.createdAt).format("MMM DD, YYYY")}</p>
-                    <p>Bill Status</p>
-                    <p
-                      className="mt-2 max-w-32 rounded-md px-2 py-[1px] text-xs font-semibold md:mt-0"
-                      style={{
-                        color: invoice.column?.textColor || undefined,
-                        backgroundColor: invoice?.column?.bgColor || undefined,
-                      }}
-                    >
-                      {invoice.column?.title}
-                    </p>
-
-                    <p>
+                  <>
+                    <h1 className="col-span-full text-center text-xl font-bold uppercase text-slate-600 md:text-left md:text-3xl">
                       {parseFloat(
                         calculateDue(
                           Number(invoice.grandTotal),
                           Number(invoice.totalPayment),
                           Number(invoice.deposit),
                         ).toFixed(2),
-                      ) === 0 && <span>Payment Status</span>}
-                    </p>
-                    <p className="pt-1">
-                      {parseFloat(
-                        calculateDue(
-                          Number(invoice.grandTotal),
-                          Number(invoice.totalPayment),
-                          Number(invoice.deposit),
-                        ).toFixed(2),
-                      ) === 0 && (
-                        <span className="text-green-500 bg-green-200 rounded-md  px-4 py-[1px] text-xs font-semibold md:mt-1">
-                          PAID
+                      ) === 0
+                        ? "RECEIPT"
+                        : invoice?.type?.toUpperCase()}
+                    </h1>
+
+                    {/* Client Info */}
+                    <div className="overflow-hidden">
+                      <h2 className="font-bold text-slate-500">Estimate To:</h2>
+                      <p className="flex items-center gap-1 truncate">
+                        {client?.firstName} {client?.lastName}
+                      </p>
+
+                      <p className="truncate">
+                        <a
+                          href={`tel:${client?.mobile}`}
+                          className="cursor-pointer text-blue-500"
+                        >
+                          {client?.mobile}
+                        </a>
+                      </p>
+                      <p className="truncate">
+                        <a
+                          href={`mailto:${client?.email}`}
+                          className="text-blue-500"
+                        >
+                          {client?.email}
+                        </a>
+                      </p>
+                      <Tooltip
+                        title={invoice?.customerNotes}
+                        placement="top"
+                        trigger="click"
+                      >
+                        <span className="inline-flex cursor-pointer items-center rounded px-1 py-0.5 text-xs border border-slate-200">
+                          Note
                         </span>
-                      )}
-                    </p>
+                      </Tooltip>
+                    </div>
 
-                    {invoice.isViewed && !isPublic && (
-                      <div className="mt-1 flex items-center gap-1">
-                        <Eye className="h-4 w-4 text-green-500" />
-                        <span className="text-xs text-green-500">Viewed</span>
+                    {/* Vehicle Info */}
+                    <div>
+                      <h2 className="font-bold text-slate-500">
+                        Vehicle Details:
+                      </h2>
+                      <div className="flex flex-row flex-wrap gap-2">
+                        <p>{vehicle?.year || ""}</p>
+                        <p>{vehicle?.make}</p>
+                        <p>{vehicle?.model}</p>
+                        {vehicle?.other && <p>{vehicle?.other}</p>}
                       </div>
-                    )}
-                  </div>
-                </>
-              )}
+                      <p>{vehicle?.submodel}</p>
+                      <p>{vehicle?.type}</p>
+                      {vehicle?.vin && (
+                        <>
+                          <p>Vin Number</p>
+                          <p>{vehicle?.vin}</p>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Estimate Details */}
+                    <div>
+                      <h2 className="font-bold text-slate-500">
+                        Estimate Details:
+                      </h2>
+                      <p>{invoice.id}</p>
+                      <p>{moment(invoice.createdAt).format("MMM DD, YYYY")}</p>
+                      <p>Bill Status</p>
+                      <p
+                        className="mt-2 max-w-32 rounded-md px-2 py-[1px] text-xs font-semibold md:mt-0"
+                        style={{
+                          color: invoice.column?.textColor || undefined,
+                          backgroundColor: invoice?.column?.bgColor || undefined,
+                        }}
+                      >
+                        {invoice.column?.title}
+                      </p>
+
+                      <p>
+                        {parseFloat(
+                          calculateDue(
+                            Number(invoice.grandTotal),
+                            Number(invoice.totalPayment),
+                            Number(invoice.deposit),
+                          ).toFixed(2),
+                        ) === 0 && <span>Payment Status</span>}
+                      </p>
+                      <p className="pt-1">
+                        {parseFloat(
+                          calculateDue(
+                            Number(invoice.grandTotal),
+                            Number(invoice.totalPayment),
+                            Number(invoice.deposit),
+                          ).toFixed(2),
+                        ) === 0 && (
+                            <span className="text-green-500 bg-green-200 rounded-md  px-4 py-[1px] text-xs font-semibold md:mt-1">
+                              PAID
+                            </span>
+                          )}
+                      </p>
+
+                      {invoice.isViewed && !isPublic && (
+                        <div className="mt-1 flex items-center gap-1">
+                          <Eye className="h-4 w-4 text-green-500" />
+                          <span className="text-xs text-green-500">Viewed</span>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
 
               {/* Attachments Tab Content - Only visible on mobile when selected */}
               {activeTab === "attachments" &&
@@ -891,10 +919,10 @@ export default function InvoiceModalBody({
                               {formatCurrency(
                                 (Number(
                                   (invoice.subtotal as any) -
-                                    (invoice.discount as any),
+                                  (invoice.discount as any),
                                 ) *
                                   Number(value)) /
-                                  100,
+                                100,
                               )}
                             </span>
                           )}
@@ -921,6 +949,142 @@ export default function InvoiceModalBody({
               isPrinting={isPrinting}
               items={invoice.invoiceItems}
             />
+          </div>
+
+          {/* payment info  */}
+          <div className="space-y-2">
+            <h2 className="font-bold text-slate-600">Payment Info</h2>
+
+            {paymentEntries.length === 0 && (
+              <div className="rounded-md border border-dashed p-3 text-xs text-slate-500">
+                No payment info available for this invoice.
+              </div>
+            )}
+
+            {paymentEntries.length > 0 && (
+              <>
+                <div className="hidden overflow-x-auto rounded-md border md:block">
+                  <table className="w-full text-xs">
+                    <thead className="bg-slate-50">
+                      <tr className="border-b">
+                        <th className="px-3 py-2 text-left">Date</th>
+                        <th className="px-3 py-2 text-left">Method</th>
+                        <th className="px-3 py-2 text-left">Amount</th>
+                        <th className="px-3 py-2 text-left">Cash Received</th>
+                        <th className="px-3 py-2 text-left">Due After</th>
+                        <th className="px-3 py-2 text-left">Status</th>
+                        <th className="px-3 py-2 text-left">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {paymentEntries.map((payment, index) => {
+                        const refundedAmount = payment.Refund.reduce(
+                          (sum, refund) => sum + Number(refund.amount || 0),
+                          0,
+                        );
+
+                        return (
+                          <tr
+                            key={payment.id}
+                            className={index % 2 === 0 ? "bg-white" : "bg-slate-50"}
+                          >
+                            <td className="px-3 py-2">
+                              {moment(payment.date || payment.createdAt).format(
+                                "MM.DD.YYYY",
+                              )}
+                            </td>
+                            <td className="px-3 py-2">
+                              {getPaymentMethodText(payment)}
+                            </td>
+                            <td className="px-3 py-2">
+                              <div className="flex flex-col">
+                                <span>{formatCurrency(Number(payment.amount || 0))}</span>
+                                {refundedAmount > 0 && (
+                                  <span className="text-[11px] text-red-600">
+                                    Refunded: {formatCurrency(refundedAmount)}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-3 py-2">
+                              {payment.cash?.receivedCash || "N/A"}
+                            </td>
+                            <td className="px-3 py-2">
+                              {payment.dueAfterPayment !== null &&
+                                payment.dueAfterPayment !== undefined
+                                ? formatCurrency(Number(payment.dueAfterPayment))
+                                : "N/A"}
+                            </td>
+                            <td className="px-3 py-2">{invoice.column?.title || "-"}</td>
+                            <td className="px-3 py-2">{payment.notes || "-"}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="grid gap-2 md:hidden">
+                  {paymentEntries.map((payment, index) => {
+                    const refundedAmount = payment.Refund.reduce(
+                      (sum, refund) => sum + Number(refund.amount || 0),
+                      0,
+                    );
+
+                    return (
+                      <div
+                        key={payment.id}
+                        className={`rounded-md border p-3 text-xs ${index % 2 === 0 ? "bg-white" : "bg-slate-50"
+                          }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="font-semibold text-slate-700">
+                            {getPaymentMethodText(payment)}
+                          </p>
+                          <p className="font-semibold text-[#6571FF]">
+                            {formatCurrency(Number(payment.amount || 0))}
+                          </p>
+                        </div>
+                        {refundedAmount > 0 && (
+                          <p className="mt-1 text-[11px] text-red-600">
+                            Refunded: {formatCurrency(refundedAmount)}
+                          </p>
+                        )}
+                        <div className="mt-2 space-y-1 text-slate-600">
+                          <p>
+                            <span className="font-semibold">Date:</span>{" "}
+                            {moment(payment.date || payment.createdAt).format(
+                              "MM.DD.YYYY",
+                            )}
+                          </p>
+                          <p>
+                            <span className="font-semibold">Cash Received:</span>{" "}
+                            {payment.cash?.receivedCash || "N/A"}
+                          </p>
+                          <p>
+                            <span className="font-semibold">Due After:</span>{" "}
+                            {payment.dueAfterPayment !== null &&
+                              payment.dueAfterPayment !== undefined
+                              ? formatCurrency(Number(payment.dueAfterPayment))
+                              : "N/A"}
+                          </p>
+                          <p>
+                            <span className="font-semibold">Status:</span>{" "}
+                            {invoice.column?.title || "-"}
+                          </p>
+                          {payment.notes && (
+                            <p>
+                              <span className="font-semibold">Notes:</span>{" "}
+                              {payment.notes}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
           </div>
 
           {/* Terms, Policies */}
@@ -1186,11 +1350,10 @@ export default function InvoiceModalBody({
                       setDesktopActiveTab(tab.key as typeof desktopActiveTab)
                     }
                     data-active={isActive}
-                    className={`group relative flex items-center gap-2 rounded-xl px-6 py-2 font-medium transition-all duration-300 ease-out shadow-sm ring-1 ring-transparent ${
-                      isActive
-                        ? "text-white shadow-indigo-500/30 ring-black/5 translate-y-[-1px]"
-                        : "text-slate-500 dark:text-slate-300 bg-white/70 dark:bg-slate-900/60 hover:text-slate-700 dark:hover:text-white"
-                    }`}
+                    className={`group relative flex items-center gap-2 rounded-xl px-6 py-2 font-medium transition-all duration-300 ease-out shadow-sm ring-1 ring-transparent ${isActive
+                      ? "text-white shadow-indigo-500/30 ring-black/5 translate-y-[-1px]"
+                      : "text-slate-500 dark:text-slate-300 bg-white/70 dark:bg-slate-900/60 hover:text-slate-700 dark:hover:text-white"
+                      }`}
                   >
                     {isActive && (
                       <span className="absolute inset-0 -z-10 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee]" />
