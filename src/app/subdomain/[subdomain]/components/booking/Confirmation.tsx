@@ -50,6 +50,9 @@ export const Confirmation = () => {
   const grandTotal = bookingTotals
     ? Number(bookingTotals.grandTotal || 0)
     : Number((subtotal + shopFee + tax).toFixed(2));
+  const giftCardRedeemed = bookingTotals
+    ? Number(bookingTotals.giftCardRedeemed || 0)
+    : 0;
 
   const generateICS = () => {
     if (!selectedDate || !selectedSlot) return;
@@ -200,6 +203,12 @@ END:VCALENDAR`;
               <div className="flex justify-between text-muted-foreground">
                 <span>Tax</span>
                 <span>${tax.toFixed(2)}</span>
+              </div>
+            )}
+            {giftCardRedeemed > 0 && (
+              <div className="flex justify-between text-emerald-600">
+                <span>Gift Card Applied</span>
+                <span>-${giftCardRedeemed.toFixed(2)}</span>
               </div>
             )}
           </div>

@@ -82,7 +82,7 @@ const searchParamsValidation = z.object({
     .string({
       invalid_type_error: "Start date must be a string",
     })
-    .refine(value => {
+    .refine((value) => {
       if (!value) return true;
       const date = moment(value, "YYYY-MM-DD");
       if (!date.isValid()) {
@@ -95,7 +95,7 @@ const searchParamsValidation = z.object({
     .string({
       invalid_type_error: "End date must be a string",
     })
-    .refine(value => {
+    .refine((value) => {
       if (!value) return true;
       const date = moment(value, "YYYY-MM-DD");
       if (!date.isValid()) {
@@ -182,7 +182,14 @@ const createServiceBookingSchema = z.object({
       invalid_type_error: "Notes must be a string",
     })
     .optional(),
+  giftCardCode: z
+    .string({
+      invalid_type_error: "Gift card code must be a string",
+    })
+    .optional(),
 });
+
+const roundMoney = (value: number) => Number(value.toFixed(2));
 
 /**
  * @swagger
@@ -502,7 +509,10 @@ export async function GET(req: Request) {
     }
 
     if ((startDate && !endDate) || (!startDate && endDate)) {
-      throw new AppError(400, "Start date and end date are required together for a range");
+      throw new AppError(
+        400,
+        "Start date and end date are required together for a range",
+      );
     }
 
     if (date || (month && year) || (startDate && endDate)) {
@@ -910,6 +920,7 @@ export async function POST(req: Request) {
       model,
       year,
       notes,
+      giftCardCode,
     } = parsedBody;
 
     const shopServiceIds = shopServices
@@ -1219,16 +1230,80 @@ export async function POST(req: Request) {
       const serviceFeeAmount = (totalServiceCost * serviceFeeRate) / 100;
 
       const grandTotal = subtotal + taxAmount + serviceFeeAmount;
+
+      const normalizedGiftCardCode = giftCardCode?.trim().toUpperCase();
+      let redeemGiftCard: {
+        id: number;
+        code: string;
+        currentBalance: number;
+      } | null = null;
+      let giftCardRedeemedAmount = 0;
+
+      if (normalizedGiftCardCode) {
+        const giftCard = await tx.issuedGiftCard.findFirst({
+          where: {
+            code: normalizedGiftCardCode,
+            companyId,
+          },
+          select: {
+            id: true,
+            code: true,
+            status: true,
+            currentBalance: true,
+          },
+        });
+
+        if (!giftCard) {
+          throw new AppError(404, "Gift card not found for this shop");
+        }
+
+        if (giftCard.status !== "ACTIVE") {
+          throw new AppError(
+            400,
+            `Cannot redeem a ${giftCard.status.toLowerCase()} gift card. Status must be active.`,
+          );
+        }
+
+        const availableBalance = roundMoney(
+          Number(giftCard.currentBalance || 0),
+        );
+        if (availableBalance <= 0) {
+          throw new AppError(400, "Gift card has no balance to redeem");
+        }
+
+        giftCardRedeemedAmount = roundMoney(
+          Math.min(availableBalance, grandTotal),
+        );
+
+        if (giftCardRedeemedAmount <= 0) {
+          throw new AppError(400, "Gift card balance is not redeemable");
+        }
+
+        redeemGiftCard = {
+          id: giftCard.id,
+          code: giftCard.code,
+          currentBalance: availableBalance,
+        };
+      }
+
+      const adjustedGrandTotal = roundMoney(
+        Math.max(0, grandTotal - giftCardRedeemedAmount),
+      );
+
       const isDepositEnabled = bookingSettings.isDepositEnabled;
       const depositType = bookingSettings.depositType;
       const depositValue = Number(bookingSettings.depositValue || 0);
-      const requiredDepositAmount = isDepositEnabled
-        ? depositType === "PERCENTAGE"
-          ? Number(((grandTotal * depositValue) / 100).toFixed(2))
-          : depositValue
-        : 0;
+      const calculatedDepositAmount = !isDepositEnabled
+        ? 0
+        : depositType === "PERCENTAGE"
+          ? Number(((adjustedGrandTotal * depositValue) / 100).toFixed(2))
+          : depositValue;
+      const requiredDepositAmount = roundMoney(
+        Math.min(adjustedGrandTotal, Math.max(0, calculatedDepositAmount)),
+      );
 
-      const shopBookingStatus = !isDepositEnabled ? "CONFIRMED" : "PENDING";
+      const shopBookingStatus =
+        requiredDepositAmount > 0 ? "PENDING" : "CONFIRMED";
 
       // 8. Create Estimate using the refactored shared action
       const estimateResult = await createInvoice({
@@ -1237,15 +1312,15 @@ export async function POST(req: Request) {
         clientId: client?.id,
         vehicleId: vehicle?.id,
         subtotal,
-        discount: 0,
+        discount: giftCardRedeemedAmount,
         tax: taxRate,
         serviceFee: serviceFeeAmount,
         vehicleExtraCost,
         deposit: 0,
         depositNotes: "",
         depositMethod: "",
-        grandTotal,
-        due: grandTotal,
+        grandTotal: adjustedGrandTotal,
+        due: adjustedGrandTotal,
         internalNotes: "",
         terms: shop.company.terms || "",
         policy: shop.company.policy || "",
@@ -1366,6 +1441,47 @@ export async function POST(req: Request) {
         });
       }
 
+      let remainingGiftCardBalance: number | null = null;
+      if (redeemGiftCard && giftCardRedeemedAmount > 0) {
+        const nextBalance = roundMoney(
+          redeemGiftCard.currentBalance - giftCardRedeemedAmount,
+        );
+
+        const updateResult = await tx.issuedGiftCard.updateMany({
+          where: {
+            id: redeemGiftCard.id,
+            companyId,
+            currentBalance: {
+              gte: new Prisma.Decimal(giftCardRedeemedAmount),
+            },
+          },
+          data: {
+            currentBalance: new Prisma.Decimal(nextBalance),
+            status: nextBalance <= 0 ? "DEPLETED" : "ACTIVE",
+          },
+        });
+
+        if (updateResult.count === 0) {
+          throw new AppError(
+            409,
+            "Gift card balance changed while processing booking. Please retry.",
+          );
+        }
+
+        await tx.giftCardTransaction.create({
+          data: {
+            giftCardId: redeemGiftCard.id,
+            type: "REDEMPTION",
+            amount: new Prisma.Decimal(-giftCardRedeemedAmount),
+            balanceAfter: new Prisma.Decimal(nextBalance),
+            referenceId: `SHOP-BOOKING-${shopBooking.id}`,
+            notes: "Redeemed in virtual shop service booking checkout",
+          },
+        });
+
+        remainingGiftCardBalance = nextBalance;
+      }
+
       // Send Confirmation via reusable helper
       if (shopBookingStatus === "CONFIRMED") {
         await sendBookingConfirmation({
@@ -1429,10 +1545,18 @@ export async function POST(req: Request) {
               tax: taxAmount,
               serviceFee: serviceFeeAmount,
               grandTotal: Number(estimate.grandTotal),
+              giftCardRedeemed: giftCardRedeemedAmount,
               depositRequired: requiredDepositAmount,
               depositPaid: 0,
               balanceDue: Number(estimate.due),
             },
+            giftCardRedemption: redeemGiftCard
+              ? {
+                  code: redeemGiftCard.code,
+                  redeemedAmount: giftCardRedeemedAmount,
+                  remainingBalance: Number(remainingGiftCardBalance || 0),
+                }
+              : null,
           },
         },
         { status: 200 },

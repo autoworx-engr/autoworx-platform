@@ -38,6 +38,7 @@ import {
   useGetShopBySlug,
   useLookupClientByPhone,
 } from "@/hooks/virtual-shop/service/useShopService";
+import axios from "axios";
 import toast from "react-hot-toast";
 import PhoneInput from "@/components/PhoneInput";
 import { SlimInput } from "@/components/SlimInput";
@@ -101,6 +102,14 @@ export const Checkout = () => {
   const [createdBookingId, setCreatedBookingId] = useState<string>("");
   const [isResolvingBookingReturn, setIsResolvingBookingReturn] =
     useState(false);
+  const [giftCardCode, setGiftCardCode] = useState("");
+  const [isApplyingGiftCard, setIsApplyingGiftCard] = useState(false);
+  const [giftCardError, setGiftCardError] = useState("");
+  const [appliedGiftCard, setAppliedGiftCard] = useState<{
+    code: string;
+    maskedCode: string;
+    balance: number;
+  } | null>(null);
   const [serverDepositRequired, setServerDepositRequired] = useState<
     number | null
   >(null);
@@ -161,7 +170,7 @@ export const Checkout = () => {
       setPhoneLookedUp(true);
     } catch (error) {
       console.error("Phone lookup failed:", error);
-      setPhoneLookedUp(true); 
+      setPhoneLookedUp(true);
     }
   }, [form.phone, shop?.id, lookupClient, setIsReturningClient]);
 
@@ -176,6 +185,71 @@ export const Checkout = () => {
         email: "john@example.com",
       }));
     }
+  }, []);
+
+  const handleApplyGiftCard = useCallback(async () => {
+    const normalizedCode = giftCardCode.trim().toUpperCase();
+    if (!normalizedCode) {
+      setGiftCardError("Please enter a gift card code");
+      return;
+    }
+
+    setIsApplyingGiftCard(true);
+    setGiftCardError("");
+
+    try {
+      const response = await axios.get(
+        "/api/virtual-shop/issued-gift-card/check-balance",
+        {
+          params: {
+            code: normalizedCode,
+          },
+        },
+      );
+
+      if (!response.data?.success) {
+        throw new Error(
+          response.data?.message || "Unable to validate gift card",
+        );
+      }
+
+      const card = response.data?.data;
+      const cardStatus = String(card?.status || "").toUpperCase();
+      const balance = Number(card?.balance || 0);
+
+      if (cardStatus !== "ACTIVE") {
+        throw new Error(
+          `Cannot redeem a ${cardStatus.toLowerCase()} gift card.`,
+        );
+      }
+
+      if (!Number.isFinite(balance) || balance <= 0) {
+        throw new Error("Gift card has no redeemable balance.");
+      }
+
+      setGiftCardCode(normalizedCode);
+      setAppliedGiftCard({
+        code: normalizedCode,
+        maskedCode: card?.maskedCode || normalizedCode,
+        balance,
+      });
+      setGiftCardError("");
+      toast.success("Gift card applied.");
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to validate gift card";
+      setGiftCardError(message);
+      toast.error(message);
+    } finally {
+      setIsApplyingGiftCard(false);
+    }
+  }, [giftCardCode]);
+
+  const clearAppliedGiftCard = useCallback(() => {
+    setAppliedGiftCard(null);
+    setGiftCardError("");
   }, []);
 
   const clearPaymentQueryParams = useCallback(() => {
@@ -354,6 +428,7 @@ export const Checkout = () => {
         model: normalizedModel,
         year: parsedYear,
         notes: form.notes.trim() || undefined,
+        giftCardCode: appliedGiftCard?.code,
       });
 
       const client = response?.data?.client;
@@ -367,6 +442,7 @@ export const Checkout = () => {
           tax: Number(apiTotals.tax || 0),
           serviceFee: Number(apiTotals.serviceFee || 0),
           grandTotal: Number(apiTotals.grandTotal || 0),
+          giftCardRedeemed: Number(apiTotals.giftCardRedeemed || 0),
           depositRequired: Number(apiTotals.depositRequired || 0),
           depositPaid: Number(apiTotals.depositPaid || 0),
           balanceDue: Number(apiTotals.balanceDue || 0),
@@ -510,13 +586,26 @@ export const Checkout = () => {
     ? Number(((serviceBaseTotal * taxRate) / 100).toFixed(2))
     : 0;
   const grandTotal = Number((subtotal + shopFee + tax).toFixed(2));
+  const giftCardRedeemedPreview = appliedGiftCard
+    ? Number(Math.min(appliedGiftCard.balance, grandTotal).toFixed(2))
+    : 0;
+  const adjustedGrandTotal = Number(
+    Math.max(0, grandTotal - giftCardRedeemedPreview).toFixed(2),
+  );
 
-  const depositAmount = isDepositEnabled
+  const calculatedDepositAmount = isDepositEnabled
     ? depositType === "fixed"
       ? depositValue
-      : Number(((grandTotal * depositValue) / 100).toFixed(2))
+      : Number(((adjustedGrandTotal * depositValue) / 100).toFixed(2))
     : 0;
+  const depositAmount = Number(
+    Math.min(adjustedGrandTotal, Math.max(0, calculatedDepositAmount)).toFixed(
+      2,
+    ),
+  );
   const effectiveDepositDue = serverDepositRequired ?? depositAmount;
+  const hasPendingBookingPayment =
+    Boolean(createdBookingId) && effectiveDepositDue > 0;
 
   if (isResolvingBookingReturn) {
     return (
@@ -590,14 +679,20 @@ export const Checkout = () => {
               <span>${tax}</span>
             </div>
           )}
+          {giftCardRedeemedPreview > 0 && (
+            <div className="flex justify-between text-xs text-emerald-600">
+              <span>Gift Card Applied</span>
+              <span>-${giftCardRedeemedPreview.toFixed(2)}</span>
+            </div>
+          )}
           <div className="flex justify-between font-bold">
             <span>Total</span>
-            <span>${grandTotal}</span>
+            <span>${adjustedGrandTotal.toFixed(2)}</span>
           </div>
           {effectiveDepositDue > 0 && (
             <div className="flex justify-between text-xs text-primary">
               <span>Deposit Due Now</span>
-              <span>${effectiveDepositDue}</span>
+              <span>${effectiveDepositDue.toFixed(2)}</span>
             </div>
           )}
         </div>
@@ -643,57 +738,108 @@ export const Checkout = () => {
         </div>
       )}
 
-      {/* Customer Form */}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Phone first — used to check returning client */}
-        <div className="space-y-1.5">
-          <Label htmlFor="phone" className="text-xs">
-            Phone Number <span className="text-red-500 ml-1">*</span>
-          </Label>
-          <div className="flex gap-2 items-center">
+      {!hasPendingBookingPayment && (
+        <div className="rounded-xl border bg-card p-4 space-y-3">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            Gift Card Redemption (Optional)
+          </p>
+
+          <div className="flex gap-2">
             <Input
-              type="hidden"
-              id="phone"
-              value={form.phone}
-              onChange={() => {}}
+              value={giftCardCode}
+              onChange={(e) => {
+                setGiftCardCode(e.target.value.toUpperCase());
+                setGiftCardError("");
+              }}
+              placeholder="Enter gift card code"
+              className="uppercase"
+              disabled={isApplyingGiftCard}
             />
-            <div className="flex-1">
-              <PhoneInput
-                label=""
-                placeholder="1234567890"
-                required
-                defaultIsoCode={selectedCountryCode}
-                onChange={(num, code, isoCode) => {
-                  update("phone", `${code}${num}`);
-                  setSelectedCountryCode(isoCode || "US");
-                }}
-              />
-            </div>
-            {!phoneLookedUp && form.phone.length >= 7 && (
+
+            {appliedGiftCard?.code ? (
               <Button
                 type="button"
-                variant="secondary"
-                size="lg"
-                onClick={handlePhoneLookup}
-                disabled={isLookingUp}
+                variant="outline"
+                onClick={clearAppliedGiftCard}
               >
-                {isLookingUp ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  "Continue"
-                )}
+                Remove
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                onClick={handleApplyGiftCard}
+                disabled={!giftCardCode.trim() || isApplyingGiftCard}
+              >
+                {isApplyingGiftCard ? "Applying..." : "Apply"}
               </Button>
             )}
-            {/* {phoneLookedUp && !isReturningClient && (
+          </div>
+
+          {appliedGiftCard && (
+            <p className="text-xs text-emerald-600">
+              {appliedGiftCard.maskedCode} applied. Available balance: $
+              {appliedGiftCard.balance.toFixed(2)}
+            </p>
+          )}
+
+          {giftCardError && (
+            <p className="text-xs text-destructive">{giftCardError}</p>
+          )}
+        </div>
+      )}
+
+      {/* Customer Form */}
+      {!hasPendingBookingPayment && (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Phone first — used to check returning client */}
+          <div className="space-y-1.5">
+            <Label htmlFor="phone" className="text-xs">
+              Phone Number <span className="text-red-500 ml-1">*</span>
+            </Label>
+            <div className="flex gap-2 items-center">
+              <Input
+                type="hidden"
+                id="phone"
+                value={form.phone}
+                onChange={() => {}}
+              />
+              <div className="flex-1">
+                <PhoneInput
+                  label=""
+                  placeholder="1234567890"
+                  required
+                  defaultIsoCode={selectedCountryCode}
+                  onChange={(num, code, isoCode) => {
+                    update("phone", `${code}${num}`);
+                    setSelectedCountryCode(isoCode || "US");
+                  }}
+                />
+              </div>
+              {!phoneLookedUp && form.phone.length >= 7 && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="lg"
+                  onClick={handlePhoneLookup}
+                  disabled={isLookingUp}
+                >
+                  {isLookingUp ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    "Continue"
+                  )}
+                </Button>
+              )}
+              {/* {phoneLookedUp && !isReturningClient && (
               <span className="flex items-center  text-xs text-muted-foreground">
                 New client
               </span>
             )} */}
+            </div>
           </div>
-        </div>
 
-        {/* OTP for returning clients — shown right after phone lookup */}
-        {/* {isReturningClient && showOtp && !otpVerified && (
+          {/* OTP for returning clients — shown right after phone lookup */}
+          {/* {isReturningClient && showOtp && !otpVerified && (
           <div className="rounded-xl border bg-card p-4 space-y-3 text-center">
             <Shield className="w-8 h-8 mx-auto text-primary" />
             <p className="text-sm font-medium">
@@ -726,128 +872,129 @@ export const Checkout = () => {
           </div>
         )} */}
 
-        {/* Remaining fields — shown after phone lookup (or OTP verified for returning) */}
-        {phoneLookedUp && (true || !isReturningClient || otpVerified) && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <SlimInput
-                id="name"
-                name="fullName"
-                label="Full Name"
-                required
-                labelClassName="text-xs font-medium"
-                className="h-10 text-sm font-normal rounded-md border-input bg-background px-3 py-2"
-                value={form.fullName}
-                onChange={(e) => update("fullName", e.target.value)}
-                placeholder="John Doe"
-              />
+          {/* Remaining fields — shown after phone lookup (or OTP verified for returning) */}
+          {phoneLookedUp && (true || !isReturningClient || otpVerified) && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <SlimInput
+                  id="name"
+                  name="fullName"
+                  label="Full Name"
+                  required
+                  labelClassName="text-xs font-medium"
+                  className="h-10 text-sm font-normal rounded-md border-input bg-background px-3 py-2"
+                  value={form.fullName}
+                  onChange={(e) => update("fullName", e.target.value)}
+                  placeholder="John Doe"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <SlimInput
+                  id="email"
+                  name="email"
+                  label="Email"
+                  type="email"
+                  required
+                  labelClassName="text-xs font-medium"
+                  className="h-10 text-sm font-normal rounded-md border-input bg-background px-3 py-2"
+                  value={form.email}
+                  onChange={(e) => update("email", e.target.value)}
+                  placeholder="john@email.com"
+                />
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <SlimInput
-                id="email"
-                name="email"
-                label="Email"
-                type="email"
-                required
-                labelClassName="text-xs font-medium"
-                className="h-10 text-sm font-normal rounded-md border-input bg-background px-3 py-2"
-                value={form.email}
-                onChange={(e) => update("email", e.target.value)}
-                placeholder="john@email.com"
-              />
-            </div>
-          </div>
-        )}
+          )}
 
-        {phoneLookedUp && (true || !isReturningClient || otpVerified) && (
-          <>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pt-2">
-              Vehicle Information
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <Selector
-                name="vehicleYear"
-                label="Year"
-                placeholder="Year"
-                options={years?.data || []}
-                value={form.vehicleYear || ""}
-                onChange={(value: string) => update("vehicleYear", value)}
-                isSearch={true}
-                isClear={true}
-                required={true}
-              />
-              <Selector
-                name="vehicleMake"
-                label="Make"
-                placeholder="Make"
-                options={vehicleOptions || []}
-                value={form.vehicleMake || ""}
-                onChange={(value: string) => {
-                  update("vehicleMake", value);
-                  update("vehicleModel", "");
-                }}
-                isSearch={true}
-                isClear={true}
-                required={true}
-              />
-              <Selector
-                name="vehicleModel"
-                label="Model"
-                placeholder="Model"
-                options={vehicleModelOptions || []}
-                value={form.vehicleModel || ""}
-                onChange={(value: string) => update("vehicleModel", value)}
-                isSearch={true}
-                isClear={true}
-                required={true}
-                disabled={!form.vehicleMake}
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <SlimTextarea
-                id="notes"
-                name="notes"
-                label="Notes"
-                labelClassName="text-xs font-medium"
-                value={form.notes}
-                onChange={(e) => update("notes", e.target.value)}
-                placeholder="Any special requests..."
-                rows={3}
-                className="text-sm font-normal rounded-md"
-              />
-            </div>
-
-            {/* Policies */}
-            <div className="rounded-lg bg-muted/50 p-3 space-y-1.5 text-xs text-muted-foreground">
-              <p className="flex items-center gap-1.5">
-                <Shield className="w-3.5 h-3.5 text-primary" /> Your info is
-                secure and encrypted.
+          {phoneLookedUp && (true || !isReturningClient || otpVerified) && (
+            <>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pt-2">
+                Vehicle Information
               </p>
-              <p>
-                By confirming, an <strong>Autoworx client account</strong> will
-                be created automatically. Future bookings will use OTP
-                verification for faster checkout.
-              </p>
-              <p>
-                Free cancellation up to 24 hours before your appointment.{" "}
-                <a href="#" className="text-primary underline">
-                  Cancellation Policy
-                </a>
-              </p>
-            </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <Selector
+                  name="vehicleYear"
+                  label="Year"
+                  placeholder="Year"
+                  options={years?.data || []}
+                  value={form.vehicleYear || ""}
+                  onChange={(value: string) => update("vehicleYear", value)}
+                  isSearch={true}
+                  isClear={true}
+                  required={true}
+                />
+                <Selector
+                  name="vehicleMake"
+                  label="Make"
+                  placeholder="Make"
+                  options={vehicleOptions || []}
+                  value={form.vehicleMake || ""}
+                  onChange={(value: string) => {
+                    update("vehicleMake", value);
+                    update("vehicleModel", "");
+                  }}
+                  isSearch={true}
+                  isClear={true}
+                  required={true}
+                />
+                <Selector
+                  name="vehicleModel"
+                  label="Model"
+                  placeholder="Model"
+                  options={vehicleModelOptions || []}
+                  value={form.vehicleModel || ""}
+                  onChange={(value: string) => update("vehicleModel", value)}
+                  isSearch={true}
+                  isClear={true}
+                  required={true}
+                  disabled={!form.vehicleMake}
+                />
+              </div>
 
-            <Button
-              type="submit"
-              size="lg"
-              className="w-full"
-              disabled={isBookingSubmitting}
-            >
-              {isBookingSubmitting ? "Confirming..." : "Confirm Booking"}
-            </Button>
-          </>
-        )}
-      </form>
+              <div className="space-y-1.5">
+                <SlimTextarea
+                  id="notes"
+                  name="notes"
+                  label="Notes"
+                  labelClassName="text-xs font-medium"
+                  value={form.notes}
+                  onChange={(e) => update("notes", e.target.value)}
+                  placeholder="Any special requests..."
+                  rows={3}
+                  className="text-sm font-normal rounded-md"
+                />
+              </div>
+
+              {/* Policies */}
+              <div className="rounded-lg bg-muted/50 p-3 space-y-1.5 text-xs text-muted-foreground">
+                <p className="flex items-center gap-1.5">
+                  <Shield className="w-3.5 h-3.5 text-primary" /> Your info is
+                  secure and encrypted.
+                </p>
+                <p>
+                  By confirming, an <strong>Autoworx client account</strong>{" "}
+                  will be created automatically. Future bookings will use OTP
+                  verification for faster checkout.
+                </p>
+                <p>
+                  Free cancellation up to 24 hours before your appointment.{" "}
+                  <a href="#" className="text-primary underline">
+                    Cancellation Policy
+                  </a>
+                </p>
+              </div>
+
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full"
+                disabled={isBookingSubmitting}
+              >
+                {isBookingSubmitting ? "Confirming..." : "Confirm Booking"}
+              </Button>
+            </>
+          )}
+        </form>
+      )}
 
       {/* Timer Expired Dialog */}
       <Dialog open={timerExpired} onOpenChange={() => {}}>

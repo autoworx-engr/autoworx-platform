@@ -18,8 +18,6 @@ export interface Service {
   vehicleTypePricing: VehicleTypePricing;
 }
 
-
-
 export interface CartItem {
   service: Service;
   quantity: number;
@@ -45,6 +43,7 @@ export interface BookingTotals {
   tax: number;
   serviceFee: number;
   grandTotal: number;
+  giftCardRedeemed?: number;
   depositRequired?: number;
   depositPaid?: number;
   balanceDue?: number;

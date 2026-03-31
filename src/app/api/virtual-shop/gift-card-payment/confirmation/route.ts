@@ -122,6 +122,9 @@ export async function POST(req: Request) {
     if (issued?.giftCard?.orderNumber) {
       const codeParts = issued.giftCard.code.split("-");
       const maskedCode = `${codeParts[0]}-****-${codeParts[2] || "****"}`;
+      const issuedAmount = Number(
+        issued.amount ?? issued.giftCard.initialBalance ?? 0,
+      );
 
       return NextResponse.json(
         {
@@ -131,7 +134,7 @@ export async function POST(req: Request) {
             settlementStatus: settlement.status,
             confirmationNumber: issued.giftCard.orderNumber,
             maskedCode,
-            amount: Number(issued.giftCard.initialBalance),
+            amount: issuedAmount,
             recipientName: issued.giftCard.recipientName,
             deliveryInfo: issued.giftCard.scheduledSendAt
               ? "Recipient • Scheduled"

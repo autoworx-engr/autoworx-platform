@@ -19,6 +19,7 @@ export const createAuthorizeNetPaymentLink = async ({
   giftCardSource,
   giftCardCode,
   giftCardId,
+  redirectUrl,
   amount,
   payType,
 }: PaymentParams): Promise<PaymentLink> => {
@@ -309,14 +310,23 @@ export const createAuthorizeNetPaymentLink = async ({
 
     // Configure iframe communicator URL so Authorize.Net can send
     // transactResponse / cancel / resizeWindow messages to our
-    // domain. This URL must:
-    //  - be HTTPS
-    //  - be on the same domain as the page hosting the iframe
-    // NEXT_PUBLIC_APP_URL should point to that origin in both
-    // dev (ngrok/dev-tunnel) and production.
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-    if (appUrl) {
-      const normalized = appUrl.replace(/\/+$/, "");
+    // domain. Prefer the current page origin if provided, because
+    // multi-domain setups (e.g. test.dev.* vs dev.*) can break
+    // postMessage handling when this is hard-coded.
+    const configuredAppUrl =
+      process.env.NEXT_PUBLIC_APP_URL || env("NEXT_PUBLIC_APP_URL") || "";
+
+    let communicatorBaseUrl = configuredAppUrl;
+    if (redirectUrl) {
+      try {
+        communicatorBaseUrl = new URL(redirectUrl).origin;
+      } catch {
+        // Ignore invalid redirect URL and fall back to configured app URL.
+      }
+    }
+
+    if (communicatorBaseUrl) {
+      const normalized = communicatorBaseUrl.replace(/\/+$/, "");
       const communicatorSetting = new ApiContracts.SettingType();
       communicatorSetting.setSettingName("hostedPaymentIFrameCommunicatorUrl");
       communicatorSetting.setSettingValue(
@@ -325,7 +335,7 @@ export const createAuthorizeNetPaymentLink = async ({
       settings.push(communicatorSetting);
     } else {
       console.warn(
-        "NEXT_PUBLIC_APP_URL is not set; hostedPaymentIFrameCommunicatorUrl will not be configured for Authorize.Net.",
+        "No communicator base URL found; hostedPaymentIFrameCommunicatorUrl will not be configured for Authorize.Net.",
       );
     }
 
