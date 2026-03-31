@@ -17,9 +17,9 @@ export const EventContent = ({
   const colors = getServiceColor(serviceType);
   const originalData = props.originalData;
   const isAdmin = session?.user.employeeType === EmployeeType.Admin;
-  console.log("Rendering event:", {
-    event: event.extendedProps.originalData,
-  });
+  // console.log("Rendering event:", {
+  //   event: event.extendedProps.originalData,
+  // });
 
   // Styles for the container
   const containerStyle: React.CSSProperties = {
