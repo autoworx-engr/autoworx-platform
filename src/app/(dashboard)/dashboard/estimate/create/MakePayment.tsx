@@ -160,7 +160,8 @@ export default function MakePayment() {
       errorToast("Deposit amount cannot be greater than due amount");
       return;
     }
-
+  
+    if(pending) return;
     try {
       await additionalDataValidation.parseAsync({
         creditCard: card,

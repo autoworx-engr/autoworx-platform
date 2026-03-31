@@ -12,7 +12,7 @@ interface HeaderSearchProps {
 }
 
 export default function HeaderSearch({ activeTab }: HeaderSearchProps) {
-  const { setFilter } = usePaymentFilterStore();
+  const { setFilter, dateRange } = usePaymentFilterStore();
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Clear input when tab changes
@@ -45,6 +45,7 @@ export default function HeaderSearch({ activeTab }: HeaderSearchProps) {
         <div className="flex w-full items-center gap-4 md:w-auto md:ml-4 z-50">
           <div className="transition-transform hover:scale-[1.01] z-50">
             <DateRange
+            dateRange={dateRange}
               onOk={(start, end) => setFilter({ dateRange: [start, end] })}
               onCancel={() => setFilter({ dateRange: [null, null] })}
             />
