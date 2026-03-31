@@ -261,8 +261,32 @@ export const EventDetailsSheet = ({
                       </div>
                     </div>
 
-                    <div className="pt-2 border-t mt-4">
-                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
+                    <div className="mt-4">
+                      {originalData?.taskUser &&
+                        originalData.taskUser.length > 0 && (
+                          <div className="flex items-center gap-1 mb-2 flex-wrap text-gray-500 text-xs ">
+                            <span className="font-medium uppercase tracking-wider">
+                              Assigned to:
+                            </span>
+                            <span>
+                              {originalData.taskUser
+                                .map(
+                                  (tu: {
+                                    user?: {
+                                      firstName: string;
+                                      lastName: string;
+                                    };
+                                  }) =>
+                                    tu?.user
+                                      ? `${tu.user.firstName} ${tu.user.lastName}`
+                                      : null,
+                                )
+                                .filter(Boolean)
+                                .join(", ")}
+                            </span>
+                          </div>
+                        )}{" "}
+                      <p className="text-xs pt-2 border-t font-medium text-gray-500 uppercase tracking-wider mb-2">
                         Description
                       </p>
                       <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
