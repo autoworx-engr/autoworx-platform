@@ -32,8 +32,15 @@ import {
   InvoiceType,
   Labor,
   Material,
+  Payment,
+  PaymentMethod,
   Refund,
   Service,
+  CardPayment,
+  CheckPayment,
+  CashPayment,
+  OtherPayment,
+  DepositPayment,
   TwilioCredentials,
   User,
   Vehicle,
@@ -85,6 +92,14 @@ type InvoiceData = Invoice & {
   user: User;
   client: Client;
   vehicle: Vehicle;
+  payments: (Payment & {
+    card: CardPayment | null;
+    check: CheckPayment | null;
+    cash: CashPayment | null;
+    other: (OtherPayment & { paymentMethod: PaymentMethod | null }) | null;
+    deposit: DepositPayment | null;
+    Refund: Refund[];
+  })[];
 };
 
 export default function InvoiceModalBody({
@@ -250,6 +265,25 @@ export default function InvoiceModalBody({
   const company = invoice.company;
   const client = invoice.client;
   const vehicle = invoice.vehicle;
+  const paymentEntries = (invoice.payments ?? [])
+    .filter(payment => payment.invoiceId === invoice.id)
+    .sort(
+      (a, b) =>
+        new Date(b.date || b.createdAt).getTime() -
+        new Date(a.date || a.createdAt).getTime(),
+    );
+
+  const getPaymentMethodText = (payment: InvoiceData["payments"][number]) => {
+    if (payment.type === "OTHER") {
+      return payment.other?.paymentMethod?.name || "OTHER";
+    }
+
+    if (payment.type === "CARD") {
+      return payment.card?.cardType || "CARD";
+    }
+
+    return payment.type;
+  };
 
   const handleEmail = async () => {
     let res = await sendInvoiceEmail({ invoiceId: invoice.id });
@@ -920,6 +954,155 @@ export default function InvoiceModalBody({
               isPrinting={isPrinting}
               items={invoice.invoiceItems}
             />
+          </div>
+
+          {/* payment info  */}
+          <div className="space-y-2">
+            <h2 className="font-bold text-slate-600">Payment Info</h2>
+
+            {paymentEntries.length === 0 && (
+              <div className="rounded-md border border-dashed p-3 text-xs text-slate-500">
+                No payment info available for this invoice.
+              </div>
+            )}
+
+            {paymentEntries.length > 0 && (
+              <>
+                <div className="hidden overflow-x-auto rounded-md border md:block">
+                  <table className="w-full text-xs">
+                    <thead className="bg-slate-50">
+                      <tr className="border-b">
+                        <th className="px-3 py-2 text-left">Date</th>
+                        <th className="px-3 py-2 text-left">Method</th>
+                        <th className="px-3 py-2 text-left">Amount</th>
+                        <th className="px-3 py-2 text-left">Cash Received</th>
+                        <th className="px-3 py-2 text-left">Due After</th>
+                        <th className="px-3 py-2 text-left">Status</th>
+                        <th className="px-3 py-2 text-left">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {paymentEntries.map((payment, index) => {
+                        const refundedAmount = payment.Refund.reduce(
+                          (sum, refund) => sum + Number(refund.amount || 0),
+                          0,
+                        );
+
+                        return (
+                          <tr
+                            key={payment.id}
+                            className={
+                              index % 2 === 0 ? "bg-white" : "bg-slate-50"
+                            }
+                          >
+                            <td className="px-3 py-2">
+                              {moment(payment.date || payment.createdAt).format(
+                                "MM.DD.YYYY",
+                              )}
+                            </td>
+                            <td className="px-3 py-2">
+                              {getPaymentMethodText(payment)}
+                            </td>
+                            <td className="px-3 py-2">
+                              <div className="flex flex-col">
+                                <span>
+                                  {formatCurrency(Number(payment.amount || 0))}
+                                </span>
+                                {refundedAmount > 0 && (
+                                  <span className="text-[11px] text-red-600">
+                                    Refunded: {formatCurrency(refundedAmount)}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-3 py-2">
+                              {payment.cash?.receivedCash || "N/A"}
+                            </td>
+                            <td className="px-3 py-2">
+                              {payment.dueAfterPayment !== null &&
+                              payment.dueAfterPayment !== undefined
+                                ? formatCurrency(
+                                    Number(payment.dueAfterPayment),
+                                  )
+                                : "N/A"}
+                            </td>
+                            <td className="px-3 py-2">
+                              {invoice.column?.title || "-"}
+                            </td>
+                            <td className="px-3 py-2">
+                              {payment.notes || "-"}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="grid gap-2 md:hidden">
+                  {paymentEntries.map((payment, index) => {
+                    const refundedAmount = payment.Refund.reduce(
+                      (sum, refund) => sum + Number(refund.amount || 0),
+                      0,
+                    );
+
+                    return (
+                      <div
+                        key={payment.id}
+                        className={`rounded-md border p-3 text-xs ${
+                          index % 2 === 0 ? "bg-white" : "bg-slate-50"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="font-semibold text-slate-700">
+                            {getPaymentMethodText(payment)}
+                          </p>
+                          <p className="font-semibold text-[#6571FF]">
+                            {formatCurrency(Number(payment.amount || 0))}
+                          </p>
+                        </div>
+                        {refundedAmount > 0 && (
+                          <p className="mt-1 text-[11px] text-red-600">
+                            Refunded: {formatCurrency(refundedAmount)}
+                          </p>
+                        )}
+                        <div className="mt-2 space-y-1 text-slate-600">
+                          <p>
+                            <span className="font-semibold">Date:</span>{" "}
+                            {moment(payment.date || payment.createdAt).format(
+                              "MM.DD.YYYY",
+                            )}
+                          </p>
+                          <p>
+                            <span className="font-semibold">
+                              Cash Received:
+                            </span>{" "}
+                            {payment.cash?.receivedCash || "N/A"}
+                          </p>
+                          <p>
+                            <span className="font-semibold">Due After:</span>{" "}
+                            {payment.dueAfterPayment !== null &&
+                            payment.dueAfterPayment !== undefined
+                              ? formatCurrency(Number(payment.dueAfterPayment))
+                              : "N/A"}
+                          </p>
+                          <p>
+                            <span className="font-semibold">Status:</span>{" "}
+                            {invoice.column?.title || "-"}
+                          </p>
+                          {payment.notes && (
+                            <p>
+                              <span className="font-semibold">Notes:</span>{" "}
+                              {payment.notes}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
           </div>
 
           {/* Terms, Policies */}

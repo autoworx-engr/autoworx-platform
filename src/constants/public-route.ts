@@ -24,6 +24,7 @@ export const PUBLIC_API_ROUTES = [
   "/api/authorize-net/webhook",
   "/api/platform/webhook",
   "/api/infobip/mms/receive",
+  "/api/infobip/sms/receive",
   "/api/infobip/email/receive",
   "/api/twilio/call-recording",
   "/api/twilio/call-state",
