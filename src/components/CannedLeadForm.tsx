@@ -5,6 +5,7 @@ import { deleteLeadLink } from "@/actions/lead/deleteLeadLink";
 import Image from "next/image";
 import { successToast } from "@/lib/toast";
 import { Skeleton } from "@mui/material";
+import { Popconfirm } from "antd";
 import moment from "moment";
 import { ClipboardCheck, Clock, Copy, Download, Link, QrCode, Trash2, X } from "lucide-react";
 
@@ -196,14 +197,21 @@ const CannedLeadForm = ({ companyId }: { companyId: number }) => {
                               />
                             </button>
                             {/* Delete Button */}
-                            <button
-                              className="rounded-full p-2 transition-colors duration-200 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-400 text-red-600"
-                              onClick={() => handleDeleteLink(entry.id)}
-                              aria-label="Delete link"
-                              title="Delete link"
+                            <Popconfirm
+                              title="Delete lead link"
+                              description="Are you sure you want to delete this link?"
+                              okText="Yes"
+                              cancelText="No"
+                              onConfirm={() => handleDeleteLink(entry.id)}
                             >
-                              <Trash2 className="h-6 w-6" />
-                            </button>
+                              <button
+                                className="rounded-full p-2 transition-colors duration-200 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-400 text-red-600"
+                                aria-label="Delete link"
+                                title="Delete link"
+                              >
+                                <Trash2 className="h-6 w-6" />
+                              </button>
+                            </Popconfirm>
                           </div>
                         </div>
 
