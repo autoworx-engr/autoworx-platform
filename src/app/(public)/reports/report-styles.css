@@ -1,0 +1,76 @@
+.report-scope .kpi-card {
+  @apply bg-card rounded-xl p-6 shadow-sm border border-border/50 transition-all duration-200 hover:shadow-md hover:border-accent/20;
+}
+
+.report-scope .metric-value {
+  @apply text-3xl font-bold text-foreground tracking-tight;
+}
+
+.report-scope .metric-label {
+  @apply text-sm font-medium text-muted-foreground uppercase tracking-wider;
+}
+
+/* Success/Warning background colors for the performance badges */
+.performance-badge-up {
+  background-color: rgba(34, 197, 94, 0.1) !important;
+  color: rgb(34, 197, 94) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 0.25rem 0.5rem !important;
+  border-radius: 9999px !important;
+}
+
+.performance-badge-down {
+  background-color: rgba(239, 68, 68, 0.1) !important;
+  color: rgb(239, 68, 68) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 0.25rem 0.5rem !important;
+  border-radius: 9999px !important;
+}
+
+.performance-badge-neutral {
+  background-color: rgba(107, 114, 128, 0.1) !important;
+  color: rgb(107, 114, 128) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 0.25rem 0.5rem !important;
+  border-radius: 9999px !important;
+}
+
+.report-scope .animate-fade-in {
+  animation: reportFadeIn 0.5s ease-out forwards;
+}
+
+.report-scope .animate-slide-up {
+  @apply opacity-100;
+  animation: reportSlideUp 0.5s ease-out forwards;
+}
+
+@keyframes reportFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes reportSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Ensure opacity is 1 when generating PDF */
+body.is-generating-pdf .report-scope .animate-slide-up,
+body.is-generating-pdf .report-scope .animate-fade-in {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+}

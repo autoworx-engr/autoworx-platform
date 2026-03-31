@@ -19,6 +19,8 @@ import { CirclePause, CirclePlay, SquarePen, Trash2 } from "lucide-react";
 import { useUpdateTagAutomationRule } from "@/hooks/tag-automation/useUpdateTagAutomationRule";
 import { useDeleteTagAutomationRule } from "@/hooks/tag-automation/useDeleteTagAutomationRule";
 import CarLoading from "@/components/common/CarLoading";
+import { useDeleteReportingAutomationRule } from "@/hooks/reporting-automation/useDeleteInventoryAutomationRule";
+import { useUpdateReportingAutomationRule } from "@/hooks/reporting-automation/useUpdateInventoryAutomationRule";
 
 interface Item {
   id: string;
@@ -78,6 +80,9 @@ const AutomationCard: FC<AutomationCardProps> = ({
     useDeleteInventoryAutomationRule();
   const { mutate: deleteTagRule, isPending: isTagDeleting } =
     useDeleteTagAutomationRule();
+ const { mutate: deleteReportingRule, isPending: isReportingDeleting } =
+    useDeleteReportingAutomationRule();
+
 
   const { mutate: updateInvoiceRule, isPending: isInvoiceUpdating } =
     useUpdateInvoiceAutomationRule();
@@ -86,6 +91,8 @@ const AutomationCard: FC<AutomationCardProps> = ({
   const { mutate: updateTagRule, isPending: isTagUpdating } =
     useUpdateTagAutomationRule();
 
+    const { mutate: updateReportingAutomation, isPending: isReportingUpdating } =
+    useUpdateReportingAutomationRule();
   const handleSetIsEdit = (id: any) => {
     setId(id);
     setIsCreate(false);
@@ -108,6 +115,8 @@ const AutomationCard: FC<AutomationCardProps> = ({
       updateInventory({ id, data: data });
     } else if (type === "tag") {
       updateTagRule({ id, companyId, data });
+    } else if (type === "reporting"){
+      updateReportingAutomation({id, data:data})
     } else if (type == "marketing") {
       const now = Date.now();
 
@@ -168,6 +177,8 @@ const AutomationCard: FC<AutomationCardProps> = ({
       deleteInventoryRule(id);
     } else if (type === "tag") {
       deleteTagRule(id);
+    } else if (type === "reporting"){
+      deleteReportingRule(id)
     }
 
     setIsCreate(false);
@@ -207,7 +218,8 @@ const AutomationCard: FC<AutomationCardProps> = ({
           isServiceUpdating ||
           isTagUpdating ||
           isInventoryUpdating ||
-          isInvoiceUpdating ? (
+          isInvoiceUpdating || 
+          isReportingUpdating ? (
             <button>
               <Spin />
             </button>
@@ -237,7 +249,8 @@ const AutomationCard: FC<AutomationCardProps> = ({
           isServiceDeleting ||
           isTagDeleting ||
           isInventoryDeleting ||
-          isInvoiceDeleting ? (
+          isInvoiceDeleting || 
+          isReportingDeleting ? (
             <button>
               <Spin />
             </button>
