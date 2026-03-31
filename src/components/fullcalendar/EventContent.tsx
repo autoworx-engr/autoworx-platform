@@ -146,18 +146,14 @@ export const EventContent = ({
         {originalData?.taskUser && originalData.taskUser.length > 0 && (
           <div className="flex items-center gap-1 mt-0.5 flex-wrap">
             <span className="text-gray-500 text-[10px]">Assigned to:</span>
-            {originalData.taskUser.map((tu) => (
-              <div
-                key={tu.id}
-                className="flex items-center gap-1 bg-white/60 px-1 rounded-full"
-              >
-                {tu?.user && (
-                  <span>
-                    {tu.user.firstName} {tu.user.lastName}
-                  </span>
-                )}
-              </div>
-            ))}
+            <span className="text-gray-700 text-[10px]">
+              {originalData.taskUser
+                .map((tu) =>
+                  tu?.user ? `${tu.user.firstName} ${tu.user.lastName}` : null,
+                )
+                .filter(Boolean)
+                .join(", ")}
+            </span>
           </div>
         )}
       </div>

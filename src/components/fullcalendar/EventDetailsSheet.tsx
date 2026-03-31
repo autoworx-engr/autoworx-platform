@@ -9,6 +9,7 @@ import {
 import { errorToast, successToast } from "@/lib/toast";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import {
+  Car,
   CheckCircle,
   Clock3,
   Edit,
@@ -82,6 +83,10 @@ export const EventDetailsSheet = ({
     eventType === "appointment"
       ? originalData?.client?.mobile || "No phone"
       : "";
+  const appointmentVehicle =
+    eventType === "appointment" && originalData?.vehicle
+      ? `${originalData?.vehicle?.year} ${originalData?.vehicle?.make} ${originalData?.vehicle?.model}`
+      : "";
 
   const timeRange = `${
     selectedEvent.start
@@ -138,95 +143,161 @@ export const EventDetailsSheet = ({
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
-      <SheetContent side="right">
-        <div className="flex flex-col h-full bg-white">
+      <SheetContent side="right" className="p-0 sm:max-w-md">
+        <div className="flex flex-col h-full bg-slate-50/50">
           {/* Scrollable Content */}
           <div className="flex-1 overflow-y-auto">
-            <div className="p-6 space-y-5">
-              <h2 className="text-2xl font-bold text-gray-900">
-                {selectedEvent.title}
-              </h2>
+            <div className="p-6 space-y-6">
+              {/* Header */}
+              <div>
+                {eventType && (
+                  <span
+                    className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold mb-3 ${
+                      eventType === "appointment"
+                        ? "bg-blue-100 text-blue-800 border-blue-200"
+                        : eventType === "task"
+                          ? "bg-amber-100 text-amber-800 border-amber-200"
+                          : "bg-green-100 text-green-800 border-green-200"
+                    }`}
+                  >
+                    {eventType.charAt(0).toUpperCase() + eventType.slice(1)}
+                  </span>
+                )}
+                <h2 className="text-2xl font-bold text-gray-900 leading-tight">
+                  {selectedEvent.title}
+                </h2>
+              </div>
 
-              {eventType === "appointment" && (
-                <>
-                  <div className="flex items-center gap-2  font-medium text-gray-700">
-                    <Clock3 className="h-5 w-5 text-gray-500" />
-                    <span>
-                      <span className="text-gray-600">Time:</span> {timeRange}
-                    </span>
-                  </div>
+              {/* Info Card */}
+              <div className="space-y-5">
+                {eventType === "appointment" && (
+                  <>
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-blue-50 text-blue-600 rounded-lg shrink-0">
+                        <Clock3 className="size-4" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-0.5">
+                          Time
+                        </p>
+                        <p className="text-sm font-medium text-gray-900">
+                          {timeRange}
+                        </p>
+                      </div>
+                    </div>
 
-                  <div className="flex items-center gap-2  font-medium text-gray-700">
-                    <User className="h-5 w-5 text-gray-500" />
-                    <span>
-                      <span className="text-gray-600">Client:</span>{" "}
-                      {appointmentClientName}
-                    </span>
-                  </div>
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-slate-50 text-slate-600 rounded-lg shrink-0">
+                        <User className="size-4" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-0.5">
+                          Client
+                        </p>
+                        <p className="text-sm font-medium text-gray-900">
+                          {appointmentClientName}
+                        </p>
+                      </div>
+                    </div>
 
-                  <div className="flex items-center gap-2  font-medium text-gray-700">
-                    <Mail className="h-5 w-5 text-gray-500" />
-                    <span>
-                      <span className="text-gray-600">Email:</span>{" "}
-                      {appointmentClientEmail}
-                    </span>
-                  </div>
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-slate-50 text-slate-600 rounded-lg shrink-0">
+                        <Mail className="size-4" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-0.5">
+                          Email
+                        </p>
+                        <p className="text-sm font-medium text-gray-900">
+                          {appointmentClientEmail}
+                        </p>
+                      </div>
+                    </div>
 
-                  <div className="flex items-center gap-2  font-medium text-gray-700">
-                    <Phone className="h-5 w-5 text-gray-500" />
-                    <span>
-                      <span className="text-gray-600">Phone:</span>{" "}
-                      {appointmentClientPhone}
-                    </span>
-                  </div>
-                </>
-              )}
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-slate-50 text-slate-600 rounded-lg shrink-0">
+                        <Phone className="size-4" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-0.5">
+                          Phone
+                        </p>
+                        <p className="text-sm font-medium text-gray-900">
+                          {appointmentClientPhone}
+                        </p>
+                      </div>
+                    </div>
+                    {appointmentVehicle && (
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 bg-slate-50 text-slate-600 rounded-lg shrink-0">
+                          <Car className="size-4" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-0.5">
+                            Vehicle
+                          </p>
+                          <p className="text-sm font-medium text-gray-900">
+                            {appointmentVehicle}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
 
-              {eventType === "task" && (
-                <>
-                  <div className="flex items-center gap-2  font-semibold text-gray-700">
-                    <Zap className="h-5 w-5 text-gray-500" />
-                    <span className="text-gray-600">Priority:</span>
-                    <span className="uppercase text-amber-500">
-                      {originalData?.priority || "N/A"}
-                    </span>
-                  </div>
+                {eventType === "task" && (
+                  <>
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-amber-50 text-amber-600 rounded-lg shrink-0">
+                        <Zap className="size-4" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-0.5">
+                          Priority
+                        </p>
+                        <p className="text-sm font-bold text-amber-600 uppercase">
+                          {originalData?.priority || "N/A"}
+                        </p>
+                      </div>
+                    </div>
 
-                  <div className="space-y-1">
-                    <h3 className="text-[20px] font-semibold  text-slate-500">
-                      Description:
-                    </h3>
-                    <p className="text-gray-700">
-                      {originalData?.description || "No description provided."}
-                    </p>
-                  </div>
-                </>
-              )}
+                    <div className="pt-2 border-t mt-4">
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
+                        Description
+                      </p>
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+                        {originalData?.description ||
+                          "No description provided."}
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
           {/* Footer */}
-          <div className="p-4 border-t space-y-3 bg-white">
-            <div className="flex gap-4">
+          <div className="p-4 border-t bg-white space-y-3 shrink-0">
+            <div className="flex gap-3">
               {eventType === "task" && taskId ? (
                 <Button
                   variant="outline"
-                  className="flex-1 justify-center h-11 border-gray-300 hover:bg-gray-50 font-medium"
+                  className="flex-1 justify-center shadow-sm"
                   onClick={onEditTask}
                 >
                   <Edit className="mr-2 h-4 w-4" />
-                  Edit
+                  Edit Task
                 </Button>
               ) : null}
 
               {eventType === "appointment" && appointmentId ? (
                 <Button
                   variant="outline"
-                  className="flex-1 justify-center h-11 border-gray-300 hover:bg-gray-50 font-medium"
+                  className="flex-1 justify-center shadow-sm"
                   onClick={onEditAppointment}
                 >
                   <Edit className="mr-2 h-4 w-4" />
-                  Edit
+                  Edit Appointment
                 </Button>
               ) : null}
 
@@ -243,10 +314,7 @@ export const EventDetailsSheet = ({
                   }
                   onConfirm={handleTaskComplete}
                 >
-                  <Button
-                    variant="outline"
-                    className="flex-1 justify-center h-11 border-gray-300 hover:bg-gray-50 font-medium"
-                  >
+                  <Button className="flex-1 justify-center shadow-sm bg-green-600 hover:bg-green-700 text-white">
                     <CheckCircle className="mr-2 h-4 w-4" />
                     Complete
                   </Button>
@@ -256,8 +324,7 @@ export const EventDetailsSheet = ({
 
             {eventType === "appointment" && (
               <Button
-                variant="outline"
-                className="w-full justify-center h-11 border-gray-300 hover:bg-gray-50 font-medium"
+                className="w-full justify-center shadow-sm"
                 onClick={handleMessageClient}
               >
                 <MessageSquare className="mr-2 h-4 w-4" />
