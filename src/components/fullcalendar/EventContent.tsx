@@ -15,6 +15,7 @@ export const EventContent = ({
   const props = event.extendedProps as CustomEventProps;
   const serviceType = props.serviceType || "Appointment";
   const colors = getServiceColor(serviceType);
+  const originalData = props.originalData;
   const isAdmin = session?.user.employeeType === EmployeeType.Admin;
   console.log("Rendering event:", {
     event: event.extendedProps.originalData,
@@ -81,18 +82,6 @@ export const EventContent = ({
         <span className="font-semibold text-gray-500 text-[10px] uppercase">
           {serviceType}
         </span>
-        {props.carModel && (
-          <>
-            <span className="text-gray-400 mx-1">·</span>
-            <span className="font-medium truncate">{props.carModel}</span>
-          </>
-        )}
-        {props.price && (
-          <>
-            <span className="text-gray-400 mx-1">·</span>
-            <span className="font-bold text-gray-900">{props.price}</span>
-          </>
-        )}
       </div>
     );
   }
@@ -129,30 +118,49 @@ export const EventContent = ({
       className="flex flex-col text-xs leading-tight h-full cursor-pointer hover:opacity-90 transition-opacity"
     >
       <div className="flex flex-col gap-0.5">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="font-bold text-sm text-gray-900">{event.title}</span>
-          <span
-            className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-sm"
+        <div className="items-center flex-wrap">
+          <p
+            className="text-[8px] font-bold uppercase tracking-wide"
             style={{
               background: colors.borderColor + "20",
               color: colors.accentColor,
             }}
           >
             {serviceType}
-          </span>
+          </p>
+          {originalData.client ? (
+            <p className="font-bold text-sm text-gray-900">
+              {originalData.client.firstName} {originalData.client.lastName}
+            </p>
+          ) : (
+            <p className="font-bold text-sm text-gray-900">{event.title}</p>
+          )}
+          {originalData.vehicle && (
+            <p className="text-xs text-gray-600">
+              {originalData.vehicle.year} {originalData.vehicle.make}{" "}
+              {originalData.vehicle.model}
+            </p>
+          )}
         </div>
-        {props.carModel && (
-          <div className="text-gray-600 font-medium truncate mt-0.5">
-            {props.carModel}
+
+        {originalData?.taskUser && originalData.taskUser.length > 0 && (
+          <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+            <span className="text-gray-500 text-[10px]">Assigned to:</span>
+            {originalData.taskUser.map((tu) => (
+              <div
+                key={tu.id}
+                className="flex items-center gap-1 bg-white/60 px-1 rounded-full"
+              >
+                {tu?.user && (
+                  <span>
+                    {tu.user.firstName} {tu.user.lastName}
+                  </span>
+                )}
+              </div>
+            ))}
           </div>
         )}
       </div>
-
-      {props.price && (
-        <div className="font-bold text-gray-900 mt-auto text-sm">
-          {props.price}
-        </div>
-      )}
     </div>
   );
 };

@@ -39,6 +39,13 @@ export default function useAppointmentQuery(
               mobile: true,
             },
           },
+          vehicle: {
+            select: {
+              model: true,
+              make: true,
+              year: true,
+            },
+          },
         },
       });
       const appointments = response.data as (Appointment & {
