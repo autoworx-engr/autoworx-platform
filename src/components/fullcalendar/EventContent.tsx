@@ -141,6 +141,19 @@ export const EventContent = ({
               {originalData.vehicle.model}
             </p>
           )}
+          {originalData.title && props.serviceType?.includes("Appointment") && (
+            <p className="text-xs text-gray-600 mt-0.5">{originalData.title}</p>
+          )}
+          {originalData.invoiceGrandTotal !== undefined &&
+            originalData.invoiceGrandTotal > 0 && (
+              <p className="text-xs font-semibold text-gray-700 mt-0.5">
+                $
+                {Number(originalData.invoiceGrandTotal).toLocaleString(
+                  undefined,
+                  { minimumFractionDigits: 0, maximumFractionDigits: 2 },
+                )}
+              </p>
+            )}
         </div>
 
         {originalData?.taskUser && originalData.taskUser.length > 0 && (

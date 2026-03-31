@@ -143,6 +143,11 @@ export default function Calendar({ type }: { type: CalendarType }) {
     selectedAppointmentTechnicianIds,
   });
 
+  const estRevenue = filteredAppointments.reduce(
+    (acc, apt: any) => acc + (Number(apt.invoiceGrandTotal) || 0),
+    0
+  );
+
   const eventType = selectedEvent?.extendedProps?.type;
   const originalData = selectedEvent?.extendedProps?.originalData;
 
@@ -222,6 +227,7 @@ export default function Calendar({ type }: { type: CalendarType }) {
         type={getCalendarType(view)}
         appointmentCount={filteredAppointments.length}
         taskCount={filteredTasks.length}
+        estRevenue={estRevenue}
         users={taskUserOptions}
         technicians={appointmentTechnicianOptions}
         selectedUserIds={selectedTaskUserIds}

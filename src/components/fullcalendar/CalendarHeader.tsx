@@ -25,7 +25,7 @@ import { useDate } from "@/app/(dashboard)/dashboard/task/_hook/lib/useDate";
 import useMonth from "@/app/(dashboard)/dashboard/task/_hook/lib/useMonth";
 import useWeekStartEndDays from "@/app/(dashboard)/dashboard/task/_hook/lib/useWeekStartEndDays";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { CalendarDays, ClipboardList } from "lucide-react";
+import { CalendarDays, ClipboardList, DollarSign } from "lucide-react";
 import { Button } from "../ui/button";
 import {
   Select,
@@ -46,6 +46,7 @@ interface CalendarHeaderProps {
   type: CalendarType;
   appointmentCount: number;
   taskCount: number;
+  estRevenue: number;
   users: { id: number; name: string }[];
   technicians: { id: number; name: string }[];
   selectedUserIds: number[];
@@ -59,6 +60,7 @@ export function CalendarHeader({
   type,
   appointmentCount,
   taskCount,
+  estRevenue,
   users,
   technicians,
   selectedUserIds,
@@ -174,8 +176,15 @@ export function CalendarHeader({
           </span>
         </div>
         <div className="flex flex-1 lg:flex-none items-center gap-2 rounded-md border bg-white px-3 py-1.5 text-sm text-slate-700">
+          <DollarSign size={14} className="text-slate-500" />
+          <span>Est. Revenue</span>
+          <span className="font-semibold text-slate-900">
+            ${estRevenue.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+          </span>
+        </div>
+        <div className="flex flex-1 lg:flex-none items-center gap-2 rounded-md border bg-white px-3 py-1.5 text-sm text-slate-700">
           <ClipboardList size={14} className="text-slate-500" />
-          <span>Tasks</span>
+          <span>Pending</span>
           <span className="font-semibold text-slate-900">{taskCount}</span>
         </div>
         {/* Desktop Search */}

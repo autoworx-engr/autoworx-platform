@@ -5,6 +5,7 @@ export interface CustomEventProps {
     title: string;
     date?: string;
     startTime: string;
+    invoiceGrandTotal?: number;
     client?: {
       id: number;
       firstName: string;
