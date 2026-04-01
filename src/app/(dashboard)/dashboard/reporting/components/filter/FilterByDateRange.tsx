@@ -97,7 +97,7 @@ export default function FilterDateRange({
     const formattedStart = format(start, "MM/dd/yyyy");
     const formattedEnd = format(end, "MM/dd/yyyy");
 
-    if (startDate && startDate !== "undefined" && endDate && endDate !== "undefined") {
+    if ( startDate !== "undefined"  && endDate !== "undefined") {
       return `${startDate} - ${endDate}`;
     } else if (isRangeSelected) {
       return `${formattedStart} - ${formattedEnd}`;
