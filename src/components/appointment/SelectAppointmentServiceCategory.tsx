@@ -7,6 +7,19 @@ import newCategory from "@/actions/category/newCategory";
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
+const STATIC_CATEGORY_COLORS = [
+  "#60A5FA",
+  "#FB923C",
+  "#34D399",
+  "#A78BFA",
+  "#F87171",
+  "#22D3EE",
+  "#EC4899",
+  "#FACC15",
+  "#4ADE80",
+  "#F97316",
+];
+
 type SelectAppointmentServiceCategoryProps = {
   name?: string;
   value?: number | null;
@@ -34,6 +47,7 @@ export function SelectAppointmentServiceCategory({
   );
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+  const [selectedColor, setSelectedColor] = useState(STATIC_CATEGORY_COLORS[0]);
 
   useEffect(() => {
     if (!serviceCategoryId) {
@@ -79,7 +93,10 @@ export function SelectAppointmentServiceCategory({
 
     try {
       setIsCreating(true);
-      const res = await newCategory({ name: normalizedSearch });
+      const res = await newCategory({
+        name: normalizedSearch,
+        color: selectedColor,
+      });
 
       if (res.type !== "success") {
         toast.error(res.message || "Failed to create category");
@@ -93,6 +110,7 @@ export function SelectAppointmentServiceCategory({
       setSelectedCategory(createdCategory);
       setServiceCategoryId(createdCategory.id);
       setSearchTerm("");
+      setSelectedColor(STATIC_CATEGORY_COLORS[0]);
       setIsOpen(false);
     } catch (error) {
       void error;
@@ -117,6 +135,22 @@ export function SelectAppointmentServiceCategory({
               <p className="mb-2 text-center text-sm text-slate-500">
                 New category: "{normalizedSearch}"
               </p>
+              <div className="mb-3 flex items-center justify-center gap-2">
+                {STATIC_CATEGORY_COLORS.map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => setSelectedColor(color)}
+                    className="size-4 rounded-full border-2 transition-transform hover:scale-105"
+                    style={{
+                      backgroundColor: color,
+                      borderColor:
+                        selectedColor === color ? "#0F172A" : "#FFFFFF",
+                    }}
+                    aria-label={`Select color ${color}`}
+                  />
+                ))}
+              </div>
               <button
                 type="button"
                 onClick={handleCreateCategory}
