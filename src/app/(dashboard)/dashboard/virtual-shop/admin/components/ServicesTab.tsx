@@ -135,16 +135,41 @@ export default function ServicesTab({
       </div>
 
       {/* Service list */}
-      <div className="min-h-[40vh] max-h-[65vh] overflow-y-auto thin-scrollbar pr-1">
+      <div className="min-h-[65vh] max-h-[65vh] overflow-y-auto thin-scrollbar pr-1">
         <div className="flex flex-col gap-2">
           {!shopId ? (
-            <p className="py-8 text-center text-sm text-gray-400">
-              Configure your virtual shop first to manage services.
-            </p>
+            <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
+              <p className="text-sm text-gray-500">Configure your shop first.</p>
+              <a
+                href="/dashboard/settings/virtual-shop-configure"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-[#6571FF] to-[#5a66ee] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_4px_14px_0_rgba(101,113,255,0.39)] transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(101,113,255,0.23)]"
+              >
+                Go to shop configure
+              </a>
+            </div>
           ) : services.length === 0 ? (
-            <p className="py-8 text-center text-sm text-gray-400">
-              No services found.
-            </p>
+            <div className="flex min-h-[400px] w-full flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-200 bg-slate-50/30 p-12 text-center">
+              {/* Ghost Icon Illustration */}
+              <div className="relative mb-6 flex h-16 w-16 items-center justify-center rounded-3xl bg-white shadow-sm ring-1 ring-slate-200/50">
+                <Search
+                  size={24}
+                  className="text-slate-300"
+                  strokeWidth={1.5}
+                />
+                {/* Decorative ripple effect */}
+                <div className="absolute inset-0 animate-ping rounded-3xl bg-slate-100 opacity-20" />
+              </div>
+
+              {/* Text Content */}
+              <h3 className="mb-2 text-lg font-bold text-slate-500">
+                No Services Found
+              </h3>
+              <p className="max-w-[280px] text-sm font-medium leading-relaxed text-slate-400">
+                We couldn't find any services. Try adjusting your search or add a new service.
+              </p>
+            </div>
           ) : (
             services.map((service) => (
               <ServiceCard
@@ -158,7 +183,7 @@ export default function ServicesTab({
         </div>
       </div>
 
-      {shopId && meta && (
+      {shopId && meta && services.length > 0 && (
         <div className="flex items-center justify-end border-t border-gray-200 pt-2">
           <Pagination
             className="custom-pagination"
