@@ -12,7 +12,7 @@ export const useShopInfo = (initialData?: any) => {
     isError,
   } = useGetShopBySlug(slug, initialData);
 
-  console.log("Shop info from hook:", shop);
+
   return {
     shop,
     isPending,

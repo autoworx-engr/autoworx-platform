@@ -39,7 +39,6 @@ import {
   useLookupClientByPhone,
 } from "@/hooks/virtual-shop/service/useShopService";
 import axios from "axios";
-import toast from "react-hot-toast";
 import PhoneInput from "@/components/PhoneInput";
 import { SlimInput } from "@/components/SlimInput";
 import { SlimTextarea } from "@/components/SlimTextarea";
@@ -49,6 +48,7 @@ import {
   useGetModelsByYearAndMake,
 } from "@/hooks/useCarData";
 import Selector from "@/app/(dashboard)/dashboard/settings/automation/components/Selector";
+import { errorToast, successToast } from "@/lib/toast";
 
 const TIMER_SECONDS = 600; // 10 min
 
@@ -90,7 +90,6 @@ export const Checkout = () => {
   const { data: years }: any = useGetAllYears();
   const { data: makes }: any = useGetMake();
 
-  console.log("years ", years);
   const [selectedCountryCode, setSelectedCountryCode] = useState("US");
   const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
   const [timerExpired, setTimerExpired] = useState(false);
@@ -135,9 +134,18 @@ export const Checkout = () => {
       setTimerExpired(true);
       return;
     }
-    const interval = setInterval(() => setTimeLeft((t) => t - 1), 1000);
+    const interval = setInterval(() => {
+      setTimeLeft((t) => {
+        if (t <= 1) {
+          clearInterval(interval);
+          setTimerExpired(true);
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
     return () => clearInterval(interval);
-  }, [timeLeft]);
+  }, []);
 
   const formatTime = (s: number) =>
     `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
@@ -234,14 +242,14 @@ export const Checkout = () => {
         balance,
       });
       setGiftCardError("");
-      toast.success("Gift card applied.");
+      successToast("Gift card applied.");
     } catch (error: any) {
       const message =
         error?.response?.data?.message ||
         error?.message ||
         "Failed to validate gift card";
       setGiftCardError(message);
-      toast.error(message);
+      errorToast(message);
     } finally {
       setIsApplyingGiftCard(false);
     }
@@ -265,7 +273,7 @@ export const Checkout = () => {
     if (searchParams.get("cancel") !== "true") return;
 
     setIsResolvingBookingReturn(true);
-    toast.error("Payment was cancelled. Your booking is still pending.");
+    errorToast("Payment was cancelled. Your booking is still pending.");
     clearPaymentQueryParams();
     setIsResolvingBookingReturn(false);
   }, [searchParams, clearPaymentQueryParams]);
@@ -280,7 +288,7 @@ export const Checkout = () => {
     const raw = sessionStorage.getItem("virtualShopPendingBooking");
     if (!raw) {
       setStep("confirmation");
-      toast.success("Payment successful!");
+      successToast("Payment successful!");
       clearPaymentQueryParams();
       setIsResolvingBookingReturn(false);
       return;
@@ -335,13 +343,13 @@ export const Checkout = () => {
       }
 
       setStep("confirmation");
-      toast.success("Deposit payment successful. Booking confirmed.");
+      successToast("Deposit payment successful. Booking confirmed.");
       sessionStorage.removeItem("virtualShopPendingBooking");
       clearPaymentQueryParams();
       setIsResolvingBookingReturn(false);
     } catch {
       setStep("confirmation");
-      toast.success("Payment successful!");
+      successToast("Payment successful!");
       clearPaymentQueryParams();
       setIsResolvingBookingReturn(false);
     }
@@ -361,17 +369,17 @@ export const Checkout = () => {
     e.preventDefault();
 
     if (!shop?.id) {
-      toast.error("Shop not found. Please refresh and try again.");
+      errorToast("Shop not found. Please refresh and try again.");
       return;
     }
 
     if (!selectedDate || !selectedSlot) {
-      toast.error("Please select appointment date and time.");
+      errorToast("Please select appointment date and time.");
       return;
     }
 
     if (cart.length === 0) {
-      toast.error("Please select at least one service.");
+      errorToast("Please select at least one service.");
       return;
     }
 
@@ -387,17 +395,17 @@ export const Checkout = () => {
       !normalizedModel ||
       !form.vehicleYear
     ) {
-      toast.error("Phone and vehicle details are required.");
+      errorToast("Phone and vehicle details are required.");
       return;
     }
 
     if (normalizedPhone.length < 10 || normalizedPhone.length > 15) {
-      toast.error("Phone must be between 10 and 15 digits.");
+      errorToast("Phone must be between 10 and 15 digits.");
       return;
     }
 
     if (!isValidEmail(normalizedEmail)) {
-      toast.error("Please enter a valid email address.");
+      errorToast("Please enter a valid email address.");
       return;
     }
 
@@ -408,7 +416,7 @@ export const Checkout = () => {
       parsedYear < 1886 ||
       parsedYear > currentYear
     ) {
-      toast.error("Vehicle year must be a valid number.");
+      errorToast("Vehicle year must be a valid number.");
       return;
     }
 
@@ -467,7 +475,7 @@ export const Checkout = () => {
       setEstimateId(response?.data?.estimateId ?? null);
 
       setIsReturningClient(true);
-      toast.success(response?.message || "Booking created successfully");
+      successToast(response?.message || "Booking created successfully");
 
       const newBookingId = response?.data?.shopBookingId;
       const depositRequiredNow = Number(normalizedTotals?.depositRequired || 0);
@@ -501,7 +509,7 @@ export const Checkout = () => {
 
         setCreatedBookingId(newBookingId.toString());
         setShowPayNowModal(true);
-        toast.success(
+        successToast(
           "Booking created. Please complete the deposit to confirm.",
         );
         return;
@@ -511,7 +519,7 @@ export const Checkout = () => {
     } catch (error) {
       const message =
         (error as { message?: string })?.message || "Failed to create booking";
-      toast.error(message);
+      errorToast(message);
     }
   };
 
