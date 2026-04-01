@@ -15,6 +15,7 @@ export const createAppointmentValidationSchema = z.object({
   // .nonempty("At least one assigned user is required"),
   clientId: z.number().optional(),
   vehicleId: z.number().optional(),
+  serviceCategoryId: z.number().optional(),
   draftEstimate: z.string().nullable(),
   notes: z.string().optional(),
   confirmationEmailTemplateId: z.number().optional(),

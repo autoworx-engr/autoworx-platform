@@ -22,6 +22,7 @@ import { useSession } from "next-auth/react";
 import styles from "./fullcalendar.module.css";
 import useTaskQuery from "@/app/(dashboard)/dashboard/task/_hook/task/query/useTaskQuery";
 import useAppointmentQuery from "@/app/(dashboard)/dashboard/task/_hook/appointment/query/useAppointmentQuery";
+import getCategories from "@/actions/category/getCategories";
 import {
   appointmentQueryKey,
   taskQueryKey,
@@ -29,6 +30,7 @@ import {
 import { useCalendarFilters } from "./useCalendarFilters";
 import { useCalendarEventDateTimeUpdate } from "./useCalendarEventDateTimeUpdate";
 import { getCalendarType } from "./calendarView";
+import { useListsStore } from "@/stores/lists";
 
 export default function Calendar({ type }: { type: CalendarType }) {
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
@@ -123,6 +125,20 @@ export default function Calendar({ type }: { type: CalendarType }) {
   const { data: holidays = [], isLoading: isHolidaysLoading } = useGetHolidays(
     session?.user?.companyId ?? 0,
   );
+  const { data: categories = [] } = useQuery({
+    queryKey: ["appointment-categories", session?.user?.companyId],
+    queryFn: () => getCategories(),
+    enabled: !!session?.user?.companyId,
+  });
+
+  useEffect(() => {
+    if (categories.length > 0) {
+      useListsStore.setState((state) => ({
+        categories: state.categories.length > 0 ? state.categories : categories,
+      }));
+    }
+  }, [categories]);
+
   const loading =
     isCalendarLoading ||
     isSettingsLoading ||
@@ -145,7 +161,7 @@ export default function Calendar({ type }: { type: CalendarType }) {
 
   const estRevenue = filteredAppointments.reduce(
     (acc, apt: any) => acc + (Number(apt.invoiceGrandTotal) || 0),
-    0
+    0,
   );
 
   const eventType = selectedEvent?.extendedProps?.type;

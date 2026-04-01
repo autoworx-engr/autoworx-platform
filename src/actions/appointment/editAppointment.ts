@@ -31,6 +31,7 @@ export interface AppointmentToUpdate {
   assignedUsers: number[];
   clientId?: number;
   vehicleId?: number;
+  serviceCategoryId?: number;
   draftEstimate?: string | null;
   notes?: string;
   confirmationEmailTemplateId?: number;
@@ -65,7 +66,7 @@ export async function editAppointment({
       });
       console.log(
         "🚀 ~ editAppointment ~ existingAppointment:",
-        existingAppointment
+        existingAppointment,
       );
 
       if (existingAppointment?.draftEstimate !== appointment.draftEstimate) {
@@ -104,6 +105,7 @@ export async function editAppointment({
         endTime: appointment.endTime,
         clientId: appointment.clientId,
         vehicleId: appointment.vehicleId,
+        serviceCategoryId: appointment.serviceCategoryId,
         draftEstimate: appointment.draftEstimate,
         notes: appointment.notes,
         confirmationEmailTemplateId: appointment.confirmationEmailTemplateId,
@@ -117,7 +119,7 @@ export async function editAppointment({
     });
     console.log(
       "🚀 ~ editAppointment ~ updatedAppointment:",
-      updatedAppointment
+      updatedAppointment,
     );
 
     // Delete all the assigned users for the appointment
@@ -189,7 +191,7 @@ export async function editAppointment({
 
     if (confirmationEmailTemplate) {
       const appointmentDate = moment(
-        `${appointment.date}T${appointment.startTime}:00`
+        `${appointment.date}T${appointment.startTime}:00`,
       ).format("dddd, MMMM DD, h:mm A");
       let confirmationSubject = confirmationEmailTemplate?.subject || "";
       let confirmationMessage = confirmationEmailTemplate?.message || "";
@@ -197,45 +199,45 @@ export async function editAppointment({
       // replace the placeholders: <VEHICLE>, <CLIENT>
       confirmationSubject = confirmationSubject?.replace(
         "<VEHICLE>",
-        vehicle ? vehicle.model! : ""
+        vehicle ? vehicle.model! : "",
       );
       confirmationSubject = confirmationSubject?.replace(
         "<CLIENT>",
-        client ? client.firstName + " " + client.lastName : ""
+        client ? client.firstName + " " + client.lastName : "",
       );
 
       confirmationMessage = confirmationMessage?.replace(
         "<VEHICLE>",
-        vehicle ? vehicle.model! : ""
+        vehicle ? vehicle.model! : "",
       );
       confirmationMessage = confirmationMessage?.replace(
         "<CLIENT>",
-        client ? client.firstName + " " + client.lastName : ""
+        client ? client.firstName + " " + client.lastName : "",
       );
 
       confirmationMessage = confirmationMessage?.replace(
         "<DATE>",
-        appointmentDate
+        appointmentDate,
       );
 
       confirmationMessage = confirmationMessage?.replace(
         "<DATE>",
-        appointmentDate
+        appointmentDate,
       );
 
       confirmationMessage = confirmationMessage?.replace(
         "<BUSINESS_NAME>",
-        company?.name ?? ""
+        company?.name ?? "",
       );
 
       confirmationMessage = confirmationMessage?.replace(
         "<ADDRESS>",
-        company?.address ?? ""
+        company?.address ?? "",
       );
 
       confirmationMessage = confirmationMessage?.replace(
         "<PHONE>",
-        company?.phone ?? ""
+        company?.phone ?? "",
       );
 
       // send the confirmation email
@@ -326,7 +328,7 @@ export async function editAppointment({
       ) {
         updateGoogleCalendarEvent(
           updatedAppointment.googleEventId,
-          appointment
+          appointment,
         );
       } else if (
         googleCalendarToken &&
