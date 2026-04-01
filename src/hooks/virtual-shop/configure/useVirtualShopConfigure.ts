@@ -2,6 +2,7 @@ import {
   configureVirtualShop,
   deleteShopConfigure,
   getShopById,
+  getShopsByCompanyId,
   ShopData,
   updateShopConfigure,
 } from "@/service/virtual-shop/api";
@@ -28,7 +29,7 @@ export const useGetVirtualShops = (
 ) => {
   return useQuery({
     queryKey: ["virtual-shops", companyId],
-    queryFn: () => getShopById(companyId),
+    queryFn: () => getShopsByCompanyId(companyId),
     enabled: options?.enabled ?? (!!companyId || companyId === undefined),
     initialData: options?.initialData,
     staleTime: 1000 * 60,
@@ -43,7 +44,7 @@ export const useConfigureShop = (companyId: number) => {
 
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["virtual-shop", companyId],
+        queryKey: ["virtual-shops", companyId],
       });
       toast.success("Virtual shop configured successfully!");
     },
@@ -65,13 +66,16 @@ export const useUpdateShop = (id?: number) => {
   });
 };
 
-export const useDeleteShop = (id: number) => {
+export const useDeleteShop = (id: number, companyId: number) => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: () => deleteShopConfigure(id),
 
     onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["virtual-shops", companyId],
+      });
       queryClient.invalidateQueries({
         queryKey: ["virtual-shop", id],
       });

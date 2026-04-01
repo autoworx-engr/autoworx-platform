@@ -31,6 +31,7 @@ type ShopFormData = {
   isActive: boolean;
 };
 
+const domain = new URL(process.env.NEXT_PUBLIC_APP_URL!).hostname;
 const fonts = ["Inter", "Roboto", "Playfair Display"];
 
 export default function ShopForm({
@@ -42,15 +43,14 @@ export default function ShopForm({
 }) {
   const router = useRouter();
 
-  /** API hooks */
   const { data, isPending: isFetching } =
     useGetVirtualShopConfigureById(shopId);
+
   const { mutateAsync: createShop, isPending: isCreating } =
     useConfigureShop(companyId);
   const { mutateAsync: updateShop, isPending: isUpdating } =
     useUpdateShop(shopId);
 
-  /** state */
   const [form, setForm] = useState<ShopFormData>({
     storeName: "",
     slug: "",
@@ -87,7 +87,6 @@ export default function ShopForm({
     [],
   );
 
-  /** populate data for update */
   useEffect(() => {
     if (data) {
       setForm({
@@ -105,7 +104,6 @@ export default function ShopForm({
     }
   }, [data]);
 
-  /** auto slug */
   useEffect(() => {
     if (!shopId) {
       const slug = form.storeName
@@ -175,6 +173,7 @@ export default function ShopForm({
 
       if (files.logo) {
         const uploaded = await uploadFile(files.logo, "logo");
+
         if (uploaded) logoUrl = uploaded;
       }
 
@@ -187,6 +186,7 @@ export default function ShopForm({
         ...form,
         logoUrl,
         bannerUrl,
+        companyId,
       };
 
       if (shopId) {
@@ -195,7 +195,7 @@ export default function ShopForm({
         await createShop(payload);
       }
 
-      router.push("/shops");
+      router.push("/dashboard/settings/virtual-shop-configure");
     } catch (err) {
       console.error(err);
     } finally {
@@ -208,8 +208,7 @@ export default function ShopForm({
   if (isFetching && shopId) return <CarLoading />;
 
   return (
-    <div className="max-w-3xl mx-auto p-6 space-y-6">
-      {/* TITLE */}
+    <div className=" mx-auto p-6 space-y-6">
       <div>
         <h1 className="text-xl font-semibold">
           {shopId ? "Update Shop" : "Create Shop"}
@@ -259,7 +258,7 @@ export default function ShopForm({
             className="flex-1 px-2 text-sm outline-none"
           />
           <span className="px-3 py-2 text-sm text-gray-400 bg-gray-50">
-            .yourdomain.com
+            .{domain}
           </span>
         </div>
 
@@ -282,11 +281,16 @@ export default function ShopForm({
           <FileUpload
             label="Logo"
             previewUrl={previews.logo || form.logoUrl}
+            hint="Square image"
             onChange={handleFileChange("logo")}
             onRemove={() => {
-              setFiles((p) => ({ ...p, logo: null }));
-              setForm((p) => ({ ...p, logoUrl: "" }));
+              setFiles((prev) => ({ ...prev, logo: null }));
+              setPreviews((prev) => ({ ...prev, logo: "" }));
+              setForm((prev) => ({ ...prev, logoUrl: "" }));
             }}
+            height="h-32"
+            width="w-32"
+            circular={true}
           />
 
           <FileUpload

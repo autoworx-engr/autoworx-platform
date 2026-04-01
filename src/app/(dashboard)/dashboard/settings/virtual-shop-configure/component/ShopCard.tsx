@@ -4,17 +4,25 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Pencil, Trash2 } from "lucide-react";
 import { useDeleteShop } from "@/hooks/virtual-shop/configure/useVirtualShopConfigure";
+import Image from "next/image";
+import { Popconfirm } from "antd";
 
 export default function ShopCard({ shop }: { shop: any }) {
-  const { mutate: deleteShop, isPending } = useDeleteShop(shop?.id);
+  const { mutate: deleteShop, isPending } = useDeleteShop(
+    shop?.id,
+    shop?.companyId,
+  );
 
   return (
     <div className="border rounded-xl p-4 space-y-3 hover:shadow-sm transition">
       {/* Banner */}
       {shop.bannerUrl && (
-        <img
+        <Image
           src={shop.bannerUrl}
+          alt={shop?.storeName}
           className="w-full h-32 object-cover rounded-lg"
+          width={400}
+          height={400}
         />
       )}
 
@@ -45,14 +53,20 @@ export default function ShopCard({ shop }: { shop: any }) {
             </Button>
           </Link>
 
-          <Button
-            variant="destructive"
-            size="icon"
-            disabled={isPending}
-            onClick={() => deleteShop(shop.id)}
+          <Popconfirm
+            title="Delete the shop"
+            description="Are you sure to delete this shop?"
+            okText="Yes"
+            cancelText="No"
+            onConfirm={() => deleteShop(shop.id)}
           >
-            <Trash2 className="w-4 h-4" />
-          </Button>
+            <button
+              className="flex items-center gap-1 px-2 text-xs rounded-md border border-red-300 text-red-500 hover:bg-red-50"
+              disabled={isPending}
+            >
+              <Trash2 size={14} />
+            </button>
+          </Popconfirm>
         </div>
       </div>
     </div>

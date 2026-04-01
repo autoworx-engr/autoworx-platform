@@ -30,7 +30,7 @@ model Appointment {
   times                           Json? // { time: string; date: string }
   createdAt                       DateTime                        @default(now()) @map("created_at")
   updatedAt                       DateTime                        @default(now()) @updatedAt @map("updated_at")
-  user                            User?                            @relation(fields: [userId], references: [id], onDelete: Cascade) 
+  user                            User?                           @relation(fields: [userId], references: [id], onDelete: Cascade)
   company                         Company                         @relation(fields: [companyId], references: [id], onDelete: Cascade)
   appointmentUsers                AppointmentUser[]
   client                          Client?                         @relation(fields: [clientId], references: [id])
@@ -327,6 +327,7 @@ model ReportingAutomationRule {
 
   @@index([companyId])
 }
+
 model ReportingAutomationTeamMember {
   reportingRuleId Int
   userId          Int
@@ -498,6 +499,7 @@ enum ReportingNotificationAction {
   SMS
   BOTH
 }
+
 // Client of a company.
 // Client is just data, they can't login.
 model Client {
@@ -563,7 +565,7 @@ model Fleet {
 model FleetStatement {
   id        String    @id @default(cuid())
   fleetId   Int       @map("fleet_id")
-  Fleet     Fleet     @relation(fields: [fleetId], references: [id], onDelete: Cascade )
+  Fleet     Fleet     @relation(fields: [fleetId], references: [id], onDelete: Cascade)
   invoice   Invoice[]
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
@@ -721,17 +723,17 @@ model Company {
   callForwardingNumber             String?                            @map("call_forwarding_number")
   missedCallTextBackEnabled        Boolean                            @default(true) @map("missed_call_text_back_enabled")
   enforcePlatformPlan              Boolean                            @default(false) @map("enforce_platform_plan")
-  googleReviewLink     String? @map("google_review_link") @db.VarChar(500)
-  billingCustomer      PlatformBillingCustomer?
-  platformSubscription PlatformSubscription?
-  platformPlans        PlatformPlan[]
+  googleReviewLink                 String?                            @map("google_review_link") @db.VarChar(500)
+  billingCustomer                  PlatformBillingCustomer?
+  platformSubscription             PlatformSubscription?
+  platformPlans                    PlatformPlan[]
 
-  callWhisperEnabled               Boolean                            @default(true) @map("call_whisper_enabled")
+  callWhisperEnabled Boolean @default(true) @map("call_whisper_enabled")
 
-  servicePlaybooks                 ServicePlaybook[]
-  conversationExamples             ConversationExample[]
-  knowledgeBaseDocuments           KnowledgeBaseDocument[]
-  reviews                          Reviews[]
+  servicePlaybooks       ServicePlaybook[]
+  conversationExamples   ConversationExample[]
+  knowledgeBaseDocuments KnowledgeBaseDocument[]
+  reviews                Reviews[]
 
   // Virtual Shop & Gift Card Relations
   shops             Shop[]
@@ -2613,96 +2615,96 @@ model VehicleParts {
 // Platform Billing & Subscriptions
 
 model PlatformPlan {
-  id               String               @id @default(cuid())
-  name             String               @unique // e.g. "Starter (Text Only)"
-  description      String?              @db.Text
-  price            Decimal              @db.Decimal(10, 2)
-  interval         PlatformPlanInterval @default(MONTHLY)
-  trialLengthDays  Int                  @default(0)
-  displayOrder     Int                  @default(0)
-  isActive         Boolean              @default(true)
-  companyId        Int?
-  createdAt        DateTime             @default(now())
-  updatedAt        DateTime             @updatedAt
+  id              String               @id @default(cuid())
+  name            String               @unique // e.g. "Starter (Text Only)"
+  description     String?              @db.Text
+  price           Decimal              @db.Decimal(10, 2)
+  interval        PlatformPlanInterval @default(MONTHLY)
+  trialLengthDays Int                  @default(0)
+  displayOrder    Int                  @default(0)
+  isActive        Boolean              @default(true)
+  companyId       Int?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
 
-  company          Company?             @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  features         PlanFeature[]
-  subscriptions    PlatformSubscription[]
+  company       Company?               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  features      PlanFeature[]
+  subscriptions PlatformSubscription[]
 }
 
 model PlanFeature {
-  id          String              @id @default(cuid())
-  planId      String
-  featureKey  String              // e.g. "can_use_voice"
-  value       String              // e.g. "true" or "3"
-  type        PlatformFeatureType @default(BOOLEAN)
+  id         String              @id @default(cuid())
+  planId     String
+  featureKey String // e.g. "can_use_voice"
+  value      String // e.g. "true" or "3"
+  type       PlatformFeatureType @default(BOOLEAN)
 
-  plan        PlatformPlan        @relation(fields: [planId], references: [id], onDelete: Cascade)
+  plan PlatformPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
 
   @@unique([planId, featureKey])
 }
 
 model PlatformBillingCustomer {
-  id                    String   @id @default(cuid())
-  companyId             Int      @unique
-  authNetProfileId      String?  @unique // Authorize.net customerProfileId
-  email                 String?
-  taxId                 String?
-  trialConsumedAt       DateTime?
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  id               String    @id @default(cuid())
+  companyId        Int       @unique
+  authNetProfileId String?   @unique // Authorize.net customerProfileId
+  email            String?
+  taxId            String?
+  trialConsumedAt  DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
-  company               Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  subscriptions         PlatformSubscription[]
-  paymentMethods        PlatformPaymentMethod[]
-  invoices              PlatformInvoice[]
+  company        Company                 @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  subscriptions  PlatformSubscription[]
+  paymentMethods PlatformPaymentMethod[]
+  invoices       PlatformInvoice[]
 }
 
 model PlatformSubscription {
-  id                        String                     @id @default(cuid())
-  companyId                 Int                        @unique
-  billingCustomerId         String
-  planId                    String
-  status                    PlatformSubscriptionStatus @default(ACTIVE)
-  billingAnchor             DateTime?                  // next charge date
-  cancelAtPeriodEnd         Boolean                    @default(false)
-  authNetSubscriptionId     String?                    @unique
-  currentPeriodStart        DateTime                   @default(now())
-  currentPeriodEnd          DateTime?
-  createdAt                 DateTime                   @default(now())
-  updatedAt                 DateTime                   @updatedAt
+  id                    String                     @id @default(cuid())
+  companyId             Int                        @unique
+  billingCustomerId     String
+  planId                String
+  status                PlatformSubscriptionStatus @default(ACTIVE)
+  billingAnchor         DateTime? // next charge date
+  cancelAtPeriodEnd     Boolean                    @default(false)
+  authNetSubscriptionId String?                    @unique
+  currentPeriodStart    DateTime                   @default(now())
+  currentPeriodEnd      DateTime?
+  createdAt             DateTime                   @default(now())
+  updatedAt             DateTime                   @updatedAt
 
-  company                   Company                    @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  billingCustomer           PlatformBillingCustomer    @relation(fields: [billingCustomerId], references: [id], onDelete: Cascade)
-  plan                      PlatformPlan               @relation(fields: [planId], references: [id])
-  items                     PlatformSubscriptionItem[]
+  company         Company                    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  billingCustomer PlatformBillingCustomer    @relation(fields: [billingCustomerId], references: [id], onDelete: Cascade)
+  plan            PlatformPlan               @relation(fields: [planId], references: [id])
+  items           PlatformSubscriptionItem[]
 }
 
 model PlatformSubscriptionItem {
-  id             String               @id @default(cuid())
+  id             String   @id @default(cuid())
   subscriptionId String
-  name           String               // e.g. "Growth Plan" or "Website Add-on"
-  price          Decimal              @db.Decimal(10, 2)
-  quantity       Int                  @default(1)
-  isOneTime      Boolean              @default(false)
-  createdAt      DateTime             @default(now())
-  updatedAt      DateTime             @updatedAt
+  name           String // e.g. "Growth Plan" or "Website Add-on"
+  price          Decimal  @db.Decimal(10, 2)
+  quantity       Int      @default(1)
+  isOneTime      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  subscription   PlatformSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  subscription PlatformSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
 }
 
 model PlatformPaymentMethod {
-  id                    String   @id @default(cuid())
-  billingCustomerId     String
-  authNetPaymentProfileId String @unique // Authorize.net paymentProfileId
-  cardType              String?  // e.g. "Visa"
-  last4                 String?
-  expiry                String?
-  isDefault             Boolean  @default(false)
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  id                      String   @id @default(cuid())
+  billingCustomerId       String
+  authNetPaymentProfileId String   @unique // Authorize.net paymentProfileId
+  cardType                String? // e.g. "Visa"
+  last4                   String?
+  expiry                  String?
+  isDefault               Boolean  @default(false)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
 
-  billingCustomer       PlatformBillingCustomer @relation(fields: [billingCustomerId], references: [id], onDelete: Cascade)
+  billingCustomer PlatformBillingCustomer @relation(fields: [billingCustomerId], references: [id], onDelete: Cascade)
 }
 
 model PlatformInvoice {
@@ -2710,13 +2712,13 @@ model PlatformInvoice {
   billingCustomerId String
   subscriptionId    String?
   amount            Decimal  @db.Decimal(10, 2)
-  status            String   // e.g. "PAID", "OPEN", "VOID"
+  status            String // e.g. "PAID", "OPEN", "VOID"
   authNetTransId    String?  @unique // Linking to a specific capture trans
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  billingCustomer   PlatformBillingCustomer @relation(fields: [billingCustomerId], references: [id], onDelete: Cascade)
-  payments          PlatformPayment[]
+  billingCustomer PlatformBillingCustomer @relation(fields: [billingCustomerId], references: [id], onDelete: Cascade)
+  payments        PlatformPayment[]
 }
 
 model PlatformPayment {
@@ -2727,7 +2729,7 @@ model PlatformPayment {
   authNetTransId    String?  @unique
   createdAt         DateTime @default(now())
 
-  invoice           PlatformInvoice @relation(fields: [platformInvoiceId], references: [id], onDelete: Cascade)
+  invoice PlatformInvoice @relation(fields: [platformInvoiceId], references: [id], onDelete: Cascade)
 }
 
 enum PlatformSubscriptionStatus {
@@ -2748,6 +2750,7 @@ enum PlatformFeatureType {
   NUMERIC
   TEXT
 }
+
 // Ai sales agent configuration for a company
 //TODO: Ai sales agent configuration for a company
 model CompanyInfo {
@@ -2922,7 +2925,7 @@ model FAQ {
 
 model Shop {
   id              Int                 @id @default(autoincrement())
-  companyId       Int                 @unique @map("company_id")
+  companyId       Int                 @map("company_id")
   slug            String              @unique
   storeName       String              @map("store_name")
   description     String?             @db.Text
@@ -3050,7 +3053,7 @@ model ShopBooking {
   invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
   // Status
-  status          ShopBookingStatus @default(PENDING)
+  status ShopBookingStatus @default(PENDING)
 
   // Notes
   customerNotes String? @map("customer_notes") @db.Text
@@ -3204,9 +3207,9 @@ enum DeliveryMethod {
 
 // TODO: Gift card Transition history model
 model IssuedGiftCard {
-  id        Int @id @default(autoincrement())
-  companyId Int    @map("company_id")
-  code      String @unique // Secure alphanumeric code
+  id          Int     @id @default(autoincrement())
+  companyId   Int     @map("company_id")
+  code        String  @unique // Secure alphanumeric code
   orderNumber String? @unique @map("order_number")
 
   // Balances
@@ -3214,10 +3217,10 @@ model IssuedGiftCard {
   currentBalance Decimal @map("current_balance") @db.Decimal(10, 2)
 
   // Purchaser Snapshot
-  purchaseType    GiftCardPurchaseType @map("purchase_type")
+  purchaseType   GiftCardPurchaseType @map("purchase_type")
   // paymentStatus   PaymentStatus        @default(PENDING) @map("payment_status")
-  purchaserName  String @map("purchaser_name")
-  purchaserEmail String @map("purchaser_email")
+  purchaserName  String               @map("purchaser_name")
+  purchaserEmail String               @map("purchaser_email")
 
   // --- NEW: Missing fields from PRD Step 5 ---
   recipientName  String  @map("recipient_name")
@@ -3246,14 +3249,12 @@ model IssuedGiftCard {
   @@map("issued_gift_cards")
 }
 
-
 // enum PaymentStatus {
 //   PENDING
 //   PAID
 //   FAILED
 //   REFUNDED
 // }
-
 
 enum GiftCardPurchaseType {
   INDIVIDUAL

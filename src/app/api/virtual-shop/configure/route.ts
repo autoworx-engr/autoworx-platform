@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
       themeConfig,
       companyId,
     } = body;
-
+    console.log("body", body);
     const slug = storeName
       .toLowerCase()
       .replace(/\s+/g, "-")
@@ -129,9 +129,11 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      const existingShopBookingSetting = await tx.shopBookingSetting.findUnique({
-        where: { shopId: newShop.id },
-      });
+      const existingShopBookingSetting = await tx.shopBookingSetting.findUnique(
+        {
+          where: { shopId: newShop.id },
+        },
+      );
 
       if (existingShopBookingSetting) {
         throw new AppError(400, "Shop booking setting already exists");
@@ -151,7 +153,7 @@ export async function POST(req: NextRequest) {
         "FRIDAY",
         "SATURDAY",
         "SUNDAY",
-      ].map(day => ({
+      ].map((day) => ({
         dayOfWeek: day as any,
         isOpen: true,
         startTime: defaultStartTime,
@@ -192,21 +194,24 @@ export async function POST(req: NextRequest) {
             defaultDelivery: "EMAIL",
             allowScheduledSend: true,
             defaultExpiryDays: null,
-            termsAndConditions: "Gift cards are non-refundable and cannot be exchanged for cash.",
-            privacyPolicy: "We value your privacy. Your information is securely stored.",
+            termsAndConditions:
+              "Gift cards are non-refundable and cannot be exchanged for cash.",
+            privacyPolicy:
+              "We value your privacy. Your information is securely stored.",
           },
         });
       }
 
       return newShop;
     });
-
+    console.log("shop", shop);
     return NextResponse.json({
       success: true,
       message: "Shop created successfully",
       data: shop,
     });
   } catch (error: any) {
+    console.log("error", error);
     const formattedError = errorHandler(error);
     return NextResponse.json(
       {

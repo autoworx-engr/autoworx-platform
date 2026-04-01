@@ -109,7 +109,7 @@ export async function GET(
 
     const skip = (page - 1) * limit;
 
-    const shop = await db.shop.findMany({
+    const shops = await db.shop.findMany({
       where: {
         companyId,
       },
@@ -127,10 +127,10 @@ export async function GET(
       skip,
       take: limit,
     });
-
+    console.log("shops", shops);
     return NextResponse.json({
       success: true,
-      data: shop,
+      data: shops,
     });
   } catch (error) {
     if (error instanceof AppError) {

@@ -104,7 +104,7 @@ export async function GET(
 
     const { searchParams } = new URL(req.url);
 
-    const shop = await db.shop.findMany({
+    const shop = await db.shop.findFirst({
       where: {
         id,
       },
