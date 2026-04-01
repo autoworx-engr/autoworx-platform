@@ -368,12 +368,24 @@ export async function validateCustomerPaymentProfile(
 ): Promise<void> {
   const merchantAuthenticationType = getPlatformAuthNetCredentials();
 
+  const explicit = (process.env.PLATFORM_AUTHNET_ENVIRONMENT || "")
+    .trim()
+    .toLowerCase();
+  const isLiveValidation =
+    explicit === "production" ||
+    explicit === "live" ||
+    (!explicit && process.env.NODE_ENV === "production");
+
   const validateRequest =
     new ApiContracts.ValidateCustomerPaymentProfileRequest();
   validateRequest.setMerchantAuthentication(merchantAuthenticationType);
   validateRequest.setCustomerProfileId(customerProfileId);
   validateRequest.setCustomerPaymentProfileId(customerPaymentProfileId);
-  validateRequest.setValidationMode(ApiContracts.ValidationModeEnum.TESTMODE);
+  validateRequest.setValidationMode(
+    isLiveValidation
+      ? ApiContracts.ValidationModeEnum.LIVEMODE
+      : ApiContracts.ValidationModeEnum.TESTMODE,
+  );
 
   return new Promise<void>((resolve, reject) => {
     const ctrl = new ApiControllers.ValidateCustomerPaymentProfileController(
