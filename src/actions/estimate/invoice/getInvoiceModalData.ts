@@ -26,6 +26,23 @@ export async function getInvoiceModalData(id: string) {
         client: true,
         vehicle: true,
         Refund: true,
+        payments: {
+          include: {
+            card: true,
+            check: true,
+            cash: true,
+            other: {
+              include: {
+                paymentMethod: true,
+              },
+            },
+            deposit: true,
+            Refund: true,
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
       },
     });
 

@@ -57,15 +57,13 @@ export const getEmployeesForPaginate = cache(
       const numericId = /^\d+$/.test(trimmed) ? Number(trimmed) : null;
       whereClause.OR = filter.searchParams
         .split(" ")
-        .flatMap(searchText => [
+        .flatMap((searchText) => [
           { firstName: { contains: searchText, mode: "insensitive" } },
           { lastName: { contains: searchText, mode: "insensitive" } },
           { email: { contains: searchText, mode: "insensitive" } },
           { phone: { contains: searchText, mode: "insensitive" } },
         ]) as Prisma.UserWhereInput[];
-      whereClause.OR.push(
-        ...(numericId !== null ? [{ id: numericId }] : [])
-      )
+      whereClause.OR.push(...(numericId !== null ? [{ id: numericId }] : []));
     }
 
     if (
@@ -73,9 +71,14 @@ export const getEmployeesForPaginate = cache(
       filter.dateRange.startDate &&
       filter.dateRange.endDate
     ) {
+      const start = new Date(filter.dateRange.startDate);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(filter.dateRange.endDate);
+      end.setHours(23, 59, 59, 999);
+
       whereClause.joinDate = {
-        gte: filter.dateRange.startDate,
-        lte: filter.dateRange.endDate,
+        gte: start,
+        lte: end,
       };
     }
 
@@ -101,7 +104,7 @@ export const getEmployeesForPaginate = cache(
         zip: true,
         companyName: true,
         image: true,
-        countryCode:true,
+        countryCode: true,
         salaryHistory: {
           where: {
             isActive: true,
@@ -124,5 +127,5 @@ export const getEmployeesForPaginate = cache(
       },
     });
     return { employees, totalEmployees };
-  }
+  },
 );
