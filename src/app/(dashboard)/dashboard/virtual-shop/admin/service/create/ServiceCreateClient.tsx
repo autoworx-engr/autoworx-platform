@@ -188,11 +188,6 @@ function ServiceBillSummary({
       </div>
 
       <div className="mt-4 flex flex-col gap-4 rounded-lg bg-[#006d77] p-5 text-white shadow-xl shadow-[#006d77]/20">
-        {validationError ? (
-          <p className="rounded-md bg-red-50 px-3 py-2 text-xs font-semibold text-red-600">
-            {validationError}
-          </p>
-        ) : null}
         <button
           type="button"
           className="w-full rounded-xl bg-white py-3 text-sm font-bold text-[#6571FF] shadow-lg transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
@@ -339,9 +334,38 @@ export default function ServiceCreateClient({
         "Service, material, and labor is required";
     }
 
+    const invalidMaterialQuantity = (items || []).some((item) =>
+      Array.isArray(item?.materials)
+        ? item.materials.some((material) => {
+          if (!material || !String(material.name || "").trim()) {
+            return false;
+          }
+
+          return toSafeNumber(material.quantity) <= 0;
+        })
+        : false,
+    );
+
+    if (invalidMaterialQuantity) {
+      nextErrors.items = "Material quantity cannot be 0";
+    }
+
+    const invalidLaborHours = (items || []).some((item) => {
+      if (!item?.labor || !String(item.labor.name || "").trim()) {
+        return false;
+      }
+
+      return toSafeNumber(item.labor.hours) <= 0;
+    });
+
+    if (invalidLaborHours) {
+      nextErrors.items = "Labor no of hours cannot be 0";
+    }
+
     if (Object.keys(nextErrors).length > 0) {
       setValidationErrors(nextErrors);
       errorToast(
+        nextErrors.items ||
         nextErrors.serviceTitle ||
         nextErrors.description ||
         "Please complete required fields",

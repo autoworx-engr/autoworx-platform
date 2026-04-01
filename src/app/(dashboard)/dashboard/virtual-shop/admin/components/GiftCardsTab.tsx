@@ -45,6 +45,7 @@ import {
   Check,
   CircleHelp,
 } from "lucide-react";
+import GiftCardsTabSkeleton from "./GiftCardsTabSkeleton";
 
 // ── Gift Card Designs ─────────────────────────────────────────────────────────
 
@@ -649,14 +650,7 @@ export default function GiftCardsTab() {
 
   return (
     <div className="flex flex-col gap-4">
-      {isHydratingSettings && (
-        <div className="flex min-h-[260px] items-center justify-center rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="flex flex-col items-center gap-3 text-sm text-gray-600">
-            <Loader2 size={28} className="animate-spin text-[#6571FF]" />
-            <span>Loading gift card settings...</span>
-          </div>
-        </div>
-      )}
+      {isHydratingSettings && <GiftCardsTabSkeleton />}
 
       {!isHydratingSettings && (
         <>
