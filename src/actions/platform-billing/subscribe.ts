@@ -27,6 +27,21 @@ type SubscribeToPlatformPlanInput = {
   debugRequestId?: string;
 };
 
+type BillingDebugEventInput = {
+  requestId: string;
+  companyId: number;
+  planId: string;
+  phase: "preflight" | "accept-error" | "accept-exception";
+  clientEnv?: string;
+  hasClientKey?: boolean;
+  clientKeyLength?: number;
+  hasApiLoginId?: boolean;
+  apiLoginIdMasked?: string;
+  acceptErrorCodes?: string[];
+  acceptErrorMessages?: string[];
+  exceptionMessage?: string;
+};
+
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -61,6 +76,28 @@ function getAuthDebugContext() {
 function isAuthNetRecordNotFound(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error || "");
   return /record cannot be found/i.test(message) || /E00040/i.test(message);
+}
+
+export async function logPlatformBillingDebugEvent(
+  input: BillingDebugEventInput,
+) {
+  try {
+    const session = await requireBillingSession();
+    assertCompanyAccess(session, input.companyId);
+
+    console.warn("[AWX Billing] debug event", {
+      ...input,
+      auth: getAuthDebugContext(),
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("[AWX Billing] debug event failed", {
+      input,
+      message: error?.message,
+    });
+    return { success: false };
+  }
 }
 
 export async function subscribeToPlatformPlan({

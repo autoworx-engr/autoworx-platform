@@ -1,7 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { subscribeToPlatformPlan } from "@/actions/platform-billing/subscribe";
+import {
+  logPlatformBillingDebugEvent,
+  subscribeToPlatformPlan,
+} from "@/actions/platform-billing/subscribe";
 import { toast } from "react-hot-toast";
 import {
   Loader2,
@@ -63,6 +66,28 @@ export function CheckoutForm({
       apiLoginID: process.env.NEXT_PUBLIC_PLATFORM_AUTHNET_API_LOGIN_ID,
     };
 
+    const apiLoginIdMasked = authData.apiLoginID
+      ? `${authData.apiLoginID.slice(0, 4)}...${authData.apiLoginID.slice(-4)}`
+      : undefined;
+
+    // Always log preflight server-side so production has traces even when
+    // Accept.js rejects before subscribe server action is called.
+    try {
+      await logPlatformBillingDebugEvent({
+        requestId,
+        companyId,
+        planId: plan.id,
+        phase: "preflight",
+        clientEnv,
+        hasClientKey: !!authData.clientKey,
+        clientKeyLength: authData.clientKey?.length || 0,
+        hasApiLoginId: !!authData.apiLoginID,
+        apiLoginIdMasked,
+      });
+    } catch {
+      // best-effort debug signal only
+    }
+
     if (!authData.clientKey || !authData.apiLoginID) {
       toast.error(
         "Billing is misconfigured. Missing Authorize.Net public keys.",
@@ -95,6 +120,32 @@ export function CheckoutForm({
     try {
       Accept.dispatchData(secureData, async (response: any) => {
         if (response.messages.resultCode === "Error") {
+          const errors = Array.isArray(response?.messages?.message)
+            ? response.messages.message
+            : [];
+
+          try {
+            await logPlatformBillingDebugEvent({
+              requestId,
+              companyId,
+              planId: plan.id,
+              phase: "accept-error",
+              clientEnv,
+              hasClientKey: !!authData.clientKey,
+              clientKeyLength: authData.clientKey?.length || 0,
+              hasApiLoginId: !!authData.apiLoginID,
+              apiLoginIdMasked,
+              acceptErrorCodes: errors.map((msg: any) =>
+                String(msg?.code || ""),
+              ),
+              acceptErrorMessages: errors.map((msg: any) =>
+                String(msg?.text || ""),
+              ),
+            });
+          } catch {
+            // best-effort debug signal only
+          }
+
           response.messages.message.forEach((msg: any) =>
             toast.error(msg.text),
           );
@@ -120,6 +171,23 @@ export function CheckoutForm({
         }
       });
     } catch (err: any) {
+      try {
+        await logPlatformBillingDebugEvent({
+          requestId,
+          companyId,
+          planId: plan.id,
+          phase: "accept-exception",
+          clientEnv,
+          hasClientKey: !!authData.clientKey,
+          clientKeyLength: authData.clientKey?.length || 0,
+          hasApiLoginId: !!authData.apiLoginID,
+          apiLoginIdMasked,
+          exceptionMessage: err?.message || "Unknown Accept exception",
+        });
+      } catch {
+        // best-effort debug signal only
+      }
+
       toast.error("Failed to process payment");
       setLoading(false);
     }
