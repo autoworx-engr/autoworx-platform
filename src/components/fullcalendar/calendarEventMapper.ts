@@ -1,5 +1,6 @@
 import { EventInput } from "@fullcalendar/core";
 import moment from "moment";
+import { hexToRgba, isHexColor } from "./colorUtils";
 
 type BuildCalendarEventsParams = {
   appointments: any[];
@@ -22,6 +23,9 @@ export const buildCalendarEvents = ({
   appointments.forEach((appointment: any) => {
     const dateStr = getDateString(appointment?.date);
     if (!dateStr) return;
+    const categoryColor = isHexColor(appointment?.serviceCategory?.color)
+      ? appointment.serviceCategory.color
+      : undefined;
 
     mappedEvents.push({
       id: `apt-${appointment.id}`,
@@ -36,9 +40,16 @@ export const buildCalendarEvents = ({
       end: appointment.endTime
         ? `${dateStr}T${appointment.endTime}`
         : undefined,
+      backgroundColor: categoryColor
+        ? hexToRgba(categoryColor, 0.18)
+        : undefined,
+      borderColor: categoryColor ? hexToRgba(categoryColor, 0.55) : undefined,
+      textColor: categoryColor ? "#111827" : undefined,
       extendedProps: {
         type: "appointment",
         serviceType: "Appointment",
+        serviceCategoryColor: categoryColor,
+        serviceCategoryName: appointment?.serviceCategory?.name,
         carModel: appointment.vehicle
           ? `${appointment.vehicle.make} ${appointment.vehicle.model}`
           : undefined,

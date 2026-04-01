@@ -46,6 +46,13 @@ export default function useAppointmentQuery(
               year: true,
             },
           },
+          serviceCategory: {
+            select: {
+              id: true,
+              name: true,
+              color: true,
+            },
+          },
         },
       });
       const appointments = response.data as (Appointment & {

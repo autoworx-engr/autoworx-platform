@@ -1,6 +1,6 @@
 import { EventContentArg } from "@fullcalendar/core";
 import { CustomEventProps } from "./types";
-import { getServiceColor, SERVICE_COLORS } from "./utils";
+import { getServiceColor } from "./utils";
 import HolidayDeleteConfirmation from "@/app/(dashboard)/dashboard/task/_component/calendar/HolidayDeleteConfirmation";
 import { EmployeeType } from "@prisma/client";
 
@@ -14,8 +14,13 @@ export const EventContent = ({
   const { event, view } = eventInfo;
   const props = event.extendedProps as CustomEventProps;
   const serviceType = props.serviceType || "Appointment";
-  const colors = getServiceColor(serviceType);
   const originalData = props.originalData;
+  const categoryColor =
+    props.serviceCategoryColor || originalData?.serviceCategory?.color;
+  const colors = getServiceColor(
+    serviceType,
+    serviceType === "Appointment" ? categoryColor : undefined,
+  );
   const isAdmin = session?.user.employeeType === EmployeeType.Admin;
   // console.log("Rendering event:", {
   //   event: event.extendedProps.originalData,

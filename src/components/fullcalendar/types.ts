@@ -20,6 +20,11 @@ export interface CustomEventProps {
       make: string;
       year: number;
     };
+    serviceCategory?: {
+      id: number;
+      name: string;
+      color?: string;
+    };
     taskUser?: [
       {
         id: number;
@@ -38,6 +43,14 @@ export interface CustomEventProps {
     ];
   };
   serviceType?: string;
+  serviceCategoryColor?: string;
+  serviceCategoryName?: string;
 }
 
-export type ServiceType = CustomEventProps["serviceType"];
+export type ServiceType =
+  | "Low"
+  | "Medium"
+  | "High"
+  | "Task"
+  | "Appointment"
+  | "Holiday";
