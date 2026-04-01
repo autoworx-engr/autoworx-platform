@@ -52,10 +52,32 @@ export function CheckoutForm({
     e.preventDefault();
     setLoading(true);
 
+    const requestId = `awx-sub-${Date.now()}`;
+    const clientEnv =
+      process.env.NEXT_PUBLIC_PLATFORM_AUTHNET_ENVIRONMENT === "production"
+        ? "production"
+        : "sandbox";
+
     const authData = {
       clientKey: process.env.NEXT_PUBLIC_PLATFORM_AUTHNET_CLIENT_KEY,
       apiLoginID: process.env.NEXT_PUBLIC_PLATFORM_AUTHNET_API_LOGIN_ID,
     };
+
+    if (!authData.clientKey || !authData.apiLoginID) {
+      toast.error(
+        "Billing is misconfigured. Missing Authorize.Net public keys.",
+      );
+      setLoading(false);
+      return;
+    }
+
+    if (typeof Accept === "undefined" || !Accept?.dispatchData) {
+      toast.error(
+        "Payment library failed to load. Please refresh and try again.",
+      );
+      setLoading(false);
+      return;
+    }
 
     const cardDetails = {
       cardNumber: cardData.cardNumber.replace(/\s+/g, ""),
@@ -85,6 +107,7 @@ export function CheckoutForm({
             firstName: cardData.firstName,
             lastName: cardData.lastName,
             opaqueData: response.opaqueData,
+            debugRequestId: requestId,
           });
 
           if (result?.success) {
