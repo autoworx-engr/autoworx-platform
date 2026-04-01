@@ -317,7 +317,7 @@ export default function ServiceCreateClient({
       nextErrors.description = "Description is required";
     }
 
-    const hasRequiredRow = (items || []).some((item) => {
+    const rowStates = (items || []).map((item) => {
       const hasService = Boolean(item?.service);
       const hasLabor = Boolean(item?.labor && String(item.labor.name || "").trim());
       const hasMaterial = Array.isArray(item?.materials)
@@ -326,12 +326,23 @@ export default function ServiceCreateClient({
         )
         : false;
 
-      return hasService && hasLabor && hasMaterial;
+      return {
+        hasService,
+        hasLabor,
+        hasMaterial,
+        hasAny: hasService || hasLabor || hasMaterial,
+      };
     });
 
-    if (!hasRequiredRow) {
-      nextErrors.items =
-        "Service, material, and labor is required";
+    const hasAnySelectedRow = rowStates.some((row) => row.hasAny);
+    const hasIncompleteSelectedRow = rowStates.some(
+      (row) => row.hasAny && !(row.hasService && row.hasLabor && row.hasMaterial),
+    );
+
+    if (!hasAnySelectedRow) {
+      nextErrors.items = "Service, material, and labor is required";
+    } else if (hasIncompleteSelectedRow) {
+      nextErrors.items = "Each selected row must include service, material, and labor";
     }
 
     const invalidMaterialQuantity = (items || []).some((item) =>
