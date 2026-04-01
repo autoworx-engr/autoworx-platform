@@ -24,10 +24,38 @@ type SubscribeToPlatformPlanInput = {
   firstName: string;
   lastName: string;
   opaqueData: { dataDescriptor: string; dataValue: string };
+  debugRequestId?: string;
 };
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function mask(value?: string | null) {
+  if (!value) return "(missing)";
+  if (value.length <= 8) return `${value[0]}***${value[value.length - 1]}`;
+  return `${value.slice(0, 4)}...${value.slice(-4)}`;
+}
+
+function getAuthDebugContext() {
+  const serverLogin = process.env.PLATFORM_AUTHNET_API_LOGIN_ID || "";
+  const publicLogin =
+    process.env.NEXT_PUBLIC_PLATFORM_AUTHNET_API_LOGIN_ID || "";
+  const serverTx = process.env.PLATFORM_AUTHNET_TRANSACTION_KEY || "";
+  const serverEnv = process.env.PLATFORM_AUTHNET_ENVIRONMENT || "(unset)";
+  const publicEnv =
+    process.env.NEXT_PUBLIC_PLATFORM_AUTHNET_ENVIRONMENT || "(unset)";
+
+  return {
+    nodeEnv: process.env.NODE_ENV || "(unset)",
+    serverEnv,
+    publicEnv,
+    serverLoginMasked: mask(serverLogin),
+    publicLoginMasked: mask(publicLogin),
+    loginIdMatch: !!serverLogin && !!publicLogin && serverLogin === publicLogin,
+    hasServerTransactionKey: !!serverTx,
+    transactionKeyLength: serverTx.length,
+  };
 }
 
 function isAuthNetRecordNotFound(error: unknown): boolean {
@@ -42,8 +70,19 @@ export async function subscribeToPlatformPlan({
   firstName,
   lastName,
   opaqueData,
+  debugRequestId,
 }: SubscribeToPlatformPlanInput) {
   try {
+    const requestId = debugRequestId || `sub-${Date.now()}`;
+    console.log("[AWX Billing] subscribe start", {
+      requestId,
+      companyId,
+      planId,
+      opaqueDescriptor: opaqueData?.dataDescriptor,
+      opaqueValueLength: opaqueData?.dataValue?.length || 0,
+      auth: getAuthDebugContext(),
+    });
+
     const session = await requireBillingSession();
     assertCompanyAccess(session, companyId);
 
@@ -418,7 +457,11 @@ export async function subscribeToPlatformPlan({
 
     return { success: true };
   } catch (error: any) {
-    console.error("❌ Subscription failed:", error);
+    console.error("❌ Subscription failed:", {
+      message: error?.message,
+      stack: error?.stack,
+      auth: getAuthDebugContext(),
+    });
     return { success: false, message: error.message || "Failed to subscribe" };
   }
 }
