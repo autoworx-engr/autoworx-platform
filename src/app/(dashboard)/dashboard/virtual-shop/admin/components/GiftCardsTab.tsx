@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
-import { Popconfirm } from "antd";
+import { Popconfirm, Tooltip } from "antd";
 import { Switch } from "@/components/Switch";
 import Selector from "@/components/Selector";
 import { Button } from "@/components/ui/button";
@@ -39,11 +39,11 @@ import {
   FileText,
   ShieldCheck,
   Plus,
-  Pencil,
   Trash2,
   Loader2,
   SquarePen,
   Check,
+  CircleHelp,
 } from "lucide-react";
 
 // ── Gift Card Designs ─────────────────────────────────────────────────────────
@@ -144,10 +144,31 @@ function Section({
   );
 }
 
-function ToggleRow({ label, checked, setChecked }: { label: string; checked: boolean; setChecked: (v: boolean) => void }) {
+function ToggleRow({
+  label,
+  checked,
+  setChecked,
+  tooltip,
+}: {
+  label: string;
+  checked: boolean;
+  setChecked: (v: boolean) => void;
+  tooltip: string;
+}) {
   return (
     <div className="flex items-center justify-between py-1">
-      <span className="text-sm font-semibold text-gray-800">{label}</span>
+      <div className="flex items-center gap-1.5">
+        <span className="text-sm font-semibold text-gray-800">{label}</span>
+        <Tooltip title={tooltip} placement="top">
+          <button
+            type="button"
+            aria-label={`${label} info`}
+            className="inline-flex text-gray-400 hover:text-gray-600"
+          >
+            <CircleHelp size={14} />
+          </button>
+        </Tooltip>
+      </div>
       <Switch checked={checked} setChecked={setChecked} />
     </div>
   );
@@ -158,11 +179,12 @@ function ToggleRow({ label, checked, setChecked }: { label: string; checked: boo
 export default function GiftCardsTab() {
   const { data: session } = useSession();
   const accessToken = session?.accessToken;
+  const companyId = session?.user?.companyId;
   const {
     data: giftCardSettings,
     isLoading: isGiftCardSettingsLoading,
     isFetched: hasFetchedGiftCardSettings,
-  } = useGetGiftCardSettings(accessToken);
+  } = useGetGiftCardSettings(companyId);
   const { mutateAsync: updateGiftCardSettings, isPending: isSaving } =
     useUpdateGiftCardSettings();
   const {
@@ -189,8 +211,47 @@ export default function GiftCardsTab() {
   // Designs
   const [designs, setDesigns] = useState<CardDesign[]>(INITIAL_DESIGNS);
 
-  const toggleDesign = (id: number, enabled: boolean) =>
-    setDesigns((prev) => prev.map((d) => (d.id === id ? { ...d, enabled } : d)));
+  const toggleDesign = (id: number, enabled: boolean) => {
+    setDesigns((prev) => {
+      const next = prev.map((d) => (d.id === id ? { ...d, enabled } : d));
+
+      if (enabled) {
+        return next;
+      }
+
+      const toggledDesign = next.find((design) => design.id === id);
+      if (!toggledDesign?.isDefault) {
+        return next;
+      }
+
+      const fallbackDefault = next.find((design) => design.id !== id && design.enabled);
+      if (!fallbackDefault) {
+        return next.map((design) => (design.id === id ? { ...design, isDefault: false } : design));
+      }
+
+      return next.map((design) => {
+        if (design.id === id) {
+          return { ...design, isDefault: false };
+        }
+
+        if (design.id === fallbackDefault.id) {
+          return { ...design, isDefault: true };
+        }
+
+        return design;
+      });
+    });
+  };
+
+  const setDefaultTemplateInState = (id: number) => {
+    setDesigns((prev) =>
+      prev.map((design) => ({
+        ...design,
+        isDefault: design.id === id,
+        enabled: design.id === id ? true : design.enabled,
+      })),
+    );
+  };
 
   const [newTemplateName, setNewTemplateName] = useState("");
   const [newTemplateImageFile, setNewTemplateImageFile] = useState<File | null>(null);
@@ -487,26 +548,40 @@ export default function GiftCardsTab() {
     }
   };
 
-  const handleSetDefaultTemplate = async (template: CardDesign) => {
+  const handleSaveTemplates = async () => {
     if (!accessToken) {
       toast.error("Session expired. Please sign in again.");
       return;
     }
 
-    try {
-      await updateGiftCardTemplate({
-        id: template.id,
-        payload: {
-          isDefault: true,
-          isActive: true,
-        },
-        accessToken,
-      });
+    if (!designs.some((design) => design.enabled)) {
+      toast.error("At least one gift card template must be active");
+      return;
+    }
 
-      toast.success("Default template updated successfully");
+    if (!designs.some((design) => design.enabled && design.isDefault)) {
+      toast.error("Please set one active template as default");
+      return;
+    }
+
+    try {
+      await Promise.all(
+        designs.map((design) =>
+          updateGiftCardTemplate({
+            id: design.id,
+            payload: {
+              isActive: design.enabled,
+              isDefault: design.isDefault,
+            },
+            accessToken,
+          }),
+        ),
+      );
+
+      toast.success("Gift card templates saved successfully");
     } catch (error: any) {
       const message =
-        error?.response?.data?.message ?? error?.message ?? "Failed to set default template";
+        error?.response?.data?.message ?? error?.message ?? "Failed to save templates";
       toast.error(message);
     }
   };
@@ -660,15 +735,25 @@ export default function GiftCardsTab() {
                   <div className="flex items-center gap-3">
                     {!design.isDefault && design.enabled && (
                       <button
-                        onClick={() => handleSetDefaultTemplate(design)}
-                        disabled={isUpdatingTemplate}
+                        onClick={() => setDefaultTemplateInState(design.id)}
                         className="inline-flex items-center gap-1 rounded-md border border-[#6571FF] px-2.5 py-1 text-xs font-semibold text-[#6571FF] transition-colors hover:bg-[#6571FF] hover:text-white disabled:opacity-60"
                       >
                         <Check size={14} />
                         Set Default
                       </button>
                     )}
-                    <Switch checked={design.enabled} setChecked={(v) => toggleDesign(design.id, v)} />
+                    <Tooltip
+                      title={
+                        design.enabled
+                          ? "Enabled templates are available to customers when buying gift cards."
+                          : "Enable this template to make it available to customers."
+                      }
+                      placement="top"
+                    >
+                      <div>
+                        <Switch checked={design.enabled} setChecked={(v) => toggleDesign(design.id, v)} />
+                      </div>
+                    </Tooltip>
                     <Popconfirm
                       title="Delete template"
                       description={`Delete template "${design.name}"? This action cannot be undone.`}
@@ -691,13 +776,29 @@ export default function GiftCardsTab() {
                   </div>
                 </div>
               ))}
+
+              <div className="flex justify-end">
+                <Button
+                  type="button"
+                  onClick={handleSaveTemplates}
+                  disabled={isUpdatingTemplate || !accessToken}
+                  className="bg-[#6571FF] hover:bg-[#5560ee]"
+                >
+                  {isUpdatingTemplate ? "Saving..." : "Save Changes"}
+                </Button>
+              </div>
             </div>
           </Section>
 
           {/* ── Amount Presets ── */}
           <Section icon={DollarSign} title="Amount Presets" subtitle="Configure preset amounts and custom range">
             <div className="flex flex-col gap-4">
-              <ToggleRow label="Show Presets" checked={showPresets} setChecked={setShowPresets} />
+              <ToggleRow
+                label="Show Presets"
+                checked={showPresets}
+                setChecked={setShowPresets}
+                tooltip="Show quick-pick gift card amounts for faster checkout."
+              />
 
               {showPresets && (
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -707,7 +808,12 @@ export default function GiftCardsTab() {
                 </div>
               )}
 
-              <ToggleRow label="Allow Custom Amount" checked={allowCustom} setChecked={setAllowCustom} />
+              <ToggleRow
+                label="Allow Custom Amount"
+                checked={allowCustom}
+                setChecked={setAllowCustom}
+                tooltip="Allow customers to enter their own amount within the min/max range."
+              />
 
               {allowCustom && (
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -721,8 +827,18 @@ export default function GiftCardsTab() {
           {/* ── Delivery Options ── */}
           <Section icon={Send} title="Delivery Options" subtitle="Configure how gift cards can be delivered">
             <div className="flex flex-col gap-4">
-              <ToggleRow label="Enable Text Delivery" checked={textDelivery} setChecked={setTextDelivery} />
-              <ToggleRow label="Enable Email Delivery" checked={emailDelivery} setChecked={setEmailDelivery} />
+              <ToggleRow
+                label="Enable Text Delivery"
+                checked={textDelivery}
+                setChecked={setTextDelivery}
+                tooltip="Allow gift cards to be delivered to recipients by SMS/text."
+              />
+              <ToggleRow
+                label="Enable Email Delivery"
+                checked={emailDelivery}
+                setChecked={setEmailDelivery}
+                tooltip="Allow gift cards to be delivered to recipients by email."
+              />
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-semibold text-gray-700">Default Method</label>
@@ -738,7 +854,12 @@ export default function GiftCardsTab() {
                 />
               </div>
 
-              <ToggleRow label="Allow Scheduled Send" checked={scheduledSend} setChecked={setScheduledSend} />
+              <ToggleRow
+                label="Allow Scheduled Send"
+                checked={scheduledSend}
+                setChecked={setScheduledSend}
+                tooltip="Let customers choose a future date/time to send the gift card."
+              />
             </div>
           </Section>
 

@@ -130,17 +130,32 @@ export default function ServiceInfo({
                 type="number"
                 min={0}
                 step="0.01"
+                placeholder="0"
+                inputMode="decimal"
                 value={
                   vehicleTypeModifiers[
-                  vehicleType.key as keyof typeof vehicleTypeModifiers
-                  ]
+                    vehicleType.key as keyof typeof vehicleTypeModifiers
+                  ] === "0"
+                    ? ""
+                    : vehicleTypeModifiers[
+                    vehicleType.key as keyof typeof vehicleTypeModifiers
+                    ]
                 }
-                onChange={(event) =>
-                  setVehicleTypeModifiers((prev) => ({
-                    ...prev,
-                    [vehicleType.key]: event.target.value,
-                  }))
-                }
+                onKeyDown={(event) => {
+                  if (["e", "E", "+", "-"].includes(event.key)) {
+                    event.preventDefault();
+                  }
+                }}
+                onChange={(event) => {
+                  const nextValue = event.target.value;
+
+                  if (nextValue === "" || /^\d*\.?\d{0,2}$/.test(nextValue)) {
+                    setVehicleTypeModifiers((prev) => ({
+                      ...prev,
+                      [vehicleType.key]: nextValue,
+                    }));
+                  }
+                }}
                 className={cn(
                   "w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-400",
                   slimInputClassName,
