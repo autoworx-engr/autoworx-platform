@@ -16,7 +16,6 @@ import AppointmentTitleSelectAndAdd from "./AppointmentTitleSelectAndAdd";
 
 import type {
   Appointment,
-  Category,
   Client,
   EmailTemplate,
   Lead,
@@ -33,7 +32,6 @@ import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { queryKeys } from "@/lib/queryKeys";
 import { errorToast, successToast } from "@/lib/toast";
 import { useCalendarStore } from "@/stores/calendarStore";
-import { useListsStore } from "@/stores/lists";
 import { formatTime12Hour } from "@/utils/formateTime12Hours";
 import { normalizeTime } from "@/utils/normalizeTime";
 import { formatTime } from "@/utils/taskAndActivity";
@@ -56,6 +54,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AssignUsers from "./AssignUsers";
 import { Reminder } from "./Reminder";
 import ScheduleTab from "./ScheduleTab";
+import { SelectAppointmentServiceCategory } from "./SelectAppointmentServiceCategory";
 import { SelectAppointmentClient } from "./SelectAppointmentClient";
 import { SelectAppointmentVehicle } from "./SelectAppointmentVehicle";
 enum Tab {
@@ -111,7 +110,6 @@ export default function AppointmentModalBody({
   const queryClient = useQueryClient();
   const { showError, clearError } = useFormErrorStore();
   const { setUpdateVariable } = useCalendarStore();
-  const categories = useListsStore((x) => x.categories);
 
   const [client, setClient] = useState<Partial<
     Client & {
@@ -149,9 +147,9 @@ export default function AppointmentModalBody({
   const [endTime, setEndTime] = useState("00:00");
   const [allDay, setAllDay] = useState(false);
   const [vehicle, setVehicle] = useState<Partial<Vehicle> | null>(null);
-  const [serviceCategoryId, setServiceCategoryId] = useState<
-    number | undefined
-  >(undefined);
+  const [serviceCategoryId, setServiceCategoryId] = useState<number | null>(
+    null,
+  );
   const [draft, setDraft] = useState<string | null>(draftEstimateId || null);
   const [draftSearch, setDraftSearch] = useState("");
   const [assignedUsers, setAssignedUsers] = useState<User[]>([]);
@@ -205,7 +203,7 @@ export default function AppointmentModalBody({
     setEndTime("00:00");
     setClient(null);
     setVehicle(null);
-    setServiceCategoryId(undefined);
+    setServiceCategoryId(null);
     setDraft(null);
     setAssignedUsers([]);
     setConfirmationTemplate(null);
@@ -292,9 +290,7 @@ export default function AppointmentModalBody({
       setNotes(appointment?.notes ?? "");
       setClient(appointment?.client ?? null);
       setVehicle(appointment?.vehicle ?? null);
-      setServiceCategoryId(
-        (appointment as any)?.serviceCategoryId ?? undefined,
-      );
+      setServiceCategoryId((appointment as any)?.serviceCategoryId ?? null);
       setDraft(appointment?.draftEstimate ?? null);
       setAssignedUsers(appointment?.assignUsers ?? []);
       setTimes((appointment?.times as any) ?? []);
@@ -318,7 +314,7 @@ export default function AppointmentModalBody({
           : [],
         client: appointment?.client ?? null,
         vehicle: appointment?.vehicle ?? null,
-        serviceCategoryId: (appointment as any)?.serviceCategoryId ?? undefined,
+        serviceCategoryId: (appointment as any)?.serviceCategoryId ?? null,
         draft: appointment?.draftEstimate ?? null,
         notes: appointment?.notes ?? "",
         confirmationTemplate: appointment?.confirmationEmailTemplate ?? null,
@@ -343,7 +339,7 @@ export default function AppointmentModalBody({
         assignedUsers: [],
         client: null,
         vehicle: null,
-        serviceCategoryId: undefined,
+        serviceCategoryId: null,
         draft: draftEstimateId || null,
         notes: "",
         confirmationTemplate: null,
@@ -530,6 +526,10 @@ export default function AppointmentModalBody({
       }
 
       let res;
+      const selectedClientId = client?.id ?? undefined;
+      const selectedVehicleId = vehicle?.id ?? undefined;
+      const selectedServiceCategoryId =
+        serviceCategoryId === null ? undefined : serviceCategoryId;
 
       if (fromEdit && appointmentId) {
         res = await editAppointment({
@@ -540,9 +540,9 @@ export default function AppointmentModalBody({
             startTime: startTime as string,
             endTime: endTime as string,
             assignedUsers: assignedUsers.map((user) => user.id),
-            clientId: client ? client.id : undefined,
-            vehicleId: vehicle ? vehicle.id : undefined,
-            serviceCategoryId,
+            clientId: selectedClientId,
+            vehicleId: selectedVehicleId,
+            serviceCategoryId: selectedServiceCategoryId,
             draftEstimate: draft,
             notes,
             confirmationEmailTemplateId: confirmationTemplate?.id,
@@ -571,9 +571,9 @@ export default function AppointmentModalBody({
           startTime,
           endTime,
           assignedUsers: assignedUsers.map((user) => user.id),
-          clientId: client ? client.id : undefined,
-          vehicleId: vehicle ? vehicle.id : undefined,
-          serviceCategoryId,
+          clientId: selectedClientId,
+          vehicleId: selectedVehicleId,
+          serviceCategoryId: selectedServiceCategoryId,
           draftEstimate: draft,
           notes,
           confirmationEmailTemplateId: confirmationTemplate?.id,
@@ -806,11 +806,6 @@ export default function AppointmentModalBody({
     const label = formatTime12Hour(hour, minute, timezone);
     return { value, label };
   });
-
-  const getCategoryColor = (color?: string) => {
-    if (!color) return "#94A3B8";
-    return /^#([0-9A-Fa-f]{3}){1,2}$/.test(color) ? color : "#94A3B8";
-  };
 
   return (
     <DialogContent
@@ -1055,38 +1050,10 @@ export default function AppointmentModalBody({
                 setOpenDropdown={setVehicleOpenDropdown}
                 setIsAppointmentModalOpen={setIsAppointmentModalOpen}
               />
-              <div className="w-full">
-                <Select
-                  allowClear
-                  placeholder="Select service category"
-                  value={serviceCategoryId}
-                  onChange={(value) => setServiceCategoryId(value)}
-                  style={{ width: "100%" }}
-                  className="h-[38px] w-full rounded-xl"
-                  optionFilterProp="label"
-                  showSearch
-                >
-                  {categories.map((category: Category) => (
-                    <Option
-                      key={category.id}
-                      value={category.id}
-                      label={category.name}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span
-                          className="h-2.5 w-2.5 rounded-full border border-slate-200"
-                          style={{
-                            backgroundColor: getCategoryColor(
-                              (category as any).color,
-                            ),
-                          }}
-                        />
-                        <span>{category.name}</span>
-                      </div>
-                    </Option>
-                  ))}
-                </Select>
-              </div>
+              <SelectAppointmentServiceCategory
+                value={serviceCategoryId}
+                setValue={setServiceCategoryId}
+              />
               <div className="w-full">
                 <DropdownMenu.Root open={draftOpen} onOpenChange={setDraftOpen}>
                   <DropdownMenu.Trigger asChild>

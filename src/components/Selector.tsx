@@ -25,7 +25,7 @@ interface SelectorProps<T> {
   items: T[];
   border?: boolean;
   footer?: React.ReactNode;
-  newButton: React.ReactNode;
+  newButton?: React.ReactNode;
   displayList: (item: T) => JSX.Element;
   onSearch?: (search: string) => T[];
   onSelect?: (item: T) => void;
@@ -121,15 +121,15 @@ export default function Selector<T>({
     } else {
       const searchedItems = searchQuery.trim()
         ? items.filter(
-          (item: any) =>
-            item.clientName
-              ?.toLowerCase()
-              .includes(searchQuery.toLowerCase()) ||
-            item.id
-              ?.toString()
-              .toLowerCase()
-              .includes(searchQuery.toLowerCase()),
-        )
+            (item: any) =>
+              item.clientName
+                ?.toLowerCase()
+                .includes(searchQuery.toLowerCase()) ||
+              item.id
+                ?.toString()
+                .toLowerCase()
+                .includes(searchQuery.toLowerCase()),
+          )
         : items;
       setFilteredItems(searchedItems);
     }
@@ -198,7 +198,7 @@ export default function Selector<T>({
                     "hover:bg-[#6571FF]/5 active:bg-[#6571FF]/10",
                     isSelected && "bg-[#6571FF]/10",
                     border &&
-                    "border-b border-slate-100 rounded-md last:border-b-0",
+                      "border-b border-slate-100 rounded-md last:border-b-0",
                   )}
                 >
                   <div className="flex-1 min-w-0">{displayList(item)}</div>
@@ -238,10 +238,12 @@ export default function Selector<T>({
       </div>
 
       {/* Footer / Action area */}
-      <div className="border-t border-slate-100 p-1.5">
-        {newButton}
-        {footer && <div className="mt-1">{footer}</div>}
-      </div>
+      {(newButton || footer) && (
+        <div className="border-t border-slate-100 p-1.5">
+          {newButton}
+          {footer && <div className="mt-1">{footer}</div>}
+        </div>
+      )}
     </>
   );
 
