@@ -41,10 +41,13 @@ function extractSubdomain(request: NextRequest): string | null {
     return parts.length > 0 ? parts[0] : null;
   }
 
+  // Prefixes that should not be treated as tenant subdomains
+  const ignoredSubdomains = ["www", "dev", "stage"];
+
   // Regular subdomain detection
   const isSubdomain =
     hostname !== rootDomainFormatted &&
-    hostname !== `www.${rootDomainFormatted}` &&
+    !ignoredSubdomains.some((sub) => hostname === `${sub}.${rootDomainFormatted}`) &&
     hostname.endsWith(`.${rootDomainFormatted}`);
 
   return isSubdomain ? hostname.replace(`.${rootDomainFormatted}`, "") : null;
