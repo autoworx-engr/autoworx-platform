@@ -1,6 +1,4 @@
 import {
-  createGiftCardSettings,
-  getGiftCardSettings,
   UpdateGiftCardSettingsPayload,
   updateGiftCardSettings,
   getGiftCardSettingsByCompanyId,
@@ -15,32 +13,18 @@ type UpdateGiftCardSettingsParams = {
   accessToken: string;
 };
 
-function isNotFoundError(error: any) {
-  const status = error?.statusCode ?? error?.response?.status;
-  return status === 404;
-}
-
-export const useGetGiftCardSettings = (accessToken?: string) => {
+export const useGetGiftCardSettings = (companyId?: number) => {
   return useQuery({
-    queryKey: ["virtual-shop-gift-card-settings"],
+    queryKey: ["virtual-shop-gift-card-settings", companyId],
     queryFn: async () => {
-      if (!accessToken) {
-        throw new Error("Missing access token");
+      if (!companyId) {
+        throw new Error("Missing company id");
       }
 
-      try {
-        return await getGiftCardSettings(accessToken);
-      } catch (error: any) {
-        if (isNotFoundError(error)) {
-          return createGiftCardSettings(accessToken);
-        }
-
-        throw error;
-      }
+      return getGiftCardSettingsByCompanyId(Number(companyId));
     },
-    enabled: !!accessToken,
+    enabled: !!companyId,
     staleTime: 1000 * 60,
-    retry: false,
   });
 };
 
@@ -58,7 +42,6 @@ export const useUpdateGiftCardSettings = () => {
   });
 };
 
-
 export const useGetGiftCardSettingsByCompanyId = (companyId?: number) => {
   return useQuery({
     queryKey: ["virtual-shop-gift-card-settings", companyId],
@@ -74,7 +57,9 @@ export const useGetGiftCardTemplatesPublic = (companyId?: number) => {
     queryFn: () => getGiftCardTemplatesPublic(Number(companyId)),
     enabled: !!companyId,
   });
-};export const useBuyGiftCard = () => {
+};
+
+export const useBuyGiftCard = () => {
   return useMutation({
     mutationFn: (payload: BuyGiftCardPayload) => buyGiftCard(payload),
   });
