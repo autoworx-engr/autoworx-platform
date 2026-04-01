@@ -22,6 +22,7 @@ export const PUBLIC_API_ROUTES = [
   "/api/infobip",
   "/api/lead-generate",
   "/api/authorize-net/webhook",
+  "/api/platform/webhook",
   "/api/infobip/mms/receive",
   "/api/infobip/sms/receive",
   "/api/infobip/email/receive",

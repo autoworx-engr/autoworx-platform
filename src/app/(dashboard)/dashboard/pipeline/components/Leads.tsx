@@ -497,7 +497,10 @@ const Leads = ({ salesColumn }: TProps) => {
                           </Link>
                         </td>
                         <td className="border-b px-4 py-2 text-left">
-                          <Link href="#" className="block h-full w-full">
+                          <Link
+                            href={`/dashboard/client/${lead.clientId}`}
+                            className="block h-full w-full"
+                          >
                             {lead.clientName}
                           </Link>
                         </td>

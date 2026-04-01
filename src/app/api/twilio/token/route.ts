@@ -1,4 +1,9 @@
 import { getTwilioCredentials } from "@/actions/communication/client/sendTwilioMessage";
+import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
+import {
+  assertCompanyAccess,
+  requireBillingSession,
+} from "@/lib/platform-billing/guards";
 import { NextRequest, NextResponse } from "next/server";
 import twilio from "twilio";
 
@@ -28,18 +33,36 @@ import twilio from "twilio";
  *         description: Server error
  */
 export async function POST(request: NextRequest) {
-  const { identity, companyId, platform } = await request.json();
+  const {
+    identity: rawIdentity,
+    companyId: rawCompanyId,
+    platform,
+  } = await request.json();
+  const companyId = Number(rawCompanyId);
+  // Twilio Client identity cannot contain '+' or other special chars — normalize.
+  const identity = (rawIdentity as string).replace(/[^a-zA-Z0-9_\-.~]/g, "");
+
+  const entitlements = await getCompanyEntitlements(companyId);
+  if (!entitlements.canUseVoice) {
+    return NextResponse.json(
+      { error: "Voice calling is not enabled for this plan." },
+      { status: 403 },
+    );
+  }
 
   try {
     const AccessToken = twilio.jwt.AccessToken;
     const VoiceGrant = AccessToken.VoiceGrant;
 
-    let twilioCredentials = await getTwilioCredentials({ companyId });
+    let twilioCredentials = await getTwilioCredentials({
+      companyId,
+    });
 
     if (!twilioCredentials) {
+      console.error("🚀 ~ POST ~ twilioCredentials not found");
       return NextResponse.json(
         { error: "Twilio credentials not found" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -47,15 +70,21 @@ export async function POST(request: NextRequest) {
       twilioCredentials.accountSid,
       twilioCredentials.apiKeySid,
       twilioCredentials.apiKeySecret,
-      { identity }
+      { identity },
     );
 
     let pushCredentialSid: string | undefined;
+    console.log(
+      "🚀 ~ POST ~ twilioCredentials APN_FCM_TEST:",
+      twilioCredentials,
+    );
 
     if (platform === "ios") {
       pushCredentialSid = twilioCredentials.apnPushCredentialSid ?? undefined;
+      console.log("🚀 ~ POST ~ ios pushCredentialSid:", pushCredentialSid);
     } else if (platform === "android") {
       pushCredentialSid = twilioCredentials.fcmPushCredentialSid ?? undefined;
+      console.log("🚀 ~ POST ~ android pushCredentialSid:", pushCredentialSid);
     }
 
     if (twilioCredentials.twimlAppSid) {

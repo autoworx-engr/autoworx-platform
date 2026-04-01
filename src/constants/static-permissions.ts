@@ -112,6 +112,11 @@ export const staticPermissions = [
     permission_name: "sales-agent",
     status: false,
   },
+  {
+    title: "Reporting Automation",
+    permission_name: "reportingAutomation",
+    status: false,
+  },
 ];
 
 export const CHILD_PERMISSIONS = [
@@ -127,6 +132,7 @@ export const AUTOMATION_CHILD_PERMISSIONS = [
   "inventoryAutomation",
   "serviceAutomation",
   "tagAutomation",
+  "reportingAutomation",
 ];
 export const COMMUNICATION_HUB_CHILD_PERMISSIONS = [
   "communicationHubInternal",

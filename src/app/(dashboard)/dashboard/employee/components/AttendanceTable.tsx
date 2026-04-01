@@ -76,6 +76,7 @@ const Dashboard = () => {
   const [updateSuccess, setUpdateSuccess] = useState<string | null>(null);
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
+  const [hasManualDateRange, setHasManualDateRange] = useState(false);
 
   const params = useParams();
   const employeeId = Number(params?.id);
@@ -303,8 +304,8 @@ const Dashboard = () => {
         <div className="left-3 top-3 w-fit">
           <DateRange
             dateRange={[
-              startDate ? new Date(startDate) : null,
-              endDate ? new Date(endDate) : null,
+              hasManualDateRange && startDate ? new Date(startDate) : null,
+              hasManualDateRange && endDate ? new Date(endDate) : null,
             ]}
             onOk={(start: any, end: any) => {
               let startDateObj: Date;
@@ -367,9 +368,11 @@ const Dashboard = () => {
 
               setStartDate(formattedStartDate);
               setEndDate(formattedEndDate);
+              setHasManualDateRange(true);
             }}
             onCancel={() => {
-              // Reset to current week
+              // Clear manual filter in UI and keep fallback current week data
+              setHasManualDateRange(false);
               if (timezone) {
                 const currentWeekStart = moment.tz(timezone).startOf("week");
                 const currentWeekEnd = moment.tz(timezone).endOf("week");
