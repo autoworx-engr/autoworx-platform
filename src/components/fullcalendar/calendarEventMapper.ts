@@ -41,7 +41,7 @@ export const buildCalendarEvents = ({
         ? `${dateStr}T${appointment.endTime}`
         : undefined,
       backgroundColor: categoryColor
-        ? hexToRgba(categoryColor, 0.18)
+        ? hexToRgba(categoryColor, 0.34)
         : undefined,
       borderColor: categoryColor ? hexToRgba(categoryColor, 0.55) : undefined,
       textColor: categoryColor ? "#111827" : undefined,
