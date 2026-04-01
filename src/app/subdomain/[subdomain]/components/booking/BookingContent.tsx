@@ -85,11 +85,12 @@ const BookingContent = ({ initialShop }: { initialShop?: any }) => {
   // Sync pagination metadata to context
   useEffect(() => {
     if (shopServices?.meta) {
-      setTotalPages(shopServices.meta.totalPages);
-      setHasNextPage(shopServices.meta.hasNextPage);
-      setHasPrevPage(shopServices.meta.hasPrevPage);
+      const { totalPages, hasNextPage, hasPrevPage } = shopServices.meta;
+      setTotalPages(totalPages);
+      setHasNextPage(hasNextPage);
+      setHasPrevPage(hasPrevPage);
     }
-  }, [shopServices?.meta, setTotalPages, setHasNextPage, setHasPrevPage]);
+  }, [shopServices?.meta]);
 
   // Map and sync services to context
   useEffect(() => {
@@ -132,7 +133,7 @@ const BookingContent = ({ initialShop }: { initialShop?: any }) => {
     );
   }
 
-  if (!shop && !isShopLoading || shop?.isActive === false) {
+  if ((!shop && !isShopLoading) || shop?.isActive === false) {
     return <ShopNotFound />;
   }
 

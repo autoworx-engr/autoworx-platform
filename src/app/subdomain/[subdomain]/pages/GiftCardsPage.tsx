@@ -25,6 +25,7 @@ import {
   GiftCardSettings,
   initialPurchaseData,
 } from "../data/gift-card-types";
+import ShopNotFound from "../components/giftcards/ShopNotFound";
 
 type BuyStep =
   | "design"
@@ -603,19 +604,7 @@ const GiftCardsPage = ({
   }
 
   if (error || !settings) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 text-center space-y-4">
-        <div className="w-12 h-12 bg-destructive/10 text-destructive flex flex-col items-center justify-center rounded-full">
-          <RefreshCw className="w-6 h-6" />
-        </div>
-        <p className="text-lg font-medium text-destructive">
-          {error || "Gift cards not configured."}
-        </p>
-        <p className="text-muted-foreground text-sm max-w-sm">
-          Please contact the shop owner to resolve configuration issues.
-        </p>
-      </div>
-    );
+    return <ShopNotFound />;
   }
 
   return (
