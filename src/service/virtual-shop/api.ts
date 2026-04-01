@@ -433,10 +433,21 @@ export const configureVirtualShop = async function (payload: ShopData) {
   }
 };
 
-export const getShopByCompanyId = async function (companyId: number) {
+export const getShopById = async function (id?: number) {
+  try {
+    const response = await axios.get(`/api/virtual-shop/configure/${id}`);
+
+    return response.data?.data;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+
+export const getShopsByCompanyId = async function (companyId: number) {
   try {
     const response = await axios.get(
-      `/api/virtual-shop/configure/${companyId}`,
+      `/api/virtual-shop/configure/company/${companyId}`,
     );
 
     return response.data?.data;
@@ -448,13 +459,23 @@ export const getShopByCompanyId = async function (companyId: number) {
 
 export const updateShopConfigure = async function (
   payload: ShopData,
-  companyId: number,
+  id?: number,
 ) {
   try {
     const response = await axios.patch(
-      `/api/virtual-shop/configure/${companyId}`,
+      `/api/virtual-shop/configure/${id}`,
       payload,
     );
+
+    return response.data;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+export const deleteShopConfigure = async function (id: number) {
+  try {
+    const response = await axios.delete(`/api/virtual-shop/configure/${id}`);
 
     return response.data;
   } catch (error) {

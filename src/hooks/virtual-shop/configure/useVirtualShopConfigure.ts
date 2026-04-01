@@ -1,6 +1,7 @@
 import {
   configureVirtualShop,
-  getShopByCompanyId,
+  deleteShopConfigure,
+  getShopById,
   ShopData,
   updateShopConfigure,
 } from "@/service/virtual-shop/api";
@@ -12,13 +13,22 @@ type UseGetVirtualShopConfigureOptions = {
   initialData?: ShopData | null;
 };
 
-export const useGetVirtualShopConfigure = (
+export const useGetVirtualShopConfigureById = (id?: number) => {
+  return useQuery({
+    queryKey: ["virtual-shop", id],
+    queryFn: () => getShopById(id),
+    enabled: !!id,
+    staleTime: 1000 * 60,
+  });
+};
+
+export const useGetVirtualShops = (
   companyId: number,
   options?: UseGetVirtualShopConfigureOptions,
 ) => {
   return useQuery({
-    queryKey: ["virtual-shop", companyId],
-    queryFn: () => getShopByCompanyId(companyId),
+    queryKey: ["virtual-shops", companyId],
+    queryFn: () => getShopById(companyId),
     enabled: options?.enabled ?? (!!companyId || companyId === undefined),
     initialData: options?.initialData,
     staleTime: 1000 * 60,
@@ -40,15 +50,30 @@ export const useConfigureShop = (companyId: number) => {
   });
 };
 
-export const useUpdateShop = (companyId: number) => {
+export const useUpdateShop = (id?: number) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: ShopData) => updateShopConfigure(payload, companyId),
+    mutationFn: (payload: ShopData) => updateShopConfigure(payload, id),
 
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["virtual-shop", companyId],
+        queryKey: ["virtual-shop", id],
+      });
+      toast.success("Virtual shop configure updated successfully!");
+    },
+  });
+};
+
+export const useDeleteShop = (id: number) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => deleteShopConfigure(id),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["virtual-shop", id],
       });
       toast.success("Virtual shop configure updated successfully!");
     },

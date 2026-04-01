@@ -4,15 +4,15 @@ import { AppError } from "@/error-boundary/error";
 
 /**
  * @swagger
- * /api/virtual-shop/configure/{companyId}:
+ * /api/virtual-shop/configure/{id}:
  *   get:
  *     tags:
  *       - Virtual Shop
- *     summary: Get shops by companyId
+ *     summary: Get shops by id
  *     description: Retrieve all shops belonging to a specific company with pagination.
  *     parameters:
  *       - in: path
- *         name: companyId
+ *         name: id
  *         required: true
  *         description: Company ID
  *         schema:
@@ -86,32 +86,27 @@ import { AppError } from "@/error-boundary/error";
  *                         type: string
  *                         format: date-time
  *       400:
- *         description: Invalid companyId
+ *         description: Invalid id
  *       500:
  *         description: Failed to fetch shops
  */
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { companyId: string } },
+  { params }: { params: { id: string } },
 ) {
   try {
-    const companyId = Number(params.companyId);
+    const id = Number(params.id);
 
-    if (!companyId) {
-      throw new AppError(400, "Invalid companyId");
+    if (!id) {
+      throw new AppError(400, "Invalid id");
     }
 
     const { searchParams } = new URL(req.url);
 
-    const page = Number(searchParams.get("page") || 1);
-    const limit = Number(searchParams.get("limit") || 10);
-
-    const skip = (page - 1) * limit;
-
-    const shop = await db.shop.findFirst({
+    const shop = await db.shop.findMany({
       where: {
-        companyId,
+        id,
       },
       include: {
         company: {
@@ -124,8 +119,6 @@ export async function GET(
       orderBy: {
         createdAt: "desc",
       },
-      skip,
-      take: limit,
     });
 
     return NextResponse.json({
@@ -139,7 +132,7 @@ export async function GET(
         { status: error.statusCode },
       );
     }
-    console.error(error);
+    // console.error(error);
 
     throw new AppError(500, "Failed to fetch shops");
   }
@@ -147,7 +140,7 @@ export async function GET(
 
 /**
  * @swagger
- * /api/virtual-shop/configure/{companyId}:
+ * /api/virtual-shop/configure/{id}:
  *   patch:
  *     tags:
  *       - Virtual Shop
@@ -199,12 +192,12 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { companyId: string } },
+  { params }: { params: { id: string } },
 ) {
   try {
-    const companyId = Number(params.companyId);
+    const id = Number(params.id);
 
-    if (!companyId) {
+    if (!id) {
       throw new AppError(400, "Invalid shopId");
     }
 
@@ -220,7 +213,7 @@ export async function PATCH(
     } = body;
 
     const existingShop = await db.shop.findUnique({
-      where: { companyId },
+      where: { id },
     });
 
     if (!existingShop) {
@@ -232,7 +225,7 @@ export async function PATCH(
       .replace(/[^a-z0-9-]/g, "");
 
     const updatedShop = await db.shop.update({
-      where: { companyId },
+      where: { id },
       data: {
         storeName,
         slug,
@@ -256,7 +249,73 @@ export async function PATCH(
         { status: error.statusCode },
       );
     }
-    console.error(error);
+    // console.error(error);
+
+    throw new AppError(500, "Failed to update shop");
+  }
+}
+/**
+ * @swagger
+ * /api/virtual-shop/configure/{id}:
+ *   delete:
+ *     tags:
+ *       - Virtual Shop
+ *     summary: Delete shop
+ *     description: Delete shop configuration by company ID
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: company ID
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *     responses:
+ *       200:
+ *         description: Shop updated successfully
+ *       400:
+ *         description: Invalid shop ID
+ *       404:
+ *         description: Shop not found
+ *       500:
+ *         description: Failed to update shop
+ */
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } },
+) {
+  try {
+    const id = Number(params.id);
+
+    if (!id) {
+      throw new AppError(400, "Invalid shopId");
+    }
+
+    const existingShop = await db.shop.findUnique({
+      where: { id },
+    });
+
+    if (!existingShop) {
+      throw new AppError(404, "Shop not found");
+    }
+
+    const deletedShop = await db.shop.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Shop deleted successfully",
+      data: deletedShop,
+    });
+  } catch (error) {
+    if (error instanceof AppError) {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: error.statusCode },
+      );
+    }
 
     throw new AppError(500, "Failed to update shop");
   }
