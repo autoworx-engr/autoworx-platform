@@ -24,80 +24,15 @@ type SubscribeToPlatformPlanInput = {
   firstName: string;
   lastName: string;
   opaqueData: { dataDescriptor: string; dataValue: string };
-  debugRequestId?: string;
-};
-
-type BillingDebugEventInput = {
-  requestId: string;
-  companyId: number;
-  planId: string;
-  phase: "preflight" | "accept-error" | "accept-exception";
-  clientEnv?: string;
-  hasClientKey?: boolean;
-  clientKeyLength?: number;
-  hasApiLoginId?: boolean;
-  apiLoginIdMasked?: string;
-  acceptErrorCodes?: string[];
-  acceptErrorMessages?: string[];
-  exceptionMessage?: string;
 };
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function mask(value?: string | null) {
-  if (!value) return "(missing)";
-  if (value.length <= 8) return `${value[0]}***${value[value.length - 1]}`;
-  return `${value.slice(0, 4)}...${value.slice(-4)}`;
-}
-
-function getAuthDebugContext() {
-  const serverLogin = process.env.PLATFORM_AUTHNET_API_LOGIN_ID || "";
-  const publicLogin =
-    process.env.NEXT_PUBLIC_PLATFORM_AUTHNET_API_LOGIN_ID || "";
-  const serverTx = process.env.PLATFORM_AUTHNET_TRANSACTION_KEY || "";
-  const serverEnv = process.env.PLATFORM_AUTHNET_ENVIRONMENT || "(unset)";
-  const publicEnv =
-    process.env.NEXT_PUBLIC_PLATFORM_AUTHNET_ENVIRONMENT || "(unset)";
-
-  return {
-    nodeEnv: process.env.NODE_ENV || "(unset)",
-    serverEnv,
-    publicEnv,
-    serverLoginMasked: mask(serverLogin),
-    publicLoginMasked: mask(publicLogin),
-    loginIdMatch: !!serverLogin && !!publicLogin && serverLogin === publicLogin,
-    hasServerTransactionKey: !!serverTx,
-    transactionKeyLength: serverTx.length,
-  };
-}
-
 function isAuthNetRecordNotFound(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error || "");
   return /record cannot be found/i.test(message) || /E00040/i.test(message);
-}
-
-export async function logPlatformBillingDebugEvent(
-  input: BillingDebugEventInput,
-) {
-  try {
-    const session = await requireBillingSession();
-    assertCompanyAccess(session, input.companyId);
-
-    console.warn("[AWX Billing] debug event", {
-      ...input,
-      auth: getAuthDebugContext(),
-    });
-
-    return { success: true };
-  } catch (error: any) {
-    console.error("[AWX Billing] debug event failed", {
-      input,
-      message: error?.message,
-    });
-    return { success: false };
-  }
 }
 
 export async function subscribeToPlatformPlan({
@@ -107,19 +42,8 @@ export async function subscribeToPlatformPlan({
   firstName,
   lastName,
   opaqueData,
-  debugRequestId,
 }: SubscribeToPlatformPlanInput) {
   try {
-    const requestId = debugRequestId || `sub-${Date.now()}`;
-    console.log("[AWX Billing] subscribe start", {
-      requestId,
-      companyId,
-      planId,
-      opaqueDescriptor: opaqueData?.dataDescriptor,
-      opaqueValueLength: opaqueData?.dataValue?.length || 0,
-      auth: getAuthDebugContext(),
-    });
-
     const session = await requireBillingSession();
     assertCompanyAccess(session, companyId);
 
@@ -494,11 +418,7 @@ export async function subscribeToPlatformPlan({
 
     return { success: true };
   } catch (error: any) {
-    console.error("❌ Subscription failed:", {
-      message: error?.message,
-      stack: error?.stack,
-      auth: getAuthDebugContext(),
-    });
+    console.error("❌ Subscription failed:", error);
     return { success: false, message: error.message || "Failed to subscribe" };
   }
 }

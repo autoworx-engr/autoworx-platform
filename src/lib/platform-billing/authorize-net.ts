@@ -2,28 +2,6 @@ const ApiContracts = require("authorizenet").APIContracts;
 const ApiControllers = require("authorizenet").APIControllers;
 const SDKConstants = require("authorizenet").Constants;
 
-function mask(value?: string | null) {
-  if (!value) return "(missing)";
-  if (value.length <= 8) return `${value[0]}***${value[value.length - 1]}`;
-  return `${value.slice(0, 4)}...${value.slice(-4)}`;
-}
-
-function getAuthNetContext() {
-  const rawLogin = process.env.PLATFORM_AUTHNET_API_LOGIN_ID || "";
-  const rawTx = process.env.PLATFORM_AUTHNET_TRANSACTION_KEY || "";
-  const envRaw = process.env.PLATFORM_AUTHNET_ENVIRONMENT || "(unset)";
-
-  return {
-    nodeEnv: process.env.NODE_ENV || "(unset)",
-    platformEnvRaw: envRaw,
-    apiLoginMasked: mask(rawLogin.trim()),
-    apiLoginLength: rawLogin.trim().length,
-    transactionKeyLength: rawTx.trim().length,
-    hasLeadingOrTrailingWhitespace:
-      rawLogin !== rawLogin.trim() || rawTx !== rawTx.trim(),
-  };
-}
-
 /**
  * Get Platform Authorize.Net Credentials from Environment
  */
@@ -33,18 +11,7 @@ function getPlatformAuthNetCredentials() {
   const apiLoginId = rawApiLoginId.trim();
   const transactionKey = rawTransactionKey.trim();
 
-  if (rawApiLoginId !== apiLoginId || rawTransactionKey !== transactionKey) {
-    console.warn(
-      "[AWX Billing] PLATFORM_AUTHNET credentials had leading/trailing whitespace; using trimmed values",
-      getAuthNetContext(),
-    );
-  }
-
   if (!apiLoginId || !transactionKey) {
-    console.error(
-      "[AWX Billing] Platform Authorize.Net credentials missing",
-      getAuthNetContext(),
-    );
     throw new Error("Platform Authorize.Net credentials not configured");
   }
 
@@ -74,13 +41,6 @@ function getEnvironment() {
     explicit === "development"
   ) {
     return SDKConstants.endpoint.sandbox;
-  }
-
-  if (explicit) {
-    console.warn(
-      "[AWX Billing] Unexpected PLATFORM_AUTHNET_ENVIRONMENT value; falling back to NODE_ENV",
-      getAuthNetContext(),
-    );
   }
 
   return process.env.NODE_ENV === "production"
@@ -177,13 +137,6 @@ export async function createPlatformCustomerProfile(
         const error = response?.getMessages().getMessage()[0];
         const errorText = error?.getText() || "";
         const errorCode = error?.getCode() || "";
-
-        console.error("[AWX Billing] createPlatformCustomerProfile failed", {
-          errorCode,
-          errorText,
-          companyId,
-          context: getAuthNetContext(),
-        });
 
         if (errorCode === "E00039") {
           console.log(
@@ -442,13 +395,6 @@ export async function validateCustomerPaymentProfile(
         resolve();
       } else {
         const error = response?.getMessages().getMessage()[0];
-        console.error("[AWX Billing] validateCustomerPaymentProfile failed", {
-          customerProfileId,
-          customerPaymentProfileId,
-          errorCode: error?.getCode?.() || "",
-          errorText: error?.getText?.() || "",
-          context: getAuthNetContext(),
-        });
         reject(
           new Error(error?.getText() || "Payment profile validation failed"),
         );
@@ -520,16 +466,6 @@ export async function createPlatformARBSubscription({
         resolve({ subscriptionId: response.getSubscriptionId() });
       } else {
         const error = response?.getMessages().getMessage()[0];
-        console.error("[AWX Billing] createPlatformARBSubscription failed", {
-          customerProfileId,
-          customerPaymentProfileId,
-          amount,
-          intervalMonths,
-          startDate: startDate.toISOString(),
-          errorCode: error?.getCode?.() || "",
-          errorText: error?.getText?.() || "",
-          context: getAuthNetContext(),
-        });
         reject(
           new Error(error?.getText() || "Failed to create ARB subscription"),
         );
