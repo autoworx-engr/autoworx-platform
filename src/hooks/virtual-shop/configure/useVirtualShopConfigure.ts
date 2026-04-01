@@ -48,6 +48,14 @@ export const useConfigureShop = (companyId: number) => {
       });
       toast.success("Virtual shop configured successfully!");
     },
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Something went wrong";
+
+      toast.error(message);
+    },
   });
 };
 
@@ -62,6 +70,14 @@ export const useUpdateShop = (id?: number) => {
         queryKey: ["virtual-shop", id],
       });
       toast.success("Virtual shop configure updated successfully!");
+    },
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Something went wrong";
+
+      toast.error(message);
     },
   });
 };
@@ -80,6 +96,14 @@ export const useDeleteShop = (id: number, companyId: number) => {
         queryKey: ["virtual-shop", id],
       });
       toast.success("Virtual shop configure updated successfully!");
+    },
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Something went wrong";
+
+      toast.error(message);
     },
   });
 };
