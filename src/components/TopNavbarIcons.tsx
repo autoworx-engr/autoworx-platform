@@ -24,7 +24,7 @@ export default function TopNavbarIcons() {
   return (
     <div className="flex items-center gap-x-3">
       {currentUser?.employeeType == "Admin" && (
-        <Link href="/dashboard/virtual-shop/admin">
+        <Link href="/dashboard/virtual-shop/admin/services">
           <Store className="size-5 sm:size-7  text-[#6571FF]" />
         </Link>
       )}
