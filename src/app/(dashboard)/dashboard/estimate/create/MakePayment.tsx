@@ -246,10 +246,8 @@ export default function MakePayment() {
         successToast("Payment recorded successfully");
         reset();
 
-        // Refresh the page to get updated data from server
-        router.refresh();
-
-        isEditPage && router.push("/dashboard/estimate/invoices");
+        // Redirect to the estimate/invoice list page after first payment
+        router.push("/dashboard/estimate/invoices");
       } else if (res2?.type === "globalError") {
         errorToast(
           res2?.errorSource?.length
