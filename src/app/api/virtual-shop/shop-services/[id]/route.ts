@@ -193,27 +193,6 @@ export async function GET(
   }
 }
 
-type TUpdateShopServiceRequest = {
-  shopId: number;
-  companyId: number;
-  title: string;
-  description?: string;
-  items: {
-    id?: number;
-    service: Service | null;
-    materials: ((Material & { tags: Tag[] }) | null)[];
-    labor: (Labor & { tags: Tag[] }) | null;
-    tags: Tag[];
-    serviceDesc?: string;
-  }[];
-  imageUrl?: string;
-  modifierCoupe?: string;
-  modifierSedan?: string;
-  modifierSUV?: string;
-  modifierTruck?: string;
-  isActive?: boolean;
-};
-
 /**
  * @swagger
  * /api/virtual-shop/shop-services/{id}:
@@ -401,8 +380,11 @@ export async function PUT(
       throw new AppError(400, "Invalid Shop Service ID");
     }
 
-    const body = (await req.json()) as TUpdateShopServiceRequest;
-    await updateShopServiceSchema.parseAsync({ id: serviceId, ...body });
+    const body = await req.json();
+    const validatedData = await updateShopServiceSchema.parseAsync({
+      id: serviceId,
+      ...body,
+    });
 
     const authHeader = req.headers.get("authorization") ?? "";
     const accessToken = authHeader.startsWith("Bearer ")
@@ -440,7 +422,7 @@ export async function PUT(
       modifierSUV,
       modifierTruck,
       isActive,
-    } = body;
+    } = validatedData;
 
     if (!companyId) {
       throw new AppError(403, "Company ID not found");
@@ -461,7 +443,7 @@ export async function PUT(
     let totalDuration = 0;
     const categoryIdsToFetch = new Set<number>();
 
-    items?.forEach((item) => {
+    items?.forEach(item => {
       if (item.service?.categoryId) {
         categoryIdsToFetch.add(item.service.categoryId);
       }
@@ -474,7 +456,7 @@ export async function PUT(
         totalDuration += (Number(item.labor.hours) || 0) * 60;
       }
 
-      item.materials?.forEach((mat) => {
+      item.materials?.forEach(mat => {
         if (!mat || !mat.name) return;
         const matQuantity = Number(mat.quantity) || 0;
         const matSell = Number(mat.sell) || 0;
@@ -488,155 +470,171 @@ export async function PUT(
       where: { id: { in: Array.from(categoryIdsToFetch) } },
       select: { name: true },
     });
-    const categories = fetchedCategories.map((c) => c.name);
+    const categories = fetchedCategories.map(c => c.name);
 
     // 3. DATABASE TRANSACTION
-    const updatedShopService = await db.$transaction(async (tx) => {
-      // --- BULK CLEANUP PHASE ---
-      // Fetch IDs needed for cascading manual deletes
-      const oldInvoiceItems = await tx.invoiceItem.findMany({
-        where: { shopServiceId: serviceId },
-        select: { id: true, laborId: true },
-      });
-
-      const oldInvoiceItemIds = oldInvoiceItems.map((i) => i.id);
-      const oldLaborIds = oldInvoiceItems
-        .map((i) => i.laborId)
-        .filter(Boolean) as number[]; // Assuming Int
-
-      if (oldInvoiceItemIds.length > 0) {
-        // Find materials linked to these invoice items
-        const oldMaterials = await tx.material.findMany({
-          where: { invoiceItemId: { in: oldInvoiceItemIds } },
-          select: { id: true },
+    const updatedShopService = await db.$transaction(
+      async tx => {
+        // --- BULK CLEANUP PHASE ---
+        // Fetch IDs needed for cascading manual deletes
+        const oldInvoiceItems = await tx.invoiceItem.findMany({
+          where: { shopServiceId: serviceId },
+          select: { id: true, laborId: true },
         });
-        const oldMaterialIds = oldMaterials.map((m) => m.id);
 
-        if (oldMaterialIds.length > 0) {
-          await tx.materialTag.deleteMany({
-            where: { materialId: { in: oldMaterialIds } },
+        const oldInvoiceItemIds = oldInvoiceItems.map(i => i.id);
+        const oldLaborIds = oldInvoiceItems
+          .map(i => i.laborId)
+          .filter(Boolean) as number[]; // Assuming Int
+
+        if (oldInvoiceItemIds.length > 0) {
+          // Find materials linked to these invoice items
+          const oldMaterials = await tx.material.findMany({
+            where: { invoiceItemId: { in: oldInvoiceItemIds } },
+            select: { id: true },
           });
-          await tx.material.deleteMany({
-            where: { id: { in: oldMaterialIds } },
+          const oldMaterialIds = oldMaterials.map(m => m.id);
+
+          if (oldMaterialIds.length > 0) {
+            await tx.materialTag.deleteMany({
+              where: { materialId: { in: oldMaterialIds } },
+            });
+            await tx.material.deleteMany({
+              where: { id: { in: oldMaterialIds } },
+            });
+          }
+
+          await tx.itemTag.deleteMany({
+            where: { itemId: { in: oldInvoiceItemIds } },
+          });
+          await tx.invoiceItem.deleteMany({
+            where: { id: { in: oldInvoiceItemIds } },
           });
         }
 
-        await tx.itemTag.deleteMany({
-          where: { itemId: { in: oldInvoiceItemIds } },
-        });
-        await tx.invoiceItem.deleteMany({
-          where: { id: { in: oldInvoiceItemIds } },
-        });
-      }
+        if (oldLaborIds.length > 0) {
+          await tx.laborTag.deleteMany({
+            where: { laborId: { in: oldLaborIds } },
+          });
+          await tx.labor.deleteMany({ where: { id: { in: oldLaborIds } } });
+        }
 
-      if (oldLaborIds.length > 0) {
-        await tx.laborTag.deleteMany({
-          where: { laborId: { in: oldLaborIds } },
-        });
-        await tx.labor.deleteMany({ where: { id: { in: oldLaborIds } } });
-      }
+        // --- REBUILD PHASE ---
+        if (items && items.length > 0) {
+          await Promise.all(
+            items.map(async item => {
+              let newLaborId;
 
-      // --- REBUILD PHASE ---
-      if (items && items.length > 0) {
-        await Promise.all(
-          items.map(async (item) => {
-            let newLaborId;
+              if (item.labor) {
+                const newLabor = await tx.labor.create({
+                  data: {
+                    name: item.labor.name,
+                    categoryId: item.labor.categoryId,
+                    notes: item.labor.notes,
+                    hours: item.labor.hours,
+                    charge: item.labor.charge,
+                    discount: item.labor.discount,
+                    companyId,
+                  },
+                });
+                newLaborId = newLabor.id;
 
-            if (item.labor) {
-              const newLabor = await tx.labor.create({
+                if (item.labor.tags?.length) {
+                  const validTags = item.labor.tags.filter(
+                    (tag): tag is NonNullable<typeof tag> => !!(tag && tag.id),
+                  );
+                  await tx.laborTag.createMany({
+                    data: validTags.map(tag => ({
+                      laborId: newLabor.id,
+                      tagId: tag.id!,
+                    })),
+                  });
+                }
+              }
+
+              const invoiceItem = await tx.invoiceItem.create({
                 data: {
-                  name: item.labor.name,
-                  categoryId: item.labor.categoryId,
-                  notes: item.labor.notes,
-                  hours: item.labor.hours,
-                  charge: item.labor.charge,
-                  discount: item.labor.discount,
-                  companyId,
+                  shopServiceId: serviceId,
+                  serviceId: item.service?.id,
+                  laborId: newLaborId,
                 },
               });
-              newLaborId = newLabor.id;
 
-              if (item.labor.tags?.length) {
-                await tx.laborTag.createMany({
-                  data: item.labor.tags.map((tag) => ({
-                    laborId: newLabor.id,
-                    tagId: tag.id,
+              if (item.materials?.length) {
+                await Promise.all(
+                  item.materials.map(async material => {
+                    if (!material || !material.name) return;
+
+                    const newMat = await tx.material.create({
+                      data: {
+                        name: material.name,
+                        vendorId: material.vendorId,
+                        categoryId: material.categoryId,
+                        notes: material.notes,
+                        quantity: material.quantity,
+                        cost: material.cost,
+                        sell: material.sell,
+                        discount: material.discount,
+                        companyId,
+                        invoiceItemId: invoiceItem.id,
+                        productId: material.productId,
+                      },
+                    });
+
+                    if (material.tags?.length) {
+                      const validTags = material.tags.filter(
+                        (tag): tag is NonNullable<typeof tag> =>
+                          !!(tag && tag.id),
+                      );
+                      await tx.materialTag.createMany({
+                        data: validTags.map(tag => ({
+                          materialId: newMat.id,
+                          tagId: tag.id!,
+                        })),
+                      });
+                    }
+                  }),
+                );
+              }
+
+              if (item.tags?.length) {
+                const validTags = item.tags.filter(
+                  (tag): tag is NonNullable<typeof tag> => !!(tag && tag.id),
+                );
+                await tx.itemTag.createMany({
+                  data: validTags.map(tag => ({
+                    itemId: invoiceItem.id,
+                    tagId: tag.id!,
                   })),
                 });
               }
-            }
+            }),
+          );
+        }
 
-            const invoiceItem = await tx.invoiceItem.create({
-              data: {
-                shopServiceId: serviceId,
-                serviceId: item.service?.id,
-                laborId: newLaborId,
-              },
-            });
-
-            if (item.materials?.length) {
-              await Promise.all(
-                item.materials.map(async (material) => {
-                  if (!material || !material.name) return;
-
-                  const newMat = await tx.material.create({
-                    data: {
-                      name: material.name,
-                      vendorId: material.vendorId,
-                      categoryId: material.categoryId,
-                      notes: material.notes,
-                      quantity: material.quantity,
-                      cost: material.cost,
-                      sell: material.sell,
-                      discount: material.discount,
-                      companyId,
-                      invoiceItemId: invoiceItem.id,
-                      productId: material.productId,
-                    },
-                  });
-
-                  if (material.tags?.length) {
-                    await tx.materialTag.createMany({
-                      data: material.tags.map((tag) => ({
-                        materialId: newMat.id,
-                        tagId: tag.id,
-                      })),
-                    });
-                  }
-                }),
-              );
-            }
-
-            if (item.tags?.length) {
-              await tx.itemTag.createMany({
-                data: item.tags.map((tag) => ({
-                  itemId: invoiceItem.id,
-                  tagId: tag.id,
-                })),
-              });
-            }
-          }),
-        );
-      }
-
-      // --- UPDATE PARENT RECORD ---
-      return await tx.shopService.update({
-        where: { id: serviceId },
-        data: {
-          title,
-          description,
-          imageUrl,
-          category: categories,
-          modifierCoupe: modifierCoupe ? parseFloat(modifierCoupe) : 0,
-          modifierSedan: modifierSedan ? parseFloat(modifierSedan) : 0,
-          modifierSUV: modifierSUV ? parseFloat(modifierSUV) : 0,
-          modifierTruck: modifierTruck ? parseFloat(modifierTruck) : 0,
-          isActive: isActive !== undefined ? isActive : true,
-          price: totalPrice,
-          duration: totalDuration > 0 ? totalDuration : 30,
-        },
-      });
-    });
+        // --- UPDATE PARENT RECORD ---
+        return await tx.shopService.update({
+          where: { id: serviceId },
+          data: {
+            title,
+            description,
+            imageUrl,
+            category: categories,
+            modifierCoupe: modifierCoupe ? Number(modifierCoupe) : 0,
+            modifierSedan: modifierSedan ? Number(modifierSedan) : 0,
+            modifierSUV: modifierSUV ? Number(modifierSUV) : 0,
+            modifierTruck: modifierTruck ? Number(modifierTruck) : 0,
+            isActive: isActive !== undefined ? isActive : true,
+            price: totalPrice,
+            duration: totalDuration > 0 ? totalDuration : 30,
+          },
+        });
+      },
+      {
+        timeout: 30000,
+        maxWait: 10000,
+      },
+    );
 
     return NextResponse.json(
       { success: true, data: updatedShopService },

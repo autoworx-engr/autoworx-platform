@@ -14,9 +14,19 @@ const itemValidationSchema = z
       .optional(),
     service: serviceModelDataValidationSchema.nullable(),
     materials: z
-      .array(materialModelSchemaValidation.nullable().optional(), {
-        invalid_type_error: "Materials must be an array",
-      })
+      .array(
+        z.intersection(
+          materialModelSchemaValidation,
+          z.object({
+            tags: z.array(tagModelValidationSchema.optional()).optional(),
+          })
+        )
+          .nullable()
+          .optional(),
+        {
+          invalid_type_error: "Materials must be an array",
+        },
+      )
       .nullable()
       .optional(),
     labor: laborCreateValidationSchema.optional().nullable(),
@@ -25,7 +35,7 @@ const itemValidationSchema = z
     }),
   })
   .refine(
-    (data) => {
+    data => {
       const hasLabor = !!data.labor;
       const hasMaterials =
         Array.isArray(data.materials) && data.materials.length > 0;
@@ -33,7 +43,7 @@ const itemValidationSchema = z
     },
     {
       message: "Each service item must have either labor or materials",
-    }
+    },
   );
 
 // Base shop service schema with common fields
@@ -66,21 +76,61 @@ const baseShopServiceSchema = z.object({
     .union([z.string(), z.number()], {
       invalid_type_error: "Modifier for Coupe must be a string or number",
     })
+    .refine(
+      val => {
+        if (val === null || val === undefined) return true;
+        const numVal = Number(val);
+        return !isNaN(numVal) && numVal >= 0;
+      },
+      {
+        message: "Modifier for Coupe must be a non-negative number",
+      },
+    )
     .optional(),
   modifierSedan: z
     .union([z.string(), z.number()], {
       invalid_type_error: "Modifier for Sedan must be a string or number",
     })
+    .refine(
+      val => {
+        if (val === null || val === undefined) return true;
+        const numVal = Number(val);
+        return !isNaN(numVal) && numVal >= 0;
+      },
+      {
+        message: "Modifier for Sedan must be a non-negative number",
+      },
+    )
     .optional(),
   modifierSUV: z
     .union([z.string(), z.number()], {
       invalid_type_error: "Modifier for SUV must be a string or number",
     })
+    .refine(
+      val => {
+        if (val === null || val === undefined) return true;
+        const numVal = Number(val);
+        return !isNaN(numVal) && numVal >= 0;
+      },
+      {
+        message: "Modifier for SUV must be a non-negative number",
+      },
+    )
     .optional(),
   modifierTruck: z
     .union([z.string(), z.number()], {
       invalid_type_error: "Modifier for Truck must be a string or number",
     })
+    .refine(
+      val => {
+        if (val === null || val === undefined) return true;
+        const numVal = Number(val);
+        return !isNaN(numVal) && numVal >= 0;
+      },
+      {
+        message: "Modifier for Truck must be a non-negative number",
+      },
+    )
     .optional(),
   isActive: z
     .boolean({ invalid_type_error: "Active status must be a boolean value" })
