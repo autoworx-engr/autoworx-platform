@@ -9,7 +9,8 @@ export function getAutomationLimitForModule(
     | "inventory"
     | "tag"
     | "service"
-    | "marketing",
+    | "marketing"
+    | "reporting",
 ): number {
   switch (moduleKey) {
     case "pipeline":
@@ -26,6 +27,8 @@ export function getAutomationLimitForModule(
       return entitlements.automationLimitService;
     case "marketing":
       return entitlements.automationLimitMarketing;
+    case "reporting":
+      return entitlements.automationLimitReporting;
     default:
       return 0;
   }

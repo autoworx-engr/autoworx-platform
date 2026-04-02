@@ -57,6 +57,22 @@ export function CheckoutForm({
       apiLoginID: process.env.NEXT_PUBLIC_PLATFORM_AUTHNET_API_LOGIN_ID,
     };
 
+    if (!authData.clientKey || !authData.apiLoginID) {
+      toast.error(
+        "Billing is misconfigured. Missing Authorize.Net public keys.",
+      );
+      setLoading(false);
+      return;
+    }
+
+    if (typeof Accept === "undefined" || !Accept?.dispatchData) {
+      toast.error(
+        "Payment library failed to load. Please refresh and try again.",
+      );
+      setLoading(false);
+      return;
+    }
+
     const cardDetails = {
       cardNumber: cardData.cardNumber.replace(/\s+/g, ""),
       month: cardData.month.padStart(2, "0"),
