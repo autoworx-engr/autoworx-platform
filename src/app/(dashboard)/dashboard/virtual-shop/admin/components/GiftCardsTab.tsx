@@ -629,6 +629,17 @@ export default function GiftCardsTab() {
         toast.error("Minimum custom amount cannot exceed maximum amount");
         return;
       }
+
+      if (showPresets) {
+        const hasPresetOutsideRange = presetValues.some(
+          (amount) => amount < parsedMin || amount > parsedMax,
+        );
+
+        if (hasPresetOutsideRange) {
+          toast.error("Preset amounts must be within the custom min and max range");
+          return;
+        }
+      }
     }
 
     if (!emailDelivery && !textDelivery) {
