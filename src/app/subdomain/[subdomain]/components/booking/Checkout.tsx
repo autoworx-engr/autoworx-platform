@@ -829,13 +829,15 @@ export const Checkout = () => {
                   }}
                 />
               </div>
-              {!phoneLookedUp && form.phone.length >= 7 && (
+              {!phoneLookedUp && (
                 <Button
                   type="button"
                   variant="secondary"
                   size="lg"
                   onClick={handlePhoneLookup}
-                  disabled={isLookingUp}
+                  disabled={
+                    isLookingUp || normalizePhone(form.phone).length < 10
+                  }
                 >
                   {isLookingUp ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
