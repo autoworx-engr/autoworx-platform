@@ -254,8 +254,30 @@ export interface VirtualShopServiceBookingListResponse {
     limit: number;
     hasNextPage: boolean;
     hasPrevPage: boolean;
+    statusCounts?: {
+      pending: number;
+      confirmed: number;
+      completed: number;
+      cancelled: number;
+      total: number;
+    };
   };
   data: VirtualShopServiceBookingItem[];
+}
+
+export type VirtualShopBookingStatus =
+  | "PENDING"
+  | "CONFIRMED"
+  | "COMPLETED"
+  | "CANCELLED";
+
+export interface UpdateVirtualShopServiceBookingStatusResponse {
+  success: boolean;
+  message: string;
+  data: {
+    id: number;
+    status: VirtualShopBookingStatus;
+  };
 }
 
 export type GetVirtualShopServiceBookingCalendarParams = {
@@ -772,6 +794,24 @@ export const getVirtualShopServiceBookings = async function ({
         },
       },
     );
+
+    return response.data;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+
+export const updateVirtualShopServiceBookingStatus = async function (
+  id: number,
+  status: VirtualShopBookingStatus,
+) {
+  try {
+    const response =
+      await axios.patch<UpdateVirtualShopServiceBookingStatusResponse>(
+        `/api/virtual-shop/service-booking/${id}/status`,
+        { status },
+      );
 
     return response.data;
   } catch (error) {

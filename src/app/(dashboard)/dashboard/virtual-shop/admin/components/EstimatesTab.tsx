@@ -1,9 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState, type ElementType } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Pagination } from "antd";
 import FilterByDateRange from "@/app/(dashboard)/dashboard/reporting/components/filter/FilterByDateRange";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import toast from "react-hot-toast";
+import { updateVirtualShopServiceBookingStatus } from "@/service/virtual-shop/api";
+import Selector from "@/components/Selector";
 import {
   Search,
   CalendarDays,
@@ -20,6 +23,13 @@ import {
 
 export type AppointmentStatus = "confirmed" | "pending" | "cancelled" | "completed";
 export type FilterStatus = "all" | AppointmentStatus;
+
+const BOOKING_STATUSES: AppointmentStatus[] = [
+  "pending",
+  "confirmed",
+  "completed",
+  "cancelled",
+];
 
 type EstimateService = {
   name: string;
@@ -44,52 +54,82 @@ export type Estimate = {
   total: number;
 };
 
-const STATUS_CONFIG: Record<
-  AppointmentStatus,
-  { label: string; bg: string; text: string; icon: ElementType }
-> = {
-  confirmed: {
-    label: "Confirmed",
-    bg: "bg-emerald-50 dark:bg-emerald-900/30",
-    text: "text-emerald-600 dark:text-emerald-400",
-    icon: CheckCircle2,
-  },
-  pending: {
-    label: "Pending",
-    bg: "bg-amber-50 dark:bg-amber-900/30",
-    text: "text-amber-600 dark:text-amber-400",
-    icon: AlertCircle,
-  },
-  completed: {
-    label: "Completed",
-    bg: "bg-sky-50 dark:bg-sky-900/30",
-    text: "text-sky-600 dark:text-sky-400",
-    icon: CheckCircle2,
-  },
-  cancelled: {
-    label: "Cancelled",
-    bg: "bg-rose-50 dark:bg-rose-900/30",
-    text: "text-rose-600 dark:text-rose-400",
-    icon: XCircle,
-  },
-};
-
 function getServiceTotal(svc: EstimateService) {
   return svc.basePrice + svc.adjustment;
 }
 
-function StatusBadge({ status }: { status: AppointmentStatus }) {
-  const { label, bg, text, icon: Icon } = STATUS_CONFIG[status];
-  return (
-    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${bg} ${text}`}>
-      <Icon size={11} />
-      {label}
-    </span>
-  );
+function formatStatusLabel(status: AppointmentStatus) {
+  return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
-function EstimateCard({ estimate }: { estimate: Estimate }) {
+function getStatusColorClasses(status: AppointmentStatus) {
+  if (status === "confirmed") {
+    return {
+      text: "text-emerald-600 dark:text-emerald-400",
+      badge: "bg-emerald-50 dark:bg-emerald-900/30",
+    };
+  }
+
+  if (status === "pending") {
+    return {
+      text: "text-amber-600 dark:text-amber-400",
+      badge: "bg-amber-50 dark:bg-amber-900/30",
+    };
+  }
+
+  if (status === "completed") {
+    return {
+      text: "text-sky-600 dark:text-sky-400",
+      badge: "bg-sky-50 dark:bg-sky-900/30",
+    };
+  }
+
+  return {
+    text: "text-rose-600 dark:text-rose-400",
+    badge: "bg-rose-50 dark:bg-rose-900/30",
+  };
+}
+
+function toApiBookingStatus(status: AppointmentStatus) {
+  return status.toUpperCase() as "PENDING" | "CONFIRMED" | "COMPLETED" | "CANCELLED";
+}
+
+function EstimateCard({
+  estimate,
+  onStatusUpdated,
+}: {
+  estimate: Estimate;
+  onStatusUpdated: () => void;
+}) {
   const [expanded, setExpanded] = useState(true);
+  const [statusValue, setStatusValue] = useState<AppointmentStatus>(estimate.status);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+
+  useEffect(() => {
+    setStatusValue(estimate.status);
+  }, [estimate.status]);
+
+  const onStatusSelectChange = async (nextStatus: AppointmentStatus) => {
+    if (nextStatus === statusValue || isUpdatingStatus) return;
+
+    const previousStatus = statusValue;
+    setStatusValue(nextStatus);
+    setIsUpdatingStatus(true);
+
+    try {
+      await updateVirtualShopServiceBookingStatus(
+        estimate.id,
+        toApiBookingStatus(nextStatus),
+      );
+      toast.success("Estimate status updated successfully");
+      onStatusUpdated();
+    } catch (error) {
+      setStatusValue(previousStatus);
+      toast.error(error instanceof Error ? error.message : "Failed to update status");
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
 
   return (
     <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden">
@@ -117,10 +157,28 @@ function EstimateCard({ estimate }: { estimate: Estimate }) {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
-          <StatusBadge status={estimate.status} />
+          <Selector
+            items={BOOKING_STATUSES}
+            selectedItem={statusValue}
+            onSelect={(status) => {
+              onStatusSelectChange(status);
+            }}
+            label={(item) => formatStatusLabel((item || statusValue) as AppointmentStatus)}
+            displayList={(item) => (
+              <span
+                className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold`}
+              >
+                {formatStatusLabel(item)}
+              </span>
+            )}
+            newButton={<div className="hidden" />}
+            disabledDropdown={isUpdatingStatus}
+            showSearch={false}
+            className={`min-w-[140px] max-w-[150px] [&_button>span]:font-semibold `}
+          />
           <button
             onClick={() => setExpanded(v => !v)}
-            className="w-7 h-7 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+            className="min-w-7 min-h-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
             aria-label={expanded ? "Collapse" : "Expand"}
           >
             {expanded ? (
@@ -293,6 +351,10 @@ export default function EstimatesTab({
     });
   };
 
+  const onCardStatusUpdated = useCallback(() => {
+    router.refresh();
+  }, [router]);
+
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-start sm:items-center justify-between flex-wrap gap-3">
@@ -378,7 +440,7 @@ export default function EstimatesTab({
         <>
           <div className="space-y-4 max-h-[54vh] overflow-y-auto thin-scrollbar pr-1">
             {estimates.map(est => (
-              <EstimateCard key={est.id} estimate={est} />
+              <EstimateCard key={est.id} estimate={est} onStatusUpdated={onCardStatusUpdated} />
             ))}
           </div>
 
