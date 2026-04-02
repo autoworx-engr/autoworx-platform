@@ -113,7 +113,25 @@ function SettingInput({
         min={min}
         required={required}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(event) => {
+          if (type !== "number") return;
+
+          if (["e", "E", "+", "-"].includes(event.key)) {
+            event.preventDefault();
+          }
+        }}
+        onChange={(e) => {
+          const nextValue = e.target.value;
+
+          if (type !== "number") {
+            onChange(nextValue);
+            return;
+          }
+
+          if (nextValue === "" || /^\d*\.?\d*$/.test(nextValue)) {
+            onChange(nextValue);
+          }
+        }}
         className="w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 outline-none focus:border-[#6571FF] focus:ring-1 focus:ring-[#6571FF]"
       />
     </div>
