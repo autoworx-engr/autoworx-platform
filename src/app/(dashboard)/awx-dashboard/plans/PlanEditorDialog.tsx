@@ -21,6 +21,7 @@ const AUTOMATION_MODULE_OPTIONS = [
   "tag",
   "service",
   "marketing",
+  "reporting",
 ];
 
 type FeatureDraft = {
