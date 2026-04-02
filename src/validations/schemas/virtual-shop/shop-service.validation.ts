@@ -14,9 +14,19 @@ const itemValidationSchema = z
       .optional(),
     service: serviceModelDataValidationSchema.nullable(),
     materials: z
-      .array(materialModelSchemaValidation.nullable().optional(), {
-        invalid_type_error: "Materials must be an array",
-      })
+      .array(
+        z.intersection(
+          materialModelSchemaValidation,
+          z.object({
+            tags: z.array(tagModelValidationSchema.optional()).optional(),
+          })
+        )
+          .nullable()
+          .optional(),
+        {
+          invalid_type_error: "Materials must be an array",
+        },
+      )
       .nullable()
       .optional(),
     labor: laborCreateValidationSchema.optional().nullable(),
