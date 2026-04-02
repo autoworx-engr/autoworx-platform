@@ -1,5 +1,6 @@
 "use client";
 
+import { getBookingAppointmentTitles } from "@/actions/appointment/getBookingAppoinmentTitles";
 import { getCompanyCalendarSettings } from "@/actions/booking/getCompanyCalendarSettings";
 import {
   getAppointmentByDateTime,
@@ -28,20 +29,29 @@ type FormData = {
   email: string;
   mobile: string;
   notes: string;
-  countryCode:string;
+  countryCode: string;
+};
+type AppointmentTitle = {
+  id: number;
+  title: string;
+  createdAt: Date;
 };
 
 const BookingForm = () => {
   const searchParams = useSearchParams();
   const refParam = searchParams.get("ref");
   const [companyId, bookingFormId] = refParam ? decodeCompanyId(refParam) : [];
-  const [callingCode, setCallingCode] = useState("+1")
-  const [isoCode, setIsoCode] = useState("")
+  const [callingCode, setCallingCode] = useState("+1");
+  const [isoCode, setIsoCode] = useState("");
   const { data: bookingForm, isLoading: bookingFromLoading } =
     useBookingFormQueryById(Number(bookingFormId));
 
   const [timeOptions, setTimeOptions] = useState<
     { value: string; label: string }[]
+  >([]);
+
+  const [appointmentTitles, setAppointmentTitles] = useState<
+    AppointmentTitle[]
   >([]);
 
   // Add state for company info if needed
@@ -58,7 +68,7 @@ const BookingForm = () => {
     email: "",
     mobile: "+1",
     notes: "",
-    countryCode: "US"
+    countryCode: "US",
   });
 
   // State for handling title dropdown and custom input
@@ -94,17 +104,27 @@ const BookingForm = () => {
     : false;
 
   useEffect(() => {
+    getBookingAppointmentTitles().then((res) => {
+      if (res.type === "success") {
+        setAppointmentTitles(res.data);
+      } else {
+        console.error(res.message);
+      }
+    });
+  }, []);
+
+  useEffect(() => {
     const updateTimeOptions = async () => {
       if (formData.date) {
-        console.log("Updating time options for date:", formData.date);
+        // console.log("Updating time options for date:", formData.date);
         const getAppointmentByDate = await getAppointmentByDateTime(
           Number(companyId),
           formData.date
         );
-        console.log(
-          "Existing appointments on this date:",
-          getAppointmentByDate
-        );
+        // console.log(
+        //   "Existing appointments on this date:",
+        //   getAppointmentByDate
+        // );
 
         const options = getTimeOptions();
         // Filter out already booked times
@@ -202,7 +222,7 @@ const BookingForm = () => {
     // }
 
     // setFormData((prev) => ({ ...prev, [field]: processedValue }));
-setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
     if (error[field]) {
       setError((prev) => {
         const newErrors = { ...prev };
@@ -391,8 +411,8 @@ setFormData((prev) => ({ ...prev, [field]: value }));
     if (!formData.mobile.trim()) {
       newError.mobile = "Mobile is required.";
     } else if (formData.mobile.length < 10) {
-    newError.mobile = "Please enter a valid phone number.";
-  }
+      newError.mobile = "Please enter a valid phone number.";
+    }
     //  else if (!/^\+1[\d\s\-$$$$]+$/.test(formData.mobile)) {
     //   newError.mobile =
     //     "Phone number must start with '+1' and contain valid characters.";
@@ -432,9 +452,9 @@ setFormData((prev) => ({ ...prev, [field]: value }));
     try {
       const fullPhoneNumber = `${callingCode}${formData.mobile}`;
       const bookingData = {
-      ...formData,
-      mobile: fullPhoneNumber, 
-    };
+        ...formData,
+        mobile: fullPhoneNumber,
+      };
       // Process the booking
       const result = await processBooking(
         bookingData,
@@ -453,7 +473,7 @@ setFormData((prev) => ({ ...prev, [field]: value }));
           email: "",
           mobile: "+1",
           notes: "",
-          countryCode: "US"
+          countryCode: "US",
         });
         setCallingCode("+1");
         // Reset title selection states
@@ -581,36 +601,43 @@ setFormData((prev) => ({ ...prev, [field]: value }));
 
             <select
               id="title-select"
-              value={selectedTitleOption}
-              onChange={(e) => handleTitleSelection(e.target.value)}
+              value={formData.title}
+              onChange={(e) => {
+                const value = e.target.value;
+                setFormData((prev) => ({ ...prev, title: value }));
+                if (error.title) {
+                  setError((prev) => {
+                    const newErrors = { ...prev };
+                    delete newErrors.title;
+                    return newErrors;
+                  });
+                }
+              }}
               className={cn(
                 slimInputClassName,
                 "h-[33px] px-3 w-full",
                 inputClass,
                 error.title && "border-red-500 focus-visible:ring-red-500"
               )}
-              required
             >
               <option value="">Select appointment type...</option>
-              {availableTitleOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option === "Custom" ? "Custom (Enter your own)" : option}
+
+              {availableTitleOptions.map((title) => (
+                <option key={title} value={title}>
+                  {title}
                 </option>
               ))}
-            </select>
 
-            {/* Custom title input - only show when "Custom" is selected */}
-            {selectedTitleOption === "Custom" && (
-              <SlimInput
-                value={customTitle}
-                onChange={(e) => handleCustomTitleChange(e.target.value)}
-                name="customTitle"
-                label="Enter Custom Title"
-                placeholder="Enter your custom appointment title"
-                required
-                className={`${inputClass}`}
-              />
-            )}
+              {appointmentTitles.length > 0 && (
+                <>
+                  {appointmentTitles.map((item) => (
+                    <option key={item.id} value={item.title}>
+                      {item.title}
+                    </option>
+                  ))}
+                </>
+              )}
+            </select>
 
             {error.title && (
               <p className="text-sm text-red-600 mt-1">{error.title}</p>
@@ -746,29 +773,29 @@ setFormData((prev) => ({ ...prev, [field]: value }));
               /> */}
 
               <PhoneInput
-  // value={formData.mobile}
-  onChange={(phone, code, isoCode) => {
-    setFormData(prev => ({
-      ...prev,
-      mobile: phone,
-      countryCode: isoCode
-    }));
-    setCallingCode(code);
-   
-    if (error.mobile) {
-      setError(prev => {
-        const newErrors = { ...prev };
-        delete newErrors.mobile;
-        return newErrors;
-      });
-    }
-  }}
-  label="Mobile"
-  placeholder="1234567890"
-  required
-  error={error.mobile}
-  // defaultIsoCode="US" 
-/>
+                // value={formData.mobile}
+                onChange={(phone, code, isoCode) => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    mobile: phone,
+                    countryCode: isoCode,
+                  }));
+                  setCallingCode(code);
+
+                  if (error.mobile) {
+                    setError((prev) => {
+                      const newErrors = { ...prev };
+                      delete newErrors.mobile;
+                      return newErrors;
+                    });
+                  }
+                }}
+                label="Mobile"
+                placeholder="1234567890"
+                required
+                error={error.mobile}
+                // defaultIsoCode="US"
+              />
             </div>
 
             <div className="space-y-2">

@@ -84,6 +84,16 @@ model BookingForm {
   updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
 }
 
+model BookingAppointmentTitle {
+  id        Int      @id @default(autoincrement())
+  title     String   @db.VarChar(200)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+
+  @@map("booking_appointment_titles")
+}
+
 // Pipeline Automation Schema
 
 model PipelineAutomationRule {
@@ -713,6 +723,7 @@ model Company {
   BugReport                        BugReport[]
   salaryHistory                    SalaryHistory[]
   appointmentTitles                AppointmentTitle[]
+  
   shortLinks                       ShortLink[]
   smsGateway                       SmsGateway                         @default(TWILIO)
   invoiceTemplates                 InvoiceTemplate[]
