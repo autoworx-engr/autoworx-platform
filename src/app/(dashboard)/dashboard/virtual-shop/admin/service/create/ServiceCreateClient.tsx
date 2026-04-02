@@ -532,7 +532,7 @@ export default function ServiceCreateClient({
       setServiceInfo(INITIAL_SERVICE_INFO);
       setSelectedImageFile(null);
       setValidationErrors({});
-      router.push("/dashboard/virtual-shop/admin");
+      router.push("/dashboard/virtual-shop/admin/services");
       router.refresh();
     } catch (error) {
       const message =
