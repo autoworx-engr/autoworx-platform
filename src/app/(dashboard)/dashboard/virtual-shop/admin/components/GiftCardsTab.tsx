@@ -45,6 +45,7 @@ import {
   Check,
   CircleHelp,
 } from "lucide-react";
+import GiftCardsTabSkeleton from "./GiftCardsTabSkeleton";
 
 // ── Gift Card Designs ─────────────────────────────────────────────────────────
 
@@ -112,7 +113,25 @@ function SettingInput({
         min={min}
         required={required}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(event) => {
+          if (type !== "number") return;
+
+          if (["e", "E", "+", "-"].includes(event.key)) {
+            event.preventDefault();
+          }
+        }}
+        onChange={(e) => {
+          const nextValue = e.target.value;
+
+          if (type !== "number") {
+            onChange(nextValue);
+            return;
+          }
+
+          if (nextValue === "" || /^\d*\.?\d*$/.test(nextValue)) {
+            onChange(nextValue);
+          }
+        }}
         className="w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 outline-none focus:border-[#6571FF] focus:ring-1 focus:ring-[#6571FF]"
       />
     </div>
@@ -610,6 +629,17 @@ export default function GiftCardsTab() {
         toast.error("Minimum custom amount cannot exceed maximum amount");
         return;
       }
+
+      if (showPresets) {
+        const hasPresetOutsideRange = presetValues.some(
+          (amount) => amount < parsedMin || amount > parsedMax,
+        );
+
+        if (hasPresetOutsideRange) {
+          toast.error("Preset amounts must be within the custom min and max range");
+          return;
+        }
+      }
     }
 
     if (!emailDelivery && !textDelivery) {
@@ -649,14 +679,7 @@ export default function GiftCardsTab() {
 
   return (
     <div className="flex flex-col gap-4">
-      {isHydratingSettings && (
-        <div className="flex min-h-[260px] items-center justify-center rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="flex flex-col items-center gap-3 text-sm text-gray-600">
-            <Loader2 size={28} className="animate-spin text-[#6571FF]" />
-            <span>Loading gift card settings...</span>
-          </div>
-        </div>
-      )}
+      {isHydratingSettings && <GiftCardsTabSkeleton />}
 
       {!isHydratingSettings && (
         <>

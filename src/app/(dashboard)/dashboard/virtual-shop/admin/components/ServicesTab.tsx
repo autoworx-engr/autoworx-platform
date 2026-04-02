@@ -67,6 +67,7 @@ export default function ServicesTab({
         price: Number(item.price ?? 0),
         duration: Number(item.duration ?? 0),
         imageUrl: item.imageUrl || "",
+        isActive: item.isActive,
       })),
     [servicesResponse?.data],
   );
@@ -175,6 +176,7 @@ export default function ServicesTab({
               <ServiceCard
                 key={service.id}
                 service={service}
+                shopId={shopId}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
               />

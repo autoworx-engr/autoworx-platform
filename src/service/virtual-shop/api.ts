@@ -86,10 +86,19 @@ export interface ShopServiceApi {
   duration: number;
   description?: string | null;
   imageUrl?: string | null;
+  isActive: boolean;
   modifierCoupe?: number | string;
   modifierSedan?: number | string;
   modifierSUV?: number | string;
   modifierTruck?: number | string;
+}
+
+export interface UpdateShopServiceStatusResponse {
+  success: boolean;
+  data: {
+    id: number;
+    isActive: boolean;
+  };
 }
 
 export interface ShopServicesResponse {
@@ -245,8 +254,30 @@ export interface VirtualShopServiceBookingListResponse {
     limit: number;
     hasNextPage: boolean;
     hasPrevPage: boolean;
+    statusCounts?: {
+      pending: number;
+      confirmed: number;
+      completed: number;
+      cancelled: number;
+      total: number;
+    };
   };
   data: VirtualShopServiceBookingItem[];
+}
+
+export type VirtualShopBookingStatus =
+  | "PENDING"
+  | "CONFIRMED"
+  | "COMPLETED"
+  | "CANCELLED";
+
+export interface UpdateVirtualShopServiceBookingStatusResponse {
+  success: boolean;
+  message: string;
+  data: {
+    id: number;
+    status: VirtualShopBookingStatus;
+  };
 }
 
 export type GetVirtualShopServiceBookingCalendarParams = {
@@ -567,6 +598,23 @@ export const updateShopService = async function (
   }
 };
 
+export const updateShopServiceStatus = async function (
+  id: number,
+  isActive: boolean,
+) {
+  try {
+    const response = await axios.patch<UpdateShopServiceStatusResponse>(
+      `/api/virtual-shop/shop-services/${id}/status`,
+      { isActive },
+    );
+
+    return response.data;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+
 export const getShopBookingSettings = async function (shopId: number) {
   try {
     const response = await axios.get<{
@@ -746,6 +794,24 @@ export const getVirtualShopServiceBookings = async function ({
         },
       },
     );
+
+    return response.data;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+
+export const updateVirtualShopServiceBookingStatus = async function (
+  id: number,
+  status: VirtualShopBookingStatus,
+) {
+  try {
+    const response =
+      await axios.patch<UpdateVirtualShopServiceBookingStatusResponse>(
+        `/api/virtual-shop/service-booking/${id}/status`,
+        { status },
+      );
 
     return response.data;
   } catch (error) {
