@@ -818,8 +818,14 @@ export const Checkout = () => {
                   required
                   defaultIsoCode={selectedCountryCode}
                   onChange={(num, code, isoCode) => {
-                    update("phone", `${code}${num}`);
+                    const newPhone = `${code}${num}`;
+                    update("phone", newPhone);
                     setSelectedCountryCode(isoCode || "US");
+
+                    if (phoneLookedUp) {
+                      setPhoneLookedUp(false);
+                      setIsReturningClient(false);
+                    }
                   }}
                 />
               </div>
