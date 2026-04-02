@@ -14,6 +14,7 @@ import {
   getGiftCardTemplatesPublic,
   lookupClientByPhone,
   ShopServicesResponse,
+  updateShopServiceStatus,
 } from "@/service/virtual-shop/api";
 import {
   keepPreviousData,
@@ -138,6 +139,26 @@ export const useUpdateShopService = () => {
       }
 
       toast.success("Shop service updated successfully!");
+    },
+  });
+};
+
+export const useUpdateShopServiceStatus = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      isActive,
+    }: {
+      id: number;
+      isActive: boolean;
+      shopId?: number;
+    }) => updateShopServiceStatus(id, isActive),
+    onSuccess: (_response, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["virtual-shop-services", variables?.shopId],
+      });
     },
   });
 };

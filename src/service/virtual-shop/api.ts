@@ -86,10 +86,19 @@ export interface ShopServiceApi {
   duration: number;
   description?: string | null;
   imageUrl?: string | null;
+  isActive: boolean;
   modifierCoupe?: number | string;
   modifierSedan?: number | string;
   modifierSUV?: number | string;
   modifierTruck?: number | string;
+}
+
+export interface UpdateShopServiceStatusResponse {
+  success: boolean;
+  data: {
+    id: number;
+    isActive: boolean;
+  };
 }
 
 export interface ShopServicesResponse {
@@ -558,6 +567,23 @@ export const updateShopService = async function (
     const response = await axios.put<UpdateShopServiceResponse>(
       `/api/virtual-shop/shop-services/${id}`,
       payload,
+    );
+
+    return response.data;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+
+export const updateShopServiceStatus = async function (
+  id: number,
+  isActive: boolean,
+) {
+  try {
+    const response = await axios.patch<UpdateShopServiceStatusResponse>(
+      `/api/virtual-shop/shop-services/${id}/status`,
+      { isActive },
     );
 
     return response.data;
