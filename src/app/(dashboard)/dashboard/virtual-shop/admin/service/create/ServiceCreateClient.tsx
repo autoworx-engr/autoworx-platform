@@ -12,7 +12,7 @@ import TemplateInspectionTab from "@/app/(dashboard)/dashboard/estimate/template
 import ServiceInfo, { ServiceInfoState } from "./ServiceInfo";
 import Create from "@/app/(dashboard)/dashboard/estimate/create/Create";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { errorToast } from "@/lib/toast";
 import { useGetVirtualShopConfigure } from "@/hooks/virtual-shop/configure/useVirtualShopConfigure";
 import {
@@ -230,6 +230,7 @@ export default function ServiceCreateClient({
     description?: string;
     items?: string;
   }>({});
+  const lastValidationToastMessageRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!initialServiceData) {
@@ -267,6 +268,7 @@ export default function ServiceCreateClient({
     setServiceInfo((prev) => ({
       ...prev,
       imageName: file.name,
+      imageUrl: "",
     }));
   };
 
@@ -375,16 +377,21 @@ export default function ServiceCreateClient({
 
     if (Object.keys(nextErrors).length > 0) {
       setValidationErrors(nextErrors);
-      errorToast(
+      const validationMessage =
         nextErrors.items ||
         nextErrors.serviceTitle ||
         nextErrors.description ||
-        "Please complete required fields",
-      );
+        "Please complete required fields";
+
+      if (lastValidationToastMessageRef.current !== validationMessage) {
+        errorToast(validationMessage);
+        lastValidationToastMessageRef.current = validationMessage;
+      }
       return;
     }
 
     setValidationErrors({});
+    lastValidationToastMessageRef.current = null;
 
     if (!shopConfig?.id) {
       errorToast("Virtual shop is not configured yet");
