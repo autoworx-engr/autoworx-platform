@@ -79,6 +79,11 @@ const catalogFeatures = [
     type: PlatformFeatureType.NUMERIC,
     value: "0",
   },
+  {
+    key: "automation_limit_reporting",
+    type: PlatformFeatureType.NUMERIC,
+    value: "0",
+  },
 ];
 
 async function main() {
