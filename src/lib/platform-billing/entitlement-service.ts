@@ -28,6 +28,7 @@ export type Entitlements = {
   automationLimitTag: number;
   automationLimitService: number;
   automationLimitMarketing: number;
+  automationLimitReporting: number;
   websiteIncluded: boolean;
   carWrapVisualizer: boolean;
   aiSmartReplies: boolean;
@@ -41,7 +42,8 @@ export type AutomationModuleKey =
   | "inventory"
   | "tag"
   | "service"
-  | "marketing";
+  | "marketing"
+  | "reporting";
 
 type AutomationLimitKey =
   | "automationLimitPipeline"
@@ -50,7 +52,8 @@ type AutomationLimitKey =
   | "automationLimitInventory"
   | "automationLimitTag"
   | "automationLimitService"
-  | "automationLimitMarketing";
+  | "automationLimitMarketing"
+  | "automationLimitReporting";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -69,6 +72,7 @@ const DEFAULT_ENTITLEMENTS: Entitlements = {
   automationLimitTag: 0,
   automationLimitService: 0,
   automationLimitMarketing: 0,
+  automationLimitReporting: 0,
   websiteIncluded: false,
   carWrapVisualizer: false,
   aiSmartReplies: false,
@@ -86,6 +90,7 @@ const AUTOMATION_LIMIT_KEY_BY_MODULE: Record<
   tag: "automationLimitTag",
   service: "automationLimitService",
   marketing: "automationLimitMarketing",
+  reporting: "automationLimitReporting",
 };
 
 /**
@@ -109,6 +114,7 @@ const AUTOMATION_PERMISSION_TO_MODULE: Record<string, AutomationModuleKey> = {
   tagAutomation: "tag",
   serviceAutomation: "service",
   marketingAutomation: "marketing",
+  reportingAutomation: "reporting",
 };
 
 // ---------------------------------------------------------------------------

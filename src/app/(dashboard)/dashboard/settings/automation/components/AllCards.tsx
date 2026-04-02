@@ -21,6 +21,7 @@ import { useAllReportingAutomationRules } from "@/hooks/reporting-automation/use
 import { useServerGet } from "@/hooks/useServerGet";
 import { getEntitlements } from "@/actions/platform-billing/entitlements";
 import { getAutomationLimitForModule } from "@/lib/platform-billing/automation-limits";
+import type { AutomationModuleKey } from "@/lib/platform-billing/entitlement-service";
 import UpgradePlanBanner from "@/components/UpgradePlanBanner";
 const CommunicationRuleForm = dynamic(() => import("./CommunicationRuleForm"));
 const PipelineRuleForm = dynamic(() => import("./PipelineRuleForm"));
@@ -29,7 +30,9 @@ const CampaignForm = dynamic(() => import("./CampaignForm"));
 const ServiceRuleForm = dynamic(() => import("./ServiceRuleForm"));
 const InvoiceRuleForm = dynamic(() => import("./InvoiceRuleForm"));
 const TagRuleForm = dynamic(() => import("./TagRuleForm"));
-const ReportingAutomationRuleForm = dynamic (()=>import ("./ReportingAutomationRuleForm"));
+const ReportingAutomationRuleForm = dynamic(
+  () => import("./ReportingAutomationRuleForm"),
+);
 // Form component map
 const formComponents: Record<string, React.ComponentType<any>> = {
   pipeline: PipelineRuleForm,
@@ -39,7 +42,7 @@ const formComponents: Record<string, React.ComponentType<any>> = {
   invoice: InvoiceRuleForm,
   inventory: InventoryRuleForm,
   tag: TagRuleForm,
-  reporting: ReportingAutomationRuleForm
+  reporting: ReportingAutomationRuleForm,
 };
 
 export default function AllCards({
@@ -108,8 +111,7 @@ export default function AllCards({
     isFetching: tagAutomationIsFetching,
   } = useAllTagAutomationRules(companyId, type === "tag");
 
-
-    const {
+  const {
     data: allReportingAutomation,
     isLoading: reportingAutomationIsLoading,
     isFetching: reportingAutomationIsFetching,
@@ -133,8 +135,8 @@ export default function AllCards({
         return inventoryAutomationIsLoading || inventoryAutomationIsFetching;
       case "tag":
         return tagAutomationIsLoading || tagAutomationIsFetching;
-        case "reporting": 
-        return reportingAutomationIsLoading || reportingAutomationIsFetching
+      case "reporting":
+        return reportingAutomationIsLoading || reportingAutomationIsFetching;
       default:
         return false;
     }
@@ -169,10 +171,12 @@ export default function AllCards({
               : type === "inventory"
                 ? allInventoryAutomation?.data
                 : type === "tag"
-                  ? allTagAutomation?.data 
-                  : type === "reporting" ?allReportingAutomation?.data : campaigns;
+                  ? allTagAutomation?.data
+                  : type === "reporting"
+                    ? allReportingAutomation?.data
+                    : campaigns;
 
-  const moduleKey =
+  const moduleKey: AutomationModuleKey =
     type === "service-maintenance"
       ? "service"
       : type === "pipeline"
@@ -187,13 +191,15 @@ export default function AllCards({
                 ? "inventory"
                 : type === "tag"
                   ? "tag"
-                  : "pipeline";
+                  : type === "reporting"
+                    ? "reporting"
+                    : "pipeline";
 
   const entitlements = entitlementsRes?.success ? entitlementsRes.data : null;
   const automationModules = entitlements?.automationModules || [];
   const moduleEnabled = automationModules.includes(moduleKey);
   const rawLimit = entitlements
-    ? getAutomationLimitForModule(entitlements, moduleKey as any)
+    ? getAutomationLimitForModule(entitlements, moduleKey)
     : 3;
   const moduleLimit = rawLimit ?? 0;
   const limitReached =
