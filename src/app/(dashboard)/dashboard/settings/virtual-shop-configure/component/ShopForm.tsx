@@ -74,8 +74,15 @@ export default function ShopForm({
     banner: string;
   }>({ logo: "", banner: "" });
 
-  const [errors, setErrors] = useState<{ storeName?: string }>({});
-  const [touched, setTouched] = useState<{ storeName?: boolean }>({});
+  const [errors, setErrors] = useState<{
+    storeName?: string;
+    description?: string;
+  }>({});
+
+  const [touched, setTouched] = useState<{
+    storeName?: boolean;
+    description?: boolean;
+  }>({});
   const [isUploading, setIsUploading] = useState(false);
 
   /** slug control */
@@ -118,9 +125,15 @@ export default function ShopForm({
   /** validation */
   const validate = () => {
     const newErrors: typeof errors = {};
+
     if (!form.storeName.trim()) {
       newErrors.storeName = "Store name is required";
     }
+
+    if (form.description && form.description.length > 150) {
+      newErrors.description = "Max 150 characters allowed";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -266,13 +279,48 @@ export default function ShopForm({
           value={form.description}
           name="description"
           placeholder="Description..."
-          onChange={(e) =>
+          maxLength={150}
+          onChange={(e) => {
+            const value = e.target.value;
+
             setForm((p) => ({
               ...p,
-              description: e.target.value,
-            }))
+              description: value,
+            }));
+
+            // real-time validation
+            setErrors((prev) => ({
+              ...prev,
+              description:
+                value.length > 150 ? "Max 150 characters allowed" : undefined,
+            }));
+          }}
+          onBlur={() => {
+            setTouched((p) => ({ ...p, description: true }));
+            validate();
+          }}
+          className={
+            touched.description && errors.description ? "border-red-400" : ""
           }
         />
+
+        <div className="flex justify-between text-xs">
+          {errors.description && touched.description ? (
+            <p className="text-red-500">{errors.description}</p>
+          ) : (
+            <span />
+          )}
+
+          <span
+            className={
+              (form.description || "").length > 150
+                ? "text-red-500"
+                : "text-gray-400"
+            }
+          >
+            {(form.description || "").length}/150
+          </span>
+        </div>
       </div>
 
       {/* FILES */}

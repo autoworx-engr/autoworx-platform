@@ -127,7 +127,7 @@ export async function GET(
       skip,
       take: limit,
     });
-    console.log("shops", shops);
+
     return NextResponse.json({
       success: true,
       data: shops,
