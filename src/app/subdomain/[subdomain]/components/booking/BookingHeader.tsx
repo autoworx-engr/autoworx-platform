@@ -3,7 +3,6 @@
 import { Button } from "@/components/ui/button";
 import { Gift, ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
 import { useShopInfo } from "@/hooks/virtual-shop/useShopInfo";
 
 interface BookingHeaderProps {
@@ -37,13 +36,15 @@ export const BookingHeader = ({
         <div className="absolute inset-0 container max-w-5xl mx-auto px-6 flex items-center justify-between">
           <div className="flex items-center gap-5">
             {/* Minimalist Logo */}
-            <div className="h-16 w-16 md:h-20 md:w-20 rounded-2xl overflow-hidden border-2 border-white/30 bg-white/10 backdrop-blur-md shadow-xl flex items-center justify-center p-2 transform transition-transform hover:scale-105">
-              <img
-                src={shop?.logoUrl || "/icons/Logo.png"}
-                alt={shopName}
-                className="w-full h-full object-contain brightness-0 invert"
-              />
-            </div>
+            {shop?.logoUrl && (
+              <div className="h-16 w-16 md:h-20 md:w-20 rounded-2xl overflow-hidden border-2 border-white/30 bg-white/10 backdrop-blur-md shadow-xl flex items-center justify-center p-2 transform transition-transform hover:scale-105">
+                <img
+                  src={shop.logoUrl}
+                  alt={shopName}
+                  className="w-full h-full object-contain"
+                />
+              </div>
+            )}
 
             <div className="space-y-0.5">
               <h1 className="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-md">

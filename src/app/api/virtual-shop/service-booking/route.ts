@@ -304,6 +304,24 @@ const roundMoney = (value: number) => Number(value.toFixed(2));
  *                     hasPrevPage:
  *                       type: boolean
  *                       example: false
+ *                     statusCounts:
+ *                       type: object
+ *                       properties:
+ *                         pending:
+ *                           type: integer
+ *                           example: 5
+ *                         confirmed:
+ *                           type: integer
+ *                           example: 10
+ *                         completed:
+ *                           type: integer
+ *                           example: 7
+ *                         cancelled:
+ *                           type: integer
+ *                           example: 3
+ *                         total:
+ *                           type: integer
+ *                           example: 25
  *                 data:
  *                   type: array
  *                   items:
@@ -464,19 +482,15 @@ export async function GET(req: Request) {
       endDate,
     });
 
-    const whereClause: Prisma.ShopBookingWhereInput = {
+    const baseWhereClause: Prisma.ShopBookingWhereInput = {
       shop: {
         companyId,
       },
     };
 
-    if (status) {
-      whereClause.status = status.toUpperCase() as any;
-    }
-
     if (search) {
       const searchNum = parseInt(search, 10);
-      whereClause.OR = [
+      baseWhereClause.OR = [
         {
           client: {
             OR: [
@@ -543,7 +557,7 @@ export async function GET(req: Request) {
       }
 
       if (gte && lte) {
-        whereClause.appointment = {
+        baseWhereClause.appointment = {
           date: {
             gte,
             lte,
@@ -551,6 +565,35 @@ export async function GET(req: Request) {
         };
       }
     }
+
+    const whereClause: Prisma.ShopBookingWhereInput = {
+      ...baseWhereClause,
+      ...(status ? { status: status.toUpperCase() as any } : {}),
+    };
+
+    const statusCountsRaw = await db.shopBooking.groupBy({
+      by: ["status"],
+      where: baseWhereClause,
+      _count: {
+        id: true,
+      },
+    });
+
+    const statusCounts = {
+      pending: 0,
+      confirmed: 0,
+      completed: 0,
+      cancelled: 0,
+      total: 0,
+    };
+
+    statusCountsRaw.forEach((item) => {
+      const key = item.status?.toLowerCase() as keyof typeof statusCounts;
+      if (key && statusCounts[key] !== undefined) {
+        statusCounts[key] = item._count.id;
+        statusCounts.total += item._count.id;
+      }
+    });
 
     const [totalRecords, shopBookings] = await Promise.all([
       db.shopBooking.count({ where: whereClause }),
@@ -631,6 +674,7 @@ export async function GET(req: Request) {
           limit,
           hasNextPage: page < totalPages,
           hasPrevPage: page > 1,
+          statusCounts,
         },
         data: shopBookings.map((sb) => {
           const subtotal = Number(sb.invoice?.subtotal || 0);

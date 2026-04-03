@@ -1,6 +1,9 @@
 import Image from "next/image";
-import { SquarePen, Trash2 } from "lucide-react";
-import { Popconfirm } from "antd";
+import { Loader2, SquarePen, Trash2 } from "lucide-react";
+import { Popconfirm, Tooltip } from "antd";
+import { Switch } from "@/components/Switch";
+import { useRouter } from "nextjs-toploader/app";
+import { useUpdateShopServiceStatus } from "@/hooks/virtual-shop/service/useShopService";
 
 export type Service = {
   id: number;
@@ -9,19 +12,52 @@ export type Service = {
   price: number;
   duration: number;
   imageUrl?: string;
+  isActive: boolean;
 };
 
 type ServiceCardProps = {
   service: Service;
+  shopId?: number;
   onEdit?: (service: Service) => void;
   onDelete?: (service: Service) => void;
 };
 
 export default function ServiceCard({
   service,
+  shopId,
   onEdit,
   onDelete,
 }: ServiceCardProps) {
+  const router = useRouter();
+  const {
+    mutateAsync: updateServiceStatus,
+    isPending: isUpdatingStatus,
+    variables: statusVariables,
+  } = useUpdateShopServiceStatus();
+
+  const isTogglingStatus =
+    isUpdatingStatus && statusVariables?.id === service.id;
+
+  const switchTooltip = isTogglingStatus
+    ? "Updating status..."
+    : service.isActive
+      ? "Click to deactivate service"
+      : "Click to activate service";
+
+  const handleToggleStatus = async (isActive: boolean) => {
+    if (!shopId) return;
+
+    try {
+      await updateServiceStatus({
+        id: service.id,
+        isActive,
+        shopId,
+      });
+      router.refresh();
+    } catch {
+    }
+  };
+
   return (
     <div className="group flex flex-col lg:flex-row lg:justify-between rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition-all hover:border-slate-300 hover:shadow-md sm:px-4 sm:py-3">
       <div className="flex items-start gap-3 sm:items-center sm:gap-4">
@@ -63,6 +99,24 @@ export default function ServiceCard({
       </div>
 
       <div className="mt-3 flex items-center justify-end gap-2 border-t border-slate-100 pt-2 sm:mt-0 sm:border-t-0 sm:pt-0">
+        <div className="mr-1 flex items-center gap-2">
+          {/* {isTogglingStatus &&
+            <span className="inline-flex items-center gap-1 text-sm font-medium text-slate-500">
+              <Loader2 size={16} color="#6571FF" className="animate-spin" />
+              {service.isActive ? "Deactivating..." : "Activating..."}
+            </span>
+          } */}
+          <Tooltip title={switchTooltip}>
+            <span className="inline-flex">
+              <Switch
+                checked={service.isActive}
+                setChecked={handleToggleStatus}
+                disabled={isTogglingStatus}
+                aria-label={`${service.name} status`}
+              />
+            </span>
+          </Tooltip>
+        </div>
         <button
           onClick={() => onEdit?.(service)}
           className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-md border border-slate-200 bg-white px-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 sm:border-0 sm:bg-transparent sm:p-1.5"

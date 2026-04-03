@@ -33,7 +33,9 @@ export default function ServiceInfo({
   onImageSelect,
   errors,
 }: ServiceInfoProps) {
-  const { serviceTitle, description, imageName, vehicleTypeModifiers } = value;
+  const { serviceTitle, description, imageName, imageUrl, vehicleTypeModifiers } =
+    value;
+  const shouldShowExistingImage = Boolean(imageUrl && !imageName);
 
   const setVehicleTypeModifiers = (
     updater: (
@@ -99,18 +101,30 @@ export default function ServiceInfo({
 
       <div className="space-y-1">
         <label className="text-sm font-medium text-slate-700">Service Image</label>
-        <label className="flex cursor-pointer items-center justify-between rounded-md border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-600">
-          <span className="truncate">{imageName || "Choose image (PNG, JPG, WEBP)"}</span>
-          <span className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs">
-            Browse
-          </span>
-          <input
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            className="hidden"
-            onChange={handleImageChange}
-          />
-        </label>
+        <div className="flex items-center gap-3">
+          {shouldShowExistingImage && (
+            <img
+              src={imageUrl}
+              alt="Current service image"
+              className="h-12 w-14 rounded-md border border-slate-200 object-cover"
+            />
+          )}
+
+          <label className="flex w-full cursor-pointer items-center justify-between rounded-md border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+            <span className="truncate">
+              {imageName || "Choose image (PNG, JPG, WEBP)"}
+            </span>
+            <span className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs">
+              Browse
+            </span>
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="hidden"
+              onChange={handleImageChange}
+            />
+          </label>
+        </div>
       </div>
 
       <div className="space-y-2">
@@ -130,17 +144,32 @@ export default function ServiceInfo({
                 type="number"
                 min={0}
                 step="0.01"
+                placeholder="0"
+                inputMode="decimal"
                 value={
                   vehicleTypeModifiers[
-                  vehicleType.key as keyof typeof vehicleTypeModifiers
-                  ]
+                    vehicleType.key as keyof typeof vehicleTypeModifiers
+                  ] === "0"
+                    ? ""
+                    : vehicleTypeModifiers[
+                    vehicleType.key as keyof typeof vehicleTypeModifiers
+                    ]
                 }
-                onChange={(event) =>
-                  setVehicleTypeModifiers((prev) => ({
-                    ...prev,
-                    [vehicleType.key]: event.target.value,
-                  }))
-                }
+                onKeyDown={(event) => {
+                  if (["e", "E", "+", "-"].includes(event.key)) {
+                    event.preventDefault();
+                  }
+                }}
+                onChange={(event) => {
+                  const nextValue = event.target.value;
+
+                  if (nextValue === "" || /^\d*\.?\d{0,2}$/.test(nextValue)) {
+                    setVehicleTypeModifiers((prev) => ({
+                      ...prev,
+                      [vehicleType.key]: nextValue,
+                    }));
+                  }
+                }}
                 className={cn(
                   "w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-400",
                   slimInputClassName,

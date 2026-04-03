@@ -16,7 +16,7 @@ export const ProgressBar = ({ current }: { current: BookingStep }) => {
   const currentIdx = stepOrder.indexOf(current);
 
   return (
-    <div className="flex items-center justify-between w-full max-w-lg mx-auto px-2">
+    <div className="flex items-center justify-between w-full max-w-lg mx-auto px-2 py-4">
       {steps.map((s, i) => {
         const isDone = i < currentIdx;
         const isActive = i === currentIdx;

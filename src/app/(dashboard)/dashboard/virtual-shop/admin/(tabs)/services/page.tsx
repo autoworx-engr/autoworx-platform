@@ -81,7 +81,6 @@ export default async function VirtualShopServicesPage({
     if (shop?.id) {
       const whereClause = {
         shopId: shop.id,
-        isActive: true,
         ...(search
           ? {
             OR: [
@@ -123,6 +122,7 @@ export default async function VirtualShopServicesPage({
         duration: service.duration,
         description: service.description,
         imageUrl: service.imageUrl,
+        isActive: service.isActive,
         modifierCoupe: Number(service.modifierCoupe),
         modifierSedan: Number(service.modifierSedan),
         modifierSUV: Number(service.modifierSUV),

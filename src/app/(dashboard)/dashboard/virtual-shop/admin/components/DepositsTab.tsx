@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useSession } from "next-auth/react";
 import { Switch } from "@/components/Switch";
@@ -11,6 +11,21 @@ import {
   useGetShopBookingSettings,
   useUpdateShopBookingSettings,
 } from "@/hooks/virtual-shop/booking-settings/useShopBookingSettings";
+import Selector from "@/components/Selector";
+import { SlimInput } from "@/components/SlimInput";
+
+const DEPOSIT_TYPES = ["Percentage (%)", "Fixed Amount ($)"] as const;
+type DepositType = (typeof DEPOSIT_TYPES)[number];
+
+const UI_TO_API_DEPOSIT_TYPE: Record<DepositType, "FIXED" | "PERCENTAGE"> = {
+  "Percentage (%)": "PERCENTAGE",
+  "Fixed Amount ($)": "FIXED",
+};
+
+const API_TO_UI_DEPOSIT_TYPE: Record<"FIXED" | "PERCENTAGE", DepositType> = {
+  FIXED: "Fixed Amount ($)",
+  PERCENTAGE: "Percentage (%)",
+};
 
 export default function DepositsTab() {
   const { data: session } = useSession();
@@ -21,6 +36,8 @@ export default function DepositsTab() {
   const shopId = Number(shopConfig?.id ?? 0);
 
   const [requireDeposit, setRequireDeposit] = useState(false);
+  const [depositType, setDepositType] = useState<DepositType>("Percentage (%)");
+  const [amount, setAmount] = useState("25");
   const {
     data: bookingSettings,
     isLoading: isBookingSettingsLoading,
@@ -28,12 +45,40 @@ export default function DepositsTab() {
   const { mutateAsync: updateBookingSettings, isPending: isSaving } =
     useUpdateShopBookingSettings(shopId);
 
+  const label = depositType === "Percentage (%)" ? "Percentage (%)" : "Fixed Amount ($)";
+  const depositTypeItems = [...DEPOSIT_TYPES];
+
+  const handleDepositTypeChange = (item: (typeof DEPOSIT_TYPES)[number]) => {
+    setDepositType(item);
+  };
+
   const isLoading = isShopConfigLoading || isBookingSettingsLoading;
+
+  const parsedAmount = useMemo(() => {
+    if (!amount.trim()) return null;
+    const next = Number(amount);
+    return Number.isNaN(next) ? null : next;
+  }, [amount]);
 
   useEffect(() => {
     if (!bookingSettings) return;
 
     setRequireDeposit(Boolean(bookingSettings.isDepositEnabled));
+
+    if (bookingSettings.depositType) {
+      setDepositType(
+        API_TO_UI_DEPOSIT_TYPE[bookingSettings.depositType] ?? "Percentage (%)",
+      );
+    }
+
+    if (
+      bookingSettings.depositValue !== null
+      && bookingSettings.depositValue !== undefined
+    ) {
+      setAmount(String(bookingSettings.depositValue));
+    } else {
+      setAmount("");
+    }
   }, [bookingSettings]);
 
   const handleSave = async () => {
@@ -47,25 +92,29 @@ export default function DepositsTab() {
       return;
     }
 
-    const normalizedDepositValue = Number(bookingSettings?.depositValue ?? 0);
-    const payload: UpdateShopBookingSettingsPayload = {
-      shopId,
-      isDepositEnabled: requireDeposit,
-      depositValue: null,
-    };
-
     if (requireDeposit) {
-      payload.depositType = bookingSettings?.depositType === "FIXED"
-        ? "FIXED"
-        : "PERCENTAGE";
-      payload.depositValue = Number.isFinite(normalizedDepositValue)
-        ? normalizedDepositValue
-        : 0;
+
+      if (parsedAmount === null || parsedAmount < 0) {
+        toast.error("Please enter a valid deposit amount");
+        return;
+      }
+
+      if (depositType === "Percentage (%)" && parsedAmount > 100) {
+        toast.error("Percentage cannot exceed 100");
+        return;
+      }
     }
 
     try {
       await updateBookingSettings({
-        payload,
+        payload: {
+          shopId,
+          isDepositEnabled: requireDeposit,
+          depositType: requireDeposit
+            ? UI_TO_API_DEPOSIT_TYPE[depositType]
+            : undefined,
+          depositValue: requireDeposit ? parsedAmount : null,
+        },
         accessToken: session.accessToken,
       });
 
@@ -83,6 +132,41 @@ export default function DepositsTab() {
       <p className="mt-1 text-sm text-[#6571FF]">
         Configure deposit requirements for bookings
       </p>
+
+      {/* Conditional fields */}
+      {requireDeposit && (
+        <div className="w-full md:max-w-xl mt-6 flex flex-col gap-4">
+          {/* Deposit Type */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-gray-700">
+              Deposit Type
+            </label>
+            <Selector
+              items={depositTypeItems}
+              selectedItem={depositType}
+              onSelect={handleDepositTypeChange}
+              label={(item) => item ?? "Select type"}
+              displayList={(item) => <span>{item}</span>}
+              newButton={<></>}
+              showSearch={false}
+              className="w-full md:w-48"
+            />
+          </div>
+
+          {/* Amount / Percentage */}
+          <SlimInput
+            name="depositAmount"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            label={label}
+            type="number"
+            min="0"
+            max={depositType === "Percentage (%)" ? "100" : undefined}
+            step={depositType === "Percentage (%)" ? "0.01" : "0.01"}
+            className="w-full md:max-w-40"
+          />
+        </div>
+      )}
 
       {/* Require Deposit row */}
       <div className="mt-6 flex items-center justify-between">

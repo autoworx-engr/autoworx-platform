@@ -30,6 +30,7 @@ type AppointmentService = {
   name: string;
   vehicleType: string;
   price: number;
+  extraFee: number;
 };
 
 type Appointment = {
@@ -156,13 +157,14 @@ function mapBookingToAppointment(item: VirtualShopServiceBookingItem): Appointme
         name: service?.title || "Service",
         vehicleType: service?.modifierType || "Vehicle",
         price: Number(service?.price || 0),
+        extraFee: Number(service?.modifierPrice || 0),
       }))
       : [],
   };
 }
 
 function getTotalRevenue(appt: Appointment) {
-  return appt.services.reduce((sum, s) => sum + s.price, 0);
+  return appt.services.reduce((sum, s) => sum + s.price + s.extraFee, 0);
 }
 
 function getDaysInMonth(year: number, month: number) {
@@ -242,7 +244,7 @@ function AppointmentCard({ appt }: { appt: Appointment }) {
               <span className="truncate block sm:inline">{svc.name}</span>{" "}
               <span className="text-xs text-slate-400 dark:text-slate-500 whitespace-nowrap">({svc.vehicleType})</span>
             </span>
-            <span className="font-medium text-slate-800 dark:text-slate-200 flex-shrink-0">${svc.price.toLocaleString()}</span>
+            <span className="font-medium text-slate-800 dark:text-slate-200 flex-shrink-0">${svc.price.toLocaleString() + (svc.extraFee > 0 ? ` + $${svc.extraFee.toLocaleString()}` : '')}</span>
           </div>
         ))}
       </div>
