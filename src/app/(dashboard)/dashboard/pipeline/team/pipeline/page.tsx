@@ -1,11 +1,8 @@
 import { getWorkOrders } from "@/actions/pipelines/getWorkOrders";
-import {
-  getColumnsByType,
-  getTechniciansColumnByCompany,
-} from "@/actions/pipelines/pipelinesColumn";
+import { getTechniciansColumnByCompany } from "@/actions/pipelines/pipelinesColumn";
 import { authOptions } from "@/authOptions";
 import { ShopLead, ShopPipelineData } from "@/types/invoiceLead";
-import { Service, Technician } from "@prisma/client";
+import { Technician } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import dynamic from "next/dynamic";
 
@@ -15,18 +12,14 @@ const PipelinePage = async () => {
   const session = await getServerSession(authOptions);
   const currentUser = session?.user;
   const invoices = await getWorkOrders();
-  const columnType = "shop";
-  console.log("team pipeline");
-  const pipelineColumns = await getColumnsByType(columnType);
   const techniciansColumn = await getTechniciansColumnByCompany();
-  console.log("techniciansColumn", techniciansColumn);
 
   const type = "Team Pipelines";
 
   const servicesOfCurrentUser: any = [];
   let pipelineData: ShopPipelineData[] = [];
 
-  if (invoices && pipelineColumns) {
+  if (invoices && techniciansColumn) {
     const filteredInvoices = invoices.filter((invoice) => {
       return invoice.type === "Invoice";
     });
@@ -96,22 +89,24 @@ const PipelinePage = async () => {
       };
     });
 
-    let updatedPipelineData = pipelineColumns.map((column) => ({
-      id: column.id,
-      title: column.title,
-      leads: transformedLeads
-        .filter((lead) => lead.columnId === column.id)
-        .sort((a, b) => {
-          const dateA = a.deliveredAt
-            ? new Date(a.deliveredAt).getTime()
-            : new Date(a.createdAt).getTime();
-          const dateB = b.deliveredAt
-            ? new Date(b.deliveredAt).getTime()
-            : new Date(a.createdAt).getTime();
-          // console.log(dateA, dateB);
+    const uniqueTechnicians = Array.from(
+      new Map(
+        techniciansColumn.map((tech) => [
+          tech.id,
+          {
+            id: tech.id,
+            title: `${tech?.firstName ?? ""} ${tech?.lastName ?? ""}`.trim(),
+          },
+        ]),
+      ).values(),
+    );
 
-          return dateB - dateA;
-        }),
+    let updatedPipelineData = uniqueTechnicians.map((tech) => ({
+      id: tech.id,
+      title: tech.title,
+      leads: transformedLeads.filter((lead) =>
+        lead.technicians.some((t) => t.userId === tech.id),
+      ),
     }));
 
     // Only filter for technicians
@@ -126,10 +121,8 @@ const PipelinePage = async () => {
       }));
     }
     pipelineData = updatedPipelineData;
-
-    // setPipelineData(updatedPipelineData);
   }
-  console.log("pipelineData", pipelineData);
+
   return (
     <TeamPipelines
       pipelinesTitle={type}

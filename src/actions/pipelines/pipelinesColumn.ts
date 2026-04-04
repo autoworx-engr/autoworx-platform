@@ -33,7 +33,6 @@ export const getColumnsByType = async (type: string) => {
 
 export const getTechniciansColumnByCompany = async () => {
   const companyId = await getCompanyId();
-  console.log("companyId", companyId);
   let columns = await db.user.findMany({
     where: { companyId: companyId, employeeType: "Technician" },
     include: {
