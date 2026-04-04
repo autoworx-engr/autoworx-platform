@@ -100,20 +100,20 @@ export async function POST(req: NextRequest) {
       themeConfig,
       companyId,
     } = body;
-    console.log("body", body);
+
     const slug = storeName
       .toLowerCase()
       .replace(/\s+/g, "-")
       .replace(/[^a-z0-9-]/g, "");
 
     if (!storeName || !slug) {
-      throw new AppError(400, "storeName and slug are required");
+      throw new AppError(400, "The store name are required!");
     }
 
     // Check if slug already exists
     const existing = await db.shop.findUnique({ where: { slug } });
     if (existing) {
-      throw new AppError(400, "Slug already exists");
+      throw new AppError(400, "The shop already exist!");
     }
 
     const shop = await db.$transaction(async (tx) => {
@@ -204,14 +204,13 @@ export async function POST(req: NextRequest) {
 
       return newShop;
     });
-    console.log("shop", shop);
+
     return NextResponse.json({
       success: true,
       message: "Shop created successfully",
       data: shop,
     });
   } catch (error: any) {
-    console.log("error", error);
     const formattedError = errorHandler(error);
     return NextResponse.json(
       {
