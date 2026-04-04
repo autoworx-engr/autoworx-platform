@@ -39,6 +39,13 @@ export async function POST(request: NextRequest) {
     platform,
   } = await request.json();
   const companyId = Number(rawCompanyId);
+
+  if (!rawIdentity) {
+    return NextResponse.json(
+      { error: "identity is required" },
+      { status: 400 },
+    );
+  }
   // Twilio Client identity cannot contain '+' or other special chars — normalize.
   const identity = (rawIdentity as string).replace(/[^a-zA-Z0-9_\-.~]/g, "");
 
