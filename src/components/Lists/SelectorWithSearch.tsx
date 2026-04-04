@@ -67,11 +67,11 @@ export function SelectorWithSearch({
   }, []);
 
   // Focus search input when dropdown opens
-  useEffect(() => {
-    if (isOpen && isSearch && searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
-  }, [isOpen, isSearch]);
+  // useEffect(() => {
+  //   if (isOpen && isSearch && searchInputRef.current) {
+  //     searchInputRef.current.focus();
+  //   }
+  // }, [isOpen, isSearch]);
 
   const normalizeOptions = () => {
     if (typeof options?.[0] === "string" || typeof options?.[0] === "number") {
@@ -87,8 +87,8 @@ export function SelectorWithSearch({
 
   const filteredOptions = searchTerm
     ? normalizedOptions.filter((opt) =>
-      opt.title.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+        opt.title.toLowerCase().includes(searchTerm.toLowerCase()),
+      )
     : normalizedOptions;
 
   const handleSelect = (id: string) => {
@@ -125,7 +125,7 @@ export function SelectorWithSearch({
       <div
         className={cn(
           "mb-1 text-sm font-semibold text-slate-700 dark:text-slate-200",
-          labelClassName
+          labelClassName,
         )}
       >
         {label ?? sentenceCase(name)}
@@ -138,7 +138,8 @@ export function SelectorWithSearch({
             "flex w-full items-center justify-between rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-left text-sm leading-6 text-slate-700 dark:text-slate-200 outline-none transition-all duration-200",
             "focus:ring-2 focus:ring-[#6571FF]/30 focus:border-[#6571FF] hover:border-[#6571FF] hover:shadow-md",
             error && "border-red-500 focus:border-red-500 focus:ring-red-200",
-            disabled && "cursor-not-allowed bg-slate-100 text-slate-400 opacity-70 dark:bg-slate-800"
+            disabled &&
+              "cursor-not-allowed bg-slate-100 text-slate-400 opacity-70 dark:bg-slate-800",
           )}
           onClick={() => !disabled && setIsOpen(!isOpen)}
           id={name}
@@ -175,7 +176,7 @@ export function SelectorWithSearch({
                     className={cn(
                       "cursor-pointer px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800",
                       selectedValue === opt?.id.toString() &&
-                      "bg-[#6571FF]/10 text-[#6571FF] dark:text-[#8ea0ff]"
+                        "bg-[#6571FF]/10 text-[#6571FF] dark:text-[#8ea0ff]",
                     )}
                     onClick={() => handleSelect(opt?.id.toString())}
                   >
