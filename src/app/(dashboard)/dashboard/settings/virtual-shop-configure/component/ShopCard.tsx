@@ -7,6 +7,8 @@ import { useDeleteShop } from "@/hooks/virtual-shop/configure/useVirtualShopConf
 import Image from "next/image";
 import { Popconfirm } from "antd";
 
+const domain = new URL(process.env.NEXT_PUBLIC_APP_URL!).hostname;
+
 export default function ShopCard({ shop }: { shop: any }) {
   const { mutate: deleteShop, isPending } = useDeleteShop(
     shop?.id,
@@ -45,7 +47,7 @@ export default function ShopCard({ shop }: { shop: any }) {
 
         <div className="flex gap-2">
           <Link
-            href={`https://${shop.slug}.${process.env.NEXT_PUBLIC_APP_URL}`}
+            href={`${window.location.protocol}//${slug}.${domain}${window.location.port ? ":" + window.location.port : ""}`}
             target="_blank"
           >
             <Button variant="ghost" size="icon">
