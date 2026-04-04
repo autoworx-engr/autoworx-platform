@@ -818,18 +818,26 @@ export const Checkout = () => {
                   required
                   defaultIsoCode={selectedCountryCode}
                   onChange={(num, code, isoCode) => {
-                    update("phone", `${code}${num}`);
+                    const newPhone = `${code}${num}`;
+                    update("phone", newPhone);
                     setSelectedCountryCode(isoCode || "US");
+
+                    if (phoneLookedUp) {
+                      setPhoneLookedUp(false);
+                      setIsReturningClient(false);
+                    }
                   }}
                 />
               </div>
-              {!phoneLookedUp && form.phone.length >= 7 && (
+              {!phoneLookedUp && (
                 <Button
                   type="button"
                   variant="secondary"
                   size="lg"
                   onClick={handlePhoneLookup}
-                  disabled={isLookingUp}
+                  disabled={
+                    isLookingUp || normalizePhone(form.phone).length < 10
+                  }
                 >
                   {isLookingUp ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
