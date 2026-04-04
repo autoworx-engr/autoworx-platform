@@ -28,6 +28,7 @@ export type Entitlements = {
   automationLimitTag: number;
   automationLimitService: number;
   automationLimitMarketing: number;
+  automationLimitReporting: number;
   websiteIncluded: boolean;
   carWrapVisualizer: boolean;
   aiSmartReplies: boolean;
@@ -41,7 +42,8 @@ export type AutomationModuleKey =
   | "inventory"
   | "tag"
   | "service"
-  | "marketing";
+  | "marketing"
+  | "reporting";
 
 type AutomationLimitKey =
   | "automationLimitPipeline"
@@ -50,7 +52,8 @@ type AutomationLimitKey =
   | "automationLimitInventory"
   | "automationLimitTag"
   | "automationLimitService"
-  | "automationLimitMarketing";
+  | "automationLimitMarketing"
+  | "automationLimitReporting";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -69,6 +72,7 @@ const DEFAULT_ENTITLEMENTS: Entitlements = {
   automationLimitTag: 0,
   automationLimitService: 0,
   automationLimitMarketing: 0,
+  automationLimitReporting: 0,
   websiteIncluded: false,
   carWrapVisualizer: false,
   aiSmartReplies: false,
@@ -86,6 +90,7 @@ const AUTOMATION_LIMIT_KEY_BY_MODULE: Record<
   tag: "automationLimitTag",
   service: "automationLimitService",
   marketing: "automationLimitMarketing",
+  reporting: "automationLimitReporting",
 };
 
 /**
@@ -109,7 +114,10 @@ const AUTOMATION_PERMISSION_TO_MODULE: Record<string, AutomationModuleKey> = {
   tagAutomation: "tag",
   serviceAutomation: "service",
   marketingAutomation: "marketing",
+  reportingAutomation: "reporting",
 };
+
+const LEGACY_UNLIMITED_AUTOMATION_COMPANY_IDS = new Set([4, 12, 14]);
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -120,6 +128,7 @@ const AUTOMATION_PERMISSION_TO_MODULE: Record<string, AutomationModuleKey> = {
  * This is used for legacy-mode companies (enforcePlatformPlan = false).
  */
 function buildEntitlementsFromFeaturePermissions(
+  companyId: number,
   permissions: { permission_name: string; enabled: boolean }[],
 ): Entitlements {
   const result: Entitlements = { ...DEFAULT_ENTITLEMENTS };
@@ -138,11 +147,19 @@ function buildEntitlementsFromFeaturePermissions(
   }
 
   result.automationModules = Array.from(enabledAutomationModules);
+  const legacyAutomationLimit = LEGACY_UNLIMITED_AUTOMATION_COMPANY_IDS.has(
+    companyId,
+  )
+    ? -1
+    : 3;
+
   for (const moduleKey of Object.keys(
     AUTOMATION_LIMIT_KEY_BY_MODULE,
   ) as AutomationModuleKey[]) {
     const limitKey = AUTOMATION_LIMIT_KEY_BY_MODULE[moduleKey];
-    result[limitKey] = enabledAutomationModules.has(moduleKey) ? -1 : 0;
+    result[limitKey] = enabledAutomationModules.has(moduleKey)
+      ? legacyAutomationLimit
+      : 0;
   }
 
   return result;
@@ -217,7 +234,7 @@ export async function getCompanyEntitlements(
       },
       select: { permission_name: true, enabled: true },
     });
-    return buildEntitlementsFromFeaturePermissions(featurePerms);
+    return buildEntitlementsFromFeaturePermissions(id, featurePerms);
   }
 
   // Platform-plan mode: use subscription plan entitlements only.

@@ -30,6 +30,7 @@ async function main() {
         { key: "automation_limit_tag", value: "1", type: "NUMERIC" },
         { key: "automation_limit_service", value: "0", type: "NUMERIC" },
         { key: "automation_limit_marketing", value: "0", type: "NUMERIC" },
+        { key: "automation_limit_reporting", value: "0", type: "NUMERIC" },
         { key: "website_included", value: "false", type: "BOOLEAN" },
       ],
     },
@@ -55,6 +56,7 @@ async function main() {
         { key: "automation_limit_tag", value: "1", type: "NUMERIC" },
         { key: "automation_limit_service", value: "0", type: "NUMERIC" },
         { key: "automation_limit_marketing", value: "0", type: "NUMERIC" },
+        { key: "automation_limit_reporting", value: "0", type: "NUMERIC" },
         { key: "website_included", value: "false", type: "BOOLEAN" },
       ],
     },
@@ -84,6 +86,7 @@ async function main() {
         { key: "automation_limit_tag", value: "3", type: "NUMERIC" },
         { key: "automation_limit_service", value: "3", type: "NUMERIC" },
         { key: "automation_limit_marketing", value: "0", type: "NUMERIC" },
+        { key: "automation_limit_reporting", value: "0", type: "NUMERIC" },
       ],
     },
     {
@@ -101,7 +104,7 @@ async function main() {
         {
           key: "automation_modules",
           value:
-            "pipeline,marketing,calendar,communication,invoice,inventory,tag,service",
+            "pipeline,marketing,calendar,communication,invoice,inventory,tag,service,reporting",
           type: "TEXT",
         },
         { key: "automation_limit_pipeline", value: "-1", type: "NUMERIC" },
@@ -111,6 +114,7 @@ async function main() {
         { key: "automation_limit_tag", value: "-1", type: "NUMERIC" },
         { key: "automation_limit_service", value: "-1", type: "NUMERIC" },
         { key: "automation_limit_marketing", value: "-1", type: "NUMERIC" },
+        { key: "automation_limit_reporting", value: "-1", type: "NUMERIC" },
       ],
     },
   ];

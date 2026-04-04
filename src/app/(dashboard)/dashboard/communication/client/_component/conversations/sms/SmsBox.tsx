@@ -1,7 +1,6 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import SmsMessage from "./SmsMessage";
-import { useInView } from "framer-motion";
 import useInfinitySmsQueryByClientId from "../../../_hooks/useInfinitySmsQuery";
 import Spinner from "@/components/ui/Spinner";
 import { cn } from "@/lib/cn";
@@ -19,7 +18,7 @@ export default function SmsBox({ clientId }: { clientId: number }) {
 
   // flatten pages (oldest -> newest assumed in each page)
   const rawMessages = useMemo(
-    () => data?.pages?.flatMap(p => p.data) ?? [],
+    () => data?.pages?.flatMap((p) => p.data) ?? [],
     [data],
   );
 
@@ -38,33 +37,10 @@ export default function SmsBox({ clientId }: { clientId: number }) {
 
   // Track scroll position before loading more messages to maintain position
   const [prevScrollHeight, setPrevScrollHeight] = useState(0);
+  const isLoadingOlderRef = useRef(false);
 
-  // Add state to track if component is ready for intersection observer
+  // Delay top-loading until initial autoscroll settles
   const [isReady, setIsReady] = useState(false);
-
-  const topInView = useInView(topSentinelRef, {
-    root: containerRef, // Pass the ref object itself to avoid access during render
-    amount: 0.1,
-    margin: "100px 0px 0px 0px", // Increased margin for earlier triggering
-  });
-
-  // Fix: Add delay and ready state check to intersection observer effect
-  useEffect(() => {
-    if (!isReady) return;
-
-    const timeoutId = setTimeout(() => {
-      if (topInView && hasNextPage && !isFetchingNextPage) {
-        // Store current scroll height before loading
-        const container = containerRef.current;
-        if (container) {
-          setPrevScrollHeight(container.scrollHeight);
-        }
-        fetchNextPage();
-      }
-    }, 100); // Small delay to ensure proper initialization
-
-    return () => clearTimeout(timeoutId);
-  }, [topInView, hasNextPage, isFetchingNextPage, fetchNextPage, isReady]);
 
   // Maintain scroll position after loading older messages
   useEffect(() => {
@@ -121,15 +97,42 @@ export default function SmsBox({ clientId }: { clientId: number }) {
     }
   }, [messages.length, isReady, shouldAutoScroll]);
 
+  const maybeLoadOlderMessages = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    if (
+      !isReady ||
+      el.scrollTop > 80 ||
+      !hasNextPage ||
+      isFetchingNextPage ||
+      isLoadingOlderRef.current
+    ) {
+      return;
+    }
+
+    isLoadingOlderRef.current = true;
+    setPrevScrollHeight(el.scrollHeight);
+    void fetchNextPage().finally(() => {
+      isLoadingOlderRef.current = false;
+    });
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage, isReady]);
+
   const onScroll = useCallback(() => {
     const el = containerRef.current;
     if (!el) return;
+
+    maybeLoadOlderMessages();
 
     const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 24;
 
     setShowJump(!atBottom);
     setShouldAutoScroll(atBottom);
-  }, []);
+  }, [maybeLoadOlderMessages]);
+
+  useEffect(() => {
+    maybeLoadOlderMessages();
+  }, [isReady, data?.pages?.length, maybeLoadOlderMessages]);
 
   // Fix: Reset ready state when clientId changes
   useEffect(() => {

@@ -43,8 +43,7 @@ export type EstimateMaterial = {
 };
 
 export default function MaterialCreate() {
-  const { categories } = useListsStore();
-  const { vendors } = useListsStore();
+  const { categories, vendors, materials: inventoryMaterials } = useListsStore();
 
   const { currentSelectedCategoryId } = useEstimateCreateStore();
 
@@ -58,6 +57,7 @@ export default function MaterialCreate() {
   const [sell, setSell] = useState<number>();
   const [discount, setDiscount] = useState<number>();
   const [addToInventory, setAddToInventory] = useState<boolean>(false);
+  const [inventoryError, setInventoryError] = useState<string | null>(null);
 
   const { close, data } = useEstimatePopupStore();
   const itemId = data?.itemId;
@@ -69,6 +69,27 @@ export default function MaterialCreate() {
   const [categoryOpen, setCategoryOpen] = useState(false);
 
   // const { actionType } = useActionStoreCreateEdit();
+
+  const selectedInventoryMaterial = inventoryMaterials.find(
+    (m) => m.name.toLowerCase() === name.toLowerCase(),
+  );
+
+  useEffect(() => {
+    if (selectedInventoryMaterial) {
+      const available = Number(selectedInventoryMaterial.quantity || 0);
+      if (quantity && quantity > available) {
+        setInventoryError(
+          `Insufficient inventory. Only ${available} available.`,
+        );
+      } else if (available === 0) {
+        setInventoryError("Out of stock (0 available).");
+      } else {
+        setInventoryError(null);
+      }
+    } else {
+      setInventoryError(null);
+    }
+  }, [quantity, selectedInventoryMaterial]);
 
   useEffect(() => {
     if (data.material && data.edit) {
@@ -564,33 +585,45 @@ export default function MaterialCreate() {
           type: "number",
         },
       ].map((field) => (
-        <div key={field.id} className="flex items-center gap-3 mb-0.5">
-          <label
-            htmlFor={field.id}
-            className="w-24 text-sm font-semibold text-slate-500"
-          >
-            {field.label}
-          </label>
-          <input
-            type={field.type}
-            id={field.id}
-            value={field.val ?? ""}
-            disabled={field.disabled}
-            min="0"
-            onChange={(e) => {
-              if (e.target.value === "") {
-                field.set(undefined);
-              } else {
-                const parsed = parseFloat(e.target.value);
-                field.set(parsed < 0 ? 0 : parsed);
-              }
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "-" || e.key === "e") e.preventDefault();
-            }}
-            className="w-full flex-1 rounded-[10px] border border-slate-300/80 px-3 py-1.5 text-base font-medium leading-6 outline-none transition-all duration-300"
-            placeholder={field.placeholder}
-          />
+        <div key={field.id} className="mb-0.5">
+          <div className="flex items-center gap-3">
+            <label
+              htmlFor={field.id}
+              className="w-24 text-sm font-semibold text-slate-500"
+            >
+              {field.label}
+            </label>
+            <input
+              type={field.type}
+              id={field.id}
+              value={field.val ?? ""}
+              disabled={field.disabled}
+              min="0"
+              onChange={(e) => {
+                if (e.target.value === "") {
+                  field.set(undefined);
+                } else {
+                  const parsed = parseFloat(e.target.value);
+                  field.set(parsed < 0 ? 0 : parsed);
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "-" || e.key === "e") e.preventDefault();
+              }}
+              className={cn(
+                "w-full flex-1 rounded-[10px] border px-3 py-1.5 text-base font-medium leading-6 outline-none transition-all duration-300",
+                field.id === "qt" && inventoryError
+                  ? "border-red-500 ring-1 ring-red-500/20"
+                  : "border-slate-300/80",
+              )}
+              placeholder={field.placeholder}
+            />
+          </div>
+          {field.id === "qt" && inventoryError && (
+            <p className="ml-[6.7rem] mt-1 text-xs font-medium text-red-500">
+              {inventoryError}
+            </p>
+          )}
         </div>
       ))}
 
