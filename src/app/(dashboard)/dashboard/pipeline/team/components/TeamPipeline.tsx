@@ -25,7 +25,7 @@ import SearchScroll from "../../components/SearchScroll";
 
 interface PipelinesProps {
   pipelinesTitle: string;
-  columns?: Column[];
+  columns?: User[];
   shopPipelineDataProp: ShopPipelineData[];
   loading?: boolean;
   isTechnician?: boolean;
@@ -39,7 +39,7 @@ export default function TeamPipelines({
   isTechnician,
 }: PipelinesProps) {
   const router = useRouter();
-
+  console.log("columns", columns);
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
   //   console.log("selectedClientId==>", selectedClientId);
   const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(

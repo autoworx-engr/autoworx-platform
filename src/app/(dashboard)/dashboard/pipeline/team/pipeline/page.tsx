@@ -16,9 +16,11 @@ const PipelinePage = async () => {
   const currentUser = session?.user;
   const invoices = await getWorkOrders();
   const columnType = "shop";
+  console.log("team pipeline");
   const pipelineColumns = await getColumnsByType(columnType);
   const techniciansColumn = await getTechniciansColumnByCompany();
   console.log("techniciansColumn", techniciansColumn);
+
   const type = "Team Pipelines";
 
   const servicesOfCurrentUser: any = [];
@@ -127,10 +129,11 @@ const PipelinePage = async () => {
 
     // setPipelineData(updatedPipelineData);
   }
+  console.log("pipelineData", pipelineData);
   return (
     <TeamPipelines
       pipelinesTitle={type}
-      columns={pipelineColumns}
+      columns={techniciansColumn}
       shopPipelineDataProp={pipelineData}
       isTechnician={currentUser?.employeeType === "Technician"}
     />
