@@ -47,7 +47,7 @@ export default function ShopCard({ shop }: { shop: any }) {
 
         <div className="flex gap-2">
           <Link
-            href={`${window.location.protocol}//${slug}.${domain}${window.location.port ? ":" + window.location.port : ""}`}
+            href={`${window.location.protocol}//${shop?.slug}.${domain}${window.location.port ? ":" + window.location.port : ""}`}
             target="_blank"
           >
             <Button variant="ghost" size="icon">
