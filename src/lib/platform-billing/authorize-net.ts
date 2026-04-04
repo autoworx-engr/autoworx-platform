@@ -6,8 +6,10 @@ const SDKConstants = require("authorizenet").Constants;
  * Get Platform Authorize.Net Credentials from Environment
  */
 function getPlatformAuthNetCredentials() {
-  const apiLoginId = process.env.PLATFORM_AUTHNET_API_LOGIN_ID;
-  const transactionKey = process.env.PLATFORM_AUTHNET_TRANSACTION_KEY;
+  const rawApiLoginId = process.env.PLATFORM_AUTHNET_API_LOGIN_ID || "";
+  const rawTransactionKey = process.env.PLATFORM_AUTHNET_TRANSACTION_KEY || "";
+  const apiLoginId = rawApiLoginId.trim();
+  const transactionKey = rawTransactionKey.trim();
 
   if (!apiLoginId || !transactionKey) {
     throw new Error("Platform Authorize.Net credentials not configured");
@@ -25,11 +27,23 @@ function getPlatformAuthNetCredentials() {
  * Get the current environment (production or sandbox)
  */
 function getEnvironment() {
-  const env =
-    process.env.PLATFORM_AUTHNET_ENVIRONMENT ||
-    process.env.NODE_ENV ||
-    "sandbox";
-  return env === "production"
+  const explicit = (process.env.PLATFORM_AUTHNET_ENVIRONMENT || "")
+    .trim()
+    .toLowerCase();
+
+  if (explicit === "production" || explicit === "live") {
+    return SDKConstants.endpoint.production;
+  }
+
+  if (
+    explicit === "sandbox" ||
+    explicit === "test" ||
+    explicit === "development"
+  ) {
+    return SDKConstants.endpoint.sandbox;
+  }
+
+  return process.env.NODE_ENV === "production"
     ? SDKConstants.endpoint.production
     : SDKConstants.endpoint.sandbox;
 }
@@ -354,12 +368,24 @@ export async function validateCustomerPaymentProfile(
 ): Promise<void> {
   const merchantAuthenticationType = getPlatformAuthNetCredentials();
 
+  const explicit = (process.env.PLATFORM_AUTHNET_ENVIRONMENT || "")
+    .trim()
+    .toLowerCase();
+  const isLiveValidation =
+    explicit === "production" ||
+    explicit === "live" ||
+    (!explicit && process.env.NODE_ENV === "production");
+
   const validateRequest =
     new ApiContracts.ValidateCustomerPaymentProfileRequest();
   validateRequest.setMerchantAuthentication(merchantAuthenticationType);
   validateRequest.setCustomerProfileId(customerProfileId);
   validateRequest.setCustomerPaymentProfileId(customerPaymentProfileId);
-  validateRequest.setValidationMode(ApiContracts.ValidationModeEnum.TESTMODE);
+  validateRequest.setValidationMode(
+    isLiveValidation
+      ? ApiContracts.ValidationModeEnum.LIVEMODE
+      : ApiContracts.ValidationModeEnum.TESTMODE,
+  );
 
   return new Promise<void>((resolve, reject) => {
     const ctrl = new ApiControllers.ValidateCustomerPaymentProfileController(
