@@ -1,16 +1,16 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { debounce } from "@/utils/debounce";
-import { FileUpload } from "./component/FileUpload";
-import { ColorPicker } from "./component/ColorPicker";
-import { Select } from "./component/Select";
+import { FileUpload } from "./FileUpload";
+import { ColorPicker } from "./ColorPicker";
+import { Select } from "./Select";
 import { SlimInput } from "@/components/SlimInput";
 import { SlimTextarea } from "@/components/SlimTextarea";
 import {
   useConfigureShop,
-  useGetVirtualShopConfigure,
+  useGetVirtualShops,
   useUpdateShop,
 } from "@/hooks/virtual-shop/configure/useVirtualShopConfigure";
 import CarLoading from "@/components/common/CarLoading";
@@ -38,13 +38,12 @@ type ShopFormData = {
 const domain = new URL(process.env.NEXT_PUBLIC_APP_URL!).hostname;
 const fonts = ["Inter", "Roboto", "Playfair Display"];
 
-export default function VirtualShopConfigure({
+export default function VirtualShopConfigureList({
   companyId,
 }: {
   companyId: number;
 }) {
-  const { data, isPending: isGetPending } =
-    useGetVirtualShopConfigure(companyId);
+  const { data, isPending: isGetPending } = useGetVirtualShops(companyId);
   const { mutate, isPending } = useConfigureShop(companyId);
   const { mutate: updateConfigure, isPending: IsPendingUpdateConfigure } =
     useUpdateShop(companyId);
@@ -183,7 +182,7 @@ export default function VirtualShopConfigure({
   if (isGetPending) {
     return <CarLoading />;
   }
-
+  console.log("data", data);
   return (
     <div className="w-full mx-auto p-6 space-y-4 h-screen overflow-y-auto">
       <div className="mb-2 flex items-center justify-between">

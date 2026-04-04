@@ -1,10 +1,10 @@
 import { getCompanyId } from "@/lib/companyId";
 import React from "react";
-import VirtualShopConfigure from "./VirtualShopConfigure";
+import ShopListPage from "./component/ShopListPage";
 
 async function VirtualShopConfigurePage() {
   const companyId = await getCompanyId();
-  return <VirtualShopConfigure companyId={companyId} />;
+  return <ShopListPage companyId={companyId} />;
 }
 
 export default VirtualShopConfigurePage;
