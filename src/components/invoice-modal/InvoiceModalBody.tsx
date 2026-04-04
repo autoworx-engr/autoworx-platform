@@ -15,7 +15,6 @@ import {
   DialogPortal,
 } from "@/components/Dialog";
 import { useServerGet } from "@/hooks/useServerGet";
-import { cn } from "@/lib/cn";
 import { queryKeys } from "@/lib/queryKeys";
 import { errorToast, successToast } from "@/lib/toast";
 import { calculateDue } from "@/utils/calculateDue";
@@ -33,15 +32,34 @@ import {
   InvoiceType,
   Labor,
   Material,
+  Payment,
+  PaymentMethod,
   Refund,
   Service,
+  CardPayment,
+  CheckPayment,
+  CashPayment,
+  OtherPayment,
+  DepositPayment,
   TwilioCredentials,
   User,
   Vehicle,
 } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 import { Popconfirm, Tooltip } from "antd";
-import { Eye, Mail, MessageCircleMore, SquarePen, X } from "lucide-react";
+import {
+  ChevronDown,
+  Copy,
+  Eye,
+  FileDown,
+  Mail,
+  Calendar,
+  MessageCircle,
+  MessageCircleMore,
+  Printer,
+  SquarePen,
+  X,
+} from "lucide-react";
 import moment from "moment";
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -55,6 +73,7 @@ import WorkOrderModal from "../workorder-modal/WorkOrderModal";
 import { InspectionItems } from "./InspectionItems";
 import { InvoiceItems } from "./InvoiceItems";
 import { PayNow } from "./PayNow";
+import { AppointmentCreateOrEdit } from "../appointment/AppointmentCreateOrEdit";
 
 const DownloadPDF = dynamic(() => import("./DownloadInvoice"), {
   ssr: false,
@@ -73,14 +92,24 @@ type InvoiceData = Invoice & {
   user: User;
   client: Client;
   vehicle: Vehicle;
+  payments: (Payment & {
+    card: CardPayment | null;
+    check: CheckPayment | null;
+    cash: CashPayment | null;
+    other: (OtherPayment & { paymentMethod: PaymentMethod | null }) | null;
+    deposit: DepositPayment | null;
+    Refund: Refund[];
+  })[];
 };
 
 export default function InvoiceModalBody({
   invoiceId,
   isPublic = false,
+  isShowEdit = true,
 }: {
   invoiceId?: string;
   isPublic?: boolean;
+  isShowEdit?: boolean;
 }) {
   const searchParams = useSearchParams();
 
@@ -90,8 +119,6 @@ export default function InvoiceModalBody({
     queryFn: () => getInvoiceModalData(invoiceId!),
     enabled: !!invoiceId,
   });
-
-  // console.log({ isError, error, data });
 
   const [twilioCredentials, setTwilioCredentials] = useState<
     TwilioCredentials | InfobipConfig | null
@@ -106,6 +133,7 @@ export default function InvoiceModalBody({
   const [authorizedNameInput, setAuthorizedNameInput] = useState("");
   const [sigImageURL, setSigImageURL] = useState(null);
   const [showSignaturePad, setShowSignaturePad] = useState(false);
+  const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<
     "estimate" | "attachments" | "inspections"
   >("estimate");
@@ -121,6 +149,9 @@ export default function InvoiceModalBody({
   const [isSuccessMsgShown, setIsSuccessMsgShown] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
   const [refundAmount, setRefundAmount] = useState<number>(0);
+  const [openGroup, setOpenGroup] = useState<"export" | "share" | null>(null);
+  const isExportOpen = openGroup === "export";
+  const isShareOpen = openGroup === "share";
 
   // Detect if we're coming from an intercepted route
   const fromInterceptedRoute =
@@ -135,7 +166,7 @@ export default function InvoiceModalBody({
         data.invoice.Refund?.reduce(
           (total: number, refund: Refund) =>
             total + (Number(refund.amount) || 0),
-          0
+          0,
         ) || 0;
 
       setRefundAmount(refundAmount);
@@ -182,7 +213,6 @@ export default function InvoiceModalBody({
   const companyId = data?.invoice?.companyId;
   const { data: stripeAccountData } = useServerGet(getStripeAccount, companyId);
   const { data: gatewayInfo } = useServerGet(getPaymentGatewayInfo, companyId);
-  console.log("🚀 ~ InvoiceModalBody ~ gatewayInfo:", gatewayInfo);
 
   useEffect(() => {
     if (isSuccess && !isSuccessMsgShown) {
@@ -235,6 +265,25 @@ export default function InvoiceModalBody({
   const company = invoice.company;
   const client = invoice.client;
   const vehicle = invoice.vehicle;
+  const paymentEntries = (invoice.payments ?? [])
+    .filter((payment) => payment.invoiceId === invoice.id)
+    .sort(
+      (a, b) =>
+        new Date(b.date || b.createdAt).getTime() -
+        new Date(a.date || a.createdAt).getTime(),
+    );
+
+  const getPaymentMethodText = (payment: InvoiceData["payments"][number]) => {
+    if (payment.type === "OTHER") {
+      return payment.other?.paymentMethod?.name || "OTHER";
+    }
+
+    if (payment.type === "CARD") {
+      return payment.card?.cardType || "CARD";
+    }
+
+    return payment.type;
+  };
 
   const handleEmail = async () => {
     let res = await sendInvoiceEmail({ invoiceId: invoice.id });
@@ -254,20 +303,27 @@ export default function InvoiceModalBody({
   };
   const handleCopyLink = async () => {
     // 1. Identify what you want to copy
-    const clientName = invoice?.client?.firstName || invoice?.client?.lastName || "";
-    
+    const clientName =
+      invoice?.client?.firstName || invoice?.client?.lastName || "";
+
     const shortLinkResult = await getOrCreateShortLinkAction({
       invoiceId: invoiceId!,
       clientName,
     });
 
-    const urlToCopy = shortLinkResult.success && shortLinkResult.shortUrl 
-      ? shortLinkResult.shortUrl 
-      : (shortLinkResult.originalUrl || `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoiceId}`);
+    const urlToCopy =
+      shortLinkResult.success && shortLinkResult.shortUrl
+        ? shortLinkResult.shortUrl
+        : shortLinkResult.originalUrl ||
+        `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoiceId}`;
 
     try {
       // 2. Check if the Clipboard API is available AND the context is secure
-      if (typeof window !== "undefined" && navigator.clipboard && navigator.clipboard.writeText) {
+      if (
+        typeof window !== "undefined" &&
+        navigator.clipboard &&
+        navigator.clipboard.writeText
+      ) {
         await navigator.clipboard.writeText(urlToCopy);
         successToast("Link copied to clipboard");
       } else {
@@ -276,7 +332,7 @@ export default function InvoiceModalBody({
       }
     } catch (error) {
       console.warn("Clipboard failed, using fallback:", error);
-      
+
       // 4. The "Old School" Fallback
       // This creates a temporary input, selects the text, and copies it.
       // This is more compatible with older/insecure environments.
@@ -301,7 +357,7 @@ export default function InvoiceModalBody({
     try {
       const file = getFileFromCanvas(
         sigCanvas.current.getCanvas(),
-        `signature-${invoiceId}.png`
+        `signature-${invoiceId}.png`,
       );
 
       const formData = new FormData();
@@ -326,7 +382,7 @@ export default function InvoiceModalBody({
         invoice.id,
         authorizedNameInput,
         data[0],
-        invoice.type
+        invoice.type,
       );
 
       if (response?.type === "success") {
@@ -359,322 +415,409 @@ export default function InvoiceModalBody({
       >
         <div
           ref={printComponentRef}
-          className="#shadow-lg no-visible-scrollbar relative grid h-full w-full shrink grow-0 flex-col items-center justify-center gap-4 overflow-y-auto rounded-md border bg-background p-6 md:h-[90vh] md:w-[740px] md:flex-row"
+          className="#shadow-lg no-visible-scrollbar relative grid h-full w-full shrink grow-0 flex-col items-center justify-center gap-4 overflow-y-auto rounded-md border bg-background p-6 md:h-[95vh] md:w-[800px] md:flex-row print:block print:h-auto print:w-full print:border-none print:p-0 print:shadow-none"
         >
           {/* Action Buttons */}
-          {!isPublic && (
-            <div className="mt-2 flex w-full flex-wrap items-center justify-center print:hidden">
-              <div className="grid w-full grid-cols-2 flex-wrap items-center justify-center gap-2 md:flex md:gap-3">
-                <Link
-                  className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-sm text-white md:px-4 md:text-base"
-                  href={`/dashboard/estimate/edit/${invoice.id}?clientId=${invoice.clientId}`}
-                >
-                  <SquarePen className="h-4 w-4 md:h-4 md:w-4" />
-                  <span className="hidden md:inline">Edit</span>
-                </Link>
-                <Link
-                  href={`/dashboard/communication/client/${invoice.clientId}?chat=true`}
-                  className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-sm text-white md:px-4 md:text-base"
-                >
-                  <MessageCircleMore className="size-4 md:size-[22px] text-white md:text-xl" />
-                  <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-                    Communications
-                  </span>
-                </Link>
-                <button
-                  className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-sm text-white md:px-4 md:text-base"
-                  onClick={handlePrint}
-                >
-                  <svg
-                    fill="#ffffff"
-                    viewBox="0 0 32 32"
-                    height="16"
-                    width="16"
-                    version="1.1"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                    <g
-                      id="SVGRepo_tracerCarrier"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    ></g>
-                    <g id="SVGRepo_iconCarrier">
-                      {" "}
-                      <title>print</title>{" "}
-                      <path d="M30 13.75h-2.75v-7.75c0-0 0-0.001 0-0.001 0-0.345-0.14-0.657-0.365-0.883l-4-4c-0.226-0.226-0.539-0.366-0.885-0.366-0 0-0 0-0 0h-17c-0.69 0-1.25 0.56-1.25 1.25v0 11.75h-1.75c-0.69 0-1.25 0.56-1.25 1.25v0 9c0 0.69 0.56 1.25 1.25 1.25s1.25-0.56 1.25-1.25v0-7.75h25.5v7.75c0 0.69 0.56 1.25 1.25 1.25s1.25-0.56 1.25-1.25v0-9c-0-0.69-0.56-1.25-1.25-1.25h-0zM6.25 3.25h15.232l3.268 3.268v7.232h-18.5zM26 20.75h-20c-0.69 0-1.25 0.56-1.25 1.25v8c0 0.69 0.56 1.25 1.25 1.25h20c0.69-0.001 1.249-0.56 1.25-1.25v-8c-0.001-0.69-0.56-1.249-1.25-1.25h-0zM24.75 28.75h-17.5v-5.5h17.5zM26.879 17.62c-0.228-0.228-0.544-0.37-0.893-0.37-0.168 0-0.329 0.033-0.475 0.093l0.008-0.003c-0.16 0.060-0.295 0.156-0.399 0.279l-0.001 0.001c-0.119 0.109-0.213 0.242-0.277 0.392l-0.003 0.007c-0.059 0.142-0.095 0.306-0.1 0.479l-0 0.002c0.002 0.346 0.147 0.657 0.378 0.878l0 0c0.226 0.223 0.537 0.361 0.88 0.361s0.654-0.138 0.88-0.361l-0 0c0.233-0.222 0.378-0.533 0.381-0.878v-0c-0.005-0.174-0.041-0.339-0.103-0.49l0.003 0.009c-0.066-0.158-0.161-0.291-0.28-0.399l-0.001-0.001z"></path>{" "}
-                    </g>
-                  </svg>
+          {!isPublic && isShowEdit && (
+            <div className="mt-6 flex w-full flex-col items-center gap-3 print:hidden">
+              {/* Row 1 — main actions */}
+              <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
+                {/* Edit Link */}
+                {isShowEdit && (
+                  <Tooltip title="Edit">
 
-                  <span className="hidden md:inline">Print</span>
-                </button>
 
-                <button className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-xs text-white md:px-4 md:py-1 md:text-base">
-                  {client && (
-                    <DownloadPDF
-                      id={invoice.id}
-                      invoice={invoice}
-                      client={client}
-                      vehicle={vehicle}
-                      companyDetails={company}
-                      authorizedName={authorizedName}
-                      signImageUrl={signImage ?? undefined}
-                      isStripe={
-                        (gatewayInfo?.success &&
-                          (gatewayInfo?.hasStripe ||
-                            gatewayInfo?.hasAuthorizeNet) &&
-                          parseFloat(Number(invoice?.due ?? 0).toFixed(2)) >
-                            0) ??
-                        false
-                      }
-                    />
-                  )}
-                </button>
-
-                <div className="flex items-center gap-x-2 rounded-md border border-gray-300 px-2 py-0.5">
-                  <span className="mr-1 font-semibold text-sm md:text-base">
-                    Share via
-                  </span>
-                  <Popconfirm
-                    title="Send invoice via Email now?"
-                    onConfirm={handleEmail}
-                    okText="Yes"
-                    cancelText="No"
-                  >
-                    <button className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-1 py-0.5 text-sm text-white md:px-4 md:text-base">
-                      <Mail className="h-4 w-4 md:h-4 md:w-4" />
-                      <span className="hidden md:inline">Email</span>
-                    </button>
-                  </Popconfirm>
-                  {twilioCredentials && (
-                    <Popconfirm
-                      title="Send invoice via SMS now?"
-                      onConfirm={handleSms}
-                      okText="Yes"
-                      cancelText="No"
+                    <Link
+                      className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-2 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
+                      href={`/dashboard/estimate/edit/${invoice.id}?clientId=${invoice.clientId}`}
                     >
-                      <button className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-sm text-white md:px-4 md:text-base">
-                        <svg
-                          fill="#ffffff"
-                          height="24"
-                          width="24"
-                          version="1.1"
-                          id="Icon"
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="-5.28 -5.28 34.56 34.56"
-                          enable-background="new 0 0 24 24"
-                          stroke="#ffffff"
-                          stroke-width="0.36"
-                        >
-                          <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                          <g
-                            id="SVGRepo_tracerCarrier"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke="#CCCCCC"
-                            stroke-width="0.144"
-                          ></g>
-                          <g id="SVGRepo_iconCarrier">
-                            {" "}
-                            <path d="M12,1C5.37,1,0,5.58,0,10.55c0,2.92,1.86,5.95,4.72,7.59L3,23l5.85-3.32C9.86,19.88,10.91,20,12,20c6.63,0,12-4.48,12-9.45 C24,5.58,18.63,1,12,1z M6.55,13.8c-0.53,0.47-1.24,0.7-2.14,0.7c-0.52,0-0.97-0.06-1.36-0.17c-0.39-0.11-0.75-0.26-1.09-0.43v-1.84 h0.16c0.34,0.33,0.71,0.58,1.12,0.76c0.41,0.18,0.8,0.26,1.19,0.26c0.1,0,0.23-0.01,0.38-0.04c0.16-0.02,0.29-0.06,0.38-0.11 c0.12-0.06,0.22-0.14,0.3-0.25c0.08-0.1,0.12-0.24,0.12-0.42c0-0.19-0.07-0.35-0.2-0.47s-0.29-0.21-0.48-0.26 c-0.23-0.07-0.47-0.13-0.73-0.2c-0.26-0.06-0.51-0.14-0.73-0.23c-0.52-0.21-0.9-0.49-1.12-0.85c-0.23-0.36-0.34-0.8-0.34-1.34 c0-0.72,0.27-1.31,0.8-1.75c0.53-0.45,1.2-0.67,2-0.67c0.4,0,0.8,0.05,1.2,0.14c0.4,0.09,0.75,0.22,1.06,0.38v1.76H6.93 C6.68,8.54,6.37,8.33,6.01,8.16C5.65,7.99,5.28,7.9,4.9,7.9c-0.15,0-0.28,0.01-0.4,0.04C4.38,7.97,4.26,8.01,4.13,8.08 c-0.11,0.06-0.2,0.14-0.27,0.25C3.78,8.44,3.74,8.56,3.74,8.69c0,0.2,0.06,0.35,0.18,0.47c0.12,0.12,0.36,0.22,0.71,0.31 c0.23,0.06,0.44,0.12,0.66,0.17C5.49,9.7,5.72,9.78,5.96,9.87c0.47,0.19,0.82,0.45,1.04,0.78c0.23,0.33,0.34,0.76,0.34,1.29 C7.34,12.72,7.08,13.33,6.55,13.8z M15.33,14.36h-1.68V9.24l-1.23,3.3h-1.16l-1.23-3.3v5.12H8.44V6.64h1.95l1.5,3.81l1.49-3.81h1.95 V14.36z M21.18,13.8c-0.53,0.47-1.24,0.7-2.14,0.7c-0.52,0-0.97-0.06-1.36-0.17c-0.39-0.11-0.75-0.26-1.09-0.43v-1.84h0.16 c0.34,0.33,0.71,0.58,1.12,0.76c0.41,0.18,0.8,0.26,1.19,0.26c0.1,0,0.23-0.01,0.38-0.04c0.16-0.02,0.29-0.06,0.38-0.11 c0.12-0.06,0.22-0.14,0.3-0.25c0.08-0.1,0.12-0.24,0.12-0.42c0-0.19-0.07-0.35-0.2-0.47s-0.29-0.21-0.48-0.26 c-0.23-0.07-0.47-0.13-0.73-0.2c-0.26-0.06-0.51-0.14-0.73-0.23c-0.52-0.21-0.9-0.49-1.12-0.85c-0.23-0.36-0.34-0.8-0.34-1.34 c0-0.72,0.27-1.31,0.8-1.75c0.53-0.45,1.2-0.67,2-0.67c0.4,0,0.8,0.05,1.2,0.14c0.4,0.09,0.75,0.22,1.06,0.38v1.76h-0.15 c-0.25-0.25-0.56-0.45-0.92-0.62C20.27,7.99,19.9,7.9,19.52,7.9c-0.15,0-0.28,0.01-0.4,0.04C19,7.97,18.88,8.01,18.75,8.08 c-0.11,0.06-0.2,0.14-0.27,0.25c-0.08,0.11-0.12,0.23-0.12,0.37c0,0.2,0.06,0.35,0.18,0.47c0.12,0.12,0.36,0.22,0.71,0.31 c0.23,0.06,0.44,0.12,0.66,0.17c0.21,0.06,0.43,0.13,0.67,0.23c0.47,0.19,0.82,0.45,1.04,0.78c0.23,0.33,0.34,0.76,0.34,1.29 C21.97,12.72,21.7,13.33,21.18,13.8z"></path>{" "}
-                          </g>
-                        </svg>
-                        <span className="hidden md:inline">SMS</span>
-                      </button>
-                    </Popconfirm>
-                  )}
-                </div>
-                <button
-                  className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-sm text-white md:px-4 md:text-base"
-                  onClick={handleCopyLink}
-                >
-                  <svg
-                    viewBox="0 0 32 32"
-                    height="16"
-                    width="16"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="#ffffff"
+                      <SquarePen className="h-4 w-4 md:h-5 md:w-5" />
+                      {/* <span className="hidden md:inline">Edit</span> */}
+                    </Link>
+                  </Tooltip>
+                )}
+
+                {/* Communications Link */}
+                <Tooltip title="Communications" placement="top">
+                  <Link
+                    href={`/dashboard/communication/client/${invoice.clientId}?chat=true`}
+                    className="flex items-center justify-center rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-2 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
                   >
-                    <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                    <g
-                      id="SVGRepo_tracerCarrier"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    ></g>
-                    <g id="SVGRepo_iconCarrier">
-                      {" "}
-                      <g fill="none" fill-rule="evenodd">
-                        {" "}
-                        <path d="m0 0h32v32h-32z"></path>{" "}
-                        <path
-                          d="m24.110782 0 5.889218 8.76607872v19.23392128h-4v4h-24v-28h4v-4zm-18.110782 6h-2v24h20v-2h-18z"
-                          fill="#ffffff"
-                          fill-rule="nonzero"
-                        ></path>{" "}
-                      </g>{" "}
-                    </g>
-                  </svg>
-                  <span className="hidden md:inline">Copy Link</span>
-                </button>
+                    <MessageCircleMore className="h-4 w-4 md:h-5 md:w-5" />
+                  </Link>
+                </Tooltip>
+
+                {/* Export Group — Print/PDF */}
+                <div className="flex items-center gap-0 rounded-2xl border border-slate-200 bg-white/80 px-1 py-1 shadow-sm dark:border-slate-700 dark:bg-slate-900/60">
+                  <button
+                    className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95"
+                    onClick={() =>
+                      setOpenGroup((p) => (p === "export" ? null : "export"))
+                    }
+                  >
+                    <FileDown className="h-4 w-4" />
+                    <span className="hidden md:inline">Export</span>
+                    <ChevronDown
+                      className={`h-3.5 w-3.5 transition-transform duration-300 ease-in-out ${isExportOpen ? "rotate-180" : ""
+                        }`}
+                    />
+                  </button>
+
+                  {/* Animated expand */}
+                  <div
+                    className={`grid transition-all duration-300 ease-in-out ${isExportOpen
+                      ? "grid-cols-[1fr] opacity-100"
+                      : "grid-cols-[0fr] opacity-0"
+                      }`}
+                  >
+                    <div className="overflow-hidden">
+                      <div className="flex items-center gap-1 pl-1">
+                        <button
+                          className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95"
+                          onClick={handlePrint}
+                        >
+                          <Printer className="h-4 w-4" />
+                          <span className="hidden md:inline">Print</span>
+                        </button>
+
+                        {client && (
+                          <button className="flex items-center justify-center whitespace-nowrap rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95">
+                            <DownloadPDF
+                              id={invoice.id}
+                              invoice={invoice}
+                              client={client}
+                              vehicle={vehicle}
+                              companyDetails={company}
+                              authorizedName={authorizedName}
+                              signImageUrl={signImage ?? undefined}
+                              isStripe={
+                                (gatewayInfo?.success &&
+                                  (gatewayInfo?.hasStripe ||
+                                    gatewayInfo?.hasAuthorizeNet) &&
+                                  parseFloat(
+                                    Number(invoice?.due ?? 0).toFixed(2),
+                                  ) > 0) ??
+                                false
+                              }
+                            />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Share Group — Email/SMS */}
+                <div className="flex items-center gap-0 rounded-2xl border border-slate-200 bg-white/80 px-3 py-1 shadow-sm dark:border-slate-700 dark:bg-slate-900/60">
+                  <button
+                    className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-slate-500 transition-colors hover:text-[#6571FF] dark:text-slate-400 md:text-xs"
+                    onClick={() =>
+                      setOpenGroup((p) => (p === "share" ? null : "share"))
+                    }
+                  >
+                    Share
+                    <ChevronDown
+                      className={`h-3.5 w-3.5 transition-transform duration-300 ease-in-out ${isShareOpen ? "rotate-180" : ""
+                        }`}
+                    />
+                  </button>
+
+                  <div
+                    className={`grid transition-all duration-300 ease-in-out ${isShareOpen
+                      ? "grid-cols-[1fr] opacity-100"
+                      : "grid-cols-[0fr] opacity-0"
+                      }`}
+                  >
+                    <div className="overflow-hidden">
+                      <div className="flex items-center gap-1 pl-2">
+                        <Popconfirm
+                          onConfirm={handleEmail}
+                          title="Send via Email?"
+                          okText="Yes"
+                          cancelText="No"
+                        >
+                          <button className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95">
+                            <Mail className="h-4 w-4" />
+                            <span className="hidden md:inline">Email</span>
+                          </button>
+                        </Popconfirm>
+
+                        {twilioCredentials && (
+                          <Popconfirm
+                            onConfirm={handleSms}
+                            title="Send via SMS?"
+                            okText="Yes"
+                            cancelText="No"
+                          >
+                            <button className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95">
+                              <MessageCircle className="h-4 w-4" />
+                              <span className="hidden md:inline">SMS</span>
+                            </button>
+                          </Popconfirm>
+                        )}
+
+                        {/* Copy Link Button */}
+                        <button
+                          className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95"
+                          onClick={handleCopyLink}
+                        >
+                          <Copy className="h-4 w-4" />
+                          <span className="hidden md:inline">Copy Link</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Create Appointment Button */}
+                <Tooltip title="Create Appointment" placement="top">
+                  <button
+                    type="button"
+                    className="flex items-center justify-center rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-2 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base print:hidden"
+                    onClick={() => setIsAppointmentModalOpen(true)}
+                  >
+                    <Calendar className="h-4 w-4 md:h-5 md:w-5" />
+                  </button>
+                </Tooltip>
+
+                <AppointmentCreateOrEdit
+                  clientId={invoice.clientId}
+                  vehicleId={invoice.vehicleId}
+                  draftEstimateId={invoice.id}
+                  isModalOpen={isAppointmentModalOpen}
+                  setIsModalOpen={setIsAppointmentModalOpen}
+                  onAppointmentCreated={(appointment) => {
+                    setIsAppointmentModalOpen(false);
+                  }}
+                  onAppointmentUpdated={(appointment) => {
+                    setIsAppointmentModalOpen(false);
+                  }}
+                />
               </div>
             </div>
           )}
 
           {/* Company Info */}
-          <div className="flex w-full flex-row justify-between gap-4 md:flex-row md:items-center md:gap-0">
+          <div className="flex w-full flex-row items-start justify-between gap-6 border-b border-slate-100 pb-8 dark:border-slate-800">
+            {/* Logo Container with Soft Shadow & Ring */}
             <div
-              className={cn(
-                "flex aspect-square items-center justify-center text-center font-bold text-white",
-                company?.image ? "w-32 md:w-44" : "w-32 bg-gray-500"
-              )}
+            // className={cn(
+            //   "relative flex aspect-square items-center justify-center overflow-hidden rounded-2xl transition-all duration-300",
+            //   company?.image
+            //     ? "w-28 ring-1 ring-slate-200/60 shadow-sm md:w-36"
+            //     : "w-28 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 md:w-36"
+            // )}
             >
               {company?.image ? (
                 <Image
                   src={`${company.image}`}
                   alt="company logo"
-                  width={176}
-                  height={176}
-                  className="object-fit rounded-md"
+                  width={144}
+                  height={144}
+                  className="object-contain rounded-xl"
                 />
               ) : (
-                "Logo"
+                <div className="w-28 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 md:w-36 border border-dashed border-slate-300 dark:border-slate-700 flex h-36 md:h-36 items-center justify-center rounded-xl">
+                  <span className="text-sm font-black uppercase tracking-wider text-slate-400">
+                    No Logo
+                  </span>
+                </div>
               )}
             </div>
-            <div className="text-right text-xs">
-              <h2 className="font-bold">Contact Information:</h2>
-              <p>{company?.name}</p>
-              <p>
-                {company?.address && `${company.address}`}
-                {company?.address && company?.city && ", "}
-                {company?.city && `${company.city}`}
-                {company?.city && company?.state && ", "}
-                {company?.state && `${company.state}`}
-                {company?.state && company?.zip && ", "}
-                {company?.zip && `${company.zip}`}
+
+            {/* Contact Information with Clean Hierarchy */}
+            <div className="flex flex-col text-right">
+              <h2 className="mb-1.5 text-sm font-black uppercase tracking-[0.2em] text-[#6571FF] dark:text-indigo-400">
+                Contact Information
+              </h2>
+
+              <p className="text-base font-bold tracking-tight text-slate-600 dark:text-white md:text-lg">
+                {company?.name}
               </p>
-              <p className="mt-1">{company?.phone}</p>
-              <p className="mt-1 break-words">{company?.email}</p>
+
+              <div className="mt-2 space-y-0.5 text-xs font-medium text-slate-500 dark:text-slate-400 md:text-sm">
+                <p className="leading-relaxed">
+                  {company?.address && `${company.address}`}
+                  {company?.address && company?.city && ", "}
+                  {company?.city && `${company.city}`}
+                  <br className="md:hidden" />
+                  {company?.city && company?.state && ", "}
+                  {company?.state && `${company.state}`}
+                  {company?.state && company?.zip && " "}
+                  {company?.zip && `${company.zip}`}
+                </p>
+
+                <div className="flex flex-col items-end gap-1 pt-1">
+                  <p className="flex items-center gap-1.5 font-bold text-slate-500 dark:text-slate-300">
+                    {company?.phone}
+                  </p>
+                  <p className="max-w-[200px] break-words italic text-slate-500 dark:text-slate-500">
+                    {company?.email}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
           <DialogClose
-            className={`absolute right-4 top-1 rounded-sm font-bold opacity-90 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground md:right-2 md:top-3 print:hidden ${isPublic ? "hidden" : ""}`}
+            className={`absolute right-2 top-2 z-50 flex h-8 w-8 items-center justify-center rounded-full bg-slate-100/50 text-slate-500 transition-all duration-300 hover:bg-red-50 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-red-200 active:scale-90 dark:bg-slate-800/50 dark:hover:bg-red-900/30 md:right-3 md:top-3 print:hidden ${isPublic ? "hidden" : ""
+              }`}
           >
-            <X className="h-6 w-6 font-bold text-slate-500" />
+            <X className="h-5 w-5 stroke-[2.5px]" />
             <span className="sr-only">Close</span>
           </DialogClose>
-
-          <hr />
 
           {/* Information Section */}
           <div className="flex w-full flex-col space-y-4 md:flex-row md:space-x-2 md:space-y-0">
             <div className="grid w-full grow grid-cols-2 gap-2 text-xs md:grid-cols-3">
               {/* Tabs */}
               <div className="col-span-full flex justify-center gap-2 md:hidden">
-                <button
-                  className={`rounded px-3 py-1 text-sm font-medium ${activeTab === "estimate" ? "bg-[#6571FF] text-white" : "bg-gray-200"}`}
-                  onClick={() => setActiveTab("estimate")}
-                >
-                  Estimate
-                </button>
-                <button
-                  className={`rounded px-3 py-1 text-sm font-medium ${activeTab === "attachments" ? "bg-[#6571FF] text-white" : "bg-gray-200"}`}
-                  onClick={() => setActiveTab("attachments")}
-                >
-                  Attachments
-                </button>
-                <button
-                  className={`rounded px-3 py-1 text-sm font-medium ${activeTab === "inspections" ? "bg-[#6571FF] text-white" : "bg-gray-200"}`}
-                  onClick={() => setActiveTab("inspections")}
-                >
-                  Inspections
-                </button>
+                {[
+                  { key: "estimate", label: "Estimate" },
+                  { key: "attachments", label: "Attachments" },
+                  { key: "inspections", label: "Inspections" },
+                ].map((tab) => {
+                  const isActive = activeTab === tab.key;
+                  return (
+                    <button
+                      key={tab.key}
+                      onClick={() => setActiveTab(tab.key as typeof activeTab)}
+                      data-active={isActive}
+                      className={`group relative flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-medium transition-all duration-300 ease-out shadow-sm ring-1 ring-transparent ${isActive
+                        ? "text-white shadow-indigo-500/30 ring-black/5 translate-y-[-1px]"
+                        : "text-slate-500 dark:text-slate-300 bg-white/70 dark:bg-slate-900/60"
+                        }`}
+                    >
+                      {isActive && (
+                        <span className="absolute inset-0 -z-10 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee]" />
+                      )}
+                      <span className="whitespace-nowrap">{tab.label}</span>
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Estimate Tab Content */}
               {(activeTab === "estimate" ||
                 !window.matchMedia("(max-width: 768px)").matches) && (
-                <>
-                  <h1 className="col-span-full text-center text-xl font-bold uppercase text-slate-500 md:text-left md:text-3xl">
-                    {invoice?.type?.toUpperCase()}
-                  </h1>
+                  <>
+                    <h1 className="col-span-full text-center text-xl font-bold uppercase text-slate-600 md:text-left md:text-3xl">
+                      {parseFloat(
+                        calculateDue(
+                          Number(invoice.grandTotal),
+                          Number(invoice.totalPayment),
+                          Number(invoice.deposit),
+                        ).toFixed(2),
+                      ) === 0
+                        ? "RECEIPT"
+                        : invoice?.type?.toUpperCase()}
+                    </h1>
 
-                  {/* Client Info */}
-                  <div className="overflow-hidden">
-                    <h2 className="font-bold text-slate-500">Estimate To:</h2>
-                    <p className="flex items-center gap-1 truncate">
-                      {client?.firstName} {client?.lastName}
-                    </p>
+                    {/* Client Info */}
+                    <div className="overflow-hidden">
+                      <h2 className="font-bold text-slate-500">Estimate To:</h2>
+                      <p className="flex items-center gap-1 truncate">
+                        {client?.firstName} {client?.lastName}
+                      </p>
 
-                    <p className="truncate">
-                      <a
-                        href={`tel:${client?.mobile}`}
-                        className="cursor-pointer text-blue-500"
+                      <p className="truncate">
+                        <a
+                          href={`tel:${client?.mobile}`}
+                          className="cursor-pointer text-blue-500"
+                        >
+                          {client?.mobile}
+                        </a>
+                      </p>
+                      <p className="truncate">
+                        <a
+                          href={`mailto:${client?.email}`}
+                          className="text-blue-500"
+                        >
+                          {client?.email}
+                        </a>
+                      </p>
+                      <Tooltip
+                        title={invoice?.customerNotes}
+                        placement="top"
+                        trigger="click"
                       >
-                        {client?.mobile}
-                      </a>
-                    </p>
-                    <p className="truncate">
-                      <a
-                        href={`mailto:${client?.email}`}
-                        className="text-blue-500"
-                      >
-                        {client?.email}
-                      </a>
-                    </p>
-                    <Tooltip
-                      title={invoice?.customerNotes}
-                      placement="top"
-                      trigger="click"
-                    >
-                      <span className="inline-flex cursor-pointer items-center rounded bg-[#6571FF] px-2 py-0.5 text-xs text-white">
-                        Note
-                      </span>
-                    </Tooltip>
-                  </div>
-
-                  {/* Vehicle Info */}
-                  <div>
-                    <h2 className="font-bold text-slate-500">
-                      Vehicle Details:
-                    </h2>
-                    <div className="flex flex-row flex-wrap gap-2">
-                      <p>{vehicle?.year || ""}</p>
-                      <p>{vehicle?.make}</p>
-                      <p>{vehicle?.model}</p>
-                      {vehicle?.other && <p>{vehicle?.other}</p>}
+                        <span className="inline-flex cursor-pointer items-center rounded px-1 py-0.5 text-xs border border-slate-200">
+                          Note
+                        </span>
+                      </Tooltip>
                     </div>
-                    <p>{vehicle?.submodel}</p>
-                    <p>{vehicle?.type}</p>
-                  </div>
 
-                  {/* Estimate Details */}
-                  <div>
-                    <h2 className="font-bold text-slate-500">
-                      Estimate Details:
-                    </h2>
-                    <p>{invoice.id}</p>
-                    <p>{moment(invoice.createdAt).format("MMM DD, YYYY")}</p>
-                    <p>Bill Status</p>
-                    <p
-                      className="mt-2 max-w-32 rounded-md px-2 py-[1px] text-xs font-semibold md:mt-0"
-                      style={{
-                        color: invoice.column?.textColor || undefined,
-                        backgroundColor: invoice?.column?.bgColor || undefined,
-                      }}
-                    >
-                      {invoice.column?.title}
-                    </p>
-
-                    {invoice.isViewed && (
-                      <div className="mt-1 flex items-center gap-1">
-                        <Eye className="h-4 w-4 text-green-500" />
-                        <span className="text-xs text-green-500">Viewed</span>
+                    {/* Vehicle Info */}
+                    <div>
+                      <h2 className="font-bold text-slate-500">
+                        Vehicle Details:
+                      </h2>
+                      <div className="flex flex-row flex-wrap gap-2">
+                        <p>{vehicle?.year || ""}</p>
+                        <p>{vehicle?.make}</p>
+                        <p>{vehicle?.model}</p>
+                        {vehicle?.other && <p>{vehicle?.other}</p>}
                       </div>
-                    )}
-                  </div>
-                </>
-              )}
+                      <p>{vehicle?.submodel}</p>
+                      <p>{vehicle?.type}</p>
+                      {vehicle?.vin && (
+                        <>
+                          <p>Vin Number</p>
+                          <p>{vehicle?.vin}</p>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Estimate Details */}
+                    <div>
+                      <h2 className="font-bold text-slate-500">
+                        Estimate Details:
+                      </h2>
+                      <p>{invoice.id}</p>
+                      <p>{moment(invoice.createdAt).format("MMM DD, YYYY")}</p>
+                      <p>Bill Status</p>
+                      <p
+                        className="mt-2 max-w-32 rounded-md px-2 py-[1px] text-xs font-semibold md:mt-0"
+                        style={{
+                          color: invoice.column?.textColor || undefined,
+                          backgroundColor: invoice?.column?.bgColor || undefined,
+                        }}
+                      >
+                        {invoice.column?.title}
+                      </p>
+
+                      <p>
+                        {parseFloat(
+                          calculateDue(
+                            Number(invoice.grandTotal),
+                            Number(invoice.totalPayment),
+                            Number(invoice.deposit),
+                          ).toFixed(2),
+                        ) === 0 && <span>Payment Status</span>}
+                      </p>
+                      <p className="pt-1">
+                        {parseFloat(
+                          calculateDue(
+                            Number(invoice.grandTotal),
+                            Number(invoice.totalPayment),
+                            Number(invoice.deposit),
+                          ).toFixed(2),
+                        ) === 0 && (
+                            <span className="text-green-500 bg-green-200 rounded-md  px-4 py-[1px] text-xs font-semibold md:mt-1">
+                              PAID
+                            </span>
+                          )}
+                      </p>
+
+                      {invoice.isViewed && !isPublic && (
+                        <div className="mt-1 flex items-center gap-1">
+                          <Eye className="h-4 w-4 text-green-500" />
+                          <span className="text-xs text-green-500">Viewed</span>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
 
               {/* Attachments Tab Content - Only visible on mobile when selected */}
               {activeTab === "attachments" &&
@@ -687,10 +830,10 @@ export default function InvoiceModalBody({
                       <div className="grid w-full grid-cols-3 gap-4 px-2 sm:px-4 [@media(max-width:374px)]:grid-cols-2">
                         {invoice.photos.map((x, index) => {
                           const allImageUrls = invoice.photos.map(
-                            (photo) => photo.photo
+                            (photo) => photo.photo,
                           );
                           const urlsParam = encodeURIComponent(
-                            JSON.stringify(allImageUrls)
+                            JSON.stringify(allImageUrls),
                           );
                           return (
                             <Link
@@ -754,7 +897,7 @@ export default function InvoiceModalBody({
                     calculateDue(
                       Number(invoice.grandTotal),
                       Number(invoice.totalPayment),
-                      Number(invoice.deposit)
+                      Number(invoice.deposit),
                     ),
                   ],
                   ["Refunded", refundAmount],
@@ -767,7 +910,7 @@ export default function InvoiceModalBody({
                         <span className="min-w-0 flex-1 overflow-x-clip text-ellipsis whitespace-nowrap px-2 font-bold uppercase text-[#6571FF]">
                           {key}
                         </span>
-                        <div className="basis-30 shrink-0 rounded bg-[#6571FF] px-2 text-white">
+                        <div className="shrink-0 w-[10rem] rounded bg-[#6571FF] px-2 text-white">
                           {Number(value)}%
                           {Number(value) !== 0 && (
                             <span>
@@ -776,10 +919,10 @@ export default function InvoiceModalBody({
                               {formatCurrency(
                                 (Number(
                                   (invoice.subtotal as any) -
-                                    (invoice.discount as any)
+                                  (invoice.discount as any),
                                 ) *
                                   Number(value)) /
-                                  100
+                                100,
                               )}
                             </span>
                           )}
@@ -791,7 +934,7 @@ export default function InvoiceModalBody({
                       <span className="min-w-0 flex-1 overflow-x-clip text-ellipsis whitespace-nowrap px-2 font-bold uppercase text-[#6571FF]">
                         {key}
                       </span>
-                      <div className="shrink-0 basis-20 rounded bg-[#6571FF] px-2 text-white">
+                      <div className="shrink-0 w-[10rem] rounded bg-gradient-to-br from-[#6571FF] from-60% to-[#4A55E2] px-2 text-white">
                         {formatCurrency(parseFloat("" + value))}
                       </div>
                     </div>
@@ -808,6 +951,142 @@ export default function InvoiceModalBody({
             />
           </div>
 
+          {/* payment info  */}
+          <div className="space-y-2">
+            <h2 className="font-bold text-slate-600">Payment Info</h2>
+
+            {paymentEntries.length === 0 && (
+              <div className="rounded-md border border-dashed p-3 text-xs text-slate-500">
+                No payment info available for this invoice.
+              </div>
+            )}
+
+            {paymentEntries.length > 0 && (
+              <>
+                <div className="hidden overflow-x-auto rounded-md border md:block">
+                  <table className="w-full text-xs">
+                    <thead className="bg-slate-50">
+                      <tr className="border-b">
+                        <th className="px-3 py-2 text-left">Date</th>
+                        <th className="px-3 py-2 text-left">Method</th>
+                        <th className="px-3 py-2 text-left">Amount</th>
+                        <th className="px-3 py-2 text-left">Cash Received</th>
+                        <th className="px-3 py-2 text-left">Due After</th>
+                        <th className="px-3 py-2 text-left">Status</th>
+                        <th className="px-3 py-2 text-left">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {paymentEntries.map((payment, index) => {
+                        const refundedAmount = payment.Refund.reduce(
+                          (sum, refund) => sum + Number(refund.amount || 0),
+                          0,
+                        );
+
+                        return (
+                          <tr
+                            key={payment.id}
+                            className={index % 2 === 0 ? "bg-white" : "bg-slate-50"}
+                          >
+                            <td className="px-3 py-2">
+                              {moment(payment.date || payment.createdAt).format(
+                                "MM.DD.YYYY",
+                              )}
+                            </td>
+                            <td className="px-3 py-2">
+                              {getPaymentMethodText(payment)}
+                            </td>
+                            <td className="px-3 py-2">
+                              <div className="flex flex-col">
+                                <span>{formatCurrency(Number(payment.amount || 0))}</span>
+                                {refundedAmount > 0 && (
+                                  <span className="text-[11px] text-red-600">
+                                    Refunded: {formatCurrency(refundedAmount)}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-3 py-2">
+                              {payment.cash?.receivedCash || "N/A"}
+                            </td>
+                            <td className="px-3 py-2">
+                              {payment.dueAfterPayment !== null &&
+                                payment.dueAfterPayment !== undefined
+                                ? formatCurrency(Number(payment.dueAfterPayment))
+                                : "N/A"}
+                            </td>
+                            <td className="px-3 py-2">{invoice.column?.title || "-"}</td>
+                            <td className="px-3 py-2">{payment.notes || "-"}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="grid gap-2 md:hidden">
+                  {paymentEntries.map((payment, index) => {
+                    const refundedAmount = payment.Refund.reduce(
+                      (sum, refund) => sum + Number(refund.amount || 0),
+                      0,
+                    );
+
+                    return (
+                      <div
+                        key={payment.id}
+                        className={`rounded-md border p-3 text-xs ${index % 2 === 0 ? "bg-white" : "bg-slate-50"
+                          }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="font-semibold text-slate-700">
+                            {getPaymentMethodText(payment)}
+                          </p>
+                          <p className="font-semibold text-[#6571FF]">
+                            {formatCurrency(Number(payment.amount || 0))}
+                          </p>
+                        </div>
+                        {refundedAmount > 0 && (
+                          <p className="mt-1 text-[11px] text-red-600">
+                            Refunded: {formatCurrency(refundedAmount)}
+                          </p>
+                        )}
+                        <div className="mt-2 space-y-1 text-slate-600">
+                          <p>
+                            <span className="font-semibold">Date:</span>{" "}
+                            {moment(payment.date || payment.createdAt).format(
+                              "MM.DD.YYYY",
+                            )}
+                          </p>
+                          <p>
+                            <span className="font-semibold">Cash Received:</span>{" "}
+                            {payment.cash?.receivedCash || "N/A"}
+                          </p>
+                          <p>
+                            <span className="font-semibold">Due After:</span>{" "}
+                            {payment.dueAfterPayment !== null &&
+                              payment.dueAfterPayment !== undefined
+                              ? formatCurrency(Number(payment.dueAfterPayment))
+                              : "N/A"}
+                          </p>
+                          <p>
+                            <span className="font-semibold">Status:</span>{" "}
+                            {invoice.column?.title || "-"}
+                          </p>
+                          {payment.notes && (
+                            <p>
+                              <span className="font-semibold">Notes:</span>{" "}
+                              {payment.notes}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+
           {/* Terms, Policies */}
           <div className="grid grid-cols-2 gap-4 text-xs">
             <section>
@@ -822,10 +1101,12 @@ export default function InvoiceModalBody({
 
           <div className="flex items-center justify-between gap-2">
             <div>
-              <p className="font-bold text-slate-500">{invoice.company.name}</p>
-              <p>
-                {invoice.user.firstName} {invoice.user.lastName}
-              </p>
+              <p className="font-bold text-slate-600">{invoice.company.name}</p>
+              {invoice?.user && (
+                <p className="font-medium">
+                  {invoice?.user?.firstName} {invoice?.user?.lastName}
+                </p>
+              )}
             </div>
             <div className="mt-4 space-y-2 md:mt-0">
               {showAuthorizedName && (
@@ -927,7 +1208,7 @@ export default function InvoiceModalBody({
                       // setShowAuthorizedName(true);
                       setShowSignaturePad(true);
                     }}
-                    className="rounded bg-[#6571FF] px-8 pb-1 text-white print:hidden"
+                    className="rounded-xl pt-1 bg-gradient-to-r from-70% from-[#6571FF] to-[#5a66ee] px-8 pb-2 text-white print:hidden"
                   >
                     {invoice?.wasAuthorized ? "Re-Authorize" : "Authorize"}
                   </button>
@@ -935,26 +1216,52 @@ export default function InvoiceModalBody({
             </div>
           </div>
 
-          <div className="flex justify-end items-center">
+          <div className="flex justify-end items-center mt-6">
             {showSignaturePad && !sigImageURL && !invoice?.signatureImage && (
-              <div className="flex justify-end items-center gap-4">
-                <SignatureCanvas
-                  ref={sigCanvas}
-                  penColor="black"
-                  backgroundColor="#f9fafb"
-                  canvasProps={{
-                    width: 300,
-                    height: 100,
-                    className: "border border-gray-400 rounded-md",
-                  }}
-                />
+              <div className="flex flex-col items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/50">
+                <div className="w-full flex justify-between items-center mb-1">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    Sign Below
+                  </span>
+                  <button
+                    onClick={() => {
+                      setShowSignaturePad(false);
+                    }}
+                    className="text-xs font-medium text-slate-400 hover:text-red-500 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
 
-                <div className="flex flex-col gap-3">
+                <div className="overflow-hidden rounded-xl border border-slate-300 bg-white shadow-inner dark:border-slate-700 dark:bg-slate-950">
+                  <SignatureCanvas
+                    ref={sigCanvas}
+                    penColor="black"
+                    backgroundColor="transparent"
+                    canvasProps={{
+                      width: 320,
+                      height: 160,
+                    }}
+                  />
+                </div>
+
+                <div className="flex w-full items-center justify-between gap-3">
+                  <button
+                    onClick={() => {
+                      sigCanvas.current.clear();
+                      // setShowSignaturePad(false);
+                      setSigImageURL(null);
+                    }}
+                    className="flex-1 rounded-xl border border-slate-200 bg-white py-2 text-sm font-semibold text-slate-600 shadow-sm transition-all hover:bg-slate-50 hover:text-slate-900 active:scale-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                  >
+                    Clear
+                  </button>
+
                   <button
                     onClick={() => {
                       if (!sigCanvas.current || sigCanvas.current.isEmpty()) {
                         errorToast(
-                          "Please provide your signature before saving."
+                          "Please provide your signature before saving.",
                         );
                         return;
                       }
@@ -966,19 +1273,9 @@ export default function InvoiceModalBody({
                       setShowAuthorizedName(false);
                       setShowSignaturePad(false);
                     }}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md"
+                    className="flex-[2] rounded-xl bg-gradient-to-r from-[#6571FF] to-[#5a66ee] py-2 text-sm font-semibold text-white shadow-md shadow-indigo-500/20 transition-all hover:shadow-lg hover:shadow-indigo-500/30 active:scale-95"
                   >
                     Save
-                  </button>
-                  <button
-                    onClick={() => {
-                      sigCanvas.current.clear();
-                      setShowSignaturePad(false);
-                      setSigImageURL(null);
-                    }}
-                    className="px-4 py-2 bg-gray-500 text-white rounded-md"
-                  >
-                    Clear
                   </button>
                 </div>
               </div>
@@ -1021,7 +1318,7 @@ export default function InvoiceModalBody({
                     invoiceId={invoice.id}
                     companyId={invoice.companyId}
                     due={parseFloat(
-                      Number(invoice?.due ?? 0).toFixed(2)
+                      Number(invoice?.due ?? 0).toFixed(2),
                     ).toString()}
                     open={isStripeDialogOpen}
                     setOpen={setIsStripeDialogOpen}
@@ -1037,45 +1334,49 @@ export default function InvoiceModalBody({
           <p className="font-semibold">Powered by Autoworx.</p>
         </div>
 
-        <div className="flex w-full flex-col gap-1 space-y-1 md:flex md:h-[90vh] md:w-[394px] md:shrink md:grow-0 md:gap-4 md:space-y-0 md:overflow-y-auto print:hidden">
+        <div className="flex w-full flex-col gap-1 space-y-1 md:flex md:h-[95vh] md:w-[394px] md:shrink md:grow-0 md:gap-4 md:space-y-0 md:overflow-y-auto print:hidden">
           <div className="#shadow-lg hidden h-[calc(100%-50px)] flex-1 overflow-y-auto rounded-md border bg-background p-3 md:p-6 md:block">
             {/* Desktop tabs are here */}
-            <div className="hidden md:mb-4 md:flex md:justify-center md:gap-4">
-              <button
-                className={`rounded px-4 py-1 text-sm font-medium ${
-                  desktopActiveTab === "attachments"
-                    ? "bg-[#6571FF] text-white"
-                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                }`}
-                onClick={() => setDesktopActiveTab("attachments")}
-              >
-                Attachments
-              </button>
-              <button
-                className={`rounded px-4 py-1 text-sm font-medium ${
-                  desktopActiveTab === "inspections"
-                    ? "bg-[#6571FF] text-white"
-                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                }`}
-                onClick={() => setDesktopActiveTab("inspections")}
-              >
-                Inspections
-              </button>
+            <div className="hidden w-fit mx-auto md:mb-4 md:flex md:justify-center md:gap-2 border border-gray-200 rounded-2xl p-1 bg-white/70 dark:bg-slate-900/60">
+              {[
+                { key: "attachments", label: "Attachments" },
+                { key: "inspections", label: "Inspections" },
+              ].map((tab) => {
+                const isActive = desktopActiveTab === tab.key;
+                return (
+                  <button
+                    key={tab.key}
+                    onClick={() =>
+                      setDesktopActiveTab(tab.key as typeof desktopActiveTab)
+                    }
+                    data-active={isActive}
+                    className={`group relative flex items-center gap-2 rounded-xl px-6 py-2 font-medium transition-all duration-300 ease-out shadow-sm ring-1 ring-transparent ${isActive
+                      ? "text-white shadow-indigo-500/30 ring-black/5 translate-y-[-1px]"
+                      : "text-slate-500 dark:text-slate-300 bg-white/70 dark:bg-slate-900/60 hover:text-slate-700 dark:hover:text-white"
+                      }`}
+                  >
+                    {isActive && (
+                      <span className="absolute inset-0 -z-10 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee]" />
+                    )}
+                    <span className="whitespace-nowrap">{tab.label}</span>
+                  </button>
+                );
+              })}
             </div>
 
             {/* Attachments Tab Content - Desktop */}
             {desktopActiveTab === "attachments" && (
               <>
-                <h2 className="col-span-full mb-3  text-xl font-bold uppercase text-slate-500 md:text-3xl">
+                <h2 className="col-span-full mb-3 text-xl font-bold uppercase text-slate-500 md:text-3xl">
                   Attachments
                 </h2>
                 <div className="flex grid-cols-1 gap-4 overflow-x-auto md:grid">
                   {invoice.photos.map((x, index) => {
                     const allImageUrls = invoice.photos.map(
-                      (photo) => photo.photo
+                      (photo) => photo.photo,
                     );
                     const urlsParam = encodeURIComponent(
-                      JSON.stringify(allImageUrls)
+                      JSON.stringify(allImageUrls),
                     );
                     return (
                       <Link
@@ -1108,7 +1409,7 @@ export default function InvoiceModalBody({
             {/* Inspections Tab Content - Desktop */}
             {desktopActiveTab === "inspections" && (
               <>
-                <h2 className="col-span-full mb-3 text-xl font-bold uppercase text-slate-500 md:text-3xl">
+                <h2 className="col-span-full mb-3 text-xl font-bold uppercase text-slate-600 md:text-3xl">
                   Inspections
                 </h2>
                 <InspectionItems
@@ -1128,7 +1429,7 @@ export default function InvoiceModalBody({
                     invoiceId={invoice.id}
                     onWorkOrderCreated={async () => {
                       const updatedInvoice = await getIsWorkorderCreated(
-                        invoice.id
+                        invoice.id,
                       );
                       setInvoice((prevInvoice) => {
                         if (!prevInvoice) return prevInvoice;
@@ -1147,7 +1448,7 @@ export default function InvoiceModalBody({
                     }
                   />
                 )}
-              <button
+              {/* <button
                 onClick={handleEmail}
                 className="flex w-full items-center justify-center gap-2 rounded-md bg-background py-2 text-[#6571FF]"
               >
@@ -1179,7 +1480,7 @@ export default function InvoiceModalBody({
                     ></path>{" "}
                   </g>
                 </svg>
-              </button>
+              </button> */}
             </>
           )}
         </div>

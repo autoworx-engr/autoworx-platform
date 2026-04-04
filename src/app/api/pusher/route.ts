@@ -1,13 +1,12 @@
-import { authOptions } from "@/authOptions";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
 import {
-  sendInternalMessageNotification,
   sendCollaborationMessageNotification,
+  sendInternalMessageNotification,
 } from "@/lib/notification/communication-notify";
 import { getPusherInstance } from "@/lib/pusher/server";
 import { sendType } from "@/types/Chat";
 import { MessageSection } from "@prisma/client";
-import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
 
 type TMessageDate = {
@@ -38,10 +37,46 @@ const pusher = getPusherInstance();
  *             properties:
  *               to:
  *                 type: integer
+<<<<<<< HEAD
+=======
+ *                 description: Recipient user ID or group ID.
+ *               sessionUserId:
+ *                 type: integer
+ *                 description: Sender user ID.
+>>>>>>> b13cc748f79e5676eb818262729c7aee087e2d7f
  *               message:
  *                 type: string
  *               type:
  *                 type: string
+<<<<<<< HEAD
+=======
+ *                 description: The type of message being sent.
+ *                 example: USER,GROUP
+ *               section:
+ *                 type: string
+ *                 enum: [INTERNAL, COLLABORATION]
+ *                 description: The section context for the message.
+ *               attachmentFiles:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     fileName:
+ *                       type: string
+ *                     fileType:
+ *                       type: string
+ *                     fileUrl:
+ *                       type: string
+ *                     fileSize:
+ *                       type: integer
+ *                 description: Optional array of file attachments.
+ *               requestEstimate:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                 description: Optional associated estimate request.
+>>>>>>> b13cc748f79e5676eb818262729c7aee087e2d7f
  *     responses:
  *       200:
  *         description: Message sent
@@ -53,11 +88,22 @@ const pusher = getPusherInstance();
 // Body: { message, roomId }
 export async function POST(req: Request) {
   const body = await req.json();
-  const { to, message, type, section, attachmentFiles, requestEstimate } = body;
+  const {
+    to,
+    message,
+    type,
+    section,
+    attachmentFiles,
+    requestEstimate,
+    sessionUserId,
+  } = body;
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) throw new Error("Unauthorized");
-    const userId = parseInt(session.user.id);
+    const userId = parseInt(sessionUserId);
+
+    if (!userId) {
+      throw new Error("Missing Session User ID");
+    }
+
     if (!to || (!message && !attachmentFiles && !requestEstimate)) {
       throw new Error("Missing some argument for message");
     }
@@ -75,7 +121,11 @@ export async function POST(req: Request) {
       // If there are attachments but no text message, generate descriptive text
       if (attachmentFiles && attachmentFiles.length > 0) {
         const imageCount = attachmentFiles.filter(
+<<<<<<< HEAD
           (file) => file.fileType && file.fileType.startsWith("image/")
+=======
+          (file) => file.fileType && file.fileType.startsWith("image/"),
+>>>>>>> b13cc748f79e5676eb818262729c7aee087e2d7f
         ).length;
         const otherFileCount = attachmentFiles.length - imageCount;
 
@@ -268,14 +318,15 @@ export async function POST(req: Request) {
 
       const company = await db.company.findUnique({
         where: { id: receiver?.companyId },
-        select: { name: true },
+        select: { name: true, id: true },
       });
       // send collaboration message notification
       // Send a notification to the user about the new message
-      sendCollaborationMessageNotification({
-        toUserId: to,
-        companyName: company?.name || "",
-      });
+      if (company) {
+        sendCollaborationMessageNotification({
+          companyId: company?.id,
+        });
+      }
     }
     revalidatePath("/dashboard/communication/internal");
     revalidatePath("/dashboard/communication/collaboration");
@@ -289,13 +340,23 @@ export async function POST(req: Request) {
         chatTrack: userChatTrack,
       })
     );
-  } catch (e: any) {
+  } catch (e) {
+    const formattedError = errorHandler(e);
     console.error(e);
     return new Response(
-      JSON.stringify({ message: "Failed to send message", success: false }),
+      JSON.stringify({
+        message: formattedError?.message,
+        success: false,
+        errorDetails: formattedError,
+      }),
       {
+<<<<<<< HEAD
         status: 500,
       }
+=======
+        status: formattedError?.statusCode || 500,
+      },
+>>>>>>> b13cc748f79e5676eb818262729c7aee087e2d7f
     );
   }
 }

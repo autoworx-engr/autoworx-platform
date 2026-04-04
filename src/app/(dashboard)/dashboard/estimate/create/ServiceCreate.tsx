@@ -19,7 +19,7 @@ export default function ServiceCreate() {
   const { categories } = useListsStore();
 
   const [name, setName] = useState("");
-  const [category, setCategory] = useState<Category | undefined>();
+  const [category, setCategory] = useState<Category | null>(null);
   const [description, setDescription] = useState("");
   const [categoryOpen, setCategoryOpen] = useState(false);
 
@@ -27,12 +27,12 @@ export default function ServiceCreate() {
     if (data?.service && data.edit) {
       setName(data.service.name);
 
-      setCategory(categories.find((cat) => cat.id === data.service.categoryId));
+      setCategory(categories.find((cat) => cat.id === data.service.categoryId) || null);
 
       setDescription(data?.serviceDesc);
     } else {
       setName("");
-      setCategory(undefined);
+      setCategory(null);
       setDescription("");
     }
   }, [data]);

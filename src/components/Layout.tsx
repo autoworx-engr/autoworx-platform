@@ -194,6 +194,7 @@ export default function Layout({
     "TWILIO"
   );
 
+  console.log({ session });
   useEffect(() => {
     const uploadNotificationData = async () => {
       try {

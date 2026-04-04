@@ -160,11 +160,11 @@ export default function AddNewEmployee({
     }
 
     // Validate optional fields if provided
-    if (zip && !/^\d*$/.test(zip)) {
-      showError({
-        field: "zip",
-        message: "Zip code should contain only numbers.",
-      });
+    if (zip === "" && !/^\d*$/.test(zip)) {
+      // showError({
+      //   field: "zip",
+      //   message: "Zip code should contain only numbers.",
+      // });
       return;
     }
 
@@ -284,7 +284,10 @@ export default function AddNewEmployee({
             </button>
           )}
         </DialogTrigger>
-        <DialogContent className="max-h-full max-w-2xl grid-rows-[auto,1fr,auto]">
+        <DialogContent
+          className="max-h-full max-w-2xl grid-rows-[auto,1fr,auto]"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
           <div className="mt-8 flex items-center justify-between px-2 md:px-4">
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-slate-600 dark:text-slate-100">
@@ -294,7 +297,6 @@ export default function AddNewEmployee({
             </div>
 
             {profilePic ? (
-              // eslint-disable-next-line @next/next/no-img-element
               <div className="relative group">
                 <img
                   src={URL.createObjectURL(profilePic)}
@@ -467,16 +469,19 @@ export default function AddNewEmployee({
                 name="zip"
                 placeholder="zip code"
                 required={false}
+                type="number"
                 onChange={(e: any) => {
                   const value = e.target.value;
-                  if (value && !/^\d*$/.test(value)) {
-                    showError({
-                      field: "zip",
-                      message: "Zip code should contain only numbers.",
-                    });
-                  } else {
-                    clearError();
-                  }
+                  // value && !/^\d*$/.test(value);
+                  // (value === "" || /^\d+$/.test(value
+                  // if (value === "" || /^\d+$/.test(value)) {
+                  //   showError({
+                  //     field: "zip",
+                  //     message: "Zip code should contain only numbers.",
+                  //   });
+                  // } else {
+                  //   clearError();
+                  // }
                 }}
               />
             </div>

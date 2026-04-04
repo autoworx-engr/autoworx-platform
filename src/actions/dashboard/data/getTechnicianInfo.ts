@@ -39,8 +39,21 @@ export interface CurrentProject {
   dueDate: Date | null;
   startDate: Date | null;
 }
-export async function getCurrentProjects() {
-  const { companyId, userId } = await getEssentials();
+export async function getCurrentProjects(
+  currentUserId?: number,
+  currentCompanyId?: number,
+) {
+  let userId = currentUserId;
+  let companyId = currentCompanyId;
+
+  if (!userId) {
+    const data = await getEssentials();
+    userId = data?.userId;
+  }
+  if (!companyId) {
+    const data = await getEssentials();
+    companyId = data?.companyId;
+  }
 
   // Get all invoices where the technician is the current user and the status is "In Progress"
   const invoices = await db.invoice.findMany({
@@ -72,12 +85,12 @@ export async function getCurrentProjects() {
   // Map invoices to projects where the technician is the current user
   const projects = invoices.map((invoice) => {
     const technicians = invoice.technician.filter(
-      (technician) => technician.userId === userId
+      (technician) => technician.userId === userId,
     );
 
     const totalPayout = technicians.reduce(
       (acc, technician) => acc + Number(technician.amount),
-      0
+      0,
     );
 
     // Get the earliest start date from technicians
@@ -87,7 +100,7 @@ export async function getCurrentProjects() {
         if (!earliest) return technician.date;
         return technician.date < earliest ? technician.date : earliest;
       },
-      null
+      null,
     );
 
     // Get the earliest due date from technicians
@@ -97,7 +110,7 @@ export async function getCurrentProjects() {
         if (!earliest) return technician.due;
         return technician.due < earliest ? technician.due : earliest;
       },
-      null
+      null,
     );
 
     return {
@@ -120,8 +133,14 @@ export async function getCurrentProjects() {
 /**
  * Get performance metrics for the technician.
  */
-export async function getPerformance(timezone: string) {
-  const { userId } = await getEssentials();
+export async function getPerformance(timezone: string, currentUserId?: number) {
+  let userId = currentUserId;
+
+  if (!userId) {
+    const data = await getEssentials();
+    userId = data?.userId;
+  }
+
   const {
     currentMonthStart,
     currentMonthEnd,
@@ -141,7 +160,7 @@ export async function getPerformance(timezone: string) {
 
   // Calculate on-time completion rate for the current month
   const onTimeJobs = currentMonthJobs.filter(
-    (job) => job.status === "Completed" && job.dateClosed! <= job.due!
+    (job) => job.status === "Completed" && job.dateClosed! <= job.due!,
   );
   const onTimeCompletionRate = onTimeJobs.length / currentMonthJobs.length;
 
@@ -158,7 +177,7 @@ export async function getPerformance(timezone: string) {
 
   // Calculate on-time completion rate for the previous month
   const previousOnTimeJobs = previousMonthJobs.filter(
-    (job) => job.status === "Completed" && job.dateClosed! <= job.due!
+    (job) => job.status === "Completed" && job.dateClosed! <= job.due!,
   );
   const previousOnTimeCompletionRate =
     previousOnTimeJobs.length / previousMonthJobs.length;
@@ -203,8 +222,17 @@ export async function getPerformance(timezone: string) {
 /**
  * Get monthly payout for the technician.
  */
-export async function getMonthlyPayout(timezone: string) {
-  const { userId } = await getEssentials();
+export async function getMonthlyPayout(
+  timezone: string,
+  currentUserId?: number,
+) {
+  let userId = currentUserId;
+
+  if (!userId) {
+    const data = await getEssentials();
+    userId = data?.userId;
+  }
+
   const {
     currentMonthStart,
     currentMonthEnd,
@@ -225,7 +253,7 @@ export async function getMonthlyPayout(timezone: string) {
 
   const totalPayout = completedJobs.reduce(
     (acc, job) => acc + Number(job.amount),
-    0
+    0,
   );
 
   // Get pending jobs for the current month
@@ -244,7 +272,7 @@ export async function getMonthlyPayout(timezone: string) {
 
   const pendingPayout = pendingJobs.reduce(
     (acc, job) => acc + Number(job.amount),
-    0
+    0,
   );
 
   // Get completed jobs for the previous month
@@ -261,7 +289,7 @@ export async function getMonthlyPayout(timezone: string) {
 
   const previousTotalPayout = previousMonthCompletedJobs.reduce(
     (acc, job) => acc + Number(job.amount),
-    0
+    0,
   );
 
   return {

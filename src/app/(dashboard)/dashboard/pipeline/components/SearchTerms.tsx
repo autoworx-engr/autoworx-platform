@@ -3,16 +3,17 @@ import { useEstimateFilterStore } from "@/stores/estimate-filter";
 import { Search } from "lucide-react";
 
 export default function SearchTerms() {
-  const { setFilter } = useEstimateFilterStore();
+  const { setFilter, search } = useEstimateFilterStore();
 
   return (
-    <div className="relative min-w-0 flex-1 group">
+    <div className="relative flex-1 group">
       <Search
         size={18}
         className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-[#6571FF]"
       />
       <input
         type="text"
+        value={search}
         placeholder="Search by Work Order, Client, Vehicle or Service"
         className={cn(
           "w-full h-11 pl-12 pr-4 rounded-xl border-2 border-slate-100 bg-white",

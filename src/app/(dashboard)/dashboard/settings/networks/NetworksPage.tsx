@@ -105,7 +105,11 @@ const NetworksPage = ({
     const result = await connectWithCompany(companyId);
     if (result.success) {
       setNearbyCompanies((prevNearby) =>
+<<<<<<< HEAD
         prevNearby.filter((company) => company.id !== companyId)
+=======
+        prevNearby.filter((company) => company.id !== companyId),
+>>>>>>> b13cc748f79e5676eb818262729c7aee087e2d7f
       );
       setConnectedCompanies((prevConnected) => [
         ...prevConnected,
@@ -128,7 +132,11 @@ const NetworksPage = ({
       findNearbyCompanies(
         location.latitude,
         location.longitude,
+<<<<<<< HEAD
         nearByCompanyRange
+=======
+        nearByCompanyRange,
+>>>>>>> b13cc748f79e5676eb818262729c7aee087e2d7f
       ).then((res) => {
         setNearbyCompanies(res.data);
       });
@@ -142,7 +150,13 @@ const NetworksPage = ({
   useEffect(() => {
     if (nearbyCompaniesSearch.length > 0) {
       const filteredNearbyCompanies = nearbyCompanies.filter((company) =>
+<<<<<<< HEAD
         company.name.toLowerCase().includes(nearbyCompaniesSearch.toLowerCase())
+=======
+        company.name
+          .toLowerCase()
+          .includes(nearbyCompaniesSearch.toLowerCase()),
+>>>>>>> b13cc748f79e5676eb818262729c7aee087e2d7f
       );
       setSearchedNearbyCompanies(filteredNearbyCompanies);
     } else {
@@ -264,8 +278,8 @@ const NetworksPage = ({
                           company={company}
                           rightSlot={
                             <div className="flex gap-2 pt-1">
-                              <Button
-                                className="bg-green-500"
+                              <button
+                                className="w-full disabled:bg-slate-200 bg-green-600 hover:bg-green-700 text-white font-medium py-0.5 px-3 rounded-lg shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                                 onClick={() =>
                                   acceptCompanyJoin(
                                     joinId,
@@ -274,9 +288,9 @@ const NetworksPage = ({
                                 }
                               >
                                 Accept
-                              </Button>
-                              <Button
-                                className="bg-red-500"
+                              </button>
+                              <button
+                                className="w-full disabled:bg-slate-200 bg-red-600 hover:bg-red-700 text-white font-medium py-0.5 px-3 rounded-lg shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                                 onClick={() =>
                                   rejectCompanyJoin(
                                     joinId,
@@ -285,7 +299,7 @@ const NetworksPage = ({
                                 }
                               >
                                 Reject
-                              </Button>
+                              </button>
                             </div>
                           }
                         />
@@ -352,8 +366,8 @@ const NetworksPage = ({
                           company={company}
                           rightSlot={
                             <div className="flex gap-2 pt-1">
-                              <Button
-                                className="bg-green-500"
+                              <button
+                                className="w-full disabled:bg-slate-200 bg-green-600 hover:bg-green-700 text-white font-medium py-0.5 px-3 rounded-lg shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                                 onClick={() =>
                                   acceptCompanyJoin(
                                     joinId,
@@ -362,18 +376,7 @@ const NetworksPage = ({
                                 }
                               >
                                 Accept
-                              </Button>
-                              {/* <Button
-                                className="bg-red-500"
-                                onClick={() =>
-                                  rejectCompanyJoin(
-                                    joinId,
-                                    Number(currentCompany?.id)
-                                  )
-                                }
-                              >
-                                Reject
-                              </Button> */}
+                              </button>
                             </div>
                           }
                         />

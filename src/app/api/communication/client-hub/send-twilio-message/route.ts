@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
+<<<<<<< HEAD
     const data = await sendTwilioMessage({
       companyId: body.companyId,
       clientId: body.clientId,
@@ -51,6 +52,46 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true, data });
+=======
+    if (!body.companyId) {
+      return NextResponse.json(
+        { success: false, message: "Company id is required!" },
+        { status: 404 },
+      );
+    }
+
+    const companyInfo = await db.company.findFirst({
+      where: { id: body.companyId },
+    });
+
+    let data: any = null;
+
+    if (companyInfo?.smsGateway === "TWILIO") {
+      data = await sendTwilioMessage({
+        companyId: body.companyId,
+        clientId: body.clientId,
+        message: body.message,
+        attachments: body.attachments ?? [],
+        isSalesAgent: body.isSalesAgent,
+        userId: body.userId,
+      });
+    } else {
+      data = await sendInfobipMessage({
+        companyId: body.companyId,
+        clientId: body.clientId,
+        message: body.message,
+        attachments: body.attachments ?? [],
+        isSalesAgent: body.isSalesAgent,
+        userId: body.userId,
+      });
+    }
+
+    if (data?.success) {
+      return NextResponse.json({ success: true, data });
+    } else {
+      return NextResponse.json({ ...data });
+    }
+>>>>>>> b13cc748f79e5676eb818262729c7aee087e2d7f
   } catch (error: any) {
     return NextResponse.json(
       { success: false, message: error.message },

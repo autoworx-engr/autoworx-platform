@@ -5,12 +5,14 @@ import { useListsStore } from "@/stores/lists";
 import { Client } from "@prisma/client";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import Avatar from "../Avatar";
+
 import useClientListQuery from "@/hooks/query-hook/useClientListQuery";
 import { queryKeys } from "@/lib/queryKeys";
 import { useQueryClient } from "@tanstack/react-query";
 import NewCustomer from "../Lists/NewCustomer";
 import { SelectProps } from "../Lists/select-props";
 import { usePathname } from "next/navigation";
+import useClientListInfiniteQuery from "@/hooks/query-hook/useClientListInfiniteQuery";
 
 export function SelectAppointmentClient({
   name = "clientId",
@@ -28,14 +30,28 @@ export function SelectAppointmentClient({
 > | null>) {
   const state = useState(value);
   const [client, setClient] = setValue ? [value, setValue] : state;
-  const { data: clientList = [] } = useClientListQuery();
-  const newAddedCustomer = useListsStore(x => x.newAddedCustomer);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useClientListInfiniteQuery(debouncedSearchTerm);
+  const clientList = data?.pages.flatMap((page) => page.clients) ?? [];
+
+  const newAddedCustomer = useListsStore((x) => x.newAddedCustomer);
   const queryClient = useQueryClient();
   const pathname = usePathname();
 
   useEffect(() => {
     if (clientId && clientList.length > 0) {
-      const matchedClient = clientList.find(c => c.id === clientId);
+      const matchedClient = clientList.find((c) => c.id === clientId);
       if (matchedClient) {
         setClient(matchedClient);
       } else {
@@ -52,7 +68,13 @@ export function SelectAppointmentClient({
         [queryKeys.clientList],
         (oldData: Client[] | undefined) => {
           return oldData ? [...oldData, newAddedCustomer] : [newAddedCustomer];
-        }
+        },
+      );
+      queryClient.setQueryData(
+        [queryKeys.clientList],
+        (oldData: Client[] | undefined) => {
+          return oldData ? [...oldData, newAddedCustomer] : [newAddedCustomer];
+        },
       );
     }
   }, [newAddedCustomer]);
@@ -68,10 +90,11 @@ export function SelectAppointmentClient({
       <input type="hidden" name={name} value={client?.id ?? ""} />
 
       <Selector
+        className="min-w-full"
         label={(client: Partial<Client> | null) =>
           client ? `${client.firstName} ${client.lastName ?? ""}` : "Client"
         }
-        disabledDropdown={(fromLead && !!clientId) ?? client?.fromRequest!}
+        disabledDropdown={Boolean((fromLead && clientId) || client?.fromRequest)}
         newButton={
           <NewCustomer
             // @ts-ignore
@@ -103,19 +126,20 @@ export function SelectAppointmentClient({
           </div>
         )}
         items={clientList}
-        onSearch={(search: string) =>
-          clientList.filter(client =>
-            `${client.firstName} ${client.lastName}`
-              .toLowerCase()
-              .includes(search.toLowerCase())
-          )
-        }
+        onSearch={(search: string) => {
+          setSearchTerm(search);
+          return clientList;
+        }}
         openState={[
           openDropdown as boolean,
           setOpenDropdown as Dispatch<SetStateAction<boolean>>,
         ]}
         selectedItem={client}
         setSelectedItem={setClient}
+        useInfiniteScroll
+        hasNextPage={hasNextPage}
+        fetchNextPage={fetchNextPage}
+        isFetchingNextPage={isFetchingNextPage}
       />
     </>
   );

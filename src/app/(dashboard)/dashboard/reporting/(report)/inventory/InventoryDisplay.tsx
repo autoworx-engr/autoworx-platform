@@ -57,6 +57,12 @@ export default function InventoryDisplay({
   const params = useSearchParams();
   const search = params.get("search");
 
+  // Sync state with URL params when they change
+  useEffect(() => {
+    setCurrentPage(page || 1);
+    setPageSize(take || 50);
+  }, [page, take]);
+
   useEffect(() => {
     if (inventoryProducts.length > 0) {
       setShowPagination(true);
@@ -102,7 +108,10 @@ export default function InventoryDisplay({
       0
     );
 
-    const averageCost = Math.round(totalPurchasePrice / totalPurchaseQuantity);
+    const averageCost =
+      totalPurchaseQuantity > 0
+        ?totalPurchasePrice / totalPurchaseQuantity
+        : 0;
 
     const ReturnAndInvestment =
       averageSales > averageCost
@@ -167,6 +176,7 @@ export default function InventoryDisplay({
                   <div className="absolute inset-0 animate-ping rounded-3xl bg-slate-100 opacity-20" />
                 </div>
 
+<<<<<<< HEAD
                 {/* Text Content */}
                 <h3 className="mb-2 text-lg font-bold text-slate-500">
                   No Results Found
@@ -204,6 +214,53 @@ export default function InventoryDisplay({
                 </tbody>
               </table>
           }
+=======
+              {/* Text Content */}
+              <h3 className="mb-2 text-lg font-bold text-slate-500">
+                No Results Found
+              </h3>
+              <p className="max-w-[280px] text-sm font-medium leading-relaxed text-slate-400">
+                We couldn't find what you're looking for. Try adjusting your
+                filters or search terms.
+              </p>
+            </div>
+          ) : (
+            <table className="max-h-[600px] w-full overflow-y-auto shadow-md">
+              <thead className="sticky top-0 bg-background">
+                <tr className="h-10 border-b">
+                  <th className="border-b px-4 py-2 text-left">Product #</th>
+                  <th className="border-b px-4 py-2 text-left">Name </th>
+                  <th className="border-b px-4 py-2 text-left">Average Cost</th>
+                  <th className="border-b px-4 py-2 text-left">Average Sell</th>
+                  <th className="border-b px-4 py-2 text-left">Stock Qty.</th>
+                  <th className="border-b px-4 py-2 text-left">Qty. Sold</th>
+                  <th className="border-b px-4 py-2 text-left">Type</th>
+                  <th className="border-b px-4 py-2 text-left">ROI Average</th>
+                  <th className="border-b px-4 py-2 text-left">
+                    Purchase Date
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {inventoryToRender?.map((history, index) => (
+                  <InventoryTableRow
+                    key={history.id}
+                    history={history}
+                    // index={
+                    //   currentPage > 1 ? index + 10 * (currentPage - 1) : index
+                    // }
+                    index={
+                      currentPage > 1
+                        ? index + pageSize * (currentPage - 1)
+                        : index
+                    }
+                    timezone={timezone}
+                  />
+                ))}
+              </tbody>
+            </table>
+          )}
+>>>>>>> b13cc748f79e5676eb818262729c7aee087e2d7f
           {showPagination && (
             <div className="mt-4 flex justify-end">
               <Pagination

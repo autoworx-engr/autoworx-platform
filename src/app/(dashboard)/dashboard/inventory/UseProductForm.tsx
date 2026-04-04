@@ -105,7 +105,15 @@ export default function UseProductForm({
         </button>
       </DialogTrigger>
 
+<<<<<<< HEAD
       <DialogContent className="max-h-[80%] w-[96%] max-w-xl grid-rows-[auto,1fr,auto] thin-scrollbar" form>
+=======
+      <DialogContent
+        className="max-h-[80%] w-[96%] max-w-xl grid-rows-[auto,1fr,auto] thin-scrollbar"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        form
+      >
+>>>>>>> b13cc748f79e5676eb818262729c7aee087e2d7f
         <DialogHeader>
           <DialogTitle className="text-slate-600">
             {productType === "Product" ? "Loss" : "Use"} Product
@@ -120,6 +128,10 @@ export default function UseProductForm({
               name="date"
               type="date"
               label="Date"
+              onFocus={(e) => {
+                // Prevent the default focus behavior to avoid opening the calendar popup
+                e.preventDefault();
+              }}
               defaultValue={todayInCompanyTz}
             />
             <SlimInput

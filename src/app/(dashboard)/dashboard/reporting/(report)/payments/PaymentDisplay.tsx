@@ -1,7 +1,7 @@
 "use client";
 import { cn } from "@/lib/cn";
 import { formatCurrency } from "@/utils/formatCurrency";
-import { Payment, Prisma, Refund } from "@prisma/client";
+import { Payment, Prisma } from "@prisma/client";
 import { Pagination } from "antd"; // Importing the Pagination component from Ant Design
 import { ArrowDown, Search } from "lucide-react";
 import moment from "moment-timezone";
@@ -140,6 +140,7 @@ export default function PaymentDisplay({
                       0
                     ) || 0;
 
+<<<<<<< HEAD
                   const hasRefund = refundedAmount > 0;
                   return (
                     <tr
@@ -147,6 +148,55 @@ export default function PaymentDisplay({
                       className={cn(
                         "cursor-pointer rounded-md py-3",
                         index % 2 === 0 ? "bg-background" : "bg-blue-100"
+=======
+                const refundedAmount = Number(payment.refundedAmount) || 0;
+
+                const hasRefund = refundedAmount > 0;
+
+                return (
+                  <tr
+                    key={payment.id}
+                    className={cn(
+                      "cursor-pointer rounded-md py-3",
+                      index % 2 === 0 ? "bg-background" : "bg-blue-100"
+                    )}
+                  >
+                    <td className="border-b px-4 py-2 text-left">
+                      {payment?.date
+                        ? moment.tz(payment.date, timezone).format("MM/DD/YYYY")
+                        : ""}
+                    </td>
+
+                    <td className="border-b px-4 py-2 text-left">
+                      {payment.invoiceId}
+                    </td>
+                    <td className="border-b px-4 py-2 text-left">
+                      {payment.invoice?.client?.firstName}{" "}
+                      {payment.invoice?.client?.lastName}
+                    </td>
+                    <td className="border-b px-4 py-2 text-left">
+                      {payment.invoice?.vehicle?.year || ""}{" "}
+                      {payment.invoice?.vehicle?.make}{" "}
+                      {payment.invoice?.vehicle?.model}{" "}
+                      {payment.invoice?.vehicle?.other
+                        ? payment.invoice?.vehicle?.other
+                        : ""}
+                    </td>
+                    <td className="border-b px-4 py-2 text-left">
+                      {payment.type === "OTHER"
+                        ? payment?.other?.paymentMethod?.name
+                        : payment.type === "DEPOSIT"
+                          ? `${payment.type} (${payment?.deposit?.depositMethod || "N/A"})`
+                          : payment.type}
+                    </td>
+                    <td className="border-b px-4 py-2 text-left">
+                      {formatCurrency(Number(payment.amount))}
+                      {hasRefund && (
+                        <div className="flex items-center gap-1 text-red-500 text-xs font-normal">
+                          <ArrowDown size={14} strokeWidth={2} />
+                          <span>{formatCurrency(refundedAmount)}</span>
+                        </div>
+>>>>>>> b13cc748f79e5676eb818262729c7aee087e2d7f
                       )}
                     >
                       <td className="border-b px-4 py-2 text-left">

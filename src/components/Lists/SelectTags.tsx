@@ -62,17 +62,13 @@ export function SelectTags({
   }, [dropdownsOpen]);
 
   return (
-    <div className="flex flex-col max-w-sm">
+    <div className="flex flex-col max-w-sm sm:max-w-full">
       <input
         type="hidden"
         name={name}
         value={tags.map((x) => x.id).join(",")}
       />
-      <DropdownMenu
-        open={open}
-        onOpenChange={(open) => {
-        }}
-      >
+      <DropdownMenu open={open} onOpenChange={(open) => {}}>
         {tags && tags.length > 0 && (
           <div className="mb-2 flex flex-wrap gap-2 max-w-[260px]">
             {tags.map((tag, i) => (
@@ -126,12 +122,12 @@ export function SelectTags({
               }
 
               setOpen(true);
-              setTimeout(() => {
-                searchRef.current?.focus();
-              }, 50);
+              // setTimeout(() => {
+              //   searchRef.current?.focus();
+              // }, 50);
             }
           }}
-          className="flex min-h-11 min-w-[150px] w-full items-center justify-between rounded-lg shadow-sm shadow-black/20 bg-gray-100/40 px-4 ring-1 ring-inset ring-slate-200 transition-all hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30"
+          className="flex min-h-11 min-w-[150px] w-full items-center justify-between rounded-[10px] px-4 ring-1 ring-inset ring-slate-200 transition-all hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30"
         >
           <p className="text-sm font-medium text-slate-400">Tags</p>
           <ChevronDown size={18} className="text-slate-400" />
@@ -142,7 +138,7 @@ export function SelectTags({
             side="bottom"
             align="start"
             sideOffset={8}
-            className="z-50 w-full min-w-[240px] overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-2xl ring-1 ring-black/5"
+            className="z-50 w-full min-w-[240px] max-w-xs overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-2xl ring-1 ring-black/5"
           >
             <DropdownMenuGroup>
               {/* Search Header */}
@@ -177,7 +173,7 @@ export function SelectTags({
                   .filter((x) =>
                     searchQuery
                       ? x.name.toLowerCase().includes(searchQuery.toLowerCase())
-                      : true
+                      : true,
                   )
                   .map((tag) => (
                     <DropdownMenuItem
@@ -206,7 +202,7 @@ export function SelectTags({
                         style={{
                           backgroundColor: tag.bgColor,
                           color: tag.textColor,
-                          borderRadius: '6px'
+                          borderRadius: "6px",
                         }}
                       >
                         <span>{tag.name}</span>
@@ -256,7 +252,7 @@ export function SelectTags({
                         "flex h-8 items-center justify-center rounded-lg text-xs font-bold transition-all hover:scale-105",
                         selectedColor?.textColor === color.textColor
                           ? "ring-2 ring-[#6571FF] ring-offset-1"
-                          : "ring-1 ring-transparent"
+                          : "ring-1 ring-transparent",
                       )}
                     >
                       Aa

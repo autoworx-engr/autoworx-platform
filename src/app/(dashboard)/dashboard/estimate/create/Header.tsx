@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
 import { SelectClient } from "@/components/Lists/SelectClient";
@@ -9,6 +10,7 @@ import {
   Column,
   Invoice,
   InvoiceTemplate,
+  RequestEstimate,
   Vehicle,
 } from "@prisma/client";
 import { customAlphabet } from "nanoid";
@@ -28,6 +30,7 @@ export default function Header({
   isAllServicesCompleted,
   isEdit = false,
   selectedTemplate,
+  requestEstimate,
 }: {
   id?: string;
   vehicle?: Vehicle;
@@ -37,6 +40,7 @@ export default function Header({
   isAllServicesCompleted?: boolean;
   isEdit?: boolean;
   selectedTemplate?: InvoiceTemplate | null;
+  requestEstimate?: any;
 }) {
   const {
     invoiceId,
@@ -68,15 +72,20 @@ export default function Header({
   useEffect(() => {
     if (client) {
       const params = new URLSearchParams(searchParams?.toString());
+      const existingClientId = params.get("clientId");
+      if (existingClientId === client.id.toString()) return;
       params.set("clientId", client.id.toString());
-      router.push(`${pathname}?${params.toString()}`);
+      router.replace(`${pathname}?${params.toString()}`);
     }
   }, []);
+
   useEffect(() => {
     if (template) {
       const params = new URLSearchParams(searchParams?.toString());
+      const existingTemplateId = params.get("templateId");
+      if (existingTemplateId === template.id) return;
       params.set("templateId", template?.id);
-      router.push(`${pathname}?${params.toString()}`);
+      router.replace(`${pathname}?${params.toString()}`);
     }
   }, [template]);
 
@@ -112,22 +121,26 @@ export default function Header({
   ]);
 
   return (
-    <div className="app-shadow col-start-1 flex flex-wrap items-center gap-3 rounded-md p-3">
-      <div className="mr-auto flex gap-1">
-        <p>{invoiceId || template?.id}</p>
+    <div className="col-start-1 flex flex-wrap items-center gap-3 rounded-md">
+      <div className="rounded-lg bg-stone-200/80 px-3 py-1 font-mono font-semibold text-slate-600/70">
+        {invoiceId || template?.id}
       </div>
 
       {!isTemplate && (
-        <CreateEstimateActionsButtons status={status! || selectedStatus} />
+        <CreateEstimateActionsButtons
+          status={status! || selectedStatus}
+          requestEstimate={requestEstimate}
+        />
       )}
 
       <div className="flex basis-full flex-wrap items-end gap-3">
         {isTemplate ? (
           <SlimInput
             name="title"
-            className="py-2"
+            className="py-[5px] mx-0.5 rounded-lg"
             required
             value={title}
+            placeholder="Enter a title"
             onChange={(e) => setTitle(e.target.value)}
           />
         ) : (

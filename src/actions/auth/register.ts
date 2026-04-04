@@ -33,7 +33,7 @@ const ACCESS_CODE = env("ACCESS_CODE");
 
 const insertDefaultColumns = async (columnId: number, type: string) => {
   const columnsFortypes = defaultColumnWithColor.filter(
-    (column) => column.type === type
+    (column) => column.type === type,
   );
 
   const columnsWithCompany = columnsFortypes.map((column) => ({
@@ -208,6 +208,11 @@ export async function register({
         permission_name: "serviceAutomation",
         status: true,
       },
+      {
+        title: "Reporting Automation",
+        permission_name: "reportingAutomation",
+        status: true,
+      },
     ];
 
     await Promise.all(
@@ -219,8 +224,8 @@ export async function register({
             permission_name: perm.permission_name,
             enabled: perm.status,
           },
-        })
-      )
+        }),
+      ),
     );
 
     const createdUser = await db.user.create({
@@ -273,7 +278,7 @@ export async function register({
     uploadNotificationSettings(
       createdUser.id,
       createdUser.employeeType,
-      newCompany.id
+      newCompany.id,
     );
 
     // Create default columns

@@ -8,21 +8,20 @@ import { updateEmployee } from "@/actions/employee/update";
 import { getCompany } from "@/actions/settings/getCompany";
 import SlimSalaryManagement from "@/components/employee/SlimSalaryManagement";
 import Password from "@/components/Password";
+import PhoneInput from "@/components/PhoneInput";
 import { useServerGet } from "@/hooks/useServerGet";
 import { DEFAULT_IMAGE_URL } from "@/lib/consts";
 import { successToast } from "@/lib/toast";
+import { useEmployeeFilterStore } from "@/stores/employeeFilter";
 import { useFormErrorStore } from "@/stores/form-error";
 import { EmployeeType, SalaryType, User } from "@prisma/client";
-import { CircleUserRound as UserIcon, SquarePen, X } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { SquarePen, CircleUserRound as UserIcon, X } from "lucide-react";
 import moment from "moment";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
-import SelectEmployeeType from "./SelectEmployeeType";
-import { useQueryClient } from "@tanstack/react-query";
-import { useEmployeeFilterStore } from "@/stores/employeeFilter";
 import { EMPLOYEE_LIST_KEY } from "./_hook/useEmployeeQuery";
-import PhoneInput from "@/components/PhoneInput";
-import { cn } from "@/lib/cn";
+import SelectEmployeeType from "./SelectEmployeeType";
 
 type TEditClientModalBodyProps = {
   employee: User;
@@ -43,6 +42,8 @@ export default function EditClientModalBody({
   const { data: companyName } = useServerGet(getCompany);
   const [openChangePassword, setOpenChangePassword] = useState(false);
   const { showError, clearError } = useFormErrorStore();
+  // Controlled zip state — blocks non-digit input
+  const [zip, setZip] = useState(employee.zip ?? "");
 
   const phoneDataRef = useRef({
     phoneNumber: "",
@@ -60,7 +61,9 @@ export default function EditClientModalBody({
 
   useEffect(() => {
     setProfilePic(employee.image !== DEFAULT_IMAGE_URL ? employee.image : null);
-  }, [employee.image]);
+    // Sync zip if employee prop changes (e.g. modal reused for different employee)
+    setZip(employee.zip ?? "");
+  }, [employee.image, employee.zip]);
 
   useEffect(() => {
     if (newProfilePic) {
@@ -74,6 +77,8 @@ export default function EditClientModalBody({
   const { phoneNumber, countryCode, isoCode } = phoneDataRef.current;
   async function handleSubmit(data: FormData) {
     const fullPhone = `${countryCode}${phoneNumber}`;
+    // Inject controlled zip into FormData since the input is controlled
+    data.set("zip", zip);
     data.set("mobileNumber", fullPhone);
     let photo;
     const firstName = data.get("firstName") as string;
@@ -83,7 +88,7 @@ export default function EditClientModalBody({
     const address = data.get("address") as string;
     const city = data.get("city") as string;
     const state = data.get("state") as string;
-    const zip = data.get("zip") as string;
+    // const zip = data.get("zip") as string;
     const commission = data.get("commission") as string;
     const date = data.get("date") as string;
     const type = data.get("type") as string;
@@ -116,12 +121,11 @@ export default function EditClientModalBody({
       });
       return;
     }
-
-    // Validate optional fields if provided
-    if (zip && !/^\d*$/.test(zip)) {
+    // Validate zip — digits only
+    if (zip && !/^\d+$/.test(zip)) {
       showError({
         field: "zip",
-        message: "Zip code should contain only numbers.",
+        message: "Zip code must contain digits only.",
       });
       return;
     }
@@ -225,6 +229,7 @@ export default function EditClientModalBody({
   return (
     <DialogContent
       className="max-h-full max-w-2xl grid-rows-[auto,1fr,auto]"
+      onOpenAutoFocus={(e) => e.preventDefault()}
       form
     >
       <div className="mt-8 flex items-center justify-between px-2 md:px-4">
@@ -232,7 +237,9 @@ export default function EditClientModalBody({
           <h1 className="text-2xl font-bold tracking-tight text-slate-600 dark:text-slate-100">
             Edit Employee
           </h1>
-          <p className="text-sm text-slate-500 mt-1">Update details for the team member</p>
+          <p className="text-sm text-slate-500 mt-1">
+            Update details for the team member
+          </p>
         </div>
 
         {profilePic ? (
@@ -357,7 +364,7 @@ export default function EditClientModalBody({
           <PhoneInput
             label="Mobile"
             placeholder="1234567890"
-            required={false}
+            required={true}
             defaultValue={employee.phone!}
             // value={phoneNumber}
             defaultIsoCode={employee.countryCode!}
@@ -426,19 +433,21 @@ export default function EditClientModalBody({
             defaultValue={employee.state!}
             required={false}
           />
+
           <SlimInput
             name="zip"
-            defaultValue={employee.zip!}
             required={false}
+            value={zip}
             onChange={(e) => {
               const value = e.target.value;
-              if (value && !/^\d*$/.test(value)) {
+              if (value === "" || /^\d+$/.test(value)) {
+                setZip(value);
+                clearError();
+              } else {
                 showError({
                   field: "zip",
-                  message: "Zip code should contain only numbers.",
+                  message: "Zip code must contain digits only.",
                 });
-              } else {
-                clearError();
               }
             }}
           />

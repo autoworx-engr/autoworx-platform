@@ -25,11 +25,11 @@ type TProps = {
     link?: string | null;
     path: string;
     subnav?:
-    | {
-      title: string;
-      link: string;
-    }[]
-    | null;
+      | {
+          title: string;
+          link: string;
+        }[]
+      | null;
   }[];
   permissions: PermissionsResult | null;
 };
@@ -46,61 +46,56 @@ export default function MobileNav({ navList, permissions }: TProps) {
     if (!companyFeaturePermission || companyFeaturePermission.length === 0)
       return true;
     const routeWithoutQuery = route.split("?")[0];
+
+    // Visualization visibility is controlled at route/page level (entitlements),
+    // not by company feature-permission filtering in nav.
+    if (routeWithoutQuery === "/dashboard/visualization") return true;
+
+    // Sales Agent route is controlled by plan entitlements at page/API level.
+    if (routeWithoutQuery.startsWith("/dashboard/settings/sales-agent")) {
+      return true;
+    }
+
     const featureKey = FEATURE_PERMISSIONS_MAP[routeWithoutQuery];
     if (!featureKey) return true;
     if (Array.isArray(featureKey)) {
       return featureKey.some((key) =>
         companyFeaturePermission.some(
-          (perm) => perm.permission_name === key && perm.enabled
-        )
+          (perm) => perm.permission_name === key && perm.enabled,
+        ),
       );
     }
     return companyFeaturePermission.some(
-      (perm) => perm.permission_name === featureKey && perm.enabled
+      (perm) => perm.permission_name === featureKey && perm.enabled,
     );
   }
 
-  // First filter by permissions, then by company feature permission
-  const [filteredNavList, setFilteredNavList] = useState(() => {
-    // Permission-based filtering
-    let permissionFiltered = filterNavList(navList, permissions);
-    // Company feature permission filtering
+  const buildFilteredNavList = (list: TProps["navList"]) => {
+    const permissionFiltered = filterNavList(list, permissions);
+
     return permissionFiltered
       .filter((item) => !item.link || canAccessCompanyFeatureRoute(item.link))
       .map((item) => {
-        if (item.subnav) {
-          const filteredSubnav = item.subnav.filter((sub) =>
-            canAccessCompanyFeatureRoute(sub.link)
-          );
-          return {
-            ...item,
-            subnav: filteredSubnav.length > 0 ? filteredSubnav : null,
-          };
-        }
-        return item;
+        if (!item.subnav) return item;
+
+        const filteredSubnav = item.subnav.filter((sub) =>
+          canAccessCompanyFeatureRoute(sub.link),
+        );
+
+        return {
+          ...item,
+          subnav: filteredSubnav.length > 0 ? filteredSubnav : null,
+        };
       });
-  });
+  };
+
+  // First filter by permissions, then by company feature permission
+  const [filteredNavList, setFilteredNavList] = useState(() =>
+    buildFilteredNavList(navList),
+  );
 
   useEffect(() => {
-    // Permission-based filtering
-    let permissionFiltered = filterNavList(navList, permissions);
-    // Company feature permission filtering
-    setFilteredNavList(
-      permissionFiltered
-        .filter((item) => !item.link || canAccessCompanyFeatureRoute(item.link))
-        .map((item) => {
-          if (item.subnav) {
-            const filteredSubnav = item.subnav.filter((sub) =>
-              canAccessCompanyFeatureRoute(sub.link)
-            );
-            return {
-              ...item,
-              subnav: filteredSubnav.length > 0 ? filteredSubnav : null,
-            };
-          }
-          return item;
-        })
-    );
+    setFilteredNavList(buildFilteredNavList(navList));
   }, [companyFeaturePermission, navList, permissions]);
   useEffect(() => {
     if (openNav) {
@@ -168,7 +163,7 @@ export default function MobileNav({ navList, permissions }: TProps) {
       <div
         className={cn(
           "w-0 bg-[#0C1427] duration-300",
-          openNav && "fixed inset-0 w-full overflow-scroll duration-300"
+          openNav && "fixed inset-0 w-full overflow-scroll duration-300",
         )}
         style={{
           zIndex: 999,

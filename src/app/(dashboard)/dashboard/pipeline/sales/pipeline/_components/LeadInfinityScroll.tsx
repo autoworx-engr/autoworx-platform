@@ -1,15 +1,16 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useCallback } from "react";
 import { getLeads } from "@/actions/pipelines/getLeads";
 import { actionTypes } from "@/constants/lead.constant";
 import {
   useColumnDispatch,
+  useOrderBy,
   useSearchTerm,
 } from "@/context/sales-pipeline.context";
 import { LeadWithSalesUser } from "@/types/invoiceLead";
-import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
+import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 type TProps = {
   columnTitle: string;
@@ -34,6 +35,7 @@ export default function LeadInfinityScroll({
 }: TProps) {
   const dispatch = useColumnDispatch();
   const searchTerm = useSearchTerm();
+  const orderBy = useOrderBy()
   const scrollRef = useRef<HTMLUListElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const loaderRef = useRef<HTMLDivElement>(null);
@@ -46,6 +48,9 @@ export default function LeadInfinityScroll({
 
   const leadsLength = leads?.length ?? 0;
 
+  console.log({ orderBy });
+
+
   const fetchMoreLeads = useCallback(async () => {
     try {
       if (columnId) {
@@ -54,6 +59,7 @@ export default function LeadInfinityScroll({
           take: defaultTakeLeads,
           skip: leadsLength,
           searchTerm: searchTerm || undefined,
+          orderBy: orderBy,
         });
         if (getNextLeads?.length < defaultTakeLeads) {
           setHasMore(false);
@@ -72,7 +78,7 @@ export default function LeadInfinityScroll({
       console.error(err);
       setHasMore(false);
     }
-  }, [columnId, leadsLength, searchTerm, dispatch]);
+  }, [columnId, leadsLength, searchTerm, dispatch, orderBy]);
 
   useEffect(() => {
     if (leadsLength >= defaultTakeLeads) {
@@ -121,7 +127,7 @@ export default function LeadInfinityScroll({
     });
   }, [columnIndex, screenWidth]);
 
-   useEffect(() => {
+  useEffect(() => {
     const ulElement = scrollRef.current;
     if (!ulElement || (screenWidth !== undefined && screenWidth < 768)) return;
 

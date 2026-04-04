@@ -29,15 +29,18 @@ export default function CollaborationToggle({
       setLoading(true);
       const newValue = !isCollaborators;
 
-      await fetch(`/api/company/${companyId}/collaboration`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
+      await fetch(
+        `/api/communication/collaboration/company/${companyId}/enable`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            isCollaborators: newValue,
+          }),
         },
-        body: JSON.stringify({
-          isCollaborators: newValue,
-        }),
-      });
+      );
 
       setIsCollaborators(newValue);
       onChange?.(newValue);
@@ -76,7 +79,7 @@ export default function CollaborationToggle({
 
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-[#797979] sm:text-[14px] sm:font-normal">
-          User List
+          Collaborators List
         </h2>
 
         {isCollaborators && (

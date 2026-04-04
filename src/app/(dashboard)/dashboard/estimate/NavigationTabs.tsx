@@ -92,7 +92,9 @@ export default function NavigationTabs({
       </div>
 
       {/* Desktop tabs */}
-      <TabsList className="hidden md:flex gap-2 overflow-x-auto w-auto">
+      <TabsList
+        className="hidden md:flex   w-auto"
+      >
         <Link href="/dashboard/estimate/templates">
           <TabsTrigger
             className=""

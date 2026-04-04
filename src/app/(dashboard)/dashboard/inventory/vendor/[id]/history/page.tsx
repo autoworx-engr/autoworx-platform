@@ -86,10 +86,10 @@ export default async function Page({
     <div className="h-full px-4 sm:px-6 lg:px-8"> {/* Added padding for better page spacing */}
 
       {/* 1. Header & Back Button */}
-      <Title className={`flex items-center gap-3 ${BASE_TEXT_COLOR} text-2xl lg:text-3xl font-extrabold mb-6 mt-4`}>
-        <Link href="/dashboard/inventory/vendor" className="flex items-center">
+      <Title className={`flex items-center gap-2 ${BASE_TEXT_COLOR} text-xl lg:text-2xl font-bold mb-4 mt-2`}>
+        <Link href={`/dashboard/inventory/vendor?vendorId=${id}`} className="flex items-center">
           <ArrowLeft
-            size={24}
+            size={20}
             className="text-slate-600 dark:text-white rounded-full p-1 hover:bg-slate-100 dark:hover:bg-slate-700/50 active:scale-[0.95] transition-all"
           />
         </Link>

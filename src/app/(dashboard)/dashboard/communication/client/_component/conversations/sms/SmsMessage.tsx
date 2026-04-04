@@ -19,9 +19,11 @@ export default function SmsMessage({
   const isIncoming = message.sentBy !== "Company";
   const text = (message.message ?? "").trim();
 
-   const senderName = message.sentBy === "Company" 
-                ? message.user && `${message.user.firstName} ${message.user.lastName || ''}`.trim()
-: null;
+  const senderName =
+    message.sentBy === "Company"
+      ? message.user &&
+        `${message.user.firstName} ${message.user.lastName || ""}`.trim()
+      : null;
   const handleDownload = (fileUrl: string) => {
     window.open(fileUrl, "_blank", "noopener,noreferrer");
   };
@@ -41,7 +43,7 @@ export default function SmsMessage({
     <div
       className={cn(
         "flex w-full items-start gap-2 px-2 py-1",
-        isIncoming ? "justify-start" : "justify-end"
+        isIncoming ? "justify-start" : "justify-end",
       )}
     >
       {/* Avatar (incoming only) */}
@@ -66,7 +68,7 @@ export default function SmsMessage({
               "select-text hover:shadow-md",
               isIncoming
                 ? "bg-zinc-200 text-zinc-900 ring-zinc-300 dark:bg-zinc-800 dark:text-zinc-100 dark:ring-white/10"
-                : "bg-gradient-to-br from-[#0a8a95] to-[#006D77] text-white ring-white/20"
+                : "bg-gradient-to-br from-[#0a8a95] to-[#006D77] text-white ring-white/20",
             )}
           >
             {/* Bubble tails
@@ -89,26 +91,25 @@ export default function SmsMessage({
         )}
 
         {/* Timestamp */}
-       <div className={cn(
-                                 "mt-1 flex flex-col gap-0 text-zinc-500",
-                                 !isIncoming && "items-end"
-                               )}>
-
-                                {senderName && (
-                          <div className="text-[9px] italic text-zinc-500">
-                            {senderName}
-                          </div>
-                        )}
-         <div
+        <div
           className={cn(
-            "mt-1  text-[10px] leading-4 text-zinc-500",
-            !isIncoming && "text-right"
+            "mt-1 flex flex-col gap-0 text-zinc-500",
+            !isIncoming && "items-end",
           )}
-          title={new Date(message.createdAt).toLocaleString()}
         >
-          {formatTime(message.createdAt)}
+          {senderName && (
+            <div className="text-[9px] italic text-zinc-500">{senderName}</div>
+          )}
+          <div
+            className={cn(
+              "mt-1  text-[10px] leading-4 text-zinc-500",
+              !isIncoming && "text-right",
+            )}
+            title={new Date(message.createdAt).toLocaleString()}
+          >
+            {formatTime(message.createdAt)}
+          </div>
         </div>
-       </div>
       </div>
     </div>
   );

@@ -239,7 +239,8 @@ export default function NewLabor({
       </DialogTrigger>
 
       <DialogContent
-        className="max-h-[94vh] max-w-md grid-rows-[auto,1fr,auto] overflow-hidden"
+        className="max-h-[94vh] max-w-md grid-rows-[auto,1fr,auto]"
+        onOpenAutoFocus={(e) => e.preventDefault()}
         form
       >
         <DialogHeader className="border-b border-slate-200 pb-2">
@@ -271,7 +272,7 @@ export default function NewLabor({
                     clearError();
                   }
                 }}
-                className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400"
+                className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg outline-none transition-all placeholder:text-slate-400 focus:border-blue-500"
                 placeholder="Enter labor name"
               />
             </div>
@@ -329,7 +330,7 @@ export default function NewLabor({
                         }
                       }}
                       step="0.01"
-                      className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400"
+                      className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg outline-none transition-all placeholder:text-slate-400 focus:border-blue-500"
                       placeholder="0.00"
                       required
                     />
@@ -363,7 +364,7 @@ export default function NewLabor({
                         }
                       }}
                       step="0.01"
-                      className="w-full pl-8 pr-4 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400"
+                      className="w-full pl-8 pr-4 py-2.5 text-sm border border-slate-300 rounded-lg outline-none transition-all placeholder:text-slate-400 focus:border-blue-500"
                       placeholder="0.00"
                       required
                     />
@@ -389,7 +390,7 @@ export default function NewLabor({
                     value={discount}
                     onChange={(e) => setDiscount(e.target.value)}
                     step="0.01"
-                    className="w-full pl-8 pr-4 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400"
+                    className="w-full pl-8 pr-4 py-2.5 text-sm border border-slate-300 rounded-lg outline-none transition-all placeholder:text-slate-400 focus:border-blue-500"
                     placeholder="0.00"
                   />
                 </div>
@@ -443,7 +444,7 @@ export default function NewLabor({
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={3}
-                className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400 resize-none"
+                className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg outline-none transition-all placeholder:text-slate-400 focus:border-blue-500"
                 placeholder="Add any additional notes or details..."
               />
             </div>

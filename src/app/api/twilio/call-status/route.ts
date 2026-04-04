@@ -1,7 +1,8 @@
 import { db } from "@/lib/db";
-import { NextResponse } from "next/server";
+import { twiml } from "twilio";
 import { sendInfobipMessage } from "@/actions/communication/client/sendInfobipMessage";
 import { sendTwilioMessage } from "@/actions/communication/client/sendTwilioMessage";
+import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
 
 /**
  * @swagger
@@ -50,10 +51,19 @@ export async function POST(request: Request) {
 
     if (!callSid) {
       console.error("❌ [Call-Status] Missing CallSid");
+<<<<<<< HEAD
       return NextResponse.json(
         { error: "Missing 'CallSid' parameter." },
         { status: 400 }
       );
+=======
+      // Return empty TwiML so Twilio doesn't play "application error"
+      const errResponse = new twiml.VoiceResponse();
+      return new Response(errResponse.toString(), {
+        status: 400,
+        headers: { "Content-Type": "text/xml" },
+      });
+>>>>>>> b13cc748f79e5676eb818262729c7aee087e2d7f
     }
 
     // Find the call record
@@ -66,6 +76,7 @@ export async function POST(request: Request) {
             id: true,
             name: true,
             smsGateway: true,
+            missedCallTextBackEnabled: true,
           },
         },
       },
@@ -73,7 +84,12 @@ export async function POST(request: Request) {
 
     if (!call) {
       console.error("❌ [Call-Status] Call not found for callSid:", callSid);
-      return NextResponse.json({ error: "Call not found" }, { status: 404 });
+      // Return empty TwiML so Twilio doesn't play "application error"
+      const notFoundResponse = new twiml.VoiceResponse();
+      return new Response(notFoundResponse.toString(), {
+        status: 200,
+        headers: { "Content-Type": "text/xml" },
+      });
     }
 
     console.log("📞 [Call-Status] Call found:", {
@@ -88,12 +104,11 @@ export async function POST(request: Request) {
     // DialCallStatus can be: completed, answered, busy, no-answer, failed, canceled
     // We want to send SMS for: no-answer, busy, failed, canceled
     const missedStatuses = ["no-answer", "busy", "failed", "canceled"];
-    console.log("🚀 ~ POST ~ missedStatuses:", missedStatuses);
     const isMissedCall =
       dialCallStatus && missedStatuses.includes(dialCallStatus);
-    console.log("🚀 ~ POST ~ isMissedCall:", isMissedCall);
 
     if (isMissedCall && call.client) {
+<<<<<<< HEAD
       console.log(
         "🔔 [Call-Status] Missed call detected, sending alert to client:",
         call.client.mobile
@@ -145,6 +160,62 @@ export async function POST(request: Request) {
           error
         );
         // Don't throw - we still want to update the call status
+=======
+      // Check company toggle and plan entitlement before sending
+      if (!call.company?.missedCallTextBackEnabled) {
+        console.log(
+          "⏭️ [Call-Status] Missed call text back is disabled for company, skipping SMS",
+        );
+      } else {
+        const entitlements = await getCompanyEntitlements(call.company.id);
+        if (!entitlements.canUseSms || !entitlements.missedCallTextBack) {
+          console.log(
+            "⏭️ [Call-Status] Missed call text back not included in plan, skipping SMS",
+          );
+        } else {
+          console.log(
+            "🔔 [Call-Status] Missed call detected, sending alert to client:",
+            call.client.mobile,
+          );
+          try {
+            const companyName = call.company?.name || "our business";
+            const message = `Sorry we missed your call! Feel free to text this number with what you need in the meantime and we’ll get back to you as soon as possible. - ${companyName}`;
+
+            if (call.company?.smsGateway === "TWILIO") {
+              const response = await sendTwilioMessage({
+                companyId: call.company?.id,
+                clientId: call.client.id,
+                message: message,
+                attachments: [],
+                systemCall: true,
+              });
+              if (!response.success) throw new Error(`SMS sending failed`);
+              console.log("✅ [Call-Status] Missed call SMS sent via Twilio");
+            } else if (call.company?.smsGateway === "INFOBIP") {
+              const response = await sendInfobipMessage({
+                companyId: call.company?.id,
+                clientId: call.client.id,
+                message: message,
+                attachments: [],
+                systemCall: true,
+              });
+              if (!response.success) throw new Error(`SMS sending failed`);
+              console.log("✅ [Call-Status] Missed call SMS sent via Infobip");
+            } else {
+              console.warn(
+                "⚠️ [Call-Status] No SMS gateway configured for company:",
+                call.company?.id,
+              );
+            }
+          } catch (error) {
+            console.error(
+              "❌ [Call-Status] Failed to send missed call SMS:",
+              error,
+            );
+            // Don't throw - we still want to update the call status
+          }
+        }
+>>>>>>> b13cc748f79e5676eb818262729c7aee087e2d7f
       }
     }
 
@@ -167,9 +238,15 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({ success: true });
+    // Return empty TwiML so Twilio hangs up gracefully instead of playing
+    // "We're sorry, an application error has occurred"
+    const voiceResponse = new twiml.VoiceResponse();
+    return new Response(voiceResponse.toString(), {
+      headers: { "Content-Type": "text/xml" },
+    });
   } catch (error) {
     console.error("❌ [Call-Status] Error handling call status:", error);
+<<<<<<< HEAD
     return NextResponse.json(
       {
         error: "Internal Server Error",
@@ -177,5 +254,13 @@ export async function POST(request: Request) {
       },
       { status: 500 }
     );
+=======
+    // Return empty TwiML even on error so Twilio can hang up cleanly
+    const errResponse = new twiml.VoiceResponse();
+    return new Response(errResponse.toString(), {
+      status: 500,
+      headers: { "Content-Type": "text/xml" },
+    });
+>>>>>>> b13cc748f79e5676eb818262729c7aee087e2d7f
   }
 }

@@ -261,7 +261,10 @@ export default function NewCustomer({
             </button>
           )}
         </DialogTrigger>
-        <DialogContent className="max-h-full max-w-2xl grid-rows-[auto,1fr,auto]">
+        <DialogContent
+          className="max-h-full max-w-2xl grid-rows-[auto,1fr,auto]"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
           <div className="mt-8 flex items-center justify-between">
             <div className="px-2">
               <h1 className="text-2xl font-bold tracking-tight text-slate-600 dark:text-slate-100">
@@ -423,7 +426,11 @@ export default function NewCustomer({
                 value={clientInfo.zip}
                 required={false}
                 onChange={(e) => {
-                  setClientInfo((prev) => ({ ...prev, zip: e.target.value }));
+                  const value = e.target.value;
+                  if (value === "" || /^\d+$/.test(value)) {
+                    setClientInfo((prev) => ({ ...prev, zip: value }));
+                  }
+                  // setClientInfo((prev) => ({ ...prev, zip: e.target.value }));
                 }}
               />
             </div>
@@ -566,6 +573,7 @@ export default function NewCustomer({
       >
         <DialogContent
           className="max-w-md"
+          onOpenAutoFocus={(e) => e.preventDefault()}
           onInteractOutside={(e) => {
             // Prevent closing when clicking outside
             e.preventDefault();

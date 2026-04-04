@@ -35,7 +35,7 @@ export default function NewService({
   const [name, setName] = useState("");
   const [nameError, setNameError] = useState("");
   const [nameTouched, setNameTouched] = useState(false);
-  const [category, setCategory] = useState<Category | undefined>();
+  const [category, setCategory] = useState<Category | null>(null);
   const [categoryError, setCategoryError] = useState("");
   const [description, setDescription] = useState("");
   const [categoryOpen, setCategoryOpen] = useState(false);
@@ -48,7 +48,7 @@ export default function NewService({
       if (data?.service && data.edit) {
         setName(data.service.name);
         setCategory(
-          categories.find((cat) => cat.id === data.service.categoryId)
+          categories.find((cat) => cat.id === data.service.categoryId) || null
         );
         setDescription(data.service.description);
       } else {
@@ -60,7 +60,7 @@ export default function NewService({
   // Reset form function
   const resetForm = () => {
     setName("");
-    setCategory(undefined);
+    setCategory(null);
     setDescription("");
     setNameError("");
     setCategoryError("");
@@ -83,7 +83,7 @@ export default function NewService({
     }
   };
 
-  const validateCategory = (category: Category | undefined) => {
+  const validateCategory = (category: Category | null | undefined) => {
     if (!category) {
       setCategoryError("Category is required");
       showError({
@@ -250,7 +250,8 @@ export default function NewService({
       </DialogTrigger>
 
       <DialogContent
-        className="max-h-[94vh] max-w-md grid-rows-[auto,1fr,auto] overflow-hidden"
+        className="max-h-[94vh] max-w-md grid-rows-[auto,1fr,auto]"
+        onOpenAutoFocus={(e) => e.preventDefault()}
         form
       >
         <DialogHeader className="border-b border-slate-200 pb-4">
@@ -284,9 +285,15 @@ export default function NewService({
                   }
                 }}
                 onBlur={() => setNameTouched(true)}
+<<<<<<< HEAD
                 className={`w-full px-4 py-2.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400 ${nameError
                     ? "border-red-500 focus:ring-red-500"
                     : "border-slate-300"
+=======
+                className={`w-full px-4 py-2.5 text-sm border rounded-lg outline-none transition-all placeholder:text-slate-400 ${nameError
+                    ? "border-red-500 focus:border-red-600"
+                    : "border-slate-300 focus:border-blue-500"
+>>>>>>> b13cc748f79e5676eb818262729c7aee087e2d7f
                   }`}
                 aria-invalid={nameError ? "true" : "false"}
                 aria-describedby={nameError ? "name-error" : undefined}
@@ -385,11 +392,27 @@ export default function NewService({
                   setDescription(value);
                 }}
                 rows={5}
-                className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400 resize-none"
+                className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg outline-none transition-all placeholder:text-slate-400 focus:border-blue-500"
               />
+<<<<<<< HEAD
               <p className="text-xs text-slate-500">
                 Provide a detailed description of what this service includes
               </p>
+=======
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-slate-500">
+                  Provide a detailed description of what this service includes
+                </p>
+                <span
+                  className={`text-xs ${descriptionLength > maxDescriptionLength * 0.9
+                    ? "text-red-600 font-medium"
+                    : "text-slate-500"
+                    }`}
+                >
+                  {descriptionLength}/{maxDescriptionLength}
+                </span>
+              </div>
+>>>>>>> b13cc748f79e5676eb818262729c7aee087e2d7f
             </div>
 
             {/* Info Box */}

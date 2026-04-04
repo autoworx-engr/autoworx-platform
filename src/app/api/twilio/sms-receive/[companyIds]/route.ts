@@ -2,11 +2,15 @@
 import { updatePipelineAutomationTriggerWithToken } from "@/actions/automation/pipeline/triggerPipelineAutomation";
 import { updateNewSMSChatTrack } from "@/actions/communication/client/chat-track";
 import { db } from "@/lib/db";
+import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
 import { sendClientMessageNotification } from "@/lib/notification/communication-notify";
 import sendClientMailOrSMSNotify from "@/lib/pusher/client-conversation-notify";
 import receiveTwiloMessage from "@/lib/pusher/receiveTwiloMessage";
 import { getPusherInstance } from "@/lib/pusher/server";
-import { NextRequest } from "next/server";
+import { sendSMSToAgent } from "@/service/ai-agent/api";
+import { allCompanyFeaturePermissions } from "@/service/feature-permissions/api";
+import { revalidatePath } from "next/cache";
+import { NextRequest, NextResponse } from "next/server";
 
 const pusher = getPusherInstance();
 
@@ -44,7 +48,7 @@ const pusher = getPusherInstance();
  */
 export async function POST(
   req: NextRequest,
-  context: { params: Promise<{ companyIds: string }> }
+  context: { params: Promise<{ companyIds: string }> },
 ) {
   try {
     const { params } = context;
@@ -62,7 +66,7 @@ export async function POST(
       body = Object.fromEntries(new URLSearchParams(formData).entries());
     } else {
       throw new Error(
-        "Unsupported content type: Twilio webhook expects form-encoded data"
+        "Unsupported content type: Twilio webhook expects form-encoded data",
       );
     }
 
@@ -93,7 +97,7 @@ export async function POST(
       const file = await fetchTwilioMedia(
         url,
         credential?.apiKeySid || "",
-        credential?.apiKeySecret || ""
+        credential?.apiKeySecret || "",
       );
       formData.append("file", file);
     }
@@ -106,12 +110,24 @@ export async function POST(
     const imgs = await res.json();
     const images = imgs?.data ?? [];
 
+    const normalizedFrom = normalizePhoneNumber(body.From);
+
     for (const companyId of companyIds) {
+      const entitlements = await getCompanyEntitlements(companyId);
+      if (!entitlements.canUseSms) {
+        continue;
+      }
+      const company = await db.company.findUnique({
+        where: { id: companyId },
+      });
+
       let client = await db.client.findFirst({
         where: {
-          mobile: {
-            endsWith: body.From.replace("+", ""),
-          },
+          OR: normalizedFrom.lookupValues.map((lookupValue) => ({
+            mobile: {
+              endsWith: lookupValue,
+            },
+          })),
           companyId: +companyId,
         },
         select: {
@@ -120,6 +136,7 @@ export async function POST(
           lastName: true,
           companyId: true,
           Lead: true,
+          isSalesAgent: true,
         },
       });
 
@@ -128,8 +145,9 @@ export async function POST(
           data: {
             firstName: body.From,
             lastName: " ",
-            mobile: body.From,
+            mobile: normalizedFrom.storeValue,
             companyId: companyId,
+            isSalesAgent: true,
           },
           select: {
             id: true,
@@ -137,6 +155,7 @@ export async function POST(
             lastName: true,
             companyId: true,
             Lead: true,
+            isSalesAgent: true,
           },
         });
       }
@@ -173,6 +192,38 @@ export async function POST(
           lastMessageBy: "Client",
           attachments: attachments,
         });
+
+        const currentClient = await db.client.findUnique({
+          where: { id: client?.id },
+        });
+
+        const permissions = await allCompanyFeaturePermissions(companyId);
+
+        const entitlements = await getCompanyEntitlements(client.companyId);
+        const isSalesAgentEnabled = entitlements.awxSalesAgent;
+
+        //sales agent
+        const isCompanySalesAgent = company?.isSalesAgent === true;
+        const isClientSalesAgent = currentClient?.isSalesAgent === true;
+
+        if (isCompanySalesAgent && isClientSalesAgent && isSalesAgentEnabled) {
+          if (dbMessage && dbMessage.to === credential?.phoneNumber) {
+            try {
+              await sendSMSToAgent({
+                company_id: client.companyId,
+                message: dbMessage?.message,
+                send_from: dbMessage?.from,
+                send_to: dbMessage?.to,
+                client_id: client?.id,
+              });
+            } catch (error) {
+              return Response.json(
+                { message: `Sales agent error: ${error}` },
+                { status: 200 },
+              );
+            }
+          }
+        }
 
         // pusher trigger to send message to company admin real time
 
@@ -221,16 +272,17 @@ export async function POST(
         });
       }
     }
+    revalidatePath("/dashboard/communication/client");
     // Send a success response
     return Response.json(
       { message: "Webhook subscription successful", data: body },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error: any) {
     console.error("Subscription error:", error);
     return Response.json(
       { message: "Webhook subscription failed", error: error?.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -238,7 +290,7 @@ export async function POST(
 async function fetchTwilioMedia(
   url: string,
   apiKeySid: string,
-  apiKeySecret: string
+  apiKeySecret: string,
 ) {
   const response = await fetch(url, {
     headers: {
@@ -252,4 +304,23 @@ async function fetchTwilioMedia(
 
   const blob = await response.blob();
   return new File([blob], "twilio-mms.jpg", { type: blob.type });
+}
+
+function normalizePhoneNumber(phone: string) {
+  const digits = (phone || "").replace(/\D/g, "");
+  const last10Digits = digits.length >= 10 ? digits.slice(-10) : digits;
+
+  const lookupValues = Array.from(
+    new Set([digits, last10Digits].filter((value) => value.length > 0)),
+  );
+
+  const storeValue =
+    digits.length === 11 && digits.startsWith("1")
+      ? last10Digits
+      : digits || phone;
+
+  return {
+    lookupValues,
+    storeValue,
+  };
 }

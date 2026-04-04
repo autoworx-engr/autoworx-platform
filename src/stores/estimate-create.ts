@@ -88,6 +88,7 @@ interface EstimateCreateStore {
     itemIndex: number;
     materialIndex: number;
   }) => void;
+
 }
 
 export const useEstimateCreateStore = create<EstimateCreateStore>((set) => ({
@@ -124,49 +125,49 @@ export const useEstimateCreateStore = create<EstimateCreateStore>((set) => ({
 
   setInvoiceId: (invoiceId: string) => set({ invoiceId }),
   setType: (type: string) => set({ type }),
-  setSubtotal: (subtotal: number) => set({ subtotal }),
-  setDiscount: (discount: number) => set({ discount }),
-  setTax: (tax: number) => set({ tax }),
-  setServiceFee: (serviceFee: number) => set({ serviceFee }),
-  setGrandTotal: (grandTotal: number) => set({ grandTotal }),
-  setDue: (due: number) => set({ due }),
-  setDeposit: (deposit: number) => set({ deposit }),
-  setTotalPayment: (totalPayment: number) => set({ totalPayment }),
-  setInternalNotes: (internalNotes: string) => set({ internalNotes }),
+  setSubtotal: (subtotal: number) => set({ subtotal, }),
+  setDiscount: (discount: number) => set({ discount, }),
+  setTax: (tax: number) => set({ tax, }),
+  setServiceFee: (serviceFee: number) => set({ serviceFee, }),
+  setGrandTotal: (grandTotal: number) => set({ grandTotal, }),
+  setDue: (due: number) => set({ due, }),
+  setDeposit: (deposit: number) => set({ deposit, }),
+  setTotalPayment: (totalPayment: number) => set({ totalPayment, }),
+  setInternalNotes: (internalNotes: string) => set({ internalNotes, }),
   setTerms: (terms: string) => set({ terms }),
-  setPolicy: (policy: string) => set({ policy }),
+  setPolicy: (policy: string) => set({ policy  }),
   setCustomerNotes: (customerNotes: string) => set({ customerNotes }),
-  setCustomerComments: (customerComments: string) => set({ customerComments }),
-  setCoupon: (coupon: Coupon) => set({ coupon }),
+  setCustomerComments: (customerComments: string) => set({ customerComments, }),
+  setCoupon: (coupon: Coupon) => set({ coupon ,}),
   setTitle: (title: string) => {
-    set({ title });
+    set({ title, });
   },
   setTemplate: (template: InvoiceTemplate) => {
-    set({ template });
+    set({ template, });
   },
-  setPhotos: (photos: { id?: number; photo?: string }[]) => set({ photos }),
+  setPhotos: (photos: { id?: number; photo?: string }[]) => set({ photos, }),
   addPhoto: (photo: string) =>
-    set((x: any) => ({ photos: [...x.photos, photo] })),
+    set((x: any) => ({ photos: [...x.photos, photo] ,})),
   removePhoto: (photo: string) =>
-    set((x: any) => ({ photos: x.photos.filter((p: string) => p !== photo) })),
+    set((x: any) => ({ photos: x.photos.filter((p: string) => p !== photo), })),
 
   setTasks: (tasks: { id: undefined | number; task: string }[]) =>
-    set({ tasks }),
-  addTask: (task: Task) => set((x: any) => ({ tasks: [...x.tasks, task] })),
+    set({ tasks,}),
+  addTask: (task: Task) => set((x: any) => ({ tasks: [...x.tasks, task], })),
   removeTask: (taskId: number) =>
-    set((x: any) => ({ tasks: x.tasks.filter((t: Task) => t.id !== taskId) })),
+    set((x: any) => ({ tasks: x.tasks.filter((t: Task) => t.id !== taskId), })),
 
   setCurrentSelectedCategoryId: (categoryId: number) =>
     set({ currentSelectedCategoryId: categoryId }),
 
-  setInspections: (inspections: InspectionType[]) => set({ inspections }),
+  setInspections: (inspections: InspectionType[]) => set({ inspections, }),
   updateInspection: (index: number, inspection: InspectionType) =>
     set((state) => {
       const updatedInspections = [...state.inspections];
       updatedInspections[index] = inspection;
-      return { inspections: updatedInspections };
+      return { inspections: updatedInspections,};
     }),
-  setDamageNotes: (damageNotes: string) => set({ damageNotes }),
+  setDamageNotes: (damageNotes: string) => set({ damageNotes, }),
   reset: () =>
     set({
       invoiceId: "",
@@ -197,7 +198,9 @@ export const useEstimateCreateStore = create<EstimateCreateStore>((set) => ({
         notes: "",
       })),
       damageNotes: "",
+    
     }),
+  
   removeMaterial({ itemIndex, materialIndex }) {
     set((state) => {
       const items = state.items.map((item, index) => {

@@ -34,7 +34,7 @@ export default function ClientInfinityScroll({
   const { filter, searchTerm } = useDemoClientFilterStore();
   const normalizedSearch = searchTerm?.trim();
   const resetClientData = useClientCommunicationStore(
-    (state) => state.resetClientData
+    (state) => state.resetClientData,
   );
   const [hasMore, setHasMore] = useState(true);
   const params = useParams();
@@ -84,7 +84,7 @@ export default function ClientInfinityScroll({
     return () => {
       pusher.unbind("client-notify").unsubscribe(`client-notify-${companyId}`);
     };
-  }, [pathname]);
+  }, [companyId, clientIdParams]);
 
   useEffect(() => {
     // Only refetch when user is actively filtering/searching
@@ -104,7 +104,7 @@ export default function ClientInfinityScroll({
         } catch (err) {
           console.error(
             "📋 ClientInfinityScroll: Error fetching clients:",
-            err
+            err,
           );
           errorToast("Failed to fetch clients");
         }
@@ -163,7 +163,7 @@ export default function ClientInfinityScroll({
       setClients((prev) => {
         const existingIds = new Set(prev.map((client) => client.id));
         const newClients = fetchClients.filter(
-          (client) => !existingIds.has(client.id)
+          (client) => !existingIds.has(client.id),
         );
         return [...prev, ...newClients];
       });

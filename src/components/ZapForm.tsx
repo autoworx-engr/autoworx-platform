@@ -123,13 +123,11 @@ const ZapForm = ({ company }: ZapFormProps) => {
     const { name, value } = e.target;
 
     setFormData({
-    ...formData,
-    [name]: value,
-  });
-  
-  
-  clearFieldError(name);
+      ...formData,
+      [name]: value,
+    });
 
+    clearFieldError(name);
   };
 
   const clearFieldError = (field: string) => {
@@ -141,42 +139,66 @@ const ZapForm = ({ company }: ZapFormProps) => {
   };
 
   const handleServiceChange = (
-    value: { id: string | number; title: string }[]
+    value: { id: string | number; title: string }[],
   ) => {
     setFormData((prev) => ({ ...prev, multiServices: value }));
   };
 
-  const handlePhoneChange = (num: string, code: string, isoCode:string) => {
- 
-  const fullPhoneNumber = `${code}${num}`; 
+  const handlePhoneChange = (num: string, code: string, isoCode: string) => {
+    const fullPhoneNumber = `${code}${num}`;
 
- 
-  setFormData((prev) => ({
-    ...prev,
-    phone: fullPhoneNumber,
-    countryCode: isoCode,
-  }));
+    setFormData((prev) => ({
+      ...prev,
+      phone: fullPhoneNumber,
+      countryCode: isoCode,
+    }));
 
-  clearFieldError("phone");
-}
+    clearFieldError("phone");
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
     setFormStatus({ message: "", type: null });
-if (!formData.phone || formData.phone.length < 10) {
-    setFieldErrors({
-      ...fieldErrors,
-      phone: "Please enter a valid phone number",
-    });
-    return;
-  }
+
+    const requiredFieldErrors: { [key: string]: string } = {};
+
+    if (!formData.name.trim()) {
+      requiredFieldErrors.name = "Full name is required";
+    }
+
+    if (!formData.vehicle_year) {
+      requiredFieldErrors.vehicle_year = "Year is required";
+    }
+
+    if (!formData.vehicle_make) {
+      requiredFieldErrors.vehicle_make = "Make is required";
+    }
+
+    if (!formData.vehicle_model) {
+      requiredFieldErrors.vehicle_model = "Model is required";
+    }
+
+    if (Object.keys(requiredFieldErrors).length > 0) {
+      setFieldErrors((prev) => ({ ...prev, ...requiredFieldErrors }));
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!formData.phone || formData.phone.length < 10) {
+      setFieldErrors({
+        ...fieldErrors,
+        phone: "Please enter a valid phone number",
+      });
+      setIsSubmitting(false);
+      return;
+    }
     try {
       const serviceTitle =
         formData.multiServices && formData.multiServices.length > 0
           ? formData.multiServices
-              .map((s: { title: string }) => s.title)
-              .join(", ")
+            .map((s: { title: string }) => s.title)
+            .join(", ")
           : "";
 
       // Use 'others' as vehicle info if filled, else use year/make/model
@@ -207,6 +229,7 @@ if (!formData.phone || formData.phone.length < 10) {
           multiServices: formData?.multiServices,
         }),
       });
+      console.log({ response });
 
       if (response.ok) {
         setFormStatus({
@@ -320,8 +343,6 @@ if (!formData.phone || formData.phone.length < 10) {
             )}
           </div>
 
-         
-
           {/* Form Title */}
 
           <p className="mt-1 text-center font-semibold text-white text-opacity-90">
@@ -336,7 +357,7 @@ if (!formData.phone || formData.phone.length < 10) {
                 htmlFor="name"
                 className="block text-sm font-medium text-gray-700"
               >
-                Full Name*
+                Full Name<span className="text-red-500">*</span>
               </label>
               <input
                 id="name"
@@ -348,6 +369,9 @@ if (!formData.phone || formData.phone.length < 10) {
                 required
                 className="w-full rounded-md border-2 border-gray-300 px-4 py-2 placeholder:text-gray-500 focus:border-[#00b8b0] focus:outline-none focus:ring-2 focus:ring-[#00b8b0]"
               />
+              {fieldErrors.name && (
+                <p className="text-sm text-red-600">{fieldErrors.name}</p>
+              )}
             </div>
             <div className="space-y-2">
               <label
@@ -367,14 +391,15 @@ if (!formData.phone || formData.phone.length < 10) {
               />
             </div>
             <div className="space-y-2">
-             
-               <PhoneInput
-    label="Phone Number"
-    // value={formData.phone} 
-    onChange={(num, code, isoCode) => handlePhoneChange(num, code, isoCode)} 
-    required
-    error={fieldErrors.phone} 
-  />
+              <PhoneInput
+                label="Phone Number"
+                // value={formData.phone}
+                onChange={(num, code, isoCode) =>
+                  handlePhoneChange(num, code, isoCode)
+                }
+                required
+                error={fieldErrors.phone}
+              />
             </div>{" "}
             <div className="space-y-2">
               {formData.token ? (
@@ -396,53 +421,58 @@ if (!formData.phone || formData.phone.length < 10) {
                 Vehicle Information*
               </h3>
             </div>
-          
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
               <Selector
                 name="vehicle_year"
                 label="Year"
+                required
                 placeholder="Select year"
                 options={years?.data}
                 value={formData.vehicle_year || ""}
-                onChange={(value) =>
-                  setFormData((prev) => ({ ...prev, vehicle_year: value }))
-                }
+                onChange={(value) => {
+                  setFormData((prev) => ({ ...prev, vehicle_year: value }));
+                  clearFieldError("vehicle_year");
+                }}
                 isSearch={true}
                 isClear={true}
-                disabled={formData.others !== ""}
-                // error={isYearFetchError ? "Failed to fetch years" : undefined}
+                error={fieldErrors.vehicle_year}
+              // error={isYearFetchError ? "Failed to fetch years" : undefined}
               />
               <Selector
                 name="vehicle_make"
                 label="Make"
+                required
                 placeholder="Select make"
                 options={vehicleOptions || []}
                 value={formData.vehicle_make || ""}
-                onChange={(value) =>
-                  setFormData((prev) => ({ ...prev, vehicle_make: value }))
-                }
+                onChange={(value) => {
+                  setFormData((prev) => ({ ...prev, vehicle_make: value }));
+                  clearFieldError("vehicle_make");
+                }}
                 isSearch={true}
                 isClear={true}
-                disabled={formData.others !== ""}
-                // error={isMakeFetchError ? "Failed to fetch Makes" : undefined}
+                error={fieldErrors.vehicle_make}
+              // error={isMakeFetchError ? "Failed to fetch Makes" : undefined}
               />
 
               <Selector
                 name="vehicle_model"
                 label="Model"
+                required
                 placeholder="Select model"
                 options={vehicleModelOptions || []}
                 // rootClassName="w-1/3"
                 value={formData.vehicle_model || ""}
-                onChange={(value) =>
-                  setFormData((prev) => ({ ...prev, vehicle_model: value }))
-                }
+                onChange={(value) => {
+                  setFormData((prev) => ({ ...prev, vehicle_model: value }));
+                  clearFieldError("vehicle_model");
+                }}
                 isSearch={true}
                 isClear={true}
-                disabled={formData.others !== ""}
-                // error={
-                //   isModelsFetchError ? "Failed to fetch Models" : undefined
-                // }
+                error={fieldErrors.vehicle_model}
+              // error={
+              //   isModelsFetchError ? "Failed to fetch Models" : undefined
+              // }
               />
             </div>
             <div className="space-y-2">
@@ -462,21 +492,15 @@ if (!formData.phone || formData.phone.length < 10) {
                 name="others"
                 value={formData.others}
                 onChange={handleChange}
-                disabled={
-                  formData.vehicle_year !== "" ||
-                  formData.vehicle_make !== "" ||
-                  formData.vehicle_model !== ""
-                }
                 className="w-full rounded-md border-2 border-gray-300 px-4 py-2 placeholder:text-gray-500 focus:border-[#00b8b0] focus:outline-none focus:ring-2 focus:ring-[#00b8b0] disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
             </div>
             {formStatus.message && (
               <div
-                className={`rounded-md p-3 ${
-                  formStatus.type === "success"
+                className={`rounded-md p-3 ${formStatus.type === "success"
                     ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
                     : "border border-red-200 bg-red-50 text-red-700"
-                }`}
+                  }`}
               >
                 {formStatus.message}
               </div>
@@ -488,10 +512,10 @@ if (!formData.phone || formData.phone.length < 10) {
                 isSubmitting ||
                 !consent ||
                 !!fieldErrors.phone ||
-                (!formData.others &&
-                  (!formData.vehicle_year ||
-                    !formData.vehicle_make ||
-                    !formData.vehicle_model))
+                !formData.name.trim() ||
+                !formData.vehicle_year ||
+                !formData.vehicle_make ||
+                !formData.vehicle_model
               }
             >
               {isSubmitting ? "Submitting..." : "Request Service"}

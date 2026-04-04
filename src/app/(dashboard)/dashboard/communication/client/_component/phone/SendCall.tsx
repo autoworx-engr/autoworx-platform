@@ -6,17 +6,20 @@ import { useEffect, useState } from "react";
 import CallStatus from "./CallStatus";
 import { useRouter } from "next/navigation";
 import { useVoiceDevice } from "@/context/VoiceDeviceContext";
+import UpgradePlanBanner from "@/components/UpgradePlanBanner";
 
 type TProps = {
   client?: Client | null;
   phoneNumber?: string | null;
   provider?: "TWILIO" | "INFOBIP";
+  canUseVoice?: boolean;
 };
 
 export default function SendCall({
   client,
   phoneNumber,
   provider = "TWILIO",
+  canUseVoice = true,
 }: TProps) {
   const router = useRouter();
   const {
@@ -141,6 +144,15 @@ export default function SendCall({
 
   return (
     <>
+      {!canUseVoice && (
+        <div className="mb-3">
+          <UpgradePlanBanner
+            title="Voice calling is not included in your plan"
+            description="Upgrade to make and receive calls directly from the platform."
+            ctaLabel="Upgrade Plan"
+          />
+        </div>
+      )}
       <div className="mt-auto flex w-full gap-3">
         {/* Setup Device Button */}
         <button
@@ -150,7 +162,7 @@ export default function SendCall({
               : "bg-gradient-to-br from-[#6571FF] to-[#5563E8] shadow-[#6571FF]/20 hover:shadow-xl hover:shadow-[#6571FF]/30 hover:-translate-y-0.5 active:scale-95"
           }`}
           onClick={handleSetupDevice}
-          disabled={isDeviceReady}
+          disabled={isDeviceReady || !canUseVoice}
         >
           {!isDeviceReady && (
             <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
@@ -182,14 +194,14 @@ export default function SendCall({
         {/* Make Call Button */}
         <button
           className={`group relative overflow-hidden w-full rounded-xl px-4 py-3.5 text-base font-semibold text-white shadow-lg transition-all duration-300 ${
-            isDeviceReady && !currentConnection
+            isDeviceReady && !currentConnection && canUseVoice
               ? "bg-gradient-to-br from-emerald-500 to-teal-600 shadow-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/30 hover:-translate-y-0.5 active:scale-95"
               : "bg-slate-300 text-slate-500 cursor-not-allowed shadow-none"
           }`}
           onClick={makeCall}
-          disabled={!isDeviceReady || !!currentConnection}
+          disabled={!isDeviceReady || !!currentConnection || !canUseVoice}
         >
-          {isDeviceReady && !currentConnection && (
+          {isDeviceReady && !currentConnection && canUseVoice && (
             <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
           )}
           <div className="relative flex items-center justify-center gap-2">

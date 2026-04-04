@@ -74,7 +74,11 @@ export default function SideNavbar({ navList, permissions }: TProps) {
   >([]);
 
   const clientConversationTrack = useClientCommunicationStore(
+<<<<<<< HEAD
     (state) => state.clientConversationTrack
+=======
+    (state) => state.clientConversationTrack,
+>>>>>>> b13cc748f79e5676eb818262729c7aee087e2d7f
   );
 
   const { data: unreadInternalMessageCountData } = useServerGet(
@@ -159,27 +163,46 @@ export default function SideNavbar({ navList, permissions }: TProps) {
     if (!companyFeaturePermission || companyFeaturePermission.length === 0)
       return true;
     const routeWithoutQuery = route.split("?")[0];
+
+    // Visualization visibility is controlled at route/page level (entitlements),
+    // not by company feature-permission filtering in nav.
+    if (routeWithoutQuery === "/dashboard/visualization") return true;
+
+    // Sales Agent route is controlled by plan entitlements at page/API level.
+    if (routeWithoutQuery.startsWith("/dashboard/settings/sales-agent")) {
+      return true;
+    }
+
     const featureKey = FEATURE_PERMISSIONS_MAP[routeWithoutQuery];
     if (!featureKey) return true;
     if (Array.isArray(featureKey)) {
       return featureKey.some((key) =>
         companyFeaturePermission.some(
+<<<<<<< HEAD
           (perm) => perm.permission_name === key && perm.enabled
         )
       );
     }
     return companyFeaturePermission.some(
       (perm) => perm.permission_name === featureKey && perm.enabled
+=======
+          (perm) => perm.permission_name === key && perm.enabled,
+        ),
+      );
+    }
+    return companyFeaturePermission.some(
+      (perm) => perm.permission_name === featureKey && perm.enabled,
+>>>>>>> b13cc748f79e5676eb818262729c7aee087e2d7f
     );
   }
-  // First filter by permissions, then by company feature permission
-  const [filteredNavList, setFilteredNavList] = useState(() => {
-    // Permission-based filtering
-    let permissionFiltered = filterNavList(navList, permissions);
-    // Company feature permission filtering
+
+  const buildFilteredNavList = (list: TProps["navList"]) => {
+    const permissionFiltered = filterNavList(list, permissions);
+
     return permissionFiltered
       .filter((item) => !item.link || canAccessCompanyFeatureRoute(item.link))
       .map((item) => {
+<<<<<<< HEAD
         if (item.subnav) {
           const filteredSubnav = item.subnav.filter((sub) =>
             canAccessCompanyFeatureRoute(sub.link)
@@ -190,10 +213,28 @@ export default function SideNavbar({ navList, permissions }: TProps) {
           };
         }
         return item;
+=======
+        if (!item.subnav) return item;
+
+        const filteredSubnav = item.subnav.filter((sub) =>
+          canAccessCompanyFeatureRoute(sub.link),
+        );
+
+        return {
+          ...item,
+          subnav: filteredSubnav.length > 0 ? filteredSubnav : null,
+        };
+>>>>>>> b13cc748f79e5676eb818262729c7aee087e2d7f
       });
-  });
+  };
+
+  // First filter by permissions, then by company feature permission
+  const [filteredNavList, setFilteredNavList] = useState(() =>
+    buildFilteredNavList(navList),
+  );
 
   useEffect(() => {
+<<<<<<< HEAD
     // Permission-based filtering
     let permissionFiltered = filterNavList(navList, permissions);
     // Company feature permission filtering
@@ -213,6 +254,9 @@ export default function SideNavbar({ navList, permissions }: TProps) {
           return item;
         })
     );
+=======
+    setFilteredNavList(buildFilteredNavList(navList));
+>>>>>>> b13cc748f79e5676eb818262729c7aee087e2d7f
   }, [companyFeaturePermission, navList, permissions]);
 
   const unReadClientCount = clientConversations?.length || 0;
@@ -259,7 +303,11 @@ export default function SideNavbar({ navList, permissions }: TProps) {
         setClientConversations((prevClients) => {
           if (!prevClients) return [data];
           const findConversation = prevClients?.find(
+<<<<<<< HEAD
             (conversation) => conversation?.clientId === data?.clientId
+=======
+            (conversation) => conversation?.clientId === data?.clientId,
+>>>>>>> b13cc748f79e5676eb818262729c7aee087e2d7f
           );
           if (findConversation) {
             return prevClients;

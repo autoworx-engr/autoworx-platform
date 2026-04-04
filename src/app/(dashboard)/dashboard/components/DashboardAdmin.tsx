@@ -36,8 +36,27 @@ const Dashboard = async () => {
         <div className="flex-1 min-h-0">
           <TaskListBox />
         </div>
+<<<<<<< HEAD
         <div className="flex-1 min-h-0">
           <ReputationBox />
+=======
+
+        {/* Column 3 */}
+        <div className="flex flex-col h-full max-h-[30rem] md:col-span-2 lg:col-span-1 lg:max-h-[90vh]">
+          <AppointmentListBox />
+        </div>
+
+        {/* Column 4 */}
+        <div className="md:col-span-2 lg:col-span-1 lg:max-h-[90vh]">
+          <div className="flex flex-col md:flex-row lg:flex-col h-full gap-2 xl:gap-4">
+            <div className="flex-1 min-h-[30rem] sm:min-h-0 max-h-[30rem] lg:max-h-[90vh]">
+              <TaskListBox />
+            </div>
+            <div className="flex-1 min-h-0 max-h-[30rem] lg:max-h-[90vh]">
+              <ReputationBox />
+            </div>
+          </div>
+>>>>>>> b13cc748f79e5676eb818262729c7aee087e2d7f
         </div>
       </div>
     </div>

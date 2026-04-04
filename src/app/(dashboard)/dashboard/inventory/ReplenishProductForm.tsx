@@ -99,6 +99,7 @@ export default function ReplenishProductForm({
 
       <DialogContent
         className="max-h-[80%] w-[96%] max-w-xl grid-rows-[auto,1fr,auto] thin-scrollbar"
+        onOpenAutoFocus={(e) => e.preventDefault()}
         form
       >
         <DialogHeader>
@@ -111,7 +112,15 @@ export default function ReplenishProductForm({
               name="date"
               type="date"
               label="Date"
+              onFocus={(e) => {
+                // Prevent the default focus behavior to avoid opening the calendar popup
+                e.preventDefault();
+              }}
               defaultValue={todayInCompanyTz}
+<<<<<<< HEAD
+=======
+              // required={true}
+>>>>>>> b13cc748f79e5676eb818262729c7aee087e2d7f
             />
             <div className="space-y-1">
               <label className="font-medium text-slate-600">Vendor</label>

@@ -10,17 +10,16 @@ import {
 } from "@/components/Dialog";
 import FormError from "@/components/FormError";
 import { SelectClientTags } from "@/components/Lists/SelectClientTags";
+import PhoneInput from "@/components/PhoneInput";
 import { SlimInput } from "@/components/SlimInput";
+import { successToast } from "@/lib/toast";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import { Client, Fleet, Tag } from "@prisma/client";
+import { CircleUserRound, SquarePen } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 import { RotatingLines } from "react-loader-spinner";
 import SelectComponent from "./Select";
-import Image from "next/image";
-import { successToast } from "@/lib/toast";
-import { CircleUserRound, SquarePen } from "lucide-react";
-import PhoneInput from "@/components/PhoneInput";
 
 export default function NewFleet({
   fleet,
@@ -48,6 +47,7 @@ export default function NewFleet({
   const [mobile, setMobile] = useState("+1");
   const [countryCode, setCountryCode] = useState("");
   const [countryIsoCode, setCountryIsoCode] = useState("");
+  const [zip, setZip] = useState(fleet?.zip ?? "");
 
   useEffect(() => {
     if (isEdit && fleet && open) {
@@ -56,6 +56,7 @@ export default function NewFleet({
       setPreferredPaymentTerm(
         fleet ? fleet?.fleet!.preferredPaymentTerm : null
       );
+      setZip(fleet?.zip ?? "");
     }
   }, [isEdit, fleet, open]);
 
@@ -73,7 +74,6 @@ export default function NewFleet({
     const address = document.querySelector<HTMLInputElement>("#address")?.value;
     const city = document.querySelector<HTMLInputElement>("#city")?.value;
     const state = document.querySelector<HTMLInputElement>("#state")?.value;
-    const zip = document.querySelector<HTMLInputElement>("#zip")?.value;
 
     if (!fleetName?.trim()) {
       showError({
@@ -100,6 +100,15 @@ export default function NewFleet({
       showError({
         field: "mobile",
         message: "Mobile is required.",
+      });
+      return;
+    }
+
+    // Validate zip code — digits only
+    if (zip && !/^\d+$/.test(zip)) {
+      showError({
+        field: "zip",
+        message: "Zip code must contain digits only.",
       });
       return;
     }
@@ -206,9 +215,10 @@ export default function NewFleet({
           <button className="text-xs text-[#6571FF]">+ Add New Fleet</button>
         )}
       </DialogTrigger>
-      <DialogContent
+      <DialogContent 
+       onOpenAutoFocus={(e)=>e.preventDefault()}
         className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]"
-      // form
+        // form
       >
         <div className="mt-8 flex items-center justify-between px-2 md:px-4">
           <div>
@@ -223,7 +233,6 @@ export default function NewFleet({
           {profilePic ? (
             <div className="relative group">
               <div className="relative h-16 w-16 rounded-full overflow-hidden ring-4 ring-white dark:ring-slate-800 shadow-md transition-transform group-hover:scale-105">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={
                     typeof profilePic === "string"
@@ -378,7 +387,24 @@ export default function NewFleet({
               required={false}
               defaultValue={fleet?.state!}
             />
-            <SlimInput name="zip" required={false} defaultValue={fleet?.zip!} />
+            {/* Controlled zip input with digits-only validation */}
+            <SlimInput
+              name="zip"
+              required={false}
+              value={zip}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === "" || /^\d+$/.test(value)) {
+                  setZip(value);
+                  clearError();
+                } else {
+                  showError({
+                    field: "zip",
+                    message: "Zip code must contain digits only.",
+                  });
+                }
+              }}
+            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

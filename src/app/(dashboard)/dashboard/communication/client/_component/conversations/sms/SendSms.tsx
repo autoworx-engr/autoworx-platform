@@ -1,5 +1,6 @@
 "use client";
 import updateFirstContactTimeClient from "@/actions/communication/client/updateFirstContactTimeClient";
+import { getEntitlements } from "@/actions/platform-billing/entitlements";
 import { getCompany } from "@/actions/settings/getCompany";
 import { useServerGet } from "@/hooks/useServerGet";
 import { errorToast } from "@/lib/toast";
@@ -14,6 +15,7 @@ import useSmsSendMutation from "../../../_hooks/useSmsSendMutation";
 import AttachmentInput from "../AttachmentInput";
 import SmartReplyBar from "./SmartReply";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
+import UpgradePlanBanner from "@/components/UpgradePlanBanner";
 
 // Helper function to format attachment message
 const formatAttachmentMessage = (files: File[]) => {
@@ -28,7 +30,7 @@ const formatAttachmentMessage = (files: File[]) => {
   }
   if (otherFiles.length > 0) {
     parts.push(
-      otherFiles.length === 1 ? "1 file" : `${otherFiles.length} files`
+      otherFiles.length === 1 ? "1 file" : `${otherFiles.length} files`,
     );
   }
 
@@ -38,15 +40,21 @@ const formatAttachmentMessage = (files: File[]) => {
 type TProps = {
   clientId: number;
   companyId: number;
+  canUseSms?: boolean;
 };
 
-export default function SendSms({ clientId, companyId }: TProps) {
+export default function SendSms({
+  clientId,
+  companyId,
+  canUseSms = true,
+}: TProps) {
   const { clientList, setClientList } = clientListStore();
   const { mutate, isSuccess, isPending } = useSmsSendMutation(clientId);
   const { clientConversationTrack, setClientConversationTrack } =
     useClientCommunicationStore();
 
   const { data } = useServerGet(getCompany);
+  const { data: entitlements } = useServerGet(getEntitlements, companyId);
   const currentUser = useGetCurrentUser();
   const [files, setFiles] = useState<File[]>([]);
   const [messageInput, setMessageInput] = useState("");
@@ -65,9 +73,14 @@ export default function SendSms({ clientId, companyId }: TProps) {
   }, [messageInput]);
 
   const handleSendMessage = async (
-    e: React.FormEvent<HTMLFormElement | HTMLTextAreaElement>
+    e: React.FormEvent<HTMLFormElement | HTMLTextAreaElement>,
   ) => {
     e.preventDefault();
+
+    if (!canUseSms) {
+      errorToast("SMS is not enabled for your plan");
+      return;
+    }
 
     const trimmedMessage = messageInput.trim();
     if (!trimmedMessage && files.length === 0) return;
@@ -85,7 +98,7 @@ export default function SendSms({ clientId, companyId }: TProps) {
       user: {
         firstName: currentUser?.name || "",
         lastName: "",
-      }
+      },
     };
 
     // Update conversation track optimistically
@@ -127,6 +140,15 @@ export default function SendSms({ clientId, companyId }: TProps) {
 
   return (
     <>
+      {!canUseSms && (
+        <div className="mb-3">
+          <UpgradePlanBanner
+            title="SMS is not available on your plan"
+            description="Upgrade to enable SMS conversations with clients from this screen."
+            ctaLabel="Upgrade Plan"
+          />
+        </div>
+      )}
       <AttachmentInput
         className="bottom-[50px]"
         multiAttachmentFile={files}
@@ -143,6 +165,7 @@ export default function SendSms({ clientId, companyId }: TProps) {
           companyId={companyId}
           draft={messageInput} // <-- pass the textarea value here
           onPick={(text) => setMessageInput(text)} // or append if you prefer
+          isAllowed={entitlements?.success && entitlements.data?.aiSmartReplies}
         />
       </div>
 
@@ -156,6 +179,7 @@ export default function SendSms({ clientId, companyId }: TProps) {
         onDrop={(e) => {
           e.preventDefault();
           const dropped = Array.from(e.dataTransfer.files || []);
+          if (!canUseSms) return;
           if (dropped.length) setFiles((prev) => [...prev, ...dropped]);
         }}
       >
@@ -178,8 +202,9 @@ export default function SendSms({ clientId, companyId }: TProps) {
         <button
           type="button"
           onClick={() => fileRef?.current?.click()}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-md text-zinc-600 transition hover:bg-zinc-200/80 active:scale-[0.98] dark:text-zinc-300 dark:hover:bg-white/10"
+          className={`inline-flex h-9 w-9 items-center justify-center rounded-md text-zinc-600 transition hover:bg-zinc-200/80 active:scale-[0.98] dark:text-zinc-300 dark:hover:bg-white/10 ${!canUseSms ? "cursor-not-allowed opacity-60" : ""}`}
           aria-label="Add attachment"
+          disabled={!canUseSms}
         >
           <Image src="/icons/Attachment.svg" alt="" width={20} height={20} />
         </button>
@@ -187,9 +212,11 @@ export default function SendSms({ clientId, companyId }: TProps) {
         {/* input area */}
         <div className="flex w-full items-center gap-2 rounded-md bg-white ring-1 ring-zinc-200 focus-within:ring-emerald-500 dark:bg-zinc-900 dark:ring-white/10">
           <textarea
-            placeholder="Send message…"
+            placeholder={
+              canUseSms ? "Send message…" : "SMS not available on this plan"
+            }
             ref={textareaRef}
-            className="max-h-28 min-h-10 w-full resize-none rounded-md border-none bg-transparent px-3 py-2 text-[15px] leading-5 text-zinc-800 outline-none placeholder:text-zinc-400 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-500"
+            className="max-h-28 min-h-10 w-full resize-none rounded-md border-none bg-transparent px-3 py-2 text-[15px] leading-5 text-zinc-800 outline-none placeholder:text-zinc-400 focus:outline-none disabled:cursor-not-allowed disabled:text-zinc-400 dark:text-zinc-100 dark:placeholder:text-zinc-500"
             value={messageInput}
             style={{
               WebkitAppearance: "none",
@@ -198,11 +225,12 @@ export default function SendSms({ clientId, companyId }: TProps) {
               height: "auto",
             }}
             onChange={(e) => {
+              if (!canUseSms) return;
               setMessageInput(e.target.value);
               adjustTextareaHeight(e.target);
             }}
             onInput={(e: React.FormEvent<HTMLTextAreaElement>) =>
-              adjustTextareaHeight(e.currentTarget)
+              canUseSms ? adjustTextareaHeight(e.currentTarget) : undefined
             }
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
@@ -212,11 +240,14 @@ export default function SendSms({ clientId, companyId }: TProps) {
             }}
             rows={1}
             aria-label="Message"
+            disabled={!canUseSms}
           />
 
           {/* send button */}
           <button
-            disabled={isPending || (!messageInput && files.length === 0)}
+            disabled={
+              isPending || !canUseSms || (!messageInput && files.length === 0)
+            }
             type="submit"
             className="mr-1 inline-flex h-9 w-9 items-center justify-center rounded-md text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:text-zinc-400 disabled:hover:bg-transparent dark:text-emerald-400 dark:hover:bg-emerald-400/10"
             aria-label="Send message"

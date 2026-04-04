@@ -1,7 +1,14 @@
 "use client";
 
 import React from "react";
-import { Users, MessageSquare, Paperclip, UserPlus, Tag, Box } from "lucide-react";
+import {
+  Users,
+  MessageSquare,
+  Paperclip,
+  UserPlus,
+  Tag,
+  Box,
+} from "lucide-react";
 
 export default function CollaborationEmptyBox() {
   return (
@@ -29,7 +36,9 @@ export default function CollaborationEmptyBox() {
             </div>
             <div className="text-left">
               <div className="font-semibold">Real-time chat</div>
-              <div className="text-sm text-slate-500">Send messages and stay in sync instantly.</div>
+              <div className="text-sm text-slate-500">
+                Send messages and stay in sync instantly.
+              </div>
             </div>
           </div>
 
@@ -39,7 +48,9 @@ export default function CollaborationEmptyBox() {
             </div>
             <div className="text-left">
               <div className="font-semibold">Share files</div>
-              <div className="text-sm text-slate-500">Attach documents, images, and assets securely.</div>
+              <div className="text-sm text-slate-500">
+                Attach documents, images, and assets securely.
+              </div>
             </div>
           </div>
 
@@ -48,8 +59,10 @@ export default function CollaborationEmptyBox() {
               <UserPlus className="w-6 h-6 text-slate-700" />
             </div>
             <div className="text-left">
-              <div className="font-semibold">Invite teammates</div>
-              <div className="text-sm text-slate-500">Bring others into channels to collaborate together.</div>
+              <div className="font-semibold">Send Collaboration Request</div>
+              <div className="text-sm text-slate-500">
+                Bring others into channels to collaborate together.
+              </div>
             </div>
           </div>
 
@@ -58,21 +71,12 @@ export default function CollaborationEmptyBox() {
               <Tag className="w-6 h-6 text-slate-700" />
             </div>
             <div className="text-left">
-              <div className="font-semibold">Organize with tags</div>
-              <div className="text-sm text-slate-500">Label conversations and tasks for easy discovery.</div>
+              <div className="font-semibold">Request for estimate</div>
+              <div className="text-sm text-slate-500">
+                Request for estimate to your collaborators.
+              </div>
             </div>
           </div>
-        </div>
-
-        <div className="flex gap-3">
-          <button className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-white font-medium hover:bg-emerald-700">
-            <Box className="w-4 h-4" />
-            Create Channel
-          </button>
-
-          <button className="inline-flex items-center gap-2 rounded-md border border-slate-200 px-4 py-2 text-slate-700 bg-white hover:bg-slate-50">
-            Invite Teammates
-          </button>
         </div>
       </div>
     </div>

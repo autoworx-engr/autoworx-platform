@@ -10,9 +10,9 @@ export const searchCompanyQuery = async (searchTerm: string) => {
       where: {
         NOT: [{ id: companyId }],
         OR: [
-          { name: { contains: searchTerm } },
-          { website: { contains: searchTerm } },
-          { phone: { contains: searchTerm } },
+          { name: { contains: searchTerm, mode: "insensitive" } },
+          { website: { contains: searchTerm, mode: "insensitive" } },
+          { phone: { contains: searchTerm, mode: "insensitive" } },
         ],
         isCollaborators: true,
       },
@@ -30,11 +30,32 @@ export const searchCompanyQuery = async (searchTerm: string) => {
             image: true,
           },
         },
+        companyJoinsAsOne: {
+          where: {
+            OR: [{ companyOneId: companyId }, { companyTwoId: companyId }],
+          },
+          select: {
+            status: true,
+            companyOneId: true,
+            companyTwoId: true,
+          },
+        },
+        companyJoinsAsTwo: {
+          where: {
+            OR: [{ companyOneId: companyId }, { companyTwoId: companyId }],
+          },
+          select: {
+            status: true,
+            companyOneId: true,
+            companyTwoId: true,
+          },
+        },
       },
     });
     return {
       success: true,
       data: companies,
+      companyId,
     };
   } catch (err: any) {
     throw new Error(err);

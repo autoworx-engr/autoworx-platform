@@ -136,7 +136,7 @@ const FleetListTable = ({ filteredFleets }: { filteredFleets: any }) => {
       </div>
 
       {/* Mobile Card View */}
-      <div className="lg:hidden space-y-3">
+      {/* <div className="lg:hidden space-y-3">
         {paginatedFleets.map((client: any, index: number) => (
           <div
             key={index}
@@ -218,7 +218,7 @@ const FleetListTable = ({ filteredFleets }: { filteredFleets: any }) => {
             />
           </div>
         )}
-      </div>
+      </div> */}
     </>
   );
 };

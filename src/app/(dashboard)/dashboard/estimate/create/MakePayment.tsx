@@ -45,7 +45,7 @@ function TabTrigger({
         "group relative flex items-center justify-center gap-2.5 rounded-xl px-3 py-2 text-base font-medium transition-all duration-300 ease-out",
         isActive
           ? "text-white shadow-md shadow-indigo-500/25 ring-1 ring-black/5 translate-y-[-1px]"
-          : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200 [&>svg]:text-slate-400 [&>svg]:group-hover:text-[#6571FF]"
+          : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200 [&>svg]:text-slate-400 [&>svg]:group-hover:text-[#6571FF]",
       )}
     >
       {isActive && (
@@ -74,7 +74,7 @@ export default function MakePayment() {
   const router = useRouter();
   const pathaname = usePathname();
   const [pending, startTransition] = useTransition();
-  const isEditPage = pathaname?.includes("/estimate/edit/");
+  const isEditPage = pathaname?.includes("/dashboard/estimate/edit/");
 
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState("CARD");
@@ -88,7 +88,7 @@ export default function MakePayment() {
   const [cash, setCash] = useState<string>("");
   const [amount, setAmount] = useState<number | string>(0);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(
-    null
+    null,
   );
 
   const [openPaymentMethod, setOpenPaymentMethod] = useState(false);
@@ -174,7 +174,9 @@ export default function MakePayment() {
 
       if (res1 && res1.type === "globalError") {
         errorToast(
-          res1?.errorSource?.length ? res1.errorSource[0].message : res1.message
+          res1?.errorSource?.length
+            ? res1.errorSource[0].message
+            : res1.message,
         );
         return;
       }
@@ -212,7 +214,7 @@ export default function MakePayment() {
         if (tab === "DEPOSIT") {
           console.log(
             "🚀 ~ handleSubmit ~ formatAmount(deposit) :",
-            formatAmount(deposit)
+            formatAmount(deposit),
           );
           console.log("🚀 ~ handleSubmit ~ due:", due);
 
@@ -244,13 +246,13 @@ export default function MakePayment() {
         successToast("Payment recorded successfully");
         reset();
 
-        // Refresh the page to get updated data from server
-        router.refresh();
-
-        !isEditPage && router.push("/dashboard/estimate/invoices");
+        // Redirect to the estimate/invoice list page after first payment
+        router.push("/dashboard/estimate/invoices");
       } else if (res2?.type === "globalError") {
         errorToast(
-          res2?.errorSource?.length ? res2.errorSource[0].message : res2.message
+          res2?.errorSource?.length
+            ? res2.errorSource[0].message
+            : res2.message,
         );
       }
     } catch (err) {
@@ -258,7 +260,7 @@ export default function MakePayment() {
       errorToast(
         formattedError?.errorSource?.length
           ? formattedError.errorSource[0].message
-          : formattedError.message
+          : formattedError.message,
       );
     }
   }
@@ -277,7 +279,7 @@ export default function MakePayment() {
         });
       } else if (res.type === "globalError") {
         errorToast(
-          res?.errorSource?.length ? res.errorSource[0].message : res.message
+          res?.errorSource?.length ? res.errorSource[0].message : res.message,
         );
       }
     } catch (err) {
@@ -285,7 +287,7 @@ export default function MakePayment() {
       errorToast(
         formattedError?.errorSource?.length
           ? formattedError.errorSource[0].message
-          : formattedError.message
+          : formattedError.message,
       );
     }
   }
@@ -326,7 +328,7 @@ export default function MakePayment() {
             "w-full rounded-lg py-3 px-4 font-bold transition-all active:scale-95",
             isDueZero
               ? "cursor-not-allowed bg-slate-200 text-slate-400"
-              : "bg-white text-[#006d77] shadow-lg shadow-black/10 hover:bg-slate-50"
+              : "bg-white text-[#006d77] shadow-lg shadow-black/10 hover:bg-slate-50",
           )}
           disabled={isDueZero}
         >
@@ -372,8 +374,6 @@ export default function MakePayment() {
                   width={20}
                   height={20}
                 />
-
-
                 Check
               </TabTrigger>
 
@@ -514,7 +514,10 @@ export default function MakePayment() {
                   <textarea
                     name="notes"
                     id="notes"
-                    className={cn("h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none", slimInputClassName)}
+                    className={cn(
+                      "h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none",
+                      slimInputClassName,
+                    )}
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                   />
@@ -534,7 +537,7 @@ export default function MakePayment() {
                       const localDate = moment.tz(
                         e.target.value,
                         "YYYY-MM-DD",
-                        timezone
+                        timezone,
                       );
                       setDate(localDate.toDate());
                     }}
@@ -574,7 +577,10 @@ export default function MakePayment() {
                 <textarea
                   name="notes"
                   id="notes"
-                  className={cn("h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none", slimInputClassName)}
+                  className={cn(
+                    "h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none",
+                    slimInputClassName,
+                  )}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                 />
@@ -593,7 +599,7 @@ export default function MakePayment() {
                       const localDate = moment.tz(
                         e.target.value,
                         "YYYY-MM-DD",
-                        timezone
+                        timezone,
                       );
                       setDate(localDate.toDate());
                     }}
@@ -632,7 +638,10 @@ export default function MakePayment() {
                 <textarea
                   name="notes"
                   id="notes"
-                  className={cn("h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none", slimInputClassName)}
+                  className={cn(
+                    "h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none",
+                    slimInputClassName,
+                  )}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                 />
@@ -649,7 +658,7 @@ export default function MakePayment() {
                   label={(paymentMethod: PaymentMethod | null) =>
                     paymentMethod
                       ? paymentMethod.name ||
-                      `Payment Method ${paymentMethod.id}`
+                        `Payment Method ${paymentMethod.id}`
                       : "Payment Method"
                   }
                   newButton={
@@ -665,7 +674,7 @@ export default function MakePayment() {
                         onClick={handleNewPaymentMethod}
                         className={cn(
                           "text-nowrap rounded-md px-2 text-white",
-                          paymentMethodInput ? "bg-slate-700" : "bg-slate-400"
+                          paymentMethodInput ? "bg-slate-700" : "bg-slate-400",
                         )}
                         type="button"
                         disabled={!paymentMethodInput}
@@ -677,7 +686,7 @@ export default function MakePayment() {
                   items={paymentMethods}
                   onSearch={(search: string) =>
                     paymentMethods.filter((method) =>
-                      method.name.toLowerCase().includes(search.toLowerCase())
+                      method.name.toLowerCase().includes(search.toLowerCase()),
                     )
                   }
                   displayList={(paymentMethod: PaymentMethod) => (
@@ -700,7 +709,7 @@ export default function MakePayment() {
                       const localDate = moment.tz(
                         e.target.value,
                         "YYYY-MM-DD",
-                        timezone
+                        timezone,
                       );
                       setDate(localDate.toDate());
                     }}
@@ -728,7 +737,10 @@ export default function MakePayment() {
                 <textarea
                   name="notes"
                   id="notes"
-                  className={cn("h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none", slimInputClassName)}
+                  className={cn(
+                    "h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none",
+                    slimInputClassName,
+                  )}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                 />
@@ -746,7 +758,7 @@ export default function MakePayment() {
                       const localDate = moment.tz(
                         e.target.value,
                         "YYYY-MM-DD",
-                        timezone
+                        timezone,
                       );
                       setDate(localDate.toDate());
                     }}
@@ -787,7 +799,10 @@ export default function MakePayment() {
                 <textarea
                   name="depositNotes"
                   id="depositNotes"
-                  className={cn("h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none", slimInputClassName)}
+                  className={cn(
+                    "h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none",
+                    slimInputClassName,
+                  )}
                   value={depositNotes}
                   onChange={(e) => setDepositNotes(e.target.value)}
                 />

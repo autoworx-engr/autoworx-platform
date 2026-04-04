@@ -16,8 +16,8 @@ export const ChangePassword = () => {
 
   return (
     <>
-      <h3 className="my-4 text-lg font-bold">New Password</h3>
-      <div className="space-y-4 rounded-md p-8 shadow-md">
+      <h3 className="mt-4 text-lg font-bold">New Password</h3>
+      <div className="space-y-4 rounded-md p-4 shadow-md">
         <div className="relative">
           <SlimInput
             name="currentPassword"

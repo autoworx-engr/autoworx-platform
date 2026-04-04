@@ -1,5 +1,18 @@
 import { Appointment, Client, User } from "@prisma/client";
+<<<<<<< HEAD
 import { MessageCircleMore, SquarePen, Clock, Mail, Phone, User as UserIcon, Users } from "lucide-react";
+=======
+import {
+  Clock,
+  Mail,
+  MessageCircleMore,
+  Phone,
+  SquarePen,
+  User as UserIcon,
+  Users,
+  X,
+} from "lucide-react";
+>>>>>>> b13cc748f79e5676eb818262729c7aee087e2d7f
 import moment from "moment";
 import Link from "next/link";
 
@@ -47,6 +60,7 @@ export default function AppointmentTooltip({
         <h3 className="font-semibold text-lg max-w-sm truncate">{event.title}</h3>
         {/* Chat Link */}
         <div className="flex gap-2">
+<<<<<<< HEAD
           <Link
             href={`/dashboard/communication/client/${event.clientId}?chat=true`}
             className="rounded-full bg-[#6571FF] p-2 text-white"
@@ -54,6 +68,20 @@ export default function AppointmentTooltip({
           >
             <MessageCircleMore strokeWidth={2.5} className="h-4 w-4 cursor-pointer mx-auto" />
           </Link>
+=======
+          {event.clientId && (
+            <Link
+              href={`/dashboard/communication/client/${event.clientId}?chat=true`}
+              className="rounded-full bg-[#6571FF] p-2 text-white"
+              title="Open Chat"
+            >
+              <MessageCircleMore
+                strokeWidth={2.5}
+                className="h-4 w-4 cursor-pointer mx-auto"
+              />
+            </Link>
+          )}
+>>>>>>> b13cc748f79e5676eb818262729c7aee087e2d7f
           <button
             type="button"
             className="rounded-full bg-[#6571FF] p-2 text-white"

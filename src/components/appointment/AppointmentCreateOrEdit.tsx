@@ -13,6 +13,7 @@ type TAppointmentCreateOrEditProps = {
   fromLead?: boolean;
   clientId?: number | null;
   vehicleId?: number | null;
+  draftEstimateId?: string | null;
   defaultDate?: Date | string; // Use Date or string based on your requirements
   defaultStartTime?: string; // Use string for time in "HH:mm" format
   fromEdit?: boolean;
@@ -21,10 +22,10 @@ type TAppointmentCreateOrEditProps = {
   isModalOpen?: boolean; // Optional prop to control modal visibility
   setIsModalOpen?: React.Dispatch<React.SetStateAction<boolean>>;
   onAppointmentCreated?: (
-    appointment: Appointment & { lead: Lead | null }
+    appointment: Appointment & { lead: Lead | null },
   ) => void; // Replace 'any' with actual type
   onAppointmentUpdated?: (
-    appointment: Appointment & { lead: Lead | null }
+    appointment: Appointment & { lead: Lead | null },
   ) => void; // Replace 'any' with
   onAppointmentDeleted?: (appointmentId?: number) => void; // Replace 'any' with actual type
 };
@@ -33,6 +34,7 @@ export function AppointmentCreateOrEdit({
   fromLead = false,
   clientId,
   vehicleId,
+  draftEstimateId,
   defaultDate,
   defaultStartTime,
   fromEdit,
@@ -102,6 +104,7 @@ export function AppointmentCreateOrEdit({
           fromLead={fromLead}
           clientId={clientId}
           vehicleId={vehicleId}
+          draftEstimateId={draftEstimateId}
           date={defaultDate}
           startTime={defaultStartTime}
           appointmentId={appointmentId}

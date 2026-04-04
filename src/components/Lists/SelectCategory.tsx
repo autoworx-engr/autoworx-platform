@@ -20,7 +20,7 @@ export default function SelectCategory({
   className,
 }: {
   categoryData?: Category | null;
-  onCategoryChange: (category: Category) => void;
+  onCategoryChange: (category: Category | null) => void;
   labelPosition?: "top" | "left" | "none";
   categoryOpen?: boolean;
   setCategoryOpen?: any;
@@ -62,7 +62,9 @@ export default function SelectCategory({
     const res = await deleteCategory({ categoryId });
 
     if (res.type === "success") {
-      setCategory(null);
+      if (category?.id === categoryId) {
+        setCategory(null);
+      }
       useListsStore.setState((state) => {
         return {
           categories: state.categories.filter((cat) => cat.id !== categoryId),
@@ -78,9 +80,7 @@ export default function SelectCategory({
   }
 
   useEffect(() => {
-    if (category) {
-      onCategoryChange(category);
-    }
+    onCategoryChange(category);
   }, [category]);
 
   return (
@@ -134,7 +134,7 @@ export default function SelectCategory({
                     "w-full rounded-lg bg-slate-50 px-3 py-2 text-sm font-medium outline-none transition-all",
                     "ring-1 ring-inset ring-slate-200 placeholder:text-slate-400",
                     "focus:bg-white focus:ring-2 focus:ring-[#6571FF]/40",
-                    error && "ring-red-200 focus:ring-red-400"
+                    error && "ring-red-200 focus:ring-red-400",
                   )}
                 />
               </div>
@@ -147,7 +147,7 @@ export default function SelectCategory({
                   "rounded-lg px-4 text-xs font-bold uppercase tracking-wider text-white transition-all active:scale-95",
                   categoryInput && !error
                     ? "bg-[#6571FF] shadow-lg shadow-[#6571FF]/20 hover:bg-[#525ee5]"
-                    : "bg-slate-300 cursor-not-allowed"
+                    : "bg-slate-300 cursor-not-allowed",
                 )}
               >
                 Quick Add
@@ -166,25 +166,29 @@ export default function SelectCategory({
             <p className="text-sm font-medium text-slate-700 group-hover:text-[#6571FF] transition-colors">
               {category.name}
             </p>
-            <Popconfirm
-              title="Delete Category"
-              description="Are you sure you want to remove this?"
-              okText="Delete"
-              cancelText="Cancel"
-              onConfirm={() => handleDeleteCategory(category?.id)}
-            >
-              <div
-                className="rounded-lg p-1.5 hover:bg-red-50 text-slate-300 hover:text-red-500 transition-all"
-                onClick={(e) => e.stopPropagation()}
+            
+            <div onClick={(e) => e.stopPropagation()}>
+              <Popconfirm
+                title="Delete Category"
+                description="Are you sure you want to remove this?"
+                okText="Delete"
+                cancelText="Cancel"
+                onConfirm={() => handleDeleteCategory(category?.id)}
+                onPopupClick={(e) => e.stopPropagation()}
               >
-                <X size={16} strokeWidth={2.5} />
-              </div>
-            </Popconfirm>
+                <div
+                  className="rounded-lg p-1.5 hover:bg-red-50 text-slate-300 hover:text-red-500 transition-all cursor-pointer"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <X size={16} strokeWidth={2.5} />
+                </div>
+              </Popconfirm>
+            </div>
           </div>
         )}
         onSearch={(search: string) =>
           categories.filter((cat) =>
-            cat.name.toLowerCase().includes(search.toLowerCase())
+            cat.name.toLowerCase().includes(search.toLowerCase()),
           )
         }
         openState={[

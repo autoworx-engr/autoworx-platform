@@ -5,7 +5,6 @@ import {
   DialogFooter,
   DialogTrigger,
 } from "@/components/Dialog";
-import { SlimInput } from "@/components/SlimInput";
 import { SetStateAction, useEffect, useRef, useState } from "react";
 import { Company, User } from "@prisma/client";
 import Avatar from "@/components/Avatar";
@@ -19,6 +18,7 @@ type TProps = {
   companyAdmins: Partial<
     User & {
       isConnected: boolean;
+      companyStatus?: string | null;
     }
   >[];
   setCompanyAdmins: React.Dispatch<
@@ -26,6 +26,7 @@ type TProps = {
       Partial<
         User & {
           isConnected: boolean;
+          companyStatus?: string | null;
         }
       >[]
     >
@@ -52,9 +53,51 @@ export default function SearchCollaborationModal({
     }
   }, [open]);
 
+  async function handleSubmit(event?: React.ChangeEvent<HTMLInputElement>) {
+    // event && event.preventDefault();
+    try {
+      const inputValue = event?.target?.value || "";
+      const response = await searchCompanyQuery(inputValue?.trim());
+      if (response.success) {
+        const updateCompanyAdmins = response.data
+          .map((company) => {
+            return company.users.map((user) => {
+              const joinAsOne = company.companyJoinsAsOne.find(
+                (j) =>
+                  (j.companyOneId === company.id &&
+                    j.companyTwoId === response?.companyId) ||
+                  (j.companyOneId === response?.companyId &&
+                    j.companyTwoId === company.id),
+              );
+
+              const joinAsTwo = company.companyJoinsAsTwo.find(
+                (j) =>
+                  (j.companyOneId === company.id &&
+                    j.companyTwoId === response?.companyId) ||
+                  (j.companyOneId === response?.companyId &&
+                    j.companyTwoId === company.id),
+              );
+
+              const joinStatus = joinAsOne?.status ?? joinAsTwo?.status ?? null;
+              return {
+                ...user,
+                companyName: company.name,
+                isConnected: companies.some((c) => c.id === user.companyId),
+                companyStatus: joinStatus?.toLocaleLowerCase(),
+              };
+            });
+          })
+          .flat();
+        setCompanyAdmins(updateCompanyAdmins);
+      }
+    } catch (err: any) {
+      errorToast(err.message);
+    }
+  }
+
   useEffect(() => {
     if (inputRef?.current) {
-      inputRef.current.focus();
+      // inputRef.current.focus();
       handleSubmit();
     }
   }, [openUserList]);
@@ -86,45 +129,29 @@ export default function SearchCollaborationModal({
     }
   }
 
-  async function handleSubmit(event?: React.ChangeEvent<HTMLInputElement>) {
-    // event && event.preventDefault();
-    try {
-      const inputValue = event?.target?.value || "";
-      const response = await searchCompanyQuery(inputValue?.trim());
-      if (response.success) {
-        const updateCompanyAdmins = response.data
-          .map((company) => {
-            return company.users.map((user) => {
-              return {
-                ...user,
-                companyName: company.name,
-                isConnected: companies.some((c) => c.id === user.companyId),
-              };
-            });
-          })
-          .flat();
-        setCompanyAdmins(updateCompanyAdmins);
-      }
-    } catch (err: any) {
-      errorToast(err.message);
-    }
-  }
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="rounded-md bg-gradient-to-r from-teal-700 to-teal-600 px-2 py-1 text-[14px] text-white shadow-md">
+        <button className="flex items-center gap-1.5 rounded-lg bg-[#006D77] px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#005a63] active:scale-95">
+          <Plus size={16} strokeWidth={2.5} />
           Search for Collaborators
         </button>
       </DialogTrigger>
-      <DialogContent className="min-w-lg max-w-fit">
+      <DialogContent
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        className="w-[calc(100vw-2rem)] sm:w-full sm:max-w-lg"
+      >
         {error && <p className="text-center text-sm text-red-400">{error}</p>}
-        <h2 className="mb-5 text-2xl font-bold">Search for Collaborators</h2>
-        <div className="min-w-96">
+        <h2 className="mb-4 text-xl font-bold text-slate-600">
+          Search for Collaborators
+        </h2>
+        <div className="w-full sm:min-w-96">
           {openUserList ? (
             <>
-              <div className="mb-1 px-2 font-medium">Enter Company Name</div>
-              <div className="h-fit w-full space-y-4 rounded-md border border-gray-500 p-4">
+              <div className="mb-1.5 px-1 text-sm font-semibold text-slate-600">
+                Enter Company Name
+              </div>
+              <div className="h-fit w-full space-y-3 rounded-xl border border-slate-200 bg-slate-50/50 p-2 sm:p-4">
                 {/* Search box */}
                 <SearchBox
                   onSearch={handleSubmit}
@@ -134,72 +161,75 @@ export default function SearchCollaborationModal({
                   setOpenUserList={setOpenUserList}
                 />
                 {/* user list */}
-                <div className="flex h-72 flex-col items-start space-y-2 overflow-y-auto p-1">
+                <div className="flex h-72 flex-col items-start space-y-2 overflow-y-auto thin-scrollbar p-1">
                   {companyAdmins &&
                     companyAdmins?.length > 0 &&
-                    companyAdmins.map((user) => (
-                      <div
-                        key={user?.id}
-                        className="flex w-full cursor-pointer items-center justify-between space-x-2 p-1"
-                      >
-                        <Avatar
-                          className="flex-shrink-0"
-                          photo={user?.image}
-                          width={60}
-                          height={60}
-                        />
-                        <div className="flex w-full flex-wrap items-start gap-x-4 overflow-hidden">
-                          <div className="mb-1 flex flex-col items-start">
-                            <p className="text-sm font-bold text-[#797979]">
-                              {user?.firstName} {user?.lastName}
-                            </p>
-                            <div className="flex items-center text-[10px]">
-                              {user?.phone && <p>{user?.phone}</p>}
-                              <p>{user?.email}</p>
+                    companyAdmins.map((user) => {
+                      return (
+                        <div
+                          key={user?.id}
+                          className="flex w-full flex-wrap items-center gap-2 rounded-lg border border-slate-100 bg-white p-2 transition-colors hover:bg-slate-50 sm:flex-nowrap sm:gap-3 sm:p-2.5"
+                        >
+                          <Avatar
+                            className="flex-shrink-0"
+                            photo={user?.image}
+                            width={40}
+                            height={40}
+                          />
+                          <div className="flex min-w-0 flex-1 flex-col">
+                            <div className="flex flex-wrap items-center gap-1 sm:flex-nowrap sm:gap-2">
+                              <p className="truncate text-sm font-semibold text-slate-700">
+                                {user?.firstName} {user?.lastName}
+                              </p>
+                              <span className="flex-shrink-0 rounded-full bg-teal-50 px-2 py-0.5 text-[10px] font-semibold text-[#006D77] sm:text-xs">
+                                {user?.companyName}
+                              </span>
+                            </div>
+                            <div className="flex flex-col text-[10px] text-slate-400 sm:flex-row sm:items-center sm:gap-2 sm:text-xs">
+                              {user?.phone && <span>{user?.phone}</span>}
+                              <span className="truncate">{user?.email}</span>
                             </div>
                           </div>
-                          <p className="flex-shrink-0 text-sm font-bold capitalize text-[#006D77]">
-                            {user?.companyName}
-                          </p>
+                          <div className="w-full flex-shrink-0 sm:w-auto">
+                            {user?.companyStatus === "accepted" ? (
+                              <span className="block w-full rounded-lg bg-slate-100 px-3 py-1.5 text-center text-xs font-semibold text-slate-500 sm:inline sm:w-auto sm:text-left">
+                                Connected
+                              </span>
+                            ) : user?.companyStatus ? (
+                              <span className="block w-full rounded-lg bg-slate-100 px-3 py-1.5 text-center text-xs font-semibold text-slate-500 sm:inline sm:w-auto sm:text-left capitalize">
+                                {user?.companyStatus}
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() =>
+                                  handleConnectCompany(user?.companyId!)
+                                }
+                                className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-[#006D77] px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-all hover:bg-[#005a63] active:scale-95 sm:w-auto"
+                              >
+                                <Plus size={14} strokeWidth={2.5} />
+                                <span>Invite</span>
+                              </button>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex-shrink-0">
-                          {!user?.isConnected && (
-                            <button
-                              onClick={() =>
-                                handleConnectCompany(user?.companyId!)
-                              }
-                              className="flex items-center space-x-1 rounded-md bg-[#006D77] px-1 py-1 text-[14px] text-white shadow-md"
-                            >
-                              <Plus size={8} />
-                              <span className="text-sm">Send Invite</span>
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                 </div>
               </div>
             </>
           ) : (
-            <div className="relative">
-              <SlimInput
-                label="Enter Company Name"
-                name="ContactList"
-                type="text"
-                readOnly
-                onClick={() => {
-                  setOpenUserList((prev) => !prev);
-                }}
-              />
-              <ChevronDown
-                onClick={() => setOpenUserList((prev) => !prev)}
-                className="absolute right-1 top-[32px] size-6 cursor-pointer"
-              />
-            </div>
+            <button
+              type="button"
+              onClick={() => setOpenUserList((prev) => !prev)}
+              className="flex w-full cursor-pointer items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-500 transition-all hover:border-slate-300 hover:bg-white"
+            >
+              <span>Enter Company Name</span>
+              <ChevronDown className="size-5 text-slate-400" />
+            </button>
           )}
         </div>
-        <DialogFooter className="flex-row-reverse gap-x-2 sm:flex-row sm:gap-x-0">
-          <DialogClose className="rounded-lg border-2 border-slate-400 p-2">
+        <DialogFooter className="flex-row-reverse gap-x-2 sm:flex-row">
+          <DialogClose className="rounded-lg border border-slate-200 px-5 py-2 text-sm font-medium text-slate-600 transition-all hover:bg-slate-50 active:scale-95">
             Cancel
           </DialogClose>
           <button
@@ -207,7 +237,7 @@ export default function SearchCollaborationModal({
               setOpen(false);
               setOpenUserList(false);
             }}
-            className="rounded-lg border bg-[#6571FF] px-5 py-2 text-white"
+            className="rounded-lg bg-[#6571FF] px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#525ceb] active:scale-95"
           >
             Done
           </button>

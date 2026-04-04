@@ -15,6 +15,7 @@ import newTag from "@/actions/tag/newTag";
 import { getTags } from "../../actions/tag/getTags";
 import { deleteTag } from "../../actions/tag/deleteTag";
 import { ChevronDown, ChevronUp, Palette, Search, X } from "lucide-react";
+import { cn } from "@/lib/cn";
 
 type SelectedColor = { textColor: string; bgColor: string } | null;
 
@@ -89,8 +90,6 @@ export function SelectClientTags({
       if (tag?.id === id) {
         setTag(undefined!);
       }
-
-      if (setOpen) setOpen(false);
     }
   }
 
@@ -113,48 +112,61 @@ export function SelectClientTags({
         }}
       >
         <DropdownMenuTrigger
-          className={`flex w-full justify-between h-10 items-center gap-x-8 rounded-md border border-slate-300 bg-white px-3 py-2 ${customStyles}`}
+          className={cn(
+            "flex w-full h-10 items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 shadow-sm transition-all hover:shadow-md",
+            customStyles
+          )}
           style={{
             backgroundColor: tag?.bgColor,
             color: tag?.textColor,
-            border: tag ? `1px solid ${tag.textColor}` : "",
+            border: tag ? `1px solid ${tag.textColor}` : undefined,
           }}
           onClick={() => {
             setOpen && setOpen(!open);
           }}
         >
-          <span className="text-slate-600 text-sm font-medium">{showPlaceholder ? (tag?.name ?? "Select Tag") : ""}</span>
-          <ChevronDown className="text-slate-500" />
+          <span className={cn("text-sm font-medium", !tag && "text-slate-500")}>{showPlaceholder ? (tag?.name ?? "Select Tag") : ""}</span>
+          <ChevronDown
+            size={16}
+            className={cn(
+              "shrink-0 transition-transform duration-200",
+              open ? "rotate-180" : "rotate-0",
+              tag ? "" : "text-slate-400"
+            )}
+          />
         </DropdownMenuTrigger>
 
         <DropdownMenuContent
           side="bottom"
           align="start"
           sideOffset={8}
-          className="space-y-1 rounded-md border border-slate-300 bg-background p-0 shadow-md"
+          avoidCollisions
+          collisionPadding={8}
+          className="z-50 w-full min-w-[280px] overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-2xl ring-1 ring-black/5"
           ref={dropdownRef}
         >
-          {/* Search */}
-          <div className="relative m-2">
+          {/* Search Header */}
+          <div className="relative border-b border-slate-100 bg-slate-50/50 p-2">
             <Search
-              size={18}
-              className="absolute left-2 top-1/2 -translate-y-1/2 transform text-slate-500"
+              size={16}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
             />
             <Input search={search} setSearch={setSearch} key="search" />
             <button
               onClick={() => {
                 setOpen && setOpen(!open);
               }}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
             >
-              <ChevronUp className="absolute right-2 top-1/2 -translate-y-1/2 transform text-slate-500" />
+              <ChevronUp size={16} />
             </button>
           </div>
 
-          <div className="thin-scrollbar max-h-28 space-y-1 overflow-y-auto">
+          <div className="thin-scrollbar my-1 max-h-[200px] overflow-y-auto px-2">
             {filteredTagList.map((tagItem) => (
               <div
                 key={tagItem.id}
-                className="mx-4 flex cursor-pointer items-center justify-between rounded-full px-4 py-2"
+                className="mb-1 flex cursor-pointer items-center justify-between rounded-lg px-3 py-1.5 text-sm font-medium transition-opacity hover:opacity-80"
                 style={{
                   backgroundColor: tagItem?.bgColor,
                   color: tagItem?.textColor,
@@ -172,50 +184,56 @@ export function SelectClientTags({
                   {tagItem.name}
                 </button>
                 <button
-                  className="text-lg text-slate-600 hover:text-slate-800"
                   onClick={() => handleDelete(tagItem.id)}
+                  className="ml-1.5 transition-transform hover:scale-110"
                 >
-                  <X size={20} />
+                  <div className="rounded-full border  text-slate-500 border-slate-100 p-0.5 hover:bg-red-100 hover:text-red-600">
+                    <X size={16} strokeWidth={2.5} />
+                  </div>
                 </button>
               </div>
             ))}
           </div>
           <FormError />
-          <QuickAddForm
-            onSuccess={(tag) => {
-              setTag(tag);
-              if (setOpen) setOpen(false);
-            }}
-            setTags={setTags}
-            setPickerOpen={setPickerOpen}
-            selectedColor={selectedColor}
-          />
-          {pickerOpen && (
-            <div className="grid grid-cols-4 gap-2 p-2">
-              {INVOICE_COLORS.map((color, index) => (
-                <button
-                  key={index}
-                  onClick={() => {
-                    setSelectedColor({
-                      textColor: color.textColor,
-                      bgColor: color.bgColor,
-                    });
-                  }}
-                  style={{
-                    backgroundColor: color.bgColor,
-                    color: color.textColor,
-                    border:
+          {/* Quick Add Footer */}
+          <div className="border-t border-slate-100 bg-slate-50/50 p-3">
+            <QuickAddForm
+              onSuccess={(tag) => {
+                setTag(tag);
+                if (setOpen) setOpen(false);
+              }}
+              setTags={setTags}
+              setPickerOpen={setPickerOpen}
+              selectedColor={selectedColor}
+            />
+            {pickerOpen && (
+              <div className="mt-3 grid grid-cols-5 gap-2 rounded-xl bg-white p-2 shadow-inner ring-1 ring-slate-200">
+                {INVOICE_COLORS.map((color, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      setSelectedColor({
+                        textColor: color.textColor,
+                        bgColor: color.bgColor,
+                      });
+                    }}
+                    style={{
+                      backgroundColor: color.bgColor,
+                      color: color.textColor,
+                    }}
+                    className={cn(
+                      "flex h-8 items-center justify-center rounded-lg text-xs font-bold transition-all hover:scale-105",
                       selectedColor?.textColor === color.textColor
-                        ? `1px solid ${color.textColor}`
-                        : "none",
-                  }}
-                  className="rounded-md p-2"
-                >
-                  Aa
-                </button>
-              ))}
-            </div>
-          )}
+                        ? "ring-2 ring-[#6571FF] ring-offset-1"
+                        : "ring-1 ring-transparent"
+                    )}
+                  >
+                    Aa
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </DropdownMenuContent>
       </DropdownMenu>
     </>
@@ -232,8 +250,8 @@ const Input = ({
   return (
     <input
       type="text"
-      placeholder="Search"
-      className="w-full rounded-md border border-slate-300 p-2 pl-8 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-slate-200"
+      placeholder="Search tags"
+      className="h-9 w-full rounded-lg bg-white pl-9 pr-10 text-sm font-medium ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30"
       value={search}
       onChange={(e) => {
         setSearch(e.target.value);
@@ -276,29 +294,34 @@ function QuickAddForm({
   }
 
   return (
-    <form ref={formRef} className="flex w-[200px] gap-2 p-2">
-      <input
-        name="name"
-        type="text"
-        required
-        className="w-[80%] flex-1 rounded-md border border-slate-300 p-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-200"
-      />
+    <form ref={formRef} className="flex flex-col gap-2">
+      <div className="relative flex-1">
+        <input
+          name="name"
+          type="text"
+          required
+          placeholder="New tag name..."
+          className="h-10 w-full rounded-lg bg-white px-2 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30 placeholder:text-slate-400"
+        />
+      </div>
 
-      <button
-        className="rounded bg-[#6470FF] p-2 text-white"
-        onClick={() => setPickerOpen((prev: boolean) => !prev)}
-        type="button"
-      >
-        <Palette size={18} />
-      </button>
+      <div className="flex w-full items-center justify-end gap-2">
+        <button
+          type="button"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600 transition-colors hover:bg-slate-200 hover:text-slate-900"
+          onClick={() => setPickerOpen((prev: boolean) => !prev)}
+          title="Choose Color"
+        >
+          <Palette size={18} strokeWidth={2.5} />
+        </button>
 
-      <Submit
-        className="rounded bg-slate-500 p-1 text-xs leading-3 text-white"
-        formAction={handleSubmit}
-      >
-        Quick
-        <br /> Add
-      </Submit>
+        <Submit
+          className="h-10 flex-1 shrink-0 rounded-lg bg-[#6571FF] px-3 text-[11px] font-bold uppercase tracking-wider text-white shadow-sm shadow-[#6571FF]/30 transition-all hover:bg-[#525ceb] active:scale-95"
+          formAction={handleSubmit}
+        >
+          Quick Add
+        </Submit>
+      </div>
     </form>
   );
 }

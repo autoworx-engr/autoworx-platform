@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 // Helper function to create descriptive attachment message
 function createAttachmentMessage(
   attachments: any[],
-  textMessage?: string
+  textMessage?: string,
 ): string {
   if (!attachments || attachments.length === 0) {
     return textMessage || "";
@@ -14,12 +14,12 @@ function createAttachmentMessage(
   const images = attachments.filter(
     (att) =>
       att.name?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i) ||
-      att.url?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i)
+      att.url?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i),
   );
   const otherFiles = attachments.filter(
     (att) =>
       !att.name?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i) &&
-      !att.url?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i)
+      !att.url?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i),
   );
 
   const parts = [];
@@ -30,7 +30,7 @@ function createAttachmentMessage(
 
   if (otherFiles.length > 0) {
     parts.push(
-      otherFiles.length === 1 ? "1 file" : `${otherFiles.length} files`
+      otherFiles.length === 1 ? "1 file" : `${otherFiles.length} files`,
     );
   }
 
@@ -77,7 +77,7 @@ export async function initialCreateClientChatTrack(clientId: number) {
 
 export async function CreateClientChatTrack(
   clientId: number,
-  data: TCreateChatTrack
+  data: TCreateChatTrack,
 ) {
   try {
     const findClientChatTrack = await db.clientConversationTrack.findUnique({
@@ -270,7 +270,7 @@ export async function unreadClientSmsAndEmail(clientId: number) {
 
     if (updatedData?.lastMessageBy === "Client") {
       updatedData = await db.clientConversationTrack.update({
-        where: { clientId },
+        where: { clientId, smsIsRead: true },
         data: {
           smsIsRead: false,
           smsUnReadCount: { increment: 1 }, // or set to specific number
@@ -280,7 +280,7 @@ export async function unreadClientSmsAndEmail(clientId: number) {
 
     if (updatedData?.lastEmailBy === "Client") {
       updatedData = await db.clientConversationTrack.update({
-        where: { clientId },
+        where: { clientId, emailIsRead: true },
         data: {
           emailIsRead: false,
           emailIsUnReadCount: { increment: 1 }, // or set to specific number

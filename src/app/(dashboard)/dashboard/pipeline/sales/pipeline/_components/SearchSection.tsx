@@ -3,7 +3,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { cn } from "@/lib/cn";
 import { Search, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type TSearchSectionProps = {
   searchValue?: string;
@@ -16,6 +16,11 @@ export default function SearchSection({
   const router = useRouter();
   const pathname = usePathname() || "";
   const params = useSearchParams();
+  useEffect(() => {
+    if (searchValue == "") {
+      setSearchTerm("");
+    }
+  }, [searchValue])
 
   const handleSearchChange = useDebounce((value: string) => {
     const searchParams = new URLSearchParams(params.toString());

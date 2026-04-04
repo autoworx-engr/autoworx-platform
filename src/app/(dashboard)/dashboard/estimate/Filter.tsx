@@ -242,7 +242,11 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
 
         <DialogFooter className="bg-slate-50/50 p-4">
           <Submit
+<<<<<<< HEAD
             className="mx-auto flex h-10 items-center gap-2 rounded-xl bg-[#6571FF] px-8 text-sm font-bold text-white shadow-lg shadow-[#6571FF]/25 transition-all hover:scale-[1.02] active:scale-95"
+=======
+            className="w-fit flex h-10 items-center gap-2 rounded-xl bg-[#6571FF] px-8 text-sm font-semibold text-white shadow-lg shadow-[#6571FF]/25 transition-all active:scale-95"
+>>>>>>> b13cc748f79e5676eb818262729c7aee087e2d7f
             formAction={handleFilter}
           >
             <Funnel size={16} />

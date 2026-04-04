@@ -224,8 +224,13 @@ export default async function Page({
     }))
   );
   return (
+<<<<<<< HEAD
     <div className="gap-3 space-y-4 overflow-clip py-2 md:-my-2 md:min-h-[93vh] xl:grid xl:grid-cols-4 xl:space-y-0">
       <div className="col-span-3 space-y-4">
+=======
+    <div className="gap-3 space-y-4 overflow-clip py-2 md:-my-2 md:min-h-[93vh] xl:flex xl:space-y-0">
+      <div className="w-full xl:min-w-[68%] flex flex-col gap-3">
+>>>>>>> b13cc748f79e5676eb818262729c7aee087e2d7f
         <Title>Template</Title>
 
         <SyncLists
