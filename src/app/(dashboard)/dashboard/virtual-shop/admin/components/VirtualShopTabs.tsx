@@ -14,32 +14,45 @@ import {
 } from "lucide-react";
 
 type VirtualShopTabsProps = {
+  shopId?: number;
   children: React.ReactNode;
 };
 
 const TABS = [
-  { href: "/dashboard/virtual-shop/admin/services", label: "Services", icon: Settings },
-  { href: "/dashboard/virtual-shop/admin/deposits", label: "Deposits", icon: DollarSign },
-  { href: "/dashboard/virtual-shop/admin/scheduling", label: "Scheduling", icon: CalendarDays },
-  { href: "/dashboard/virtual-shop/admin/financial", label: "Financial", icon: Percent },
-  { href: "/dashboard/virtual-shop/admin/gift-cards", label: "Gift Cards", icon: Gift },
-  { href: "/dashboard/virtual-shop/admin/calendar", label: "Calendar", icon: Calendar },
-  { href: "/dashboard/virtual-shop/admin/estimates", label: "Estimates", icon: FileText },
+  { segment: "services", label: "Services", icon: Settings },
+  { segment: "deposits", label: "Deposits", icon: DollarSign },
+  { segment: "scheduling", label: "Scheduling", icon: CalendarDays },
+  { segment: "financial", label: "Financial", icon: Percent },
+  { segment: "gift-cards", label: "Gift Cards", icon: Gift },
+  { segment: "calendar", label: "Calendar", icon: Calendar },
+  { segment: "estimates", label: "Estimates", icon: FileText },
 ] as const;
 
 export default function VirtualShopTabs({
+  shopId,
   children,
 }: VirtualShopTabsProps) {
   const pathname = usePathname();
   const tabsContainerRef = useRef<HTMLUListElement>(null);
 
+  const tabs = useMemo(
+    () =>
+      TABS.map((tab) => ({
+        ...tab,
+        href: shopId
+          ? `/dashboard/virtual-shop/admin/${shopId}/${tab.segment}`
+          : `/dashboard/virtual-shop/admin/${tab.segment}`,
+      })),
+    [shopId],
+  );
+
   const activeHref = useMemo(() => {
     if (!pathname) {
-      return TABS[0].href;
+      return tabs[0]?.href;
     }
 
-    return TABS.find((tab) => pathname.startsWith(tab.href))?.href ?? TABS[0].href;
-  }, [pathname]);
+    return tabs.find((tab) => pathname.startsWith(tab.href))?.href ?? tabs[0]?.href;
+  }, [pathname, tabs]);
 
   useEffect(() => {
     if (!tabsContainerRef.current) return;
@@ -73,7 +86,7 @@ export default function VirtualShopTabs({
           ref={tabsContainerRef}
           className="flex items-center gap-1.5 p-1.5 overflow-x-auto thin-scrollbar rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm w-full md:w-auto md:inline-flex"
         >
-          {TABS.map(({ href, label, icon: Icon }) => {
+          {tabs.map(({ href, label, icon: Icon }) => {
             const isActive = href === activeHref;
 
             return (

@@ -26,10 +26,13 @@ type InitialServiceData = {
 export default async function Page({
   searchParams,
 }: {
-  searchParams: { serviceId?: string };
+  searchParams: { serviceId?: string; shopId?: string };
 }) {
   const companyId = await getCompanyId();
   const serviceId = searchParams?.serviceId ? Number(searchParams.serviceId) : null;
+  const selectedShopId = searchParams?.shopId
+    ? Number.parseInt(searchParams.shopId, 10)
+    : null;
 
   let initialServiceData: InitialServiceData | null = null;
 
@@ -41,6 +44,9 @@ export default async function Page({
     const shopService = await db.shopService.findFirst({
       where: {
         id: serviceId,
+        ...(selectedShopId && Number.isFinite(selectedShopId)
+          ? { shopId: selectedShopId }
+          : {}),
         shop: {
           companyId,
         },
@@ -192,6 +198,7 @@ export default async function Page({
 
       <ServiceCreateClient
         companyId={companyId}
+        selectedShopId={selectedShopId}
         initialServiceData={initialServiceData}
       />
     </div>

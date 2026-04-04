@@ -3,10 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useSession } from "next-auth/react";
-import { Loader2 } from "lucide-react";
 import { Switch } from "@/components/Switch";
 import { Button } from "@/components/ui/button";
-import { useGetVirtualShopConfigure } from "@/hooks/virtual-shop/configure/useVirtualShopConfigure";
 import { useCalendarSettingsStore } from "@/stores/calendarSettingsStore";
 import {
   useGetShopBookingSettings,
@@ -92,18 +90,17 @@ function getCompanyFallbackSchedules(calendarSettings: {
   return fallback;
 }
 
-export default function SchedulingTab() {
+type SchedulingTabProps = {
+  shopId?: number;
+};
+
+export default function SchedulingTab({ shopId = 0 }: SchedulingTabProps) {
   const { data: session } = useSession();
-  const companyId = session?.user?.companyId ?? 0;
   const {
     calendarSettings,
     fetchCalendarSettings,
     loading: isCalendarSettingsLoading,
   } = useCalendarSettingsStore();
-
-  const { data: shopConfig, isLoading: isShopConfigLoading } =
-    useGetVirtualShopConfigure(companyId);
-  const shopId = Number(shopConfig?.id ?? 0);
 
   const {
     data: bookingSettings,
@@ -122,8 +119,8 @@ export default function SchedulingTab() {
     setSchedules((prev) => ({ ...prev, [day]: { ...prev[day], ...patch } }));
   };
 
-  const isLoading = isShopConfigLoading || isBookingSettingsLoading || isCalendarSettingsLoading;
-  const isHydratingBookingSettings = isShopConfigLoading || (shopId > 0 && !hasFetchedBookingSettings);
+  const isLoading = isBookingSettingsLoading || isCalendarSettingsLoading;
+  const isHydratingBookingSettings = shopId > 0 && !hasFetchedBookingSettings;
 
   const parsedStackingLimit = useMemo(() => {
     const next = Number(stackingLimit);
@@ -244,10 +241,41 @@ export default function SchedulingTab() {
       </p>
 
       {isHydratingBookingSettings && (
-        <div className="mt-6 flex min-h-[420px] items-center justify-center rounded-md border border-gray-200 bg-gray-50">
-          <div className="flex flex-col items-center gap-3 text-sm text-gray-600">
-            <Loader2 size={30} className="animate-spin text-[#6571FF]" />
-            <span>Loading scheduling settings...</span>
+        <div className="mt-6 flex flex-col gap-5 animate-pulse">
+          <div className="rounded-md border border-gray-200 bg-gray-50 p-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-2">
+                <div className="h-5 w-44 rounded bg-gray-200" />
+                <div className="h-4 w-56 rounded bg-gray-200" />
+              </div>
+              <div className="h-6 w-11 rounded-full bg-gray-200" />
+            </div>
+            <div className="mt-4 space-y-2">
+              <div className="h-4 w-28 rounded bg-gray-200" />
+              <div className="h-10 w-24 rounded bg-gray-200" />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="h-4 w-48 rounded bg-gray-200" />
+            <div className="h-10 w-24 rounded bg-gray-200" />
+          </div>
+
+          <div className="space-y-3">
+            <div className="h-4 w-32 rounded bg-gray-200" />
+            {Array.from({ length: 4 }).map((_, idx) => (
+              <div key={idx} className="flex items-center gap-4">
+                <div className="h-6 w-11 rounded-full bg-gray-200" />
+                <div className="h-4 w-24 rounded bg-gray-200" />
+                <div className="h-9 w-28 rounded bg-gray-200" />
+                <div className="h-4 w-6 rounded bg-gray-200" />
+                <div className="h-9 w-28 rounded bg-gray-200" />
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-2 flex justify-end">
+            <div className="h-10 w-36 rounded-md bg-gray-200" />
           </div>
         </div>
       )}

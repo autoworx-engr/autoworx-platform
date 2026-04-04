@@ -6,13 +6,16 @@ import {
   ShopServicesResponse,
 } from "@/service/virtual-shop/api";
 import { getServerSession } from "next-auth";
-import ServicesTab from "../../components/ServicesTab";
+import ServicesTab from "../../../components/ServicesTab";
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 10;
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100] as const;
 
 type VirtualShopServicesPageProps = {
+  params: {
+    shopId: string;
+  };
   searchParams?: {
     page?: string;
     limit?: string;
@@ -39,6 +42,7 @@ function parsePositiveInt(
 }
 
 export default async function VirtualShopServicesPage({
+  params,
   searchParams,
 }: VirtualShopServicesPageProps) {
   const session = await getServerSession(authOptions);
@@ -50,13 +54,17 @@ export default async function VirtualShopServicesPage({
     DEFAULT_LIMIT,
     PAGE_SIZE_OPTIONS,
   );
+  const shopId = Number.parseInt(params.shopId, 10);
 
   let initialShopConfig: ShopData | null = null;
   let servicesResponse: ShopServicesResponse | undefined;
 
-  if (companyId) {
-    const shop = await db.shop.findUnique({
-      where: { companyId },
+  if (companyId && Number.isFinite(shopId)) {
+    const shop = await db.shop.findFirst({
+      where: {
+        id: shopId,
+        companyId,
+      },
     });
 
     if (shop) {
@@ -76,9 +84,7 @@ export default async function VirtualShopServicesPage({
         themeConfig: mappedThemeConfig,
         isActive: shop.isActive,
       };
-    }
 
-    if (shop?.id) {
       const whereClause = {
         shopId: shop.id,
         ...(search

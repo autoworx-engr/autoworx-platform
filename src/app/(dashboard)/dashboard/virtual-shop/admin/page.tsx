@@ -1,4 +1,8 @@
 import { redirect } from "next/navigation";
+import { authOptions } from "@/authOptions";
+import { db } from "@/lib/db";
+import { getServerSession } from "next-auth";
+import ShopNotFound from "@/app/subdomain/[subdomain]/components/giftcards/ShopNotFound";
 
 const DEFAULT_TAB = "services";
 
@@ -31,8 +35,25 @@ export default async function VirtualShopAdminPage({
   searchParams,
 }: VirtualShopAdminPageProps) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const session = await getServerSession(authOptions);
+  const companyId = session?.user?.companyId;
+
+  if (!companyId) {
+    return <ShopNotFound />;
+  }
+
+  const shops = await db.shop.findMany({
+    where: { companyId },
+    select: { id: true },
+    orderBy: { createdAt: "asc" },
+  });
+
+  if (shops.length === 0) {
+    return <ShopNotFound />;
+  }
+
   const routeSegment = resolveTabRoute(resolvedSearchParams?.tab);
 
-  redirect(`/dashboard/virtual-shop/admin/${routeSegment}`);
+  redirect(`/dashboard/virtual-shop/admin/${shops[0].id}/${routeSegment}`);
 }
 

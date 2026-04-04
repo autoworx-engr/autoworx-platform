@@ -6,7 +6,6 @@ import { useSession } from "next-auth/react";
 import { Switch } from "@/components/Switch";
 import { Button } from "@/components/ui/button";
 import type { UpdateShopBookingSettingsPayload } from "@/service/virtual-shop/api";
-import { useGetVirtualShopConfigure } from "@/hooks/virtual-shop/configure/useVirtualShopConfigure";
 import {
   useGetShopBookingSettings,
   useUpdateShopBookingSettings,
@@ -27,13 +26,12 @@ const API_TO_UI_DEPOSIT_TYPE: Record<"FIXED" | "PERCENTAGE", DepositType> = {
   PERCENTAGE: "Percentage (%)",
 };
 
-export default function DepositsTab() {
-  const { data: session } = useSession();
-  const companyId = session?.user?.companyId ?? 0;
+type DepositsTabProps = {
+  shopId?: number;
+};
 
-  const { data: shopConfig, isLoading: isShopConfigLoading } =
-    useGetVirtualShopConfigure(companyId);
-  const shopId = Number(shopConfig?.id ?? 0);
+export default function DepositsTab({ shopId = 0 }: DepositsTabProps) {
+  const { data: session } = useSession();
 
   const [requireDeposit, setRequireDeposit] = useState(false);
   const [depositType, setDepositType] = useState<DepositType>("Percentage (%)");
@@ -41,6 +39,7 @@ export default function DepositsTab() {
   const {
     data: bookingSettings,
     isLoading: isBookingSettingsLoading,
+    isFetched: hasFetchedBookingSettings,
   } = useGetShopBookingSettings(shopId);
   const { mutateAsync: updateBookingSettings, isPending: isSaving } =
     useUpdateShopBookingSettings(shopId);
@@ -52,7 +51,8 @@ export default function DepositsTab() {
     setDepositType(item);
   };
 
-  const isLoading = isShopConfigLoading || isBookingSettingsLoading;
+  const isLoading = isBookingSettingsLoading;
+  const isHydratingBookingSettings = shopId > 0 && !hasFetchedBookingSettings;
 
   const parsedAmount = useMemo(() => {
     if (!amount.trim()) return null;
@@ -133,57 +133,84 @@ export default function DepositsTab() {
         Configure deposit requirements for bookings
       </p>
 
-      {/* Conditional fields */}
-      {requireDeposit && (
-        <div className="w-full md:max-w-xl mt-6 flex flex-col gap-4">
-          {/* Deposit Type */}
+      {isHydratingBookingSettings && (
+        <div className="mt-6 flex flex-col gap-4 animate-pulse">
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-semibold text-gray-700">
-              Deposit Type
-            </label>
-            <Selector
-              items={depositTypeItems}
-              selectedItem={depositType}
-              onSelect={handleDepositTypeChange}
-              label={(item) => item ?? "Select type"}
-              displayList={(item) => <span>{item}</span>}
-              newButton={<></>}
-              showSearch={false}
-              className="w-full md:w-48"
-            />
+            <div className="h-4 w-28 rounded bg-gray-200" />
+            <div className="h-10 w-full md:w-48 rounded bg-gray-100" />
           </div>
 
-          {/* Amount / Percentage */}
-          <SlimInput
-            name="depositAmount"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            label={label}
-            type="number"
-            min="0"
-            max={depositType === "Percentage (%)" ? "100" : undefined}
-            step={depositType === "Percentage (%)" ? "0.01" : "0.01"}
-            className="w-full md:max-w-40"
-          />
+          <div className="flex flex-col gap-1.5">
+            <div className="h-4 w-32 rounded bg-gray-200" />
+            <div className="h-10 w-full md:max-w-40 rounded bg-gray-100" />
+          </div>
+
+          <div className="mt-2 flex items-center justify-between">
+            <div className="h-5 w-32 rounded bg-gray-200" />
+            <div className="h-6 w-11 rounded-full bg-gray-200" />
+          </div>
+
+          <div className="mt-2 flex justify-end">
+            <div className="h-10 w-32 rounded-md bg-gray-200" />
+          </div>
         </div>
       )}
 
-      {/* Require Deposit row */}
-      <div className="mt-6 flex items-center justify-between">
-        <span className="font-semibold text-gray-800">Require Deposit</span>
-        <Switch checked={requireDeposit} setChecked={setRequireDeposit} />
-      </div>
+      {!isHydratingBookingSettings && (
+        <>
+          {/* Conditional fields */}
+          {requireDeposit && (
+            <div className="w-full md:max-w-xl mt-6 flex flex-col gap-4">
+              {/* Deposit Type */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-gray-700">
+                  Deposit Type
+                </label>
+                <Selector
+                  items={depositTypeItems}
+                  selectedItem={depositType}
+                  onSelect={handleDepositTypeChange}
+                  label={(item) => item ?? "Select type"}
+                  displayList={(item) => <span>{item}</span>}
+                  newButton={<></>}
+                  showSearch={false}
+                  className="w-full md:w-48"
+                />
+              </div>
 
-      <div className="mt-6 flex justify-end">
-        <Button
-          type="button"
-          onClick={handleSave}
-          disabled={isLoading || isSaving || !shopId}
-          className="bg-[#6571FF] hover:bg-[#5a66ee]"
-        >
-          {isSaving ? "Saving..." : "Save Deposits"}
-        </Button>
-      </div>
+              {/* Amount / Percentage */}
+              <SlimInput
+                name="depositAmount"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                label={label}
+                type="number"
+                min="0"
+                max={depositType === "Percentage (%)" ? "100" : undefined}
+                step={depositType === "Percentage (%)" ? "0.01" : "0.01"}
+                className="w-full md:max-w-40"
+              />
+            </div>
+          )}
+
+          {/* Require Deposit row */}
+          <div className="mt-6 flex items-center justify-between">
+            <span className="font-semibold text-gray-800">Require Deposit</span>
+            <Switch checked={requireDeposit} setChecked={setRequireDeposit} />
+          </div>
+
+          <div className="mt-6 flex justify-end">
+            <Button
+              type="button"
+              onClick={handleSave}
+              disabled={isLoading || isSaving || !shopId}
+              className="bg-[#6571FF] hover:bg-[#5a66ee]"
+            >
+              {isSaving ? "Saving..." : "Save Deposits"}
+            </Button>
+          </div>
+        </>
+      )}
     </div>
   );
 }

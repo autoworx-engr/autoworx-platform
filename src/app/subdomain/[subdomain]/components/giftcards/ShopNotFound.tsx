@@ -8,7 +8,7 @@ import { usePathname } from "next/navigation";
 export default function ShopNotFound() {
   const pathname = usePathname();
   const shouldShowConfigure =
-    pathname === "/dashboard/virtual-shop/admin/services";
+    pathname.startsWith("/dashboard/virtual-shop/admin");
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-white to-gray-100 p-4">

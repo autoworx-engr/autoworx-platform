@@ -5,21 +5,23 @@ import toast from "react-hot-toast";
 import { useSession } from "next-auth/react";
 import { Switch } from "@/components/Switch";
 import { Button } from "@/components/ui/button";
-import { useGetVirtualShopConfigure } from "@/hooks/virtual-shop/configure/useVirtualShopConfigure";
 import {
   useGetShopBookingSettings,
   useUpdateShopBookingSettings,
 } from "@/hooks/virtual-shop/booking-settings/useShopBookingSettings";
 
-export default function FinancialTab() {
+type FinancialTabProps = {
+  shopId?: number;
+};
+
+export default function FinancialTab({ shopId = 0 }: FinancialTabProps) {
   const { data: session } = useSession();
-  const companyId = session?.user?.companyId ?? 0;
 
-  const { data: shopConfig, isLoading: isShopConfigLoading } =
-    useGetVirtualShopConfigure(companyId);
-  const shopId = Number(shopConfig?.id ?? 0);
-
-  const { data: bookingSettings, isLoading: isBookingSettingsLoading } =
+  const {
+    data: bookingSettings,
+    isLoading: isBookingSettingsLoading,
+    isFetched: hasFetchedBookingSettings,
+  } =
     useGetShopBookingSettings(shopId);
   const { mutateAsync: updateBookingSettings, isPending: isSaving } =
     useUpdateShopBookingSettings(shopId);
@@ -27,7 +29,8 @@ export default function FinancialTab() {
   const [shopFee, setShopFee] = useState(false);
   const [tax, setTax] = useState(false);
 
-  const isLoading = isShopConfigLoading || isBookingSettingsLoading;
+  const isLoading = isBookingSettingsLoading;
+  const isHydratingBookingSettings = shopId > 0 && !hasFetchedBookingSettings;
 
   useEffect(() => {
     if (!bookingSettings) return;
@@ -72,42 +75,74 @@ export default function FinancialTab() {
         Enable or disable tax and shop fee for virtual shop bookings.
       </p>
 
-      {/* Shop Fee */}
-      <div className="mt-6">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="font-semibold text-gray-800">Shop Fee</p>
-            <p className="text-sm text-gray-400">
-              Applied as percentage of subtotal
-            </p>
+      {isHydratingBookingSettings && (
+        <div className="mt-6 flex flex-col gap-4 animate-pulse">
+          <div className="rounded-md border border-gray-200 bg-gray-50 p-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-2">
+                <div className="h-5 w-24 rounded bg-gray-200" />
+                <div className="h-4 w-56 rounded bg-gray-200" />
+              </div>
+              <div className="h-6 w-11 rounded-full bg-gray-200" />
+            </div>
           </div>
-          <Switch checked={shopFee} setChecked={setShopFee} />
-        </div>
-      </div>
 
-      {/* Tax */}
-      <div className="mt-6">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="font-semibold text-gray-800">Tax</p>
-            <p className="text-sm text-gray-400">
-              Applied to subtotal + shop fee
-            </p>
+          <div className="rounded-md border border-gray-200 bg-gray-50 p-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-2">
+                <div className="h-5 w-16 rounded bg-gray-200" />
+                <div className="h-4 w-52 rounded bg-gray-200" />
+              </div>
+              <div className="h-6 w-11 rounded-full bg-gray-200" />
+            </div>
           </div>
-          <Switch checked={tax} setChecked={setTax} />
-        </div>
-      </div>
 
-      <div className="mt-6 flex justify-end">
-        <Button
-          type="button"
-          onClick={handleSave}
-          disabled={isLoading || isSaving || !shopId}
-          className="bg-[#6571FF] hover:bg-[#5a66ee]"
-        >
-          {isSaving ? "Saving..." : "Save Financial Settings"}
-        </Button>
-      </div>
+          <div className="mt-2 flex justify-end">
+            <div className="h-10 w-44 rounded-md bg-gray-200" />
+          </div>
+        </div>
+      )}
+
+      {!isHydratingBookingSettings && (
+        <>
+          {/* Shop Fee */}
+          <div className="mt-6">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="font-semibold text-gray-800">Shop Fee</p>
+                <p className="text-sm text-gray-400">
+                  Applied as percentage of subtotal
+                </p>
+              </div>
+              <Switch checked={shopFee} setChecked={setShopFee} />
+            </div>
+          </div>
+
+          {/* Tax */}
+          <div className="mt-6">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="font-semibold text-gray-800">Tax</p>
+                <p className="text-sm text-gray-400">
+                  Applied to subtotal + shop fee
+                </p>
+              </div>
+              <Switch checked={tax} setChecked={setTax} />
+            </div>
+          </div>
+
+          <div className="mt-6 flex justify-end">
+            <Button
+              type="button"
+              onClick={handleSave}
+              disabled={isLoading || isSaving || !shopId}
+              className="bg-[#6571FF] hover:bg-[#5a66ee]"
+            >
+              {isSaving ? "Saving..." : "Save Financial Settings"}
+            </Button>
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -2,11 +2,12 @@ import EstimatesTab, {
   type AppointmentStatus,
   type Estimate,
   type FilterStatus,
-} from "../../components/EstimatesTab";
+} from "../../../components/EstimatesTab";
 import { authOptions } from "@/authOptions";
 import { db } from "@/lib/db";
 import type { Prisma, ShopBookingStatus } from "@prisma/client";
 import { getServerSession } from "next-auth";
+import ShopNotFound from "@/app/subdomain/[subdomain]/components/giftcards/ShopNotFound";
 
 type PageSearchParams = {
   search?: string | string[];
@@ -17,6 +18,9 @@ type PageSearchParams = {
 };
 
 type VirtualShopEstimatesPageProps = {
+  params: {
+    shopId: string;
+  };
   searchParams?: Promise<PageSearchParams>;
 };
 
@@ -232,6 +236,7 @@ function toEstimate(item: ShopBookingRow): Estimate {
 }
 
 export default async function VirtualShopEstimatesPage({
+  params,
   searchParams,
 }: VirtualShopEstimatesPageProps) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
@@ -248,8 +253,21 @@ export default async function VirtualShopEstimatesPage({
 
   const session = await getServerSession(authOptions);
   const companyId = session?.user?.companyId;
+  const shopId = Number.parseInt(params.shopId, 10);
 
-  if (!companyId) {
+  if (!companyId || !Number.isFinite(shopId)) {
+    return <ShopNotFound />;
+  }
+
+  const shop = await db.shop.findFirst({
+    where: {
+      id: shopId,
+      companyId,
+    },
+    select: { id: true },
+  });
+
+  if (!shop) {
     return (
       <EstimatesTab
         estimates={[]}
@@ -272,9 +290,7 @@ export default async function VirtualShopEstimatesPage({
   }
 
   const whereBase: Prisma.ShopBookingWhereInput = {
-    shop: {
-      companyId,
-    },
+    shopId: shop.id,
   };
 
   if (search) {
