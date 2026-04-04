@@ -5,7 +5,6 @@ import React, { useEffect, useRef, useState } from "react";
 import { DateRangePicker } from "react-date-range";
 import "react-date-range/dist/styles.css"; // main style file
 import "react-date-range/dist/theme/default.css"; // theme css file
-import { TFilterModalState } from "../../(report)/revenue/FilterHeader";
 import { Calendar } from "lucide-react";
 type TProps = {
   startDate?: string;
@@ -47,7 +46,9 @@ export default function FilterDateRange({
 
   // const [showPicker, setShowPicker] = useState(false);
   const [tempRange, setTempRange] = useState(state.selection);
-  const [isRangeSelected, setIsRangeSelected] = useState(false);
+  const [isRangeSelected, setIsRangeSelected] = useState(
+    Boolean(startDate && endDate),
+  );
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -99,6 +100,7 @@ export default function FilterDateRange({
   const formatRange = (start: Date, end: Date) => {
     const formattedStart = format(start, "MM/dd/yyyy");
     const formattedEnd = format(end, "MM/dd/yyyy");
+
     if (startDate !== "undefined" && endDate !== "undefined") {
       return `${startDate} - ${endDate}`;
     } else if (isRangeSelected) {
@@ -135,7 +137,7 @@ export default function FilterDateRange({
         className={`
           flex w-full items-center justify-between gap-3 rounded-xl px-4 py-2.5 text-sm transition-all duration-300 ease-out
           ${
-            activeModal[modalName as keyof TFilterModalState]
+            activeModal[modalName]
               ? "bg-white ring-2 ring-[#6571FF] shadow-md shadow-indigo-500/10 dark:bg-slate-900"
               : "bg-white ring-1 ring-slate-200 hover:ring-indigo-500/50 hover:shadow-sm dark:bg-slate-900 dark:ring-slate-700"
           }
