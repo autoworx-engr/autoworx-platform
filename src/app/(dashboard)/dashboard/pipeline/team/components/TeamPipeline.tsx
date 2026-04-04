@@ -39,7 +39,7 @@ export default function TeamPipelines({
   isTechnician,
 }: PipelinesProps) {
   const router = useRouter();
-  console.log("columns", columns);
+
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
   //   console.log("selectedClientId==>", selectedClientId);
   const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(
@@ -539,7 +539,7 @@ export default function TeamPipelines({
       element: scrollContainer,
     });
   }, [screenWidth]);
-  console.log("filteredPipelineData", filteredPipelineData);
+
   return (
     <>
       {/* Add the search component at the top */}
@@ -561,6 +561,7 @@ export default function TeamPipelines({
           >
             {filteredPipelineData.map((item, categoryIndex) => (
               <DroppableColumn
+                isTeamPipeline={true}
                 key={categoryIndex}
                 columnRefs={columnRefs}
                 categoryIndex={categoryIndex}
