@@ -132,9 +132,9 @@ export default function ItemSelector<T>({
         }
         // Force dropdown to open and focus the search
         setOpen(true);
-        setTimeout(() => {
-          searchRef.current?.focus();
-        }, 50);
+        // setTimeout(() => {
+        //   searchRef.current?.focus();
+        // }, 50);
       }}
     >
       <DropdownMenu open={open} onOpenChange={setOpen}>
