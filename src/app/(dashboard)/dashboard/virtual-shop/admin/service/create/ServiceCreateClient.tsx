@@ -14,7 +14,6 @@ import Create from "@/app/(dashboard)/dashboard/estimate/create/Create";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { errorToast } from "@/lib/toast";
-import { useGetVirtualShopConfigure } from "@/hooks/virtual-shop/configure/useVirtualShopConfigure";
 import {
   useCreateShopService,
   useUpdateShopService,
@@ -136,7 +135,8 @@ function ServiceBillSummary({
     [grandTotal, subtotal],
   );
 
-  const isSaveDisabled = isSaving || isImageUploading;
+  const isSubmitting = isSaving || isImageUploading;
+  const isSaveDisabled = isSubmitting;
 
   return (
     <>
@@ -194,7 +194,7 @@ function ServiceBillSummary({
           disabled={isSaveDisabled}
           onClick={onSave}
         >
-          {isSaving
+          {isSubmitting
             ? isEditMode
               ? "Updating..."
               : "Saving..."
@@ -209,14 +209,15 @@ function ServiceBillSummary({
 
 export default function ServiceCreateClient({
   companyId,
+  selectedShopId,
   initialServiceData,
 }: {
   companyId: number;
+  selectedShopId?: number | null;
   initialServiceData?: InitialServiceData | null;
 }) {
   const router = useRouter();
   const isEditMode = !!initialServiceData?.id;
-  const { data: shopConfig } = useGetVirtualShopConfigure(companyId);
   const { mutateAsync: createShopService, isPending: isSaving } = useCreateShopService();
   const { mutateAsync: updateShopService, isPending: isUpdating } =
     useUpdateShopService();
@@ -393,7 +394,7 @@ export default function ServiceCreateClient({
     setValidationErrors({});
     lastValidationToastMessageRef.current = null;
 
-    if (!shopConfig?.id) {
+    if (!selectedShopId) {
       errorToast("Virtual shop is not configured yet");
       return;
     }
@@ -506,7 +507,7 @@ export default function ServiceCreateClient({
       }
 
       const payload = {
-        shopId: Number(shopConfig.id),
+        shopId: Number(selectedShopId),
         companyId,
         title: serviceInfo.serviceTitle.trim(),
         description: serviceInfo.description.trim(),
@@ -532,7 +533,7 @@ export default function ServiceCreateClient({
       setServiceInfo(INITIAL_SERVICE_INFO);
       setSelectedImageFile(null);
       setValidationErrors({});
-      router.push("/dashboard/virtual-shop/admin/services");
+      router.push(`/dashboard/virtual-shop/admin/${selectedShopId}/services`);
       router.refresh();
     } catch (error) {
       const message =

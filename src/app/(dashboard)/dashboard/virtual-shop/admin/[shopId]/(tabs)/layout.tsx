@@ -2,32 +2,45 @@ import { authOptions } from "@/authOptions";
 import { db } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import ShopNotFound from "@/app/subdomain/[subdomain]/components/giftcards/ShopNotFound";
-import VirtualShopTabs from "../components/VirtualShopTabs";
+import VirtualShopTabs from "../../components/VirtualShopTabs";
 
 type VirtualShopTabsLayoutProps = {
   children: React.ReactNode;
+  params: {
+    shopId: string;
+  };
 };
 
 export default async function VirtualShopTabsLayout({
   children,
+  params,
 }: VirtualShopTabsLayoutProps) {
   const session = await getServerSession(authOptions);
   const companyId = session?.user?.companyId;
+  const shopId = Number.parseInt(params.shopId, 10);
 
-  if (!companyId) {
+  if (!companyId || !Number.isFinite(shopId)) {
     return <ShopNotFound />;
   }
 
-  const shop = await db.shop.findUnique({
+  const shops = await db.shop.findMany({
     where: { companyId },
-    select: { id: true },
+    select: {
+      id: true,
+      storeName: true,
+    },
+    orderBy: { createdAt: "asc" },
   });
 
-  if (!shop) {
+  const activeShop = shops.find((shop) => shop.id === shopId);
+
+  if (!activeShop) {
     return <ShopNotFound />;
   }
 
   return (
-    <VirtualShopTabs>{children}</VirtualShopTabs>
+    <>
+      <VirtualShopTabs shopId={activeShop.id}>{children}</VirtualShopTabs>
+    </>
   );
 }

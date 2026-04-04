@@ -8,7 +8,7 @@ import LogoutBtn from "./LogoutBtn";
 import QuickLink from "./QuickLink";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { RotateCw, SquarePlay, Store } from "lucide-react";
+import { RotateCw, SquarePlay } from "lucide-react";
 
 const NotificationsPopover = dynamic(
   () =>
@@ -23,11 +23,6 @@ export default function TopNavbarIcons() {
 
   return (
     <div className="flex items-center gap-x-3">
-      {currentUser?.employeeType == "Admin" && (
-        <Link href="/dashboard/virtual-shop/admin/services">
-          <Store className="size-5 sm:size-7  text-[#6571FF]" />
-        </Link>
-      )}
       <button className="lg:hidden" onClick={() => window.location.reload()}>
         <RotateCw className="size-7 text-[#6571FF]" />
       </button>

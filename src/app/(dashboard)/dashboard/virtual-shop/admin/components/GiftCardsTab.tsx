@@ -195,7 +195,11 @@ function ToggleRow({
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export default function GiftCardsTab() {
+type GiftCardsTabProps = {
+  shopId?: number;
+};
+
+export default function GiftCardsTab({ shopId: _shopId }: GiftCardsTabProps) {
   const { data: session } = useSession();
   const accessToken = session?.accessToken;
   const companyId = session?.user?.companyId;

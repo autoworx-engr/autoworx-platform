@@ -73,7 +73,11 @@ export default function ServicesTab({
   );
 
   const handleEdit = (service: Service) => {
-    router.push(`/dashboard/virtual-shop/admin/service/create?serviceId=${service.id}`);
+    if (!shopId) return;
+
+    router.push(
+      `/dashboard/virtual-shop/admin/service/create?shopId=${shopId}&serviceId=${service.id}`,
+    );
   };
 
   const handleDelete = async (service: Service) => {
@@ -87,7 +91,9 @@ export default function ServicesTab({
   };
 
   const handleAddService = () => {
-    router.push("/dashboard/virtual-shop/admin/service/create");
+    if (!shopId) return;
+
+    router.push(`/dashboard/virtual-shop/admin/service/create?shopId=${shopId}`);
   };
 
   const handlePageChange = (nextPage: number, nextPageSize: number) => {

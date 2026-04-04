@@ -6,7 +6,7 @@ import type {
 } from "@/service/virtual-shop/api";
 import type { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
-import CalendarTab from "../../components/CalendarTab";
+import CalendarTab from "../../../components/CalendarTab";
 
 type PageSearchParams = {
   mode?: string | string[];
@@ -18,6 +18,9 @@ type PageSearchParams = {
 };
 
 type VirtualShopCalendarPageProps = {
+  params: {
+    shopId: string;
+  };
   searchParams?: Promise<PageSearchParams>;
 };
 
@@ -152,12 +155,14 @@ function mapShopBookingsToResponseData(
 }
 
 export default async function VirtualShopCalendarPage({
+  params,
   searchParams,
 }: VirtualShopCalendarPageProps) {
   const now = new Date();
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const session = await getServerSession(authOptions);
   const companyId = session?.user?.companyId;
+  const shopId = Number.parseInt(params.shopId, 10);
 
   const viewMode = first(resolvedSearchParams?.mode) === "list" ? "list" : "grid";
   const viewYear = toPositiveInt(first(resolvedSearchParams?.year), now.getFullYear());
@@ -204,14 +209,12 @@ export default async function VirtualShopCalendarPage({
     data: [],
   };
 
-  if (companyId) {
+  if (companyId && Number.isFinite(shopId)) {
     const monthStart = new Date(viewYear, viewMonth, 1);
     const monthEnd = new Date(viewYear, viewMonth + 1, 0, 23, 59, 59, 999);
 
     const baseWhere: Prisma.ShopBookingWhereInput = {
-      shop: {
-        companyId,
-      },
+      shopId,
     };
 
     if (viewMode === "grid") {
