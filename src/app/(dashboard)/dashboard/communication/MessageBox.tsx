@@ -23,7 +23,13 @@ import {
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import toast from "react-hot-toast";
 import { formatDate } from "./client/_component/conversations/mailgun/MailgunConversation";
 import AddUsersInGroupModal from "./internal/AddUsersInGroupModal";
@@ -62,7 +68,7 @@ export default function MessageBox({
   const messageBoxRef = useRef<HTMLDivElement>(null);
   const [openSettings, setOpenSettings] = useState(false);
   const [multiAttachmentFile, setMultiAttachmentFile] = useState<File[] | null>(
-    null
+    null,
   );
 
   const router = useRouter();
@@ -72,20 +78,23 @@ export default function MessageBox({
   const [isImageLoaded, setIsImageLoaded] = useState(false);
 
   const isEstimateAttachmentShow = pathname?.includes(
-    "/communication/collaboration"
+    "/communication/collaboration",
   );
 
   const { lastMessage, setLastMessage } = useChatTrackStore();
   const [groupName, setGroupName] = useState(group?.name || "");
   const [isGroupNameEdited, setIsGroupNameEdited] = useState(false);
 
-  useEffect(() => {
-    if (messageBoxRef.current) {
-      messageBoxRef.current.scrollTop = messageBoxRef.current.scrollHeight;
-      // messageBoxRef.current.scrollIntoView({ behavior: "smooth" });
-      setIsImageLoaded(false);
-    }
-  }, [messages, isImageLoaded]);
+  useLayoutEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      if (messageBoxRef.current) {
+        messageBoxRef.current.scrollTop = messageBoxRef.current.scrollHeight;
+        setIsImageLoaded(false);
+      }
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [messages, isImageLoaded, totalMessageBox]);
 
   async function handleSendMessage(e: any) {
     e.preventDefault();
@@ -124,7 +133,7 @@ export default function MessageBox({
           attachmentFileUrl && attachmentFileUrl.length > 0
             ? (attachmentFileUrl as string[]).map((fileUrl, urlIndex) => {
                 const findFileIntoMultiFile = multiAttachmentFile?.find(
-                  (_, fileIndex) => fileIndex === urlIndex
+                  (_, fileIndex) => fileIndex === urlIndex,
                 );
                 return {
                   fileName: findFileIntoMultiFile?.name,
@@ -179,7 +188,7 @@ export default function MessageBox({
       }
       setUsersList &&
         setUsersList((usersList) =>
-          usersList.filter((u) => u.id !== receiverUser?.id)
+          usersList.filter((u) => u.id !== receiverUser?.id),
         );
     } catch (err) {
       const formattedError = errorHandler(err);
@@ -190,7 +199,7 @@ export default function MessageBox({
   const handleDeleteUserFromGroupList = async (userId: number) => {
     const isUserExistInGroup = await getUserInGroup(
       parseInt(session?.user?.id!),
-      group?.id!
+      group?.id!,
     );
     if (!isUserExistInGroup) {
       toast.error("You can not remove this User from this group");
@@ -211,7 +220,7 @@ export default function MessageBox({
                 };
               }
               return g;
-            })
+            }),
           );
         const removedUser = group?.users.find((user) => user.id === userId);
         const userName = removedUser
@@ -250,14 +259,14 @@ export default function MessageBox({
   const handleRemoveAttachment = (fileName: string) => {
     setMultiAttachmentFile(
       (multiFiles) =>
-        multiFiles && multiFiles?.filter((file) => file?.name !== fileName)
+        multiFiles && multiFiles?.filter((file) => file?.name !== fileName),
     );
   };
   return (
     <div
       className={cn(
         "app-shadow flex h-[calc(100vh-50px)] w-full flex-col justify-between overflow-hidden border bg-background max-[1400px]:w-[100%] sm:h-full sm:rounded-lg",
-        totalMessageBox > 2 && "sm:h-[44vh]"
+        totalMessageBox > 2 && "sm:h-[44vh]",
       )}
     >
       {/* name and delete */}
@@ -287,7 +296,7 @@ export default function MessageBox({
                   height={50}
                   className={cn(
                     "rounded-full",
-                    index === 0 ? "ml-0" : "-ml-9 sm:-ml-8"
+                    index === 0 ? "ml-0" : "-ml-9 sm:-ml-8",
                   )}
                 />
               ))}
@@ -342,7 +351,7 @@ export default function MessageBox({
                               (existingGroup) =>
                                 existingGroup.id !== group?.id &&
                                 existingGroup.name?.trim().toLowerCase() ===
-                                  trimmedName.toLowerCase()
+                                  trimmedName.toLowerCase(),
                             ) ?? false;
                           if (hasDuplicateName) {
                             toast.error("Group name already exists.");
@@ -354,12 +363,12 @@ export default function MessageBox({
                             if (group?.id) {
                               const response = await renameGroup(
                                 trimmedName,
-                                group.id
+                                group.id,
                               );
                               if (response?.status === 200) {
                                 successToast(
                                   response?.message ||
-                                    "Group renamed successfully."
+                                    "Group renamed successfully.",
                                 );
                               }
                             }
@@ -437,7 +446,7 @@ export default function MessageBox({
         id="messageBox"
         className={cn(
           "overflow-y-scroll",
-          totalMessageBox > 2 ? "h-[calc(100%-60px)]" : "h-[82%]"
+          totalMessageBox > 2 ? "h-[calc(100%-60px)]" : "h-[82%]",
         )}
         ref={messageBoxRef}
       >
@@ -445,11 +454,11 @@ export default function MessageBox({
           let lastDate = "";
           const messageDate = format(
             new Date(message?.createdAt ?? new Date()),
-            "PPP"
+            "PPP",
           ); // 'Jan 1, 2024'
           const messageTime = format(
             new Date(message?.createdAt ?? new Date()),
-            "h:mm a"
+            "h:mm a",
           ); // '12:30 PM'
 
           const showDateSeparator = messageDate !== lastDate;
@@ -459,7 +468,7 @@ export default function MessageBox({
               {showDateSeparator && (
                 <div className="block py-2 text-center text-xs text-gray-500">
                   {formatDate(
-                    new Date(message?.createdAt ?? new Date()).toDateString()
+                    new Date(message?.createdAt ?? new Date()).toDateString(),
                   )}
                 </div>
               )}
@@ -480,7 +489,7 @@ export default function MessageBox({
         <div
           className={cn(
             "relative w-full rounded-lg border border-gray-200 bg-white shadow-md flex flex-col",
-            totalMessageBox > 2 ? "max-h-[120px]" : "max-h-64"
+            totalMessageBox > 2 ? "max-h-[120px]" : "max-h-64",
           )}
         >
           {/* Sticky header */}
@@ -562,7 +571,7 @@ export default function MessageBox({
       <form
         className={cn(
           "relative flex items-center gap-2 bg-[#D9D9D9] p-2",
-          totalMessageBox > 2 ? "h-[60px] min-h-[60px]" : "h-[8%] min-h-[50px]"
+          totalMessageBox > 2 ? "h-[60px] min-h-[60px]" : "h-[8%] min-h-[50px]",
         )}
         onSubmit={(e) => startTransition(() => handleSendMessage(e))}
       >
@@ -571,7 +580,7 @@ export default function MessageBox({
           <div
             className={cn(
               "absolute -top-[55px] space-y-1",
-              isEstimateAttachmentShow ? "-top-[55px]" : "-top-[27px]"
+              isEstimateAttachmentShow ? "-top-[55px]" : "-top-[27px]",
             )}
           >
             <p

@@ -68,11 +68,7 @@ export function SelectTags({
         name={name}
         value={tags.map((x) => x.id).join(",")}
       />
-      <DropdownMenu
-        open={open}
-        onOpenChange={(open) => {
-        }}
-      >
+      <DropdownMenu open={open} onOpenChange={(open) => {}}>
         {tags && tags.length > 0 && (
           <div className="mb-2 flex flex-wrap gap-2 max-w-[260px]">
             {tags.map((tag, i) => (
@@ -126,9 +122,9 @@ export function SelectTags({
               }
 
               setOpen(true);
-              setTimeout(() => {
-                searchRef.current?.focus();
-              }, 50);
+              // setTimeout(() => {
+              //   searchRef.current?.focus();
+              // }, 50);
             }
           }}
           className="flex min-h-11 min-w-[150px] w-full items-center justify-between rounded-[10px] px-4 ring-1 ring-inset ring-slate-200 transition-all hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30"
@@ -177,7 +173,7 @@ export function SelectTags({
                   .filter((x) =>
                     searchQuery
                       ? x.name.toLowerCase().includes(searchQuery.toLowerCase())
-                      : true
+                      : true,
                   )
                   .map((tag) => (
                     <DropdownMenuItem
@@ -206,7 +202,7 @@ export function SelectTags({
                         style={{
                           backgroundColor: tag.bgColor,
                           color: tag.textColor,
-                          borderRadius: '6px'
+                          borderRadius: "6px",
                         }}
                       >
                         <span>{tag.name}</span>
@@ -256,7 +252,7 @@ export function SelectTags({
                         "flex h-8 items-center justify-center rounded-lg text-xs font-bold transition-all hover:scale-105",
                         selectedColor?.textColor === color.textColor
                           ? "ring-2 ring-[#6571FF] ring-offset-1"
-                          : "ring-1 ring-transparent"
+                          : "ring-1 ring-transparent",
                       )}
                     >
                       Aa
