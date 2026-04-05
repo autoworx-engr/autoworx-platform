@@ -12,7 +12,9 @@ export default function CalendarSidebar() {
     <div
       className={cn(
         "hidden flex-col overflow-x-clip transition-[width] ease-in md:flex",
-        minimized ? "w-8" : "w-[20%] max-[1300px]:w-[300px] 2xl:w-[370px]",
+        minimized
+          ? "md:w-8 md:min-w-8 md:max-w-8"
+          : "md:w-[20%] md:min-w-[300px] md:max-w-[320px] md:shrink-0",
       )}
     >
       <Heading />
