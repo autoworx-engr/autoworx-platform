@@ -1,5 +1,5 @@
 import { ServiceType } from "./types";
-import { hexToRgba, isHexColor } from "./colorUtils";
+import { darkenHex, isHexColor, lightenHex } from "./colorUtils";
 
 export const SERVICE_COLORS: Record<
   ServiceType,
@@ -40,8 +40,8 @@ export const SERVICE_COLORS: Record<
 export const getServiceColor = (type: string, customColor?: string) => {
   if (isHexColor(customColor)) {
     return {
-      gradient: [hexToRgba(customColor, 0.32), hexToRgba(customColor, 0.22)],
-      borderColor: hexToRgba(customColor, 0.55),
+      gradient: [lightenHex(customColor, 0.32), lightenHex(customColor, 0.22)],
+      borderColor: lightenHex(customColor, 0.55),
       accentColor: customColor,
     };
   }

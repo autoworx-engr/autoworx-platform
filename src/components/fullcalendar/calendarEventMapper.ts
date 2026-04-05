@@ -1,6 +1,6 @@
 import { EventInput } from "@fullcalendar/core";
 import moment from "moment";
-import { hexToRgba, isHexColor } from "./colorUtils";
+import { darkenHex, isHexColor, lightenHex } from "./colorUtils";
 
 type BuildCalendarEventsParams = {
   appointments: any[];
@@ -41,9 +41,9 @@ export const buildCalendarEvents = ({
         ? `${dateStr}T${appointment.endTime}`
         : undefined,
       backgroundColor: categoryColor
-        ? hexToRgba(categoryColor, 0.34)
+        ? lightenHex(categoryColor, 0.25)
         : undefined,
-      borderColor: categoryColor ? hexToRgba(categoryColor, 0.55) : undefined,
+      borderColor: categoryColor ? darkenHex(categoryColor, 0.75) : undefined,
       textColor: categoryColor ? "#111827" : undefined,
       extendedProps: {
         type: "appointment",
