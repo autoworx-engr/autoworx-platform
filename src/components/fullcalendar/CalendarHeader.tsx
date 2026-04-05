@@ -47,12 +47,12 @@ interface CalendarHeaderProps {
   appointmentCount: number;
   taskCount: number;
   estRevenue: number;
-  users: { id: number; name: string }[];
-  technicians: { id: number; name: string }[];
-  selectedUserIds: number[];
-  selectedTechnicianIds: number[];
-  onSelectedUserIdsChange: (ids: number[]) => void;
-  onSelectedTechnicianIdsChange: (ids: number[]) => void;
+  teamMates: { id: number; name: string }[];
+  categories: { id: number; name: string }[];
+  selectedTeamMateIds: number[];
+  selectedCategoryIds: number[];
+  onSelectedTeamMateIdsChange: (ids: number[]) => void;
+  onSelectedCategoryIdsChange: (ids: number[]) => void;
 }
 
 export function CalendarHeader({
@@ -61,12 +61,12 @@ export function CalendarHeader({
   appointmentCount,
   taskCount,
   estRevenue,
-  users,
-  technicians,
-  selectedUserIds,
-  selectedTechnicianIds,
-  onSelectedUserIdsChange,
-  onSelectedTechnicianIdsChange,
+  teamMates,
+  categories,
+  selectedTeamMateIds,
+  selectedCategoryIds,
+  onSelectedTeamMateIdsChange,
+  onSelectedCategoryIdsChange,
 }: CalendarHeaderProps) {
   const date = useDate();
   const dateFormat = date.format("YYYY-MM-DD");
@@ -263,12 +263,12 @@ export function CalendarHeader({
           )}
 
         <CalendarFilterDropdown
-          users={users}
-          technicians={technicians}
-          selectedUserIds={selectedUserIds}
-          selectedTechnicianIds={selectedTechnicianIds}
-          onSelectedUserIdsChange={onSelectedUserIdsChange}
-          onSelectedTechnicianIdsChange={onSelectedTechnicianIdsChange}
+          teamMates={teamMates}
+          categories={categories}
+          selectedTeamMateIds={selectedTeamMateIds}
+          selectedCategoryIds={selectedCategoryIds}
+          onSelectedTeamMateIdsChange={onSelectedTeamMateIdsChange}
+          onSelectedCategoryIdsChange={onSelectedCategoryIdsChange}
         />
 
         {/* Settings Button */}

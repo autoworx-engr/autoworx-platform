@@ -42,11 +42,8 @@ export default function Calendar({ type }: { type: CalendarType }) {
     start: moment().startOf("month").format("YYYY-MM-DD"),
     end: moment().endOf("month").format("YYYY-MM-DD"),
   });
-  const [selectedTaskUserIds, setSelectedTaskUserIds] = useState<number[]>([]);
-  const [
-    selectedAppointmentTechnicianIds,
-    setSelectedAppointmentTechnicianIds,
-  ] = useState<number[]>([]);
+  const [selectedTeamMateIds, setSelectedTeamMateIds] = useState<number[]>([]);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
   const { data: session } = useSession();
   const calendarRef = useRef<FullCalendar>(null);
   const [view, setView] = useState(
@@ -146,8 +143,8 @@ export default function Calendar({ type }: { type: CalendarType }) {
     isAppointmentsLoading ||
     isHolidaysLoading;
   const {
-    taskUserOptions,
-    appointmentTechnicianOptions,
+    teamMateOptions,
+    categoryOptions,
     filteredTasks,
     filteredAppointments,
     events,
@@ -155,8 +152,8 @@ export default function Calendar({ type }: { type: CalendarType }) {
     tasks,
     appointments,
     holidays,
-    selectedTaskUserIds,
-    selectedAppointmentTechnicianIds,
+    selectedTeamMateIds,
+    selectedCategoryIds,
   });
 
   const estRevenue = filteredAppointments.reduce(
@@ -244,12 +241,12 @@ export default function Calendar({ type }: { type: CalendarType }) {
         appointmentCount={filteredAppointments.length}
         taskCount={filteredTasks.length}
         estRevenue={estRevenue}
-        users={taskUserOptions}
-        technicians={appointmentTechnicianOptions}
-        selectedUserIds={selectedTaskUserIds}
-        selectedTechnicianIds={selectedAppointmentTechnicianIds}
-        onSelectedUserIdsChange={setSelectedTaskUserIds}
-        onSelectedTechnicianIdsChange={setSelectedAppointmentTechnicianIds}
+        teamMates={teamMateOptions}
+        categories={categoryOptions}
+        selectedTeamMateIds={selectedTeamMateIds}
+        selectedCategoryIds={selectedCategoryIds}
+        onSelectedTeamMateIdsChange={setSelectedTeamMateIds}
+        onSelectedCategoryIdsChange={setSelectedCategoryIds}
       />
 
       <div className={`flex-1 w-full relative ${styles.calendarBody}`}>

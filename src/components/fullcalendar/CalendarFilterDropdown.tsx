@@ -17,64 +17,55 @@ type FilterOption = {
 };
 
 type CalendarFilterDropdownProps = {
-  users: FilterOption[];
-  technicians: FilterOption[];
-  selectedUserIds: number[];
-  selectedTechnicianIds: number[];
-  onSelectedUserIdsChange: (ids: number[]) => void;
-  onSelectedTechnicianIdsChange: (ids: number[]) => void;
+  teamMates: FilterOption[];
+  categories: FilterOption[];
+  selectedTeamMateIds: number[];
+  selectedCategoryIds: number[];
+  onSelectedTeamMateIdsChange: (ids: number[]) => void;
+  onSelectedCategoryIdsChange: (ids: number[]) => void;
 };
 
 export function CalendarFilterDropdown({
-  users,
-  technicians,
-  selectedUserIds,
-  selectedTechnicianIds,
-  onSelectedUserIdsChange,
-  onSelectedTechnicianIdsChange,
+  teamMates,
+  categories,
+  selectedTeamMateIds,
+  selectedCategoryIds,
+  onSelectedTeamMateIdsChange,
+  onSelectedCategoryIdsChange,
 }: CalendarFilterDropdownProps) {
-  const [activeFilterTab, setActiveFilterTab] = useState<"user" | "technician">(
-    "technician",
+  const [activeFilterTab, setActiveFilterTab] = useState<"teamMate" | "category">(
+    "teamMate",
   );
 
-  const allUsersSelected =
-    users.length > 0 && selectedUserIds.length === users.length;
-  const allTechniciansSelected =
-    technicians.length > 0 &&
-    selectedTechnicianIds.length === technicians.length;
+  const allTeamMatesSelected =
+    teamMates.length > 0 && selectedTeamMateIds.length === teamMates.length;
+  const allCategoriesSelected =
+    categories.length > 0 && selectedCategoryIds.length === categories.length;
 
-  const handleToggleUser = (userId: number, checked: boolean) => {
+  const handleToggleTeamMate = (id: number, checked: boolean) => {
     if (checked) {
-      if (selectedUserIds.includes(userId)) {
-        return;
-      }
-      onSelectedUserIdsChange([...selectedUserIds, userId]);
-      return;
+      if (selectedTeamMateIds.includes(id)) return;
+      onSelectedTeamMateIdsChange([...selectedTeamMateIds, id]);
+    } else {
+      onSelectedTeamMateIdsChange(selectedTeamMateIds.filter((i) => i !== id));
     }
-
-    onSelectedUserIdsChange(selectedUserIds.filter((id) => id !== userId));
   };
 
-  const handleToggleTechnician = (technicianId: number, checked: boolean) => {
+  const handleToggleAllTeamMates = (checked: boolean) => {
+    onSelectedTeamMateIdsChange(checked ? teamMates.map((t) => t.id) : []);
+  };
+
+  const handleToggleCategory = (id: number, checked: boolean) => {
     if (checked) {
-      if (selectedTechnicianIds.includes(technicianId)) {
-        return;
-      }
-      onSelectedTechnicianIdsChange([...selectedTechnicianIds, technicianId]);
-      return;
+      if (selectedCategoryIds.includes(id)) return;
+      onSelectedCategoryIdsChange([...selectedCategoryIds, id]);
+    } else {
+      onSelectedCategoryIdsChange(selectedCategoryIds.filter((i) => i !== id));
     }
-
-    onSelectedTechnicianIdsChange(
-      selectedTechnicianIds.filter((id) => id !== technicianId),
-    );
   };
 
-  const handleToggleAllTechnicians = (checked: boolean) => {
-    onSelectedTechnicianIdsChange(checked ? technicians.map((t) => t.id) : []);
-  };
-
-  const handleToggleAllUsers = (checked: boolean) => {
-    onSelectedUserIdsChange(checked ? users.map((u) => u.id) : []);
+  const handleToggleAllCategories = (checked: boolean) => {
+    onSelectedCategoryIdsChange(checked ? categories.map((c) => c.id) : []);
   };
 
   return (
@@ -83,7 +74,7 @@ export function CalendarFilterDropdown({
         <Button
           variant="outline"
           className="gap-2 flex-1 lg:flex-none w-full lg:w-auto"
-          disabled={!users.length && !technicians.length}
+          disabled={!teamMates.length && !categories.length}
         >
           <Filter size={14} />
           Filters
@@ -93,34 +84,36 @@ export function CalendarFilterDropdown({
         <div className="mb-1 grid grid-cols-2 border-b">
           <button
             type="button"
-            onClick={() => setActiveFilterTab("user")}
-            className={`px-3 py-2 text-sm ${activeFilterTab === "user"
-              ? "border-b-2 border-slate-900 font-medium text-slate-900"
-              : "text-slate-500"
-              }`}
+            onClick={() => setActiveFilterTab("teamMate")}
+            className={`px-3 py-2 text-sm ${
+              activeFilterTab === "teamMate"
+                ? "border-b-2 border-slate-900 font-medium text-slate-900"
+                : "text-slate-500"
+            }`}
           >
-            User
+            Team Mate
           </button>
           <button
             type="button"
-            onClick={() => setActiveFilterTab("technician")}
-            className={`px-3 py-2 text-sm ${activeFilterTab === "technician"
-              ? "border-b-2 border-slate-900 font-medium text-slate-900"
-              : "text-slate-500"
-              }`}
+            onClick={() => setActiveFilterTab("category")}
+            className={`px-3 py-2 text-sm ${
+              activeFilterTab === "category"
+                ? "border-b-2 border-slate-900 font-medium text-slate-900"
+                : "text-slate-500"
+            }`}
           >
-            Technician
+            Category
           </button>
         </div>
 
-        {activeFilterTab === "user" ? (
+        {activeFilterTab === "teamMate" ? (
           <>
-            {users.length > 0 ? (
+            {teamMates.length > 0 ? (
               <>
                 <DropdownMenuCheckboxItem
-                  checked={allUsersSelected}
+                  checked={allTeamMatesSelected}
                   onCheckedChange={(checked) =>
-                    handleToggleAllUsers(Boolean(checked))
+                    handleToggleAllTeamMates(Boolean(checked))
                   }
                 >
                   Select All
@@ -128,32 +121,32 @@ export function CalendarFilterDropdown({
 
                 <DropdownMenuSeparator />
 
-                {users.map((userItem) => (
+                {teamMates.map((mate) => (
                   <DropdownMenuCheckboxItem
-                    key={userItem.id}
-                    checked={selectedUserIds.includes(userItem.id)}
+                    key={mate.id}
+                    checked={selectedTeamMateIds.includes(mate.id)}
                     onCheckedChange={(checked) =>
-                      handleToggleUser(userItem.id, Boolean(checked))
+                      handleToggleTeamMate(mate.id, Boolean(checked))
                     }
                   >
-                    {userItem.name}
+                    {mate.name}
                   </DropdownMenuCheckboxItem>
                 ))}
               </>
             ) : (
               <div className="px-3 py-3 text-sm text-slate-500">
-                No user available
+                No team mate available
               </div>
             )}
           </>
         ) : (
           <>
-            {technicians.length > 0 ? (
+            {categories.length > 0 ? (
               <>
                 <DropdownMenuCheckboxItem
-                  checked={allTechniciansSelected}
+                  checked={allCategoriesSelected}
                   onCheckedChange={(checked) =>
-                    handleToggleAllTechnicians(Boolean(checked))
+                    handleToggleAllCategories(Boolean(checked))
                   }
                 >
                   Select All
@@ -161,21 +154,21 @@ export function CalendarFilterDropdown({
 
                 <DropdownMenuSeparator />
 
-                {technicians.map((technician) => (
+                {categories.map((cat) => (
                   <DropdownMenuCheckboxItem
-                    key={technician.id}
-                    checked={selectedTechnicianIds.includes(technician.id)}
+                    key={cat.id}
+                    checked={selectedCategoryIds.includes(cat.id)}
                     onCheckedChange={(checked) =>
-                      handleToggleTechnician(technician.id, Boolean(checked))
+                      handleToggleCategory(cat.id, Boolean(checked))
                     }
                   >
-                    {technician.name}
+                    {cat.name}
                   </DropdownMenuCheckboxItem>
                 ))}
               </>
             ) : (
               <div className="px-3 py-3 text-sm text-slate-500">
-                No technician available
+                No category available
               </div>
             )}
           </>
