@@ -16,7 +16,10 @@ export default function useAppointmentQuery(
             gte: `${startDate}T00:00:00.000Z`,
             lte: `${endDate}T23:59:59.999Z`,
           },
-          AND: [{ startTime: { not: null } }, { endTime: { not: null } }],
+          OR: [
+            { AND: [{ startTime: { not: null } }, { endTime: { not: null } }] },
+            { AND: [{ startTime: null }, { endTime: null }] },
+          ],
         },
         include: {
           appointmentUsers: {

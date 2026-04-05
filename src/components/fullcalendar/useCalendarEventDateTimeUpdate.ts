@@ -34,12 +34,19 @@ export function useCalendarEventDateTimeUpdate() {
         return;
       }
 
-      const eventEnd =
-        info.event.end ?? moment(eventStart).add(1, "hour").toDate();
+      const isAllDay = info.event.allDay;
       const updatedDate = moment(eventStart).format("YYYY-MM-DD");
-      const updatedStartTime = moment(eventStart).format("HH:mm");
-      const updatedEndTime = moment(eventEnd).format("HH:mm");
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+      let updatedStartTime: string | null = null;
+      let updatedEndTime: string | null = null;
+
+      if (!isAllDay) {
+        const eventEnd =
+          info.event.end ?? moment(eventStart).add(1, "hour").toDate();
+        updatedStartTime = moment(eventStart).format("HH:mm");
+        updatedEndTime = moment(eventEnd).format("HH:mm");
+      }
 
       try {
         if (eventType === "task") {
