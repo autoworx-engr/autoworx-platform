@@ -2,7 +2,14 @@
 import { cn } from "@/lib/cn";
 import { Item } from "@/stores/estimate-create";
 import { useEstimatePopupStore } from "@/stores/estimate-popup";
-import { ChevronDown, ChevronUp, Plus, Search, SquarePen, X } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Plus,
+  Search,
+  SquarePen,
+  X,
+} from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
 type MobileItemSelectorProps<T> = {
@@ -66,9 +73,9 @@ export default function MobileItemSelector<T>({
     setIsOpen(!isOpen);
     // Force dropdown to open and focus the search
     // setIsOpen(true);
-    setTimeout(() => {
-      searchRef.current?.focus();
-    }, 50);
+    // setTimeout(() => {
+    //   searchRef.current?.focus();
+    // }, 50);
   };
 
   // Handle search
@@ -134,7 +141,7 @@ export default function MobileItemSelector<T>({
           "ring-1 ring-inset ring-slate-200 hover:bg-slate-100",
           isOpen && "ring-2 ring-[#6571FF]/40 bg-white shadow-sm",
           !selected && "text-slate-400 font-normal",
-          selected && "text-slate-600 font-bold"
+          selected && "text-slate-600 font-bold",
         )}
         onClick={handleClick}
       >
@@ -142,8 +149,16 @@ export default function MobileItemSelector<T>({
           {selected ? (selected as any)[display] : `Select ${label}`}
         </span>
 
-        <div className={cn("transition-transform duration-200", isOpen ? "rotate-180" : "rotate-0")}>
-          <ChevronDown size={18} className={isOpen ? "text-[#6571FF]" : "text-slate-400"} />
+        <div
+          className={cn(
+            "transition-transform duration-200",
+            isOpen ? "rotate-180" : "rotate-0",
+          )}
+        >
+          <ChevronDown
+            size={18}
+            className={isOpen ? "text-[#6571FF]" : "text-slate-400"}
+          />
         </div>
 
         {/* Edit/Delete badges - Floating style */}
@@ -205,7 +220,9 @@ export default function MobileItemSelector<T>({
                 className={cn(
                   "w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-all",
                   "hover:bg-[#6571FF]/5 hover:text-[#6571FF]",
-                  selected && (selected as any).id === (item as any).id ? "bg-[#6571FF] text-white" : "text-slate-600"
+                  selected && (selected as any).id === (item as any).id
+                    ? "bg-[#6571FF] text-white"
+                    : "text-slate-600",
                 )}
                 onClick={() => handleSelect(item)}
               >
@@ -213,7 +230,9 @@ export default function MobileItemSelector<T>({
               </button>
             ))}
             {filteredList.length === 0 && (
-              <div className="py-4 text-center text-xs text-slate-400">No results found</div>
+              <div className="py-4 text-center text-xs text-slate-400">
+                No results found
+              </div>
             )}
           </div>
 

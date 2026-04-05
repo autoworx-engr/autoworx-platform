@@ -78,8 +78,8 @@ export default function Tasks() {
   return (
     <div
       className={cn(
-        "md:app-shadow relative mt-5 flex flex-grow flex-col gap-2 overflow-hidden rounded-[12px] md:bg-background",
-        minimized || "p-3"
+        "md:app-shadow relative mt-5 flex flex-grow flex-col gap-2 overflow-hidden rounded-[12px] md:bg-background w-full max-w-80",
+        minimized || "p-3",
       )}
     >
       <h2 className="-mt-4 flex items-center justify-between md:-mt-0">

@@ -74,7 +74,7 @@ export default function AddUsersInGroupModal({
     }));
     const searchUsersResult = await searchUsers(
       searchTerm || "",
-      withoutContactList.concat(alreadyAddedUsersInGroup)
+      withoutContactList.concat(alreadyAddedUsersInGroup),
     );
     if (searchUsersResult.success) {
       setGroupUsers(searchUsersResult.data);
@@ -89,7 +89,7 @@ export default function AddUsersInGroupModal({
       const searchTerm = event.target.value;
       getFindUsers(searchTerm);
     },
-    500
+    500,
   );
 
   // add user in contact list
@@ -99,7 +99,7 @@ export default function AddUsersInGroupModal({
       name: user.firstName + " " + user.lastName,
     };
     setGroupUsers((prevContact) =>
-      prevContact.filter((prevUser) => prevUser.id !== user.id)
+      prevContact.filter((prevUser) => prevUser.id !== user.id),
     );
 
     setError(null);
@@ -112,7 +112,7 @@ export default function AddUsersInGroupModal({
       users.find((u) => u.id === user.id)!,
     ]);
     setContactList((prev) =>
-      prev.filter((prevUser) => prevUser.id !== user.id)
+      prev.filter((prevUser) => prevUser.id !== user.id),
     );
   };
 
@@ -136,10 +136,10 @@ export default function AddUsersInGroupModal({
                 return response.data;
               }
               return g;
-            })
+            }),
           );
 
-        successToast("Users added to the group successfully!")
+        successToast("Users added to the group successfully!");
       } else {
         setError("Failed to create group.");
       }
@@ -259,7 +259,6 @@ export default function AddUsersInGroupModal({
                 }}
                 className="absolute right-1 top-9 size-6 cursor-pointer text-slate-500 transition-transform duration-300 ease-in-out hover:scale-110 dark:text-slate-400"
               />
-
             </div>
           )}
         </div>

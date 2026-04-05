@@ -44,7 +44,7 @@ async function fetchCountries(): Promise<CountryOption[]> {
   }
 
   return Array.from(map.values()).sort((a, b) =>
-    a.title.localeCompare(b.title)
+    a.title.localeCompare(b.title),
   );
 }
 
@@ -53,7 +53,7 @@ type PhoneInputProps = {
   onChange?: (
     phoneNumber: string,
     callingCode: string,
-    countryCode: string
+    countryCode: string,
   ) => void;
   label?: string;
   placeholder?: string;
@@ -77,7 +77,7 @@ export default function PhoneInput({
 }: PhoneInputProps) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [selectedCountry, setSelectedCountry] = useState<CountryOption | null>(
-    null
+    null,
   );
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -173,18 +173,18 @@ export default function PhoneInput({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    if (isOpen && searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
-  }, [isOpen]);
+  // useEffect(() => {
+  //   if (isOpen && searchInputRef.current) {
+  //     searchInputRef.current.focus();
+  //   }
+  // }, [isOpen]);
 
   const filteredCountries = useMemo(() => {
     if (!searchTerm) return countries;
     const lower = searchTerm.toLowerCase();
     return countries.filter(
       (c) =>
-        c.title.toLowerCase().includes(lower) || c.code?.includes(searchTerm)
+        c.title.toLowerCase().includes(lower) || c.code?.includes(searchTerm),
     );
   }, [countries, searchTerm]);
 
@@ -201,7 +201,7 @@ export default function PhoneInput({
     onChange?.(
       num,
       selectedCountry?.code || "",
-      selectedCountry?.isoCode || ""
+      selectedCountry?.isoCode || "",
     );
   };
 
@@ -215,7 +215,7 @@ export default function PhoneInput({
       {label && (
         <label
           className={cn(
-            "flex items-center gap-1 text-base font-medium text-slate-700 dark:text-slate-200 transition-colors duration-300"
+            "flex items-center gap-1 text-base font-medium text-slate-700 dark:text-slate-200 transition-colors duration-300",
           )}
         >
           {label}
