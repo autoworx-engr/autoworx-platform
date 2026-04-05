@@ -269,7 +269,7 @@ export default function Calendar({ type }: { type: CalendarType }) {
               firstDay={firstDay}
               navLinks={true}
               editable={true}
-              dayMaxEvents={5}
+              dayMaxEvents={2}
               eventClick={handleEventClick}
               eventDrop={handleEventDateTimeUpdate}
               eventResize={handleEventDateTimeUpdate}
