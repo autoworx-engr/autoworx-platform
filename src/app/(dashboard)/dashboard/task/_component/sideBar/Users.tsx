@@ -148,7 +148,7 @@ export default function Users() {
   return (
     <div
       className={cn(
-        "md:app-shadow relative mt-5 flex flex-grow flex-col gap-2 overflow-hidden rounded-[12px] md:bg-background",
+        "md:app-shadow relative mt-5 flex flex-grow flex-col gap-2 overflow-hidden rounded-[12px] md:bg-background w-full max-w-80",
         minimized || "p-3",
       )}
     >
@@ -237,7 +237,7 @@ export default function Users() {
         <NewEmployee
           button={
             <button
-              className="mt-4 w-full rounded-xl bg-blue-600 text-[15px] flex items-center justify-center gap-2 px-6 py-2 text-sm font-semibold text-white transition-all duration-300 ease-in-out
+              className="mt-4 w-full rounded-xl bg-blue-600 py-2 text-[15px] flex items-center justify-center gap-2 px-6  text-sm font-semibold text-white transition-all duration-300 ease-in-out
 
   // Gradient Background (Blue/Indigo)
   bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
