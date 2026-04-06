@@ -41,6 +41,7 @@ interface SelectorProps<T> {
   useInfiniteScroll?: boolean;
   showSearch?: boolean;
   usePortal?: boolean;
+  isLoading?: boolean;
 }
 
 export default function Selector<T>({
@@ -64,6 +65,7 @@ export default function Selector<T>({
   useInfiniteScroll = false,
   showSearch = true,
   usePortal = false,
+  isLoading = false,
 }: SelectorProps<T>): JSX.Element {
   const [searchTerm, setSearchTerm] = useState("");
   const [localOpen, setLocalOpen] = useState(false);
@@ -170,7 +172,11 @@ export default function Selector<T>({
         onScroll={handleScroll}
         className="flex max-h-48 flex-col overflow-y-auto py-1 thin-scrollbar"
       >
-        {filteredItems?.length === 0 ? (
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-6 px-4">
+            <p className="text-sm text-slate-400">Loading...</p>
+          </div>
+        ) : filteredItems?.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-6 px-4">
             <Search size={18} className="text-slate-300 mb-1.5" />
             <p className="text-sm text-slate-400">No results found</p>

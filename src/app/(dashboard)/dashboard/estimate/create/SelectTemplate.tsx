@@ -35,10 +35,8 @@ export default function SelectTemplate({
   }, [searchTerm]);
 
   // Infinite query
-  const { data: infiniteData } =
+  const { data: templateList, isLoading } =
     useTemplateListInfiniteQuery(debouncedSearchTerm);
-
-  const templateList = useMemo(() => infiniteData ?? [], [infiniteData]);
 
   const handleSelect = (t: InvoiceTemplate | null) => {
     setTemplate(t);
@@ -69,11 +67,12 @@ export default function SelectTemplate({
             <h3 className="font-bold">{t.title}</h3>
           </div>
         )}
-        items={templateList}
+        items={templateList || []}
         onSearch={(search: string) => {
           setSearchTerm(search);
-          return templateList;
+          return templateList || [];
         }}
+        isLoading={isLoading}
         openState={[
           openDropdown as boolean,
           setOpenDropdown as Dispatch<SetStateAction<boolean>>,

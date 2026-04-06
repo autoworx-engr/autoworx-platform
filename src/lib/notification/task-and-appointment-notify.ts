@@ -14,6 +14,14 @@ type TNewAppointmentNotification = {
   clientName?: string;
   sendRoles?: EmployeeType[];
 };
+type TNewTaskNotification = {
+  title: string;
+  appointmentDate?: Date | null;
+  startTime: string;
+  companyId?: number;
+  clientName?: string;
+  sendRoles?: EmployeeType[];
+};
 
 // send notification for new Appointment create
 export const sendNewAppointmentNotification = async ({
@@ -91,6 +99,63 @@ export const sendNewAppointmentNotification = async ({
         });
       }),
     );
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+};
+// send notification for new task create
+export const sendNewTaskNotification = async ({
+  companyId,
+  title,
+  clientName,
+  appointmentDate,
+  startTime,
+  sendRoles = ["Admin", "Manager"],
+}: TNewTaskNotification) => {
+  try {
+    const companyUniqueId = companyId || (await getCompanyId());
+    // update technician status to complete
+    // get all company admins and managers
+    const getUsers = await getUsersByRole(companyUniqueId, sendRoles, {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      phone: true,
+    });
+
+    const date = moment(appointmentDate);
+    const formattedDate = date.isValid()
+      ? date.format("MM-DD-YYYY")
+      : moment().format("MM-DD-YYYY");
+    const formattedTime = moment(startTime, "HH:mm").format("hh:mm A");
+    const description = clientName
+      ? `Task with ${clientName} on ${formattedDate} at ${formattedTime} has been created. Check your Autoworx calendar.`
+      : `Task ${title} on ${formattedDate} at ${formattedTime} has been created. Check your Autoworx calendar.`;
+
+    const sendNotiInfo = {
+      title: "New Task",
+      companyId: companyUniqueId,
+      type: "task",
+      redirectUrl: `/dashboard/task/day?date=${formattedDate}`,
+      description: description,
+    };
+
+    for (const user of getUsers) {
+      sendUserNotifications({
+        userId: user.id,
+        userName: `${user.firstName} ${user.lastName}`,
+        userEmail: user.email || "",
+        userPhoneNo: user.phone || "",
+        companyId: companyUniqueId,
+        iconType: sendNotiInfo.type as "task",
+        title: sendNotiInfo.title,
+        description,
+        type: "APPOINTMENT_CREATED",
+        redirectUrl: sendNotiInfo.redirectUrl,
+      });
+    }
   } catch (err) {
     console.error(err);
     throw err;
