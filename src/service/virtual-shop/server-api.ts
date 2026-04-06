@@ -9,6 +9,12 @@ export const getShopBySlugServer = cache(async (slug: string) => {
       where: { slug },
       include: {
         bookingSettings: true,
+        company: {
+          select: {
+            tax: true,
+            serviceFee: true,
+          },
+        },
       },
     });
 

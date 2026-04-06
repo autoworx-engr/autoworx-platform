@@ -587,19 +587,23 @@ export const Checkout = () => {
     bookingSettings?.isServiceFeeEnabled ?? settings.shopFeeEnabled;
   const isTaxEnabled = bookingSettings?.isTaxEnabled ?? settings.taxEnabled;
 
+  // Gift card preview (capped at subtotal so we know the discount before tax)
+  const giftCardRedeemedPreview = appliedGiftCard
+    ? Number(Math.min(appliedGiftCard.balance, subtotal).toFixed(2))
+    : 0;
+
+  // Tax and fee are computed on (subtotal - discount) to match the invoice display
+  const netForTaxFee = subtotal - giftCardRedeemedPreview;
   const shopFee = isServiceFeeEnabled
-    ? Number(((serviceBaseTotal * serviceFeeRate) / 100).toFixed(2))
+    ? Number(((netForTaxFee * serviceFeeRate) / 100).toFixed(2))
     : 0;
   const tax = isTaxEnabled
-    ? Number(((serviceBaseTotal * taxRate) / 100).toFixed(2))
+    ? Number(((netForTaxFee * taxRate) / 100).toFixed(2))
     : 0;
-  const grandTotal = Number((subtotal + shopFee + tax).toFixed(2));
-  const giftCardRedeemedPreview = appliedGiftCard
-    ? Number(Math.min(appliedGiftCard.balance, grandTotal).toFixed(2))
-    : 0;
-  const adjustedGrandTotal = Number(
-    Math.max(0, grandTotal - giftCardRedeemedPreview).toFixed(2),
+  const grandTotal = Number(
+    (netForTaxFee + shopFee + tax).toFixed(2),
   );
+  const adjustedGrandTotal = grandTotal;
 
   const calculatedDepositAmount = isDepositEnabled
     ? depositType === "fixed"
