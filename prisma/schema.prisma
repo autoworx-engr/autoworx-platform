@@ -26,6 +26,7 @@ model Appointment {
   confirmationEmailTemplateStatus Boolean                         @default(false) @map("confirmation_email_template_status")
   reminderEmailTemplateId         Int?                            @map("reminder_email_template_id")
   reminderEmailTemplateStatus     Boolean                         @default(false) @map("reminder_email_template_status")
+  serviceCategoryId               Int?                            @map("service_category_id")
   times                           Json? // { time: string; date: string }
   createdAt                       DateTime                        @default(now()) @map("created_at")
   updatedAt                       DateTime                        @default(now()) @updatedAt @map("updated_at")
@@ -34,6 +35,7 @@ model Appointment {
   appointmentUsers                AppointmentUser[]
   client                          Client?                         @relation(fields: [clientId], references: [id])
   vehicle                         Vehicle?                        @relation(fields: [vehicleId], references: [id])
+  serviceCategory                 Category?                       @relation(fields: [serviceCategoryId], references: [id])
   googleEventId                   String?
   timezone                        String?
   createdBy                       TaskAndAppointmentCreatedByEnum @default(user)
@@ -41,6 +43,7 @@ model Appointment {
   @@index([userId], name: "fk_tasks_user")
   @@index([companyId], name: "fk_tasks_company")
   @@index([clientId], name: "fk_tasks_client")
+  @@index([serviceCategoryId])
   @@index([date])
 }
 
@@ -1049,9 +1052,11 @@ model MailgunEmailAttachment {
 model Category {
   id                Int                @id @default(autoincrement())
   name              String
+  color             String             @default("#94A3B8") // hex (with #)
   companyId         Int                @map("company_id")
   createdAt         DateTime           @default(now()) @map("created_at")
   updatedAt         DateTime           @default(now()) @updatedAt @map("updated_at")
+  appointments      Appointment[]
   services          Service[]
   materials         Material[]
   labors            Labor[]

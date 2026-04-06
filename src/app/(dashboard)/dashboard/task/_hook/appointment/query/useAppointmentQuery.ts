@@ -3,7 +3,7 @@ import { Appointment, AppointmentUser, User } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 import { appointmentQueryKey } from "../../../_constant";
 
-export default function useAppointmentQueryByWeek(
+export default function useAppointmentQuery(
   startDate: string,
   endDate: string,
 ) {
@@ -16,7 +16,10 @@ export default function useAppointmentQueryByWeek(
             gte: `${startDate}T00:00:00.000Z`,
             lte: `${endDate}T23:59:59.999Z`,
           },
-          AND: [{ startTime: { not: null } }, { endTime: { not: null } }],
+          OR: [
+            { AND: [{ startTime: { not: null } }, { endTime: { not: null } }] },
+            { AND: [{ startTime: null }, { endTime: null }] },
+          ],
         },
         include: {
           appointmentUsers: {
@@ -39,18 +42,34 @@ export default function useAppointmentQueryByWeek(
               mobile: true,
             },
           },
+          vehicle: {
+            select: {
+              model: true,
+              make: true,
+              year: true,
+            },
+          },
+          serviceCategory: {
+            select: {
+              id: true,
+              name: true,
+              color: true,
+            },
+          },
         },
       });
       const appointments = response.data as (Appointment & {
         appointmentUsers: (AppointmentUser & { user: User })[];
       })[];
-      
+
       // Transform appointmentUsers to assignedUsers to match CalendarAppointment interface
-      return appointments.map(appointment => {
+      return appointments.map((appointment) => {
         const { appointmentUsers, ...appointmentData } = appointment;
         return {
           ...appointmentData,
-          assignedUsers: appointmentUsers.map(appointmentUser => appointmentUser.user)
+          assignedUsers: appointmentUsers.map(
+            (appointmentUser) => appointmentUser.user,
+          ),
         };
       });
     },
