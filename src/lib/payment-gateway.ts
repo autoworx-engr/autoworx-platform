@@ -8,6 +8,7 @@ export interface PaymentParams {
   invoiceId?: string;
   statementId?: string;
   amount: string;
+  tip?: string;
   payType: "payment" | "deposit" | "statement";
 }
 

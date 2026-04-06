@@ -3,9 +3,7 @@ import { format, isValid, parse } from "date-fns";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
 import { DateRangePicker } from "react-date-range";
-// @ts-expect-error CSS side-effect import for react-date-range
 import "react-date-range/dist/styles.css"; // main style file
-// @ts-expect-error CSS side-effect import for react-date-range
 import "react-date-range/dist/theme/default.css"; // theme css file
 import { Calendar } from "lucide-react";
 type TProps = {

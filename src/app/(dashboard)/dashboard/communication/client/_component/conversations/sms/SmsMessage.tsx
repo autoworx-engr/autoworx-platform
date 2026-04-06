@@ -18,6 +18,7 @@ export default function SmsMessage({
 }) {
   const isIncoming = message.sentBy !== "Company";
   const text = (message.message ?? "").trim();
+  const hasAttachments = (message.attachments?.length ?? 0) > 0;
 
   const senderName =
     message.sentBy === "Company"
@@ -60,8 +61,8 @@ export default function SmsMessage({
       <div
         className={cn("max-w-[85%] sm:max-w-[70%]", !isIncoming && "ml-auto")}
       >
-        {/* Bubble */}
-        {(!!text || !!message) && (
+        {/* Bubble — only render when there's text or attachments */}
+        {(!!text || hasAttachments) && (
           <div
             className={cn(
               "group relative rounded-2xl px-3 py-2 text-[14px] shadow-sm ring-1 transition",
@@ -71,13 +72,6 @@ export default function SmsMessage({
                 : "bg-gradient-to-br from-[#0a8a95] to-[#006D77] text-white ring-white/20",
             )}
           >
-            {/* Bubble tails
-            // {isIncoming ? (
-            //   <span className="pointer-events-none absolute -left-1 bottom-2 h-3 w-3 rotate-45 rounded-[2px] bg-zinc-200 ring-1 ring-zinc-300 dark:bg-zinc-800 dark:ring-white/10" />
-            // ) : (
-            //   <span className="pointer-events-none absolute -right-1 bottom-2 h-3 w-3 rotate-45 rounded-[2px] bg-[#006D77] ring-1 ring-white/20" />
-            // )} */}
-
             {/* Text */}
             {text && (
               <div className="break-words whitespace-pre-wrap">
@@ -85,8 +79,10 @@ export default function SmsMessage({
               </div>
             )}
 
-            {/* Attachments (kept inside bubble) */}
-            <SMSAttachment message={message} handleDownload={handleDownload} />
+            {/* Attachments */}
+            {hasAttachments && (
+              <SMSAttachment message={message} handleDownload={handleDownload} />
+            )}
           </div>
         )}
 

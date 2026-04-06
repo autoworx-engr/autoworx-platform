@@ -14,6 +14,7 @@ export interface ReturnPayment {
   vehicle?: string;
   date: Date;
   amount: number;
+  tip: number;
   refundedAmount: number;
   refundMethod?: string;
   refundReason?: string;
@@ -67,6 +68,7 @@ export async function getPayments(): Promise<ReturnPayment[]> {
       vehicle: `${payment?.invoice?.vehicle?.year || ""} ${payment?.invoice?.vehicle?.make || ""} ${payment?.invoice?.vehicle?.model || ""} ${payment?.invoice?.vehicle?.other || ""}`,
       date: payment.date as Date,
       amount: Number(payment.amount),
+      tip: Number(payment.tip) || 0,
       refundedAmount: Number(payment.refundedAmount) || 0,
       refundMethod: payment.refundMethod as string,
       refundReason: payment.refundReason ?? undefined,

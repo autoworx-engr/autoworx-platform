@@ -121,20 +121,28 @@ export async function POST(req: NextRequest) {
         }
 
         // Process payment for each invoice in the statement
+        // Use base amount (excluding tip) for distributing across invoices
+        const statementTip = parseFloat(paymentData.tip || "0");
+        const statementBaseAmount = Number(paymentData.amount);
         let totalPaid = 0;
         const invoicesWithDue = statement.invoice.filter(
           (inv) => inv.due && Number(inv.due) > 0
         );
 
         const paymentRecords = [];
+        let isFirstPayment = true;
 
         for (const invoice of invoicesWithDue) {
           const paymentAmount = Math.min(
             Number(invoice.due ?? 0),
-            Number(paymentData.amount) - totalPaid
+            statementBaseAmount - totalPaid
           );
 
           if (paymentAmount <= 0) break;
+
+          // Store tip on the first payment record only
+          const tipForThisRecord = isFirstPayment ? statementTip : 0;
+          isFirstPayment = false;
 
           // Create payment record for this invoice
           let stripePayment;
@@ -144,6 +152,7 @@ export async function POST(req: NextRequest) {
                 companyId: paymentData.companyId,
                 invoiceId: invoice.id,
                 amount: paymentAmount,
+                tip: tipForThisRecord,
                 type: "OTHER",
                 date: new Date(),
                 other: {
@@ -174,6 +183,7 @@ export async function POST(req: NextRequest) {
                 companyId: paymentData.companyId,
                 invoiceId: invoice.id,
                 amount: paymentAmount,
+                tip: tipForThisRecord,
                 type: "OTHER",
                 date: new Date(),
                 other: {
@@ -261,6 +271,7 @@ export async function POST(req: NextRequest) {
         // Determine payment type based on payType from metadata
         const isDeposit = paymentData.payType === "deposit";
         const paymentType = isDeposit ? "DEPOSIT" : "OTHER";
+        const tipAmount = parseFloat(paymentData.tip || "0");
 
         let stripePayment;
         if (stripeFound === -1) {
@@ -271,6 +282,7 @@ export async function POST(req: NextRequest) {
                 companyId: paymentData.companyId,
                 invoiceId: paymentData.invoiceId,
                 amount: paymentData.amount,
+                tip: tipAmount,
                 type: paymentType,
                 date: new Date(),
                 deposit: {
@@ -287,6 +299,7 @@ export async function POST(req: NextRequest) {
                 companyId: paymentData.companyId,
                 invoiceId: paymentData.invoiceId,
                 amount: paymentData.amount,
+                tip: tipAmount,
                 type: paymentType,
                 date: new Date(),
                 other: {
@@ -310,6 +323,7 @@ export async function POST(req: NextRequest) {
                 companyId: paymentData.companyId,
                 invoiceId: paymentData.invoiceId,
                 amount: paymentData.amount,
+                tip: tipAmount,
                 type: paymentType,
                 date: new Date(),
                 deposit: {
@@ -326,6 +340,7 @@ export async function POST(req: NextRequest) {
                 companyId: paymentData.companyId,
                 invoiceId: paymentData.invoiceId,
                 amount: paymentData.amount,
+                tip: tipAmount,
                 type: paymentType,
                 date: new Date(),
                 other: {

@@ -12,12 +12,16 @@ import React, { useState, useTransition } from "react";
 import ProfilePicture from "./ProfilePicture";
 import Timezone from "./Timezone";
 import { SlimTextarea } from "@/components/SlimTextarea";
+import Selector from "@/components/Selector";
+import { Tooltip } from "antd";
+import { InfoCircleOutlined } from "@ant-design/icons";
 
 type TProps = {
   company: Company | null;
 };
 
 export default function BusinessForm({ company }: TProps) {
+  const IconComponent = InfoCircleOutlined;
   const queryClient = useQueryClient();
   const [imageSrc, setImageSrc] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null | undefined>(
@@ -257,6 +261,10 @@ export default function BusinessForm({ company }: TProps) {
     newValidationErrors.businessType = validateBusinessType(
       businessSettings.businessType,
     );
+
+    newValidationErrors.teamSize = !businessSettings.teamSize
+  ? "Team size is required."
+  : "";
     newValidationErrors.businessPhone = validateBusinessPhone(
       businessSettings.businessPhone,
     );
@@ -266,6 +274,7 @@ export default function BusinessForm({ company }: TProps) {
     newValidationErrors.businessWebsite = validateBusinessWebsite(
       businessSettings.businessWebsite,
     );
+
 
     // Set validation errors
     setValidationErrors(newValidationErrors);
@@ -417,15 +426,53 @@ export default function BusinessForm({ company }: TProps) {
               name="businessType"
               error={validationErrors.businessType}
             />
-            <SlimInput
-              required={false}
-              value={businessSettings.teamSize}
-              onChange={handleChange}
-              label="Team Size"
-              name="teamSize"
-              error={validationErrors.teamSize}
-              tooltipText="Your team size will be displayed on your Collaboration Profile."
-            />
+      
+<div className="flex flex-col gap-1.5 w-full">
+  <label className="flex items-center gap-1 text-base font-medium text-slate-600 dark:text-slate-200 transition-colors duration-300">
+    Team Size
+    <span className="text-rose-500 font-bold">*</span>
+    <Tooltip title="Your team size will be displayed on your Collaboration Profile." placement="top">
+      <IconComponent className="text-gray-400 hover:text-gray-600 cursor-help text-xs" />
+    </Tooltip>
+  </label>
+
+  <Selector<{ id: string; label: string }>
+    label={(item) => item?.label ?? "Select Team Size"}
+    items={[
+      { id: "SMALL", label: "Small" },
+      { id: "MEDIUM", label: "Medium" },
+      { id: "LARGE", label: "Large" },
+    ]}
+    displayList={(item) => <span>{item.label}</span>}
+    selectedItem={
+      businessSettings.teamSize
+        ? {
+            id: businessSettings.teamSize,
+            label:
+              businessSettings.teamSize.charAt(0) +
+              businessSettings.teamSize.slice(1).toLowerCase(),
+          }
+        : null
+    }
+    onSelect={(item) =>
+      setBusinessSettings((prev) => ({
+        ...prev,
+        teamSize: item.id as typeof prev.teamSize,
+      }))
+    }
+    newButton={null}
+    showSearch={false}
+    className="max-w-full"
+  />
+
+  {validationErrors.teamSize && (
+    <div className="animate-in slide-in-from-top-1 fade-in duration-200 mt-1 flex items-center gap-1.5 px-1">
+      <div className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+      <span className="text-xs font-medium text-rose-500">{validationErrors.teamSize}</span>
+    </div>
+  )}
+</div>
+            
 
             <SlimInput
               required={false}

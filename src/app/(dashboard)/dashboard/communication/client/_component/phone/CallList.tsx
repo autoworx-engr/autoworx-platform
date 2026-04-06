@@ -4,10 +4,8 @@ import { useEffect, useRef } from "react";
 
 export const CallList = ({
   data,
-  twilioNumber,
 }: {
   data: any[];
-  twilioNumber: string;
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -28,7 +26,7 @@ export const CallList = ({
       className="mb-4 flex h-full w-full flex-col space-y-3 overflow-y-auto px-2 scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent"
     >
       {data.map((call) => {
-        const isSentByMe = call.from === twilioNumber;
+        const isSentByMe = call.direction === "outbound";
 
         return (
           <div

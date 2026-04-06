@@ -43,11 +43,17 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
+    const attachments = (body.attachments ?? []).map((a: any) => ({
+      url: a.url,
+      name: a.name,
+      isVoiceNote: a.isVoiceNote ?? false,
+    }));
+
     const data = await sendInfobipMessage({
       companyId: body.companyId,
       clientId: body.clientId,
       message: body.message,
-      attachments: body.attachments ?? [],
+      attachments,
     });
 
     if (!data.success) {
