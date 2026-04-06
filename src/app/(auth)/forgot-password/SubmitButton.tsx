@@ -19,7 +19,10 @@ export default function SubmitButton() {
 
     if (!res.ok) {
       const errorData = await res.json();
-      showError({ message: errorData.error || "Something went wrong", field: "email" });
+      showError({
+        message: errorData.error || "Something went wrong",
+        field: "email",
+      });
       return;
     }
 
