@@ -167,39 +167,9 @@ export async function POST(req: Request) {
 
     /* ---------------- COMPANY CHAT TRACK ---------------- */
 
-    const existingTrack = await db.companyChatTrack.findFirst({
-      where: {
-        OR: [
-          {
-            AND: [
-              { senderCompanyId: fromCompanyId },
-              { receiverCompanyId: toCompanyId },
-            ],
-          },
-          {
-            AND: [
-              { senderCompanyId: toCompanyId },
-              { receiverCompanyId: fromCompanyId },
-            ],
-          },
-        ],
-      },
-    });
-
     let chatTrack;
 
-    if (existingTrack) {
-      chatTrack = await db.companyChatTrack.update({
-        where: { id: existingTrack.id },
-        data: {
-          lastMessage: message || "Attachment",
-          messageId: createdMessage.id,
-          senderCompanyId: fromCompanyId,
-          receiverCompanyId: toCompanyId,
-          isRead: false,
-        },
-      });
-    } else {
+    if (createdMessage?.id) {
       chatTrack = await db.companyChatTrack.create({
         data: {
           senderCompanyId: fromCompanyId,

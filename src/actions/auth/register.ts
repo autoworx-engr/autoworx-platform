@@ -208,6 +208,11 @@ export async function register({
         permission_name: "serviceAutomation",
         status: true,
       },
+      {
+        title: "Reporting Automation",
+        permission_name: "reportingAutomation",
+        status: true,
+      },
     ];
 
     await Promise.all(

@@ -5,6 +5,7 @@ import { updateChatTrack } from "@/actions/communication/internal/updateChatTrac
 import Avatar from "@/components/Avatar";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { cn } from "@/lib/cn";
+import { successToast } from "@/lib/toast";
 import { useChatTrackStore } from "@/stores/chatTrackStore";
 import { sendType } from "@/types/Chat";
 import { Attachment, Group, User } from "@prisma/client";
@@ -22,14 +23,18 @@ import {
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import toast from "react-hot-toast";
 import { formatDate } from "./client/_component/conversations/mailgun/MailgunConversation";
-import InvoiceEstimateModal from "./collaboration/InvoiceEstimateModal";
 import AddUsersInGroupModal from "./internal/AddUsersInGroupModal";
 import { Message as TMessage } from "./internal/UsersArea";
 import Message from "./Message";
-import { successToast } from "@/lib/toast";
 
 type TSection = "collaboration" | "internal";
 
@@ -80,13 +85,16 @@ export default function MessageBox({
   const [groupName, setGroupName] = useState(group?.name || "");
   const [isGroupNameEdited, setIsGroupNameEdited] = useState(false);
 
-  useEffect(() => {
-    if (messageBoxRef.current) {
-      messageBoxRef.current.scrollTop = messageBoxRef.current.scrollHeight;
-      // messageBoxRef.current.scrollIntoView({ behavior: "smooth" });
-      setIsImageLoaded(false);
-    }
-  }, [messages, isImageLoaded]);
+  useLayoutEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      if (messageBoxRef.current) {
+        messageBoxRef.current.scrollTop = messageBoxRef.current.scrollHeight;
+        setIsImageLoaded(false);
+      }
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [messages, isImageLoaded, totalMessageBox]);
 
   async function handleSendMessage(e: any) {
     e.preventDefault();

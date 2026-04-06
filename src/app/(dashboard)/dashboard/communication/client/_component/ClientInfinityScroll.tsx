@@ -84,7 +84,7 @@ export default function ClientInfinityScroll({
     return () => {
       pusher.unbind("client-notify").unsubscribe(`client-notify-${companyId}`);
     };
-  }, [pathname]);
+  }, [companyId, clientIdParams]);
 
   useEffect(() => {
     // Only refetch when user is actively filtering/searching
@@ -174,13 +174,6 @@ export default function ClientInfinityScroll({
     }
   };
 
-  const sortedClients = clients.sort((a, b) => {
-    const dateA = a.conversationsTrack?.createdAt ?? new Date(0);
-    const dateB = b.conversationsTrack?.createdAt ?? new Date(0);
-
-    return dateB.getTime() - dateA.getTime();
-  });
-
   return (
     <div
       id="scrollableDiv"
@@ -200,7 +193,7 @@ export default function ClientInfinityScroll({
         scrollableTarget="scrollableDiv"
         endMessage={
           <p className="mb-5 text-center">
-            {sortedClients.length === 0 ? (
+            {clients.length === 0 ? (
               <b>Client Not Found</b>
             ) : (
               <b>Yay! You have seen it all</b>
@@ -208,7 +201,7 @@ export default function ClientInfinityScroll({
           </p>
         }
       >
-        {sortedClients?.map((client: Client) => {
+        {clients?.map((client: Client) => {
           const selected = parseInt(clientIdParams as string) === client.id;
           return (
             <ClientItem

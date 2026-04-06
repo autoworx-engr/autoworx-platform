@@ -14,14 +14,14 @@ export async function POST(request: NextRequest) {
     if (!identity || !deviceToken) {
       return NextResponse.json(
         { error: "identity and deviceToken are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (platform !== "ios") {
       return NextResponse.json(
         { error: "VoIP registration is only supported for iOS" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -32,29 +32,27 @@ export async function POST(request: NextRequest) {
     if (!twilioCredentials) {
       return NextResponse.json(
         { error: "Twilio credentials not found" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    const notifyServiceSid =
-      (twilioCredentials as any).notifyServiceSid ??
-      process.env.TWILIO_VOIP_NOTIFY_SERVICE_SID;
+    const notifyServiceSid = process.env.TWILIO_VOIP_NOTIFY_SERVICE_SID;
 
     const credentialSid =
-      (twilioCredentials as any).voipPushCredentialSid ??
+      (twilioCredentials as any).apnPushCredentialSid ??
       process.env.TWILIO_VOIP_PUSH_CREDENTIAL_SID;
 
     if (!notifyServiceSid || !credentialSid) {
       return NextResponse.json(
         { error: "Twilio Notify or Push Credential SID missing" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
     const client = Twilio(
       twilioCredentials.apiKeySid,
       twilioCredentials.apiKeySecret,
-      { accountSid: twilioCredentials.accountSid }
+      { accountSid: twilioCredentials.accountSid },
     );
 
     // Fetch ALL bindings for identity (safe pagination)
@@ -63,22 +61,22 @@ export async function POST(request: NextRequest) {
       .bindings.list({ identity });
 
     const apnBindings = bindings.filter(
-      (b) => b.bindingType === "apn" && !!b.address
+      (b) => b.bindingType === "apn" && !!b.address,
     );
 
     const matching = apnBindings.filter(
-      (b) => b.address?.toLowerCase() === normalizedToken
+      (b) => b.address?.toLowerCase() === normalizedToken,
     );
 
     // Remove stale bindings (enforce single-device policy)
     const staleBindings = apnBindings.filter(
-      (b) => b.address?.toLowerCase() !== normalizedToken
+      (b) => b.address?.toLowerCase() !== normalizedToken,
     );
 
     await Promise.all(
       staleBindings.map((b) =>
-        client.notify.v1.services(notifyServiceSid).bindings(b.sid).remove()
-      )
+        client.notify.v1.services(notifyServiceSid).bindings(b.sid).remove(),
+      ),
     );
 
     if (matching.length > 0) {
@@ -87,8 +85,8 @@ export async function POST(request: NextRequest) {
 
       await Promise.all(
         duplicates.map((b) =>
-          client.notify.v1.services(notifyServiceSid).bindings(b.sid).remove()
-        )
+          client.notify.v1.services(notifyServiceSid).bindings(b.sid).remove(),
+        ),
       );
 
       return NextResponse.json({
@@ -117,7 +115,7 @@ export async function POST(request: NextRequest) {
     console.error("VoIP registration error:", error);
     return NextResponse.json(
       { error: error?.message ?? "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

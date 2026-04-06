@@ -15,8 +15,6 @@ type Props = {
   companies: CompanyStat[];
 };
 
-
-
 const AWXDashboard = ({ companies }: Props) => {
   const { data: reports, isFetching, isLoading } = useGetAllBugReports(20);
   const [inputValue, setInputValue] = useState("");
@@ -26,11 +24,12 @@ const AWXDashboard = ({ companies }: Props) => {
 
   const filteredCompanies = useMemo(
     () =>
-      companies.filter((company) =>
-        company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        company?.adminEmail?.toLowerCase().includes(searchTerm.toLowerCase())
+      companies.filter(
+        (company) =>
+          company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          company?.adminEmail?.toLowerCase().includes(searchTerm.toLowerCase()),
       ),
-    [companies, searchTerm]
+    [companies, searchTerm],
   );
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -40,7 +39,6 @@ const AWXDashboard = ({ companies }: Props) => {
   };
 
   const getStatusStyles = (status: string | undefined) => {
-
     if (status?.toUpperCase() === "PAID") {
       // Modernized status tag for success state
       return {
@@ -64,9 +62,19 @@ const AWXDashboard = ({ companies }: Props) => {
     { title: "Bugs", value: reports?.length ?? 0 },
   ];
   return (
-    <div className="h-full lg:h-[calc(100vh-350px)] bg-slate-50 dark:bg-slate-900 p-4 text-xs 2xl:text-base">
-
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-4 text-xs 2xl:text-base">
       <div className="flex flex-col gap-y-8">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <h1 className="text-2xl font-bold text-slate-700 dark:text-slate-200">
+            AWX Dashboard
+          </h1>
+          <Link
+            href="/awx-dashboard/plans"
+            className="rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white transition hover:bg-slate-800"
+          >
+            Manage Plans
+          </Link>
+        </div>
 
         {/* Statistics Section  */}
         <div className="w-full space-y-4">
@@ -77,7 +85,6 @@ const AWXDashboard = ({ companies }: Props) => {
             {statistics.map((stat, index) => (
               <Card
                 key={index}
-
                 className="h-[120px] w-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50 transition-all duration-300 hover:shadow-2xl hover:shadow-[#6571FF]/20 dark:hover:shadow-[#6571FF]/10 sm:h-[150px] rounded-2xl ring-1 ring-slate-200 dark:ring-slate-700 hover:z-10 hover:-translate-y-0.5"
               >
                 <CardContent className="w-full px-4 py-6 sm:p-7">
@@ -93,7 +100,6 @@ const AWXDashboard = ({ companies }: Props) => {
             ))}
           </div>
         </div>
-
 
         <div className="grid grid-cols-1 gap-8 xl:grid-cols-3">
           <div className="h-full col-span-1 xl:col-span-2">
@@ -127,12 +133,11 @@ const AWXDashboard = ({ companies }: Props) => {
                   {filteredCompanies.map((company, index) => {
                     const statusStyles = getStatusStyles("PAID");
                     return (
-
                       <Link
                         href={`/awx-dashboard/statistics/${company?.id}`}
                         key={index}
                         className={cn(
-                          "flex cursor-pointer flex-col rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/70 p-3 transition-all duration-300 hover:border-[#6571FF] hover:shadow-lg hover:shadow-[#6571FF]/10 dark:hover:shadow-lg dark:hover:shadow-[#6571FF]/20 hover:-translate-y-0.5 sm:p-4 lg:flex-row lg:items-center lg:gap-6 lg:p-6 2xl:gap-8 2xl:p-8"
+                          "flex cursor-pointer flex-col rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/70 p-3 transition-all duration-300 hover:border-[#6571FF] hover:shadow-lg hover:shadow-[#6571FF]/10 dark:hover:shadow-lg dark:hover:shadow-[#6571FF]/20 hover:-translate-y-0.5 sm:p-4 lg:flex-row lg:items-center lg:gap-6 lg:p-6 2xl:gap-8 2xl:p-8",
                         )}
                       >
                         {/* company info */}
@@ -159,13 +164,22 @@ const AWXDashboard = ({ companies }: Props) => {
                             </p>
                             {/* Use text-slate-600 for data points */}
                             <p className="text-slate-600 dark:text-slate-300">
-                              Users : <span className="font-bold">{company.stats.users}</span>
+                              Users :{" "}
+                              <span className="font-bold">
+                                {company.stats.users}
+                              </span>
                             </p>
                             <p className="text-slate-600 dark:text-slate-300">
-                              Clients : <span className="font-bold">{company.stats.clients}</span>
+                              Clients :{" "}
+                              <span className="font-bold">
+                                {company.stats.clients}
+                              </span>
                             </p>
                             <p className="text-slate-600 dark:text-slate-300">
-                              Employee : <span className="font-bold">{company.stats.employees}</span>
+                              Employee :{" "}
+                              <span className="font-bold">
+                                {company.stats.employees}
+                              </span>
                             </p>
                           </div>
                         </div>
@@ -218,7 +232,6 @@ const AWXDashboard = ({ companies }: Props) => {
               isLoading={isLoading}
             />
           </div>
-
         </div>
       </div>
     </div>
