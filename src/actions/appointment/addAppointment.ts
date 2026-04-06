@@ -28,6 +28,7 @@ export interface AppointmentToAdd {
   assignedUsers: number[];
   clientId?: number;
   vehicleId?: number;
+  serviceCategoryId?: number;
   draftEstimate: string | null;
   notes?: string;
   confirmationEmailTemplateId?: number;
@@ -39,7 +40,7 @@ export interface AppointmentToAdd {
 }
 
 export async function addAppointment(
-  appointment: TCreateAppointmentValidationSchema
+  appointment: TCreateAppointmentValidationSchema,
 ): Promise<ServerAction | TErrorHandler> {
   try {
     await createAppointmentValidationSchema.parseAsync(appointment);
@@ -83,6 +84,7 @@ export async function addAppointment(
         endTime: appointment.endTime,
         clientId: appointment.clientId,
         vehicleId: appointment.vehicleId,
+        serviceCategoryId: appointment.serviceCategoryId,
         draftEstimate: appointment.draftEstimate,
         notes: appointment.notes,
         userId: parseInt(session.user.id),
@@ -135,7 +137,7 @@ export async function addAppointment(
 
       if (!pendingColumn) {
         throw new Error(
-          "Pending column not found for draft estimate at new appointment"
+          "Pending column not found for draft estimate at new appointment",
         );
       }
 
@@ -202,7 +204,7 @@ export async function addAppointment(
     });
 
     const appointmentDate = moment(
-      `${appointment.date}T${appointment.startTime}:00`
+      `${appointment.date}T${appointment.startTime}:00`,
     ).format("dddd, MMMM DD, h:mm A");
 
     if (confirmationEmailTemplate) {
@@ -213,45 +215,45 @@ export async function addAppointment(
       // replace the placeholders: <VEHICLE>, <CLIENT>
       confirmationSubject = confirmationSubject?.replace(
         "<VEHICLE>",
-        `${vehicle?.year ? vehicle?.year : ""} ${vehicle?.make} ${vehicle?.model} ${vehicle?.other}`
+        `${vehicle?.year ? vehicle?.year : ""} ${vehicle?.make} ${vehicle?.model} ${vehicle?.other}`,
       );
       confirmationSubject = confirmationSubject?.replace(
         "<CLIENT>",
-        clientName
+        clientName,
       );
 
       confirmationMessage = confirmationMessage?.replace(
         "<VEHICLE>",
-        `${vehicle?.year ? vehicle?.year : ""} ${vehicle?.make} ${vehicle?.model} ${vehicle?.other}`
+        `${vehicle?.year ? vehicle?.year : ""} ${vehicle?.make} ${vehicle?.model} ${vehicle?.other}`,
       );
       confirmationMessage = confirmationMessage?.replace(
         "<CLIENT>",
-        clientName
+        clientName,
       );
 
       confirmationMessage = confirmationMessage?.replace(
         "<DATE>",
-        appointmentDate
+        appointmentDate,
       );
 
       confirmationMessage = confirmationMessage?.replace(
         "<DATE>",
-        appointmentDate
+        appointmentDate,
       );
 
       confirmationMessage = confirmationMessage?.replace(
         "<BUSINESS_NAME>",
-        company?.name ?? ""
+        company?.name ?? "",
       );
 
       confirmationMessage = confirmationMessage?.replace(
         "<PHONE>",
-        company?.phone ?? ""
+        company?.phone ?? "",
       );
 
       confirmationMessage = confirmationMessage?.replace(
         "<ADDRESS>",
-        company?.address ?? ""
+        company?.address ?? "",
       );
 
       // send the confirmation email
@@ -413,7 +415,7 @@ export async function scheduleRemindersInNest({
           "Content-Type": "application/json",
           // Authorization: `Bearer ${process.env.INTERNAL_API_KEY}`, // optional security
         },
-      }
+      },
     );
   } catch (error) {
     console.log("error from scheduleRemindersInNest", error);
