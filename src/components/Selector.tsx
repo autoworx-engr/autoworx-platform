@@ -41,6 +41,7 @@ interface SelectorProps<T> {
   useInfiniteScroll?: boolean;
   showSearch?: boolean;
   usePortal?: boolean;
+  isLoading?: boolean;
 }
 
 export default function Selector<T>({
@@ -64,6 +65,7 @@ export default function Selector<T>({
   useInfiniteScroll = false,
   showSearch = true,
   usePortal = false,
+  isLoading = false,
 }: SelectorProps<T>): JSX.Element {
   const [searchTerm, setSearchTerm] = useState("");
   const [localOpen, setLocalOpen] = useState(false);
@@ -121,15 +123,15 @@ export default function Selector<T>({
     } else {
       const searchedItems = searchQuery.trim()
         ? items.filter(
-          (item: any) =>
-            item.clientName
-              ?.toLowerCase()
-              .includes(searchQuery.toLowerCase()) ||
-            item.id
-              ?.toString()
-              .toLowerCase()
-              .includes(searchQuery.toLowerCase()),
-        )
+            (item: any) =>
+              item.clientName
+                ?.toLowerCase()
+                .includes(searchQuery.toLowerCase()) ||
+              item.id
+                ?.toString()
+                .toLowerCase()
+                .includes(searchQuery.toLowerCase()),
+          )
         : items;
       setFilteredItems(searchedItems);
     }
@@ -170,7 +172,11 @@ export default function Selector<T>({
         onScroll={handleScroll}
         className="flex max-h-48 flex-col overflow-y-auto py-1 thin-scrollbar"
       >
-        {filteredItems?.length === 0 ? (
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-6 px-4">
+            <p className="text-sm text-slate-400">Loading...</p>
+          </div>
+        ) : filteredItems?.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-6 px-4">
             <Search size={18} className="text-slate-300 mb-1.5" />
             <p className="text-sm text-slate-400">No results found</p>
@@ -198,7 +204,7 @@ export default function Selector<T>({
                     "hover:bg-[#6571FF]/5 active:bg-[#6571FF]/10",
                     isSelected && "bg-[#6571FF]/10",
                     border &&
-                    "border-b border-slate-100 rounded-md last:border-b-0",
+                      "border-b border-slate-100 rounded-md last:border-b-0",
                   )}
                 >
                   <div className="flex-1 min-w-0">{displayList(item)}</div>
