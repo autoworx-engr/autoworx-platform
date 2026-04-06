@@ -5,6 +5,7 @@ export const PUBLIC_API_ROUTES = [
   "/api/auth/register",
   "/api/auth/forgot-password",
   "/api/auth/reset-password",
+  "/api/auth/forgot-password/verify-otp",
   "/api/auth/refresh-token",
   "/api/auth/providers",
   "/api/auth/signin",
