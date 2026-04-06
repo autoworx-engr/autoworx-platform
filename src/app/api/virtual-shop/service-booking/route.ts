@@ -104,6 +104,17 @@ const searchParamsValidation = z.object({
       return date.toDate();
     }, "Invalid end date format")
     .optional(),
+  shopId: z
+    .string({ invalid_type_error: "Shop ID must be a string" })
+    .refine((value) => {
+      if (!value) return true;
+      const shopId = parseInt(value);
+      if (isNaN(shopId)) {
+        throw new Error("Invalid shop ID format");
+      }
+      return shopId;
+    }, "Invalid shop ID format")
+    .optional(),
 });
 
 const createServiceBookingSchema = z.object({
@@ -250,6 +261,12 @@ const roundMoney = (value: number) => Number(value.toFixed(2));
  *           type: string
  *           format: date
  *         description: Filter bookings until this end date (YYYY-MM-DD).
+ *       - in: query
+ *         name: shopId
+ *         required: false
+ *         schema:
+ *           type: integer
+ *         description: Filter bookings by a specific shop ID.
  *       - in: query
  *         name: sortOrder
  *         required: false
@@ -460,6 +477,7 @@ export async function GET(req: Request) {
     const status = searchParams.get("status") ?? undefined;
     const startDate = searchParams.get("startDate") ?? undefined;
     const endDate = searchParams.get("endDate") ?? undefined;
+    const shopId = searchParams.get("shopId") ?? undefined;
 
     const sortOrder = (
       searchParams.get("sortOrder") === "asc" ? "asc" : "desc"
@@ -480,11 +498,13 @@ export async function GET(req: Request) {
       status,
       startDate,
       endDate,
+      shopId,
     });
 
     const baseWhereClause: Prisma.ShopBookingWhereInput = {
       shop: {
         companyId,
+        ...(shopId ? { id: parseInt(shopId, 10) } : {}),
       },
     };
 
