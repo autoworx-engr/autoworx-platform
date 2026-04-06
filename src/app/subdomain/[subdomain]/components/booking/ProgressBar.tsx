@@ -18,8 +18,8 @@ export const ProgressBar = ({ current }: { current: BookingStep }) => {
   return (
     <div className="flex items-center justify-between w-full max-w-lg mx-auto px-2 py-4">
       {steps.map((s, i) => {
-        const isDone = i < currentIdx;
-        const isActive = i === currentIdx;
+        const isDone = i < currentIdx || (current === 'confirmation' && i === currentIdx);
+        const isActive = i === currentIdx && current !== 'confirmation';
         return (
           <div key={s.key} className="flex items-center flex-1 last:flex-none">
             <div className="flex flex-col items-center">
