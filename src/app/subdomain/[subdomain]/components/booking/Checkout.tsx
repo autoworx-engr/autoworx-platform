@@ -297,6 +297,7 @@ export const Checkout = () => {
     try {
       const snapshot = JSON.parse(raw) as {
         bookingId?: string;
+        estimateId?: string;
         selectedDate?: string;
         selectedSlot?: any;
         customerInfo?: CustomerInfo;
@@ -311,6 +312,10 @@ export const Checkout = () => {
 
       if (snapshot.bookingId) {
         setCreatedBookingId(snapshot.bookingId);
+      }
+
+      if (snapshot.estimateId) {
+        setEstimateId(snapshot.estimateId);
       }
 
       if (snapshot.selectedDate) {
@@ -485,6 +490,7 @@ export const Checkout = () => {
           "virtualShopPendingBooking",
           JSON.stringify({
             bookingId: newBookingId.toString(),
+            estimateId: response?.data?.estimateId ?? null,
             depositRequired: depositRequiredNow,
             selectedDate: selectedDate?.toISOString(),
             selectedSlot,
