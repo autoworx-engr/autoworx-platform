@@ -212,7 +212,7 @@ export default function CompanyMessageBox({
   const handleRemoveAttachment = (fileName: string) => {
     setMultiAttachmentFile(
       (multiFiles) =>
-        multiFiles && multiFiles?.filter((file) => file?.name !== fileName)
+        multiFiles && multiFiles?.filter((file) => file?.name !== fileName),
     );
   };
 
@@ -303,6 +303,12 @@ export default function CompanyMessageBox({
                           height={200}
                           className="rounded-md border cursor-pointer"
                         />
+                      ) : attachment.fileType?.includes("video") ? (
+                        <video
+                          src={attachment.fileUrl}
+                          className="h-40 w-60 rounded-md border cursor-pointer"
+                          controls
+                        />
                       ) : (
                         <div className="rounded-md bg-[#006D77] px-4 py-2 text-white">
                           <p className="text-sm">{attachment.fileName}</p>
@@ -352,13 +358,13 @@ export default function CompanyMessageBox({
                         href={`/dashboard/estimate/edit/${msg?.requestEstimate.invoiceId}`}
                         className={cn(
                           "w-96 rounded-md bg-[#006D77] p-1",
-                          !msg?.isOwnMessage && "bg-[#D9D9D9]"
+                          !msg?.isOwnMessage && "bg-[#D9D9D9]",
                         )}
                       >
                         <div
                           className={cn(
                             "flex items-center justify-center gap-x-2 rounded-md border border-white p-5",
-                            !msg?.isOwnMessage && "border-[#006D77]"
+                            !msg?.isOwnMessage && "border-[#006D77]",
                           )}
                         >
                           <Image
@@ -370,7 +376,7 @@ export default function CompanyMessageBox({
                           <p
                             className={cn(
                               "font-semibold text-white",
-                              !msg?.isOwnMessage && "text-[#006D77]"
+                              !msg?.isOwnMessage && "text-[#006D77]",
                             )}
                           >
                             Requested an Estimate
@@ -388,7 +394,7 @@ export default function CompanyMessageBox({
                       "max-w-[75%] rounded-2xl px-4 py-2 text-sm shadow-sm break-words",
                       isOwn
                         ? "bg-[#006D77] text-white rounded-br-sm"
-                        : "bg-gray-100 text-gray-800 rounded-bl-sm"
+                        : "bg-gray-100 text-gray-800 rounded-bl-sm",
                     )}
                   >
                     {msg.message}
@@ -401,7 +407,7 @@ export default function CompanyMessageBox({
                     "text-[11px] mt-1",
                     isOwn
                       ? "text-gray-400 text-right"
-                      : "text-gray-500 text-left"
+                      : "text-gray-500 text-left",
                   )}
                 >
                   {format(new Date(msg?.createdAt), "p")} ·
@@ -419,7 +425,7 @@ export default function CompanyMessageBox({
         <div
           className={cn(
             "relative w-full rounded-lg border border-gray-200 bg-white shadow-md flex flex-col",
-            "max-h-64"
+            "max-h-64",
           )}
         >
           {/* Sticky header */}
@@ -470,6 +476,13 @@ export default function CompanyMessageBox({
                           sizes="80px"
                         />
                       </div>
+                    ) : attachmentFile.type.includes("video") ? (
+                      <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border border-gray-300 bg-black">
+                        <video
+                          src={URL.createObjectURL(attachmentFile)}
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
                     ) : (
                       // Non-image file preview
                       <div className="flex h-20 w-20 flex-shrink-0 flex-col items-center justify-center rounded-md bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-sm">
@@ -505,7 +518,7 @@ export default function CompanyMessageBox({
           <div
             className={cn(
               "absolute z-50 -top-[55px] space-y-1",
-              isEstimateAttachmentShow ? "-top-[55px]" : "-top-[27px]"
+              isEstimateAttachmentShow ? "-top-[55px]" : "-top-[27px]",
             )}
           >
             <p
@@ -534,7 +547,7 @@ export default function CompanyMessageBox({
         />
         <input
           multiple
-          accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+          accept="image/*,video/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
           ref={attachmentRef}
           onChange={handleAttachment}
           onClick={(e) => {
