@@ -1358,7 +1358,7 @@ export async function POST(req: Request) {
         subtotal,
         discount: giftCardRedeemedAmount,
         tax: taxRate,
-        serviceFee: serviceFeeAmount,
+        serviceFee: serviceFeeRate,
         vehicleExtraCost,
         deposit: 0,
         depositNotes: "",
