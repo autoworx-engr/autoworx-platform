@@ -1269,12 +1269,8 @@ export async function POST(req: Request) {
         ? Number(shop.company.serviceFee)
         : 0;
 
-      // tax and service fee is calculated on totalServiceCost
-      const taxAmount = (totalServiceCost * taxRate) / 100;
-      const serviceFeeAmount = (totalServiceCost * serviceFeeRate) / 100;
-
-      const grandTotal = subtotal + taxAmount + serviceFeeAmount;
-
+      // Process gift card first so tax/fee are computed on (subtotal - discount),
+      // matching the formula used by the invoice display components.
       const normalizedGiftCardCode = giftCardCode?.trim().toUpperCase();
       let redeemGiftCard: {
         id: number;
@@ -1316,7 +1312,7 @@ export async function POST(req: Request) {
         }
 
         giftCardRedeemedAmount = roundMoney(
-          Math.min(availableBalance, grandTotal),
+          Math.min(availableBalance, subtotal),
         );
 
         if (giftCardRedeemedAmount <= 0) {
@@ -1330,8 +1326,13 @@ export async function POST(req: Request) {
         };
       }
 
+      // Tax and fee computed on (subtotal - discount) to match invoice display
+      const netForTaxFee = subtotal - giftCardRedeemedAmount;
+      const taxAmount = (netForTaxFee * taxRate) / 100;
+      const serviceFeeAmount = (netForTaxFee * serviceFeeRate) / 100;
+
       const adjustedGrandTotal = roundMoney(
-        Math.max(0, grandTotal - giftCardRedeemedAmount),
+        netForTaxFee + taxAmount + serviceFeeAmount,
       );
 
       const isDepositEnabled = bookingSettings.isDepositEnabled;
