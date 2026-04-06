@@ -20,6 +20,27 @@ export const isImage = (fileName: string = "") => {
   return imageExtensions.includes(ext ?? "");
 };
 
+export const isAudio = (fileName: string = "") => {
+  if (!fileName) return false;
+
+  const audioExtensions = [
+    "mp3",
+    "wav",
+    "ogg",
+    "oga",
+    "opus",
+    "m4a",
+    "webm",
+    "aac",
+    "amr",
+    "3gp",
+    "flac",
+  ];
+  const ext = fileName?.split(".")?.pop()?.toLowerCase();
+
+  return audioExtensions.includes(ext ?? "");
+};
+
 export const clientSortByUpdatedMessage = (
   clients: (Client & {
     conversationsTrack?: ClientConversationTrack | null;
