@@ -48,20 +48,22 @@ export default function CompanyMessageBox({
   const [showProfile, setShowProfile] = useState(false);
   const { data: session } = useSession();
   const attachmentRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const toggleRef = useRef<HTMLImageElement>(null);
   const pathname = usePathname();
   const [messages, setMessages] = useState<TMessage[]>([]);
   const [message, setMessage] = useState("");
   const [pending, startTransition] = useTransition();
   const messageBoxRef = useRef<HTMLDivElement>(null);
   const [multiAttachmentFile, setMultiAttachmentFile] = useState<File[] | null>(
-    null
+    null,
   );
   const searchParams = useSearchParams();
   const companyId = searchParams.get("companyId");
   const [showAttachment, setShowAttachment] = useState(false);
   const currentCompanyId = session?.user?.companyId;
   const isEstimateAttachmentShow = pathname?.includes(
-    "/communication/collaboration"
+    "/communication/collaboration",
   );
 
   // 🔹 Load messages
@@ -71,7 +73,7 @@ export default function CompanyMessageBox({
     async function fetchMessages() {
       try {
         const res = await fetch(
-          `/api/communication/collaboration/messages/v2-messages?companyA=${currentCompanyId}&companyB=${companyId}&viewerCompanyId=${currentCompanyId}`
+          `/api/communication/collaboration/messages/v2-messages?companyA=${currentCompanyId}&companyB=${companyId}&viewerCompanyId=${currentCompanyId}`,
         );
 
         const data = await res.json();
@@ -135,6 +137,27 @@ export default function CompanyMessageBox({
       pusher.unsubscribe(`company-${currentCompanyId}`);
     };
   }, [companyId, currentCompanyId]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      const target = event.target as Node;
+      if (
+        showAttachment &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(target) &&
+        toggleRef.current &&
+        !toggleRef.current.contains(target) &&
+        !(target instanceof Element && target.closest('[role="dialog"]'))
+      ) {
+        setShowAttachment(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showAttachment]);
 
   async function handleSendMessage(e: React.FormEvent) {
     e.preventDefault();
@@ -281,7 +304,7 @@ export default function CompanyMessageBox({
               <div
                 className={cn(
                   "flex flex-col space-y-2",
-                  isOwn ? "items-end" : "items-start"
+                  isOwn ? "items-end" : "items-start",
                 )}
               >
                 {/* Attachments */}
@@ -292,7 +315,7 @@ export default function CompanyMessageBox({
                       key={attachment.fileUrl}
                       className={cn(
                         "flex items-center gap-2",
-                        isOwn ? "flex-row-reverse" : "flex-row"
+                        isOwn ? "flex-row-reverse" : "flex-row",
                       )}
                     >
                       {attachment.fileType?.includes("image") ? (
@@ -516,6 +539,7 @@ export default function CompanyMessageBox({
         {/* attachment or estimate dropdown */}
         {showAttachment && (
           <div
+            ref={dropdownRef}
             className={cn(
               "absolute z-50 -top-[55px] space-y-1",
               isEstimateAttachmentShow ? "-top-[55px]" : "-top-[27px]",
@@ -538,6 +562,7 @@ export default function CompanyMessageBox({
           </div>
         )}
         <Image
+          ref={toggleRef}
           onClick={() => setShowAttachment(!showAttachment)}
           className="cursor-pointer"
           src="/icons/Attachment.svg"
@@ -547,7 +572,7 @@ export default function CompanyMessageBox({
         />
         <input
           multiple
-          accept="image/*,video/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+          accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
           ref={attachmentRef}
           onChange={handleAttachment}
           onClick={(e) => {
