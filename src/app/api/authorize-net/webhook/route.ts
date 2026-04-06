@@ -132,10 +132,19 @@ export async function POST(req: NextRequest) {
       const authAmount = parseFloat(payload.authAmount);
       const invoiceNumber = payload.invoiceNumber as string | undefined;
 
+      // Extract tip from invoiceNumber suffix (encoded as "-T<amount>")
+      // Authorize.Net webhook payloads only include bare fields — no
+      // order description or userFields — so tip is encoded in invoiceNumber.
+      const tipMatch = invoiceNumber?.match(/-T([\d.]+)$/);
+      const tipAmount = tipMatch ? parseFloat(tipMatch[1]) : 0;
+      const baseAmount = authAmount - tipAmount;
+
       console.log("Authorize.Net payload parsed:", {
         transactionId,
         authAmount,
         invoiceNumber,
+        tipAmount,
+        baseAmount,
       });
 
       // Check if already processed
@@ -163,7 +172,8 @@ export async function POST(req: NextRequest) {
       // Decode our own prefixes from invoiceNumber so we know whether
       // this is a deposit, normal invoice payment, or a statement
       // payment. This mirrors how Stripe uses metadata.
-      const rawInvoiceNumber = invoiceNumber;
+      // Strip the tip suffix (e.g. "-T8") before decoding the prefix.
+      const rawInvoiceNumber = invoiceNumber.replace(/-T[\d.]+$/, "");
       let targetId = rawInvoiceNumber;
       let sourceType:
         | "deposit"
@@ -489,7 +499,8 @@ export async function POST(req: NextRequest) {
             data: {
               companyId,
               invoiceId: targetId,
-              amount: authAmount,
+              amount: baseAmount,
+              tip: tipAmount,
               type: paymentType,
               date: new Date(),
               gateway: "AUTHORIZE_NET",
@@ -506,7 +517,8 @@ export async function POST(req: NextRequest) {
             data: {
               companyId,
               invoiceId: targetId,
-              amount: authAmount,
+              amount: baseAmount,
+              tip: tipAmount,
               type: paymentType,
               date: new Date(),
               gateway: "AUTHORIZE_NET",
@@ -532,10 +544,11 @@ export async function POST(req: NextRequest) {
         });
 
         // Update invoice balances using the same business rules as Stripe
+        // Use baseAmount (excluding tip) so the tip doesn't reduce the invoice due
         const currentDue = Number(invoice.due ?? 0);
 
         if (isDeposit) {
-          const depositAmount = authAmount;
+          const depositAmount = baseAmount;
           console.log("🚀 ~ POST ~ depositAmount:", depositAmount);
 
           if (currentDue > 0) {
@@ -568,7 +581,7 @@ export async function POST(req: NextRequest) {
             });
           }
         } else {
-          const paymentAmount = authAmount;
+          const paymentAmount = baseAmount;
           const amountToApply = Math.min(paymentAmount, currentDue);
           const newDue = Math.max(0, currentDue - amountToApply);
 
@@ -669,26 +682,33 @@ export async function POST(req: NextRequest) {
         });
       }
 
+      // Use baseAmount (excluding tip) for distributing across invoices
       let totalPaid = 0;
       const invoicesWithDue = statement.invoice.filter(
         (inv) => inv.due && Number(inv.due) > 0,
       );
 
       const paymentRecords: { paymentId: number; invoiceId: any }[] = [];
+      let isFirstPayment = true;
 
       for (const inv of invoicesWithDue) {
         const paymentAmount = Math.min(
           Number(inv.due ?? 0),
-          authAmount - totalPaid,
+          baseAmount - totalPaid
         );
 
         if (paymentAmount <= 0) break;
+
+        // Store tip on the first payment record only
+        const tipForThisRecord = isFirstPayment ? tipAmount : 0;
+        isFirstPayment = false;
 
         const payment = await db.payment.create({
           data: {
             companyId,
             invoiceId: inv.id,
             amount: paymentAmount,
+            tip: tipForThisRecord,
             type: "OTHER",
             date: new Date(),
             gateway: "AUTHORIZE_NET",

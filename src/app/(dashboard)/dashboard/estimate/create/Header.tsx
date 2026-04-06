@@ -64,6 +64,7 @@ export default function Header({
   const pathname = usePathname();
   const isTemplate = pathname.includes("templates");
   const isEstimateCreate = pathname.includes("estimate/create");
+  const isEstimateEdit = pathname.includes("estimate/edit");
 
   useEffect(() => {
     if (!id) setInvoiceId(customAlphabet("1234567890", 10)());
@@ -168,8 +169,8 @@ export default function Header({
           setOpen={setStatusOpenDropdown}
           isAllServicesCompleted={isAllServicesCompleted}
         />
-        {!isTemplate &&
-          (isEstimateCreate || (!isTemplate && items.length === 0)) && (
+        {(!isTemplate && isEstimateCreate) ||
+          (isEstimateEdit && (
             <SelectTemplate
               openDropdown={templateOpenDropdown}
               setOpenDropdown={setTemplateOpenDropdown}
@@ -177,7 +178,7 @@ export default function Header({
               value={template || selectedTemplate}
               name="templateId"
             />
-          )}
+          ))}
       </div>
     </div>
   );

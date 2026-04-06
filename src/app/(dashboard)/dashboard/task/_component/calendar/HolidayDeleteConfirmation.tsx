@@ -29,7 +29,7 @@ export default function HolidayDeleteConfirmation({
       const response = await deleteHoliday(holidayId);
       if (response?.status === 200) {
         const removedHoliday = moment(response.data.date).format(
-          "MMMM DD, YYYY"
+          "MMMM DD, YYYY",
         );
         console.log("removedHoliday", removedHoliday);
         queryClient.setQueryData(
@@ -38,7 +38,7 @@ export default function HolidayDeleteConfirmation({
             return oldData
               ? oldData.filter((holiday) => holiday.id !== holidayId)
               : [];
-          }
+          },
         );
         queryClient.invalidateQueries({
           queryKey: [calenderQueryKey.holidays, selectedMonth, selectedYear],
@@ -57,11 +57,10 @@ export default function HolidayDeleteConfirmation({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={`rounded-full ${!isMonthly && "bg-red-200"} p-2`}
+        className={`rounded-full ${!isMonthly && "bg-red-200"} p-1`}
       >
         <Trash2
-          size={20}
-          className={`cursor-pointer ${!isMonthly && "text-red-500"} `}
+          className={`cursor-pointer size-3 sm:size-4 ${!isMonthly && "text-red-500"} `}
         />
       </button>
       <DialogContent>

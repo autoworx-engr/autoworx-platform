@@ -52,13 +52,6 @@ export default async function AiTrainOverview() {
               <div>
                 <h3 className="font-semibold text-foreground flex items-center gap-2">
                   SMS AI Agent
-                  <Badge
-                    variant="default"
-                    className="bg-green-500 hover:bg-green-600"
-                  >
-                    <CheckCircle className="h-3 w-3 mr-1" />
-                    Active
-                  </Badge>
                 </h3>
                 <p className="text-sm text-muted-foreground">
                   Connected via Twilio • Automatically responding to customer
@@ -79,7 +72,7 @@ export default async function AiTrainOverview() {
         <AIMetrics companyId={companyId} />
 
         {/* Quick Setup */}
-        <section>
+        {/* <section>
           <h2 className="my-4 text-lg font-semibold text-foreground">
             Quick Setup
           </h2>
@@ -115,7 +108,7 @@ export default async function AiTrainOverview() {
               </CardContent>
             </Card>
           </div>
-        </section>
+        </section> */}
       </div>
 
       {/* RIGHT SIDE PERMISSION PANEL */}

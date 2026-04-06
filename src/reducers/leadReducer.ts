@@ -426,6 +426,11 @@ export function leadReducer<T>(
                 });
             }
 
+            const columnIdsInState = new Set(state.map(c => c.id));
+            if (!columnIdsInState.has(previousColumnId) || !columnIdsInState.has(updatedLead?.columnId)) {
+                return state;
+            }
+
             const findPrevLead = state
                 .find(column => column?.id === previousColumnId)
                 ?.leads.find(lead => lead?.id === updatedLead?.id);

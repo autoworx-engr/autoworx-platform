@@ -65,6 +65,10 @@ export function PayNow({
   onSuccess?: () => void;
 }) {
   const [amount, setAmount] = useState(due);
+  const [selectedTipPercent, setSelectedTipPercent] = useState<number | null>(
+    null,
+  );
+  const [customTip, setCustomTip] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [payType, setPayType] = useState<
     | "payment"
@@ -256,6 +260,7 @@ export function PayNow({
 
   const handlePayment = async () => {
     setIsLoading(true);
+    const tipStr = tipAmount > 0 ? tipAmount.toString() : undefined;
     try {
       let result;
 
@@ -263,6 +268,7 @@ export function PayNow({
         if (mode === "statement") {
           result = await createStripePaymentLink({
             amount,
+            tip: tipStr,
             statementId: statementId!,
             companyId,
             payType: "statement",
@@ -289,6 +295,7 @@ export function PayNow({
         } else {
           result = await createStripePaymentLink({
             amount,
+            tip: tipStr,
             invoiceId: invoiceId!,
             companyId,
             payType,
@@ -304,6 +311,7 @@ export function PayNow({
         if (mode === "statement") {
           result = await createAuthorizeNetPaymentLink({
             amount,
+            tip: tipStr,
             statementId: statementId!,
             companyId,
             payType: "statement",
@@ -330,6 +338,7 @@ export function PayNow({
         } else {
           result = await createAuthorizeNetPaymentLink({
             amount,
+            tip: tipStr,
             invoiceId: invoiceId!,
             companyId,
             payType,
@@ -355,6 +364,15 @@ export function PayNow({
       setIsLoading(false);
     }
   };
+
+  const tipPercentages = [10, 15, 20];
+  const baseAmount = parseFloat(amount || "0");
+  const tipAmount = customTip
+    ? parseFloat(customTip || "0")
+    : selectedTipPercent
+      ? Math.round(baseAmount * (selectedTipPercent / 100))
+      : 0;
+  const totalAmount = baseAmount + tipAmount;
 
   const gatewayName = selectedGateway === "STRIPE" ? "Stripe" : "Authorize.Net";
 
@@ -498,6 +516,70 @@ export function PayNow({
                   ( Max. {due} )
                 </span>
               </div>
+            </div>
+
+            {/* Add a Tip */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="font-semibold">Add a Tip</Label>
+                <span className="text-xs text-gray-500">
+                  {/* ( Max. {due} ) */}
+                </span>
+              </div>
+              <div className="flex gap-2">
+                {tipPercentages.map((percent) => {
+                  const tipVal = Math.round(baseAmount * (percent / 100));
+                  const isSelected =
+                    selectedTipPercent === percent && !customTip;
+                  return (
+                    <button
+                      key={percent}
+                      type="button"
+                      onClick={() => {
+                        setCustomTip("");
+                        setSelectedTipPercent(
+                          selectedTipPercent === percent ? null : percent,
+                        );
+                      }}
+                      className={`flex-1 rounded-lg border px-2 py-2 text-sm font-medium transition-colors ${
+                        isSelected
+                          ? "bg-[#6571ff] text-white border-[#6571ff]"
+                          : "bg-white text-gray-700 border-gray-300 hover:border-[#6571ff]"
+                      }`}
+                    >
+                      {percent}% | ${tipVal}
+                      {isSelected && " \u2713"}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2">
+                <span className="text-sm text-gray-500 whitespace-nowrap">
+                  Custom Tip
+                </span>
+                <input
+                  type="text"
+                  value={customTip}
+                  placeholder="$0.00"
+                  className="flex-1 text-sm outline-none bg-transparent"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (!/^\d*\.?\d*$/.test(val)) return;
+                    setCustomTip(val);
+                    if (val) setSelectedTipPercent(null);
+                  }}
+                />
+                <span className="text-sm font-medium text-gray-700">
+                  ${customTip ? parseFloat(customTip || "0").toFixed(2) : "0.00"}
+                </span>
+              </div>
+            </div>
+
+            {/* Total */}
+            <div className="flex justify-end">
+              <span className="text-base font-bold">
+                Total: ${totalAmount.toFixed(0)}
+              </span>
             </div>
           </div>
           <DialogFooter>

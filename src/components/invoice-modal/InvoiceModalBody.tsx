@@ -975,10 +975,7 @@ export default function InvoiceModalBody({
                         <th className="px-3 py-2 text-left">Date</th>
                         <th className="px-3 py-2 text-left">Method</th>
                         <th className="px-3 py-2 text-left">Amount</th>
-                        <th className="px-3 py-2 text-left">Cash Received</th>
-                        <th className="px-3 py-2 text-left">Due After</th>
                         <th className="px-3 py-2 text-left">Status</th>
-                        <th className="px-3 py-2 text-left">Notes</th>
                       </tr>
                     </thead>
                     <tbody>

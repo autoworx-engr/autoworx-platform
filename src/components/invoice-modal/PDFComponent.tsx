@@ -384,17 +384,17 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0,
   },
   paymentColDate: {
-    width: "20%",
+    width: "33.33%",
     fontSize: 8,
     color: colors.text,
   },
   paymentColMethod: {
-    width: "24%",
+    width: "33.33%",
     fontSize: 8,
     color: colors.text,
   },
   paymentColAmount: {
-    width: "24%",
+    width: "33.33%",
     fontSize: 8,
     color: colors.text,
   },
@@ -635,11 +635,7 @@ const PDFComponent = function PDF({
 
   const paymentEntries = (invoice.payments ?? [])
     .filter((payment) => payment.invoiceId === invoice.id)
-    .sort(
-      (a, b) =>
-        new Date(b.date || b.createdAt).getTime() -
-        new Date(a.date || a.createdAt).getTime(),
-    );
+    .reverse()
 
   const getPaymentMethodText = (
     payment: (typeof paymentEntries)[number],
@@ -846,12 +842,6 @@ const PDFComponent = function PDF({
                 >
                   Amount
                 </Text>
-                <Text style={[styles.paymentColCash, styles.paymentHeaderText]}>
-                  Cash
-                </Text>
-                <Text style={[styles.paymentColDue, styles.paymentHeaderText]}>
-                  Due
-                </Text>
               </View>
 
               {paymentEntries.map((payment, index) => {
@@ -886,15 +876,6 @@ const PDFComponent = function PDF({
                         </Text>
                       )}
                     </View>
-                    <Text style={styles.paymentColCash}>
-                      {payment.cash?.receivedCash || "N/A"}
-                    </Text>
-                    <Text style={styles.paymentColDue}>
-                      {payment.dueAfterPayment !== null &&
-                        payment.dueAfterPayment !== undefined
-                        ? formatCurrency(Number(payment.dueAfterPayment))
-                        : "N/A"}
-                    </Text>
                   </View>
                 );
               })}

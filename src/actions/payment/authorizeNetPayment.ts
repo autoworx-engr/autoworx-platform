@@ -21,6 +21,7 @@ export const createAuthorizeNetPaymentLink = async ({
   giftCardId,
   redirectUrl,
   amount,
+  tip,
   payType,
 }: PaymentParams): Promise<PaymentLink> => {
   try {
@@ -90,6 +91,8 @@ export const createAuthorizeNetPaymentLink = async ({
 
     // Validate amount
     const paymentAmount = parseFloat(amount);
+    const tipAmount = parseFloat(tip || "0");
+    const totalCharge = paymentAmount + tipAmount;
     if (isNaN(paymentAmount) || paymentAmount <= 0) {
       throw new Error("Invalid payment amount");
     }
@@ -117,7 +120,7 @@ export const createAuthorizeNetPaymentLink = async ({
     transactionRequestType.setTransactionType(
       ApiContracts.TransactionTypeEnum.AUTHCAPTURETRANSACTION,
     );
-    transactionRequestType.setAmount(paymentAmount);
+    transactionRequestType.setAmount(totalCharge);
 
     // Set up order information
     const orderType = new ApiContracts.OrderType();
@@ -151,14 +154,16 @@ export const createAuthorizeNetPaymentLink = async ({
           : `VSGCP-${paymentId}`;
     }
 
-    if (invoiceNumberForGateway.length > 20) {
-      throw new Error("Payment reference is too long for Authorize.Net");
+    // Encode tip into invoiceNumber so the webhook can extract it.
+    // The webhook payload only includes bare fields (id, authAmount,
+    // invoiceNumber) — no order description or userFields.
+    if (tipAmount > 0) {
+      invoiceNumberForGateway += `-T${tipAmount}`;
     }
 
     const isDepositPayment =
       payType === "deposit" || payType === "virtual_shop_deposit";
     const isGiftCardPayment = payType === "virtual_shop_gift_card";
-
     orderType.setInvoiceNumber(invoiceNumberForGateway);
     orderType.setDescription(
       `${isGiftCardPayment ? "Gift Card" : isDepositPayment ? "Deposit" : "Payment"} for ${productName}`,
@@ -180,7 +185,7 @@ export const createAuthorizeNetPaymentLink = async ({
           : "Payment",
     );
     lineItem.setQuantity("1");
-    lineItem.setUnitPrice(paymentAmount.toString());
+    lineItem.setUnitPrice(totalCharge.toString());
     lineItemsArray.push(lineItem);
 
     // Wrap in ArrayOfLineItem
@@ -214,6 +219,11 @@ export const createAuthorizeNetPaymentLink = async ({
     customField2.setName("payType");
     customField2.setValue(payType);
     userFieldsArray.push(customField2);
+
+    const tipField = new ApiContracts.UserField();
+    tipField.setName("tip");
+    tipField.setValue((tip || "0").toString());
+    userFieldsArray.push(tipField);
 
     if (invoiceId) {
       const customField3 = new ApiContracts.UserField();

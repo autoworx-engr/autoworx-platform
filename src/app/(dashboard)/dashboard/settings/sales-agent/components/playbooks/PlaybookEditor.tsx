@@ -13,12 +13,21 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, Save, X, GripVertical, AlertCircle } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  Save,
+  X,
+  GripVertical,
+  AlertCircle,
+  Copy,
+} from "lucide-react";
 import { Popconfirm } from "antd";
 import { cn } from "@/lib/utils";
 import SelectCategory from "@/components/Lists/SelectCategory";
 import { Category } from "@prisma/client";
 import toast from "react-hot-toast";
+import { useClonePlaybooks } from "@/hooks/sales-agent/useServicePlaybooks";
 
 interface PlaybookEditorProps {
   playbook?: ServicePlaybook;
@@ -63,6 +72,7 @@ export function PlaybookEditor({
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState("basic");
+  const { mutate: clonePlaybooks, isPending } = useClonePlaybooks();
 
   const validateForm = (): Record<string, string> => {
     const newErrors: Record<string, string> = {};
@@ -70,7 +80,7 @@ export function PlaybookEditor({
     // Service name validation
     if (!formData.service_name || !formData.service_name.trim()) {
       newErrors.service_name = "Service name is required";
-    } 
+    }
     // else if (formData.service_name.length > 100) {
     //   newErrors.service_name = "Service name must be less than 100 characters";
     // }
@@ -248,6 +258,12 @@ export function PlaybookEditor({
     setFormData({ ...formData, dont_say: list });
   };
 
+  const clonePlaybookHandler = () => {
+    try {
+      clonePlaybooks();
+    } catch (error) {}
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -259,6 +275,12 @@ export function PlaybookEditor({
           <p className="text-muted-foreground">
             Train your AI assistant on how to handle this service
           </p>
+          {!playbook && process.env.NODE_ENV !== "production" && (
+            <Button variant="outline" onClick={clonePlaybookHandler}>
+              <Copy className="mr-2 h-4 w-4" />
+              Clone playbook
+            </Button>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={onCancel}>

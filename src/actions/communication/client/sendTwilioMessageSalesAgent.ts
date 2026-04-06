@@ -22,7 +22,7 @@ export async function sendTwilioMessageSalesAgent({
   companyId?: number;
   message: string;
   clientId: number;
-  attachments: { url: string; name: string }[];
+  attachments: { url: string; name: string; isVoiceNote?: boolean }[];
   isSalesAgent?: boolean;
 }) {
   try {
@@ -88,12 +88,14 @@ export async function sendTwilioMessageSalesAgent({
           data: {
             name: file.name,
             url: file.url,
+            isVoiceNote: file.isVoiceNote ?? false,
             clientSMSId: dbMessage.id,
           },
         });
         processedAttachments.push({
           name: file.name,
           url: file.url,
+          isVoiceNote: file.isVoiceNote ?? false,
         });
       }
 
