@@ -12,7 +12,7 @@ import TemplateInspectionTab from "@/app/(dashboard)/dashboard/estimate/template
 import ServiceInfo, { ServiceInfoState } from "./ServiceInfo";
 import Create from "@/app/(dashboard)/dashboard/estimate/create/Create";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { errorToast } from "@/lib/toast";
 import {
   useCreateShopService,
@@ -231,7 +231,6 @@ export default function ServiceCreateClient({
     description?: string;
     items?: string;
   }>({});
-  const lastValidationToastMessageRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!initialServiceData) {
@@ -379,20 +378,16 @@ export default function ServiceCreateClient({
     if (Object.keys(nextErrors).length > 0) {
       setValidationErrors(nextErrors);
       const validationMessage =
-        nextErrors.items ||
         nextErrors.serviceTitle ||
         nextErrors.description ||
+        nextErrors.items ||
         "Please complete required fields";
 
-      if (lastValidationToastMessageRef.current !== validationMessage) {
-        errorToast(validationMessage);
-        lastValidationToastMessageRef.current = validationMessage;
-      }
+      errorToast(validationMessage, { id: "service-create-validation" });
       return;
     }
 
     setValidationErrors({});
-    lastValidationToastMessageRef.current = null;
 
     if (!selectedShopId) {
       errorToast("Virtual shop is not configured yet");
