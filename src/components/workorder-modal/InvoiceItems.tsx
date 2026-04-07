@@ -5,8 +5,15 @@ import type { db } from "@/lib/db";
 import React, { useState } from "react";
 import LaborItems from "./LaborItems";
 import ReDoModal from "./ReDoModal";
-import { Technician, TechnicianImage, VehicleParts } from "@prisma/client";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import {
+  InvoiceRedo,
+  Technician,
+  TechnicianImage,
+  VehicleParts,
+} from "@prisma/client";
+import { ChevronDown, ChevronUp, LucideImage } from "lucide-react";
+import { Dialog, DialogContent, DialogTrigger } from "../Dialog";
+import { ImagesDialogContent } from "../ImagesDialogContent";
 
 type TProps = {
   invoiceTechnicians: (Technician & { name: string })[];
@@ -24,6 +31,7 @@ type TProps = {
     >
   >;
   invoiceStatus: string | undefined;
+  invoiceId: string;
   writePermission: boolean;
   techniciansPerItem: Record<
     number,
@@ -34,14 +42,17 @@ type TProps = {
       images?: TechnicianImage[];
     })[]
   >;
+  redoPerService: Record<number, InvoiceRedo[]>;
 };
 
 export function InvoiceItems({
   items = [],
   invoiceTechnicians,
   invoiceStatus,
+  invoiceId,
   writePermission,
   techniciansPerItem,
+  redoPerService,
   openService,
   setOpenService,
 }: TProps) {
@@ -56,7 +67,7 @@ export function InvoiceItems({
         <div
           className={cn(
             "flex w-full cursor-pointer justify-between text-[#6571FF]",
-            openService && "border-b py-2"
+            openService && "border-b py-2",
           )}
           onClick={() =>
             setOpenService(openService === item.id ? null : item.id)
@@ -70,6 +81,10 @@ export function InvoiceItems({
                 serviceId={item?.serviceId as number}
                 technicians={invoiceTechnicians}
                 invoiceStatus={invoiceStatus}
+                existingRedos={
+                  redoPerService?.[item?.serviceId as number] ?? []
+                }
+                parentInvoiceId={invoiceId}
               />
             )}
             <button
