@@ -50,10 +50,12 @@ export const BookingHeader = ({
               <h1 className="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-md">
                 {shopName}
               </h1>
-              {/* <p className="text-[10px] md:text-xs text-white/70 font-semibold uppercase tracking-wider flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
-                {shop?.description || "Auto Repair & Services"}
-              </p> */}
+              {shop?.description && (
+                <p className="text-[10px] md:text-xs text-white/70 font-semibold uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+                  {shop.description}
+                </p>
+              )}
             </div>
           </div>
 
