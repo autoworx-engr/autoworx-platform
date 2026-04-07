@@ -777,7 +777,14 @@ export default function InvoiceModalBody({
                     <h2 className="font-bold text-slate-500">
                       Estimate Details:
                     </h2>
-                    <p>{invoice.id}</p>
+                    <div className="flex flex-col items-start">
+                      <p>{invoice.id}</p>
+                      {invoice.isShopBooking && (
+                        <span className="rounded-full bg-[#6571FF]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#6571FF] my-1.5">
+                          Virtual Shop
+                        </span>
+                      )}
+                    </div>
                     <p>{moment(invoice.createdAt).format("MMM DD, YYYY")}</p>
                     <p>Bill Status</p>
                     <p

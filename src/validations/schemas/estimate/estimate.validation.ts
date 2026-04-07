@@ -120,6 +120,10 @@ export const estimateCreateValidationSchema = z
     damageNotes: z.string({
       invalid_type_error: "Damage notes must be a string",
     }),
+    isShopBooking: z
+      .boolean({ invalid_type_error: "isShopBooking must be a boolean" })
+      .optional()
+      .default(false),
   })
   .refine(
     data => {

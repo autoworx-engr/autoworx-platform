@@ -53,6 +53,7 @@ type TCreateInvoiceProps = {
   policy: string;
   customerNotes: string;
   customerComments: string;
+  isShopBooking?: boolean;
 
   photos: { id?: number; photo?: string }[];
   items: {
@@ -102,6 +103,7 @@ export async function createInvoice({
   columnId,
   inspections,
   damageNotes,
+  isShopBooking = false,
 
   forceCompanyId,
 }: TCreateInvoiceProps): Promise<ServerAction | TErrorHandler> {
@@ -139,6 +141,7 @@ export async function createInvoice({
       columnId,
       inspections,
       damageNotes,
+      isShopBooking,
     });
 
     const session = await getServerSession(authOptions);
@@ -249,6 +252,7 @@ export async function createInvoice({
           workOrderCreatedAt: isWorkOrder ? new Date() : null,
           convertedAt: new Date(),
           damageNotes,
+          isShopBooking,
         },
         include: {
           client: {
