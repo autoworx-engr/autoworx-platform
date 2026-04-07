@@ -66,7 +66,27 @@ export const sendNewAppointmentNotification = async ({
       description: description,
     };
 
+    const uniqueUsersToNotify = new Map<number, any>();
+
     for (const user of getUsers) {
+      uniqueUsersToNotify.set(user.id, user);
+    }
+
+    // Add assigned sales, checking for duplicates
+    for (const salesId of assignSalesIds) {
+      if (!uniqueUsersToNotify.has(salesId)) {
+        const assignUser = await getUser(salesId);
+        uniqueUsersToNotify.set(salesId, {
+          id: salesId,
+          firstName: assignUser.firstName,
+          lastName: assignUser.lastName,
+          email: assignUser.email,
+          phone: assignUser.phone,
+        });
+      }
+    }
+
+    for (const user of uniqueUsersToNotify.values()) {
       sendUserNotifications({
         userId: user.id,
         userName: `${user.firstName} ${user.lastName}`,
@@ -80,25 +100,6 @@ export const sendNewAppointmentNotification = async ({
         redirectUrl: sendNotiInfo.redirectUrl,
       });
     }
-
-    // send notification to assigned sales
-    await Promise.all(
-      assignSalesIds.map(async (salesId) => {
-        const assignUser = await getUser(salesId);
-        sendUserNotifications({
-          userId: salesId,
-          userName: `${assignUser.firstName} ${assignUser.lastName}`,
-          userEmail: assignUser.email || "",
-          iconType: sendNotiInfo.type as "task",
-          userPhoneNo: assignUser.phone || "",
-          companyId: companyUniqueId,
-          title: sendNotiInfo.title,
-          description,
-          type: "APPOINTMENT_CREATED",
-          redirectUrl: sendNotiInfo.redirectUrl,
-        });
-      }),
-    );
   } catch (err) {
     console.error(err);
     throw err;
@@ -211,7 +212,27 @@ export const sendAppointmentUpdateNotification = async ({
         : `Appointment ${title} on ${formattedDate} at ${formattedTime} has been created. Check your Autoworx calendar.`,
     };
 
+    const uniqueUsersToNotify = new Map<number, any>();
+
     for (const user of getUsers) {
+      uniqueUsersToNotify.set(user.id, user);
+    }
+
+    // Add assigned sales, checking for duplicates
+    for (const salesId of assignSalesIds) {
+      if (!uniqueUsersToNotify.has(salesId)) {
+        const salesUser = await getUser(salesId);
+        uniqueUsersToNotify.set(salesId, {
+          id: salesId,
+          firstName: salesUser.firstName,
+          lastName: salesUser.lastName,
+          email: salesUser.email,
+          phone: salesUser.phone,
+        });
+      }
+    }
+
+    for (const user of uniqueUsersToNotify.values()) {
       sendUserNotifications({
         userId: user.id,
         userName: `${user.firstName} ${user.lastName}`,
@@ -225,25 +246,6 @@ export const sendAppointmentUpdateNotification = async ({
         redirectUrl: sendNotiInfo.redirectUrl,
       });
     }
-
-    // send notification to assigned sales
-    await Promise.all(
-      assignSalesIds.map(async (salesId) => {
-        const salesUser = await getUser(salesId);
-        sendUserNotifications({
-          userId: salesUser.id,
-          userName: `${salesUser.firstName} ${salesUser.lastName}`,
-          userEmail: salesUser.email || "",
-          iconType: sendNotiInfo.type as "task",
-          userPhoneNo: salesUser.phone || "",
-          companyId,
-          title: sendNotiInfo.title,
-          description: sendNotiInfo.description,
-          type: "APPOINTMENT_UPDATED",
-          redirectUrl: sendNotiInfo.redirectUrl,
-        });
-      }),
-    );
   } catch (err) {
     console.log("client email error", err);
     throw err;
@@ -319,7 +321,7 @@ export const sendTaskCompleteNotification = async ({
   taskTitle,
   taskDate,
   assignTaskUserId,
-  sendRoles = [],
+  sendRoles = ["Admin", "Manager", "Sales"],
 }: TTaskCompleteNotification) => {
   try {
     // Notify users by roles
@@ -331,41 +333,35 @@ export const sendTaskCompleteNotification = async ({
       phone: true,
     });
 
-    // new description
-    const roleDescription = `Task "${taskTitle}" has been marked complete. Review it in your Autoworx dashboard.`;
+    const description = `Task "${taskTitle}" has been marked complete. Review it in your Autoworx dashboard.`;
 
-    // const roleDescription = `The task "${taskTitle}" scheduled for ${formattedDate} has been completed.`;
+    const uniqueUsersToNotify = new Map<number, { user: any; title: string }>();
 
     for (const user of roleUsers) {
+      uniqueUsersToNotify.set(user.id, { user, title: "Task Completed" });
+    }
+
+    // Notify assigned task users
+    for (const userId of assignTaskUserId) {
+      if (!uniqueUsersToNotify.has(userId)) {
+        const assignUser = await getUser(userId);
+        uniqueUsersToNotify.set(userId, {
+          user: assignUser,
+          title: "Assigned Task Completed",
+        });
+      }
+    }
+
+    for (const { user, title } of uniqueUsersToNotify.values()) {
       sendUserNotifications({
         userId: user.id,
         userName: `${user.firstName} ${user.lastName}`,
         userEmail: user.email || "",
         userPhoneNo: user.phone || "",
         iconType: "task",
-        companyId: user.companyId,
-        title: "Task Completed",
-        description: roleDescription,
-        type: "TASK_FINISHED",
-        redirectUrl: "/",
-      });
-    }
-
-    // Notify assigned task users
-    const assignDescription = `Task "${taskTitle}" has been marked complete. Review it in your Autoworx dashboard.`;
-    const assignTitle = "Assigned Task Completed";
-
-    for (const userId of assignTaskUserId) {
-      const assignUser = await getUser(userId);
-      sendUserNotifications({
-        userId: assignUser.id,
-        userName: `${assignUser.firstName} ${assignUser.lastName}`,
-        userEmail: assignUser.email || "",
-        userPhoneNo: assignUser.phone || "",
-        iconType: "task",
-        companyId: assignUser.companyId,
-        title: assignTitle,
-        description: assignDescription,
+        companyId: user.companyId || companyId,
+        title,
+        description,
         type: "TASK_FINISHED",
         redirectUrl: "/",
       });
