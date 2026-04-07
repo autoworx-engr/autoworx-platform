@@ -29,7 +29,6 @@ export default async function getTemplateList(search?: string) {
 
     return { templates };
   } catch (error) {
-    console.error("Error fetching templates:", error);
     throw new Error("Failed to get templates");
   }
 }

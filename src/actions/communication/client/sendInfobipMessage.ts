@@ -39,7 +39,7 @@ export async function sendInfobipMessage({
   companyId?: number;
   message: string;
   clientId: number;
-  attachments: { url: string; name: string }[];
+  attachments: { url: string; name: string; isVoiceNote?: boolean }[];
   isSalesAgent?: boolean;
   userId?: number;
   /** Pass true when calling from a webhook/system context with no user session. */
@@ -150,6 +150,21 @@ export async function sendInfobipMessage({
             return "audio/mpeg";
           case "wav":
             return "audio/wav";
+          case "ogg":
+          case "oga":
+            return "audio/ogg";
+          case "opus":
+            return "audio/ogg; codecs=opus";
+          case "m4a":
+            return "audio/mp4";
+          case "webm":
+            return "audio/webm";
+          case "aac":
+            return "audio/aac";
+          case "amr":
+            return "audio/amr";
+          case "3gp":
+            return "audio/3gpp";
           default:
             return "image/jpeg"; // Default to image/jpeg for images
         }
@@ -311,12 +326,14 @@ export async function sendInfobipMessage({
           data: {
             name: file.name,
             url: file.url,
+            isVoiceNote: file.isVoiceNote ?? false,
             clientSMSId: dbMessage.id,
           },
         });
         processedAttachments.push({
           name: file.name,
           url: file.url,
+          isVoiceNote: file.isVoiceNote ?? false,
         });
       }
 
