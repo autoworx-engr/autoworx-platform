@@ -12,6 +12,14 @@ import {
   InvoicePhoto,
   Labor,
   Material,
+  Payment,
+  CardPayment,
+  CheckPayment,
+  CashPayment,
+  OtherPayment,
+  DepositPayment,
+  PaymentMethod,
+  Refund,
   Service,
   User,
   Vehicle,
@@ -155,7 +163,11 @@ const styles = StyleSheet.create({
   regular: { fontFamily: "Poppins" },
   italic: { fontFamily: "Poppins", fontStyle: "italic" },
   bold: { fontFamily: "Poppins", fontWeight: "bold" },
-  boldItalic: { fontFamily: "Poppins", fontWeight: "bold", fontStyle: "italic" },
+  boldItalic: {
+    fontFamily: "Poppins",
+    fontWeight: "bold",
+    fontStyle: "italic",
+  },
   extraBold: { fontFamily: "Poppins", fontWeight: 800 },
   lightItalic: { fontFamily: "Poppins", fontWeight: 300, fontStyle: "italic" },
   fontSize10: { fontSize: 9 },
@@ -344,6 +356,69 @@ const styles = StyleSheet.create({
     fontSize: 9,
     color: colors.text,
   },
+  // Payments
+  paymentTable: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    overflow: "hidden",
+    marginTop: 6,
+    marginBottom: 8,
+  },
+  paymentHeaderRow: {
+    flexDirection: "row",
+    backgroundColor: colors.bgSection,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+  },
+  paymentRow: {
+    flexDirection: "row",
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+  },
+  paymentRowLast: {
+    borderBottomWidth: 0,
+  },
+  paymentColDate: {
+    width: "20%",
+    fontSize: 8,
+    color: colors.text,
+  },
+  paymentColMethod: {
+    width: "24%",
+    fontSize: 8,
+    color: colors.text,
+  },
+  paymentColAmount: {
+    width: "24%",
+    fontSize: 8,
+    color: colors.text,
+  },
+  paymentColCash: {
+    width: "16%",
+    fontSize: 8,
+    color: colors.text,
+  },
+  paymentColDue: {
+    width: "16%",
+    fontSize: 8,
+    color: colors.text,
+  },
+  paymentHeaderText: {
+    fontSize: 8,
+    fontWeight: 700,
+    color: colors.textMuted,
+    textTransform: "uppercase",
+  },
+  paymentRefundText: {
+    fontSize: 7,
+    color: "#DC2626",
+    marginTop: 1,
+  },
   // Inspections
   inspectionCard: {
     backgroundColor: colors.bgSection,
@@ -452,6 +527,14 @@ type PDFComponentProps = {
     })[];
     photos: InvoicePhoto[];
     user: User;
+    payments: (Payment & {
+      card: CardPayment | null;
+      check: CheckPayment | null;
+      cash: CashPayment | null;
+      other: (OtherPayment & { paymentMethod: PaymentMethod | null }) | null;
+      deposit: DepositPayment | null;
+      Refund: Refund[];
+    })[];
   };
   vehicle: Vehicle | null;
   companyDetails: Company | null;
@@ -471,7 +554,7 @@ const PDFComponent = function PDF({
   signImageUrl,
 }: PDFComponentProps) {
   const [damageNotes, setDamageNotes] = useState<string>(
-    "There is no damage notes"
+    "There is no damage notes",
   );
   const [inspectionData, setInspectionData] = useState<InvoiceInspection[]>([]);
 
@@ -547,6 +630,28 @@ const PDFComponent = function PDF({
       return `${pct}% (${amount})`;
     }
     return formatCurrency(parseFloat("" + value));
+  };
+
+  const paymentEntries = (invoice.payments ?? [])
+    .filter((payment) => payment.invoiceId === invoice.id)
+    .sort(
+      (a, b) =>
+        new Date(b.date || b.createdAt).getTime() -
+        new Date(a.date || a.createdAt).getTime(),
+    );
+
+  const getPaymentMethodText = (
+    payment: (typeof paymentEntries)[number],
+  ) => {
+    if (payment.type === "OTHER") {
+      return payment.other?.paymentMethod?.name || "OTHER";
+    }
+
+    if (payment.type === "CARD") {
+      return payment.card?.cardType || "CARD";
+    }
+
+    return payment.type;
   };
 
   return (
@@ -626,8 +731,16 @@ const PDFComponent = function PDF({
             <Text style={styles.infoBlockContent}>
               {moment(invoice.createdAt).format("MMM DD, YYYY")}
             </Text>
-            <View style={{ flexDirection: "row", alignItems: "center", marginTop: 4 }}>
-              <Text style={[styles.infoBlockContent, { marginRight: 6 }]}>Bill Status:</Text>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginTop: 4,
+              }}
+            >
+              <Text style={[styles.infoBlockContent, { marginRight: 6 }]}>
+                Bill Status:
+              </Text>
               <View
                 style={[
                   styles.statusBadge,
@@ -637,7 +750,9 @@ const PDFComponent = function PDF({
                 <Text
                   style={[
                     { fontSize: 9, fontWeight: 700 },
-                    isPaid ? { color: colors.success } : { color: colors.primary },
+                    isPaid
+                      ? { color: colors.success }
+                      : { color: colors.primary },
                   ]}
                 >
                   {isPaid ? "PAID" : invoice.column?.title || "—"}
@@ -679,8 +794,7 @@ const PDFComponent = function PDF({
                 .filter((f) => totalsMap.has(f))
                 .map((field, idx, arr) => {
                   const value = totalsMap.get(field);
-                  const isEmphasis =
-                    field === "grand total" || field === "due";
+                  const isEmphasis = field === "grand total" || field === "due";
                   return (
                     <View
                       key={field}
@@ -711,6 +825,81 @@ const PDFComponent = function PDF({
           Services & Line Items
         </Text>
         <PDFInvoiceItems items={invoice.invoiceItems} />
+
+        {/* payment info  */}
+        {paymentEntries.length > 0 && (
+          <View style={[styles.termsSection, { marginTop: 6 }]}>
+            <Text style={styles.sectionTitle}>Payment Info</Text>
+            <View style={styles.paymentTable}>
+              <View style={styles.paymentHeaderRow}>
+                <Text style={[styles.paymentColDate, styles.paymentHeaderText]}>
+                  Date
+                </Text>
+                <Text
+                  style={[styles.paymentColMethod, styles.paymentHeaderText]}
+                >
+                  Method
+                </Text>
+                <Text
+                  style={[styles.paymentColAmount, styles.paymentHeaderText]}
+                >
+                  Amount
+                </Text>
+                <Text style={[styles.paymentColCash, styles.paymentHeaderText]}>
+                  Cash
+                </Text>
+                <Text style={[styles.paymentColDue, styles.paymentHeaderText]}>
+                  Due
+                </Text>
+              </View>
+
+              {paymentEntries.map((payment, index) => {
+                const refundedAmount = payment.Refund.reduce(
+                  (sum, refund) => sum + Number(refund.amount || 0),
+                  0,
+                );
+
+                return (
+                  <View
+                    key={payment.id}
+                    style={[
+                      styles.paymentRow,
+                      index === paymentEntries.length - 1
+                        ? styles.paymentRowLast
+                        : {},
+                    ]}
+                  >
+                    <Text style={styles.paymentColDate}>
+                      {moment(payment.date || payment.createdAt).format(
+                        "MM.DD.YYYY",
+                      )}
+                    </Text>
+                    <Text style={styles.paymentColMethod}>
+                      {getPaymentMethodText(payment)}
+                    </Text>
+                    <View style={styles.paymentColAmount}>
+                      <Text>{formatCurrency(Number(payment.amount || 0))}</Text>
+                      {refundedAmount > 0 && (
+                        <Text style={styles.paymentRefundText}>
+                          Refunded: {formatCurrency(refundedAmount)}
+                        </Text>
+                      )}
+                    </View>
+                    <Text style={styles.paymentColCash}>
+                      {payment.cash?.receivedCash || "N/A"}
+                    </Text>
+                    <Text style={styles.paymentColDue}>
+                      {payment.dueAfterPayment !== null &&
+                        payment.dueAfterPayment !== undefined
+                        ? formatCurrency(Number(payment.dueAfterPayment))
+                        : "N/A"}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+        )}
 
         {(inspectionData.length > 0 || damageNotes) && (
           <View style={[styles.termsSection, { marginTop: 20 }]}>
@@ -745,9 +934,11 @@ const PDFComponent = function PDF({
           <View style={styles.footerBlock}>
             <Text style={styles.footerLabel}>Prepared by</Text>
             <Text style={styles.footerValue}>{invoice.company.name}</Text>
-            <Text style={[styles.footerValue, { fontWeight: 600 }]}>
-              {invoice.user.firstName} {invoice.user.lastName}
-            </Text>
+            {invoice?.user && (
+              <Text style={[styles.footerValue, { fontWeight: 600 }]}>
+                {invoice?.user?.firstName} {invoice?.user?.lastName}
+              </Text>
+            )}
           </View>
           <View style={styles.footerSignature}>
             {signImageUrl ? (
@@ -775,7 +966,7 @@ const PDFComponent = function PDF({
             color: colors.textLight,
           }}
         >
-          Thank you for your business · Powered by Autoworx
+          Thank you for your business · Powered by {companyDetails?.name}
         </Text>
       </Page>
     </Document>
@@ -806,8 +997,7 @@ const PDFInvoiceItems = ({
     }, 0);
 
     const laborCost = item.labor?.charge
-      ? parseFloat(item.labor?.charge.toString()) *
-      (Number(item.labor.hours) || 0)
+      ? parseFloat(item.labor?.charge.toString()) * Number(item.labor?.hours)
       : 0;
     const totalDiscount =
       item.materials.reduce((acc, material) => {
@@ -844,7 +1034,9 @@ const PDFInvoiceItems = ({
                 : 0;
               return (
                 <View key={index} style={styles.lineItem}>
-                  <Text style={styles.lineItemText}>Material - {material.name}</Text>
+                  <Text style={styles.lineItemText}>
+                    Material - {material.name}
+                  </Text>
                   <Text style={styles.lineItemText}>
                     {formatCurrency(lineTotal)}
                   </Text>
@@ -854,16 +1046,12 @@ const PDFInvoiceItems = ({
           </View>
         )}
 
-        {laborCost > 0 && (
-          <View style={styles.lineItem}>
-            <Text style={styles.lineItemText}>
-              Labor - {item.labor ? item.labor.name : "Labor"}
-            </Text>
-            <Text style={styles.lineItemText}>
-              {formatCurrency(laborCost)}
-            </Text>
-          </View>
-        )}
+        <View style={styles.lineItem}>
+          <Text style={styles.lineItemText}>
+            Labor {item.labor ? `-` + item.labor.name : ""}
+          </Text>
+          <Text style={styles.lineItemText}>{formatCurrency(laborCost)}</Text>
+        </View>
         {item.labor?.notes && (
           <Text style={[styles.inspectionNote, { marginTop: 2 }]}>
             Description - {item.labor.notes}

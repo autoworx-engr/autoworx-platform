@@ -2,8 +2,6 @@ import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 import { validateCompanyId } from "../utils";
 
-
-
 /**
  * @swagger
  * /api/ai-train/faq:
@@ -42,36 +40,36 @@ import { validateCompanyId } from "../utils";
  *         description: Internal server error
  */
 export async function GET(req: Request) {
-    try {
-        const validation = validateCompanyId(req);
-        if (validation instanceof NextResponse) return validation;
-        const { companyId } = validation;
+  try {
+    const validation = validateCompanyId(req);
+    if (validation instanceof NextResponse) return validation;
+    const { companyId } = validation;
 
-        const companyInfo = await db.companyInfo.findFirst({
-            where: { companyId },
-            select: {
-                overallFaqs: true,
-            }
-        });
+    const companyInfo = await db.companyInfo.findFirst({
+      where: { companyId },
+      select: {
+        overallFaqs: true,
+      },
+    });
 
-        if (!companyInfo) {
-            return NextResponse.json(
-                { success: false, message: "Company info not found" },
-                { status: 404 },
-            );
-        }
-
-        return NextResponse.json({
-            success: true,
-            message: "FAQs retrieved successfully",
-            data: companyInfo.overallFaqs || [],
-        });
-    } catch (error) {
-        return NextResponse.json(
-            { success: false, message: "Internal server error" },
-            { status: 500 },
-        );
+    if (!companyInfo) {
+      return NextResponse.json(
+        { success: false, message: "Company info not found" },
+        { status: 404 },
+      );
     }
+
+    return NextResponse.json({
+      success: true,
+      message: "FAQs retrieved successfully",
+      data: companyInfo.overallFaqs || [],
+    });
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, message: "Internal server error" },
+      { status: 500 },
+    );
+  }
 }
 
 /**
@@ -118,45 +116,48 @@ export async function GET(req: Request) {
  *         description: Internal server error
  */
 export async function POST(req: Request) {
-    try {
-        const body = await req.json();
+  try {
+    const body = await req.json();
 
-        if (!body?.companyId || !body?.faqs) {
-            return NextResponse.json(
-                { success: false, message: "Company ID and FAQs are required" },
-                { status: 400 },
-            );
-        }
-
-        // Check if company info exists
-        let companyInfo = await db.companyInfo.findFirst({
-            where: { companyId: Number(body.companyId) }
-        });
-
-        if (!companyInfo) {
-            return NextResponse.json(
-                { success: false, message: "Company info not found. Create company info first." },
-                { status: 404 },
-            );
-        }
-
-        // Update or create FAQs
-        const updatedInfo = await db.companyInfo.update({
-            where: { id: companyInfo.id },
-            data: {
-                overallFaqs: body.faqs,
-            }
-        });
-
-        return NextResponse.json({
-            success: true,
-            message: "FAQs created/updated successfully",
-            data: updatedInfo.overallFaqs,
-        });
-    } catch (error) {
-        return NextResponse.json(
-            { success: false, message: "Internal server error" },
-            { status: 500 },
-        );
+    if (!body?.companyId || !body?.faqs) {
+      return NextResponse.json(
+        { success: false, message: "Company ID and FAQs are required" },
+        { status: 400 },
+      );
     }
-}   
+
+    // Check if company info exists
+    let companyInfo = await db.companyInfo.findFirst({
+      where: { companyId: Number(body.companyId) },
+    });
+
+    if (!companyInfo) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Company info not found. Create company info first.",
+        },
+        { status: 404 },
+      );
+    }
+
+    // Update or create FAQs
+    const updatedInfo = await db.companyInfo.update({
+      where: { id: companyInfo.id },
+      data: {
+        overallFaqs: body.faqs,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "FAQs created/updated successfully",
+      data: updatedInfo.overallFaqs,
+    });
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, message: "Internal server error" },
+      { status: 500 },
+    );
+  }
+}

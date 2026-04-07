@@ -106,10 +106,67 @@ Handles real-time updates for unread messages count on lead cards or pipeline vi
 | -------------------- | -------- | ---------------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------- |
 | `message-{clientId}` | `client` | `{ count, updatedColumnId }` | `src/app/api/twilio/sms-receive/[companyIds]/route.ts` | `src/app/(dashboard)/dashboard/pipeline/components/CommunicationsNoti.tsx` |
 
+### F. Collaboration (Inter-Company Communication)
+
+Handles real-time messaging between **companies** that have established collaboration relationships. This is a company-to-company model distinct from the user-to-user internal chat.
+
+> **Note:** This section was reworked. Messages are now sent via a dedicated
+> `/api/pusher/collaboration` route and scoped to company-level channels
+> (`company-{id}`), using the `CollaborationMessage` / `CompanyChatTrack` DB
+> models instead of the shared `Message` / `ChatTrack` models.
+
+#### F.1 — Real-Time Message Delivery
+
+Messages are broadcast to both the **sender's** and **receiver's** company channels so both parties see the update instantly.
+
+| Channel                      | Event     | Payload                                                                                                                        | Description                                                                                                  |
+| ---------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| `company-{fromCompanyId}`    | `message` | `{ fromCompanyId, toCompanyId, senderUserId, message, attachment, requestEstimate, senderUser, createdAt, isOwnMessage: true }` | Delivered to the **sender's** company. `isOwnMessage: true` is used for right-aligning bubbles in the UI.   |
+| `company-{toCompanyId}`      | `message` | Same shape as above but `isOwnMessage: false`                                                                                  | Delivered to the **receiver's** company. `isOwnMessage: false` is used for left-aligning bubbles in the UI. |
+
+#### F.2 — Chat Track (Sidebar / Last-Message Updates)
+
+After a message is sent, both companies' sidebar lists are updated with the latest message snippet.
+
+| Channel                          | Event       | Payload                                                                                   | Description                                                       |
+| -------------------------------- | ----------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `company-track-{fromCompanyId}`  | `chat-track` | `CompanyChatTrack` object (`senderCompanyId`, `receiverCompanyId`, `lastMessage`, `isRead`) | Updates the collaboration list sidebar for the **sending** company.   |
+| `company-track-{toCompanyId}`    | `chat-track` | Same `CompanyChatTrack` object                                                             | Updates the collaboration list sidebar for the **receiving** company. |
+
+#### F.3 — Key Implementation Details
+
+| Concern                  | Detail                                                                                                                                                |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **DB Models**            | `CollaborationMessage` (messages), `CompanyChatTrack` (last-message tracking), both store `fromCompanyId` + `toCompanyId` instead of user IDs.       |
+| **Trigger Route**        | [`src/app/api/pusher/collaboration/route.ts`](src/app/api/pusher/collaboration/route.ts) — dedicated `POST` endpoint; validates company IDs and saves to `CollaborationMessage`. |
+| **Subscriber**           | [`src/app/(dashboard)/dashboard/communication/CompanyMessageBox.tsx`](src/app/(dashboard)/dashboard/communication/CompanyMessageBox.tsx) — subscribes to `company-{currentCompanyId}`, binds `message`, updates local state. |
+| **Message Fetch**        | On mount, `CompanyMessageBox` fetches history from `/api/communication/collaboration/messages/v2-messages?companyA=&companyB=&viewerCompanyId=`.       |
+| **Notification**         | On send, `sendCollaborationMessageNotification({ companyId: toCompanyId })` is called to push an in-app notification to the receiver company.          |
+| **Estimate Attachments** | An estimate/invoice can be attached via `InvoiceEstimateModal`, which sends `requestEstimateId` in the body; the receiver sees an inline "Requested an Estimate" card. |
+| **Attachment Upload**    | Files are uploaded to `/api/upload` first, then their URLs are passed as `attachmentFiles[]` in the collaboration push request.                        |
+
+#### F.4 — Flow Diagram
+
+```
+Client (CompanyMessageBox)
+  → POST /api/pusher/collaboration
+      → db.collaborationMessage.create()
+      → db.companyChatTrack.upsert()
+      → pusher.trigger("company-{from}", "message", payloadFrom)
+      → pusher.trigger("company-{to}",   "message", payloadTo)
+      → pusher.trigger("company-track-{from}", "chat-track", chatTrack)
+      → pusher.trigger("company-track-{to}",   "chat-track", chatTrack)
+      → sendCollaborationMessageNotification({ companyId: to })
+
+CompanyMessageBox (receiver's browser)
+  ← pusher.subscribe("company-{myCompanyId}").bind("message") → setMessages(...)
+```
+
 ## 4. Key Files
 
 - **Triggers (Server-Side)**:
-  - [`src/app/api/pusher/route.ts`](src/app/api/pusher/route.ts) (Main chat message dispatcher)
+  - [`src/app/api/pusher/route.ts`](src/app/api/pusher/route.ts) (Internal / user-to-user chat dispatcher)
+  - [`src/app/api/pusher/collaboration/route.ts`](src/app/api/pusher/collaboration/route.ts) (Company-to-company collaboration dispatcher)
   - [`src/app/api/twilio/call-state/route.ts`](src/app/api/twilio/call-state/route.ts) (Call state)
   - [`src/actions/notification/sendNotification.ts`](src/actions/notification/sendNotification.ts)
 
@@ -118,3 +175,4 @@ Handles real-time updates for unread messages count on lead cards or pipeline vi
   - [`src/context/VoiceDeviceContext.tsx`](src/context/VoiceDeviceContext.tsx)
   - [`src/components/SideNavbar.tsx`](src/components/SideNavbar.tsx)
   - [`src/app/(dashboard)/dashboard/communication/internal/UserMessageBox.tsx`](<src/app/(dashboard)/dashboard/communication/internal/UserMessageBox.tsx>)
+  - [`src/app/(dashboard)/dashboard/communication/CompanyMessageBox.tsx`](<src/app/(dashboard)/dashboard/communication/CompanyMessageBox.tsx>) (Collaboration)

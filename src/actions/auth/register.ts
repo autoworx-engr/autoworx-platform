@@ -208,6 +208,11 @@ export async function register({
         permission_name: "serviceAutomation",
         status: true,
       },
+      {
+        title: "Reporting Automation",
+        permission_name: "reportingAutomation",
+        status: true,
+      },
     ];
 
     await Promise.all(
@@ -289,7 +294,7 @@ export async function register({
     await db.companyEmailTemplate.create({
       data: {
         subject: `Estimate for services requested at <BUSINESS_NAME>`,
-        message: `Hey <CLIENT>, your invoice for <VEHICLE> is ready. If everything looks good, please approve it so we can move forward. Thanks!– <BUSINESS_NAME>`,
+        message: `Hey <CLIENT>, your estimate for <VEHICLE> is ready. If everything looks good, please approve it so we can move forward. Thanks!– <BUSINESS_NAME>`,
         companyId: newCompany.id,
       },
     });

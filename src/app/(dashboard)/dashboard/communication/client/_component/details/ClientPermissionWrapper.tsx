@@ -1,8 +1,8 @@
 "use client";
 
-import { useGetCompanyPermissions } from "@/hooks/feature-permissions/useGetCompanyPersmissions";
+import { getEntitlements } from "@/actions/platform-billing/entitlements";
+import { useServerGet } from "@/hooks/useServerGet";
 import ClientSalesAgentToggle from "./ClientSalesAgentToggle";
-import { isSalesAgentEnabled } from "@/utils/permissions";
 
 type Props = {
   companyId: number;
@@ -15,15 +15,22 @@ export default function ClientPermissionWrapper({
   clientId,
   initialValue,
 }: Props) {
-  const { data, isLoading } = useGetCompanyPermissions(companyId);
+  const { data: entitlementsRes, loading } = useServerGet(
+    getEntitlements,
+    companyId,
+  );
 
-  if (isLoading) return null;
+  if (loading) return null;
 
-  const enabled = isSalesAgentEnabled(data);
-
-  if (!enabled) return null;
+  const enabled =
+    entitlementsRes?.success === true &&
+    Boolean(entitlementsRes.data?.awxSalesAgent);
 
   return (
-    <ClientSalesAgentToggle clientId={clientId} initialValue={initialValue} />
+    <ClientSalesAgentToggle
+      clientId={clientId}
+      initialValue={initialValue}
+      isRestricted={!enabled}
+    />
   );
 }

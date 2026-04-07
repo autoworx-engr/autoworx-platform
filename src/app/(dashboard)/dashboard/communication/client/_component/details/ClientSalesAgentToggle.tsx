@@ -7,11 +7,13 @@ import toast from "react-hot-toast";
 type Props = {
   clientId: number;
   initialValue: boolean;
+  isRestricted?: boolean;
 };
 
 export default function ClientSalesAgentToggle({
   clientId,
   initialValue,
+  isRestricted = false,
 }: Props) {
   const [enabled, setEnabled] = useState(initialValue);
   const [isPending, startTransition] = useTransition();
@@ -38,15 +40,22 @@ export default function ClientSalesAgentToggle({
   };
 
   return (
-    <div className=" flex items-center gap-2">
-      <span className="text-[11px] opacity-80 2xl:text-sm">
+    <div className="flex items-center gap-2">
+      <span
+        className={`text-[11px] 2xl:text-sm ${isRestricted ? "opacity-60" : "opacity-80"}`}
+      >
         Sales Agent Access
       </span>
       <Switch
         checked={enabled}
         onCheckedChange={handleToggle}
-        disabled={isPending}
+        disabled={isPending || isRestricted}
       />
+      {isRestricted && (
+        <span className="text-[10px] font-medium text-amber-200/90 2xl:text-xs">
+          Upgrade plan to enable
+        </span>
+      )}
     </div>
   );
 }

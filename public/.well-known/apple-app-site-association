@@ -1,0 +1,26 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "HD3DRJP77N.com.awx.autoworx",
+        "components": [
+          {
+            "/": "*",
+            "comment": "Matches all routes"
+          }
+        ]
+      }
+    ]
+  },
+  "activitycontinuation": {
+    "apps": [
+      "HD3DRJP77N.com.awx.autoworx"
+    ]
+  },
+  "webcredentials": {
+    "apps": [
+      "HD3DRJP77N.com.awx.autoworx"
+    ]
+  }
+}

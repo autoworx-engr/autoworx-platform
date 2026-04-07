@@ -29,7 +29,7 @@ model Appointment {
   times                           Json? // { time: string; date: string }
   createdAt                       DateTime                        @default(now()) @map("created_at")
   updatedAt                       DateTime                        @default(now()) @updatedAt @map("updated_at")
-  user                            User                            @relation(fields: [userId], references: [id])
+  user                            User?                            @relation(fields: [userId], references: [id], onDelete: Cascade) 
   company                         Company                         @relation(fields: [companyId], references: [id], onDelete: Cascade)
   appointmentUsers                AppointmentUser[]
   client                          Client?                         @relation(fields: [clientId], references: [id])
@@ -310,6 +310,31 @@ model InventoryAutomationTeamMember {
   @@id([inventoryRuleId, userId])
 }
 
+model ReportingAutomationRule {
+  id          Int                             @id @default(autoincrement())
+  title       String
+  companyId   Int
+  frequency   ReportingAutomationFrequency
+  action      ReportingNotificationAction
+  day         DayOfWeek?
+  isPaused    Boolean                         @default(false)
+  createdBy   String?
+  createdAt   DateTime                        @default(now())
+  updatedAt   DateTime                        @updatedAt
+  company     Company                         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  teamMembers ReportingAutomationTeamMember[]
+
+  @@index([companyId])
+}
+model ReportingAutomationTeamMember {
+  reportingRuleId Int
+  userId          Int
+  reportingRule   ReportingAutomationRule @relation(fields: [reportingRuleId], references: [id], onDelete: Cascade)
+  user            User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([reportingRuleId, userId])
+}
+
 // TODO: Tag Automation Schema
 // tag automation rules
 model TagAutomationRule {
@@ -460,6 +485,18 @@ enum InventoryNotificationAction {
   BOTH
 }
 
+enum ReportingAutomationFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+enum ReportingNotificationAction {
+  EMAIL
+  SMS
+  BOTH
+}
 // Client of a company.
 // Client is just data, they can't login.
 model Client {
@@ -524,7 +561,7 @@ model Fleet {
 model FleetStatement {
   id        String    @id @default(cuid())
   fleetId   Int       @map("fleet_id")
-  Fleet     Fleet     @relation(fields: [fleetId], references: [id])
+  Fleet     Fleet     @relation(fields: [fleetId], references: [id], onDelete: Cascade )
   invoice   Invoice[]
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
@@ -582,6 +619,8 @@ model Company {
   industry                         String?
   website                          String?
   address                          String?
+  about                            String?
+  teamSize                         TeamSize?                          @default(MEDIUM)
   city                             String?
   state                            String?
   zip                              String?
@@ -669,6 +708,7 @@ model Company {
   Refund                           Refund[]
   InvoiceAutomationRule            InvoiceAutomationRule[]
   inventoryAutomationRule          InventoryAutomationRule[]
+  reportingAutomationRule          ReportingAutomationRule[]
   companyPermissionModules         CompanyPermissionModule[]
   BugReport                        BugReport[]
   salaryHistory                    SalaryHistory[]
@@ -677,11 +717,42 @@ model Company {
   smsGateway                       SmsGateway                         @default(TWILIO)
   invoiceTemplates                 InvoiceTemplate[]
   callForwardingNumber             String?                            @map("call_forwarding_number")
+  missedCallTextBackEnabled        Boolean                            @default(true) @map("missed_call_text_back_enabled")
+  enforcePlatformPlan              Boolean                            @default(false) @map("enforce_platform_plan")
+  googleReviewLink     String? @map("google_review_link") @db.VarChar(500)
+  billingCustomer      PlatformBillingCustomer?
+  platformSubscription PlatformSubscription?
+  platformPlans        PlatformPlan[]
+
   callWhisperEnabled               Boolean                            @default(true) @map("call_whisper_enabled")
-  googleReviewLink                 String?                            @map("google_review_link") @db.VarChar(500)
+
   servicePlaybooks                 ServicePlaybook[]
   conversationExamples             ConversationExample[]
   knowledgeBaseDocuments           KnowledgeBaseDocument[]
+  reviews                          Reviews[]
+}
+
+model Reviews {
+  id            Int      @id @default(autoincrement())
+  rate          Decimal  @db.Decimal(2, 1)
+  message       String
+  companyId     Int
+  sendUserId    Int
+  sendCompanyId Int
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
+  company       Company  @relation(fields: [companyId], references: [id])
+  user          User     @relation(fields: [sendUserId], references: [id])
+
+  @@unique([sendCompanyId, companyId])
+  @@index([companyId])
+  @@index([sendUserId])
+}
+
+enum TeamSize {
+  SMALL
+  MEDIUM
+  LARGE
 }
 
 enum SmsGateway {
@@ -902,9 +973,9 @@ model TwilioCredentials {
   phoneNumberSid String  @map("phone_number_sid")
   companyId      Int     @unique @map("company_id")
 
-  // Per-subaccount Notify configuration
-  notifyServiceSid      String? @map("notify_service_sid")
-  voipPushCredentialSid String? @map("voip_push_credential_sid")
+  // Per-subaccount Voice Push credentials
+  fcmPushCredentialSid String? @map("fcm_push_credential_sid")
+  apnPushCredentialSid String? @map("apn_push_credential_sid")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
@@ -1484,24 +1555,25 @@ model TemplatePhoto {
 }
 
 model RequestEstimate {
-  id                Int      @id @default(autoincrement())
-  senderId          Int      @map("sender_id")
-  senderCompanyId   Int      @map("sender_company_id")
-  receiverId        Int      @map("receiver_id")
-  receiverCompanyId Int      @map("receiver_company_id")
-  vehicleId         Int      @unique @map("vehicle_id")
-  serviceId         Int      @unique @map("service_id")
-  invoiceId         String   @map("invoice_id")
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @default(now()) @updatedAt @map("updated_at")
-  sender            User     @relation("Sender", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver          User     @relation("Receiver", fields: [receiverId], references: [id], onDelete: Cascade)
-  senderCompany     Company  @relation("SenderCompany", fields: [senderCompanyId], references: [id], onDelete: Cascade)
-  receiverCompany   Company  @relation("ReceiverCompany", fields: [receiverCompanyId], references: [id], onDelete: Cascade)
-  invoice           Invoice?
-  vehicle           Vehicle? @relation("Vehicle", fields: [vehicleId], references: [id], onDelete: Cascade)
-  service           Service? @relation("Service", fields: [serviceId], references: [id], onDelete: Cascade)
-  message           Message? @relation("Message")
+  id                    Int                    @id @default(autoincrement())
+  senderId              Int?                   @map("sender_id")
+  senderCompanyId       Int                    @map("sender_company_id")
+  receiverId            Int?                   @map("receiver_id")
+  receiverCompanyId     Int                    @map("receiver_company_id")
+  vehicleId             Int                    @unique @map("vehicle_id")
+  serviceId             Int                    @unique @map("service_id")
+  invoiceId             String                 @map("invoice_id")
+  createdAt             DateTime               @default(now()) @map("created_at")
+  updatedAt             DateTime               @default(now()) @updatedAt @map("updated_at")
+  sender                User?                  @relation("Sender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver              User?                  @relation("Receiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  senderCompany         Company                @relation("SenderCompany", fields: [senderCompanyId], references: [id], onDelete: Cascade)
+  receiverCompany       Company                @relation("ReceiverCompany", fields: [receiverCompanyId], references: [id], onDelete: Cascade)
+  invoice               Invoice?
+  vehicle               Vehicle?               @relation("Vehicle", fields: [vehicleId], references: [id], onDelete: Cascade)
+  service               Service?               @relation("Service", fields: [serviceId], references: [id], onDelete: Cascade)
+  collaborationMessages CollaborationMessage[]
+  message               Message?               @relation("Message")
 }
 
 // Technician of a InvoiceItem.
@@ -1589,12 +1661,44 @@ model Message {
   updatedAt         DateTime         @default(now()) @updatedAt @map("updated_at")
   group             Group?           @relation(fields: [groupId], references: [id])
   attachment        Attachment[]
-  requestEstimate   RequestEstimate? @relation("Message", fields: [requestEstimateId], references: [id])
   chatTrack         ChatTrack?
+  userId            Int?
+  requestEstimate   RequestEstimate? @relation("Message", fields: [requestEstimateId], references: [id])
 
   @@index([to], name: "fk_messages_to")
   @@index([from], name: "fk_messages_from")
   @@index([groupId], name: "fk_messages_group")
+}
+
+model CollaborationMessage {
+  id                 Int               @id @default(autoincrement())
+  fromCompanyId      Int
+  toCompanyId        Int
+  senderUserId       Int
+  message            String?
+  section            String
+  requestEstimateId  Int?
+  createdAt          DateTime          @default(now()) @map("created_at")
+  updatedAt          DateTime          @default(now()) @updatedAt @map("updated_at")
+  attachment         Attachment[]
+  chatTrack          CompanyChatTrack? @relation(fields: [companyChatTrackId], references: [id])
+  requestEstimate    RequestEstimate?  @relation(fields: [requestEstimateId], references: [id])
+  companyChatTrackId Int?
+  senderUser         User              @relation(fields: [senderUserId], references: [id])
+
+  @@index([fromCompanyId], name: "fk_collaboration_messages_to")
+  @@index([toCompanyId], name: "fk_collaboration_messages_from")
+}
+
+model CompanyChatTrack {
+  id                    Int                    @id @default(autoincrement())
+  senderCompanyId       Int
+  receiverCompanyId     Int
+  messageId             Int
+  lastMessage           String
+  isRead                Boolean                @default(false)
+  createdAt             DateTime               @default(now())
+  collaborationMessages CollaborationMessage[]
 }
 
 enum MessageSection {
@@ -1616,17 +1720,19 @@ model ChatTrack {
 }
 
 model Attachment {
-  id                 Int               @id @default(autoincrement())
-  fileName           String // File name (e.g., 'image.png')
-  fileType           String // File type (e.g., 'image/png', 'application/pdf')
-  fileUrl            String // File storage path or URL
-  fileSize           String
-  messageId          Int? // Foreign key to Message model, enforces one-to-one relationship
-  bugReportMessageId Int?
-  message            Message?          @relation(fields: [messageId], references: [id])
-  bugReportMessage   BugReportMessage? @relation(fields: [bugReportMessageId], references: [id])
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @default(now()) @updatedAt @map("updated_at")
+  id                     Int                   @id @default(autoincrement())
+  fileName               String // File name (e.g., 'image.png')
+  fileType               String // File type (e.g., 'image/png', 'application/pdf')
+  fileUrl                String // File storage path or URL
+  fileSize               String
+  messageId              Int? // Foreign key to Message model, enforces one-to-one relationship
+  bugReportMessageId     Int?
+  message                Message?              @relation(fields: [messageId], references: [id])
+  bugReportMessage       BugReportMessage?     @relation(fields: [bugReportMessageId], references: [id])
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @default(now()) @updatedAt @map("updated_at")
+  collaborationMessage   CollaborationMessage? @relation(fields: [collaborationMessageId], references: [id])
+  collaborationMessageId Int?
 }
 
 model Group {
@@ -2122,9 +2228,12 @@ model User {
   resetToken                     PasswordResetToken?
   Refund                         Refund[]
   inventoryAutomationTeamMembers InventoryAutomationTeamMember[]
+  reportingAutomationTeamMembers ReportingAutomationTeamMember[]
   salaryHistory                  SalaryHistory[]
   shortLinks                     ShortLink[] // Links created by this user
   twoFactorConfirmation          TwoFactorConfirmation?
+  collaborationMessages          CollaborationMessage[]
+  reviews                        Reviews[]
 
   @@index([companyId], name: "fk_users_company")
 }
@@ -2393,13 +2502,11 @@ model ClientCall {
 }
 
 model ClientSmsAttachments {
-  id   Int    @id @default(autoincrement())
-  name String
-  url  String
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
-
+  id          Int       @id @default(autoincrement())
+  name        String
+  url         String
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
   clientSMSId Int       @map("client_sms_id")
   clientSMS   ClientSMS @relation(fields: [clientSMSId], references: [id], onDelete: Cascade)
 }
@@ -2488,6 +2595,145 @@ model VehicleParts {
   service      Service?    @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 }
 
+// Platform Billing & Subscriptions
+
+model PlatformPlan {
+  id               String               @id @default(cuid())
+  name             String               @unique // e.g. "Starter (Text Only)"
+  description      String?              @db.Text
+  price            Decimal              @db.Decimal(10, 2)
+  interval         PlatformPlanInterval @default(MONTHLY)
+  trialLengthDays  Int                  @default(0)
+  displayOrder     Int                  @default(0)
+  isActive         Boolean              @default(true)
+  companyId        Int?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  company          Company?             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  features         PlanFeature[]
+  subscriptions    PlatformSubscription[]
+}
+
+model PlanFeature {
+  id          String              @id @default(cuid())
+  planId      String
+  featureKey  String              // e.g. "can_use_voice"
+  value       String              // e.g. "true" or "3"
+  type        PlatformFeatureType @default(BOOLEAN)
+
+  plan        PlatformPlan        @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@unique([planId, featureKey])
+}
+
+model PlatformBillingCustomer {
+  id                    String   @id @default(cuid())
+  companyId             Int      @unique
+  authNetProfileId      String?  @unique // Authorize.net customerProfileId
+  email                 String?
+  taxId                 String?
+  trialConsumedAt       DateTime?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  company               Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  subscriptions         PlatformSubscription[]
+  paymentMethods        PlatformPaymentMethod[]
+  invoices              PlatformInvoice[]
+}
+
+model PlatformSubscription {
+  id                        String                     @id @default(cuid())
+  companyId                 Int                        @unique
+  billingCustomerId         String
+  planId                    String
+  status                    PlatformSubscriptionStatus @default(ACTIVE)
+  billingAnchor             DateTime?                  // next charge date
+  cancelAtPeriodEnd         Boolean                    @default(false)
+  authNetSubscriptionId     String?                    @unique
+  currentPeriodStart        DateTime                   @default(now())
+  currentPeriodEnd          DateTime?
+  createdAt                 DateTime                   @default(now())
+  updatedAt                 DateTime                   @updatedAt
+
+  company                   Company                    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  billingCustomer           PlatformBillingCustomer    @relation(fields: [billingCustomerId], references: [id], onDelete: Cascade)
+  plan                      PlatformPlan               @relation(fields: [planId], references: [id])
+  items                     PlatformSubscriptionItem[]
+}
+
+model PlatformSubscriptionItem {
+  id             String               @id @default(cuid())
+  subscriptionId String
+  name           String               // e.g. "Growth Plan" or "Website Add-on"
+  price          Decimal              @db.Decimal(10, 2)
+  quantity       Int                  @default(1)
+  isOneTime      Boolean              @default(false)
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  subscription   PlatformSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+}
+
+model PlatformPaymentMethod {
+  id                    String   @id @default(cuid())
+  billingCustomerId     String
+  authNetPaymentProfileId String @unique // Authorize.net paymentProfileId
+  cardType              String?  // e.g. "Visa"
+  last4                 String?
+  expiry                String?
+  isDefault             Boolean  @default(false)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  billingCustomer       PlatformBillingCustomer @relation(fields: [billingCustomerId], references: [id], onDelete: Cascade)
+}
+
+model PlatformInvoice {
+  id                String   @id @default(cuid())
+  billingCustomerId String
+  subscriptionId    String?
+  amount            Decimal  @db.Decimal(10, 2)
+  status            String   // e.g. "PAID", "OPEN", "VOID"
+  authNetTransId    String?  @unique // Linking to a specific capture trans
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  billingCustomer   PlatformBillingCustomer @relation(fields: [billingCustomerId], references: [id], onDelete: Cascade)
+  payments          PlatformPayment[]
+}
+
+model PlatformPayment {
+  id                String   @id @default(cuid())
+  platformInvoiceId String
+  amount            Decimal  @db.Decimal(10, 2)
+  status            String
+  authNetTransId    String?  @unique
+  createdAt         DateTime @default(now())
+
+  invoice           PlatformInvoice @relation(fields: [platformInvoiceId], references: [id], onDelete: Cascade)
+}
+
+enum PlatformSubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  UNPAID
+}
+
+enum PlatformPlanInterval {
+  MONTHLY
+  YEARLY
+}
+
+enum PlatformFeatureType {
+  BOOLEAN
+  NUMERIC
+  TEXT
+}
+// Ai sales agent configuration for a company
 //TODO: Ai sales agent configuration for a company
 model CompanyInfo {
   id        Int      @id @default(autoincrement())

@@ -6,7 +6,7 @@ export default function SearchTerms() {
   const { setFilter, search } = useEstimateFilterStore();
 
   return (
-    <div className="relative min-w-0 flex-1 group">
+    <div className="relative flex-1 group">
       <Search
         size={18}
         className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-[#6571FF]"

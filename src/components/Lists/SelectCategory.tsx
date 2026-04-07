@@ -22,7 +22,7 @@ export default function SelectCategory({
   allowEdit = false,
 }: {
   categoryData?: Category | null;
-  onCategoryChange: (category: Category) => void;
+  onCategoryChange: (category: Category | null) => void;
   labelPosition?: "top" | "left" | "none";
   categoryOpen?: boolean;
   setCategoryOpen?: any;
@@ -66,7 +66,9 @@ export default function SelectCategory({
     const res = await deleteCategory({ categoryId });
 
     if (res.type === "success") {
-      setCategory(null);
+      if (category?.id === categoryId) {
+        setCategory(null);
+      }
       useListsStore.setState((state) => {
         return {
           categories: state.categories.filter((cat) => cat.id !== categoryId),
@@ -82,9 +84,7 @@ export default function SelectCategory({
   }
 
   useEffect(() => {
-    if (category) {
-      onCategoryChange(category);
-    }
+    onCategoryChange(category);
   }, [category]);
 
   return (

@@ -37,7 +37,7 @@ export async function POST(request: Request) {
     if (!from || !to) {
       return NextResponse.json(
         { error: "Missing 'from' or 'to' parameters." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
     if (!infobipConfig) {
       return NextResponse.json(
         { error: "Infobip credentials not found" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -75,6 +75,7 @@ export async function POST(request: Request) {
           lastName: "Caller",
           mobile: from,
           companyId: infobipConfig.companyId,
+          isSalesAgent: true,
         },
       });
     }
@@ -103,7 +104,7 @@ export async function POST(request: Request) {
     console.error("Error handling incoming call:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

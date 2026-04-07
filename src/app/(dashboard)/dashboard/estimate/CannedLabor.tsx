@@ -276,6 +276,7 @@ const LaborComponent = ({
   const [charge, setCharge] = useState<string>(
     labor.charge ? Number(labor.charge).toFixed(2) : "0.00"
   );
+  const [notes, setNotes] = useState<string>((labor as any).notes || "");
   const [category, setCategory] = useState<Category | null>(
     labor?.category || null
   );
@@ -309,6 +310,7 @@ const LaborComponent = ({
       name,
       charge: parseFloat(charge) || 0,
       categoryId: category?.id || undefined,
+      notes: notes.trim() || undefined,
     });
 
     if (res.success) {
@@ -321,6 +323,22 @@ const LaborComponent = ({
     }
     setIsPending(false);
   };
+
+  // Reusable Notes field
+  const NotesField = (
+    <div>
+      <label className="mb-2 block text-sm font-medium text-gray-700">
+        Notes
+      </label>
+      <textarea
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+        rows={3}
+        className="w-full rounded-lg border border-gray-300 p-2 text-base focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors resize-none"
+        placeholder="Add any notes about this labor item..."
+      />
+    </div>
+  );
 
   if (view === "card") {
     return (
@@ -348,7 +366,7 @@ const LaborComponent = ({
                     <SquarePen className="w-5 h-5" />
                   </button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent onOpenAutoFocus={(e) => e.preventDefault()}>
                   <DialogHeader>
                     <DialogTitle>Edit Canned Labor</DialogTitle>
                   </DialogHeader>
@@ -364,6 +382,7 @@ const LaborComponent = ({
                           setName(e.target.value);
                           if (nameError) setNameError("");
                         }}
+                        autoFocus={false}
                         className={cn(
                           "w-full rounded-lg border p-2 text-base focus:ring-2 focus:ring-indigo-500 transition-colors",
                           nameError
@@ -403,6 +422,7 @@ const LaborComponent = ({
                         placeholder="$/Hour"
                       />
                     </div>
+                    {NotesField}
                   </div>
                   <DialogFooter>
                     <DialogClose asChild>
@@ -484,7 +504,10 @@ const LaborComponent = ({
               <SquarePen className="w-5 h-5" />
             </button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent
+            className="max-w-md"
+            onOpenAutoFocus={(e) => e.preventDefault()}
+          >
             <DialogHeader>
               <DialogTitle>Edit Canned Labor</DialogTitle>
             </DialogHeader>
@@ -500,6 +523,7 @@ const LaborComponent = ({
                     setName(e.target.value);
                     if (nameError) setNameError("");
                   }}
+                  autoFocus={false}
                   className={cn(
                     "w-full rounded-lg border p-2 text-base focus:ring-2 focus:ring-indigo-500 transition-colors",
                     nameError
@@ -539,6 +563,7 @@ const LaborComponent = ({
                   placeholder="$/Hour"
                 />
               </div>
+              {NotesField}
             </div>
             <DialogFooter>
               <DialogClose asChild>
