@@ -28,6 +28,7 @@ export interface AppointmentToAdd {
   assignedUsers: number[];
   clientId?: number;
   vehicleId?: number;
+  serviceCategoryId?: number;
   draftEstimate: string | null;
   notes?: string;
   confirmationEmailTemplateId?: number;
@@ -96,6 +97,7 @@ export async function addAppointment(
         endTime: appointment.endTime,
         clientId: appointment.clientId,
         vehicleId: appointment.vehicleId,
+        serviceCategoryId: appointment.serviceCategoryId,
         draftEstimate: appointment.draftEstimate,
         notes: appointment.notes,
         userId: Number(userId),

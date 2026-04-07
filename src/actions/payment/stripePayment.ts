@@ -18,6 +18,7 @@ export const createStripePaymentLink = async ({
   giftCardCode,
   giftCardId,
   amount,
+  tip,
   payType,
   redirectUrl,
 }: PaymentParams) => {
@@ -123,6 +124,9 @@ export const createStripePaymentLink = async ({
         ? appendQuery(appUrl, "cancel=true")
         : `${appUrl}/public-invoice/${invoiceId ?? statementId}${statementId ? "?fleet=true" : ""}`;
 
+    const tipAmount = parseFloat(tip || "0");
+    const totalCharge = Number(amount) + tipAmount;
+
     const session = await stripe.checkout.sessions.create(
       {
         payment_method_types: ["card"],
@@ -134,7 +138,7 @@ export const createStripePaymentLink = async ({
               product_data: {
                 name: productName,
               },
-              unit_amount: Math.round(Number(amount) * 100),
+              unit_amount: Math.round(totalCharge * 100),
             },
             quantity: 1,
           },
@@ -164,12 +168,14 @@ export const createStripePaymentLink = async ({
                       companyId,
                       invoiceId,
                       amount,
+                      tip: tip || "0",
                       payType,
                     })
                   : JSON.stringify({
                       companyId,
                       statementId,
                       amount,
+                      tip: tip || "0",
                       payType: "statement",
                     }),
           },

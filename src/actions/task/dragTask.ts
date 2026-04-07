@@ -11,8 +11,8 @@ import { getGoogleCalendarToken } from "../calendar-settings/getGoogleCalendarAu
 type TTask = {
   id: number;
   date: Date;
-  startTime: string;
-  endTime: string;
+  startTime: string | null;
+  endTime: string | null;
   timezone: string;
 };
 

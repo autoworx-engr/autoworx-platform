@@ -418,7 +418,7 @@ const ZapForm = ({ company }: ZapFormProps) => {
             {/* Vehicle Information Section */}
             <div className="border-t border-gray-200 pb-1 pt-2">
               <h3 className="text-md font-medium text-gray-700">
-                Vehicle Information*
+                Vehicle Information
               </h3>
             </div>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -498,8 +498,8 @@ const ZapForm = ({ company }: ZapFormProps) => {
             {formStatus.message && (
               <div
                 className={`rounded-md p-3 ${formStatus.type === "success"
-                    ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
-                    : "border border-red-200 bg-red-50 text-red-700"
+                  ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
+                  : "border border-red-200 bg-red-50 text-red-700"
                   }`}
               >
                 {formStatus.message}

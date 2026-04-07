@@ -199,6 +199,11 @@ export default function PaymentTable({
                     <td className="border-b px-4 py-2">
                       <div>
                         <div>{formatCurrency(item.amount)}</div>
+                        {item.tip > 0 && (
+                          <div className="text-xs text-gray-500">
+                            Tip: {formatCurrency(item.tip)}
+                          </div>
+                        )}
                         {item.refundedAmount > 0 && (
                           <div className="text-sm text-red-500">
                             Refunded: {formatCurrency(item.refundedAmount)}
@@ -271,6 +276,11 @@ export default function PaymentTable({
                     <p className="text-lg font-semibold text-[#66738C]">
                       {formatCurrency(item.amount)}
                     </p>
+                    {item.tip > 0 && (
+                      <p className="text-xs text-gray-500">
+                        Tip: {formatCurrency(item.tip)}
+                      </p>
+                    )}
                     {item.refundedAmount > 0 && (
                       <p className="text-sm text-red-500">
                         Refunded: {formatCurrency(item.refundedAmount)}

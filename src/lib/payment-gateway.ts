@@ -13,6 +13,7 @@ export interface PaymentParams {
   giftCardCode?: string;
   giftCardId?: number;
   amount: string;
+  tip?: string;
   payType:
     | "payment"
     | "deposit"

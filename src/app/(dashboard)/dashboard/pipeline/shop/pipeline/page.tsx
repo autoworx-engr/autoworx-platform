@@ -6,7 +6,7 @@ import { Service, Technician } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import dynamic from "next/dynamic";
 
-const Pipelines = dynamic(() => import("../../components/PipelinesCopy"));
+const Pipelines = dynamic(() => import("../../components/Pipelines"));
 
 const PipelinePage = async () => {
   const session = await getServerSession(authOptions);

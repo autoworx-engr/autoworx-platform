@@ -279,6 +279,11 @@ export async function fetchTaskPageData(month: string) {
     },
   });
 
+  const categories = await db.category.findMany({
+    where: { companyId },
+    orderBy: { name: "asc" },
+  });
+
   // weekends add with holidays
   const calenderSettings = await db.calendarSettings.findFirst({
     where: {
@@ -323,5 +328,6 @@ export async function fetchTaskPageData(month: string) {
     templates: emailTemplates,
     appointmentsFull,
     user,
+    categories,
   };
 }

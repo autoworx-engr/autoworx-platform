@@ -46,6 +46,11 @@ export const createAppointmentValidationSchema = z.object({
       invalid_type_error: "Vehicle ID must be a number",
     })
     .optional(),
+  serviceCategoryId: z
+    .number({
+      invalid_type_error: "Service category ID must be a number",
+    })
+    .optional(),
   draftEstimate: z
     .string({
       invalid_type_error: "Draft estimate must be a string",
