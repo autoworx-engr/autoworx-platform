@@ -1,13 +1,8 @@
-import EstimatesTab, {
-  type AppointmentStatus,
-  type Estimate,
-  type FilterStatus,
-} from "../../../components/EstimatesTab";
+import EstimatesTab from "../../../components/EstimatesTab";
 import { authOptions } from "@/authOptions";
-import { db } from "@/lib/db";
-import type { Prisma, ShopBookingStatus } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import ShopNotFound from "@/app/subdomain/[subdomain]/components/giftcards/ShopNotFound";
+import { FilterStatus, AppointmentStatus, Estimate } from "../../../components/EstimatesTab.types";
 
 type PageSearchParams = {
   search?: string | string[];
@@ -26,6 +21,7 @@ type VirtualShopEstimatesPageProps = {
 
 type ShopBookingRow = {
   id: number;
+  shopId?: number;
   status: string;
   client: {
     firstName: string;
@@ -37,17 +33,21 @@ type ShopBookingRow = {
     model: string | null;
   } | null;
   appointment: {
-    date: Date | null;
+    date: Date | string | null;
     startTime: string | null;
     endTime: string | null;
   } | null;
-  invoice: {
-    subtotal: unknown;
-    tax: unknown;
-    serviceFee: unknown;
-    grandTotal: unknown;
-    vehicleExtraCost: unknown;
+  invoice?: {
+    subtotal?: unknown;
+    tax?: unknown;
+    serviceFee?: unknown;
+    grandTotal?: unknown;
+    vehicleExtraCost?: unknown;
   } | null;
+  subtotal?: unknown;
+  tax?: unknown;
+  serviceFee?: unknown;
+  total?: unknown;
   services: Array<{
     title: string;
     price: unknown;
@@ -57,49 +57,28 @@ type ShopBookingRow = {
   }>;
 };
 
+type ServiceBookingListResponse = {
+  success: boolean;
+  meta: {
+    totalRecords: number;
+    totalPages: number;
+    page: number;
+    limit: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+    statusCounts?: {
+      pending: number;
+      confirmed: number;
+      completed: number;
+      cancelled: number;
+      total: number;
+    };
+  };
+  data: ShopBookingRow[];
+};
+
 const PAGE_SIZE = 10;
 const STATUSES: FilterStatus[] = ["all", "confirmed", "pending", "completed", "cancelled"];
-
-const bookingInclude = {
-  client: {
-    select: {
-      firstName: true,
-      lastName: true,
-    },
-  },
-  vehicle: {
-    select: {
-      year: true,
-      make: true,
-      model: true,
-    },
-  },
-  appointment: {
-    select: {
-      date: true,
-      startTime: true,
-      endTime: true,
-    },
-  },
-  invoice: {
-    select: {
-      subtotal: true,
-      tax: true,
-      serviceFee: true,
-      grandTotal: true,
-      vehicleExtraCost: true,
-    },
-  },
-  services: {
-    select: {
-      title: true,
-      price: true,
-      duration: true,
-      modifierType: true,
-      modifierPrice: true,
-    },
-  },
-} satisfies Prisma.ShopBookingInclude;
 
 const first = (value?: string | string[]) =>
   Array.isArray(value) ? value[0] : value;
@@ -196,13 +175,13 @@ function toEstimate(item: ShopBookingRow): Estimate {
     0,
   );
 
-  const subtotal = Number(item.invoice?.subtotal ?? fallbackSubtotal);
+  const subtotal = Number(item.subtotal ?? item.invoice?.subtotal ?? fallbackSubtotal);
   const taxRate = Number(item.invoice?.tax ?? 0);
   const vehicleExtraCost = Number(item.invoice?.vehicleExtraCost ?? 0);
-  const serviceFee = Number(item.invoice?.serviceFee ?? 0);
-  const total = Number(item.invoice?.grandTotal ?? subtotal + serviceFee);
+  const serviceFee = Number(item.serviceFee ?? item.invoice?.serviceFee ?? 0);
+  const total = Number(item.total ?? item.invoice?.grandTotal ?? subtotal + serviceFee);
   const totalServiceCost = subtotal - vehicleExtraCost;
-  const taxAmount = (totalServiceCost * taxRate) / 100;
+  const taxAmount = Number(item.tax ?? (totalServiceCost * taxRate) / 100);
 
   const fullName = `${item.client?.firstName || ""} ${item.client?.lastName || ""}`.trim();
   const startMinutes = parseTimeToMinutes(item.appointment?.startTime);
@@ -252,125 +231,58 @@ export default async function VirtualShopEstimatesPage({
   const hasDateRange = Boolean(startDate && endDate);
 
   const session = await getServerSession(authOptions);
-  const companyId = session?.user?.companyId;
+  const accessToken = session?.accessToken;
   const shopId = Number.parseInt(params.shopId, 10);
 
-  if (!companyId || !Number.isFinite(shopId)) {
+  if (!accessToken || !Number.isFinite(shopId)) {
     return <ShopNotFound />;
   }
 
-  const shop = await db.shop.findFirst({
-    where: {
-      id: shopId,
-      companyId,
-    },
-    select: { id: true },
+  const query = new URLSearchParams({
+    page: String(page),
+    limit: String(PAGE_SIZE),
+    shopId: String(shopId),
   });
+  if (search) query.set("search", search);
+  if (status !== "all") query.set("status", status);
+  if (hasDateRange && startDate && endDate) {
+    query.set("startDate", startDate);
+    query.set("endDate", endDate);
+  }
 
-  if (!shop) {
-    return (
-      <EstimatesTab
-        estimates={[]}
-        totalRecords={0}
-        currentPage={1}
-        pageSize={PAGE_SIZE}
-        search={search}
-        status={status}
-        startDate={startDate}
-        endDate={endDate}
-        statusCounts={{
-          all: 0,
-          confirmed: 0,
-          pending: 0,
-          completed: 0,
-          cancelled: 0,
-        }}
-      />
+  let responseData: ServiceBookingListResponse | null = null;
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
+    if (!baseUrl) {
+      throw new Error("NEXT_PUBLIC_APP_URL is not configured");
+    }
+
+    const response = await fetch(
+      `${baseUrl}/api/virtual-shop/service-booking?${query.toString()}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        cache: "no-store",
+      },
     );
+
+    if (response.ok) {
+      const json = (await response.json()) as ServiceBookingListResponse;
+      if (json?.success) {
+        responseData = json;
+      }
+    }
+  } catch {
+    responseData = null;
   }
 
-  const whereBase: Prisma.ShopBookingWhereInput = {
-    shopId: shop.id,
-  };
-
-  if (search) {
-    const searchNum = Number.parseInt(search, 10);
-    whereBase.OR = [
-      {
-        client: {
-          OR: [
-            { firstName: { contains: search, mode: "insensitive" } },
-            { lastName: { contains: search, mode: "insensitive" } },
-          ],
-        },
-      },
-      {
-        vehicle: {
-          OR: [
-            { make: { contains: search, mode: "insensitive" } },
-            { model: { contains: search, mode: "insensitive" } },
-            ...(Number.isNaN(searchNum) ? [] : [{ year: searchNum }]),
-          ],
-        },
-      },
-      {
-        services: {
-          some: {
-            title: { contains: search, mode: "insensitive" },
-          },
-        },
-      },
-    ];
-  }
-
-  if (hasDateRange) {
-    const start = new Date(`${startDate}T00:00:00`);
-    const end = new Date(`${endDate}T23:59:59.999`);
-
-    whereBase.appointment = {
-      date: {
-        gte: start,
-        lte: end,
-      },
-    };
-  }
-
-  const whereForList: Prisma.ShopBookingWhereInput = {
-    ...whereBase,
-    ...(status === "all"
-      ? {}
-      : { status: status.toUpperCase() as ShopBookingStatus }),
-  };
-
-  const [
-    filteredTotal,
-    shopBookings,
-    allCount,
-    confirmedCount,
-    pendingCount,
-    completedCount,
-    cancelledCount,
-  ] = await db.$transaction([
-    db.shopBooking.count({ where: whereForList }),
-    db.shopBooking.findMany({
-      where: whereForList,
-      include: bookingInclude,
-      orderBy: {
-        createdAt: "desc",
-      },
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
-    }),
-    db.shopBooking.count({ where: whereBase }),
-    db.shopBooking.count({ where: { ...whereBase, status: "CONFIRMED" } }),
-    db.shopBooking.count({ where: { ...whereBase, status: "PENDING" } }),
-    db.shopBooking.count({ where: { ...whereBase, status: "COMPLETED" } }),
-    db.shopBooking.count({ where: { ...whereBase, status: "CANCELLED" } }),
-  ]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredTotal / PAGE_SIZE));
+  const filteredTotal = responseData?.meta?.totalRecords ?? 0;
+  const totalPages = Math.max(1, responseData?.meta?.totalPages ?? 1);
   const currentPage = Math.min(page, totalPages);
-  const estimates = (shopBookings as ShopBookingRow[]).map(toEstimate);
+  const estimates = (responseData?.data ?? []).map(toEstimate);
+  const statusCounts = responseData?.meta?.statusCounts;
 
   return (
     <EstimatesTab
@@ -383,11 +295,11 @@ export default async function VirtualShopEstimatesPage({
       startDate={startDate}
       endDate={endDate}
       statusCounts={{
-        all: allCount,
-        confirmed: confirmedCount,
-        pending: pendingCount,
-        completed: completedCount,
-        cancelled: cancelledCount,
+        all: statusCounts?.total ?? 0,
+        confirmed: statusCounts?.confirmed ?? 0,
+        pending: statusCounts?.pending ?? 0,
+        completed: statusCounts?.completed ?? 0,
+        cancelled: statusCounts?.cancelled ?? 0,
       }}
     />
   );
