@@ -1,10 +1,9 @@
 import { authOptions } from "@/authOptions";
-import { db } from "@/lib/db";
 import type {
   VirtualShopBookingCalendarItem,
   VirtualShopServiceBookingListResponse,
+  VirtualShopServiceBookingItem,
 } from "@/service/virtual-shop/api";
-import type { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import CalendarTab from "../../../components/CalendarTab";
 
@@ -26,6 +25,21 @@ type VirtualShopCalendarPageProps = {
 
 const PAGE_SIZE = 10;
 
+const MONTH_KEYS = [
+  "january",
+  "february",
+  "march",
+  "april",
+  "may",
+  "june",
+  "july",
+  "august",
+  "september",
+  "october",
+  "november",
+  "december",
+] as const;
+
 const first = (value?: string | string[]) =>
   Array.isArray(value) ? value[0] : value;
 
@@ -34,124 +48,69 @@ const toPositiveInt = (value: string | undefined, fallback: number) => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 };
 
-function buildMeta(totalRecords: number, page: number, limit: number) {
-  const totalPages = Math.ceil(totalRecords / limit);
-
+function emptyListResponse(page: number): VirtualShopServiceBookingListResponse {
   return {
-    totalRecords,
-    totalPages,
-    page,
-    limit,
-    hasNextPage: page < totalPages,
-    hasPrevPage: page > 1,
+    success: true,
+    meta: {
+      totalRecords: 0,
+      totalPages: 0,
+      page,
+      limit: PAGE_SIZE,
+      hasNextPage: false,
+      hasPrevPage: false,
+    },
+    data: [],
   };
 }
 
-function mapShopBookingsToResponseData(
-  shopBookings: Array<{
-    id: number;
-    status: string;
-    appointment: {
-      date: Date | null;
-      startTime: string | null;
-      endTime: string | null;
-    } | null;
-    client: {
-      firstName: string;
-      lastName: string | null;
-      email: string | null;
-      mobile: string | null;
-    } | null;
-    vehicle: {
-      year: number | null;
-      make: string | null;
-      model: string | null;
-    } | null;
-    invoice: {
-      subtotal: unknown;
-      tax: unknown;
-      serviceFee: unknown;
-      grandTotal: unknown;
-      vehicleExtraCost: unknown;
-      deposit: unknown;
-      due: unknown;
-    } | null;
-    shop: {
-      bookingSettings: {
-        isDepositEnabled: boolean;
-        depositType: "FIXED" | "PERCENTAGE" | null;
-        depositValue: unknown;
-      } | null;
-    };
-    services: Array<{
-      title: string;
-      price: unknown;
-      duration: number;
-      modifierType: string | null;
-      modifierPrice: unknown;
-    }>;
-  }>,
-) {
-  return shopBookings.map((sb) => {
-    const subtotal = Number(sb.invoice?.subtotal || 0);
-    const taxRate = Number(sb.invoice?.tax || 0);
-    const vehicleExtraCost = Number(sb.invoice?.vehicleExtraCost || 0);
-    const serviceFeeAmount = Number(sb.invoice?.serviceFee || 0);
-    const grandTotal = Number(sb.invoice?.grandTotal || 0);
+function toCalendarData(items: VirtualShopServiceBookingItem[]): VirtualShopBookingCalendarItem[] {
+  return items.map((item) => ({
+    id: item.id,
+    status: item.status,
+    appointment: item.appointment
+      ? {
+        date: item.appointment.date,
+        startTime: item.appointment.startTime,
+        endTime: item.appointment.endTime,
+      }
+      : null,
+    client: item.client
+      ? {
+        firstName: item.client.firstName,
+        lastName: item.client.lastName,
+      }
+      : null,
+  }));
+}
 
-    const totalServiceCost = subtotal - vehicleExtraCost;
-    const taxAmount = (totalServiceCost * taxRate) / 100;
+async function fetchServiceBookings({
+  baseUrl,
+  accessToken,
+  query,
+}: {
+  baseUrl: string;
+  accessToken: string;
+  query: URLSearchParams;
+}): Promise<VirtualShopServiceBookingListResponse | null> {
+  try {
+    const response = await fetch(
+      `${baseUrl}/api/virtual-shop/service-booking?${query.toString()}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        cache: "no-store",
+      },
+    );
 
-    const isDepositEnabled = Boolean(sb.shop?.bookingSettings?.isDepositEnabled);
-    const depositType = sb.shop?.bookingSettings?.depositType;
-    const depositValue = Number(sb.shop?.bookingSettings?.depositValue || 0);
-    const depositRequired = !isDepositEnabled
-      ? 0
-      : depositType === "PERCENTAGE"
-        ? Number(((grandTotal * depositValue) / 100).toFixed(2))
-        : depositValue;
+    if (!response.ok) return null;
 
-    return {
-      id: sb.id,
-      status: sb.status.toLowerCase(),
-      subtotal,
-      tax: taxAmount,
-      serviceFee: serviceFeeAmount,
-      total: grandTotal,
-      depositRequired,
-      depositPaid: Number(sb.invoice?.deposit || 0),
-      balanceDue: Number(sb.invoice?.due || 0),
-      appointment: sb.appointment
-        ? {
-          date: sb.appointment.date ? sb.appointment.date.toISOString() : "",
-          startTime: sb.appointment.startTime,
-          endTime: sb.appointment.endTime,
-        }
-        : null,
-      client: sb.client
-        ? {
-          firstName: sb.client.firstName,
-          lastName: sb.client.lastName,
-          email: sb.client.email,
-          mobile: sb.client.mobile,
-        }
-        : null,
-      vehicle: sb.vehicle
-        ? {
-          year: sb.vehicle.year,
-          make: sb.vehicle.make,
-          model: sb.vehicle.model,
-        }
-        : null,
-      services: sb.services.map((srv) => ({
-        title: srv.title,
-        price: Number(srv.price),
-        duration: srv.duration,
-        modifierType: srv.modifierType,
-        modifierPrice: Number(srv.modifierPrice),
-      })),
-    };
-  });
+    const json = (await response.json()) as VirtualShopServiceBookingListResponse;
+    return json?.success ? json : null;
+  } catch {
+    return null;
+  }
 }
 
 export default async function VirtualShopCalendarPage({
@@ -161,7 +120,7 @@ export default async function VirtualShopCalendarPage({
   const now = new Date();
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const session = await getServerSession(authOptions);
-  const companyId = session?.user?.companyId;
+  const accessToken = session?.accessToken;
   const shopId = Number.parseInt(params.shopId, 10);
 
   const viewMode = first(resolvedSearchParams?.mode) === "list" ? "list" : "grid";
@@ -171,6 +130,7 @@ export default async function VirtualShopCalendarPage({
     12,
   );
   const viewMonth = month1Based - 1;
+  const monthKey = MONTH_KEYS[viewMonth];
   const isCurrentMonth =
     viewYear === now.getFullYear() && viewMonth === now.getMonth();
   const defaultDay = isCurrentMonth ? now.getDate() : 1;
@@ -184,262 +144,65 @@ export default async function VirtualShopCalendarPage({
     success: true,
     data: [],
   };
-  let selectedDateResponse: VirtualShopServiceBookingListResponse = {
-    success: true,
-    meta: {
-      totalRecords: 0,
-      totalPages: 0,
-      page: selectedDatePage,
-      limit: PAGE_SIZE,
-      hasNextPage: false,
-      hasPrevPage: false,
-    },
-    data: [],
-  };
-  let monthListResponse: VirtualShopServiceBookingListResponse = {
-    success: true,
-    meta: {
-      totalRecords: 0,
-      totalPages: 0,
-      page: listPage,
-      limit: PAGE_SIZE,
-      hasNextPage: false,
-      hasPrevPage: false,
-    },
-    data: [],
-  };
+  let selectedDateResponse: VirtualShopServiceBookingListResponse = emptyListResponse(selectedDatePage);
+  let monthListResponse: VirtualShopServiceBookingListResponse = emptyListResponse(listPage);
 
-  if (companyId && Number.isFinite(shopId)) {
-    const monthStart = new Date(viewYear, viewMonth, 1);
-    const monthEnd = new Date(viewYear, viewMonth + 1, 0, 23, 59, 59, 999);
+  if (accessToken && Number.isFinite(shopId)) {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
 
-    const baseWhere: Prisma.ShopBookingWhereInput = {
-      shopId,
-    };
+    if (baseUrl) {
+      if (viewMode === "grid") {
+        const [calendarMonthly, selectedByDate] = await Promise.all([
+          fetchServiceBookings({
+            baseUrl,
+            accessToken,
+            query: new URLSearchParams({
+              year: String(viewYear),
+              month: monthKey,
+              page: "1",
+              limit: "1000",
+              shopId: String(shopId),
+            }),
+          }),
+          fetchServiceBookings({
+            baseUrl,
+            accessToken,
+            query: new URLSearchParams({
+              date: selectedDate,
+              page: String(selectedDatePage),
+              limit: String(PAGE_SIZE),
+              shopId: String(shopId),
+            }),
+          }),
+        ]);
 
-    if (viewMode === "grid") {
-      const selectedDateStart = new Date(`${selectedDate}T00:00:00`);
-      const selectedDateEnd = new Date(`${selectedDate}T23:59:59.999`);
+        if (calendarMonthly) {
+          monthCalendarResponse = {
+            success: true,
+            data: toCalendarData(calendarMonthly.data),
+          };
+        }
 
-      const calendarWhere: Prisma.ShopBookingWhereInput = {
-        ...baseWhere,
-        appointment: {
-          date: {
-            gte: monthStart,
-            lte: monthEnd,
-          },
-        },
-      };
+        if (selectedByDate) {
+          selectedDateResponse = selectedByDate;
+        }
+      } else {
+        const monthList = await fetchServiceBookings({
+          baseUrl,
+          accessToken,
+          query: new URLSearchParams({
+            year: String(viewYear),
+            month: monthKey,
+            page: String(listPage),
+            limit: String(PAGE_SIZE),
+            shopId: String(shopId),
+          }),
+        });
 
-      const selectedWhere: Prisma.ShopBookingWhereInput = {
-        ...baseWhere,
-        appointment: {
-          date: {
-            gte: selectedDateStart,
-            lte: selectedDateEnd,
-          },
-        },
-      };
-
-      const [calendarRows, selectedTotalRecords, selectedRows] = await db.$transaction([
-        db.shopBooking.findMany({
-          where: calendarWhere,
-          select: {
-            id: true,
-            status: true,
-            appointment: {
-              select: {
-                date: true,
-                startTime: true,
-                endTime: true,
-              },
-            },
-            client: {
-              select: {
-                firstName: true,
-                lastName: true,
-              },
-            },
-          },
-          orderBy: {
-            createdAt: "asc",
-          },
-        }),
-        db.shopBooking.count({ where: selectedWhere }),
-        db.shopBooking.findMany({
-          where: selectedWhere,
-          include: {
-            shop: {
-              select: {
-                bookingSettings: {
-                  select: {
-                    isDepositEnabled: true,
-                    depositType: true,
-                    depositValue: true,
-                  },
-                },
-              },
-            },
-            client: {
-              select: {
-                firstName: true,
-                lastName: true,
-                email: true,
-                mobile: true,
-              },
-            },
-            vehicle: {
-              select: {
-                year: true,
-                make: true,
-                model: true,
-              },
-            },
-            appointment: {
-              select: {
-                date: true,
-                startTime: true,
-                endTime: true,
-              },
-            },
-            invoice: {
-              select: {
-                subtotal: true,
-                tax: true,
-                serviceFee: true,
-                grandTotal: true,
-                vehicleExtraCost: true,
-                deposit: true,
-                due: true,
-              },
-            },
-            services: {
-              select: {
-                title: true,
-                price: true,
-                duration: true,
-                modifierType: true,
-                modifierPrice: true,
-              },
-            },
-          },
-          orderBy: {
-            createdAt: "asc",
-          },
-          skip: (selectedDatePage - 1) * PAGE_SIZE,
-          take: PAGE_SIZE,
-        }),
-      ]);
-
-      monthCalendarResponse = {
-        success: true,
-        data: calendarRows.map((row) => ({
-          id: row.id,
-          status: row.status.toLowerCase(),
-          appointment: row.appointment
-            ? {
-              date: row.appointment.date ? row.appointment.date.toISOString() : "",
-              startTime: row.appointment.startTime,
-              endTime: row.appointment.endTime,
-            }
-            : null,
-          client: row.client
-            ? {
-              firstName: row.client.firstName,
-              lastName: row.client.lastName,
-            }
-            : null,
-        })),
-      };
-
-      selectedDateResponse = {
-        success: true,
-        meta: buildMeta(selectedTotalRecords, selectedDatePage, PAGE_SIZE),
-        data: mapShopBookingsToResponseData(selectedRows),
-      };
-    } else {
-      const monthWhere: Prisma.ShopBookingWhereInput = {
-        ...baseWhere,
-        appointment: {
-          date: {
-            gte: monthStart,
-            lte: monthEnd,
-          },
-        },
-      };
-
-      const [monthTotalRecords, monthRows] = await db.$transaction([
-        db.shopBooking.count({ where: monthWhere }),
-        db.shopBooking.findMany({
-          where: monthWhere,
-          include: {
-            shop: {
-              select: {
-                bookingSettings: {
-                  select: {
-                    isDepositEnabled: true,
-                    depositType: true,
-                    depositValue: true,
-                  },
-                },
-              },
-            },
-            client: {
-              select: {
-                firstName: true,
-                lastName: true,
-                email: true,
-                mobile: true,
-              },
-            },
-            vehicle: {
-              select: {
-                year: true,
-                make: true,
-                model: true,
-              },
-            },
-            appointment: {
-              select: {
-                date: true,
-                startTime: true,
-                endTime: true,
-              },
-            },
-            invoice: {
-              select: {
-                subtotal: true,
-                tax: true,
-                serviceFee: true,
-                grandTotal: true,
-                vehicleExtraCost: true,
-                deposit: true,
-                due: true,
-              },
-            },
-            services: {
-              select: {
-                title: true,
-                price: true,
-                duration: true,
-                modifierType: true,
-                modifierPrice: true,
-              },
-            },
-          },
-          orderBy: {
-            createdAt: "asc",
-          },
-          skip: (listPage - 1) * PAGE_SIZE,
-          take: PAGE_SIZE,
-        }),
-      ]);
-
-      monthListResponse = {
-        success: true,
-        meta: buildMeta(monthTotalRecords, listPage, PAGE_SIZE),
-        data: mapShopBookingsToResponseData(monthRows),
-      };
+        if (monthList) {
+          monthListResponse = monthList;
+        }
+      }
     }
   }
 

@@ -1,9 +1,13 @@
 import toast from "react-hot-toast";
 
-export function successToast(message: string) {
-  toast.success(message);
+type ToastConfig = {
+  id?: string;
+};
+
+export function successToast(message: string, config?: ToastConfig) {
+  toast.success(message, config);
 }
 
-export function errorToast(message: string) {
-  toast.error(message);
+export function errorToast(message: string, config?: ToastConfig) {
+  toast.error(message, config);
 }

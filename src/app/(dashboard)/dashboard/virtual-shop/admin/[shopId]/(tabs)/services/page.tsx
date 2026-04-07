@@ -1,8 +1,6 @@
 import { authOptions } from "@/authOptions";
-import { db } from "@/lib/db";
 import {
   ShopData,
-  ShopServiceApi,
   ShopServicesResponse,
 } from "@/service/virtual-shop/api";
 import { getServerSession } from "next-auth";
@@ -16,11 +14,11 @@ type VirtualShopServicesPageProps = {
   params: {
     shopId: string;
   };
-  searchParams?: {
+  searchParams?: Promise<{
     page?: string;
     limit?: string;
     search?: string;
-  };
+  }>;
 };
 
 function parsePositiveInt(
@@ -45,12 +43,13 @@ export default async function VirtualShopServicesPage({
   params,
   searchParams,
 }: VirtualShopServicesPageProps) {
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const session = await getServerSession(authOptions);
-  const companyId = session?.user?.companyId;
-  const search = searchParams?.search?.trim() ?? "";
-  const page = parsePositiveInt(searchParams?.page, DEFAULT_PAGE);
+  const accessToken = session?.accessToken;
+  const search = resolvedSearchParams?.search?.trim() ?? "";
+  const page = parsePositiveInt(resolvedSearchParams?.page, DEFAULT_PAGE);
   const limit = parsePositiveInt(
-    searchParams?.limit,
+    resolvedSearchParams?.limit,
     DEFAULT_LIMIT,
     PAGE_SIZE_OPTIONS,
   );
@@ -59,94 +58,52 @@ export default async function VirtualShopServicesPage({
   let initialShopConfig: ShopData | null = null;
   let servicesResponse: ShopServicesResponse | undefined;
 
-  if (companyId && Number.isFinite(shopId)) {
-    const shop = await db.shop.findFirst({
-      where: {
-        id: shopId,
-        companyId,
-      },
-    });
+  if (accessToken && Number.isFinite(shopId)) {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
 
-    if (shop) {
-      const mappedThemeConfig =
-        typeof shop.themeConfig === "object" && shop.themeConfig !== null
-          ? (shop.themeConfig as unknown as ShopData["themeConfig"])
-          : undefined;
-
-      initialShopConfig = {
-        id: shop.id,
-        companyId: shop.companyId,
-        slug: shop.slug,
-        storeName: shop.storeName,
-        description: shop.description ?? undefined,
-        logoUrl: shop.logoUrl ?? undefined,
-        bannerUrl: shop.bannerUrl ?? undefined,
-        themeConfig: mappedThemeConfig,
-        isActive: shop.isActive,
-      };
-
-      const whereClause = {
-        shopId: shop.id,
-        ...(search
-          ? {
-            OR: [
-              {
-                title: {
-                  contains: search,
-                  mode: "insensitive" as const,
-                },
-              },
-              {
-                description: {
-                  contains: search,
-                  mode: "insensitive" as const,
-                },
-              },
-            ],
-          }
-          : {}),
-      };
-
-      const [totalRecords, services] = await Promise.all([
-        db.shopService.count({ where: whereClause }),
-        db.shopService.findMany({
-          where: whereClause,
-          orderBy: {
-            createdAt: "desc",
+    if (baseUrl) {
+      const [shopConfigResponse, servicesApiResponse] = await Promise.all([
+        fetch(`${baseUrl}/api/virtual-shop/configure/${shopId}`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
           },
-          skip: (page - 1) * limit,
-          take: limit,
+          cache: "no-store",
         }),
+        fetch(
+          `${baseUrl}/api/virtual-shop/shop-services?${new URLSearchParams({
+            shopId: String(shopId),
+            page: String(page),
+            limit: String(limit),
+            ...(search ? { search } : {}),
+          }).toString()}`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+            cache: "no-store",
+          },
+        ),
       ]);
 
-      const totalPages = Math.ceil(totalRecords / limit);
-      const mappedServices: ShopServiceApi[] = services.map((service) => ({
-        id: service.id,
-        title: service.title,
-        category: service.category,
-        price: Number(service.price),
-        duration: service.duration,
-        description: service.description,
-        imageUrl: service.imageUrl,
-        isActive: service.isActive,
-        modifierCoupe: Number(service.modifierCoupe),
-        modifierSedan: Number(service.modifierSedan),
-        modifierSUV: Number(service.modifierSUV),
-        modifierTruck: Number(service.modifierTruck),
-      }));
+      if (shopConfigResponse.ok) {
+        const shopJson = (await shopConfigResponse.json()) as {
+          success: boolean;
+          data?: ShopData | null;
+        };
+        if (shopJson?.success) {
+          initialShopConfig = shopJson.data ?? null;
+        }
+      }
 
-      servicesResponse = {
-        success: true,
-        meta: {
-          totalRecords,
-          totalPages,
-          page,
-          limit,
-          hasNextPage: page < totalPages,
-          hasPrevPage: page > 1,
-        },
-        data: mappedServices,
-      };
+      if (servicesApiResponse.ok) {
+        const servicesJson =
+          (await servicesApiResponse.json()) as ShopServicesResponse;
+        if (servicesJson?.success) {
+          servicesResponse = servicesJson;
+        }
+      }
     }
   }
 
