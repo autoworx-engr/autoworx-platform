@@ -136,8 +136,7 @@ export default function PipelineHeader({
       </div>
 
       {(pathname?.includes("/sales/pipeline") ||
-        pathname?.includes("/shop/pipeline") ||
-        pathname?.includes("/team/pipeline")) &&
+        pathname?.includes("/shop/pipeline")) &&
         hasManagePipelineAccess && (
           <button
             onClick={() => setPipelineManaged(true)}
