@@ -5,6 +5,14 @@ import axios from "axios";
 
 import { PayNow } from "@/components/invoice-modal/PayNow";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/Dialog";
+import { Gift, Mail, Phone, User } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { errorToast, successToast } from "@/lib/toast";
 import { Loader2, RefreshCw, Search, ShoppingBag } from "lucide-react";
@@ -114,6 +122,7 @@ const GiftCardsPage = ({
     number: string;
     code: string;
   } | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   const update = (partial: Partial<GiftCardPurchaseData>) =>
     setData((prev) => ({ ...prev, ...partial }));
@@ -725,13 +734,112 @@ const GiftCardsPage = ({
                       Back
                     </Button>
                     <Button
-                      onClick={() => setBuyStep(stepOrder[currentIdx + 1])}
+                      onClick={() => {
+                        if (buyStep === "recipient") {
+                          setShowDetailsModal(true);
+                        } else {
+                          setBuyStep(stepOrder[currentIdx + 1]);
+                        }
+                      }}
                       disabled={!canNext() || isProcessingPayment}
                     >
                       Continue
                     </Button>
                   </div>
                 )}
+
+                {/* Details confirmation modal */}
+                <Dialog
+                  open={showDetailsModal}
+                  onOpenChange={setShowDetailsModal}
+                >
+                  <DialogContent className="max-w-sm">
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2 text-lg">
+                        <Gift className="w-5 h-5 text-primary" />
+                        Confirm Details
+                      </DialogTitle>
+                    </DialogHeader>
+
+                    <div className="space-y-3 py-2 text-sm">
+                      {/* Buyer info */}
+                      <div className="rounded-xl border bg-card p-3 space-y-2">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                          Your Information
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <User className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                          <span>{data.buyerName || "—"}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Mail className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                          <span className="truncate">
+                            {data.buyerEmail || "—"}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Phone className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                          <span>{data.buyerPhone || "—"}</span>
+                        </div>
+                      </div>
+
+                      {/* Recipient (if not sending to self) */}
+                      {!data.sendToSelf && (
+                        <div className="rounded-xl border bg-card p-3 space-y-2">
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                            Recipient
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <User className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                            <span>{data.recipientName || "—"}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {data.deliveryMethod === "email" ? (
+                              <Mail className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                            ) : (
+                              <Phone className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                            )}
+                            <span className="truncate">
+                              {data.recipientContact || "—"}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-xs text-muted-foreground pt-1">
+                            <span>Delivery via</span>
+                            <span className="capitalize font-medium text-foreground">
+                              {data.deliveryMethod}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {data.sendToSelf && (
+                        <div className="flex justify-between rounded-xl border bg-card p-3 text-sm text-muted-foreground">
+                          <span>Delivery</span>
+                          <span className="font-medium text-foreground">
+                            Send to myself
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <DialogFooter>
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowDetailsModal(false)}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          setShowDetailsModal(false);
+                          setBuyStep(stepOrder[currentIdx + 1]);
+                        }}
+                      >
+                        Confirm
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </>
             )}
 

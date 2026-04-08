@@ -102,7 +102,7 @@ const UserList: React.FC = () => {
                           <h4 className="text-base font-semibold  truncate">
                             {name}
                           </h4>
-                          <p className="text-xs font-medium text-indigo-600">
+                          <p className="text-xs font-medium text-[#6571FF]">
                             {user.employeeType}
                           </p>
                         </div>
@@ -110,7 +110,7 @@ const UserList: React.FC = () => {
                       <div className="shrink-0">
                         <button
                           onClick={() => handleEditClick(user)}
-                          className="text-indigo-600 p-2 rounded-full hover:bg-indigo-50 transition duration-150"
+                          className="text-[#6571FF] p-2 rounded-full hover:bg-indigo-50 transition duration-150"
                           title={`Edit ${user.firstName}'s permissions`}
                         >
                           <SquarePen className="w-5 h-5" />

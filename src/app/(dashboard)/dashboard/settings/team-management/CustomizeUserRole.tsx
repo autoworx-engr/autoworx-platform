@@ -133,7 +133,7 @@ const CustomizeUserRole = ({ user, onBack }: CustomizeUserRolesProps) => {
       <div className="mb-6">
         <button
           onClick={onBack}
-          className="flex items-center text-indigo-600 hover:text-indigo-800 font-semibold transition duration-150"
+          className="flex items-center  hover:text-[#6571FF] font-semibold transition duration-150"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to User List
@@ -153,7 +153,7 @@ const CustomizeUserRole = ({ user, onBack }: CustomizeUserRolesProps) => {
         </div>
         <div className="ml-4">
           <h3 className="text-xl font-bold ">{name}</h3>
-          <p className="text-sm font-medium text-indigo-700">
+          <p className="text-sm font-medium text-[#6571FF]">
             {user.employeeType} Role
           </p>
         </div>
