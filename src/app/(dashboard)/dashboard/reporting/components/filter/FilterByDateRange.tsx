@@ -98,16 +98,17 @@ export default function FilterDateRange({
   };
 
   const formatRange = (start: Date, end: Date) => {
-    const formattedStart = format(start, "MM/dd/yyyy");
-    const formattedEnd = format(end, "MM/dd/yyyy");
-
-    if (startDate !== "undefined" && endDate !== "undefined") {
+    if (startDate && endDate && startDate !== "undefined" && endDate !== "undefined") {
       return `${startDate} - ${endDate}`;
-    } else if (isRangeSelected) {
-      return `${formattedStart} - ${formattedEnd}`;
-    } else {
-      return "Date Range";
     }
+
+    if (isRangeSelected) {
+      const formattedStart = format(start, "MM/dd/yyyy");
+      const formattedEnd = format(end, "MM/dd/yyyy");
+      return `${formattedStart} - ${formattedEnd}`;
+    }
+
+    return "Date Range";
   };
 
   const handleClear = () => {

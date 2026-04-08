@@ -15,6 +15,7 @@ import {
 import { FileUpload } from "./FileUpload";
 import { ColorPicker } from "./ColorPicker";
 import { Select } from "./Select";
+import { Switch } from "@/components/ui/switch";
 
 type ThemeConfig = {
   primaryColor: string;
@@ -382,16 +383,16 @@ export default function ShopForm({
       {/* ACTIVE */}
       <div className="flex justify-between items-center border p-4 rounded-xl">
         <span className="text-sm font-medium">Active</span>
-        <button
-          onClick={() =>
+
+        <Switch
+          checked={form.isActive}
+          disabled={isCreating || isUpdating || isFetching}
+          onCheckedChange={(checked) =>
             setForm((p) => ({
               ...p,
               isActive: !p.isActive,
             }))
           }
-          className={`w-10 h-6 rounded-full ${
-            form.isActive ? "bg-blue-500" : "bg-gray-300"
-          }`}
         />
       </div>
 

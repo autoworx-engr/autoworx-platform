@@ -11,6 +11,7 @@ import {
   Gift,
   Percent,
   Settings,
+  ShoppingBag,
 } from "lucide-react";
 
 type VirtualShopTabsProps = {
@@ -24,6 +25,7 @@ const TABS = [
   { segment: "scheduling", label: "Scheduling", icon: CalendarDays },
   { segment: "financial", label: "Financial", icon: Percent },
   { segment: "gift-cards", label: "Gift Cards", icon: Gift },
+  { segment: "gift-card-purchases", label: "GC Purchases", icon: ShoppingBag },
   { segment: "calendar", label: "Calendar", icon: Calendar },
   { segment: "estimates", label: "Estimates", icon: FileText },
 ] as const;
