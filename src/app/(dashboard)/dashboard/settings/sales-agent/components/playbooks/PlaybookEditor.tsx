@@ -275,12 +275,14 @@ export function PlaybookEditor({
           <p className="text-muted-foreground">
             Train your AI assistant on how to handle this service
           </p>
-          {!playbook && process.env.NODE_ENV !== "production" && (
-            <Button variant="outline" onClick={clonePlaybookHandler}>
-              <Copy className="mr-2 h-4 w-4" />
-              Clone playbook
-            </Button>
-          )}
+          {!playbook &&
+            (Boolean(process.env.NEXT_PUBLIC_IS_CLONE_PLAYBOOK_ACCESS) ||
+              false) === true && (
+              <Button variant="outline" onClick={clonePlaybookHandler}>
+                <Copy className="mr-2 h-4 w-4" />
+                Clone playbook
+              </Button>
+            )}
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={onCancel}>
