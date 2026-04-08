@@ -68,7 +68,6 @@ export default function TaskContentModal({
   } = useTaskById(taskId!, {
     enabled: fromEdit && !!taskId,
   });
-  console.log("taskData", taskData);
   const queryClient = useQueryClient();
   const timezone = useCompanyTimezone();
   const [title, setTitle] = useState("");
@@ -222,6 +221,14 @@ export default function TaskContentModal({
         field: "all",
         message:
           "Start time and End time are required when a date is selected.",
+      });
+      return;
+    }
+
+    if (startTime && endTime && startTime === endTime) {
+      showError({
+        field: "all",
+        message: "Start time and End time cannot be the same.",
       });
       return;
     }
