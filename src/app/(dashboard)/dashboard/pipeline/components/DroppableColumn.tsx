@@ -10,14 +10,14 @@ type DroppableColumnProps = {
   openDropdownIndex?: { category: number; index: number } | null;
   tagDropdownStates: { [key: string]: boolean };
   openServiceDropdown: { [key: string]: boolean };
-
+  isTeamPipeline?: boolean;
   // for the child components, e.g., DraggableLead
   screenWidth: number;
   categoryIndex: number;
   leadRefs: React.MutableRefObject<Map<string, HTMLLIElement>>;
   handleColumnDropdownToggle: (
     categoryIndex: number,
-    leadIndex: number
+    leadIndex: number,
   ) => void;
   pipelineType: string;
   isDropdownOpen?: boolean;
@@ -25,14 +25,14 @@ type DroppableColumnProps = {
 
   createEmployeeSelectHandler: (
     categoryIndex: number,
-    leadIndex: number
+    leadIndex: number,
   ) => (value: SetStateAction<Employee | null>) => void;
   companyUsers: User[];
   setOpenDropdownIndex: (
     value: SetStateAction<{
       category: number;
       index: number;
-    } | null>
+    } | null>,
   ) => void;
 
   showColumnSelect: { [key: string]: boolean };
@@ -40,34 +40,34 @@ type DroppableColumnProps = {
   handleColumnChange: (
     categoryIndex: number,
     leadIndex: number,
-    newColumnId: string
+    newColumnId: string,
   ) => Promise<void>;
   setShowColumnSelect: (
     value: SetStateAction<{
       [key: string]: boolean;
-    }>
+    }>,
   ) => void;
   setColumnDropdownOpen: (
     value: SetStateAction<{
       [key: string]: boolean;
-    }>
+    }>,
   ) => void;
   columnDropdownOpen: { [key: string]: boolean };
   handleTagRemove: (
     categoryIndex: number,
     leadIndex: number,
-    tagToRemove: Tag
+    tagToRemove: Tag,
   ) => Promise<void>;
   handleTagDropdownToggle: (categoryIndex: number, leadIndex: number) => void;
 
   handleTagSelect: (
     categoryIndex: number,
     leadIndex: number,
-    selectedTag: Tag | undefined
+    selectedTag: Tag | undefined,
   ) => Promise<void>;
   handleServiceDropdownToggle: (
     categoryIndex: number,
-    leadIndex: number
+    leadIndex: number,
   ) => void;
   isTechnician: boolean | undefined;
   setSelectedClientId: (value: SetStateAction<number | null>) => void;
@@ -107,6 +107,7 @@ const DroppableColumn = ({
   setSelectedVehicleId,
   setIsAppointmentModalOpen,
   searchTerm,
+  isTeamPipeline = false,
 }: DroppableColumnProps) => {
   const columnRef = useRef<HTMLDivElement | null>(null);
   const ulRef = useRef<HTMLUListElement | null>(null);
@@ -167,13 +168,17 @@ const DroppableColumn = ({
           const isTagDropdownOpen = tagDropdownStates[key];
           const isServiceDropdownOpen = openServiceDropdown[key] || false;
           const selectedEmployee = lead.assignedTo;
+
           return (
             <DraggableLead
+              key={leadIndex}
               screenWidth={screenWidth}
               categoryIndex={categoryIndex}
               leadIndex={leadIndex}
               lead={lead}
+              userId={Number(item.id)}
               leadRefs={leadRefs}
+              isTeamPipeline={isTeamPipeline}
               handleColumnDropdownToggle={handleColumnDropdownToggle}
               pipelineType={pipelineType}
               isDropdownOpen={isDropdownOpen}
