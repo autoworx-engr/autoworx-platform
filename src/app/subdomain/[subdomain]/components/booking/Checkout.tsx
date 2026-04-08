@@ -598,16 +598,15 @@ export const Checkout = () => {
     ? Number(Math.min(appliedGiftCard.balance, subtotal).toFixed(2))
     : 0;
 
-  // Tax and fee are computed on (subtotal - discount) to match the invoice display
-  const netForTaxFee = subtotal - giftCardRedeemedPreview;
+  // Tax and fee are computed on the original subtotal (before gift card discount)
   const shopFee = isServiceFeeEnabled
-    ? Number(((netForTaxFee * serviceFeeRate) / 100).toFixed(2))
+    ? Number(((subtotal * serviceFeeRate) / 100).toFixed(2))
     : 0;
   const tax = isTaxEnabled
-    ? Number(((netForTaxFee * taxRate) / 100).toFixed(2))
+    ? Number(((subtotal * taxRate) / 100).toFixed(2))
     : 0;
   const grandTotal = Number(
-    (netForTaxFee + shopFee + tax).toFixed(2),
+    (subtotal + shopFee + tax - giftCardRedeemedPreview).toFixed(2),
   );
   const adjustedGrandTotal = grandTotal;
 
