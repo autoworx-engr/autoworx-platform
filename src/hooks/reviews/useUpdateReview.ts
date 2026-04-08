@@ -10,9 +10,9 @@ export const useUpdateReview = (companyId: number) => {
       queryClient.invalidateQueries({
         queryKey: ["reviews", companyId],
       });
-      //   queryClient.invalidateQueries({
-      //     queryKey: ["company-details", companyId],
-      //   });
+      queryClient.invalidateQueries({
+        queryKey: ["company-details", companyId],
+      });
     },
   });
 };

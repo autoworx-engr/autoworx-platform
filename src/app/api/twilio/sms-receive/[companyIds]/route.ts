@@ -175,10 +175,13 @@ export async function POST(
         for (const file of images) {
           // Extract file extension from URL
           const fileExtension = file.split(".").pop()?.split("?")[0] || "jpg";
+          const audioExts = ["ogg","mp3","m4a","wav","webm","aac","amr","3gp","opus","oga","flac"];
+          const isVoice = audioExts.includes(fileExtension.toLowerCase());
           let atc = await db.clientSmsAttachments.create({
             data: {
               url: file,
               name: `${dbMessage.id}_${Date.now()}.${fileExtension}`,
+              isVoiceNote: isVoice,
               clientSMSId: dbMessage.id,
             },
           });
@@ -303,7 +306,31 @@ async function fetchTwilioMedia(
   }
 
   const blob = await response.blob();
-  return new File([blob], "twilio-mms.jpg", { type: blob.type });
+  const ext = mimeToExtension(blob.type);
+  const filename = `twilio-mms-${Date.now()}.${ext}`;
+  return new File([blob], filename, { type: blob.type });
+}
+
+function mimeToExtension(mime: string): string {
+  const map: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/gif": "gif",
+    "image/webp": "webp",
+    "audio/ogg": "ogg",
+    "audio/mpeg": "mp3",
+    "audio/mp4": "m4a",
+    "audio/wav": "wav",
+    "audio/webm": "webm",
+    "audio/amr": "amr",
+    "audio/aac": "aac",
+    "audio/3gpp": "3gp",
+    "video/mp4": "mp4",
+    "video/quicktime": "mov",
+    "video/3gpp": "3gp",
+    "application/pdf": "pdf",
+  };
+  return map[mime.split(";")[0].trim()] || "bin";
 }
 
 function normalizePhoneNumber(phone: string) {

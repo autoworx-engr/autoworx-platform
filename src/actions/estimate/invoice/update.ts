@@ -15,6 +15,7 @@ import {
   Tag,
   Prisma,
   ShopBookingStatus,
+  Invoice,
 } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
@@ -27,6 +28,7 @@ import {
 import { updateServiceAutomationTrigger } from "@/service/service-maintenance-automation-trigger/api";
 import { sendInvoiceDeliveredNotification } from "@/lib/notification/invoice-notify";
 import { updateInvoiceAutomationTrigger } from "@/service/invoice-automation-trigger/api";
+import { Decimal } from "@prisma/client/runtime/library";
 
 interface UpdateEstimateInput {
   id: string;
@@ -70,6 +72,33 @@ interface UpdateEstimateInput {
 //     return new Promise(resolve => setTimeout(resolve, ms));
 // }
 
+     const hasInvoiceChanged = (
+  invoice: Invoice | null,
+  data: UpdateEstimateInput
+): boolean => {
+ if (!invoice) return false;
+  const decimalChanged = (dbValue: Decimal | null | undefined, newValue: number) => {
+    return new Decimal(newValue ?? 0).toString() !== (dbValue ?? new Decimal(0)).toString();
+  };
+
+  return (
+    invoice.clientId !== data.clientId ||
+    invoice.vehicleId !== data.vehicleId ||
+    invoice.columnId !== data.columnId ||
+    invoice.internalNotes !== data.internalNotes ||
+    invoice.terms !== data.terms ||
+    invoice.policy !== data.policy ||
+    invoice.customerNotes !== data.customerNotes ||
+    invoice.customerComments !== data.customerComments ||
+    invoice.damageNotes !== data.damageNotes ||
+    decimalChanged(invoice.subtotal, data.subtotal) ||
+    decimalChanged(invoice.discount, data.discount) ||
+    decimalChanged(invoice.tax, data.tax) ||
+    decimalChanged(invoice.serviceFee, data.serviceFee) ||
+    decimalChanged(invoice.grandTotal, data.grandTotal) ||
+    decimalChanged(invoice.due, data.due)
+  );
+};
 export async function updateInvoice(
   data: UpdateEstimateInput,
   fromPayment: boolean = false,
@@ -80,6 +109,8 @@ export async function updateInvoice(
     await estimateEditValidationSchema.parseAsync(data);
 
     const companyId = await getCompanyId();
+
+ 
 
     //find invoice from database
     const invoice = await db.invoice.findUnique({
@@ -95,9 +126,13 @@ export async function updateInvoice(
       },
     });
 
+   const isChanged = hasInvoiceChanged(invoice, data);
+
     const column = await db.column.findUnique({
       where: { id: data.columnId },
     });
+
+  
 
     // use prisma transaction for better performance or safely save data in db
     const updatedInvoice = await db.$transaction(
@@ -569,8 +604,8 @@ export async function updateInvoice(
             completedAt,
             deliveredAt,
             damageNotes: data.damageNotes,
-            authorizedName: fromPayment ? undefined : null,
-            signatureImage: fromPayment ? undefined : null,
+            authorizedName: fromPayment ? undefined : isChanged ? null : invoice?.authorizedName,
+            signatureImage: fromPayment ? undefined : isChanged ? null : invoice?.signatureImage,
             isViewed: false,
             serviceIndex: JSON.stringify(
               updatedInvoiceItem

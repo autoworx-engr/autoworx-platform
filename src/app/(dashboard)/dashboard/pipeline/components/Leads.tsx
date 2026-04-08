@@ -49,6 +49,17 @@ type TProps = {
   salesColumn: Column[];
 };
 
+const formatDisplayName = (name?: string | null) => {
+  if (!name) return "N/A";
+
+  const cleanedName = name
+    .replace(/\b(undefined|null)\b/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return cleanedName || "N/A";
+};
+
 const Leads = ({ salesColumn }: TProps) => {
   const [initialLeads, setInitialLeads] = useState<LeadWithSalesUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -398,9 +409,9 @@ const Leads = ({ salesColumn }: TProps) => {
               ...lead,
               client: lead.client
                 ? {
-                    ...lead.client,
-                    appointments: [appointment],
-                  }
+                  ...lead.client,
+                  appointments: [appointment],
+                }
                 : null,
             };
           }
@@ -501,7 +512,7 @@ const Leads = ({ salesColumn }: TProps) => {
                             href={`/dashboard/client/${lead.clientId}`}
                             className="block h-full w-full"
                           >
-                            {lead.clientName}
+                            {formatDisplayName(lead.clientName)}
                           </Link>
                         </td>
                         <td className="border-b px-4 py-2 text-left">
@@ -875,8 +886,8 @@ const DropdownMenuDemo = React.memo(function DropdownMenuDemo({
               value={
                 filter?.assignedTo
                   ? salesPersonItems.find(
-                      (item) => item.value === filter?.assignedTo
-                    )?.value || ""
+                    (item) => item.value === filter?.assignedTo
+                  )?.value || ""
                   : ""
               }
             />
