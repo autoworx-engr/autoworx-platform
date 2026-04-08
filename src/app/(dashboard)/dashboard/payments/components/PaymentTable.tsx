@@ -1,3 +1,8 @@
+import {
+  getPaymentsPaginated,
+  type PaymentMethodFilter,
+  type PaymentStatusFilter,
+} from "@/actions/payment/getPaymentsPaginated";
 import { ReturnPayment } from "@/actions/payment/getPayments";
 import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
@@ -7,104 +12,111 @@ import { FormatUtcToTimezone } from "@/utils/FormatUtcToTimezone";
 import { Pagination } from "antd";
 import moment from "moment-timezone";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import RefundModal from "./RefundModal";
-// refundedAmount
-export default function PaymentTable({
-  data,
-  onRefreshPayments,
-}: {
-  data: ReturnPayment[];
-  onRefreshPayments: () => Promise<void>;
-}) {
+
+export default function PaymentTable() {
   const { search, dateRange, amount, paidStatus, paymentMethod } =
     usePaymentFilterStore();
   const timezone = useCompanyTimezone();
-  const [filteredData, setFilteredData] = useState(data);
+
+  const [rows, setRows] = useState<ReturnPayment[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
-  const [showPagination, setShowPagination] = useState(false);
-
-  function checkPaymentMethod(method: string) {
-    if (paymentMethod === "All") {
-      return true;
-    } else if (method === paymentMethod) {
-      return true;
-    } else if (paymentMethod === "Refund") return true;
-    else if (
-      paymentMethod === "Other" &&
-      method !== "Card" &&
-      method !== "Cash" &&
-      method !== "Cheque" &&
-      method !== "Deposit"
-    ) {
-      return true;
-    } else {
-      return false;
-    }
-  }
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
+  const requestIdRef = useRef(0);
 
   useEffect(() => {
-    setFilteredData(
-      data.filter((item) => {
-        const [start, end] = dateRange;
+    const timeout = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
 
-        // Safely convert to YYYY-MM-DD string to prevent local time leakage
-        const startStr = moment(start).format("YYYY-MM-DD");
-        const endStr = moment(end).format("YYYY-MM-DD");
-
-        // Rebuild moment using Detroit timezone from date strings
-        const convertedStart = moment
-          .tz(startStr, timezone)
-          .startOf("day")
-          .utc();
-        const convertedEnd = moment.tz(endStr, timezone).endOf("day").utc();
-
-        const isWithinDateRange =
-          dateRange[0] && dateRange[1]
-            ? moment.utc(item.date).isSameOrAfter(convertedStart) &&
-              moment.utc(item.date).isSameOrBefore(convertedEnd)
-            : true;
-
-        const isWithinAmountRange =
-          item.amount >= amount[0] && item.amount <= amount[1];
-
-        const isPaymentMethodMatch = checkPaymentMethod(item.method);
-
-        const isPaidStatusMatch =
-          paidStatus === "All"
-            ? true
-            : paidStatus === "Paid"
-              ? item.paid
-              : !item.paid;
-
-        const isSearchMatch = search
-          ? item.vehicle?.toLowerCase().includes(search.toLowerCase()) ||
-            item.invoiceId.toLowerCase().includes(search.toLowerCase()) ||
-            item.client.name?.toLowerCase().includes(search.toLowerCase())
-          : true;
-
-        const isRefundMatch =
-          paymentMethod === "Refund" ? Number(item.refundedAmount) > 0 : true;
-
-        return (
-          isWithinDateRange &&
-          isWithinAmountRange &&
-          isPaidStatusMatch &&
-          isSearchMatch &&
-          (paymentMethod === "Refund" ? isRefundMatch : isPaymentMethodMatch)
-        );
-      })
-    );
-  }, [data, dateRange, amount, paidStatus, paymentMethod, search]);
+    return () => clearTimeout(timeout);
+  }, [search]);
 
   useEffect(() => {
-    if (filteredData.length > 10) {
-      setShowPagination(true);
-    } else {
-      setShowPagination(false);
+    setCurrentPage(1);
+  }, [debouncedSearch, dateRange, amount, paidStatus, paymentMethod]);
+
+  const requestPayload = useMemo(() => {
+    let startDate: string | undefined;
+    let endDate: string | undefined;
+
+    if (dateRange[0] && dateRange[1]) {
+      const startStr = moment(dateRange[0]).format("YYYY-MM-DD");
+      const endStr = moment(dateRange[1]).format("YYYY-MM-DD");
+
+      startDate = moment
+        .tz(startStr, timezone)
+        .startOf("day")
+        .utc()
+        .toISOString();
+
+      endDate = moment
+        .tz(endStr, timezone)
+        .endOf("day")
+        .utc()
+        .toISOString();
     }
-  }, [filteredData]);
+
+    return {
+      page: currentPage,
+      pageSize,
+      search: debouncedSearch,
+      startDate,
+      endDate,
+      amountMin: amount[0],
+      amountMax: amount[1],
+      paidStatus: paidStatus as PaymentStatusFilter,
+      paymentMethod: paymentMethod as PaymentMethodFilter,
+    };
+  }, [
+    currentPage,
+    pageSize,
+    debouncedSearch,
+    dateRange,
+    timezone,
+    amount,
+    paidStatus,
+    paymentMethod,
+  ]);
+
+  const fetchPayments = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
+
+    try {
+      setLoading(true);
+      const result = await getPaymentsPaginated(requestPayload);
+
+      if (requestId !== requestIdRef.current) {
+        return;
+      }
+
+      setRows(result.data);
+      setTotal(result.total);
+    } catch (error) {
+      if (requestId !== requestIdRef.current) {
+        return;
+      }
+
+      setRows([]);
+      setTotal(0);
+    } finally {
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
+    }
+  }, [requestPayload]);
+
+  useEffect(() => {
+    fetchPayments();
+  }, [fetchPayments]);
+
+  const onRefreshPayments = useCallback(async () => {
+    await fetchPayments();
+  }, [fetchPayments]);
 
   const handlePageChange = (page: number, pageSize?: number) => {
     setCurrentPage(page);
@@ -113,10 +125,7 @@ export default function PaymentTable({
     }
   };
 
-  const paginatedData = filteredData.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  const showPagination = total > 10;
 
   return (
     <div className="w-full p-4 bg-background dark:bg-slate-950 min-h-[65vh]">
@@ -125,7 +134,7 @@ export default function PaymentTable({
           <h3 className="text-lg font-bold text-slate-600 dark:text-slate-100">
             Payments{" "}
             <span className="text-slate-400 font-normal">
-              ({filteredData.length})
+              ({total})
             </span>
           </h3>
         </div>
@@ -156,9 +165,22 @@ export default function PaymentTable({
               </thead>
 
               <tbody>
-                {paginatedData.map((item, index) => (
+                {loading ? (
+                  <tr>
+                    <td colSpan={8} className="px-4 py-6 text-center text-slate-500">
+                      Loading payments...
+                    </td>
+                  </tr>
+                ) : rows.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="px-4 py-6 text-center text-slate-500">
+                      No payments found.
+                    </td>
+                  </tr>
+                ) : (
+                  rows.map((item, index) => (
                   <tr
-                    key={index}
+                    key={item.id}
                     className={`duration-200 hover:bg-slate-50 dark:hover:bg-slate-800/50 ${
                       index % 2 !== 0
                         ? "bg-blue-50/80 dark:bg-slate-900"
@@ -217,7 +239,8 @@ export default function PaymentTable({
                       />
                     </td>
                   </tr>
-                ))}
+                ))
+                )}
               </tbody>
             </table>
           </div>
@@ -225,78 +248,88 @@ export default function PaymentTable({
 
         {/* Mobile View */}
         <div className="lg:hidden space-y-4">
-          {filteredData.map((item, index) => (
-            <div
-              key={index}
-              className={`w-full rounded-lg border border-gray-100 p-6 shadow-md transition-all duration-200 ${
-                index % 2 !== 0
-                  ? "bg-blue-50/80 dark:bg-slate-900"
-                  : "bg-white dark:bg-slate-900"
-              }`}
-            >
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Link
-                    href={`/dashboard/estimate/view/${item.invoiceId}`}
-                    className="text-lg font-semibold text-[#6571FF]"
-                  >
-                    {item.invoiceId}
-                  </Link>
-                  <p className="font-semibold text-[#66738C]">
-                    {FormatUtcToTimezone(item.date, timezone, "MM/DD/YYYY")}
-                  </p>
-                </div>
-                <div className="flex items-center justify-between">
-                  <Link
-                    href={`/dashboard/client/${item?.client?.id && item?.client?.id !== undefined ? item?.client?.id : ""}`}
-                    className="line-clamp-1 text-lg font-semibold"
-                  >
-                    {item?.client?.name && item?.client?.name !== undefined
-                      ? item?.client?.name
-                      : "- - -"}
-                  </Link>
-                  <div>
-                    <p className="text-lg font-semibold text-[#66738C]">
-                      {formatCurrency(item.amount)}
+          {loading ? (
+            <div className="rounded-lg border border-gray-100 bg-white p-6 text-center text-slate-500 dark:border-slate-800 dark:bg-slate-900">
+              Loading payments...
+            </div>
+          ) : rows.length === 0 ? (
+            <div className="rounded-lg border border-gray-100 bg-white p-6 text-center text-slate-500 dark:border-slate-800 dark:bg-slate-900">
+              No payments found.
+            </div>
+          ) : (
+            rows.map((item, index) => (
+              <div
+                key={item.id}
+                className={`w-full rounded-lg border border-gray-100 p-6 shadow-md transition-all duration-200 ${
+                  index % 2 !== 0
+                    ? "bg-blue-50/80 dark:bg-slate-900"
+                    : "bg-white dark:bg-slate-900"
+                }`}
+              >
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Link
+                      href={`/dashboard/estimate/view/${item.invoiceId}`}
+                      className="text-lg font-semibold text-[#6571FF]"
+                    >
+                      {item.invoiceId}
+                    </Link>
+                    <p className="font-semibold text-[#66738C]">
+                      {FormatUtcToTimezone(item.date, timezone, "MM/DD/YYYY")}
                     </p>
-                    {item.refundedAmount > 0 && (
-                      <p className="text-sm text-red-500">
-                        Refunded: {formatCurrency(item.refundedAmount)}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Link
+                      href={`/dashboard/client/${item?.client?.id && item?.client?.id !== undefined ? item?.client?.id : ""}`}
+                      className="line-clamp-1 text-lg font-semibold"
+                    >
+                      {item?.client?.name && item?.client?.name !== undefined
+                        ? item?.client?.name
+                        : "- - -"}
+                    </Link>
+                    <div>
+                      <p className="text-lg font-semibold text-[#66738C]">
+                        {formatCurrency(item.amount)}
                       </p>
-                    )}
+                      {item.refundedAmount > 0 && (
+                        <p className="text-sm text-red-500">
+                          Refunded: {formatCurrency(item.refundedAmount)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-lg font-semibold text-[#66738C]">
+                      {item?.vehicle && item?.vehicle !== undefined
+                        ? item?.vehicle
+                        : "- - -"}
+                    </p>
+                    <p className="text-lg font-semibold text-[#66738C]">
+                      {item.method}
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-[#66738C]">Cash Received:</p>
+                    <p className="text-sm font-semibold text-[#66738C]">
+                      {item.cashReceived ? item.cashReceived : "N/A"}
+                    </p>
+                  </div>{" "}
+                  <div className="flex justify-end">
+                    <RefundModal
+                      paymentId={item.id}
+                      paymentType={item.paymentType}
+                      totalAmount={item.amount}
+                      refundedAmount={item.refundedAmount}
+                      refundMethod={item.refundMethod}
+                      refundReason={item.refundReason}
+                      refundDate={item.refundDate}
+                      onRefundSuccess={onRefreshPayments}
+                    />
                   </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <p className="text-lg font-semibold text-[#66738C]">
-                    {item?.vehicle && item?.vehicle !== undefined
-                      ? item?.vehicle
-                      : "- - -"}
-                  </p>
-                  <p className="text-lg font-semibold text-[#66738C]">
-                    {item.method}
-                  </p>
-                </div>
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-[#66738C]">Cash Received:</p>
-                  <p className="text-sm font-semibold text-[#66738C]">
-                    {item.cashReceived ? item.cashReceived : "N/A"}
-                  </p>
-                </div>{" "}
-                <div className="flex justify-end">
-                  <RefundModal
-                    paymentId={item.id}
-                    paymentType={item.paymentType}
-                    totalAmount={item.amount}
-                    refundedAmount={item.refundedAmount}
-                    refundMethod={item.refundMethod}
-                    refundReason={item.refundReason}
-                    refundDate={item.refundDate}
-                    onRefundSuccess={onRefreshPayments}
-                  />
-                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
 
         {showPagination && (
@@ -305,7 +338,7 @@ export default function PaymentTable({
               className="custom-pagination"
               current={currentPage}
               pageSize={pageSize}
-              total={filteredData.length}
+              total={total}
               onChange={handlePageChange}
               showSizeChanger
               onShowSizeChange={handlePageChange}
