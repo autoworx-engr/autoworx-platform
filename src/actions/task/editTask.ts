@@ -3,22 +3,17 @@
 import { db } from "@/lib/db";
 import { ServerAction } from "@/types/action";
 import { Priority } from "@prisma/client";
-import { google } from "googleapis";
-import { env } from "next-runtime-env";
-import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
-import { AppointmentToAdd } from "../appointment/addAppointment";
-import { AppointmentToUpdate } from "../appointment/editAppointment";
 
-import createGoogleCalendarEvent from "./google-calendar/createGoogleCalendarEvent";
-import updateGoogleCalendarEvent from "./google-calendar/updateGoogleCalendarEvent";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { sendNewTaskAssignNotification } from "@/lib/notification/task-and-appointment-notify";
 import { TErrorHandler } from "@/types/globalError";
 import {
   TUpdateTaskValidationSchema,
   updateTaskValidationSchema,
 } from "@/validations/schemas/task/task.validation";
 import { getGoogleCalendarToken } from "../calendar-settings/getGoogleCalendarAuth";
+import createGoogleCalendarEvent from "./google-calendar/createGoogleCalendarEvent";
+import updateGoogleCalendarEvent from "./google-calendar/updateGoogleCalendarEvent";
 
 interface TaskType {
   title: string;
@@ -49,10 +44,10 @@ export async function editTask({
 
     // Find the difference between the existing users and the new users
     const toRemove = taskUsers.filter(
-      (taskUser) => !assignedUsers?.includes(taskUser.userId),
+      taskUser => !assignedUsers?.includes(taskUser.userId),
     );
     const toAdd = assignedUsers?.filter(
-      (userId) => !taskUsers.find((taskUser) => taskUser.userId === userId),
+      userId => !taskUsers.find(taskUser => taskUser.userId === userId),
     );
 
     // Remove the users
@@ -70,6 +65,26 @@ export async function editTask({
       // Add the users
       for (const user of toAdd) {
         // TODO: Add the task to the user's Google Calendar
+
+        const assignedUser = await db.user.findUnique({
+          where: { id: user },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            companyId: true,
+            phone: true,
+          },
+        });
+
+        if (assignedUser) {
+          sendNewTaskAssignNotification({
+            taskTitle: task.title,
+            taskDate: task.date,
+            assignTaskUser: assignedUser,
+          });
+        }
 
         // Create the task user
         await db.taskUser.create({

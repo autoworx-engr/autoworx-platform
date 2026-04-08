@@ -57,6 +57,10 @@ const navbarList = [
 
     subnav: [
       {
+        title: "Team Pipeline",
+        link: "/dashboard/pipeline/team/pipeline",
+      },
+      {
         title: "Shop Pipeline",
         link: "/dashboard/pipeline/shop/pipeline",
       },
@@ -193,7 +197,7 @@ export default function Layout({
     "TWILIO",
   );
 
-  console.log({ session });
+  // console.log({ session });
   useEffect(() => {
     const uploadNotificationData = async () => {
       try {

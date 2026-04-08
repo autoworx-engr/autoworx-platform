@@ -5,6 +5,12 @@ import {
   UserRoundX,
 } from "lucide-react";
 import { useEffect, useRef } from "react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/Tooltip";
 
 interface ServiceSelectorProps {
   services: string[] | string;
@@ -77,31 +83,50 @@ function ServiceSelector({
         )}
 
         {type === "Shop Pipelines" && (
-          <div
-            className="flex gap-3"
-            style={{
-              visibility: isServiceDropdownOpen ? "hidden" : "visible",
-            }}
-          >
-            <div className="relative flex items-center gap-1 text-green-600">
-              <CircleCheckBig size={16} />
-              <span className="absolute -top-1.5 -right-2 text-xs">
-                {completedServices.length}
-              </span>
+          <TooltipProvider>
+            <div
+              className="flex gap-3"
+              style={{
+                visibility: isServiceDropdownOpen ? "hidden" : "visible",
+              }}
+            >
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="relative flex items-center gap-1 text-green-600">
+                    <CircleCheckBig size={16} />
+                    <span className="absolute -top-1.5 -right-2 text-xs">
+                      {completedServices.length}
+                    </span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>Complete</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="relative flex items-center gap-1 text-yellow-500">
+                    <AlertCircle size={16} />
+                    <span className="absolute -top-1.5 -right-2 text-xs">
+                      {incompleteServices.length}
+                    </span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>Incomplete</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="relative flex items-center gap-1 text-gray-600">
+                    <UserRoundX size={16} />
+                    <span className="absolute -top-1.5 -right-2 text-xs">
+                      {unAssignedServices.length}
+                    </span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>Unassigned</TooltipContent>
+              </Tooltip>
             </div>
-            <div className="relative flex items-center gap-1 text-yellow-500">
-              <AlertCircle size={16} />
-              <span className="absolute -top-1.5 -right-2 text-xs">
-                {incompleteServices.length}
-              </span>
-            </div>
-            <div className="relative flex items-center gap-1 text-gray-600">
-              <UserRoundX size={16} />
-              <span className="absolute -top-1.5 -right-2 text-xs">
-                {unAssignedServices.length}
-              </span>
-            </div>
-          </div>
+          </TooltipProvider>
         )}
       </div>
       {isServiceDropdownOpen && (

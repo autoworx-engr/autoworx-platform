@@ -1,4 +1,5 @@
 import "server-only";
+import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
 
@@ -44,8 +45,12 @@ function serializeResult(input: any): any {
   return input;
 }
 
+const databaseUrl = process.env.DIRECT_URL || process.env.DATABASE_URL;
+
 // Extend Prisma to serialize Decimal in all model operations
-const extendedPrisma = new PrismaClient().$extends({
+const extendedPrisma = new PrismaClient({
+  datasources: databaseUrl ? { db: { url: databaseUrl } } : undefined,
+}).$extends({
   query: {
     $allModels: {
       $allOperations({ args, query }) {

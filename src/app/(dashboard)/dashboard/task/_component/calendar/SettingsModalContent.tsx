@@ -1,11 +1,13 @@
 import { DialogContent, DialogHeader, DialogTitle } from "@/components/Dialog";
 import { EmployeeType } from "@prisma/client";
 import { useSession } from "next-auth/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import useSettingsQuery from "../../_hook/settings/query/useSettingsQuery";
 import TaskSpinner from "../ui/TaskSpinner";
 import General from "./General";
 import Holidays from "./Holidays";
+import { useQueryClient } from "@tanstack/react-query";
+import { calenderQueryKey } from "../../_constant";
 
 export default function SettingsModalContent({
   onClose,
@@ -14,12 +16,23 @@ export default function SettingsModalContent({
 }) {
   const { data: settings, isLoading } = useSettingsQuery();
   const [activeTab, setActiveTab] = useState("general");
+  const queryClient = useQueryClient();
 
   // Holiday functionality
   const { data: session } = useSession();
   const authUser = session;
 
   const isAdmin = authUser?.user.employeeType === EmployeeType?.Admin;
+
+  useEffect(() => {
+    return () => {
+      // Invalidate holidays query when modal unmounts
+      queryClient.invalidateQueries({
+        queryKey: [calenderQueryKey.holidays],
+      });
+    };
+  }, [queryClient]);
+
   return (
     <DialogContent className="max-w-xl grid-rows-[auto,1fr,auto]">
       {/* Heading */}

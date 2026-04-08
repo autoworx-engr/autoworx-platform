@@ -48,7 +48,7 @@ export async function sendTwilioMessage({
   companyId?: number;
   message: string;
   clientId: number;
-  attachments: { url: string; name: string }[];
+  attachments: { url: string; name: string; isVoiceNote?: boolean }[];
   userId?: number;
   isSalesAgent?: boolean;
   /** Pass true when calling from a webhook/system context with no user session. */
@@ -161,12 +161,14 @@ export async function sendTwilioMessage({
           data: {
             name: file.name,
             url: file.url,
+            isVoiceNote: file.isVoiceNote ?? false,
             clientSMSId: dbMessage.id,
           },
         });
         processedAttachments.push({
           name: file.name,
           url: file.url,
+          isVoiceNote: file.isVoiceNote ?? false,
         });
       }
 

@@ -6,8 +6,7 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { errorToast } from "@/lib/toast";
 import { signOut } from "next-auth/react";
-import { IOneSignalOneSignal } from "react-onesignal";
-import { LogOut } from "lucide-react";
+import OneSignal from "react-onesignal";
 
 type TProps = {
   className?: string;
@@ -32,14 +31,12 @@ export default function LogoutBtn({ className, ...props }: TProps) {
         ? env("NEXT_PUBLIC_APP_URL") + "/login"
         : "https://autoworx.tech/login";
 
-      window.OneSignalDeferred.push(async (OneSignal: IOneSignalOneSignal) => {
-        try {
-          await OneSignal.logout();
-          await OneSignal.login("unsubscribe");
-        } catch (err) {
-          console.error("Error logging out from OneSignal:", err);
-        }
-      });
+      try {
+        await OneSignal.logout();
+        await OneSignal.login("unsubscribe");
+      } catch (err) {
+        console.error("Error logging out from OneSignal:", err);
+      }
 
       router.push(redirectUrl);
       window.location.reload();
@@ -62,7 +59,7 @@ export default function LogoutBtn({ className, ...props }: TProps) {
       className={cn(
         className
           ? className
-          : "bg-background text-[1.7rem] font-bold text-[#6571FF] disabled:text-gray-500"
+          : "bg-background text-[1.7rem] font-bold text-[#6571FF] disabled:text-gray-500",
       )}
       disabled={pending}
     >
