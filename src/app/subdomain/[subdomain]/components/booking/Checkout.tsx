@@ -404,7 +404,7 @@ export const Checkout = () => {
       return;
     }
 
-    if (normalizedPhone.length < 10 || normalizedPhone.length > 15) {
+    if (normalizedPhone.length < 12 || normalizedPhone.length > 15) {
       errorToast("Phone must be between 10 and 15 digits.");
       return;
     }
@@ -846,7 +846,7 @@ export const Checkout = () => {
                   size="lg"
                   onClick={handlePhoneLookup}
                   disabled={
-                    isLookingUp || normalizePhone(form.phone).length < 10
+                    isLookingUp || normalizePhone(form.phone).length < 12
                   }
                 >
                   {isLookingUp ? (
