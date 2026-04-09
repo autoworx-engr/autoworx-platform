@@ -47,7 +47,9 @@ function extractSubdomain(request: NextRequest): string | null {
   // Regular subdomain detection
   const isSubdomain =
     hostname !== rootDomainFormatted &&
-    !ignoredSubdomains.some((sub) => hostname === `${sub}.${rootDomainFormatted}`) &&
+    !ignoredSubdomains.some(
+      sub => hostname === `${sub}.${rootDomainFormatted}`,
+    ) &&
     hostname.endsWith(`.${rootDomainFormatted}`);
 
   return isSubdomain ? hostname.replace(`.${rootDomainFormatted}`, "") : null;
@@ -107,6 +109,7 @@ export async function middleware(request: NextRequest) {
       }
       throw new Error("Token expired");
     } catch (err) {
+      console.log({ err });
       console.error("Invalid API access token:", err);
       return NextResponse.json({
         status: 401,
