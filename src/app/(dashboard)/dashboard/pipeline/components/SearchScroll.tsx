@@ -43,6 +43,13 @@ export default function SearchScroll({
     }
   }, 500);
 
+  // Reset store search term on unmount so navigating back doesn't show stale results
+  useEffect(() => {
+    return () => {
+      usePipelineFilterStore.setState({ searchTerm: "" });
+    };
+  }, []);
+
   // Handle clicks outside filter dropdown to close it
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
