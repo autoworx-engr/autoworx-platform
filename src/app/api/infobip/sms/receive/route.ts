@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { sendSMSToAgent } from "@/service/ai-agent/api";
 import { revalidatePath } from "next/cache";
 import { allCompanyFeaturePermissions } from "@/service/feature-permissions/api";
+import { normalizePhoneForStorage, phoneLookupWhereClause } from "@/utils/normalizePhone";
 
 const pusher = getPusherInstance();
 
@@ -77,8 +78,9 @@ export async function POST(req: NextRequest) {
         continue;
       }
 
-      const normalizedFrom = normalizePhoneNumber(from);
-      const normalizedTo = normalizePhoneNumber(to);
+      const normalizedFrom = normalizePhoneForStorage(from);
+      const fromLookup = phoneLookupWhereClause(from);
+      const toLookup = phoneLookupWhereClause(to);
 
       const messageText = message || cleanText || "";
 
@@ -100,15 +102,15 @@ export async function POST(req: NextRequest) {
 
       // Find Infobip configurations that match the "to" phone number
       // The "to" field should match our Infobip phone number
-      const infobipConfigs = await db.infobipConfig.findMany({
-        where: {
-          OR: normalizedTo.lookupValues.map((lookupValue) => ({
-            phoneNumber: {
-              endsWith: lookupValue,
+      const infobipConfigs = toLookup
+        ? await db.infobipConfig.findMany({
+            where: {
+              OR: toLookup.map((v) => ({
+                phoneNumber: { endsWith: v.mobile.endsWith },
+              })),
             },
-          })),
-        },
-      });
+          })
+        : [];
 
       console.log(
         `Found ${infobipConfigs.length} Infobip configs for phone number ${to}`,
@@ -131,23 +133,21 @@ export async function POST(req: NextRequest) {
         console.log(`Processing for company ${infobipConfig.companyId}`);
 
         // Find client by the "from" phone number (client's phone)
-        let client = await db.client.findFirst({
-          where: {
-            OR: normalizedFrom.lookupValues.map((lookupValue) => ({
-              mobile: {
-                endsWith: lookupValue,
+        let client = fromLookup
+          ? await db.client.findFirst({
+              where: {
+                OR: fromLookup,
+                companyId: infobipConfig.companyId,
               },
-            })),
-            companyId: infobipConfig.companyId,
-          },
-        });
+            })
+          : null;
 
         if (!client) {
           client = await db.client.create({
             data: {
               firstName: from,
               lastName: " ",
-              mobile: normalizedFrom.storeValue,
+              mobile: normalizedFrom,
               companyId: infobipConfig.companyId,
               isSalesAgent: true,
             },
@@ -399,24 +399,6 @@ async function fetchInfobipMedia(url: string, contentType: string) {
   return new File([blob], fileName, { type: contentType });
 }
 
-function normalizePhoneNumber(phone: string) {
-  const digits = (phone || "").replace(/\D/g, "");
-  const last10Digits = digits.length >= 10 ? digits.slice(-10) : digits;
-
-  const lookupValues = Array.from(
-    new Set([digits, last10Digits].filter((value) => value.length > 0)),
-  );
-
-  const storeValue =
-    digits.length === 11 && digits.startsWith("1")
-      ? last10Digits
-      : digits || phone;
-
-  return {
-    lookupValues,
-    storeValue,
-  };
-}
 
 // Optional: Add GET endpoint for testing webhook URL
 export async function GET() {
