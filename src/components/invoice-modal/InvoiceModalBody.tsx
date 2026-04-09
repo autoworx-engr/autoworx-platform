@@ -267,11 +267,7 @@ export default function InvoiceModalBody({
   const vehicle = invoice.vehicle;
   const paymentEntries = (invoice.payments ?? [])
     .filter((payment) => payment.invoiceId === invoice.id)
-    .sort(
-      (a, b) =>
-        new Date(b.date || b.createdAt).getTime() -
-        new Date(a.date || a.createdAt).getTime(),
-    );
+    .reverse()
 
   const getPaymentMethodText = (payment: InvoiceData["payments"][number]) => {
     if (payment.type === "OTHER") {
@@ -970,10 +966,7 @@ export default function InvoiceModalBody({
                         <th className="px-3 py-2 text-left">Date</th>
                         <th className="px-3 py-2 text-left">Method</th>
                         <th className="px-3 py-2 text-left">Amount</th>
-                        <th className="px-3 py-2 text-left">Cash Received</th>
-                        <th className="px-3 py-2 text-left">Due After</th>
                         <th className="px-3 py-2 text-left">Status</th>
-                        <th className="px-3 py-2 text-left">Notes</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1006,17 +999,7 @@ export default function InvoiceModalBody({
                                 )}
                               </div>
                             </td>
-                            <td className="px-3 py-2">
-                              {payment.cash?.receivedCash || "N/A"}
-                            </td>
-                            <td className="px-3 py-2">
-                              {payment.dueAfterPayment !== null &&
-                                payment.dueAfterPayment !== undefined
-                                ? formatCurrency(Number(payment.dueAfterPayment))
-                                : "N/A"}
-                            </td>
                             <td className="px-3 py-2">{invoice.column?.title || "-"}</td>
-                            <td className="px-3 py-2">{payment.notes || "-"}</td>
                           </tr>
                         );
                       })}

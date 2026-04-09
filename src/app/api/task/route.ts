@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { sendNewTaskAssignNotification } from "@/lib/notification/task-and-appointment-notify";
+import {
+  sendNewTaskAssignNotification,
+  sendNewTaskNotification,
+} from "@/lib/notification/task-and-appointment-notify";
 import { Priority, TaskAndAppointmentCreatedByEnum } from "@prisma/client";
 import { getGoogleCalendarToken } from "@/actions/calendar-settings/getGoogleCalendarAuth";
 import createGoogleCalendarEvent from "@/actions/task/google-calendar/createGoogleCalendarEvent";
@@ -206,6 +209,9 @@ export async function POST(req: NextRequest) {
         createdBy:
           (createdBy as TaskAndAppointmentCreatedByEnum) ?? "sales_agent",
       },
+      include: {
+        client: true,
+      },
     });
 
     // Create TaskUser (relation table)
@@ -240,7 +246,15 @@ export async function POST(req: NextRequest) {
         });
       }
     }
-
+    await sendNewTaskNotification({
+      companyId,
+      clientName: newTask?.client
+        ? `${newTask?.client?.firstName} ${newTask?.client?.lastName}`
+        : "",
+      title: title,
+      appointmentDate: newTask?.date,
+      startTime: newTask?.startTime || "",
+    });
     // Google Calendar integration (optional)
     try {
       const googleToken = (await getGoogleCalendarToken())?.googleCalendarToken;
@@ -253,6 +267,9 @@ export async function POST(req: NextRequest) {
             where: { id: newTask.id },
             data: {
               googleEventId: event.id,
+            },
+            include: {
+              client: true,
             },
           });
         }

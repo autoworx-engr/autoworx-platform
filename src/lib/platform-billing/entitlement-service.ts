@@ -146,6 +146,7 @@ function buildEntitlementsFromFeaturePermissions(
     (result as Record<string, unknown>)[key] = perm.enabled;
   }
 
+  result.callRecording = true;
   result.automationModules = Array.from(enabledAutomationModules);
   const legacyAutomationLimit = LEGACY_UNLIMITED_AUTOMATION_COMPANY_IDS.has(
     companyId,

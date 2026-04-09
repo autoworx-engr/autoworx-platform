@@ -187,7 +187,7 @@ export function filterNavList(
         if (item.title === "Analytics and Reporting") {
           return {
             ...item,
-            link: "dashboard/reporting/salesreporting",
+            link: "/dashboard/reporting/salesreporting",
           };
         }
       }

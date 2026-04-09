@@ -54,11 +54,7 @@ export default function PaymentTable() {
         .utc()
         .toISOString();
 
-      endDate = moment
-        .tz(endStr, timezone)
-        .endOf("day")
-        .utc()
-        .toISOString();
+      endDate = moment.tz(endStr, timezone).endOf("day").utc().toISOString();
     }
 
     return {
@@ -133,9 +129,7 @@ export default function PaymentTable() {
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-bold text-slate-600 dark:text-slate-100">
             Payments{" "}
-            <span className="text-slate-400 font-normal">
-              ({total})
-            </span>
+            <span className="text-slate-400 font-normal">({total})</span>
           </h3>
         </div>
 
@@ -167,79 +161,91 @@ export default function PaymentTable() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-6 text-center text-slate-500">
+                    <td
+                      colSpan={8}
+                      className="px-4 py-6 text-center text-slate-500"
+                    >
                       Loading payments...
                     </td>
                   </tr>
                 ) : rows.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-6 text-center text-slate-500">
+                    <td
+                      colSpan={8}
+                      className="px-4 py-6 text-center text-slate-500"
+                    >
                       No payments found.
                     </td>
                   </tr>
                 ) : (
                   rows.map((item, index) => (
-                  <tr
-                    key={item.id}
-                    className={`duration-200 hover:bg-slate-50 dark:hover:bg-slate-800/50 ${
-                      index % 2 !== 0
-                        ? "bg-blue-50/80 dark:bg-slate-900"
-                        : "bg-white dark:bg-slate-900"
-                    }`}
-                  >
-                    <td className="border-b px-4 py-2">
-                      <InvoiceModal
-                        invoiceId={item.invoiceId}
-                        buttonChild={<button>{item.invoiceId}</button>}
-                        buttonChildClassName="text-blue-500"
-                      />
-                    </td>
-                    <td className="border-b px-4 py-2">
-                      <Link
-                        href={`/dashboard/client/${item?.client?.id && item?.client?.id !== undefined ? item?.client?.id : ""}`}
-                        className="text-blue-500"
-                      >
-                        {item?.client?.name && item?.client?.name !== undefined
-                          ? item?.client?.name
+                    <tr
+                      key={item.id}
+                      className={`duration-200 hover:bg-slate-50 dark:hover:bg-slate-800/50 ${
+                        index % 2 !== 0
+                          ? "bg-blue-50/80 dark:bg-slate-900"
+                          : "bg-white dark:bg-slate-900"
+                      }`}
+                    >
+                      <td className="border-b px-4 py-2">
+                        <InvoiceModal
+                          invoiceId={item.invoiceId}
+                          buttonChild={<button>{item.invoiceId}</button>}
+                          buttonChildClassName="text-blue-500"
+                        />
+                      </td>
+                      <td className="border-b px-4 py-2">
+                        <Link
+                          href={`/dashboard/client/${item?.client?.id && item?.client?.id !== undefined ? item?.client?.id : ""}`}
+                          className="text-blue-500"
+                        >
+                          {item?.client?.name &&
+                          item?.client?.name !== undefined
+                            ? item?.client?.name
+                            : "- - -"}
+                        </Link>
+                      </td>
+                      <td className="border-b px-4 py-2">
+                        {item?.vehicle && item?.vehicle !== undefined
+                          ? item?.vehicle
                           : "- - -"}
-                      </Link>
-                    </td>
-                    <td className="border-b px-4 py-2">
-                      {item?.vehicle && item?.vehicle !== undefined
-                        ? item?.vehicle
-                        : "- - -"}
-                    </td>
-                    <td className="border-b px-4 py-2">
-                      {FormatUtcToTimezone(item.date, timezone, "MM/DD/YYYY")}
-                    </td>
-                    <td className="border-b px-4 py-2">
-                      <div>
-                        <div>{formatCurrency(item.amount)}</div>
-                        {item.refundedAmount > 0 && (
-                          <div className="text-sm text-red-500">
-                            Refunded: {formatCurrency(item.refundedAmount)}
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="border-b px-4 py-2">
-                      {item.cashReceived ? item.cashReceived : "N/A"}
-                    </td>
-                    <td className="border-b px-4 py-2">{item.method}</td>{" "}
-                    <td className="border-b px-4 py-2">
-                      <RefundModal
-                        paymentId={item.id}
-                        paymentType={item.paymentType}
-                        totalAmount={item.amount}
-                        refundedAmount={item.refundedAmount}
-                        refundMethod={item.refundMethod}
-                        refundReason={item.refundReason}
-                        refundDate={item.refundDate}
-                        onRefundSuccess={onRefreshPayments}
-                      />
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td className="border-b px-4 py-2">
+                        {FormatUtcToTimezone(item.date, timezone, "MM/DD/YYYY")}
+                      </td>
+                      <td className="border-b px-4 py-2">
+                        <div>
+                          <div>{formatCurrency(item.amount)}</div>
+                          {item.tip > 0 && (
+                            <div className="text-xs text-gray-500">
+                              Tip: {formatCurrency(item.tip)}
+                            </div>
+                          )}
+                          {item.refundedAmount > 0 && (
+                            <div className="text-sm text-red-500">
+                              Refunded: {formatCurrency(item.refundedAmount)}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="border-b px-4 py-2">
+                        {item.cashReceived ? item.cashReceived : "N/A"}
+                      </td>
+                      <td className="border-b px-4 py-2">{item.method}</td>{" "}
+                      <td className="border-b px-4 py-2">
+                        <RefundModal
+                          paymentId={item.id}
+                          paymentType={item.paymentType}
+                          totalAmount={item.amount}
+                          refundedAmount={item.refundedAmount}
+                          refundMethod={item.refundMethod}
+                          refundReason={item.refundReason}
+                          refundDate={item.refundDate}
+                          onRefundSuccess={onRefreshPayments}
+                        />
+                      </td>
+                    </tr>
+                  ))
                 )}
               </tbody>
             </table>
@@ -291,6 +297,11 @@ export default function PaymentTable() {
                       <p className="text-lg font-semibold text-[#66738C]">
                         {formatCurrency(item.amount)}
                       </p>
+                      {item.tip > 0 && (
+                        <p className="text-xs text-gray-500">
+                          Tip: {formatCurrency(item.tip)}
+                        </p>
+                      )}
                       {item.refundedAmount > 0 && (
                         <p className="text-sm text-red-500">
                           Refunded: {formatCurrency(item.refundedAmount)}

@@ -19,19 +19,19 @@ import { Tag, User } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { SetStateAction, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import DroppableColumn from "./DroppableColumn";
-import PipelineLoadingSkeleton from "./PipelineLoadingSkeleton";
-import SearchScroll from "./SearchScroll";
+import DroppableColumn from "../../components/DroppableColumn";
+import PipelineLoadingSkeleton from "../../components/PipelineLoadingSkeleton";
+import SearchScroll from "../../components/SearchScroll";
 
 interface PipelinesProps {
   pipelinesTitle: string;
-  columns?: Column[];
+  columns?: User[];
   shopPipelineDataProp: ShopPipelineData[];
   loading?: boolean;
   isTechnician?: boolean;
 }
 
-export default function PipelinesCopy({
+export default function TeamPipelines({
   pipelinesTitle: pipelineType,
   columns,
   loading = false,
@@ -41,7 +41,7 @@ export default function PipelinesCopy({
   const router = useRouter();
 
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
-  console.log("selectedClientId==>", selectedClientId);
+  //   console.log("selectedClientId==>", selectedClientId);
   const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(
     null,
   );
@@ -57,7 +57,7 @@ export default function PipelinesCopy({
   const [screenWidth, setScreenWidth] = useState<number>(window.innerWidth);
 
   const currentUser = useGetCurrentUser();
-  console.log("Current User:", currentUser);
+  //   console.log("Current User:", currentUser);
 
   // Get search term from store
   const searchTerm = usePipelineFilterStore((state) => state.searchTerm);
@@ -561,6 +561,7 @@ export default function PipelinesCopy({
           >
             {filteredPipelineData.map((item, categoryIndex) => (
               <DroppableColumn
+                isTeamPipeline={true}
                 key={categoryIndex}
                 columnRefs={columnRefs}
                 categoryIndex={categoryIndex}
