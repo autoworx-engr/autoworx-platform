@@ -29,7 +29,7 @@ export const useGetPipelineColumns = (type: string) => {
   return useQuery<Column[]>({
     queryKey: ["pipeline-columns", type],
     queryFn: async () => {
-      const response = await fetch(`/api/pipeline/columns?type=${type}`);
+      const response = await fetch(`/api/pipeline/sales/columns?type=${type}`);
       const result = await response.json();
       return result.success ? result.data : [];
     },
@@ -45,7 +45,7 @@ export const useReorderPipelineColumns = () => {
           id: column.id!,
           order: index,
         }));
-      const res = await fetch("/api/pipeline/columns/reorder", {
+      const res = await fetch("/api/pipeline/sales/columns/reorder", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ items: reorderedColumns }),
@@ -100,7 +100,7 @@ export const useSavePipelineColumns = (pipelineType: string, onClose: () => void
         }
 
         if (column.id === null) {
-          const res = await fetch("/api/pipeline/columns", {
+          const res = await fetch("/api/pipeline/sales/columns", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -114,7 +114,7 @@ export const useSavePipelineColumns = (pipelineType: string, onClose: () => void
           if (!data.success) throw new Error(data.error);
           column.id = data.data.id;
         } else {
-          const res = await fetch(`/api/pipeline/columns/${column.id}`, {
+          const res = await fetch(`/api/pipeline/sales/columns/${column.id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -132,7 +132,7 @@ export const useSavePipelineColumns = (pipelineType: string, onClose: () => void
 
       const columnsToDelete = deletedColumns.map(async (column) => {
         if (column.id !== null) {
-          const res = await fetch(`/api/pipeline/columns/${column.id}`, {
+          const res = await fetch(`/api/pipeline/sales/columns/${column.id}`, {
             method: "DELETE",
           });
           const data = await res.json();

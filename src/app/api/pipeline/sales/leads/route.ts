@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * @swagger
- * /api/pipeline/sales/lead:
+ * /api/pipeline/sales/leads:
  *   get:
  *     summary: Get sales leads with pagination and filtering
  *     tags: [Pipeline]
@@ -110,7 +110,7 @@ export async function GET(request: NextRequest) {
       data: result,
     });
   } catch (error: any) {
-    console.error("Error in GET /api/pipeline/sales/lead:", error);
+    console.error("Error in GET /api/pipeline/sales/leads:", error);
     return NextResponse.json(
       {
         success: false,

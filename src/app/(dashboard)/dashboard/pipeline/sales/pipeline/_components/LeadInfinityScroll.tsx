@@ -60,7 +60,7 @@ export default function LeadInfinityScroll({
         if (orderBy) queryParams.append("orderBy", orderBy);
 
         const response = await fetch(
-          `/api/pipeline/sales/lead?` + queryParams.toString(),
+          `/api/pipeline/sales/leads?` + queryParams.toString(),
         );
         const data = await response.json();
         if (!data.success) throw new Error(data.error);

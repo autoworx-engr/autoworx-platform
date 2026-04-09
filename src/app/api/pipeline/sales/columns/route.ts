@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * @swagger
- * /api/pipeline/columns:
+ * /api/pipeline/sales/columns:
  *   get:
  *     summary: Get pipeline columns by type
  *     tags: [Pipeline Columns]
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: columns });
   } catch (error: any) {
-    console.error("Error in GET /api/pipeline/columns:", error);
+    console.error("Error in GET /api/pipeline/sales/columns:", error);
     return NextResponse.json(
       { success: false, error: error.message || "Failed to fetch columns" },
       { status: 500 }
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
 
 /**
  * @swagger
- * /api/pipeline/columns:
+ * /api/pipeline/sales/columns:
  *   post:
  *     summary: Create a new pipeline column
  *     tags: [Pipeline Columns]

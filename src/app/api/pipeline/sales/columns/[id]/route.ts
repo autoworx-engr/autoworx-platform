@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * @swagger
- * /api/pipeline/columns/{id}:
+ * /api/pipeline/sales/columns/{id}:
  *   put:
  *     summary: Update an existing pipeline column
  *     tags: [Pipeline Columns]
@@ -64,7 +64,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     return NextResponse.json({ success: true, message: "Column updated successfully" });
   } catch (error: any) {
-    console.error(`Error in PUT /api/pipeline/columns/${params.id}:`, error);
+    console.error(`Error in PUT /api/pipeline/sales/columns/${params.id}:`, error);
     return NextResponse.json(
       { success: false, error: error.message || "Failed to update column" },
       { status: 500 }
@@ -74,7 +74,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
 /**
  * @swagger
- * /api/pipeline/columns/{id}:
+ * /api/pipeline/sales/columns/{id}:
  *   delete:
  *     summary: Delete a pipeline column
  *     tags: [Pipeline Columns]

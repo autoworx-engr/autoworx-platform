@@ -121,7 +121,7 @@ export default function SalesPipelineSection() {
           const newColumnId = pipelineColumns[destinationColumnIndex]?.id;
           if (newColumnId) {
             successToast("Lead column updated successfully");
-            fetch(`/api/pipeline/sales/lead/${dragData.leadId}/column`, {
+            fetch(`/api/pipeline/sales/leads/${dragData.leadId}/column`, {
               method: "PUT",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ newColumnId }),

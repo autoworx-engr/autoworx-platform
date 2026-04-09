@@ -145,7 +145,7 @@ const Leads = ({ salesColumn }: TProps) => {
           queryParams.append("endDate", dateRange[1].toISOString());
 
         const fetchPromise = fetch(
-          `/api/pipeline/sales/lead?${queryParams.toString()}`,
+          `/api/pipeline/sales/leads?${queryParams.toString()}`,
         )
           .then(res => res.json())
           .then(res => {

@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * @swagger
- * /api/pipeline/columns/reorder:
+ * /api/pipeline/sales/columns/reorder:
  *   put:
  *     summary: Reorder multiple pipeline columns
  *     tags: [Pipeline Columns]
