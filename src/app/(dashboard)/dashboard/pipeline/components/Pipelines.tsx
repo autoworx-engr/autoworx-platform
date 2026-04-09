@@ -53,11 +53,12 @@ export default function PipelinesCopy({
   // References for scrolling to leads
   const columnRefs = useRef<(HTMLDivElement | null)[]>([]);
   const leadRefs = useRef<Map<string, HTMLLIElement>>(new Map());
+  const currentHighlightRef = useRef<HTMLLIElement | null>(null);
   const dragDropContextRef = useRef<HTMLDivElement | null>(null);
   const [screenWidth, setScreenWidth] = useState<number>(window.innerWidth);
 
   const currentUser = useGetCurrentUser();
-  console.log("Current User:", currentUser);
+  // console.log("Current User:", currentUser);
 
   // Get search term from store
   const searchTerm = usePipelineFilterStore((state) => state.searchTerm);
@@ -182,6 +183,28 @@ export default function PipelinesCopy({
 
     const { columnIndex, leadIndex } = result;
 
+    // Map from pipelineData index to filteredPipelineData index.
+    // searchResults uses original pipelineData indices, but leadRefs are
+    // keyed with filteredPipelineData indices (only matching leads rendered).
+    const lead = pipelineData[columnIndex]?.leads[leadIndex];
+    if (!lead) return;
+
+    const filteredLeadIndex = filteredPipelineData[columnIndex]?.leads.findIndex(
+      (fl) => fl.invoiceId === lead.invoiceId,
+    );
+    if (filteredLeadIndex === undefined || filteredLeadIndex === -1) return;
+
+    // Clear previous highlight immediately
+    if (currentHighlightRef.current) {
+      currentHighlightRef.current.classList.remove(
+        "!bg-yellow-200",
+        "border-yellow-400",
+        "scale-[1.02]",
+        "transition-transform",
+      );
+      currentHighlightRef.current = null;
+    }
+
     // Scroll to the column first
     if (columnRefs.current[columnIndex]) {
       columnRefs.current[columnIndex]?.scrollIntoView({
@@ -192,8 +215,7 @@ export default function PipelinesCopy({
 
       // Wait a bit for the column scroll to complete before scrolling to the lead
       setTimeout(() => {
-        // Generate the key the same way we do when creating refs
-        const leadKey = `${columnIndex}-${leadIndex}`;
+        const leadKey = `${columnIndex}-${filteredLeadIndex}`;
         const leadElement = leadRefs.current.get(leadKey);
 
         if (leadElement) {
@@ -202,21 +224,36 @@ export default function PipelinesCopy({
             block: "nearest",
           });
 
-          // Highlight the found item temporarily
-          leadElement.classList.add(
-            "bg-yellow-200",
-            "border-yellow-300",
-            "scale-[1.02]",
-            "transition-transform",
-          );
-          setTimeout(() => {
-            leadElement.classList.remove(
-              "bg-yellow-200",
-              "border-yellow-300",
+          // Clear any previous highlight (in case previous timeout hasn't fired)
+          if (currentHighlightRef.current && currentHighlightRef.current !== leadElement) {
+            currentHighlightRef.current.classList.remove(
+              "!bg-yellow-200",
+              "border-yellow-400",
               "scale-[1.02]",
               "transition-transform",
             );
-          }, 5000);
+          }
+
+          // Highlight the found item
+          leadElement.classList.add(
+            "!bg-yellow-200",
+            "border-yellow-400",
+            "scale-[1.02]",
+            "transition-transform",
+          );
+          currentHighlightRef.current = leadElement;
+
+          setTimeout(() => {
+            leadElement.classList.remove(
+              "!bg-yellow-200",
+              "border-yellow-400",
+              "scale-[1.02]",
+              "transition-transform",
+            );
+            if (currentHighlightRef.current === leadElement) {
+              currentHighlightRef.current = null;
+            }
+          }, 3000);
         }
       }, 300);
     }
@@ -232,7 +269,7 @@ export default function PipelinesCopy({
       setOpenDropdownIndex({ category: categoryIndex, index: leadIndex });
     }
 
-    console.log(categoryIndex, leadIndex);
+    // console.log(categoryIndex, leadIndex);
   };
 
   const createEmployeeSelectHandler =
