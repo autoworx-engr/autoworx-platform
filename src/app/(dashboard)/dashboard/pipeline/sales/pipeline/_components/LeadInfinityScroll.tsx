@@ -1,6 +1,5 @@
 "use client";
 
-import { getLeads } from "@/actions/pipelines/getLeads";
 import { actionTypes } from "@/constants/lead.constant";
 import {
   useColumnDispatch,
@@ -35,7 +34,7 @@ export default function LeadInfinityScroll({
 }: TProps) {
   const dispatch = useColumnDispatch();
   const searchTerm = useSearchTerm();
-  const orderBy = useOrderBy()
+  const orderBy = useOrderBy();
   const scrollRef = useRef<HTMLUListElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const loaderRef = useRef<HTMLDivElement>(null);
@@ -50,17 +49,23 @@ export default function LeadInfinityScroll({
 
   console.log({ orderBy });
 
-
   const fetchMoreLeads = useCallback(async () => {
     try {
       if (columnId) {
-        const getNextLeads = await getLeads({
-          columnId,
-          take: defaultTakeLeads,
-          skip: leadsLength,
-          searchTerm: searchTerm || undefined,
-          orderBy: orderBy,
-        });
+        const queryParams = new URLSearchParams();
+        if (columnId) queryParams.append("columnId", columnId.toString());
+        queryParams.append("take", defaultTakeLeads.toString());
+        queryParams.append("skip", leadsLength.toString());
+        if (searchTerm) queryParams.append("searchTerm", searchTerm);
+        if (orderBy) queryParams.append("orderBy", orderBy);
+
+        const response = await fetch(
+          `/api/pipeline/sales/lead?` + queryParams.toString(),
+        );
+        const data = await response.json();
+        if (!data.success) throw new Error(data.error);
+
+        const getNextLeads = data.data.leads;
         if (getNextLeads?.length < defaultTakeLeads) {
           setHasMore(false);
         }
@@ -96,13 +101,13 @@ export default function LeadInfinityScroll({
 
   useEffect(() => {
     const observer = new IntersectionObserver(
-      (entries) => {
+      entries => {
         if (entries[0].isIntersecting && !scrollLoading && hasMore) {
           setScrollLoading(true);
           fetchMoreLeads().finally(() => setScrollLoading(false));
         }
       },
-      { threshold: 0.3 }
+      { threshold: 0.3 },
     );
 
     if (loaderRef.current) {
