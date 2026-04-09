@@ -104,14 +104,17 @@ export default function ReDoModal({
       {isInvoiceDelivered && !hasExistingRedo && (
         <button
           type="button"
-          onClick={() => setOpen(true)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpen(true);
+          }}
           className="flex items-center gap-1 rounded-full bg-[#6571FF] px-2 py-0.5 text-white"
         >
           Re-Do
         </button>
       )}
       <Dialog open={open} onOpenChange={() => setOpen((prev) => !prev)}>
-        <DialogContent>
+        <DialogContent onClick={(e) => e.stopPropagation()}>
           <div className="space-y-3 rounded-md bg-background">
             <div className="mx-10 my-5">
               <div>
@@ -122,7 +125,7 @@ export default function ReDoModal({
               </div>
               <div className="mt-5 flex flex-col justify-center space-y-1">
                 <div className="flex">
-                  <p className="min-w-[150px] text-center">Name</p>
+                  <p className="min-w-[150px] text-left">Name</p>
                   <p>Notes</p>
                 </div>
                 <div className="space-y-3">
