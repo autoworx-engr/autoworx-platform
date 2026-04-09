@@ -1346,13 +1346,12 @@ export async function POST(req: Request) {
         };
       }
 
-      // Tax and fee computed on (subtotal - discount) to match invoice display
-      const netForTaxFee = subtotal - giftCardRedeemedAmount;
-      const taxAmount = (netForTaxFee * taxRate) / 100;
-      const serviceFeeAmount = (netForTaxFee * serviceFeeRate) / 100;
+      // Tax and fee computed on the original subtotal (before gift card discount)
+      const taxAmount = (subtotal * taxRate) / 100;
+      const serviceFeeAmount = (subtotal * serviceFeeRate) / 100;
 
       const adjustedGrandTotal = roundMoney(
-        netForTaxFee + taxAmount + serviceFeeAmount,
+        subtotal + taxAmount + serviceFeeAmount - giftCardRedeemedAmount,
       );
 
       const isDepositEnabled = bookingSettings.isDepositEnabled;
