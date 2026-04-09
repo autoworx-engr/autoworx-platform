@@ -60,8 +60,11 @@ interface SavePipelineParams {
   deletedColumns: LocalColumn[];
 }
 
+import { useRouter } from "next/navigation";
+
 export const useSavePipelineColumns = (pipelineType: string, onClose: () => void) => {
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   return useMutation({
     mutationFn: async ({ localColumns, deletedColumns }: SavePipelineParams) => {
@@ -142,6 +145,7 @@ export const useSavePipelineColumns = (pipelineType: string, onClose: () => void
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pipeline-columns", pipelineType] });
+      router.refresh();
       onClose();
     },
     onError: (error: Error) => {
