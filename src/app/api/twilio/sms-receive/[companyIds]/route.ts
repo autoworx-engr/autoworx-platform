@@ -9,6 +9,7 @@ import receiveTwiloMessage from "@/lib/pusher/receiveTwiloMessage";
 import { getPusherInstance } from "@/lib/pusher/server";
 import { sendSMSToAgent } from "@/service/ai-agent/api";
 import { allCompanyFeaturePermissions } from "@/service/feature-permissions/api";
+import { normalizePhoneForStorage, phoneLookupWhereClause } from "@/utils/normalizePhone";
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -110,7 +111,8 @@ export async function POST(
     const imgs = await res.json();
     const images = imgs?.data ?? [];
 
-    const normalizedFrom = normalizePhoneNumber(body.From);
+    const normalizedFrom = normalizePhoneForStorage(body.From);
+    const phoneLookup = phoneLookupWhereClause(body.From);
 
     for (const companyId of companyIds) {
       const entitlements = await getCompanyEntitlements(companyId);
@@ -121,31 +123,29 @@ export async function POST(
         where: { id: companyId },
       });
 
-      let client = await db.client.findFirst({
-        where: {
-          OR: normalizedFrom.lookupValues.map((lookupValue) => ({
-            mobile: {
-              endsWith: lookupValue,
+      let client = phoneLookup
+        ? await db.client.findFirst({
+            where: {
+              OR: phoneLookup,
+              companyId: +companyId,
             },
-          })),
-          companyId: +companyId,
-        },
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          companyId: true,
-          Lead: true,
-          isSalesAgent: true,
-        },
-      });
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              companyId: true,
+              Lead: true,
+              isSalesAgent: true,
+            },
+          })
+        : null;
 
       if (!client) {
         client = await db.client.create({
           data: {
             firstName: body.From,
             lastName: " ",
-            mobile: normalizedFrom.storeValue,
+            mobile: normalizedFrom,
             companyId: companyId,
             isSalesAgent: true,
           },
@@ -333,21 +333,3 @@ function mimeToExtension(mime: string): string {
   return map[mime.split(";")[0].trim()] || "bin";
 }
 
-function normalizePhoneNumber(phone: string) {
-  const digits = (phone || "").replace(/\D/g, "");
-  const last10Digits = digits.length >= 10 ? digits.slice(-10) : digits;
-
-  const lookupValues = Array.from(
-    new Set([digits, last10Digits].filter((value) => value.length > 0)),
-  );
-
-  const storeValue =
-    digits.length === 11 && digits.startsWith("1")
-      ? last10Digits
-      : digits || phone;
-
-  return {
-    lookupValues,
-    storeValue,
-  };
-}

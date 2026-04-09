@@ -181,19 +181,19 @@ export function BillSummary({
 
     let taxAdd = 0;
     let suppliesFeeAdd = 0;
-    let newGrandTotal = netAmount;
 
+    // Tax and fee are calculated on the original subtotal (before discount)
     if (isTaxEnabled && tax > 0) {
-      taxAdd = Number((netAmount * (tax / 100)).toFixed(2));
+      taxAdd = Number((subtotal * (tax / 100)).toFixed(2));
     }
 
     if (isSuppliesEnabled && serviceFee > 0) {
-      suppliesFeeAdd = Number((netAmount * (serviceFee / 100)).toFixed(2));
+      suppliesFeeAdd = Number((subtotal * (serviceFee / 100)).toFixed(2));
     }
 
     setGrandTotal(
       Number(
-        (newGrandTotal + taxAdd + suppliesFeeAdd + vehicleExtraCost).toFixed(2),
+        (netAmount + taxAdd + suppliesFeeAdd + vehicleExtraCost).toFixed(2),
       ),
     );
   }, [
@@ -305,7 +305,7 @@ export function BillSummary({
                   isToggleItem
                     ? `${toggleState ? originalValue : 0}%${
                         toggleState && originalValue > 0
-                          ? ` | $${(((subtotal - discount) * originalValue) / 100).toFixed(2)}`
+                          ? ` | $${((subtotal * originalValue) / 100).toFixed(2)}`
                           : ""
                       }`
                     : data

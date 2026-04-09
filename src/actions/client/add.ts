@@ -5,6 +5,7 @@ import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
 import { ServerAction } from "@/types/action";
 import { TErrorHandler } from "@/types/globalError";
+import { normalizePhoneForStorage } from "@/utils/normalizePhone";
 import { createClientValidationSchema } from "@/validations/schemas/client/client.validation";
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
@@ -40,9 +41,14 @@ export async function addCustomer(
         throw new Error("Company ID is required to create a client.");
       }
     }
+    // Normalize phone number to digits-only for consistent matching
+    const normalizedMobile = data.mobile
+      ? normalizePhoneForStorage(data.mobile)
+      : data.mobile;
+
     if (data.email) {
       const existingCustomer = await db.client.findFirst({
-        where: { email: data.email, companyId, mobile: data.mobile },
+        where: { email: data.email, companyId, mobile: normalizedMobile },
       });
 
       if (existingCustomer) {
@@ -53,9 +59,9 @@ export async function addCustomer(
       }
     }
 
-    if (data.mobile) {
+    if (normalizedMobile) {
       const existingCustomerByMobile = await db.client.findFirst({
-        where: { companyId, mobile: data.mobile },
+        where: { companyId, mobile: normalizedMobile },
       });
 
       if (existingCustomerByMobile) {
@@ -64,14 +70,13 @@ export async function addCustomer(
           message: "A customer with this mobile already exists.",
         };
       }
-
-      console.log(existingCustomerByMobile);
     }
 
     const { forceCompanyId: _, ...rest } = data;
     const newCustomer = await db.client.create({
       data: {
         ...rest,
+        mobile: normalizedMobile,
         companyId,
         photo: data.photo ? data.photo : undefined,
         isSalesAgent: true,
