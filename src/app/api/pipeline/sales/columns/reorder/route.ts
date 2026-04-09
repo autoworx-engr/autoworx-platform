@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
  * /api/pipeline/sales/columns/reorder:
  *   put:
  *     summary: Reorder multiple pipeline columns
- *     tags: [Pipeline Columns]
+ *     tags: [Sales Pipeline Columns]
  *     requestBody:
  *       required: true
  *       content:
@@ -41,18 +41,24 @@ export async function PUT(request: NextRequest) {
     if (!items || !Array.isArray(items)) {
       return NextResponse.json(
         { success: false, error: "Items array is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     await updateColumnOrder(items);
 
-    return NextResponse.json({ success: true, message: "Column order updated" });
+    return NextResponse.json({
+      success: true,
+      message: "Column order updated",
+    });
   } catch (error: any) {
     console.error("Error in PUT /api/pipeline/columns/reorder:", error);
     return NextResponse.json(
-      { success: false, error: error.message || "Failed to update column order" },
-      { status: 500 }
+      {
+        success: false,
+        error: error.message || "Failed to update column order",
+      },
+      { status: 500 },
     );
   }
 }

@@ -1,4 +1,7 @@
-import { getColumnsByType, createColumn } from "@/actions/pipelines/pipelinesColumn";
+import {
+  getColumnsByType,
+  createColumn,
+} from "@/actions/pipelines/pipelinesColumn";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -6,7 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
  * /api/pipeline/sales/columns:
  *   get:
  *     summary: Get pipeline columns by type
- *     tags: [Pipeline Columns]
+ *     tags: [Sales Pipeline Columns]
  *     parameters:
  *       - in: query
  *         name: type
@@ -28,7 +31,10 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get("type");
 
     if (!type) {
-      return NextResponse.json({ success: false, error: "Type is required" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: "Type is required" },
+        { status: 400 },
+      );
     }
 
     const columns = await getColumnsByType(type);
@@ -38,7 +44,7 @@ export async function GET(request: NextRequest) {
     console.error("Error in GET /api/pipeline/sales/columns:", error);
     return NextResponse.json(
       { success: false, error: error.message || "Failed to fetch columns" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -48,7 +54,7 @@ export async function GET(request: NextRequest) {
  * /api/pipeline/sales/columns:
  *   post:
  *     summary: Create a new pipeline column
- *     tags: [Pipeline Columns]
+ *     tags: [Sales Pipeline Columns]
  *     requestBody:
  *       required: true
  *       content:
@@ -83,7 +89,7 @@ export async function POST(request: NextRequest) {
     if (!title || !type) {
       return NextResponse.json(
         { success: false, error: "Title and type are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -94,7 +100,7 @@ export async function POST(request: NextRequest) {
     console.error("Error in POST /api/pipeline/columns:", error);
     return NextResponse.json(
       { success: false, error: error.message || "Failed to create column" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
  * /api/pipeline/sales/leads/{id}/tags/{tagId}:
  *   delete:
  *     summary: Remove tag from lead
- *     tags: [Pipeline Leads]
+ *     tags: [Sales Pipeline Leads]
  *     parameters:
  *       - in: path
  *         name: id
@@ -30,19 +30,25 @@ import { NextRequest, NextResponse } from "next/server";
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; tagId: string } }
+  { params }: { params: { id: string; tagId: string } },
 ) {
   try {
     const leadId = parseInt(params.id);
     const tagId = parseInt(params.tagId);
-    
+
     if (isNaN(leadId) || isNaN(tagId)) {
-      return NextResponse.json({ success: false, error: "Invalid lead ID or tag ID" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: "Invalid lead ID or tag ID" },
+        { status: 400 },
+      );
     }
 
     const removedTag = await removeLeadTag(leadId, tagId);
     return NextResponse.json({ success: true, data: removedTag });
   } catch (error) {
-    return NextResponse.json({ success: false, error: (error as Error).message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: (error as Error).message },
+      { status: 500 },
+    );
   }
 }

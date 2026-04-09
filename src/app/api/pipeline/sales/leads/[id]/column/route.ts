@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
  * /api/pipeline/sales/leads/{id}/column:
  *   put:
  *     summary: Update lead column
- *     tags: [Pipeline Leads]
+ *     tags: [Sales Pipeline Leads]
  *     parameters:
  *       - in: path
  *         name: id
@@ -35,24 +35,33 @@ import { NextRequest, NextResponse } from "next/server";
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
   try {
     const leadId = parseInt(params.id);
     if (isNaN(leadId)) {
-      return NextResponse.json({ success: false, error: "Invalid lead ID" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: "Invalid lead ID" },
+        { status: 400 },
+      );
     }
 
     const { columnId, newColumnId } = await request.json();
     const finalColumnId = columnId ?? newColumnId;
-    
+
     if (!finalColumnId) {
-      return NextResponse.json({ success: false, error: "columnId is required" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: "columnId is required" },
+        { status: 400 },
+      );
     }
 
     const updatedLead = await updateLeadColumn(leadId, parseInt(finalColumnId));
     return NextResponse.json({ success: true, data: updatedLead });
   } catch (error) {
-    return NextResponse.json({ success: false, error: (error as Error).message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: (error as Error).message },
+      { status: 500 },
+    );
   }
 }

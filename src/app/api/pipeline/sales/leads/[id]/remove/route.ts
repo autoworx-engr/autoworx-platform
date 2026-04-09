@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
  * /api/pipeline/sales/leads/{id}/remove:
  *   put:
  *     summary: Remove lead from pipeline
- *     tags: [Pipeline Leads]
+ *     tags: [Sales Pipeline Leads]
  *     parameters:
  *       - in: path
  *         name: id
@@ -24,17 +24,23 @@ import { NextRequest, NextResponse } from "next/server";
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
   try {
     const leadId = parseInt(params.id);
     if (isNaN(leadId)) {
-      return NextResponse.json({ success: false, error: "Invalid lead ID" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: "Invalid lead ID" },
+        { status: 400 },
+      );
     }
 
     const updatedLead = await removeLeadFromPipeline(leadId);
     return NextResponse.json({ success: true, data: updatedLead });
   } catch (error) {
-    return NextResponse.json({ success: false, error: (error as Error).message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: (error as Error).message },
+      { status: 500 },
+    );
   }
 }

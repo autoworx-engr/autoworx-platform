@@ -1,4 +1,7 @@
-import { updateColumn, deleteColumn } from "@/actions/pipelines/pipelinesColumn";
+import {
+  updateColumn,
+  deleteColumn,
+} from "@/actions/pipelines/pipelinesColumn";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -6,7 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
  * /api/pipeline/sales/columns/{id}:
  *   put:
  *     summary: Update an existing pipeline column
- *     tags: [Pipeline Columns]
+ *     tags: [Sales Pipeline Columns]
  *     parameters:
  *       - in: path
  *         name: id
@@ -43,11 +46,17 @@ import { NextRequest, NextResponse } from "next/server";
  *       500:
  *         description: Failed to update column
  */
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } },
+) {
   try {
     const id = parseInt(params.id);
     if (isNaN(id)) {
-      return NextResponse.json({ success: false, error: "Invalid ID" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: "Invalid ID" },
+        { status: 400 },
+      );
     }
 
     const body = await request.json();
@@ -56,18 +65,24 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     if (!title || !type || order === undefined) {
       return NextResponse.json(
         { success: false, error: "Title, type, and order are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     await updateColumn(id, title, type, order, textColor, bgColor);
 
-    return NextResponse.json({ success: true, message: "Column updated successfully" });
+    return NextResponse.json({
+      success: true,
+      message: "Column updated successfully",
+    });
   } catch (error: any) {
-    console.error(`Error in PUT /api/pipeline/sales/columns/${params.id}:`, error);
+    console.error(
+      `Error in PUT /api/pipeline/sales/columns/${params.id}:`,
+      error,
+    );
     return NextResponse.json(
       { success: false, error: error.message || "Failed to update column" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -77,7 +92,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
  * /api/pipeline/sales/columns/{id}:
  *   delete:
  *     summary: Delete a pipeline column
- *     tags: [Pipeline Columns]
+ *     tags: [Sales Pipeline Columns]
  *     parameters:
  *       - in: path
  *         name: id
@@ -93,21 +108,30 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
  *       500:
  *         description: Failed to delete column
  */
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } },
+) {
   try {
     const id = parseInt(params.id);
     if (isNaN(id)) {
-      return NextResponse.json({ success: false, error: "Invalid ID" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: "Invalid ID" },
+        { status: 400 },
+      );
     }
 
     await deleteColumn(id);
 
-    return NextResponse.json({ success: true, message: "Column deleted successfully" });
+    return NextResponse.json({
+      success: true,
+      message: "Column deleted successfully",
+    });
   } catch (error: any) {
     console.error(`Error in DELETE /api/pipeline/columns/${params.id}:`, error);
     return NextResponse.json(
       { success: false, error: error.message || "Failed to delete column" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
