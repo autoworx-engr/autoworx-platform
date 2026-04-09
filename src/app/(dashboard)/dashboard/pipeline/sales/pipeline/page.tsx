@@ -14,13 +14,16 @@ type TProps = {
 export default async function SalesPipelinePage({ searchParams }: TProps) {
   const orderBy = searchParams.orderBy;
 
-  const { data: parsed } = await serverFetchJson("/api/pipeline/sales/pipeline", {
-    params: {
-      searchTerm: searchParams?.searchTerm,
-      initialLoad: "true",
-      orderBy: orderBy,
+  const { data: parsed } = await serverFetchJson(
+    "/api/pipeline/sales/pipeline",
+    {
+      params: {
+        searchTerm: searchParams?.searchTerm,
+        initialLoad: "true",
+        orderBy: orderBy,
+      },
     },
-  });
+  );
 
   let pipelineColumns = [];
   if (parsed?.success) {
