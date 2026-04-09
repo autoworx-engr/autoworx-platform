@@ -57,6 +57,7 @@ interface ShopPurchaseContext {
 
 interface GiftCardTemplateContext {
   id: number;
+  shopId: number;
   companyId: number;
   isActive: boolean;
 }
@@ -132,7 +133,7 @@ export async function buildGiftCardPurchaseContext(
   }
 
   const settings = await tx.giftCardSetting.findUnique({
-    where: { companyId: shop.companyId },
+    where: { shopId: input.shopId },
     select: {
       allowCustomAmount: true,
       presetAmounts: true,
@@ -143,7 +144,7 @@ export async function buildGiftCardPurchaseContext(
   });
 
   if (!settings) {
-    throw new AppError(404, "Gift card settings not found for this company");
+    throw new AppError(404, "Gift card settings not found for this shop");
   }
 
   const normalizedAmount = roundMoney(input.amount);
@@ -172,6 +173,7 @@ export async function buildGiftCardPurchaseContext(
     where: { id: input.templateId },
     select: {
       id: true,
+      shopId: true,
       companyId: true,
       isActive: true,
     },
@@ -179,7 +181,7 @@ export async function buildGiftCardPurchaseContext(
 
   if (
     !template ||
-    template.companyId !== shop.companyId ||
+    template.shopId !== input.shopId ||
     !template.isActive
   ) {
     throw new AppError(400, "Invalid or inactive gift card template");
@@ -191,7 +193,7 @@ export async function buildGiftCardPurchaseContext(
   if (input.promoCode) {
     const promo = await tx.giftCardPromo.findFirst({
       where: {
-        companyId: shop.companyId,
+        shopId: input.shopId,
         code: input.promoCode,
         isActive: true,
       },
@@ -529,6 +531,7 @@ export async function issueGiftCardFromContext(
   const giftCard = await tx.issuedGiftCard.create({
     data: {
       companyId: context.shop.companyId,
+      shopId: context.shop.id,
       code,
       orderNumber,
       initialBalance: input.amount,

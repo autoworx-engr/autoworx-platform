@@ -61,8 +61,25 @@ export async function GET(req: NextRequest) {
       throw new AppError(403, "Company ID not found in session");
     }
 
+    const { searchParams } = new URL(req.url);
+    const shopIdStr = searchParams.get("shopId");
+
+    if (!shopIdStr) {
+      throw new AppError(400, "shopId query parameter is required");
+    }
+
+    const shopId = parseInt(shopIdStr, 10);
+
+    const shop = await db.shop.findUnique({
+      where: { id: shopId },
+    });
+
+    if (!shop || shop.companyId !== companyId) {
+      throw new AppError(404, "Shop not found or access denied");
+    }
+
     const promos = await db.giftCardPromo.findMany({
-      where: { companyId },
+      where: { shopId },
       orderBy: { createdAt: "desc" },
     });
 
@@ -151,13 +168,28 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const parsedBody = createPromoSchema.safeParse(body);
+    const { shopId: rawShopId, ...promoPayload } = body;
+    const parsedBody = createPromoSchema.safeParse(promoPayload);
 
     if (!parsedBody.success) {
       throw new AppError(
         400,
         `Validation Error: ${parsedBody.error.errors.map(e => e.message).join(", ")}`
       );
+    }
+
+    if (!rawShopId || isNaN(Number(rawShopId))) {
+      throw new AppError(400, "Shop ID is required");
+    }
+
+    const shopId = Number(rawShopId);
+
+    const shop = await db.shop.findUnique({
+      where: { id: shopId },
+    });
+
+    if (!shop || shop.companyId !== companyId) {
+      throw new AppError(404, "Shop not found or access denied");
     }
 
     const {
@@ -170,23 +202,24 @@ export async function POST(req: NextRequest) {
       isActive,
     } = parsedBody.data;
 
-    // Check if code exists uniquely for this company
+    // Check if code exists uniquely for this shop
     const existingPromo = await db.giftCardPromo.findUnique({
       where: {
-        companyId_code: {
-          companyId,
+        shopId_code: {
+          shopId,
           code,
         },
       },
     });
 
     if (existingPromo) {
-      throw new AppError(400, `Promo code "${code}" already exists for this company`);
+      throw new AppError(400, `Promo code "${code}" already exists for this shop`);
     }
 
     const newPromo = await db.giftCardPromo.create({
       data: {
         companyId,
+        shopId,
         code,
         type,
         value: new Prisma.Decimal(value),

@@ -83,9 +83,10 @@ export async function PATCH(
 
     const existingTemplate = await db.giftCardTemplate.findUnique({
       where: { id: templateId },
+      include: { shop: { select: { companyId: true } } },
     });
 
-    if (!existingTemplate || existingTemplate.companyId !== companyId) {
+    if (!existingTemplate || existingTemplate.shop.companyId !== companyId) {
       throw new AppError(404, "Template not found or unauthorized");
     }
 
@@ -110,11 +111,11 @@ export async function PATCH(
     }
 
     const updatedTemplate = await db.$transaction(async (tx) => {
-      // If we are explicitly enabling isDefault=true, untoggle all other templates
+      // If we are explicitly enabling isDefault=true, untoggle all other templates for this shop
       if (isDefault === true) {
         await tx.giftCardTemplate.updateMany({
           where: {
-            companyId,
+            shopId: existingTemplate.shopId,
             id: { not: templateId },
           },
           data: { isDefault: false },
@@ -205,9 +206,10 @@ export async function DELETE(
 
     const existingTemplate = await db.giftCardTemplate.findUnique({
       where: { id: templateId },
+      include: { shop: { select: { companyId: true } } },
     });
 
-    if (!existingTemplate || existingTemplate.companyId !== companyId) {
+    if (!existingTemplate || existingTemplate.shop.companyId !== companyId) {
       throw new AppError(404, "Template not found or unauthorized");
     }
 

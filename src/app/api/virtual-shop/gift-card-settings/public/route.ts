@@ -69,12 +69,12 @@ export async function GET(req: Request) {
       );
     }
 
-    const companyId = shop.companyId;
+    const shopId = shop.id;
 
     const [settings, templates, promos] = await Promise.all([
-      db.giftCardSetting.findUnique({ where: { companyId } }),
-      db.giftCardTemplate.findMany({ where: { companyId, isActive: true } }),
-      db.giftCardPromo.findMany({ where: { companyId, isActive: true } }),
+      db.giftCardSetting.findUnique({ where: { shopId } }),
+      db.giftCardTemplate.findMany({ where: { shopId, isActive: true } }),
+      db.giftCardPromo.findMany({ where: { shopId, isActive: true } }),
     ]);
 
     if (!settings) {

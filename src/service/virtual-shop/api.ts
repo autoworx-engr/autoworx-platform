@@ -376,6 +376,7 @@ export type GiftCardDeliveryMethod = "EMAIL" | "SMS" | "BOTH";
 export interface GiftCardSettingsData {
   id: number;
   companyId: number;
+  shopId: number;
   allowCustomAmount: boolean;
   minCustomAmount: number | string | null;
   maxCustomAmount: number | string | null;
@@ -406,6 +407,7 @@ export interface UpdateGiftCardSettingsPayload {
 export interface GiftCardTemplateData {
   id: number;
   companyId: number;
+  shopId: number;
   name: string;
   imageUrl: string;
   isActive: boolean;
@@ -429,6 +431,7 @@ export type GiftCardPromoType = "Percentage" | "Fixed";
 export interface GiftCardPromoData {
   id: number;
   companyId: number;
+  shopId: number;
   code: string;
   type: GiftCardPromoType;
   value: number | string;
@@ -841,12 +844,16 @@ export const updateVirtualShopServiceBookingStatus = async function (
   }
 };
 
-export const getGiftCardSettings = async function (accessToken: string) {
+export const getGiftCardSettings = async function (
+  shopId: number,
+  accessToken: string,
+) {
   try {
     const response = await axios.get<{
       success: boolean;
       data: GiftCardSettingsData;
     }>("/api/virtual-shop/gift-card-settings", {
+      params: { shopId },
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
@@ -859,14 +866,17 @@ export const getGiftCardSettings = async function (accessToken: string) {
   }
 };
 
-export const createGiftCardSettings = async function (accessToken: string) {
+export const createGiftCardSettings = async function (
+  shopId: number,
+  accessToken: string,
+) {
   try {
     const response = await axios.post<{
       success: boolean;
       data: GiftCardSettingsData;
     }>(
       "/api/virtual-shop/gift-card-settings",
-      {},
+      { shopId },
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -882,6 +892,7 @@ export const createGiftCardSettings = async function (accessToken: string) {
 };
 
 export const updateGiftCardSettings = async function (
+  shopId: number,
   payload: UpdateGiftCardSettingsPayload,
   accessToken: string,
 ) {
@@ -889,7 +900,7 @@ export const updateGiftCardSettings = async function (
     const response = await axios.patch<{
       success: boolean;
       data: GiftCardSettingsData;
-    }>("/api/virtual-shop/gift-card-settings", payload, {
+    }>("/api/virtual-shop/gift-card-settings", { shopId, ...payload }, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
@@ -902,12 +913,16 @@ export const updateGiftCardSettings = async function (
   }
 };
 
-export const getGiftCardTemplates = async function (accessToken: string) {
+export const getGiftCardTemplates = async function (
+  shopId: number,
+  accessToken: string,
+) {
   try {
     const response = await axios.get<{
       success: boolean;
       data: GiftCardTemplateData[];
     }>("/api/virtual-shop/gift-card-templates", {
+      params: { shopId },
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
@@ -921,6 +936,7 @@ export const getGiftCardTemplates = async function (accessToken: string) {
 };
 
 export const createGiftCardTemplate = async function (
+  shopId: number,
   payload: CreateGiftCardTemplatePayload,
   accessToken: string,
 ) {
@@ -928,7 +944,7 @@ export const createGiftCardTemplate = async function (
     const response = await axios.post<{
       success: boolean;
       data: GiftCardTemplateData;
-    }>("/api/virtual-shop/gift-card-templates", payload, {
+    }>("/api/virtual-shop/gift-card-templates", { shopId, ...payload }, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
@@ -963,13 +979,13 @@ export const updateGiftCardTemplate = async function (
   }
 };
 
-export const getGiftCardTemplatesPublic = async function (companyId: number) {
+export const getGiftCardTemplatesPublic = async function (shopId: number) {
   try {
     const response = await axios.get<{
       success: boolean;
       data: GiftCardTemplateData[];
     }>("/api/virtual-shop/gift-card-templates/public", {
-      params: { companyId },
+      params: { shopId },
     });
 
     return response.data?.data ?? [];
@@ -979,15 +995,15 @@ export const getGiftCardTemplatesPublic = async function (companyId: number) {
   }
 };
 
-export const getGiftCardSettingsByCompanyId = async function (
-  companyId: number,
+export const getGiftCardSettingsByShopId = async function (
+  shopId: number,
 ) {
   try {
     const response = await axios.get<{
       success: boolean;
       data: GiftCardSettingsData;
     }>("/api/virtual-shop/gift-card-settings", {
-      params: { companyId },
+      params: { shopId },
     });
     return response.data?.data;
   } catch (error) {
@@ -1046,12 +1062,16 @@ export const deleteGiftCardTemplate = async function (
   }
 };
 
-export const getGiftCardPromos = async function (accessToken: string) {
+export const getGiftCardPromos = async function (
+  shopId: number,
+  accessToken: string,
+) {
   try {
     const response = await axios.get<{
       success: boolean;
       data: GiftCardPromoData[];
     }>("/api/virtual-shop/gift-card-promos", {
+      params: { shopId },
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
@@ -1065,6 +1085,7 @@ export const getGiftCardPromos = async function (accessToken: string) {
 };
 
 export const createGiftCardPromo = async function (
+  shopId: number,
   payload: CreateGiftCardPromoPayload,
   accessToken: string,
 ) {
@@ -1072,7 +1093,7 @@ export const createGiftCardPromo = async function (
     const response = await axios.post<{
       success: boolean;
       data: GiftCardPromoData;
-    }>("/api/virtual-shop/gift-card-promos", payload, {
+    }>("/api/virtual-shop/gift-card-promos", { shopId, ...payload }, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },

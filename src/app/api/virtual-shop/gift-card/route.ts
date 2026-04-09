@@ -84,6 +84,7 @@ export async function GET(req: Request) {
     }
 
     const { searchParams } = new URL(req.url);
+    const shopIdStr = searchParams.get("shopId");
     const search = searchParams.get("search") || "";
     const statusParam = searchParams.get("status") || "";
     const from = searchParams.get("from") || "";
@@ -95,7 +96,21 @@ export async function GET(req: Request) {
     );
     const skip = (page - 1) * limit;
 
-    const where: Prisma.IssuedGiftCardWhereInput = { companyId };
+    if (!shopIdStr) {
+      throw new AppError(400, "shopId query parameter is required");
+    }
+
+    const shopId = parseInt(shopIdStr, 10);
+
+    const shop = await db.shop.findUnique({
+      where: { id: shopId },
+    });
+
+    if (!shop || shop.companyId !== companyId) {
+      throw new AppError(404, "Shop not found or access denied");
+    }
+
+    const where: Prisma.IssuedGiftCardWhereInput = { shopId };
 
     if (
       statusParam &&
@@ -142,7 +157,7 @@ export async function GET(req: Request) {
       }),
       db.issuedGiftCard.count({ where }),
       db.issuedGiftCard.aggregate({
-        where: { companyId },
+        where: { shopId },
         _sum: {
           initialBalance: true,
           currentBalance: true,
@@ -153,7 +168,7 @@ export async function GET(req: Request) {
 
     const statusBreakdown = await db.issuedGiftCard.groupBy({
       by: ["status"],
-      where: { companyId },
+      where: { shopId },
       _count: { id: true },
     });
 

@@ -178,13 +178,14 @@ export async function POST(req: NextRequest) {
       });
 
       const existingGiftCardSetting = await tx.giftCardSetting.findUnique({
-        where: { companyId },
+        where: { shopId: newShop.id },
       });
 
       if (!existingGiftCardSetting) {
         await tx.giftCardSetting.create({
           data: {
             companyId,
+            shopId: newShop.id,
             allowCustomAmount: true,
             minCustomAmount: new Prisma.Decimal(10.0),
             maxCustomAmount: new Prisma.Decimal(1000.0),

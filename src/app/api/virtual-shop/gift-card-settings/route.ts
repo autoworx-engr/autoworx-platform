@@ -41,16 +41,16 @@ const updateGiftCardSettingsSchema = z.object({
  * /api/virtual-shop/gift-card-settings:
  *   get:
  *     summary: Retrieve gift card settings
- *     description: Fetch the global gift card settings for a specific company via its company ID.
+ *     description: Fetch the gift card settings for a specific shop via its shop ID.
  *     tags:
  *       - Virtual Shop Gift
  *     parameters:
  *       - in: query
- *         name: companyId
+ *         name: shopId
  *         required: true
  *         schema:
  *           type: integer
- *         description: The ID of the company to fetch settings for.
+ *         description: The ID of the shop to fetch settings for.
  *     responses:
  *       200:
  *         description: Successfully retrieved gift card settings.
@@ -66,7 +66,7 @@ const updateGiftCardSettingsSchema = z.object({
  *                   properties:
  *                     id:
  *                       type: integer
- *                     companyId:
+ *                     shopId:
  *                       type: integer
  *                     allowCustomAmount:
  *                       type: boolean
@@ -92,8 +92,8 @@ const updateGiftCardSettingsSchema = z.object({
  *                       type: string
  *                     privacyPolicy:
  *                       type: string
- *       401:
- *         description: Unauthorized.
+ *       400:
+ *         description: Bad request.
  *         content:
  *           application/json:
  *             schema:
@@ -114,16 +114,16 @@ const updateGiftCardSettingsSchema = z.object({
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const queryCompanyId = searchParams.get("companyId") ?? "";
+    const queryShopId = searchParams.get("shopId") ?? "";
 
-    const companyId = parseInt(queryCompanyId, 10);
+    const shopId = parseInt(queryShopId, 10);
 
-    if (isNaN(companyId)) {
-      throw new AppError(400, "Company ID is required");
+    if (isNaN(shopId)) {
+      throw new AppError(400, "Shop ID is required");
     }
 
     const settings = await db.giftCardSetting.findUnique({
-      where: { companyId },
+      where: { shopId },
     });
 
     if (!settings) {
@@ -152,11 +152,22 @@ export async function GET(req: Request) {
  * /api/virtual-shop/gift-card-settings:
  *   post:
  *     summary: Create default gift card settings
- *     description: Initializes the default gift card settings for an authenticated company if they don't already exist.
+ *     description: Initializes the default gift card settings for a shop if they don't already exist.
  *     tags:
  *       - Virtual Shop Gift
  *     security:
  *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - shopId
+ *             properties:
+ *               shopId:
+ *                 type: integer
  *     responses:
  *       201:
  *         description: Successfully created default gift card settings.
@@ -198,8 +209,23 @@ export async function POST(req: Request) {
       throw new AppError(403, "Company ID not found in session");
     }
 
+    const body = await req.json();
+    const shopId = body.shopId;
+
+    if (!shopId || isNaN(Number(shopId))) {
+      throw new AppError(400, "Shop ID is required");
+    }
+
+    const shop = await db.shop.findUnique({
+      where: { id: Number(shopId) },
+    });
+
+    if (!shop || shop.companyId !== companyId) {
+      throw new AppError(404, "Shop not found or access denied");
+    }
+
     const existingSettings = await db.giftCardSetting.findUnique({
-      where: { companyId },
+      where: { shopId: Number(shopId) },
     });
 
     if (existingSettings) {
@@ -209,6 +235,7 @@ export async function POST(req: Request) {
     const newSettings = await db.giftCardSetting.create({
       data: {
         companyId,
+        shopId: Number(shopId),
         allowCustomAmount: true,
         minCustomAmount: new Prisma.Decimal(10.0),
         maxCustomAmount: new Prisma.Decimal(1000.0),
@@ -321,13 +348,28 @@ export async function PATCH(req: Request) {
     }
 
     const body = await req.json();
-    const parsedBody = updateGiftCardSettingsSchema.safeParse(body);
+    const { shopId: rawShopId, ...settingsPayload } = body;
+    const parsedBody = updateGiftCardSettingsSchema.safeParse(settingsPayload);
 
     if (!parsedBody.success) {
       throw new AppError(
         400,
         `Validation Error: ${parsedBody.error.errors.map(e => e.message).join(", ")}`,
       );
+    }
+
+    if (!rawShopId || isNaN(Number(rawShopId))) {
+      throw new AppError(400, "Shop ID is required");
+    }
+
+    const shopId = Number(rawShopId);
+
+    const shop = await db.shop.findUnique({
+      where: { id: shopId },
+    });
+
+    if (!shop || shop.companyId !== companyId) {
+      throw new AppError(404, "Shop not found or access denied");
     }
 
     const {
@@ -371,7 +413,7 @@ export async function PATCH(req: Request) {
     if (privacyPolicy !== undefined) updateData.privacyPolicy = privacyPolicy;
 
     const updatedSettings = await db.giftCardSetting.update({
-      where: { companyId },
+      where: { shopId },
       data: updateData,
     });
 

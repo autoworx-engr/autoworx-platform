@@ -1,6 +1,6 @@
 import {
   useGetGiftCardTemplatesPublic,
-  useGetGiftCardSettingsByCompanyId,
+  useGetGiftCardSettingsByShopId,
 } from "@/hooks/virtual-shop/gift-card-settings/useGiftCardSettings";
 import { useShopInfo } from "@/hooks/virtual-shop/useShopInfo";
 import { useMemo } from "react";
@@ -17,12 +17,13 @@ export const useGiftCardPageData = (initialShop?: any) => {
     shop,
     shopName,
     companyId,
+    shopId,
     isPending: isShopLoading,
   } = useShopInfo(initialShop);
   const { data: remoteTemplates, isLoading: isTemplatesLoading } =
-    useGetGiftCardTemplatesPublic(companyId);
+    useGetGiftCardTemplatesPublic(shopId);
   const { data: remoteSettings, isLoading: isSettingsLoading } =
-    useGetGiftCardSettingsByCompanyId(companyId);
+    useGetGiftCardSettingsByShopId(shopId);
 
   const amountPresets = useMemo<GiftCardAmountPresets>(() => {
     return {
@@ -69,6 +70,7 @@ export const useGiftCardPageData = (initialShop?: any) => {
     shop,
     shopName,
     companyId,
+    shopId,
     designs,
     amountPresets,
     deliverySettings,

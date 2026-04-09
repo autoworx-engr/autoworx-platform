@@ -9,6 +9,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 type CreateGiftCardTemplateParams = {
+  shopId: number;
   payload: CreateGiftCardTemplatePayload;
   accessToken: string;
 };
@@ -24,17 +25,17 @@ type UpdateGiftCardTemplateParams = {
   accessToken: string;
 };
 
-export const useGetGiftCardTemplates = (accessToken?: string) => {
+export const useGetGiftCardTemplates = (shopId?: number, accessToken?: string) => {
   return useQuery({
-    queryKey: ["virtual-shop-gift-card-templates"],
+    queryKey: ["virtual-shop-gift-card-templates", shopId],
     queryFn: async () => {
-      if (!accessToken) {
-        throw new Error("Missing access token");
+      if (!accessToken || !shopId) {
+        throw new Error("Missing access token or shop id");
       }
 
-      return getGiftCardTemplates(accessToken);
+      return getGiftCardTemplates(shopId, accessToken);
     },
-    enabled: !!accessToken,
+    enabled: !!accessToken && !!shopId,
     staleTime: 1000 * 60,
   });
 };
@@ -43,8 +44,8 @@ export const useCreateGiftCardTemplate = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ payload, accessToken }: CreateGiftCardTemplateParams) =>
-      createGiftCardTemplate(payload, accessToken),
+    mutationFn: ({ shopId, payload, accessToken }: CreateGiftCardTemplateParams) =>
+      createGiftCardTemplate(shopId, payload, accessToken),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["virtual-shop-gift-card-templates"],

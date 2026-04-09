@@ -9,6 +9,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 type CreateGiftCardPromoParams = {
+  shopId: number;
   payload: CreateGiftCardPromoPayload;
   accessToken: string;
 };
@@ -24,17 +25,17 @@ type DeleteGiftCardPromoParams = {
   accessToken: string;
 };
 
-export const useGetGiftCardPromos = (accessToken?: string) => {
+export const useGetGiftCardPromos = (shopId?: number, accessToken?: string) => {
   return useQuery({
-    queryKey: ["virtual-shop-gift-card-promos"],
+    queryKey: ["virtual-shop-gift-card-promos", shopId],
     queryFn: async () => {
-      if (!accessToken) {
-        throw new Error("Missing access token");
+      if (!accessToken || !shopId) {
+        throw new Error("Missing access token or shop id");
       }
 
-      return getGiftCardPromos(accessToken);
+      return getGiftCardPromos(shopId, accessToken);
     },
-    enabled: !!accessToken,
+    enabled: !!accessToken && !!shopId,
     staleTime: 1000 * 60,
   });
 };
@@ -43,8 +44,8 @@ export const useCreateGiftCardPromo = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ payload, accessToken }: CreateGiftCardPromoParams) =>
-      createGiftCardPromo(payload, accessToken),
+    mutationFn: ({ shopId, payload, accessToken }: CreateGiftCardPromoParams) =>
+      createGiftCardPromo(shopId, payload, accessToken),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["virtual-shop-gift-card-promos"],

@@ -80,6 +80,7 @@ export default async function GiftCardPurchasesPage({ params, searchParams }: Pr
   const protocol = host.startsWith("localhost") ? "http" : "https";
   const baseUrl = process.env.NEXTAUTH_URL ?? `${protocol}://${host}`;
 
+  query.set("shopId", String(shopId));
   const url = `${baseUrl}/api/virtual-shop/gift-card?${query.toString()}`;
 
   let apiData: {

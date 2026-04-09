@@ -7,38 +7,38 @@ import { errorHandler } from "@/error-boundary/globalErrorHandler";
  * /api/virtual-shop/gift-card-templates/public:
  *   get:
  *     summary: List all gift card templates
- *     description: Fetch all active gift card UI templates for a specific company. This is a public route.
+ *     description: Fetch all active gift card UI templates for a specific shop. This is a public route.
  *     tags:
  *       - Virtual Shop Gift
  *     parameters:
  *       - in: query
- *         name: companyId
+ *         name: shopId
  *         required: true
  *         schema:
  *           type: integer
- *         description: The ID of the company to fetch templates for.
+ *         description: The ID of the shop to fetch templates for.
  *     responses:
  *       200:
  *         description: Successfully retrieved templates.
  *       400:
- *         description: Bad request (missing companyId).
+ *         description: Bad request (missing shopId).
  *       500:
  *         description: Internal server error.
  */
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const companyIdStr = searchParams.get("companyId");
+    const shopIdStr = searchParams.get("shopId");
 
-    if (!companyIdStr) {
-      throw new AppError(400, "companyId query parameter is required");
+    if (!shopIdStr) {
+      throw new AppError(400, "shopId query parameter is required");
     }
 
-    const companyId = parseInt(companyIdStr, 10);
+    const shopId = parseInt(shopIdStr, 10);
 
     const templates = await db.giftCardTemplate.findMany({
       where: {
-        companyId,
+        shopId,
         isActive: true,
       },
       orderBy: { createdAt: "desc" },

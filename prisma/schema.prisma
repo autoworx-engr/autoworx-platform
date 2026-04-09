@@ -740,7 +740,7 @@ model Company {
 
   // Virtual Shop & Gift Card Relations
   shops             Shop[]
-  giftCardSetting   GiftCardSetting?
+  giftCardSettings  GiftCardSetting[]
   giftCardTemplates GiftCardTemplate[]
   giftCardPromos    GiftCardPromo[]
   issuedGiftCards   IssuedGiftCard[]
@@ -2947,6 +2947,12 @@ model Shop {
   bookingSettings ShopBookingSetting?
   shopBookings    ShopBooking[]
 
+  // Gift Card Relations (shop-level isolation)
+  giftCardSetting   GiftCardSetting?
+  giftCardTemplates GiftCardTemplate[]
+  giftCardPromos    GiftCardPromo[]
+  issuedGiftCards   IssuedGiftCard[]
+
   @@map("shops")
 }
 
@@ -3136,7 +3142,8 @@ enum ShopPaymentStatus {
 // Centralized settings: 1-to-1 relation with Company
 model GiftCardSetting {
   id        Int @id @default(autoincrement())
-  companyId Int @unique @map("company_id")
+  companyId Int @map("company_id")
+  shopId    Int @unique @map("shop_id")
 
   // Amount Configuration
   allowCustomAmount Boolean  @default(true) @map("allow_custom_amount")
@@ -3159,6 +3166,7 @@ model GiftCardSetting {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  shop    Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
   @@map("gift_card_settings")
 }
@@ -3167,6 +3175,7 @@ model GiftCardSetting {
 model GiftCardTemplate {
   id        Int     @id @default(autoincrement())
   companyId Int     @map("company_id")
+  shopId    Int     @map("shop_id")
   name      String
   imageUrl  String  @map("image_url")
   isActive  Boolean @default(true) @map("is_active")
@@ -3176,9 +3185,10 @@ model GiftCardTemplate {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   company     Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  shop        Shop             @relation(fields: [shopId], references: [id], onDelete: Cascade)
   issuedCards IssuedGiftCard[]
 
-  @@index([companyId])
+  @@index([shopId])
   @@map("gift_card_templates")
 }
 
@@ -3186,6 +3196,7 @@ model GiftCardTemplate {
 model GiftCardPromo {
   id        Int          @id @default(autoincrement())
   companyId Int          @map("company_id")
+  shopId    Int          @map("shop_id")
   code      String
   type      DiscountType
   value     Decimal      @db.Decimal(10, 2)
@@ -3200,8 +3211,10 @@ model GiftCardPromo {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  shop    Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
-  @@unique([companyId, code])
+  @@unique([shopId, code])
+  @@index([shopId])
   @@map("gift_card_promos")
 }
 
@@ -3216,6 +3229,7 @@ enum DeliveryMethod {
 model IssuedGiftCard {
   id          Int     @id @default(autoincrement())
   companyId   Int     @map("company_id")
+  shopId      Int     @map("shop_id")
   code        String  @unique // Secure alphanumeric code
   orderNumber String? @unique @map("order_number")
 
@@ -3225,11 +3239,10 @@ model IssuedGiftCard {
 
   // Purchaser Snapshot
   purchaseType   GiftCardPurchaseType @map("purchase_type")
-  // paymentStatus   PaymentStatus        @default(PENDING) @map("payment_status")
   purchaserName  String               @map("purchaser_name")
   purchaserEmail String               @map("purchaser_email")
 
-  // --- NEW: Missing fields from PRD Step 5 ---
+  // Recipient Info
   recipientName  String  @map("recipient_name")
   recipientEmail String? @map("recipient_email")
   recipientPhone String? @map("recipient_phone")
@@ -3240,7 +3253,6 @@ model IssuedGiftCard {
   scheduledSendAt DateTime?      @map("scheduled_send_at")
   deliveredAt     DateTime?      @map("delivered_at")
   expiresAt       DateTime?      @map("expires_at")
-  // -------------------------------------------
 
   status    GiftCardStatus @default(ACTIVE)
   createdAt DateTime       @default(now()) @map("created_at")
@@ -3248,10 +3260,11 @@ model IssuedGiftCard {
 
   // Relations
   company      Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  shop         Shop                  @relation(fields: [shopId], references: [id], onDelete: Cascade)
   template     GiftCardTemplate      @relation(fields: [templateId], references: [id])
   transactions GiftCardTransaction[]
 
-  @@index([companyId])
+  @@index([shopId])
   @@index([code])
   @@map("issued_gift_cards")
 }

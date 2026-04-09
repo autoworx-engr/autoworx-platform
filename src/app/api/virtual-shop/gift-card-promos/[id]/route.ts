@@ -112,12 +112,13 @@ export async function PATCH(
       throw new AppError(400, "Invalid promo ID");
     }
 
-    // Verify ownership
+    // Verify ownership via shop
     const existingPromo = await db.giftCardPromo.findUnique({
       where: { id: promoId },
+      include: { shop: { select: { companyId: true } } },
     });
 
-    if (!existingPromo || existingPromo.companyId !== companyId) {
+    if (!existingPromo || existingPromo.shop.companyId !== companyId) {
       throw new AppError(404, "Promo code not found or unauthorized");
     }
 
@@ -143,12 +144,12 @@ export async function PATCH(
       throw new AppError(400, "Percentage value cannot exceed 100");
     }
 
-    // Check code uniqueness if changing code
+    // Check code uniqueness if changing code (scoped to the same shop)
     if (code && code !== existingPromo.code) {
       const duplicateCode = await db.giftCardPromo.findUnique({
         where: {
-          companyId_code: {
-            companyId,
+          shopId_code: {
+            shopId: existingPromo.shopId,
             code,
           },
         },
@@ -157,7 +158,7 @@ export async function PATCH(
       if (duplicateCode) {
         throw new AppError(
           400,
-          `Promo code "${code}" already exists for this company`,
+          `Promo code "${code}" already exists for this shop`,
         );
       }
     }
@@ -252,12 +253,13 @@ export async function DELETE(
       throw new AppError(400, "Invalid promo ID");
     }
 
-    // Verify ownership
+    // Verify ownership via shop
     const existingPromo = await db.giftCardPromo.findUnique({
       where: { id: promoId },
+      include: { shop: { select: { companyId: true } } },
     });
 
-    if (!existingPromo || existingPromo.companyId !== companyId) {
+    if (!existingPromo || existingPromo.shop.companyId !== companyId) {
       throw new AppError(404, "Promo code not found or unauthorized");
     }
 

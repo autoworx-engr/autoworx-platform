@@ -199,21 +199,20 @@ type GiftCardsTabProps = {
   shopId?: number;
 };
 
-export default function GiftCardsTab({ shopId: _shopId }: GiftCardsTabProps) {
+export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
   const { data: session } = useSession();
   const accessToken = session?.accessToken;
-  const companyId = session?.user?.companyId;
   const {
     data: giftCardSettings,
     isLoading: isGiftCardSettingsLoading,
     isFetched: hasFetchedGiftCardSettings,
-  } = useGetGiftCardSettings(companyId);
+  } = useGetGiftCardSettings(shopId, accessToken);
   const { mutateAsync: updateGiftCardSettings, isPending: isSaving } =
     useUpdateGiftCardSettings();
   const {
     data: giftCardTemplates,
     isLoading: isGiftCardTemplatesLoading,
-  } = useGetGiftCardTemplates(accessToken);
+  } = useGetGiftCardTemplates(shopId, accessToken);
   const { mutateAsync: createGiftCardTemplate, isPending: isCreatingTemplate } =
     useCreateGiftCardTemplate();
   const { mutateAsync: deleteGiftCardTemplate, isPending: isDeletingTemplate } =
@@ -223,7 +222,7 @@ export default function GiftCardsTab({ shopId: _shopId }: GiftCardsTabProps) {
   const {
     data: promoCodes = [],
     isLoading: isPromoCodesLoading,
-  } = useGetGiftCardPromos(accessToken);
+  } = useGetGiftCardPromos(shopId, accessToken);
   const { mutateAsync: createGiftCardPromo, isPending: isCreatingPromo } =
     useCreateGiftCardPromo();
   const { mutateAsync: updateGiftCardPromo, isPending: isUpdatingPromo } =
@@ -416,7 +415,7 @@ export default function GiftCardsTab({ shopId: _shopId }: GiftCardsTabProps) {
         });
         toast.success("Promo code updated successfully");
       } else {
-        await createGiftCardPromo({ payload, accessToken });
+        await createGiftCardPromo({ shopId: shopId!, payload, accessToken });
         toast.success("Promo code created successfully");
       }
 
@@ -533,6 +532,7 @@ export default function GiftCardsTab({ shopId: _shopId }: GiftCardsTabProps) {
       }
 
       await createGiftCardTemplate({
+        shopId: shopId!,
         payload: {
           name: newTemplateName.trim(),
           imageUrl: uploadedImageUrl,
@@ -658,6 +658,7 @@ export default function GiftCardsTab({ shopId: _shopId }: GiftCardsTabProps) {
 
     try {
       await updateGiftCardSettings({
+        shopId: shopId!,
         payload: {
           allowCustomAmount: allowCustom,
           minCustomAmount: allowCustom ? parsedMin : null,
