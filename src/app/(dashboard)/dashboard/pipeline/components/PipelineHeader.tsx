@@ -1,11 +1,11 @@
 "use client";
 
-import { getColumnsByType } from "@/actions/pipelines/pipelinesColumn";
 import SessionUserType from "@/types/sessionUserType";
 import { Column } from "@prisma/client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { useGetPipelineColumns } from "@/hooks/pipeline/usePipelineColumns";
 import ManagePipelines from "./ManagePipelines";
 import { cn } from "@/lib/utils";
 import { ChevronRight } from "lucide-react";
@@ -24,8 +24,9 @@ export default function PipelineHeader({
   const pathname = usePathname();
   const [isPipelineManaged, setPipelineManaged] = useState(false);
   const [currentUser, setCurrentUser] = useState<SessionUserType>();
-  const [columns, setColumns] = useState<Column[]>([]);
   const tabsContainerRef = useRef<HTMLUListElement>(null);
+
+  const { data: columns = [], refetch } = useGetPipelineColumns(type);
 
   // Scroll active tab to center if it changes
   useEffect(() => {
@@ -63,14 +64,8 @@ export default function PipelineHeader({
     };
     fetchUser();
   }, []);
-  useEffect(() => {
-    const fetchShopColumns = async () => {
-      const columns = await getColumnsByType(type);
-      setColumns(columns);
-    };
 
-    fetchShopColumns();
-  }, [type]);
+  // Columns are fetched automatically by useQuery
   const hasManagePipelineAccess =
     currentUser?.employeeType === "Admin" ||
     currentUser?.employeeType === "Manager";
