@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
  * /api/pipeline/sales/pipeline:
  *   get:
  *     summary: Get sales pipeline columns
- *     tags: [Pipeline]
+ *     tags: [Sales Pipeline]
  *     parameters:
  *       - in: query
  *         name: searchTerm

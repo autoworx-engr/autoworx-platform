@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
  * /api/pipeline/sales/leads:
  *   get:
  *     summary: Get sales leads with pagination and filtering
- *     tags: [Pipeline]
+ *     tags: [Sales Pipeline Leads]
  *     parameters:
  *       - in: query
  *         name: columnId
