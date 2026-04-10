@@ -1348,6 +1348,7 @@ export default function InvoiceModalBody({
                       paymentGateway: gatewayInfo.paymentGateway || "STRIPE",
                       hasStripe: gatewayInfo.hasStripe,
                       hasAuthorizeNet: gatewayInfo.hasAuthorizeNet,
+                      tipEnabled: gatewayInfo.tipEnabled ?? false,
                     }}
                   />
                 )}
