@@ -21,9 +21,9 @@ export const SERVICE_COLORS: Record<
     accentColor: "#22a7b8",
   },
   Appointment: {
-    gradient: ["#fef3c7", "#fef9c3"], // lighter yellow gradient
-    borderColor: "rgba(245, 158, 11, 0.45)",
-    accentColor: "#f59e0b",
+    gradient: ["#ccf7f5", "#b3f0ed"], // lighter teal gradient
+    borderColor: "rgba(20, 133, 146, 0.45)",
+    accentColor: "#0f7f8d",
   },
   Task: {
     gradient: ["#f3f4f6", "#e5e7eb"],
