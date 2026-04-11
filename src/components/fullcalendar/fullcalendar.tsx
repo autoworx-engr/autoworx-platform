@@ -76,6 +76,7 @@ export default function Calendar({ type }: { type: CalendarType }) {
     holidays,
     selectedTeamMateIds,
     selectedCategoryIds,
+    dateRange,
   });
 
   const loading = isCalendarLoading || isSettingsLoading || isDataLoading;
@@ -100,7 +101,8 @@ export default function Calendar({ type }: { type: CalendarType }) {
       : undefined;
 
   const handleEventClick = (info: EventClickArg) => {
-    if (info.event.extendedProps?.type === "holiday") return;
+    const type = info.event.extendedProps?.type;
+    if (type === "holiday" || type === "weekend") return;
     info.jsEvent.preventDefault();
     setSelectedEvent(info.event);
     setIsSheetOpen(true);
