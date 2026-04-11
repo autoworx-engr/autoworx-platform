@@ -8,7 +8,7 @@ import {
   clientListStore,
   useClientCommunicationStore,
 } from "@/stores/client-store";
-import { Mic, MicOff, SendHorizontal } from "lucide-react";
+import { CirclePause, Mic, MicOff, SendHorizontal } from "lucide-react";
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import useSmsSendMutation from "../../../_hooks/useSmsSendMutation";
@@ -293,7 +293,7 @@ export default function SendSms({
             aria-label="Stop recording"
             title={`Recording… ${formatRecordingTime(recordingSeconds)}`}
           >
-            <MicOff className="w-5 h-5" />
+            <CirclePause  className="w-5 h-5"/>
           </button>
         ) : (
           <button
