@@ -1,48 +1,47 @@
 "use client";
 
 import ResponsiveEmployeeCard from "@/components/mobile-responsive/employee/ResponsiveEmployeeCard";
-import { useClientFilterStore } from "@/stores/clientFilter";
 import { Client, Fleet, Source, Tag } from "@prisma/client";
-import { useEffect, useState } from "react";
+import { Pagination } from "antd";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import FleetListTable from "./FleetListTable";
 // import * as PusherPushNotifications from "@pusher/push-notifications-web";
 
 export default function FleetList({
   clients,
+  total,
+  page,
+  take,
 }: {
   clients: (Client & {
     tag: Tag | null;
     source: Source | null;
     fleet: Fleet | null;
   })[];
+  total: number;
+  page: number;
+  take: number;
 }) {
-  const { search } = useClientFilterStore();
-  const [filteredClients, setFilteredClients] = useState(clients);
+  const pathname = usePathname();
+  const router = useRouter();
+  const params = useSearchParams();
 
-  useEffect(() => {
-    const term = search.toLowerCase().replace(/\s+/g, " ");
-    setFilteredClients(
-      clients.filter((client) => {
-        const fullName = `${client.firstName} ${client.lastName || ""}`
-          .toLowerCase()
-          .replace(/\s+/g, " ");
+  const handlePageChange = (nextPage: number, nextPageSize?: number) => {
+    const searchParams = new URLSearchParams(params.toString());
+    searchParams.set("page", nextPage.toString());
 
-        return (
-          client.id.toString().includes(term) ||
-          fullName.includes(term) ||
-          client.firstName.toLowerCase().includes(term) ||
-          (client.lastName?.toLowerCase().includes(term) ?? false) ||
-          (client.email?.toLowerCase().includes(term) ?? false) ||
-          (client.mobile?.toLowerCase().includes(term) ?? false)
-        );
-      })
-    );
-  }, [search, clients]);
+    if (nextPageSize) {
+      searchParams.set("take", nextPageSize.toString());
+    }
+
+    const newPath = `${pathname}?${searchParams.toString()}`;
+    router.push(newPath);
+  };
 
   return (
     <div>
       <div className="h-[60%] overflow-y-auto lg:hidden">
-        {filteredClients.map((employee, index) => (
+        {clients.map((employee, index) => (
           <ResponsiveEmployeeCard
             key={index}
             data={employee}
@@ -52,7 +51,22 @@ export default function FleetList({
         ))}
       </div>
 
-      <FleetListTable filteredFleets={filteredClients} />
+      {total > 0 && (
+        <div className="mt-4 flex justify-center pb-4 lg:hidden">
+          <Pagination
+            className="custom-pagination"
+            current={page}
+            pageSize={take}
+            total={total}
+            onChange={handlePageChange}
+            showSizeChanger
+            onShowSizeChange={handlePageChange}
+            simple
+          />
+        </div>
+      )}
+
+      <FleetListTable fleets={clients} total={total} page={page} take={take} />
     </div>
   );
 }
