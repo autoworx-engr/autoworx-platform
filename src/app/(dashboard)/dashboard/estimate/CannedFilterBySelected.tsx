@@ -39,6 +39,11 @@ export default function CannedFilterBySelection({
   const router = useRouter();
   const params = useSearchParams();
 
+  const pageKeyMap: Record<string, string> = {
+    laborCategory: "laborPage",
+    serviceCategory: "servicePage",
+  };
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -57,6 +62,10 @@ export default function CannedFilterBySelection({
   const handleSelection = (value: string) => {
     const searchParams = new URLSearchParams(params!);
     searchParams.set(type, value);
+    const pageKey = pageKeyMap[type];
+    if (pageKey) {
+      searchParams.set(pageKey, "1");
+    }
     const newPath = `${pathname}?${searchParams.toString()}`;
     router.push(newPath);
     closeModal(modalName);
@@ -65,6 +74,10 @@ export default function CannedFilterBySelection({
   const handleClear = () => {
     const searchParams = new URLSearchParams(params!);
     searchParams.delete(type);
+    const pageKey = pageKeyMap[type];
+    if (pageKey) {
+      searchParams.set(pageKey, "1");
+    }
     const newPath = `${pathname}?${searchParams.toString()}`;
     router.replace(newPath);
     closeModal(modalName);
@@ -79,8 +92,12 @@ export default function CannedFilterBySelection({
         onClick={() => toggleModal(modalName)}
         className={cn(
           "flex w-full items-center justify-between gap-2 border p-2.5 px-4 text-sm font-medium transition-all duration-200 md:w-48 rounded-lg",
-          selectedItem ? "border-indigo-500 text-indigo-600 bg-indigo-50 hover:bg-indigo-100" : "border-gray-300 text-gray-600 hover:border-indigo-400 bg-white",
-          isModalOpen ? "rounded-b-none border-b-0 shadow-lg" : "shadow-sm hover:shadow-md"
+          selectedItem
+            ? "border-indigo-500 text-indigo-600 bg-indigo-50 hover:bg-indigo-100"
+            : "border-gray-300 text-gray-600 hover:border-indigo-400 bg-white",
+          isModalOpen
+            ? "rounded-b-none border-b-0 shadow-lg"
+            : "shadow-sm hover:shadow-md",
         )}
         title={`Filter by ${filterText}`}
       >
@@ -106,10 +123,11 @@ export default function CannedFilterBySelection({
             <button
               key={item.id}
               onClick={() => handleSelection(item.name)}
-              className={`text-sm flex items-center p-2 rounded-md text-start transition-colors duration-150 border ${item.name === selectedItem
-                ? "bg-indigo-50 text-indigo-600 font-semibold hover:bg-indigo-100"
-                : "text-gray-700 hover:bg-gray-100"
-                }`}
+              className={`text-sm flex items-center p-2 rounded-md text-start transition-colors duration-150 border ${
+                item.name === selectedItem
+                  ? "bg-indigo-50 text-indigo-600 font-semibold hover:bg-indigo-100"
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
             >
               {item.name}
             </button>
@@ -121,7 +139,7 @@ export default function CannedFilterBySelection({
               "sticky -bottom-2 z-50 border rounded-md border-gray-200 bg-white py-2 mt-1 text-sm font-medium transition-colors",
               !selectedItem
                 ? "text-gray-300 cursor-not-allowed bg-gray-50 hover:text-gray-300 hover:bg-gray-50"
-                : "text-red-500 hover:text-red-700"
+                : "text-red-500 hover:text-red-700",
             )}
           >
             Clear Filter

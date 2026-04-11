@@ -27,7 +27,7 @@ import { useListsStore } from "@/stores/lists";
 import { Category, Service } from "@prisma/client";
 import { Pagination, Popconfirm } from "antd";
 import { SquarePen, Trash2 } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import FilterBySearchBox from "../reporting/components/filter/FilterBySearchBox";
 import CannedFilterBySelection from "./CannedFilterBySelected";
@@ -38,55 +38,46 @@ const oddColor = "bg-[#F8FAFF]";
 
 export default function CannedServices({
   services,
+  total,
+  page,
+  take,
+  categories,
 }: {
   services: (Service & { category: Category })[];
+  total: number;
+  page: number;
+  take: number;
+  categories: Category[];
 }) {
   const params = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const selectedCategory = params.get("serviceCategory") || "";
   const serviceSearch = params.get("serviceSearch") || "";
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(50);
   const [showPagination, setShowPagination] = useState(false);
-  const [filteredData, setFilteredData] =
-    useState<(Service & { category: Category })[]>(services);
 
   const [activeModal, setActiveModal] = useState<{ [key: string]: boolean }>(
-    {}
+    {},
   );
 
   // Ref to scroll to top - attach to the main container
   const containerRef = useRef<HTMLDivElement>(null);
 
-  //  Filter logic
   useEffect(() => {
-    const filtered = services.filter((row) => {
-      const categoryName = row.category?.name?.toLowerCase() || "";
+    setShowPagination(total > 10);
+  }, [total]);
 
-      const matchesSearch = serviceSearch
-        ? row.name.toLowerCase().includes(serviceSearch.toLowerCase()) ||
-        categoryName.includes(serviceSearch.toLowerCase())
-        : true;
+  const handlePageChange = (nextPage: number, nextPageSize?: number) => {
+    const searchParams = new URLSearchParams(params.toString());
+    searchParams.set("servicePage", nextPage.toString());
 
-      const matchesCategory = selectedCategory
-        ? categoryName === selectedCategory.toLowerCase()
-        : true;
+    if (nextPageSize) {
+      searchParams.set("serviceTake", nextPageSize.toString());
+    }
 
-      return matchesSearch && matchesCategory;
-    });
-
-    setFilteredData(filtered);
-    // Reset to page 1 whenever search or filter changes
-    setCurrentPage(1);
-  }, [services, serviceSearch, selectedCategory]);
-
-  useEffect(() => {
-    setShowPagination(filteredData.length > 10);
-  }, [filteredData]);
-
-  const handlePageChange = (page: number, pageSize?: number) => {
-    setCurrentPage(page);
-    if (pageSize) setPageSize(pageSize);
+    const newPath = `${pathname}?${searchParams.toString()}`;
+    router.push(newPath);
 
     // Scroll to top when page changes
     if (containerRef.current) {
@@ -97,17 +88,7 @@ export default function CannedServices({
     }
   };
 
-  const paginatedServices = filteredData.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
-
-  const uniqueCategories = services
-    .map((l) => l?.category)
-    .filter((c): c is Category => !!c) // remove null or undefined categories
-    .filter(
-      (c, i, arr) => arr.findIndex((a) => a?.id === c?.id) === i // now all have .id safely
-    );
+  const uniqueCategories = categories;
 
   const toggleModal = (modalName: string) => {
     setActiveModal((prev) => ({
@@ -185,8 +166,8 @@ export default function CannedServices({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedServices.length > 0 ? (
-              paginatedServices.map((service, index) => (
+            {services.length > 0 ? (
+              services.map((service, index) => (
                 <ServiceComponent
                   key={service.id}
                   service={service}
@@ -209,8 +190,8 @@ export default function CannedServices({
       </div>
       {/* Mobile View */}
       <div className="grid h-full gap-4 pb-4 md:hidden mt-4">
-        {paginatedServices.length > 0 ? (
-          paginatedServices.map((service, i) => (
+        {services.length > 0 ? (
+          services.map((service, i) => (
             <ServiceComponent
               key={service.id}
               service={service}
@@ -228,9 +209,9 @@ export default function CannedServices({
         <div className="hidden h-10 justify-end lg:flex flex-shrink-0 mt-4">
           <Pagination
             className="custom-pagination"
-            current={currentPage}
-            pageSize={pageSize}
-            total={services.length}
+            current={page}
+            pageSize={take}
+            total={total}
             onChange={handlePageChange}
             showSizeChanger
             onShowSizeChange={handlePageChange}
@@ -242,10 +223,9 @@ export default function CannedServices({
         <div className="flex justify-center lg:hidden flex-shrink-0 mt-4">
           <Pagination
             className="custom-pagination"
-            current={currentPage}
-            pageSize={pageSize}
-            // total={filteredData.length}
-            total={services.length}
+            current={page}
+            pageSize={take}
+            total={total}
             onChange={handlePageChange}
             showSizeChanger
             onShowSizeChange={handlePageChange}
@@ -271,7 +251,7 @@ const ServiceComponent = ({
   const [description, setDescription] = useState(service.description);
   const [descriptionError, setDescriptionError] = useState("");
   const [category, setCategory] = useState<Category | null>(
-    service?.category || null
+    service?.category || null,
   );
   const [categoryOpen, setCategoryOpen] = useState(false);
   const { categories } = useListsStore();
@@ -281,7 +261,7 @@ const ServiceComponent = ({
   useEffect(() => {
     if (currentSelectedCategoryId && !category) {
       setCategory(
-        categories.find((cat) => cat.id === currentSelectedCategoryId)!
+        categories.find((cat) => cat.id === currentSelectedCategoryId)!,
       );
     }
   }, [currentSelectedCategoryId, category, categories]);
@@ -324,7 +304,7 @@ const ServiceComponent = ({
           index !== undefined && index % 2 === 0
             ? "border-indigo-500 bg-white"
             : "border-teal-500 bg-gray-50",
-          "shadow-md hover:shadow-lg"
+          "shadow-md hover:shadow-lg",
         )}
       >
         <CardHeader className="p-4">
@@ -362,7 +342,7 @@ const ServiceComponent = ({
                           "w-full rounded-lg border p-2 text-base focus:ring-2 focus:ring-indigo-500 transition-colors",
                           nameError
                             ? "border-red-500"
-                            : "border-gray-300 focus:border-indigo-500"
+                            : "border-gray-300 focus:border-indigo-500",
                         )}
                         placeholder="Service Name"
                       />
@@ -394,7 +374,7 @@ const ServiceComponent = ({
                           const value = e.target.value;
                           if (value.length > 250) {
                             setDescriptionError(
-                              "Description must be less than 250 characters"
+                              "Description must be less than 250 characters",
                             );
                             return;
                           }
@@ -405,7 +385,7 @@ const ServiceComponent = ({
                           "min-h-[100px] w-full rounded-lg border p-2 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors",
                           descriptionError
                             ? "border-red-500"
-                            : "border-gray-300"
+                            : "border-gray-300",
                         )}
                       />
                       {descriptionError && (
@@ -473,7 +453,7 @@ const ServiceComponent = ({
     <TableRow
       className={cn(
         "border-b border-gray-200 transition-colors hover:bg-indigo-50",
-        index % 2 === 0 ? "bg-white" : "bg-gray-50"
+        index % 2 === 0 ? "bg-white" : "bg-gray-50",
       )}
     >
       <TableCell className="py-3">
@@ -520,7 +500,7 @@ const ServiceComponent = ({
                     "w-full rounded-lg border p-2 text-base focus:ring-2 focus:ring-indigo-500 transition-colors",
                     nameError
                       ? "border-red-500"
-                      : "border-gray-300 focus:border-indigo-500"
+                      : "border-gray-300 focus:border-indigo-500",
                   )}
                   placeholder="Service Name"
                 />
@@ -555,7 +535,7 @@ const ServiceComponent = ({
                   }}
                   className={cn(
                     "min-h-[100px] thin-scrollbar w-full rounded-lg border p-2 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors",
-                    descriptionError ? "border-red-500" : "border-gray-300"
+                    descriptionError ? "border-red-500" : "border-gray-300",
                   )}
                 />
                 {descriptionError && (
