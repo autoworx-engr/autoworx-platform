@@ -14,11 +14,26 @@ import { taskQueryKey } from "../../_constant";
 import useWeekStartEndDays from "../../_hook/lib/useWeekStartEndDays";
 import { CircleCheckBig, SquarePen } from "lucide-react";
 
-// Sleeker gradient look matching dashboard task cards
-const priorityClasses = {
-  Low: "bg-gradient-to-r from-[#505aff] to-[#6571FF] shadow-indigo-700/50",
-  Medium: "bg-gradient-to-r from-cyan-600 to-blue-500 shadow-cyan-600/50",
-  High: "bg-gradient-to-r from-teal-700 to-green-700 shadow-teal-700/50",
+// Colors matching FullCalendar task event colors
+const priorityStyles = {
+  Low: {
+    background: "linear-gradient(to right, #f5f3ff, #ede9fe)",
+    borderLeft: "3px solid #6d28d9",
+    color: "#6d28d9",
+    boxShadow: "0 2px 8px rgba(109, 40, 217, 0.15)",
+  },
+  Medium: {
+    background: "linear-gradient(to right, #f0f9ff, #e0f2fe)",
+    borderLeft: "3px solid #0284c7",
+    color: "#0284c7",
+    boxShadow: "0 2px 8px rgba(2, 132, 199, 0.15)",
+  },
+  High: {
+    background: "linear-gradient(to right, #b2f2bb, #d3f9d8)",
+    borderLeft: "3px solid #22a7b8",
+    color: "#22a7b8",
+    boxShadow: "0 2px 8px rgba(34, 167, 184, 0.15)",
+  },
 };
 
 type TaskComponentProps = {
@@ -113,9 +128,9 @@ export default function TaskComponent({ task }: TaskComponentProps) {
     successToast("Task deleted successfully.");
   };
 
-  const priorityClass =
-    priorityClasses[task.priority as keyof typeof priorityClasses] ||
-    priorityClasses.Low;
+  const priorityStyle =
+    priorityStyles[task.priority as keyof typeof priorityStyles] ||
+    priorityStyles.Low;
 
   // Enhance tooltip info with due date/time when available
   const timePart = task.startTime
@@ -129,15 +144,14 @@ export default function TaskComponent({ task }: TaskComponentProps) {
   return (
     <div
       className={`
-        ${priorityClass}
-        flex items-center gap-x-2 rounded-lg px-3 md:px-4 text-white text-sm
+        flex items-center gap-x-2 rounded-lg px-3 md:px-4 text-sm
         max-[1300px]:px-2 max-[1300px]:text-[14px]
-        transition-all duration-300 ease-in-out shadow-lg ring-1 ring-white/10
-        hover:-translate-y-0.5 hover:shadow-xl hover:ring-white/20
+        transition-all duration-300 ease-in-out
+        hover:-translate-y-0.5
         h-auto min-h-[40px] max-h-[56px]
         ${isDragging ? "opacity-70" : ""}
       `}
-      style={{ cursor: task.startTime && task.endTime ? "pointer" : "move" }}
+      style={{ ...priorityStyle, cursor: task.startTime && task.endTime ? "pointer" : "move" }}
       ref={
         task.startTime && task.endTime
           ? undefined
@@ -159,8 +173,8 @@ export default function TaskComponent({ task }: TaskComponentProps) {
       }}
     >
       <span
-        style={{ cursor: task.startTime && task.endTime ? "pointer" : "move" }}
-        className="w-[90%] text-sm font-medium leading-tight text-white"
+        style={{ cursor: task.startTime && task.endTime ? "pointer" : "move", color: priorityStyle.color }}
+        className="w-[90%] text-sm font-semibold leading-tight"
       >
         <Tooltip title={tooltipLabel} placement="right">
           {task.title.length > 15
@@ -175,7 +189,7 @@ export default function TaskComponent({ task }: TaskComponentProps) {
             onClick={(e) => e.stopPropagation()}
             className="inline-flex"
           >
-            <SquarePen className="h-4 w-4 text-white/90 hover:text-white transition-colors cursor-pointer md:h-5 md:w-5" />
+            <SquarePen style={{ color: priorityStyle.color }} className="h-4 w-4 transition-colors cursor-pointer md:h-5 md:w-5 opacity-70 hover:opacity-100" />
           </span>
         }
         taskId={task.id}
@@ -202,7 +216,8 @@ export default function TaskComponent({ task }: TaskComponentProps) {
       >
         <CircleCheckBig
           strokeWidth={2.5}
-          className="h-4 w-4 text-white/90 hover:text-white transition-colors cursor-pointer md:h-5 md:w-5"
+          style={{ color: priorityStyle.color }}
+          className="h-4 w-4 transition-colors cursor-pointer md:h-5 md:w-5 opacity-70 hover:opacity-100"
           onClick={(e) => {
             e.stopPropagation();
             setPopconfirmVisible(true);
