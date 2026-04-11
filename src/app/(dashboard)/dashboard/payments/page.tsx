@@ -1,7 +1,5 @@
 "use client";
-import { getPayments } from "@/actions/payment/getPayments";
 import Title from "@/components/Title";
-import { useServerGetWithRefresh } from "@/hooks/useServerGetWithRefresh";
 import HeaderSearch from "./components/HeaderSearch";
 import {
   PaymentTab,
@@ -14,8 +12,6 @@ import { useState } from "react";
 import { Clock } from "lucide-react";
 
 export default function Page() {
-  const { data: payments, refresh: refreshPayments } =
-    useServerGetWithRefresh(getPayments);
   const [activeTab, setActiveTab] = useState("transactions");
 
   // const { data: couponsData } = useServerGet(getCoupons);
@@ -46,10 +42,7 @@ export default function Page() {
         </TabsList>
 
         <TabsContent value="transactions">
-          <PaymentTable
-            data={payments || []}
-            onRefreshPayments={refreshPayments}
-          />
+          <PaymentTable />
         </TabsContent>
 
         {/* <TabsContent value="integrations">

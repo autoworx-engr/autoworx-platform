@@ -12,9 +12,9 @@ export const useCreateReview = (companyId: number) => {
         queryKey: ["reviews", companyId],
       });
 
-      // queryClient.invalidateQueries({
-      //   queryKey: ["company-details", companyId],
-      // });
+      queryClient.invalidateQueries({
+        queryKey: ["company-details", companyId],
+      });
     },
   });
 };

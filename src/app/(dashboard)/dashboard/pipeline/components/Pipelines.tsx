@@ -216,7 +216,7 @@ export default function PipelinesCopy({
               "scale-[1.02]",
               "transition-transform",
             );
-          }, 2000);
+          }, 5000);
         }
       }, 300);
     }
