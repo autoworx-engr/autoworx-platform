@@ -1,18 +1,27 @@
 import { getWorkOrders } from "@/actions/pipelines/getWorkOrders";
-import { getTechniciansColumnByCompany } from "@/actions/pipelines/pipelinesColumn";
+import { getEmployeeColumnByCompany } from "@/actions/pipelines/pipelinesColumn";
 import { authOptions } from "@/authOptions";
 import { ShopLead, ShopPipelineData } from "@/types/invoiceLead";
-import { Technician } from "@prisma/client";
+import { EmployeeType, Technician } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import dynamic from "next/dynamic";
 
 const TeamPipelines = dynamic(() => import("../components/TeamPipeline"));
 
-const PipelinePage = async () => {
+const PipelinePage = async ({
+  searchParams,
+}: {
+  searchParams: { type?: string };
+}) => {
   const session = await getServerSession(authOptions);
   const currentUser = session?.user;
   const invoices = await getWorkOrders();
-  const techniciansColumn = await getTechniciansColumnByCompany();
+
+  const employeeType = searchParams.type;
+
+  const techniciansColumn = await getEmployeeColumnByCompany(
+    employeeType as EmployeeType,
+  );
 
   const type = "Team Pipelines";
 
@@ -23,6 +32,7 @@ const PipelinePage = async () => {
     const filteredInvoices = invoices.filter((invoice) => {
       return invoice.type === "Invoice";
     });
+
     const transformedLeads: ShopLead[] = filteredInvoices.map((invoice) => {
       const completedServices: string[] = [];
       const incompleteServices: string[] = [];
@@ -54,8 +64,6 @@ const PipelinePage = async () => {
           } else {
             item.service?.name && incompleteServices.push(item.service?.name);
           }
-        } else {
-          item.service?.name && unAssignedServices.push(item.service?.name);
         }
 
         allTechnicians.push(...technicians);
@@ -88,7 +96,6 @@ const PipelinePage = async () => {
         technicians: allTechnicians,
       };
     });
-
     const uniqueTechnicians = Array.from(
       new Map(
         techniciansColumn.map((tech) => [
@@ -127,6 +134,7 @@ const PipelinePage = async () => {
     <TeamPipelines
       pipelinesTitle={type}
       columns={techniciansColumn}
+      employeeType={employeeType as EmployeeType}
       shopPipelineDataProp={pipelineData}
       isTechnician={currentUser?.employeeType === "Technician"}
     />
