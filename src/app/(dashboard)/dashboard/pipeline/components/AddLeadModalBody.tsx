@@ -16,9 +16,11 @@ import {
   useGetMake,
   useGetModelsByYearAndMake,
 } from "@/hooks/useCarData";
-import { salesPipelineKeyStr } from "@/utils/enums/query-key-constant";
-import Selector from "../../settings/automation/components/Selector";
 import { cn } from "@/lib/cn";
+import { salesPipelineKeyStr } from "@/utils/enums/query-key-constant";
+import toast from "react-hot-toast";
+import Selector from "../../settings/automation/components/Selector";
+import { errorToast, successToast } from "@/lib/toast";
 
 const AddLeads = ({ onClose }: { onClose?: () => void }) => {
   const queryClient = useQueryClient();
@@ -200,6 +202,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
           type: "success",
         });
 
+       successToast("Lead created successfully!");
         // Invalidate and refetch pipeline data
         await queryClient.invalidateQueries({
           queryKey: [salesPipelineKeyStr.salesPipeline],
@@ -232,12 +235,14 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
           message: "Failed to create lead. Please try again.",
           type: "error",
         });
+        errorToast("Failed to create lead. Please try again.");
       }
     } catch (error) {
       setFormStatus({
         message: "An error occurred. Please try again later.",
         type: "error",
       });
+      errorToast("An error occurred. Please try again later.");
     } finally {
       setIsSubmitting(false);
     }
@@ -325,7 +330,8 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
             Vehicle Information <span className="text-[#E9405F]">*</span>
           </h3>
           <p className="mt-0.5 text-xs text-slate-400">
-            Select year, make &amp; model — or use the field below for unlisted vehicles
+            Select year, make &amp; model — or use the field below for unlisted
+            vehicles
           </p>
         </div>
 
@@ -395,12 +401,15 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
             required
             disabled={
               formData.vehicle_year != "" ||
-                formData.vehicle_make != "" ||
-                formData.vehicle_model != ""
+              formData.vehicle_make != "" ||
+              formData.vehicle_model != ""
                 ? true
                 : false
             }
-            className={cn("w-full rounded-sm border border-slate-400 bg-background px-2 py-0.5 leading-6 outline-none", slimInputClassName)}
+            className={cn(
+              "w-full rounded-sm border border-slate-400 bg-background px-2 py-0.5 leading-6 outline-none",
+              slimInputClassName,
+            )}
           />
         </div>
 
@@ -427,10 +436,11 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
 
         {formStatus.message && (
           <div
-            className={`rounded-md p-3 ${formStatus.type === "success"
-              ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
-              : "border border-red-200 bg-red-50 text-red-700"
-              }`}
+            className={`rounded-md p-3 ${
+              formStatus.type === "success"
+                ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
+                : "border border-red-200 bg-red-50 text-red-700"
+            }`}
           >
             {formStatus.message}
           </div>
