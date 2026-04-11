@@ -1,5 +1,13 @@
 import React from "react";
-import { Gift, Mail, Phone, CreditCard, CalendarClock, ShoppingBag, TrendingDown } from "lucide-react";
+import {
+  Gift,
+  Mail,
+  Phone,
+  CreditCard,
+  CalendarClock,
+  ShoppingBag,
+  TrendingDown,
+} from "lucide-react";
 import { IssuedGiftCardItem, statusMeta } from "./types";
 
 interface GiftCardPurchaseCardProps {
@@ -12,7 +20,9 @@ export function GiftCardPurchaseCard({ item }: GiftCardPurchaseCardProps) {
   const StatusIcon = meta.icon;
   const redeemedAmount = item.initialBalance - item.currentBalance;
   const redemptionPercent =
-    item.initialBalance > 0 ? Math.round((redeemedAmount / item.initialBalance) * 100) : 0;
+    item.initialBalance > 0
+      ? Math.round((redeemedAmount / item.initialBalance) * 100)
+      : 0;
 
   return (
     <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden">
@@ -64,7 +74,9 @@ export function GiftCardPurchaseCard({ item }: GiftCardPurchaseCardProps) {
           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1">
             Recipient
           </p>
-          <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{item.recipientName}</p>
+          <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            {item.recipientName}
+          </p>
           {item.recipientEmail && (
             <p className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               <Mail size={11} /> {item.recipientEmail}
@@ -84,10 +96,18 @@ export function GiftCardPurchaseCard({ item }: GiftCardPurchaseCardProps) {
           </p>
           <div className="flex items-baseline gap-1.5">
             <span className="text-base font-bold text-[#6571FF]">
-              ${item.currentBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              $
+              {item.currentBalance.toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
             </span>
             <span className="text-xs text-slate-400 dark:text-slate-500">
-              / ${item.initialBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              / $
+              {item.initialBalance.toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
             </span>
           </div>
           {/* Progress bar */}
@@ -99,14 +119,18 @@ export function GiftCardPurchaseCard({ item }: GiftCardPurchaseCardProps) {
           </div>
           {redeemedAmount > 0 && (
             <p className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500 mt-1">
-              <TrendingDown size={11} />
-              ${redeemedAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} redeemed ({redemptionPercent}%)
+              <TrendingDown size={11} />$
+              {redeemedAmount.toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}{" "}
+              redeemed ({redemptionPercent}%)
             </p>
           )}
         </div>
 
         {/* Meta */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 sm:col-span-2">
+        {/* <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 sm:col-span-2">
           <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
             <CreditCard size={11} />
             {item.deliveryMethod === "BOTH" ? "Email & SMS" : item.deliveryMethod.charAt(0) + item.deliveryMethod.slice(1).toLowerCase()}
@@ -121,7 +145,7 @@ export function GiftCardPurchaseCard({ item }: GiftCardPurchaseCardProps) {
             <ShoppingBag size={11} />
             {new Date(item.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
           </span>
-        </div>
+        </div> */}
       </div>
     </div>
   );
