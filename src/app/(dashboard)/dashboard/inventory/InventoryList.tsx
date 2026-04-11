@@ -59,7 +59,7 @@ export default function InventoryList({
   return (
     <Tabs
       value={view}
-      className={`col-start-1 mt-3 flex min-h-0 w-full flex-col overflow-clip text-xs lg:h-[83vh] 2xl:text-base ${isFullWidth ? "md:w-full" : "md:w-1/2"} `}
+      className={`col-start-1 mt-3 flex min-h-0 w-full flex-col overflow-clip text-xs lg:h-[83vh] 2xl:text-base ${isFullWidth ? "md:w-full" : "lg:w-1/2"} `}
     >
       <TabsList>
         <TabsTrigger
