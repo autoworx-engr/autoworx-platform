@@ -627,34 +627,39 @@ export const Checkout = () => {
     bookingSettings?.isServiceFeeEnabled ?? settings.shopFeeEnabled;
   const isTaxEnabled = bookingSettings?.isTaxEnabled ?? settings.taxEnabled;
 
-  // Gift card preview (capped at subtotal so we know the discount before tax)
-  const giftCardRedeemedPreview = appliedGiftCard
-    ? Number(Math.min(appliedGiftCard.balance, subtotal).toFixed(2))
-    : 0;
-
-  // Tax and fee are computed on the original subtotal (before gift card discount)
+  // Tax and fee on original subtotal (gift card never affects rates)
   const shopFee = isServiceFeeEnabled
     ? Number(((subtotal * serviceFeeRate) / 100).toFixed(2))
     : 0;
   const tax = isTaxEnabled
     ? Number(((subtotal * taxRate) / 100).toFixed(2))
     : 0;
-  const grandTotal = Number(
-    (subtotal + shopFee + tax - giftCardRedeemedPreview).toFixed(2),
-  );
-  const adjustedGrandTotal = grandTotal;
+  const rawGrandTotal = Number((subtotal + shopFee + tax).toFixed(2));
 
+  // Deposit required based on raw grand total (before gift card)
   const calculatedDepositAmount = isDepositEnabled
     ? depositType === "fixed"
       ? depositValue
-      : Number(((adjustedGrandTotal * depositValue) / 100).toFixed(2))
+      : Number(((rawGrandTotal * depositValue) / 100).toFixed(2))
     : 0;
   const depositAmount = Number(
-    Math.min(adjustedGrandTotal, Math.max(0, calculatedDepositAmount)).toFixed(
-      2,
-    ),
+    Math.min(rawGrandTotal, Math.max(0, calculatedDepositAmount)).toFixed(2),
   );
-  const effectiveDepositDue = serverDepositRequired ?? depositAmount;
+
+  // Gift card covers up to the deposit required (or full grand total if no deposit)
+  const giftCardTarget = depositAmount > 0 ? depositAmount : rawGrandTotal;
+  const giftCardRedeemedPreview = appliedGiftCard
+    ? Number(Math.min(appliedGiftCard.balance, giftCardTarget).toFixed(2))
+    : 0;
+
+  const grandTotal = Number((rawGrandTotal - giftCardRedeemedPreview).toFixed(2));
+  const adjustedGrandTotal = grandTotal;
+
+  // Deposit still owed after gift card coverage
+  const payableDeposit = Number(
+    Math.max(0, depositAmount - giftCardRedeemedPreview).toFixed(2),
+  );
+  const effectiveDepositDue = serverDepositRequired ?? payableDeposit;
   const hasPendingBookingPayment =
     Boolean(createdBookingId) && effectiveDepositDue > 0;
 
