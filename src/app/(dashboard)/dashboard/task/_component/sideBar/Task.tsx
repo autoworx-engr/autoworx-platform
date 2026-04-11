@@ -53,7 +53,7 @@ export default function TaskComponent({ task }: TaskComponentProps) {
     }),
   });
   const queryDate = useDate();
-  const { setDate, date: taskDate, setNavigating } = useCalendarStore();
+  const { setDate, date: taskDate, setNavigating, setStartTime } = useCalendarStore();
   // console.log({ taskDate });
 
   const router = useRouter();
@@ -165,6 +165,7 @@ export default function TaskComponent({ task }: TaskComponentProps) {
         if (task.date && task.startTime && task.endTime) {
           const redirectDate = moment(task.date).format("YYYY-MM-DD");
           setDate(redirectDate);
+          setStartTime(task.startTime);
         }
         router.push("/dashboard/task/day");
 

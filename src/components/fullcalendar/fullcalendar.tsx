@@ -8,8 +8,9 @@ import listPlugin from "@fullcalendar/list";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import moment from "moment";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
+import { useCalendarStore } from "@/stores/calendarStore";
 import styles from "./fullcalendar.module.css";
 import { CalendarHeader } from "./CalendarHeader";
 import { CalendarEditModals } from "./CalendarEditModals";
@@ -47,6 +48,17 @@ export default function Calendar({ type }: { type: CalendarType }) {
 
   const { data: session } = useSession();
   const calendarRef = useRef<FullCalendar>(null);
+  const { startTime: scrollToTime, setStartTime } = useCalendarStore();
+
+  // Auto-scroll to task startTime after navigation
+  useEffect(() => {
+    if (!scrollToTime) return;
+    const timer = setTimeout(() => {
+      calendarRef.current?.getApi().scrollToTime(scrollToTime);
+      setStartTime(null);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [scrollToTime]);
   const {
     settings,
     isLoading: isSettingsLoading,
