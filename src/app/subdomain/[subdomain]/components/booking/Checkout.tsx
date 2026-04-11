@@ -67,6 +67,7 @@ export const Checkout = () => {
     selectedSlot,
     setSelectedSlot,
     setCustomerInfo,
+    bookingTotals,
     setBookingTotals,
     setEstimateId,
     isReturningClient,
@@ -360,11 +361,11 @@ export const Checkout = () => {
             // Update totals from the confirmed booking (includes gift card)
             if (data?.totals) {
               const t = data.totals;
-              setBookingTotals((prev) => ({
-                ...(prev || ({} as BookingTotals)),
+              setBookingTotals({
+                ...(bookingTotals || ({} as BookingTotals)),
                 grandTotal: Number(t.grandTotal || 0),
                 giftCardRedeemed: Number(t.giftCardRedeemed || 0),
-              }));
+              });
             }
           } catch {
             // Webhook may still be processing — "View Estimate" will handle gracefully
@@ -517,7 +518,7 @@ export const Checkout = () => {
       // - PENDING: needs payment via gateway (no invoice/appointment yet)
       if (responseStatus === "PENDING" && newBookingId && shop?.companyId) {
         const payableNow = Number(
-          apiTotals?.payableNow || apiTotals?.depositRequired || 0,
+          (apiTotals as any)?.payableNow || apiTotals?.depositRequired || 0,
         );
 
         sessionStorage.setItem(
