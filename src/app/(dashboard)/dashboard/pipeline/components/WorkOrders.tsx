@@ -24,6 +24,10 @@ const WorkOrders = () => {
   const [pageSize, setPageSize] = useState(50);
 
   useEffect(() => {
+    setCurrentPage(1);
+  }, [search, dateRange, status, service]);
+
+  useEffect(() => {
     resetStatus();
     const fetchUser = async () => {
       const response = await fetch("/api/getUser");

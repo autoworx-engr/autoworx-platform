@@ -2,6 +2,7 @@
 import { authOptions } from "@/authOptions";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
+import { EmployeeType } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
 
@@ -31,10 +32,15 @@ export const getColumnsByType = async (type: string) => {
   return columns;
 };
 
-export const getTechniciansColumnByCompany = async () => {
+export const getEmployeeColumnByCompany = async (
+  employeeType?: EmployeeType,
+) => {
   const companyId = await getCompanyId();
   let columns = await db.user.findMany({
-    where: { companyId: companyId, employeeType: "Technician" },
+    where: {
+      companyId: companyId,
+      ...(employeeType && { employeeType }),
+    },
     include: {
       Technician: {
         include: {

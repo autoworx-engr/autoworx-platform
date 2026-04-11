@@ -133,6 +133,7 @@ const DraggableLead = ({
   const router = useRouter();
   const pathname = usePathname();
   const currentUser = useGetCurrentUser();
+
   useEffect(() => {
     const element = leadRef.current;
     if (!element) return;
@@ -318,12 +319,14 @@ const DraggableLead = ({
           </span>
         ))}
 
-        <button
-          onClick={() => handleTagDropdownToggle(categoryIndex, leadIndex)}
-          className="inline-flex h-[20px] items-center justify-center rounded bg-[#6571FF] px-1 py-1 text-xs font-semibold text-white"
-        >
-          + Add
-        </button>
+        {!isTeamPipeline && (
+          <button
+            onClick={() => handleTagDropdownToggle(categoryIndex, leadIndex)}
+            className="inline-flex h-[20px] items-center justify-center rounded bg-[#6571FF] px-1 py-1 text-xs font-semibold text-white"
+          >
+            + Add
+          </button>
+        )}
       </div>
 
       {isTagDropdownOpen && (
