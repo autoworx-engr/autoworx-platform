@@ -57,7 +57,9 @@ export default function Calendar({ type }: { type: CalendarType }) {
   );
 
   // Use calendar store to sync date with header controls
-  const { date } = useCalendarStore();
+  const { date, setDate, setWeek, setMonth } = useCalendarStore();
+  // Prevents the store→gotoDate→datesSet→setDate→gotoDate feedback loop
+  const isNavigatingFromCalendar = useRef(false);
 
   const { data: settings, isLoading: isSettingsLoading } = useQuery({
     queryKey: ["calendar-settings", "week-start"],
@@ -192,7 +194,16 @@ export default function Calendar({ type }: { type: CalendarType }) {
 
   useEffect(() => {
     if (calendarRef.current && date) {
-      calendarRef.current.getApi().gotoDate(date);
+      if (isNavigatingFromCalendar.current) {
+        // Calendar already navigated internally — skip to avoid feedback loop
+        isNavigatingFromCalendar.current = false;
+        return;
+      }
+      const calApi = calendarRef.current.getApi();
+      const calDate = moment(calApi.getDate()).format("YYYY-MM-DD");
+      if (calDate !== date) {
+        calApi.gotoDate(date);
+      }
     }
   }, [date]);
 
@@ -208,17 +219,25 @@ export default function Calendar({ type }: { type: CalendarType }) {
   const handleDatesSet = (arg: any) => {
     setView(arg.view.type);
 
+    // Sync the calendar store so the header DisplayDate stays accurate
+    // (covers navLinks clicks, prev/next, and view switches done by FullCalendar)
+    isNavigatingFromCalendar.current = true;
+    const viewCurrentStart = moment(arg.view.currentStart);
+
     let startStr: string;
     let endStr: string;
 
     if (arg.view.type === "dayGridMonth") {
-      startStr = moment(arg.view.currentStart)
-        .startOf("month")
-        .format("YYYY-MM-DD");
-      endStr = moment(arg.view.currentStart)
-        .endOf("month")
-        .format("YYYY-MM-DD");
+      const monthStart = viewCurrentStart.clone().startOf("month");
+      setDate(monthStart.format("YYYY-MM-DD"));
+      setMonth(monthStart.format("YYYY-MM"));
+      startStr = monthStart.format("YYYY-MM-DD");
+      endStr = viewCurrentStart.clone().endOf("month").format("YYYY-MM-DD");
     } else {
+      setDate(viewCurrentStart.format("YYYY-MM-DD"));
+      if (arg.view.type === "timeGridWeek") {
+        setWeek(viewCurrentStart.format("YYYY-[W]WW"));
+      }
       // Week/Day/List => visible range
       startStr = moment(arg.start).format("YYYY-MM-DD");
       endStr = moment(arg.end - 1).format("YYYY-MM-DD");
