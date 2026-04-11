@@ -49,15 +49,37 @@ export default function Calendar({ type }: { type: CalendarType }) {
   const { data: session } = useSession();
   const calendarRef = useRef<FullCalendar>(null);
 
-  const { settings, isLoading: isSettingsLoading, firstDay, businessHours, nonBusinessSlotClassNames } =
-    useCalendarSettings();
-  const { tasks, appointments, holidays, isLoading: isDataLoading, invalidateCalendarQueries } =
-    useCalendarData(dateRange);
-  const { handleDatesSet: syncStoreDatesSet } = useCalendarStoreSync(calendarRef);
+  const {
+    settings,
+    isLoading: isSettingsLoading,
+    firstDay,
+    businessHours,
+    nonBusinessSlotClassNames,
+  } = useCalendarSettings();
+  const {
+    tasks,
+    appointments,
+    holidays,
+    isLoading: isDataLoading,
+    invalidateCalendarQueries,
+  } = useCalendarData(dateRange);
+  const { handleDatesSet: syncStoreDatesSet } =
+    useCalendarStoreSync(calendarRef);
   const handleEventDateTimeUpdate = useCalendarEventDateTimeUpdate();
 
-  const { teamMateOptions, categoryOptions, filteredTasks, filteredAppointments, events } =
-    useCalendarFilters({ tasks, appointments, holidays, selectedTeamMateIds, selectedCategoryIds });
+  const {
+    teamMateOptions,
+    categoryOptions,
+    filteredTasks,
+    filteredAppointments,
+    events,
+  } = useCalendarFilters({
+    tasks,
+    appointments,
+    holidays,
+    selectedTeamMateIds,
+    selectedCategoryIds,
+  });
 
   const loading = isCalendarLoading || isSettingsLoading || isDataLoading;
   const estRevenue = filteredAppointments.reduce(
@@ -69,11 +91,15 @@ export default function Calendar({ type }: { type: CalendarType }) {
   const originalData = selectedEvent?.extendedProps?.originalData;
   const taskId =
     eventType === "task"
-      ? Number(originalData?.id ?? String(selectedEvent?.id).replace("task-", ""))
+      ? Number(
+          originalData?.id ?? String(selectedEvent?.id).replace("task-", ""),
+        )
       : undefined;
   const appointmentId =
     eventType === "appointment"
-      ? Number(originalData?.id ?? String(selectedEvent?.id).replace("apt-", ""))
+      ? Number(
+          originalData?.id ?? String(selectedEvent?.id).replace("apt-", ""),
+        )
       : undefined;
 
   const handleEventClick = (info: EventClickArg) => {
@@ -121,41 +147,44 @@ export default function Calendar({ type }: { type: CalendarType }) {
 
       <div className={`flex-1 w-full relative ${styles.calendarBody}`}>
         <div className="w-full h-full overflow-x-auto">
-          <div
-            className={
-              view === "timeGridDay" ? "min-w-[1000px] h-full" : "w-full h-full"
-            }
-          >
-            <FullCalendar
-              ref={calendarRef}
-              plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
-              initialView={view}
-              headerToolbar={false}
-              firstDay={firstDay}
-              navLinks={true}
-              editable={true}
-              dayMaxEvents={2}
-              allDaySlot={false}
-              expandRows={true}
-              slotMinTime="00:00:00"
-              slotMaxTime="24:00:00"
-              scrollTime={settings?.dayStart}
-              slotDuration="00:15:00"
-              slotLabelFormat={{ hour: "2-digit", minute: "2-digit", hour12: true }}
-              businessHours={businessHours}
-              slotLaneClassNames={nonBusinessSlotClassNames}
-              events={events}
-              eventContent={(eventInfo: EventContentArg) => (
-                <EventContent eventInfo={eventInfo} session={session} />
-              )}
-              eventClick={handleEventClick}
-              eventDrop={handleEventDateTimeUpdate}
-              eventResize={handleEventDateTimeUpdate}
-              datesSet={handleDatesSet}
-              loading={setIsCalendarLoading}
-              height="100%"
-            />
-          </div>
+          <FullCalendar
+            ref={calendarRef}
+            plugins={[
+              dayGridPlugin,
+              timeGridPlugin,
+              listPlugin,
+              interactionPlugin,
+            ]}
+            initialView={view}
+            headerToolbar={false}
+            firstDay={firstDay}
+            navLinks={true}
+            editable={true}
+            dayMaxEvents={2}
+            allDaySlot={false}
+            expandRows={true}
+            slotMinTime="00:00:00"
+            slotMaxTime="24:00:00"
+            scrollTime={settings?.dayStart}
+            slotDuration="00:15:00"
+            slotLabelFormat={{
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true,
+            }}
+            businessHours={businessHours}
+            slotLaneClassNames={nonBusinessSlotClassNames}
+            events={events}
+            eventContent={(eventInfo: EventContentArg) => (
+              <EventContent eventInfo={eventInfo} session={session} />
+            )}
+            eventClick={handleEventClick}
+            eventDrop={handleEventDateTimeUpdate}
+            eventResize={handleEventDateTimeUpdate}
+            datesSet={handleDatesSet}
+            loading={setIsCalendarLoading}
+            height="100%"
+          />
         </div>
 
         <CalendarLoadingOverlay loading={loading} />
