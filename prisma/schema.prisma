@@ -3062,14 +3062,21 @@ model ShopBooking {
   // Vehicle Info
   vehicleId Int? @map("vehicle_id")
 
-  // Appointment Details
-  appointmentId Int @unique @map("appointment_id")
+  // Appointment — created on confirmation when deposit is required
+  appointmentId   Int?    @unique @map("appointment_id")
+  appointmentDate String? @map("appointment_date")
+  appointmentTime String? @map("appointment_time")
 
-  invoiceId String  @unique @map("invoice_id")
-  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  // Invoice — created on confirmation when deposit is required
+  invoiceId String?  @unique @map("invoice_id")
+  invoice   Invoice? @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
   // Status
   status ShopBookingStatus @default(PENDING)
+
+  // Deposit tracking (stored at creation so confirmation can validate)
+  depositRequired      Decimal? @map("deposit_required") @db.Decimal(10, 2)
+  pendingGiftCardCode  String?  @map("pending_gift_card_code") @db.VarChar(100)
 
   // Notes
   customerNotes String? @map("customer_notes") @db.Text

@@ -57,6 +57,7 @@ export async function GET(req: Request) {
             stripeAccountId: true,
             authorizeNetApiLoginId: true,
             authorizeNetTransactionKey: true,
+            tipEnabled: true,
           },
         },
       },
@@ -109,6 +110,7 @@ export async function GET(req: Request) {
             shop.company.authorizeNetApiLoginId &&
             shop.company.authorizeNetTransactionKey,
           ),
+          tipEnabled: shop.company.tipEnabled ?? false,
         },
       },
       designs: templates.map((t) => ({

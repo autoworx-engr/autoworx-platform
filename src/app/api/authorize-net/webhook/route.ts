@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import { convertInvoicePublic } from "@/actions/estimate/invoice/convert";
 import { sendPaymentReceivedNotification } from "@/lib/notification/payment-notify";
 import { settleGiftCardReloadPayment } from "@/services/giftCardReloadSettlementService";
-import { updateVirtualShopDeposit } from "@/services/virtualShopDepositService";
+import { confirmShopBooking } from "@/services/confirmShopBooking";
 import { NextRequest, NextResponse } from "next/server";
 
 const parsePaymentNotes = (notes: string | null) => {
@@ -214,10 +214,11 @@ export async function POST(req: NextRequest) {
       });
 
       if (sourceType === "virtual_shop_deposit") {
-        const result = await updateVirtualShopDeposit(targetId, authAmount);
+        const result = await confirmShopBooking({
+          shopBookingId: targetId,
+          cashPaid: authAmount,
+        });
 
-        // Fetch the shop booking to get the companyId or related info
-        // The update function returns `{ id }` representing the shopBookingId
         const shopBooking = await db.shopBooking.findUnique({
           where: { id: Number(targetId) },
           include: { shop: true },
@@ -231,13 +232,12 @@ export async function POST(req: NextRequest) {
         }
 
         const companyId = shopBooking.shop.companyId;
-        const invoiceId = shopBooking?.invoiceId ?? null;
+        const invoiceId = result.invoiceId ?? null;
 
-        // Create a minimal payment record
         const depositPayment = await db.payment.create({
           data: {
-            companyId: companyId,
-            invoiceId: invoiceId,
+            companyId,
+            invoiceId,
             amount: authAmount,
             type: "DEPOSIT",
             date: new Date(),
@@ -251,13 +251,12 @@ export async function POST(req: NextRequest) {
           },
         });
 
-        // We can just log it as an authorize net payment to avoid reprocessing
         await db.authorizeNetPayment.create({
           data: {
             transactionId,
-            companyId: companyId,
+            companyId,
             paymentId: depositPayment.id,
-            invoiceId: invoiceId,
+            invoiceId,
           },
         });
 

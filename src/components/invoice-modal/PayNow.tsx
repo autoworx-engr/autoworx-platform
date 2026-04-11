@@ -277,6 +277,7 @@ export function PayNow({
         } else if (mode === "virtual_shop") {
           result = await createStripePaymentLink({
             amount,
+            tip: tipStr,
             shopBookingId: shopBookingId!,
             companyId,
             payType: "virtual_shop_deposit",
@@ -285,6 +286,7 @@ export function PayNow({
         } else if (mode === "virtual_shop_gift_card") {
           result = await createStripePaymentLink({
             amount,
+            tip: tipStr,
             paymentId: paymentId!,
             giftCardSource,
             giftCardCode,
@@ -320,6 +322,7 @@ export function PayNow({
         } else if (mode === "virtual_shop") {
           result = await createAuthorizeNetPaymentLink({
             amount,
+            tip: tipStr,
             shopBookingId: shopBookingId!,
             companyId,
             payType: "virtual_shop_deposit",
@@ -328,6 +331,7 @@ export function PayNow({
         } else if (mode === "virtual_shop_gift_card") {
           result = await createAuthorizeNetPaymentLink({
             amount,
+            tip: tipStr,
             paymentId: paymentId!,
             giftCardSource,
             giftCardCode,

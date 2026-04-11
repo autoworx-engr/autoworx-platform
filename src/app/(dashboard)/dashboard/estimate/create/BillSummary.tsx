@@ -258,7 +258,7 @@ export function BillSummary({
           ["subtotal", subtotal.toFixed(2)],
           ["discount", discount.toFixed(2)],
           ["tax", tax.toFixed(2)],
-          ["vehicle extra cost", vehicleExtraCost.toFixed(2)],
+          // ["vehicle extra cost", vehicleExtraCost.toFixed(2)],
           ["shop supplies", serviceFee.toFixed(2)],
           ["deposit", deposit.toFixed(2)],
           ["payment", totalPayment.toFixed(2)],

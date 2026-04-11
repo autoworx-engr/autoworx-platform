@@ -1289,69 +1289,12 @@ export async function POST(req: Request) {
         ? Number(shop.company.serviceFee)
         : 0;
 
-      // Process gift card first so tax/fee are computed on (subtotal - discount),
-      // matching the formula used by the invoice display components.
-      const normalizedGiftCardCode = giftCardCode?.trim().toUpperCase();
-      let redeemGiftCard: {
-        id: number;
-        code: string;
-        currentBalance: number;
-      } | null = null;
-      let giftCardRedeemedAmount = 0;
-
-      if (normalizedGiftCardCode) {
-        const giftCard = await tx.issuedGiftCard.findFirst({
-          where: {
-            code: normalizedGiftCardCode,
-            companyId,
-          },
-          select: {
-            id: true,
-            code: true,
-            status: true,
-            currentBalance: true,
-          },
-        });
-
-        if (!giftCard) {
-          throw new AppError(404, "Gift card not found for this shop");
-        }
-
-        if (giftCard.status !== "ACTIVE") {
-          throw new AppError(
-            400,
-            `Cannot redeem a ${giftCard.status.toLowerCase()} gift card. Status must be active.`,
-          );
-        }
-
-        const availableBalance = roundMoney(
-          Number(giftCard.currentBalance || 0),
-        );
-        if (availableBalance <= 0) {
-          throw new AppError(400, "Gift card has no balance to redeem");
-        }
-
-        giftCardRedeemedAmount = roundMoney(
-          Math.min(availableBalance, subtotal),
-        );
-
-        if (giftCardRedeemedAmount <= 0) {
-          throw new AppError(400, "Gift card balance is not redeemable");
-        }
-
-        redeemGiftCard = {
-          id: giftCard.id,
-          code: giftCard.code,
-          currentBalance: availableBalance,
-        };
-      }
-
-      // Tax and fee computed on the original subtotal (before gift card discount)
+      // Tax and fee computed on subtotal
       const taxAmount = (subtotal * taxRate) / 100;
       const serviceFeeAmount = (subtotal * serviceFeeRate) / 100;
 
       const adjustedGrandTotal = roundMoney(
-        subtotal + taxAmount + serviceFeeAmount - giftCardRedeemedAmount,
+        subtotal + taxAmount + serviceFeeAmount,
       );
 
       const isDepositEnabled = bookingSettings.isDepositEnabled;
@@ -1366,10 +1309,177 @@ export async function POST(req: Request) {
         Math.min(adjustedGrandTotal, Math.max(0, calculatedDepositAmount)),
       );
 
-      const shopBookingStatus =
-        requiredDepositAmount > 0 ? "PENDING" : "CONFIRMED";
+      // Helper: create ShopBookingService snapshot entries
+      const createServiceSnapshots = async (shopBookingId: number) => {
+        for (const srv of selectedServices) {
+          const userInput = shopServices.find(
+            (s: any) => s.shopServiceId === srv.id,
+          );
+          let modifierPrice = 0;
+          let modifierType: string | null = null;
 
-      // 8. Create Estimate using the refactored shared action
+          if (userInput?.vehicleType) {
+            const vt = userInput.vehicleType.toLowerCase();
+            if (vt === "truck") {
+              modifierType = "Truck";
+              modifierPrice = Number(srv.modifierTruck || 0);
+            } else if (vt === "suv") {
+              modifierType = "SUV";
+              modifierPrice = Number(srv.modifierSUV || 0);
+            } else if (vt === "sedan") {
+              modifierType = "Sedan";
+              modifierPrice = Number(srv.modifierSedan || 0);
+            } else if (vt === "coupe") {
+              modifierType = "Coupe";
+              modifierPrice = Number(srv.modifierCoupe || 0);
+            } else {
+              modifierType = userInput.vehicleType;
+            }
+          }
+
+          await tx.shopBookingService.create({
+            data: {
+              shopBookingId,
+              shopServiceId: srv.id,
+              title: srv.title,
+              price: srv.price,
+              duration: srv.duration,
+              modifierType: modifierType as any,
+              modifierPrice,
+            },
+          });
+        }
+      };
+
+      // ── Gift card validation (no redemption yet) ──
+      let giftCardBalance = 0;
+      const normalizedGiftCardCode = giftCardCode?.trim().toUpperCase() || null;
+
+      if (normalizedGiftCardCode && requiredDepositAmount > 0) {
+        const gc = await tx.issuedGiftCard.findFirst({
+          where: { code: normalizedGiftCardCode, companyId },
+          select: { id: true, status: true, currentBalance: true },
+        });
+
+        if (!gc) throw new AppError(404, "Gift card not found for this shop");
+        if (gc.status !== "ACTIVE") {
+          throw new AppError(400, `Cannot redeem a ${gc.status.toLowerCase()} gift card.`);
+        }
+
+        giftCardBalance = roundMoney(Number(gc.currentBalance || 0));
+        if (giftCardBalance <= 0) {
+          throw new AppError(400, "Gift card has no balance to redeem");
+        }
+      }
+
+      const giftCovered = roundMoney(
+        Math.min(giftCardBalance, requiredDepositAmount),
+      );
+      const payableNow = roundMoney(
+        Math.max(0, requiredDepositAmount - giftCovered),
+      );
+
+      // ── DEPOSIT REQUIRED + NEEDS PAYMENT: create PENDING booking ──
+      if (requiredDepositAmount > 0 && payableNow > 0) {
+        const shopBooking = await tx.shopBooking.create({
+          data: {
+            shopId: shop.id,
+            clientId: client?.id,
+            vehicleId: vehicle?.id,
+            appointmentDate,
+            appointmentTime: appointmentStartTime,
+            status: "PENDING",
+            depositRequired: requiredDepositAmount,
+            pendingGiftCardCode: normalizedGiftCardCode || undefined,
+            customerNotes: notes || undefined,
+          } as any,
+        });
+
+        await createServiceSnapshots(shopBooking.id);
+
+        return NextResponse.json(
+          {
+            success: true,
+            message:
+              "Booking created. Please complete the deposit to confirm.",
+            data: {
+              shopBookingId: shopBooking.id,
+              status: shopBooking.status,
+              client: {
+                firstName: client?.firstName,
+                lastName: client?.lastName,
+                email: client?.email,
+                mobile: client?.mobile,
+              },
+              vehicle: {
+                year: vehicle?.year,
+                make: vehicle?.make,
+                model: vehicle?.model,
+              },
+              services: selectedServices.map(srv => ({
+                title: srv.title,
+                price: srv.price,
+              })),
+              totals: {
+                subtotal,
+                tax: taxAmount,
+                serviceFee: serviceFeeAmount,
+                grandTotal: adjustedGrandTotal,
+                giftCardRedeemed: 0,
+                depositRequired: requiredDepositAmount,
+                depositPaid: 0,
+                balanceDue: adjustedGrandTotal,
+                payableNow,
+                giftCardCovered: giftCovered,
+              },
+            },
+          },
+          { status: 200 },
+        );
+      }
+
+      // ── Gift card covers deposit fully: redeem now ──
+      let giftCardRedeemedAmount = 0;
+      if (giftCovered > 0 && normalizedGiftCardCode) {
+        const gc = await tx.issuedGiftCard.findFirst({
+          where: { code: normalizedGiftCardCode, companyId },
+          select: { id: true, currentBalance: true },
+        });
+
+        if (gc) {
+          giftCardRedeemedAmount = giftCovered;
+          const newBal = roundMoney(Number(gc.currentBalance || 0) - giftCovered);
+
+          await tx.issuedGiftCard.updateMany({
+            where: {
+              id: gc.id,
+              companyId,
+              currentBalance: { gte: new Prisma.Decimal(giftCovered) },
+            },
+            data: {
+              currentBalance: new Prisma.Decimal(newBal),
+              status: newBal <= 0 ? "DEPLETED" : "ACTIVE",
+            },
+          });
+
+          await tx.giftCardTransaction.create({
+            data: {
+              giftCardId: gc.id,
+              type: "REDEMPTION",
+              amount: new Prisma.Decimal(-giftCovered),
+              balanceAfter: new Prisma.Decimal(newBal),
+              referenceId: `SHOP-BOOKING-GC-FULL`,
+              notes: "Gift card fully covered deposit at booking",
+            },
+          });
+        }
+      }
+
+      const finalGrandTotal = roundMoney(
+        adjustedGrandTotal - giftCardRedeemedAmount,
+      );
+
+      // ── CONFIRMED: no deposit needed OR gift card covers deposit ──
       const estimateResult = await createInvoice({
         invoiceId: estimateId,
         type: "Estimate",
@@ -1383,8 +1493,8 @@ export async function POST(req: Request) {
         deposit: 0,
         depositNotes: "",
         depositMethod: "",
-        grandTotal: adjustedGrandTotal,
-        due: adjustedGrandTotal,
+        grandTotal: finalGrandTotal,
+        due: finalGrandTotal,
         internalNotes: "",
         terms: shop.company.terms || "",
         policy: shop.company.policy || "",
@@ -1412,7 +1522,6 @@ export async function POST(req: Request) {
       const estimate = estimateResult.data;
       createdEstimateId = estimate.id;
 
-      // Mark lead as estimate created if exists
       if (client?.leadId) {
         await tx.lead.update({
           where: { id: client?.leadId },
@@ -1420,7 +1529,6 @@ export async function POST(req: Request) {
         });
       }
 
-      // 9. Create Appointment
       const slotInterval = bookingSettings.slotInterval;
       const endTime = moment(appointmentStartTime, "HH:mm")
         .add(slotInterval, "minutes")
@@ -1435,7 +1543,7 @@ export async function POST(req: Request) {
         vehicleId: vehicle?.id,
         notes: notes || undefined,
         draftEstimate: estimate.id,
-        timezone: "UTC", // Defaulting, you might obtain from shop.company.timezone
+        timezone: "UTC",
         assignedUsers: [findCompanyAdminUser.id],
         forceCompanyId: companyId,
         forceUserId: findCompanyAdminUser?.id,
@@ -1454,129 +1562,48 @@ export async function POST(req: Request) {
       const appointment = appointmentResult.data;
       createdAppointmentId = appointment.id;
 
-      // 10. Create ShopBooking History
       const shopBooking = await tx.shopBooking.create({
         data: {
           shopId: shop.id,
           clientId: client?.id,
+          vehicleId: vehicle?.id,
           appointmentId: appointment.id,
           invoiceId: estimate.id,
-          status: shopBookingStatus,
+          appointmentDate,
+          appointmentTime: appointmentStartTime,
+          status: "CONFIRMED",
           customerNotes: notes || undefined,
         },
       });
 
-      // Create snapshot entries for the services in ShopBookingService
-      for (const srv of selectedServices) {
-        const userInput = shopServices.find(
-          (s: any) => s.shopServiceId === srv.id,
-        );
-        let modifierPrice = 0;
-        let modifierType: string | null = null;
+      await createServiceSnapshots(shopBooking.id);
 
-        if (userInput?.vehicleType) {
-          const vt = userInput.vehicleType.toLowerCase();
-          if (vt === "truck") {
-            modifierType = "Truck";
-            modifierPrice = Number(srv.modifierTruck || 0);
-          } else if (vt === "suv") {
-            modifierType = "SUV";
-            modifierPrice = Number(srv.modifierSUV || 0);
-          } else if (vt === "sedan") {
-            modifierType = "Sedan";
-            modifierPrice = Number(srv.modifierSedan || 0);
-          } else if (vt === "coupe") {
-            modifierType = "Coupe";
-            modifierPrice = Number(srv.modifierCoupe || 0);
-          } else {
-            modifierType = userInput.vehicleType; // fallback just in case
-          }
-        }
+      await sendBookingConfirmation({
+        client: {
+          id: client!.id,
+          firstName: client!.firstName,
+          email: client?.email,
+          mobile: client?.mobile,
+        },
+        shop: {
+          companyId: shop.companyId,
+          company: shop.company,
+        },
+        appointment: {
+          date: appointmentDate,
+          startTime: appointmentStartTime,
+        },
+        vehicle: vehicle
+          ? {
+              year: vehicle.year,
+              make: vehicle.make,
+              model: vehicle.model,
+            }
+          : null,
+        services: selectedServices.map((s: any) => ({ title: s.title })),
+        isDeposit: false,
+      });
 
-        await tx.shopBookingService.create({
-          data: {
-            shopBookingId: shopBooking.id,
-            shopServiceId: srv.id,
-            title: srv.title,
-            price: srv.price,
-            duration: srv.duration,
-            modifierType: modifierType as any,
-            modifierPrice,
-          },
-        });
-      }
-
-      let remainingGiftCardBalance: number | null = null;
-      if (redeemGiftCard && giftCardRedeemedAmount > 0) {
-        const nextBalance = roundMoney(
-          redeemGiftCard.currentBalance - giftCardRedeemedAmount,
-        );
-
-        const updateResult = await tx.issuedGiftCard.updateMany({
-          where: {
-            id: redeemGiftCard.id,
-            companyId,
-            currentBalance: {
-              gte: new Prisma.Decimal(giftCardRedeemedAmount),
-            },
-          },
-          data: {
-            currentBalance: new Prisma.Decimal(nextBalance),
-            status: nextBalance <= 0 ? "DEPLETED" : "ACTIVE",
-          },
-        });
-
-        if (updateResult.count === 0) {
-          throw new AppError(
-            409,
-            "Gift card balance changed while processing booking. Please retry.",
-          );
-        }
-
-        await tx.giftCardTransaction.create({
-          data: {
-            giftCardId: redeemGiftCard.id,
-            type: "REDEMPTION",
-            amount: new Prisma.Decimal(-giftCardRedeemedAmount),
-            balanceAfter: new Prisma.Decimal(nextBalance),
-            referenceId: `SHOP-BOOKING-${shopBooking.id}`,
-            notes: "Redeemed in virtual shop service booking checkout",
-          },
-        });
-
-        remainingGiftCardBalance = nextBalance;
-      }
-
-      // Send Confirmation via reusable helper
-      if (shopBookingStatus === "CONFIRMED") {
-        await sendBookingConfirmation({
-          client: {
-            id: client!.id,
-            firstName: client!.firstName,
-            email: client?.email,
-            mobile: client?.mobile,
-          },
-          shop: {
-            companyId: shop.companyId,
-            company: shop.company,
-          },
-          appointment: {
-            date: appointmentDate,
-            startTime: appointmentStartTime,
-          },
-          vehicle: vehicle
-            ? {
-                year: vehicle.year,
-                make: vehicle.make,
-                model: vehicle.model,
-              }
-            : null,
-          services: selectedServices.map((s: any) => ({ title: s.title })),
-          isDeposit: false,
-        });
-      }
-
-      // Return success response
       return NextResponse.json(
         {
           success: true,
@@ -1611,17 +1638,10 @@ export async function POST(req: Request) {
               serviceFee: serviceFeeAmount,
               grandTotal: Number(estimate.grandTotal),
               giftCardRedeemed: giftCardRedeemedAmount,
-              depositRequired: requiredDepositAmount,
+              depositRequired: 0,
               depositPaid: 0,
               balanceDue: Number(estimate.due),
             },
-            giftCardRedemption: redeemGiftCard
-              ? {
-                  code: redeemGiftCard.code,
-                  redeemedAmount: giftCardRedeemedAmount,
-                  remainingBalance: Number(remainingGiftCardBalance || 0),
-                }
-              : null,
           },
         },
         { status: 200 },
