@@ -23,6 +23,7 @@ export function useCalendarFilters({
   selectedTeamMateIds,
   selectedCategoryIds,
   dateRange,
+  weekendDays,
 }: UseCalendarFiltersParams) {
   // Merge task users and appointment technicians into a single "team mate" list
   const teamMateOptions = useMemo(() => {
@@ -99,8 +100,9 @@ export function useCalendarFilters({
       tasks: filteredTasks,
       holidays,
       dateRange,
+      weekendDays,
     });
-  }, [filteredTasks, filteredAppointments, holidays, dateRange]);
+  }, [filteredTasks, filteredAppointments, holidays, dateRange, weekendDays]);
 
   return {
     teamMateOptions,
