@@ -67,6 +67,7 @@ export const Checkout = () => {
     selectedSlot,
     setSelectedSlot,
     setCustomerInfo,
+    bookingTotals,
     setBookingTotals,
     setEstimateId,
     isReturningClient,
@@ -110,6 +111,9 @@ export const Checkout = () => {
     balance: number;
   } | null>(null);
   const [serverDepositRequired, setServerDepositRequired] = useState<
+    number | null
+  >(null);
+  const [payableDepositAmount, setPayableDepositAmount] = useState<
     number | null
   >(null);
   const hasHandledStripeReturn = useRef(false);
@@ -297,7 +301,6 @@ export const Checkout = () => {
     try {
       const snapshot = JSON.parse(raw) as {
         bookingId?: string;
-        estimateId?: string;
         selectedDate?: string;
         selectedSlot?: any;
         customerInfo?: CustomerInfo;
@@ -312,10 +315,6 @@ export const Checkout = () => {
 
       if (snapshot.bookingId) {
         setCreatedBookingId(snapshot.bookingId);
-      }
-
-      if (snapshot.estimateId) {
-        setEstimateId(snapshot.estimateId);
       }
 
       if (snapshot.selectedDate) {
@@ -347,11 +346,40 @@ export const Checkout = () => {
         });
       }
 
-      setStep("confirmation");
-      successToast("Deposit payment successful. Booking confirmed.");
-      sessionStorage.removeItem("virtualShopPendingBooking");
-      clearPaymentQueryParams();
-      setIsResolvingBookingReturn(false);
+      // The webhook handles confirmation (creates invoice + appointment).
+      // We just fetch the result to get the invoiceId for "View Estimate".
+      const finalize = async () => {
+        if (snapshot.bookingId) {
+          try {
+            const res = await axios.get(
+              `/api/virtual-shop/service-booking/${snapshot.bookingId}/confirm`,
+            );
+            const data = res?.data?.data;
+            if (data?.invoiceId) {
+              setEstimateId(data.invoiceId);
+            }
+            // Update totals from the confirmed booking (includes gift card)
+            if (data?.totals) {
+              const t = data.totals;
+              setBookingTotals({
+                ...(bookingTotals || ({} as BookingTotals)),
+                grandTotal: Number(t.grandTotal || 0),
+                giftCardRedeemed: Number(t.giftCardRedeemed || 0),
+              });
+            }
+          } catch {
+            // Webhook may still be processing — "View Estimate" will handle gracefully
+          }
+        }
+
+        setStep("confirmation");
+        successToast("Deposit payment successful. Booking confirmed.");
+        sessionStorage.removeItem("virtualShopPendingBooking");
+        clearPaymentQueryParams();
+        setIsResolvingBookingReturn(false);
+      };
+
+      finalize();
     } catch {
       setStep("confirmation");
       successToast("Payment successful!");
@@ -441,7 +469,7 @@ export const Checkout = () => {
         model: normalizedModel,
         year: parsedYear,
         notes: form.notes.trim() || undefined,
-        giftCardCode: appliedGiftCard?.code,
+        giftCardCode: appliedGiftCard?.code || undefined,
       });
 
       const client = response?.data?.client;
@@ -483,15 +511,20 @@ export const Checkout = () => {
       successToast(response?.message || "Booking created successfully");
 
       const newBookingId = response?.data?.shopBookingId;
-      const depositRequiredNow = Number(normalizedTotals?.depositRequired || 0);
+      const responseStatus = response?.data?.status;
 
-      if (depositRequiredNow > 0 && newBookingId && shop?.companyId) {
+      // Backend handles all cases:
+      // - CONFIRMED: no deposit, or gift card fully covered deposit (everything created)
+      // - PENDING: needs payment via gateway (no invoice/appointment yet)
+      if (responseStatus === "PENDING" && newBookingId && shop?.companyId) {
+        const payableNow = Number(
+          (apiTotals as any)?.payableNow || apiTotals?.depositRequired || 0,
+        );
+
         sessionStorage.setItem(
           "virtualShopPendingBooking",
           JSON.stringify({
             bookingId: newBookingId.toString(),
-            estimateId: response?.data?.estimateId ?? null,
-            depositRequired: depositRequiredNow,
             selectedDate: selectedDate?.toISOString(),
             selectedSlot,
             bookingTotals: normalizedTotals,
@@ -513,6 +546,7 @@ export const Checkout = () => {
           }),
         );
 
+        setPayableDepositAmount(payableNow);
         setCreatedBookingId(newBookingId.toString());
         setShowPayNowModal(true);
         successToast(
@@ -1046,7 +1080,7 @@ export const Checkout = () => {
 
       {createdBookingId && shop?.companyId && (
         <PayNow
-          due={effectiveDepositDue.toString()}
+          due={(payableDepositAmount ?? effectiveDepositDue).toString()}
           shopBookingId={createdBookingId}
           companyId={shop.companyId}
           mode="virtual_shop"
@@ -1061,6 +1095,7 @@ export const Checkout = () => {
             paymentGateway: gatewayInfo?.paymentGateway || "BOTH",
             hasStripe: gatewayInfo?.hasStripe ?? true,
             hasAuthorizeNet: gatewayInfo?.hasAuthorizeNet ?? true,
+            tipEnabled: gatewayInfo?.tipEnabled ?? false,
           }}
         />
       )}

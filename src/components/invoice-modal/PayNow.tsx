@@ -375,9 +375,9 @@ export function PayNow({
   const tipAmount = customTip
     ? parseFloat(customTip || "0")
     : selectedTipPercent
-      ? Math.round(baseAmount * (selectedTipPercent / 100))
+      ? parseFloat((baseAmount * (selectedTipPercent / 100)).toFixed(2))
       : 0;
-  const totalAmount = baseAmount + tipAmount;
+  const totalAmount = parseFloat((baseAmount + tipAmount).toFixed(2));
 
   const gatewayName = selectedGateway === "STRIPE" ? "Stripe" : "Authorize.Net";
 
@@ -532,7 +532,7 @@ export function PayNow({
                   </div>
                   <div className="flex gap-2">
                     {tipPercentages.map((percent) => {
-                      const tipVal = Math.round(baseAmount * (percent / 100));
+                      const tipVal = parseFloat((baseAmount * (percent / 100)).toFixed(2));
                       const isSelected =
                         selectedTipPercent === percent && !customTip;
                       return (
@@ -551,7 +551,7 @@ export function PayNow({
                               : "bg-white text-gray-700 border-gray-300 hover:border-[#6571ff]"
                           }`}
                         >
-                          {percent}% | ${tipVal}
+                          {percent}% | ${tipVal.toFixed(2)}
                           {isSelected && " \u2713"}
                         </button>
                       );
@@ -582,7 +582,7 @@ export function PayNow({
                 {/* Total */}
                 <div className="flex justify-end">
                   <span className="text-base font-bold">
-                    Total: ${totalAmount.toFixed(0)}
+                    Total: ${totalAmount.toFixed(2)}
                   </span>
                 </div>
               </>

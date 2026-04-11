@@ -42,6 +42,7 @@ export interface GiftCardGatewayInfo {
   paymentGateway: "STRIPE" | "AUTHORIZE_NET" | "BOTH";
   hasStripe: boolean;
   hasAuthorizeNet: boolean;
+  tipEnabled?: boolean;
 }
 
 export interface GiftCardShopInfo {

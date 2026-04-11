@@ -597,7 +597,7 @@ const PDFComponent = function PDF({
     ["subtotal", invoice.subtotal],
     ["discount", invoice.discount],
     ["tax", invoice.tax],
-    ["vehicle extra cost", invoice.vehicleExtraCost],
+    // ["vehicle extra cost", invoice.vehicleExtraCost],
     ["shop supplies", invoice?.serviceFee],
     ["grand total", invoice.grandTotal],
     ["deposit", invoice.deposit],
@@ -625,8 +625,7 @@ const PDFComponent = function PDF({
       const pct = Number(value) || 0;
       if (pct === 0) return "0%";
       const amount = formatCurrency(
-        (Number((invoice.subtotal as any) - (invoice.discount as any)) * pct) /
-        100,
+        (Number(invoice.subtotal as any) * pct) / 100,
       );
       return `${pct}% (${amount})`;
     }

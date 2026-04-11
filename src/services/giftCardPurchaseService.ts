@@ -52,6 +52,7 @@ interface ShopPurchaseContext {
     stripeAccountId: string | null;
     authorizeNetApiLoginId: string | null;
     authorizeNetTransactionKey: string | null;
+    tipEnabled: boolean;
   };
 }
 
@@ -123,6 +124,7 @@ export async function buildGiftCardPurchaseContext(
           stripeAccountId: true,
           authorizeNetApiLoginId: true,
           authorizeNetTransactionKey: true,
+          tipEnabled: true,
         },
       },
     },
