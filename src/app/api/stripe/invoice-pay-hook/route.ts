@@ -2,7 +2,7 @@ import { convertInvoicePublic } from "@/actions/estimate/invoice/convert";
 import { db } from "@/lib/db";
 import { sendPaymentReceivedNotification } from "@/lib/notification/payment-notify";
 import { settleGiftCardReloadPayment } from "@/services/giftCardReloadSettlementService";
-import { updateVirtualShopDeposit } from "@/services/virtualShopDepositService";
+import { confirmShopBooking } from "@/services/confirmShopBooking";
 import { env } from "next-runtime-env";
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
@@ -84,28 +84,22 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // Handle virtual shop deposits
+      // Handle virtual shop deposits — confirm the booking (creates invoice + appointment)
       if (
         paymentData.payType === "virtual_shop_deposit" &&
         paymentData.shopBookingId
       ) {
-        const result = await updateVirtualShopDeposit(
-          paymentData.shopBookingId,
-          Number(paymentData.amount),
-        );
-
-        const shopBooking = await db.shopBooking.findUnique({
-          where: { id: Number(paymentData.shopBookingId) },
+        const result = await confirmShopBooking({
+          shopBookingId: paymentData.shopBookingId,
+          cashPaid: Number(paymentData.amount),
         });
 
-        const invoiceId =
-          paymentData.invoiceId ?? shopBooking?.invoiceId ?? null;
+        const invoiceId = result.invoiceId ?? null;
 
-        // Try to record the payment in StripePayment for idempotency checking
         const depositPayment = await db.payment.create({
           data: {
             companyId: paymentData.companyId,
-            invoiceId: invoiceId,
+            invoiceId,
             amount: paymentData.amount,
             type: "DEPOSIT",
             date: new Date(),
@@ -123,7 +117,7 @@ export async function POST(req: NextRequest) {
             stripePaymentIntentId: paymentIntent.id,
             companyId: paymentData.companyId,
             paymentId: depositPayment.id,
-            invoiceId: invoiceId,
+            invoiceId,
           },
         });
 

@@ -77,6 +77,7 @@ export async function POST(req: Request) {
               paymentGateway: context.shop.company.paymentGateway,
               hasStripe,
               hasAuthorizeNet,
+              tipEnabled: context.shop.company.tipEnabled ?? false,
             },
           },
         },
