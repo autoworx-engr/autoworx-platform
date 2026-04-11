@@ -12,6 +12,8 @@ import {
 } from "../../data/gift-card-types";
 import axios from "axios";
 import { errorToast, successToast } from "@/lib/toast";
+import { useParams } from "next/navigation";
+import { useGetShopBySlug } from "@/hooks/virtual-shop/service/useShopService";
 
 interface Props {
   presets: GiftCardAmountPresets;
@@ -28,9 +30,13 @@ interface PendingGiftCardReloadCheckout {
 }
 
 const PENDING_RELOAD_STORAGE_KEY = "virtualShopGiftCardPendingReload";
-const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 const ReloadGiftCard = ({ presets }: Props) => {
+  const params = useParams();
+  const slug = String(params?.subdomain || "");
+  const { data: shop } = useGetShopBySlug(slug);
+
   const [code, setCode] = useState("");
 
   const [looked, setLooked] = useState(false);
@@ -183,7 +189,7 @@ const ReloadGiftCard = ({ presets }: Props) => {
           }
 
           const reloadData = response.data.data;
-          setFound((prev) => ({
+          setFound(prev => ({
             maskedCode:
               reloadData.maskedCode || prev?.maskedCode || checkout.maskedCode,
             balance: Number(reloadData.balance || 0),
@@ -280,7 +286,10 @@ const ReloadGiftCard = ({ presets }: Props) => {
       const res = await axios.get(
         "/api/virtual-shop/issued-gift-card/check-balance",
         {
-          params: { code: code.trim().toUpperCase() },
+          params: {
+            code: code.trim().toUpperCase(),
+            companyId: shop?.companyId,
+          },
         },
       );
       if (res.data.success) {
@@ -474,11 +483,11 @@ const ReloadGiftCard = ({ presets }: Props) => {
         <Input
           placeholder="Enter gift card code (e.g. AWX-7F3K-9M2P)"
           value={code}
-          onChange={(e) => {
+          onChange={e => {
             setCode(e.target.value.toUpperCase());
             setLooked(false);
           }}
-          onKeyDown={(e) => {
+          onKeyDown={e => {
             if (e.key === "Enter") handleLookup();
           }}
           className="uppercase font-mono"

@@ -74,9 +74,9 @@ export const Checkout = () => {
     setIsReturningClient,
     settings,
   } = useBooking();
-  const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const params = useParams();
   const slug = String(params?.subdomain || "");
   const { data: shop } = useGetShopBySlug(slug);
   const { data: gatewayInfo } = useServerGet(
@@ -149,7 +149,7 @@ export const Checkout = () => {
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [timeLeft]);
 
   const formatTime = (s: number) =>
     `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;

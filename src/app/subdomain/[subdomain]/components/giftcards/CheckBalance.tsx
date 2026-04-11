@@ -5,8 +5,14 @@ import { Badge } from "@/components/ui/badge";
 
 import { Search, Shield, Wallet, Loader2 } from "lucide-react";
 import axios from "axios";
+import { useParams } from "next/navigation";
+import { useGetShopBySlug } from "@/hooks/virtual-shop/service/useShopService";
 
 const CheckBalance = () => {
+  const params = useParams();
+  const slug = String(params?.subdomain || "");
+  const { data: shop } = useGetShopBySlug(slug);
+
   const [code, setCode] = useState("");
   const [looked, setLooked] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -30,7 +36,10 @@ const CheckBalance = () => {
       const res = await axios.get(
         "/api/virtual-shop/issued-gift-card/check-balance",
         {
-          params: { code: code.trim().toUpperCase() },
+          params: {
+            code: code.trim().toUpperCase(),
+            companyId: shop?.companyId,
+          },
         },
       );
       if (res.data.success) {
