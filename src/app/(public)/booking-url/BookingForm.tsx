@@ -1,6 +1,5 @@
 "use client";
 
-import { getBookingAppointmentTitles } from "@/actions/appointment/getBookingAppoinmentTitles";
 import { getCompanyCalendarSettings } from "@/actions/booking/getCompanyCalendarSettings";
 import {
   getAppointmentByDateTime,
@@ -31,11 +30,6 @@ type FormData = {
   notes: string;
   countryCode: string;
 };
-type AppointmentTitle = {
-  id: number;
-  title: string;
-  createdAt: Date;
-};
 
 const BookingForm = () => {
   const searchParams = useSearchParams();
@@ -48,10 +42,6 @@ const BookingForm = () => {
 
   const [timeOptions, setTimeOptions] = useState<
     { value: string; label: string }[]
-  >([]);
-
-  const [appointmentTitles, setAppointmentTitles] = useState<
-    AppointmentTitle[]
   >([]);
 
   // Add state for company info if needed
@@ -95,7 +85,7 @@ const BookingForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string>("");
   const [date, setDate] = useState<string | undefined>(
-    moment().toISOString().split("T")[0]
+    moment().toISOString().split("T")[0],
   );
   const [minDate, setMinDate] = useState<string>("");
   const isToday = date
@@ -104,34 +94,24 @@ const BookingForm = () => {
     : false;
 
   useEffect(() => {
-    getBookingAppointmentTitles().then((res) => {
-      if (res.type === "success") {
-        setAppointmentTitles(res.data);
-      } else {
-        console.error(res.message);
-      }
-    });
-  }, []);
-
-  useEffect(() => {
     const updateTimeOptions = async () => {
       if (formData.date) {
-        // console.log("Updating time options for date:", formData.date);
+        console.log("Updating time options for date:", formData.date);
         const getAppointmentByDate = await getAppointmentByDateTime(
           Number(companyId),
-          formData.date
+          formData.date,
         );
-        // console.log(
-        //   "Existing appointments on this date:",
-        //   getAppointmentByDate
-        // );
+        console.log(
+          "Existing appointments on this date:",
+          getAppointmentByDate,
+        );
 
         const options = getTimeOptions();
         // Filter out already booked times
         const filteredOptions = options.filter((option) => {
           const isBooked =
             getAppointmentByDate?.filter(
-              (appt) => appt.startTime === option.value
+              (appt) => appt.startTime === option.value,
             ).length ?? 0;
           return isBooked < (bookingForm?.stack || 6);
         });
@@ -182,7 +162,7 @@ const BookingForm = () => {
   useEffect(() => {
     if (formData.startTime && formData.date) {
       const appointmentDateTime = moment(
-        `${formData.date} ${formData.startTime}`
+        `${formData.date} ${formData.startTime}`,
       );
       const now = moment();
 
@@ -195,7 +175,7 @@ const BookingForm = () => {
       // Check if the selected time is still available in the current options
       const availableOptions = timeOptions;
       const isTimeAvailable = availableOptions.some(
-        (option) => option.value === formData.startTime
+        (option) => option.value === formData.startTime,
       );
 
       if (!isTimeAvailable) {
@@ -381,7 +361,7 @@ const BookingForm = () => {
     } else {
       // Check if the appointment is in the future
       const appointmentDateTime = moment(
-        `${formData.date} ${formData.startTime}`
+        `${formData.date} ${formData.startTime}`,
       );
       const now = moment();
 
@@ -391,7 +371,7 @@ const BookingForm = () => {
         // Additional validation - check if selected time is still available
         const availableOptions = timeOptions;
         const isTimeAvailable = availableOptions.some(
-          (option) => option.value === formData.startTime
+          (option) => option.value === formData.startTime,
         );
 
         if (!isTimeAvailable) {
@@ -459,7 +439,7 @@ const BookingForm = () => {
       const result = await processBooking(
         bookingData,
         companyId,
-        bookingForm?.id!
+        bookingForm?.id!,
       );
 
       if (result.success) {
@@ -514,7 +494,7 @@ const BookingForm = () => {
           height={80}
           className={cn(
             !companyInfo?.image && "bg-white",
-            "w-20 h-20 rounded-full mx-auto mb-4"
+            "w-20 h-20 rounded-full mx-auto mb-4",
           )}
         />
 
@@ -565,7 +545,7 @@ const BookingForm = () => {
           height={56}
           className={cn(
             !companyInfo?.image && "bg-white",
-            "w-14 h-14 rounded-full border-2 border-white"
+            "w-14 h-14 rounded-full border-2 border-white",
           )}
         />
         <div>
@@ -601,43 +581,36 @@ const BookingForm = () => {
 
             <select
               id="title-select"
-              value={formData.title}
-              onChange={(e) => {
-                const value = e.target.value;
-                setFormData((prev) => ({ ...prev, title: value }));
-                if (error.title) {
-                  setError((prev) => {
-                    const newErrors = { ...prev };
-                    delete newErrors.title;
-                    return newErrors;
-                  });
-                }
-              }}
+              value={selectedTitleOption}
+              onChange={(e) => handleTitleSelection(e.target.value)}
               className={cn(
                 slimInputClassName,
                 "h-[33px] px-3 w-full",
                 inputClass,
-                error.title && "border-red-500 focus-visible:ring-red-500"
+                error.title && "border-red-500 focus-visible:ring-red-500",
               )}
+              required
             >
               <option value="">Select appointment type...</option>
-
-              {availableTitleOptions.map((title) => (
-                <option key={title} value={title}>
-                  {title}
+              {availableTitleOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option === "Custom" ? "Custom (Enter your own)" : option}
                 </option>
               ))}
-
-              {appointmentTitles.length > 0 && (
-                <>
-                  {appointmentTitles.map((item) => (
-                    <option key={item.id} value={item.title}>
-                      {item.title}
-                    </option>
-                  ))}
-                </>
-              )}
             </select>
+
+            {/* Custom title input - only show when "Custom" is selected */}
+            {selectedTitleOption === "Custom" && (
+              <SlimInput
+                value={customTitle}
+                onChange={(e) => handleCustomTitleChange(e.target.value)}
+                name="customTitle"
+                label="Enter Custom Title"
+                placeholder="Enter your custom appointment title"
+                required
+                className={`${inputClass}`}
+              />
+            )}
 
             {error.title && (
               <p className="text-sm text-red-600 mt-1">{error.title}</p>
@@ -674,7 +647,7 @@ const BookingForm = () => {
                     "h-[33px] w-full font-semibold text-gray-600",
                     inputClass,
                     error.startTime &&
-                      "border-red-500 focus-visible:ring-red-500"
+                      "border-red-500 focus-visible:ring-red-500",
                   )}
                   dropdownStyle={{
                     maxHeight: "300px",
@@ -691,14 +664,14 @@ const BookingForm = () => {
                   <p
                     className={cn(
                       "text-xs text-gray-500 mt-1",
-                      timeOptions.length === 0 && "text-red-500"
+                      timeOptions.length === 0 && "text-red-500",
                     )}
                   >
                     {(() => {
                       const selectedDate = moment(formData.date);
                       const isSelectedDateToday = selectedDate.isSame(
                         moment(),
-                        "day"
+                        "day",
                       );
                       const dayStart = calendarSettings.dayStart || "08:00";
                       const dayEnd = calendarSettings.dayEnd || "18:00";
@@ -812,7 +785,7 @@ const BookingForm = () => {
                 className={cn(
                   "w-full px-3 py-2 border border-gray-300 rounded-md resize-none",
                   "focus:border-[#00B4B5] focus:outline-none focus:ring-2 focus:ring-[#00B4B5]",
-                  inputClass
+                  inputClass,
                 )}
               />
             </div>
