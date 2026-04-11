@@ -24,6 +24,7 @@ type TProps = {
       isFromInventory: boolean;
     }[];
   })[];
+  total: number;
   timezone: string | Date;
   page?: number;
   take?: number;
@@ -31,6 +32,7 @@ type TProps = {
 
 export default function RevenueDisplay({
   filteredInvoice,
+  total,
   timezone,
   page,
   take,
@@ -39,20 +41,23 @@ export default function RevenueDisplay({
   const [currentPage, setCurrentPage] = useState(page || 1);
   const [pageSize, setPageSize] = useState(take || 50);
   const [showPagination, setShowPagination] = useState(false);
-  const [filteredInvoices, setFilteredInvoices] = useState(filteredInvoice);
 
   const pathname = usePathname();
   const router = useRouter();
   const params = useSearchParams();
-  const search = params.get("search");
 
   useEffect(() => {
-    if (filteredInvoice.length > 0) {
+    setCurrentPage(page || 1);
+    setPageSize(take || 50);
+  }, [page, take]);
+
+  useEffect(() => {
+    if (total > 0) {
       setShowPagination(true);
     } else {
       setShowPagination(false);
     }
-  }, [filteredInvoice]);
+  }, [total]);
 
   const handlePageChange = (page: number, pageSize?: number) => {
     const searchParams = new URLSearchParams(params.toString());
@@ -67,11 +72,8 @@ export default function RevenueDisplay({
     const newPath = `${pathname}?${searchParams.toString()}`;
     router.push(newPath);
   };
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = currentPage * pageSize;
-  const invoicesToRender = search
-    ? filteredInvoice
-    : filteredInvoice.slice(startIndex, endIndex);
+  // filteredInvoice is already server-paginated
+  const invoicesToRender = filteredInvoice;
 
   if (isDesktop) {
     return (
@@ -116,10 +118,10 @@ export default function RevenueDisplay({
                 if (invoice.inventoryLossAmount > 0) {
                   const inventoryMaterialNames =
                     invoice.InventoryProductHistory?.map(
-                      (item) => item.product?.name
+                      (item) => item.product?.name,
                     ).filter(Boolean);
                   lossDetails.push(
-                    `Inventory Loss: ${inventoryMaterialNames?.join(", ")}`
+                    `Inventory Loss: ${inventoryMaterialNames?.join(", ")}`,
                   );
                 }
 
@@ -129,17 +131,17 @@ export default function RevenueDisplay({
                   invoice.materialLossDetails?.length > 0
                 ) {
                   const materialNames = invoice.materialLossDetails.map(
-                    (detail) => `${detail.name} ($${detail.loss.toFixed(2)})`
+                    (detail) => `${detail.name} ($${detail.loss.toFixed(2)})`,
                   );
                   lossDetails.push(
-                    `Material Loss: ${materialNames.join(", ")}`
+                    `Material Loss: ${materialNames.join(", ")}`,
                   );
                 }
 
                 // Labor losses
                 if (invoice.laborLossAmount > 0) {
                   lossDetails.push(
-                    `Labor Loss: Technician cost exceeds charges ($${invoice.laborLossAmount.toFixed(2)})`
+                    `Labor Loss: Technician cost exceeds charges ($${invoice.laborLossAmount.toFixed(2)})`,
                   );
                 }
 
@@ -163,7 +165,7 @@ export default function RevenueDisplay({
               className="custom-pagination"
               current={currentPage}
               pageSize={pageSize}
-              total={filteredInvoices?.length}
+              total={total}
               onChange={handlePageChange}
               showSizeChanger
               onShowSizeChange={handlePageChange}
@@ -194,7 +196,7 @@ export default function RevenueDisplay({
             className="custom-pagination"
             current={currentPage}
             pageSize={pageSize}
-            total={filteredInvoice?.length}
+            total={total}
             onChange={handlePageChange}
             showSizeChanger
             onShowSizeChange={handlePageChange}

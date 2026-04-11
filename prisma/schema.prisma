@@ -87,6 +87,7 @@ model BookingForm {
   updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
 }
 
+
 // Pipeline Automation Schema
 
 model PipelineAutomationRule {
@@ -717,6 +718,7 @@ model Company {
   BugReport                        BugReport[]
   salaryHistory                    SalaryHistory[]
   appointmentTitles                AppointmentTitle[]
+  
   shortLinks                       ShortLink[]
   smsGateway                       SmsGateway                         @default(TWILIO)
   invoiceTemplates                 InvoiceTemplate[]

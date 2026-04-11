@@ -28,15 +28,15 @@ type FormData = {
   email: string;
   mobile: string;
   notes: string;
-  countryCode:string;
+  countryCode: string;
 };
 
 const BookingForm = () => {
   const searchParams = useSearchParams();
   const refParam = searchParams.get("ref");
   const [companyId, bookingFormId] = refParam ? decodeCompanyId(refParam) : [];
-  const [callingCode, setCallingCode] = useState("+1")
-  const [isoCode, setIsoCode] = useState("")
+  const [callingCode, setCallingCode] = useState("+1");
+  const [isoCode, setIsoCode] = useState("");
   const { data: bookingForm, isLoading: bookingFromLoading } =
     useBookingFormQueryById(Number(bookingFormId));
 
@@ -58,7 +58,7 @@ const BookingForm = () => {
     email: "",
     mobile: "+1",
     notes: "",
-    countryCode: "US"
+    countryCode: "US",
   });
 
   // State for handling title dropdown and custom input
@@ -85,7 +85,7 @@ const BookingForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string>("");
   const [date, setDate] = useState<string | undefined>(
-    moment().toISOString().split("T")[0]
+    moment().toISOString().split("T")[0],
   );
   const [minDate, setMinDate] = useState<string>("");
   const isToday = date
@@ -99,11 +99,11 @@ const BookingForm = () => {
         console.log("Updating time options for date:", formData.date);
         const getAppointmentByDate = await getAppointmentByDateTime(
           Number(companyId),
-          formData.date
+          formData.date,
         );
         console.log(
           "Existing appointments on this date:",
-          getAppointmentByDate
+          getAppointmentByDate,
         );
 
         const options = getTimeOptions();
@@ -111,7 +111,7 @@ const BookingForm = () => {
         const filteredOptions = options.filter((option) => {
           const isBooked =
             getAppointmentByDate?.filter(
-              (appt) => appt.startTime === option.value
+              (appt) => appt.startTime === option.value,
             ).length ?? 0;
           return isBooked < (bookingForm?.stack || 6);
         });
@@ -162,7 +162,7 @@ const BookingForm = () => {
   useEffect(() => {
     if (formData.startTime && formData.date) {
       const appointmentDateTime = moment(
-        `${formData.date} ${formData.startTime}`
+        `${formData.date} ${formData.startTime}`,
       );
       const now = moment();
 
@@ -175,7 +175,7 @@ const BookingForm = () => {
       // Check if the selected time is still available in the current options
       const availableOptions = timeOptions;
       const isTimeAvailable = availableOptions.some(
-        (option) => option.value === formData.startTime
+        (option) => option.value === formData.startTime,
       );
 
       if (!isTimeAvailable) {
@@ -202,7 +202,7 @@ const BookingForm = () => {
     // }
 
     // setFormData((prev) => ({ ...prev, [field]: processedValue }));
-setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
     if (error[field]) {
       setError((prev) => {
         const newErrors = { ...prev };
@@ -361,7 +361,7 @@ setFormData((prev) => ({ ...prev, [field]: value }));
     } else {
       // Check if the appointment is in the future
       const appointmentDateTime = moment(
-        `${formData.date} ${formData.startTime}`
+        `${formData.date} ${formData.startTime}`,
       );
       const now = moment();
 
@@ -371,7 +371,7 @@ setFormData((prev) => ({ ...prev, [field]: value }));
         // Additional validation - check if selected time is still available
         const availableOptions = timeOptions;
         const isTimeAvailable = availableOptions.some(
-          (option) => option.value === formData.startTime
+          (option) => option.value === formData.startTime,
         );
 
         if (!isTimeAvailable) {
@@ -391,8 +391,8 @@ setFormData((prev) => ({ ...prev, [field]: value }));
     if (!formData.mobile.trim()) {
       newError.mobile = "Mobile is required.";
     } else if (formData.mobile.length < 10) {
-    newError.mobile = "Please enter a valid phone number.";
-  }
+      newError.mobile = "Please enter a valid phone number.";
+    }
     //  else if (!/^\+1[\d\s\-$$$$]+$/.test(formData.mobile)) {
     //   newError.mobile =
     //     "Phone number must start with '+1' and contain valid characters.";
@@ -432,14 +432,14 @@ setFormData((prev) => ({ ...prev, [field]: value }));
     try {
       const fullPhoneNumber = `${callingCode}${formData.mobile}`;
       const bookingData = {
-      ...formData,
-      mobile: fullPhoneNumber, 
-    };
+        ...formData,
+        mobile: fullPhoneNumber,
+      };
       // Process the booking
       const result = await processBooking(
         bookingData,
         companyId,
-        bookingForm?.id!
+        bookingForm?.id!,
       );
 
       if (result.success) {
@@ -453,7 +453,7 @@ setFormData((prev) => ({ ...prev, [field]: value }));
           email: "",
           mobile: "+1",
           notes: "",
-          countryCode: "US"
+          countryCode: "US",
         });
         setCallingCode("+1");
         // Reset title selection states
@@ -494,7 +494,7 @@ setFormData((prev) => ({ ...prev, [field]: value }));
           height={80}
           className={cn(
             !companyInfo?.image && "bg-white",
-            "w-20 h-20 rounded-full mx-auto mb-4"
+            "w-20 h-20 rounded-full mx-auto mb-4",
           )}
         />
 
@@ -545,7 +545,7 @@ setFormData((prev) => ({ ...prev, [field]: value }));
           height={56}
           className={cn(
             !companyInfo?.image && "bg-white",
-            "w-14 h-14 rounded-full border-2 border-white"
+            "w-14 h-14 rounded-full border-2 border-white",
           )}
         />
         <div>
@@ -587,7 +587,7 @@ setFormData((prev) => ({ ...prev, [field]: value }));
                 slimInputClassName,
                 "h-[33px] px-3 w-full",
                 inputClass,
-                error.title && "border-red-500 focus-visible:ring-red-500"
+                error.title && "border-red-500 focus-visible:ring-red-500",
               )}
               required
             >
@@ -647,7 +647,7 @@ setFormData((prev) => ({ ...prev, [field]: value }));
                     "h-[33px] w-full font-semibold text-gray-600",
                     inputClass,
                     error.startTime &&
-                      "border-red-500 focus-visible:ring-red-500"
+                      "border-red-500 focus-visible:ring-red-500",
                   )}
                   dropdownStyle={{
                     maxHeight: "300px",
@@ -664,14 +664,14 @@ setFormData((prev) => ({ ...prev, [field]: value }));
                   <p
                     className={cn(
                       "text-xs text-gray-500 mt-1",
-                      timeOptions.length === 0 && "text-red-500"
+                      timeOptions.length === 0 && "text-red-500",
                     )}
                   >
                     {(() => {
                       const selectedDate = moment(formData.date);
                       const isSelectedDateToday = selectedDate.isSame(
                         moment(),
-                        "day"
+                        "day",
                       );
                       const dayStart = calendarSettings.dayStart || "08:00";
                       const dayEnd = calendarSettings.dayEnd || "18:00";
@@ -746,29 +746,29 @@ setFormData((prev) => ({ ...prev, [field]: value }));
               /> */}
 
               <PhoneInput
-  // value={formData.mobile}
-  onChange={(phone, code, isoCode) => {
-    setFormData(prev => ({
-      ...prev,
-      mobile: phone,
-      countryCode: isoCode
-    }));
-    setCallingCode(code);
-   
-    if (error.mobile) {
-      setError(prev => {
-        const newErrors = { ...prev };
-        delete newErrors.mobile;
-        return newErrors;
-      });
-    }
-  }}
-  label="Mobile"
-  placeholder="1234567890"
-  required
-  error={error.mobile}
-  // defaultIsoCode="US" 
-/>
+                // value={formData.mobile}
+                onChange={(phone, code, isoCode) => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    mobile: phone,
+                    countryCode: isoCode,
+                  }));
+                  setCallingCode(code);
+
+                  if (error.mobile) {
+                    setError((prev) => {
+                      const newErrors = { ...prev };
+                      delete newErrors.mobile;
+                      return newErrors;
+                    });
+                  }
+                }}
+                label="Mobile"
+                placeholder="1234567890"
+                required
+                error={error.mobile}
+                // defaultIsoCode="US"
+              />
             </div>
 
             <div className="space-y-2">
@@ -785,7 +785,7 @@ setFormData((prev) => ({ ...prev, [field]: value }));
                 className={cn(
                   "w-full px-3 py-2 border border-gray-300 rounded-md resize-none",
                   "focus:border-[#00B4B5] focus:outline-none focus:ring-2 focus:ring-[#00B4B5]",
-                  inputClass
+                  inputClass,
                 )}
               />
             </div>

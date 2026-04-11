@@ -1,5 +1,6 @@
 "use client";
 
+import { requestEstimate } from "@/actions/communication/collaboration/requestEstimate";
 import {
   Dialog,
   DialogClose,
@@ -8,14 +9,13 @@ import {
   DialogTrigger,
 } from "@/components/Dialog";
 import { SlimInput } from "@/components/SlimInput";
-import { useState, useTransition } from "react";
-import InvoiceEstimateAttachment from "./InvoiceEstimateAttachment";
-import { requestEstimate } from "@/actions/communication/collaboration/requestEstimate";
-import { useSession } from "next-auth/react";
+import imageCompression from "browser-image-compression";
 import { Session } from "next-auth";
+import { useSession } from "next-auth/react";
+import { useState, useTransition } from "react";
 import toast from "react-hot-toast";
 import { RotatingLines } from "react-loader-spinner";
-import imageCompression from "browser-image-compression";
+import InvoiceEstimateAttachment from "./InvoiceEstimateAttachment";
 
 type TProps = {
   receiverCompany: {
@@ -64,13 +64,16 @@ export default function InvoiceEstimateModal({
 
       if (photos.length > 0) {
         const compressedPhotos = await Promise.all(
-          photos.map((photo) =>
-            imageCompression(photo, {
-              maxSizeMB: 1,
-              maxWidthOrHeight: 1920,
-              useWebWorker: true,
-            }),
-          ),
+          photos.map(async (photo) => {
+            if (photo.type.startsWith("image/")) {
+              return await imageCompression(photo, {
+                maxSizeMB: 1,
+                maxWidthOrHeight: 1920,
+                useWebWorker: true,
+              });
+            }
+            return photo;
+          }),
         );
 
         compressedPhotos.forEach((file) => {
