@@ -11,7 +11,6 @@ import moment from "moment";
 import { useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import styles from "./fullcalendar.module.css";
-
 import { CalendarHeader } from "./CalendarHeader";
 import { CalendarEditModals } from "./CalendarEditModals";
 import { CalendarLoadingOverlay } from "./CalendarLoadingOverlay";
@@ -48,7 +47,6 @@ export default function Calendar({ type }: { type: CalendarType }) {
 
   const { data: session } = useSession();
   const calendarRef = useRef<FullCalendar>(null);
-
   const {
     settings,
     isLoading: isSettingsLoading,
@@ -66,7 +64,6 @@ export default function Calendar({ type }: { type: CalendarType }) {
   const { handleDatesSet: syncStoreDatesSet } =
     useCalendarStoreSync(calendarRef);
   const handleEventDateTimeUpdate = useCalendarEventDateTimeUpdate();
-
   const {
     teamMateOptions,
     categoryOptions,
