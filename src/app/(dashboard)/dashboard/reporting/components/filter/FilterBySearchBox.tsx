@@ -33,6 +33,15 @@ export default function FilterBySearchBox({ searchText, paramKey }: TProps) {
         searchParams.set("search", searchTerm);
       }
     }
+
+    // Keep canned list pagination behavior stable when search changes.
+    if (paramKey === "laborSearch") {
+      searchParams.set("laborPage", "1");
+    }
+    if (paramKey === "serviceSearch") {
+      searchParams.set("servicePage", "1");
+    }
+
     const newPath = `${pathname}?${searchParams.toString()}`;
     router.replace(newPath);
   };
