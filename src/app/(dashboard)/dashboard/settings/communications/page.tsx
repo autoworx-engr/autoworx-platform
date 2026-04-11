@@ -1,5 +1,4 @@
 import { getCompany } from "@/actions/settings/getCompany";
-import BookingAppointmentTitles from "@/components/BookingAppoinmentTitle";
 import BookingGenerate from "@/components/BookingGenerate";
 import CallForwardingSettings from "@/components/CallForwardingSettings";
 import CallWhisperSettings from "@/components/CallWhisperSettings";
@@ -22,7 +21,6 @@ export default async function CommunicationPage() {
         <SecurityPage company={JSON.parse(JSON.stringify(company))} />
         <GoogleReviewSettings initialReviewLink={company?.googleReviewLink} />
         <BookingGenerate companyId={companyId.toString()} />
-        <BookingAppointmentTitles />
       </div>
       {/* Sidebar */}
       <div className="space-y-4 lg:mt-8">
