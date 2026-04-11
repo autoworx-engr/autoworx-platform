@@ -5,22 +5,40 @@ import EditClient from "./EditClient";
 import Link from "next/link";
 import { MessageCircleMore } from "lucide-react";
 
+const DataField = ({ label, value }: { label: string; value: string }) => (
+  <div className="flex items-start py-2">
+    <label className="block w-24 shrink-0 text-sm font-medium text-slate-500 lg:w-28">
+      {label}
+    </label>
+    <div className="flex-1 text-sm font-semibold text-slate-600 leading-relaxed">
+      {value || <span className="text-slate-400 italic">N/A</span>}
+    </div>
+  </div>
+);
+
 export default function ClientInformation({
   client,
 }: {
   client: Client & { tag: Tag | null; source: Source | null };
 }) {
+  const normalizeNamePart = (name: unknown) => {
+    if (typeof name !== "string") return "";
 
-  const DataField = ({ label, value }: { label: string; value: string }) => (
-    <div className="flex items-start py-2">
-      <label className="block w-24 shrink-0 text-sm font-medium text-slate-500 lg:w-28">
-        {label}
-      </label>
-      <div className="flex-1 text-sm font-semibold text-slate-600 leading-relaxed">
-        {value || <span className="text-slate-400 italic">N/A</span>}
-      </div>
-    </div>
-  );
+    const trimmed = name.trim();
+    const lowered = trimmed.toLowerCase();
+
+    if (!trimmed || lowered === "null" || lowered === "undefined") {
+      return "";
+    }
+
+    return trimmed;
+  };
+
+  const fullName = [client.firstName, client.lastName]
+    .map(normalizeNamePart)
+    .filter(Boolean)
+    .join(" ")
+    .trim();
 
   return (
     <div className="mb-3 w-full p-4">
@@ -61,7 +79,7 @@ export default function ClientInformation({
           <div className="w-full divide-y divide-slate-100 lg:w-3/5">
             <DataField
               label="Name"
-              value={`${client.firstName} ${client.lastName}`}
+              value={fullName}
             />
             <DataField
               label="Email"

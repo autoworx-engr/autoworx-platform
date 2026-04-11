@@ -12,6 +12,7 @@ interface StatementPaymentDialogProps {
     paymentGateway: "STRIPE" | "AUTHORIZE_NET" | "BOTH";
     hasStripe: boolean;
     hasAuthorizeNet: boolean;
+    tipEnabled?: boolean;
   };
 }
 

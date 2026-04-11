@@ -72,7 +72,9 @@ const DropdownMenuDemo = ({ pipelineType }: DropdownProps) => {
               label="Status"
               items={[
                 { id: "all", value: "All", label: "All" },
-                ...columnStatus.map((column) => ({
+                ...columnStatus
+                .filter((column)=> column.title !== "Delivered")
+                .map((column) => ({
                   id: column.id,
                   value: column.title,
                   label: column.title,

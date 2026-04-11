@@ -49,7 +49,7 @@ type DraggableLeadProps = {
       index: number;
     } | null>,
   ) => void;
-
+  isTeamPipeline?: boolean;
   showColumnSelect: { [key: string]: boolean };
   pipelineData: ShopPipelineData[];
   handleColumnChange: (
@@ -90,6 +90,7 @@ type DraggableLeadProps = {
   setSelectedVehicleId: (value: SetStateAction<number | null>) => void;
   setIsAppointmentModalOpen: (value: SetStateAction<boolean>) => void;
   searchTerm?: string;
+  userId?: number;
 };
 const DraggableLead = ({
   screenWidth,
@@ -122,6 +123,8 @@ const DraggableLead = ({
   setSelectedVehicleId,
   setIsAppointmentModalOpen,
   searchTerm,
+  userId,
+  isTeamPipeline = false,
 }: DraggableLeadProps) => {
   const leadRef = useRef<HTMLLIElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -135,6 +138,7 @@ const DraggableLead = ({
     if (!element) return;
 
     if (screenWidth < 768) return;
+    if (isTeamPipeline) return;
 
     return combine(
       draggable({
@@ -163,7 +167,7 @@ const DraggableLead = ({
         onDrop: () => setIsDropTarget(false),
       }),
     );
-  }, [categoryIndex, leadIndex, screenWidth, lead.invoiceId]);
+  }, [categoryIndex, leadIndex, screenWidth, lead.invoiceId, isTeamPipeline]);
   const key = `${categoryIndex}-${leadIndex}`;
 
   const getInitials = (employee: Employee | null) => {
@@ -204,16 +208,16 @@ const DraggableLead = ({
         leadRef.current = el;
         if (el) leadRefs.current.set(key, el);
       }}
-      className={`max-w-auto relative mx-1 my-1 h-fit animate-none rounded-xl border p-1 duration-300 hover:bg-slate-100 cursor-grab active:cursor-grabbing  ${
-        isDropTarget ? "ring-2 ring-blue-500 bg-blue-50" : ""
-      } ${highlightMatch ? "bg-yellow-100 border-yellow-300" : "bg-background"}`}
+      className={`max-w-auto relative mx-1 my-1 h-fit animate-none rounded-xl border p-1 duration-300 hover:bg-slate-100 ${
+        isTeamPipeline ? "cursor-default" : "cursor-grab active:cursor-grabbing"
+      } ${isDropTarget ? "ring-2 ring-blue-500 bg-blue-50" : ""} ${highlightMatch ? "bg-yellow-100 border-yellow-300" : "bg-background"}`}
       style={{
         opacity: isDragging ? 0.5 : 1,
       }}
     >
       <div className="flex items-center justify-between">
         <h3 className="font-inter overflow-auto pb-2 font-semibold text-black">
-          {lead.name}
+          {isTeamPipeline && `#${lead.invoiceId}`} {lead.name}
         </h3>
         <div className="flex items-center gap-2">
           <button
@@ -342,6 +346,69 @@ const DraggableLead = ({
         <p className="mb-2 overflow-auto text-xs">{lead.vehicle}</p>
       </div>
 
+      {isTeamPipeline && lead.technicians.length > 0 && userId && (
+        <div className="mb-2 flex flex-col gap-1 rounded-lg bg-slate-50 p-2 text-xs">
+          {lead.technicians
+            .filter((tech) => tech.userId === userId)
+            ?.map((tech) => (
+              <div key={tech.id} className="flex flex-col gap-0.5">
+                <div className="flex items-center justify-between gap-1">
+                  <span
+                    className={`rounded px-1.5 py-0.5 font-semibold ${
+                      tech.status === "Completed"
+                        ? "bg-green-100 text-green-700"
+                        : tech.status === "Pending"
+                          ? "bg-yellow-100 text-yellow-700"
+                          : "bg-gray-100 text-gray-600"
+                    }`}
+                  >
+                    {tech.status ?? "—"}
+                  </span>
+                  <span
+                    className={`rounded px-1.5 py-0.5 font-medium ${
+                      tech.priority === "High"
+                        ? "bg-red-100 text-red-700"
+                        : tech.priority === "Medium"
+                          ? "bg-orange-100 text-orange-700"
+                          : "bg-blue-100 text-blue-700"
+                    }`}
+                  >
+                    {tech.priority ?? "—"}
+                  </span>
+                  {tech.amount != null && (
+                    <span className="ml-auto font-semibold text-gray-700">
+                      ${Number(tech.amount).toFixed(2)}
+                    </span>
+                  )}
+                </div>
+                <div className="flex gap-2 text-gray-500">
+                  {tech.date && (
+                    <span>
+                      Assigned:{" "}
+                      {new Date(tech.date).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </span>
+                  )}
+                  {tech.due && (
+                    <span>
+                      Due:{" "}
+                      {new Date(tech.due).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </span>
+                  )}
+                </div>
+                {tech.note && (
+                  <p className="truncate text-gray-400 italic">{tech.note}</p>
+                )}
+              </div>
+            ))}
+        </div>
+      )}
+
       {/* service code */}
       <ServiceSelector
         services={lead.services.completed
@@ -361,17 +428,20 @@ const DraggableLead = ({
           <p className="overflow-auto pb-2 text-xs">Lead Source</p>
         </div>
       )}
+
       <div className="flex justify-between">
         <div className="flex items-center gap-2">
-          <Link
-            href={`/dashboard/communication/client/${lead.clientId}?chat=true`}
-            className={`group relative mt-1 ${isTechnician ? "hidden" : ""}`}
-          >
-            <MessageCircleMore size={20} />
-            <span className="invisible absolute bottom-full left-14 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-              Communications
-            </span>
-          </Link>
+          {!isTeamPipeline && (
+            <Link
+              href={`/dashboard/communication/client/${lead.clientId}?chat=true`}
+              className={`group relative mt-1 ${isTechnician ? "hidden" : ""}`}
+            >
+              <MessageCircleMore size={20} />
+              <span className="invisible absolute bottom-full left-14 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                Communications
+              </span>
+            </Link>
+          )}
 
           <div className="group relative mx-0 mt-1 p-0">
             <WorkOrderModal
@@ -393,55 +463,59 @@ const DraggableLead = ({
             />
           </div>
 
-          <button
-            onClick={() => {
-              // removeClientIdFromParams();
-              if (!searchParams) return;
-              if (lead?.clientId) {
-                const params = new URLSearchParams(searchParams.toString());
-                params.set("clientId", lead?.clientId?.toString());
-                router.push(`${pathname}?${params.toString()}`);
+          {!isTeamPipeline && (
+            <button
+              onClick={() => {
+                // removeClientIdFromParams();
+                if (!searchParams) return;
+                if (lead?.clientId) {
+                  const params = new URLSearchParams(searchParams.toString());
+                  params.set("clientId", lead?.clientId?.toString());
+                  router.push(`${pathname}?${params.toString()}`);
 
-                setSelectedClientId(lead?.clientId);
-              }
+                  setSelectedClientId(lead?.clientId);
+                }
 
-              if (lead?.vehicleId) {
-                setSelectedVehicleId(lead?.vehicleId);
-              }
-              setIsAppointmentModalOpen(true);
-            }}
-            className="group relative"
-          >
-            <Calendar
-              size={18}
-              className={`mt-1 ${isTechnician ? "hidden" : ""}`}
-            />
-            <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-              Appointment
-            </span>
-          </button>
+                if (lead?.vehicleId) {
+                  setSelectedVehicleId(lead?.vehicleId);
+                }
+                setIsAppointmentModalOpen(true);
+              }}
+              className="group relative"
+            >
+              <Calendar
+                size={18}
+                className={`mt-1 ${isTechnician ? "hidden" : ""}`}
+              />
+              <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                Appointment
+              </span>
+            </button>
+          )}
 
-          <div className="group relative mt-1.5">
-            <TaskForm
-              companyUsers={companyUsers}
-              invoiceId={lead.invoiceId}
-              previousTasks={lead.tasks || []}
-              totalTasksCount={lead?.tasks?.length}
-              isTechnician={isTechnician}
-            />
+          {!isTeamPipeline && (
+            <div className="group relative mt-1.5">
+              <TaskForm
+                companyUsers={companyUsers}
+                invoiceId={lead.invoiceId}
+                previousTasks={lead.tasks || []}
+                totalTasksCount={lead?.tasks?.length}
+                isTechnician={isTechnician}
+              />
 
-            <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-              Add Task
-            </span>
-          </div>
+              <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                Add Task
+              </span>
+            </div>
+          )}
         </div>
         <div className="group relative">
           {/* button */}
           {/* <CirclePlus
-                                              size={24}
-                                              strokeWidth={1.5}
-                                              className="mt-1 cursor-pointer"
-                                            /> */}
+            size={24}
+            strokeWidth={1.5}
+            className="mt-1 cursor-pointer"
+          /> */}
           {/* Invoice id */}
           {(currentUser?.employeeType === "Manager" ||
             currentUser?.employeeType === "Admin" ||

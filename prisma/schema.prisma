@@ -30,7 +30,7 @@ model Appointment {
   times                           Json? // { time: string; date: string }
   createdAt                       DateTime                        @default(now()) @map("created_at")
   updatedAt                       DateTime                        @default(now()) @updatedAt @map("updated_at")
-  user                            User?                            @relation(fields: [userId], references: [id], onDelete: Cascade) 
+  user                            User?                            @relation(fields: [userId], references: [id], onDelete: Cascade)
   company                         Company                         @relation(fields: [companyId], references: [id], onDelete: Cascade)
   appointmentUsers                AppointmentUser[]
   client                          Client?                         @relation(fields: [clientId], references: [id])
@@ -702,6 +702,7 @@ model Company {
   authorizeNetApiLoginId           String?                            @map("authorize_net_api_login_id")
   authorizeNetTransactionKey       String?                            @map("authorize_net_transaction_key")
   paymentGateway                   PaymentGateway                     @default(STRIPE)
+  tipEnabled                       Boolean                            @default(true) @map("tip_enabled")
   timezone                         String?
   stripePayment                    StripePayment[]
   authorizeNetPayment              AuthorizeNetPayment[]

@@ -68,7 +68,6 @@ export default function TaskContentModal({
   } = useTaskById(taskId!, {
     enabled: fromEdit && !!taskId,
   });
-  console.log("taskData", taskData);
   const queryClient = useQueryClient();
   const timezone = useCompanyTimezone();
   const [title, setTitle] = useState("");
@@ -222,6 +221,14 @@ export default function TaskContentModal({
         field: "all",
         message:
           "Start time and End time are required when a date is selected.",
+      });
+      return;
+    }
+
+    if (startTime && endTime && startTime === endTime) {
+      showError({
+        field: "all",
+        message: "Start time and End time cannot be the same.",
       });
       return;
     }
@@ -395,7 +402,7 @@ export default function TaskContentModal({
                   clearError();
                 }
               }}
-              autoFocus
+              autoFocus={false}
             />
           </div>
 
@@ -692,10 +699,9 @@ export default function TaskContentModal({
                     className={`
                       relative flex w-full items-center justify-center gap-2 rounded-lg py-2.5 px-4
                       text-sm font-semibold transition-all duration-300 ease-out
-                      ${
-                        isActive
-                          ? `${item.color} text-white shadow-lg ${item.shadow} scale-[1.03]`
-                          : "bg-slate-50 text-slate-500 ring-1 ring-slate-200 hover:bg-white hover:ring-slate-300 hover:-translate-y-0.5"
+                      ${isActive
+                        ? `${item.color} text-white shadow-lg ${item.shadow} scale-[1.03]`
+                        : "bg-slate-50 text-slate-500 ring-1 ring-slate-200 hover:bg-white hover:ring-slate-300 hover:-translate-y-0.5"
                       }
           `}
                   >
