@@ -147,8 +147,8 @@ const Leads = ({ salesColumn }: TProps) => {
         const fetchPromise = fetch(
           `/api/pipeline/sales/leads?${queryParams.toString()}`,
         )
-          .then(res => res.json())
-          .then(res => {
+          .then((res) => res.json())
+          .then((res) => {
             if (!res.success) throw new Error(res.error);
             return res.data;
           });
@@ -207,7 +207,7 @@ const Leads = ({ salesColumn }: TProps) => {
   const handleAddLead = () => {
     // Clear the processed filters cache when adding a new lead to ensure fresh data
     processedFiltersRef.current.clear();
-    setRefreshKey(prev => prev + 1); // Increment refreshKey to trigger refetch
+    setRefreshKey((prev) => prev + 1); // Increment refreshKey to trigger refetch
   };
 
   // Memoize handlePageChange to prevent unnecessary re-creation
@@ -233,7 +233,7 @@ const Leads = ({ salesColumn }: TProps) => {
     const filterKey = JSON.stringify({
       search,
       filter,
-      dateRange: dateRange?.map(d => d?.toISOString()) || [null, null],
+      dateRange: dateRange?.map((d) => d?.toISOString()) || [null, null],
     });
 
     const isSearchEmpty = !search || search.trim() === "";
@@ -253,9 +253,9 @@ const Leads = ({ salesColumn }: TProps) => {
 
     const debounceTimeout = setTimeout(() => {
       processedFiltersRef.current.add(filterKey);
-      setCurrentPage(prevPage => {
+      setCurrentPage((prevPage) => {
         if (prevPage === 1) {
-          setRefreshKey(r => r + 1);
+          setRefreshKey((r) => r + 1);
           return prevPage;
         }
         return 1;
@@ -283,12 +283,12 @@ const Leads = ({ salesColumn }: TProps) => {
 
           // Filter sales users based on current user
           const salesUsers = companyUsers.filter(
-            user => user.employeeType === "Sales",
+            (user) => user.employeeType === "Sales",
           );
 
           if (userData?.employeeType === "Sales") {
             const currentSalesUser = salesUsers.find(
-              user => user.id.toString() === userData?.id.toString(),
+              (user) => user.id.toString() === userData?.id.toString(),
             );
             setCompanyUsers(currentSalesUser ? [currentSalesUser] : []);
           } else {
@@ -324,8 +324,8 @@ const Leads = ({ salesColumn }: TProps) => {
         });
         if (res.type === "success") {
           successToast(res?.message || "Draft estimate created");
-          setLeads(prevLeads => {
-            return prevLeads.map(lead => {
+          setLeads((prevLeads) => {
+            return prevLeads.map((lead) => {
               if (lead.id === leadId) {
                 return { ...lead, isEstimateCreated: true };
               }
@@ -400,8 +400,8 @@ const Leads = ({ salesColumn }: TProps) => {
         if (!data.success) throw new Error(data.error);
         const updatedLead = data.data;
         const column = updatedLead.column;
-        setLeads(prevLeads =>
-          prevLeads.map(lead => {
+        setLeads((prevLeads) =>
+          prevLeads.map((lead) => {
             if (lead.id === updatedLead.id) {
               return { ...lead, column };
             }
@@ -421,8 +421,8 @@ const Leads = ({ salesColumn }: TProps) => {
       appointment: Appointment,
       { leadId, columnId }: { leadId: number; columnId: number },
     ) => {
-      setLeads(prevLeads =>
-        prevLeads.map(lead => {
+      setLeads((prevLeads) =>
+        prevLeads.map((lead) => {
           if (lead.id === leadId) {
             return {
               ...lead,
@@ -440,7 +440,7 @@ const Leads = ({ salesColumn }: TProps) => {
 
       // Trigger pipeline automation
       try {
-        const lead = leads.find(l => l.id === leadId);
+        const lead = leads.find((l) => l.id === leadId);
         if (lead) {
           await updatePipelineAutomationTrigger({
             condition: "APPOINTMENT_SCHEDULED",
@@ -455,7 +455,7 @@ const Leads = ({ salesColumn }: TProps) => {
     },
     [leads],
   );
-
+  console.log("leads", leads);
   return (
     <div className="space-y-8 px-3">
       {/* TODO */}
@@ -571,11 +571,11 @@ const Leads = ({ salesColumn }: TProps) => {
                                     (optionB?.label ?? "").toLowerCase(),
                                   )
                               }
-                              options={salesColumn.map(column => ({
+                              options={salesColumn.map((column) => ({
                                 value: column.id,
                                 label: column.title,
                               }))}
-                              onSelect={value =>
+                              onSelect={(value) =>
                                 startTransition(() =>
                                   handleColumnChange({
                                     leadId: lead.id,
@@ -607,7 +607,7 @@ const Leads = ({ salesColumn }: TProps) => {
                               onClick={() =>
                                 handleCreateDraftEstimate({
                                   leadId: lead.id,
-                                  clientId: lead?.client?.id,
+                                  clientId: Number(lead?.clientId),
                                   vehicleId: lead?.client?.vehicle?.id,
                                 })
                               }
@@ -828,7 +828,7 @@ const DropdownMenuDemo = React.memo(function DropdownMenuDemo({
       const uniqueSources = new Set<string>();
       const salesPersonsId = new Set<number>();
 
-      leads?.forEach(lead => {
+      leads?.forEach((lead) => {
         if (lead.column?.title) {
           uniqueStatuses.add(lead.column.title);
         }
@@ -863,14 +863,14 @@ const DropdownMenuDemo = React.memo(function DropdownMenuDemo({
           id: `person-${index}`,
           value: personId.toString(),
           label:
-            leads?.find(lead => lead.salesUser?.id === personId)?.salesUser
+            leads?.find((lead) => lead.salesUser?.id === personId)?.salesUser
               ?.firstName +
             " " +
-            leads?.find(lead => lead.salesUser?.id === personId)?.salesUser
+            leads?.find((lead) => lead.salesUser?.id === personId)?.salesUser
               ?.lastName,
         })),
       };
-    }, [leads]); // Only recalculate when leads change
+    }, [leads]);
 
   return (
     <DropdownMenu.Root>
@@ -896,7 +896,7 @@ const DropdownMenuDemo = React.memo(function DropdownMenuDemo({
                 { id: "all", value: "All", label: "All" },
                 ...salesPersonItems,
               ]}
-              onChange={value =>
+              onChange={(value) =>
                 setFilter({
                   ...filter,
                   assignedTo: value === "All" ? null : value,
@@ -905,7 +905,7 @@ const DropdownMenuDemo = React.memo(function DropdownMenuDemo({
               value={
                 filter?.assignedTo
                   ? salesPersonItems.find(
-                      item => item.value === filter?.assignedTo,
+                      (item) => item.value === filter?.assignedTo,
                     )?.value || ""
                   : ""
               }
@@ -917,7 +917,7 @@ const DropdownMenuDemo = React.memo(function DropdownMenuDemo({
                 { id: "all", value: "All", label: "All" },
                 ...serviceItems,
               ]}
-              onChange={value =>
+              onChange={(value) =>
                 setFilter({
                   ...filter,
                   service: value === "All" ? null : value,
@@ -932,7 +932,7 @@ const DropdownMenuDemo = React.memo(function DropdownMenuDemo({
                 { id: "all", value: "All", label: "All" },
                 ...sourceItems,
               ]}
-              onChange={value =>
+              onChange={(value) =>
                 setFilter({ ...filter, source: value === "All" ? null : value })
               }
               value={filter?.source || ""}
@@ -943,7 +943,7 @@ const DropdownMenuDemo = React.memo(function DropdownMenuDemo({
                 { id: "all", value: "All", label: "All" },
                 ...statusItems,
               ]}
-              onChange={value =>
+              onChange={(value) =>
                 setFilter({ ...filter, status: value === "All" ? null : value })
               }
               value={filter?.status || ""}
