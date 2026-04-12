@@ -157,8 +157,22 @@ export const createAuthorizeNetPaymentLink = async ({
     // Encode tip into invoiceNumber so the webhook can extract it.
     // The webhook payload only includes bare fields (id, authAmount,
     // invoiceNumber) — no order description or userFields.
+    // Authorize.Net invoiceNumber has a max length of 20 characters,
+    // so we only append the tip suffix if it fits.
+    const ANET_INVOICE_MAX_LENGTH = 20;
     if (tipAmount > 0) {
-      invoiceNumberForGateway += `-T${tipAmount}`;
+      const tipSuffix = `-T${tipAmount}`;
+      if (invoiceNumberForGateway.length + tipSuffix.length <= ANET_INVOICE_MAX_LENGTH) {
+        invoiceNumberForGateway += tipSuffix;
+      } else {
+        // Try integer cents to save a character (e.g. "-T1242" instead of "-T12.42")
+        const tipCents = Math.round(tipAmount * 100);
+        const tipCentsSuffix = `-TC${tipCents}`;
+        if (invoiceNumberForGateway.length + tipCentsSuffix.length <= ANET_INVOICE_MAX_LENGTH) {
+          invoiceNumberForGateway += tipCentsSuffix;
+        }
+        // Otherwise skip tip in invoiceNumber — webhook defaults to 0
+      }
     }
 
     const isDepositPayment =
