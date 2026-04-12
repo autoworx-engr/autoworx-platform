@@ -409,35 +409,8 @@ export default function AppointmentModalBody({
   // Change start and end time based on settings
   useEffect(() => {
     if (allDay && settings) {
-      const isToday = date === formatDateToToday(date ?? new Date().toString());
-      const currentTime = getCurrentTime();
-
-      let startTime = settings.dayStart;
-      let endTime = settings.dayEnd;
-
-      if (isToday && startTime < currentTime) {
-        startTime = currentTime;
-
-        // Ensure endTime is at least 30-60 minutes after startTime
-        if (endTime < startTime) {
-          endTime = addOneHour(startTime); // Add 1 hour buffer
-        }
-
-        // Prevent exceeding settings.dayEnd
-        if (endTime > settings.dayEnd) {
-          endTime = settings.dayEnd;
-        }
-      }
-
-      setStartTime(() => {
-        const [hour, minute] = startTime.split(":").map(Number);
-        return formatTime12Hour(hour, minute, timezone);
-      });
-
-      setEndTime(() => {
-        const [hour, minute] = endTime.split(":").map(Number);
-        return formatTime12Hour(hour, minute, timezone);
-      });
+      setStartTime(settings.dayStart);
+      setEndTime(settings.dayEnd);
     } else if (settings) {
       if (fromEdit && appointment) {
         setTitle(appointment?.title || "");

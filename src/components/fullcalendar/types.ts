@@ -53,4 +53,5 @@ export type ServiceType =
   | "High"
   | "Task"
   | "Appointment"
-  | "Holiday";
+  | "Holiday"
+  | "Weekend";

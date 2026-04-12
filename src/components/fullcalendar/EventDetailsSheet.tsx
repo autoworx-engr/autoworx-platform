@@ -12,17 +12,21 @@ import {
   Car,
   CheckCircle,
   Clock3,
+  DollarSign,
   Edit,
   Mail,
   MessageSquare,
   Phone,
+  Tag,
   User,
+  Users,
   Zap,
 } from "lucide-react";
 import { Popconfirm } from "antd";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { CustomEventProps } from "./types";
+import { isHexColor, lightenHex, darkenHex } from "./colorUtils";
 
 interface EventDetailsSheetProps {
   isOpen: boolean;
@@ -88,21 +92,38 @@ export const EventDetailsSheet = ({
       ? `${originalData?.vehicle?.year} ${originalData?.vehicle?.make} ${originalData?.vehicle?.model}`
       : "";
 
+  const formatTime = (date: Date) =>
+    date.toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+
   const timeRange = `${
-    selectedEvent.start
-      ? selectedEvent.start.toLocaleTimeString([], {
-          hour: "numeric",
-          minute: "2-digit",
-        })
-      : "N/A"
-  }${
-    selectedEvent.end
-      ? ` to ${selectedEvent.end.toLocaleTimeString([], {
-          hour: "numeric",
-          minute: "2-digit",
-        })}`
-      : ""
-  }`;
+    selectedEvent.start ? formatTime(selectedEvent.start) : "N/A"
+  }${selectedEvent.end ? ` to ${formatTime(selectedEvent.end)}` : ""}`;
+
+  // Appointment: icon colors from category color
+  const catColor = props?.serviceCategoryColor;
+  const aptIconStyle = isHexColor(catColor)
+    ? { backgroundColor: lightenHex(catColor, 0.15), color: darkenHex(catColor, 0.6) }
+    : undefined;
+  const aptIconClass = isHexColor(catColor) ? "" : "bg-blue-50 text-blue-600";
+
+  // Task: icon colors from priority
+  const priority = originalData?.priority as string | undefined;
+  const taskIconClass =
+    priority === "High"
+      ? "bg-red-50 text-red-600"
+      : priority === "Low"
+        ? "bg-green-50 text-green-600"
+        : "bg-amber-50 text-amber-600"; // Medium or default
+  const taskPriorityTextClass =
+    priority === "High"
+      ? "text-red-600"
+      : priority === "Low"
+        ? "text-green-600"
+        : "text-amber-600";
 
   const invalidateCalendarQueries = () => {
     queryClient.invalidateQueries({ queryKey: [taskQueryKey.allTasks] });
@@ -172,8 +193,87 @@ export const EventDetailsSheet = ({
               <div className="space-y-5">
                 {eventType === "appointment" && (
                   <>
+                    {[
+                      { icon: <Clock3 className="size-4" />, label: "Time", value: timeRange },
+                      { icon: <User className="size-4" />, label: "Client", value: appointmentClientName },
+                      { icon: <Mail className="size-4" />, label: "Email", value: appointmentClientEmail },
+                      { icon: <Phone className="size-4" />, label: "Phone", value: appointmentClientPhone },
+                      ...(appointmentVehicle ? [{ icon: <Car className="size-4" />, label: "Vehicle", value: appointmentVehicle }] : []),
+                    ].map(({ icon, label, value }) => (
+                      <div key={label} className="flex items-start gap-3">
+                        <div className={`p-2 rounded-lg shrink-0 ${aptIconClass}`} style={aptIconStyle}>
+                          {icon}
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-0.5">{label}</p>
+                          <p className="text-sm font-medium text-gray-900">{value}</p>
+                        </div>
+                      </div>
+                    ))}
+
+                    {originalData?.invoiceGrandTotal != null &&
+                      Number(originalData.invoiceGrandTotal) > 0 && (
+                        <div className="flex items-start gap-3">
+                          <div className={`p-2 rounded-lg shrink-0 ${aptIconClass}`} style={aptIconStyle}>
+                            <DollarSign className="size-4" />
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-0.5">
+                              Estimate Price
+                            </p>
+                            <p className="text-sm font-semibold text-gray-900">
+                              ${Number(originalData.invoiceGrandTotal).toFixed(2)}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                    {originalData?.serviceCategory?.name && (
+                      <div className="flex items-start gap-3">
+                        <div className={`p-2 rounded-lg shrink-0 ${aptIconClass}`} style={aptIconStyle}>
+                          <Tag className="size-4" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-0.5">
+                            Category
+                          </p>
+                          <p className="text-sm font-medium text-gray-900">
+                            {originalData.serviceCategory.name}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {originalData?.assignedUsers &&
+                      originalData.assignedUsers.length > 0 && (
+                        <div className="flex items-start gap-3">
+                          <div className={`p-2 rounded-lg shrink-0 ${aptIconClass}`} style={aptIconStyle}>
+                            <Users className="size-4" />
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-0.5">
+                              Technicians
+                            </p>
+                            <p className="text-sm font-medium text-gray-900">
+                              {originalData.assignedUsers
+                                .map((u: any) =>
+                                  [u?.firstName, u?.lastName]
+                                    .filter(Boolean)
+                                    .join(" "),
+                                )
+                                .filter(Boolean)
+                                .join(", ")}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                  </>
+                )}
+
+                {eventType === "task" && (
+                  <>
                     <div className="flex items-start gap-3">
-                      <div className="p-2 bg-blue-50 text-blue-600 rounded-lg shrink-0">
+                      <div className={`p-2 rounded-lg shrink-0 ${taskIconClass}`}>
                         <Clock3 className="size-4" />
                       </div>
                       <div>
@@ -187,88 +287,30 @@ export const EventDetailsSheet = ({
                     </div>
 
                     <div className="flex items-start gap-3">
-                      <div className="p-2 bg-slate-50 text-slate-600 rounded-lg shrink-0">
-                        <User className="size-4" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-0.5">
-                          Client
-                        </p>
-                        <p className="text-sm font-medium text-gray-900">
-                          {appointmentClientName}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 bg-slate-50 text-slate-600 rounded-lg shrink-0">
-                        <Mail className="size-4" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-0.5">
-                          Email
-                        </p>
-                        <p className="text-sm font-medium text-gray-900">
-                          {appointmentClientEmail}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 bg-slate-50 text-slate-600 rounded-lg shrink-0">
-                        <Phone className="size-4" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-0.5">
-                          Phone
-                        </p>
-                        <p className="text-sm font-medium text-gray-900">
-                          {appointmentClientPhone}
-                        </p>
-                      </div>
-                    </div>
-                    {appointmentVehicle && (
-                      <div className="flex items-start gap-3">
-                        <div className="p-2 bg-slate-50 text-slate-600 rounded-lg shrink-0">
-                          <Car className="size-4" />
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-0.5">
-                            Vehicle
-                          </p>
-                          <p className="text-sm font-medium text-gray-900">
-                            {appointmentVehicle}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
-
-                {eventType === "task" && (
-                  <>
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 bg-amber-50 text-amber-600 rounded-lg shrink-0">
+                      <div className={`p-2 rounded-lg shrink-0 ${taskIconClass}`}>
                         <Zap className="size-4" />
                       </div>
                       <div>
                         <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-0.5">
                           Priority
                         </p>
-                        <p className="text-sm font-bold text-amber-600 uppercase">
+                        <p className={`text-sm font-bold uppercase ${taskPriorityTextClass}`}>
                           {originalData?.priority || "N/A"}
                         </p>
                       </div>
                     </div>
 
-                    <div className="mt-4">
-                      {originalData?.taskUser &&
-                        originalData.taskUser.length > 0 && (
-                          <div className="flex items-center gap-1 mb-2 flex-wrap text-gray-500 text-xs ">
-                            <span className="font-medium uppercase tracking-wider">
-                              Assigned to:
-                            </span>
-                            <span>
+                    {originalData?.taskUser &&
+                      originalData.taskUser.length > 0 && (
+                        <div className="flex items-start gap-3">
+                          <div className={`p-2 rounded-lg shrink-0 ${taskIconClass}`}>
+                            <Users className="size-4" />
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-0.5">
+                              Assigned To
+                            </p>
+                            <p className="text-sm font-medium text-gray-900">
                               {originalData.taskUser
                                 .map(
                                   (tu: {
@@ -283,16 +325,23 @@ export const EventDetailsSheet = ({
                                 )
                                 .filter(Boolean)
                                 .join(", ")}
-                            </span>
+                            </p>
                           </div>
-                        )}{" "}
-                      <p className="text-xs pt-2 border-t font-medium text-gray-500 uppercase tracking-wider mb-2">
-                        Description
-                      </p>
-                      <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
-                        {originalData?.description ||
-                          "No description provided."}
-                      </p>
+                        </div>
+                      )}
+
+                    <div className="flex items-start gap-3">
+                      <div className={`p-2 rounded-lg shrink-0 ${taskIconClass}`}>
+                        <Edit className="size-4" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-0.5">
+                          Description
+                        </p>
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+                          {originalData?.description || "No description provided."}
+                        </p>
+                      </div>
                     </div>
                   </>
                 )}
