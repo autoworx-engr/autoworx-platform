@@ -272,6 +272,7 @@ export const FleetStatementModalBody: React.FC<
                 paymentGateway: gatewayInfo?.paymentGateway || "STRIPE",
                 hasStripe: gatewayInfo?.hasStripe || false,
                 hasAuthorizeNet: gatewayInfo?.hasAuthorizeNet || false,
+                tipEnabled: gatewayInfo?.tipEnabled ?? false,
               }}
             />
           </div>
