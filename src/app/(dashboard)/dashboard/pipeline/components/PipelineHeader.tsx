@@ -1,11 +1,11 @@
 "use client";
 
-import { getColumnsByType } from "@/actions/pipelines/pipelinesColumn";
 import SessionUserType from "@/types/sessionUserType";
 import { Column } from "@prisma/client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { useGetPipelineColumns } from "@/hooks/pipeline/usePipelineColumns";
 import ManagePipelines from "./ManagePipelines";
 import { cn } from "@/lib/utils";
 import { ChevronRight } from "lucide-react";
@@ -24,26 +24,31 @@ export default function PipelineHeader({
   const pathname = usePathname();
   const [isPipelineManaged, setPipelineManaged] = useState(false);
   const [currentUser, setCurrentUser] = useState<SessionUserType>();
-  const [columns, setColumns] = useState<Column[]>([]);
   const tabsContainerRef = useRef<HTMLUListElement>(null);
+
+  const { data: columns = [], refetch } = useGetPipelineColumns(type);
 
   // Scroll active tab to center if it changes
   useEffect(() => {
     if (tabsContainerRef.current) {
-      const activeTab = tabsContainerRef.current.querySelector('[data-active="true"]') as HTMLElement;
+      const activeTab = tabsContainerRef.current.querySelector(
+        '[data-active="true"]',
+      ) as HTMLElement;
       if (activeTab) {
         const container = tabsContainerRef.current;
         const tabRect = activeTab.getBoundingClientRect();
         const containerRect = container.getBoundingClientRect();
 
         // Calculate scroll position to center the tab
-        const tabCenterOffset = tabRect.left - containerRect.left + tabRect.width / 2;
+        const tabCenterOffset =
+          tabRect.left - containerRect.left + tabRect.width / 2;
         const containerCenter = containerRect.width / 2;
-        const scrollLeft = container.scrollLeft + (tabCenterOffset - containerCenter);
+        const scrollLeft =
+          container.scrollLeft + (tabCenterOffset - containerCenter);
 
         container.scrollTo({
           left: scrollLeft,
-          behavior: 'smooth',
+          behavior: "smooth",
         });
       }
     }
@@ -59,18 +64,11 @@ export default function PipelineHeader({
     };
     fetchUser();
   }, []);
-  useEffect(() => {
-    const fetchShopColumns = async () => {
-      const columns = await getColumnsByType(type);
-      setColumns(columns);
-    };
 
-    fetchShopColumns();
-  }, [type]);
+  // Columns are fetched automatically by useQuery
   const hasManagePipelineAccess =
     currentUser?.employeeType === "Admin" ||
     currentUser?.employeeType === "Manager";
-
 
   return (
     <header className="flex items-center justify-between p-4">
@@ -87,7 +85,7 @@ export default function PipelineHeader({
                     "lg:border lg:px-4",
                     pathname === button.href
                       ? "hidden lg:flex lg:bg-[#6571FF] lg:text-white"
-                      : "border-[#6571FF] text-[#6571FF] lg:bg-background"
+                      : "border-[#6571FF] text-[#6571FF] lg:bg-background",
                   )}
                 >
                   <span className="font-medium tracking-wide">
@@ -102,7 +100,10 @@ export default function PipelineHeader({
           </ul>
         </nav>
         <nav className="hidden lg:block w-full lg:w-auto mt-2 lg:mt-0">
-          <ul className="flex items-center gap-1.5 p-1.5 overflow-x-auto thin-scrollbar rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm" ref={tabsContainerRef}>
+          <ul
+            className="flex items-center gap-1.5 p-1.5 overflow-x-auto thin-scrollbar rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm"
+            ref={tabsContainerRef}
+          >
             {toggleButtons.map((button, index) => {
               const isActive = pathname === button.href;
 
@@ -111,12 +112,15 @@ export default function PipelineHeader({
                   <Link
                     href={button.href}
                     data-active={isActive}
-                    className={`group relative flex items-center gap-2.5 rounded-xl px-3 py-2 text-base font-medium transition-all duration-300 ease-out ${isActive
-                      ? "text-white shadow-md shadow-indigo-500/25 ring-1 ring-black/5 translate-y-[-1px]"
-                      : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
-                      }`}
+                    className={`group relative flex items-center gap-2.5 rounded-xl px-3 py-2 text-base font-medium transition-all duration-300 ease-out ${
+                      isActive
+                        ? "text-white shadow-md shadow-indigo-500/25 ring-1 ring-black/5 translate-y-[-1px]"
+                        : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
+                    }`}
                   >
-                    {isActive && <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#6571FF] to-[#5a66ee] -z-10" />}
+                    {isActive && (
+                      <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#6571FF] to-[#5a66ee] -z-10" />
+                    )}
                     <span className="whitespace-nowrap">{button.label}</span>
                   </Link>
                 </li>

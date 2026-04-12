@@ -22,11 +22,11 @@ import {
   AlertCircle,
   Copy,
 } from "lucide-react";
+import { Popconfirm } from "antd";
 import { cn } from "@/lib/utils";
 import SelectCategory from "@/components/Lists/SelectCategory";
 import { Category } from "@prisma/client";
 import toast from "react-hot-toast";
-import { Popconfirm } from "antd";
 import { useClonePlaybooks } from "@/hooks/sales-agent/useServicePlaybooks";
 
 interface PlaybookEditorProps {

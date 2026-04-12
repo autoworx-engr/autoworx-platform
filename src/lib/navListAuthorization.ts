@@ -1,3 +1,4 @@
+import { ReactNode } from "react";
 import { PermissionsResult } from "@/lib/getPermissions";
 
 type BasePermission = {
@@ -24,7 +25,7 @@ type BasePermission = {
 
 type NavItem = {
   title: string;
-  icon: string;
+  icon: string | ReactNode;
   link?: string | null;
   path: string;
   subnav?:
@@ -187,7 +188,7 @@ export function filterNavList(
         if (item.title === "Analytics and Reporting") {
           return {
             ...item,
-            link: "dashboard/reporting/salesreporting",
+            link: "/dashboard/reporting/salesreporting",
           };
         }
       }

@@ -21,6 +21,7 @@ export async function getPaymentGatewayInfo(companyId: number) {
         authorizeNetApiLoginId: true,
         authorizeNetTransactionKey: true,
         paymentGateway: true,
+        tipEnabled: true,
       },
     });
 
@@ -44,6 +45,7 @@ export async function getPaymentGatewayInfo(companyId: number) {
       hasStripe,
       hasAuthorizeNet,
       paymentGateway: company.paymentGateway || "STRIPE",
+      tipEnabled: company.tipEnabled ?? false,
     };
   } catch (error: any) {
     console.error("Get Payment Gateway Info Error:", error);

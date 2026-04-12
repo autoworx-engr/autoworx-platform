@@ -49,6 +49,17 @@ type TProps = {
   salesColumn: Column[];
 };
 
+const formatDisplayName = (name?: string | null) => {
+  if (!name) return "N/A";
+
+  const cleanedName = name
+    .replace(/\b(undefined|null)\b/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return cleanedName || "N/A";
+};
+
 const Leads = ({ salesColumn }: TProps) => {
   const [initialLeads, setInitialLeads] = useState<LeadWithSalesUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,7 +78,7 @@ const Leads = ({ salesColumn }: TProps) => {
 
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
   const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(
-    null
+    null,
   );
 
   const [search, setSearch] = useState<string>("");
@@ -119,16 +130,28 @@ const Leads = ({ salesColumn }: TProps) => {
           setTimeout(() => reject(new Error("Request timeout")), 10000); // 10 second timeout
         });
 
-        const fetchPromise = getLeadsWithCount({
-          take: pageSize,
-          skip: skip,
-          searchTerm: search,
-          assignedTo: filter.assignedTo,
-          source: filter.source,
-          service: filter.service,
-          status: filter.status,
-          dateRange: dateRange,
-        });
+        const queryParams = new URLSearchParams();
+        if (pageSize) queryParams.append("take", pageSize.toString());
+        if (skip !== undefined) queryParams.append("skip", skip.toString());
+        if (search) queryParams.append("searchTerm", search);
+        if (filter.assignedTo)
+          queryParams.append("assignedTo", filter.assignedTo);
+        if (filter.source) queryParams.append("source", filter.source);
+        if (filter.service) queryParams.append("service", filter.service);
+        if (filter.status) queryParams.append("status", filter.status);
+        if (dateRange?.[0])
+          queryParams.append("startDate", dateRange[0].toISOString());
+        if (dateRange?.[1])
+          queryParams.append("endDate", dateRange[1].toISOString());
+
+        const fetchPromise = fetch(
+          `/api/pipeline/sales/leads?${queryParams.toString()}`,
+        )
+          .then(res => res.json())
+          .then(res => {
+            if (!res.success) throw new Error(res.error);
+            return res.data;
+          });
 
         const { leads: updatedLeads, totalCount: count } = (await Promise.race([
           fetchPromise,
@@ -156,7 +179,7 @@ const Leads = ({ salesColumn }: TProps) => {
               () => {
                 fetchLeads(retryCount + 1);
               },
-              1000 * (retryCount + 1)
+              1000 * (retryCount + 1),
             ); // Exponential backoff
             return;
           }
@@ -184,7 +207,7 @@ const Leads = ({ salesColumn }: TProps) => {
   const handleAddLead = () => {
     // Clear the processed filters cache when adding a new lead to ensure fresh data
     processedFiltersRef.current.clear();
-    setRefreshKey((prev) => prev + 1); // Increment refreshKey to trigger refetch
+    setRefreshKey(prev => prev + 1); // Increment refreshKey to trigger refetch
   };
 
   // Memoize handlePageChange to prevent unnecessary re-creation
@@ -197,7 +220,7 @@ const Leads = ({ salesColumn }: TProps) => {
         setCurrentPage(page);
       }
     },
-    [pageSize]
+    [pageSize],
   );
 
   // Reset page to 1 when search changes
@@ -210,7 +233,7 @@ const Leads = ({ salesColumn }: TProps) => {
     const filterKey = JSON.stringify({
       search,
       filter,
-      dateRange: dateRange?.map((d) => d?.toISOString()) || [null, null],
+      dateRange: dateRange?.map(d => d?.toISOString()) || [null, null],
     });
 
     const isSearchEmpty = !search || search.trim() === "";
@@ -230,9 +253,9 @@ const Leads = ({ salesColumn }: TProps) => {
 
     const debounceTimeout = setTimeout(() => {
       processedFiltersRef.current.add(filterKey);
-      setCurrentPage((prevPage) => {
+      setCurrentPage(prevPage => {
         if (prevPage === 1) {
-          setRefreshKey((r) => r + 1);
+          setRefreshKey(r => r + 1);
           return prevPage;
         }
         return 1;
@@ -260,12 +283,12 @@ const Leads = ({ salesColumn }: TProps) => {
 
           // Filter sales users based on current user
           const salesUsers = companyUsers.filter(
-            (user) => user.employeeType === "Sales"
+            user => user.employeeType === "Sales",
           );
 
           if (userData?.employeeType === "Sales") {
             const currentSalesUser = salesUsers.find(
-              (user) => user.id.toString() === userData?.id.toString()
+              user => user.id.toString() === userData?.id.toString(),
             );
             setCompanyUsers(currentSalesUser ? [currentSalesUser] : []);
           } else {
@@ -301,8 +324,8 @@ const Leads = ({ salesColumn }: TProps) => {
         });
         if (res.type === "success") {
           successToast(res?.message || "Draft estimate created");
-          setLeads((prevLeads) => {
-            return prevLeads.map((lead) => {
+          setLeads(prevLeads => {
+            return prevLeads.map(lead => {
               if (lead.id === leadId) {
                 return { ...lead, isEstimateCreated: true };
               }
@@ -315,7 +338,7 @@ const Leads = ({ salesColumn }: TProps) => {
           errorToast(
             res?.errorSource && res?.errorSource.length > 0
               ? res?.errorSource[0].message
-              : res.message
+              : res.message,
           );
         }
       } catch (err) {
@@ -323,11 +346,11 @@ const Leads = ({ salesColumn }: TProps) => {
         errorToast(
           formattedError?.errorSource && formattedError?.errorSource.length > 0
             ? formattedError?.errorSource[0].message
-            : formattedError.message
+            : formattedError.message,
         );
       }
     },
-    [router]
+    [router],
   ); // Only depend on router
   //sort leads by time created in descending order (already sorted by backend)
   // leads?.sort((a, b) => {
@@ -368,31 +391,38 @@ const Leads = ({ salesColumn }: TProps) => {
       newColumnId: number;
     }) => {
       try {
-        const updatedLead = await updateLeadColumn(leadId, newColumnId);
+        const res = await fetch(`/api/pipeline/sales/lead/${leadId}/column`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ newColumnId }),
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
+        const updatedLead = data.data;
         const column = updatedLead.column;
-        setLeads((prevLeads) =>
-          prevLeads.map((lead) => {
+        setLeads(prevLeads =>
+          prevLeads.map(lead => {
             if (lead.id === updatedLead.id) {
               return { ...lead, column };
             }
             return lead;
-          })
+          }),
         );
         toast.success("Lead status updated successfully");
       } catch (err) {
         toast.error("Error updating lead status");
       }
     },
-    []
+    [],
   ); // No dependencies needed
 
   const handleUpdateAppointmentInLead = useCallback(
     async (
       appointment: Appointment,
-      { leadId, columnId }: { leadId: number; columnId: number }
+      { leadId, columnId }: { leadId: number; columnId: number },
     ) => {
-      setLeads((prevLeads) =>
-        prevLeads.map((lead) => {
+      setLeads(prevLeads =>
+        prevLeads.map(lead => {
           if (lead.id === leadId) {
             return {
               ...lead,
@@ -405,12 +435,12 @@ const Leads = ({ salesColumn }: TProps) => {
             };
           }
           return lead;
-        })
+        }),
       );
 
       // Trigger pipeline automation
       try {
-        const lead = leads.find((l) => l.id === leadId);
+        const lead = leads.find(l => l.id === leadId);
         if (lead) {
           await updatePipelineAutomationTrigger({
             condition: "APPOINTMENT_SCHEDULED",
@@ -423,7 +453,7 @@ const Leads = ({ salesColumn }: TProps) => {
         console.error("Automation run failed", err);
       }
     },
-    [leads]
+    [leads],
   );
 
   return (
@@ -477,7 +507,7 @@ const Leads = ({ salesColumn }: TProps) => {
                 {leads &&
                   leads.map((lead, index) => {
                     const timeCreated = moment(lead.createdAt).format(
-                      "MM/DD/YYYY"
+                      "MM/DD/YYYY",
                     );
 
                     return (
@@ -485,7 +515,7 @@ const Leads = ({ salesColumn }: TProps) => {
                         key={lead.id + 1}
                         className={cn(
                           "rounded-md",
-                          index % 2 === 0 ? "bg-background" : "bg-blue-100"
+                          index % 2 === 0 ? "bg-background" : "bg-blue-100",
                         )}
                       >
                         <td className="border-b px-4 py-2 text-left">
@@ -501,7 +531,7 @@ const Leads = ({ salesColumn }: TProps) => {
                             href={`/dashboard/client/${lead.clientId}`}
                             className="block h-full w-full"
                           >
-                            {lead.clientName}
+                            {formatDisplayName(lead.clientName)}
                           </Link>
                         </td>
                         <td className="border-b px-4 py-2 text-left">
@@ -538,19 +568,19 @@ const Leads = ({ salesColumn }: TProps) => {
                                 (optionA?.label ?? "")
                                   .toLowerCase()
                                   .localeCompare(
-                                    (optionB?.label ?? "").toLowerCase()
+                                    (optionB?.label ?? "").toLowerCase(),
                                   )
                               }
-                              options={salesColumn.map((column) => ({
+                              options={salesColumn.map(column => ({
                                 value: column.id,
                                 label: column.title,
                               }))}
-                              onSelect={(value) =>
+                              onSelect={value =>
                                 startTransition(() =>
                                   handleColumnChange({
                                     leadId: lead.id,
                                     newColumnId: value as number,
-                                  })
+                                  }),
                                 )
                               }
                             />
@@ -639,7 +669,7 @@ const Leads = ({ salesColumn }: TProps) => {
                                   vehicleId={lead?.client?.vehicle?.id}
                                   clientId={lead?.client?.id}
                                   onAppointmentCreated={(
-                                    appointment: Appointment
+                                    appointment: Appointment,
                                   ) => {
                                     handleUpdateAppointmentInLead(appointment, {
                                       leadId: lead.id,
@@ -647,7 +677,7 @@ const Leads = ({ salesColumn }: TProps) => {
                                     });
                                   }}
                                   onAppointmentUpdated={(
-                                    appointment: Appointment
+                                    appointment: Appointment,
                                   ) => {
                                     handleUpdateAppointmentInLead(appointment, {
                                       leadId: lead.id,
@@ -750,7 +780,7 @@ const SearchTerms = React.memo(function SearchTerms({
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setSearch(e.target.value);
     },
-    [setSearch]
+    [setSearch],
   );
 
   return (
@@ -770,7 +800,7 @@ const SearchTerms = React.memo(function SearchTerms({
           "text-sm font-medium text-slate-700 placeholder:text-slate-400 outline-none",
           "transition-all duration-300 ease-in-out",
           "hover:border-slate-200 hover:bg-slate-50/30",
-          "focus:border-[#6571FF]/40 focus:bg-white focus:ring-4 focus:ring-[#6571FF]/10"
+          "focus:border-[#6571FF]/40 focus:bg-white focus:ring-4 focus:ring-[#6571FF]/10",
         )}
       />
     </div>
@@ -798,7 +828,7 @@ const DropdownMenuDemo = React.memo(function DropdownMenuDemo({
       const uniqueSources = new Set<string>();
       const salesPersonsId = new Set<number>();
 
-      leads?.forEach((lead) => {
+      leads?.forEach(lead => {
         if (lead.column?.title) {
           uniqueStatuses.add(lead.column.title);
         }
@@ -833,10 +863,10 @@ const DropdownMenuDemo = React.memo(function DropdownMenuDemo({
           id: `person-${index}`,
           value: personId.toString(),
           label:
-            leads?.find((lead) => lead.salesUser?.id === personId)?.salesUser
+            leads?.find(lead => lead.salesUser?.id === personId)?.salesUser
               ?.firstName +
             " " +
-            leads?.find((lead) => lead.salesUser?.id === personId)?.salesUser
+            leads?.find(lead => lead.salesUser?.id === personId)?.salesUser
               ?.lastName,
         })),
       };
@@ -866,7 +896,7 @@ const DropdownMenuDemo = React.memo(function DropdownMenuDemo({
                 { id: "all", value: "All", label: "All" },
                 ...salesPersonItems,
               ]}
-              onChange={(value) =>
+              onChange={value =>
                 setFilter({
                   ...filter,
                   assignedTo: value === "All" ? null : value,
@@ -875,7 +905,7 @@ const DropdownMenuDemo = React.memo(function DropdownMenuDemo({
               value={
                 filter?.assignedTo
                   ? salesPersonItems.find(
-                      (item) => item.value === filter?.assignedTo
+                      item => item.value === filter?.assignedTo,
                     )?.value || ""
                   : ""
               }
@@ -887,7 +917,7 @@ const DropdownMenuDemo = React.memo(function DropdownMenuDemo({
                 { id: "all", value: "All", label: "All" },
                 ...serviceItems,
               ]}
-              onChange={(value) =>
+              onChange={value =>
                 setFilter({
                   ...filter,
                   service: value === "All" ? null : value,
@@ -902,7 +932,7 @@ const DropdownMenuDemo = React.memo(function DropdownMenuDemo({
                 { id: "all", value: "All", label: "All" },
                 ...sourceItems,
               ]}
-              onChange={(value) =>
+              onChange={value =>
                 setFilter({ ...filter, source: value === "All" ? null : value })
               }
               value={filter?.source || ""}
@@ -913,7 +943,7 @@ const DropdownMenuDemo = React.memo(function DropdownMenuDemo({
                 { id: "all", value: "All", label: "All" },
                 ...statusItems,
               ]}
-              onChange={(value) =>
+              onChange={value =>
                 setFilter({ ...filter, status: value === "All" ? null : value })
               }
               value={filter?.status || ""}
@@ -926,7 +956,7 @@ const DropdownMenuDemo = React.memo(function DropdownMenuDemo({
                   "group mt-4 flex w-full items-center justify-center gap-2 rounded-lg py-2 transition-all duration-200 ",
                   "hover:bg-red-50", // Soft background shift
                   " text-slate-500 hover:text-red-500", // Typography style
-                  "active:scale-95 border border-slate-200 hover:border-red-100" // Tactile feedback
+                  "active:scale-95 border border-slate-200 hover:border-red-100", // Tactile feedback
                 )}
               >
                 Clear All Filters

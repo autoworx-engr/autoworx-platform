@@ -384,17 +384,17 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0,
   },
   paymentColDate: {
-    width: "20%",
+    width: "33.33%",
     fontSize: 8,
     color: colors.text,
   },
   paymentColMethod: {
-    width: "24%",
+    width: "33.33%",
     fontSize: 8,
     color: colors.text,
   },
   paymentColAmount: {
-    width: "24%",
+    width: "33.33%",
     fontSize: 8,
     color: colors.text,
   },
@@ -597,6 +597,7 @@ const PDFComponent = function PDF({
     ["subtotal", invoice.subtotal],
     ["discount", invoice.discount],
     ["tax", invoice.tax],
+    // ["vehicle extra cost", invoice.vehicleExtraCost],
     ["shop supplies", invoice?.serviceFee],
     ["grand total", invoice.grandTotal],
     ["deposit", invoice.deposit],
@@ -616,7 +617,7 @@ const PDFComponent = function PDF({
     totals.map(([k, v]) => [String(k), v]),
   );
 
-  const leftFields = ["subtotal", "discount", "tax", "shop supplies"];
+  const leftFields = ["subtotal", "discount", "tax", "vehicle extra cost", "shop supplies"];
   const rightFields = ["grand total", "deposit", "payment", "refunded", "due"];
 
   const formatTotalsValue = (field: string, value: unknown) => {
@@ -624,8 +625,7 @@ const PDFComponent = function PDF({
       const pct = Number(value) || 0;
       if (pct === 0) return "0%";
       const amount = formatCurrency(
-        (Number((invoice.subtotal as any) - (invoice.discount as any)) * pct) /
-        100,
+        (Number(invoice.subtotal as any) * pct) / 100,
       );
       return `${pct}% (${amount})`;
     }
@@ -634,11 +634,7 @@ const PDFComponent = function PDF({
 
   const paymentEntries = (invoice.payments ?? [])
     .filter((payment) => payment.invoiceId === invoice.id)
-    .sort(
-      (a, b) =>
-        new Date(b.date || b.createdAt).getTime() -
-        new Date(a.date || a.createdAt).getTime(),
-    );
+    .reverse()
 
   const getPaymentMethodText = (
     payment: (typeof paymentEntries)[number],
@@ -845,12 +841,6 @@ const PDFComponent = function PDF({
                 >
                   Amount
                 </Text>
-                <Text style={[styles.paymentColCash, styles.paymentHeaderText]}>
-                  Cash
-                </Text>
-                <Text style={[styles.paymentColDue, styles.paymentHeaderText]}>
-                  Due
-                </Text>
               </View>
 
               {paymentEntries.map((payment, index) => {
@@ -885,15 +875,6 @@ const PDFComponent = function PDF({
                         </Text>
                       )}
                     </View>
-                    <Text style={styles.paymentColCash}>
-                      {payment.cash?.receivedCash || "N/A"}
-                    </Text>
-                    <Text style={styles.paymentColDue}>
-                      {payment.dueAfterPayment !== null &&
-                        payment.dueAfterPayment !== undefined
-                        ? formatCurrency(Number(payment.dueAfterPayment))
-                        : "N/A"}
-                    </Text>
                   </View>
                 );
               })}

@@ -43,8 +43,8 @@ export default async function Sidebar({
 
   const imgUrl = product
     ? await QRCode.toDataURL(
-        `${env("NEXT_PUBLIC_APP_URL")}/dashboard/inventory/use/${product.id}`
-      )
+      `${env("NEXT_PUBLIC_APP_URL")}/dashboard/inventory/use/${product.id}`
+    )
     : null;
 
   const invoices = await db.invoice.findMany({
@@ -71,13 +71,12 @@ export default async function Sidebar({
   }));
   return (
     <div
-      className={`mt-3 ${
-        hidden ? "hidden" : !!productId ? "flex" : "hidden md:flex"
-      }  h-fit lg:h-full w-full mx-auto flex-col md:mt-12 md:w-1/2`}
+      className={`mt-3 ${hidden ? "hidden" : !!productId ? "flex" : "hidden lg:flex"
+        }  h-fit lg:h-full w-full mx-auto flex-col md:mt-12 lg:w-1/2`}
     >
       <div className="flex flex-col gap-6 lg:flex-row">
         {/* LEFT COLUMN: Financial Metrics */}
-        <div className="flex flex-col gap-4 lg:w-1/3 xl:w-1/4">
+        <div className="flex flex-col sm:flex-row lg:flex-col gap-4 lg:w-1/3 xl:w-1/4">
           {/* Total Value Card */}
           <div className="group relative flex-1 flex items-center justify-center overflow-hidden rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-900/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-md dark:bg-slate-950 dark:ring-slate-800">
             <div className="absolute inset-0 bg-gradient-to-br from-[#6571FF]/10 to-[#6571FF]/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
@@ -107,7 +106,7 @@ export default async function Sidebar({
                         <p>
                           {formatCurrency(
                             parseFloat(product.price?.toString() || "0") *
-                              parseFloat(product.quantity?.toString() || "0")
+                            parseFloat(product.quantity?.toString() || "0")
                           )}
                         </p>
                       </TooltipContent>
@@ -247,10 +246,10 @@ export default async function Sidebar({
                             <TooltipTrigger asChild>
                               <span className="cursor-default leading-relaxed">
                                 {product.description &&
-                                product.description.length > 80
+                                  product.description.length > 80
                                   ? product.description.slice(0, 80) + "..."
                                   : product.description ||
-                                    "No description available."}
+                                  "No description available."}
                               </span>
                             </TooltipTrigger>
                             {product.description &&

@@ -39,6 +39,14 @@ export async function POST(request: NextRequest) {
     platform,
   } = await request.json();
   const companyId = Number(rawCompanyId);
+
+  // if (rawIdentity == null || companyId == null) {
+  //   return NextResponse.json(
+  //     { error: "Missing required fields: identity, companyId, platform" },
+  //     { status: 400 },
+  //   );
+  // }
+
   // Twilio Client identity cannot contain '+' or other special chars — normalize.
   const identity = (rawIdentity as string).replace(/[^a-zA-Z0-9_\-.~]/g, "");
 
@@ -59,7 +67,6 @@ export async function POST(request: NextRequest) {
     });
 
     if (!twilioCredentials) {
-      console.error("🚀 ~ POST ~ twilioCredentials not found");
       return NextResponse.json(
         { error: "Twilio credentials not found" },
         { status: 400 },
@@ -74,17 +81,11 @@ export async function POST(request: NextRequest) {
     );
 
     let pushCredentialSid: string | undefined;
-    console.log(
-      "🚀 ~ POST ~ twilioCredentials APN_FCM_TEST:",
-      twilioCredentials,
-    );
 
     if (platform === "ios") {
       pushCredentialSid = twilioCredentials.apnPushCredentialSid ?? undefined;
-      console.log("🚀 ~ POST ~ ios pushCredentialSid:", pushCredentialSid);
     } else if (platform === "android") {
       pushCredentialSid = twilioCredentials.fcmPushCredentialSid ?? undefined;
-      console.log("🚀 ~ POST ~ android pushCredentialSid:", pushCredentialSid);
     }
 
     if (twilioCredentials.twimlAppSid) {

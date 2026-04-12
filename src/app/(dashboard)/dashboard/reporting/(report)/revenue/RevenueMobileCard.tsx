@@ -113,7 +113,7 @@ export default function RevenueMobileCard({
         </Link>
       </div>
 
-      <div className="flex justify-between border-t pt-2">
+      <div className="flex justify-between flex-wrap gap-2 border-t pt-2">
         <div>
           <div className="text-sm text-gray-500">Price</div>
           <div className="font-semibold text-[#66738C]">

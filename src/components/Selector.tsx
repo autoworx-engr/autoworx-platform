@@ -25,7 +25,7 @@ interface SelectorProps<T> {
   items: T[];
   border?: boolean;
   footer?: React.ReactNode;
-  newButton: React.ReactNode;
+  newButton?: React.ReactNode;
   displayList: (item: T) => JSX.Element;
   onSearch?: (search: string) => T[];
   onSelect?: (item: T) => void;
@@ -244,10 +244,12 @@ export default function Selector<T>({
       </div>
 
       {/* Footer / Action area */}
-      <div className="border-t border-slate-100 p-1.5">
-        {newButton}
-        {footer && <div className="mt-1">{footer}</div>}
-      </div>
+      {(newButton || footer) && (
+        <div className="border-t border-slate-100 p-1.5">
+          {newButton}
+          {footer && <div className="mt-1">{footer}</div>}
+        </div>
+      )}
     </>
   );
 

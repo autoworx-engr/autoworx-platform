@@ -25,13 +25,15 @@ export default function FilterDateRange({
   queryDateFormat = "MM/dd/yyyy",
 }: TProps) {
   const parseFromQuery = (value?: string) => {
-    if (!value) return null;
+    if (!value || value === "undefined") return null;
     const parsed = parse(value, queryDateFormat, new Date());
     return isValid(parsed) ? parsed : null;
   };
 
-  const initialStartDate = parseFromQuery(startDate) || new Date();
-  const initialEndDate = parseFromQuery(endDate) || new Date();
+  const parsedStart = parseFromQuery(startDate);
+  const parsedEnd = parseFromQuery(endDate);
+  const initialStartDate = parsedStart || new Date();
+  const initialEndDate = parsedEnd || new Date();
 
   const [state, setState] = useState({
     selection: {
@@ -47,7 +49,7 @@ export default function FilterDateRange({
   // const [showPicker, setShowPicker] = useState(false);
   const [tempRange, setTempRange] = useState(state.selection);
   const [isRangeSelected, setIsRangeSelected] = useState(
-    Boolean(startDate && endDate),
+    Boolean(parsedStart && parsedEnd),
   );
 
   useEffect(() => {
@@ -98,16 +100,10 @@ export default function FilterDateRange({
   };
 
   const formatRange = (start: Date, end: Date) => {
-    const formattedStart = format(start, "MM/dd/yyyy");
-    const formattedEnd = format(end, "MM/dd/yyyy");
-
-    if (startDate !== "undefined" && endDate !== "undefined") {
-      return `${startDate} - ${endDate}`;
-    } else if (isRangeSelected) {
-      return `${formattedStart} - ${formattedEnd}`;
-    } else {
-      return "Date Range";
+    if (!isRangeSelected) {
+      return "Select Date Range";
     }
+    return `${format(start, "MM/dd/yyyy")} - ${format(end, "MM/dd/yyyy")}`;
   };
 
   const handleClear = () => {

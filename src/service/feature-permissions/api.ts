@@ -12,7 +12,6 @@ export const allFeaturePermissions = async () => {
 };
 
 export const allCompanyFeaturePermissions = async (companyId: number) => {
-  // console.log("companyId", companyId)
   try {
     const response = await serverAxios.get(
       `/admin/permissions/companies/${companyId}`,
@@ -20,7 +19,8 @@ export const allCompanyFeaturePermissions = async (companyId: number) => {
 
     return response.data;
   } catch (error) {
-    throw error;
+    console.error(`Failed to fetch feature permissions for company ${companyId}:`, error);
+    return null;
   }
 };
 

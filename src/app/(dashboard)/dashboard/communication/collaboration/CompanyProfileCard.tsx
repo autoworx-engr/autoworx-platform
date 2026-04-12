@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { MapPin, Users, Briefcase, Trash2, Pencil } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { useState } from "react";
+import { useOptimistic, useTransition, useState } from "react";
 import { useCompanyDetails } from "@/hooks/communication/collaboration/useCompanyDetails ";
 import CompanyProfileCardSkeleton from "./CompanyProfileCardSkeleton";
 import { useReviews } from "@/hooks/reviews/useReviews";
@@ -32,21 +32,17 @@ export default function CompanyProfileCard({
   const [ratingInput, setRatingInput] = useState<number | null>(5);
   const [editingReview, setEditingReview] = useState<any>(null);
   const [editRating, setEditRating] = useState<number | null>(5);
-  const {
-    data: details,
-    isLoading,
-    isFetching,
-  } = useCompanyDetails({ companyId, userId, currentCompanyId });
+  const { data: details, isLoading } = useCompanyDetails({
+    companyId,
+    userId,
+    currentCompanyId,
+  });
 
   const { data: reviewData, isLoading: reviewsLoading } = useReviews(
     companyId,
     currentCompanyId,
   );
-  const {
-    mutate: createReview,
-    isPending,
-    isSuccess,
-  } = useCreateReview(companyId);
+  const { mutateAsync: createReview, isPending } = useCreateReview(companyId);
 
   const { mutate: deleteReview, isPending: deleteIsPending } =
     useDeleteReview(companyId);
@@ -54,28 +50,59 @@ export default function CompanyProfileCard({
   const { mutate: updateReview, isPending: updatePending } =
     useUpdateReview(companyId);
 
-  if (isLoading || isFetching) {
+  const [, startTransition] = useTransition();
+
+  const [optimisticReviews, addOptimisticReview] = useOptimistic(
+    reviewData?.data?.reviews ?? [],
+    (state: any[], newReview: any) => [...state, newReview],
+  );
+
+  const [optimisticDetails, updateOptimisticDetails] = useOptimistic(
+    details,
+    (state: any, update: any) => (state ? { ...state, ...update } : state),
+  );
+
+  if (isLoading) {
     return <CompanyProfileCardSkeleton />;
   }
-  const rating = details?.avgRate || 0;
+  const rating = optimisticDetails?.avgRate || 0;
 
   const handleSubmit = (e: any) => {
     e.preventDefault();
-
     const form = new FormData(e.target);
+    const message = form.get("message") as string;
+    const rate = ratingInput ?? 5;
+    const total = optimisticDetails?.totalReviews ?? 0;
+    const newAvg =
+      ((optimisticDetails?.avgRate ?? 0) * total + rate) / (total + 1);
 
-    createReview({
-      rate: ratingInput,
-      message: form.get("message"),
-      companyId,
-      sendUserId: userId,
-      sendCompanyId: currentCompanyId,
+    startTransition(async () => {
+      addOptimisticReview({
+        id: Date.now(),
+        sendCompanyId: currentCompanyId,
+        user: { firstName: "You", lastName: "" },
+        rate,
+        message,
+        createdAt: new Date().toISOString(),
+      });
+      updateOptimisticDetails({
+        totalReviews: total + 1,
+        avgRate: Number(newAvg.toFixed(1)),
+      });
+      try {
+        await createReview({
+          rate,
+          message,
+          companyId,
+          sendUserId: userId,
+          sendCompanyId: currentCompanyId,
+        });
+        toast.success("Review submitted successfully!");
+        setActiveTab("reviews");
+      } catch {
+        toast.error("Failed to submit review");
+      }
     });
-
-    if (isSuccess) {
-      toast.success("Write review successfully!");
-      setActiveTab("reviews");
-    }
   };
 
   const handleDeleteReview = (id: number) => {
@@ -136,15 +163,16 @@ export default function CompanyProfileCard({
 
         <div className="flex items-center gap-1 mt-2 text-sm">
           <Rating
+            key={rating}
             name="half-rating-read"
-            defaultValue={rating.toFixed(1)}
+            value={rating}
             precision={0.5}
             size="medium"
             readOnly
           />
 
           <span className="text-gray-600">
-            {rating.toFixed(1)} ({details?.totalReviews ?? 0})
+            {rating.toFixed(1)} ({optimisticDetails?.totalReviews ?? 0})
           </span>
         </div>
       </div>
@@ -214,7 +242,7 @@ export default function CompanyProfileCard({
             activeTab === "reviews" && "bg-white shadow",
           )}
         >
-          Reviews ({reviewData?.data?.reviews?.length || 0})
+          Reviews ({optimisticReviews.length || 0})
         </button>
 
         <button
@@ -232,11 +260,11 @@ export default function CompanyProfileCard({
         <div className="space-y-3 text-sm text-gray-600">
           {reviewsLoading && <ReviewSkeleton />}
 
-          {!reviewsLoading && reviewData?.data?.reviews?.length === 0 && (
+          {!reviewsLoading && optimisticReviews.length === 0 && (
             <NoReviewsFound />
           )}
 
-          {reviewData?.data?.reviews?.map((review: any) => {
+          {optimisticReviews.map((review: any) => {
             const isOwnReview = review.sendCompanyId === currentCompanyId;
 
             return (
@@ -295,7 +323,7 @@ export default function CompanyProfileCard({
                         defaultValue={editRating ?? 0}
                         size="small"
                         precision={0.5}
-                        onChange={(event, newValue) => {
+                        onChange={(_event, newValue) => {
                           setEditRating(newValue);
                         }}
                       />
@@ -328,8 +356,9 @@ export default function CompanyProfileCard({
                 ) : (
                   <div>
                     <Rating
+                      key={review?.rate}
                       name="half-rating-read"
-                      defaultValue={review?.rate}
+                      value={review?.rate}
                       precision={0.5}
                       size="small"
                       readOnly
@@ -359,7 +388,7 @@ export default function CompanyProfileCard({
                   defaultValue={ratingInput ?? 0}
                   size="small"
                   precision={0.5}
-                  onChange={(event, newValue) => {
+                  onChange={(_event, newValue) => {
                     setRatingInput(newValue);
                   }}
                 />

@@ -41,6 +41,7 @@ type TProps = {
       receivedCash: string | null;
     } | null;
   })[];
+  total: number;
   timezone: string;
   page?: number;
   take?: number;
@@ -48,6 +49,7 @@ type TProps = {
 
 export default function PaymentDisplay({
   paymentInfo,
+  total,
   timezone,
   page,
   take,
@@ -62,17 +64,17 @@ export default function PaymentDisplay({
   const params = useSearchParams();
 
   useEffect(() => {
-    setCurrentPage(Number(page));
-    setPageSize(Number(take));
+    setCurrentPage(page || 1);
+    setPageSize(take || 50);
   }, [page, take]);
 
   useEffect(() => {
-    if (paymentInfo.length > 0) {
+    if (total > 0) {
       setShowPagination(true);
     } else {
       setShowPagination(false);
     }
-  }, [paymentInfo]);
+  }, [total]);
 
   const handlePageChange = (page: number, pageSize?: number) => {
     const searchParams = new URLSearchParams(params.toString());
@@ -88,11 +90,8 @@ export default function PaymentDisplay({
     router.push(newPath);
   };
 
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = currentPage * pageSize;
-
-  // Use the paymentInfo that's already filtered from the server
-  const paymentsToRender = paymentInfo.slice(startIndex, endIndex);
+  // paymentInfo is already server-paginated
+  const paymentsToRender = paymentInfo;
   if (isDesktop) {
     return (
       <div className="hidden md:block">
@@ -142,7 +141,7 @@ export default function PaymentDisplay({
                     key={payment.id}
                     className={cn(
                       "cursor-pointer rounded-md py-3",
-                      index % 2 === 0 ? "bg-background" : "bg-blue-100"
+                      index % 2 === 0 ? "bg-background" : "bg-blue-100",
                     )}
                   >
                     <td className="border-b px-4 py-2 text-left">
@@ -194,7 +193,7 @@ export default function PaymentDisplay({
                           paymentStatus === "due" &&
                             "bg-[#de5967] text-white rounded-md",
                           paymentStatus === "paid" &&
-                            "bg-[#3c8f89] text-white rounded-md"
+                            "bg-[#3c8f89] text-white rounded-md",
                         )}
                       >
                         {paymentStatus}
@@ -212,7 +211,7 @@ export default function PaymentDisplay({
               className="custom-pagination"
               current={currentPage}
               pageSize={pageSize}
-              total={paymentInfo?.length}
+              total={total}
               onChange={handlePageChange}
               showSizeChanger
               onShowSizeChange={handlePageChange}
@@ -243,7 +242,7 @@ export default function PaymentDisplay({
             className="custom-pagination"
             current={currentPage}
             pageSize={pageSize}
-            total={paymentInfo.length}
+            total={total}
             onChange={handlePageChange}
             showSizeChanger
             onShowSizeChange={handlePageChange}

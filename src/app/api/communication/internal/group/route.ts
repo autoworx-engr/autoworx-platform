@@ -6,9 +6,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 const pusher = getPusherInstance();
 
-const findUsers = (users: { id: number }[]) => {
+const findUsers = (users: { id: number; action?: string }[]) => {
   return Promise.all(
-    users.map(async (user: { id: number }) => {
+    users.map(async (user: { id: number; action?: string }) => {
       if (!user.id) {
         throw new Error("User ID is required");
       }
@@ -283,7 +283,11 @@ export const GET = async (req: NextRequest) => {
  *                     id:
  *                       type: integer
  *                       description: The ID of the user
- *                 description: Array of user objects with IDs to add to the group
+ *                     action:
+ *                       type: string
+ *                       enum: [add, remove]
+ *                       description: The action to perform (add or remove). Defaults to add if not specified.
+ *                 description: Array of user objects with IDs and actions
  *     responses:
  *       200:
  *         description: Group updated successfully
@@ -332,10 +336,20 @@ export const PUT = async (req: NextRequest) => {
       throw new AppError(404, "Group not found");
     }
 
-    const findUser = await findUsers(users);
+    const connectUsers =
+      users
+        ?.filter((u: any) => u.action === "add" || !u.action)
+        .map((u: any) => ({ id: u.id })) || [];
+    const disconnectUsers =
+      users
+        ?.filter((u: any) => u.action === "remove")
+        .map((u: any) => ({ id: u.id })) || [];
 
-    if (findUser && findUser?.length !== users?.length) {
-      throw new AppError(400, "One or more users not found");
+    if (connectUsers.length > 0) {
+      const findUser = await findUsers(connectUsers);
+      if (findUser && findUser?.length !== connectUsers?.length) {
+        throw new AppError(400, "One or more users to add not found");
+      }
     }
 
     const updatedGroup = await db.group.update({
@@ -343,7 +357,8 @@ export const PUT = async (req: NextRequest) => {
       data: {
         name: name,
         users: {
-          connect: users,
+          connect: connectUsers.length > 0 ? connectUsers : undefined,
+          disconnect: disconnectUsers.length > 0 ? disconnectUsers : undefined,
         },
       },
       include: {
@@ -352,10 +367,18 @@ export const PUT = async (req: NextRequest) => {
     });
 
     if (updatedGroup) {
-      pusher.trigger("add-member-in-group", "add-member", {
-        groupId: updatedGroup.id,
-        userIds: users,
-      });
+      if (connectUsers.length > 0) {
+        pusher.trigger("add-member-in-group", "add-member", {
+          groupId: updatedGroup.id,
+          userIds: connectUsers,
+        });
+      }
+      if (disconnectUsers.length > 0) {
+        pusher.trigger("remove-member-from-group", "remove-member", {
+          groupId: updatedGroup.id,
+          userIds: disconnectUsers,
+        });
+      }
     }
 
     return NextResponse.json(

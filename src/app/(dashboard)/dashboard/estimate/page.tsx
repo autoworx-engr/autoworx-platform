@@ -32,7 +32,7 @@ export default async function EstimatesPage({
     InvoiceType.Estimate,
     companyId,
     searchParams,
-    timezone
+    timezone,
   );
 
   const categoriesPromise = db.category.findMany({
