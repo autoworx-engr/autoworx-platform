@@ -19,11 +19,11 @@ import { AppError } from "@/error-boundary/error";
  *         required: true
  *         description: The secure gift card code
  *       - in: query
- *         name: companyId
+ *         name: shopId
  *         schema:
- *           type: string
+ *           type: number
  *         required: true
- *         description: The company ID
+ *         description: The shop ID
  *     responses:
  *       200:
  *         description: Successfully retrieved the gift card balance.
@@ -38,18 +38,28 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const code = searchParams.get("code");
-    const companyId = searchParams.get("companyId");
+    const shopId = searchParams.get("shopId");
 
     if (!code) {
       throw new AppError(400, "Please provide a gift card code.");
     }
 
-    if (!companyId) {
-      throw new AppError(400, "Company ID is required.");
+    if (!shopId) {
+      throw new AppError(400, "Shop ID is required.");
+    }
+
+    const findShop = await db.shop.findUnique({
+      where: {
+        id: Number(shopId),
+      },
+    });
+
+    if (!findShop) {
+      throw new AppError(404, "Shop not found.");
     }
 
     const giftCard = await db.issuedGiftCard.findUnique({
-      where: { code, companyId: Number(companyId) },
+      where: { code, shopId: Number(shopId) },
     });
 
     if (!giftCard) {

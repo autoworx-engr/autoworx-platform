@@ -30,7 +30,7 @@ interface PendingGiftCardReloadCheckout {
 }
 
 const PENDING_RELOAD_STORAGE_KEY = "virtualShopGiftCardPendingReload";
-const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const ReloadGiftCard = ({ presets }: Props) => {
   const params = useParams();
@@ -189,7 +189,7 @@ const ReloadGiftCard = ({ presets }: Props) => {
           }
 
           const reloadData = response.data.data;
-          setFound(prev => ({
+          setFound((prev) => ({
             maskedCode:
               reloadData.maskedCode || prev?.maskedCode || checkout.maskedCode,
             balance: Number(reloadData.balance || 0),
@@ -288,7 +288,7 @@ const ReloadGiftCard = ({ presets }: Props) => {
         {
           params: {
             code: code.trim().toUpperCase(),
-            companyId: shop?.companyId,
+            shopId: shop?.id,
           },
         },
       );
@@ -483,11 +483,11 @@ const ReloadGiftCard = ({ presets }: Props) => {
         <Input
           placeholder="Enter gift card code (e.g. AWX-7F3K-9M2P)"
           value={code}
-          onChange={e => {
+          onChange={(e) => {
             setCode(e.target.value.toUpperCase());
             setLooked(false);
           }}
-          onKeyDown={e => {
+          onKeyDown={(e) => {
             if (e.key === "Enter") handleLookup();
           }}
           className="uppercase font-mono"

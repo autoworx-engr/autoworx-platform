@@ -38,7 +38,7 @@ const CheckBalance = () => {
         {
           params: {
             code: code.trim().toUpperCase(),
-            companyId: shop?.companyId,
+            shopId: shop?.id,
           },
         },
       );
@@ -72,11 +72,11 @@ const CheckBalance = () => {
         <Input
           placeholder="Enter gift card code (e.g. AWX-7F3K-9M2P)"
           value={code}
-          onChange={e => {
+          onChange={(e) => {
             setCode(e.target.value.toUpperCase());
             setLooked(false);
           }}
-          onKeyDown={e => {
+          onKeyDown={(e) => {
             if (e.key === "Enter") handleCheck();
           }}
           className="uppercase font-mono"
