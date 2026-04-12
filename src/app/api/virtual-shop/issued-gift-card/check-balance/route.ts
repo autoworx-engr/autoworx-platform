@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { AppError } from "@/error-boundary/error";
 
 /**
  * @swagger
@@ -17,6 +18,12 @@ import { errorHandler } from "@/error-boundary/globalErrorHandler";
  *           type: string
  *         required: true
  *         description: The secure gift card code
+ *       - in: query
+ *         name: companyId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The company ID
  *     responses:
  *       200:
  *         description: Successfully retrieved the gift card balance.
@@ -31,28 +38,24 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const code = searchParams.get("code");
+    const companyId = searchParams.get("companyId");
 
     if (!code) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Please provide a gift card code.",
-        },
-        { status: 400 },
-      );
+      throw new AppError(400, "Please provide a gift card code.");
+    }
+
+    if (!companyId) {
+      throw new AppError(400, "Company ID is required.");
     }
 
     const giftCard = await db.issuedGiftCard.findUnique({
-      where: { code },
+      where: { code, companyId: Number(companyId) },
     });
 
     if (!giftCard) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Gift card not found. Please check the code and try again.",
-        },
-        { status: 404 },
+      throw new AppError(
+        404,
+        "Gift card not found. Please check the code and try again.",
       );
     }
 

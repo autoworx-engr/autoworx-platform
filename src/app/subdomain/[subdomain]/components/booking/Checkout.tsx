@@ -74,9 +74,9 @@ export const Checkout = () => {
     setIsReturningClient,
     settings,
   } = useBooking();
-  const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const params = useParams();
   const slug = String(params?.subdomain || "");
   const { data: shop } = useGetShopBySlug(slug);
   const { data: gatewayInfo } = useServerGet(
@@ -139,7 +139,7 @@ export const Checkout = () => {
       return;
     }
     const interval = setInterval(() => {
-      setTimeLeft((t) => {
+      setTimeLeft(t => {
         if (t <= 1) {
           clearInterval(interval);
           setTimerExpired(true);
@@ -149,7 +149,7 @@ export const Checkout = () => {
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [timeLeft]);
 
   const formatTime = (s: number) =>
     `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
@@ -170,9 +170,9 @@ export const Checkout = () => {
 
       if (response.success && response.data) {
         const client = response.data;
-        setForm((prev) => ({
+        setForm(prev => ({
           ...prev,
-          fullName: `${client.firstName} ${client.lastName}`.trim(),
+          fullName: `${client.firstName || ""} ${client.lastName || ""}`.trim(),
           email: client.email || "",
         }));
         setIsReturningClient(true);
@@ -191,7 +191,7 @@ export const Checkout = () => {
     if (val === "1234") {
       setOtpVerified(true);
       // Auto-fill name & email but NOT vehicle info
-      setForm((prev) => ({
+      setForm(prev => ({
         ...prev,
         fullName: "John Doe",
         email: "john@example.com",
@@ -215,6 +215,7 @@ export const Checkout = () => {
         {
           params: {
             code: normalizedCode,
+            companyId: shop?.companyId,
           },
         },
       );
@@ -257,7 +258,7 @@ export const Checkout = () => {
     } finally {
       setIsApplyingGiftCard(false);
     }
-  }, [giftCardCode]);
+  }, [giftCardCode, shop?.companyId]);
 
   const clearAppliedGiftCard = useCallback(() => {
     setAppliedGiftCard(null);
@@ -338,7 +339,7 @@ export const Checkout = () => {
       }
 
       if (Array.isArray(snapshot.cart) && cart.length === 0) {
-        snapshot.cart.forEach((item) => {
+        snapshot.cart.forEach(item => {
           const qty = Number(item.quantity || 1);
           for (let i = 0; i < qty; i += 1) {
             addToCart(item.service, item.vehicleType);
@@ -456,7 +457,7 @@ export const Checkout = () => {
     try {
       const response = await createBooking({
         shopId: shop.id,
-        shopServices: cart.map((item) => ({
+        shopServices: cart.map(item => ({
           shopServiceId: Number(item.service.id),
           vehicleType: item.vehicleType,
         })),
@@ -564,7 +565,7 @@ export const Checkout = () => {
   };
 
   const update = (field: keyof CustomerInfo, value: string) =>
-    setForm((prev) => ({ ...prev, [field]: value }));
+    setForm(prev => ({ ...prev, [field]: value }));
 
   const vehicleOptions =
     makes?.data?.map((vehicle: any) => ({
@@ -652,7 +653,9 @@ export const Checkout = () => {
     ? Number(Math.min(appliedGiftCard.balance, giftCardTarget).toFixed(2))
     : 0;
 
-  const grandTotal = Number((rawGrandTotal - giftCardRedeemedPreview).toFixed(2));
+  const grandTotal = Number(
+    (rawGrandTotal - giftCardRedeemedPreview).toFixed(2),
+  );
   const adjustedGrandTotal = grandTotal;
 
   // Deposit still owed after gift card coverage
@@ -704,7 +707,7 @@ export const Checkout = () => {
         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
           Booking Summary
         </p>
-        {cart.map((item) => {
+        {cart.map(item => {
           const vehicleExtra =
             item.service.vehicleTypePricing[
               item.vehicleType.toLowerCase() as keyof typeof item.service.vehicleTypePricing
@@ -803,7 +806,7 @@ export const Checkout = () => {
           <div className="flex gap-2">
             <Input
               value={giftCardCode}
-              onChange={(e) => {
+              onChange={e => {
                 setGiftCardCode(e.target.value.toUpperCase());
                 setGiftCardError("");
               }}
@@ -948,7 +951,7 @@ export const Checkout = () => {
                   labelClassName="text-xs font-medium"
                   className="h-10 text-sm font-normal rounded-md border-input bg-background px-3 py-2"
                   value={form.fullName}
-                  onChange={(e) => update("fullName", e.target.value)}
+                  onChange={e => update("fullName", e.target.value)}
                   placeholder="John Doe"
                 />
               </div>
@@ -962,7 +965,7 @@ export const Checkout = () => {
                   labelClassName="text-xs font-medium"
                   className="h-10 text-sm font-normal rounded-md border-input bg-background px-3 py-2"
                   value={form.email}
-                  onChange={(e) => update("email", e.target.value)}
+                  onChange={e => update("email", e.target.value)}
                   placeholder="john@email.com"
                 />
               </div>
@@ -1021,7 +1024,7 @@ export const Checkout = () => {
                   label="Notes"
                   labelClassName="text-xs font-medium"
                   value={form.notes}
-                  onChange={(e) => update("notes", e.target.value)}
+                  onChange={e => update("notes", e.target.value)}
                   placeholder="Any special requests..."
                   rows={3}
                   className="text-sm font-normal rounded-md"
