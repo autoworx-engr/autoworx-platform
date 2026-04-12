@@ -1,12 +1,12 @@
 import { ChevronDown, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { ReactNode, useState } from "react";
 
 type TProps = {
   item: {
     title: string;
-    icon?: string;
+    icon?: string | ReactNode;
     link?: string | null;
     subnav?:
       | {
@@ -23,9 +23,12 @@ export default function MobileNavList({ item, setOpenNav }: TProps) {
   return (
     <li>
       <div className="flex items-center space-x-2">
-        {item.icon && (
-          <Image src={item?.icon} alt={item.title} width={20} height={20} />
-        )}
+        {item.icon &&
+          (typeof item.icon === "string" ? (
+            <Image src={item.icon} alt={item.title} width={20} height={20} />
+          ) : (
+            item.icon
+          ))}
         {item.link && !item.subnav ? (
           <Link
             onClick={() => setOpenNav(false)}

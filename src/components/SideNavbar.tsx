@@ -34,7 +34,7 @@ import { filterNavList } from "@/lib/navListAuthorization";
 type TProps = {
   navList: {
     title: string;
-    icon: string;
+    icon: string | ReactNode;
     link?: string | null;
     path: string;
     subnav?:
@@ -339,12 +339,16 @@ export default function SideNavbar({ navList, permissions }: TProps) {
                 active={modifiedPathName === item.path ? true : false}
                 icon={
                   <span className="relative inline-flex items-center justify-center">
-                    <Image
-                      src={item.icon}
-                      alt={item.title}
-                      width={24}
-                      height={24}
-                    />
+                    {typeof item.icon === "string" ? (
+                      <Image
+                        src={item.icon}
+                        alt={item.title}
+                        width={24}
+                        height={24}
+                      />
+                    ) : (
+                      item.icon
+                    )}
                     {item.title === "Communication Hub" &&
                       notificationShowPermission &&
                       totalMessageCount > 0 && (
@@ -405,12 +409,16 @@ export default function SideNavbar({ navList, permissions }: TProps) {
                       )}
                       href={item.link}
                     >
-                      <Image
-                        src={item.icon}
-                        alt={item.title}
-                        width={20}
-                        height={20}
-                      />
+                      {typeof item.icon === "string" ? (
+                        <Image
+                          src={item.icon}
+                          alt={item.title}
+                          width={20}
+                          height={20}
+                        />
+                      ) : (
+                        item.icon
+                      )}
                     </Link>
                   )}
                 </TooltipTrigger>

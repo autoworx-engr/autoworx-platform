@@ -22,11 +22,11 @@ import {
   AlertCircle,
   Copy,
 } from "lucide-react";
+import { Popconfirm } from "antd";
 import { cn } from "@/lib/utils";
 import SelectCategory from "@/components/Lists/SelectCategory";
 import { Category } from "@prisma/client";
 import toast from "react-hot-toast";
-import { Popconfirm } from "antd";
 import { useClonePlaybooks } from "@/hooks/sales-agent/useServicePlaybooks";
 
 interface PlaybookEditorProps {
@@ -275,12 +275,14 @@ export function PlaybookEditor({
           <p className="text-muted-foreground">
             Train your AI assistant on how to handle this service
           </p>
-          {!playbook && process.env.NODE_ENV !== "production" && (
-            <Button variant="outline" onClick={clonePlaybookHandler}>
-              <Copy className="mr-2 h-4 w-4" />
-              Clone playbook
-            </Button>
-          )}
+          {!playbook &&
+            (Boolean(process.env.NEXT_PUBLIC_IS_CLONE_PLAYBOOK_ACCESS) ||
+              false) === true && (
+              <Button variant="outline" onClick={clonePlaybookHandler}>
+                <Copy className="mr-2 h-4 w-4" />
+                Clone playbook
+              </Button>
+            )}
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={onCancel}>

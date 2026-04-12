@@ -29,11 +29,10 @@ interface User {
 // header component
 function Header() {
   return (
-    <div className="p-6 text-black border-b border-slate-200">
-      <div className="flex items-center gap-3 mb-2">
-        <ShieldCheck className="w-8 h-8 text-emerald-400" />
-        <h1 className="text-xl font-bold">Account Settings</h1>
-      </div>
+    <div className="p-6  border-b border-slate-200">
+      
+        <h1 className="text-lg font-bold">Account Settings</h1>
+     
       <p className="text-slate-400 text-sm">
         Manage your security preferences.
       </p>
