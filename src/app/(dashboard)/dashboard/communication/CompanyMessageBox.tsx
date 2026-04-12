@@ -48,20 +48,22 @@ export default function CompanyMessageBox({
   const [showProfile, setShowProfile] = useState(false);
   const { data: session } = useSession();
   const attachmentRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const toggleRef = useRef<HTMLImageElement>(null);
   const pathname = usePathname();
   const [messages, setMessages] = useState<TMessage[]>([]);
   const [message, setMessage] = useState("");
   const [pending, startTransition] = useTransition();
   const messageBoxRef = useRef<HTMLDivElement>(null);
   const [multiAttachmentFile, setMultiAttachmentFile] = useState<File[] | null>(
-    null
+    null,
   );
   const searchParams = useSearchParams();
   const companyId = searchParams.get("companyId");
   const [showAttachment, setShowAttachment] = useState(false);
   const currentCompanyId = session?.user?.companyId;
   const isEstimateAttachmentShow = pathname?.includes(
-    "/communication/collaboration"
+    "/communication/collaboration",
   );
 
   // 🔹 Load messages
@@ -71,7 +73,7 @@ export default function CompanyMessageBox({
     async function fetchMessages() {
       try {
         const res = await fetch(
-          `/api/communication/collaboration/messages/v2-messages?companyA=${currentCompanyId}&companyB=${companyId}&viewerCompanyId=${currentCompanyId}`
+          `/api/communication/collaboration/messages/v2-messages?companyA=${currentCompanyId}&companyB=${companyId}&viewerCompanyId=${currentCompanyId}`,
         );
 
         const data = await res.json();
@@ -135,6 +137,27 @@ export default function CompanyMessageBox({
       pusher.unsubscribe(`company-${currentCompanyId}`);
     };
   }, [companyId, currentCompanyId]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      const target = event.target as Node;
+      if (
+        showAttachment &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(target) &&
+        toggleRef.current &&
+        !toggleRef.current.contains(target) &&
+        !(target instanceof Element && target.closest('[role="dialog"]'))
+      ) {
+        setShowAttachment(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showAttachment]);
 
   async function handleSendMessage(e: React.FormEvent) {
     e.preventDefault();
@@ -212,7 +235,7 @@ export default function CompanyMessageBox({
   const handleRemoveAttachment = (fileName: string) => {
     setMultiAttachmentFile(
       (multiFiles) =>
-        multiFiles && multiFiles?.filter((file) => file?.name !== fileName)
+        multiFiles && multiFiles?.filter((file) => file?.name !== fileName),
     );
   };
 
@@ -281,7 +304,7 @@ export default function CompanyMessageBox({
               <div
                 className={cn(
                   "flex flex-col space-y-2",
-                  isOwn ? "items-end" : "items-start"
+                  isOwn ? "items-end" : "items-start",
                 )}
               >
                 {/* Attachments */}
@@ -292,7 +315,7 @@ export default function CompanyMessageBox({
                       key={attachment.fileUrl}
                       className={cn(
                         "flex items-center gap-2",
-                        isOwn ? "flex-row-reverse" : "flex-row"
+                        isOwn ? "flex-row-reverse" : "flex-row",
                       )}
                     >
                       {attachment.fileType?.includes("image") ? (
@@ -302,6 +325,12 @@ export default function CompanyMessageBox({
                           width={200}
                           height={200}
                           className="rounded-md border cursor-pointer"
+                        />
+                      ) : attachment.fileType?.includes("video") ? (
+                        <video
+                          src={attachment.fileUrl}
+                          className="h-40 w-60 rounded-md border cursor-pointer"
+                          controls
                         />
                       ) : (
                         <div className="rounded-md bg-[#006D77] px-4 py-2 text-white">
@@ -352,13 +381,13 @@ export default function CompanyMessageBox({
                         href={`/dashboard/estimate/edit/${msg?.requestEstimate.invoiceId}`}
                         className={cn(
                           "w-96 rounded-md bg-[#006D77] p-1",
-                          !msg?.isOwnMessage && "bg-[#D9D9D9]"
+                          !msg?.isOwnMessage && "bg-[#D9D9D9]",
                         )}
                       >
                         <div
                           className={cn(
                             "flex items-center justify-center gap-x-2 rounded-md border border-white p-5",
-                            !msg?.isOwnMessage && "border-[#006D77]"
+                            !msg?.isOwnMessage && "border-[#006D77]",
                           )}
                         >
                           <Image
@@ -370,7 +399,7 @@ export default function CompanyMessageBox({
                           <p
                             className={cn(
                               "font-semibold text-white",
-                              !msg?.isOwnMessage && "text-[#006D77]"
+                              !msg?.isOwnMessage && "text-[#006D77]",
                             )}
                           >
                             Requested an Estimate
@@ -388,7 +417,7 @@ export default function CompanyMessageBox({
                       "max-w-[75%] rounded-2xl px-4 py-2 text-sm shadow-sm break-words",
                       isOwn
                         ? "bg-[#006D77] text-white rounded-br-sm"
-                        : "bg-gray-100 text-gray-800 rounded-bl-sm"
+                        : "bg-gray-100 text-gray-800 rounded-bl-sm",
                     )}
                   >
                     {msg.message}
@@ -401,7 +430,7 @@ export default function CompanyMessageBox({
                     "text-[11px] mt-1",
                     isOwn
                       ? "text-gray-400 text-right"
-                      : "text-gray-500 text-left"
+                      : "text-gray-500 text-left",
                   )}
                 >
                   {format(new Date(msg?.createdAt), "p")} ·
@@ -419,7 +448,7 @@ export default function CompanyMessageBox({
         <div
           className={cn(
             "relative w-full rounded-lg border border-gray-200 bg-white shadow-md flex flex-col",
-            "max-h-64"
+            "max-h-64",
           )}
         >
           {/* Sticky header */}
@@ -470,6 +499,13 @@ export default function CompanyMessageBox({
                           sizes="80px"
                         />
                       </div>
+                    ) : attachmentFile.type.includes("video") ? (
+                      <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border border-gray-300 bg-black">
+                        <video
+                          src={URL.createObjectURL(attachmentFile)}
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
                     ) : (
                       // Non-image file preview
                       <div className="flex h-20 w-20 flex-shrink-0 flex-col items-center justify-center rounded-md bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-sm">
@@ -503,9 +539,10 @@ export default function CompanyMessageBox({
         {/* attachment or estimate dropdown */}
         {showAttachment && (
           <div
+            ref={dropdownRef}
             className={cn(
               "absolute z-50 -top-[55px] space-y-1",
-              isEstimateAttachmentShow ? "-top-[55px]" : "-top-[27px]"
+              isEstimateAttachmentShow ? "-top-[55px]" : "-top-[27px]",
             )}
           >
             <p
@@ -525,6 +562,7 @@ export default function CompanyMessageBox({
           </div>
         )}
         <Image
+          ref={toggleRef}
           onClick={() => setShowAttachment(!showAttachment)}
           className="cursor-pointer"
           src="/icons/Attachment.svg"

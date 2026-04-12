@@ -1,30 +1,30 @@
 "use server";
 import { db } from "@/lib/db";
+import { PaymentParams } from "@/lib/payment-gateway";
 import { env } from "next-runtime-env";
 import Stripe from "stripe";
 
 const stripe = new Stripe(
-  (process.env.STRIPE_SECRET_KEY || env("STRIPE_SECRET_KEY")) as string
+  (process.env.STRIPE_SECRET_KEY || env("STRIPE_SECRET_KEY")) as string,
 );
 
 export const createStripePaymentLink = async ({
   companyId,
   invoiceId,
+  statementId,
+  shopBookingId,
+  paymentId,
+  giftCardSource,
+  giftCardCode,
+  giftCardId,
   amount,
   tip,
   payType,
-  statementId,
-}: {
-  companyId: number;
-  invoiceId?: string;
-  statementId?: string;
-  amount: string;
-  tip?: string;
-  payType: "payment" | "deposit" | "statement";
-}) => {
+  redirectUrl,
+}: PaymentParams) => {
   try {
-    if (!invoiceId && !statementId) {
-      throw new Error("Invoice not found");
+    if (!invoiceId && !statementId && !shopBookingId && !paymentId) {
+      throw new Error("Invoice, statement, or booking ID is required");
     }
     const company = await db.company.findFirst({
       where: {
@@ -46,6 +46,17 @@ export const createStripePaymentLink = async ({
       ? await db.fleetStatement.findFirst({
           where: {
             id: statementId,
+          },
+        })
+      : null;
+
+    const shopBooking = shopBookingId
+      ? await db.shopBooking.findUnique({
+          where: {
+            id: Number(shopBookingId),
+          },
+          select: {
+            invoiceId: true,
           },
         })
       : null;
@@ -73,7 +84,45 @@ export const createStripePaymentLink = async ({
 
     const productName = invoiceId
       ? `INVOICE-${invoiceId}`
-      : `STATEMENT-${statementId}`;
+      : statementId
+        ? `STATEMENT-${statementId}`
+        : shopBookingId
+          ? `BOOKING-${shopBookingId}`
+          : `GIFTCARD-${paymentId}`;
+
+    const appUrl =
+      process.env.NEXT_PUBLIC_APP_URL || env("NEXT_PUBLIC_APP_URL") || "";
+    const appendQuery = (url: string, query: string) =>
+      url.includes("?") ? `${url}&${query}` : `${url}?${query}`;
+    const isVirtualShopGiftCardPayment =
+      payType === "virtual_shop_gift_card" && Boolean(paymentId);
+    const successRedirectBase = redirectUrl
+      ? appendQuery(redirectUrl, "success=true")
+      : "";
+    const successRedirectWithPaymentRef =
+      redirectUrl && isVirtualShopGiftCardPayment
+        ? appendQuery(successRedirectBase, `paymentRef=${paymentId}`)
+        : successRedirectBase;
+
+    const successUrl = redirectUrl
+      ? appendQuery(
+          successRedirectWithPaymentRef,
+          "session_id={CHECKOUT_SESSION_ID}",
+        )
+      : shopBookingId
+        ? appendQuery(appUrl, "success=true")
+        : `${appUrl}/public-invoice/${invoiceId ?? statementId}?success=true&type=${payType}${statementId ? "&fleet=true" : ""}`;
+
+    const cancelUrl = redirectUrl
+      ? appendQuery(
+          redirectUrl,
+          isVirtualShopGiftCardPayment
+            ? `cancel=true&paymentRef=${paymentId}`
+            : "cancel=true",
+        )
+      : shopBookingId
+        ? appendQuery(appUrl, "cancel=true")
+        : `${appUrl}/public-invoice/${invoiceId ?? statementId}${statementId ? "?fleet=true" : ""}`;
 
     const tipAmount = parseFloat(tip || "0");
     const totalCharge = Number(amount) + tipAmount;
@@ -96,34 +145,51 @@ export const createStripePaymentLink = async ({
         ],
         payment_intent_data: {
           metadata: {
-            paymentData: invoiceId
+            paymentData: shopBookingId
               ? JSON.stringify({
                   companyId,
-                  invoiceId,
+                  shopBookingId,
+                  invoiceId: shopBooking?.invoiceId,
                   amount,
-                  tip: tip || "0",
-                  payType,
+                  payType: "virtual_shop_deposit",
                 })
-              : JSON.stringify({
-                  companyId,
-                  statementId,
-                  amount,
-                  tip: tip || "0",
-                  payType: "statement",
-                }),
+              : paymentId
+                ? JSON.stringify({
+                    companyId,
+                    paymentRef: paymentId,
+                    amount,
+                    payType: "virtual_shop_gift_card",
+                    giftCardSource,
+                    giftCardCode,
+                    giftCardId,
+                  })
+                : invoiceId
+                  ? JSON.stringify({
+                      companyId,
+                      invoiceId,
+                      amount,
+                      tip: tip || "0",
+                      payType,
+                    })
+                  : JSON.stringify({
+                      companyId,
+                      statementId,
+                      amount,
+                      tip: tip || "0",
+                      payType: "statement",
+                    }),
           },
         },
-        success_url: `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoiceId ?? statementId}?success=true&type=${payType}${statementId ? "&fleet=true" : ""}`,
-        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoiceId ?? statementId}${statementId ? "?fleet=true" : ""}`,
+        success_url: successUrl,
+        cancel_url: cancelUrl,
       },
       {
         stripeAccount: company.stripeAccountId,
-      }
+      },
     );
 
     return { url: session.url };
   } catch (error: any) {
-    console.log(error);
     return {
       success: false,
       message: error?.message ?? "Failed to create Stripe Payment Link",

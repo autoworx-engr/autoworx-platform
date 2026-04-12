@@ -1,40 +1,38 @@
-import { protocol, rootDomain } from "@/lib/subdomains";
-import Link from "next/link";
+import { getShopBySlugServer } from "@/service/virtual-shop/server-api";
+import BookingPage from "./pages/BookingPage";
+import { Metadata } from "next";
 
-export default async function SubdomainPage({
-  params,
-}: {
-  params: Promise<{ subdomain: string }>;
-}) {
-  const { subdomain } = await params;
-  // const subdomainData = await getSubdomainData(subdomain);
+type Props = {
+  params: { subdomain: string };
+};
 
-  // if (!subdomainData) {
-  //   notFound();
-  // }
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const shop = await getShopBySlugServer(params.subdomain);
+
+  if (!shop || shop.isActive === false) {
+    return {
+      title: "Shop Not Found | Autoworx",
+    };
+  }
+
+  return {
+    title: `${shop.storeName} | Online Booking`,
+    description:
+      shop.description || `Book services from ${shop.storeName} online.`,
+    openGraph: {
+      title: shop.storeName,
+      description: shop.description || "",
+      images: shop.logoUrl ? [shop.logoUrl] : [],
+    },
+  };
+}
+
+export default async function VirtualShop({ params }: Props) {
+  const shop = await getShopBySlugServer(params.subdomain);
 
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-b from-blue-50 to-white p-4">
-      <div className="absolute top-4 right-4">
-        <Link
-          href={`${protocol}://${rootDomain}`}
-          className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
-        >
-          {rootDomain}
-        </Link>
-      </div>
-
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-9xl mb-6"></div>
-          <h1 className="text-4xl font-bold tracking-tight text-gray-900">
-            Welcome to {subdomain}.{rootDomain}
-          </h1>
-          <p className="mt-3 text-lg text-gray-600">
-            This is your custom subdomain page
-          </p>
-        </div>
-      </div>
+    <div>
+      <BookingPage initialShop={shop} />
     </div>
   );
 }

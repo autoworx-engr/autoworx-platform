@@ -1,7 +1,7 @@
 "use client";
 import { format } from "date-fns";
 import { Calendar } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { DateRangePicker } from "react-date-range";
 import "react-date-range/dist/styles.css"; // main style file
 import "react-date-range/dist/theme/default.css"; // theme css file
@@ -15,42 +15,42 @@ const PaymentDateRange = ({
   onCancel: () => void;
   dateRange?: [Date | null, Date | null];
 }) => {
-  const [state, setState] = useState({
-    selection: {
-      startDate: dateRangeProp?.[0] || new Date(),
-      endDate: dateRangeProp?.[1] || new Date(),
+  const selectedStart = dateRangeProp?.[0] ?? null;
+  const selectedEnd = dateRangeProp?.[1] ?? null;
+
+  const getSelectionFromProps = useCallback(
+    () => ({
+      startDate: selectedStart || new Date(),
+      endDate: selectedEnd || new Date(),
       key: "selection",
-    },
+    }),
+    [selectedStart, selectedEnd],
+  );
+
+  const [state, setState] = useState({
+    selection: getSelectionFromProps(),
   });
   const ref = useRef<HTMLDivElement>(null);
 
   const [showPicker, setShowPicker] = useState(false);
-  const [tempRange, setTempRange] = useState(state.selection);
+  const [tempRange, setTempRange] = useState(getSelectionFromProps());
   const isRangeSelected =
-    dateRangeProp?.[0] !== undefined &&
-    dateRangeProp?.[0] !== null &&
-    dateRangeProp?.[1] !== undefined &&
-    dateRangeProp?.[1] !== null;
+    selectedStart !== undefined &&
+    selectedStart !== null &&
+    selectedEnd !== undefined &&
+    selectedEnd !== null;
 
   useEffect(() => {
-    if (isRangeSelected) {
-      const newSelection = {
-        startDate: dateRangeProp![0]!,
-        endDate: dateRangeProp![1]!,
-        key: "selection",
-      };
-      setState({ selection: newSelection });
-      setTempRange(newSelection);
-    } else {
-      const resetSelection = {
-        startDate: new Date(),
-        endDate: new Date(),
-        key: "selection",
-      };
-      setState({ selection: resetSelection });
-      setTempRange(resetSelection);
+    const syncedSelection = getSelectionFromProps();
+    setState({ selection: syncedSelection });
+    setTempRange(syncedSelection);
+  }, [selectedStart, selectedEnd, getSelectionFromProps]);
+
+  const handleClickOutside = (event: any) => {
+    if (ref.current && !ref.current.contains(event.target)) {
+      setShowPicker(false);
     }
-  }, [dateRangeProp?.[0], dateRangeProp?.[1], isRangeSelected]);
+  };
 
   useEffect(() => {
     document.addEventListener("mousedown", handleClickOutside);
@@ -68,33 +68,30 @@ const PaymentDateRange = ({
   };
 
   const handleOk = () => {
+    if (!tempRange.startDate || !tempRange.endDate) {
+      return;
+    }
+
     setState({ selection: tempRange });
     setShowPicker(false);
     onOk(tempRange.startDate, tempRange.endDate);
   };
 
-  const handleClickOutside = (event: any) => {
-    if (ref.current && !ref.current.contains(event.target)) {
-      setShowPicker(false);
-    }
-  };
-
-  const handleCancel = () => {
-    togglePicker();
-    // reset everything
-    setState({
-      selection: {
-        startDate: new Date(),
-        endDate: new Date(),
-        key: "selection",
-      },
-    });
-    setTempRange({
+  const handleClear = () => {
+    const resetSelection = {
       startDate: new Date(),
       endDate: new Date(),
       key: "selection",
-    });
+    };
+    setState({ selection: resetSelection });
+    setTempRange(resetSelection);
+    setShowPicker(false);
     onCancel();
+  };
+
+  const handleCancel = () => {
+    setShowPicker(false);
+    setTempRange(state.selection);
   };
 
   const formatRange = (start: Date, end: Date) => {
@@ -117,7 +114,7 @@ const PaymentDateRange = ({
         `}
       >
         <span
-          className={`font-medium ${isRangeSelected ? "text-slate-700 dark:text-slate-200" : "text-slate-400"}`}
+          className={`font-medium truncate ${isRangeSelected ? "text-slate-700 dark:text-slate-200" : "text-slate-400"}`}
         >
           {isRangeSelected
             ? formatRange(state.selection.startDate, state.selection.endDate)
@@ -143,10 +140,16 @@ const PaymentDateRange = ({
           />
           <div className="mt-2 flex justify-end gap-3 border-t border-slate-100 pt-4 dark:border-slate-800">
             <button
-              onClick={handleCancel}
+              onClick={handleClear}
               className="rounded-lg px-4 py-2 text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-700 dark:hover:bg-slate-800 dark:text-slate-400"
             >
               Clear
+            </button>
+            <button
+              onClick={handleCancel}
+              className="rounded-lg px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+            >
+              Cancel
             </button>
             <button
               onClick={handleOk}

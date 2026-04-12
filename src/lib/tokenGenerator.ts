@@ -21,7 +21,7 @@ export function generateAccessToken(user: TPayload) {
       phone: user.phone,
     },
     ACCESS_SECRET,
-    { expiresIn: "1m" },
+    { expiresIn: "1h" },
   ) as string;
 }
 

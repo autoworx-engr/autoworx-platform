@@ -45,10 +45,23 @@ export async function addAppointment(
   try {
     await createAppointmentValidationSchema.parseAsync(appointment);
     const session = await getServerSession(authOptions);
-    const companyId = session?.user.companyId;
+    const sessionUserId = session?.user.id;
 
+    let companyId = appointment.forceCompanyId;
+    let userId = appointment.forceUserId ?? sessionUserId;
+
+    if (!userId) {
+      return {
+        type: "error",
+        message: "User not found",
+        field: "user",
+      };
+    }
     if (!companyId) {
-      throw new Error("Company ID is required to create an email template.");
+      companyId = session?.user?.companyId;
+      if (!companyId) {
+        throw new Error("Company ID is required to create an appointment.");
+      }
     }
 
     let client:
@@ -87,7 +100,7 @@ export async function addAppointment(
         serviceCategoryId: appointment.serviceCategoryId,
         draftEstimate: appointment.draftEstimate,
         notes: appointment.notes,
-        userId: parseInt(session.user.id),
+        userId: Number(userId),
         confirmationEmailTemplateId: appointment.confirmationEmailTemplateId,
         confirmationEmailTemplateStatus:
           appointment.confirmationEmailTemplateStatus,
@@ -148,7 +161,7 @@ export async function addAppointment(
             type: "Estimate",
             clientId: appointment.clientId,
             vehicleId: appointment.vehicleId,
-            userId: session.user.id as any,
+            userId: Number(userId),
             companyId,
             columnId: pendingColumn.id,
           },

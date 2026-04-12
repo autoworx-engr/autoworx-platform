@@ -15,7 +15,7 @@ import { Column, Employee, ShopPipelineData } from "@/types/invoiceLead";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
-import { Tag, User } from "@prisma/client";
+import { EmployeeType, Tag, User } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { SetStateAction, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
@@ -29,6 +29,7 @@ interface PipelinesProps {
   shopPipelineDataProp: ShopPipelineData[];
   loading?: boolean;
   isTechnician?: boolean;
+  employeeType?: EmployeeType;
 }
 
 export default function TeamPipelines({
@@ -37,6 +38,7 @@ export default function TeamPipelines({
   loading = false,
   shopPipelineDataProp,
   isTechnician,
+  employeeType,
 }: PipelinesProps) {
   const router = useRouter();
 
@@ -548,6 +550,7 @@ export default function TeamPipelines({
           pipelineData={pipelineData} // Pass the original pipelineData so the Select filter still has all columns
           onSearchResult={handleSearchResult}
           onColumnChange={(colId) => setSelectedSearchColumnId(colId)}
+          isTeamPipeline={true}
         />
       </div>
 

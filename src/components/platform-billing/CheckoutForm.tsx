@@ -81,8 +81,8 @@ export function CheckoutForm({
     };
 
     const billTo = {
-      firstName: cardData.firstName,
-      lastName: cardData.lastName,
+      firstName: cardData.firstName ?? "",
+      lastName: cardData.lastName ?? "",
     };
     const secureData = { authData, cardData: cardDetails, billTo };
 
