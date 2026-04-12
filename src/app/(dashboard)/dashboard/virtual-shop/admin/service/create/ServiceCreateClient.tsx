@@ -12,7 +12,7 @@ import TemplateInspectionTab from "@/app/(dashboard)/dashboard/estimate/template
 import ServiceInfo, { ServiceInfoState } from "./ServiceInfo";
 import Create from "@/app/(dashboard)/dashboard/estimate/create/Create";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { errorToast } from "@/lib/toast";
 import {
   useCreateShopService,
@@ -118,7 +118,9 @@ function ServiceBillSummary({
   useEffect(() => {
     const netAmount = subtotal;
     const taxAdd =
-      computedTax > 0 ? Number((netAmount * (computedTax / 100)).toFixed(2)) : 0;
+      computedTax > 0
+        ? Number((netAmount * (computedTax / 100)).toFixed(2))
+        : 0;
     const suppliesFeeAdd =
       computedServiceFee > 0
         ? Number((netAmount * (computedServiceFee / 100)).toFixed(2))
@@ -143,7 +145,8 @@ function ServiceBillSummary({
       <div className="space-y-1 p-1.5">
         {summaryRows.map(([title, data], index) => {
           const isToggleItem = title === "tax" || title === "shop supplies";
-          const toggleState = title === "tax" ? isTaxEnabled : isSuppliesEnabled;
+          const toggleState =
+            title === "tax" ? isTaxEnabled : isSuppliesEnabled;
           const toggleSetter =
             title === "tax" ? setIsTaxEnabled : setIsSuppliesEnabled;
 
@@ -159,12 +162,14 @@ function ServiceBillSummary({
               {isToggleItem && (
                 <div
                   onClick={() => toggleSetter((prev) => !prev)}
-                  className={`relative flex h-5 w-9 cursor-pointer items-center rounded-full px-1 transition-all duration-200 ${toggleState ? "bg-[#6571FF]" : "bg-slate-200"
-                    }`}
+                  className={`relative flex h-5 w-9 cursor-pointer items-center rounded-full px-1 transition-all duration-200 ${
+                    toggleState ? "bg-[#6571FF]" : "bg-slate-200"
+                  }`}
                 >
                   <div
-                    className={`h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform duration-200 ease-in-out ${toggleState ? "translate-x-3.5" : "translate-x-0"
-                      }`}
+                    className={`h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform duration-200 ease-in-out ${
+                      toggleState ? "translate-x-3.5" : "translate-x-0"
+                    }`}
                   />
                 </div>
               )}
@@ -174,10 +179,11 @@ function ServiceBillSummary({
                 readOnly
                 value={
                   isToggleItem
-                    ? `${toggleState ? Number(data).toFixed(2) : 0}%${toggleState && Number(data) > 0
-                      ? ` | ${((subtotal * Number(data)) / 100).toFixed(2)}`
-                      : ""
-                    }`
+                    ? `${toggleState ? Number(data).toFixed(2) : 0}%${
+                        toggleState && Number(data) > 0
+                          ? ` | ${((subtotal * Number(data)) / 100).toFixed(2)}`
+                          : ""
+                      }`
                     : data
                 }
                 className="w-[200px] rounded-lg bg-gray-500 px-3 py-1 text-right text-sm font-bold text-white ring-1 ring-inset ring-slate-100 focus:outline-none"
@@ -218,14 +224,17 @@ export default function ServiceCreateClient({
 }) {
   const router = useRouter();
   const isEditMode = !!initialServiceData?.id;
-  const { mutateAsync: createShopService, isPending: isSaving } = useCreateShopService();
+  const { mutateAsync: createShopService, isPending: isSaving } =
+    useCreateShopService();
   const { mutateAsync: updateShopService, isPending: isUpdating } =
     useUpdateShopService();
 
   const { items, reset } = useEstimateCreateStore();
-  const [serviceInfo, setServiceInfo] = useState<ServiceInfoState>(INITIAL_SERVICE_INFO);
+  const [serviceInfo, setServiceInfo] =
+    useState<ServiceInfoState>(INITIAL_SERVICE_INFO);
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [isImageUploading, setIsImageUploading] = useState(false);
+  const isSubmittingRef = useRef(false);
   const [validationErrors, setValidationErrors] = useState<{
     serviceTitle?: string;
     description?: string;
@@ -273,7 +282,6 @@ export default function ServiceCreateClient({
   };
 
   const uploadImage = async (file: File) => {
-
     setIsImageUploading(true);
     try {
       const imageFormData = new FormData();
@@ -305,152 +313,145 @@ export default function ServiceCreateClient({
   };
 
   const handleSaveService = async () => {
-    const nextErrors: {
-      serviceTitle?: string;
-      description?: string;
-      items?: string;
-    } = {};
-
-    if (!serviceInfo.serviceTitle.trim()) {
-      nextErrors.serviceTitle = "Service title is required";
+    if (isSubmittingRef.current) {
+      return;
     }
 
-    if (!serviceInfo.description.trim()) {
-      nextErrors.description = "Description is required";
-    }
+    isSubmittingRef.current = true;
 
-    const rowStates = (items || []).map((item) => {
-      const hasService = Boolean(item?.service);
-      const hasLabor = Boolean(item?.labor && String(item.labor.name || "").trim());
-      const hasMaterial = Array.isArray(item?.materials)
-        ? item.materials.some(
-          (material) => Boolean(material && String(material.name || "").trim()),
-        )
-        : false;
+    try {
+      const nextErrors: {
+        serviceTitle?: string;
+        description?: string;
+        items?: string;
+      } = {};
 
-      return {
-        hasService,
-        hasLabor,
-        hasMaterial,
-        hasAny: hasService || hasLabor || hasMaterial,
-      };
-    });
-
-    const hasAnySelectedRow = rowStates.some((row) => row.hasAny);
-    const hasIncompleteSelectedRow = rowStates.some(
-      (row) => row.hasAny && !(row.hasService && row.hasLabor && row.hasMaterial),
-    );
-
-    if (!hasAnySelectedRow) {
-      nextErrors.items = "Service, material, and labor is required";
-    } else if (hasIncompleteSelectedRow) {
-      nextErrors.items = "Each selected row must include service, material, and labor";
-    }
-
-    const invalidMaterialQuantity = (items || []).some((item) =>
-      Array.isArray(item?.materials)
-        ? item.materials.some((material) => {
-          if (!material || !String(material.name || "").trim()) {
-            return false;
-          }
-
-          return toSafeNumber(material.quantity) <= 0;
-        })
-        : false,
-    );
-
-    if (invalidMaterialQuantity) {
-      nextErrors.items = "Material quantity cannot be 0";
-    }
-
-    const invalidLaborHours = (items || []).some((item) => {
-      if (!item?.labor || !String(item.labor.name || "").trim()) {
-        return false;
+      if (!serviceInfo.serviceTitle.trim()) {
+        nextErrors.serviceTitle = "Service title is required";
       }
 
-      return toSafeNumber(item.labor.hours) <= 0;
-    });
+      if (!serviceInfo.description.trim()) {
+        nextErrors.description = "Description is required";
+      }
 
-    if (invalidLaborHours) {
-      nextErrors.items = "Labor no of hours cannot be 0";
-    }
+      const rowStates = (items || []).map((item) => {
+        const hasService = Boolean(item?.service);
+        const hasLabor = Boolean(
+          item?.labor && String(item.labor.name || "").trim(),
+        );
+        const hasMaterial = Array.isArray(item?.materials)
+          ? item.materials.some((material) =>
+              Boolean(material && String(material.name || "").trim()),
+            )
+          : false;
 
-    if (Object.keys(nextErrors).length > 0) {
-      setValidationErrors(nextErrors);
-      const validationMessage =
-        nextErrors.serviceTitle ||
-        nextErrors.description ||
-        nextErrors.items ||
-        "Please complete required fields";
+        return {
+          hasService,
+          hasLabor,
+          hasMaterial,
+          hasAny: hasService || hasLabor || hasMaterial,
+        };
+      });
 
-      errorToast(validationMessage, { id: "service-create-validation" });
-      return;
-    }
+      const hasAnySelectedRow = rowStates.some((row) => row.hasAny);
+      const hasIncompleteSelectedRow = rowStates.some(
+        (row) =>
+          row.hasAny && !(row.hasService && row.hasLabor && row.hasMaterial),
+      );
 
-    setValidationErrors({});
+      if (!hasAnySelectedRow) {
+        nextErrors.items = "Service, material, and labor is required";
+      } else if (hasIncompleteSelectedRow) {
+        nextErrors.items =
+          "Each selected row must include service, material, and labor";
+      }
 
-    if (!selectedShopId) {
-      errorToast("Virtual shop is not configured yet");
-      return;
-    }
+      const invalidMaterialQuantity = (items || []).some((item) =>
+        Array.isArray(item?.materials)
+          ? item.materials.some((material) => {
+              if (!material || !String(material.name || "").trim()) {
+                return false;
+              }
 
-    const payloadItems = (items || [])
-      .map((item) => {
-        const normalizedService = item.service
-          ? {
-            id: Number(item.service.id),
-            name: item.service.name,
-            categoryId: item.service.categoryId ?? null,
-            description: item.service.description ?? null,
-            createdAt: toSafeDate(item.service.createdAt),
-            updatedAt: toSafeDate(item.service.updatedAt),
-            fromRequest: (item.service as any).fromRequest ?? null,
-            fromRequestedCompanyId:
-              (item.service as any).fromRequestedCompanyId ?? null,
-            companyId: Number(item.service.companyId || companyId),
-          }
-          : null;
+              return toSafeNumber(material.quantity) <= 0;
+            })
+          : false,
+      );
 
-        const normalizedMaterials = (item.materials || []).map((material) => {
-          if (!material) return null;
+      if (invalidMaterialQuantity) {
+        nextErrors.items = "Material quantity cannot be 0";
+      }
 
-          return {
-            id: material.id,
-            name: material.name,
-            vendorId: material.vendorId ?? null,
-            categoryId: material.categoryId ?? null,
-            notes: material.notes ?? null,
-            quantity: toSafeNumber(material.quantity),
-            cost: toSafeNumber(material.cost),
-            sell: toSafeNumber(material.sell),
-            discount: toSafeNumber(material.discount),
-            companyId: Number(material.companyId || companyId),
-            invoiceId: material.invoiceId ?? null,
-            invoiceItemId: material.invoiceItemId ?? null,
-            productId: material.productId ?? null,
-            createdAt: toSafeDate(material.createdAt),
-            updatedAt: toSafeDate(material.updatedAt),
-            tags: ((material as any).tags || [])
-              .filter((tag: any) => tag?.id && tag?.name)
-              .map((tag: any) => ({
-                id: Number(tag.id),
-                name: String(tag.name),
-                textColor: String(tag.textColor || "#000000"),
-                bgColor: String(tag.bgColor || "#ffffff"),
-                createdAt: toSafeDate(tag.createdAt),
-                updatedAt: toSafeDate(tag.updatedAt),
-                companyId: Number(tag.companyId || companyId),
-              })),
-          };
+      const invalidLaborHours = (items || []).some((item) => {
+        if (!item?.labor || !String(item.labor.name || "").trim()) {
+          return false;
+        }
+
+        return toSafeNumber(item.labor.hours) <= 0;
+      });
+
+      if (invalidLaborHours) {
+        nextErrors.items = "Labor no of hours cannot be 0";
+      }
+
+      if (Object.keys(nextErrors).length > 0) {
+        setValidationErrors(nextErrors);
+        const validationMessage =
+          nextErrors.serviceTitle ||
+          nextErrors.description ||
+          nextErrors.items ||
+          "Please complete required fields";
+
+        errorToast(validationMessage, { id: "service-create-validation" });
+        return;
+      }
+
+      setValidationErrors({});
+
+      if (!selectedShopId) {
+        errorToast("Virtual shop is not configured yet", {
+          id: "service-create-shop-not-configured",
         });
+        return;
+      }
 
-        const normalizedLabor =
-          item.labor && item.labor.name?.trim()
+      const payloadItems = (items || [])
+        .map((item) => {
+          const normalizedService = item.service
             ? {
-              name: item.labor.name,
-              categoryId: item.labor.categoryId ?? null,
-              notes: item.labor.notes ?? null,
-              tags: ((item.labor as any).tags || [])
+                id: Number(item.service.id),
+                name: item.service.name,
+                categoryId: item.service.categoryId ?? null,
+                description: item.service.description ?? null,
+                createdAt: toSafeDate(item.service.createdAt),
+                updatedAt: toSafeDate(item.service.updatedAt),
+                fromRequest: (item.service as any).fromRequest ?? null,
+                fromRequestedCompanyId:
+                  (item.service as any).fromRequestedCompanyId ?? null,
+                companyId: Number(item.service.companyId || companyId),
+              }
+            : null;
+
+          const normalizedMaterials = (item.materials || []).map((material) => {
+            if (!material) return null;
+
+            return {
+              id: material.id,
+              name: material.name,
+              vendorId: material.vendorId ?? null,
+              categoryId: material.categoryId ?? null,
+              notes: material.notes ?? null,
+              quantity: toSafeNumber(material.quantity),
+              cost: toSafeNumber(material.cost),
+              sell: toSafeNumber(material.sell),
+              discount: toSafeNumber(material.discount),
+              companyId: Number(material.companyId || companyId),
+              invoiceId: material.invoiceId ?? null,
+              invoiceItemId: material.invoiceItemId ?? null,
+              productId: material.productId ?? null,
+              createdAt: toSafeDate(material.createdAt),
+              updatedAt: toSafeDate(material.updatedAt),
+              tags: ((material as any).tags || [])
                 .filter((tag: any) => tag?.id && tag?.name)
                 .map((tag: any) => ({
                   id: Number(tag.id),
@@ -461,80 +462,103 @@ export default function ServiceCreateClient({
                   updatedAt: toSafeDate(tag.updatedAt),
                   companyId: Number(tag.companyId || companyId),
                 })),
-              hours: toSafeNumber(item.labor.hours),
-              charge: toSafeNumber(item.labor.charge),
-              discount: toSafeNumber(item.labor.discount),
-              cannedLabor: Boolean(item.labor.cannedLabor),
-            }
-            : null;
+            };
+          });
 
-        const normalizedTags = (item.tags || [])
-          .filter((tag) => tag?.id && tag?.name)
-          .map((tag) => ({
-            id: Number(tag.id),
-            name: String(tag.name),
-            textColor: String(tag.textColor || "#000000"),
-            bgColor: String(tag.bgColor || "#ffffff"),
-            createdAt: toSafeDate(tag.createdAt),
-            updatedAt: toSafeDate(tag.updatedAt),
-            companyId: Number(tag.companyId || companyId),
-          }));
+          const normalizedLabor =
+            item.labor && item.labor.name?.trim()
+              ? {
+                  name: item.labor.name,
+                  categoryId: item.labor.categoryId ?? null,
+                  notes: item.labor.notes ?? null,
+                  tags: ((item.labor as any).tags || [])
+                    .filter((tag: any) => tag?.id && tag?.name)
+                    .map((tag: any) => ({
+                      id: Number(tag.id),
+                      name: String(tag.name),
+                      textColor: String(tag.textColor || "#000000"),
+                      bgColor: String(tag.bgColor || "#ffffff"),
+                      createdAt: toSafeDate(tag.createdAt),
+                      updatedAt: toSafeDate(tag.updatedAt),
+                      companyId: Number(tag.companyId || companyId),
+                    })),
+                  hours: toSafeNumber(item.labor.hours),
+                  charge: toSafeNumber(item.labor.charge),
+                  discount: toSafeNumber(item.labor.discount),
+                  cannedLabor: Boolean(item.labor.cannedLabor),
+                }
+              : null;
 
-        return {
-          service: normalizedService,
-          materials: normalizedMaterials,
-          labor: normalizedLabor,
-          tags: normalizedTags,
+          const normalizedTags = (item.tags || [])
+            .filter((tag) => tag?.id && tag?.name)
+            .map((tag) => ({
+              id: Number(tag.id),
+              name: String(tag.name),
+              textColor: String(tag.textColor || "#000000"),
+              bgColor: String(tag.bgColor || "#ffffff"),
+              createdAt: toSafeDate(tag.createdAt),
+              updatedAt: toSafeDate(tag.updatedAt),
+              companyId: Number(tag.companyId || companyId),
+            }));
+
+          return {
+            service: normalizedService,
+            materials: normalizedMaterials,
+            labor: normalizedLabor,
+            tags: normalizedTags,
+          };
+        })
+        .filter(
+          (item) =>
+            item.service ||
+            item.labor ||
+            (item.materials || []).some((material) => material !== null),
+        );
+
+      try {
+        let imageUrl = serviceInfo.imageUrl || undefined;
+
+        if (selectedImageFile) {
+          imageUrl = await uploadImage(selectedImageFile);
+        }
+
+        const payload = {
+          shopId: Number(selectedShopId),
+          companyId,
+          title: serviceInfo.serviceTitle.trim(),
+          description: serviceInfo.description.trim(),
+          imageUrl,
+          modifierCoupe: serviceInfo.vehicleTypeModifiers.coupe,
+          modifierSedan: serviceInfo.vehicleTypeModifiers.sedan,
+          modifierSUV: serviceInfo.vehicleTypeModifiers.suv,
+          modifierTruck: serviceInfo.vehicleTypeModifiers.truck,
+          isActive: true,
+          items: payloadItems,
         };
-      })
-      .filter(
-        (item) =>
-          item.service ||
-          item.labor ||
-          (item.materials || []).some((material) => material !== null),
-      );
 
-    try {
-      let imageUrl = serviceInfo.imageUrl || undefined;
+        if (isEditMode && initialServiceData?.id) {
+          await updateShopService({
+            id: initialServiceData.id,
+            payload,
+          });
+        } else {
+          await createShopService(payload);
+        }
 
-      if (selectedImageFile) {
-        imageUrl = await uploadImage(selectedImageFile);
+        reset();
+        setServiceInfo(INITIAL_SERVICE_INFO);
+        setSelectedImageFile(null);
+        setValidationErrors({});
+        router.push(`/dashboard/virtual-shop/admin/${selectedShopId}/services`);
+        router.refresh();
+      } catch (error) {
+        const message =
+          (error as { message?: string })?.message ||
+          `Failed to ${isEditMode ? "update" : "create"} shop service`;
+        errorToast(message, { id: "service-create-submit-error" });
       }
-
-      const payload = {
-        shopId: Number(selectedShopId),
-        companyId,
-        title: serviceInfo.serviceTitle.trim(),
-        description: serviceInfo.description.trim(),
-        imageUrl,
-        modifierCoupe: serviceInfo.vehicleTypeModifiers.coupe,
-        modifierSedan: serviceInfo.vehicleTypeModifiers.sedan,
-        modifierSUV: serviceInfo.vehicleTypeModifiers.suv,
-        modifierTruck: serviceInfo.vehicleTypeModifiers.truck,
-        isActive: true,
-        items: payloadItems,
-      };
-
-      if (isEditMode && initialServiceData?.id) {
-        await updateShopService({
-          id: initialServiceData.id,
-          payload,
-        });
-      } else {
-        await createShopService(payload);
-      }
-
-      reset();
-      setServiceInfo(INITIAL_SERVICE_INFO);
-      setSelectedImageFile(null);
-      setValidationErrors({});
-      router.push(`/dashboard/virtual-shop/admin/${selectedShopId}/services`);
-      router.refresh();
-    } catch (error) {
-      const message =
-        (error as { message?: string })?.message ||
-        `Failed to ${isEditMode ? "update" : "create"} shop service`;
-      errorToast(message);
+    } finally {
+      isSubmittingRef.current = false;
     }
   };
 
@@ -549,12 +573,18 @@ export default function ServiceCreateClient({
             <TabsTriggerCreate value="create" className="order-2 md:order-3">
               Create
             </TabsTriggerCreate>
-            <TabsTriggerCreate value="service-info" className="order-1 md:order-4">
+            <TabsTriggerCreate
+              value="service-info"
+              className="order-1 md:order-4"
+            >
               Service Info
             </TabsTriggerCreate>
           </TabsList>
 
-          <TabsContent value="service-info" className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-14rem)] overflow-y-auto thin-scrollbar p-2">
+          <TabsContent
+            value="service-info"
+            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-14rem)] overflow-y-auto thin-scrollbar p-2"
+          >
             <ServiceInfo
               value={serviceInfo}
               onChange={setServiceInfo}
@@ -563,7 +593,10 @@ export default function ServiceCreateClient({
             />
           </TabsContent>
 
-          <TabsContent value="create" className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-14rem)] overflow-y-auto thin-scrollbar p-2">
+          <TabsContent
+            value="create"
+            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-14rem)] overflow-y-auto thin-scrollbar p-2"
+          >
             <CreateTab />
           </TabsContent>
         </Tabs>
