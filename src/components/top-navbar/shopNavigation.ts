@@ -2,6 +2,7 @@ export type ShopOption = {
   id: number;
   storeName: string;
   logoUrl?: string;
+  slug?: string;
 };
 
 export function normalizeShops(data: unknown): ShopOption[] {
@@ -11,7 +12,14 @@ export function normalizeShops(data: unknown): ShopOption[] {
 
   return data
     .filter(
-      (shop): shop is { id: number; storeName: string; logoUrl?: string | null } =>
+      (
+        shop,
+      ): shop is {
+        id: number;
+        storeName: string;
+        logoUrl?: string | null;
+        slug?: string | null;
+      } =>
         Number.isFinite(Number((shop as { id?: unknown })?.id)) &&
         typeof (shop as { storeName?: unknown })?.storeName === "string",
     )
@@ -19,6 +27,7 @@ export function normalizeShops(data: unknown): ShopOption[] {
       id: Number(shop.id),
       storeName: shop.storeName,
       logoUrl: typeof shop.logoUrl === "string" ? shop.logoUrl : undefined,
+      slug: typeof shop.slug === "string" ? shop.slug : undefined,
     }));
 }
 

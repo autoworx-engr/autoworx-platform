@@ -14,8 +14,10 @@ import {
   DropdownMenuPortal,
   DropdownMenuTrigger,
 } from "@radix-ui/react-dropdown-menu";
-import { ChevronDown, Check, Store } from "lucide-react";
+import { ChevronDown, Check, Store, ExternalLink } from "lucide-react";
 import Avatar from "../Avatar";
+
+const domain = new URL(process.env.NEXT_PUBLIC_APP_URL!).hostname;
 
 export default function ShopList() {
   const router = useRouter();
@@ -49,6 +51,14 @@ export default function ShopList() {
     router.push(`/dashboard/virtual-shop/admin/${shopId}/services`);
   };
 
+  const getPublicShopUrl = (slug?: string) => {
+    if (!slug || typeof window === "undefined") {
+      return null;
+    }
+
+    return `${window.location.protocol}//${slug}.${domain}${window.location.port ? ":" + window.location.port : ""}`;
+  };
+
   if (currentUser?.employeeType !== "Admin" || shops.length === 0) {
     return null;
   }
@@ -57,11 +67,10 @@ export default function ShopList() {
     <div className="mr-3 w-56">
       <DropdownMenu>
         <DropdownMenuTrigger
-          className={`group flex w-full items-center justify-between rounded-xl border px-3 py-1.5 text-sm font-medium shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] outline-none transition-all duration-300 focus-visible:ring-2 focus-visible:ring-[#6571FF]/50 focus-visible:ring-offset-1 ${
-            isVirtualShopAdminPath
-              ? "border-slate-200 bg-white/80 text-slate-800 backdrop-blur-md hover:border-slate-300 hover:bg-white hover:shadow-[0_4px_14px_-4px_rgba(0,0,0,0.1)] data-[state=open]:border-[#6571FF]/50 data-[state=open]:bg-white data-[state=open]:shadow-[0_4px_14px_-4px_rgba(101,113,255,0.15)] data-[state=open]:ring-2 data-[state=open]:ring-[#6571FF]/10"
-              : "border-[#6571FF]/20 bg-gradient-to-b from-[#6571FF]/5 to-[#6571FF]/[0.02] text-[#6571FF] hover:border-[#6571FF]/40 hover:from-[#6571FF]/10 hover:to-[#6571FF]/5 data-[state=open]:border-[#6571FF]/50 data-[state=open]:from-[#6571FF]/15 data-[state=open]:to-[#6571FF]/10 data-[state=open]:shadow-md"
-          }`}
+          className={`group flex w-full items-center justify-between rounded-xl border px-3 py-1.5 text-sm font-medium shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] outline-none transition-all duration-300 focus-visible:ring-2 focus-visible:ring-[#6571FF]/50 focus-visible:ring-offset-1 ${isVirtualShopAdminPath
+            ? "border-slate-200 bg-white/80 text-slate-800 backdrop-blur-md hover:border-slate-300 hover:bg-white hover:shadow-[0_4px_14px_-4px_rgba(0,0,0,0.1)] data-[state=open]:border-[#6571FF]/50 data-[state=open]:bg-white data-[state=open]:shadow-[0_4px_14px_-4px_rgba(101,113,255,0.15)] data-[state=open]:ring-2 data-[state=open]:ring-[#6571FF]/10"
+            : "border-[#6571FF]/20 bg-gradient-to-b from-[#6571FF]/5 to-[#6571FF]/[0.02] text-[#6571FF] hover:border-[#6571FF]/40 hover:from-[#6571FF]/10 hover:to-[#6571FF]/5 data-[state=open]:border-[#6571FF]/50 data-[state=open]:from-[#6571FF]/15 data-[state=open]:to-[#6571FF]/10 data-[state=open]:shadow-md"
+            }`}
         >
           <div className="flex min-w-0 items-center gap-3">
             {isVirtualShopAdminPath && selectedShop?.logoUrl ? (
@@ -92,9 +101,8 @@ export default function ShopList() {
           <ChevronDown
             size={16}
             strokeWidth={2.5}
-            className={`shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.87,_0,_0.13,_1)] group-data-[state=open]:rotate-180 ${
-              isVirtualShopAdminPath ? "text-slate-400" : "text-[#6571FF]/70"
-            }`}
+            className={`shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.87,_0,_0.13,_1)] group-data-[state=open]:rotate-180 ${isVirtualShopAdminPath ? "text-slate-400" : "text-[#6571FF]/70"
+              }`}
           />
         </DropdownMenuTrigger>
 
@@ -110,19 +118,19 @@ export default function ShopList() {
                 Your Shops
               </span>
             </div>
-            <div className="flex flex-col gap-0.5">
+            <div className="flex flex-col gap-1">
               {shops.map((shop) => {
                 const isSelected = selectedShop?.id === shop.id;
+                const publicShopUrl = getPublicShopUrl(shop.slug);
 
                 return (
                   <DropdownMenuItem
                     key={shop.id}
                     onSelect={() => handleShopClick(shop.id)}
-                    className={`group relative flex w-full cursor-pointer select-none items-center justify-between rounded-md px-2 py-1.5 text-sm font-medium outline-none transition-colors data-[highlighted]:bg-slate-100 data-[highlighted]:text-slate-900 ${
-                      isSelected && isVirtualShopAdminPath
-                        ? "bg-[#6571FF]/[0.04] text-[#6571FF] data-[highlighted]:bg-[#6571FF]/[0.08] data-[highlighted]:text-[#6571FF]"
-                        : "text-slate-700"
-                    }`}
+                    className={`group relative flex w-full border border-slate-100 cursor-pointer select-none items-center justify-between rounded-lg px-2 py-1.5 text-sm font-medium outline-none transition-colors data-[highlighted]:bg-slate-100 data-[highlighted]:text-slate-900 ${isSelected && isVirtualShopAdminPath
+                      ? "bg-[#6571FF]/[0.04] text-[#6571FF] data-[highlighted]:bg-[#6571FF]/[0.08] data-[highlighted]:text-[#6571FF]"
+                      : "text-slate-700"
+                      }`}
                   >
                     <div className="flex min-w-0 items-center gap-3">
                       {shop.logoUrl ? (
@@ -130,7 +138,7 @@ export default function ShopList() {
                           photo={shop.logoUrl}
                           width={24}
                           height={24}
-                          className="shrink-0 rounded-full border border-slate-100 shadow-sm transition-transform duration-300 group-hover:scale-105"
+                          className="shrink-0 rounded-full border border-slate-100 shadow-sm transition-transform duration-300"
                           alt={shop.storeName}
                         />
                       ) : (
@@ -143,13 +151,29 @@ export default function ShopList() {
                       <span className="truncate tracking-tight">{shop.storeName}</span>
                     </div>
 
-                    {isSelected && isVirtualShopAdminPath && (
-                      <Check
-                        size={16}
-                        strokeWidth={3}
-                        className="shrink-0 text-[#6571FF] animate-in zoom-in-50"
-                      />
-                    )}
+                    <div className="flex items-center gap-1.5">
+                      {isSelected && isVirtualShopAdminPath && (
+                        <Check
+                          size={16}
+                          strokeWidth={3}
+                          className="shrink-0 text-[#6571FF] animate-in zoom-in-50"
+                        />
+                      )}
+                      {publicShopUrl && (
+                        <a
+                          href={publicShopUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                          }}
+                          className="inline-flex h-6 w-6 items-center justify-center border rounded-md text-[#6571FF] transition-colors hover:bg-slate-200/70 hover:text-slate-600"
+                          aria-label={`Open ${shop.storeName} public shop`}
+                        >
+                          <ExternalLink size={14} />
+                        </a>
+                      )}
+                    </div>
                   </DropdownMenuItem>
                 );
               })}
