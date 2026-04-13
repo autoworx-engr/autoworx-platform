@@ -159,6 +159,25 @@ export const POST = async (req: NextRequest) => {
  *           type: integer
  *           default: 20
  *         description: Number of groups per page
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search by group name
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           enum: [name, createdAt, updatedAt]
+ *           default: createdAt
+ *         description: Field to sort by
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: desc
+ *         description: Sort order
  *     responses:
  *       200:
  *         description: Groups fetched successfully
@@ -214,18 +233,35 @@ export const GET = async (req: NextRequest) => {
 
     const pageNum = parseInt(searchParams.get("page") || "1");
     const limitNum = parseInt(searchParams.get("limit") || "20");
+    const search = searchParams.get("search") || "";
+    const sortBy = searchParams.get("sortBy") || "createdAt";
+    const sortOrder = searchParams.get("sortOrder") || "desc";
+
+    const where: any = {
+      users: { some: { id: parseInt(userId) } },
+    };
+
+    if (search) {
+      where.name = {
+        contains: search,
+        mode: "insensitive",
+      };
+    }
 
     const groups = await db.group.findMany({
-      where: { users: { some: { id: parseInt(userId) } } },
+      where,
       include: {
         users: true,
+      },
+      orderBy: {
+        [sortBy]: sortOrder,
       },
       skip: (pageNum - 1) * limitNum,
       take: limitNum,
     });
 
     const totalGroups = await db.group.count({
-      where: { users: { some: { id: parseInt(userId) } } },
+      where,
     });
 
     return NextResponse.json(
