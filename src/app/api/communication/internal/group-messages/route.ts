@@ -120,10 +120,29 @@ export async function GET(request: NextRequest) {
     const hasPrevPage = pageNum > 1;
     const totalPages = Math.ceil(totalRecords / limitNum);
 
+    const transformMessage = await Promise.all(
+      messages.map(async (message) => {
+        const { to, from, requestEstimate, requestEstimateId, ...rest } =
+          message;
+        const findUser = await db.user.findUnique({
+          where: { id: from },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            phone: true,
+            image: true,
+          },
+        });
+        return { ...rest, sender: findUser };
+      }),
+    );
+
     return NextResponse.json(
       {
         success: true,
-        data: messages,
+        data: transformMessage,
         message: "Group messages fetched successfully",
         meta: {
           totalRecords: totalRecords,
