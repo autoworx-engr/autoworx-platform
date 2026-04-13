@@ -188,21 +188,6 @@ const DraggableLead = ({
       lead.vehicle && lead.vehicle.toLowerCase().includes(lowerSearchTerm);
     return nameMatch || vehicleMatch;
   }, [searchTerm, lead]);
-
-  const [highlightMatch, setHighlightMatch] = useState(false);
-
-  useEffect(() => {
-    if (isSearchMatch) {
-      setHighlightMatch(true);
-      const timer = setTimeout(() => {
-        setHighlightMatch(false);
-      }, 2000);
-      return () => clearTimeout(timer);
-    } else {
-      setHighlightMatch(false);
-    }
-  }, [isSearchMatch]);
-
   return (
     <li
       ref={(el) => {
@@ -211,7 +196,7 @@ const DraggableLead = ({
       }}
       className={`max-w-auto relative mx-1 my-1 h-fit animate-none rounded-xl border p-1 duration-300 hover:bg-slate-100 ${
         isTeamPipeline ? "cursor-default" : "cursor-grab active:cursor-grabbing"
-      } ${isDropTarget ? "ring-2 ring-blue-500 bg-blue-50" : ""} ${highlightMatch ? "bg-yellow-100 border-yellow-300" : "bg-background"}`}
+      } ${isDropTarget ? "ring-2 ring-blue-500 bg-blue-50" : ""} ${isSearchMatch ? "bg-yellow-100 border-yellow-300" : "bg-background"}`}
       style={{
         opacity: isDragging ? 0.5 : 1,
       }}
