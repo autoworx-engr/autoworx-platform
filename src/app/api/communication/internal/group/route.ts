@@ -51,6 +51,9 @@ const findUsers = (users: { id: number; action?: string }[]) => {
  *                       type: integer
  *                       description: The ID of the user
  *                 description: Array of user objects with IDs
+ *               companyId:
+ *                 type: integer
+ *                 description: The ID of the company
  *     responses:
  *       200:
  *         description: Group created successfully
@@ -84,7 +87,11 @@ const findUsers = (users: { id: number; action?: string }[]) => {
  */
 export const POST = async (req: NextRequest) => {
   try {
-    const { name, users } = await req.json();
+    const { name, users, companyId } = await req.json();
+
+    if (!companyId) {
+      throw new AppError(400, "Company ID is required");
+    }
 
     const findUser = await findUsers(users);
 
@@ -95,6 +102,7 @@ export const POST = async (req: NextRequest) => {
     const groupData = await db.group.create({
       data: {
         name: name,
+        companyId: companyId,
         users: {
           connect: users,
         },
