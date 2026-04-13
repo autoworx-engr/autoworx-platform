@@ -17,7 +17,7 @@ import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-sc
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { EmployeeType, Tag, User } from "@prisma/client";
 import { useRouter } from "next/navigation";
-import { SetStateAction, useEffect, useMemo, useRef, useState } from "react";
+import { SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import DroppableColumn from "../../components/DroppableColumn";
 import PipelineLoadingSkeleton from "../../components/PipelineLoadingSkeleton";
@@ -62,7 +62,8 @@ export default function TeamPipelines({
   //   console.log("Current User:", currentUser);
 
   // Get search term from store
-  const searchTerm = usePipelineFilterStore((state) => state.searchTerm);
+  const { searchTerm, resetStatus } = usePipelineFilterStore((state) => state);
+
   const [selectedSearchColumnId, setSelectedSearchColumnId] = useState<
     number | null
   >(null);
@@ -73,9 +74,10 @@ export default function TeamPipelines({
 
   useEffect(() => {
     updateWidth();
+    resetStatus();
     window.addEventListener("resize", updateWidth);
     return () => window.removeEventListener("resize", updateWidth);
-  }, []);
+  }, [resetStatus]);
 
   useEffect(() => {
     setPipelineData(shopPipelineDataProp);
@@ -177,7 +179,7 @@ export default function TeamPipelines({
     [key: string]: boolean;
   }>({});
 
-  const handleSearchResult = (
+  const handleSearchResult = useCallback((
     result: { columnIndex: number; leadIndex: number } | null,
   ) => {
     if (!result) return;
@@ -222,7 +224,7 @@ export default function TeamPipelines({
         }
       }, 300);
     }
-  };
+  }, []);
 
   const handleDropdownToggle = (categoryIndex: number, leadIndex: number) => {
     if (
@@ -547,7 +549,7 @@ export default function TeamPipelines({
       {/* Add the search component at the top */}
       <div className="mb-4 px-2">
         <SearchScroll
-          pipelineData={pipelineData} // Pass the original pipelineData so the Select filter still has all columns
+          pipelineData={filteredPipelineData}
           onSearchResult={handleSearchResult}
           onColumnChange={(colId) => setSelectedSearchColumnId(colId)}
           isTeamPipeline={true}
