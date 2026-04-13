@@ -228,13 +228,13 @@ END:VCALENDAR`;
         <Button variant="outline" onClick={generateICS} className="gap-2">
           <CalendarPlus className="w-4 h-4" /> Add to Calendar
         </Button>
-        <Button
+        {/* <Button
           variant="outline"
           className="gap-2"
           onClick={handleViewEstimate}
         >
           <FileText className="w-4 h-4" /> View Estimate
-        </Button>
+        </Button> */}
         <Button onClick={resetBooking} className="gap-2">
           <RotateCcw className="w-4 h-4" /> Book Another
         </Button>
