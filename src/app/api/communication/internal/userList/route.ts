@@ -111,6 +111,15 @@ export const GET = async (request: NextRequest) => {
 
     const usersData = await db.user.findMany({
       where,
+      select: {
+        firstName: true,
+        lastName: true,
+        email: true,
+        phone: true,
+        image: true,
+        employeeType: true,
+        id: true,
+      },
       skip: (pageNum - 1) * limitNum,
       take: limitNum,
       orderBy: { [sortBy]: sortOrder === "desc" ? "desc" : "asc" },
@@ -122,20 +131,18 @@ export const GET = async (request: NextRequest) => {
 
     const usersWithChatTrack = await Promise.all(
       usersData.map(async (user) => {
-        const { id, password, isSuperAdmin, ...restUser } = user;
+        const { id, ...restUser } = user;
         const userChatTrack = await db.chatTrack.findMany({
           where: {
             OR: [{ senderId: id as number }, { receiverId: id as number }],
             section: "internal",
           },
-          include: {
-            message: true,
-          },
+          orderBy: { createdAt: "desc" },
         });
         return {
           ...restUser,
           id,
-          chatTrack: userChatTrack,
+          chatTrack: userChatTrack?.[0] ?? null,
         };
       }),
     );
