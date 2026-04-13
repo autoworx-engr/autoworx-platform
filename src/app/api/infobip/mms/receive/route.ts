@@ -148,13 +148,24 @@ export async function POST(req: NextRequest) {
           if (media && media.length > 0) {
             console.log(`Processing ${media.length} MMS attachments`);
             for (const mediaItem of media) {
+              const ext = infobipMimeToExt(mediaItem.contentType || "");
+              const baseName =
+                mediaItem.caption ||
+                mediaItem.name ||
+                `mms_media_${Date.now()}`;
+              // Ensure the name has an extension so the frontend can detect type
+              const name = baseName.includes(".")
+                ? baseName
+                : `${baseName}.${ext}`;
+              const isVoice = (mediaItem.contentType || "")
+                .split(";")[0]
+                .trim()
+                .startsWith("audio/");
               const attachment = await db.clientSmsAttachments.create({
                 data: {
-                  name:
-                    mediaItem.caption ||
-                    mediaItem.name ||
-                    `mms_media_${Date.now()}`,
+                  name,
                   url: mediaItem.url,
+                  isVoiceNote: isVoice,
                   clientSMSId: clientSMS.id,
                 },
               });
@@ -265,6 +276,26 @@ export async function GET() {
     { message: "Infobip MMS receive webhook is active" },
     { status: 200 },
   );
+}
+
+function infobipMimeToExt(mime: string): string {
+  const map: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/gif": "gif",
+    "audio/ogg": "ogg",
+    "audio/mpeg": "mp3",
+    "audio/mp4": "m4a",
+    "audio/wav": "wav",
+    "audio/webm": "webm",
+    "audio/amr": "amr",
+    "audio/aac": "aac",
+    "audio/3gpp": "3gp",
+    "video/mp4": "mp4",
+    "video/3gpp": "3gp",
+    "application/pdf": "pdf",
+  };
+  return map[mime.split(";")[0].trim()] || "bin";
 }
 
 function normalizePhoneNumber(phone: string) {

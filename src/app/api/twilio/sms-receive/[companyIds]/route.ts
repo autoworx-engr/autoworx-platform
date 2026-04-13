@@ -9,6 +9,7 @@ import receiveTwiloMessage from "@/lib/pusher/receiveTwiloMessage";
 import { getPusherInstance } from "@/lib/pusher/server";
 import { sendSMSToAgent } from "@/service/ai-agent/api";
 import { allCompanyFeaturePermissions } from "@/service/feature-permissions/api";
+import { normalizePhoneForStorage, phoneLookupWhereClause } from "@/utils/normalizePhone";
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -110,7 +111,8 @@ export async function POST(
     const imgs = await res.json();
     const images = imgs?.data ?? [];
 
-    const normalizedFrom = normalizePhoneNumber(body.From);
+    const normalizedFrom = normalizePhoneForStorage(body.From);
+    const phoneLookup = phoneLookupWhereClause(body.From);
 
     for (const companyId of companyIds) {
       const entitlements = await getCompanyEntitlements(companyId);
@@ -121,31 +123,29 @@ export async function POST(
         where: { id: companyId },
       });
 
-      let client = await db.client.findFirst({
-        where: {
-          OR: normalizedFrom.lookupValues.map((lookupValue) => ({
-            mobile: {
-              endsWith: lookupValue,
+      let client = phoneLookup
+        ? await db.client.findFirst({
+            where: {
+              OR: phoneLookup,
+              companyId: +companyId,
             },
-          })),
-          companyId: +companyId,
-        },
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          companyId: true,
-          Lead: true,
-          isSalesAgent: true,
-        },
-      });
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              companyId: true,
+              Lead: true,
+              isSalesAgent: true,
+            },
+          })
+        : null;
 
       if (!client) {
         client = await db.client.create({
           data: {
             firstName: body.From,
             lastName: " ",
-            mobile: normalizedFrom.storeValue,
+            mobile: normalizedFrom,
             companyId: companyId,
             isSalesAgent: true,
           },
@@ -175,10 +175,13 @@ export async function POST(
         for (const file of images) {
           // Extract file extension from URL
           const fileExtension = file.split(".").pop()?.split("?")[0] || "jpg";
+          const audioExts = ["ogg","mp3","m4a","wav","webm","aac","amr","3gp","opus","oga","flac"];
+          const isVoice = audioExts.includes(fileExtension.toLowerCase());
           let atc = await db.clientSmsAttachments.create({
             data: {
               url: file,
               name: `${dbMessage.id}_${Date.now()}.${fileExtension}`,
+              isVoiceNote: isVoice,
               clientSMSId: dbMessage.id,
             },
           });
@@ -303,24 +306,30 @@ async function fetchTwilioMedia(
   }
 
   const blob = await response.blob();
-  return new File([blob], "twilio-mms.jpg", { type: blob.type });
+  const ext = mimeToExtension(blob.type);
+  const filename = `twilio-mms-${Date.now()}.${ext}`;
+  return new File([blob], filename, { type: blob.type });
 }
 
-function normalizePhoneNumber(phone: string) {
-  const digits = (phone || "").replace(/\D/g, "");
-  const last10Digits = digits.length >= 10 ? digits.slice(-10) : digits;
-
-  const lookupValues = Array.from(
-    new Set([digits, last10Digits].filter((value) => value.length > 0)),
-  );
-
-  const storeValue =
-    digits.length === 11 && digits.startsWith("1")
-      ? last10Digits
-      : digits || phone;
-
-  return {
-    lookupValues,
-    storeValue,
+function mimeToExtension(mime: string): string {
+  const map: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/gif": "gif",
+    "image/webp": "webp",
+    "audio/ogg": "ogg",
+    "audio/mpeg": "mp3",
+    "audio/mp4": "m4a",
+    "audio/wav": "wav",
+    "audio/webm": "webm",
+    "audio/amr": "amr",
+    "audio/aac": "aac",
+    "audio/3gpp": "3gp",
+    "video/mp4": "mp4",
+    "video/quicktime": "mov",
+    "video/3gpp": "3gp",
+    "application/pdf": "pdf",
   };
+  return map[mime.split(";")[0].trim()] || "bin";
 }
+

@@ -69,11 +69,11 @@ export function Selector({
   }, []);
 
   // Focus search input when dropdown opens
-  useEffect(() => {
-    if (isOpen && isSearch && searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
-  }, [isOpen, isSearch]);
+  // useEffect(() => {
+  //   if (isOpen && isSearch && searchInputRef.current) {
+  //     searchInputRef.current.focus();
+  //   }
+  // }, [isOpen, isSearch]);
 
   const normalizeOptions = () => {
     if (typeof options?.[0] === "string" || typeof options?.[0] === "number") {
@@ -89,8 +89,8 @@ export function Selector({
 
   const filteredOptions = searchTerm
     ? normalizedOptions?.filter((opt) =>
-      opt.title.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+        opt.title.toLowerCase().includes(searchTerm.toLowerCase()),
+      )
     : normalizedOptions;
 
   const handleSelect = (id: string) => {
@@ -135,7 +135,12 @@ export function Selector({
 
   return (
     <div className={cn("block", rootClassName)} ref={dropdownRef}>
-      <div className={cn("mb-1 font-medium text-slate-600 dark:text-slate-300", labelClassName)}>
+      <div
+        className={cn(
+          "mb-1 font-medium text-slate-600 dark:text-slate-300",
+          labelClassName,
+        )}
+      >
         {label ?? sentenceCase(name)}
         {required && <span className="text-[#E9405F]"> *</span>}
       </div>
@@ -155,7 +160,14 @@ export function Selector({
           id={name}
           disabled={disabled}
         >
-          <span className={cn("truncate text-sm font-medium", selectedLabel ? "text-slate-700 dark:text-slate-200" : "text-slate-400")}>
+          <span
+            className={cn(
+              "truncate text-sm font-medium",
+              selectedLabel
+                ? "text-slate-700 dark:text-slate-200"
+                : "text-slate-400",
+            )}
+          >
             {selectedLabel || placeholder}
           </span>
           <ChevronDown
@@ -168,10 +180,12 @@ export function Selector({
         </button>
 
         {isOpen && (
-          <div className={cn(
-            "absolute z-50 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg animate-in fade-in-0 zoom-in-95 duration-150 dark:border-slate-700 dark:bg-slate-900",
-            dropUp ? "bottom-full mb-1" : "top-full mt-1",
-          )}>
+          <div
+            className={cn(
+              "absolute z-50 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg animate-in fade-in-0 zoom-in-95 duration-150 dark:border-slate-700 dark:bg-slate-900",
+              dropUp ? "bottom-full mb-1" : "top-full mt-1",
+            )}
+          >
             {isSearch && (
               <div className="relative border-b border-slate-100 px-2 py-2 dark:border-slate-700">
                 <Search
@@ -209,7 +223,11 @@ export function Selector({
                     >
                       <span className="flex-1 truncate">{opt.title}</span>
                       {isSelected && (
-                        <Check size={14} strokeWidth={3} className="shrink-0 text-[#6571FF]" />
+                        <Check
+                          size={14}
+                          strokeWidth={3}
+                          className="shrink-0 text-[#6571FF]"
+                        />
                       )}
                     </button>
                   );

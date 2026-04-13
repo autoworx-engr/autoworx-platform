@@ -425,8 +425,6 @@ export default function InvoiceModalBody({
                 {/* Edit Link */}
                 {isShowEdit && (
                   <Tooltip title="Edit">
-
-
                     <Link
                       className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-2 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
                       href={`/dashboard/estimate/edit/${invoice.id}?clientId=${invoice.clientId}`}
@@ -773,7 +771,14 @@ export default function InvoiceModalBody({
                       <h2 className="font-bold text-slate-500">
                         Estimate Details:
                       </h2>
-                      <p>{invoice.id}</p>
+                      <div className="flex flex-col items-start">
+                        <p>{invoice.id}</p>
+                        {invoice.isShopBooking && (
+                          <span className="rounded-full bg-[#6571FF]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#6571FF] my-1.5">
+                            Virtual Shop
+                          </span>
+                        )}
+                      </div>
                       <p>{moment(invoice.createdAt).format("MMM DD, YYYY")}</p>
                       <p>Bill Status</p>
                       <p
@@ -888,6 +893,7 @@ export default function InvoiceModalBody({
                   ["subtotal", invoice.subtotal],
                   ["discount", invoice.discount],
                   ["tax", invoice.tax],
+                  // ["vehicle extra cost", invoice.vehicleExtraCost],
                   ["shop supplies", invoice?.serviceFee],
                   ["grand total", invoice.grandTotal],
                   ["deposit", invoice.deposit],
@@ -917,10 +923,7 @@ export default function InvoiceModalBody({
                               {" "}
                               |
                               {formatCurrency(
-                                (Number(
-                                  (invoice.subtotal as any) -
-                                  (invoice.discount as any),
-                                ) *
+                                (Number(invoice.subtotal as any) *
                                   Number(value)) /
                                 100,
                               )}
@@ -970,14 +973,11 @@ export default function InvoiceModalBody({
                         <th className="px-3 py-2 text-left">Date</th>
                         <th className="px-3 py-2 text-left">Method</th>
                         <th className="px-3 py-2 text-left">Amount</th>
-                        <th className="px-3 py-2 text-left">Cash Received</th>
-                        <th className="px-3 py-2 text-left">Due After</th>
                         <th className="px-3 py-2 text-left">Status</th>
-                        <th className="px-3 py-2 text-left">Notes</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {paymentEntries.map((payment, index) => {
+                      {paymentEntries.reverse().map((payment, index) => {
                         const refundedAmount = payment.Refund.reduce(
                           (sum, refund) => sum + Number(refund.amount || 0),
                           0,
@@ -986,7 +986,9 @@ export default function InvoiceModalBody({
                         return (
                           <tr
                             key={payment.id}
-                            className={index % 2 === 0 ? "bg-white" : "bg-slate-50"}
+                            className={
+                              index % 2 === 0 ? "bg-white" : "bg-slate-50"
+                            }
                           >
                             <td className="px-3 py-2">
                               {moment(payment.date || payment.createdAt).format(
@@ -998,7 +1000,9 @@ export default function InvoiceModalBody({
                             </td>
                             <td className="px-3 py-2">
                               <div className="flex flex-col">
-                                <span>{formatCurrency(Number(payment.amount || 0))}</span>
+                                <span>
+                                  {formatCurrency(Number(payment.amount || 0))}
+                                </span>
                                 {refundedAmount > 0 && (
                                   <span className="text-[11px] text-red-600">
                                     Refunded: {formatCurrency(refundedAmount)}
@@ -1007,16 +1011,8 @@ export default function InvoiceModalBody({
                               </div>
                             </td>
                             <td className="px-3 py-2">
-                              {payment.cash?.receivedCash || "N/A"}
+                              {invoice.column?.title || "-"}
                             </td>
-                            <td className="px-3 py-2">
-                              {payment.dueAfterPayment !== null &&
-                                payment.dueAfterPayment !== undefined
-                                ? formatCurrency(Number(payment.dueAfterPayment))
-                                : "N/A"}
-                            </td>
-                            <td className="px-3 py-2">{invoice.column?.title || "-"}</td>
-                            <td className="px-3 py-2">{payment.notes || "-"}</td>
                           </tr>
                         );
                       })}
@@ -1058,7 +1054,9 @@ export default function InvoiceModalBody({
                             )}
                           </p>
                           <p>
-                            <span className="font-semibold">Cash Received:</span>{" "}
+                            <span className="font-semibold">
+                              Cash Received:
+                            </span>{" "}
                             {payment.cash?.receivedCash || "N/A"}
                           </p>
                           <p>
@@ -1326,6 +1324,7 @@ export default function InvoiceModalBody({
                       paymentGateway: gatewayInfo.paymentGateway || "STRIPE",
                       hasStripe: gatewayInfo.hasStripe,
                       hasAuthorizeNet: gatewayInfo.hasAuthorizeNet,
+                      tipEnabled: gatewayInfo.tipEnabled ?? false,
                     }}
                   />
                 )}

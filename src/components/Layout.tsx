@@ -9,6 +9,7 @@ import { Spin } from "antd";
 import { Session } from "next-auth";
 import { redirect, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Store } from "lucide-react";
 import MobileNav from "./mobile-responsive/MobileNav";
 import PopupState from "./PopupState";
 import PrivateRoute from "./PrivateRoute";
@@ -56,6 +57,10 @@ const navbarList = [
     path: "/dashboard/pipeline",
 
     subnav: [
+      {
+        title: "Team Pipeline",
+        link: "/dashboard/pipeline/team/pipeline",
+      },
       {
         title: "Shop Pipeline",
         link: "/dashboard/pipeline/shop/pipeline",
@@ -137,6 +142,12 @@ const navbarList = [
     link: "/dashboard/visualization",
     path: "/dashboard/visualization",
   },
+  // {
+  //   title: "Virtual Shop",
+  //   icon: <Store className="w-5 h-5" color="#fff" />,
+  //   link: "/dashboard/virtual-shop",
+  //   path: "/dashboard/virtual-shop",
+  // },
 ];
 
 const mobileNav = [
@@ -182,6 +193,7 @@ export default function Layout({
   session: Session | null;
   children: React.ReactNode;
 }) {
+  console.log({ session });
   const pathname = usePathname(); // Get the current route path
   const isSuperAdminRoute = pathname?.startsWith("/awx-dashboard");
   useSetPermissions(session); // Set user permissions based on session
@@ -193,7 +205,7 @@ export default function Layout({
     "TWILIO",
   );
 
-  console.log({ session });
+  // console.log({ session });
   useEffect(() => {
     const uploadNotificationData = async () => {
       try {

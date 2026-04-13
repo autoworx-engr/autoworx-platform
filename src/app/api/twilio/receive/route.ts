@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
+import { phoneLookupWhereClause } from "@/utils/normalizePhone";
 import { NextResponse } from "next/server";
 import { twiml } from "twilio";
 import { v4 as uuidv4 } from "uuid";
@@ -69,6 +70,7 @@ export async function POST(request: Request) {
     const entitlements = await getCompanyEntitlements(
       twilioCredentials.companyId,
     );
+
     if (!entitlements.canUseVoice) {
       const voiceResponse = new twiml.VoiceResponse();
       voiceResponse.reject();
@@ -77,14 +79,15 @@ export async function POST(request: Request) {
       });
     }
 
-    const client = await db.client.findFirst({
-      where: {
-        companyId: twilioCredentials?.companyId,
-        mobile: {
-          contains: to.replace("+", ""),
-        },
-      },
-    });
+    const phoneLookup = phoneLookupWhereClause(to);
+    const client = phoneLookup
+      ? await db.client.findFirst({
+          where: {
+            companyId: twilioCredentials?.companyId,
+            OR: phoneLookup,
+          },
+        })
+      : null;
 
     let callId = uuidv4();
     // Prepare database insert for ClientCall

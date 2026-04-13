@@ -68,7 +68,6 @@ export default function TaskContentModal({
   } = useTaskById(taskId!, {
     enabled: fromEdit && !!taskId,
   });
-  console.log("taskData", taskData);
   const queryClient = useQueryClient();
   const timezone = useCompanyTimezone();
   const [title, setTitle] = useState("");
@@ -94,7 +93,7 @@ export default function TaskContentModal({
 
     if (taskData && fromEdit) {
       const assignUsers = taskData?.taskUser?.map(
-        (taskUserData) => taskUserData.user.id,
+        taskUserData => taskUserData.user.id,
       );
       setTitle(taskData?.title || "");
       setDescription(taskData?.description || "");
@@ -222,6 +221,14 @@ export default function TaskContentModal({
         field: "all",
         message:
           "Start time and End time are required when a date is selected.",
+      });
+      return;
+    }
+
+    if (startTime && endTime && startTime === endTime) {
+      showError({
+        field: "all",
+        message: "Start time and End time cannot be the same.",
       });
       return;
     }
@@ -383,7 +390,7 @@ export default function TaskContentModal({
                 slimInputClassName,
               )}
               value={title}
-              onChange={(e) => {
+              onChange={e => {
                 const value = e.target.value;
                 setTitle(value);
                 if (!value.trim()) {
@@ -395,7 +402,7 @@ export default function TaskContentModal({
                   clearError();
                 }
               }}
-              autoFocus
+              autoFocus={false}
             />
           </div>
 
@@ -411,7 +418,7 @@ export default function TaskContentModal({
                 slimInputClassName,
               )}
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={e => setDescription(e.target.value)}
             />
           </div>
 
@@ -427,7 +434,7 @@ export default function TaskContentModal({
                   value={date ?? ""}
                   // min={minDate}
                   required
-                  onChange={(event) => setDate(event.currentTarget.value)}
+                  onChange={event => setDate(event.currentTarget.value)}
                 />
                 <div className="flex items-end gap-2 mt-2 lg:mt-0">
                   {/* Start Time */}
@@ -459,7 +466,7 @@ export default function TaskContentModal({
                       </Select> */}
                       <Select
                         value={startTime}
-                        onChange={(value) =>
+                        onChange={value =>
                           handleTimeChange(
                             { target: { value } } as any,
                             "start",
@@ -484,7 +491,7 @@ export default function TaskContentModal({
                           Start Time
                         </Option>
 
-                        {timeOptions.map((time) => (
+                        {timeOptions.map(time => (
                           <Option
                             key={time.value}
                             value={time.value}
@@ -529,7 +536,7 @@ export default function TaskContentModal({
                     </Select> */}
                     <Select
                       value={endTime}
-                      onChange={(value) =>
+                      onChange={value =>
                         handleTimeChange({ target: { value } } as any, "end")
                       }
                       // Remove inline styles to rely on Tailwind's precision
@@ -551,7 +558,7 @@ export default function TaskContentModal({
                         End Time
                       </Option>
 
-                      {timeOptions.map((time) => (
+                      {timeOptions.map(time => (
                         <Option
                           key={time.value}
                           value={time.value}
@@ -682,7 +689,7 @@ export default function TaskContentModal({
                   shadow: "shadow-[#006D77]/40",
                   ring: "ring-[#006D77]",
                 },
-              ].map((item) => {
+              ].map(item => {
                 const isActive = priority === item.id;
                 return (
                   <button
