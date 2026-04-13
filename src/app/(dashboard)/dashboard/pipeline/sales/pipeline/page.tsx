@@ -2,8 +2,7 @@ import SalesPipelineSection from "./_components/SalesPipelineSection";
 import SearchSection from "./_components/SearchSection";
 import OrderSelect from "./_components/FilterLead";
 import { ColumnProvider } from "@/context/sales-pipeline.context";
-import { getSalePipelineColumns } from "@/actions/pipelines/getSalePipelineColumns";
-import ResetButton from "./_components/ResetButton";
+import { serverFetchJson } from "@/lib/server-fetch";
 
 type TProps = {
   searchParams: {
@@ -13,16 +12,23 @@ type TProps = {
 };
 
 export default async function SalesPipelinePage({ searchParams }: TProps) {
-  const columnType = "sales";
   const orderBy = searchParams.orderBy;
 
-  const pipelineColumns = await getSalePipelineColumns(
-    columnType,
-    searchParams?.searchTerm,
-    true, // Initial load - fetch only limited leads per column for fast loading
-    orderBy,
+  const { data: parsed } = await serverFetchJson(
+    "/api/pipeline/sales/pipeline",
+    {
+      params: {
+        searchTerm: searchParams?.searchTerm,
+        initialLoad: "true",
+        orderBy: orderBy,
+      },
+    },
   );
 
+  let pipelineColumns = [];
+  if (parsed?.success) {
+    pipelineColumns = parsed.data;
+  }
 
   return (
     <div className="space-y-8">

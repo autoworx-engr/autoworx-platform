@@ -23,12 +23,15 @@ import { NextRequest, NextResponse } from "next/server";
  *         name: sortBy
  *         schema:
  *           type: string
+ *           enum: [firstName, lastName, email, createdAt, updatedAt]
+ *           default: createdAt
  *         description: Field to sort by
  *       - in: query
  *         name: sortOrder
  *         schema:
  *           type: string
  *           enum: [asc, desc]
+ *           default: asc
  *         description: Order of sorting
  *       - in: query
  *         name: page
@@ -40,6 +43,12 @@ import { NextRequest, NextResponse } from "next/server";
  *         schema:
  *           type: integer
  *           default: 20
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search by first name, last name, or email
+ *
  *     responses:
  *       200:
  *         description: Successfully retrieved user list
@@ -64,15 +73,13 @@ export const GET = async (request: NextRequest) => {
     const userId = verifyToken?.payload?.id ?? "";
 
     const companyId = searchParams.get("companyId");
-    const sortBy = searchParams.get("sortBy");
-    const sortOrder = searchParams.get("sortOrder");
+    const search = searchParams.get("search") || "";
+    const sortBy = searchParams.get("sortBy") || "createdAt";
+    const sortOrder = searchParams.get("sortOrder") || "asc";
 
-    // 3. Handle numbers (params are always strings by default)
-    // If 'page' is null, default to 1.
     const pageNum = parseInt(searchParams.get("page") || "1");
     const limitNum = parseInt(searchParams.get("limit") || "20");
 
-    // Placeholder for actual message retrieval logic
     const companyIdNum = companyId ? parseInt(companyId) : null;
 
     if (!companyIdNum) {
@@ -87,18 +94,26 @@ export const GET = async (request: NextRequest) => {
       throw new AppError(404, "Company not found");
     }
 
-    const usersData = await db.user.findMany({
-      where: {
-        NOT: {
-          id: userId ? parseInt(userId as string, 10) : undefined,
-        },
-        companyId: companyIdNum,
+    const where: any = {
+      NOT: {
+        id: userId ? parseInt(userId as string, 10) : undefined,
       },
+      companyId: companyIdNum,
+    };
+
+    if (search) {
+      where.OR = [
+        { firstName: { contains: search, mode: "insensitive" } },
+        { lastName: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } },
+      ];
+    }
+
+    const usersData = await db.user.findMany({
+      where,
       skip: (pageNum - 1) * limitNum,
       take: limitNum,
-      orderBy: sortBy
-        ? { [sortBy]: sortOrder === "desc" ? "desc" : "asc" }
-        : { createdAt: "asc" },
+      orderBy: { [sortBy]: sortOrder === "desc" ? "desc" : "asc" },
     });
 
     if (!userId) {
@@ -106,7 +121,7 @@ export const GET = async (request: NextRequest) => {
     }
 
     const usersWithChatTrack = await Promise.all(
-      usersData.map(async user => {
+      usersData.map(async (user) => {
         const { id, password, isSuperAdmin, ...restUser } = user;
         const userChatTrack = await db.chatTrack.findMany({
           where: {
@@ -126,7 +141,7 @@ export const GET = async (request: NextRequest) => {
     );
 
     const totalRecords = await db.user.count({
-      where: { companyId: companyIdNum },
+      where,
     });
 
     const hasNextPage = pageNum * limitNum < totalRecords;

@@ -198,8 +198,7 @@ export default async function PaymentTab({
         }
         return sum;
       }, 0);
-      dueAfterPayment =
-        originalInvoiceGrandTotal - originalInvoiceDeposit - totalPaidUpToThis;
+      dueAfterPayment = originalInvoiceGrandTotal - totalPaidUpToThis;
     }
 
     invoicesWithFull.push({

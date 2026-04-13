@@ -133,6 +133,7 @@ const DraggableLead = ({
   const router = useRouter();
   const pathname = usePathname();
   const currentUser = useGetCurrentUser();
+
   useEffect(() => {
     const element = leadRef.current;
     if (!element) return;
@@ -220,17 +221,21 @@ const DraggableLead = ({
           {isTeamPipeline && `#${lead.invoiceId}`} {lead.name}
         </h3>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => handleColumnDropdownToggle(categoryIndex, leadIndex)}
-            className="cursor-pointer text-xl mr-2 hover:text-blue-600 transition-colors md:hidden"
-            title="Move to different column"
-          >
-            <ArrowRightLeft
-              size={24}
-              strokeWidth={2}
-              style={{ color: "#6571FFed" }}
-            />
-          </button>
+          {!isTeamPipeline && (
+            <button
+              onClick={() =>
+                handleColumnDropdownToggle(categoryIndex, leadIndex)
+              }
+              className="cursor-pointer text-xl mr-2 hover:text-blue-600 transition-colors md:hidden"
+              title="Move to different column"
+            >
+              <ArrowRightLeft
+                size={24}
+                strokeWidth={2}
+                style={{ color: "#6571FFed" }}
+              />
+            </button>
+          )}
 
           {pipelineType === "Sales Pipelines" && (
             <div>
@@ -318,12 +323,14 @@ const DraggableLead = ({
           </span>
         ))}
 
-        <button
-          onClick={() => handleTagDropdownToggle(categoryIndex, leadIndex)}
-          className="inline-flex h-[20px] items-center justify-center rounded bg-[#6571FF] px-1 py-1 text-xs font-semibold text-white"
-        >
-          + Add
-        </button>
+        {!isTeamPipeline && (
+          <button
+            onClick={() => handleTagDropdownToggle(categoryIndex, leadIndex)}
+            className="inline-flex h-[20px] items-center justify-center rounded bg-[#6571FF] px-1 py-1 text-xs font-semibold text-white"
+          >
+            + Add
+          </button>
+        )}
       </div>
 
       {isTagDropdownOpen && (

@@ -33,10 +33,28 @@ export const PUBLIC_API_ROUTES = [
   "/api/twilio/incoming",
   "/api/twilio/receive",
   "/api/twilio/whisper",
-  "/api/twilio/token",
   "/api/invoice/track-view",
   "/api/upload",
   "/api/communication/client-hub/send-twilio-message",
+  // Virtual shop public storefront read endpoints
+  "/api/virtual-shop/shop-services",
+  "/api/virtual-shop/shop-services/categories",
+  "/api/virtual-shop/appointment-slots",
+  // virtual-shop public route
+  "/api/virtual-shop/buy-gift-card",
+  "/api/virtual-shop/service-booking",
+  "/api/virtual-shop/issued-gift-card",
+  "/api/virtual-shop/gift-card-settings",
+  // gift card public route
+  "/api/virtual-shop/issued-gift-card/check-balance",
+  "/api/virtual-shop/issued-gift-card/reload",
+  "/api/virtual-shop/issued-gift-card/reload/confirmation",
+  "/api/virtual-shop/issued-gift-card/reload-payment/initiate",
+  "/api/virtual-shop/gift-card-settings/public",
+  "/api/virtual-shop/gift-card-payment/initiate",
+  "/api/virtual-shop/gift-card-payment/confirmation",
+  "/api/virtual-shop/gift-card-templates/public",
+  "/api/virtual-shop/client-lookup/by-phone",
 ];
 
 export const PUBLIC_DYNAMIC_API_ROUTES = [
@@ -44,4 +62,6 @@ export const PUBLIC_DYNAMIC_API_ROUTES = [
   "/api/twilio/sms-receive/:companyIds",
   "/api/twilio/call-recording/:recordingSid",
   "/api/admin/client/:id/sales-agent",
+  // Public shop resolve by subdomain slug
+  "/api/virtual-shop/configure/subdomain/:slug",
 ];

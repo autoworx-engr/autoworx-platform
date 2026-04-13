@@ -6,9 +6,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 const pusher = getPusherInstance();
 
-const findUsers = (users: { id: number }[]) => {
+const findUsers = (users: { id: number; action?: string }[]) => {
   return Promise.all(
-    users.map(async (user: { id: number }) => {
+    users.map(async (user: { id: number; action?: string }) => {
       if (!user.id) {
         throw new Error("User ID is required");
       }
@@ -51,6 +51,9 @@ const findUsers = (users: { id: number }[]) => {
  *                       type: integer
  *                       description: The ID of the user
  *                 description: Array of user objects with IDs
+ *               companyId:
+ *                 type: integer
+ *                 description: The ID of the company
  *     responses:
  *       200:
  *         description: Group created successfully
@@ -84,7 +87,11 @@ const findUsers = (users: { id: number }[]) => {
  */
 export const POST = async (req: NextRequest) => {
   try {
-    const { name, users } = await req.json();
+    const { name, users, companyId } = await req.json();
+
+    if (!companyId) {
+      throw new AppError(400, "Company ID is required");
+    }
 
     const findUser = await findUsers(users);
 
@@ -95,6 +102,7 @@ export const POST = async (req: NextRequest) => {
     const groupData = await db.group.create({
       data: {
         name: name,
+        companyId: companyId,
         users: {
           connect: users,
         },
@@ -159,6 +167,25 @@ export const POST = async (req: NextRequest) => {
  *           type: integer
  *           default: 20
  *         description: Number of groups per page
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search by group name
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           enum: [name, createdAt, updatedAt]
+ *           default: createdAt
+ *         description: Field to sort by
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: desc
+ *         description: Sort order
  *     responses:
  *       200:
  *         description: Groups fetched successfully
@@ -214,18 +241,35 @@ export const GET = async (req: NextRequest) => {
 
     const pageNum = parseInt(searchParams.get("page") || "1");
     const limitNum = parseInt(searchParams.get("limit") || "20");
+    const search = searchParams.get("search") || "";
+    const sortBy = searchParams.get("sortBy") || "createdAt";
+    const sortOrder = searchParams.get("sortOrder") || "desc";
+
+    const where: any = {
+      users: { some: { id: parseInt(userId) } },
+    };
+
+    if (search) {
+      where.name = {
+        contains: search,
+        mode: "insensitive",
+      };
+    }
 
     const groups = await db.group.findMany({
-      where: { users: { some: { id: parseInt(userId) } } },
+      where,
       include: {
         users: true,
+      },
+      orderBy: {
+        [sortBy]: sortOrder,
       },
       skip: (pageNum - 1) * limitNum,
       take: limitNum,
     });
 
     const totalGroups = await db.group.count({
-      where: { users: { some: { id: parseInt(userId) } } },
+      where,
     });
 
     return NextResponse.json(
@@ -283,7 +327,11 @@ export const GET = async (req: NextRequest) => {
  *                     id:
  *                       type: integer
  *                       description: The ID of the user
- *                 description: Array of user objects with IDs to add to the group
+ *                     action:
+ *                       type: string
+ *                       enum: [add, remove]
+ *                       description: The action to perform (add or remove). Defaults to add if not specified.
+ *                 description: Array of user objects with IDs and actions
  *     responses:
  *       200:
  *         description: Group updated successfully
@@ -332,10 +380,20 @@ export const PUT = async (req: NextRequest) => {
       throw new AppError(404, "Group not found");
     }
 
-    const findUser = await findUsers(users);
+    const connectUsers =
+      users
+        ?.filter((u: any) => u.action === "add" || !u.action)
+        .map((u: any) => ({ id: u.id })) || [];
+    const disconnectUsers =
+      users
+        ?.filter((u: any) => u.action === "remove")
+        .map((u: any) => ({ id: u.id })) || [];
 
-    if (findUser && findUser?.length !== users?.length) {
-      throw new AppError(400, "One or more users not found");
+    if (connectUsers.length > 0) {
+      const findUser = await findUsers(connectUsers);
+      if (findUser && findUser?.length !== connectUsers?.length) {
+        throw new AppError(400, "One or more users to add not found");
+      }
     }
 
     const updatedGroup = await db.group.update({
@@ -343,7 +401,8 @@ export const PUT = async (req: NextRequest) => {
       data: {
         name: name,
         users: {
-          connect: users,
+          connect: connectUsers.length > 0 ? connectUsers : undefined,
+          disconnect: disconnectUsers.length > 0 ? disconnectUsers : undefined,
         },
       },
       include: {
@@ -352,10 +411,18 @@ export const PUT = async (req: NextRequest) => {
     });
 
     if (updatedGroup) {
-      pusher.trigger("add-member-in-group", "add-member", {
-        groupId: updatedGroup.id,
-        userIds: users,
-      });
+      if (connectUsers.length > 0) {
+        pusher.trigger("add-member-in-group", "add-member", {
+          groupId: updatedGroup.id,
+          userIds: connectUsers,
+        });
+      }
+      if (disconnectUsers.length > 0) {
+        pusher.trigger("remove-member-from-group", "remove-member", {
+          groupId: updatedGroup.id,
+          userIds: disconnectUsers,
+        });
+      }
     }
 
     return NextResponse.json(

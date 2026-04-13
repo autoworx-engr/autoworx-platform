@@ -19,13 +19,13 @@ export default function Header() {
   }, 500);
 
   return (
-    <div className="flex flex-col items-end gap-2 lg:flex-row lg:items-center lg:justify-between lg:gap-0">
-      <div className="flex w-full items-center gap-x-8 bg-background lg:w-fit">
+    <div className="flex flex-col items-end gap-y-2 gap-x-4 md:flex-row md:items-center md:justify-between lg:gap-0">
+      <div className="flex w-full items-center gap-x-8 bg-background md:w-[400px] xl:w-[500px]">
         <div
           className="
             group relative flex w-full items-center gap-x-3 rounded-xl
             bg-white dark:bg-slate-900 
-            px-4 py-2 lg:w-[400px] xl:w-[500px]
+            px-4 py-2 md:w-[400px] xl:w-[500px]
             ring-1 ring-slate-200 dark:ring-slate-700
             shadow-sm transition-all duration-300 ease-out
             focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500/50

@@ -42,6 +42,7 @@ export default function ResponsiveEstimateCard({
     status,
     bgColor,
     textColor,
+    isShopBooking,
   } = invoiceEstimate || {};
   const { setActionType } = useActionStoreCreateEdit();
   const timezone = useCompanyTimezone();
@@ -62,6 +63,11 @@ export default function ResponsiveEstimateCard({
             invoiceId={id}
             buttonChild={<button className="text-blue-600">{id}</button>}
           />
+          {isShopBooking && (
+            <span className="mt-1 block text-center text-[10px] font-bold uppercase tracking-wider text-[#6571FF] bg-[#6571FF]/10 rounded-full px-2 py-0.5 w-fit">
+              Virtual Shop
+            </span>
+          )}
         </CardTitle>
         <CardDescription className="font-bold">
           {moment.tz(createdAt, timezone).format("MM/DD/YYYY")}
