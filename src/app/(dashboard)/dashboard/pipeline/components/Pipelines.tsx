@@ -60,6 +60,7 @@ export default function PipelinesCopy({
   // References for scrolling to leads
   const columnRefs = useRef<(HTMLDivElement | null)[]>([]);
   const leadRefs = useRef<Map<string, HTMLLIElement>>(new Map());
+  const currentHighlightRef = useRef<HTMLLIElement | null>(null);
   const dragDropContextRef = useRef<HTMLDivElement | null>(null);
   const [screenWidth, setScreenWidth] = useState<number>(window.innerWidth);
 
@@ -240,7 +241,7 @@ export default function PipelinesCopy({
       setOpenDropdownIndex({ category: categoryIndex, index: leadIndex });
     }
 
-    console.log(categoryIndex, leadIndex);
+    // console.log(categoryIndex, leadIndex);
   };
 
   const createEmployeeSelectHandler =

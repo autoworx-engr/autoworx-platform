@@ -1,18 +1,22 @@
 "use client";
 import { DialogContent, DialogFooter } from "@/components/Dialog";
 import { Dialog } from "@/components/Dialog";
-import { Technician } from "@prisma/client";
+import { InvoiceRedo, Technician } from "@prisma/client";
 import { useState, useTransition } from "react";
 import RedoTechnician from "./RedoTechnician";
 import toast from "react-hot-toast";
 import { RotatingLines } from "react-loader-spinner";
 import { createInvoiceRedo } from "@/actions/estimate/labor/createInvoiceRedo";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queryKeys";
 
 type TProps = {
   invoiceId: string;
   serviceId: number;
   technicians: (Technician & { name: string })[];
   invoiceStatus: string | undefined;
+  existingRedos: InvoiceRedo[];
+  parentInvoiceId: string;
 };
 
 type TRedoTechnicianInfo = {
@@ -27,14 +31,18 @@ export default function ReDoModal({
   serviceId,
   technicians,
   invoiceStatus,
+  existingRedos,
+  parentInvoiceId,
 }: TProps) {
   const [open, setOpen] = useState(false);
   const [redoTechnicians, setRedoTechnicians] = useState<TRedoTechnicianInfo[]>(
     [],
   );
   const [pending, startTransition] = useTransition();
+  const queryClient = useQueryClient();
 
   const isInvoiceDelivered = invoiceStatus === "Delivered";
+  const hasExistingRedo = existingRedos.length > 0;
 
   const handleRedoTechnician = (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -72,12 +80,19 @@ export default function ReDoModal({
   };
 
   const handleSaveInvoiceRedo = async () => {
+    if (redoTechnicians.length === 0) {
+      toast.error("Please select at least one technician");
+      return;
+    }
     try {
       const response = await createInvoiceRedo(redoTechnicians);
       if (response.status === 200) {
         setRedoTechnicians([]);
         setOpen(false);
-        toast.success("save redo technicians successfully");
+        toast.success("Redo saved successfully");
+        await queryClient.invalidateQueries({
+          queryKey: queryKeys.getWorkOrderDataKey(parentInvoiceId),
+        });
       }
     } catch (err) {
       toast.error("Failed to save redo technicians");
@@ -86,17 +101,20 @@ export default function ReDoModal({
 
   return (
     <>
-      {isInvoiceDelivered && (
+      {isInvoiceDelivered && !hasExistingRedo && (
         <button
           type="button"
-          onClick={() => setOpen(true)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpen(true);
+          }}
           className="flex items-center gap-1 rounded-full bg-[#6571FF] px-2 py-0.5 text-white"
         >
           Re-Do
         </button>
       )}
       <Dialog open={open} onOpenChange={() => setOpen((prev) => !prev)}>
-        <DialogContent>
+        <DialogContent onClick={(e) => e.stopPropagation()}>
           <div className="space-y-3 rounded-md bg-background">
             <div className="mx-10 my-5">
               <div>
@@ -107,7 +125,7 @@ export default function ReDoModal({
               </div>
               <div className="mt-5 flex flex-col justify-center space-y-1">
                 <div className="flex">
-                  <p className="min-w-[150px] text-center">Name</p>
+                  <p className="min-w-[150px] text-left">Name</p>
                   <p>Notes</p>
                 </div>
                 <div className="space-y-3">

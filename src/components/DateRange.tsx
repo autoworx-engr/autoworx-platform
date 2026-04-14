@@ -64,7 +64,13 @@ const DateRange = ({
   }, []);
 
   const handleSelect = (ranges: any) => {
-    setTempRange(ranges.selection);
+    const { startDate, endDate, key } = ranges.selection;
+    // moveRangeOnFirstSelection=false keeps the previous endDate when user picks a
+    if (startDate > endDate) {
+      setTempRange({ startDate, endDate: startDate, key });
+    } else {
+      setTempRange(ranges.selection);
+    }
   };
 
   const togglePicker = () => {

@@ -65,6 +65,7 @@ export async function getInvoiceModalData(id: string) {
       twilioCredentials,
     };
   } catch (error) {
-    throw new Error("Failed to fetch invoice data");
+    console.error("[getInvoiceModalData] Failed to fetch invoice data:", error);
+    throw error;
   }
 }

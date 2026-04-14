@@ -89,11 +89,28 @@ export const GET = async (request: NextRequest) => {
     };
 
     if (search) {
-      where.OR = [
+      const searchWords = search.trim().split(/\s+/);
+      const conditions: any[] = [
         { firstName: { contains: search, mode: "insensitive" } },
         { lastName: { contains: search, mode: "insensitive" } },
         { email: { contains: search, mode: "insensitive" } },
       ];
+
+      // Handle full name search (e.g. "Mahmud Hassan Lehri" split across firstName + lastName)
+      if (searchWords.length > 1) {
+        for (let i = 1; i < searchWords.length; i++) {
+          const firstPart = searchWords.slice(0, i).join(" ");
+          const lastPart = searchWords.slice(i).join(" ");
+          conditions.push({
+            AND: [
+              { firstName: { contains: firstPart, mode: "insensitive" } },
+              { lastName: { contains: lastPart, mode: "insensitive" } },
+            ],
+          });
+        }
+      }
+
+      where.OR = conditions;
     }
 
     // Fetch all users matching filter (optimize if dataset is very large)
