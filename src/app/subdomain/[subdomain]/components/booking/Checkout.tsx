@@ -177,6 +177,11 @@ export const Checkout = () => {
         }));
         setIsReturningClient(true);
       } else {
+        setForm((prev) => ({
+          ...prev,
+          fullName: "",
+          email: "",
+        }));
         setIsReturningClient(false);
       }
       setPhoneLookedUp(true);
@@ -874,6 +879,11 @@ export const Checkout = () => {
                     setSelectedCountryCode(isoCode || "US");
 
                     if (phoneLookedUp) {
+                      setForm((prev) => ({
+                        ...prev,
+                        fullName: "",
+                        email: "",
+                      }));
                       setPhoneLookedUp(false);
                       setIsReturningClient(false);
                     }

@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import AutomationCard from "./AutomationCard";
 import dynamic from "next/dynamic";
 import { useAllPipelineAutomationRules } from "@/hooks/pipeline-automation/useAllPipelineAutomationRules";
@@ -64,6 +64,20 @@ export default function AllCards({
   const [isCreate, setIsCreate] = useState(false);
   const [id, setId] = useState<string | null>(null);
   const [campaigns, setCampaigns] = useState<any>([]);
+  const listSectionRef = useRef<HTMLDivElement | null>(null);
+  const formSectionRef = useRef<HTMLDivElement | null>(null);
+
+  const scrollToMobileSection = (
+    ref: React.RefObject<HTMLDivElement | null>,
+  ) => {
+    if (typeof window === "undefined" || window.innerWidth >= 768) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
 
   const { data: entitlementsRes } = useServerGet(
     getEntitlements,
@@ -157,6 +171,18 @@ export default function AllCards({
     setIsEdit(false);
   }, [type]);
 
+  useEffect(() => {
+    if (!type) return;
+
+    scrollToMobileSection(listSectionRef);
+  }, [type]);
+
+  useEffect(() => {
+    if (!isCreate && !isEdit) return;
+
+    scrollToMobileSection(formSectionRef);
+  }, [isCreate, isEdit]);
+
   const items =
     type === "pipeline"
       ? allPipelineRules?.data
@@ -226,7 +252,7 @@ export default function AllCards({
 
   return (
     <div className="mx-auto flex flex-col items-start gap-10 bg-gray-50 md:flex-row">
-      <div className="w-full lg:w-1/2">
+      <div ref={listSectionRef} className="w-full lg:w-1/2">
         <div className="mx-auto w-full max-w-xl">
           <h2 className="mb-6 text-lg font-semibold capitalize text-gray-800 md:text-xl">
             {`${type} Automation`}
@@ -311,7 +337,7 @@ export default function AllCards({
         </div>
       </div>
 
-      <div className="w-full lg:w-1/2">
+      <div ref={formSectionRef} className="w-full lg:w-1/2">
         {FormComponent && (isCreate || isEdit) && (
           <>
             <div className="mb-4 flex items-center justify-between">
