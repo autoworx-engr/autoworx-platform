@@ -102,9 +102,13 @@ export default function RevenueDisplay({
               <thead className="sticky top-0 bg-white shadow-sm">
                 <tr className="h-10 border-b">
                   <th className="border-b px-4 py-2 text-left">Customer</th>
-                  <th className="border-b px-4 py-2 text-left">Vehicle Info </th>
+                  <th className="border-b px-4 py-2 text-left">
+                    Vehicle Info{" "}
+                  </th>
                   <th className="border-b px-4 py-2 text-left">Invoice #</th>
-                  <th className="border-b px-4 py-2 text-left">Date Delivered</th>
+                  <th className="border-b px-4 py-2 text-left">
+                    Date Delivered
+                  </th>
                   <th className="border-b px-4 py-2 text-left">Price</th>
                   <th className="border-b px-4 py-2 text-left">Cost</th>
                   <th className="border-b px-4 py-2 text-left">Profit</th>

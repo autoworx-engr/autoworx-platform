@@ -38,7 +38,10 @@ export function useCalendarFilters({
           .filter(Boolean)
           .join(" ")
           .trim();
-        matesMap.set(userId, { id: userId, name: fullName || `User ${userId}` });
+        matesMap.set(userId, {
+          id: userId,
+          name: fullName || `User ${userId}`,
+        });
       });
     });
 

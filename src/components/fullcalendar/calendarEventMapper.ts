@@ -3,8 +3,13 @@ import moment from "moment";
 import { darkenHex, isHexColor, lightenHex } from "./colorUtils";
 
 const DAY_NAME_TO_DOW: Record<string, number> = {
-  sunday: 0, monday: 1, tuesday: 2, wednesday: 3,
-  thursday: 4, friday: 5, saturday: 6,
+  sunday: 0,
+  monday: 1,
+  tuesday: 2,
+  wednesday: 3,
+  thursday: 4,
+  friday: 5,
+  saturday: 6,
 };
 
 type BuildCalendarEventsParams = {

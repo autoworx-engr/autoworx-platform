@@ -31,6 +31,7 @@ const BookingContent = ({ initialShop }: { initialShop?: any }) => {
   const {
     step,
     setStep,
+    resetBooking,
     setServices,
     currentPage,
     setCurrentPage,
@@ -137,10 +138,15 @@ const BookingContent = ({ initialShop }: { initialShop?: any }) => {
     return <ShopNotFound />;
   }
 
+  const handleLogoClick = () => {
+    resetBooking();
+    setCurrentPage(1);
+  };
+
   return (
     <div className="min-h-screen bg-background text-sm">
       {/* Header */}
-      <BookingHeader rightElement="giftcard">
+      <BookingHeader rightElement="giftcard" onLogoClick={handleLogoClick}>
         <ProgressBar current={step} />
       </BookingHeader>
 

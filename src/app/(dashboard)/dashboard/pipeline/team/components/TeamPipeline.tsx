@@ -17,7 +17,14 @@ import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-sc
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { EmployeeType, Tag, User } from "@prisma/client";
 import { useRouter } from "next/navigation";
-import { SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  SetStateAction,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import toast from "react-hot-toast";
 import DroppableColumn from "../../components/DroppableColumn";
 import PipelineLoadingSkeleton from "../../components/PipelineLoadingSkeleton";
@@ -179,52 +186,53 @@ export default function TeamPipelines({
     [key: string]: boolean;
   }>({});
 
-  const handleSearchResult = useCallback((
-    result: { columnIndex: number; leadIndex: number } | null,
-  ) => {
-    if (!result) return;
+  const handleSearchResult = useCallback(
+    (result: { columnIndex: number; leadIndex: number } | null) => {
+      if (!result) return;
 
-    const { columnIndex, leadIndex } = result;
+      const { columnIndex, leadIndex } = result;
 
-    // Scroll to the column first
-    if (columnRefs.current[columnIndex]) {
-      columnRefs.current[columnIndex]?.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
-        inline: "start",
-      });
+      // Scroll to the column first
+      if (columnRefs.current[columnIndex]) {
+        columnRefs.current[columnIndex]?.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: "start",
+        });
 
-      // Wait a bit for the column scroll to complete before scrolling to the lead
-      setTimeout(() => {
-        // Generate the key the same way we do when creating refs
-        const leadKey = `${columnIndex}-${leadIndex}`;
-        const leadElement = leadRefs.current.get(leadKey);
+        // Wait a bit for the column scroll to complete before scrolling to the lead
+        setTimeout(() => {
+          // Generate the key the same way we do when creating refs
+          const leadKey = `${columnIndex}-${leadIndex}`;
+          const leadElement = leadRefs.current.get(leadKey);
 
-        if (leadElement) {
-          leadElement.scrollIntoView({
-            behavior: "smooth",
-            block: "nearest",
-          });
+          if (leadElement) {
+            leadElement.scrollIntoView({
+              behavior: "smooth",
+              block: "nearest",
+            });
 
-          // Highlight the found item temporarily
-          leadElement.classList.add(
-            "bg-yellow-200",
-            "border-yellow-300",
-            "scale-[1.02]",
-            "transition-transform",
-          );
-          setTimeout(() => {
-            leadElement.classList.remove(
+            // Highlight the found item temporarily
+            leadElement.classList.add(
               "bg-yellow-200",
               "border-yellow-300",
               "scale-[1.02]",
               "transition-transform",
             );
-          }, 2000);
-        }
-      }, 300);
-    }
-  }, []);
+            setTimeout(() => {
+              leadElement.classList.remove(
+                "bg-yellow-200",
+                "border-yellow-300",
+                "scale-[1.02]",
+                "transition-transform",
+              );
+            }, 2000);
+          }
+        }, 300);
+      }
+    },
+    [],
+  );
 
   const handleDropdownToggle = (categoryIndex: number, leadIndex: number) => {
     if (

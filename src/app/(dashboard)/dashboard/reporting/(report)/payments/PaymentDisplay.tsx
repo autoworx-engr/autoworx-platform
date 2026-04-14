@@ -122,9 +122,13 @@ export default function PaymentDisplay({
                   <th className="border-b px-4 py-2 text-left">Invoice # </th>
                   <th className="border-b px-4 py-2 text-left">Client Name</th>
                   <th className="border-b px-4 py-2 text-left">Vehicle Info</th>
-                  <th className="border-b px-4 py-2 text-left">Payment Method</th>
+                  <th className="border-b px-4 py-2 text-left">
+                    Payment Method
+                  </th>
                   <th className="border-b px-4 py-2 text-left">Total Amount</th>
-                  <th className="border-b px-4 py-2 text-left">Cash Received</th>
+                  <th className="border-b px-4 py-2 text-left">
+                    Cash Received
+                  </th>
                   <th className="border-b px-4 py-2 text-center">Status</th>
                 </tr>
               </thead>
@@ -147,7 +151,9 @@ export default function PaymentDisplay({
                     >
                       <td className="border-b px-4 py-2 text-left">
                         {payment?.date
-                          ? moment.tz(payment.date, timezone).format("MM/DD/YYYY")
+                          ? moment
+                              .tz(payment.date, timezone)
+                              .format("MM/DD/YYYY")
                           : ""}
                       </td>
 
@@ -192,9 +198,9 @@ export default function PaymentDisplay({
                           className={cn(
                             `border-b px-2 py-1 text-left capitalize`,
                             paymentStatus === "due" &&
-                            "bg-[#de5967] text-white rounded-md",
+                              "bg-[#de5967] text-white rounded-md",
                             paymentStatus === "paid" &&
-                            "bg-[#3c8f89] text-white rounded-md",
+                              "bg-[#3c8f89] text-white rounded-md",
                           )}
                         >
                           {paymentStatus}

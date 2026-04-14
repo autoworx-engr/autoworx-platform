@@ -89,7 +89,9 @@ export default function Calendar({ type }: { type: CalendarType }) {
     selectedTeamMateIds,
     selectedCategoryIds,
     dateRange,
-    weekendDays: [settings?.weekend1, settings?.weekend2].filter(Boolean) as string[],
+    weekendDays: [settings?.weekend1, settings?.weekend2].filter(
+      Boolean,
+    ) as string[],
   });
 
   const loading = isCalendarLoading || isSettingsLoading || isDataLoading;

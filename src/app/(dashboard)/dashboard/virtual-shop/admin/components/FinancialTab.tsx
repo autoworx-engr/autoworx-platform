@@ -23,8 +23,7 @@ export default function FinancialTab({ shopId = 0 }: FinancialTabProps) {
     data: bookingSettings,
     isLoading: isBookingSettingsLoading,
     isFetched: hasFetchedBookingSettings,
-  } =
-    useGetShopBookingSettings(shopId);
+  } = useGetShopBookingSettings(shopId);
   const { mutateAsync: updateBookingSettings, isPending: isSaving } =
     useUpdateShopBookingSettings(shopId);
 
@@ -121,7 +120,9 @@ export default function FinancialTab({ shopId = 0 }: FinancialTabProps) {
           <div className="mt-6">
             <div className="flex items-start justify-between">
               <div>
-                <p className="font-semibold text-gray-800">Shop Fee ({shopFeeRate.toFixed(2)}%)</p>
+                <p className="font-semibold text-gray-800">
+                  Shop Fee ({shopFeeRate.toFixed(2)}%)
+                </p>
                 <p className="text-sm text-gray-400">
                   Applied as percentage of subtotal
                 </p>
@@ -134,7 +135,9 @@ export default function FinancialTab({ shopId = 0 }: FinancialTabProps) {
           <div className="mt-6">
             <div className="flex items-start justify-between">
               <div>
-                <p className="font-semibold text-gray-800">Tax ({taxRate.toFixed(2)}%)</p>
+                <p className="font-semibold text-gray-800">
+                  Tax ({taxRate.toFixed(2)}%)
+                </p>
                 <p className="text-sm text-gray-400">
                   Applied to subtotal + shop fee
                 </p>

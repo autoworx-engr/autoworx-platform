@@ -1,4 +1,8 @@
 import { db } from "@/lib/db";
+import {
+  normalizePhoneForStorage,
+  phoneLookupWhereClause,
+} from "@/utils/normalizePhone";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -30,10 +34,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Shop not found" }, { status: 404 });
     }
 
+    const normalizedPhone = normalizePhoneForStorage(phone);
+    const phoneLookup = phoneLookupWhereClause(phone) ?? [];
+
+    const fallbackLookup = [
+      { mobile: phone },
+      { mobile: normalizedPhone },
+    ].filter((entry) => Boolean(entry.mobile));
+
     const client = await db.client.findFirst({
       where: {
         companyId: shop.companyId,
-        mobile: phone,
+        OR: phoneLookup.length > 0 ? phoneLookup : fallbackLookup,
       },
       select: {
         id: true,

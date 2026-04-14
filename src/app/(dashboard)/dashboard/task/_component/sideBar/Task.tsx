@@ -53,7 +53,12 @@ export default function TaskComponent({ task }: TaskComponentProps) {
     }),
   });
   const queryDate = useDate();
-  const { setDate, date: taskDate, setNavigating, setStartTime } = useCalendarStore();
+  const {
+    setDate,
+    date: taskDate,
+    setNavigating,
+    setStartTime,
+  } = useCalendarStore();
   // console.log({ taskDate });
 
   const router = useRouter();
@@ -151,7 +156,10 @@ export default function TaskComponent({ task }: TaskComponentProps) {
         h-auto min-h-[40px] max-h-[56px]
         ${isDragging ? "opacity-70" : ""}
       `}
-      style={{ ...priorityStyle, cursor: task.startTime && task.endTime ? "pointer" : "move" }}
+      style={{
+        ...priorityStyle,
+        cursor: task.startTime && task.endTime ? "pointer" : "move",
+      }}
       ref={
         task.startTime && task.endTime
           ? undefined
@@ -174,7 +182,10 @@ export default function TaskComponent({ task }: TaskComponentProps) {
       }}
     >
       <span
-        style={{ cursor: task.startTime && task.endTime ? "pointer" : "move", color: priorityStyle.color }}
+        style={{
+          cursor: task.startTime && task.endTime ? "pointer" : "move",
+          color: priorityStyle.color,
+        }}
         className="w-[90%] text-sm font-semibold leading-tight"
       >
         <Tooltip title={tooltipLabel} placement="right">
@@ -186,11 +197,11 @@ export default function TaskComponent({ task }: TaskComponentProps) {
 
       <TaskCreateOrEdit
         triggerIcon={
-          <span
-            onClick={(e) => e.stopPropagation()}
-            className="inline-flex"
-          >
-            <SquarePen style={{ color: priorityStyle.color }} className="h-4 w-4 transition-colors cursor-pointer md:h-5 md:w-5 opacity-70 hover:opacity-100" />
+          <span onClick={(e) => e.stopPropagation()} className="inline-flex">
+            <SquarePen
+              style={{ color: priorityStyle.color }}
+              className="h-4 w-4 transition-colors cursor-pointer md:h-5 md:w-5 opacity-70 hover:opacity-100"
+            />
           </span>
         }
         taskId={task.id}
