@@ -10,25 +10,17 @@ import {
 import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
 import { errorToast, successToast } from "@/lib/toast";
 import { updateTagAutomationTrigger } from "@/service/tag-automation-trigger/api";
-import { usePipelineFilterStore } from "@/stores/PipelineFilterStore";
 import { Column, Employee, ShopPipelineData } from "@/types/invoiceLead";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
-import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
-import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { Tag, User } from "@prisma/client";
-import { useRouter } from "next/navigation";
-import {
-  SetStateAction,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { SetStateAction, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import DroppableColumn from "./DroppableColumn";
 import PipelineLoadingSkeleton from "./PipelineLoadingSkeleton";
 import SearchScroll from "./SearchScroll";
+import DroppableColumn from "./DroppableColumn";
+import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
 
 interface PipelinesProps {
   pipelinesTitle: string;
@@ -48,9 +40,9 @@ export default function PipelinesCopy({
   const router = useRouter();
 
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
-
+  console.log("selectedClientId==>", selectedClientId);
   const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(
-    null,
+    null
   );
   const [pipelineData, setPipelineData] =
     useState<ShopPipelineData[]>(shopPipelineDataProp);
@@ -64,12 +56,7 @@ export default function PipelinesCopy({
   const [screenWidth, setScreenWidth] = useState<number>(window.innerWidth);
 
   const currentUser = useGetCurrentUser();
-
-  // Get search term from store
-  const { searchTerm, resetStatus } = usePipelineFilterStore((state) => state);
-  const [selectedSearchColumnId, setSelectedSearchColumnId] = useState<
-    number | null
-  >(null);
+  console.log("Current User:", currentUser);
 
   function updateWidth() {
     setScreenWidth(window.innerWidth);
@@ -77,12 +64,12 @@ export default function PipelinesCopy({
 
   useEffect(() => {
     updateWidth();
-    resetStatus();
     window.addEventListener("resize", updateWidth);
     return () => window.removeEventListener("resize", updateWidth);
-  }, [resetStatus]);
+  }, []);
 
   useEffect(() => {
+    // setIsLoading(true);
     setPipelineData(shopPipelineDataProp);
     // Reset refs when data changes
     columnRefs.current = new Array(shopPipelineDataProp.length).fill(null);
@@ -91,6 +78,7 @@ export default function PipelinesCopy({
   }, [shopPipelineDataProp]);
 
   useEffect(() => {
+    // setIsLoading(true);
     const fetchCompanyUsers = async () => {
       const fetchedCompanyUsers = await getEmployees({
         excludeCurrentUser: true,
@@ -101,58 +89,6 @@ export default function PipelinesCopy({
     };
     fetchCompanyUsers();
   }, [router]);
-
-  // Filter pipeline data based on search term
-  const filteredPipelineData = useMemo(() => {
-    let result = pipelineData;
-
-    // First, if a specific column is selected in search filter,
-    // we can either filter the whole columns array, or just clear leads from other columns.
-    // Making other columns empty is usually better for a Kanban to maintain structure.
-
-    if (searchTerm && searchTerm.trim() !== "") {
-      const lowerSearchTerm = searchTerm.toLowerCase();
-
-      result = result.map((column) => {
-        // If a column filter is active and it's not THIS column, return empty leads
-        if (
-          selectedSearchColumnId !== null &&
-          column.id !== selectedSearchColumnId
-        ) {
-          return { ...column, leads: [] };
-        }
-
-        return {
-          ...column,
-          leads: column.leads.filter((lead) => {
-            // Search by client name
-            const nameMatch = (lead.name || "")
-              .toLowerCase()
-              .includes(lowerSearchTerm);
-
-            // Search by vehicle information
-            const vehicleMatch =
-              lead.vehicle &&
-              lead.vehicle.toLowerCase().includes(lowerSearchTerm);
-
-            return nameMatch || vehicleMatch;
-          }),
-        };
-      });
-    } else {
-      // If no search term but a column is selected
-      if (selectedSearchColumnId !== null) {
-        result = result.map((column) => {
-          if (column.id !== selectedSearchColumnId) {
-            return { ...column, leads: [] };
-          }
-          return column;
-        });
-      }
-    }
-
-    return result;
-  }, [pipelineData, searchTerm, selectedSearchColumnId]);
 
   const [selectedEmployees, setSelectedEmployees] = useState<{
     [key: string]: Employee | null;
@@ -182,53 +118,44 @@ export default function PipelinesCopy({
     [key: string]: boolean;
   }>({});
 
-  const handleSearchResult = useCallback(
-    (result: { columnIndex: number; leadIndex: number } | null) => {
-      if (!result) return;
+  const handleSearchResult = (
+    result: { columnIndex: number; leadIndex: number } | null
+  ) => {
+    if (!result) return;
 
-      const { columnIndex, leadIndex } = result;
+    const { columnIndex, leadIndex } = result;
 
-      // Scroll to the column first
-      if (columnRefs.current[columnIndex]) {
-        columnRefs.current[columnIndex]?.scrollIntoView({
-          behavior: "smooth",
-          block: "nearest",
-          inline: "start",
-        });
+    // Scroll to the column first
+    if (columnRefs.current[columnIndex]) {
+      columnRefs.current[columnIndex]?.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "start",
+      });
 
-        // Wait a bit for the column scroll to complete before scrolling to the lead
-        setTimeout(() => {
-          // Generate the key the same way we do when creating refs
-          const leadKey = `${columnIndex}-${leadIndex}`;
-          const leadElement = leadRefs.current.get(leadKey);
+      // Wait a bit for the column scroll to complete before scrolling to the lead
+      setTimeout(() => {
+        // Generate the key the same way we do when creating refs
+        const leadKey = `${columnIndex}-${leadIndex}`;
+        const leadElement = leadRefs.current.get(leadKey);
 
-          if (leadElement) {
-            leadElement.scrollIntoView({
-              behavior: "smooth",
-              block: "nearest",
-            });
+        if (leadElement) {
+          leadElement.scrollIntoView({
+            behavior: "smooth",
+            block: "nearest",
+          });
 
-            // Highlight the found item temporarily
-            leadElement.classList.add(
-              "bg-yellow-200",
-              "border-yellow-300",
-              "scale-[1.02]",
-              "transition-transform",
-            );
-            setTimeout(() => {
-              leadElement.classList.remove(
-                "bg-yellow-200",
-                "border-yellow-300",
-                "scale-[1.02]",
-                "transition-transform",
-              );
-            }, 5000);
-          }
-        }, 300);
-      }
-    },
-    [],
-  );
+          // Highlight the found item temporarily
+          leadElement.classList.add("bg-yellow-100");
+          setTimeout(() => {
+            leadElement.classList.remove("bg-yellow-100");
+          }, 2000);
+        }
+      }, 300);
+    }
+  };
+
+  // ... Rest of your existing code ...
 
   const handleDropdownToggle = (categoryIndex: number, leadIndex: number) => {
     if (
@@ -242,6 +169,7 @@ export default function PipelinesCopy({
 
     console.log(categoryIndex, leadIndex);
   };
+
 
   const createEmployeeSelectHandler =
     (categoryIndex: number, leadIndex: number) =>
@@ -287,7 +215,7 @@ export default function PipelinesCopy({
 
   const handleTagDropdownToggle = (
     categoryIndex: number,
-    leadIndex: number,
+    leadIndex: number
   ) => {
     const key = `${categoryIndex}-${leadIndex}`;
     setTagDropdownStates((prevState) => ({
@@ -295,12 +223,11 @@ export default function PipelinesCopy({
       [key]: !prevState[key],
     }));
   };
-
   //for tag handling
   const handleTagSelect = async (
     categoryIndex: number,
     leadIndex: number,
-    selectedTag: Tag | undefined,
+    selectedTag: Tag | undefined
   ) => {
     if (selectedTag) {
       const key = `${categoryIndex}-${leadIndex}`;
@@ -315,6 +242,15 @@ export default function PipelinesCopy({
           });
           setPipelineData(updatedPipelineData);
 
+          // // Optionally update the leadTags state (if needed)
+          // setLeadTags((prevState) => {
+          //   const existingTags = prevState[key] || [];
+          //   return {
+          //     ...prevState,
+          //     [key]: [...existingTags, selectedTag],
+          //   };
+          // });
+
           updateTagAutomationTrigger({
             columnId: result?.invoice?.columnId!,
             companyId: result?.invoice?.companyId,
@@ -328,12 +264,11 @@ export default function PipelinesCopy({
       }
     }
   };
-
   // Handle tag removal
   const handleTagRemove = async (
     categoryIndex: number,
     leadIndex: number,
-    tagToRemove: Tag,
+    tagToRemove: Tag
   ) => {
     const key = `${categoryIndex}-${leadIndex}`;
     const invoiceId = pipelineData[categoryIndex].leads[leadIndex].invoiceId;
@@ -347,9 +282,17 @@ export default function PipelinesCopy({
         const updatedPipelineData = [...pipelineData];
         updatedPipelineData[categoryIndex].leads[leadIndex].tags =
           updatedPipelineData[categoryIndex].leads[leadIndex].tags.filter(
-            (tag) => tag.tag.id !== tagToRemove.id,
+            (tag) => tag.tag.id !== tagToRemove.id
           );
         setPipelineData(updatedPipelineData);
+        // setLeadTags((prevState) => {
+        //   const existingTags =
+        //     prevState[key] || pipelineData[categoryIndex].leads[leadIndex].tags;
+        //   return {
+        //     ...prevState,
+        //     [key]: existingTags.filter((tag) => tag.id !== tagToRemove.id),
+        //   };
+        // });
       }
     } catch (error) {
       console.error("Error removing tag:", error);
@@ -357,9 +300,10 @@ export default function PipelinesCopy({
   };
 
   //service
+
   const handleServiceDropdownToggle = (
     categoryIndex: number,
-    leadIndex: number,
+    leadIndex: number
   ) => {
     const key = `${categoryIndex}-${leadIndex}`;
     setOpenServiceDropdown((prevState) => ({
@@ -370,7 +314,7 @@ export default function PipelinesCopy({
 
   const handleColumnDropdownToggle = (
     categoryIndex: number,
-    leadIndex: number,
+    leadIndex: number
   ) => {
     const key = `${categoryIndex}-${leadIndex}`;
     setShowColumnSelect((prevState) => ({
@@ -386,7 +330,7 @@ export default function PipelinesCopy({
   const handleColumnChange = async (
     categoryIndex: number,
     leadIndex: number,
-    newColumnId: string,
+    newColumnId: string
   ) => {
     const key = `${categoryIndex}-${leadIndex}`;
     const lead = pipelineData[categoryIndex].leads[leadIndex];
@@ -406,7 +350,7 @@ export default function PipelinesCopy({
         const completed = lead?.services?.incomplete?.length === 0;
         if (!completed && lead?.technicians?.length > 0) {
           toast.error(
-            "All services must be completed by Technicians before moving to delivered.",
+            "All services must be completed by Technicians before moving to delivered."
           );
           return;
         }
@@ -455,6 +399,7 @@ export default function PipelinesCopy({
     }
   };
 
+  
   useEffect(() => {
     return monitorForElements({
       onDrop({ source, location }) {
@@ -495,17 +440,17 @@ export default function PipelinesCopy({
             if ((!completed && removed?.technicians?.length > 0) || hasDue) {
               if (hasDue)
                 toast.error(
-                  "Please clear due balance before moving to delivered.",
+                  "Please clear due balance before moving to delivered."
                 );
               else
                 toast.error(
-                  "All services must be completed before moving to delivered.",
+                  "All services must be completed before moving to delivered."
                 );
               return prevData;
             }
 
             updateTechnicianStatustoComplete(removed.invoiceId).catch(
-              console.error,
+              console.error
             );
           }
 
@@ -527,7 +472,7 @@ export default function PipelinesCopy({
                 .then((res) =>
                   res.type === "success"
                     ? successToast("Job moved successfully")
-                    : errorToast("Update failed"),
+                    : errorToast("Update failed")
                 )
                 .catch(() => errorToast("Failed to update status"));
             }
@@ -547,15 +492,13 @@ export default function PipelinesCopy({
       element: scrollContainer,
     });
   }, [screenWidth]);
-
   return (
     <>
       {/* Add the search component at the top */}
       <div className="mb-4 px-2">
         <SearchScroll
-          pipelineData={filteredPipelineData}
+          pipelineData={pipelineData}
           onSearchResult={handleSearchResult}
-          onColumnChange={(colId) => setSelectedSearchColumnId(colId)}
         />
       </div>
 
@@ -567,7 +510,7 @@ export default function PipelinesCopy({
             ref={dragDropContextRef}
             className="thin-scrollbar flex touch-pan-x snap-x snap-mandatory flex-nowrap justify-between gap-2 overflow-x-auto"
           >
-            {filteredPipelineData.map((item, categoryIndex) => (
+            {pipelineData.map((item, categoryIndex) => (
               <DroppableColumn
                 key={categoryIndex}
                 columnRefs={columnRefs}
@@ -598,7 +541,6 @@ export default function PipelinesCopy({
                 setSelectedClientId={setSelectedClientId}
                 setSelectedVehicleId={setSelectedVehicleId}
                 setIsAppointmentModalOpen={setIsAppointmentModalOpen}
-                searchTerm={searchTerm}
               />
             ))}
           </div>
