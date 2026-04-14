@@ -28,6 +28,16 @@ type TMessage = {
   createdAt: Date;
 };
 
+const formatAttachmentSize = (fileSize: unknown) => {
+  const sizeInBytes = Number(fileSize);
+
+  if (!Number.isFinite(sizeInBytes) || sizeInBytes < 0) {
+    return "Unknown size";
+  }
+
+  return `${(sizeInBytes / (1024 * 1024)).toFixed(2)} MB`;
+};
+
 export default function CompanyMessageBox({
   company,
   currentUser,
@@ -336,8 +346,7 @@ export default function CompanyMessageBox({
                         <div className="rounded-md bg-[#006D77] px-4 py-2 text-white">
                           <p className="text-sm">{attachment.fileName}</p>
                           <p className="text-xs">
-                            {(attachment.fileSize / (1024 * 1024)).toFixed(2)}{" "}
-                            MB
+                            {formatAttachmentSize(attachment.fileSize)}
                           </p>
                         </div>
                       )}
