@@ -221,17 +221,21 @@ const DraggableLead = ({
           {isTeamPipeline && `#${lead.invoiceId}`} {lead.name}
         </h3>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => handleColumnDropdownToggle(categoryIndex, leadIndex)}
-            className="cursor-pointer text-xl mr-2 hover:text-blue-600 transition-colors md:hidden"
-            title="Move to different column"
-          >
-            <ArrowRightLeft
-              size={24}
-              strokeWidth={2}
-              style={{ color: "#6571FFed" }}
-            />
-          </button>
+          {!isTeamPipeline && (
+            <button
+              onClick={() =>
+                handleColumnDropdownToggle(categoryIndex, leadIndex)
+              }
+              className="cursor-pointer text-xl mr-2 hover:text-blue-600 transition-colors md:hidden"
+              title="Move to different column"
+            >
+              <ArrowRightLeft
+                size={24}
+                strokeWidth={2}
+                style={{ color: "#6571FFed" }}
+              />
+            </button>
+          )}
 
           {pipelineType === "Sales Pipelines" && (
             <div>

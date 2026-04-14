@@ -31,15 +31,15 @@ export const FleetStatementModalBody: React.FC<
   // Calculate totals
   const totalAmount = invoices.reduce(
     (sum: number, invoice: any) => sum + Number(invoice.grandTotal || 0),
-    0
+    0,
   );
   const totalPaid = invoices.reduce(
     (sum: number, invoice: any) => sum + Number(invoice.totalPayment || 0),
-    0
+    0,
   );
   const totalDue = invoices.reduce(
     (sum: number, invoice: any) => sum + Number(invoice.due || 0),
-    0
+    0,
   );
 
   const totals = {
@@ -59,7 +59,7 @@ export const FleetStatementModalBody: React.FC<
               "flex items-center justify-center rounded-lg overflow-hidden",
               company?.image
                 ? "w-24 h-24 sm:w-32 sm:h-32"
-                : "w-24 h-24 sm:w-32 sm:h-32 bg-slate-400"
+                : "w-24 h-24 sm:w-32 sm:h-32 bg-slate-400",
             )}
           >
             {company?.image ? (
@@ -193,7 +193,7 @@ export const FleetStatementModalBody: React.FC<
                   <td className="px-4 py-3 text-sm font-semibold text-right whitespace-nowrap">
                     <span
                       className={cn(
-                        invoice.due > 0 ? "text-red-600" : "text-green-600"
+                        invoice.due > 0 ? "text-red-600" : "text-green-600",
                       )}
                     >
                       ${Number(invoice.due || 0).toFixed(2)}
@@ -272,6 +272,7 @@ export const FleetStatementModalBody: React.FC<
                 paymentGateway: gatewayInfo?.paymentGateway || "STRIPE",
                 hasStripe: gatewayInfo?.hasStripe || false,
                 hasAuthorizeNet: gatewayInfo?.hasAuthorizeNet || false,
+                tipEnabled: gatewayInfo?.tipEnabled ?? false,
               }}
             />
           </div>

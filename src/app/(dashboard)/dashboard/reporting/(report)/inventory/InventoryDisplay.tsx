@@ -78,7 +78,7 @@ export default function InventoryDisplay({
     const purchaseHistory = product.InventoryProductHistory.filter(
       (history) => {
         return history.type === "Purchase";
-      }
+      },
     );
     const stockQuantity = product.quantity ?? 0;
     const { totalSalesPrice, quantitySold } = salesHistory.reduce(
@@ -91,26 +91,26 @@ export default function InventoryDisplay({
       {
         totalSalesPrice: 0,
         quantitySold: 0,
-      }
+      },
     );
 
     const averageSales = Math.round(
-      totalSalesPrice / (quantitySold || 1)
+      totalSalesPrice / (quantitySold || 1),
     ) as number;
 
     const totalPurchaseQuantity = purchaseHistory.reduce(
       (acc, history) => acc + Number(history.quantity),
-      0
+      0,
     );
 
     const totalPurchasePrice = purchaseHistory.reduce(
       (acc, history) => acc + Number(history.price) * Number(history.quantity),
-      0
+      0,
     );
 
     const averageCost =
       totalPurchaseQuantity > 0
-        ?totalPurchasePrice / totalPurchaseQuantity
+        ? totalPurchasePrice / totalPurchaseQuantity
         : 0;
 
     const ReturnAndInvestment =
@@ -129,7 +129,7 @@ export default function InventoryDisplay({
           stockQuantity: Number(stockQuantity),
         },
         productInfo: productInfo,
-      }))
+      })),
     );
     return acc;
   }, [] as TInventoryPurchaseHistory);
@@ -189,40 +189,48 @@ export default function InventoryDisplay({
               </p>
             </div>
           ) : (
-            <table className="max-h-[600px] w-full overflow-y-auto shadow-md">
-              <thead className="sticky top-0 bg-background">
-                <tr className="h-10 border-b">
-                  <th className="border-b px-4 py-2 text-left">Product #</th>
-                  <th className="border-b px-4 py-2 text-left">Name </th>
-                  <th className="border-b px-4 py-2 text-left">Average Cost</th>
-                  <th className="border-b px-4 py-2 text-left">Average Sell</th>
-                  <th className="border-b px-4 py-2 text-left">Stock Qty.</th>
-                  <th className="border-b px-4 py-2 text-left">Qty. Sold</th>
-                  <th className="border-b px-4 py-2 text-left">Type</th>
-                  <th className="border-b px-4 py-2 text-left">ROI Average</th>
-                  <th className="border-b px-4 py-2 text-left">
-                    Purchase Date
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {inventoryToRender?.map((history, index) => (
-                  <InventoryTableRow
-                    key={history.id}
-                    history={history}
-                    // index={
-                    //   currentPage > 1 ? index + 10 * (currentPage - 1) : index
-                    // }
-                    index={
-                      currentPage > 1
-                        ? index + pageSize * (currentPage - 1)
-                        : index
-                    }
-                    timezone={timezone}
-                  />
-                ))}
-              </tbody>
-            </table>
+            <div className="w-full overflow-x-auto">
+              <table className="w-full min-w-[980px] border-collapse shadow-md">
+                <thead className="sticky top-0 bg-background">
+                  <tr className="h-10 border-b">
+                    <th className="border-b px-4 py-2 text-left">Product #</th>
+                    <th className="border-b px-4 py-2 text-left">Name </th>
+                    <th className="border-b px-4 py-2 text-left">
+                      Average Cost
+                    </th>
+                    <th className="border-b px-4 py-2 text-left">
+                      Average Sell
+                    </th>
+                    <th className="border-b px-4 py-2 text-left">Stock Qty.</th>
+                    <th className="border-b px-4 py-2 text-left">Qty. Sold</th>
+                    <th className="border-b px-4 py-2 text-left">Type</th>
+                    <th className="border-b px-4 py-2 text-left">
+                      ROI Average
+                    </th>
+                    <th className="border-b px-4 py-2 text-left">
+                      Purchase Date
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {inventoryToRender?.map((history, index) => (
+                    <InventoryTableRow
+                      key={history.id}
+                      history={history}
+                      // index={
+                      //   currentPage > 1 ? index + 10 * (currentPage - 1) : index
+                      // }
+                      index={
+                        currentPage > 1
+                          ? index + pageSize * (currentPage - 1)
+                          : index
+                      }
+                      timezone={timezone}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
           {showPagination && (
             <div className="mt-4 flex justify-end">

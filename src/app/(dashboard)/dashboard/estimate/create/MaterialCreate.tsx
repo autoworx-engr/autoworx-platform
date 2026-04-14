@@ -43,7 +43,11 @@ export type EstimateMaterial = {
 };
 
 export default function MaterialCreate() {
-  const { categories, vendors, materials: inventoryMaterials } = useListsStore();
+  const {
+    categories,
+    vendors,
+    materials: inventoryMaterials,
+  } = useListsStore();
 
   const { currentSelectedCategoryId } = useEstimateCreateStore();
 
@@ -189,7 +193,9 @@ export default function MaterialCreate() {
     }
 
     if (!quantity || quantity <= 0) {
-      errorToast("Material Quantity must be at least 1");
+      errorToast("Material Quantity must be at least 1", {
+        id: "material-quantity-min-1",
+      });
       return;
     }
 
@@ -392,7 +398,9 @@ export default function MaterialCreate() {
     }
 
     if (!quantity || quantity <= 0) {
-      errorToast("Material Quantity must be at least 1");
+      errorToast("Material Quantity must be at least 1", {
+        id: "material-quantity-min-1",
+      });
       return;
     }
 

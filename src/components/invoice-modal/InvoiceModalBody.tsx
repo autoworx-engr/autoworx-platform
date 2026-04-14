@@ -983,7 +983,7 @@ export default function InvoiceModalBody({
                       </tr>
                     </thead>
                     <tbody>
-                      {paymentEntries.map((payment, index) => {
+                      {paymentEntries.reverse().map((payment, index) => {
                         const refundedAmount = payment.Refund.reduce(
                           (sum, refund) => sum + Number(refund.amount || 0),
                           0,
@@ -1017,21 +1017,7 @@ export default function InvoiceModalBody({
                               </div>
                             </td>
                             <td className="px-3 py-2">
-                              {payment.cash?.receivedCash || "N/A"}
-                            </td>
-                            <td className="px-3 py-2">
-                              {payment.dueAfterPayment !== null &&
-                              payment.dueAfterPayment !== undefined
-                                ? formatCurrency(
-                                    Number(payment.dueAfterPayment),
-                                  )
-                                : "N/A"}
-                            </td>
-                            <td className="px-3 py-2">
                               {invoice.column?.title || "-"}
-                            </td>
-                            <td className="px-3 py-2">
-                              {payment.notes || "-"}
                             </td>
                           </tr>
                         );

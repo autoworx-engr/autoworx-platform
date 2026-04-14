@@ -70,6 +70,7 @@ export async function POST(request: Request) {
     const entitlements = await getCompanyEntitlements(
       twilioCredentials.companyId,
     );
+
     if (!entitlements.canUseVoice) {
       const voiceResponse = new twiml.VoiceResponse();
       voiceResponse.reject();

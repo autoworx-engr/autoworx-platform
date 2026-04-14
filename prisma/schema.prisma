@@ -683,6 +683,7 @@ model Company {
   permissionForOther               PermissionForOther[]
   permissions                      Permission[]
   Lead                             Lead[]
+  group       Group[]
   isCRMEnabled                     Boolean?                           @default(false) @map("is_crm_enabled")
   isCollaborators                  Boolean?                           @default(false) @map("is_collaborators")
   LeaveRequest                     LeaveRequest[]
@@ -1763,6 +1764,8 @@ model Group {
   id        Int       @id @default(autoincrement())
   name      String
   type      String    @default("Group")
+  companyId Int?       @map("company_id")
+  company   Company?   @relation(fields: [companyId], references: [id])
   users     User[]    @relation("UserGroups")
   messages  Message[]
   createdAt DateTime  @default(now()) @map("created_at")

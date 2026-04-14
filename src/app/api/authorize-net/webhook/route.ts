@@ -132,11 +132,19 @@ export async function POST(req: NextRequest) {
       const authAmount = parseFloat(payload.authAmount);
       const invoiceNumber = payload.invoiceNumber as string | undefined;
 
-      // Extract tip from invoiceNumber suffix (encoded as "-T<amount>")
-      // Authorize.Net webhook payloads only include bare fields — no
-      // order description or userFields — so tip is encoded in invoiceNumber.
-      const tipMatch = invoiceNumber?.match(/-T([\d.]+)$/);
-      const tipAmount = tipMatch ? parseFloat(tipMatch[1]) : 0;
+      // Extract tip from invoiceNumber suffix. Two formats:
+      //   "-T<amount>"  — dollars (e.g. "-T12.42")
+      //   "-TC<cents>"  — integer cents, used when dollars would exceed
+      //                    Authorize.Net's 20-char invoiceNumber limit
+      const tipCentsMatch = invoiceNumber?.match(/-TC(\d+)$/);
+      const tipDollarsMatch = !tipCentsMatch
+        ? invoiceNumber?.match(/-T([\d.]+)$/)
+        : null;
+      const tipAmount = tipCentsMatch
+        ? parseInt(tipCentsMatch[1], 10) / 100
+        : tipDollarsMatch
+          ? parseFloat(tipDollarsMatch[1])
+          : 0;
       const baseAmount = authAmount - tipAmount;
 
       console.log("Authorize.Net payload parsed:", {
@@ -172,8 +180,8 @@ export async function POST(req: NextRequest) {
       // Decode our own prefixes from invoiceNumber so we know whether
       // this is a deposit, normal invoice payment, or a statement
       // payment. This mirrors how Stripe uses metadata.
-      // Strip the tip suffix (e.g. "-T8") before decoding the prefix.
-      const rawInvoiceNumber = invoiceNumber.replace(/-T[\d.]+$/, "");
+      // Strip the tip suffix (e.g. "-T8" or "-TC842") before decoding the prefix.
+      const rawInvoiceNumber = invoiceNumber.replace(/-TC?\d[\d.]*$/, "");
       let targetId = rawInvoiceNumber;
       let sourceType:
         | "deposit"
@@ -693,7 +701,7 @@ export async function POST(req: NextRequest) {
       for (const inv of invoicesWithDue) {
         const paymentAmount = Math.min(
           Number(inv.due ?? 0),
-          baseAmount - totalPaid
+          baseAmount - totalPaid,
         );
 
         if (paymentAmount <= 0) break;

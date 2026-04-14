@@ -4,9 +4,7 @@ import { useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import { useGetVirtualShops } from "@/hooks/virtual-shop/configure/useVirtualShopConfigure";
-import {
-  normalizeShops,
-} from "./shopNavigation";
+import { normalizeShops } from "./shopNavigation";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,8 +12,10 @@ import {
   DropdownMenuPortal,
   DropdownMenuTrigger,
 } from "@radix-ui/react-dropdown-menu";
-import { ChevronDown, Check, Store } from "lucide-react";
+import { ChevronDown, Check, Store, ExternalLink } from "lucide-react";
 import Avatar from "../Avatar";
+
+const domain = new URL(process.env.NEXT_PUBLIC_APP_URL!).hostname;
 
 export default function ShopList() {
   const router = useRouter();
@@ -29,8 +29,13 @@ export default function ShopList() {
 
   const reverseShopData = shopsData.reverse();
 
-  const shops = useMemo(() => normalizeShops(reverseShopData), [reverseShopData]);
-  const isVirtualShopAdminPath = pathname.startsWith("/dashboard/virtual-shop/admin/");
+  const shops = useMemo(
+    () => normalizeShops(reverseShopData),
+    [reverseShopData],
+  );
+  const isVirtualShopAdminPath = pathname.startsWith(
+    "/dashboard/virtual-shop/admin/",
+  );
 
   const selectedShopId = useMemo(() => {
     const match = pathname.match(/\/dashboard\/virtual-shop\/admin\/(\d+)/);
@@ -43,10 +48,19 @@ export default function ShopList() {
     return shops[0]?.id ?? 0;
   }, [pathname, shops]);
 
-  const selectedShop = shops.find((shop) => shop.id === selectedShopId) ?? shops[0];
+  const selectedShop =
+    shops.find((shop) => shop.id === selectedShopId) ?? shops[0];
 
   const handleShopClick = (shopId: number) => {
     router.push(`/dashboard/virtual-shop/admin/${shopId}/services`);
+  };
+
+  const getPublicShopUrl = (slug?: string) => {
+    if (!slug || typeof window === "undefined") {
+      return null;
+    }
+
+    return `${window.location.protocol}//${slug}.${domain}${window.location.port ? ":" + window.location.port : ""}`;
   };
 
   if (currentUser?.employeeType !== "Admin" || shops.length === 0) {
@@ -85,7 +99,7 @@ export default function ShopList() {
             )}
             <span className="truncate tracking-tight">
               {isVirtualShopAdminPath
-                ? selectedShop?.storeName ?? "Select Shop"
+                ? (selectedShop?.storeName ?? "Select Shop")
                 : "Virtual Shops"}
             </span>
           </div>
@@ -110,15 +124,16 @@ export default function ShopList() {
                 Your Shops
               </span>
             </div>
-            <div className="flex flex-col gap-0.5">
+            <div className="flex flex-col gap-1">
               {shops.map((shop) => {
                 const isSelected = selectedShop?.id === shop.id;
+                const publicShopUrl = getPublicShopUrl(shop.slug);
 
                 return (
                   <DropdownMenuItem
                     key={shop.id}
                     onSelect={() => handleShopClick(shop.id)}
-                    className={`group relative flex w-full cursor-pointer select-none items-center justify-between rounded-md px-2 py-1.5 text-sm font-medium outline-none transition-colors data-[highlighted]:bg-slate-100 data-[highlighted]:text-slate-900 ${
+                    className={`group relative flex w-full border border-slate-100 cursor-pointer select-none items-center justify-between rounded-lg px-2 py-1.5 text-sm font-medium outline-none transition-colors data-[highlighted]:bg-slate-100 data-[highlighted]:text-slate-900 ${
                       isSelected && isVirtualShopAdminPath
                         ? "bg-[#6571FF]/[0.04] text-[#6571FF] data-[highlighted]:bg-[#6571FF]/[0.08] data-[highlighted]:text-[#6571FF]"
                         : "text-slate-700"
@@ -130,7 +145,7 @@ export default function ShopList() {
                           photo={shop.logoUrl}
                           width={24}
                           height={24}
-                          className="shrink-0 rounded-full border border-slate-100 shadow-sm transition-transform duration-300 group-hover:scale-105"
+                          className="shrink-0 rounded-full border border-slate-100 shadow-sm transition-transform duration-300"
                           alt={shop.storeName}
                         />
                       ) : (
@@ -140,16 +155,34 @@ export default function ShopList() {
                           </span>
                         </div>
                       )}
-                      <span className="truncate tracking-tight">{shop.storeName}</span>
+                      <span className="truncate tracking-tight">
+                        {shop.storeName}
+                      </span>
                     </div>
 
-                    {isSelected && isVirtualShopAdminPath && (
-                      <Check
-                        size={16}
-                        strokeWidth={3}
-                        className="shrink-0 text-[#6571FF] animate-in zoom-in-50"
-                      />
-                    )}
+                    <div className="flex items-center gap-1.5">
+                      {isSelected && isVirtualShopAdminPath && (
+                        <Check
+                          size={16}
+                          strokeWidth={3}
+                          className="shrink-0 text-[#6571FF] animate-in zoom-in-50"
+                        />
+                      )}
+                      {publicShopUrl && (
+                        <a
+                          href={publicShopUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                          }}
+                          className="inline-flex h-6 w-6 items-center justify-center border rounded-md text-[#6571FF] transition-colors hover:bg-slate-200/70 hover:text-slate-600"
+                          aria-label={`Open ${shop.storeName} public shop`}
+                        >
+                          <ExternalLink size={14} />
+                        </a>
+                      )}
+                    </div>
                   </DropdownMenuItem>
                 );
               })}

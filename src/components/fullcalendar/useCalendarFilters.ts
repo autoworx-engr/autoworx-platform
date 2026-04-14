@@ -12,6 +12,8 @@ type UseCalendarFiltersParams = {
   holidays: any[];
   selectedTeamMateIds: number[];
   selectedCategoryIds: number[];
+  dateRange: { start: string; end: string };
+  weekendDays?: string[];
 };
 
 export function useCalendarFilters({
@@ -20,6 +22,8 @@ export function useCalendarFilters({
   holidays,
   selectedTeamMateIds,
   selectedCategoryIds,
+  dateRange,
+  weekendDays,
 }: UseCalendarFiltersParams) {
   // Merge task users and appointment technicians into a single "team mate" list
   const teamMateOptions = useMemo(() => {
@@ -34,7 +38,10 @@ export function useCalendarFilters({
           .filter(Boolean)
           .join(" ")
           .trim();
-        matesMap.set(userId, { id: userId, name: fullName || `User ${userId}` });
+        matesMap.set(userId, {
+          id: userId,
+          name: fullName || `User ${userId}`,
+        });
       });
     });
 
@@ -83,34 +90,22 @@ export function useCalendarFilters({
   }, [tasks, selectedTeamMateIds]);
 
   const filteredAppointments = useMemo(() => {
-    let result = appointments;
-
-    if (selectedTeamMateIds.length > 0) {
-      const selectedSet = new Set(selectedTeamMateIds);
-      result = result.filter((appointment: any) =>
-        appointment?.assignedUsers?.some((user: any) =>
-          selectedSet.has(Number(user?.id)),
-        ),
-      );
-    }
-
-    if (selectedCategoryIds.length > 0) {
-      const catSet = new Set(selectedCategoryIds);
-      result = result.filter((appointment: any) =>
-        catSet.has(Number(appointment?.serviceCategory?.id)),
-      );
-    }
-
-    return result;
-  }, [appointments, selectedTeamMateIds, selectedCategoryIds]);
+    if (selectedCategoryIds.length === 0) return appointments;
+    const catSet = new Set(selectedCategoryIds);
+    return appointments.filter((appointment: any) =>
+      catSet.has(Number(appointment?.serviceCategory?.id)),
+    );
+  }, [appointments, selectedCategoryIds]);
 
   const events = useMemo(() => {
     return buildCalendarEvents({
       appointments: filteredAppointments,
       tasks: filteredTasks,
       holidays,
+      dateRange,
+      weekendDays,
     });
-  }, [filteredTasks, filteredAppointments, holidays]);
+  }, [filteredTasks, filteredAppointments, holidays, dateRange, weekendDays]);
 
   return {
     teamMateOptions,

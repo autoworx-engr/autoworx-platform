@@ -77,7 +77,7 @@ export default function RevenueDisplay({
 
   if (isDesktop) {
     return (
-      <div className=" w-full -mt-5 pt-5">
+      <div className="w-full -mt-5 pt-5">
         {invoicesToRender.length === 0 ? (
           <div className="flex min-h-[200px] w-full flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-100 bg-slate-50/30 p-12 text-center">
             {/* Ghost Icon Illustration */}
@@ -97,67 +97,73 @@ export default function RevenueDisplay({
             </p>
           </div>
         ) : (
-          <table className="w-full border-collapse shadow-md">
-            <thead className="sticky top-0 bg-white shadow-sm">
-              <tr className="h-10 border-b">
-                <th className="border-b px-4 py-2 text-left">Customer</th>
-                <th className="border-b px-4 py-2 text-left">Vehicle Info </th>
-                <th className="border-b px-4 py-2 text-left">Invoice #</th>
-                <th className="border-b px-4 py-2 text-left">Date Delivered</th>
-                <th className="border-b px-4 py-2 text-left">Price</th>
-                <th className="border-b px-4 py-2 text-left">Cost</th>
-                <th className="border-b px-4 py-2 text-left">Profit</th>
-              </tr>
-            </thead>
-            <tbody>
-              {invoicesToRender?.map((invoice, index) => {
-                // Generate loss details for tooltip
-                const lossDetails = [];
+          <div className="w-full overflow-x-auto">
+            <table className="w-full min-w-[980px] border-collapse shadow-md">
+              <thead className="sticky top-0 bg-white shadow-sm">
+                <tr className="h-10 border-b">
+                  <th className="border-b px-4 py-2 text-left">Customer</th>
+                  <th className="border-b px-4 py-2 text-left">
+                    Vehicle Info{" "}
+                  </th>
+                  <th className="border-b px-4 py-2 text-left">Invoice #</th>
+                  <th className="border-b px-4 py-2 text-left">
+                    Date Delivered
+                  </th>
+                  <th className="border-b px-4 py-2 text-left">Price</th>
+                  <th className="border-b px-4 py-2 text-left">Cost</th>
+                  <th className="border-b px-4 py-2 text-left">Profit</th>
+                </tr>
+              </thead>
+              <tbody>
+                {invoicesToRender?.map((invoice, index) => {
+                  // Generate loss details for tooltip
+                  const lossDetails = [];
 
-                // Inventory losses (lost products)
-                if (invoice.inventoryLossAmount > 0) {
-                  const inventoryMaterialNames =
-                    invoice.InventoryProductHistory?.map(
-                      (item) => item.product?.name,
-                    ).filter(Boolean);
-                  lossDetails.push(
-                    `Inventory Loss: ${inventoryMaterialNames?.join(", ")}`,
-                  );
-                }
+                  // Inventory losses (lost products)
+                  if (invoice.inventoryLossAmount > 0) {
+                    const inventoryMaterialNames =
+                      invoice.InventoryProductHistory?.map(
+                        (item) => item.product?.name,
+                      ).filter(Boolean);
+                    lossDetails.push(
+                      `Inventory Loss: ${inventoryMaterialNames?.join(", ")}`,
+                    );
+                  }
 
-                // Material losses (show actual material names with losses)
-                if (
-                  invoice.materialLossAmount > 0 &&
-                  invoice.materialLossDetails?.length > 0
-                ) {
-                  const materialNames = invoice.materialLossDetails.map(
-                    (detail) => `${detail.name} ($${detail.loss.toFixed(2)})`,
-                  );
-                  lossDetails.push(
-                    `Material Loss: ${materialNames.join(", ")}`,
-                  );
-                }
+                  // Material losses (show actual material names with losses)
+                  if (
+                    invoice.materialLossAmount > 0 &&
+                    invoice.materialLossDetails?.length > 0
+                  ) {
+                    const materialNames = invoice.materialLossDetails.map(
+                      (detail) => `${detail.name} ($${detail.loss.toFixed(2)})`,
+                    );
+                    lossDetails.push(
+                      `Material Loss: ${materialNames.join(", ")}`,
+                    );
+                  }
 
-                // Labor losses
-                if (invoice.laborLossAmount > 0) {
-                  lossDetails.push(
-                    `Labor Loss: Technician cost exceeds charges ($${invoice.laborLossAmount.toFixed(2)})`,
-                  );
-                }
+                  // Labor losses
+                  if (invoice.laborLossAmount > 0) {
+                    lossDetails.push(
+                      `Labor Loss: Technician cost exceeds charges ($${invoice.laborLossAmount.toFixed(2)})`,
+                    );
+                  }
 
-                return (
-                  <RevenueTableRow
-                    key={invoice.id}
-                    invoice={invoice}
-                    timezone={timezone as string}
-                    index={index}
-                    totalLossAmount={invoice.totalLossAmount}
-                    lossDetails={lossDetails}
-                  />
-                );
-              })}
-            </tbody>
-          </table>
+                  return (
+                    <RevenueTableRow
+                      key={invoice.id}
+                      invoice={invoice}
+                      timezone={timezone as string}
+                      index={index}
+                      totalLossAmount={invoice.totalLossAmount}
+                      lossDetails={lossDetails}
+                    />
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
         {showPagination && (
           <div className="mt-4 flex justify-end">

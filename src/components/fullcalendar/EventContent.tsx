@@ -43,6 +43,24 @@ export const EventContent = ({
 
   // Month view rendering (Horizontal single line style)
   if (view.type === "dayGridMonth") {
+    if (serviceType === "Weekend")
+      return (
+        <div
+          className="flex items-center text-xs truncate w-full h-full overflow-hidden rounded-r-sm pl-1 cursor-default"
+          style={{
+            background: `linear-gradient(to bottom, ${colors.gradient.join(", ")})`,
+            borderRadius: "4px",
+            color: "#1f2937",
+          }}
+        >
+          <span
+            className="font-bold whitespace-nowrap text-[8px] sm:text-[12px] uppercase"
+            style={{ color: colors.accentColor }}
+          >
+            Weekend
+          </span>
+        </div>
+      );
     if (serviceType === "Holiday")
       return (
         <div
