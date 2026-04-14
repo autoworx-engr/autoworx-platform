@@ -53,45 +53,50 @@ export default function HeaderSearch({ activeTab }: HeaderSearchProps) {
           <div className="transition-transform hover:scale-[1.01]">
             <FilterforPayment />
           </div>
-          <div className="w-full sm:ml-auto sm:w-auto">
-            <Link
-              href="/dashboard/reporting/payments"
-              className="
-                group relative flex items-center gap-3 pl-3 pr-4 py-2 rounded-xl
-                bg-gradient-to-b from-white to-slate-50 dark:from-slate-800 dark:to-slate-900
-                ring-1 ring-slate-200 dark:ring-slate-700
-                shadow-[0_1px_2px_rgba(0,0,0,0.05)]
-                text-[#6571FF] font-medium
-                transition-all duration-300 ease-out
-                hover:shadow-lg hover:shadow-indigo-500/10
-                hover:-translate-y-0.5 hover:scale-[1.02]
-                hover:ring-indigo-500/30 dark:hover:ring-indigo-400/30
-                w-fit
-              "
-            >
-              {/* Icon Container */}
-              <div className="
-                  p-1.5 rounded-lg
-                  bg-indigo-50 dark:bg-indigo-500/10
-                  text-[#6571FF]
-                  group-hover:bg-indigo-100 dark:group-hover:bg-indigo-500/20
-                  transition-colors duration-300
-                ">
-                <PieChart className="w-5 h-5" />
-              </div>
-
-              <span className="font-inter tracking-tight">Payment Reporting</span>
-
-              {/* Animated Arrow Micro-interaction */}
-              <ArrowRight className="
-                  w-4 h-4
-                  opacity-0 -translate-x-2
-                  group-hover:opacity-100 group-hover:translate-x-0
-                  transition-all duration-300 ease-out
-                " />
-            </Link>
-          </div>
         </div>
+      </div>
+
+      <div className="mr-4 flex gap-4">
+        <Link
+          href="/dashboard/reporting/payments"
+          className="
+            group relative flex items-center gap-3 pl-3 pr-4 py-2 rounded-xl
+            bg-gradient-to-b from-white to-slate-50 dark:from-slate-800 dark:to-slate-900
+            ring-1 ring-slate-200 dark:ring-slate-700
+            shadow-[0_1px_2px_rgba(0,0,0,0.05)]
+            text-[#6571FF] font-medium
+            transition-all duration-300 ease-out
+            hover:shadow-lg hover:shadow-indigo-500/10
+            hover:-translate-y-0.5 hover:scale-[1.02]
+            hover:ring-indigo-500/30 dark:hover:ring-indigo-400/30
+            w-fit
+          "
+        >
+          {/* Icon Container */}
+          <div
+            className="
+              p-1.5 rounded-lg 
+              bg-indigo-50 dark:bg-indigo-500/10 
+              text-[#6571FF]
+              group-hover:bg-indigo-100 dark:group-hover:bg-indigo-500/20 
+              transition-colors duration-300
+            "
+          >
+            <PieChart className="w-5 h-5" />
+          </div>
+
+          <span className="font-inter tracking-tight">Payment Reporting</span>
+
+          {/* Animated Arrow Micro-interaction */}
+          <ArrowRight
+            className="
+              w-4 h-4 
+              opacity-0 -translate-x-2 
+              group-hover:opacity-100 group-hover:translate-x-0 
+              transition-all duration-300 ease-out
+            "
+          />
+        </Link>
       </div>
     </div>
   );

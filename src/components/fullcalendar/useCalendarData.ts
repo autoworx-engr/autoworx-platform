@@ -33,8 +33,7 @@ export function useCalendarData(dateRange: { start: string; end: string }) {
   useEffect(() => {
     if (categories.length > 0) {
       useListsStore.setState((state) => ({
-        categories:
-          state.categories.length > 0 ? state.categories : categories,
+        categories: state.categories.length > 0 ? state.categories : categories,
       }));
     }
   }, [categories]);

@@ -106,7 +106,10 @@ export const EventDetailsSheet = ({
   // Appointment: icon colors from category color
   const catColor = props?.serviceCategoryColor;
   const aptIconStyle = isHexColor(catColor)
-    ? { backgroundColor: lightenHex(catColor, 0.15), color: darkenHex(catColor, 0.6) }
+    ? {
+        backgroundColor: lightenHex(catColor, 0.15),
+        color: darkenHex(catColor, 0.6),
+      }
     : undefined;
   const aptIconClass = isHexColor(catColor) ? "" : "bg-blue-50 text-blue-600";
 
@@ -194,19 +197,50 @@ export const EventDetailsSheet = ({
                 {eventType === "appointment" && (
                   <>
                     {[
-                      { icon: <Clock3 className="size-4" />, label: "Time", value: timeRange },
-                      { icon: <User className="size-4" />, label: "Client", value: appointmentClientName },
-                      { icon: <Mail className="size-4" />, label: "Email", value: appointmentClientEmail },
-                      { icon: <Phone className="size-4" />, label: "Phone", value: appointmentClientPhone },
-                      ...(appointmentVehicle ? [{ icon: <Car className="size-4" />, label: "Vehicle", value: appointmentVehicle }] : []),
+                      {
+                        icon: <Clock3 className="size-4" />,
+                        label: "Time",
+                        value: timeRange,
+                      },
+                      {
+                        icon: <User className="size-4" />,
+                        label: "Client",
+                        value: appointmentClientName,
+                      },
+                      {
+                        icon: <Mail className="size-4" />,
+                        label: "Email",
+                        value: appointmentClientEmail,
+                      },
+                      {
+                        icon: <Phone className="size-4" />,
+                        label: "Phone",
+                        value: appointmentClientPhone,
+                      },
+                      ...(appointmentVehicle
+                        ? [
+                            {
+                              icon: <Car className="size-4" />,
+                              label: "Vehicle",
+                              value: appointmentVehicle,
+                            },
+                          ]
+                        : []),
                     ].map(({ icon, label, value }) => (
                       <div key={label} className="flex items-start gap-3">
-                        <div className={`p-2 rounded-lg shrink-0 ${aptIconClass}`} style={aptIconStyle}>
+                        <div
+                          className={`p-2 rounded-lg shrink-0 ${aptIconClass}`}
+                          style={aptIconStyle}
+                        >
                           {icon}
                         </div>
                         <div>
-                          <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-0.5">{label}</p>
-                          <p className="text-sm font-medium text-gray-900">{value}</p>
+                          <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-0.5">
+                            {label}
+                          </p>
+                          <p className="text-sm font-medium text-gray-900">
+                            {value}
+                          </p>
                         </div>
                       </div>
                     ))}
@@ -214,7 +248,10 @@ export const EventDetailsSheet = ({
                     {originalData?.invoiceGrandTotal != null &&
                       Number(originalData.invoiceGrandTotal) > 0 && (
                         <div className="flex items-start gap-3">
-                          <div className={`p-2 rounded-lg shrink-0 ${aptIconClass}`} style={aptIconStyle}>
+                          <div
+                            className={`p-2 rounded-lg shrink-0 ${aptIconClass}`}
+                            style={aptIconStyle}
+                          >
                             <DollarSign className="size-4" />
                           </div>
                           <div>
@@ -222,7 +259,10 @@ export const EventDetailsSheet = ({
                               Estimate Price
                             </p>
                             <p className="text-sm font-semibold text-gray-900">
-                              ${Number(originalData.invoiceGrandTotal).toFixed(2)}
+                              $
+                              {Number(originalData.invoiceGrandTotal).toFixed(
+                                2,
+                              )}
                             </p>
                           </div>
                         </div>
@@ -230,7 +270,10 @@ export const EventDetailsSheet = ({
 
                     {originalData?.serviceCategory?.name && (
                       <div className="flex items-start gap-3">
-                        <div className={`p-2 rounded-lg shrink-0 ${aptIconClass}`} style={aptIconStyle}>
+                        <div
+                          className={`p-2 rounded-lg shrink-0 ${aptIconClass}`}
+                          style={aptIconStyle}
+                        >
                           <Tag className="size-4" />
                         </div>
                         <div>
@@ -247,7 +290,10 @@ export const EventDetailsSheet = ({
                     {originalData?.assignedUsers &&
                       originalData.assignedUsers.length > 0 && (
                         <div className="flex items-start gap-3">
-                          <div className={`p-2 rounded-lg shrink-0 ${aptIconClass}`} style={aptIconStyle}>
+                          <div
+                            className={`p-2 rounded-lg shrink-0 ${aptIconClass}`}
+                            style={aptIconStyle}
+                          >
                             <Users className="size-4" />
                           </div>
                           <div>
@@ -273,7 +319,9 @@ export const EventDetailsSheet = ({
                 {eventType === "task" && (
                   <>
                     <div className="flex items-start gap-3">
-                      <div className={`p-2 rounded-lg shrink-0 ${taskIconClass}`}>
+                      <div
+                        className={`p-2 rounded-lg shrink-0 ${taskIconClass}`}
+                      >
                         <Clock3 className="size-4" />
                       </div>
                       <div>
@@ -287,14 +335,18 @@ export const EventDetailsSheet = ({
                     </div>
 
                     <div className="flex items-start gap-3">
-                      <div className={`p-2 rounded-lg shrink-0 ${taskIconClass}`}>
+                      <div
+                        className={`p-2 rounded-lg shrink-0 ${taskIconClass}`}
+                      >
                         <Zap className="size-4" />
                       </div>
                       <div>
                         <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-0.5">
                           Priority
                         </p>
-                        <p className={`text-sm font-bold uppercase ${taskPriorityTextClass}`}>
+                        <p
+                          className={`text-sm font-bold uppercase ${taskPriorityTextClass}`}
+                        >
                           {originalData?.priority || "N/A"}
                         </p>
                       </div>
@@ -303,7 +355,9 @@ export const EventDetailsSheet = ({
                     {originalData?.taskUser &&
                       originalData.taskUser.length > 0 && (
                         <div className="flex items-start gap-3">
-                          <div className={`p-2 rounded-lg shrink-0 ${taskIconClass}`}>
+                          <div
+                            className={`p-2 rounded-lg shrink-0 ${taskIconClass}`}
+                          >
                             <Users className="size-4" />
                           </div>
                           <div>
@@ -331,7 +385,9 @@ export const EventDetailsSheet = ({
                       )}
 
                     <div className="flex items-start gap-3">
-                      <div className={`p-2 rounded-lg shrink-0 ${taskIconClass}`}>
+                      <div
+                        className={`p-2 rounded-lg shrink-0 ${taskIconClass}`}
+                      >
                         <Edit className="size-4" />
                       </div>
                       <div>
@@ -339,7 +395,8 @@ export const EventDetailsSheet = ({
                           Description
                         </p>
                         <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
-                          {originalData?.description || "No description provided."}
+                          {originalData?.description ||
+                            "No description provided."}
                         </p>
                       </div>
                     </div>

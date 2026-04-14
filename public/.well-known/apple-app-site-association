@@ -18,6 +18,9 @@
             "comment": "Only open the app for this specific finished route"
           },
           {
+            "/": "/reset-password*"
+          },
+          {
             "/": "/*",
             "exclude": true,
             "comment": "Default: Do not open the app for any other routes"
