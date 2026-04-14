@@ -189,48 +189,40 @@ export default function InventoryDisplay({
               </p>
             </div>
           ) : (
-            <div className="w-full overflow-x-auto">
-              <table className="w-full min-w-[980px] border-collapse shadow-md">
-                <thead className="sticky top-0 bg-background">
-                  <tr className="h-10 border-b">
-                    <th className="border-b px-4 py-2 text-left">Product #</th>
-                    <th className="border-b px-4 py-2 text-left">Name </th>
-                    <th className="border-b px-4 py-2 text-left">
-                      Average Cost
-                    </th>
-                    <th className="border-b px-4 py-2 text-left">
-                      Average Sell
-                    </th>
-                    <th className="border-b px-4 py-2 text-left">Stock Qty.</th>
-                    <th className="border-b px-4 py-2 text-left">Qty. Sold</th>
-                    <th className="border-b px-4 py-2 text-left">Type</th>
-                    <th className="border-b px-4 py-2 text-left">
-                      ROI Average
-                    </th>
-                    <th className="border-b px-4 py-2 text-left">
-                      Purchase Date
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {inventoryToRender?.map((history, index) => (
-                    <InventoryTableRow
-                      key={history.id}
-                      history={history}
-                      // index={
-                      //   currentPage > 1 ? index + 10 * (currentPage - 1) : index
-                      // }
-                      index={
-                        currentPage > 1
-                          ? index + pageSize * (currentPage - 1)
-                          : index
-                      }
-                      timezone={timezone}
-                    />
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <table className="max-h-[600px] w-full overflow-y-auto shadow-md">
+              <thead className="sticky top-0 bg-background">
+                <tr className="h-10 border-b">
+                  <th className="border-b px-4 py-2 text-left">Product #</th>
+                  <th className="border-b px-4 py-2 text-left">Name </th>
+                  <th className="border-b px-4 py-2 text-left">Average Cost</th>
+                  <th className="border-b px-4 py-2 text-left">Average Sell</th>
+                  <th className="border-b px-4 py-2 text-left">Stock Qty.</th>
+                  <th className="border-b px-4 py-2 text-left">Qty. Sold</th>
+                  <th className="border-b px-4 py-2 text-left">Type</th>
+                  <th className="border-b px-4 py-2 text-left">ROI Average</th>
+                  <th className="border-b px-4 py-2 text-left">
+                    Purchase Date
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {inventoryToRender?.map((history, index) => (
+                  <InventoryTableRow
+                    key={history.id}
+                    history={history}
+                    // index={
+                    //   currentPage > 1 ? index + 10 * (currentPage - 1) : index
+                    // }
+                    index={
+                      currentPage > 1
+                        ? index + pageSize * (currentPage - 1)
+                        : index
+                    }
+                    timezone={timezone}
+                  />
+                ))}
+              </tbody>
+            </table>
           )}
           {showPagination && (
             <div className="mt-4 flex justify-end">

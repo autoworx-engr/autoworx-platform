@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useSession } from "next-auth/react";
 import { Switch } from "@/components/Switch";
 import { Button } from "@/components/ui/button";
+import { useGetVirtualShopConfigureById } from "@/hooks/virtual-shop/configure/useVirtualShopConfigure";
 import {
   useGetShopBookingSettings,
   useUpdateShopBookingSettings,
@@ -16,18 +17,28 @@ type FinancialTabProps = {
 
 export default function FinancialTab({ shopId = 0 }: FinancialTabProps) {
   const { data: session } = useSession();
+  const { data: shopConfig } = useGetVirtualShopConfigureById(shopId);
 
   const {
     data: bookingSettings,
     isLoading: isBookingSettingsLoading,
     isFetched: hasFetchedBookingSettings,
-  } =
-    useGetShopBookingSettings(shopId);
+  } = useGetShopBookingSettings(shopId);
   const { mutateAsync: updateBookingSettings, isPending: isSaving } =
     useUpdateShopBookingSettings(shopId);
 
   const [shopFee, setShopFee] = useState(false);
   const [tax, setTax] = useState(false);
+
+  const taxRate = useMemo(() => {
+    const value = Number(shopConfig?.company?.tax ?? 0);
+    return Number.isFinite(value) ? value : 0;
+  }, [shopConfig?.company?.tax]);
+
+  const shopFeeRate = useMemo(() => {
+    const value = Number(shopConfig?.company?.serviceFee ?? 0);
+    return Number.isFinite(value) ? value : 0;
+  }, [shopConfig?.company?.serviceFee]);
 
   const isLoading = isBookingSettingsLoading;
   const isHydratingBookingSettings = shopId > 0 && !hasFetchedBookingSettings;
@@ -109,7 +120,9 @@ export default function FinancialTab({ shopId = 0 }: FinancialTabProps) {
           <div className="mt-6">
             <div className="flex items-start justify-between">
               <div>
-                <p className="font-semibold text-gray-800">Shop Fee</p>
+                <p className="font-semibold text-gray-800">
+                  Shop Fee ({shopFeeRate.toFixed(2)}%)
+                </p>
                 <p className="text-sm text-gray-400">
                   Applied as percentage of subtotal
                 </p>
@@ -122,7 +135,9 @@ export default function FinancialTab({ shopId = 0 }: FinancialTabProps) {
           <div className="mt-6">
             <div className="flex items-start justify-between">
               <div>
-                <p className="font-semibold text-gray-800">Tax</p>
+                <p className="font-semibold text-gray-800">
+                  Tax ({taxRate.toFixed(2)}%)
+                </p>
                 <p className="text-sm text-gray-400">
                   Applied to subtotal + shop fee
                 </p>

@@ -17,7 +17,14 @@ import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-sc
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { Tag, User } from "@prisma/client";
 import { useRouter } from "next/navigation";
-import { SetStateAction, useEffect, useMemo, useRef, useState } from "react";
+import {
+  SetStateAction,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import toast from "react-hot-toast";
 import DroppableColumn from "./DroppableColumn";
 import PipelineLoadingSkeleton from "./PipelineLoadingSkeleton";
@@ -41,7 +48,7 @@ export default function PipelinesCopy({
   const router = useRouter();
 
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
-  console.log("selectedClientId==>", selectedClientId);
+
   const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(
     null,
   );
@@ -57,10 +64,9 @@ export default function PipelinesCopy({
   const [screenWidth, setScreenWidth] = useState<number>(window.innerWidth);
 
   const currentUser = useGetCurrentUser();
-  console.log("Current User:", currentUser);
 
   // Get search term from store
-  const searchTerm = usePipelineFilterStore((state) => state.searchTerm);
+  const { searchTerm, resetStatus } = usePipelineFilterStore((state) => state);
   const [selectedSearchColumnId, setSelectedSearchColumnId] = useState<
     number | null
   >(null);
@@ -71,9 +77,10 @@ export default function PipelinesCopy({
 
   useEffect(() => {
     updateWidth();
+    resetStatus();
     window.addEventListener("resize", updateWidth);
     return () => window.removeEventListener("resize", updateWidth);
-  }, []);
+  }, [resetStatus]);
 
   useEffect(() => {
     setPipelineData(shopPipelineDataProp);
@@ -175,52 +182,53 @@ export default function PipelinesCopy({
     [key: string]: boolean;
   }>({});
 
-  const handleSearchResult = (
-    result: { columnIndex: number; leadIndex: number } | null,
-  ) => {
-    if (!result) return;
+  const handleSearchResult = useCallback(
+    (result: { columnIndex: number; leadIndex: number } | null) => {
+      if (!result) return;
 
-    const { columnIndex, leadIndex } = result;
+      const { columnIndex, leadIndex } = result;
 
-    // Scroll to the column first
-    if (columnRefs.current[columnIndex]) {
-      columnRefs.current[columnIndex]?.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
-        inline: "start",
-      });
+      // Scroll to the column first
+      if (columnRefs.current[columnIndex]) {
+        columnRefs.current[columnIndex]?.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: "start",
+        });
 
-      // Wait a bit for the column scroll to complete before scrolling to the lead
-      setTimeout(() => {
-        // Generate the key the same way we do when creating refs
-        const leadKey = `${columnIndex}-${leadIndex}`;
-        const leadElement = leadRefs.current.get(leadKey);
+        // Wait a bit for the column scroll to complete before scrolling to the lead
+        setTimeout(() => {
+          // Generate the key the same way we do when creating refs
+          const leadKey = `${columnIndex}-${leadIndex}`;
+          const leadElement = leadRefs.current.get(leadKey);
 
-        if (leadElement) {
-          leadElement.scrollIntoView({
-            behavior: "smooth",
-            block: "nearest",
-          });
+          if (leadElement) {
+            leadElement.scrollIntoView({
+              behavior: "smooth",
+              block: "nearest",
+            });
 
-          // Highlight the found item temporarily
-          leadElement.classList.add(
-            "bg-yellow-200",
-            "border-yellow-300",
-            "scale-[1.02]",
-            "transition-transform",
-          );
-          setTimeout(() => {
-            leadElement.classList.remove(
+            // Highlight the found item temporarily
+            leadElement.classList.add(
               "bg-yellow-200",
               "border-yellow-300",
               "scale-[1.02]",
               "transition-transform",
             );
-          }, 5000);
-        }
-      }, 300);
-    }
-  };
+            setTimeout(() => {
+              leadElement.classList.remove(
+                "bg-yellow-200",
+                "border-yellow-300",
+                "scale-[1.02]",
+                "transition-transform",
+              );
+            }, 5000);
+          }
+        }, 300);
+      }
+    },
+    [],
+  );
 
   const handleDropdownToggle = (categoryIndex: number, leadIndex: number) => {
     if (
@@ -545,7 +553,7 @@ export default function PipelinesCopy({
       {/* Add the search component at the top */}
       <div className="mb-4 px-2">
         <SearchScroll
-          pipelineData={pipelineData} // Pass the original pipelineData so the Select filter still has all columns
+          pipelineData={filteredPipelineData}
           onSearchResult={handleSearchResult}
           onColumnChange={(colId) => setSelectedSearchColumnId(colId)}
         />
