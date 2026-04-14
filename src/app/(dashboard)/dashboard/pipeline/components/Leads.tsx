@@ -467,14 +467,14 @@ const Leads = ({ salesColumn }: TProps) => {
             <div className="flex w-full md:items-center gap-2 md:gap-4 md:flex-row flex-col">
               <SearchTerms search={search} setSearch={setSearch} />
               <div className="items-center gap-2 md:gap-4 flex flex-1">
-                <div className="">
+                <div className="flex-1">
                   <DateRange
                     dateRange={dateRange}
                     onOk={(start, end) => setDateRange([start, end])}
                     onCancel={() => setDateRange([null, null])}
                   />
                 </div>
-                <div className="relative">
+                <div className="relative flex-1">
                   <DropdownMenuDemo
                     leads={initialLeads ?? []}
                     filter={filter}
@@ -734,6 +734,11 @@ const Leads = ({ salesColumn }: TProps) => {
                       key={index}
                       lead={lead as any}
                       index={index}
+                      onCreateDraftEstimate={handleCreateDraftEstimate}
+                      onUpdateAppointment={handleUpdateAppointmentInLead}
+                      companyUsers={companyUsers}
+                      salesColumn={salesColumn}
+                      onColumnChange={handleColumnChange}
                     />
                   );
                 })}
@@ -893,7 +898,7 @@ const DropdownMenuDemo = React.memo(function DropdownMenuDemo({
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
         <button
-          className="flex items-center gap-x-12 rounded-xl border px-4 py-2"
+          className="flex items-center gap-x-12 rounded-xl border px-4 py-2 flex-1"
           aria-label="Customise options"
         >
           <span>Filter</span>
