@@ -251,7 +251,6 @@ export default function NewTask({
               className="mt-2 rounded-md border-2 border-gray-500 p-1"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              autoFocus
               required
             />
           </div>

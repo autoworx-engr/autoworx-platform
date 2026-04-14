@@ -219,6 +219,7 @@ const Leads = ({ salesColumn }: TProps) => {
       } else {
         setCurrentPage(page);
       }
+      document.querySelector("main")?.scrollTo({ top: 0, behavior: "smooth" });
     },
     [pageSize],
   );
@@ -457,293 +458,309 @@ const Leads = ({ salesColumn }: TProps) => {
   );
   console.log("leads", leads);
   return (
-    <div className="space-y-8 px-3">
+    <div className="">
       {/* TODO */}
       {/* <Filter pipelineType={type} /> */}
-      <div className="mt-5 flex w-full flex-col-reverse justify-between gap-4 md:flex-row md:items-center">
-        <div className="flex w-full max-w-4xl rounded-lg border border-gray-300 bg-background p-2">
-          <div className="flex w-full items-center gap-4">
-            <SearchTerms search={search} setSearch={setSearch} />
-            <div className="hidden items-center gap-4 lg:flex">
-              <div className="m-2 px-4">
-                <DateRange
-                  dateRange={dateRange}
-                  onOk={(start, end) => setDateRange([start, end])}
-                  onCancel={() => setDateRange([null, null])}
-                />
-              </div>
-              <div className="relative">
-                <DropdownMenuDemo
-                  leads={initialLeads ?? []}
-                  filter={filter}
-                  setFilter={setFilter}
-                  clearFilters={clearFilters}
-                />
+      <div className="space-y-4 sm:space-y-6 md:space-y-8 px-3">
+        <div className="mt-5 flex w-full flex-col-reverse justify-between gap-4 md:flex-row md:items-center">
+          <div className="flex w-full max-w-4xl rounded-xl border bg-background p-2">
+            <div className="flex w-full md:items-center gap-2 md:gap-4 md:flex-row flex-col">
+              <SearchTerms search={search} setSearch={setSearch} />
+              <div className="items-center gap-2 md:gap-4 flex flex-1">
+                <div className="">
+                  <DateRange
+                    dateRange={dateRange}
+                    onOk={(start, end) => setDateRange([start, end])}
+                    onCancel={() => setDateRange([null, null])}
+                  />
+                </div>
+                <div className="relative">
+                  <DropdownMenuDemo
+                    leads={initialLeads ?? []}
+                    filter={filter}
+                    setFilter={setFilter}
+                    clearFilters={clearFilters}
+                  />
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {leads.length > 0 && !loading ? (
-        <>
-          <div className="hidden lg:block">
-            <table className="w-full shadow-md">
-              <thead className="bg-background">
-                <tr className="h-10 border-b">
-                  <th className="border-b px-4 py-2 text-left">Lead#</th>
-                  <th className="border-b px-4 py-2 text-left">Client </th>
-                  <th className="border-b px-4 py-2 text-left">Vehicle Info</th>
-                  <th className="border-b px-4 py-2 text-left">Services</th>
-                  <th className="border-b px-4 py-2 text-left">Assigned To</th>
-                  <th className="border-b px-4 py-2 text-left">Lead Source</th>
-                  <th className="border-b px-4 py-2 text-left">Status</th>
-                  <th className="border-b px-4 py-2 text-left">Actions</th>
-                  <th className="border-b px-4 py-2 text-left">Time Created</th>
-                </tr>
-              </thead>
+        {leads.length > 0 && !loading ? (
+          <>
+            <div className="hidden lg:block">
+              <table className="w-full shadow-md">
+                <thead className="bg-background">
+                  <tr className="h-10 border-b">
+                    <th className="border-b px-4 py-2 text-left">Lead#</th>
+                    <th className="border-b px-4 py-2 text-left">Client </th>
+                    <th className="border-b px-4 py-2 text-left">
+                      Vehicle Info
+                    </th>
+                    <th className="border-b px-4 py-2 text-left">Services</th>
+                    <th className="border-b px-4 py-2 text-left">
+                      Assigned To
+                    </th>
+                    <th className="border-b px-4 py-2 text-left">
+                      Lead Source
+                    </th>
+                    <th className="border-b px-4 py-2 text-left">Status</th>
+                    <th className="border-b px-4 py-2 text-left">Actions</th>
+                    <th className="border-b px-4 py-2 text-left">
+                      Time Created
+                    </th>
+                  </tr>
+                </thead>
 
-              <tbody>
-                {leads &&
-                  leads.map((lead, index) => {
-                    const timeCreated = moment(lead.createdAt).format(
-                      "MM/DD/YYYY",
-                    );
+                <tbody>
+                  {leads &&
+                    leads.map((lead, index) => {
+                      const timeCreated = moment(lead.createdAt).format(
+                        "MM/DD/YYYY",
+                      );
 
-                    return (
-                      <tr
-                        key={lead.id + 1}
-                        className={cn(
-                          "rounded-md",
-                          index % 2 === 0 ? "bg-background" : "bg-blue-100",
-                        )}
-                      >
-                        <td className="border-b px-4 py-2 text-left">
-                          <Link
-                            href={`/dashboard/client/${lead.clientId}`}
-                            className="block h-full w-full text-[#6571FF]"
-                          >
-                            {(currentPage - 1) * pageSize + index + 1}
-                          </Link>
-                        </td>
-                        <td className="border-b px-4 py-2 text-left">
-                          <Link
-                            href={`/dashboard/client/${lead.clientId}`}
-                            className="block h-full w-full"
-                          >
-                            {formatDisplayName(lead.clientName)}
-                          </Link>
-                        </td>
-                        <td className="border-b px-4 py-2 text-left">
-                          <Link href="#" className="block h-full w-full">
-                            {lead.vehicleInfo}
-                          </Link>
-                        </td>
-                        <td className="border-b px-4 py-2 text-left">
-                          <Link href="#" className="block h-full w-full">
-                            {lead.services}
-                          </Link>
-                        </td>
-                        <td className="border-b px-4 py-2 text-left">
-                          <Link href="#" className="block h-full w-full">
-                            {lead.salesUser?.firstName}{" "}
-                            {lead.salesUser?.lastName ?? ""}
-                          </Link>
-                        </td>
-                        <td className="border-b px-4 py-2 text-left">
-                          <Link href="#" className="block h-full w-full">
-                            {lead.source}
-                          </Link>
-                        </td>
-                        <td className="border-b px-4 py-2 text-left">
-                          {lead?.isQualified ? (
-                            <Select
-                              showSearch
-                              value={lead.column?.id ?? " "}
-                              style={{ width: 150 }}
-                              placeholder="Search to Select"
-                              optionFilterProp="label"
-                              disabled={pending}
-                              filterSort={(optionA, optionB) =>
-                                (optionA?.label ?? "")
-                                  .toLowerCase()
-                                  .localeCompare(
-                                    (optionB?.label ?? "").toLowerCase(),
-                                  )
-                              }
-                              options={salesColumn.map((column) => ({
-                                value: column.id,
-                                label: column.title,
-                              }))}
-                              onSelect={(value) =>
-                                startTransition(() =>
-                                  handleColumnChange({
-                                    leadId: lead.id,
-                                    newColumnId: value as number,
-                                  }),
-                                )
-                              }
-                            />
-                          ) : (
-                            "Unqualified"
+                      return (
+                        <tr
+                          key={lead.id + 1}
+                          className={cn(
+                            "rounded-md",
+                            index % 2 === 0 ? "bg-background" : "bg-blue-100",
                           )}
-                        </td>
-
-                        <td className="border-b px-4 py-2 text-left">
-                          <div className="flex items-center gap-2">
+                        >
+                          <td className="border-b px-4 py-2 text-left">
                             <Link
-                              href={`/dashboard/communication/client/${lead?.client?.id}?source=lead`}
-                              className="group relative"
+                              href={`/dashboard/client/${lead.clientId}`}
+                              className="block h-full w-full text-[#6571FF]"
                             >
-                              <MessageCircleMore
-                                size={20}
-                                className="duration-300 hover:text-[#6571FF]"
-                              />
-                              <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-                                Communications
-                              </span>
+                              {(currentPage - 1) * pageSize + index + 1}
                             </Link>
-                            <button
-                              onClick={() =>
-                                handleCreateDraftEstimate({
-                                  leadId: lead.id,
-                                  clientId: Number(lead?.clientId),
-                                  vehicleId: lead?.client?.vehicle?.id,
-                                })
-                              }
-                              className="group relative"
+                          </td>
+                          <td className="border-b px-4 py-2 text-left">
+                            <Link
+                              href={`/dashboard/client/${lead.clientId}`}
+                              className="block h-full w-full"
                             >
-                              {lead.isEstimateCreated ? (
-                                <div className="relative h-6 w-4">
-                                  <Image
-                                    alt="draftEstimateDone"
-                                    src="/icons/estimateDone.png"
-                                    fill
-                                    className="object-contain"
-                                    loading="lazy"
-                                    sizes="24px"
-                                  />
-                                </div>
-                              ) : (
-                                <div className="relative h-4 w-4">
-                                  <Image
-                                    src="/icons/draftEstimate.png"
-                                    alt="draftEstimate"
-                                    fill
-                                    sizes="16px"
-                                    className="object-contain duration-300 hover:opacity-80"
-                                    loading="lazy"
-                                  />
-                                </div>
-                              )}
-                              <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-                                Draft estimate
-                              </span>
-                            </button>
-                            {(() => {
-                              const appointment =
-                                (lead?.client?.appointments?.length ?? 0) > 0
-                                  ? lead?.client?.appointments?.[0]
-                                  : undefined;
-                              return (
-                                <AppointmentCreateOrEdit
-                                  fromEdit={!!appointment}
-                                  fromLead
-                                  appointmentId={appointment?.id}
-                                  triggerIcon={
-                                    <button className="group relative">
-                                      {!!appointment ? (
-                                        <CalendarCheck
-                                          size={18}
-                                          color="#6571FF"
-                                        />
-                                      ) : (
-                                        <Calendar size={18} color="#66738C" />
-                                      )}
-
-                                      <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-                                        New Appointment
-                                      </span>
-                                    </button>
-                                  }
-                                  vehicleId={lead?.client?.vehicle?.id}
-                                  clientId={lead?.client?.id}
-                                  onAppointmentCreated={(
-                                    appointment: Appointment,
-                                  ) => {
-                                    handleUpdateAppointmentInLead(appointment, {
+                              {formatDisplayName(lead.clientName)}
+                            </Link>
+                          </td>
+                          <td className="border-b px-4 py-2 text-left">
+                            <Link href="#" className="block h-full w-full">
+                              {lead.vehicleInfo}
+                            </Link>
+                          </td>
+                          <td className="border-b px-4 py-2 text-left">
+                            <Link href="#" className="block h-full w-full">
+                              {lead.services}
+                            </Link>
+                          </td>
+                          <td className="border-b px-4 py-2 text-left">
+                            <Link href="#" className="block h-full w-full">
+                              {lead.salesUser?.firstName}{" "}
+                              {lead.salesUser?.lastName ?? ""}
+                            </Link>
+                          </td>
+                          <td className="border-b px-4 py-2 text-left">
+                            <Link href="#" className="block h-full w-full">
+                              {lead.source}
+                            </Link>
+                          </td>
+                          <td className="border-b px-4 py-2 text-left">
+                            {lead?.isQualified ? (
+                              <Select
+                                showSearch
+                                value={lead.column?.id ?? " "}
+                                style={{ width: 150 }}
+                                placeholder="Search to Select"
+                                optionFilterProp="label"
+                                disabled={pending}
+                                filterSort={(optionA, optionB) =>
+                                  (optionA?.label ?? "")
+                                    .toLowerCase()
+                                    .localeCompare(
+                                      (optionB?.label ?? "").toLowerCase(),
+                                    )
+                                }
+                                options={salesColumn.map((column) => ({
+                                  value: column.id,
+                                  label: column.title,
+                                }))}
+                                onSelect={(value) =>
+                                  startTransition(() =>
+                                    handleColumnChange({
                                       leadId: lead.id,
-                                      columnId: lead.columnId!,
-                                    });
-                                  }}
-                                  onAppointmentUpdated={(
-                                    appointment: Appointment,
-                                  ) => {
-                                    handleUpdateAppointmentInLead(appointment, {
-                                      leadId: lead.id,
-                                      columnId: lead.columnId!,
-                                    });
-                                  }}
-                                />
-                              );
-                            })()}
-                            <div className="group relative ">
-                              <TaskForm
-                                companyUsers={companyUsers}
-                                leadId={lead.id}
-                                previousTasks={lead.tasks || []}
+                                      newColumnId: value as number,
+                                    }),
+                                  )
+                                }
                               />
-                              <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-                                Add Task
-                              </span>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="border-b px-4 py-2 text-left">
-                          <Link href="#" className="block h-full w-full">
-                            {timeCreated}
-                          </Link>
-                        </td>
-                      </tr>
-                    );
-                  })}
-              </tbody>
-            </table>
-          </div>
-          <div className="overflow-y-auto lg:hidden">
-            {leads &&
-              leads.map((lead, index) => {
-                return (
-                  <ResponsiveSalesPipelineCard
-                    key={index}
-                    lead={lead as any}
-                    index={index}
-                  />
-                );
-              })}
-          </div>
-        </>
-      ) : loading ? (
-        // <div
-        //   className="flex w-full items-center justify-center"
-        //   style={{ height: "calc(100vh - 300px)" }}
-        // >
-        //   <Spin size="large" />
-        // </div>
+                            ) : (
+                              "Unqualified"
+                            )}
+                          </td>
 
-        <>
-          <LeadsTableSkeleton />
-          <LeadsMobileSkeleton />
-        </>
-      ) : (
-        <div className="my-20 flex w-full justify-center text-gray-500">
-          No leads found.
-        </div>
-      )}
+                          <td className="border-b px-4 py-2 text-left">
+                            <div className="flex items-center gap-2">
+                              <Link
+                                href={`/dashboard/communication/client/${lead?.client?.id}?source=lead`}
+                                className="group relative"
+                              >
+                                <MessageCircleMore
+                                  size={20}
+                                  className="duration-300 hover:text-[#6571FF]"
+                                />
+                                <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                                  Communications
+                                </span>
+                              </Link>
+                              <button
+                                onClick={() =>
+                                  handleCreateDraftEstimate({
+                                    leadId: lead.id,
+                                    clientId: Number(lead?.clientId),
+                                    vehicleId: lead?.client?.vehicle?.id,
+                                  })
+                                }
+                                className="group relative"
+                              >
+                                {lead.isEstimateCreated ? (
+                                  <div className="relative h-6 w-4">
+                                    <Image
+                                      alt="draftEstimateDone"
+                                      src="/icons/estimateDone.png"
+                                      fill
+                                      className="object-contain"
+                                      loading="lazy"
+                                      sizes="24px"
+                                    />
+                                  </div>
+                                ) : (
+                                  <div className="relative h-4 w-4">
+                                    <Image
+                                      src="/icons/draftEstimate.png"
+                                      alt="draftEstimate"
+                                      fill
+                                      sizes="16px"
+                                      className="object-contain duration-300 hover:opacity-80"
+                                      loading="lazy"
+                                    />
+                                  </div>
+                                )}
+                                <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                                  Draft estimate
+                                </span>
+                              </button>
+                              {(() => {
+                                const appointment =
+                                  (lead?.client?.appointments?.length ?? 0) > 0
+                                    ? lead?.client?.appointments?.[0]
+                                    : undefined;
+                                return (
+                                  <AppointmentCreateOrEdit
+                                    fromEdit={!!appointment}
+                                    fromLead
+                                    appointmentId={appointment?.id}
+                                    triggerIcon={
+                                      <button className="group relative">
+                                        {!!appointment ? (
+                                          <CalendarCheck
+                                            size={18}
+                                            color="#6571FF"
+                                          />
+                                        ) : (
+                                          <Calendar size={18} color="#66738C" />
+                                        )}
+
+                                        <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                                          New Appointment
+                                        </span>
+                                      </button>
+                                    }
+                                    vehicleId={lead?.client?.vehicle?.id}
+                                    clientId={lead?.client?.id}
+                                    onAppointmentCreated={(
+                                      appointment: Appointment,
+                                    ) => {
+                                      handleUpdateAppointmentInLead(
+                                        appointment,
+                                        {
+                                          leadId: lead.id,
+                                          columnId: lead.columnId!,
+                                        },
+                                      );
+                                    }}
+                                    onAppointmentUpdated={(
+                                      appointment: Appointment,
+                                    ) => {
+                                      handleUpdateAppointmentInLead(
+                                        appointment,
+                                        {
+                                          leadId: lead.id,
+                                          columnId: lead.columnId!,
+                                        },
+                                      );
+                                    }}
+                                  />
+                                );
+                              })()}
+                              <div className="group relative ">
+                                <TaskForm
+                                  companyUsers={companyUsers}
+                                  leadId={lead.id}
+                                  previousTasks={lead.tasks || []}
+                                />
+                                <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                                  Add Task
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="border-b px-4 py-2 text-left">
+                            <Link href="#" className="block h-full w-full">
+                              {timeCreated}
+                            </Link>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            </div>
+            <div className="overflow-y-auto lg:hidden">
+              {leads &&
+                leads.map((lead, index) => {
+                  return (
+                    <ResponsiveSalesPipelineCard
+                      key={index}
+                      lead={lead as any}
+                      index={index}
+                    />
+                  );
+                })}
+            </div>
+          </>
+        ) : loading ? (
+          // <div
+          //   className="flex w-full items-center justify-center"
+          //   style={{ height: "calc(100vh - 300px)" }}
+          // >
+          //   <Spin size="large" />
+          // </div>
+
+          <>
+            <LeadsTableSkeleton />
+            <LeadsMobileSkeleton />
+          </>
+        ) : (
+          <div className="py-20 flex w-full justify-center text-gray-500">
+            No leads found.
+          </div>
+        )}
+      </div>
 
       {/* Pagination */}
       {showPagination && (
-        <div className="mt-4 flex justify-end">
+        <div className="py-4 sm:mx-3 px-3 flex justify-end sticky bottom-0 bg-background z-10">
           <Pagination
             className="custom-pagination"
             current={currentPage}
@@ -796,7 +813,7 @@ const SearchTerms = React.memo(function SearchTerms({
         placeholder="Search by client, vehicle, services..."
         onChange={handleSearchChange}
         className={cn(
-          "w-full h-11 pl-12 pr-4 rounded-xl border-2 border-slate-100 bg-white",
+          "w-full h-11 pl-12 pr-4 rounded-xl border  bg-white",
           "text-sm font-medium text-slate-700 placeholder:text-slate-400 outline-none",
           "transition-all duration-300 ease-in-out",
           "hover:border-slate-200 hover:bg-slate-50/30",
@@ -876,7 +893,7 @@ const DropdownMenuDemo = React.memo(function DropdownMenuDemo({
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
         <button
-          className="flex items-center gap-x-12 rounded-md border px-4 py-2"
+          className="flex items-center gap-x-12 rounded-xl border px-4 py-2"
           aria-label="Customise options"
         >
           <span>Filter</span>
