@@ -23,6 +23,7 @@ import {
   LayoutDashboard,
   Send,
   Headset,
+  Store,
 } from "lucide-react";
 
 type Props = {
@@ -76,6 +77,11 @@ const businessSettings = [
     link: "/dashboard/settings/communications",
     label: "Communications Hub",
     icon: Send,
+  },
+  {
+    link: "/dashboard/settings/virtual-shop-configure",
+    label: "Virtual Shop Configure",
+    icon: Store,
   },
   {
     link: "/dashboard/settings/leadgeneration",

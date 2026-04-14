@@ -21,7 +21,7 @@ import { CircleX, Menu, RotateCw, SquarePlay } from "lucide-react";
 type TProps = {
   navList: {
     title: string;
-    icon: string;
+    icon: string | React.ReactNode;
     link?: string | null;
     path: string;
     subnav?:

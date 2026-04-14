@@ -17,7 +17,14 @@ import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-sc
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { Tag, User } from "@prisma/client";
 import { useRouter } from "next/navigation";
-import { SetStateAction, useEffect, useMemo, useRef, useState } from "react";
+import {
+  SetStateAction,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import toast from "react-hot-toast";
 import DroppableColumn from "./DroppableColumn";
 import PipelineLoadingSkeleton from "./PipelineLoadingSkeleton";
@@ -41,7 +48,7 @@ export default function PipelinesCopy({
   const router = useRouter();
 
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
-  console.log("selectedClientId==>", selectedClientId);
+
   const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(
     null,
   );
@@ -58,10 +65,9 @@ export default function PipelinesCopy({
   const [screenWidth, setScreenWidth] = useState<number>(window.innerWidth);
 
   const currentUser = useGetCurrentUser();
-  // console.log("Current User:", currentUser);
 
   // Get search term from store
-  const searchTerm = usePipelineFilterStore((state) => state.searchTerm);
+  const { searchTerm, resetStatus } = usePipelineFilterStore((state) => state);
   const [selectedSearchColumnId, setSelectedSearchColumnId] = useState<
     number | null
   >(null);
@@ -72,9 +78,10 @@ export default function PipelinesCopy({
 
   useEffect(() => {
     updateWidth();
+    resetStatus();
     window.addEventListener("resize", updateWidth);
     return () => window.removeEventListener("resize", updateWidth);
-  }, []);
+  }, [resetStatus]);
 
   useEffect(() => {
     setPipelineData(shopPipelineDataProp);
@@ -176,88 +183,53 @@ export default function PipelinesCopy({
     [key: string]: boolean;
   }>({});
 
-  const handleSearchResult = (
-    result: { columnIndex: number; leadIndex: number } | null,
-  ) => {
-    if (!result) return;
+  const handleSearchResult = useCallback(
+    (result: { columnIndex: number; leadIndex: number } | null) => {
+      if (!result) return;
 
-    const { columnIndex, leadIndex } = result;
+      const { columnIndex, leadIndex } = result;
 
-    // Map from pipelineData index to filteredPipelineData index.
-    // searchResults uses original pipelineData indices, but leadRefs are
-    // keyed with filteredPipelineData indices (only matching leads rendered).
-    const lead = pipelineData[columnIndex]?.leads[leadIndex];
-    if (!lead) return;
+      // Scroll to the column first
+      if (columnRefs.current[columnIndex]) {
+        columnRefs.current[columnIndex]?.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: "start",
+        });
 
-    const filteredLeadIndex = filteredPipelineData[columnIndex]?.leads.findIndex(
-      (fl) => fl.invoiceId === lead.invoiceId,
-    );
-    if (filteredLeadIndex === undefined || filteredLeadIndex === -1) return;
+        // Wait a bit for the column scroll to complete before scrolling to the lead
+        setTimeout(() => {
+          // Generate the key the same way we do when creating refs
+          const leadKey = `${columnIndex}-${leadIndex}`;
+          const leadElement = leadRefs.current.get(leadKey);
 
-    // Clear previous highlight immediately
-    if (currentHighlightRef.current) {
-      currentHighlightRef.current.classList.remove(
-        "!bg-yellow-200",
-        "border-yellow-400",
-        "scale-[1.02]",
-        "transition-transform",
-      );
-      currentHighlightRef.current = null;
-    }
+          if (leadElement) {
+            leadElement.scrollIntoView({
+              behavior: "smooth",
+              block: "nearest",
+            });
 
-    // Scroll to the column first
-    if (columnRefs.current[columnIndex]) {
-      columnRefs.current[columnIndex]?.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
-        inline: "start",
-      });
-
-      // Wait a bit for the column scroll to complete before scrolling to the lead
-      setTimeout(() => {
-        const leadKey = `${columnIndex}-${filteredLeadIndex}`;
-        const leadElement = leadRefs.current.get(leadKey);
-
-        if (leadElement) {
-          leadElement.scrollIntoView({
-            behavior: "smooth",
-            block: "nearest",
-          });
-
-          // Clear any previous highlight (in case previous timeout hasn't fired)
-          if (currentHighlightRef.current && currentHighlightRef.current !== leadElement) {
-            currentHighlightRef.current.classList.remove(
-              "!bg-yellow-200",
-              "border-yellow-400",
+            // Highlight the found item temporarily
+            leadElement.classList.add(
+              "bg-yellow-200",
+              "border-yellow-300",
               "scale-[1.02]",
               "transition-transform",
             );
+            setTimeout(() => {
+              leadElement.classList.remove(
+                "bg-yellow-200",
+                "border-yellow-300",
+                "scale-[1.02]",
+                "transition-transform",
+              );
+            }, 5000);
           }
-
-          // Highlight the found item
-          leadElement.classList.add(
-            "!bg-yellow-200",
-            "border-yellow-400",
-            "scale-[1.02]",
-            "transition-transform",
-          );
-          currentHighlightRef.current = leadElement;
-
-          setTimeout(() => {
-            leadElement.classList.remove(
-              "!bg-yellow-200",
-              "border-yellow-400",
-              "scale-[1.02]",
-              "transition-transform",
-            );
-            if (currentHighlightRef.current === leadElement) {
-              currentHighlightRef.current = null;
-            }
-          }, 3000);
-        }
-      }, 300);
-    }
-  };
+        }, 300);
+      }
+    },
+    [],
+  );
 
   const handleDropdownToggle = (categoryIndex: number, leadIndex: number) => {
     if (
@@ -582,7 +554,7 @@ export default function PipelinesCopy({
       {/* Add the search component at the top */}
       <div className="mb-4 px-2">
         <SearchScroll
-          pipelineData={pipelineData} // Pass the original pipelineData so the Select filter still has all columns
+          pipelineData={filteredPipelineData}
           onSearchResult={handleSearchResult}
           onColumnChange={(colId) => setSelectedSearchColumnId(colId)}
         />

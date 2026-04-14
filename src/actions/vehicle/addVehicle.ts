@@ -23,20 +23,44 @@ export async function addVehicle(data: {
   notes: string;
   other: string;
   clientId: number;
+  forceCompanyId?: number;
 }, pathname?: string): Promise<ServerAction | TErrorHandler> {
   try {
     const session = await getServerSession(authOptions);
-    const companyId = session?.user.companyId;
+    let companyId = data.forceCompanyId;
 
     if (!companyId) {
-      throw new Error("Company ID is required to create an email template.");
+      companyId = session?.user.companyId;
+      if (!companyId) {
+        throw new Error("Company ID is required to create a vehicle.");
+      }
     }
     await createVehicleValidationSchema.parseAsync(data);
+
+    // Check if vehicle already exists
+    const existingVehicle = await db.vehicle.findFirst({
+      where: {
+        clientId: data.clientId,
+        year: data.year,
+        make: data.make,
+        model: data.model,
+        companyId,
+      },
+    });
+
+    if (existingVehicle) {
+      return {
+        type: "success",
+        data: existingVehicle,
+      };
+    }
+
+    const { forceCompanyId: _, ...rest } = data;
 
     // Add vehicle to the database
     const vehicle = await db.vehicle.create({
       data: {
-        ...data,
+        ...rest,
         companyId,
       },
     });

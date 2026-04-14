@@ -8,6 +8,7 @@ export type SlimTextareaProps = {
   label?: ReactNode;
   name: string;
   rootClassName?: string;
+  labelClassName?: string;
   tooltipText?: string;
 };
 
@@ -23,13 +24,19 @@ export function SlimTextarea({
   label,
   className,
   rootClassName,
+  labelClassName,
   tooltipText,
   ...props
 }: SlimTextareaProps & ComponentProps<"textarea">) {
   const IconComponent = InfoCircleOutlined;
   return (
     <label className={cn("block", rootClassName)}>
-      <div className="mb-1 px-2 font-medium text-slate-600 flex items-center gap-1">
+      <div
+        className={cn(
+          "mb-1  font-medium text-slate-600 flex items-center gap-1",
+          labelClassName,
+        )}
+      >
         {label ?? sentenceCase(props.name)}
         {tooltipText && (
           <Tooltip title={tooltipText} placement="top">

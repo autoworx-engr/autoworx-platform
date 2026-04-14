@@ -8,8 +8,7 @@ import { normalizeUSPhoneNumber } from "@/lib/normalizeUSPhoneNumber";
 import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
 import { revalidatePath } from "next/cache";
 import { updateNewSMSChatTrack } from "./chat-track";
-import { getInfobipConfig, getInfobipConfigById } from "./createInfobipConfig";
-import { sendSMSToAgent } from "@/service/ai-agent/api";
+import { getInfobipConfigById } from "./createInfobipConfig";
 
 type TInfobipConfig = {
   companyId?: number;
