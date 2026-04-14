@@ -47,7 +47,7 @@ export const sendInvoiceConvertedNotification = async ({
     for (const user of getUsers) {
       sendUserNotifications({
         userId: user.id,
-        userName: `${user.firstName} ${user.lastName}`,
+        userName: `${user.firstName} ${user.lastName ? user.lastName : ""}`,
         userEmail: user.email || "",
         userPhoneNo: user.phone || "",
         companyId: companyUniqueId,
@@ -101,7 +101,7 @@ export const sendInvoiceAuthorizeNotification = async ({
     for (const user of getUsers) {
       sendUserNotifications({
         userId: user.id,
-        userName: `${user.firstName} ${user.lastName}`,
+        userName: `${user.firstName} ${user.lastName ? user.lastName : ""}`,
         userEmail: user.email || "",
         userPhoneNo: user.phone || "",
         companyId: companyUniqueId,

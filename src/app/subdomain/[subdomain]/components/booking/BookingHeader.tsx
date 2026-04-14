@@ -34,10 +34,10 @@ export const BookingHeader = ({
 
         {/* Floating Content Layout */}
         <div className="absolute inset-0 container max-w-5xl mx-auto px-6 flex items-center justify-between">
-          <div className="flex items-center gap-5">
+          <Link href="/" className="flex items-center gap-5 group">
             {/* Minimalist Logo */}
             {shop?.logoUrl && (
-              <div className="h-16 w-16 md:h-20 md:w-20 rounded-2xl overflow-hidden border-2 border-white/30 bg-white/10 backdrop-blur-md shadow-xl flex items-center justify-center p-2 transform transition-transform hover:scale-105">
+              <div className="h-16 w-16 md:h-20 md:w-20 rounded-2xl overflow-hidden border-2 border-white/30 bg-white/10 backdrop-blur-md shadow-xl flex items-center justify-center p-2 transform transition-transform group-hover:scale-105">
                 <img
                   src={shop.logoUrl}
                   alt={shopName}
@@ -57,7 +57,7 @@ export const BookingHeader = ({
                 </p>
               )}
             </div>
-          </div>
+          </Link>
 
           {/* Compact Navigation */}
           <div className="flex items-center gap-3">
