@@ -1,7 +1,6 @@
 import { AppError } from "@/error-boundary/error";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
-import { Message } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -12,35 +11,35 @@ import { NextRequest, NextResponse } from "next/server";
  *     tags: [Internal Messages]
  *     parameters:
  *       - in: query
- *         name: to
+ *         name: toId
+ *         required: false
  *         schema:
  *           type: integer
- *         description: ID of the recipient user (optional if 'from' is provided)
+ *         description: ID of the recipient user (required if 'fromId' is not provided)
  *       - in: query
- *         name: from
+ *         name: fromId
+ *         required: false
  *         schema:
  *           type: integer
- *         description: ID of the sender user (optional if 'to' is provided)
- *       - in: query
- *         name: userId
- *         schema:
- *           type: integer
- *         description: ID of the current user to determine sender/recipient perspective (defaults to 'from' or 'to' if only one is provided)
+ *         description: ID of the sender user (required if 'toId' is not provided)
  *       - in: query
  *         name: companyId
+ *         required: true
  *         schema:
  *           type: integer
- *         description: ID of the company (required)
+ *         description: ID of the company
  *       - in: query
  *         name: page
  *         schema:
  *           type: integer
- *         description: Page number for pagination (default is 1)
+ *           default: 1
+ *         description: Page number for pagination
  *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
- *         description: Number of records per page (default is 20)
+ *           default: 20
+ *         description: Number of records per page
  *       - in: query
  *         name: sortBy
  *         schema:
@@ -67,9 +66,8 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
 
-    const to = searchParams.get("to");
-    const from = searchParams.get("from");
-    const userId = searchParams.get("userId");
+    const toIdRaw = searchParams.get("toId");
+    const fromIdRaw = searchParams.get("fromId");
     const companyId = searchParams.get("companyId");
     const sortBy = searchParams.get("sortBy");
     const sortOrder = searchParams.get("sortOrder");
@@ -77,30 +75,24 @@ export async function GET(request: NextRequest) {
     const pageNum = parseInt(searchParams.get("page") || "1");
     const limitNum = parseInt(searchParams.get("limit") || "20");
 
-    const toId = to ? parseInt(to) : null;
-    const fromId = from ? parseInt(from) : null;
+    const toId = toIdRaw ? parseInt(toIdRaw) : null;
+    const fromId = fromIdRaw ? parseInt(fromIdRaw) : null;
     const companyIdNum = companyId ? parseInt(companyId) : null;
-    let currentUserId = userId ? parseInt(userId) : null;
 
-    // Determine current user if not explicitly provided
-    if (!currentUserId) {
-      if (fromId) {
-        currentUserId = fromId;
-      } else if (toId) {
-        currentUserId = toId;
-      }
-    }
+    // Determine current user for perspective (sender/recipient)
+    // Preference: 1. fromId, 2. toId
+    const currentUserId = fromId || toId;
 
     // Validation
     if (!companyIdNum || isNaN(companyIdNum)) {
       throw new AppError(400, "Valid Company ID is required");
     }
 
-    // At least one of 'from' or 'to' must be provided
+    // At least one of 'fromId' or 'toId' must be provided
     if ((!toId || isNaN(toId)) && (!fromId || isNaN(fromId))) {
       throw new AppError(
         400,
-        "At least one valid user ID ('from' or 'to') is required",
+        "At least one valid user ID ('fromId' or 'toId') is required",
       );
     }
 
@@ -146,10 +138,10 @@ export async function GET(request: NextRequest) {
         { from: toId, to: fromId },
       ];
     } else if (fromId) {
-      // Only from provided: all messages involving this user
+      // Only fromId provided: all messages involving this user
       where.OR = [{ from: fromId }, { to: fromId }];
     } else if (toId) {
-      // Only to provided: all messages involving this user
+      // Only toId provided: all messages involving this user
       where.OR = [{ from: toId }, { to: toId }];
     }
 
