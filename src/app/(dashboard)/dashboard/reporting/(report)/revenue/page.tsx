@@ -15,7 +15,7 @@ import FilterHeader from "./FilterHeader";
 import RevenueDisplay from "./RevenueDisplay";
 
 type TProps = {
-  searchParams: {
+  searchParams: Promise<{
     category?: string;
     startDate?: string;
     endDate?: string;
@@ -27,7 +27,7 @@ type TProps = {
     filterRevenue?: string;
     page?: string;
     take?: string;
-  };
+  }>;
 };
 
 export type TSliderData = {
@@ -70,7 +70,8 @@ export type TInvoice = Prisma.InvoiceGetPayload<{
   };
 }>;
 
-export default async function RevenueReportPage({ searchParams }: TProps) {
+export default async function RevenueReportPage(props: TProps) {
+  const searchParams = await props.searchParams;
   const session = await getServerSession(authOptions);
   const { timezone } = (await getCompanyTimezone()) || {
     timezone: moment.tz.guess(),

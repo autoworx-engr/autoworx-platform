@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm --version)",
+      "Bash(echo \"EXIT_CODE=$?\")",
+      "Bash(yarn install:*)",
+      "Bash(yarn list:*)",
+      "Bash(npx --yes @next/codemod@canary next-async-request-api . --force)",
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(yarn info:*)",
+      "Bash(yarn build:*)"
+    ]
+  }
+}

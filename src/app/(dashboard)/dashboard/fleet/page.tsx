@@ -6,14 +6,15 @@ import Header from "./components/Header";
 import FleetList from "./components/FleetList";
 
 type TProps = {
-  searchParams: {
+  searchParams: Promise<{
     search?: string;
     page?: string;
     take?: string;
-  };
+  }>;
 };
 
-export default async function Page({ searchParams }: TProps) {
+export default async function Page(props: TProps) {
+  const searchParams = await props.searchParams;
   const companyId = await getCompanyId();
   const defaultTake = 10;
 

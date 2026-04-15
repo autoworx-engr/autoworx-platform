@@ -62,11 +62,17 @@ const DetailRow = ({ icon: Icon, label, value, isLink = false, type = 'text', li
 };
 
 
-export default async function Page({
-  params: { id },
-}: {
-  params: { id: string };
-}) {
+export default async function Page(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = await props.params;
+
+  const {
+    id
+  } = params;
+
   const { timezone } = await getCompanyTimezone();
 
   // Data fetching logic (omitted for brevity, assume `vendor`, `vendorTransactions`, `totalPurchaseAmount` are populated)

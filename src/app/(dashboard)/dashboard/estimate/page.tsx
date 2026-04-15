@@ -10,18 +10,19 @@ import Header from "./Header";
 import NavigationTabs from "./NavigationTabs";
 import Table from "./Table";
 
-export default async function EstimatesPage({
-  searchParams,
-}: Readonly<{
-  searchParams: {
-    startDate?: string;
-    endDate?: string;
-    status?: string;
-    searchTerm?: string;
-    page?: string;
-    take?: string;
-  };
-}>) {
+export default async function EstimatesPage(
+  props: Readonly<{
+    searchParams: Promise<{
+      startDate?: string;
+      endDate?: string;
+      status?: string;
+      searchTerm?: string;
+      page?: string;
+      take?: string;
+    }>;
+  }>
+) {
+  const searchParams = await props.searchParams;
   const session = await getServerSession(authOptions);
   const companyId = session?.user.companyId;
   const { timezone } = await getCompanyTimezone();

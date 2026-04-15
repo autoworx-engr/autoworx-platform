@@ -2,21 +2,14 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/Tooltip";
 import { cn } from "@/lib/cn";
 import { db } from "@/lib/db";
 import { Client, User, Vehicle } from "@prisma/client";
-import dynamic from "next/dynamic";
 import Image from "next/image";
 import BackBtn from "../conversations/BackBtn";
 import EditClientModalTrigger from "./EditClientModalTrigger";
 import ClientSalesAgentToggle from "./ClientSalesAgentToggle";
 import ClientPermissionWrapper from "./ClientPermissionWrapper";
+import { VehicleDetails, CreateAppointment } from "./ClientHeadingDynamics";
 
 type TProps = { client?: Client | null; vehicles?: Partial<Vehicle>[] };
-
-const VehicleDetails = dynamic(() => import("./VehicleDetails"), {
-  ssr: false,
-});
-const CreateAppointment = dynamic(() => import("./CreateAppointment"), {
-  ssr: false,
-});
 
 export default async function ClientHeading({ client, vehicles = [] }: TProps) {
   if (!client) return null;

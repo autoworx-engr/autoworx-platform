@@ -9,7 +9,7 @@
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "prettier": "prettier --ignore-path .gitignore --write \"**/*.+(js|ts|json)\"",
     "prettier:fix": "npm run prettier --fix",
     "tsc": "tsc",
@@ -104,8 +104,8 @@
     "moment-timezone": "^0.5.47",
     "mutative": "^1.0.5",
     "nanoid": "^5.0.6",
-    "next": "^14.2.33",
-    "next-auth": "^4.24.7",
+    "next": "^16.1.6",
+    "next-auth": "^4.24.14",
     "next-runtime-env": "^3.2.2",
     "nextjs-toploader": "^3.9.17",
     "nprogress": "^0.2.0",
@@ -115,11 +115,11 @@
     "qrcode": "^1.5.4",
     "quill": "^2.0.3",
     "radix-ui": "latest",
-    "react": "^18.3.1",
+    "react": "^19.1.0",
     "react-date-range": "^1.4.0",
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",
-    "react-dom": "^18",
+    "react-dom": "^19.1.0",
     "react-hot-toast": "^2.4.1",
     "react-infinite-scroll-component": "^6.1.0",
     "react-loader-spinner": "^6.1.6",
@@ -164,9 +164,9 @@
     "@types/node": "^20.19.6",
     "@types/nprogress": "^0.2.3",
     "@types/qrcode": "^1.5.5",
-    "@types/react": "^18",
+    "@types/react": "^19",
     "@types/react-date-range": "^1.4.9",
-    "@types/react-dom": "^18",
+    "@types/react-dom": "^19",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-react": "^5.18.0",
     "@types/uuid": "^10.0.0",
@@ -185,7 +185,7 @@
     "typescript": "^5"
   },
   "engines": {
-    "node": ">=20.x"
+    "node": ">=20.9"
   },
   "resolutions": {
     "string-width": "^4.2.3"

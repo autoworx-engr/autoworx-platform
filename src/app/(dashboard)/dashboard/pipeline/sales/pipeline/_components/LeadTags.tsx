@@ -8,9 +8,6 @@ import { removeLeadTag, saveLeadTag } from "@/actions/pipelines/leadTag";
 import { useColumnDispatch } from "@/context/sales-pipeline.context";
 import { actionTypes } from "@/constants/lead.constant";
 import { updateTagAutomationTrigger } from "@/service/tag-automation-trigger/api";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/authOptions";
-import { revalidatePath } from "next/cache";
 
 type TLeadTagsProps = {
   leadTags: {

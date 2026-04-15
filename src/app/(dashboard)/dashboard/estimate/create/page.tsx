@@ -20,11 +20,12 @@ import PaymentTab from "./tabs/PaymentTab";
 import EstimateInspectionsTab from "./tabs/EstimateInspectionsTab";
 import DynamicTemplateLoader from "../DynamicTemplateLoader";
 
-export default async function Page({
-  searchParams,
-}: {
-  searchParams: { clientId?: string; templateId?: string };
-}) {
+export default async function Page(
+  props: {
+    searchParams: Promise<{ clientId?: string; templateId?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const companyId = await getCompanyId();
   const clientId = searchParams.clientId
     ? parseInt(searchParams.clientId)

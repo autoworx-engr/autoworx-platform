@@ -6,13 +6,14 @@ import { getSalePipelineColumns } from "@/actions/pipelines/getSalePipelineColum
 import ResetButton from "./_components/ResetButton";
 
 type TProps = {
-  searchParams: {
+  searchParams: Promise<{
     searchTerm?: string;
     orderBy?: "asc" | "desc" | undefined;
-  };
+  }>;
 };
 
-export default async function SalesPipelinePage({ searchParams }: TProps) {
+export default async function SalesPipelinePage(props: TProps) {
+  const searchParams = await props.searchParams;
   const columnType = "sales";
   const orderBy = searchParams.orderBy;
 

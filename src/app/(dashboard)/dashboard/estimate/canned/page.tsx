@@ -8,7 +8,7 @@ import CannedTable from "../CannedTable";
 import NavigationTabs from "../NavigationTabs";
 
 type TProps = {
-  searchParams: {
+  searchParams: Promise<{
     laborCategory?: string;
     laborSearch?: string;
     laborPage?: string;
@@ -17,10 +17,11 @@ type TProps = {
     serviceSearch?: string;
     servicePage?: string;
     serviceTake?: string;
-  };
+  }>;
 };
 
-export default async function CannedPage({ searchParams }: TProps) {
+export default async function CannedPage(props: TProps) {
+  const searchParams = await props.searchParams;
   const session = await getServerSession(authOptions);
   const companyId = session?.user?.companyId;
 

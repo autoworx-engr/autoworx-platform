@@ -105,18 +105,29 @@ const getInventoryItem = cache(
   }
 );
 
-export default async function Page({
-  searchParams: { productId, view, page = "1", limit = "50", search, category },
-}: {
-  searchParams: {
-    productId: string;
-    view: string;
-    page?: string;
-    limit?: string;
-    search?: string;
-    category?: string;
-  };
-}) {
+export default async function Page(
+  props: {
+    searchParams: Promise<{
+      productId: string;
+      view: string;
+      page?: string;
+      limit?: string;
+      search?: string;
+      category?: string;
+    }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+
+  const {
+    productId,
+    view,
+    page = "1",
+    limit = "50",
+    search,
+    category
+  } = searchParams;
+
   const companyId = await getCompanyId();
   const { data: supplies, totalItems: totalSupplies } = await getInventoryItem({
     type: "Supply",

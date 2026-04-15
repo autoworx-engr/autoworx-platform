@@ -12,7 +12,7 @@ import { getEmployeePayout } from "@/actions/dashboard/data/getAdminInfo";
 
 // Props type
 type TProps = {
-  searchParams: {
+  searchParams: Promise<{
     category?: string;
     startDate?: string;
     endDate?: string;
@@ -21,7 +21,7 @@ type TProps = {
     employeeType?: "Admin" | "Sales" | "Technician" | "Manager" | "Other";
     page?: string;
     take?: string;
-  };
+  }>;
 };
 
 // Slider type
@@ -35,7 +35,8 @@ type TSliderData = {
 
 // Filter sliders
 
-export default async function WorkforceReportPage({ searchParams }: TProps) {
+export default async function WorkforceReportPage(props: TProps) {
+  const searchParams = await props.searchParams;
   const session = await getServerSession(authOptions);
   const page = searchParams.page ? parseInt(searchParams.page, 10) : 1;
   const take = searchParams.take ? parseInt(searchParams.take, 10) : 50;

@@ -92,10 +92,8 @@ import { NextRequest, NextResponse } from "next/server";
  *         description: Failed to fetch notifications
  */
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { companyId: string } },
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ companyId: string }> }) {
+  const params = await props.params;
   try {
     const companyId = Number(params.companyId);
 

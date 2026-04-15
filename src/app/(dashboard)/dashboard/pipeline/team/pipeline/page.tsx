@@ -8,11 +8,12 @@ import dynamic from "next/dynamic";
 
 const TeamPipelines = dynamic(() => import("../components/TeamPipeline"));
 
-const PipelinePage = async ({
-  searchParams,
-}: {
-  searchParams: { type?: string };
-}) => {
+const PipelinePage = async (
+  props: {
+    searchParams: Promise<{ type?: string }>;
+  }
+) => {
+  const searchParams = await props.searchParams;
   const session = await getServerSession(authOptions);
   const currentUser = session?.user;
   const invoices = await getWorkOrders();

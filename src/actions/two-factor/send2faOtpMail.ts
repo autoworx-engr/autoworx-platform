@@ -82,7 +82,7 @@ export default async function send2faOtpMail({ userId, email }: TSend2faOtp) {
 
     // 4. Set the Session ID in a HTTP-Only Cookie
     // Attackers can't read this via JS
-    cookies().set("2fa_session", sessionId, {
+    (await cookies()).set("2fa_session", sessionId, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",

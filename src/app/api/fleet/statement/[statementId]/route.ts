@@ -21,10 +21,8 @@ import { NextRequest, NextResponse } from "next/server";
  *       404:
  *         description: Statement not found
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { statementId: string } }
-) {
+export async function GET(request: NextRequest, props: { params: Promise<{ statementId: string }> }) {
+  const params = await props.params;
   try {
     const { statementId } = params;
 
