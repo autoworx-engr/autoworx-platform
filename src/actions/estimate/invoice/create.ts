@@ -41,6 +41,7 @@ type TCreateInvoiceProps = {
   discount: number;
   tax: number;
   serviceFee: number;
+  vehicleExtraCost?: number;
   deposit: number;
   depositNotes: string;
   depositMethod: string;
@@ -52,6 +53,7 @@ type TCreateInvoiceProps = {
   policy: string;
   customerNotes: string;
   customerComments: string;
+  isShopBooking?: boolean;
 
   photos: { id?: number; photo?: string }[];
   items: {
@@ -67,6 +69,8 @@ type TCreateInvoiceProps = {
   columnId?: number;
   inspections: InspectionType[];
   damageNotes: string | null;
+
+  forceCompanyId?: number;
 };
 
 export async function createInvoice({
@@ -78,6 +82,7 @@ export async function createInvoice({
   discount,
   tax,
   serviceFee,
+  vehicleExtraCost,
   deposit,
   depositNotes,
   depositMethod,
@@ -98,6 +103,9 @@ export async function createInvoice({
   columnId,
   inspections,
   damageNotes,
+  isShopBooking = false,
+
+  forceCompanyId,
 }: TCreateInvoiceProps): Promise<ServerAction | TErrorHandler> {
   try {
     // Step 1: Validate input data using Zod schema
@@ -112,6 +120,7 @@ export async function createInvoice({
       discount,
       tax,
       serviceFee,
+      vehicleExtraCost,
       deposit,
       depositNotes,
       depositMethod,
@@ -132,14 +141,18 @@ export async function createInvoice({
       columnId,
       inspections,
       damageNotes,
+      isShopBooking,
     });
 
-    // Step 2: Get authenticated session and company ID
     const session = await getServerSession(authOptions);
-    const companyId = session?.user.companyId;
+    // Step 2: Get authenticated session and company ID
+    let companyId = forceCompanyId;
 
     if (!companyId) {
-      throw new Error("Company ID is required to create an email template.");
+      companyId = session?.user.companyId;
+      if (!companyId) {
+        throw new Error("Company ID is required to create an email template.");
+      }
     }
 
     const invoice = await db.$transaction(async (db) => {
@@ -223,6 +236,7 @@ export async function createInvoice({
           discount,
           tax,
           serviceFee,
+          vehicleExtraCost,
           deposit,
           grandTotal,
           due,
@@ -232,12 +246,13 @@ export async function createInvoice({
           customerNotes,
           customerComments,
           companyId,
-          userId: session.user.id as any,
+          userId: session?.user.id as any,
           columnId: finalColumnId,
           isWorkOrder,
           workOrderCreatedAt: isWorkOrder ? new Date() : null,
           convertedAt: new Date(),
           damageNotes,
+          isShopBooking,
         },
         include: {
           client: {

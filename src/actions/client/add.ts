@@ -26,16 +26,20 @@ export async function addCustomer(
     photo?: string;
     sourceId?: number;
     countryCode?: string;
+    forceCompanyId?: number;
   },
   pathname?: string,
 ): Promise<ServerAction | TErrorHandler> {
   try {
     await createClientValidationSchema.parseAsync(data);
     const session = await getServerSession(authOptions);
-    const companyId = session?.user?.companyId;
+    let companyId = data.forceCompanyId;
 
     if (!companyId) {
-      throw new Error("Company ID is required to create an email template.");
+      companyId = session?.user?.companyId;
+      if (!companyId) {
+        throw new Error("Company ID is required to create a client.");
+      }
     }
     // Normalize phone number to digits-only for consistent matching
     const normalizedMobile = data.mobile
@@ -68,9 +72,10 @@ export async function addCustomer(
       }
     }
 
+    const { forceCompanyId: _, ...rest } = data;
     const newCustomer = await db.client.create({
       data: {
-        ...data,
+        ...rest,
         mobile: normalizedMobile,
         companyId,
         photo: data.photo ? data.photo : undefined,

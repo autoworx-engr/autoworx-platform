@@ -12,6 +12,7 @@ import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import AttachmentInput from "../AttachmentInput";
 import SmartReplyBar from "../sms/SmartReply";
+import toast from "react-hot-toast";
 
 // Helper function to format attachment message
 const formatAttachmentMessage = (files: File[]) => {
@@ -192,8 +193,31 @@ export default function SendMail({
         {/* hidden file input */}
         <input
           onChange={(e) => {
-            const picked = Array.from(e.target.files || []);
-            if (picked.length) setFiles((prev) => [...prev, ...picked]); // append, don't replace
+            const picked = Array.from(e?.target?.files || []);
+
+            if (picked.length) {
+              setFiles((prev) => {
+                const duplicates: string[] = [];
+                const newFiles = picked.filter((file) => {
+                  const exists = prev.some(
+                    (f) =>
+                      f.name === file.name &&
+                      f.size === file.size &&
+                      f.lastModified === file.lastModified,
+                  );
+
+                  if (exists) duplicates.push(file.name);
+                  return !exists;
+                });
+
+                if (duplicates.length) {
+                  toast.error(`Already uploaded: ${duplicates.join(", ")}`);
+                }
+
+                return [...prev, ...newFiles];
+              });
+            }
+
             e.currentTarget.value = "";
           }}
           multiple

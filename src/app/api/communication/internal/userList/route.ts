@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
  * @swagger
  * /api/communication/internal/userList:
  *   get:
- *     summary: Retrieve a list of users for a specific company
+ *     summary: Retrieve a list of users for a specific company, sorted by latest message
  *     tags: [Internal]
  *     security:
  *       - bearerAuth: []
@@ -20,29 +20,26 @@ import { NextRequest, NextResponse } from "next/server";
  *           type: integer
  *         description: The ID of the company
  *       - in: query
- *         name: sortBy
- *         schema:
- *           type: string
- *         description: Field to sort by
- *       - in: query
- *         name: sortOrder
- *         schema:
- *           type: string
- *           enum: [asc, desc]
- *         description: Order of sorting
- *       - in: query
  *         name: page
  *         schema:
  *           type: integer
  *           default: 1
+ *         description: Page number for pagination
  *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
  *           default: 20
+ *         description: Number of records per page
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search by first name, last name, or email
+ *
  *     responses:
  *       200:
- *         description: Successfully retrieved user list
+ *         description: Successfully retrieved user list sorted by latest message
  *       400:
  *         description: Company ID is required
  *       401:
@@ -60,19 +57,17 @@ export const GET = async (request: NextRequest) => {
       : authHeader;
 
     const verifyToken = await jwtVerifyToken(accessToken);
-
     const userId = verifyToken?.payload?.id ?? "";
 
+    if (!userId) {
+      throw new AppError(401, "Unauthorized");
+    }
+
     const companyId = searchParams.get("companyId");
-    const sortBy = searchParams.get("sortBy");
-    const sortOrder = searchParams.get("sortOrder");
+    const search = searchParams.get("search") || "";
+    const pageNum = Math.max(1, parseInt(searchParams.get("page") || "1"));
+    const limitNum = Math.max(1, parseInt(searchParams.get("limit") || "20"));
 
-    // 3. Handle numbers (params are always strings by default)
-    // If 'page' is null, default to 1.
-    const pageNum = parseInt(searchParams.get("page") || "1");
-    const limitNum = parseInt(searchParams.get("limit") || "20");
-
-    // Placeholder for actual message retrieval logic
     const companyIdNum = companyId ? parseInt(companyId) : null;
 
     if (!companyIdNum) {
@@ -87,47 +82,97 @@ export const GET = async (request: NextRequest) => {
       throw new AppError(404, "Company not found");
     }
 
-    const usersData = await db.user.findMany({
-      where: {
-        NOT: {
-          id: userId ? parseInt(userId as string, 10) : undefined,
-        },
-        companyId: companyIdNum,
-      },
-      skip: (pageNum - 1) * limitNum,
-      take: limitNum,
-      orderBy: sortBy
-        ? { [sortBy]: sortOrder === "desc" ? "desc" : "asc" }
-        : { createdAt: "asc" },
-    });
+    const userIdNum = parseInt(userId as string, 10);
+    const where: any = {
+      NOT: { id: userIdNum },
+      companyId: companyIdNum,
+    };
 
-    if (!userId) {
-      throw new AppError(401, "Unauthorized");
+    if (search) {
+      const searchWords = search.trim().split(/\s+/);
+      const conditions: any[] = [
+        { firstName: { contains: search, mode: "insensitive" } },
+        { lastName: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } },
+      ];
+
+      // Handle full name search (e.g. "Mahmud Hassan Lehri" split across firstName + lastName)
+      if (searchWords.length > 1) {
+        for (let i = 1; i < searchWords.length; i++) {
+          const firstPart = searchWords.slice(0, i).join(" ");
+          const lastPart = searchWords.slice(i).join(" ");
+          conditions.push({
+            AND: [
+              { firstName: { contains: firstPart, mode: "insensitive" } },
+              { lastName: { contains: lastPart, mode: "insensitive" } },
+            ],
+          });
+        }
+      }
+
+      where.OR = conditions;
     }
 
-    const usersWithChatTrack = await Promise.all(
-      usersData.map(async user => {
-        const { id, password, isSuperAdmin, ...restUser } = user;
-        const userChatTrack = await db.chatTrack.findMany({
-          where: {
-            OR: [{ senderId: id as number }, { receiverId: id as number }],
-            section: "internal",
-          },
-          include: {
-            message: true,
-          },
-        });
-        return {
-          ...restUser,
-          id,
-          chatTrack: userChatTrack,
-        };
-      }),
-    );
-
-    const totalRecords = await db.user.count({
-      where: { companyId: companyIdNum },
+    // Fetch all users matching filter (optimize if dataset is very large)
+    const allUsers = await db.user.findMany({
+      where,
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        phone: true,
+        image: true,
+        employeeType: true,
+      },
     });
+
+    // Batch fetch all chatTracks for these users in a single query
+    const userIds = allUsers.map((u) => u.id);
+    const chatTracks = await db.chatTrack.findMany({
+      where: {
+        OR: [{ senderId: { in: userIds } }, { receiverId: { in: userIds } }],
+        section: "internal",
+      },
+    });
+
+    // Map latest chatTrack per user
+    const userIdSet = new Set(userIds);
+    const latestChatTrackMap = new Map<number, (typeof chatTracks)[0]>();
+
+    for (const track of chatTracks) {
+      if (track.senderId && userIdSet.has(track.senderId)) {
+        const existing = latestChatTrackMap.get(track.senderId);
+        if (!existing || track.updatedAt > existing.updatedAt) {
+          latestChatTrackMap.set(track.senderId, track);
+        }
+      }
+      if (track.receiverId && userIdSet.has(track.receiverId)) {
+        const existing = latestChatTrackMap.get(track.receiverId);
+        if (!existing || track.updatedAt > existing.updatedAt) {
+          latestChatTrackMap.set(track.receiverId, track);
+        }
+      }
+    }
+
+    // Combine and sort by latest chatTrack date
+    const usersWithChatTrack = allUsers
+      .map((user) => ({
+        ...user,
+        chatTrack: latestChatTrackMap.get(user.id) ?? null,
+      }))
+      .sort((a, b) => {
+        const aDate = a.chatTrack?.updatedAt ?? new Date(0);
+        const bDate = b.chatTrack?.updatedAt ?? new Date(0);
+        return bDate.getTime() - aDate.getTime(); // Latest first
+      });
+
+    // Apply pagination after sorting
+    const totalRecords = usersWithChatTrack.length;
+    const paginatedUsers = usersWithChatTrack.slice(
+      (pageNum - 1) * limitNum,
+      pageNum * limitNum,
+    );
 
     const hasNextPage = pageNum * limitNum < totalRecords;
     const hasPrevPage = pageNum > 1;
@@ -136,10 +181,10 @@ export const GET = async (request: NextRequest) => {
     return NextResponse.json(
       {
         success: true,
-        data: usersWithChatTrack,
+        data: paginatedUsers,
         message: "Messages fetched successfully",
         meta: {
-          totalRecords: totalRecords,
+          totalRecords,
           page: pageNum,
           limit: limitNum,
           totalPages,

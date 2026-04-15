@@ -65,12 +65,12 @@ const getInventoryItem = cache(
         },
         ...(searchTerms.length > 0
           ? [
-              {
-                OR: searchTerms.flatMap((term) => [
-                  { name: { contains: term.trim() } },
-                ]),
-              },
-            ]
+            {
+              OR: searchTerms.flatMap((term) => [
+                { name: { contains: term.trim() } },
+              ]),
+            },
+          ]
           : []),
       ];
       const items = await db.inventoryProduct.findMany({
@@ -163,13 +163,13 @@ export default async function Page(
 
         {(user?.employeeType === "Admin" ||
           user?.employeeType === "Manager") && (
-          <div className="mt-2">
-            <AddNewProduct view={view} />
-          </div>
-        )}
+            <div className="mt-2">
+              <AddNewProduct view={view} />
+            </div>
+          )}
       </header>
 
-      <div className="mb-5 flex h-full w-full flex-col justify-between gap-3 md:mb-0 md:flex-wrap">
+      <div className="mb-5 flex h-full w-full flex-col justify-between gap-3 md:mb-0 lg:flex-wrap">
         <ClientInventoryList
           searchParams={{
             page,

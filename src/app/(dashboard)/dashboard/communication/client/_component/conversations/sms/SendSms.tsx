@@ -16,6 +16,7 @@ import AttachmentInput from "../AttachmentInput";
 import SmartReplyBar from "./SmartReply";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import UpgradePlanBanner from "@/components/UpgradePlanBanner";
+import toast from "react-hot-toast";
 
 // Helper function to format attachment message
 const formatAttachmentMessage = (files: File[]) => {
@@ -88,11 +89,9 @@ export default function SendSms({
       recorder.onstop = () => {
         const ext = mimeType.includes("ogg") ? "ogg" : "webm";
         const blob = new Blob(audioChunksRef.current, { type: mimeType });
-        const voiceFile = new File(
-          [blob],
-          `voice_note_${Date.now()}.${ext}`,
-          { type: mimeType },
-        );
+        const voiceFile = new File([blob], `voice_note_${Date.now()}.${ext}`, {
+          type: mimeType,
+        });
         setFiles((prev) => [...prev, voiceFile]);
         stream.getTracks().forEach((t) => t.stop());
       };
@@ -262,7 +261,30 @@ export default function SendSms({
         <input
           onChange={(e) => {
             const picked = Array.from(e?.target?.files || []);
-            if (picked.length) setFiles((prev) => [...prev, ...picked]);
+
+            if (picked.length) {
+              setFiles((prev) => {
+                const duplicates: string[] = [];
+                const newFiles = picked.filter((file) => {
+                  const exists = prev.some(
+                    (f) =>
+                      f.name === file.name &&
+                      f.size === file.size &&
+                      f.lastModified === file.lastModified,
+                  );
+
+                  if (exists) duplicates.push(file.name);
+                  return !exists;
+                });
+
+                if (duplicates.length) {
+                  toast.error(`Already uploaded: ${duplicates.join(", ")}`);
+                }
+
+                return [...prev, ...newFiles];
+              });
+            }
+
             e.currentTarget.value = "";
           }}
           multiple
@@ -293,7 +315,7 @@ export default function SendSms({
             aria-label="Stop recording"
             title={`Recording… ${formatRecordingTime(recordingSeconds)}`}
           >
-            <CirclePause  className="w-5 h-5"/>
+            <CirclePause className="w-5 h-5" />
           </button>
         ) : (
           <button

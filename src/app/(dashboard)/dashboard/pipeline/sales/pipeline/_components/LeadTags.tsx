@@ -1,13 +1,16 @@
+import { actionTypes } from "@/constants/lead.constant";
+import { useColumnDispatch } from "@/context/sales-pipeline.context";
+import { useAddLeadTagMutation, useRemoveLeadTagMutation } from "@/hooks/pipeline/usePipelineLeads";
 import { cn } from "@/lib/cn";
-import { SalesTagSelector } from "../../../components/SalesTagSelector";
-import SalesSelector from "../../../components/SalesSelector";
+import { updateTagAutomationTrigger } from "@/service/tag-automation-trigger/api";
+import { LeadWithSalesUser } from "@/types/invoiceLead";
 import { Tag } from "@prisma/client";
 import { useState } from "react";
 import { LeadWithSalesUser } from "@/types/invoiceLead";
-import { removeLeadTag, saveLeadTag } from "@/actions/pipelines/leadTag";
 import { useColumnDispatch } from "@/context/sales-pipeline.context";
 import { actionTypes } from "@/constants/lead.constant";
 import { updateTagAutomationTrigger } from "@/service/tag-automation-trigger/api";
+import { SalesTagSelector } from "../../../components/SalesTagSelector";
 
 type TLeadTagsProps = {
   leadTags: {
@@ -35,6 +38,8 @@ type TRemoveTag = {
 export default function LeadTags({ leadTags, lead }: TLeadTagsProps) {
   const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
   const dispatch = useColumnDispatch();
+  const { mutateAsync: addTag } = useAddLeadTagMutation();
+  const { mutateAsync: removeTag } = useRemoveLeadTagMutation();
 
   const handleAddTag = async ({
     columnId,
@@ -42,9 +47,9 @@ export default function LeadTags({ leadTags, lead }: TLeadTagsProps) {
     selectedTag,
   }: TTagSelect) => {
     try {
-      const result = await saveLeadTag(leadId, selectedTag.id);
+      const result = await addTag({ leadId, tagId: selectedTag.id });
 
-      if (result) {
+      if (result?.success) {
         dispatch({
           type: actionTypes.ADD_TAG,
           payload: {
@@ -56,10 +61,10 @@ export default function LeadTags({ leadTags, lead }: TLeadTagsProps) {
 
         const response = await updateTagAutomationTrigger({
           columnId: columnId,
-          companyId: result?.lead?.companyId,
+          companyId: result.data?.lead?.companyId,
           pipelineType: "SALES",
           tagId: selectedTag?.id,
-          leadId: result?.leadId,
+          leadId: result.data?.leadId,
         });
         // console.log("response", response?.data);
         // if (response?.success) {
@@ -79,14 +84,12 @@ export default function LeadTags({ leadTags, lead }: TLeadTagsProps) {
 
   const handleRemoveTag = async ({ columnId, leadId, tagId }: TRemoveTag) => {
     try {
-      const success = await removeLeadTag(leadId, tagId);
+      await removeTag({ leadId, tagId });
 
-      if (success) {
-        dispatch({
-          type: actionTypes.REMOVE_TAG,
-          payload: { columnId, leadId, tagId },
-        });
-      }
+      dispatch({
+        type: actionTypes.REMOVE_TAG,
+        payload: { columnId, leadId, tagId },
+      });
     } catch (error) {
       console.error("Error removing tag:", error);
     }

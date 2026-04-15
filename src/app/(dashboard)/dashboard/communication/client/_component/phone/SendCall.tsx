@@ -1,12 +1,12 @@
 "use client";
 import updateFirstContactTimeClient from "@/actions/communication/client/updateFirstContactTimeClient";
+import UpgradePlanBanner from "@/components/UpgradePlanBanner";
+import { useVoiceDevice } from "@/context/VoiceDeviceContext";
 import { Client } from "@prisma/client";
 import { Call } from "@twilio/voice-sdk";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import CallStatus from "./CallStatus";
-import { useRouter } from "next/navigation";
-import { useVoiceDevice } from "@/context/VoiceDeviceContext";
-import UpgradePlanBanner from "@/components/UpgradePlanBanner";
 
 type TProps = {
   client?: Client | null;
@@ -86,9 +86,14 @@ export default function SendCall({
             setLocalCallStatus("Call ended");
             setLocalConnection(null);
             if (timer) clearInterval(timer);
-            setTimeout(() => {
-              router.refresh();
-            }, 3000);
+
+            // setTimeout(() => {
+            //   router.refresh();
+            // }, 3000);
+            // Twilio processes recordings async, poll until available
+            [3000, 6000, 10000, 15000, 20000].forEach((delay) => {
+              setTimeout(() => router.refresh(), delay);
+            });
           });
 
           connection.on("cancel", () => {

@@ -33,6 +33,7 @@ export interface InvoiceData {
   bgColor?: string;
   clientId: number | null;
   deliveredAt?: Date | null;
+  isShopBooking?: boolean;
 }
 
 const evenColor = "bg-background";
@@ -60,7 +61,7 @@ export default function Table({
   const [currentPage, setCurrentPage] = useState(parseInt(page ?? "", 10) || 1);
   const timezone = useCompanyTimezone();
   const [pageSize, setPageSize] = useState(
-    parseInt(take ?? "", 10) || defaultTake
+    parseInt(take ?? "", 10) || defaultTake,
   );
   // const [showPagination, setShowPagination] = useState(false);
   const allStatusesFromStore = useListsStore((x) => x.statuses);
@@ -113,7 +114,7 @@ export default function Table({
       const newPath = `${pathname}?${searchParams.toString()}`;
       router.push(newPath);
     },
-    [params, pathname, router]
+    [params, pathname, router],
   );
 
   // Handler for converting an invoice to an estimate or invoice
@@ -123,7 +124,7 @@ export default function Table({
       const checkEstimateOrInvoice =
         res.data.type === "Estimate" ? "Invoice" : "Estimate";
       successToast(
-        `${checkEstimateOrInvoice} - ${id} converted to ${res.data.type}`
+        `${checkEstimateOrInvoice} - ${id} converted to ${res.data.type}`,
       );
 
       if (res?.data?.type == "Invoice") {
@@ -214,7 +215,7 @@ export default function Table({
                       key={data.id}
                       className={cn(
                         "py-3",
-                        index % 2 === 0 ? evenColor : oddColor
+                        index % 2 === 0 ? evenColor : oddColor,
                       )}
                     >
                       <td className="px-4 py-2 text-left">
@@ -223,6 +224,11 @@ export default function Table({
                           buttonChild={<button>{data.id}</button>}
                           buttonChildClassName="block w-full text-blue-600"
                         />
+                        {data.isShopBooking && (
+                          <span className="mt-1 block text-center text-[10px] font-bold uppercase tracking-wider text-[#6571FF] bg-[#6571FF]/10 rounded-full px-2 py-0.5">
+                            Virtual Shop
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 py-2 text-left">
                         <p className="block h-full w-full">{data.clientName}</p>

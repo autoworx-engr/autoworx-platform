@@ -114,96 +114,104 @@ export default function PaymentDisplay({
             </p>
           </div>
         ) : (
-          <table className="w-full shadow-md">
-            <thead className="sticky top-0  bg-background">
-              <tr className="h-10 border-b">
-                <th className="border-b px-4 py-2 text-left">Date</th>
-                <th className="border-b px-4 py-2 text-left">Invoice # </th>
-                <th className="border-b px-4 py-2 text-left">Client Name</th>
-                <th className="border-b px-4 py-2 text-left">Vehicle Info</th>
-                <th className="border-b px-4 py-2 text-left">Payment Method</th>
-                <th className="border-b px-4 py-2 text-left">Total Amount</th>
-                <th className="border-b px-4 py-2 text-left">Cash Received</th>
-                <th className="border-b px-4 py-2 text-center">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paymentsToRender?.map((payment, index) => {
-                const paymentStatus =
-                  Number(payment.invoice?.due) <= 0 ? "paid" : "due";
+          <div className="w-full overflow-x-auto">
+            <table className="w-full min-w-[980px] border-collapse shadow-md">
+              <thead className="sticky top-0  bg-background">
+                <tr className="h-10 border-b">
+                  <th className="border-b px-4 py-2 text-left">Date</th>
+                  <th className="border-b px-4 py-2 text-left">Invoice # </th>
+                  <th className="border-b px-4 py-2 text-left">Client Name</th>
+                  <th className="border-b px-4 py-2 text-left">Vehicle Info</th>
+                  <th className="border-b px-4 py-2 text-left">
+                    Payment Method
+                  </th>
+                  <th className="border-b px-4 py-2 text-left">Total Amount</th>
+                  <th className="border-b px-4 py-2 text-left">
+                    Cash Received
+                  </th>
+                  <th className="border-b px-4 py-2 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paymentsToRender?.map((payment, index) => {
+                  const paymentStatus =
+                    Number(payment.invoice?.due) <= 0 ? "paid" : "due";
 
-                const refundedAmount = Number(payment.refundedAmount) || 0;
+                  const refundedAmount = Number(payment.refundedAmount) || 0;
 
-                const hasRefund = refundedAmount > 0;
+                  const hasRefund = refundedAmount > 0;
 
-                return (
-                  <tr
-                    key={payment.id}
-                    className={cn(
-                      "cursor-pointer rounded-md py-3",
-                      index % 2 === 0 ? "bg-background" : "bg-blue-100",
-                    )}
-                  >
-                    <td className="border-b px-4 py-2 text-left">
-                      {payment?.date
-                        ? moment.tz(payment.date, timezone).format("MM/DD/YYYY")
-                        : ""}
-                    </td>
-
-                    <td className="border-b px-4 py-2 text-left">
-                      {payment.invoiceId}
-                    </td>
-                    <td className="border-b px-4 py-2 text-left">
-                      {payment.invoice?.client?.firstName}{" "}
-                      {payment.invoice?.client?.lastName}
-                    </td>
-                    <td className="border-b px-4 py-2 text-left">
-                      {payment.invoice?.vehicle?.year || ""}{" "}
-                      {payment.invoice?.vehicle?.make}{" "}
-                      {payment.invoice?.vehicle?.model}{" "}
-                      {payment.invoice?.vehicle?.other
-                        ? payment.invoice?.vehicle?.other
-                        : ""}
-                    </td>
-                    <td className="border-b px-4 py-2 text-left">
-                      {payment.type === "OTHER"
-                        ? payment?.other?.paymentMethod?.name
-                        : payment.type === "DEPOSIT"
-                          ? `${payment.type} (${payment?.deposit?.depositMethod || "N/A"})`
-                          : payment.type}
-                    </td>
-                    <td className="border-b px-4 py-2 text-left">
-                      {formatCurrency(Number(payment.amount))}
-                      {hasRefund && (
-                        <div className="flex items-center gap-1 text-red-500 text-xs font-normal">
-                          <ArrowDown size={14} strokeWidth={2} />
-                          <span>{formatCurrency(refundedAmount)}</span>
-                        </div>
+                  return (
+                    <tr
+                      key={payment.id}
+                      className={cn(
+                        "cursor-pointer rounded-md py-3",
+                        index % 2 === 0 ? "bg-background" : "bg-blue-100",
                       )}
-                    </td>
-                    <td className="border-b px-4 py-2 text-left">
-                      {payment.cash?.receivedCash
-                        ? payment.cash.receivedCash
-                        : "N/A"}
-                    </td>
-                    <td className="text-center">
-                      <span
-                        className={cn(
-                          `border-b px-2 py-1 text-left capitalize`,
-                          paymentStatus === "due" &&
-                            "bg-[#de5967] text-white rounded-md",
-                          paymentStatus === "paid" &&
-                            "bg-[#3c8f89] text-white rounded-md",
+                    >
+                      <td className="border-b px-4 py-2 text-left">
+                        {payment?.date
+                          ? moment
+                              .tz(payment.date, timezone)
+                              .format("MM/DD/YYYY")
+                          : ""}
+                      </td>
+
+                      <td className="border-b px-4 py-2 text-left">
+                        {payment.invoiceId}
+                      </td>
+                      <td className="border-b px-4 py-2 text-left">
+                        {payment.invoice?.client?.firstName}{" "}
+                        {payment.invoice?.client?.lastName}
+                      </td>
+                      <td className="border-b px-4 py-2 text-left">
+                        {payment.invoice?.vehicle?.year || ""}{" "}
+                        {payment.invoice?.vehicle?.make}{" "}
+                        {payment.invoice?.vehicle?.model}{" "}
+                        {payment.invoice?.vehicle?.other
+                          ? payment.invoice?.vehicle?.other
+                          : ""}
+                      </td>
+                      <td className="border-b px-4 py-2 text-left">
+                        {payment.type === "OTHER"
+                          ? payment?.other?.paymentMethod?.name
+                          : payment.type === "DEPOSIT"
+                            ? `${payment.type} (${payment?.deposit?.depositMethod || "N/A"})`
+                            : payment.type}
+                      </td>
+                      <td className="border-b px-4 py-2 text-left">
+                        {formatCurrency(Number(payment.amount))}
+                        {hasRefund && (
+                          <div className="flex items-center gap-1 text-red-500 text-xs font-normal">
+                            <ArrowDown size={14} strokeWidth={2} />
+                            <span>{formatCurrency(refundedAmount)}</span>
+                          </div>
                         )}
-                      >
-                        {paymentStatus}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      </td>
+                      <td className="border-b px-4 py-2 text-left">
+                        {payment.cash?.receivedCash
+                          ? payment.cash.receivedCash
+                          : "N/A"}
+                      </td>
+                      <td className="text-center">
+                        <span
+                          className={cn(
+                            `border-b px-2 py-1 text-left capitalize`,
+                            paymentStatus === "due" &&
+                              "bg-[#de5967] text-white rounded-md",
+                            paymentStatus === "paid" &&
+                              "bg-[#3c8f89] text-white rounded-md",
+                          )}
+                        >
+                          {paymentStatus}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
         {showPagination && (
           <div className="mt-4 flex justify-end">

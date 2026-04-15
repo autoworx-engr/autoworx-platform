@@ -89,6 +89,7 @@ export default function WorkOrderModalBody({
     invoiceTechnicians,
     writePermission,
     techniciansPerItem,
+    redoPerService,
   } = data as IWorkOrderData;
 
   const getTechnicianPhotos = (): TechnicianPhoto[] => {
@@ -98,11 +99,11 @@ export default function WorkOrderModalBody({
       ? Object.values(techniciansPerItem).flat()
       : [];
 
-    allTechnicians.forEach(t => {
+    allTechnicians.forEach((t) => {
       const technicianName = t.name || "Unknown Technician";
 
       if (t.images && t.images.length > 0) {
-        t.images.forEach(image => {
+        t.images.forEach((image) => {
           finalPhotosArray.push({
             id: image.id,
             photo: image.fileUrl,
@@ -218,13 +219,15 @@ export default function WorkOrderModalBody({
           invoiceStatus={invoice?.column?.title}
           writePermission={writePermission}
           techniciansPerItem={techniciansPerItem}
+          redoPerService={redoPerService}
           openService={openService}
           setOpenService={setOpenService}
+          invoiceId={invoice?.id}
         />
 
         {/* see images dialog trigger (uses its own internal state) */}
         {technicianPhotos.length > 0 && isAdminOrManager && (
-          <div className="absolute right-5 md:right-28 top-0">
+          <div className="">
             <Dialog>
               <DialogTrigger asChild>
                 <button className="md:bg-[#6571ff] md:text-white px-5 py-0.5 rounded-md">

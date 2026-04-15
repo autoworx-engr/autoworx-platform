@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import SmsMessage from "./SmsMessage";
 import useInfinitySmsQueryByClientId from "../../../_hooks/useInfinitySmsQuery";
-import Spinner from "@/components/ui/Spinner";
+import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/cn";
 
 export default function SmsBox({ clientId }: { clientId: number }) {

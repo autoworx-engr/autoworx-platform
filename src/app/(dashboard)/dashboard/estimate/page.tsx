@@ -20,7 +20,7 @@ export default async function EstimatesPage(
       page?: string;
       take?: string;
     }>;
-  }>
+  }>,
 ) {
   const searchParams = await props.searchParams;
   const session = await getServerSession(authOptions);
@@ -33,7 +33,7 @@ export default async function EstimatesPage(
     InvoiceType.Estimate,
     companyId,
     searchParams,
-    timezone
+    timezone,
   );
 
   const categoriesPromise = db.category.findMany({

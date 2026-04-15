@@ -1,5 +1,5 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { SetStateAction, useEffect, useRef, useState, useMemo } from "react";
+import { SetStateAction, useEffect, useRef, useState } from "react";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import {
   draggable,
@@ -180,29 +180,6 @@ const DraggableLead = ({
     return "";
   };
 
-  const isSearchMatch = useMemo(() => {
-    if (!searchTerm) return false;
-    const lowerSearchTerm = searchTerm.toLowerCase();
-    const nameMatch = (lead.name || "").toLowerCase().includes(lowerSearchTerm);
-    const vehicleMatch =
-      lead.vehicle && lead.vehicle.toLowerCase().includes(lowerSearchTerm);
-    return nameMatch || vehicleMatch;
-  }, [searchTerm, lead]);
-
-  const [highlightMatch, setHighlightMatch] = useState(false);
-
-  useEffect(() => {
-    if (isSearchMatch) {
-      setHighlightMatch(true);
-      const timer = setTimeout(() => {
-        setHighlightMatch(false);
-      }, 2000);
-      return () => clearTimeout(timer);
-    } else {
-      setHighlightMatch(false);
-    }
-  }, [isSearchMatch]);
-
   return (
     <li
       ref={(el) => {
@@ -211,7 +188,7 @@ const DraggableLead = ({
       }}
       className={`max-w-auto relative mx-1 my-1 h-fit animate-none rounded-xl border p-1 duration-300 hover:bg-slate-100 ${
         isTeamPipeline ? "cursor-default" : "cursor-grab active:cursor-grabbing"
-      } ${isDropTarget ? "ring-2 ring-blue-500 bg-blue-50" : ""} ${highlightMatch ? "bg-yellow-100 border-yellow-300" : "bg-background"}`}
+      } ${isDropTarget ? "ring-2 ring-blue-500 bg-blue-50" : ""}  bg-background`}
       style={{
         opacity: isDragging ? 0.5 : 1,
       }}
@@ -221,17 +198,21 @@ const DraggableLead = ({
           {isTeamPipeline && `#${lead.invoiceId}`} {lead.name}
         </h3>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => handleColumnDropdownToggle(categoryIndex, leadIndex)}
-            className="cursor-pointer text-xl mr-2 hover:text-blue-600 transition-colors md:hidden"
-            title="Move to different column"
-          >
-            <ArrowRightLeft
-              size={24}
-              strokeWidth={2}
-              style={{ color: "#6571FFed" }}
-            />
-          </button>
+          {!isTeamPipeline && (
+            <button
+              onClick={() =>
+                handleColumnDropdownToggle(categoryIndex, leadIndex)
+              }
+              className="cursor-pointer text-xl mr-2 hover:text-blue-600 transition-colors md:hidden"
+              title="Move to different column"
+            >
+              <ArrowRightLeft
+                size={24}
+                strokeWidth={2}
+                style={{ color: "#6571FFed" }}
+              />
+            </button>
+          )}
 
           {pipelineType === "Sales Pipelines" && (
             <div>

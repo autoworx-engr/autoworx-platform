@@ -1,13 +1,10 @@
-import { Badge } from "@/components/ui/badge";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
-import { CheckCircle, Phone, Settings } from "lucide-react";
+import {  Phone, Settings } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 import AIMetrics from "./components/AIMetrics";
@@ -46,8 +43,8 @@ export default async function AiTrainOverview() {
         <Card className="border-primary/20 bg-primary/5">
           <CardContent className="flex items-center justify-between p-6">
             <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                <Phone className="h-6 w-6 text-primary" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                <Phone className="h-4 w-4 text-primary" />
               </div>
               <div>
                 <h3 className="font-semibold text-foreground flex items-center gap-2">

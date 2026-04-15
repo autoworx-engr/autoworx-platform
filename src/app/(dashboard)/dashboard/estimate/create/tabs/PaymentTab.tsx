@@ -101,7 +101,7 @@ export default async function PaymentTab({
         : null;
 
       return { ...invoice, vehicle: vehicle?.model ?? "" };
-    })
+    }),
   );
 
   const invoicesWithFull: InvoiceWithFull[] = [];
@@ -141,14 +141,14 @@ export default async function PaymentTab({
   const sortedPayments = allPayments.sort(
     (a, b) =>
       new Date(a.date || a.createdAt).getTime() -
-      new Date(b.date || b.createdAt).getTime()
+      new Date(b.date || b.createdAt).getTime(),
   );
 
   for (let i = 0; i < sortedPayments.length; i++) {
     const payment = sortedPayments[i];
 
     const originalInvoice = invoices.find(
-      (inv) => inv.id === payment.invoiceId
+      (inv) => inv.id === payment.invoiceId,
     );
     if (!originalInvoice) continue;
 
@@ -173,7 +173,7 @@ export default async function PaymentTab({
 
     const actualRefundedAmount = payment.Refund.reduce(
       (sum, refund) => sum + Number(refund.amount),
-      0
+      0,
     );
     const originalAmount = Number(payment?.amount ?? 0);
     const netAmount = originalAmount - actualRefundedAmount;
@@ -192,14 +192,13 @@ export default async function PaymentTab({
         if (pmt.invoiceId === payment.invoiceId) {
           const refunds = pmt.Refund.reduce(
             (refundSum, refund) => refundSum + Number(refund.amount),
-            0
+            0,
           );
           return sum + Number(pmt.amount || 0) - refunds;
         }
         return sum;
       }, 0);
-      dueAfterPayment =
-        originalInvoiceGrandTotal - originalInvoiceDeposit - totalPaidUpToThis;
+      dueAfterPayment = originalInvoiceGrandTotal - totalPaidUpToThis;
     }
 
     invoicesWithFull.push({
@@ -261,7 +260,7 @@ export default async function PaymentTab({
   }
 
   allTransactionEntries.sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
   );
 
   const totalCustomerPaidAmount = allPayments.reduce((acc, payment) => {
@@ -273,7 +272,7 @@ export default async function PaymentTab({
   const totalRefundedAmount = allPayments.reduce((acc, payment) => {
     const actualRefundedAmount = payment.Refund.reduce(
       (sum, refund) => sum + Number(refund.amount),
-      0
+      0,
     );
     return acc + actualRefundedAmount;
   }, 0);
@@ -282,7 +281,7 @@ export default async function PaymentTab({
     (acc, invoice) =>
       acc +
       (invoice.grandTotal ? parseFloat(invoice.grandTotal.toString()) : 0),
-    0
+    0,
   );
 
   const totalServices = [] as (Service & { count: number })[];
@@ -395,7 +394,7 @@ export default async function PaymentTab({
                   key={service.id}
                   className={cn(
                     "flex justify-between items-center gap-4 p-3 py-2 transition-colors border-b rounded-xl",
-                    index % 2 === 0 ? "bg-white" : "bg-slate-50"
+                    index % 2 === 0 ? "bg-white" : "bg-slate-50",
                   )}
                 >
                   <p className="truncate pr-2 font-semibold text-slate-600">
@@ -433,7 +432,7 @@ export default async function PaymentTab({
             <tbody>
               {invoicesWithFull?.map((data, index) => {
                 const mergedPayment = mergedPaymentData.find(
-                  (m) => m.paymentId === data.paymentId
+                  (m) => m.paymentId === data.paymentId,
                 );
 
                 //  Calculate total paid for this specific invoice
@@ -445,7 +444,7 @@ export default async function PaymentTab({
                     key={data.id}
                     className={cn(
                       "py-3",
-                      index % 2 === 0 ? evenColor : oddColor
+                      index % 2 === 0 ? evenColor : oddColor,
                     )}
                   >
                     <td className="h-8 px-10 text-left">
@@ -506,7 +505,7 @@ export default async function PaymentTab({
           {invoicesWithFull.slice(0, 4).map((data, index) => {
             //  Find the merged payment data for this payment
             const mergedPayment = mergedPaymentData.find(
-              (m) => m.paymentId === data.paymentId
+              (m) => m.paymentId === data.paymentId,
             );
 
             //  Calculate total paid for this specific invoice
@@ -519,7 +518,7 @@ export default async function PaymentTab({
                 key={data.id}
                 className={cn(
                   "rounded-lg p-4 shadow-sm transition-all duration-200",
-                  index % 2 === 0 ? "bg-background" : "bg-[#F8FAFF]"
+                  index % 2 === 0 ? "bg-background" : "bg-[#F8FAFF]",
                 )}
               >
                 <div className="flex items-center justify-between">
@@ -673,7 +672,7 @@ export default async function PaymentTab({
               key={transaction.id}
               className={cn(
                 "rounded-lg p-4 shadow-sm transition-all duration-200",
-                index % 2 === 0 ? "bg-background" : "bg-[#F8FAFF]"
+                index % 2 === 0 ? "bg-background" : "bg-[#F8FAFF]",
               )}
             >
               <div className="flex items-center justify-between">

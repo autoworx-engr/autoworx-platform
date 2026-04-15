@@ -5,13 +5,19 @@ import { jwtVerifyToken } from "./lib/jwtVerify";
 import { isDynamicPublicApiRoute } from "./utils/isDynamicPublicApiRoute";
 import { rootDomain } from "./lib/subdomains";
 
+const isProduction = process.env.NODE_ENV === "production";
+
 function extractSubdomain(request: NextRequest): string | null {
   const url = request.url;
+
   const host = request.headers.get("host") || "";
   const hostname = host.split(":")[0];
 
   // Local development environment
-  if (url.includes("localhost") || url.includes("127.0.0.1")) {
+  if (
+    !isProduction &&
+    (url.includes("localhost") || url.includes("127.0.0.1"))
+  ) {
     // Try to extract subdomain from the full URL
     const fullUrlMatch = url.match(/http:\/\/([^.]+)\.localhost/);
     if (fullUrlMatch && fullUrlMatch[1]) {
@@ -35,10 +41,15 @@ function extractSubdomain(request: NextRequest): string | null {
     return parts.length > 0 ? parts[0] : null;
   }
 
+  // Prefixes that should not be treated as tenant subdomains
+  const ignoredSubdomains = ["www", "dev", "stage"];
+
   // Regular subdomain detection
   const isSubdomain =
     hostname !== rootDomainFormatted &&
-    hostname !== `www.${rootDomainFormatted}` &&
+    !ignoredSubdomains.some(
+      sub => hostname === `${sub}.${rootDomainFormatted}`,
+    ) &&
     hostname.endsWith(`.${rootDomainFormatted}`);
 
   return isSubdomain ? hostname.replace(`.${rootDomainFormatted}`, "") : null;
@@ -47,6 +58,7 @@ function extractSubdomain(request: NextRequest): string | null {
 export async function proxy(request: NextRequest) {
   const token = await getToken({ req: request });
   const { pathname } = request.nextUrl;
+  const isPublicAssetRequest = /\.[a-zA-Z0-9]+$/.test(pathname);
 
   const authHeader = request.headers.get("authorization");
   const isExternalApiRequest =
@@ -64,15 +76,17 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(new URL("/", request.url));
     }
 
+    // Important: keep static/public files (e.g. /IFrameCommunicator.html)
+    // on the original path so third-party iframes can load them.
+    if (isPublicAssetRequest) {
+      return NextResponse.next();
+    }
+
     // Skip API routes so they can be handled by the main app API handlers
     if (!pathname.startsWith("/api/")) {
+      const rewriteUrl = `/subdomain/${subdomain}${pathname === "/" ? "" : pathname}`;
       // Rewrite all other paths to the subdomain folder
-      return NextResponse.rewrite(
-        new URL(
-          `/subdomain/${subdomain}${pathname === "/" ? "" : pathname}`,
-          request.url,
-        ),
-      );
+      return NextResponse.rewrite(new URL(rewriteUrl, request.url));
     }
   }
 

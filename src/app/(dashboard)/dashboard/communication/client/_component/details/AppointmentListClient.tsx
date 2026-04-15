@@ -12,7 +12,7 @@ export default function AppointmentListClient({
   appointments: Appointment[];
 }) {
   const [appointmentModalId, setAppointmentModalId] = useState<number | null>(
-    null
+    null,
   );
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
 
@@ -37,7 +37,7 @@ export default function AppointmentListClient({
       .filter(
         (a) =>
           moment(a.date).startOf("day").valueOf() >= startOfToday.valueOf() &&
-          !currentIds.has(a.id)
+          !currentIds.has(a.id),
       )
       .sort((x, y) => moment(x.date).valueOf() - moment(y.date).valueOf());
   }, [appointments]);
@@ -54,7 +54,7 @@ export default function AppointmentListClient({
           Appointments
         </h3>
         <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-600 dark:bg-white/10 dark:text-zinc-300">
-          {upcoming?.length || 0}
+          {Number(current?.length) + Number(upcoming?.length) || 0}
         </span>
       </header>
 

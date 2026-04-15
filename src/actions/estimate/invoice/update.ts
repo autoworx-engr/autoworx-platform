@@ -14,6 +14,7 @@ import {
   Service,
   Tag,
   Prisma,
+  ShopBookingStatus,
   Invoice,
 } from "@prisma/client";
 import { revalidatePath } from "next/cache";
@@ -41,6 +42,7 @@ interface UpdateEstimateInput {
   discount: number;
   tax: number;
   serviceFee: number;
+  vehicleExtraCost?: number;
   grandTotal: number;
   due: number;
 
@@ -70,25 +72,40 @@ interface UpdateEstimateInput {
 //     return new Promise(resolve => setTimeout(resolve, ms));
 // }
 
-     const hasInvoiceChanged = (
+const hasInvoiceChanged = (
   invoice: Invoice | null,
-  data: UpdateEstimateInput
+  data: UpdateEstimateInput,
 ): boolean => {
- if (!invoice) return false;
-  const decimalChanged = (dbValue: Decimal | null | undefined, newValue: number) => {
-    return new Decimal(newValue ?? 0).toString() !== (dbValue ?? new Decimal(0)).toString();
+  if (!invoice) return false;
+
+  const nullishEqual = <T>(a: T | null | undefined, b: T | null | undefined) =>
+    (a ?? null) === (b ?? null);
+
+  const normalizedText = (value: string | null | undefined) => value ?? "";
+
+  const decimalChanged = (
+    dbValue: Decimal | null | undefined,
+    newValue: number,
+  ) => {
+    return (
+      new Decimal(newValue ?? 0).toString() !==
+      (dbValue ?? new Decimal(0)).toString()
+    );
   };
 
   return (
-    invoice.clientId !== data.clientId ||
-    invoice.vehicleId !== data.vehicleId ||
-    invoice.columnId !== data.columnId ||
-    invoice.internalNotes !== data.internalNotes ||
-    invoice.terms !== data.terms ||
-    invoice.policy !== data.policy ||
-    invoice.customerNotes !== data.customerNotes ||
-    invoice.customerComments !== data.customerComments ||
-    invoice.damageNotes !== data.damageNotes ||
+    !nullishEqual(invoice.clientId, data.clientId) ||
+    !nullishEqual(invoice.vehicleId, data.vehicleId) ||
+    !nullishEqual(invoice.columnId, data.columnId) ||
+    normalizedText(invoice.internalNotes) !==
+      normalizedText(data.internalNotes) ||
+    normalizedText(invoice.terms) !== normalizedText(data.terms) ||
+    normalizedText(invoice.policy) !== normalizedText(data.policy) ||
+    normalizedText(invoice.customerNotes) !==
+      normalizedText(data.customerNotes) ||
+    normalizedText(invoice.customerComments) !==
+      normalizedText(data.customerComments) ||
+    normalizedText(invoice.damageNotes) !== normalizedText(data.damageNotes) ||
     decimalChanged(invoice.subtotal, data.subtotal) ||
     decimalChanged(invoice.discount, data.discount) ||
     decimalChanged(invoice.tax, data.tax) ||
@@ -108,8 +125,6 @@ export async function updateInvoice(
 
     const companyId = await getCompanyId();
 
- 
-
     //find invoice from database
     const invoice = await db.invoice.findUnique({
       where: {
@@ -124,13 +139,11 @@ export async function updateInvoice(
       },
     });
 
-   const isChanged = hasInvoiceChanged(invoice, data);
+    const isChanged = hasInvoiceChanged(invoice, data);
 
     const column = await db.column.findUnique({
       where: { id: data.columnId },
     });
-
-  
 
     // use prisma transaction for better performance or safely save data in db
     const updatedInvoice = await db.$transaction(
@@ -175,7 +188,37 @@ export async function updateInvoice(
         let deliveredAt = invoice?.deliveredAt;
         let completedAt = invoice?.completedAt;
 
-        if (column) {
+        if (column && invoice) {
+          const findShopBooking = await txDb.shopBooking.findUnique({
+            where: {
+              invoiceId: invoice.id,
+            },
+          });
+          if (
+            (column.title === "Completed" || column.title === "Delivered") &&
+            findShopBooking
+          ) {
+            await txDb.shopBooking.update({
+              where: {
+                id: findShopBooking.id,
+              },
+              data: {
+                status: ShopBookingStatus.COMPLETED,
+              },
+            });
+          } else if (
+            findShopBooking &&
+            findShopBooking.status === ShopBookingStatus.COMPLETED
+          ) {
+            await txDb.shopBooking.update({
+              where: {
+                id: findShopBooking.id,
+              },
+              data: {
+                status: ShopBookingStatus.CONFIRMED,
+              },
+            });
+          }
           // data.type = column.title === "In Progress" ? "Invoice" : data.type;
           if (column.title === "In Progress") {
             data.type = "Invoice";
@@ -556,6 +599,7 @@ export async function updateInvoice(
             discount: data.discount,
             tax: data.tax,
             serviceFee: data.serviceFee,
+            vehicleExtraCost: data.vehicleExtraCost,
             grandTotal: data.grandTotal,
             due: data.due,
             internalNotes: data.internalNotes,
@@ -571,8 +615,16 @@ export async function updateInvoice(
             completedAt,
             deliveredAt,
             damageNotes: data.damageNotes,
-            authorizedName: fromPayment ? undefined : isChanged ? null : invoice?.authorizedName,
-            signatureImage: fromPayment ? undefined : isChanged ? null : invoice?.signatureImage,
+            authorizedName: fromPayment
+              ? undefined
+              : isChanged
+                ? null
+                : invoice?.authorizedName,
+            signatureImage: fromPayment
+              ? undefined
+              : isChanged
+                ? null
+                : invoice?.signatureImage,
             isViewed: false,
             serviceIndex: JSON.stringify(
               updatedInvoiceItem

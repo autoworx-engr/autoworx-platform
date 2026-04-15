@@ -4,6 +4,7 @@ export interface ReportData {
     conversionRate: number;
     estimatesSent: number;
     totalPayments: number;
+    paymentsCollected: number;
     paymentsPending: number;
     unqualifiedLeads: number;
     averageTicket: number;

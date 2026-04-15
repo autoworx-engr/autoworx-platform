@@ -1,7 +1,7 @@
 "use client";
 import { format } from "date-fns";
 import { Calendar } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { DateRangePicker } from "react-date-range";
 import "react-date-range/dist/styles.css"; // main style file
 import "react-date-range/dist/theme/default.css"; // theme css file
@@ -18,11 +18,14 @@ const PaymentDateRange = ({
   const selectedStart = dateRangeProp?.[0] ?? null;
   const selectedEnd = dateRangeProp?.[1] ?? null;
 
-  const getSelectionFromProps = () => ({
-    startDate: selectedStart || new Date(),
-    endDate: selectedEnd || new Date(),
-    key: "selection",
-  });
+  const getSelectionFromProps = useCallback(
+    () => ({
+      startDate: selectedStart || new Date(),
+      endDate: selectedEnd || new Date(),
+      key: "selection",
+    }),
+    [selectedStart, selectedEnd],
+  );
 
   const [state, setState] = useState({
     selection: getSelectionFromProps(),
@@ -41,7 +44,13 @@ const PaymentDateRange = ({
     const syncedSelection = getSelectionFromProps();
     setState({ selection: syncedSelection });
     setTempRange(syncedSelection);
-  }, [selectedStart, selectedEnd]);
+  }, [selectedStart, selectedEnd, getSelectionFromProps]);
+
+  const handleClickOutside = (event: any) => {
+    if (ref.current && !ref.current.contains(event.target)) {
+      setShowPicker(false);
+    }
+  };
 
   useEffect(() => {
     document.addEventListener("mousedown", handleClickOutside);
@@ -66,12 +75,6 @@ const PaymentDateRange = ({
     setState({ selection: tempRange });
     setShowPicker(false);
     onOk(tempRange.startDate, tempRange.endDate);
-  };
-
-  const handleClickOutside = (event: any) => {
-    if (ref.current && !ref.current.contains(event.target)) {
-      setShowPicker(false);
-    }
   };
 
   const handleClear = () => {

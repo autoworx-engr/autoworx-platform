@@ -699,9 +699,10 @@ export default function TaskContentModal({
                     className={`
                       relative flex w-full items-center justify-center gap-2 rounded-lg py-2.5 px-4
                       text-sm font-semibold transition-all duration-300 ease-out
-                      ${isActive
-                        ? `${item.color} text-white shadow-lg ${item.shadow} scale-[1.03]`
-                        : "bg-slate-50 text-slate-500 ring-1 ring-slate-200 hover:bg-white hover:ring-slate-300 hover:-translate-y-0.5"
+                      ${
+                        isActive
+                          ? `${item.color} text-white shadow-lg ${item.shadow} scale-[1.03]`
+                          : "bg-slate-50 text-slate-500 ring-1 ring-slate-200 hover:bg-white hover:ring-slate-300 hover:-translate-y-0.5"
                       }
           `}
                   >

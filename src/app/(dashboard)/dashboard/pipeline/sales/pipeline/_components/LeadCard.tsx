@@ -1,26 +1,25 @@
 "use client";
 
-import React, { memo, useState, useRef, useEffect } from "react";
-import { removeLeadFromPipeline } from "@/actions/pipelines/updateLeadSalesUser";
-import { updateLeadColumn } from "@/actions/pipelines/getLeads";
 import { actionTypes } from "@/constants/lead.constant";
 import {
   useColumnDispatch,
   useColumnState,
 } from "@/context/sales-pipeline.context";
+import { useRemoveLeadMutation, useUpdateLeadColumnMutation } from "@/hooks/pipeline/usePipelineLeads";
 import { cn } from "@/lib/cn";
-import { LeadWithSalesUser } from "@/types/invoiceLead";
-import { Popconfirm } from "antd";
 import { errorToast, successToast } from "@/lib/toast";
-import ColumnDropdown from "./ColumnDropdown";
-import LeadActions from "./LeadActions";
-import LeadTags from "./LeadTags";
-import { ArrowRightLeft, X } from "lucide-react";
+import { LeadWithSalesUser } from "@/types/invoiceLead";
+import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import {
   draggable,
   dropTargetForElements,
 } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
-import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
+import { Popconfirm } from "antd";
+import { ArrowRightLeft, X } from "lucide-react";
+import { memo, useEffect, useRef, useState } from "react";
+import ColumnDropdown from "./ColumnDropdown";
+import LeadActions from "./LeadActions";
+import LeadTags from "./LeadTags";
 
 
 type LeadCardProps = {
@@ -47,9 +46,12 @@ export default memo(function LeadCard({
   const [isDropTarget, setIsDropTarget] = useState(false);
   const cardRef = useRef<HTMLLIElement>(null);
 
+  const { mutateAsync: removeLead } = useRemoveLeadMutation();
+  const { mutateAsync: updateColumn } = useUpdateLeadColumnMutation();
+
   const handleRemoveLead = async (leadId: number, columnId: number) => {
     try {
-      await removeLeadFromPipeline(leadId);
+      await removeLead(leadId);
       dispatch({
         type: actionTypes.REMOVE_LEAD,
         payload: { leadId, columnId },
@@ -93,7 +95,7 @@ export default memo(function LeadCard({
         },
       });
 
-      await updateLeadColumn(leadData.id, parseInt(newColumnId));
+      await updateColumn({ leadId: leadData.id, columnId: parseInt(newColumnId) });
       setShowColumnSelect(false);
       successToast("Job moved successfully");
     } catch (error) {
