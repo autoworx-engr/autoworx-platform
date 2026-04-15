@@ -46,7 +46,7 @@ const CustomizeUserRole = ({ user, onBack }: CustomizeUserRolesProps) => {
 
   const persistPermissions = async (
     updatedPermissions: PermissionType,
-    previousPermissions: PermissionType
+    previousPermissions: PermissionType,
   ) => {
     try {
       await savePermissions(user.id, updatedPermissions);
@@ -102,7 +102,7 @@ const CustomizeUserRole = ({ user, onBack }: CustomizeUserRolesProps) => {
 
   const handleViewOnlyChange = async (
     viewOnlyKey: string,
-    checked: boolean
+    checked: boolean,
   ) => {
     const previousPermissions = permissions;
     const { id, ...prevWithoutId } = previousPermissions;
@@ -173,10 +173,10 @@ const CustomizeUserRole = ({ user, onBack }: CustomizeUserRolesProps) => {
               {/* Conditional header - logic preserved */}
               {(user.employeeType === "Sales" ||
                 user.employeeType === "Technician") && (
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider ">
-                    View Only Access
-                  </th>
-                )}
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider ">
+                  View Only Access
+                </th>
+              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
@@ -204,22 +204,22 @@ const CustomizeUserRole = ({ user, onBack }: CustomizeUserRolesProps) => {
                 {/* View Only Checkbox Column */}
                 {(user.employeeType === "Sales" ||
                   user.employeeType === "Technician") && (
-                    <td className="px-4 py-3">
-                      {module.viewOnly && (
-                        <Tooltip title="View Only">
-                          <Checkbox
-                            checked={permissions[module.viewOnly] ?? false}
-                            onChange={(e) =>
-                              handleViewOnlyChange(
-                                module.viewOnly!,
-                                e.target.checked
-                              )
-                            }
-                          />
-                        </Tooltip>
-                      )}
-                    </td>
-                  )}
+                  <td className="px-4 py-3">
+                    {module.viewOnly && (
+                      <Tooltip title="View Only">
+                        <Checkbox
+                          checked={permissions[module.viewOnly] ?? false}
+                          onChange={(e) =>
+                            handleViewOnlyChange(
+                              module.viewOnly!,
+                              e.target.checked,
+                            )
+                          }
+                        />
+                      </Tooltip>
+                    )}
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

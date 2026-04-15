@@ -24,7 +24,9 @@ export function GiftCardPurchaseList({
       <div className="flex flex-col items-center justify-center py-16 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/30 text-slate-400 dark:text-slate-500">
         <Gift size={32} className="opacity-40 mb-3" />
         <p className="text-sm font-medium">No gift card purchases found</p>
-        <p className="text-xs mt-1 opacity-70">Try a different search term or filter</p>
+        <p className="text-xs mt-1 opacity-70">
+          Try a different search term or filter
+        </p>
       </div>
     );
   }

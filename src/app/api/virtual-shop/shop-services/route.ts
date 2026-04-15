@@ -537,7 +537,7 @@ export async function POST(req: NextRequest) {
     let totalDuration = 0;
     const categoryIdsToFetch = new Set<number>();
 
-    items?.forEach(item => {
+    items?.forEach((item) => {
       // Gather category IDs
       if (item.service?.categoryId) {
         categoryIdsToFetch.add(item.service.categoryId);
@@ -553,7 +553,7 @@ export async function POST(req: NextRequest) {
       }
 
       // Calculate Materials
-      item.materials?.forEach(mat => {
+      item.materials?.forEach((mat) => {
         if (!mat || !mat.name) return;
         const matQuantity = Number(mat.quantity) || 0;
         const matSell = Number(mat.sell) || 0;
@@ -570,10 +570,10 @@ export async function POST(req: NextRequest) {
       where: { id: { in: Array.from(categoryIdsToFetch) } },
       select: { name: true },
     });
-    const categories = fetchedCategories.map(c => c.name);
+    const categories = fetchedCategories.map((c) => c.name);
 
     // 3. DATABASE TRANSACTION
-    const newShopService = await db.$transaction(async tx => {
+    const newShopService = await db.$transaction(async (tx) => {
       // Because we pre-calculated everything, we can create the final record immediately.
       // No need to update it at the end of the transaction!
       const serviceRecord = await tx.shopService.create({
@@ -595,7 +595,7 @@ export async function POST(req: NextRequest) {
 
       if (items && items.length > 0) {
         await Promise.all(
-          items.map(async item => {
+          items.map(async (item) => {
             let laborId;
 
             if (item.labor) {
@@ -615,7 +615,7 @@ export async function POST(req: NextRequest) {
               // Use createMany instead of a loop for tags
               if (item.labor.tags?.length) {
                 await tx.laborTag.createMany({
-                  data: item.labor.tags.map(tag => ({
+                  data: item.labor.tags.map((tag) => ({
                     laborId: newLabor.id,
                     tagId: tag.id,
                   })),
@@ -633,7 +633,7 @@ export async function POST(req: NextRequest) {
 
             if (item.materials?.length) {
               await Promise.all(
-                item.materials.map(async material => {
+                item.materials.map(async (material) => {
                   if (!material || !material.name) return;
                   const newMat = await tx.material.create({
                     data: {
@@ -654,7 +654,7 @@ export async function POST(req: NextRequest) {
                   // Use createMany instead of a loop for tags
                   if (material.tags?.length) {
                     await tx.materialTag.createMany({
-                      data: material.tags.map(tag => ({
+                      data: material.tags.map((tag) => ({
                         materialId: newMat.id,
                         tagId: tag.id,
                       })),
@@ -667,7 +667,7 @@ export async function POST(req: NextRequest) {
             // Use createMany instead of a loop for item tags
             if (item.tags?.length) {
               await tx.itemTag.createMany({
-                data: item.tags.map(tag => ({
+                data: item.tags.map((tag) => ({
                   itemId: invoiceItem.id,
                   tagId: tag.id,
                 })),

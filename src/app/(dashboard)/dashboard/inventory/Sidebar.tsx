@@ -43,8 +43,8 @@ export default async function Sidebar({
 
   const imgUrl = product
     ? await QRCode.toDataURL(
-      `${env("NEXT_PUBLIC_APP_URL")}/dashboard/inventory/use/${product.id}`
-    )
+        `${env("NEXT_PUBLIC_APP_URL")}/dashboard/inventory/use/${product.id}`,
+      )
     : null;
 
   const invoices = await db.invoice.findMany({
@@ -71,8 +71,9 @@ export default async function Sidebar({
   }));
   return (
     <div
-      className={`mt-3 ${hidden ? "hidden" : !!productId ? "flex" : "hidden lg:flex"
-        }  h-fit lg:h-full w-full mx-auto flex-col md:mt-12 lg:w-1/2`}
+      className={`mt-3 ${
+        hidden ? "hidden" : !!productId ? "flex" : "hidden lg:flex"
+      }  h-fit lg:h-full w-full mx-auto flex-col md:mt-12 lg:w-1/2`}
     >
       <div className="flex flex-col gap-6 lg:flex-row">
         {/* LEFT COLUMN: Financial Metrics */}
@@ -106,7 +107,7 @@ export default async function Sidebar({
                         <p>
                           {formatCurrency(
                             parseFloat(product.price?.toString() || "0") *
-                            parseFloat(product.quantity?.toString() || "0")
+                              parseFloat(product.quantity?.toString() || "0"),
                           )}
                         </p>
                       </TooltipContent>
@@ -134,7 +135,7 @@ export default async function Sidebar({
                           <span className="cursor-default">
                             {(() => {
                               const price = parseFloat(
-                                product.price?.toString() || "0"
+                                product.price?.toString() || "0",
                               );
                               const priceStr = price.toLocaleString();
                               return priceStr.length > 6
@@ -146,7 +147,7 @@ export default async function Sidebar({
                         <TooltipContent className="bg-slate-900 text-white border-none">
                           <p>
                             {formatCurrency(
-                              parseFloat(product.price?.toString() || "0")
+                              parseFloat(product.price?.toString() || "0"),
                             )}
                           </p>
                         </TooltipContent>
@@ -246,10 +247,10 @@ export default async function Sidebar({
                             <TooltipTrigger asChild>
                               <span className="cursor-default leading-relaxed">
                                 {product.description &&
-                                  product.description.length > 80
+                                product.description.length > 80
                                   ? product.description.slice(0, 80) + "..."
                                   : product.description ||
-                                  "No description available."}
+                                    "No description available."}
                               </span>
                             </TooltipTrigger>
                             {product.description &&

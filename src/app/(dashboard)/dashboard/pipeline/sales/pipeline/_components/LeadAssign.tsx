@@ -1,7 +1,5 @@
 import { actionTypes } from "@/constants/lead.constant";
-import {
-  useColumnDispatch
-} from "@/context/sales-pipeline.context";
+import { useColumnDispatch } from "@/context/sales-pipeline.context";
 import { useAssignLeadSalesUserMutation } from "@/hooks/pipeline/usePipelineLeads";
 import useCompanyUsersQuery from "@/hooks/query-hook/useCompanyUsersQuery";
 import { errorToast, successToast } from "@/lib/toast";

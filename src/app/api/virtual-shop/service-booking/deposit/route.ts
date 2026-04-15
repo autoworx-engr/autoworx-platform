@@ -75,7 +75,7 @@ export async function PUT(req: Request) {
       throw new AppError(400, "shopBookingId and depositAmount are required");
     }
 
-    return await db.$transaction(async tx => {
+    return await db.$transaction(async (tx) => {
       // Find the booking
       const booking = await tx.shopBooking.findUnique({
         where: { id: Number(shopBookingId) },
@@ -165,12 +165,15 @@ export async function PUT(req: Request) {
             date: booking.appointment?.date || null,
             startTime: booking.appointment?.startTime || null,
           },
-          vehicle: booking.vehicle ? {
-            year: booking.vehicle.year,
-            make: booking.vehicle.make,
-            model: booking.vehicle.model,
-          } : null,
-          services: booking.services?.map((s: any) => ({ title: s.title })) || null,
+          vehicle: booking.vehicle
+            ? {
+                year: booking.vehicle.year,
+                make: booking.vehicle.make,
+                model: booking.vehicle.model,
+              }
+            : null,
+          services:
+            booking.services?.map((s: any) => ({ title: s.title })) || null,
           isDeposit: true,
         });
       }

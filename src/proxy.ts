@@ -48,7 +48,7 @@ function extractSubdomain(request: NextRequest): string | null {
   const isSubdomain =
     hostname !== rootDomainFormatted &&
     !ignoredSubdomains.some(
-      sub => hostname === `${sub}.${rootDomainFormatted}`,
+      (sub) => hostname === `${sub}.${rootDomainFormatted}`,
     ) &&
     hostname.endsWith(`.${rootDomainFormatted}`);
 

@@ -1,8 +1,7 @@
-import { Button } from '@/components/ui/button';
-import { Check, Copy, Gift, Shield } from 'lucide-react';
-import Link from 'next/link';
-import { useState } from 'react';
-
+import { Button } from "@/components/ui/button";
+import { Check, Copy, Gift, Shield } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
 
 interface Props {
   confirmationNumber: string;
@@ -14,7 +13,15 @@ interface Props {
   shopName: string;
 }
 
-const GiftCardConfirmation = ({ confirmationNumber, maskedCode, amount, recipientName, deliveryMethod, sendTiming, shopName }: Props) => {
+const GiftCardConfirmation = ({
+  confirmationNumber,
+  maskedCode,
+  amount,
+  recipientName,
+  deliveryMethod,
+  sendTiming,
+  shopName,
+}: Props) => {
   const [copied, setCopied] = useState(false);
 
   const copyCode = () => {
@@ -30,8 +37,15 @@ const GiftCardConfirmation = ({ confirmationNumber, maskedCode, amount, recipien
       </div>
 
       <div>
-        <h2 className="text-2xl font-bold tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Purchase Complete!</h2>
-        <p className="text-muted-foreground mt-1">Your gift card has been processed successfully</p>
+        <h2
+          className="text-2xl font-bold tracking-tight"
+          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+        >
+          Purchase Complete!
+        </h2>
+        <p className="text-muted-foreground mt-1">
+          Your gift card has been processed successfully
+        </p>
       </div>
 
       <div className="w-full rounded-xl border bg-card p-5 space-y-4 text-sm">
@@ -39,8 +53,15 @@ const GiftCardConfirmation = ({ confirmationNumber, maskedCode, amount, recipien
           <span className="text-muted-foreground">Confirmation #</span>
           <div className="flex items-center gap-1.5">
             <span className="font-mono font-medium">{confirmationNumber}</span>
-            <button onClick={copyCode} className="text-muted-foreground hover:text-foreground transition-colors">
-              {copied ? <Check className="w-3.5 h-3.5 text-primary" /> : <Copy className="w-3.5 h-3.5" />}
+            <button
+              onClick={copyCode}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {copied ? (
+                <Check className="w-3.5 h-3.5 text-primary" />
+              ) : (
+                <Copy className="w-3.5 h-3.5" />
+              )}
             </button>
           </div>
         </div>
@@ -54,11 +75,13 @@ const GiftCardConfirmation = ({ confirmationNumber, maskedCode, amount, recipien
         </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">Recipient</span>
-          <span>{recipientName || 'Yourself'}</span>
+          <span>{recipientName || "Yourself"}</span>
         </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">Delivery</span>
-          <span className="capitalize">{deliveryMethod} • {sendTiming}</span>
+          <span className="capitalize">
+            {deliveryMethod} • {sendTiming}
+          </span>
         </div>
       </div>
 

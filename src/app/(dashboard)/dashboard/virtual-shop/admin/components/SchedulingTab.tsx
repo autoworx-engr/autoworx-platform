@@ -64,12 +64,14 @@ function normalizeToDay(value?: string | null): Day | null {
   return DAYS.includes(normalized as Day) ? (normalized as Day) : null;
 }
 
-function getCompanyFallbackSchedules(calendarSettings: {
-  dayStart?: string | null;
-  dayEnd?: string | null;
-  weekend1?: string | null;
-  weekend2?: string | null;
-} | null): Record<Day, DaySchedule> {
+function getCompanyFallbackSchedules(
+  calendarSettings: {
+    dayStart?: string | null;
+    dayEnd?: string | null;
+    weekend1?: string | null;
+    weekend2?: string | null;
+  } | null,
+): Record<Day, DaySchedule> {
   const fallback = {} as Record<Day, DaySchedule>;
 
   const dayStart = calendarSettings?.dayStart || "09:00";
@@ -77,7 +79,9 @@ function getCompanyFallbackSchedules(calendarSettings: {
 
   const weekend1 = normalizeToDay(calendarSettings?.weekend1);
   const weekend2 = normalizeToDay(calendarSettings?.weekend2);
-  const weekendSet = new Set<Day>([weekend1, weekend2].filter(Boolean) as Day[]);
+  const weekendSet = new Set<Day>(
+    [weekend1, weekend2].filter(Boolean) as Day[],
+  );
 
   for (const day of DAYS) {
     fallback[day] = {
@@ -113,7 +117,9 @@ export default function SchedulingTab({ shopId = 0 }: SchedulingTabProps) {
   const [stacking, setStacking] = useState(false);
   const [stackingLimit, setStackingLimit] = useState("1");
   const [timeSlotInterval, setTimeSlotInterval] = useState("30");
-  const [schedules, setSchedules] = useState<Record<Day, DaySchedule>>(() => getCompanyFallbackSchedules(null));
+  const [schedules, setSchedules] = useState<Record<Day, DaySchedule>>(() =>
+    getCompanyFallbackSchedules(null),
+  );
 
   const updateSchedule = (day: Day, patch: Partial<DaySchedule>) => {
     setSchedules((prev) => ({ ...prev, [day]: { ...prev[day], ...patch } }));
@@ -148,8 +154,9 @@ export default function SchedulingTab({ shopId = 0 }: SchedulingTabProps) {
     setStackingLimit(String(bookingSettings.stackingLimit ?? 1));
     setTimeSlotInterval(String(bookingSettings.slotInterval ?? 30));
 
-    const hasApiAvailabilities = Array.isArray(bookingSettings.availabilities)
-      && bookingSettings.availabilities.length > 0;
+    const hasApiAvailabilities =
+      Array.isArray(bookingSettings.availabilities) &&
+      bookingSettings.availabilities.length > 0;
 
     const nextSchedules: Record<Day, DaySchedule> = { ...companyFallback };
 
@@ -180,7 +187,10 @@ export default function SchedulingTab({ shopId = 0 }: SchedulingTabProps) {
       return;
     }
 
-    if (stacking && (!Number.isInteger(parsedStackingLimit) || parsedStackingLimit < 1)) {
+    if (
+      stacking &&
+      (!Number.isInteger(parsedStackingLimit) || parsedStackingLimit < 1)
+    ) {
       toast.error("Stacking limit must be at least 1");
       return;
     }
@@ -282,13 +292,16 @@ export default function SchedulingTab({ shopId = 0 }: SchedulingTabProps) {
 
       {!isHydratingBookingSettings && (
         <>
-
           {/* Appointment Stacking */}
           <div className="mt-6">
             <div className="flex items-start justify-between">
               <div>
-                <p className="font-semibold text-gray-800">Appointment Stacking</p>
-                <p className="text-sm text-gray-400">Allow overlapping appointments</p>
+                <p className="font-semibold text-gray-800">
+                  Appointment Stacking
+                </p>
+                <p className="text-sm text-gray-400">
+                  Allow overlapping appointments
+                </p>
               </div>
               <Switch checked={stacking} setChecked={setStacking} />
             </div>
@@ -326,12 +339,17 @@ export default function SchedulingTab({ shopId = 0 }: SchedulingTabProps) {
 
           {/* Day Availability */}
           <div className="mt-6 flex flex-col gap-3">
-            <p className="text-sm font-semibold text-gray-700">Day Availability</p>
+            <p className="text-sm font-semibold text-gray-700">
+              Day Availability
+            </p>
 
             {DAYS.map((day) => {
               const s = schedules[day];
               return (
-                <div key={day} className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                <div
+                  key={day}
+                  className="flex flex-wrap items-center gap-x-4 gap-y-2"
+                >
                   <div className="flex items-center gap-4 shrink-0">
                     <Switch
                       checked={s.enabled}
@@ -345,14 +363,18 @@ export default function SchedulingTab({ shopId = 0 }: SchedulingTabProps) {
                       <input
                         type="time"
                         value={s.start}
-                        onChange={(e) => updateSchedule(day, { start: e.target.value })}
+                        onChange={(e) =>
+                          updateSchedule(day, { start: e.target.value })
+                        }
                         className="rounded-md border border-gray-200 bg-gray-50 px-2 py-1.5 text-sm text-gray-700 outline-none focus:border-[#6571FF] focus:ring-1 focus:ring-[#6571FF]"
                       />
                       <span className="text-sm text-gray-400">to</span>
                       <input
                         type="time"
                         value={s.end}
-                        onChange={(e) => updateSchedule(day, { end: e.target.value })}
+                        onChange={(e) =>
+                          updateSchedule(day, { end: e.target.value })
+                        }
                         className="rounded-md border border-gray-200 bg-gray-50 px-2 py-1.5 text-sm text-gray-700 outline-none focus:border-[#6571FF] focus:ring-1 focus:ring-[#6571FF]"
                       />
                     </div>
@@ -377,4 +399,3 @@ export default function SchedulingTab({ shopId = 0 }: SchedulingTabProps) {
     </div>
   );
 }
-

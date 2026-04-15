@@ -30,9 +30,8 @@ interface User {
 function Header() {
   return (
     <div className="p-6  border-b border-slate-200">
-      
-        <h1 className="text-lg font-bold">Account Settings</h1>
-     
+      <h1 className="text-lg font-bold">Account Settings</h1>
+
       <p className="text-slate-400 text-sm">
         Manage your security preferences.
       </p>
@@ -89,7 +88,7 @@ function Content() {
         errorToast(message);
         return;
       }
-      setUser(prev => ({ ...prev, twoFactorEnabled: false }));
+      setUser((prev) => ({ ...prev, twoFactorEnabled: false }));
       successToast(message);
     } else {
       // Logic to enable
@@ -98,7 +97,7 @@ function Content() {
         errorToast(outcome.message);
         return;
       }
-      setUser(prev => ({ ...prev, twoFactorEnabled: true }));
+      setUser((prev) => ({ ...prev, twoFactorEnabled: true }));
       successToast(outcome.message);
     }
   };
@@ -140,7 +139,9 @@ function Content() {
                 <Mail className="w-5 h-5" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-slate-900 font-medium text-sm truncate">{user?.email}</p>
+                <p className="text-slate-900 font-medium text-sm truncate">
+                  {user?.email}
+                </p>
                 <p className="text-slate-400 text-xs">Primary Email</p>
               </div>
             </div>

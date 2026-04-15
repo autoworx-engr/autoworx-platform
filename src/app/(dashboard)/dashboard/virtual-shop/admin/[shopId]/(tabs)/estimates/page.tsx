@@ -2,7 +2,11 @@ import EstimatesTab from "../../../components/EstimatesTab";
 import { authOptions } from "@/authOptions";
 import { getServerSession } from "next-auth";
 import ShopNotFound from "@/app/subdomain/[subdomain]/components/giftcards/ShopNotFound";
-import { FilterStatus, AppointmentStatus, Estimate } from "../../../components/EstimatesTab.types";
+import {
+  FilterStatus,
+  AppointmentStatus,
+  Estimate,
+} from "../../../components/EstimatesTab.types";
 
 type PageSearchParams = {
   search?: string | string[];
@@ -78,7 +82,13 @@ type ServiceBookingListResponse = {
 };
 
 const PAGE_SIZE = 10;
-const STATUSES: FilterStatus[] = ["all", "confirmed", "pending", "completed", "cancelled"];
+const STATUSES: FilterStatus[] = [
+  "all",
+  "confirmed",
+  "pending",
+  "completed",
+  "cancelled",
+];
 
 const first = (value?: string | string[]) =>
   Array.isArray(value) ? value[0] : value;
@@ -175,18 +185,26 @@ function toEstimate(item: ShopBookingRow): Estimate {
     0,
   );
 
-  const subtotal = Number(item.subtotal ?? item.invoice?.subtotal ?? fallbackSubtotal);
+  const subtotal = Number(
+    item.subtotal ?? item.invoice?.subtotal ?? fallbackSubtotal,
+  );
   const taxRate = Number(item.invoice?.tax ?? 0);
   const vehicleExtraCost = Number(item.invoice?.vehicleExtraCost ?? 0);
   const serviceFee = Number(item.serviceFee ?? item.invoice?.serviceFee ?? 0);
-  const total = Number(item.total ?? item.invoice?.grandTotal ?? subtotal + serviceFee);
+  const total = Number(
+    item.total ?? item.invoice?.grandTotal ?? subtotal + serviceFee,
+  );
   const totalServiceCost = subtotal - vehicleExtraCost;
   const taxAmount = Number(item.tax ?? (totalServiceCost * taxRate) / 100);
 
-  const fullName = `${item.client?.firstName || ""} ${item.client?.lastName || ""}`.trim();
+  const fullName =
+    `${item.client?.firstName || ""} ${item.client?.lastName || ""}`.trim();
   const startMinutes = parseTimeToMinutes(item.appointment?.startTime);
   const endMinutes = parseTimeToMinutes(item.appointment?.endTime);
-  const serviceDuration = services.reduce((sum, svc) => sum + svc.durationMinutes, 0);
+  const serviceDuration = services.reduce(
+    (sum, svc) => sum + svc.durationMinutes,
+    0,
+  );
 
   const duration =
     startMinutes !== null && endMinutes !== null && endMinutes > startMinutes
@@ -220,7 +238,9 @@ export default async function VirtualShopEstimatesPage({
 }: VirtualShopEstimatesPageProps) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const search = first(resolvedSearchParams?.search)?.trim() || "";
-  const rawStatus = (first(resolvedSearchParams?.status) || "all").toLowerCase();
+  const rawStatus = (
+    first(resolvedSearchParams?.status) || "all"
+  ).toLowerCase();
   const status: FilterStatus = STATUSES.includes(rawStatus as FilterStatus)
     ? (rawStatus as FilterStatus)
     : "all";

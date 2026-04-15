@@ -10,7 +10,7 @@ import z from "zod";
 const searchParamsValidation = z.object({
   year: z
     .string({ invalid_type_error: "Year must be a string" })
-    .refine(value => {
+    .refine((value) => {
       if (!value) return true;
       const year = parseInt(value);
       if (isNaN(year)) {

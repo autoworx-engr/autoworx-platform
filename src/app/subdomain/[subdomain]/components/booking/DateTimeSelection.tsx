@@ -43,7 +43,6 @@ export const DateTimeSelection = () => {
     true,
   );
 
- 
   const handleDateSelect = (value: dayjs.Dayjs) => {
     const date = value.toDate();
     setSelectedDate(date);
@@ -149,7 +148,9 @@ export const DateTimeSelection = () => {
                           size="icon"
                           variant="ghost"
                           className="h-7 w-7"
-                          onClick={() => onChange(value.month(value.month() - 1))}
+                          onClick={() =>
+                            onChange(value.month(value.month() - 1))
+                          }
                         >
                           <ArrowLeft className="w-4 h-4" />
                         </Button>
@@ -157,7 +158,9 @@ export const DateTimeSelection = () => {
                           size="icon"
                           variant="ghost"
                           className="h-7 w-7"
-                          onClick={() => onChange(value.month(value.month() + 1))}
+                          onClick={() =>
+                            onChange(value.month(value.month() + 1))
+                          }
                         >
                           <ArrowRight className="w-4 h-4" />
                         </Button>

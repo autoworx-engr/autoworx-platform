@@ -900,11 +900,15 @@ export const updateGiftCardSettings = async function (
     const response = await axios.patch<{
       success: boolean;
       data: GiftCardSettingsData;
-    }>("/api/virtual-shop/gift-card-settings", { shopId, ...payload }, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
+    }>(
+      "/api/virtual-shop/gift-card-settings",
+      { shopId, ...payload },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
       },
-    });
+    );
 
     return response.data?.data;
   } catch (error) {
@@ -944,11 +948,15 @@ export const createGiftCardTemplate = async function (
     const response = await axios.post<{
       success: boolean;
       data: GiftCardTemplateData;
-    }>("/api/virtual-shop/gift-card-templates", { shopId, ...payload }, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
+    }>(
+      "/api/virtual-shop/gift-card-templates",
+      { shopId, ...payload },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
       },
-    });
+    );
 
     return response.data?.data;
   } catch (error) {
@@ -995,9 +1003,7 @@ export const getGiftCardTemplatesPublic = async function (shopId: number) {
   }
 };
 
-export const getGiftCardSettingsByShopId = async function (
-  shopId: number,
-) {
+export const getGiftCardSettingsByShopId = async function (shopId: number) {
   try {
     const response = await axios.get<{
       success: boolean;
@@ -1093,11 +1099,15 @@ export const createGiftCardPromo = async function (
     const response = await axios.post<{
       success: boolean;
       data: GiftCardPromoData;
-    }>("/api/virtual-shop/gift-card-promos", { shopId, ...payload }, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
+    }>(
+      "/api/virtual-shop/gift-card-promos",
+      { shopId, ...payload },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
       },
-    });
+    );
 
     return response.data?.data;
   } catch (error) {

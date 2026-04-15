@@ -56,7 +56,10 @@ export const CartDrawer = () => {
                 className="flex items-center gap-3 p-3 rounded-lg bg-muted/50"
               >
                 <img
-                  src={item.service.images[0] || "https://img.freepik.com/free-vector/businessman-with-smartphone-rents-car-street-via-carsharing-service-carsharing-service-short-periods-rent-best-taxi-alternative-concept_335657-2201.jpg?t=st=1774777481~exp=1774781081~hmac=392773361784ea1099eb657d3d5371390f1e88bb056a7d5b0aa0c5585b60204d&w=1480"}
+                  src={
+                    item.service.images[0] ||
+                    "https://img.freepik.com/free-vector/businessman-with-smartphone-rents-car-street-via-carsharing-service-carsharing-service-short-periods-rent-best-taxi-alternative-concept_335657-2201.jpg?t=st=1774777481~exp=1774781081~hmac=392773361784ea1099eb657d3d5371390f1e88bb056a7d5b0aa0c5585b60204d&w=1480"
+                  }
                   alt=""
                   className="w-14 h-14 rounded-lg object-cover"
                 />

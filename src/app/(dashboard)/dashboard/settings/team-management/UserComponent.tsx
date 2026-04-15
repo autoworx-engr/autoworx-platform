@@ -32,13 +32,13 @@ const UserList: React.FC = () => {
         const fetchedUsers = await teamManagementUser();
         const searchedUsers = search.toLowerCase();
         let filteredUsers = fetchedUsers.filter(
-          (user) => user.employeeType !== EmployeeType.Admin
+          (user) => user.employeeType !== EmployeeType.Admin,
         );
         if (searchedUsers) {
           filteredUsers = filteredUsers.filter((user) =>
             `${user.firstName} ${user.lastName}`
               .toLowerCase()
-              .includes(searchedUsers)
+              .includes(searchedUsers),
           );
         }
         setUsers(filteredUsers);

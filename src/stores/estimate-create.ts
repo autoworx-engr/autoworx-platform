@@ -92,7 +92,7 @@ interface EstimateCreateStore {
   }) => void;
 }
 
-export const useEstimateCreateStore = create<EstimateCreateStore>(set => ({
+export const useEstimateCreateStore = create<EstimateCreateStore>((set) => ({
   invoiceId: "",
   type: "",
   title: "",
@@ -165,7 +165,7 @@ export const useEstimateCreateStore = create<EstimateCreateStore>(set => ({
 
   setInspections: (inspections: InspectionType[]) => set({ inspections }),
   updateInspection: (index: number, inspection: InspectionType) =>
-    set(state => {
+    set((state) => {
       const updatedInspections = [...state.inspections];
       updatedInspections[index] = inspection;
       return { inspections: updatedInspections };
@@ -205,7 +205,7 @@ export const useEstimateCreateStore = create<EstimateCreateStore>(set => ({
     }),
 
   removeMaterial({ itemIndex, materialIndex }) {
-    set(state => {
+    set((state) => {
       const items = state.items.map((item, index) => {
         if (index === itemIndex && item.materials.length > 0) {
           const materials = item.materials.filter((material, i) => {

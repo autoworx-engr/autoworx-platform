@@ -37,7 +37,7 @@ export default function ColumnItem({
   const [{ isDragging }, drag] = useDrag({
     type: ItemType,
     item: { id: column.id, index },
-    collect: monitor => ({
+    collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
   });
@@ -66,7 +66,7 @@ export default function ColumnItem({
           type="text"
           ref={inputRef}
           value={column.title}
-          onChange={e => handleColumnChange(index, e.target.value)}
+          onChange={(e) => handleColumnChange(index, e.target.value)}
           className={`w-full px-3 py-2 text-sm font-medium rounded-lg border transition-all outline-none ${
             isRestricted
               ? "bg-slate-100 border-slate-200 text-slate-600 cursor-grab"

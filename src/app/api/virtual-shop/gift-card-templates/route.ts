@@ -5,15 +5,17 @@ import { AppError } from "@/error-boundary/error";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { z } from "zod";
 
-const createTemplateSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters").max(255),
-  imageUrl: z.string().url("Must be a valid URL"),
-  isActive: z.boolean().optional().default(true),
-  isDefault: z.boolean().optional().default(false),
-}).refine(data => !(data.isActive === false && data.isDefault === true), {
-  message: "A template cannot be set as default if it is inactive",
-  path: ["isDefault"],
-});
+const createTemplateSchema = z
+  .object({
+    name: z.string().min(2, "Name must be at least 2 characters").max(255),
+    imageUrl: z.string().url("Must be a valid URL"),
+    isActive: z.boolean().optional().default(true),
+    isDefault: z.boolean().optional().default(false),
+  })
+  .refine((data) => !(data.isActive === false && data.isDefault === true), {
+    message: "A template cannot be set as default if it is inactive",
+    path: ["isDefault"],
+  });
 
 /**
  * @swagger
@@ -156,7 +158,7 @@ export async function POST(req: NextRequest) {
     if (!parsedBody.success) {
       throw new AppError(
         400,
-        `Validation Error: ${parsedBody.error.errors.map(e => e.message).join(", ")}`
+        `Validation Error: ${parsedBody.error.errors.map((e) => e.message).join(", ")}`,
       );
     }
 
@@ -198,7 +200,11 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json(
-      { success: true, message: "Template created successfully", data: newTemplate },
+      {
+        success: true,
+        message: "Template created successfully",
+        data: newTemplate,
+      },
       { status: 201 },
     );
   } catch (error: any) {

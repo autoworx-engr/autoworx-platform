@@ -48,7 +48,9 @@ export function GiftCardPurchaseStats({ summary }: GiftCardPurchaseStatsProps) {
             {label}
           </p>
           <p className={`text-lg font-bold mt-1 ${color}`}>{value}</p>
-          <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{sub}</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+            {sub}
+          </p>
         </div>
       ))}
     </div>

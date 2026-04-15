@@ -8,7 +8,10 @@
       "Bash(npx --yes @next/codemod@canary next-async-request-api . --force)",
       "Bash(echo \"EXIT=$?\")",
       "Bash(yarn info:*)",
-      "Bash(yarn build:*)"
+      "Bash(yarn build:*)",
+      "Bash(ls eslint.config.*)",
+      "Bash(ls -la .next/build.lock .next/*.lock)",
+      "Bash(tasklist //FI \"IMAGENAME eq node.exe\")"
     ]
   }
 }

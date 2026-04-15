@@ -35,7 +35,6 @@ export const ServiceCard = ({ service }: { service: Service }) => {
     setSelectedType(type);
   };
 
-  
   return (
     <div
       className={cn(
@@ -45,7 +44,10 @@ export const ServiceCard = ({ service }: { service: Service }) => {
     >
       <div className="relative aspect-[16/10] overflow-hidden">
         <img
-          src={service.images[0] || "https://img.freepik.com/free-vector/businessman-with-smartphone-rents-car-street-via-carsharing-service-carsharing-service-short-periods-rent-best-taxi-alternative-concept_335657-2201.jpg?t=st=1774777481~exp=1774781081~hmac=392773361784ea1099eb657d3d5371390f1e88bb056a7d5b0aa0c5585b60204d&w=1480"}
+          src={
+            service.images[0] ||
+            "https://img.freepik.com/free-vector/businessman-with-smartphone-rents-car-street-via-carsharing-service-carsharing-service-short-periods-rent-best-taxi-alternative-concept_335657-2201.jpg?t=st=1774777481~exp=1774781081~hmac=392773361784ea1099eb657d3d5371390f1e88bb056a7d5b0aa0c5585b60204d&w=1480"
+          }
           alt={service.title}
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           loading="lazy"

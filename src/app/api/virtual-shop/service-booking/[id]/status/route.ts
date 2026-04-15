@@ -86,9 +86,10 @@ const updateStatusSchema = z.object({
  */
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  props: { params: Promise<{ id: string }> },
 ) {
   try {
+    const params = await props.params;
     const bookingId = parseInt(params.id, 10);
     if (isNaN(bookingId)) {
       throw new AppError(400, "Invalid booking ID");
