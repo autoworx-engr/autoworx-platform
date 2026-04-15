@@ -392,7 +392,7 @@ const Leads = ({ salesColumn }: TProps) => {
       newColumnId: number;
     }) => {
       try {
-        const res = await fetch(`/api/pipeline/sales/lead/${leadId}/column`, {
+        const res = await fetch(`/api/pipeline/sales/leads/${leadId}/column`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ newColumnId }),
@@ -456,7 +456,7 @@ const Leads = ({ salesColumn }: TProps) => {
     },
     [leads],
   );
-  console.log("leads", leads);
+
   return (
     <div className="">
       {/* TODO */}
