@@ -455,7 +455,7 @@ const Leads = ({ salesColumn }: TProps) => {
     },
     [leads],
   );
-  console.log("leads", leads);
+
   return (
     <div className="space-y-8 px-3">
       {/* TODO */}
