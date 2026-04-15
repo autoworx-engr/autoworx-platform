@@ -39,6 +39,7 @@ export async function PUT(
 ) {
   try {
     const leadId = parseInt(params.id);
+
     if (isNaN(leadId)) {
       return NextResponse.json(
         { success: false, error: "Invalid lead ID" },
