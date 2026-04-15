@@ -15,6 +15,7 @@ import { KPICard } from "./KPICard";
 interface KPIGridProps {
   kpis?: {
     totalPayments: number;
+    paymentsCollected: number;
     totalJobs: number;
     appointments: number;
     averageTicket: number;
@@ -87,7 +88,7 @@ export const KPIGrid = ({ kpis }: KPIGridProps) => {
 
         <KPICard
           title="Payments Collected"
-          value={`$${(kpis.totalPayments ?? 0).toLocaleString()}`}
+          value={`$${(kpis.paymentsCollected ?? 0).toLocaleString()}`}
           subLabel="Payments + Deposits"
           icon={CreditCard}
           delay={350}
