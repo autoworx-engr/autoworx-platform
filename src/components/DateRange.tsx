@@ -134,7 +134,7 @@ const DateRange = ({
         >
           {isRangeSelected
             ? formatRange(state.selection.startDate, state.selection.endDate)
-            : "Select Date Range"}
+            : "Select Date"}
         </span>
         <Calendar
           className={`w-4 h-4 ${showPicker || isRangeSelected ? "text-[#6571FF]" : "text-slate-400"}`}
