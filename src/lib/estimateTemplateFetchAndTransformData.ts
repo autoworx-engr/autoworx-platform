@@ -15,7 +15,7 @@ export async function estimateTemplateFetchAndTransformData(
     searchTerm?: string;
     take?: string;
   } = {},
-  timezone: string
+  timezone: string,
 ) {
   const page = Number(searchParams.page) || 1;
   const take = Number(searchParams.take) || defaultTake;
@@ -101,7 +101,7 @@ export async function estimateTemplateFetchAndTransformData(
 
   const sortedData = data.sort(
     (a: { status: string }, b: { status: string }) =>
-      getStatusPriority(a?.status) - getStatusPriority(b?.status)
+      getStatusPriority(a?.status) - getStatusPriority(b?.status),
   );
 
   return {

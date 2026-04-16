@@ -19,7 +19,7 @@ interface SalaryUpdateRequest {
 export async function getEmployeeSalary(userId: number) {
   try {
     const companyId = await getCompanyId();
-    
+
     const salaryHistory = await db.salaryHistory.findFirst({
       where: {
         userId,

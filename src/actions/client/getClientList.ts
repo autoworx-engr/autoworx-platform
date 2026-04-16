@@ -5,7 +5,7 @@ import { Prisma } from "@prisma/client";
 
 export default async function getClientList(
   params: Prisma.ClientFindManyArgs = {},
-  search?: string
+  search?: string,
 ) {
   try {
     const companyId = await getCompanyId();

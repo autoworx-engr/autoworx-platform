@@ -55,7 +55,7 @@ export async function deleteRemindersInNest(id: string) {
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
     console.log("🚀 ~ deleteRemindersInNest ~ end:");
     return data;

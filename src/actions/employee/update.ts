@@ -73,7 +73,7 @@ export async function updateEmployee({
       lastName,
       email,
       phone: mobileNumber,
-      countryCode:countryCode,
+      countryCode: countryCode,
       address,
       city,
       state,

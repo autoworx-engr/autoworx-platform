@@ -7,6 +7,6 @@ export const useFindOneTagAutomationRule = (id: number) => {
     queryKey: ["tag-automation", id],
     queryFn: async () => findOneTagAutomationRule(id),
     enabled: !!id,
-    staleTime: 3600 * 1000
+    staleTime: 3600 * 1000,
   });
 };

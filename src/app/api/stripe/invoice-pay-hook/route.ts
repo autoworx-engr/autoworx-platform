@@ -340,7 +340,7 @@ export async function POST(req: NextRequest) {
         for (const invoice of invoicesWithDue) {
           const paymentAmount = Math.min(
             Number(invoice.due ?? 0),
-            statementBaseAmount - totalPaid
+            statementBaseAmount - totalPaid,
           );
 
           if (paymentAmount <= 0) break;

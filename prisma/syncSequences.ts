@@ -47,37 +47,35 @@ async function syncSequences() {
 
         const sequenceName = sequenceInfo[0]?.sequence_name;
         if (!sequenceName) {
-          console.log(
-            `⚠️  No sequence found for ${table_name}.${column_name}`
-          );
+          console.log(`⚠️  No sequence found for ${table_name}.${column_name}`);
           continue;
         }
 
         // Get the max ID from the table
         const result: Array<{ max: number | null }> =
           await prisma.$queryRawUnsafe(
-            `SELECT MAX("${column_name}") as max FROM "public"."${table_name}"`
+            `SELECT MAX("${column_name}") as max FROM "public"."${table_name}"`,
           );
 
         const maxId = result[0]?.max;
         if (maxId === null || maxId === undefined) {
           console.log(
-            `⚠️  No records found in ${table_name}, skipping sequence sync`
+            `⚠️  No records found in ${table_name}, skipping sequence sync`,
           );
           continue;
         }
 
         // Set sequence to max ID
         await prisma.$executeRawUnsafe(
-          `SELECT setval('${sequenceName}', ${maxId}, true)`
+          `SELECT setval('${sequenceName}', ${maxId}, true)`,
         );
         console.log(
-          `✅ Synced ${sequenceName} to ${maxId} (table: ${table_name})`
+          `✅ Synced ${sequenceName} to ${maxId} (table: ${table_name})`,
         );
       } catch (err: any) {
         console.error(
           `❌ Error syncing sequence for ${table_name}:`,
-          err.message
+          err.message,
         );
       }
     }

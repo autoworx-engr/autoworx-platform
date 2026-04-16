@@ -6,11 +6,11 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const session = await getServerSession(authOptions);
-    const companyId = session?.user.companyId;
+  const companyId = session?.user.companyId;
 
-    if (!companyId) {
-      throw new Error("Company ID is required to create an email template.");
-    }
+  if (!companyId) {
+    throw new Error("Company ID is required to create an email template.");
+  }
   const code = searchParams.get("code");
   if (!code)
     return NextResponse.redirect(

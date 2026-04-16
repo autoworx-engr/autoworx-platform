@@ -28,20 +28,20 @@ interface EmployeeFilterState {
   }): void;
 }
 
-export const useEmployeeFilterStore = create<EmployeeFilterState>(set => ({
+export const useEmployeeFilterStore = create<EmployeeFilterState>((set) => ({
   dateRange: [null, null],
   type: "All",
   search: "",
   currentPage: 1,
   pageSize: 50,
   setFilter: ({ dateRange, type, search }) =>
-    set(state => ({
+    set((state) => ({
       dateRange: dateRange !== undefined ? dateRange : state.dateRange,
       type: type || state.type,
       search: search ?? state.search,
     })),
   setPaginate: ({ currentPage, pageSize }) =>
-    set(state => ({
+    set((state) => ({
       currentPage: currentPage ?? state.currentPage,
       pageSize: pageSize || state.pageSize,
     })),

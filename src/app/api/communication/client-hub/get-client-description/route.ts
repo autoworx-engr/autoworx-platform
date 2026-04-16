@@ -86,7 +86,7 @@ export async function GET(req: NextRequest) {
     if (!clientIdParam) {
       return NextResponse.json(
         { success: false, message: "clientId is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -96,14 +96,14 @@ export async function GET(req: NextRequest) {
     if (isNaN(clientId)) {
       return NextResponse.json(
         { success: false, message: "clientId must be a valid number" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (companyIdParam && isNaN(companyId)) {
       return NextResponse.json(
         { success: false, message: "companyId must be a valid number" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -120,7 +120,7 @@ export async function GET(req: NextRequest) {
         success: false,
         message: error?.message || "Failed to retrieve client description",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

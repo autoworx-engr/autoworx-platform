@@ -1,4 +1,3 @@
-
 import { allCompanyFeaturePermissions } from "@/service/feature-permissions/api";
 import { useQuery } from "@tanstack/react-query";
 

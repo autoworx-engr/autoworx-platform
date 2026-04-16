@@ -2,9 +2,8 @@
 import { db } from "@/lib/db";
 import { Vehicle } from "@prisma/client";
 
-
 export async function getVehicleByInvoiceId(
-  invoiceId: string
+  invoiceId: string,
 ): Promise<Vehicle | null> {
   if (!invoiceId) return null;
   const vehicleInfo = await db.invoice.findUnique({

@@ -83,7 +83,7 @@ export async function POST(req: Request) {
       "FRIDAY",
       "SATURDAY",
       "SUNDAY",
-    ].map(day => ({
+    ].map((day) => ({
       dayOfWeek: day as any,
       isOpen: true,
       startTime: defaultStartTime,

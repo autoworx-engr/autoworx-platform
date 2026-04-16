@@ -24,7 +24,7 @@ import { NextResponse } from "next/server";
  */
 export async function GET(
   req: Request,
-  { params }: { params: { filename: string } }
+  { params }: { params: { filename: string } },
 ) {
   const { filename } = params;
   // ✅ use system temp dir, safe in serverless (Vercel/Lambda/etc.)

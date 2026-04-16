@@ -36,7 +36,7 @@ export async function POST(req: Request) {
   if (!resetToken || resetToken.expiresAt < new Date()) {
     return NextResponse.json(
       { error: "Invalid or expired token" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -59,6 +59,6 @@ export async function POST(req: Request) {
       message: "Password reset successful",
       email: user?.email,
     },
-    { status: 200 }
+    { status: 200 },
   );
 }

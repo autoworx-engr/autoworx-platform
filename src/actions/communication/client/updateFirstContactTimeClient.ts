@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 
 const updateFirstContactTimeClient = async (
   clientId: number,
-  companyId?: number
+  companyId?: number,
 ) => {
   const cId = companyId || (await getCompanyId());
   let client = await db.client.findFirst({

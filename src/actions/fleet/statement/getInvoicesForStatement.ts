@@ -7,7 +7,9 @@ import { ServerAction } from "@/types/action";
 import { TErrorHandler } from "@/types/globalError";
 import { getServerSession } from "next-auth";
 
-export async function getUnpaidInvoicesForFleet(fleetId: number): Promise<ServerAction | TErrorHandler> {
+export async function getUnpaidInvoicesForFleet(
+  fleetId: number,
+): Promise<ServerAction | TErrorHandler> {
   try {
     const session = await getServerSession(authOptions);
     const companyId = session?.user.companyId;
@@ -50,7 +52,7 @@ export async function getUnpaidInvoicesForFleet(fleetId: number): Promise<Server
         column: true,
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
 
@@ -65,7 +67,9 @@ export async function getUnpaidInvoicesForFleet(fleetId: number): Promise<Server
   }
 }
 
-export async function getFleetStatements(fleetId?: number): Promise<ServerAction | TErrorHandler> {
+export async function getFleetStatements(
+  fleetId?: number,
+): Promise<ServerAction | TErrorHandler> {
   try {
     const session = await getServerSession(authOptions);
     const companyId = session?.user.companyId;
@@ -103,25 +107,25 @@ export async function getFleetStatements(fleetId?: number): Promise<ServerAction
         },
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
 
     // Calculate totals for each statement
-    const statementsWithTotals = statements.map(statement => {
+    const statementsWithTotals = statements.map((statement) => {
       const totalAmount = statement.invoice.reduce(
         (sum, invoice) => sum + Number(invoice.grandTotal || 0),
-        0
+        0,
       );
-      
+
       const totalPaid = statement.invoice.reduce(
         (sum, invoice) => sum + Number(invoice.totalPayment || 0),
-        0
+        0,
       );
-      
+
       const totalDue = statement.invoice.reduce(
         (sum, invoice) => sum + Number(invoice.due || 0),
-        0
+        0,
       );
 
       return {

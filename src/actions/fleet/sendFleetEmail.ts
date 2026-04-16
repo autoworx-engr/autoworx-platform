@@ -54,12 +54,12 @@ export async function sendFleetEmail({ statementId }: { statementId: string }) {
     let variabledSubject = template.subject
       ?.replace(
         "<CLIENT>",
-        fleetStatement?.invoice?.[0].client?.firstName || "No client"
+        fleetStatement?.invoice?.[0].client?.firstName || "No client",
       )
       .replace(
         "<BUSINESS_NAME>",
         fleetStatement?.invoice?.[0]?.client?.company?.name ||
-          "No business name"
+          "No business name",
       );
     const clientName =
       (fleetStatement?.invoice?.[0]?.client?.firstName

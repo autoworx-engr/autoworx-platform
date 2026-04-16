@@ -13,8 +13,8 @@ export const useUpdateCompanyPermission = () => {
     mutationFn: async (updates: PermissionUpdate[]) => {
       return await Promise.all(
         updates.map((u) =>
-          updatePermission(u.companyId, u.permission_name, u.enabled)
-        )
+          updatePermission(u.companyId, u.permission_name, u.enabled),
+        ),
       );
     },
 
@@ -41,7 +41,7 @@ export const useBulkUpdatePermissions = () => {
     }) => {
       return await bulkUpdatePermissions(
         payload.companyId,
-        payload.permissions
+        payload.permissions,
       );
     },
 

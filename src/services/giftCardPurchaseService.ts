@@ -181,11 +181,7 @@ export async function buildGiftCardPurchaseContext(
     },
   });
 
-  if (
-    !template ||
-    template.shopId !== input.shopId ||
-    !template.isActive
-  ) {
+  if (!template || template.shopId !== input.shopId || !template.isActive) {
     throw new AppError(400, "Invalid or inactive gift card template");
   }
 

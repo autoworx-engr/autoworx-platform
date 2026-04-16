@@ -21,7 +21,7 @@ const updatePromoSchema = z
     isActive: z.boolean().optional(),
   })
   .refine(
-    data => {
+    (data) => {
       if (data.type === "Percentage" && data.value && data.value > 100) {
         return false;
       }
@@ -128,7 +128,7 @@ export async function PATCH(
     if (!parsedBody.success) {
       throw new AppError(
         400,
-        `Validation Error: ${parsedBody.error.errors.map(e => e.message).join(", ")}`,
+        `Validation Error: ${parsedBody.error.errors.map((e) => e.message).join(", ")}`,
       );
     }
 

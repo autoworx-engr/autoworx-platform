@@ -44,10 +44,10 @@ export async function editTask({
 
     // Find the difference between the existing users and the new users
     const toRemove = taskUsers.filter(
-      taskUser => !assignedUsers?.includes(taskUser.userId),
+      (taskUser) => !assignedUsers?.includes(taskUser.userId),
     );
     const toAdd = assignedUsers?.filter(
-      userId => !taskUsers.find(taskUser => taskUser.userId === userId),
+      (userId) => !taskUsers.find((taskUser) => taskUser.userId === userId),
     );
 
     // Remove the users

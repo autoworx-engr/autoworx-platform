@@ -25,7 +25,7 @@ import os from "os";
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { filename: string } }
+  { params }: { params: { filename: string } },
 ) {
   try {
     // serverless-safe writable path

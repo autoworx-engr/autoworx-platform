@@ -155,7 +155,7 @@ export async function createInvoice({
       }
     }
 
-    const invoice = await db.$transaction(async db => {
+    const invoice = await db.$transaction(async (db) => {
       // Step 3: Determine the column ID for invoice placement
       let finalColumnId = columnId;
       let isWorkOrder = false;
@@ -277,7 +277,7 @@ export async function createInvoice({
         }
       }
       //save the inspections
-      const inspectionsToSave = inspections.filter(inspection => {
+      const inspectionsToSave = inspections.filter((inspection) => {
         const hasTitle =
           !!inspection.title && inspection.title.toString().trim() !== "";
         const hasFlags = !!inspection.driver || !!inspection.passenger;
@@ -288,7 +288,7 @@ export async function createInvoice({
 
       if (inspectionsToSave.length > 0) {
         await Promise.all(
-          inspectionsToSave.map(async inspection => {
+          inspectionsToSave.map(async (inspection) => {
             return db.invoiceInspection.create({
               data: {
                 invoiceId: newInvoice.id,
@@ -319,7 +319,7 @@ export async function createInvoice({
         const productsWithQuantity = getProductWithQuantity(materials);
 
         await Promise.all(
-          productsWithQuantity.map(async product => {
+          productsWithQuantity.map(async (product) => {
             if (!product.id) return;
             const findInventoryProduct = await db.inventoryProduct.findUnique({
               where: { id: product.id },
@@ -341,7 +341,7 @@ export async function createInvoice({
 
       // Step 7: Process and upload photos
       await Promise.all(
-        photos.map(async photo => {
+        photos.map(async (photo) => {
           return db.invoicePhoto.create({
             data: {
               invoiceId: newInvoice.id,
@@ -354,7 +354,7 @@ export async function createInvoice({
       // Step 8: Process invoice items (services, materials, labor, tags)
       const serviceIndex: (number | undefined)[] = [];
       await Promise.all(
-        items.map(async item => {
+        items.map(async (item) => {
           const service = item.service;
           serviceIndex.push(service?.id);
           const materials = item.materials;
@@ -378,7 +378,7 @@ export async function createInvoice({
 
             // Create labor tags
             await Promise.all(
-              labor.tags.map(async tag => {
+              labor.tags.map(async (tag) => {
                 return db.laborTag.create({
                   data: {
                     laborId: newLabor.id,
@@ -403,7 +403,7 @@ export async function createInvoice({
 
           // Create materials
           await Promise.all(
-            materials.map(async material => {
+            materials.map(async (material) => {
               if (!material || !material.name) return;
               if (Number(material?.quantity || 0) <= 0) {
                 throw new Error("Material quantity should be greater than 0");
@@ -432,7 +432,7 @@ export async function createInvoice({
               });
               // Create material tag
               await Promise.all(
-                material.tags.map(async tag => {
+                material.tags.map(async (tag) => {
                   return db.materialTag.create({
                     data: {
                       materialId: newMat.id,
@@ -447,7 +447,7 @@ export async function createInvoice({
 
           // Process tags
           await Promise.all(
-            tags.map(async tag => {
+            tags.map(async (tag) => {
               return db.itemTag.create({
                 data: {
                   itemId: invoiceItem.id,
@@ -492,7 +492,7 @@ export async function createInvoice({
 
     // Create associated tasks
     await Promise.all(
-      tasks.map(async task => {
+      tasks.map(async (task) => {
         if (!task) return;
 
         const taskSplit = task.task.split(":");

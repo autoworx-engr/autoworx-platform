@@ -37,5 +37,9 @@ export const makeFleetStatementPaymentValidationSchema = z.object({
   paymentMethodId: z.number().optional(),
 });
 
-export type CreateFleetStatementInput = z.infer<typeof createFleetStatementValidationSchema>;
-export type MakeFleetStatementPaymentInput = z.infer<typeof makeFleetStatementPaymentValidationSchema>;
+export type CreateFleetStatementInput = z.infer<
+  typeof createFleetStatementValidationSchema
+>;
+export type MakeFleetStatementPaymentInput = z.infer<
+  typeof makeFleetStatementPaymentValidationSchema
+>;

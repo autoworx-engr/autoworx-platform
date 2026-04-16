@@ -6,23 +6,31 @@ import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 
-const createPromoSchema = z.object({
-  code: z.string().min(2, "Code must be at least 2 characters").max(50, "Code is too long"),
-  type: z.enum(["Percentage", "Fixed"]),
-  value: z.number().positive("Value must be a positive number"),
-  startDate: z.string().optional().nullable(),
-  expireDate: z.string().optional().nullable(),
-  usageLimit: z.number().int().nonnegative().optional().nullable(),
-  isActive: z.boolean().optional(),
-}).refine((data) => {
-  if (data.type === "Percentage" && data.value > 100) {
-    return false;
-  }
-  return true;
-}, {
-  message: "Percentage value cannot exceed 100",
-  path: ["value"],
-});
+const createPromoSchema = z
+  .object({
+    code: z
+      .string()
+      .min(2, "Code must be at least 2 characters")
+      .max(50, "Code is too long"),
+    type: z.enum(["Percentage", "Fixed"]),
+    value: z.number().positive("Value must be a positive number"),
+    startDate: z.string().optional().nullable(),
+    expireDate: z.string().optional().nullable(),
+    usageLimit: z.number().int().nonnegative().optional().nullable(),
+    isActive: z.boolean().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.type === "Percentage" && data.value > 100) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Percentage value cannot exceed 100",
+      path: ["value"],
+    },
+  );
 
 /**
  * @swagger
@@ -83,10 +91,7 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json(
-      { success: true, data: promos },
-      { status: 200 },
-    );
+    return NextResponse.json({ success: true, data: promos }, { status: 200 });
   } catch (error: any) {
     const formattedError = errorHandler(error);
     return NextResponse.json(
@@ -174,7 +179,7 @@ export async function POST(req: NextRequest) {
     if (!parsedBody.success) {
       throw new AppError(
         400,
-        `Validation Error: ${parsedBody.error.errors.map(e => e.message).join(", ")}`
+        `Validation Error: ${parsedBody.error.errors.map((e) => e.message).join(", ")}`,
       );
     }
 
@@ -192,15 +197,8 @@ export async function POST(req: NextRequest) {
       throw new AppError(404, "Shop not found or access denied");
     }
 
-    const {
-      code,
-      type,
-      value,
-      startDate,
-      expireDate,
-      usageLimit,
-      isActive,
-    } = parsedBody.data;
+    const { code, type, value, startDate, expireDate, usageLimit, isActive } =
+      parsedBody.data;
 
     // Check if code exists uniquely for this shop
     const existingPromo = await db.giftCardPromo.findUnique({
@@ -213,7 +211,10 @@ export async function POST(req: NextRequest) {
     });
 
     if (existingPromo) {
-      throw new AppError(400, `Promo code "${code}" already exists for this shop`);
+      throw new AppError(
+        400,
+        `Promo code "${code}" already exists for this shop`,
+      );
     }
 
     const newPromo = await db.giftCardPromo.create({
@@ -231,7 +232,11 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json(
-      { success: true, message: "Promo code created successfully", data: newPromo },
+      {
+        success: true,
+        message: "Promo code created successfully",
+        data: newPromo,
+      },
       { status: 201 },
     );
   } catch (error: any) {

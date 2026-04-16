@@ -37,14 +37,14 @@ export async function updateWorkOrderStatus(id: string): Promise<ServerAction> {
   }
 
   const allComplete = technicians.every(
-    (technician) => technician.status === "Complete"
+    (technician) => technician.status === "Complete",
   );
   const anyInProgress = technicians.some(
-    (technician) => technician.status === "In Progress"
+    (technician) => technician.status === "In Progress",
   );
   const anyPending = technicians.some(
     (technician) =>
-      technician.status === "Pending" || technician.status === "Cancel"
+      technician.status === "Pending" || technician.status === "Cancel",
   );
 
   // Check if the current status is already "Completed" and all technicians are complete

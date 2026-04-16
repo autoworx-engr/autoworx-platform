@@ -8,7 +8,10 @@ type FetchOptions = RequestInit & {
  * A wrapper around native `fetch` specifically for Server Components.
  * Automatically injects cookies, Base URL, Content-Type, and builds search parameters.
  */
-export async function serverFetch(endpoint: string, options: FetchOptions = {}) {
+export async function serverFetch(
+  endpoint: string,
+  options: FetchOptions = {},
+) {
   const { params, headers, ...restOptions } = options;
 
   const baseUrl =
@@ -63,11 +66,14 @@ export async function serverFetch(endpoint: string, options: FetchOptions = {}) 
 
 /**
  * A wrapper around `serverFetch` that also calls `.json()` automatically
- * and potentially checks `response.ok`. 
+ * and potentially checks `response.ok`.
  */
-export async function serverFetchJson<T = any>(endpoint: string, options: FetchOptions = {}): Promise<{ response: Response; data: T }> {
+export async function serverFetchJson<T = any>(
+  endpoint: string,
+  options: FetchOptions = {},
+): Promise<{ response: Response; data: T }> {
   const response = await serverFetch(endpoint, options);
-  
+
   const data = await response.json().catch(() => null);
 
   return {

@@ -354,7 +354,7 @@ export async function PATCH(req: Request) {
     if (!parsedBody.success) {
       throw new AppError(
         400,
-        `Validation Error: ${parsedBody.error.errors.map(e => e.message).join(", ")}`,
+        `Validation Error: ${parsedBody.error.errors.map((e) => e.message).join(", ")}`,
       );
     }
 

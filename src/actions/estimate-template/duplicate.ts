@@ -15,7 +15,7 @@ type TDuplicateEstimateTemplateProps = {
 
 async function generateDuplicateTitle(
   companyId: number,
-  originalTitle: string
+  originalTitle: string,
 ) {
   const existing = await db.invoiceTemplate.findMany({
     where: {
@@ -105,8 +105,8 @@ export async function duplicateEstimateTemplate({
               passenger: i.passenger,
               notes: i.notes,
             },
-          })
-        )
+          }),
+        ),
       );
 
       // 5️⃣ Duplicate photos
@@ -117,8 +117,8 @@ export async function duplicateEstimateTemplate({
               invoiceTemplateId: createdTemplate.id,
               photo: p.photo,
             },
-          })
-        )
+          }),
+        ),
       );
 
       // 6️⃣ Duplicate items
@@ -147,8 +147,8 @@ export async function duplicateEstimateTemplate({
                   laborId: newLabor.id,
                   tagId: t.tagId,
                 },
-              })
-            )
+              }),
+            ),
           );
 
           laborId = newLabor.id;
@@ -183,8 +183,8 @@ export async function duplicateEstimateTemplate({
                 companyId,
                 productId: m.productId,
               },
-            })
-          )
+            }),
+          ),
         );
 
         // Item tags
@@ -195,8 +195,8 @@ export async function duplicateEstimateTemplate({
                 itemId: invoiceItem.id,
                 tagId: t.tagId,
               },
-            })
-          )
+            }),
+          ),
         );
       }
 

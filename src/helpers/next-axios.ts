@@ -14,7 +14,7 @@ const nextAxios = axios.create({
 
 // === REQUEST INTERCEPTOR ===
 nextAxios.interceptors.request.use(
-  async config => {
+  async (config) => {
     const session = await getSession();
     const token = session?.accessToken || null;
     if (token) {
@@ -22,12 +22,12 @@ nextAxios.interceptors.request.use(
     }
     return config;
   },
-  error => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 // === RESPONSE INTERCEPTOR ===
 nextAxios.interceptors.response.use(
-  response => response,
+  (response) => response,
   async (error: AxiosError) => {
     if (error.response?.status === 401) {
       console.warn("Unauthorized, redirecting to login...");
@@ -39,7 +39,7 @@ nextAxios.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default nextAxios;

@@ -10,7 +10,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { sendSMSToAgent } from "@/service/ai-agent/api";
 import { revalidatePath } from "next/cache";
 import { allCompanyFeaturePermissions } from "@/service/feature-permissions/api";
-import { normalizePhoneForStorage, phoneLookupWhereClause } from "@/utils/normalizePhone";
+import {
+  normalizePhoneForStorage,
+  phoneLookupWhereClause,
+} from "@/utils/normalizePhone";
 
 const pusher = getPusherInstance();
 
@@ -398,7 +401,6 @@ async function fetchInfobipMedia(url: string, contentType: string) {
 
   return new File([blob], fileName, { type: contentType });
 }
-
 
 // Optional: Add GET endpoint for testing webhook URL
 export async function GET() {

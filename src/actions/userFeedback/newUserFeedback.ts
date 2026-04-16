@@ -55,7 +55,6 @@ async function createAsanaTask(
     company: Company;
   },
 ) {
-
   const res = await fetch(`${ASANA_BASE_URL}/tasks`, {
     method: "POST",
     headers: {

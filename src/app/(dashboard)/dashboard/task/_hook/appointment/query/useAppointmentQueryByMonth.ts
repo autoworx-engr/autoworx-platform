@@ -52,13 +52,15 @@ export default function useAppointmentQueryByMonth(
       const appointments = response.data as (Appointment & {
         appointmentUsers: (AppointmentUser & { user: User })[];
       })[];
-      
+
       // Transform appointmentUsers to assignedUsers to match CalendarAppointment interface
-      return appointments.map(appointment => {
+      return appointments.map((appointment) => {
         const { appointmentUsers, ...appointmentData } = appointment;
         return {
           ...appointmentData,
-          assignedUsers: appointmentUsers.map(appointmentUser => appointmentUser.user)
+          assignedUsers: appointmentUsers.map(
+            (appointmentUser) => appointmentUser.user,
+          ),
         };
       });
     },

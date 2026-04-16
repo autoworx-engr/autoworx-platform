@@ -12,14 +12,14 @@ export default function useWeekStartEndDays() {
       const res = await fetch("/api/calendar-settings");
       const data = await res.json();
       return data;
-    }
+    },
   });
   const week = useWeek(settings);
   const weekStart = settings?.weekStart || "Sunday";
   const days = useMemo(() => {
     const weekInfo = getWeekInfoFromWeekStr(
       week.format("YYYY-[W]WW"),
-      weekStart
+      weekStart,
     );
     const startOfWeek = moment(weekInfo.startDate);
 
@@ -28,7 +28,7 @@ export default function useWeekStartEndDays() {
       const currentDay = moment(startOfWeek).add(i, "days");
       daysInWeek.push({
         dayName: currentDay.format("dddd"),
-        date: currentDay.format("YYYY-MM-DD")
+        date: currentDay.format("YYYY-MM-DD"),
       });
     }
 

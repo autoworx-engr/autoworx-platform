@@ -43,7 +43,7 @@ export async function POST(req: Request) {
   if (!token)
     return NextResponse.json(
       { error: "Invalid or expired OTP" },
-      { status: 400 }
+      { status: 400 },
     );
 
   return NextResponse.json({ success: true, token: token.token });

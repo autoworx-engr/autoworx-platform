@@ -277,7 +277,7 @@ export async function newPayment({
       {
         timeout: 15000, // 15 seconds
         maxWait: 6000, // 6 seconds
-      }
+      },
     );
 
     revalidatePath("/dashboard/estimate/edit");

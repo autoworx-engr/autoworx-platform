@@ -113,20 +113,23 @@ export async function getAvailableSlots(shopId: number, dateString: string) {
     });
 
     // Check stacking
-    const availableSlots = baseSlots.filter(slotTime => {
+    const availableSlots = baseSlots.filter((slotTime) => {
       const slotMoment = moment.utc(
         `${selectedDateStr} ${slotTime}`,
-        "YYYY-MM-DD HH:mm"
+        "YYYY-MM-DD HH:mm",
       );
       const slotEndMoment = slotMoment.clone().add(intervalMinutes, "minutes");
 
-      const appointmentsInSlot = existingAppointments.filter(app => {
+      const appointmentsInSlot = existingAppointments.filter((app) => {
         if (!app.startTime) return false;
         const appMoment = moment.utc(
           `${selectedDateStr} ${app.startTime}`,
-          "YYYY-MM-DD HH:mm"
+          "YYYY-MM-DD HH:mm",
         );
-        return appMoment.isSameOrAfter(slotMoment) && appMoment.isBefore(slotEndMoment);
+        return (
+          appMoment.isSameOrAfter(slotMoment) &&
+          appMoment.isBefore(slotEndMoment)
+        );
       });
       return appointmentsInSlot.length < stackingLimit;
     });

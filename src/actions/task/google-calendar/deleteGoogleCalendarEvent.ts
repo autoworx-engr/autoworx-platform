@@ -1,4 +1,3 @@
-
 import { getGoogleCalendarToken } from "@/actions/calendar-settings/getGoogleCalendarAuth";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";

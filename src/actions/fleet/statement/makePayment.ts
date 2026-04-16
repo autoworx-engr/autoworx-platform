@@ -72,18 +72,18 @@ export async function makeFleetStatementPayment(data: {
     // Calculate total due amount
     const totalDue = statement.invoice.reduce(
       (sum, invoice) => sum + Number(invoice.due || 0),
-      0
+      0,
     );
 
     if (data.amount > totalDue) {
       throw new Error(
-        `Payment amount ($${data.amount}) exceeds total due amount ($${totalDue})`
+        `Payment amount ($${data.amount}) exceeds total due amount ($${totalDue})`,
       );
     }
 
     // Process payment by distributing amount across invoices
     const result = await db.$transaction(
-      async tx => {
+      async (tx) => {
         let remainingAmount = data.amount;
         const paymentsCreated = [];
 
@@ -230,7 +230,7 @@ export async function makeFleetStatementPayment(data: {
       {
         timeout: 15000, // 15 seconds
         maxWait: 6000, // 6 seconds
-      }
+      },
     );
 
     revalidatePath("/dashboard/fleet");

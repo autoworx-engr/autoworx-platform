@@ -28,9 +28,11 @@ export interface SendBookingConfirmationParams {
     make: string | null;
     model: string | null;
   } | null;
-  services?: {
-    title: string;
-  }[] | null;
+  services?:
+    | {
+        title: string;
+      }[]
+    | null;
   isDeposit?: boolean;
 }
 

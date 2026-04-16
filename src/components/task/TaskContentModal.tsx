@@ -59,8 +59,6 @@ export default function TaskContentModal({
   onTaskUpdated,
   onTaskDeleted,
 }: NewTaskProps) {
-  const { data: companyUsers = [], isLoading: isCompanyUsersLoading } =
-    useCompanyUsersQuery();
   const {
     data: taskData,
     isError,
@@ -86,14 +84,14 @@ export default function TaskContentModal({
 
   // get task task data for update task
   useEffect(() => {
-    if (fromEdit && taskId && !taskData && !isFetched && !companyUsers) {
+    if (fromEdit && taskId && !taskData && !isFetched) {
       setIsLoading(true);
       return;
     }
 
     if (taskData && fromEdit) {
       const assignUsers = taskData?.taskUser?.map(
-        taskUserData => taskUserData.user.id,
+        (taskUserData) => taskUserData.user.id,
       );
       setTitle(taskData?.title || "");
       setDescription(taskData?.description || "");
@@ -126,7 +124,7 @@ export default function TaskContentModal({
     } else if (isFetched && !taskData && fromEdit) {
       setIsLoading(false);
     }
-  }, [taskData, fromEdit, taskId, isFetched, companyUsers]);
+  }, [taskData, fromEdit, taskId, isFetched]);
 
   // Add function to generate a reasonable default end time based on start time
   const getDefaultEndTime = (start: string) => {
@@ -338,8 +336,7 @@ export default function TaskContentModal({
       } else {
         errorToast("Failed to delete task");
       }
-    } catch (err) {
-      console.error("Error deleting task:", err);
+    } catch {
       errorToast("Failed to delete task");
     } finally {
       setIsLoading(false);
@@ -371,7 +368,7 @@ export default function TaskContentModal({
         <DialogTitle>{fromEdit ? "Update Task" : "Add Task"}</DialogTitle>
       </DialogHeader>
       <FormError />
-      {isLoading || isCompanyUsersLoading ? (
+      {isLoading ? (
         <div className="flex min-h-[500px] my-auto items-center justify-center py-10 text-center">
           <TaskSpinner />
         </div>
@@ -390,7 +387,7 @@ export default function TaskContentModal({
                 slimInputClassName,
               )}
               value={title}
-              onChange={e => {
+              onChange={(e) => {
                 const value = e.target.value;
                 setTitle(value);
                 if (!value.trim()) {
@@ -418,7 +415,7 @@ export default function TaskContentModal({
                 slimInputClassName,
               )}
               value={description}
-              onChange={e => setDescription(e.target.value)}
+              onChange={(e) => setDescription(e.target.value)}
             />
           </div>
 
@@ -434,7 +431,7 @@ export default function TaskContentModal({
                   value={date ?? ""}
                   // min={minDate}
                   required
-                  onChange={event => setDate(event.currentTarget.value)}
+                  onChange={(event) => setDate(event.currentTarget.value)}
                 />
                 <div className="flex items-end gap-2 mt-2 lg:mt-0">
                   {/* Start Time */}
@@ -466,7 +463,7 @@ export default function TaskContentModal({
                       </Select> */}
                       <Select
                         value={startTime}
-                        onChange={value =>
+                        onChange={(value) =>
                           handleTimeChange(
                             { target: { value } } as any,
                             "start",
@@ -491,7 +488,7 @@ export default function TaskContentModal({
                           Start Time
                         </Option>
 
-                        {timeOptions.map(time => (
+                        {timeOptions.map((time) => (
                           <Option
                             key={time.value}
                             value={time.value}
@@ -536,7 +533,7 @@ export default function TaskContentModal({
                     </Select> */}
                     <Select
                       value={endTime}
-                      onChange={value =>
+                      onChange={(value) =>
                         handleTimeChange({ target: { value } } as any, "end")
                       }
                       // Remove inline styles to rely on Tailwind's precision
@@ -558,7 +555,7 @@ export default function TaskContentModal({
                         End Time
                       </Option>
 
-                      {timeOptions.map(time => (
+                      {timeOptions.map((time) => (
                         <Option
                           key={time.value}
                           value={time.value}
@@ -622,15 +619,12 @@ export default function TaskContentModal({
 
           {/* custom radio. show user name and image (column)*/}
           {/* TODO: */}
-          {companyUsers?.length > 0 && (
-            <AssignTaskDropDown
-              companyUsers={companyUsers}
-              assignedUsers={assignedUsers}
-              setAssignedUsers={setAssignedUsers}
-              onlyOneUser={onlyOneUser}
-              fromUpdate={fromEdit}
-            />
-          )}
+          <AssignTaskDropDown
+            assignedUsers={assignedUsers}
+            setAssignedUsers={setAssignedUsers}
+            onlyOneUser={onlyOneUser}
+            fromUpdate={fromEdit}
+          />
 
           {/* <div className="mb-4 flex flex-col">
             <label>Priority</label>
@@ -689,7 +683,7 @@ export default function TaskContentModal({
                   shadow: "shadow-[#006D77]/40",
                   ring: "ring-[#006D77]",
                 },
-              ].map(item => {
+              ].map((item) => {
                 const isActive = priority === item.id;
                 return (
                   <button
