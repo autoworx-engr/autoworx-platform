@@ -1,7 +1,7 @@
 import "server-only";
 import "dotenv/config";
 import { PrismaClient, Prisma } from "@prisma/client";
-import { Decimal } from "@prisma/client/runtime/library";
+import { PrismaPg } from "@prisma/adapter-pg";
 
 // Highly optimized serializer
 function serializeResult(input: any): any {
@@ -15,8 +15,14 @@ function serializeResult(input: any): any {
     return input;
   }
 
-  if (input instanceof Decimal) {
-    return input.toNumber();
+  // Handle Prisma Decimal and similar numeric wrapper types via duck-typing
+  if (
+    typeof input === "object" &&
+    input !== null &&
+    "toNumber" in input &&
+    typeof (input as any).toNumber === "function"
+  ) {
+    return (input as any).toNumber();
   }
 
   if (input instanceof Date) {
@@ -45,12 +51,12 @@ function serializeResult(input: any): any {
   return input;
 }
 
-const databaseUrl = process.env.DIRECT_URL || process.env.DATABASE_URL;
+const databaseUrl = process.env.DIRECT_URL || process.env.DATABASE_URL || "";
+
+const adapter = new PrismaPg({ connectionString: databaseUrl });
 
 // Extend Prisma to serialize Decimal in all model operations
-const extendedPrisma = new PrismaClient({
-  datasourceUrl: databaseUrl ?? undefined,
-}).$extends({
+const extendedPrisma = new PrismaClient({ adapter }).$extends({
   query: {
     $allModels: {
       $allOperations({ args, query }) {

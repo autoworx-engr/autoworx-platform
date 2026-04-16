@@ -189,48 +189,57 @@ export async function getRevenue(timezone: string, currentCompanyId?: number) {
     previousMonthStart,
     previousMonthEnd,
   } = getDateRanges(timezone);
-  const currentMonthInvoices = await db.invoice.findMany({
-    where: {
-      companyId,
-      column: {
-        title: "Delivered",
-      },
-      type: "Invoice",
-      deliveredAt: {
-        gte: currentMonthStart,
-        lte: currentMonthEnd,
-      },
-    },
-  });
 
-  const currentMonthRevenue = currentMonthInvoices.reduce(
-    (acc, invoice) => acc + Number(invoice.grandTotal || 0),
-    0,
-  );
-
-  const previousMonthInvoices = await db.invoice.findMany({
-    where: {
-      companyId,
-      type: "Invoice",
-      column: {
-        title: "Delivered",
+  try {
+    const currentMonthInvoices = await db.invoice.findMany({
+      where: {
+        companyId,
+        column: {
+          title: "Delivered",
+        },
+        type: "Invoice",
+        deliveredAt: {
+          gte: currentMonthStart,
+          lte: currentMonthEnd,
+        },
       },
-      deliveredAt: {
-        gte: previousMonthStart,
-        lte: previousMonthEnd,
+    });
+
+    const currentMonthRevenue = currentMonthInvoices.reduce(
+      (acc, invoice) => acc + Number(invoice.grandTotal || 0),
+      0,
+    );
+
+    const previousMonthInvoices = await db.invoice.findMany({
+      where: {
+        companyId,
+        type: "Invoice",
+        column: {
+          title: "Delivered",
+        },
+        deliveredAt: {
+          gte: previousMonthStart,
+          lte: previousMonthEnd,
+        },
       },
-    },
-  });
+    });
 
-  const previousMonthRevenue = previousMonthInvoices.reduce(
-    (acc, invoice) => acc + (Number(invoice.grandTotal) || 0),
-    0,
-  );
+    const previousMonthRevenue = previousMonthInvoices.reduce(
+      (acc, invoice) => acc + (Number(invoice.grandTotal) || 0),
+      0,
+    );
 
-  return {
-    revenue: currentMonthRevenue,
-    growth: growthRate(currentMonthRevenue, previousMonthRevenue),
-  };
+    return {
+      revenue: currentMonthRevenue,
+      growth: growthRate(currentMonthRevenue, previousMonthRevenue),
+    };
+  } catch (error) {
+    console.error("Error calculating revenue, returning zeroed values:", error);
+    return {
+      revenue: 0,
+      growth: growthRate(0, 0),
+    };
+  }
 }
 
 /**
@@ -242,35 +251,33 @@ export async function getExpectedRevenue(currentCompanyId?: number) {
     companyId = await getCompanyId();
   }
 
-  const pendingInvoices = await db.invoice.findMany({
-    where: {
-      companyId,
-      type: "Invoice",
-      column: {
-        // title not Delivered
-        OR: [
-          {
-            title: "Pending",
-          },
-          {
-            title: "In Progress",
-          },
-          {
-            title: "Completed",
-          },
-        ],
+  try {
+    const pendingInvoices = await db.invoice.findMany({
+      where: {
+        companyId,
+        type: "Invoice",
+        column: {
+          OR: [
+            { title: "Pending" },
+            { title: "In Progress" },
+            { title: "Completed" },
+          ],
+        },
       },
-    },
-  });
+    });
 
-  const totalExpectedRevenue = pendingInvoices.reduce(
-    (acc, invoice) => acc + (Number(invoice.grandTotal) || 0),
-    0,
-  );
+    const totalExpectedRevenue = pendingInvoices.reduce(
+      (acc, invoice) => acc + (Number(invoice.grandTotal) || 0),
+      0,
+    );
 
-  return {
-    revenue: totalExpectedRevenue,
-  };
+    return {
+      revenue: totalExpectedRevenue,
+    };
+  } catch (error) {
+    console.error("Error calculating expected revenue, returning zero:", error);
+    return { revenue: 0 };
+  }
 }
 
 /**
