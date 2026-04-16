@@ -105,105 +105,112 @@ export default function WorkforceDisplay({
             </p>
           </div>
         ) : (
-          <table className="w-full shadow-md">
-            <thead className="bg-background sticky top-0 ">
-              <tr className="h-10 border-b">
-                <th className="border-b px-4 py-2 text-left">Employee</th>
-                <th className="border-b px-4 py-2 text-left">Employee Type </th>
-                <th className="border-b px-4 py-2 text-left">Total Payout</th>
-                <th className="border-b px-4 py-2 text-left">Attendance</th>
-                <th className="border-b px-4 py-2 text-left">
-                  # Jobs Completed
-                </th>
-                <th className="border-b px-4 py-2 text-left">
-                  Completion Date
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedEmployees.map((employee, index) => {
-                const jobsCompleted: number = employee.Technician?.reduce(
-                  (acc, cur) => {
-                    const techDate = cur.dateClosed
-                      ? moment(cur.dateClosed).utc()
-                      : null;
-                    // console.log('techDate', techDate);
-                    const isDateValid =
-                      !hasDateRange ||
-                      (techDate &&
-                        techDate.isSameOrAfter(formattedStartDate) &&
-                        techDate.isSameOrBefore(formattedEndDate));
+          <div className="w-full overflow-x-auto">
+            <table className="w-full min-w-[980px] border-collapse shadow-md">
+              <thead className="bg-background sticky top-0 ">
+                <tr className="h-10 border-b">
+                  <th className="border-b px-4 py-2 text-left">Employee</th>
+                  <th className="border-b px-4 py-2 text-left">
+                    Employee Type{" "}
+                  </th>
+                  <th className="border-b px-4 py-2 text-left">Total Payout</th>
+                  <th className="border-b px-4 py-2 text-left">Attendance</th>
+                  <th className="border-b px-4 py-2 text-left">
+                    # Jobs Completed
+                  </th>
+                  <th className="border-b px-4 py-2 text-left">
+                    Completion Date
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedEmployees.map((employee, index) => {
+                  const jobsCompleted: number = employee.Technician?.reduce(
+                    (acc, cur) => {
+                      const techDate = cur.dateClosed
+                        ? moment(cur.dateClosed).utc()
+                        : null;
+                      // console.log('techDate', techDate);
+                      const isDateValid =
+                        !hasDateRange ||
+                        (techDate &&
+                          techDate.isSameOrAfter(formattedStartDate) &&
+                          techDate.isSameOrBefore(formattedEndDate));
 
-                    if (cur.status === "Complete" && isDateValid) {
-                      return acc + 1;
-                    }
+                      if (cur.status === "Complete" && isDateValid) {
+                        return acc + 1;
+                      }
 
-                    return acc;
-                  },
-                  0
-                );
+                      return acc;
+                    },
+                    0,
+                  );
 
-                const totalPayout = employee.Technician.reduce((sum, tech) => {
-                  const techDate = tech.dateClosed
-                    ? moment(tech.dateClosed)
-                    : null;
+                  const totalPayout = employee.Technician.reduce(
+                    (sum, tech) => {
+                      const techDate = tech.dateClosed
+                        ? moment(tech.dateClosed)
+                        : null;
 
-                  const isDateValid =
-                    !hasDateRange ||
-                    (techDate &&
-                      techDate.isSameOrAfter(formattedStartDate) &&
-                      techDate.isSameOrBefore(formattedEndDate));
+                      const isDateValid =
+                        !hasDateRange ||
+                        (techDate &&
+                          techDate.isSameOrAfter(formattedStartDate) &&
+                          techDate.isSameOrBefore(formattedEndDate));
 
-                  if (tech.status === "Complete" && isDateValid) {
-                    return sum + Number(tech?.amount || 0);
-                  }
+                      if (tech.status === "Complete" && isDateValid) {
+                        return sum + Number(tech?.amount || 0);
+                      }
 
-                  return sum;
-                }, 0);
+                      return sum;
+                    },
+                    0,
+                  );
 
-                // Get the latest completion date
-                const latestCompletionDate = employee.Technician.filter(
-                  (tech) => tech.status === "Complete" && tech.dateClosed
-                )
-                  .map((tech) => moment(tech.dateClosed))
-                  .sort((a, b) => b.diff(a))[0];
+                  // Get the latest completion date
+                  const latestCompletionDate = employee.Technician.filter(
+                    (tech) => tech.status === "Complete" && tech.dateClosed,
+                  )
+                    .map((tech) => moment(tech.dateClosed))
+                    .sort((a, b) => b.diff(a))[0];
 
-                return (
-                  <tr
-                    key={employee.id}
-                    className={cn(
-                      "cursor-pointer rounded-md py-3",
-                      index % 2 === 0 ? "bg-background" : "bg-blue-100"
-                    )}
-                  >
-                    <Link
-                      href={`/dashboard/employee/${employee.id}?view=details`}
+                  return (
+                    <tr
+                      key={employee.id}
+                      className={cn(
+                        "cursor-pointer rounded-md py-3",
+                        index % 2 === 0 ? "bg-background" : "bg-blue-100",
+                      )}
                     >
-                      <td className="border-b px-4 py-2 text-left hover:text-blue-500">
-                        {" "}
-                        {employee.firstName} {employee.lastName}
+                      <Link
+                        href={`/dashboard/employee/${employee.id}?view=details`}
+                      >
+                        <td className="border-b px-4 py-2 text-left hover:text-blue-500">
+                          {" "}
+                          {employee.firstName} {employee.lastName}
+                        </td>
+                      </Link>
+                      <td className="border-b px-4 py-2 text-left">
+                        {employee.employeeType}
                       </td>
-                    </Link>
-                    <td className="border-b px-4 py-2 text-left">
-                      {employee.employeeType}
-                    </td>
-                    <td className="border-b px-4 py-2 text-left">
-                      {formatCurrency(totalPayout)}
-                    </td>
-                    <td className="border-b px-4 py-2 text-left"></td>
-                    <td className={cn("border-b px-4 py-2 text-left")}>
-                      {jobsCompleted}
-                    </td>
-                    <td className={cn("border-b px-4 py-2 text-left")}>
-                      {latestCompletionDate
-                        ? moment(latestCompletionDate).format("MM/DD/YYYY")
-                        : "N/A"}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      <td className="border-b px-4 py-2 text-left">
+                        {formatCurrency(totalPayout)}
+                      </td>
+                      <td className="border-b px-4 py-2 text-left"></td>
+                      <td className={cn("border-b px-4 py-2 text-left")}>
+                        {jobsCompleted}
+                      </td>
+                      <td className={cn("border-b px-4 py-2 text-left")}>
+                        {latestCompletionDate
+                          ? moment(latestCompletionDate).format("MM/DD/YYYY")
+                          : "N/A"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
         {showPagination && (
           <div className="mt-4 flex justify-end">

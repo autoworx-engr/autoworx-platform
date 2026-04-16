@@ -53,15 +53,15 @@ export default function FilterHeader({
   };
 
   return (
-    <div className="flex w-full flex-col gap-4 md:flex-row md:items-center md:justify-between md:gap-x-3">
+    <div className="flex w-full flex-col gap-4 md:flex-row md:flex-wrap md:items-start md:justify-start md:gap-4">
       {/* Search and Date Range Section */}
-      <div className="flex flex-col gap-4 md:flex-1 md:flex-row md:items-center md:space-x-4">
+      <div className="flex w-full min-w-0 flex-col gap-4 md:w-auto md:flex-1 md:flex-row md:flex-wrap md:items-start md:justify-start md:gap-4">
         {/* Search Box - Full width on mobile */}
-        <div className="relative w-full md:min-w-[300px] md:max-w-[693px]">
+        <div className="relative w-full md:min-w-[260px] md:flex-1 lg:max-w-[693px]">
           <FilterBySearchBox searchText={searchParams.search as string} />
         </div>
         {/* Date Range - Full width on mobile */}
-        <div className="w-full md:w-auto">
+        <div className="flex w-full flex-wrap gap-4 md:w-auto md:flex-nowrap md:justify-start">
           <FilterByDateRange
             startDate={decodeURIComponent(searchParams?.startDate as string)}
             endDate={decodeURIComponent(searchParams?.endDate as string)}
@@ -75,7 +75,7 @@ export default function FilterHeader({
 
       {/* Filter Options Section */}
 
-      <div className="w-full md:w-auto">
+      <div className="flex w-full flex-wrap items-center justify-start gap-4 md:w-auto md:flex-nowrap">
         <FilterBySelection
           selectedItem={searchParams?.types as string}
           items={getType}
