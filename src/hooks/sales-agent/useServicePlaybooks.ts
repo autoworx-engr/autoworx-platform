@@ -95,6 +95,40 @@ export function useCreatePlaybook() {
     },
   });
 }
+export function useClonePlaybooks() {
+  const queryClient = useQueryClient();
+  const { data: company } = useCompanyQuery();
+  const companyId = company?.id;
+
+  return useMutation({
+    mutationFn: async () => {
+      const response = await fetch("/api/ai-train/clone-playbooks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sourceCompanyId: 4,
+          targetCompanyId: companyId,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to clone playbook");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.servicePlaybooks({ companyId }),
+      });
+      toast.success("Playbook cloned successfully");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to clone playbook");
+    },
+  });
+}
 
 export function useUpdatePlaybook() {
   const queryClient = useQueryClient();

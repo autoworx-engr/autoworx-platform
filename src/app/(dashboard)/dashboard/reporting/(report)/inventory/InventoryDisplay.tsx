@@ -78,7 +78,7 @@ export default function InventoryDisplay({
     const purchaseHistory = product.InventoryProductHistory.filter(
       (history) => {
         return history.type === "Purchase";
-      }
+      },
     );
     const stockQuantity = product.quantity ?? 0;
     const { totalSalesPrice, quantitySold } = salesHistory.reduce(
@@ -91,26 +91,26 @@ export default function InventoryDisplay({
       {
         totalSalesPrice: 0,
         quantitySold: 0,
-      }
+      },
     );
 
     const averageSales = Math.round(
-      totalSalesPrice / (quantitySold || 1)
+      totalSalesPrice / (quantitySold || 1),
     ) as number;
 
     const totalPurchaseQuantity = purchaseHistory.reduce(
       (acc, history) => acc + Number(history.quantity),
-      0
+      0,
     );
 
     const totalPurchasePrice = purchaseHistory.reduce(
       (acc, history) => acc + Number(history.price) * Number(history.quantity),
-      0
+      0,
     );
 
     const averageCost =
       totalPurchaseQuantity > 0
-        ?totalPurchasePrice / totalPurchaseQuantity
+        ? totalPurchasePrice / totalPurchaseQuantity
         : 0;
 
     const ReturnAndInvestment =
@@ -129,7 +129,7 @@ export default function InventoryDisplay({
           stockQuantity: Number(stockQuantity),
         },
         productInfo: productInfo,
-      }))
+      })),
     );
     return acc;
   }, [] as TInventoryPurchaseHistory);

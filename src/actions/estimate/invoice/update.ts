@@ -14,6 +14,8 @@ import {
   Service,
   Tag,
   Prisma,
+  ShopBookingStatus,
+  Invoice,
 } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
@@ -26,6 +28,7 @@ import {
 import { updateServiceAutomationTrigger } from "@/service/service-maintenance-automation-trigger/api";
 import { sendInvoiceDeliveredNotification } from "@/lib/notification/invoice-notify";
 import { updateInvoiceAutomationTrigger } from "@/service/invoice-automation-trigger/api";
+import { Decimal } from "@prisma/client/runtime/library";
 
 interface UpdateEstimateInput {
   id: string;
@@ -39,6 +42,7 @@ interface UpdateEstimateInput {
   discount: number;
   tax: number;
   serviceFee: number;
+  vehicleExtraCost?: number;
   grandTotal: number;
   due: number;
 
@@ -68,6 +72,48 @@ interface UpdateEstimateInput {
 //     return new Promise(resolve => setTimeout(resolve, ms));
 // }
 
+const hasInvoiceChanged = (
+  invoice: Invoice | null,
+  data: UpdateEstimateInput,
+): boolean => {
+  if (!invoice) return false;
+
+  const nullishEqual = <T>(a: T | null | undefined, b: T | null | undefined) =>
+    (a ?? null) === (b ?? null);
+
+  const normalizedText = (value: string | null | undefined) => value ?? "";
+
+  const decimalChanged = (
+    dbValue: Decimal | null | undefined,
+    newValue: number,
+  ) => {
+    return (
+      new Decimal(newValue ?? 0).toString() !==
+      (dbValue ?? new Decimal(0)).toString()
+    );
+  };
+
+  return (
+    !nullishEqual(invoice.clientId, data.clientId) ||
+    !nullishEqual(invoice.vehicleId, data.vehicleId) ||
+    !nullishEqual(invoice.columnId, data.columnId) ||
+    normalizedText(invoice.internalNotes) !==
+      normalizedText(data.internalNotes) ||
+    normalizedText(invoice.terms) !== normalizedText(data.terms) ||
+    normalizedText(invoice.policy) !== normalizedText(data.policy) ||
+    normalizedText(invoice.customerNotes) !==
+      normalizedText(data.customerNotes) ||
+    normalizedText(invoice.customerComments) !==
+      normalizedText(data.customerComments) ||
+    normalizedText(invoice.damageNotes) !== normalizedText(data.damageNotes) ||
+    decimalChanged(invoice.subtotal, data.subtotal) ||
+    decimalChanged(invoice.discount, data.discount) ||
+    decimalChanged(invoice.tax, data.tax) ||
+    decimalChanged(invoice.serviceFee, data.serviceFee) ||
+    decimalChanged(invoice.grandTotal, data.grandTotal) ||
+    decimalChanged(invoice.due, data.due)
+  );
+};
 export async function updateInvoice(
   data: UpdateEstimateInput,
   fromPayment: boolean = false,
@@ -92,6 +138,8 @@ export async function updateInvoice(
         },
       },
     });
+
+    const isChanged = hasInvoiceChanged(invoice, data);
 
     const column = await db.column.findUnique({
       where: { id: data.columnId },
@@ -140,7 +188,37 @@ export async function updateInvoice(
         let deliveredAt = invoice?.deliveredAt;
         let completedAt = invoice?.completedAt;
 
-        if (column) {
+        if (column && invoice) {
+          const findShopBooking = await txDb.shopBooking.findUnique({
+            where: {
+              invoiceId: invoice.id,
+            },
+          });
+          if (
+            (column.title === "Completed" || column.title === "Delivered") &&
+            findShopBooking
+          ) {
+            await txDb.shopBooking.update({
+              where: {
+                id: findShopBooking.id,
+              },
+              data: {
+                status: ShopBookingStatus.COMPLETED,
+              },
+            });
+          } else if (
+            findShopBooking &&
+            findShopBooking.status === ShopBookingStatus.COMPLETED
+          ) {
+            await txDb.shopBooking.update({
+              where: {
+                id: findShopBooking.id,
+              },
+              data: {
+                status: ShopBookingStatus.CONFIRMED,
+              },
+            });
+          }
           // data.type = column.title === "In Progress" ? "Invoice" : data.type;
           if (column.title === "In Progress") {
             data.type = "Invoice";
@@ -521,6 +599,7 @@ export async function updateInvoice(
             discount: data.discount,
             tax: data.tax,
             serviceFee: data.serviceFee,
+            vehicleExtraCost: data.vehicleExtraCost,
             grandTotal: data.grandTotal,
             due: data.due,
             internalNotes: data.internalNotes,
@@ -536,8 +615,16 @@ export async function updateInvoice(
             completedAt,
             deliveredAt,
             damageNotes: data.damageNotes,
-            authorizedName: fromPayment ? undefined : null,
-            signatureImage: fromPayment ? undefined : null,
+            authorizedName: fromPayment
+              ? undefined
+              : isChanged
+                ? null
+                : invoice?.authorizedName,
+            signatureImage: fromPayment
+              ? undefined
+              : isChanged
+                ? null
+                : invoice?.signatureImage,
             isViewed: false,
             serviceIndex: JSON.stringify(
               updatedInvoiceItem

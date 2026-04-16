@@ -6,9 +6,26 @@
         "appID": "HD3DRJP77N.com.awx.autoworx",
         "components": [
           {
-            "/": "*",
-            "comment": "Matches all routes"
+            "/": "/internal/*",
+            "comment": "Only open the app for this specific finished route"
+          },
+          {
+            "/": "/client/*",
+            "comment": "Only open the app for this specific finished route"
+          },
+          {
+            "/": "/collaboration/*",
+            "comment": "Only open the app for this specific finished route"
+          },
+          {
+            "/": "/reset-password*"
+          },
+          {
+            "/": "/*",
+            "exclude": true,
+            "comment": "Default: Do not open the app for any other routes"
           }
+          
         ]
       }
     ]

@@ -39,10 +39,10 @@ export const usePaymentFilterStore = create<PaymentFilterState>((set) => ({
   paymentMethod: "All",
   setFilter: ({ search, dateRange, amount, paidStatus, paymentMethod }) =>
     set((state) => ({
-      search,
-      dateRange: dateRange || state.dateRange,
-      amount: amount || state.amount,
-      paidStatus: paidStatus || state.paidStatus,
-      paymentMethod: paymentMethod || state.paymentMethod,
+      search: search ?? state.search,
+      dateRange: dateRange ?? state.dateRange,
+      amount: amount ?? state.amount,
+      paidStatus: paidStatus ?? state.paidStatus,
+      paymentMethod: paymentMethod ?? state.paymentMethod,
     })),
 }));

@@ -8,7 +8,7 @@ import {
   clientListStore,
   useClientCommunicationStore,
 } from "@/stores/client-store";
-import { SendHorizontal } from "lucide-react";
+import { CirclePause, Mic, MicOff, SendHorizontal } from "lucide-react";
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import useSmsSendMutation from "../../../_hooks/useSmsSendMutation";
@@ -16,6 +16,7 @@ import AttachmentInput from "../AttachmentInput";
 import SmartReplyBar from "./SmartReply";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import UpgradePlanBanner from "@/components/UpgradePlanBanner";
+import toast from "react-hot-toast";
 
 // Helper function to format attachment message
 const formatAttachmentMessage = (files: File[]) => {
@@ -60,6 +61,79 @@ export default function SendSms({
   const [messageInput, setMessageInput] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  // Voice recording state
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+
+  const startRecording = async () => {
+    if (!canUseSms) return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? "audio/webm;codecs=opus"
+        : MediaRecorder.isTypeSupported("audio/ogg;codecs=opus")
+          ? "audio/ogg;codecs=opus"
+          : "audio/webm";
+      const recorder = new MediaRecorder(stream, { mimeType });
+      mediaRecorderRef.current = recorder;
+      audioChunksRef.current = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = () => {
+        const ext = mimeType.includes("ogg") ? "ogg" : "webm";
+        const blob = new Blob(audioChunksRef.current, { type: mimeType });
+        const voiceFile = new File([blob], `voice_note_${Date.now()}.${ext}`, {
+          type: mimeType,
+        });
+        setFiles((prev) => [...prev, voiceFile]);
+        stream.getTracks().forEach((t) => t.stop());
+      };
+
+      recorder.start();
+      setIsRecording(true);
+      setRecordingSeconds(0);
+      recordingTimerRef.current = setInterval(
+        () => setRecordingSeconds((s) => s + 1),
+        1000,
+      );
+    } catch {
+      errorToast("Microphone access denied");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
+    }
+  };
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+      mediaRecorderRef.current?.stop();
+    };
+  }, []);
+
+  const formatRecordingTime = (secs: number) => {
+    const m = Math.floor(secs / 60)
+      .toString()
+      .padStart(2, "0");
+    const s = (secs % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
+  };
 
   const adjustTextareaHeight = (ta?: HTMLTextAreaElement | null) => {
     const el = textareaRef.current;
@@ -187,7 +261,30 @@ export default function SendSms({
         <input
           onChange={(e) => {
             const picked = Array.from(e?.target?.files || []);
-            if (picked.length) setFiles((prev) => [...prev, ...picked]);
+
+            if (picked.length) {
+              setFiles((prev) => {
+                const duplicates: string[] = [];
+                const newFiles = picked.filter((file) => {
+                  const exists = prev.some(
+                    (f) =>
+                      f.name === file.name &&
+                      f.size === file.size &&
+                      f.lastModified === file.lastModified,
+                  );
+
+                  if (exists) duplicates.push(file.name);
+                  return !exists;
+                });
+
+                if (duplicates.length) {
+                  toast.error(`Already uploaded: ${duplicates.join(", ")}`);
+                }
+
+                return [...prev, ...newFiles];
+              });
+            }
+
             e.currentTarget.value = "";
           }}
           multiple
@@ -208,6 +305,37 @@ export default function SendSms({
         >
           <Image src="/icons/Attachment.svg" alt="" width={20} height={20} />
         </button>
+
+        {/* voice note record button */}
+        {isRecording ? (
+          <button
+            type="button"
+            onClick={stopRecording}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-red-600 transition hover:bg-red-50 active:scale-[0.98] dark:hover:bg-red-400/10 animate-pulse"
+            aria-label="Stop recording"
+            title={`Recording… ${formatRecordingTime(recordingSeconds)}`}
+          >
+            <CirclePause className="w-5 h-5" />
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={startRecording}
+            className={`inline-flex h-9 w-9 items-center justify-center rounded-md text-zinc-600 transition hover:bg-zinc-200/80 active:scale-[0.98] dark:text-zinc-300 dark:hover:bg-white/10 ${!canUseSms ? "cursor-not-allowed opacity-60" : ""}`}
+            aria-label="Record voice note"
+            title="Record voice note"
+            disabled={!canUseSms}
+          >
+            <Mic className="w-5 h-5" />
+          </button>
+        )}
+
+        {/* recording timer label */}
+        {isRecording && (
+          <span className="text-xs font-mono text-red-600 select-none">
+            {formatRecordingTime(recordingSeconds)}
+          </span>
+        )}
 
         {/* input area */}
         <div className="flex w-full items-center gap-2 rounded-md bg-white ring-1 ring-zinc-200 focus-within:ring-emerald-500 dark:bg-zinc-900 dark:ring-white/10">

@@ -6,6 +6,7 @@ import {
 
 const prisma = new PrismaClient();
 
+
 const catalogName = "Feature Catalog";
 
 const catalogFeatures = [

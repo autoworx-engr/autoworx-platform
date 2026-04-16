@@ -237,7 +237,7 @@ export default function Users() {
         <NewEmployee
           button={
             <button
-              className="mt-4 w-full rounded-xl bg-blue-600 py-2 text-[15px] text-white flex items-center justify-center gap-2 px-6 py-2 text-sm font-semibold text-white transition-all duration-300 ease-in-out
+              className="mt-4 w-full rounded-xl bg-blue-600 py-2 text-[15px] flex items-center justify-center gap-2 px-6  text-sm font-semibold text-white transition-all duration-300 ease-in-out
 
   // Gradient Background (Blue/Indigo)
   bg-gradient-to-r from-[#6571FF] to-[#5a66ee]

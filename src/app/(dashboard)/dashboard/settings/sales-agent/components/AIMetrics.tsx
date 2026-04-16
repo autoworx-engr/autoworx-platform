@@ -44,7 +44,7 @@ export default function AIMetrics({ companyId }: { companyId: number }) {
             value={data?.totalClients ?? 0}
             icon={<Users className="h-5 w-5" />}
             subtitle="Unique phone numbers"
-            variant="primary"
+            variant="success"
           />
           <StatsCard
             title="Texts Exchanged"

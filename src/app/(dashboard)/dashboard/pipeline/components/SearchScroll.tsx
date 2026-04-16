@@ -1,23 +1,35 @@
 import { useDebounce } from "@/hooks/useDebounce";
 import { cn } from "@/lib/cn";
 import { usePipelineFilterStore } from "@/stores/PipelineFilterStore";
-import { ArrowDown, ArrowUp, ChevronDown, Funnel, Search, X } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { EmployeeType } from "@prisma/client";
+import {
+  ArrowDown,
+  ArrowUp,
+  ChevronDown,
+  Funnel,
+  Search,
+  X,
+} from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 interface SearchScrollProps {
   pipelineData: any[];
   onSearchResult?: (
-    result: { columnIndex: number; leadIndex: number } | null
+    result: { columnIndex: number; leadIndex: number } | null,
   ) => void;
   setSearchTerm?: (term: string) => void;
   onColumnChange?: (columnId: number | null) => void;
+  isTeamPipeline?: boolean;
+  employeeType?: EmployeeType;
 }
 
 export default function SearchScroll({
   pipelineData,
   onSearchResult,
   onColumnChange,
+  isTeamPipeline = false,
+  employeeType,
 }: SearchScrollProps) {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [searchResults, setSearchResults] = useState<
@@ -26,13 +38,19 @@ export default function SearchScroll({
   const [currentResultIndex, setCurrentResultIndex] = useState<number>(0);
   const [showColumnFilter, setShowColumnFilter] = useState<boolean>(false);
   const [selectedColumnId, setSelectedColumnId] = useState<number | null>(null);
+  const [selectedType, setSelectedType] = useState<EmployeeType | undefined>(
+    employeeType,
+  );
   const filterRef = useRef<HTMLDivElement>(null);
 
   // const queryClient = useQueryClient();
 
   const pathname = usePathname() || "";
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const isSalesPipeline = pathname.includes(
-    "/dashboard/pipeline/sales/pipeline"
+    "/dashboard/pipeline/sales/pipeline",
   );
 
   const handleSearchChange = useDebounce(async (value: string) => {
@@ -42,6 +60,13 @@ export default function SearchScroll({
       // console.error("Error in handleSearchChange:", err);
     }
   }, 500);
+
+  // Reset store search term on unmount so navigating back doesn't show stale results
+  useEffect(() => {
+    return () => {
+      usePipelineFilterStore.setState({ searchTerm: "" });
+    };
+  }, []);
 
   // Handle clicks outside filter dropdown to close it
   useEffect(() => {
@@ -142,8 +167,15 @@ export default function SearchScroll({
   // Clear column filter
   const handleClearFilter = () => {
     setSelectedColumnId(null);
+    setSelectedType(undefined);
     if (onColumnChange) onColumnChange(null);
     setShowColumnFilter(false);
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("type");
+
+    const query = params.toString();
+    router.push(query ? `${pathname}?${query}` : pathname);
   };
 
   // Toggle column filter dropdown
@@ -156,6 +188,16 @@ export default function SearchScroll({
     setSelectedColumnId(columnId);
     if (onColumnChange) onColumnChange(columnId);
     setShowColumnFilter(false);
+  };
+
+  const selectType = (type: EmployeeType) => {
+    setSelectedType(type);
+    setShowColumnFilter(false);
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("type", type);
+
+    router.push(`${pathname}?${params.toString()}`);
   };
 
   return (
@@ -196,61 +238,136 @@ export default function SearchScroll({
       {/* Filter & Navigation Container */}
       <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center sm:gap-4">
         {/* Column filter button */}
-        <div className="relative" ref={filterRef}>
-          <button
-            onClick={toggleColumnFilter}
-            className={cn(
-              "flex h-12 w-full items-center gap-2 rounded-2xl border-2 px-4 transition-all duration-200 sm:w-auto",
-              "text-sm font-semibold outline-none active:scale-95",
-              selectedColumnId !== null
-                ? "border-[#6571FF]/40 bg-[#6571FF]/5 text-[#6571FF]"
-                : "border-slate-100 bg-white text-slate-500 hover:border-slate-200 hover:bg-slate-50"
-            )}
-            aria-label="Filter by column"
-          >
-            <Funnel size={16} className={selectedColumnId !== null ? "text-[#6571FF]" : "text-slate-400"} />
-            <span>
-              {selectedColumnId !== null
-                ? pipelineData.find((col) => col.id === selectedColumnId)?.title || "Column"
-                : "All Columns"}
-            </span>
-            <ChevronDown size={14} className="ml-1 opacity-50" />
-          </button>
+        {!isTeamPipeline ? (
+          <div className="relative" ref={filterRef}>
+            <button
+              onClick={toggleColumnFilter}
+              className={cn(
+                "flex h-12 w-full items-center gap-2 rounded-2xl border-2 px-4 transition-all duration-200 sm:w-auto",
+                "text-sm font-semibold outline-none active:scale-95",
+                selectedColumnId !== null
+                  ? "border-[#6571FF]/40 bg-[#6571FF]/5 text-[#6571FF]"
+                  : "border-slate-100 bg-white text-slate-500 hover:border-slate-200 hover:bg-slate-50",
+              )}
+              aria-label="Filter by column"
+            >
+              <Funnel
+                size={16}
+                className={
+                  selectedColumnId !== null
+                    ? "text-[#6571FF]"
+                    : "text-slate-400"
+                }
+              />
+              <span>
+                {selectedColumnId !== null
+                  ? pipelineData.find((col) => col.id === selectedColumnId)
+                      ?.title || "Column"
+                  : "All Columns"}
+              </span>
+              <ChevronDown size={14} className="ml-1 opacity-50" />
+            </button>
 
-          {/* Dropdown */}
-          {showColumnFilter && (
-            <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-56 overflow-hidden rounded-xl border border-slate-50 bg-white p-2 shadow-[0_20px_50px_rgba(101,113,255,0.12)] animate-in fade-in zoom-in-95 duration-200">
-              <div className="flex flex-col gap-1">
-                <button
-                  onClick={handleClearFilter}
-                  className={cn(
-                    "flex w-full items-center rounded-xl px-4 py-2.5 text-left text-sm font-semibold transition-colors",
-                    selectedColumnId === null
-                      ? "bg-[#6571FF] text-white"
-                      : "text-slate-500 hover:bg-slate-50"
-                  )}
-                >
-                  All Columns
-                </button>
-
-                {pipelineData.map((column: any) => (
+            {/* Dropdown */}
+            {showColumnFilter && (
+              <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-56 overflow-hidden rounded-xl border border-slate-50 bg-white p-2 shadow-[0_20px_50px_rgba(101,113,255,0.12)] animate-in fade-in zoom-in-95 duration-200">
+                <div className="flex flex-col gap-1">
                   <button
-                    key={column.id}
-                    onClick={() => selectColumn(column.id)}
+                    onClick={handleClearFilter}
                     className={cn(
                       "flex w-full items-center rounded-xl px-4 py-2.5 text-left text-sm font-semibold transition-colors",
-                      selectedColumnId === column.id
+                      selectedColumnId === null
                         ? "bg-[#6571FF] text-white"
-                        : "text-slate-600 hover:bg-slate-50"
+                        : "text-slate-500 hover:bg-slate-50",
                     )}
                   >
-                    {column.title}
+                    All Columns
                   </button>
-                ))}
+
+                  {pipelineData.map((column: any) => (
+                    <button
+                      key={column.id}
+                      onClick={() => selectColumn(column.id)}
+                      className={cn(
+                        "flex w-full items-center rounded-xl px-4 py-2.5 text-left text-sm font-semibold transition-colors",
+                        selectedColumnId === column.id
+                          ? "bg-[#6571FF] text-white"
+                          : "text-slate-600 hover:bg-slate-50",
+                      )}
+                    >
+                      {column.title}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        ) : (
+          <div className="relative" ref={filterRef}>
+            <button
+              onClick={toggleColumnFilter}
+              className={cn(
+                "flex h-12 w-full items-center gap-2 rounded-2xl border-2 px-4 transition-all duration-200 sm:w-auto",
+                "text-sm font-semibold outline-none active:scale-95",
+                selectedType !== null
+                  ? "border-[#6571FF]/40 bg-[#6571FF]/5 text-[#6571FF]"
+                  : "border-slate-100 bg-white text-slate-500 hover:border-slate-200 hover:bg-slate-50",
+              )}
+              aria-label="Filter by Type"
+            >
+              <Funnel
+                size={16}
+                className={
+                  selectedType !== undefined
+                    ? "text-[#6571FF]"
+                    : "text-slate-400"
+                }
+              />
+              <span>
+                {selectedType !== undefined
+                  ? selectedType || "Column"
+                  : "All Type"}
+              </span>
+              <ChevronDown size={14} className="ml-1 opacity-50" />
+            </button>
+
+            {/* Dropdown */}
+            {showColumnFilter && (
+              <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-56 overflow-hidden rounded-xl border border-slate-50 bg-white p-2 shadow-[0_20px_50px_rgba(101,113,255,0.12)] animate-in fade-in zoom-in-95 duration-200">
+                <div className="flex flex-col gap-1">
+                  <button
+                    onClick={handleClearFilter}
+                    className={cn(
+                      "flex w-full items-center rounded-xl px-4 py-2.5 text-left text-sm font-semibold transition-colors",
+                      selectedType === undefined
+                        ? "bg-[#6571FF] text-white"
+                        : "text-slate-500 hover:bg-slate-50",
+                    )}
+                  >
+                    All Type
+                  </button>
+
+                  {["Admin", "Manager", "Sales", "Technician", "Other"].map(
+                    (type: any, i: number) => (
+                      <button
+                        key={i}
+                        onClick={() => selectType(type)}
+                        className={cn(
+                          "flex w-full items-center rounded-xl px-4 py-2.5 text-left text-sm font-semibold transition-colors",
+                          selectedType === type
+                            ? "bg-[#6571FF] text-white"
+                            : "text-slate-600 hover:bg-slate-50",
+                        )}
+                      >
+                        {type}
+                      </button>
+                    ),
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Search result navigation - Refined Navigation UI */}
         {searchResults.length > 0 && (

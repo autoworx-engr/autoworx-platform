@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import SmsMessage from "./SmsMessage";
 import useInfinitySmsQueryByClientId from "../../../_hooks/useInfinitySmsQuery";
-import Spinner from "@/components/ui/Spinner";
+import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/cn";
 
 export default function SmsBox({ clientId }: { clientId: number }) {
@@ -60,30 +60,26 @@ export default function SmsBox({ clientId }: { clientId: number }) {
     }
   }, [data?.pages?.length, prevScrollHeight]); // Track pages length instead of messages length
 
-  // Only auto-scroll to bottom for initial load or new incoming messages (not infinite scroll)
+  // Auto-scroll to bottom when a new message is sent or received
   useEffect(() => {
     const last = messages[messages.length - 1];
     const lastId = last?.id ?? null;
 
-    // Only scroll to bottom if this is a new message (different from what we've seen)
-    // and we're not in the middle of loading older messages
-    if (
-      !lastSeenId ||
-      (lastId && lastId !== lastSeenId && !isFetchingNextPage)
-    ) {
-      const el = containerRef.current;
-      if (el && shouldAutoScroll) {
-        const nearBottom =
-          el.scrollHeight - el.scrollTop - el.clientHeight < 120;
-        if (nearBottom) {
-          setTimeout(() => {
-            bottomAnchorRef.current?.scrollIntoView({ block: "end" });
-          }, 0);
-        }
-      }
-      setLastSeenId(lastId);
+    // Nothing new, or loading older pages — skip
+    if (!lastId || lastId === lastSeenId || isFetchingNextPage) return;
+
+    setLastSeenId(lastId);
+
+    if (shouldAutoScroll) {
+      // Wait for the DOM to paint the new message, then scroll
+      requestAnimationFrame(() => {
+        bottomAnchorRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "end",
+        });
+      });
     }
-  }, [messages, lastSeenId, shouldAutoScroll, isFetchingNextPage]); // Added isFetchingNextPage
+  }, [messages, lastSeenId, shouldAutoScroll, isFetchingNextPage]);
 
   // Only auto-scroll to bottom for initial load - prevent it during infinite scroll
   useEffect(() => {

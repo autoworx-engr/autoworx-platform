@@ -250,6 +250,28 @@ export async function getAuthorizeNetStatus(companyId: number) {
   }
 }
 
+export async function updateTipEnabled(
+  companyId: number,
+  enabled: boolean
+) {
+  try {
+    if (!companyId) throw new Error("Company ID not found");
+
+    await db.company.update({
+      where: { id: companyId },
+      data: { tipEnabled: enabled },
+    });
+
+    return { success: true, message: "Tip setting updated successfully" };
+  } catch (error: any) {
+    console.error("Update Tip Setting Error:", error);
+    return {
+      success: false,
+      message: error?.message ?? "Failed to update tip setting",
+    };
+  }
+}
+
 export async function updatePaymentGateway(
   companyId: number,
   gateway: "STRIPE" | "AUTHORIZE_NET" | "BOTH"

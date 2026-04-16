@@ -49,6 +49,17 @@ type TProps = {
   salesColumn: Column[];
 };
 
+const formatDisplayName = (name?: string | null) => {
+  if (!name) return "N/A";
+
+  const cleanedName = name
+    .replace(/\b(undefined|null)\b/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return cleanedName || "N/A";
+};
+
 const Leads = ({ salesColumn }: TProps) => {
   const [initialLeads, setInitialLeads] = useState<LeadWithSalesUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,7 +78,7 @@ const Leads = ({ salesColumn }: TProps) => {
 
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
   const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(
-    null
+    null,
   );
 
   const [search, setSearch] = useState<string>("");
@@ -119,16 +130,28 @@ const Leads = ({ salesColumn }: TProps) => {
           setTimeout(() => reject(new Error("Request timeout")), 10000); // 10 second timeout
         });
 
-        const fetchPromise = getLeadsWithCount({
-          take: pageSize,
-          skip: skip,
-          searchTerm: search,
-          assignedTo: filter.assignedTo,
-          source: filter.source,
-          service: filter.service,
-          status: filter.status,
-          dateRange: dateRange,
-        });
+        const queryParams = new URLSearchParams();
+        if (pageSize) queryParams.append("take", pageSize.toString());
+        if (skip !== undefined) queryParams.append("skip", skip.toString());
+        if (search) queryParams.append("searchTerm", search);
+        if (filter.assignedTo)
+          queryParams.append("assignedTo", filter.assignedTo);
+        if (filter.source) queryParams.append("source", filter.source);
+        if (filter.service) queryParams.append("service", filter.service);
+        if (filter.status) queryParams.append("status", filter.status);
+        if (dateRange?.[0])
+          queryParams.append("startDate", dateRange[0].toISOString());
+        if (dateRange?.[1])
+          queryParams.append("endDate", dateRange[1].toISOString());
+
+        const fetchPromise = fetch(
+          `/api/pipeline/sales/leads?${queryParams.toString()}`,
+        )
+          .then((res) => res.json())
+          .then((res) => {
+            if (!res.success) throw new Error(res.error);
+            return res.data;
+          });
 
         const { leads: updatedLeads, totalCount: count } = (await Promise.race([
           fetchPromise,
@@ -156,7 +179,7 @@ const Leads = ({ salesColumn }: TProps) => {
               () => {
                 fetchLeads(retryCount + 1);
               },
-              1000 * (retryCount + 1)
+              1000 * (retryCount + 1),
             ); // Exponential backoff
             return;
           }
@@ -196,8 +219,9 @@ const Leads = ({ salesColumn }: TProps) => {
       } else {
         setCurrentPage(page);
       }
+      document.querySelector("main")?.scrollTo({ top: 0, behavior: "smooth" });
     },
-    [pageSize]
+    [pageSize],
   );
 
   // Reset page to 1 when search changes
@@ -260,12 +284,12 @@ const Leads = ({ salesColumn }: TProps) => {
 
           // Filter sales users based on current user
           const salesUsers = companyUsers.filter(
-            (user) => user.employeeType === "Sales"
+            (user) => user.employeeType === "Sales",
           );
 
           if (userData?.employeeType === "Sales") {
             const currentSalesUser = salesUsers.find(
-              (user) => user.id.toString() === userData?.id.toString()
+              (user) => user.id.toString() === userData?.id.toString(),
             );
             setCompanyUsers(currentSalesUser ? [currentSalesUser] : []);
           } else {
@@ -315,7 +339,7 @@ const Leads = ({ salesColumn }: TProps) => {
           errorToast(
             res?.errorSource && res?.errorSource.length > 0
               ? res?.errorSource[0].message
-              : res.message
+              : res.message,
           );
         }
       } catch (err) {
@@ -323,11 +347,11 @@ const Leads = ({ salesColumn }: TProps) => {
         errorToast(
           formattedError?.errorSource && formattedError?.errorSource.length > 0
             ? formattedError?.errorSource[0].message
-            : formattedError.message
+            : formattedError.message,
         );
       }
     },
-    [router]
+    [router],
   ); // Only depend on router
   //sort leads by time created in descending order (already sorted by backend)
   // leads?.sort((a, b) => {
@@ -368,7 +392,14 @@ const Leads = ({ salesColumn }: TProps) => {
       newColumnId: number;
     }) => {
       try {
-        const updatedLead = await updateLeadColumn(leadId, newColumnId);
+        const res = await fetch(`/api/pipeline/sales/leads/${leadId}/column`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ newColumnId }),
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
+        const updatedLead = data.data;
         const column = updatedLead.column;
         setLeads((prevLeads) =>
           prevLeads.map((lead) => {
@@ -376,20 +407,20 @@ const Leads = ({ salesColumn }: TProps) => {
               return { ...lead, column };
             }
             return lead;
-          })
+          }),
         );
         toast.success("Lead status updated successfully");
       } catch (err) {
         toast.error("Error updating lead status");
       }
     },
-    []
+    [],
   ); // No dependencies needed
 
   const handleUpdateAppointmentInLead = useCallback(
     async (
       appointment: Appointment,
-      { leadId, columnId }: { leadId: number; columnId: number }
+      { leadId, columnId }: { leadId: number; columnId: number },
     ) => {
       setLeads((prevLeads) =>
         prevLeads.map((lead) => {
@@ -405,7 +436,7 @@ const Leads = ({ salesColumn }: TProps) => {
             };
           }
           return lead;
-        })
+        }),
       );
 
       // Trigger pipeline automation
@@ -423,297 +454,318 @@ const Leads = ({ salesColumn }: TProps) => {
         console.error("Automation run failed", err);
       }
     },
-    [leads]
+    [leads],
   );
 
   return (
-    <div className="space-y-8 px-3">
+    <div className="">
       {/* TODO */}
       {/* <Filter pipelineType={type} /> */}
-      <div className="mt-5 flex w-full flex-col-reverse justify-between gap-4 md:flex-row md:items-center">
-        <div className="flex w-full max-w-4xl rounded-lg border border-gray-300 bg-background p-2">
-          <div className="flex w-full items-center gap-4">
-            <SearchTerms search={search} setSearch={setSearch} />
-            <div className="hidden items-center gap-4 lg:flex">
-              <div className="m-2 px-4">
-                <DateRange
-                  dateRange={dateRange}
-                  onOk={(start, end) => setDateRange([start, end])}
-                  onCancel={() => setDateRange([null, null])}
-                />
-              </div>
-              <div className="relative">
-                <DropdownMenuDemo
-                  leads={initialLeads ?? []}
-                  filter={filter}
-                  setFilter={setFilter}
-                  clearFilters={clearFilters}
-                />
+      <div className="space-y-4 sm:space-y-6 md:space-y-8 px-3">
+        <div className="mt-5 flex w-full flex-col-reverse justify-between gap-4 md:flex-row md:items-center">
+          <div className="flex w-full max-w-4xl rounded-xl border bg-background p-2">
+            <div className="flex w-full md:items-center gap-2 md:gap-4 md:flex-row flex-col">
+              <SearchTerms search={search} setSearch={setSearch} />
+              <div className="items-center gap-2 md:gap-4 flex flex-1">
+                <div className="flex-1">
+                  <DateRange
+                    dateRange={dateRange}
+                    onOk={(start, end) => setDateRange([start, end])}
+                    onCancel={() => setDateRange([null, null])}
+                  />
+                </div>
+                <div className="relative flex-1">
+                  <DropdownMenuDemo
+                    leads={initialLeads ?? []}
+                    filter={filter}
+                    setFilter={setFilter}
+                    clearFilters={clearFilters}
+                  />
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {leads.length > 0 && !loading ? (
-        <>
-          <div className="hidden lg:block">
-            <table className="w-full shadow-md">
-              <thead className="bg-background">
-                <tr className="h-10 border-b">
-                  <th className="border-b px-4 py-2 text-left">Lead#</th>
-                  <th className="border-b px-4 py-2 text-left">Client </th>
-                  <th className="border-b px-4 py-2 text-left">Vehicle Info</th>
-                  <th className="border-b px-4 py-2 text-left">Services</th>
-                  <th className="border-b px-4 py-2 text-left">Assigned To</th>
-                  <th className="border-b px-4 py-2 text-left">Lead Source</th>
-                  <th className="border-b px-4 py-2 text-left">Status</th>
-                  <th className="border-b px-4 py-2 text-left">Actions</th>
-                  <th className="border-b px-4 py-2 text-left">Time Created</th>
-                </tr>
-              </thead>
+        {leads.length > 0 && !loading ? (
+          <>
+            <div className="hidden lg:block">
+              <table className="w-full shadow-md">
+                <thead className="bg-background">
+                  <tr className="h-10 border-b">
+                    <th className="border-b px-4 py-2 text-left">Lead#</th>
+                    <th className="border-b px-4 py-2 text-left">Client </th>
+                    <th className="border-b px-4 py-2 text-left">
+                      Vehicle Info
+                    </th>
+                    <th className="border-b px-4 py-2 text-left">Services</th>
+                    <th className="border-b px-4 py-2 text-left">
+                      Assigned To
+                    </th>
+                    <th className="border-b px-4 py-2 text-left">
+                      Lead Source
+                    </th>
+                    <th className="border-b px-4 py-2 text-left">Status</th>
+                    <th className="border-b px-4 py-2 text-left">Actions</th>
+                    <th className="border-b px-4 py-2 text-left">
+                      Time Created
+                    </th>
+                  </tr>
+                </thead>
 
-              <tbody>
-                {leads &&
-                  leads.map((lead, index) => {
-                    const timeCreated = moment(lead.createdAt).format(
-                      "MM/DD/YYYY"
-                    );
+                <tbody>
+                  {leads &&
+                    leads.map((lead, index) => {
+                      const timeCreated = moment(lead.createdAt).format(
+                        "MM/DD/YYYY",
+                      );
 
-                    return (
-                      <tr
-                        key={lead.id + 1}
-                        className={cn(
-                          "rounded-md",
-                          index % 2 === 0 ? "bg-background" : "bg-blue-100"
-                        )}
-                      >
-                        <td className="border-b px-4 py-2 text-left">
-                          <Link
-                            href={`/dashboard/client/${lead.clientId}`}
-                            className="block h-full w-full text-[#6571FF]"
-                          >
-                            {(currentPage - 1) * pageSize + index + 1}
-                          </Link>
-                        </td>
-                        <td className="border-b px-4 py-2 text-left">
-                          <Link
-                            href={`/dashboard/client/${lead.clientId}`}
-                            className="block h-full w-full"
-                          >
-                            {lead.clientName}
-                          </Link>
-                        </td>
-                        <td className="border-b px-4 py-2 text-left">
-                          <Link href="#" className="block h-full w-full">
-                            {lead.vehicleInfo}
-                          </Link>
-                        </td>
-                        <td className="border-b px-4 py-2 text-left">
-                          <Link href="#" className="block h-full w-full">
-                            {lead.services}
-                          </Link>
-                        </td>
-                        <td className="border-b px-4 py-2 text-left">
-                          <Link href="#" className="block h-full w-full">
-                            {lead.salesUser?.firstName}{" "}
-                            {lead.salesUser?.lastName ?? ""}
-                          </Link>
-                        </td>
-                        <td className="border-b px-4 py-2 text-left">
-                          <Link href="#" className="block h-full w-full">
-                            {lead.source}
-                          </Link>
-                        </td>
-                        <td className="border-b px-4 py-2 text-left">
-                          {lead?.isQualified ? (
-                            <Select
-                              showSearch
-                              value={lead.column?.id ?? " "}
-                              style={{ width: 150 }}
-                              placeholder="Search to Select"
-                              optionFilterProp="label"
-                              disabled={pending}
-                              filterSort={(optionA, optionB) =>
-                                (optionA?.label ?? "")
-                                  .toLowerCase()
-                                  .localeCompare(
-                                    (optionB?.label ?? "").toLowerCase()
-                                  )
-                              }
-                              options={salesColumn.map((column) => ({
-                                value: column.id,
-                                label: column.title,
-                              }))}
-                              onSelect={(value) =>
-                                startTransition(() =>
-                                  handleColumnChange({
-                                    leadId: lead.id,
-                                    newColumnId: value as number,
-                                  })
-                                )
-                              }
-                            />
-                          ) : (
-                            "Unqualified"
+                      return (
+                        <tr
+                          key={lead.id + 1}
+                          className={cn(
+                            "rounded-md",
+                            index % 2 === 0 ? "bg-background" : "bg-blue-100",
                           )}
-                        </td>
-
-                        <td className="border-b px-4 py-2 text-left">
-                          <div className="flex items-center gap-2">
+                        >
+                          <td className="border-b px-4 py-2 text-left">
                             <Link
-                              href={`/dashboard/communication/client/${lead?.client?.id}?source=lead`}
-                              className="group relative"
+                              href={`/dashboard/client/${lead.clientId}`}
+                              className="block h-full w-full text-[#6571FF]"
                             >
-                              <MessageCircleMore
-                                size={20}
-                                className="duration-300 hover:text-[#6571FF]"
-                              />
-                              <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-                                Communications
-                              </span>
+                              {(currentPage - 1) * pageSize + index + 1}
                             </Link>
-                            <button
-                              onClick={() =>
-                                handleCreateDraftEstimate({
-                                  leadId: lead.id,
-                                  clientId: lead?.client?.id,
-                                  vehicleId: lead?.client?.vehicle?.id,
-                                })
-                              }
-                              className="group relative"
+                          </td>
+                          <td className="border-b px-4 py-2 text-left">
+                            <Link
+                              href={`/dashboard/client/${lead.clientId}`}
+                              className="block h-full w-full"
                             >
-                              {lead.isEstimateCreated ? (
-                                <div className="relative h-6 w-4">
-                                  <Image
-                                    alt="draftEstimateDone"
-                                    src="/icons/estimateDone.png"
-                                    fill
-                                    className="object-contain"
-                                    loading="lazy"
-                                    sizes="24px"
-                                  />
-                                </div>
-                              ) : (
-                                <div className="relative h-4 w-4">
-                                  <Image
-                                    src="/icons/draftEstimate.png"
-                                    alt="draftEstimate"
-                                    fill
-                                    sizes="16px"
-                                    className="object-contain duration-300 hover:opacity-80"
-                                    loading="lazy"
-                                  />
-                                </div>
-                              )}
-                              <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-                                Draft estimate
-                              </span>
-                            </button>
-                            {(() => {
-                              const appointment =
-                                (lead?.client?.appointments?.length ?? 0) > 0
-                                  ? lead?.client?.appointments?.[0]
-                                  : undefined;
-                              return (
-                                <AppointmentCreateOrEdit
-                                  fromEdit={!!appointment}
-                                  fromLead
-                                  appointmentId={appointment?.id}
-                                  triggerIcon={
-                                    <button className="group relative">
-                                      {!!appointment ? (
-                                        <CalendarCheck
-                                          size={18}
-                                          color="#6571FF"
-                                        />
-                                      ) : (
-                                        <Calendar size={18} color="#66738C" />
-                                      )}
-
-                                      <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-                                        New Appointment
-                                      </span>
-                                    </button>
-                                  }
-                                  vehicleId={lead?.client?.vehicle?.id}
-                                  clientId={lead?.client?.id}
-                                  onAppointmentCreated={(
-                                    appointment: Appointment
-                                  ) => {
-                                    handleUpdateAppointmentInLead(appointment, {
+                              {formatDisplayName(lead.clientName)}
+                            </Link>
+                          </td>
+                          <td className="border-b px-4 py-2 text-left">
+                            <Link href="#" className="block h-full w-full">
+                              {lead.vehicleInfo}
+                            </Link>
+                          </td>
+                          <td className="border-b px-4 py-2 text-left">
+                            <Link href="#" className="block h-full w-full">
+                              {lead.services}
+                            </Link>
+                          </td>
+                          <td className="border-b px-4 py-2 text-left">
+                            <Link href="#" className="block h-full w-full">
+                              {lead.salesUser?.firstName}{" "}
+                              {lead.salesUser?.lastName ?? ""}
+                            </Link>
+                          </td>
+                          <td className="border-b px-4 py-2 text-left">
+                            <Link href="#" className="block h-full w-full">
+                              {lead.source}
+                            </Link>
+                          </td>
+                          <td className="border-b px-4 py-2 text-left">
+                            {lead?.isQualified ? (
+                              <Select
+                                showSearch
+                                value={lead.column?.id ?? " "}
+                                style={{ width: 150 }}
+                                placeholder="Search to Select"
+                                optionFilterProp="label"
+                                disabled={pending}
+                                filterSort={(optionA, optionB) =>
+                                  (optionA?.label ?? "")
+                                    .toLowerCase()
+                                    .localeCompare(
+                                      (optionB?.label ?? "").toLowerCase(),
+                                    )
+                                }
+                                options={salesColumn.map((column) => ({
+                                  value: column.id,
+                                  label: column.title,
+                                }))}
+                                onSelect={(value) =>
+                                  startTransition(() =>
+                                    handleColumnChange({
                                       leadId: lead.id,
-                                      columnId: lead.columnId!,
-                                    });
-                                  }}
-                                  onAppointmentUpdated={(
-                                    appointment: Appointment
-                                  ) => {
-                                    handleUpdateAppointmentInLead(appointment, {
-                                      leadId: lead.id,
-                                      columnId: lead.columnId!,
-                                    });
-                                  }}
-                                />
-                              );
-                            })()}
-                            <div className="group relative ">
-                              <TaskForm
-                                companyUsers={companyUsers}
-                                leadId={lead.id}
-                                previousTasks={lead.tasks || []}
+                                      newColumnId: value as number,
+                                    }),
+                                  )
+                                }
                               />
-                              <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-                                Add Task
-                              </span>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="border-b px-4 py-2 text-left">
-                          <Link href="#" className="block h-full w-full">
-                            {timeCreated}
-                          </Link>
-                        </td>
-                      </tr>
-                    );
-                  })}
-              </tbody>
-            </table>
-          </div>
-          <div className="overflow-y-auto lg:hidden">
-            {leads &&
-              leads.map((lead, index) => {
-                return (
-                  <ResponsiveSalesPipelineCard
-                    key={index}
-                    lead={lead as any}
-                    index={index}
-                  />
-                );
-              })}
-          </div>
-        </>
-      ) : loading ? (
-        // <div
-        //   className="flex w-full items-center justify-center"
-        //   style={{ height: "calc(100vh - 300px)" }}
-        // >
-        //   <Spin size="large" />
-        // </div>
+                            ) : (
+                              "Unqualified"
+                            )}
+                          </td>
 
-        <>
-          <LeadsTableSkeleton />
-          <LeadsMobileSkeleton />
-        </>
-      ) : (
-        <div className="my-20 flex w-full justify-center text-gray-500">
-          No leads found.
-        </div>
-      )}
+                          <td className="border-b px-4 py-2 text-left">
+                            <div className="flex items-center gap-2">
+                              <Link
+                                href={`/dashboard/communication/client/${lead?.client?.id}?source=lead`}
+                                className="group relative"
+                              >
+                                <MessageCircleMore
+                                  size={20}
+                                  className="duration-300 hover:text-[#6571FF]"
+                                />
+                                <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                                  Communications
+                                </span>
+                              </Link>
+                              <button
+                                onClick={() =>
+                                  handleCreateDraftEstimate({
+                                    leadId: lead.id,
+                                    clientId: Number(lead?.clientId),
+                                    vehicleId: lead?.client?.vehicle?.id,
+                                  })
+                                }
+                                className="group relative"
+                              >
+                                {lead.isEstimateCreated ? (
+                                  <div className="relative h-6 w-4">
+                                    <Image
+                                      alt="draftEstimateDone"
+                                      src="/icons/estimateDone.png"
+                                      fill
+                                      className="object-contain"
+                                      loading="lazy"
+                                      sizes="24px"
+                                    />
+                                  </div>
+                                ) : (
+                                  <div className="relative h-4 w-4">
+                                    <Image
+                                      src="/icons/draftEstimate.png"
+                                      alt="draftEstimate"
+                                      fill
+                                      sizes="16px"
+                                      className="object-contain duration-300 hover:opacity-80"
+                                      loading="lazy"
+                                    />
+                                  </div>
+                                )}
+                                <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                                  Draft estimate
+                                </span>
+                              </button>
+                              {(() => {
+                                const appointment =
+                                  (lead?.client?.appointments?.length ?? 0) > 0
+                                    ? lead?.client?.appointments?.[0]
+                                    : undefined;
+                                return (
+                                  <AppointmentCreateOrEdit
+                                    fromEdit={!!appointment}
+                                    fromLead
+                                    appointmentId={appointment?.id}
+                                    triggerIcon={
+                                      <button className="group relative">
+                                        {!!appointment ? (
+                                          <CalendarCheck
+                                            size={18}
+                                            color="#6571FF"
+                                          />
+                                        ) : (
+                                          <Calendar size={18} color="#66738C" />
+                                        )}
+
+                                        <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                                          New Appointment
+                                        </span>
+                                      </button>
+                                    }
+                                    vehicleId={lead?.client?.vehicle?.id}
+                                    clientId={lead?.client?.id}
+                                    onAppointmentCreated={(
+                                      appointment: Appointment,
+                                    ) => {
+                                      handleUpdateAppointmentInLead(
+                                        appointment,
+                                        {
+                                          leadId: lead.id,
+                                          columnId: lead.columnId!,
+                                        },
+                                      );
+                                    }}
+                                    onAppointmentUpdated={(
+                                      appointment: Appointment,
+                                    ) => {
+                                      handleUpdateAppointmentInLead(
+                                        appointment,
+                                        {
+                                          leadId: lead.id,
+                                          columnId: lead.columnId!,
+                                        },
+                                      );
+                                    }}
+                                  />
+                                );
+                              })()}
+                              <div className="group relative ">
+                                <TaskForm
+                                  companyUsers={companyUsers}
+                                  leadId={lead.id}
+                                  previousTasks={lead.tasks || []}
+                                />
+                                <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                                  Add Task
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="border-b px-4 py-2 text-left">
+                            <Link href="#" className="block h-full w-full">
+                              {timeCreated}
+                            </Link>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            </div>
+            <div className="overflow-y-auto lg:hidden">
+              {leads &&
+                leads.map((lead, index) => {
+                  return (
+                    <ResponsiveSalesPipelineCard
+                      key={index}
+                      lead={lead as any}
+                      index={index}
+                      onCreateDraftEstimate={handleCreateDraftEstimate}
+                      onUpdateAppointment={handleUpdateAppointmentInLead}
+                      companyUsers={companyUsers}
+                      salesColumn={salesColumn}
+                      onColumnChange={handleColumnChange}
+                    />
+                  );
+                })}
+            </div>
+          </>
+        ) : loading ? (
+          // <div
+          //   className="flex w-full items-center justify-center"
+          //   style={{ height: "calc(100vh - 300px)" }}
+          // >
+          //   <Spin size="large" />
+          // </div>
+
+          <>
+            <LeadsTableSkeleton />
+            <LeadsMobileSkeleton />
+          </>
+        ) : (
+          <div className="py-20 flex w-full justify-center text-gray-500">
+            No leads found.
+          </div>
+        )}
+      </div>
 
       {/* Pagination */}
       {showPagination && (
-        <div className="mt-4 flex justify-end">
+        <div className="py-4 sm:mx-3 px-3 flex justify-end sticky bottom-0 bg-background z-10">
           <Pagination
             className="custom-pagination"
             current={currentPage}
@@ -750,7 +802,7 @@ const SearchTerms = React.memo(function SearchTerms({
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setSearch(e.target.value);
     },
-    [setSearch]
+    [setSearch],
   );
 
   return (
@@ -766,11 +818,11 @@ const SearchTerms = React.memo(function SearchTerms({
         placeholder="Search by client, vehicle, services..."
         onChange={handleSearchChange}
         className={cn(
-          "w-full h-11 pl-12 pr-4 rounded-xl border-2 border-slate-100 bg-white",
+          "w-full h-11 pl-12 pr-4 rounded-xl border  bg-white",
           "text-sm font-medium text-slate-700 placeholder:text-slate-400 outline-none",
           "transition-all duration-300 ease-in-out",
           "hover:border-slate-200 hover:bg-slate-50/30",
-          "focus:border-[#6571FF]/40 focus:bg-white focus:ring-4 focus:ring-[#6571FF]/10"
+          "focus:border-[#6571FF]/40 focus:bg-white focus:ring-4 focus:ring-[#6571FF]/10",
         )}
       />
     </div>
@@ -840,13 +892,13 @@ const DropdownMenuDemo = React.memo(function DropdownMenuDemo({
               ?.lastName,
         })),
       };
-    }, [leads]); // Only recalculate when leads change
+    }, [leads]);
 
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
         <button
-          className="flex items-center gap-x-12 rounded-md border px-4 py-2"
+          className="flex items-center gap-x-12 rounded-xl border px-4 py-2 flex-1"
           aria-label="Customise options"
         >
           <span>Filter</span>
@@ -875,7 +927,7 @@ const DropdownMenuDemo = React.memo(function DropdownMenuDemo({
               value={
                 filter?.assignedTo
                   ? salesPersonItems.find(
-                      (item) => item.value === filter?.assignedTo
+                      (item) => item.value === filter?.assignedTo,
                     )?.value || ""
                   : ""
               }
@@ -926,7 +978,7 @@ const DropdownMenuDemo = React.memo(function DropdownMenuDemo({
                   "group mt-4 flex w-full items-center justify-center gap-2 rounded-lg py-2 transition-all duration-200 ",
                   "hover:bg-red-50", // Soft background shift
                   " text-slate-500 hover:text-red-500", // Typography style
-                  "active:scale-95 border border-slate-200 hover:border-red-100" // Tactile feedback
+                  "active:scale-95 border border-slate-200 hover:border-red-100", // Tactile feedback
                 )}
               >
                 Clear All Filters

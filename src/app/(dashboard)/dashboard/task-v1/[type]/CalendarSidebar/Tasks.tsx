@@ -16,13 +16,13 @@ export default function Tasks({
   users: User[];
   companyUsers: User[];
 }) {
-  const minimized = useCalendarSidebarStore((x) => x.minimized);
+  const minimized = useCalendarSidebarStore(x => x.minimized);
 
   return (
     <div
       className={cn(
         "md:app-shadow relative mt-5 flex flex-grow flex-col gap-2 overflow-hidden rounded-[12px] md:bg-background",
-        minimized || "p-3"
+        minimized || "p-3",
       )}
     >
       <h2 className="-mt-4 flex items-center justify-between md:-mt-0">
@@ -41,7 +41,7 @@ export default function Tasks({
           {!tasks ? (
             <TaskListSkeleton rows={4} />
           ) : tasks.length > 0 ? (
-            tasks.map((task) => (
+            tasks.map(task => (
               <TaskComponent
                 key={task.id}
                 task={task}

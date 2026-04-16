@@ -32,34 +32,31 @@ import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { queryKeys } from "@/lib/queryKeys";
 import { errorToast, successToast } from "@/lib/toast";
 import { useCalendarStore } from "@/stores/calendarStore";
+import { formatTime12Hour } from "@/utils/formateTime12Hours";
+import { normalizeTime } from "@/utils/normalizeTime";
 import { formatTime } from "@/utils/taskAndActivity";
 import { addOneHour, formatDateToToday, getCurrentTime } from "@/utils/time";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQueryClient } from "@tanstack/react-query";
-import moment from "moment-timezone";
-import { customAlphabet } from "nanoid";
-import { useEffect, useMemo, useRef, useState } from "react";
-import AssignUsers from "./AssignUsers";
-import { Reminder } from "./Reminder";
-import ScheduleTab from "./ScheduleTab";
-import { SelectAppointmentClient } from "./SelectAppointmentClient";
-import { SelectAppointmentVehicle } from "./SelectAppointmentVehicle";
-import { formatTime12Hour } from "@/utils/formateTime12Hours";
 import { Popconfirm, Select } from "antd";
-import { normalizeTime } from "@/utils/normalizeTime";
 import {
   Bell,
   Calendar,
-  Car,
   ChevronDown,
   Hash,
   Plus,
   Search,
   Trash2,
 } from "lucide-react";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { getVehicleByInvoiceId } from "@/actions/vehicle/getVehicleByInvoiceId";
-import { getVehicles } from "@/actions/vehicle/getVehicles";
-import useVehicleByClientIdQuery from "@/hooks/query-hook/useVehicleByClientIdQuery";
+import moment from "moment-timezone";
+import { customAlphabet } from "nanoid";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import AssignUsers from "./AssignUsers";
+import { Reminder } from "./Reminder";
+import ScheduleTab from "./ScheduleTab";
+import { SelectAppointmentServiceCategory } from "./SelectAppointmentServiceCategory";
+import { SelectAppointmentClient } from "./SelectAppointmentClient";
+import { SelectAppointmentVehicle } from "./SelectAppointmentVehicle";
 enum Tab {
   Schedule = 0,
   Reminder = 1,
@@ -150,6 +147,9 @@ export default function AppointmentModalBody({
   const [endTime, setEndTime] = useState("00:00");
   const [allDay, setAllDay] = useState(false);
   const [vehicle, setVehicle] = useState<Partial<Vehicle> | null>(null);
+  const [serviceCategoryId, setServiceCategoryId] = useState<number | null>(
+    null,
+  );
   const [draft, setDraft] = useState<string | null>(draftEstimateId || null);
   const [draftSearch, setDraftSearch] = useState("");
   const [assignedUsers, setAssignedUsers] = useState<User[]>([]);
@@ -173,6 +173,50 @@ export default function AppointmentModalBody({
 
   const [openConfirmation, setOpenConfirmation] = useState(false);
   const [openReminder, setOpenReminder] = useState(false);
+
+  // Track whether the form has changed so the save button can stay disabled
+  const [formChanged, setFormChanged] = useState(false);
+
+  // Store original values when the modal opens so edit detection stays stable
+  const [originalValues, setOriginalValues] = useState({
+    title,
+    date,
+    startTime,
+    endTime,
+    assignedUsers: assignedUsers ? [...assignedUsers] : [],
+    client,
+    vehicle,
+    serviceCategoryId,
+    draft,
+    notes,
+    confirmationTemplate,
+    reminderTemplate,
+    confirmationTemplateStatus,
+    reminderTemplateStatus,
+    times,
+  });
+
+  const resetAll = useCallback(() => {
+    setTitle("");
+    setDate(today);
+    setStartTime("00:00");
+    setEndTime("00:00");
+    setClient(null);
+    setVehicle(null);
+    setServiceCategoryId(null);
+    setDraft(null);
+    setAssignedUsers([]);
+    setConfirmationTemplate(null);
+    setReminderTemplate(null);
+    setConfirmationTemplateStatus(false);
+    setReminderTemplateStatus(false);
+    setTimes([]);
+    setAllDay(false);
+    setIsSubmitting(false);
+    clearError();
+    // remove the clientId from the url
+    // router.push(pathname);
+  }, [clearError, today]);
 
   const draftEstimateOptions = useMemo(
     () =>
@@ -246,6 +290,7 @@ export default function AppointmentModalBody({
       setNotes(appointment?.notes ?? "");
       setClient(appointment?.client ?? null);
       setVehicle(appointment?.vehicle ?? null);
+      setServiceCategoryId((appointment as any)?.serviceCategoryId ?? null);
       setDraft(appointment?.draftEstimate ?? null);
       setAssignedUsers(appointment?.assignUsers ?? []);
       setTimes((appointment?.times as any) ?? []);
@@ -269,6 +314,7 @@ export default function AppointmentModalBody({
           : [],
         client: appointment?.client ?? null,
         vehicle: appointment?.vehicle ?? null,
+        serviceCategoryId: (appointment as any)?.serviceCategoryId ?? null,
         draft: appointment?.draftEstimate ?? null,
         notes: appointment?.notes ?? "",
         confirmationTemplate: appointment?.confirmationEmailTemplate ?? null,
@@ -293,6 +339,7 @@ export default function AppointmentModalBody({
         assignedUsers: [],
         client: null,
         vehicle: null,
+        serviceCategoryId: null,
         draft: draftEstimateId || null,
         notes: "",
         confirmationTemplate: null,
@@ -302,7 +349,7 @@ export default function AppointmentModalBody({
         times: [],
       });
     }
-  }, [fromEdit, today]);
+  }, [fromEdit, today, draftEstimateId]);
 
   useEffect(() => {
     if (selectedStartTime) {
@@ -319,7 +366,7 @@ export default function AppointmentModalBody({
           setStartTime(formattedTime);
           setEndTime(addOneHour(formattedTime));
         } catch (e) {
-          console.error("Failed to parse startTime:", e);
+          void e;
         }
       }
     }
@@ -333,7 +380,7 @@ export default function AppointmentModalBody({
           const formattedDate = selectedDateObj.format("YYYY-MM-DD");
           setDate(formattedDate);
         } catch (e) {
-          console.error("Failed to parse date:", e);
+          void e;
         }
       }
     }
@@ -351,7 +398,7 @@ export default function AppointmentModalBody({
     return () => {
       resetAll();
     };
-  }, []);
+  }, [resetAll]);
 
   const handleDate = (operator: "+" | "-") => {
     const d = new Date();
@@ -362,35 +409,8 @@ export default function AppointmentModalBody({
   // Change start and end time based on settings
   useEffect(() => {
     if (allDay && settings) {
-      const isToday = date === formatDateToToday(date ?? new Date().toString());
-      const currentTime = getCurrentTime();
-
-      let startTime = settings.dayStart;
-      let endTime = settings.dayEnd;
-
-      if (isToday && startTime < currentTime) {
-        startTime = currentTime;
-
-        // Ensure endTime is at least 30-60 minutes after startTime
-        if (endTime < startTime) {
-          endTime = addOneHour(startTime); // Add 1 hour buffer
-        }
-
-        // Prevent exceeding settings.dayEnd
-        if (endTime > settings.dayEnd) {
-          endTime = settings.dayEnd;
-        }
-      }
-
-      setStartTime(() => {
-        const [hour, minute] = startTime.split(":").map(Number);
-        return formatTime12Hour(hour, minute, timezone);
-      });
-
-      setEndTime(() => {
-        const [hour, minute] = endTime.split(":").map(Number);
-        return formatTime12Hour(hour, minute, timezone);
-      });
+      setStartTime(settings.dayStart);
+      setEndTime(settings.dayEnd);
     } else if (settings) {
       if (fromEdit && appointment) {
         setTitle(appointment?.title || "");
@@ -424,7 +444,7 @@ export default function AppointmentModalBody({
         setEndTime(end.format("HH:mm"));
       }
     }
-  }, [allDay, settings?.dayStart, settings?.dayEnd, date]);
+  }, [allDay, settings, date, fromEdit, appointment, timezone]);
 
   const handleSubmit = async () => {
     if (isSubmitting) return; // Prevent multiple submissions
@@ -479,6 +499,10 @@ export default function AppointmentModalBody({
       }
 
       let res;
+      const selectedClientId = client?.id ?? undefined;
+      const selectedVehicleId = vehicle?.id ?? undefined;
+      const selectedServiceCategoryId =
+        serviceCategoryId === null ? undefined : serviceCategoryId;
 
       if (fromEdit && appointmentId) {
         res = await editAppointment({
@@ -489,8 +513,9 @@ export default function AppointmentModalBody({
             startTime: startTime as string,
             endTime: endTime as string,
             assignedUsers: assignedUsers.map((user) => user.id),
-            clientId: client ? client.id : undefined,
-            vehicleId: vehicle ? vehicle.id : undefined,
+            clientId: selectedClientId,
+            vehicleId: selectedVehicleId,
+            serviceCategoryId: selectedServiceCategoryId,
             draftEstimate: draft,
             notes,
             confirmationEmailTemplateId: confirmationTemplate?.id,
@@ -509,7 +534,7 @@ export default function AppointmentModalBody({
           try {
             successToast("Appointment updated successfully!");
           } catch (toastError) {
-            console.error("Toast error:", toastError);
+            void toastError;
           }
         }
       } else {
@@ -519,8 +544,9 @@ export default function AppointmentModalBody({
           startTime,
           endTime,
           assignedUsers: assignedUsers.map((user) => user.id),
-          clientId: client ? client.id : undefined,
-          vehicleId: vehicle ? vehicle.id : undefined,
+          clientId: selectedClientId,
+          vehicleId: selectedVehicleId,
+          serviceCategoryId: selectedServiceCategoryId,
           draftEstimate: draft,
           notes,
           confirmationEmailTemplateId: confirmationTemplate?.id,
@@ -536,7 +562,7 @@ export default function AppointmentModalBody({
           try {
             successToast("Appointment created successfully!");
           } catch (toastError) {
-            console.error("Toast error:", toastError);
+            void toastError;
           }
         }
       }
@@ -565,61 +591,31 @@ export default function AppointmentModalBody({
       setIsSubmitting(false);
     } catch (error) {
       setIsSubmitting(false);
-      console.error("Error in handleSubmit:", error);
+      void error;
       errorToast("An unexpected error occurred. Please try again.");
     }
   };
 
-  // Add state to track if form has changed
-  const [formChanged, setFormChanged] = useState(false);
-
-  // Store original values when component mounts
-  const [originalValues, setOriginalValues] = useState({
-    title,
-    date,
-    startTime,
-    endTime,
-    assignedUsers: assignedUsers ? [...assignedUsers] : [],
-    client,
-    vehicle,
-    draft,
-    notes,
-    confirmationTemplate,
-    reminderTemplate,
-    confirmationTemplateStatus,
-    reminderTemplateStatus,
-    times,
-  });
-
-  // Create a function to check if any field has changed
-  const checkFormChanged = () => {
-    if (
-      title !== originalValues.title ||
-      date !== originalValues.date ||
-      startTime !== originalValues.startTime ||
-      endTime !== originalValues.endTime ||
-      JSON.stringify(assignedUsers) !==
-        JSON.stringify(originalValues.assignedUsers) ||
-      client?.id !== originalValues.client?.id ||
-      vehicle?.id !== originalValues.vehicle?.id ||
-      draft !== originalValues.draft ||
-      notes !== originalValues.notes ||
-      confirmationTemplate?.id !== originalValues.confirmationTemplate?.id ||
-      reminderTemplate?.id !== originalValues.reminderTemplate?.id ||
-      confirmationTemplateStatus !==
-        originalValues.confirmationTemplateStatus ||
-      reminderTemplateStatus !== originalValues.reminderTemplateStatus ||
-      JSON.stringify(times) !== JSON.stringify(originalValues.times)
-    ) {
-      setFormChanged(true);
-    } else {
-      setFormChanged(false);
-    }
-  };
-
-  // Call checkFormChanged whenever a field changes
   useEffect(() => {
-    checkFormChanged();
+    setFormChanged(
+      title !== originalValues.title ||
+        date !== originalValues.date ||
+        startTime !== originalValues.startTime ||
+        endTime !== originalValues.endTime ||
+        JSON.stringify(assignedUsers) !==
+          JSON.stringify(originalValues.assignedUsers) ||
+        client?.id !== originalValues.client?.id ||
+        vehicle?.id !== originalValues.vehicle?.id ||
+        serviceCategoryId !== originalValues.serviceCategoryId ||
+        draft !== originalValues.draft ||
+        notes !== originalValues.notes ||
+        confirmationTemplate?.id !== originalValues.confirmationTemplate?.id ||
+        reminderTemplate?.id !== originalValues.reminderTemplate?.id ||
+        confirmationTemplateStatus !==
+          originalValues.confirmationTemplateStatus ||
+        reminderTemplateStatus !== originalValues.reminderTemplateStatus ||
+        JSON.stringify(times) !== JSON.stringify(originalValues.times),
+    );
   }, [
     title,
     date,
@@ -628,6 +624,7 @@ export default function AppointmentModalBody({
     assignedUsers,
     client,
     vehicle,
+    serviceCategoryId,
     draft,
     notes,
     confirmationTemplate,
@@ -635,28 +632,8 @@ export default function AppointmentModalBody({
     confirmationTemplateStatus,
     reminderTemplateStatus,
     times,
+    originalValues,
   ]);
-
-  function resetAll() {
-    setTitle("");
-    setDate(today);
-    setStartTime("00:00");
-    setEndTime("00:00");
-    setClient(null);
-    setVehicle(null);
-    setDraft(null);
-    setAssignedUsers([]);
-    setConfirmationTemplate(null);
-    setReminderTemplate(null);
-    setConfirmationTemplateStatus(false);
-    setReminderTemplateStatus(false);
-    setTimes([]);
-    setAllDay(false);
-    setIsSubmitting(false);
-    clearError();
-    // remove the clientId from the url
-    // router.push(pathname);
-  }
 
   useEffect(() => {
     if (
@@ -1045,6 +1022,10 @@ export default function AppointmentModalBody({
                 openDropdown={vehicleOpenDropdown}
                 setOpenDropdown={setVehicleOpenDropdown}
                 setIsAppointmentModalOpen={setIsAppointmentModalOpen}
+              />
+              <SelectAppointmentServiceCategory
+                value={serviceCategoryId}
+                setValue={setServiceCategoryId}
               />
               <div className="w-full">
                 <DropdownMenu.Root open={draftOpen} onOpenChange={setDraftOpen}>

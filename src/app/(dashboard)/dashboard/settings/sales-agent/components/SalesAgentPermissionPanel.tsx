@@ -38,10 +38,9 @@ export default function SalesAgentPermissionPanel({ companyId }: Props) {
   }, [clients, search]);
 
   return (
-    <Card className="border-amber-200 bg-amber-50/40">
+    <Card className="">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <Shield className="h-4 w-4 text-amber-600" />
           Sales Agent Permission
         </CardTitle>
       </CardHeader>
@@ -75,7 +74,6 @@ export default function SalesAgentPermissionPanel({ companyId }: Props) {
         {/* Client Section */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
             <p className="text-sm font-medium">Client Permissions</p>
           </div>
 

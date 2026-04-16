@@ -64,7 +64,13 @@ const DateRange = ({
   }, []);
 
   const handleSelect = (ranges: any) => {
-    setTempRange(ranges.selection);
+    const { startDate, endDate, key } = ranges.selection;
+    // moveRangeOnFirstSelection=false keeps the previous endDate when user picks a
+    if (startDate > endDate) {
+      setTempRange({ startDate, endDate: startDate, key });
+    } else {
+      setTempRange(ranges.selection);
+    }
   };
 
   const togglePicker = () => {
@@ -128,7 +134,7 @@ const DateRange = ({
         >
           {isRangeSelected
             ? formatRange(state.selection.startDate, state.selection.endDate)
-            : "Select Date Range"}
+            : "Select Date"}
         </span>
         <Calendar
           className={`w-4 h-4 ${showPicker || isRangeSelected ? "text-[#6571FF]" : "text-slate-400"}`}

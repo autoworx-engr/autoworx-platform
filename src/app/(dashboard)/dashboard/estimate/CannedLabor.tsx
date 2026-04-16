@@ -28,7 +28,7 @@ import { formatCurrency } from "@/utils/formatCurrency";
 import { Category, Labor } from "@prisma/client";
 import { Pagination, Popconfirm } from "antd";
 import { SquarePen, Trash2 } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import FilterBySearchBox from "../reporting/components/filter/FilterBySearchBox";
 import CannedFilterBySelection from "./CannedFilterBySelected";
@@ -40,53 +40,44 @@ export type TFilterModalState = {
 
 export default function CannedLabor({
   labors,
+  total,
+  page,
+  take,
+  categories,
 }: {
   labors: (Labor & { category: Category })[];
+  total: number;
+  page: number;
+  take: number;
+  categories: Category[];
 }) {
   const params = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const selectedCategory = params.get("laborCategory") || "";
   const laborSearch = params.get("laborSearch") || "";
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(50);
   const [showPagination, setShowPagination] = useState(false);
-  const [filteredData, setFilteredData] =
-    useState<(Labor & { category: Category })[]>(labors);
   const [activeModal, setActiveModal] = useState<{ [key: string]: boolean }>(
-    {}
+    {},
   );
 
   // Ref to scroll to top
   const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const filtered = labors.filter((row) => {
-      const categoryName = row?.category?.name?.toLowerCase() || "";
-      const laborName = row?.name.toLowerCase();
+    setShowPagination(total > 10);
+  }, [total]);
 
-      const matchesSearch = laborSearch
-        ? laborName.includes(laborSearch.toLowerCase()) ||
-          categoryName.includes(laborSearch.toLowerCase())
-        : true;
+  const handlePageChange = (nextPage: number, nextPageSize?: number) => {
+    const searchParams = new URLSearchParams(params.toString());
+    searchParams.set("laborPage", nextPage.toString());
 
-      const matchesCategory = selectedCategory
-        ? categoryName === selectedCategory.toLowerCase()
-        : true;
+    if (nextPageSize) {
+      searchParams.set("laborTake", nextPageSize.toString());
+    }
 
-      return matchesSearch && matchesCategory;
-    });
-
-    setFilteredData(filtered);
-    // Reset to page 1 whenever search or filter changes
-    setCurrentPage(1);
-  }, [laborSearch, selectedCategory, labors]);
-
-  useEffect(() => {
-    setShowPagination(filteredData?.length > 10);
-  }, [filteredData]);
-
-  const handlePageChange = (page: number, pageSize?: number) => {
-    setCurrentPage(page);
-    if (pageSize) setPageSize(pageSize);
+    const newPath = `${pathname}?${searchParams.toString()}`;
+    router.push(newPath);
 
     // Scroll to top when page changes
     if (contentRef.current) {
@@ -97,17 +88,8 @@ export default function CannedLabor({
     }
   };
 
-  const paginatedLabors = filteredData.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
-
   //  Category names for dropdown
-  const uniqueCategories = labors
-    .map((l) => l?.category)
-    .filter(
-      (c, i, arr) => c && arr.findIndex((a) => a?.id === c?.id) === i
-    ) as any;
+  const uniqueCategories = categories;
 
   const toggleModal = (modalName: string) => {
     setActiveModal((prev) => ({
@@ -187,8 +169,8 @@ export default function CannedLabor({
             </TableRow>
           </TableHeader>
           <TableBody className="overflow-y-auto thin-scrollbar h-full">
-            {paginatedLabors.length > 0 ? (
-              paginatedLabors.map((labor, index) => (
+            {labors.length > 0 ? (
+              labors.map((labor, index) => (
                 <LaborComponent
                   key={labor.id}
                   index={index}
@@ -211,8 +193,8 @@ export default function CannedLabor({
       </div>
       {/* Mobile View */}
       <div className="grid gap-4 pb-4 md:hidden mt-4">
-        {paginatedLabors.length > 0 ? (
-          paginatedLabors.map((labor, i) => (
+        {labors.length > 0 ? (
+          labors.map((labor, i) => (
             <LaborComponent
               key={labor.id}
               labor={labor}
@@ -230,9 +212,9 @@ export default function CannedLabor({
         <div className=" hidden h-10 justify-end lg:flex flex-shrink-0 mt-4">
           <Pagination
             className="custom-pagination"
-            current={currentPage}
-            pageSize={pageSize}
-            total={labors.length}
+            current={page}
+            pageSize={take}
+            total={total}
             onChange={handlePageChange}
             showSizeChanger
             onShowSizeChange={handlePageChange}
@@ -245,10 +227,9 @@ export default function CannedLabor({
         <div className="flex justify-center lg:hidden flex-shrink-0 mt-4">
           <Pagination
             className="custom-pagination"
-            current={currentPage}
-            pageSize={pageSize}
-            // total={filteredData.length}
-            total={labors.length}
+            current={page}
+            pageSize={take}
+            total={total}
             onChange={handlePageChange}
             showSizeChanger
             onShowSizeChange={handlePageChange}
@@ -274,11 +255,11 @@ const LaborComponent = ({
   const [name, setName] = useState<string>(labor.name);
   const [nameError, setNameError] = useState<string>("");
   const [charge, setCharge] = useState<string>(
-    labor.charge ? Number(labor.charge).toFixed(2) : "0.00"
+    labor.charge ? Number(labor.charge).toFixed(2) : "0.00",
   );
   const [notes, setNotes] = useState<string>((labor as any).notes || "");
   const [category, setCategory] = useState<Category | null>(
-    labor?.category || null
+    labor?.category || null,
   );
   const [categoryOpen, setCategoryOpen] = useState(false);
   const { categories } = useListsStore();
@@ -288,7 +269,7 @@ const LaborComponent = ({
   useEffect(() => {
     if (currentSelectedCategoryId && !category) {
       setCategory(
-        categories.find((cat) => cat.id === currentSelectedCategoryId)!
+        categories.find((cat) => cat.id === currentSelectedCategoryId)!,
       );
     }
   }, [currentSelectedCategoryId, category, categories]);
@@ -348,7 +329,7 @@ const LaborComponent = ({
           index !== undefined && index % 2 === 0
             ? "border-indigo-500 bg-white"
             : "border-teal-500 bg-gray-50",
-          "shadow-md hover:shadow-lg"
+          "shadow-md hover:shadow-lg",
         )}
       >
         <CardHeader className="p-4">
@@ -387,7 +368,7 @@ const LaborComponent = ({
                           "w-full rounded-lg border p-2 text-base focus:ring-2 focus:ring-indigo-500 transition-colors",
                           nameError
                             ? "border-red-500"
-                            : "border-gray-300 focus:border-indigo-500"
+                            : "border-gray-300 focus:border-indigo-500",
                         )}
                         placeholder="Labor Name"
                       />
@@ -480,7 +461,7 @@ const LaborComponent = ({
     <TableRow
       className={cn(
         "border-b border-gray-200 transition-colors hover:bg-indigo-50",
-        index % 2 === 0 ? "bg-white" : "bg-gray-50"
+        index % 2 === 0 ? "bg-white" : "bg-gray-50",
       )}
     >
       <TableCell className="py-3">
@@ -528,7 +509,7 @@ const LaborComponent = ({
                     "w-full rounded-lg border p-2 text-base focus:ring-2 focus:ring-indigo-500 transition-colors",
                     nameError
                       ? "border-red-500"
-                      : "border-gray-300 focus:border-indigo-500"
+                      : "border-gray-300 focus:border-indigo-500",
                   )}
                   placeholder="Labor Name"
                 />
