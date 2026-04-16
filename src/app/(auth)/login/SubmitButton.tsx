@@ -3,13 +3,11 @@
 import Submit from "@/components/Submit";
 import { useFormErrorStore } from "@/stores/form-error";
 import { getSession, signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { checkLoginWithTwoFactor } from "./actions/checkLoginWithTwoFactor";
 import { useLoginStore } from "@/stores/LoginStore";
 
 export default function SubmitButton() {
   const { showError } = useFormErrorStore();
-  const router = useRouter();
   const { setShowTwoFactor, setEmail, setPassword } = useLoginStore();
 
   const handler = async (formData: FormData) => {
@@ -39,12 +37,7 @@ export default function SubmitButton() {
         });
         const session = await getSession();
         const isSuperAdmin = session?.user?.isSuperAdmin;
-        if (isSuperAdmin) {
-          router.push("/awx-dashboard");
-        } else {
-          router.push("/dashboard");
-        }
-        router.refresh();
+        window.location.href = isSuperAdmin ? "/awx-dashboard" : "/dashboard";
       }
     } catch (err) {
       console.log("log in page error", err);
