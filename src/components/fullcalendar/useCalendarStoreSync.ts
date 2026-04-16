@@ -21,20 +21,26 @@ export function useCalendarStoreSync(
   // navigate FullCalendar to that date — but skip when we set it ourselves.
   useEffect(() => {
     if (!calendarRef.current || !date) return;
-    if (isNavigatingFromCalendar.current) {
-      isNavigatingFromCalendar.current = false;
-      return;
-    }
     const calApi = calendarRef.current.getApi();
+    console.log("heheeheheh");
     if (moment(calApi.getDate()).format("YYYY-MM-DD") !== date) {
+      // Set the flag BEFORE gotoDate so the resulting datesSet callback
+      // knows to skip the store update (preventing an infinite loop and
+      // preventing the flag from getting stuck in the "true" state).
+      isNavigatingFromCalendar.current = true;
       calApi.gotoDate(date);
     }
   }, [date, calendarRef]);
 
   // Called by FullCalendar on every navigation — syncs the store so that
   // DisplayDate (and anything else reading the store) stays accurate.
+  // When triggered by our own gotoDate call above, we skip the store update
+  // (the store already has the correct value) and just reset the flag.
   const handleDatesSet = (arg: any) => {
-    isNavigatingFromCalendar.current = true;
+    if (isNavigatingFromCalendar.current) {
+      isNavigatingFromCalendar.current = false;
+      return;
+    }
     const viewStart = moment(arg.view.currentStart);
 
     if (arg.view.type === "dayGridMonth") {

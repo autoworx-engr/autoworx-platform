@@ -36,9 +36,9 @@ export const SERVICE_COLORS: Record<
     accentColor: "#059669",
   },
   Weekend: {
-    gradient: ["#dcfce7", "#bbf7d0"],
-    borderColor: "rgba(34, 197, 94, 0.35)",
-    accentColor: "#16a34a",
+    gradient: ["#ede9fe", "#ddd6fe"],
+    borderColor: "rgba(109, 40, 217, 0.35)",
+    accentColor: "#6d28d9",
   },
 };
 
