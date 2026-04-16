@@ -1,5 +1,5 @@
-import { db } from "@/lib/db";
-import { Prisma, type PrismaClient } from "@prisma/client";
+import { db, type TransactionClient } from "@/lib/db";
+import { Prisma } from "@prisma/client";
 import { createInvoice } from "@/actions/estimate/invoice/create";
 import { addAppointment } from "@/actions/appointment/addAppointment";
 import { customAlphabet } from "nanoid";
@@ -8,10 +8,7 @@ import { sendBookingConfirmation } from "@/actions/communication/client/sendBook
 
 const roundMoney = (value: number) => Number(value.toFixed(2));
 
-type Tx = Omit<
-  PrismaClient,
-  "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
->;
+type Tx = TransactionClient;
 
 export interface ConfirmBookingParams {
   shopBookingId: number | string;

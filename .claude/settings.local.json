@@ -11,7 +11,12 @@
       "Bash(yarn build:*)",
       "Bash(ls eslint.config.*)",
       "Bash(ls -la .next/build.lock .next/*.lock)",
-      "Bash(tasklist //FI \"IMAGENAME eq node.exe\")"
+      "Bash(tasklist //FI \"IMAGENAME eq node.exe\")",
+      "Bash(yarn prisma:*)",
+      "Bash(yarn tsc:*)",
+      "Bash(grep -n 'db\\\\.$transaction\\\\|TransactionClient\\\\|type.*Tx\\\\|Prisma\\\\.TransactionClient' src/services/giftCardPurchaseSettlementService.ts src/services/giftCardPurchaseService.ts)",
+      "Bash(sed -n '85,110p' src/lib/notification/invoice-notify.ts)",
+      "Bash(sed -n '140,160p' src/lib/notification/invoice-notify.ts)"
     ]
   }
 }
