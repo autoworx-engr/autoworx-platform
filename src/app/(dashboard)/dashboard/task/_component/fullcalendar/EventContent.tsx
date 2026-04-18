@@ -1,6 +1,6 @@
 import { EventContentArg } from "@fullcalendar/core";
-import { CustomEventProps } from "./types";
-import { getServiceColor } from "./utils";
+import { CustomEventProps } from "../../_utils/calendar.types";
+import { getServiceColor } from "../../_utils/calendarColors";
 import HolidayDeleteConfirmation from "./HolidayDeleteConfirmation";
 import { EmployeeType } from "@prisma/client";
 

@@ -1,4 +1,4 @@
-import { ServiceType } from "./types";
+import { ServiceType } from "./calendar.types";
 import { darkenHex, isHexColor, lightenHex } from "./colorUtils";
 
 export const SERVICE_COLORS: Record<

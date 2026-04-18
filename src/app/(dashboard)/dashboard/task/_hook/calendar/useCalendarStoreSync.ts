@@ -22,7 +22,6 @@ export function useCalendarStoreSync(
   useEffect(() => {
     if (!calendarRef.current || !date) return;
     const calApi = calendarRef.current.getApi();
-    console.log("heheeheheh");
     if (moment(calApi.getDate()).format("YYYY-MM-DD") !== date) {
       // Set the flag BEFORE gotoDate so the resulting datesSet callback
       // knows to skip the store update (preventing an infinite loop and

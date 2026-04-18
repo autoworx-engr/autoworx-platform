@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { buildCalendarEvents } from "./calendarEventMapper";
+import { buildCalendarEvents } from "../../_utils/calendarEventMapper";
 
 export type CalendarFilterOption = {
   id: number;

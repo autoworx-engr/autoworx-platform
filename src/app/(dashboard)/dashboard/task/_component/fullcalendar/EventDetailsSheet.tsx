@@ -25,8 +25,8 @@ import {
 import { Popconfirm } from "antd";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { CustomEventProps } from "./types";
-import { isHexColor, lightenHex, darkenHex } from "./colorUtils";
+import { CustomEventProps } from "../../_utils/calendar.types";
+import { isHexColor, lightenHex, darkenHex } from "../../_utils/colorUtils";
 
 interface EventDetailsSheetProps {
   isOpen: boolean;

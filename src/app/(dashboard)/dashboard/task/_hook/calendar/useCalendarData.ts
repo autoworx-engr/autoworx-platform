@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import getCategories from "@/actions/category/getCategories";
@@ -38,13 +38,13 @@ export function useCalendarData(dateRange: { start: string; end: string }) {
     }
   }, [categories]);
 
-  const invalidateCalendarQueries = () => {
+  const invalidateCalendarQueries = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: [taskQueryKey.allTasks] });
     queryClient.invalidateQueries({
       queryKey: [appointmentQueryKey.allAppointments],
     });
     queryClient.invalidateQueries({ queryKey: taskQueryKey.allTaskByScroll });
-  };
+  }, [queryClient]);
 
   return {
     tasks,

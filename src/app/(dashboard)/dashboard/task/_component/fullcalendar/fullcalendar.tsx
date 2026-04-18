@@ -8,7 +8,7 @@ import listPlugin from "@fullcalendar/list";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import moment from "moment";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useCalendarStore } from "@/stores/calendarStore";
 import styles from "./fullcalendar.module.css";
@@ -17,12 +17,12 @@ import { CalendarEditModals } from "./CalendarEditModals";
 import { CalendarLoadingOverlay } from "./CalendarLoadingOverlay";
 import { EventContent } from "./EventContent";
 import { EventDetailsSheet } from "./EventDetailsSheet";
-import { getCalendarType } from "./calendarView";
-import { useCalendarData } from "./useCalendarData";
-import { useCalendarEventDateTimeUpdate } from "./useCalendarEventDateTimeUpdate";
-import { useCalendarFilters } from "./useCalendarFilters";
-import { useCalendarSettings } from "./useCalendarSettings";
-import { useCalendarStoreSync } from "./useCalendarStoreSync";
+import { getCalendarType } from "../../_utils/calendarView";
+import { useCalendarData } from "../../_hook/calendar/useCalendarData";
+import { useCalendarEventDateTimeUpdate } from "../../_hook/calendar/useCalendarEventDateTimeUpdate";
+import { useCalendarFilters } from "../../_hook/calendar/useCalendarFilters";
+import { useCalendarSettings } from "../../_hook/calendar/useCalendarSettings";
+import { useCalendarStoreSync } from "../../_hook/calendar/useCalendarStoreSync";
 
 export default function Calendar({ type }: { type: CalendarType }) {
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
@@ -76,6 +76,12 @@ export default function Calendar({ type }: { type: CalendarType }) {
   const { handleDatesSet: syncStoreDatesSet } =
     useCalendarStoreSync(calendarRef);
   const handleEventDateTimeUpdate = useCalendarEventDateTimeUpdate();
+
+  const weekendDays = useMemo(
+    () => [settings?.weekend1, settings?.weekend2].filter(Boolean) as string[],
+    [settings?.weekend1, settings?.weekend2],
+  );
+
   const {
     teamMateOptions,
     categoryOptions,
@@ -89,9 +95,7 @@ export default function Calendar({ type }: { type: CalendarType }) {
     selectedTeamMateIds,
     selectedCategoryIds,
     dateRange,
-    weekendDays: [settings?.weekend1, settings?.weekend2].filter(
-      Boolean,
-    ) as string[],
+    weekendDays,
   });
 
   const loading = isCalendarLoading || isSettingsLoading || isDataLoading;

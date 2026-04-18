@@ -2,7 +2,7 @@ import { getWeekStartNumber } from "@/app/(dashboard)/dashboard/task/_utils/util
 import { getCalenderSettings } from "@/actions/task/getCalendarSettings";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
-import styles from "./fullcalendar.module.css";
+import styles from "../../_component/fullcalendar/fullcalendar.module.css";
 
 export function useCalendarSettings() {
   const { data: settings, isLoading } = useQuery({
