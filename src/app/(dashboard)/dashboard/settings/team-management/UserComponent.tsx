@@ -66,7 +66,7 @@ const UserList: React.FC = () => {
     <div className="w-full p-6">
       <div className="mb-6 flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 sm:text-2xl">
+          <h2 className="text-xl font-bold text-slate-600 sm:text-2xl">
             User Roles (Custom)
           </h2>
           <p className="text-sm text-slate-500">

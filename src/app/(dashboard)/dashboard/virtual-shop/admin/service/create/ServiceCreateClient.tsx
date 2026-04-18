@@ -355,15 +355,13 @@ export default function ServiceCreateClient({
 
       const hasAnySelectedRow = rowStates.some((row) => row.hasAny);
       const hasIncompleteSelectedRow = rowStates.some(
-        (row) =>
-          row.hasAny && !(row.hasService && row.hasLabor && row.hasMaterial),
+        (row) => row.hasAny && !(row.hasService && row.hasLabor),
       );
 
       if (!hasAnySelectedRow) {
-        nextErrors.items = "Service, material, and labor is required";
+        nextErrors.items = "Service and labor is required";
       } else if (hasIncompleteSelectedRow) {
-        nextErrors.items =
-          "Each selected row must include service, material, and labor";
+        nextErrors.items = "Each selected row must include service and labor";
       }
 
       const invalidMaterialQuantity = (items || []).some((item) =>
