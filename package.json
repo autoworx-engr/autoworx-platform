@@ -193,7 +193,7 @@
     "typescript": "^5"
   },
   "engines": {
-    "node": ">=20.9"
+    "node": ">=22.0.0"
   },
   "resolutions": {
     "string-width": "^4.2.3"
