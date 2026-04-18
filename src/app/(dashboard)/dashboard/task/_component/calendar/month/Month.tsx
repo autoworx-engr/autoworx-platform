@@ -28,10 +28,14 @@ import CalendarTooltip from "../CalendarTooltip";
 import HolidayDeleteConfirmation from "../HolidayDeleteConfirmation";
 import { Skeleton } from "antd";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { appointmentQueryKey, calenderQueryKey, taskQueryKey } from "../../../_constant";
+import {
+  appointmentQueryKey,
+  calenderQueryKey,
+  taskQueryKey,
+} from "../../../_constant";
 import getHoliday from "@/actions/task/getHoliday";
 import { useState } from "react";
-import {  X } from "lucide-react";
+import { X } from "lucide-react";
 import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
 import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
 
@@ -65,7 +69,7 @@ export default function Month() {
   const router = useRouter();
   const { data: session } = useSession();
   const [openTooltipId, setOpenTooltipId] = useState<number | string | null>(
-    null
+    null,
   );
   const [openListIndex, setOpenListIndex] = useState<number | null>(null);
 
@@ -73,8 +77,6 @@ export default function Month() {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
 
- 
- 
   const authUser = session?.user;
   const {
     data: holidays,
@@ -93,7 +95,7 @@ export default function Month() {
   // Fetch tasks for the current month
   const { data: tasks = [], isLoading: isTasksLoading } = useTaskQueryByMonth(
     formattedMonth,
-    formattedYear
+    formattedYear,
   );
 
   // Fetch appointment for the current month
@@ -189,7 +191,7 @@ export default function Month() {
 
     const holiday = holidays?.find((holiday: any) => {
       const holidayDateLocal = new Date(holiday.date).toLocaleDateString(
-        "en-CA"
+        "en-CA",
       );
       return holidayDateLocal === currDateLocal;
     });
@@ -215,7 +217,7 @@ export default function Month() {
     } else if (type === "task") {
       // Get the id of the task from the dataTransfer object
       const taskId = parseInt(
-        event.dataTransfer.getData("text/plain").split("|")[1]
+        event.dataTransfer.getData("text/plain").split("|")[1],
       );
 
       let oldTask = tasks.find((task) => task.id === taskId);
@@ -246,12 +248,12 @@ export default function Month() {
     } else {
       // Get the id of the appointment from the dataTransfer object
       const appointmentId = parseInt(
-        event.dataTransfer.getData("text/plain").split("|")[1]
+        event.dataTransfer.getData("text/plain").split("|")[1],
       );
 
       // Find the appointment in your state
       const appointment = appointments.find(
-        (appointment) => appointment.id == appointmentId
+        (appointment) => appointment.id == appointmentId,
       );
 
       if (appointment) {
@@ -283,12 +285,11 @@ export default function Month() {
   };
   const clientTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const queryClient = useQueryClient();
- const revalidateTaskQueries = () => {
+  const revalidateTaskQueries = () => {
     // Invalidate queries for tasks based on the current month and year
     queryClient.invalidateQueries({
       queryKey: [taskQueryKey.allTasks, formattedMonth, formattedYear],
     });
-
   };
 
   const revalidateAppointmentQueries = () => {
@@ -300,7 +301,6 @@ export default function Month() {
         formattedYear,
       ],
     });
-   
   };
 
   if (isTasksLoading || isAppointmentsLoading) {
@@ -382,7 +382,7 @@ export default function Month() {
               <TooltipTrigger
                 type="button"
                 className={cn(
-                  "relative flex h-full cursor-default flex-col border-b border-r border-neutral-200 p-2"
+                  "relative flex h-full cursor-default flex-col border-b border-r border-neutral-200 p-2",
                 )}
                 onClick={(event) => {
                   if (
@@ -425,7 +425,7 @@ export default function Month() {
                         today.getMonth() === cell[0]?.getMonth() &&
                         today.getDate() === cell[0]?.getDate()
                         ? "text-[#6571FF]"
-                        : "text-[#797979]"
+                        : "text-[#797979]",
                     )}
                   >
                     {cell[0]?.getDate() || ""}
@@ -453,7 +453,7 @@ export default function Month() {
                                   e.stopPropagation();
                                   // handleRedirectToDay(cell[0]);
                                   setOpenTooltipId(
-                                    isTooltipOpen ? null : eventKey
+                                    isTooltipOpen ? null : eventKey,
                                   );
                                 }}
                                 className="cursor-pointer truncate rounded border px-1 py-0.5 text-xs text-slate-700 lg:block xl:text-sm"
@@ -468,11 +468,10 @@ export default function Month() {
                                 }
                                 onClose={() => setOpenTooltipId(null)}
                                 onEditOpen={() => {
-    setSelectedEventId(appointment.id);
-    setIsAppointmentOpen(true);
-    setOpenTooltipId(null); 
-  }}
-                                
+                                  setSelectedEventId(appointment.id);
+                                  setIsAppointmentOpen(true);
+                                  setOpenTooltipId(null);
+                                }}
                               />
                             )}
                           </Tooltip>
@@ -501,12 +500,12 @@ export default function Month() {
                                   e.stopPropagation();
                                   // handleRedirectToDay(cell[0]);
                                   setOpenTooltipId(
-                                    isTooltipOpen ? null : eventKey
+                                    isTooltipOpen ? null : eventKey,
                                   );
                                 }}
                                 className={cn(
                                   "cursor-pointer truncate rounded px-1 py-2 text-xs text-white lg:block lg:text-sm transition-all duration-300 ease-in-out hover:shadow-lg hover:scale-[1.01]",
-                                  taskPriorityClass
+                                  taskPriorityClass,
                                 )}
                               >
                                 {task.title}
@@ -517,10 +516,10 @@ export default function Month() {
                                 event={{ ...task, type: "task" } as any}
                                 onClose={() => setOpenTooltipId(null)}
                                 onEditOpen={() => {
-    setSelectedEventId(task.id);
-    setIsTaskModalOpen(true);
-    setOpenTooltipId(null); 
-  }}
+                                  setSelectedEventId(task.id);
+                                  setIsTaskModalOpen(true);
+                                  setOpenTooltipId(null);
+                                }}
                               />
                             )}
                           </Tooltip>
@@ -572,7 +571,7 @@ export default function Month() {
                               const moreLeft = Math.max(0, cell[2].length - 1);
                               const moreTasksLeft = Math.max(
                                 0,
-                                (cell[1]?.length || 0) - 1
+                                (cell[1]?.length || 0) - 1,
                               );
                               const totalLeft = moreLeft + moreTasksLeft;
 
@@ -614,7 +613,7 @@ export default function Month() {
                                   )}
                                 </Tooltip>
                               );
-                            }
+                            },
                           )}
                       </div>
                     )}
@@ -634,7 +633,7 @@ export default function Month() {
                           holiday?.id ? "z-20" : "z-10",
                           cell[1].length || cell[2].length
                             ? "-bottom-12"
-                            : "-bottom-24"
+                            : "-bottom-24",
                         )}
                       >
                         <span className="block lg:hidden">H</span>{" "}
@@ -648,15 +647,14 @@ export default function Month() {
                           />
                         )}
                       </div>
-                    )
+                    ),
                 )}
               </TooltipTrigger>
 
-              <TooltipPortal >
+              <TooltipPortal>
                 {/* Large list shows only when '+more' clicked */}
                 {openListIndex === index && (
                   <TooltipContent>
-                     
                     <div className="relative max-h-[350px] w-[350px] overflow-y-scroll">
                       {/* Close button – top-right corner */}
                       <button
@@ -696,12 +694,12 @@ export default function Month() {
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           setOpenTooltipId(
-                                            isTooltipOpen ? null : eventKey
+                                            isTooltipOpen ? null : eventKey,
                                           );
                                         }}
                                         className={cn(
                                           "flex cursor-pointer items-center gap-2 rounded p-2 text-white transition-all duration-300 ease-in-out",
-                                          taskPriorityClass
+                                          taskPriorityClass,
                                         )}
                                       >
                                         <p className="text-left w-full">
@@ -714,11 +712,11 @@ export default function Month() {
                                         event={{ ...task, type: "task" } as any}
                                         onClose={() => setOpenTooltipId(null)}
                                         onEditOpen={() => {
-    setSelectedEventId(task.id);
-    setIsTaskModalOpen(true);
-    setOpenTooltipId(null); 
-    setOpenListIndex(null);
-  }}
+                                          setSelectedEventId(task.id);
+                                          setIsTaskModalOpen(true);
+                                          setOpenTooltipId(null);
+                                          setOpenListIndex(null);
+                                        }}
                                       />
                                     )}
                                   </div>
@@ -740,7 +738,7 @@ export default function Month() {
                               .map(
                                 (
                                   appointment: CalendarAppointment,
-                                  i: number
+                                  i: number,
                                 ) => {
                                   const eventKey = `list-appointment-${appointment.id}-${index}-${i}`;
                                   const isTooltipOpen =
@@ -757,7 +755,7 @@ export default function Month() {
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             setOpenTooltipId(
-                                              isTooltipOpen ? null : eventKey
+                                              isTooltipOpen ? null : eventKey,
                                             );
                                           }}
                                           className="flex cursor-pointer items-center gap-2 rounded bg-gray-600 p-2 text-white"
@@ -777,16 +775,16 @@ export default function Month() {
                                           }
                                           onClose={() => setOpenTooltipId(null)}
                                           onEditOpen={() => {
-    setSelectedEventId(appointment.id);
-    setIsAppointmentOpen(true);
-    setOpenTooltipId(null); 
-    setOpenListIndex(null);
-  }}
+                                            setSelectedEventId(appointment.id);
+                                            setIsAppointmentOpen(true);
+                                            setOpenTooltipId(null);
+                                            setOpenListIndex(null);
+                                          }}
                                         />
                                       )}
                                     </div>
                                   );
-                                }
+                                },
                               )}
                           </div>
                         </>
@@ -805,8 +803,8 @@ export default function Month() {
           appointmentId={selectedEventId}
           isModalOpen={isAppointmentModalOpen}
           setIsModalOpen={setIsAppointmentOpen}
-         onAppointmentUpdated={revalidateAppointmentQueries} 
-    onAppointmentDeleted={revalidateAppointmentQueries}
+          onAppointmentUpdated={revalidateAppointmentQueries}
+          onAppointmentDeleted={revalidateAppointmentQueries}
         />
       )}
 
@@ -816,9 +814,8 @@ export default function Month() {
           taskId={selectedEventId}
           isModalOpen={isTaskModalOpen}
           setIsModalOpen={setIsTaskModalOpen}
-          onTaskUpdated={revalidateTaskQueries} 
+          onTaskUpdated={revalidateTaskQueries}
           onTaskDelete={revalidateTaskQueries}
-         
         />
       )}
     </div>

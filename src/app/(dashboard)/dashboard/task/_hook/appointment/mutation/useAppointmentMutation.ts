@@ -28,7 +28,7 @@ export default function useAppointmentMutation() {
       return response.data as Appointment;
     },
 
-    // 🔁 Optimistic update
+    // Optimistic update — immediately reflect the change in the UI
     onMutate: async (newAppointment) => {
       await queryClient.cancelQueries({
         queryKey: [appointmentQueryKey.allAppointments, dateFormat],
@@ -41,6 +41,11 @@ export default function useAppointmentMutation() {
           weekEndDate,
         ],
       });
+
+      const applyUpdate = (appointment: Appointment) =>
+        appointment.id === newAppointment.id
+          ? { ...appointment, ...newAppointment }
+          : appointment;
 
       let previousTodos: Appointment[] = [];
 
@@ -56,75 +61,64 @@ export default function useAppointmentMutation() {
           weekEndDate,
         ]) as Appointment[];
       }
-      // update day page appointments
+
       queryClient.setQueryData(
         [appointmentQueryKey.allAppointments, dateFormat],
-        (oldTaskData: Appointment[]) => {
-          const updatedData =
-            oldTaskData && oldTaskData.length > 0
-              ? oldTaskData.map((appointment: Appointment) =>
-                  appointment.id === newAppointment.id
-                    ? { ...appointment, ...newAppointment }
-                    : appointment,
-                )
-              : [];
-          return updatedData;
+        (oldData: Appointment[]) => {
+          if (!oldData || oldData.length === 0) return oldData ?? [];
+          return oldData.map(applyUpdate);
         },
       );
 
-      // update week page appointments
       queryClient.setQueryData(
         [appointmentQueryKey.allAppointments, weekStartDate, weekEndDate],
-        (oldTaskData: Appointment[]) => {
-          const updatedData =
-            oldTaskData && oldTaskData.length > 0
-              ? oldTaskData.map((appointment: Appointment) =>
-                  appointment.id === newAppointment.id
-                    ? { ...appointment, ...newAppointment }
-                    : appointment,
-                )
-              : [];
-          return updatedData;
+        (oldData: Appointment[]) => {
+          if (!oldData || oldData.length === 0) return oldData ?? [];
+          return oldData.map(applyUpdate);
         },
       );
 
       return { previousTodos };
     },
 
-    // ❌ Rollback on error
+    // Update cache with actual server data — avoids the refetch flicker
+    onSuccess: (data) => {
+      if (!data) return;
+
+      const applyServerData = (appointment: Appointment) =>
+        appointment.id === data.id ? data : appointment;
+
+      queryClient.setQueryData(
+        [appointmentQueryKey.allAppointments, dateFormat],
+        (oldData: Appointment[]) => {
+          if (!oldData) return oldData;
+          return oldData.map(applyServerData);
+        },
+      );
+
+      queryClient.setQueryData(
+        [appointmentQueryKey.allAppointments, weekStartDate, weekEndDate],
+        (oldData: Appointment[]) => {
+          if (!oldData) return oldData;
+          return oldData.map(applyServerData);
+        },
+      );
+    },
+
+    // Rollback on error
     onError: (err, newTodo, context) => {
       console.error("Error updating appointment:", err);
-      console.log("context", context);
-      // Rollback day page appointments
       if (isDayPage) {
         queryClient.setQueryData(
           [appointmentQueryKey.allAppointments, dateFormat],
           context?.previousTodos,
         );
       } else if (isWeekPage) {
-        // Rollback week page appointments
         queryClient.setQueryData(
           [appointmentQueryKey.allAppointments, weekStartDate, weekEndDate],
           context?.previousTodos,
         );
       }
-    },
-
-    // ✅ Refetch after success or error
-    onSettled: () => {
-      // Invalidate day page appointments
-      queryClient.invalidateQueries({
-        queryKey: [appointmentQueryKey.allAppointments, dateFormat],
-      });
-
-      // Invalidate week page appointments
-      queryClient.invalidateQueries({
-        queryKey: [
-          appointmentQueryKey.allAppointments,
-          weekStartDate,
-          weekEndDate,
-        ],
-      });
     },
   });
 }

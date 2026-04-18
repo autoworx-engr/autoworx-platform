@@ -30,7 +30,7 @@ export default function useTaskMutation() {
       return response.data as Task;
     },
 
-    // 🔁 Optimistic update
+    // Optimistic update — immediately reflect the change in the UI
     onMutate: async (newTodo) => {
       await queryClient.cancelQueries({
         queryKey: [taskQueryKey.allTasks, dateFormat],
@@ -39,6 +39,9 @@ export default function useTaskMutation() {
       await queryClient.cancelQueries({
         queryKey: [taskQueryKey.allTasks, weekStartDate, weekEndDate],
       });
+
+      const applyUpdate = (task: Task) =>
+        task.id === newTodo.id ? { ...task, ...newTodo } : task;
 
       queryClient.setQueryData(
         [taskQueryKey.allTaskByScroll],
@@ -49,9 +52,7 @@ export default function useTaskMutation() {
             pages: oldData.pages.map(
               (page: { totalTasks: number; data: Task[] }) => ({
                 ...page,
-                data: page.data.map((task: Task) =>
-                  task.id === newTodo.id ? { ...task, ...newTodo } : task,
-                ),
+                data: page.data.map(applyUpdate),
               }),
             ),
           };
@@ -73,65 +74,82 @@ export default function useTaskMutation() {
         ]) as Task[];
       }
 
-      // update task for day view
       queryClient.setQueryData(
         [taskQueryKey.allTasks, dateFormat],
         (oldTaskData: Task[]) => {
-          const updatedTaskData =
-            oldTaskData && oldTaskData.length > 0
-              ? oldTaskData.map((task: Task) =>
-                  task.id === newTodo.id ? { ...task, ...newTodo } : task,
-                )
-              : [];
-          return updatedTaskData;
+          if (!oldTaskData || oldTaskData.length === 0)
+            return oldTaskData ?? [];
+          return oldTaskData.map(applyUpdate);
         },
       );
 
-      // update task for week view
       queryClient.setQueryData(
         [taskQueryKey.allTasks, weekStartDate, weekEndDate],
         (oldTaskData: Task[]) => {
-          const updatedTaskData =
-            oldTaskData && oldTaskData.length > 0
-              ? oldTaskData.map((task: Task) =>
-                  task.id === newTodo.id ? { ...task, ...newTodo } : task,
-                )
-              : [];
-          return updatedTaskData;
+          if (!oldTaskData || oldTaskData.length === 0)
+            return oldTaskData ?? [];
+          return oldTaskData.map(applyUpdate);
         },
       );
 
       return { previousTodos };
     },
 
-    // ❌ Rollback on error
+    // Update cache with actual server data — avoids the refetch flicker
+    onSuccess: (data) => {
+      if (!data) return;
+
+      const applyServerData = (task: Task) =>
+        task.id === data.id ? data : task;
+
+      queryClient.setQueryData(
+        [taskQueryKey.allTasks, dateFormat],
+        (oldData: Task[]) => {
+          if (!oldData) return oldData;
+          return oldData.map(applyServerData);
+        },
+      );
+
+      queryClient.setQueryData(
+        [taskQueryKey.allTasks, weekStartDate, weekEndDate],
+        (oldData: Task[]) => {
+          if (!oldData) return oldData;
+          return oldData.map(applyServerData);
+        },
+      );
+
+      queryClient.setQueryData(
+        [taskQueryKey.allTaskByScroll],
+        (oldData: any) => {
+          if (!oldData) return oldData;
+          return {
+            ...oldData,
+            pages: oldData.pages.map(
+              (page: { totalTasks: number; data: Task[] }) => ({
+                ...page,
+                data: page.data.map(applyServerData),
+              }),
+            ),
+          };
+        },
+      );
+    },
+
+    // Rollback on error
     onError: (err, newTodo, context) => {
       console.error("Error updating task:", err);
 
       if (isDayPage) {
-        // Rollback the day view optimistic update
         queryClient.setQueryData(
           [taskQueryKey.allTasks, dateFormat],
           context?.previousTodos,
         );
       } else if (isWeekPage) {
-        // Rollback the week view optimistic update
         queryClient.setQueryData(
-          [taskQueryKey.allTasks, dateFormat],
+          [taskQueryKey.allTasks, weekStartDate, weekEndDate],
           context?.previousTodos,
         );
       }
-    },
-
-    // ✅ Refetch after success or error
-    onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: [taskQueryKey.allTasks, dateFormat],
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: [taskQueryKey.allTasks, weekStartDate, weekEndDate],
-      });
     },
   });
 }
