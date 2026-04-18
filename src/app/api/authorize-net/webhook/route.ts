@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { convertInvoicePublic } from "@/actions/estimate/invoice/convert";
+import { convertInvoice } from "@/actions/estimate/invoice/convert";
 import { sendPaymentReceivedNotification } from "@/lib/notification/payment-notify";
 import { settleGiftCardReloadPayment } from "@/services/giftCardReloadSettlementService";
 import { confirmShopBooking } from "@/services/confirmShopBooking";
@@ -609,7 +609,7 @@ export async function POST(req: NextRequest) {
         // Convert estimate to invoice if needed
         try {
           if (invoice.type === "Estimate") {
-            convertInvoicePublic(targetId, companyId);
+            convertInvoice(targetId, companyId);
           }
         } catch (error) {
           console.log("Convert invoice error:", error);
@@ -745,7 +745,7 @@ export async function POST(req: NextRequest) {
 
         try {
           if (inv.type === "Estimate") {
-            convertInvoicePublic(inv.id, companyId);
+            convertInvoice(inv.id, companyId);
           }
         } catch (error) {
           console.log("Convert invoice error:", error);
