@@ -119,6 +119,8 @@ export interface ShopPipelineData {
   id: number | null;
   title: string;
   leads: ShopLead[];
+  hasMore?: boolean;
+  totalCount?: number;
 }
 export interface SalesPipelineData {
   id: number | null;
