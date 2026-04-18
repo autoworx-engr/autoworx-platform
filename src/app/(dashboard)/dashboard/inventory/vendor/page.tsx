@@ -20,7 +20,7 @@ export default async function Page({
   });
 
   return (
-    <div className="h-full w-full overflow-y-hidden p-2">
+    <div className="h-full w-full overflow-y-auto p-2 lg:overflow-y-hidden">
       <div className="flex items-center justify-between">
         <Title>Vendor List</Title>
 
