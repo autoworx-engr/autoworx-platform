@@ -363,6 +363,7 @@ export default function TaskContentModal({
         isLoading ? "block" : "flex flex-col",
         "min-h-[500px] overflow-y-auto",
       )}
+      onClick={(e) => e.stopPropagation()}
     >
       <DialogHeader>
         <DialogTitle>{fromEdit ? "Update Task" : "Add Task"}</DialogTitle>
