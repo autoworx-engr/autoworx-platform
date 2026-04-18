@@ -6,7 +6,7 @@ import styles from "../../_component/fullcalendar/fullcalendar.module.css";
 
 export function useCalendarSettings() {
   const { data: settings, isLoading } = useQuery({
-    queryKey: ["calendar-settings", "week-start"],
+    queryKey: ["calendarSettings"],
     queryFn: () => getCalenderSettings(),
   });
 
