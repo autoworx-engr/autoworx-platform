@@ -2,7 +2,6 @@
 
 import { db } from "@/lib/db";
 import { ServerAction } from "@/types/action";
-import { revalidatePath } from "next/cache";
 
 export async function assignTask({
   userId,
@@ -70,8 +69,6 @@ export async function assignTask({
       }
     }
   }
-
-  revalidatePath("/task");
 
   return {
     type: "success",
