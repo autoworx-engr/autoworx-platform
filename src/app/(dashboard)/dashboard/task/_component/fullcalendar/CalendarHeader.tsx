@@ -13,10 +13,10 @@ import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { CalendarType } from "@/types/calendar";
 import { Appointment, Lead } from "@prisma/client";
-import CalendarSearch from "@/app/(dashboard)/dashboard/task/_component/calendar/CalendarSearch";
-import DateSelector from "@/app/(dashboard)/dashboard/task/_component/calendar/DateSelector";
-import DisplayDate from "@/app/(dashboard)/dashboard/task/_component/calendar/DisplayDate";
-import Settings from "@/app/(dashboard)/dashboard/task/_component/calendar/Settings";
+import CalendarSearch from "./CalendarSearch";
+import DateSelector from "./DateSelector";
+import DisplayDate from "./DisplayDate";
+import Settings from "./Settings";
 import {
   appointmentQueryKey,
   calenderQueryKey,

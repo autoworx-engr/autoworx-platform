@@ -1,7 +1,7 @@
 import { EventContentArg } from "@fullcalendar/core";
 import { CustomEventProps } from "./types";
 import { getServiceColor } from "./utils";
-import HolidayDeleteConfirmation from "@/app/(dashboard)/dashboard/task/_component/calendar/HolidayDeleteConfirmation";
+import HolidayDeleteConfirmation from "./HolidayDeleteConfirmation";
 import { EmployeeType } from "@prisma/client";
 
 export const EventContent = ({

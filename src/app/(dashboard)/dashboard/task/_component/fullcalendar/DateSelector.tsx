@@ -186,8 +186,9 @@ function DateSelector({ type, weekStart = 1 }: DateSelectorProps) {
         {/* Chevron Icon: Rotates on open, smooth transition */}
         <ChevronDown
           size={16}
-          className={`${iconStyle} ${TRANSITION_UTILITY} ${isOpen ? "rotate-180" : ""
-            }`}
+          className={`${iconStyle} ${TRANSITION_UTILITY} ${
+            isOpen ? "rotate-180" : ""
+          }`}
         />
       </Button>
 
