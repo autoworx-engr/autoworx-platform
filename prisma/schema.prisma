@@ -549,8 +549,11 @@ model Client {
   fleet                  Fleet?
   isSalesAgent           Boolean                  @default(true)
   shopBookings           ShopBooking[]
+  metaSenderId           String?                  @map("meta_sender_id")
+  metaMessages           ClientMetaMessage[]
 
   @@index([companyId], name: "fk_customers_company")
+  @@index([metaSenderId])
   @@map("Client")
 }
 
@@ -607,6 +610,10 @@ model ClientConversationTrack {
   lastMessageBy      String?   @map("last_message_by")
   lastEmailBy        String?   @map("last_email_by") // Track who sent the last email: "Company" or "Client"
   sendAt             DateTime? @map("send_at")
+  metaLastMessage    String?   @map("meta_last_message") @db.Text
+  metaIsRead         Boolean   @default(true) @map("meta_is_read")
+  metaUnReadCount    Int       @default(0) @map("meta_unread_count")
+  metaLastPlatform   String?   @map("meta_last_platform")
   createdAt          DateTime  @default(now()) @map("created_at")
   updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at")
   client             Client    @relation(fields: [clientId], references: [id], onDelete: Cascade) // Update this line to establish the one-to-one relation
@@ -696,6 +703,8 @@ model Company {
   UserFeedback                     UserFeedback[]
   ClientSMS                        ClientSMS[]
   ClientCall                       ClientCall[]
+  metaCredentials                  MetaCredentials[]
+  metaMessages                     ClientMetaMessage[]
   infobipConfig                    InfobipConfig?
   TwilioCredentials                TwilioCredentials?                 @relation(fields: [twilioCredentialsId], references: [id])
   twilioCredentialsId              Int?
@@ -2250,6 +2259,7 @@ model User {
   ClientSMS                      ClientSMS[]
   ClientCall                     ClientCall[]
   MailgunEmail                   MailgunEmail[]
+  ClientMetaMessage              ClientMetaMessage[]
   salesLead                      Lead[]
   NotificationSettings           NotificationSettingsV2[]
   Notification                   Notification[]
@@ -3328,5 +3338,56 @@ enum TransactionType {
   REDEMPTION // Used to pay for a service
   RELOAD // Purchaser added more money
   REFUND // Service was cancelled, money returned to card
+}
+
+// ─── Meta (Facebook + Instagram) Integration ────────────────────────────────
+
+model MetaCredentials {
+  id                    Int      @id @default(autoincrement())
+  companyId             Int      @map("company_id")
+  pageId                String   @map("page_id")
+  pageName              String?  @map("page_name")
+  pageAccessToken       String   @map("page_access_token") @db.Text
+  instagramAccountId    String?  @map("instagram_account_id")
+  instagramUsername     String?  @map("instagram_username")
+  metaUserId            String   @map("meta_user_id")
+  isActive              Boolean  @default(true) @map("is_active")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @default(now()) @updatedAt @map("updated_at")
+
+  company               Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, pageId])
+}
+
+model ClientMetaMessage {
+  id             Int                    @id @default(autoincrement())
+  message        String                 @db.Text
+  platform       String
+  metaMessageId  String?                @map("meta_message_id")
+  metaSenderId   String                 @map("meta_sender_id")
+  sentBy         ClientSMSSentBy
+  isRead         Boolean                @default(false) @map("is_read")
+  userId         Int?                   @map("user_id")
+  companyId      Int                    @map("company_id")
+  clientId       Int                    @map("client_id")
+  attachments    ClientMetaAttachments[]
+  createdAt      DateTime               @default(now()) @map("created_at")
+  updatedAt      DateTime               @default(now()) @updatedAt @map("updated_at")
+
+  client         Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  user           User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company        Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+model ClientMetaAttachments {
+  id                  Int               @id @default(autoincrement())
+  clientMetaMessageId Int               @map("client_meta_message_id")
+  url                 String
+  name                String?
+  type                String?
+  createdAt           DateTime          @default(now()) @map("created_at")
+
+  clientMetaMessage   ClientMetaMessage @relation(fields: [clientMetaMessageId], references: [id], onDelete: Cascade)
 }
 // }

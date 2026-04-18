@@ -54,10 +54,10 @@ export default function ClientItem({
   const searchParams = useSearchParams();
 
   const conversationTrack = useClientCommunicationStore(
-    (state) => state.clientConversationTrack
+    (state) => state.clientConversationTrack,
   );
   const setClientConversationTrack = useClientCommunicationStore(
-    (state) => state.setClientConversationTrack
+    (state) => state.setClientConversationTrack,
   );
 
   const markClientMessagesAsUnseen = async (clientId: number) => {
@@ -131,7 +131,7 @@ export default function ClientItem({
   const handleStarUnStarClient = async (
     event: React.MouseEvent<HTMLButtonElement>,
     isStarred: boolean,
-    clientId: number
+    clientId: number,
   ) => {
     try {
       event.stopPropagation();
@@ -156,7 +156,8 @@ export default function ClientItem({
   const isShowConversationIndicator =
     client?.conversationsTrack &&
     (!client?.conversationsTrack?.smsIsRead ||
-      !client?.conversationsTrack?.emailIsRead);
+      !client?.conversationsTrack?.emailIsRead ||
+      !client?.conversationsTrack?.metaIsRead);
   return (
     <div
       ref={buttonRef}
@@ -178,7 +179,7 @@ export default function ClientItem({
               "bg-white dark:bg-zinc-900/60",
               "border-zinc-200/70 dark:border-white/10",
               "hover:border-zinc-300/80 dark:hover:border-white/20",
-            ].join(" ")
+            ].join(" "),
       )}
     >
       <Image
@@ -196,7 +197,7 @@ export default function ClientItem({
           "size-12 shrink-0 rounded-full object-cover",
           selected
             ? "ring-2 ring-white/80"
-            : "ring-1 ring-zinc-200 dark:ring-white/10"
+            : "ring-1 ring-zinc-200 dark:ring-white/10",
         )}
       />
 
@@ -205,7 +206,7 @@ export default function ClientItem({
           <p
             className={cn(
               "truncate text-sm font-semibold tracking-tight",
-              selected ? "text-white" : "text-zinc-800 dark:text-zinc-100"
+              selected ? "text-white" : "text-zinc-800 dark:text-zinc-100",
             )}
             title={`${client?.firstName || ""} ${client?.lastName || ""}`}
           >
@@ -218,7 +219,7 @@ export default function ClientItem({
                 "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium",
                 selected
                   ? "bg-white/15 text-white"
-                  : "bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300"
+                  : "bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300",
               )}
             >
               ★ Favorite
@@ -230,7 +231,7 @@ export default function ClientItem({
           <p
             className={cn(
               "mt-1 truncate text-xs",
-              selected ? "text-teal-50/90" : "text-zinc-500 dark:text-zinc-400"
+              selected ? "text-teal-50/90" : "text-zinc-500 dark:text-zinc-400",
             )}
             title={client?.customerCompany}
           >
@@ -246,7 +247,7 @@ export default function ClientItem({
               selected ? "text-white/95" : "text-zinc-600 dark:text-zinc-300",
               client?.conversationsTrack?.emailIsRead
                 ? "font-normal"
-                : "font-semibold"
+                : "font-semibold",
             )}
             title={client?.conversationsTrack?.emailLastMessage}
           >
@@ -265,7 +266,7 @@ export default function ClientItem({
               selected ? "text-white/95" : "text-zinc-600 dark:text-zinc-300",
               client?.conversationsTrack?.smsIsRead
                 ? "font-normal"
-                : "font-semibold"
+                : "font-semibold",
             )}
             title={client?.conversationsTrack?.smsLastMessage}
           >
@@ -273,6 +274,29 @@ export default function ClientItem({
               ? "You (SMS)"
               : "Client (SMS)"}{" "}
             — {client?.conversationsTrack?.smsLastMessage}
+          </p>
+        )}
+
+        {/* Meta (Instagram / Facebook) preview */}
+        {client?.conversationsTrack?.metaLastMessage && (
+          <p
+            className={cn(
+              "mt-1.5 line-clamp-1 text-xs",
+              selected ? "text-white/95" : "text-zinc-600 dark:text-zinc-300",
+              client?.conversationsTrack?.metaIsRead
+                ? "font-normal"
+                : "font-semibold",
+            )}
+            title={client?.conversationsTrack?.metaLastMessage}
+          >
+            {client?.conversationsTrack?.lastMessageBy === "Company"
+              ? client?.conversationsTrack?.metaLastPlatform === "INSTAGRAM"
+                ? "You (Instagram)"
+                : "You (Facebook)"
+              : client?.conversationsTrack?.metaLastPlatform === "INSTAGRAM"
+                ? "Client (Instagram)"
+                : "Client (Facebook)"}{" "}
+            — {client?.conversationsTrack?.metaLastMessage}
           </p>
         )}
       </div>
@@ -284,7 +308,8 @@ export default function ClientItem({
             <span className="absolute -inset-1.5 animate-ping rounded-full bg-rose-400/60"></span>
             <span className="relative flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold leading-none text-white ring-2 ring-white/90 dark:ring-zinc-900">
               {(client?.conversationsTrack?.emailIsUnReadCount || 0) +
-                (client?.conversationsTrack?.smsUnReadCount || 0)}
+                (client?.conversationsTrack?.smsUnReadCount || 0) +
+                (client?.conversationsTrack?.metaUnReadCount || 0)}
             </span>
           </div>
         </div>
@@ -307,7 +332,7 @@ export default function ClientItem({
                   "h-8 w-8 rounded-xl transition-colors",
                   selected
                     ? "text-white hover:bg-white/15"
-                    : "text-zinc-500 hover:bg-zinc-100 dark:hover:bg-white/10"
+                    : "text-zinc-500 hover:bg-zinc-100 dark:hover:bg-white/10",
                 )}
                 aria-label="More actions"
               >
@@ -344,7 +369,7 @@ export default function ClientItem({
                   handleStarUnStarClient(
                     e as any,
                     !!client?.isStarred,
-                    client?.id as number
+                    client?.id as number,
                   );
                 }}
               >

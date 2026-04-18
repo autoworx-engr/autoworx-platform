@@ -1,22 +1,20 @@
 "use client";
+
+import { initiateMetaConnect } from "@/actions/meta/connect";
 import { pusher } from "@/lib/pusher/client";
 import { useClientCommunicationStore } from "@/stores/client-store";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import { Client, ClientConversationTrack } from "@prisma/client";
-import { usePathname } from "next/navigation";
-import { useRouter } from "next/navigation";
-import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { PremiumModal } from "../phone/PremiumCallModal";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { useCompanyFeaturePermissionStore } from "@/stores/companyFeaturePermissionStore";
-import { companyPermissionModule } from "@/constants/company-permission";
 import { cn } from "@/lib/cn";
 import { AtSign, Phone } from "lucide-react";
+import { useServerGet } from "@/hooks/useServerGet";
+import { getMetaCredentials } from "../../_actions/getMetaCredentials";
 
 type TClient =
-  | (Client & {
-      conversationsTrack?: ClientConversationTrack | null;
-    })
+  | (Client & { conversationsTrack?: ClientConversationTrack | null })
   | null;
 
 type TProps = {
@@ -25,53 +23,72 @@ type TProps = {
   companyId: number;
 };
 
+// Messenger icon SVG — represents both FB and IG messaging
+function MessengerIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      fill="currentColor"
+      aria-hidden
+    >
+      <path d="M12 2C6.36 2 2 6.13 2 11.7c0 2.91 1.19 5.44 3.14 7.17.16.14.26.34.27.55l.05 1.72c.03.54.59.89 1.09.65l1.91-.85c.16-.07.34-.09.51-.05.79.22 1.64.34 2.52.34 5.64 0 10-4.13 10-9.7C22 6.13 17.64 2 12 2zm6 7.46-2.93 4.65c-.47.74-1.47.92-2.17.4l-2.33-1.75c-.21-.16-.5-.16-.71 0L7.35 14.1c-.46.37-1.07-.17-.74-.67l2.93-4.65c.47-.74 1.47-.92 2.17-.4l2.33 1.75c.21.16.5.16.71 0l2.51-1.96c.46-.37 1.07.17.74.67z" />
+    </svg>
+  );
+}
+
 export default function ChatHead({
   client: initialClient,
   selectedConversation = "SMS",
   companyId,
 }: TProps) {
   const [selected, setSelected] = useState<string>(selectedConversation);
-  const [showPremiumModal, setShowPremiumModal] = useState(false);
-  // const [client, setClient] = useState<TClient | undefined>(initialClient);
+  const [metaPopoverOpen, setMetaPopoverOpen] = useState(false);
+  const metaPopoverRef = useRef<HTMLDivElement>(null);
+
   const user = useGetCurrentUser();
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { companyFeaturePermission } = useCompanyFeaturePermissionStore();
 
-  const isCallingAccess = companyFeaturePermission.find(
-    (permission) =>
-      permission.permission_name === companyPermissionModule.CALLING_ACCESS,
-  );
+  const { data: metaCredentials, loading: metaLoading } =
+    useServerGet(getMetaCredentials);
+
+  const isMetaActive = selected === "INSTAGRAM" || selected === "FACEBOOK";
 
   const handleTabChange = (tab: string) => {
-    // if (tab === "PHONE" && !isCallingAccess?.enabled) {
-    //   setShowPremiumModal(true);
-    //   return;
-    // }
-
     setSelected(tab);
+    setMetaPopoverOpen(false);
     if (searchParams) {
-      const updatedParams = new URLSearchParams(searchParams);
-      updatedParams.set("open", tab); // Update the tabState query parameter
-      if (tab === "SMS" && updatedParams.has("open")) {
-        updatedParams.delete("open");
-      }
-      router.replace(`${pathname}?${updatedParams.toString()}`); // Update the URL without affecting other
+      const updated = new URLSearchParams(searchParams);
+      updated.set("open", tab);
+      if (tab === "SMS" && updated.has("open")) updated.delete("open");
+      router.replace(`${pathname}?${updated.toString()}`);
     }
   };
+
+  const handleMetaIconClick = () => {
+    setMetaPopoverOpen((prev) => !prev);
+  };
+
+  // Close popover on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (
+        metaPopoverRef.current &&
+        !metaPopoverRef.current.contains(e.target as Node)
+      ) {
+        setMetaPopoverOpen(false);
+      }
+    };
+    if (metaPopoverOpen) document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [metaPopoverOpen]);
 
   const clientConversationTrack = useClientCommunicationStore(
     (state) => state.clientConversationTrack,
   );
 
-  // useEffect(() => {
-  //   useClientCommunicationStore.setState({
-  //     clientConversationTrack: initialClient?.conversationsTrack,
-  //   });
-  // }, []);
-
-  // subscribe to pusher channel for realtime updates
   useEffect(() => {
     pusher
       .subscribe(`client-notify-${user?.companyId}-${initialClient?.id}`)
@@ -110,7 +127,6 @@ export default function ChatHead({
           selected === "EMAIL" ? "bg-white/30" : "bg-transparent",
         )}
       >
-        {/* unread badge */}
         {clientConversationTrack && !clientConversationTrack?.emailIsRead && (
           <span className="absolute -top-1 -right-1 z-10">
             <span className="absolute -inset-0.5 animate-ping rounded-full bg-rose-400/70" />
@@ -170,6 +186,122 @@ export default function ChatHead({
         </svg>
       </button>
 
+      {/* META (Instagram + Facebook) */}
+      <div className="relative" ref={metaPopoverRef}>
+        <button
+          onClick={handleMetaIconClick}
+          role="tab"
+          aria-selected={isMetaActive}
+          aria-controls="panel-meta"
+          title="Instagram / Facebook"
+          className={cn(
+            "relative rounded-full p-3 transition-all",
+            "hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/70",
+            isMetaActive ? "bg-white/30" : "bg-transparent",
+          )}
+        >
+          {/* Unread badge */}
+          {clientConversationTrack && !clientConversationTrack?.metaIsRead && (
+            <span className="absolute -top-1 -right-1 z-10">
+              <span className="absolute -inset-0.5 animate-ping rounded-full bg-rose-400/70" />
+              <span className="relative flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold leading-none text-white ring-2 ring-white/80">
+                {clientConversationTrack.metaUnReadCount > 0
+                  ? clientConversationTrack.metaUnReadCount
+                  : 1}
+              </span>
+            </span>
+          )}
+          <MessengerIcon className="w-5 h-5 text-white" />
+        </button>
+
+        {/* Popover */}
+        {metaPopoverOpen && (
+          <div className="absolute right-0 top-full mt-2 z-50 w-56 rounded-xl bg-white shadow-xl ring-1 ring-zinc-200/80 dark:bg-zinc-900 dark:ring-white/10 overflow-hidden">
+            {metaLoading ? (
+              <div className="p-3 text-center text-xs text-zinc-400">
+                Loading…
+              </div>
+            ) : metaCredentials ? (
+              /* Connected — show IG / FB options */
+              <>
+                <div className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
+                  Message via
+                </div>
+                {metaCredentials.instagramAccountId && (
+                  <button
+                    onClick={() => handleTabChange("INSTAGRAM")}
+                    className={cn(
+                      "flex w-full items-center gap-2.5 px-3 py-2.5 text-sm transition",
+                      "hover:bg-zinc-50 dark:hover:bg-white/5",
+                      selected === "INSTAGRAM" &&
+                        "bg-zinc-100 dark:bg-white/10 font-semibold",
+                    )}
+                  >
+                    {/* IG gradient dot */}
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-[#833AB4] to-[#E1306C] text-[9px] font-bold text-white flex-shrink-0">
+                      IG
+                    </span>
+                    <span>
+                      Instagram
+                      {metaCredentials.instagramUsername && (
+                        <span className="ml-1 text-xs text-zinc-400">
+                          @{metaCredentials.instagramUsername}
+                        </span>
+                      )}
+                    </span>
+                  </button>
+                )}
+                <button
+                  onClick={() => handleTabChange("FACEBOOK")}
+                  className={cn(
+                    "flex w-full items-center gap-2.5 px-3 py-2.5 text-sm transition",
+                    "hover:bg-zinc-50 dark:hover:bg-white/5",
+                    selected === "FACEBOOK" &&
+                      "bg-zinc-100 dark:bg-white/10 font-semibold",
+                  )}
+                >
+                  {/* FB blue dot */}
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#1877F2] text-[9px] font-bold text-white flex-shrink-0">
+                    f
+                  </span>
+                  <span>
+                    Facebook
+                    {metaCredentials.pageName && (
+                      <span className="ml-1 text-xs text-zinc-400">
+                        {metaCredentials.pageName}
+                      </span>
+                    )}
+                  </span>
+                </button>
+              </>
+            ) : (
+              /* Not connected — connect prompt */
+              <div className="p-3">
+                <p className="mb-2 text-[12px] text-zinc-600 dark:text-zinc-300 leading-snug">
+                  Connect Meta to message clients on Instagram &amp; Facebook.
+                </p>
+                <div className="flex items-center gap-2">
+                  <form action={initiateMetaConnect}>
+                    <button
+                      type="submit"
+                      className="rounded-lg bg-[#1877F2] px-3 py-1.5 text-[12px] font-semibold text-white transition hover:bg-[#1565D8]"
+                    >
+                      Connect
+                    </button>
+                  </form>
+                  <button
+                    onClick={() => setMetaPopoverOpen(false)}
+                    className="rounded-lg px-3 py-1.5 text-[12px] text-zinc-500 transition hover:bg-zinc-100 dark:hover:bg-white/10"
+                  >
+                    Later
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* PHONE */}
       <button
         onClick={() => handleTabChange("PHONE")}
@@ -185,12 +317,6 @@ export default function ChatHead({
       >
         <Phone className="w-5 h-5 fill-current text-white" />
       </button>
-
-      {/* <PremiumModal
-        open={showPremiumModal}
-        onClose={() => setShowPremiumModal(false)}
-        featureName="calling feature"
-      /> */}
     </div>
   );
 }
