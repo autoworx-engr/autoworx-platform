@@ -11401,7 +11401,7 @@ quill@^1.3.7:
     parchment "^1.1.4"
     quill-delta "^3.6.2"
 
-quill@^2.0.3:
+quill@^2.0.3, quill@~2.0.3:
   version "2.0.3"
   resolved "https://registry.yarnpkg.com/quill/-/quill-2.0.3.tgz#752765a31d5a535cdc5717dc49d4e50099365eb1"
   integrity sha512-xEYQBqfYx/sfb33VJiKnSJp8ehloavImQ2A6564GAbqG55PGw1dAWUn1MUbQB62t0azawUS2CZZhWCjO8gRvTw==
@@ -12034,6 +12034,14 @@ react-onesignal@^3.2.2:
   version "3.5.1"
   resolved "https://registry.yarnpkg.com/react-onesignal/-/react-onesignal-3.5.1.tgz#dc9fa59f2e391698f273725a3faf5fdd26dbc33a"
   integrity sha512-Pd3V/4yOfaD20o2aglJ+ernr9VO7FKNs20LJCmT81pkpkYNn+eCAAdLgLcaGocElLmM8sc9GiM2CCh2FzgYuaw==
+
+react-quill-new@^3.8.3:
+  version "3.8.3"
+  resolved "https://registry.yarnpkg.com/react-quill-new/-/react-quill-new-3.8.3.tgz#c9642428ebb1c8eb6cb98b7c347fc6d0c1ca3b95"
+  integrity sha512-c96PYqFTo0pI4R3e79B3rH9LUIce1kIQbmTBu/imJQZk8305ogyLyBqKKjG2UoInDlquXqePSzmBo2aVia3ttw==
+  dependencies:
+    lodash-es "^4.17.21"
+    quill "~2.0.3"
 
 react-quill@^2.0.0:
   version "2.0.0"
