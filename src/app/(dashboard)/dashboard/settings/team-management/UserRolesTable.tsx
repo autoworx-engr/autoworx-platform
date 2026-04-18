@@ -126,7 +126,7 @@ export default function UserRolesTable() {
     <div className="w-full">
       <div className="flex items-start justify-between gap-3 px-6 pb-4 pt-6">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 sm:text-2xl">
+          <h2 className="text-xl font-bold text-slate-600 sm:text-2xl">
             User Roles (Default)
           </h2>
           <p className="text-sm text-slate-500">
