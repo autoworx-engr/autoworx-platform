@@ -9,7 +9,7 @@ export default function Page() {
     <div className="space-y-6 rounded-2xl border border-slate-200/80 bg-gradient-to-br from-slate-50 via-white to-sky-50/40 p-4 sm:p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-600 sm:text-3xl">
             Team Access & Permissions
           </h1>
           <p className="mt-1 text-sm text-slate-600">
@@ -17,7 +17,7 @@ export default function Page() {
             members.
           </p>
         </div>
-        <span className="inline-flex w-fit items-center rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-700">
+        <span className="inline-flex w-fit items-center rounded-full bg-[#6571FF]/10 px-3 py-1 text-xs font-semibold text-[#6571FF]">
           Security controls
         </span>
       </div>

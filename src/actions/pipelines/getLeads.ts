@@ -276,8 +276,8 @@ export const getLeadsWithCount = async ({
         dateRange[0] &&
         dateRange[1] && {
           createdAt: {
-            gte: new Date(dateRange[0]),
-            lte: new Date(dateRange[1].getTime() + 24 * 60 * 60 * 1000 - 1), // End of day
+            gte: moment.tz(dateRange[0], timezone ?? "UTC").startOf("day").toDate(),
+            lte: moment.tz(dateRange[1], timezone ?? "UTC").endOf("day").toDate(),
           },
         }),
     };
@@ -503,8 +503,8 @@ export const getLeadsWithCountOptimized = async ({
         dateRange[0] &&
         dateRange[1] && {
           createdAt: {
-            gte: new Date(dateRange[0]),
-            lte: new Date(dateRange[1].getTime() + 24 * 60 * 60 * 1000 - 1),
+            gte: moment.tz(dateRange[0], timezone ?? "UTC").startOf("day").toDate(),
+            lte: moment.tz(dateRange[1], timezone ?? "UTC").endOf("day").toDate(),
           },
         }),
     };
