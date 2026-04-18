@@ -1,22 +1,22 @@
+import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
 import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
-import { Tooltip, TooltipContent } from "@/components/Tooltip";
+import { Tooltip } from "@/components/Tooltip";
 import { cn } from "@/lib/cn";
-import { TASK_COLOR } from "@/lib/consts";
-import { Task, User } from "@prisma/client";
+import { User } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { Clock, Mail, Phone, User as UserIcon, Users } from "lucide-react";
 import moment from "moment";
 import { useEffect, useState } from "react";
 import { useMediaQuery } from "react-responsive";
-import { appointmentQueryKey, taskQueryKey } from "../../../_constant";
-import { useDate } from "../../../_hook/lib/useDate";
+import CalendarTooltip from "../CalendarTooltip";
 import DraggableTaskTooltip from "../DraggableTaskTooltip";
 import ResizeTaskTooltip from "./ResizeTaskTooltip";
-import TaskTooltip from "../TaskTooltip";
-import useWeekStartEndDays from "../../../_hook/lib/useWeekStartEndDays";
-import AppointmentTooltip from "../AppointmentTooltip";
-import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
-import { Clock, Mail, Phone, User as UserIcon, Users } from "lucide-react";
-import CalendarTooltip from "../CalendarTooltip";
+import { useDate } from "@/app/(dashboard)/dashboard/task/_hook/lib/useDate";
+import useWeekStartEndDays from "@/app/(dashboard)/dashboard/task/_hook/lib/useWeekStartEndDays";
+import {
+  appointmentQueryKey,
+  taskQueryKey,
+} from "@/app/(dashboard)/dashboard/task/_constant";
 
 // Gradient priority classes for tasks
 const priorityClasses = {
@@ -44,8 +44,6 @@ export default function DayTask({
 }: TProps) {
   const date = useDate();
   const dateFormat = date.format("YYYY-MM-DD");
-  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
-  const [isAppointmentModalOpen, setIsAppointmentOpen] = useState(false);
   const queryClient = useQueryClient();
   const [height, setHeight] = useState(0);
   const is1300 = useMediaQuery({ query: "(max-width: 1300px)" });

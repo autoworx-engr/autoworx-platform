@@ -2,15 +2,12 @@ import {
   appointmentQueryKey,
   taskQueryKey,
 } from "@/app/(dashboard)/dashboard/task/_constant";
-import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
-import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
 import { TooltipTrigger } from "@/components/Tooltip";
 import { useQueryClient } from "@tanstack/react-query";
 import { ReactElement } from "react";
 import { useDrag } from "react-dnd";
-import { useDate } from "../../_hook/lib/useDate";
-import useWeekStartEndDays from "../../_hook/lib/useWeekStartEndDays";
-import { PopoverTrigger } from "@/components/ui/popover";
+import { useDate } from "../../../task/_hook/lib/useDate";
+import useWeekStartEndDays from "../../../task/_hook/lib/useWeekStartEndDays";
 
 type TDraggableTaskTooltipProps = {
   children: ReactElement;

@@ -1,8 +1,8 @@
 import { CalendarType } from "@/types/calendar";
 import Body from "./Body";
 import Heading from "./Heading";
-import Tasks from "../sideBar/Tasks";
 import AppointmentLists from "./AppointmentLists";
+import Tasks from "../../../task/_component/sideBar/Tasks";
 
 type TCalendarProps = {
   type: CalendarType;

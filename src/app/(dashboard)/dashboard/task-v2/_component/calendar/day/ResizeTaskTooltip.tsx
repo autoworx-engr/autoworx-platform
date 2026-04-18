@@ -1,8 +1,8 @@
-import useAppointmentMutation from "@/app/(dashboard)/dashboard/task/_hook/appointment/mutation/useAppointmentMutation";
-import useTaskMutation from "@/app/(dashboard)/dashboard/task/_hook/task/mutation/useTaskMutation";
 import { cn } from "@/lib/cn";
 import moment from "moment";
 import { useEffect, useRef, useState } from "react";
+import useTaskMutation from "../../../_hook/task/mutation/useTaskMutation";
+import useAppointmentMutation from "../../../_hook/appointment/mutation/useAppointmentMutation";
 
 type TProps = {
   children: React.ReactNode;

@@ -1,10 +1,11 @@
 "use client";
 
 import getTaskById from "@/actions/task/getTaskById";
+import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
+import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
 import { Tooltip } from "@/components/Tooltip";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { cn } from "@/lib/cn";
-import { TASK_COLOR } from "@/lib/consts";
 import { useCalendarStore } from "@/stores/calendarStore";
 import {
   formatDate,
@@ -12,27 +13,28 @@ import {
   updateTimeSpace,
 } from "@/utils/taskAndActivity";
 import type { Task } from "@prisma/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { Skeleton } from "antd";
 import mergeRefs from "merge-refs";
 import moment from "moment-timezone";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useDrop } from "react-dnd";
 import useAppointmentMutation from "../../../_hook/appointment/mutation/useAppointmentMutation";
-import useAppointmentQueryByWeek from "../../../_hook/appointment/query/useAppointmentQueryByWeek";
-import useAutoScrollWhileDragging from "../../../_hook/lib/useAutoScrollWhileDragging";
-import useWeek from "../../../_hook/lib/useWeek";
-import useWeekStartEndDays from "../../../_hook/lib/useWeekStartEndDays";
-import useSettingsQuery from "../../../_hook/settings/query/useSettingsQuery";
 import useTaskMutation from "../../../_hook/task/mutation/useTaskMutation";
-import useTaskQueryByWeek from "../../../_hook/task/query/useTaskQueryByWeek";
-import { getWeekStartNumber } from "../../../_utils/utils.DateSelector";
 import CalendarTooltip from "../CalendarTooltip";
 import DraggableTaskTooltip from "../DraggableTaskTooltip";
-import { Skeleton } from "antd";
-import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
-import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
-import { appointmentQueryKey, taskQueryKey } from "../../../_constant";
-import { useQueryClient } from "@tanstack/react-query";
+import useSettingsQuery from "@/app/(dashboard)/dashboard/task/_hook/settings/query/useSettingsQuery";
+import useWeek from "@/app/(dashboard)/dashboard/task/_hook/lib/useWeek";
+import useWeekStartEndDays from "@/app/(dashboard)/dashboard/task/_hook/lib/useWeekStartEndDays";
+import useAppointmentQueryByWeek from "@/app/(dashboard)/dashboard/task/_hook/appointment/query/useAppointmentQueryByWeek";
+import useTaskQueryByWeek from "@/app/(dashboard)/dashboard/task/_hook/task/query/useTaskQueryByWeek";
+import { getWeekStartNumber } from "@/app/(dashboard)/dashboard/task/_utils/utils.DateSelector";
+import useAutoScrollWhileDragging from "@/app/(dashboard)/dashboard/task/_hook/lib/useAutoScrollWhileDragging";
+import {
+  appointmentQueryKey,
+  taskQueryKey,
+} from "@/app/(dashboard)/dashboard/task/_constant";
 
 // Gradient priority classes for tasks
 const priorityClasses = {

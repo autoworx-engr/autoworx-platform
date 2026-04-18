@@ -4,20 +4,20 @@ import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { formatTime, updateTimeSpace } from "@/utils/taskAndActivity";
 import type { Task } from "@prisma/client";
+import { Skeleton } from "antd";
 import mergeRefs from "merge-refs";
 import moment, { Moment } from "moment-timezone";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDrop } from "react-dnd";
 import useAppointmentMutation from "../../../_hook/appointment/mutation/useAppointmentMutation";
-import useAppointmentQueryByDate from "../../../_hook/appointment/query/useAppointmentQueryByDate";
-import useAutoScrollWhileDragging from "../../../_hook/lib/useAutoScrollWhileDragging";
-import { useDate } from "../../../_hook/lib/useDate";
-import useSettingsQuery from "../../../_hook/settings/query/useSettingsQuery";
 import useTaskMutation from "../../../_hook/task/mutation/useTaskMutation";
-import useTaskQueryByDate from "../../../_hook/task/query/useTaskQueryByDate";
 import DayRow from "./DayRow";
 import DayTask from "./DayTask";
-import { Skeleton } from "antd";
+import { useDate } from "@/app/(dashboard)/dashboard/task/_hook/lib/useDate";
+import useSettingsQuery from "@/app/(dashboard)/dashboard/task/_hook/settings/query/useSettingsQuery";
+import useTaskQueryByDate from "@/app/(dashboard)/dashboard/task/_hook/task/query/useTaskQueryByDate";
+import useAppointmentQueryByDate from "@/app/(dashboard)/dashboard/task/_hook/appointment/query/useAppointmentQueryByDate";
+import useAutoScrollWhileDragging from "@/app/(dashboard)/dashboard/task/_hook/lib/useAutoScrollWhileDragging";
 
 function doesTaskOrAppointmentEndNextDay(startTime: Moment, endTime: Moment) {
   // Parse the start and end times as moment objects with specific time format
@@ -70,6 +70,7 @@ export default function Day() {
   }, []);
 
   const parentRef = useRef<HTMLDivElement>(null);
+  const [parentWidth, setParentWidth] = useState<number>(0);
 
   const { setDate } = useCalendarStore();
 
@@ -105,6 +106,17 @@ export default function Day() {
     // Optionally, listen to resize events or other events that might affect the ref's availability
     window.addEventListener("resize", checkRefAvailability);
     return () => window.removeEventListener("resize", checkRefAvailability);
+  }, []);
+
+  useEffect(() => {
+    const updateParentWidth = () => {
+      setParentWidth(parentRef.current?.offsetWidth ?? 0);
+    };
+
+    updateParentWidth();
+    window.addEventListener("resize", updateParentWidth);
+
+    return () => window.removeEventListener("resize", updateParentWidth);
   }, []);
 
   const events = useMemo(
@@ -240,7 +252,17 @@ export default function Day() {
         }
       }
     },
-    [tasks, appointments, date, rows, setUpdateVariable],
+    [
+      tasks,
+      appointments,
+      date,
+      rows,
+      setUpdateVariable,
+      timezone,
+      taskMutation,
+      setDate,
+      appointmentMutation,
+    ],
   );
 
   //scrolling till settings.dayStart
@@ -298,15 +320,14 @@ export default function Day() {
    */
   const calculateLeftPosition = useCallback(
     (taskIndex: number, tasksInRowLength: number) => {
-      if (parentRef.current) {
-        const parentWidth = parentRef.current.offsetWidth;
+      if (parentWidth > 0) {
         const distributionPercentage = (90 / tasksInRowLength) * taskIndex;
         const shiftPercentage = (110 / parentWidth) * 100;
         return `calc(${distributionPercentage}% + ${shiftPercentage}%)`;
       }
       return "0%"; // Default fallback
     },
-    [],
+    [parentWidth],
   );
 
   return (

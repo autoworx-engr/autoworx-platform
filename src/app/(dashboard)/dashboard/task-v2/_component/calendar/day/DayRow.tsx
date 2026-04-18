@@ -4,11 +4,11 @@ import { formatTime } from "@/utils/taskAndActivity";
 import { useQueryClient } from "@tanstack/react-query";
 import moment, { Moment } from "moment";
 import { useEffect, useState } from "react";
-import { appointmentQueryKey } from "../../../_constant";
-import useSettingsQuery from "../../../_hook/settings/query/useSettingsQuery";
 import { Appointment, Lead } from "@prisma/client";
 import { updatePipelineAutomationTrigger } from "@/actions/automation/pipeline/triggerPipelineAutomation";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import useSettingsQuery from "@/app/(dashboard)/dashboard/task/_hook/settings/query/useSettingsQuery";
+import { appointmentQueryKey } from "@/app/(dashboard)/dashboard/task/_constant";
 
 type TProps = {
   row: any;

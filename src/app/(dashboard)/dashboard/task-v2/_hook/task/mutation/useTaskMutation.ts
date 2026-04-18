@@ -1,9 +1,9 @@
 import { updateTask } from "@/actions/task/dragTask";
+import { taskQueryKey } from "@/app/(dashboard)/dashboard/task/_constant";
+import { useDate } from "@/app/(dashboard)/dashboard/task/_hook/lib/useDate";
+import useWeekStartEndDays from "@/app/(dashboard)/dashboard/task/_hook/lib/useWeekStartEndDays";
 import { Task } from "@prisma/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { taskQueryKey } from "../../../_constant";
-import { useDate } from "../../lib/useDate";
-import useWeekStartEndDays from "../../lib/useWeekStartEndDays";
 import { usePathname } from "next/navigation";
 
 export default function useTaskMutation() {

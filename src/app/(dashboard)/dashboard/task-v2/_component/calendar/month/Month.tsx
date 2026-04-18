@@ -17,27 +17,28 @@ import moment from "moment";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useDrop } from "react-dnd";
-import useAppointmentQueryByMonth from "../../../_hook/appointment/query/useAppointmentQueryByMonth";
-import useMonth from "../../../_hook/lib/useMonth";
-import useRotatedDays from "../../../_hook/lib/useRotatedDays";
-import useSettingsQuery from "../../../_hook/settings/query/useSettingsQuery";
-import useTaskQueryByMonth from "../../../_hook/task/query/useTaskQueryByMonth";
-import useHolidaysQuery from "../../../_hook/useHolidaysQuery";
-import { getDayNumber } from "../../../_utils/utils.DateSelector";
 import CalendarTooltip from "../CalendarTooltip";
-import HolidayDeleteConfirmation from "../HolidayDeleteConfirmation";
+
 import { Skeleton } from "antd";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  appointmentQueryKey,
-  calenderQueryKey,
-  taskQueryKey,
-} from "../../../_constant";
+
 import getHoliday from "@/actions/task/getHoliday";
 import { useState } from "react";
 import { X } from "lucide-react";
 import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
 import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
+import useMonth from "@/app/(dashboard)/dashboard/task/_hook/lib/useMonth";
+import useSettingsQuery from "@/app/(dashboard)/dashboard/task/_hook/settings/query/useSettingsQuery";
+import {
+  appointmentQueryKey,
+  calenderQueryKey,
+  taskQueryKey,
+} from "@/app/(dashboard)/dashboard/task/_constant";
+import useAppointmentQueryByMonth from "@/app/(dashboard)/dashboard/task/_hook/appointment/query/useAppointmentQueryByMonth";
+import useTaskQueryByMonth from "@/app/(dashboard)/dashboard/task/_hook/task/query/useTaskQueryByMonth";
+import { getDayNumber } from "@/app/(dashboard)/dashboard/task/_utils/utils.DateSelector";
+import useRotatedDays from "@/app/(dashboard)/dashboard/task/_hook/lib/useRotatedDays";
+import HolidayDeleteConfirmation from "@/app/(dashboard)/dashboard/task/_component/fullcalendar/HolidayDeleteConfirmation";
 
 // Gradient priority classes for tasks
 const priorityClasses = {

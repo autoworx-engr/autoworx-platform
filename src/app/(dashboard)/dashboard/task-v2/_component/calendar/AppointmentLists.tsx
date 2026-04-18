@@ -1,9 +1,6 @@
 "use client";
 import moment from "moment-timezone";
-import useAppointmentQueryByDate from "../../_hook/appointment/query/useAppointmentQueryByDate";
-import { useDate } from "../../_hook/lib/useDate";
-import TaskError from "../ui/TaskError";
-import TaskSpinner from "../ui/TaskSpinner";
+
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import {
   Calendar,
@@ -14,6 +11,10 @@ import {
   UserIcon,
   Users,
 } from "lucide-react";
+import { useDate } from "../../../task/_hook/lib/useDate";
+import useAppointmentQueryByDate from "../../../task/_hook/appointment/query/useAppointmentQueryByDate";
+import TaskSpinner from "../../../task/_component/ui/TaskSpinner";
+import TaskError from "../../../task/_component/ui/TaskError";
 
 const SHADOW_COLOR = "shadow-md shadow-slate-900/10 dark:shadow-white/5";
 const BASE_TEXT_COLOR = "text-slate-600 dark:text-white";

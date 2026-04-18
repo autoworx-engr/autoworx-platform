@@ -1,9 +1,9 @@
 import { assignAppointmentDate } from "@/actions/appointment/assignAppointmentDate";
+import { appointmentQueryKey } from "@/app/(dashboard)/dashboard/task/_constant";
+import { useDate } from "@/app/(dashboard)/dashboard/task/_hook/lib/useDate";
+import useWeekStartEndDays from "@/app/(dashboard)/dashboard/task/_hook/lib/useWeekStartEndDays";
 import { Appointment } from "@prisma/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { appointmentQueryKey } from "../../../_constant";
-import { useDate } from "../../lib/useDate";
-import useWeekStartEndDays from "../../lib/useWeekStartEndDays";
 import { usePathname } from "next/navigation";
 
 export default function useAppointmentMutation() {

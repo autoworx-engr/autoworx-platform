@@ -7,12 +7,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import AppointmentTooltip from "./AppointmentTooltip";
 import TaskTooltip from "./TaskTooltip";
-import { appointmentQueryKey, taskQueryKey } from "../../_constant";
-import { useDate } from "../../_hook/lib/useDate";
 import { TooltipPortal } from "@radix-ui/react-tooltip";
-import useMonth from "../../_hook/lib/useMonth";
 import moment from "moment";
-import useWeekStartEndDays from "../../_hook/lib/useWeekStartEndDays";
+import { useDate } from "../../../task/_hook/lib/useDate";
+import useMonth from "../../../task/_hook/lib/useMonth";
+import useWeekStartEndDays from "../../../task/_hook/lib/useWeekStartEndDays";
+import { appointmentQueryKey, taskQueryKey } from "../../../task/_constant";
 
 type TCalendarTooltipProps = {
   event: (Task | Appointment) & {
