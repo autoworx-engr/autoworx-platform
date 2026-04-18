@@ -17,7 +17,7 @@ export default function Page() {
             members.
           </p>
         </div>
-        <span className="inline-flex w-fit items-center rounded-full bg-purple-100 px-3 py-1 text-xs font-semibold text-sky-700">
+        <span className="inline-flex w-fit items-center rounded-full bg-[#6571FF]/10 px-3 py-1 text-xs font-semibold text-[#6571FF]">
           Security controls
         </span>
       </div>
