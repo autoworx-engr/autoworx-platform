@@ -64,7 +64,7 @@ export default function Day() {
         } else {
           return "12 AM";
         }
-      })
+      }),
     );
     return timeRows;
   }, []);
@@ -79,10 +79,10 @@ export default function Day() {
   const [isRefAvailable, setIsRefAvailable] = useState<boolean>(false);
   const [{ canDrop, isOver }, dropRef] = useDrop({
     accept: ["tag", "task", "appointment"],
-    collect: monitor => ({
+    collect: (monitor) => ({
       isOver: monitor.isOver(),
-      canDrop: monitor.canDrop()
-    })
+      canDrop: monitor.canDrop(),
+    }),
   }) as [{ canDrop: boolean; isOver: boolean }, any];
 
   // useEffect(() => {
@@ -110,29 +110,29 @@ export default function Day() {
   const events = useMemo(
     () =>
       [
-        ...tasks.map(task => ({
+        ...tasks.map((task) => ({
           ...task,
           type: "task" as const,
-          assignedUsers: []
+          assignedUsers: [],
         })),
-        ...appointments.map(appointment => {
+        ...appointments.map((appointment) => {
           const { appointmentUsers, ...appointmentData } = appointment;
           return {
             ...appointmentData,
             type: "appointment" as const,
             assignedUsers: appointmentUsers.map(
-              appointmentUser => appointmentUser.user
-            )
+              (appointmentUser) => appointmentUser.user,
+            ),
           };
-        })
+        }),
       ]
-        .map(event => {
+        .map((event) => {
           const taskStartTime = moment(event.startTime, "HH:mm").format("h A");
           const taskEndTime = moment(event.endTime, "HH:mm").format("h A");
 
           // Find the rowStartIndex and rowEndIndex by looping through the rows array
-          const rowStartIndex = rows.findIndex(row => row === taskStartTime);
-          const rowEndIndex = rows.findIndex(row => row === taskEndTime);
+          const rowStartIndex = rows.findIndex((row) => row === taskStartTime);
+          const rowEndIndex = rows.findIndex((row) => row === taskEndTime);
 
           // Return the task with the rowStartIndex and rowEndIndex
           return { ...event, rowStartIndex, rowEndIndex };
@@ -156,7 +156,7 @@ export default function Day() {
 
           return aBigIndex - bBigIndex;
         }),
-    [tasks, appointments, date]
+    [tasks, appointments, date],
   );
   // drop event handler
   const handleDrop = useCallback(
@@ -173,15 +173,15 @@ export default function Day() {
         // Get the id of the task from the dataTransfer object
         const taskId = parseInt(attributeData[1]);
         // Find the task in your state
-        let oldTask = tasks.find(task => task.id === taskId);
+        let oldTask = tasks.find((task) => task.id === taskId);
         if (!oldTask) {
           oldTask = (await getTaskById(taskId, {
             select: {
               id: true,
               startTime: true,
               endTime: true,
-              date: true
-            }
+              date: true,
+            },
           })) as Task | undefined;
         }
         const taskFoundWithoutTime = !oldTask?.startTime && !oldTask?.endTime;
@@ -191,7 +191,7 @@ export default function Day() {
             date: new Date(date.format("YYYY-MM-DD")),
             startTime: startTime,
             endTime: endTime,
-            timezone: timezone
+            timezone: timezone,
           });
 
           setUpdateVariable();
@@ -200,17 +200,17 @@ export default function Day() {
           const { newStartTime, newEndTime } = updateTimeSpace(
             oldTask?.startTime as string,
             oldTask?.endTime as string,
-            rows[rowIndex]
+            rows[rowIndex],
           );
           if (oldTask) {
             taskMutation.mutate({
               id: oldTask.id,
               date: new Date(
-                oldTask.date ? oldTask.date : date.format("YYYY-MM-DD")
+                oldTask.date ? oldTask.date : date.format("YYYY-MM-DD"),
               ),
               startTime: newStartTime,
               endTime: newEndTime,
-              timezone: timezone
+              timezone: timezone,
             });
 
             setUpdateVariable();
@@ -221,12 +221,12 @@ export default function Day() {
         const appointmentId = parseInt(attributeData[1]);
         // Find the appointment in your state
         const oldAppointment = appointments.find(
-          appointment => appointment.id === appointmentId
+          (appointment) => appointment.id === appointmentId,
         );
         const { newStartTime, newEndTime } = updateTimeSpace(
           oldAppointment?.startTime as string,
           oldAppointment?.endTime as string,
-          rows[rowIndex]
+          rows[rowIndex],
         );
         if (oldAppointment) {
           appointmentMutation.mutate({
@@ -234,13 +234,13 @@ export default function Day() {
             date: oldAppointment.date as Date | string,
             startTime: newStartTime,
             endTime: newEndTime,
-            timezone: timezone
+            timezone: timezone,
           });
           setUpdateVariable();
         }
       }
     },
-    [tasks, appointments, date, rows, setUpdateVariable]
+    [tasks, appointments, date, rows, setUpdateVariable],
   );
 
   //scrolling till settings.dayStart
@@ -254,13 +254,13 @@ export default function Day() {
 
       if (startTime) {
         const formattedTime = moment(startTime, "HH:mm").format("h A");
-        const timeIndex = rows.findIndex(row => row === formattedTime);
+        const timeIndex = rows.findIndex((row) => row === formattedTime);
 
         if (timeIndex !== -1) {
           const scrollPosition = timeIndex * 75;
           containerRef.current.scrollTo({
             top: scrollPosition,
-            behavior: "smooth"
+            behavior: "smooth",
           });
 
           // Mark only after successful scroll
@@ -276,14 +276,14 @@ export default function Day() {
 
       if (!startTime && !hasScrolledRef.current) {
         const startTimeIndex = rows.findIndex(
-          row => formatTime(row) === settings?.dayStart
+          (row) => formatTime(row) === settings?.dayStart,
         );
 
         if (startTimeIndex !== -1) {
           const scrollPosition = startTimeIndex * 75;
           containerRef.current.scrollTo({
             top: scrollPosition,
-            behavior: "smooth"
+            behavior: "smooth",
           });
 
           hasScrolledRef.current = true;
@@ -306,7 +306,7 @@ export default function Day() {
       }
       return "0%"; // Default fallback
     },
-    []
+    [],
   );
 
   return (
@@ -334,7 +334,7 @@ export default function Day() {
                 } ${index !== 0 ? "" : "border-t"}`}
                 style={{
                   width: "calc(100% - 85px)",
-                  backgroundColor: "#f2f2f2"
+                  backgroundColor: "#f2f2f2",
                 }}
               >
                 <Skeleton.Button
@@ -367,17 +367,17 @@ export default function Day() {
 
             const isEventEndNextDay = doesTaskOrAppointmentEndNextDay(
               eventStartTime,
-              eventEndTime
+              eventEndTime,
             );
 
             const dayEnd = moment("23:59", "HH:mm");
 
-            const tasksInRow = events.filter(task => {
+            const tasksInRow = events.filter((task) => {
               const taskStartTime = moment(task.startTime, "HH:mm");
               const taskEndTime = moment(task.endTime, "HH:mm");
               const isTaskEndNextDay = doesTaskOrAppointmentEndNextDay(
                 taskStartTime,
-                taskEndTime
+                taskEndTime,
               );
               if (
                 event.rowStartIndex === task.rowStartIndex ||
@@ -394,7 +394,7 @@ export default function Day() {
               }
             });
 
-            const taskIndex = tasksInRow.findIndex(task => {
+            const taskIndex = tasksInRow.findIndex((task) => {
               if (task.id === event.id && task.type === event.type) {
                 return true;
               }
@@ -408,7 +408,7 @@ export default function Day() {
                 totalTaskInRow={tasksInRow.length}
                 calculateLeftPosition={calculateLeftPosition(
                   taskIndex,
-                  tasksInRow.length
+                  tasksInRow.length,
                 )}
                 event={event}
                 isRefAvailable={isRefAvailable}

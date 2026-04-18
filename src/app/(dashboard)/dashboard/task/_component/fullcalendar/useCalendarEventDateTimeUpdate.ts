@@ -70,7 +70,16 @@ export function useCalendarEventDateTimeUpdate() {
             return;
           }
 
-          queryClient.invalidateQueries({ queryKey: [taskQueryKey.allTasks] });
+          // Update cache directly with server data — avoids invalidation refetch flicker
+          queryClient.setQueriesData(
+            { queryKey: [taskQueryKey.allTasks] },
+            (oldData: any) => {
+              if (!Array.isArray(oldData)) return oldData;
+              return oldData.map((task: any) =>
+                task.id === taskId ? { ...task, ...result.data } : task,
+              );
+            },
+          );
           return;
         }
 
@@ -94,9 +103,16 @@ export function useCalendarEventDateTimeUpdate() {
           return;
         }
 
-        queryClient.invalidateQueries({
-          queryKey: [appointmentQueryKey.allAppointments],
-        });
+        // Update cache directly with server data — avoids invalidation refetch flicker
+        queryClient.setQueriesData(
+          { queryKey: [appointmentQueryKey.allAppointments] },
+          (oldData: any) => {
+            if (!Array.isArray(oldData)) return oldData;
+            return oldData.map((apt: any) =>
+              apt.id === appointmentId ? { ...apt, ...result.data } : apt,
+            );
+          },
+        );
       } catch {
         info.revert();
         errorToast("Failed to update event date and time.");

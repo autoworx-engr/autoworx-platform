@@ -2,14 +2,14 @@
 
 import { useState } from "react";
 import { Filter } from "lucide-react";
-import { Button } from "../ui/button";
+import { Button } from "../../../../../../components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
+} from "../../../../../../components/ui/dropdown-menu";
 
 type FilterOption = {
   id: number;
@@ -33,9 +33,9 @@ export function CalendarFilterDropdown({
   onSelectedTeamMateIdsChange,
   onSelectedCategoryIdsChange,
 }: CalendarFilterDropdownProps) {
-  const [activeFilterTab, setActiveFilterTab] = useState<"teamMate" | "category">(
-    "teamMate",
-  );
+  const [activeFilterTab, setActiveFilterTab] = useState<
+    "teamMate" | "category"
+  >("teamMate");
 
   const allTeamMatesSelected =
     teamMates.length > 0 && selectedTeamMateIds.length === teamMates.length;

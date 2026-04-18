@@ -91,7 +91,7 @@ export default function Heading({ type }: THeadingProps) {
   };
 
   const handleAppointmentCreate = async (
-    newAppointment: Appointment & { lead: Lead | null }
+    newAppointment: Appointment & { lead: Lead | null },
   ) => {
     try {
       // Invalidate queries for appointments based on the current month and year
@@ -183,12 +183,12 @@ export default function Heading({ type }: THeadingProps) {
         </div>
         {/* new appointment */}
         {ALLOWED_ROLES_FOR_NEW_APPOINTMENT.includes(
-          user?.employeeType ?? ""
+          user?.employeeType ?? "",
         ) && (
-            <AppointmentCreateOrEdit
-              onAppointmentCreated={handleAppointmentCreate}
-            />
-          )}
+          <AppointmentCreateOrEdit
+            onAppointmentCreated={handleAppointmentCreate}
+          />
+        )}
 
         <Settings />
 
@@ -199,10 +199,11 @@ export default function Heading({ type }: THeadingProps) {
             {days.map((day, index) => (
               <p
                 key={day}
-                className={` p-1 rounded-full ${index === currentDayIndex
-                  ? "bg-blue-500 text-white font-bold"
-                  : ""
-                  }`}
+                className={` p-1 rounded-full ${
+                  index === currentDayIndex
+                    ? "bg-blue-500 text-white font-bold"
+                    : ""
+                }`}
               >
                 {day}
               </p>

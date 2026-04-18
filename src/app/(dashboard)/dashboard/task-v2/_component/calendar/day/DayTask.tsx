@@ -298,36 +298,36 @@ export default function DayTask({
             event={event}
             onClose={() => setOpenTooltipId(null)}
             onEditOpen={() => {
-          setOpenTooltipId(null); 
-          setIsEditModalOpen(true); 
-        }}
+              setOpenTooltipId(null);
+              setIsEditModalOpen(true);
+            }}
           />
         )}
       </ResizeTaskTooltip>
 
       {isEditModalOpen && (
-  <>
-    {event.type === "appointment" ? (
-      <AppointmentCreateOrEdit
-        fromEdit
-        appointmentId={event.id}
-        isModalOpen={isEditModalOpen}
-        setIsModalOpen={setIsEditModalOpen}
-        onAppointmentUpdated={revalidateAppointmentQueries}
-        onAppointmentDeleted={revalidateAppointmentQueries}
-      />
-    ) : (
-      <TaskCreateOrEdit
-        fromEdit
-        taskId={event.id}
-        isModalOpen={isEditModalOpen}
-        setIsModalOpen={setIsEditModalOpen}
-        onTaskUpdated={revalidateTaskQueries}
-        onTaskDelete={revalidateTaskQueries}
-      />
-    )}
-  </>
-)}
+        <>
+          {event.type === "appointment" ? (
+            <AppointmentCreateOrEdit
+              fromEdit
+              appointmentId={event.id}
+              isModalOpen={isEditModalOpen}
+              setIsModalOpen={setIsEditModalOpen}
+              onAppointmentUpdated={revalidateAppointmentQueries}
+              onAppointmentDeleted={revalidateAppointmentQueries}
+            />
+          ) : (
+            <TaskCreateOrEdit
+              fromEdit
+              taskId={event.id}
+              isModalOpen={isEditModalOpen}
+              setIsModalOpen={setIsEditModalOpen}
+              onTaskUpdated={revalidateTaskQueries}
+              onTaskDelete={revalidateTaskQueries}
+            />
+          )}
+        </>
+      )}
     </Tooltip>
   );
 }

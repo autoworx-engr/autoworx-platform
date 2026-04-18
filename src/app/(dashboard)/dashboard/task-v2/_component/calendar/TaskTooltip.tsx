@@ -1,6 +1,6 @@
 import { Task } from "@prisma/client";
 import { SquarePen, X, Zap } from "lucide-react"; // Zap for priority icon
-import {useEffect, useRef} from "react";
+import { useEffect, useRef } from "react";
 type TTaskTooltipProps = {
   event: Task;
   onModalOpen?: () => void;

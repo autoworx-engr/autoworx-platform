@@ -31,14 +31,14 @@ import {
   ClipboardList,
   DollarSign,
 } from "lucide-react";
-import { Button } from "../ui/button";
+import { Button } from "../../../../../../components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
+} from "../../../../../../components/ui/select";
 import { CalendarFilterDropdown } from "./CalendarFilterDropdown";
 
 const ALLOWED_ROLES_FOR_NEW_APPOINTMENT = ["Admin", "Manager", "Sales"];

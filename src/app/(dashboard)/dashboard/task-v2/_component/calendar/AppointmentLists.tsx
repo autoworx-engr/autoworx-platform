@@ -5,7 +5,15 @@ import { useDate } from "../../_hook/lib/useDate";
 import TaskError from "../ui/TaskError";
 import TaskSpinner from "../ui/TaskSpinner";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
-import { Calendar, CalendarX2, Clock, Mail, Phone, UserIcon, Users } from "lucide-react";
+import {
+  Calendar,
+  CalendarX2,
+  Clock,
+  Mail,
+  Phone,
+  UserIcon,
+  Users,
+} from "lucide-react";
 
 const SHADOW_COLOR = "shadow-md shadow-slate-900/10 dark:shadow-white/5";
 const BASE_TEXT_COLOR = "text-slate-600 dark:text-white";
@@ -58,7 +66,7 @@ export default function AppointmentLists() {
       const start = moment(appointment.startTime, "HH:mm");
       const end = moment(appointment.endTime, "HH:mm");
       const date = moment(appointment?.date, "YYYY-MM-DD").format(
-        "Do MMMM YYYY"
+        "Do MMMM YYYY",
       );
 
       return (
@@ -70,23 +78,31 @@ export default function AppointmentLists() {
         >
           {/* Left: Client Info */}
           <div className="pr-3 space-y-1">
-
             {/* Title */}
-            <p className={`text-lg font-extrabold ${BASE_TEXT_COLOR} leading-snug`}>
+            <p
+              className={`text-lg font-extrabold ${BASE_TEXT_COLOR} leading-snug`}
+            >
               {appointment?.title}
             </p>
 
             {/* Time Range */}
-            <p className={`flex items-center gap-1 text-sm font-medium ${BASE_TEXT_COLOR} pt-1`}>
+            <p
+              className={`flex items-center gap-1 text-sm font-medium ${BASE_TEXT_COLOR} pt-1`}
+            >
               <Clock size={14} className="text-cyan-600 dark:text-cyan-400" />
               {/* Placeholder for Moment objects/formatted strings */}
-              {start && end ? `${start.format("h:mm A")} - ${end.format("h:mm A")}` : "Time N/A"}
+              {start && end
+                ? `${start.format("h:mm A")} - ${end.format("h:mm A")}`
+                : "Time N/A"}
             </p>
 
             {/* Date */}
             {appointment?.date && (
               <div className={`flex items-center gap-1`}>
-                <Calendar size={14} className="text-cyan-600 dark:text-cyan-400" />
+                <Calendar
+                  size={14}
+                  className="text-cyan-600 dark:text-cyan-400"
+                />
                 <p className={`text-sm font-medium ${BASE_TEXT_COLOR}`}>
                   {/* Placeholder for date string/Moment object */}
                   {date}
@@ -96,11 +112,21 @@ export default function AppointmentLists() {
 
             {/* Client Name (Iconified) */}
             <p className={`flex items-center gap-1 text-sm ${INFO_TEXT_COLOR}`}>
-              <UserIcon size={16} className="text-cyan-600 dark:text-cyan-400" />
-              <span className={`font-semibold ${BASE_TEXT_COLOR}`}>Client:</span>
-              {appointment?.client?.firstName && appointment?.client?.lastName
-                ? <span className={`font-semibold`}>{appointment.client.firstName} {appointment.client.lastName}</span>
-                : <span className="italic">N/A</span>}
+              <UserIcon
+                size={16}
+                className="text-cyan-600 dark:text-cyan-400"
+              />
+              <span className={`font-semibold ${BASE_TEXT_COLOR}`}>
+                Client:
+              </span>
+              {appointment?.client?.firstName &&
+              appointment?.client?.lastName ? (
+                <span className={`font-semibold`}>
+                  {appointment.client.firstName} {appointment.client.lastName}
+                </span>
+              ) : (
+                <span className="italic">N/A</span>
+              )}
             </p>
 
             {/* Email Link (Iconified) */}
@@ -111,7 +137,9 @@ export default function AppointmentLists() {
                 href={`mailto:${appointment.client?.email}`}
                 className={`w-full break-all text-sm font-medium ${LINK_BLUE}`}
               >
-                {appointment.client?.email || <span className={`italic ${INFO_TEXT_COLOR}`}>N/A</span>}
+                {appointment.client?.email || (
+                  <span className={`italic ${INFO_TEXT_COLOR}`}>N/A</span>
+                )}
               </a>
             </p>
 
@@ -123,24 +151,33 @@ export default function AppointmentLists() {
                 href={`tel:${appointment.client?.mobile}`}
                 className={`cursor-pointer text-sm font-medium ${LINK_EMERALD}`}
               >
-                {appointment.client?.mobile || <span className={`italic ${INFO_TEXT_COLOR}`}>N/A</span>}
+                {appointment.client?.mobile || (
+                  <span className={`italic ${INFO_TEXT_COLOR}`}>N/A</span>
+                )}
               </a>
             </p>
           </div>
 
           {/* Assigned To (Iconified) */}
-          <div className={`flex items-center gap-1 text-sm font-semibold ${BASE_TEXT_COLOR}`}>
+          <div
+            className={`flex items-center gap-1 text-sm font-semibold ${BASE_TEXT_COLOR}`}
+          >
             <Users size={14} className="text-[#6571FF] dark:text-[#6571FF]" />
-            <span className={`font-semibold ${BASE_TEXT_COLOR}`}>Assigned To:</span>
+            <span className={`font-semibold ${BASE_TEXT_COLOR}`}>
+              Assigned To:
+            </span>
             <span className="text-sm font-medium">
-              {appointment.assignedUsers && appointment.assignedUsers.length > 0
-                ? appointment.assignedUsers
+              {appointment.assignedUsers &&
+              appointment.assignedUsers.length > 0 ? (
+                appointment.assignedUsers
                   .map(
                     (user: any) =>
-                      `${user?.firstName ?? ""} ${user?.lastName ?? ""}`
+                      `${user?.firstName ?? ""} ${user?.lastName ?? ""}`,
                   )
                   .join(", ")
-                : <span className="italic font-normal">N/A</span>}
+              ) : (
+                <span className="italic font-normal">N/A</span>
+              )}
             </span>
           </div>
         </div>

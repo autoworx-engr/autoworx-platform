@@ -71,8 +71,7 @@ export default function DraggableTaskTooltip({
       onDragStart={handleDragStart}
       // onMouseDown={(e) => e.preventDefault()}
       onMouseDown={(e) => {
-       
-        if (e.button === 0) { 
+        if (e.button === 0) {
           return;
         }
       }}
@@ -110,5 +109,5 @@ export default function DraggableTaskTooltip({
   //   </>
   // );
 
-  return event
+  return event;
 }

@@ -81,7 +81,7 @@ export default function Week() {
   const { setDate, setNavigating } = useCalendarStore();
   const [openTooltipId, setOpenTooltipId] = useState<string | null>(null);
   const [editingEvent, setEditingEvent] = useState<any | null>(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false); 
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const today = week.toDate();
   const parentRef = useRef<HTMLDivElement>(null);
 
@@ -383,34 +383,27 @@ export default function Week() {
     const startTime = formatTime(rowTime);
     // open("ADD_TASK", { date, startTime, companyUsers });
   }
-const queryClient = useQueryClient();
-   const revalidateTaskQueries = () => {
-      
-  
-      // Invalidate queries for tasks based on the current week
-      queryClient.invalidateQueries({
-        queryKey: [taskQueryKey.allTasks, weekStartDate, weekEndDate],
-      });
-  
-     
-    };
-  
-    const revalidateAppointmentQueries = () => {
-      
-      // Invalidate queries for appointments based on the current week
-      queryClient.invalidateQueries({
-        queryKey: [
-          appointmentQueryKey.allAppointments,
-          weekStartDate,
-          weekEndDate,
-        ],
-      });
-      
-    };
+  const queryClient = useQueryClient();
+  const revalidateTaskQueries = () => {
+    // Invalidate queries for tasks based on the current week
+    queryClient.invalidateQueries({
+      queryKey: [taskQueryKey.allTasks, weekStartDate, weekEndDate],
+    });
+  };
+
+  const revalidateAppointmentQueries = () => {
+    // Invalidate queries for appointments based on the current week
+    queryClient.invalidateQueries({
+      queryKey: [
+        appointmentQueryKey.allAppointments,
+        weekStartDate,
+        weekEndDate,
+      ],
+    });
+  };
   const isLoading = isTaskLoading || isAppointmentLoading;
   return (
     <>
-
       <div
         className="relative mt-3 h-[90%] overflow-auto border-neutral-200"
         // style={{
@@ -699,10 +692,10 @@ const queryClient = useQueryClient();
                         event={event}
                         onClose={() => setOpenTooltipId(null)}
                         onEditOpen={() => {
-      setOpenTooltipId(null); 
-      setEditingEvent(event); 
-      setIsEditModalOpen(true);
-    }}
+                          setOpenTooltipId(null);
+                          setEditingEvent(event);
+                          setIsEditModalOpen(true);
+                        }}
                       />
                     )}
                   </Tooltip>
@@ -761,8 +754,8 @@ const queryClient = useQueryClient();
               isModalOpen={isEditModalOpen}
               setIsModalOpen={setIsEditModalOpen}
               onAppointmentUpdated={() => {
-                  setIsEditModalOpen(false);
-                  revalidateAppointmentQueries()
+                setIsEditModalOpen(false);
+                revalidateAppointmentQueries();
               }}
               onAppointmentDeleted={revalidateAppointmentQueries}
             />
@@ -773,8 +766,8 @@ const queryClient = useQueryClient();
               isModalOpen={isEditModalOpen}
               setIsModalOpen={setIsEditModalOpen}
               onTaskUpdated={() => {
-                  setIsEditModalOpen(false);
-                  revalidateTaskQueries()
+                setIsEditModalOpen(false);
+                revalidateTaskQueries();
               }}
               onTaskDelete={revalidateTaskQueries}
             />
@@ -782,7 +775,5 @@ const queryClient = useQueryClient();
         </>
       )}
     </>
-
-    
   );
 }
