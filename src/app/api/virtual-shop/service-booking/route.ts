@@ -1238,13 +1238,54 @@ export async function POST(req: Request) {
         throw new AppError(400, "No valid services selected for this shop.");
       }
 
-      const allInvoiceItems = selectedServices.flatMap((srv) => {
-        return srv.invoiceItems;
-      });
+      console.log({ selectedServices });
+
+      const allInvoiceItems: any[] = [];
+      for (const srv of selectedServices) {
+        let cachedDefaultService: any = null;
+
+        const getDefaultService = async () => {
+          if (cachedDefaultService) return cachedDefaultService;
+          cachedDefaultService = await tx.service.findFirst({
+            where: { name: srv.title, companyId },
+          });
+          if (!cachedDefaultService) {
+            cachedDefaultService = await tx.service.create({
+              data: {
+                name: srv.title,
+                description: srv.description || srv.title,
+                companyId,
+              },
+            });
+          }
+          return cachedDefaultService;
+        };
+
+        if (!srv.invoiceItems || srv.invoiceItems.length === 0) {
+          const defaultService = await getDefaultService();
+          allInvoiceItems.push({
+            id: 0,
+            serviceId: defaultService.id,
+            service: defaultService,
+            materials: [],
+            labor: null,
+            tags: [],
+          });
+        } else {
+          for (const item of srv.invoiceItems) {
+            if (!item.service) {
+              const defaultService = await getDefaultService();
+              item.serviceId = defaultService.id;
+              item.service = defaultService as any;
+            }
+            allInvoiceItems.push(item);
+          }
+        }
+      }
 
       const items = allInvoiceItems.map(({ id, ...item }) => ({
         ...item,
-        materials: item.materials.map((material) => ({
+        materials: item.materials.map((material: any) => ({
           ...material,
           quantity: (Number(material.quantity) || 0) as any,
           cost: (Number(material.cost) || 0) as any,
