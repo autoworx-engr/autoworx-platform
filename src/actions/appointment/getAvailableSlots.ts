@@ -109,24 +109,34 @@ export async function getAvailableSlots(shopId: number, dateString: string) {
           lt: startOfNextDay,
         },
       },
-      select: { startTime: true },
+      select: { startTime: true, endTime: true },
     });
 
     // Check stacking
-    const availableSlots = baseSlots.filter(slotTime => {
+    const availableSlots = baseSlots.filter((slotTime) => {
       const slotMoment = moment.utc(
         `${selectedDateStr} ${slotTime}`,
-        "YYYY-MM-DD HH:mm"
+        "YYYY-MM-DD HH:mm",
       );
       const slotEndMoment = slotMoment.clone().add(intervalMinutes, "minutes");
 
-      const appointmentsInSlot = existingAppointments.filter(app => {
-        if (!app.startTime) return false;
-        const appMoment = moment.utc(
+      const appointmentsInSlot = existingAppointments.filter((app) => {
+        if (!app.startTime || !app.endTime) return false;
+        const appStartMoment = moment.utc(
           `${selectedDateStr} ${app.startTime}`,
-          "YYYY-MM-DD HH:mm"
+          "YYYY-MM-DD HH:mm",
         );
-        return appMoment.isSameOrAfter(slotMoment) && appMoment.isBefore(slotEndMoment);
+        const appEndMoment = moment.utc(
+          `${selectedDateStr} ${app.endTime}`,
+          "YYYY-MM-DD HH:mm",
+        );
+
+        // A slot overlaps with an appointment if the slot starts before the appointment ends
+        // AND the slot ends after the appointment starts.
+        return (
+          slotEndMoment.isAfter(appStartMoment) &&
+          slotMoment.isBefore(appEndMoment)
+        );
       });
       return appointmentsInSlot.length < stackingLimit;
     });

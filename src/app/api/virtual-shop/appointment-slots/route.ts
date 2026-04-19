@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { AppError } from "@/error-boundary/error";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import {
   getAvailableSlots,

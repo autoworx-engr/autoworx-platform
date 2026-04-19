@@ -1238,8 +1238,6 @@ export async function POST(req: Request) {
         throw new AppError(400, "No valid services selected for this shop.");
       }
 
-      console.log({ selectedServices });
-
       const allInvoiceItems: any[] = [];
       for (const srv of selectedServices) {
         let cachedDefaultService: any = null;
@@ -1321,6 +1319,11 @@ export async function POST(req: Request) {
 
       let totalServiceCost = selectedServices.reduce(
         (acc, cur) => acc + Number(cur.price),
+        0,
+      );
+
+      let totalDuration = selectedServices.reduce(
+        (acc, cur) => acc + Number(cur.duration || 30),
         0,
       );
 
@@ -1581,7 +1584,7 @@ export async function POST(req: Request) {
 
       const slotInterval = bookingSettings.slotInterval;
       const endTime = moment(appointmentStartTime, "HH:mm")
-        .add(slotInterval, "minutes")
+        .add(totalDuration > 0 ? totalDuration : slotInterval, "minutes")
         .format("HH:mm");
 
       const appointmentResult = await addAppointment({
