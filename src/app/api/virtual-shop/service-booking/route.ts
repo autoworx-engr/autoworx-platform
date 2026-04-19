@@ -122,6 +122,7 @@ const searchParamsValidation = z.object({
 });
 
 const createServiceBookingSchema = z.object({
+  sessionToken: z.string().optional(),
   shopId: z
     .union([z.string(), z.number()], {
       required_error: "Shop ID is required",
@@ -989,6 +990,7 @@ export async function POST(req: Request) {
       year,
       notes,
       giftCardCode,
+      sessionToken,
     } = parsedBody;
 
     const shopServiceIds = shopServices
@@ -1122,7 +1124,12 @@ export async function POST(req: Request) {
         }
       }
 
-      // 5. Find ShopBookingSetting & check Availability
+      // 5. Lock ShopBookingSetting to prevent concurrent slot race conditions
+      await tx.$executeRawUnsafe(
+        'SELECT 1 FROM "shop_booking_settings" WHERE "shop_id" = $1 FOR UPDATE',
+        Number(shop.id),
+      );
+
       const bookingSettings = await tx.shopBookingSetting.findUnique({
         where: { shopId: shop.id },
         include: { availabilities: true },
@@ -1168,35 +1175,7 @@ export async function POST(req: Request) {
         }
       }
 
-      // 6. Check Capacity (Stacking context)
-      // Check existing appointments for this exact slot
-      const existingAppointmentsCount = await tx.appointment.count({
-        where: {
-          companyId,
-          date: new Date(appointmentDate),
-          startTime: appointmentStartTime,
-        },
-      });
-
-      if (
-        bookingSettings.isStackingEnabled &&
-        existingAppointmentsCount >= bookingSettings.stackingLimit
-      ) {
-        throw new AppError(
-          400,
-          `No available slots for ${appointmentDate} at ${appointmentStartTime}. Limit reached.`,
-        );
-      } else if (
-        !bookingSettings.isStackingEnabled &&
-        existingAppointmentsCount > 0
-      ) {
-        throw new AppError(
-          400,
-          `No available slots for ${appointmentDate} at ${appointmentStartTime}. Slot is already booked.`,
-        );
-      }
-
-      // 7. Retrieve Service Invoice Items & Calculate Totals
+      // 6. Retrieve Service Invoice Items to calculate duration
       const selectedServices = await tx.shopService.findMany({
         where: {
           id: { in: shopServiceIds },
@@ -1236,6 +1215,89 @@ export async function POST(req: Request) {
 
       if (selectedServices.length === 0) {
         throw new AppError(400, "No valid services selected for this shop.");
+      }
+
+      let totalDuration = selectedServices.reduce(
+        (acc, cur) => acc + Number(cur.duration || 30),
+        0,
+      );
+
+      // 7. Check Capacity (Stacking context + duration overlaps + active holds)
+      const intervalMinutes = bookingSettings.slotInterval || 30;
+      const proposedAppointmentEndMoment = moment
+        .utc(`${appointmentDate} ${appointmentStartTime}`, "YYYY-MM-DD HH:mm")
+        .add(totalDuration > 0 ? totalDuration : intervalMinutes, "minutes");
+
+      const existingAppointments = await tx.appointment.findMany({
+        where: {
+          companyId,
+          date: new Date(appointmentDate),
+        },
+        select: { startTime: true, endTime: true },
+      });
+
+      const activeHolds = await tx.shopSlotHold.findMany({
+        where: {
+          shopId: shop.id,
+          date: new Date(appointmentDate),
+          expiresAt: { gt: new Date() },
+        },
+        select: { startTime: true, endTime: true, sessionToken: true },
+      });
+
+      const slotMoment = moment.utc(
+        `${appointmentDate} ${appointmentStartTime}`,
+        "YYYY-MM-DD HH:mm",
+      );
+
+      const appointmentsInSlot = existingAppointments.filter((app) => {
+        if (!app.startTime || !app.endTime) return false;
+        const appStartMoment = moment.utc(
+          `${appointmentDate} ${app.startTime}`,
+          "YYYY-MM-DD HH:mm",
+        );
+        const appEndMoment = moment.utc(
+          `${appointmentDate} ${app.endTime}`,
+          "YYYY-MM-DD HH:mm",
+        );
+        return (
+          proposedAppointmentEndMoment.isAfter(appStartMoment) &&
+          slotMoment.isBefore(appEndMoment)
+        );
+      });
+
+      const holdsInSlot = activeHolds.filter((hold) => {
+        if (hold.sessionToken === sessionToken) return false; // This user owns this hold
+        if (!hold.startTime || !hold.endTime) return false;
+        const holdStartMoment = moment.utc(
+          `${appointmentDate} ${hold.startTime}`,
+          "YYYY-MM-DD HH:mm",
+        );
+        const holdEndMoment = moment.utc(
+          `${appointmentDate} ${hold.endTime}`,
+          "YYYY-MM-DD HH:mm",
+        );
+        return (
+          proposedAppointmentEndMoment.isAfter(holdStartMoment) &&
+          slotMoment.isBefore(holdEndMoment)
+        );
+      });
+
+      const totalConcurrent = appointmentsInSlot.length + holdsInSlot.length;
+
+      if (
+        bookingSettings.isStackingEnabled &&
+        totalConcurrent >= bookingSettings.stackingLimit
+      ) {
+        throw new AppError(
+          400,
+          `No available slots for ${appointmentDate} at ${appointmentStartTime}. Limit reached or slot was just reserved.`,
+        );
+      } else if (!bookingSettings.isStackingEnabled && totalConcurrent > 0) {
+        throw new AppError(
+          400,
+          `No available slots for ${appointmentDate} at ${appointmentStartTime}. Slot is already booked or reserved.`,
+        );
       }
 
       const allInvoiceItems: any[] = [];
@@ -1319,11 +1381,6 @@ export async function POST(req: Request) {
 
       let totalServiceCost = selectedServices.reduce(
         (acc, cur) => acc + Number(cur.price),
-        0,
-      );
-
-      let totalDuration = selectedServices.reduce(
-        (acc, cur) => acc + Number(cur.duration || 30),
         0,
       );
 
@@ -1446,8 +1503,13 @@ export async function POST(req: Request) {
             customerNotes: notes || undefined,
           } as any,
         });
-
         await createServiceSnapshots(shopBooking.id);
+
+        if (sessionToken) {
+          await tx.shopSlotHold.deleteMany({
+            where: { shopId: shop.id, sessionToken },
+          });
+        }
 
         return NextResponse.json(
           {
@@ -1656,6 +1718,12 @@ export async function POST(req: Request) {
         services: selectedServices.map((s: any) => ({ title: s.title })),
         isDeposit: false,
       });
+
+      if (sessionToken) {
+        await tx.shopSlotHold.deleteMany({
+          where: { shopId: shop.id, sessionToken },
+        });
+      }
 
       return NextResponse.json(
         {

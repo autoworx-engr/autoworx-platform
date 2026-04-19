@@ -3,10 +3,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { updateShopServiceSchema } from "@/validations/schemas/virtual-shop/shop-service.validation";
 
-import { Labor, Material, Service, Tag } from "@prisma/client";
-import { jwtVerifyToken } from "@/lib/jwtVerify";
 import { AppError } from "@/error-boundary/error";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { jwtVerifyToken } from "@/lib/jwtVerify";
 import { getToken } from "next-auth/jwt";
 // Use your update schema if you have one, otherwise falling back to the create schema
 
@@ -105,7 +104,7 @@ import { getToken } from "next-auth/jwt";
  *                       format: date-time
  *                     invoiceItems:
  *                       type: array
- *                       description: Nested invoice items containing detailed breakdown of the service, labor, and materials.
+ *                       description: Nested invoice items containing detailed breakdown of the service, labor, materials, and tags.
  *                       items:
  *                         type: object
  *                         properties:
@@ -119,16 +118,25 @@ import { getToken } from "next-auth/jwt";
  *                           laborId:
  *                             type: integer
  *                             nullable: true
- *                             example: null
+ *                             example: 202
  *                           service:
  *                             type: object
  *                             nullable: true
  *                             example: { "id": 5, "name": "Basic Wash", "categoryId": 2 }
+ *                           labor:
+ *                             type: object
+ *                             nullable: true
+ *                             example: { "id": 202, "name": "Standard Labor", "hours": 1, "charge": 80 }
  *                           materials:
  *                             type: array
  *                             items:
  *                               type: object
  *                             example: [{ "id": 50, "name": "Premium Wax", "cost": 10, "sell": 15 }]
+ *                           tags:
+ *                             type: array
+ *                             items:
+ *                               type: object
+ *                             example: [{ "id": 1, "name": "Exterior" }]
  *       400:
  *         description: Invalid or missing parameter (id).
  *         content:
@@ -297,23 +305,19 @@ export async function GET(
  *           example:
  *             shopId: 1
  *             title: "Full Ceramic Coating & Detail"
- *             companyId: 4
- *             description: "Complete exterior paint correction and c..."
+ *             description: "Complete exterior paint correction and ceramic coating application."
  *             imageUrl: "https://example.com/ceramic-coating.jpg"
  *             modifierCoupe: "0"
  *             modifierSedan: "50"
  *             modifierSUV: "100"
  *             modifierTruck: "150"
  *             isActive: true
+ *             customDuration: 120
  *             items:
  *               - service:
  *                   id: 2526
- *                   name: "Test Door Serffvice 6"
+ *                   name: "Test Door Service 6"
  *                   description: "Full exterior paint correction service."
- *                   companyId: 4
- *                   categoryId: 421
- *                   createdAt: "2024-01-15T08:00:00.000Z"
- *                   updatedAt: "2024-06-10T12:00:00.000Z"
  *                 labor:
  *                   name: "Master Detailer"
  *                   notes: "Apply carefully"
@@ -321,7 +325,6 @@ export async function GET(
  *                   hours: 2
  *                   charge: 150
  *                   discount: 0
- *                   cannedLabor: false
  *                 materials:
  *                   - name: "ISO 70% ALC"
  *                     notes: "Apply in shaded area only"
@@ -329,11 +332,7 @@ export async function GET(
  *                     cost: 45
  *                     sell: 150
  *                     discount: 0
- *                     companyId: 4
  *                     productId: 1
- *                     createdAt: "2024-01-15T08:00:00.000Z"
- *                     updatedAt: "2024-06-10T12:00:00.000Z"
- *                     tags: []
  *                 tags: []
  *     responses:
  *       200:
@@ -404,12 +403,6 @@ export async function GET(
  *               $ref: '#/components/schemas/ErrorResponse'
  *       401:
  *         description: Unauthorized.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *       403:
- *         description: Company ID not found.
  *         content:
  *           application/json:
  *             schema:
@@ -748,9 +741,6 @@ export async function PUT(
  *                 message:
  *                   type: string
  *                   example: "Shop service deleted successfully"
- *                 data:
- *                   type: object
- *                   description: The raw response data for the deleted service.
  *       400:
  *         description: Missing required id or bad request.
  *         content:
@@ -765,6 +755,12 @@ export async function PUT(
  *               $ref: '#/components/schemas/ErrorResponse'
  *       403:
  *         description: Company ID not found in session.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: Shop service not found.
  *         content:
  *           application/json:
  *             schema:

@@ -95,9 +95,12 @@ export async function GET(request: Request) {
       );
     }
 
+    const durationParam = searchParams.get("duration");
+    const duration = durationParam ? parseInt(durationParam, 10) : undefined;
+
     // Handle "Next Available" lookup
     if (nextAvailable === "true") {
-      const result = await getNextAvailableAppointment(shopId);
+      const result = await getNextAvailableAppointment(shopId, duration);
       return NextResponse.json(result);
     }
 
@@ -112,7 +115,7 @@ export async function GET(request: Request) {
       );
     }
 
-    const result = await getAvailableSlots(shopId, dateParam);
+    const result = await getAvailableSlots(shopId, dateParam, duration);
     return NextResponse.json(result);
   } catch (error: any) {
     const formattedError = errorHandler(error);
