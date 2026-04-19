@@ -257,6 +257,10 @@ export async function GET(
  *                 type: boolean
  *                 description: Toggle service availability.
  *                 example: true
+ *               customDuration:
+ *                 type: number
+ *                 description: Explicit duration in minutes.
+ *                 example: 120
  *               items:
  *                 type: array
  *                 description: Nested array for rebuilding invoice configurations. At least one item is required, and each item must have materials or labor.
@@ -422,6 +426,7 @@ export async function PUT(
       modifierSUV,
       modifierTruck,
       isActive,
+      customDuration,
     } = validatedData;
 
     if (!companyId) {
@@ -443,7 +448,7 @@ export async function PUT(
     let totalDuration = 0;
     const categoryIdsToFetch = new Set<number>();
 
-    items?.forEach(item => {
+    items?.forEach((item) => {
       if (item.service?.categoryId) {
         categoryIdsToFetch.add(item.service.categoryId);
       }
@@ -456,7 +461,7 @@ export async function PUT(
         totalDuration += (Number(item.labor.hours) || 0) * 60;
       }
 
-      item.materials?.forEach(mat => {
+      item.materials?.forEach((mat) => {
         if (!mat || !mat.name) return;
         const matQuantity = Number(mat.quantity) || 0;
         const matSell = Number(mat.sell) || 0;
@@ -470,11 +475,11 @@ export async function PUT(
       where: { id: { in: Array.from(categoryIdsToFetch) } },
       select: { name: true },
     });
-    const categories = fetchedCategories.map(c => c.name);
+    const categories = fetchedCategories.map((c) => c.name);
 
     // 3. DATABASE TRANSACTION
     const updatedShopService = await db.$transaction(
-      async tx => {
+      async (tx) => {
         // --- BULK CLEANUP PHASE ---
         // Fetch IDs needed for cascading manual deletes
         const oldInvoiceItems = await tx.invoiceItem.findMany({
@@ -482,9 +487,9 @@ export async function PUT(
           select: { id: true, laborId: true },
         });
 
-        const oldInvoiceItemIds = oldInvoiceItems.map(i => i.id);
+        const oldInvoiceItemIds = oldInvoiceItems.map((i) => i.id);
         const oldLaborIds = oldInvoiceItems
-          .map(i => i.laborId)
+          .map((i) => i.laborId)
           .filter(Boolean) as number[]; // Assuming Int
 
         if (oldInvoiceItemIds.length > 0) {
@@ -493,7 +498,7 @@ export async function PUT(
             where: { invoiceItemId: { in: oldInvoiceItemIds } },
             select: { id: true },
           });
-          const oldMaterialIds = oldMaterials.map(m => m.id);
+          const oldMaterialIds = oldMaterials.map((m) => m.id);
 
           if (oldMaterialIds.length > 0) {
             await tx.materialTag.deleteMany({
@@ -522,7 +527,7 @@ export async function PUT(
         // --- REBUILD PHASE ---
         if (items && items.length > 0) {
           await Promise.all(
-            items.map(async item => {
+            items.map(async (item) => {
               let newLaborId;
 
               if (item.labor) {
@@ -544,7 +549,7 @@ export async function PUT(
                     (tag): tag is NonNullable<typeof tag> => !!(tag && tag.id),
                   );
                   await tx.laborTag.createMany({
-                    data: validTags.map(tag => ({
+                    data: validTags.map((tag) => ({
                       laborId: newLabor.id,
                       tagId: tag.id!,
                     })),
@@ -562,7 +567,7 @@ export async function PUT(
 
               if (item.materials?.length) {
                 await Promise.all(
-                  item.materials.map(async material => {
+                  item.materials.map(async (material) => {
                     if (!material || !material.name) return;
 
                     const newMat = await tx.material.create({
@@ -587,7 +592,7 @@ export async function PUT(
                           !!(tag && tag.id),
                       );
                       await tx.materialTag.createMany({
-                        data: validTags.map(tag => ({
+                        data: validTags.map((tag) => ({
                           materialId: newMat.id,
                           tagId: tag.id!,
                         })),
@@ -602,7 +607,7 @@ export async function PUT(
                   (tag): tag is NonNullable<typeof tag> => !!(tag && tag.id),
                 );
                 await tx.itemTag.createMany({
-                  data: validTags.map(tag => ({
+                  data: validTags.map((tag) => ({
                     itemId: invoiceItem.id,
                     tagId: tag.id!,
                   })),
@@ -626,7 +631,13 @@ export async function PUT(
             modifierTruck: modifierTruck ? Number(modifierTruck) : 0,
             isActive: isActive !== undefined ? isActive : true,
             price: totalPrice,
-            duration: totalDuration > 0 ? totalDuration : 30,
+            duration: (() => {
+              const base =
+                customDuration !== undefined && customDuration !== null
+                  ? Number(customDuration)
+                  : totalDuration;
+              return base > 0 ? base : 30;
+            })(),
           },
         });
       },
