@@ -1306,11 +1306,11 @@ export async function POST(req: Request) {
 
         const getDefaultService = async () => {
           if (cachedDefaultService) return cachedDefaultService;
-          cachedDefaultService = await tx.service.findFirst({
+          cachedDefaultService = await db.service.findFirst({
             where: { name: srv.title, companyId },
           });
           if (!cachedDefaultService) {
-            cachedDefaultService = await tx.service.create({
+            cachedDefaultService = await db.service.create({
               data: {
                 name: srv.title,
                 description: srv.description || srv.title,
