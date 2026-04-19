@@ -570,7 +570,7 @@ export default function TeamPipelines({
         <div className="h-full w-full overflow-hidden px-2">
           <div
             ref={dragDropContextRef}
-            className="thin-scrollbar flex touch-pan-x snap-x snap-mandatory flex-nowrap justify-between gap-2 overflow-x-auto"
+            className="thin-scrollbar flex touch-pan-x snap-x snap-mandatory flex-nowrap justify-start gap-2 overflow-x-auto"
           >
             {filteredPipelineData.map((item, categoryIndex) => (
               <DroppableColumn

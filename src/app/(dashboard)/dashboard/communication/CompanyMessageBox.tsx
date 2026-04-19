@@ -29,12 +29,15 @@ type TMessage = {
 };
 
 const formatAttachmentSize = (fileSize: unknown) => {
-  const sizeInBytes = Number(fileSize);
+  const sizeInBytes =
+    typeof fileSize === "string" ? parseFloat(fileSize) : Number(fileSize);
 
-  if (!Number.isFinite(sizeInBytes) || sizeInBytes < 0) {
+  if (!Number.isFinite(sizeInBytes) || sizeInBytes <= 0) {
     return "Unknown size";
   }
 
+  if (sizeInBytes < 1024) return `${sizeInBytes} B`;
+  if (sizeInBytes < 1024 * 1024) return `${(sizeInBytes / 1024).toFixed(1)} KB`;
   return `${(sizeInBytes / (1024 * 1024)).toFixed(2)} MB`;
 };
 
