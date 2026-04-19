@@ -97,6 +97,12 @@ import { getToken } from "next-auth/jwt";
  *                     isActive:
  *                       type: boolean
  *                       example: true
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
+ *                     updatedAt:
+ *                       type: string
+ *                       format: date-time
  *                     invoiceItems:
  *                       type: array
  *                       description: Nested invoice items containing detailed breakdown of the service, labor, and materials.
@@ -342,7 +348,54 @@ export async function GET(
  *                   example: true
  *                 data:
  *                   type: object
- *                   description: Updated Shop Service object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                       example: 10
+ *                     shopId:
+ *                       type: integer
+ *                       example: 1
+ *                     title:
+ *                       type: string
+ *                       example: "Full Detail Package"
+ *                     description:
+ *                       type: string
+ *                       example: "Updated premium deep cleaning."
+ *                     price:
+ *                       type: number
+ *                       example: 299
+ *                     duration:
+ *                       type: integer
+ *                       example: 300
+ *                     category:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                       example: ["Detailing"]
+ *                     imageUrl:
+ *                       type: string
+ *                       example: "https://example.com/image.jpg"
+ *                     modifierCoupe:
+ *                       type: number
+ *                       example: 0
+ *                     modifierSedan:
+ *                       type: number
+ *                       example: 50
+ *                     modifierSUV:
+ *                       type: number
+ *                       example: 75
+ *                     modifierTruck:
+ *                       type: number
+ *                       example: 100
+ *                     isActive:
+ *                       type: boolean
+ *                       example: true
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
+ *                     updatedAt:
+ *                       type: string
+ *                       format: date-time
  *       400:
  *         description: Invalid or missing data.
  *         content:
