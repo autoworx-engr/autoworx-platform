@@ -1214,7 +1214,7 @@ export default function AppointmentModalBody({
             </div>
           </div>
 
-          <div className="relative md:hidden h-full row-span-2 thin-scrollbar divide-y bg-background">
+          <div className="relative lg:hidden h-full row-span-2 thin-scrollbar divide-y bg-background">
             {tab === Tab.Schedule ? (
               <div
                 ref={containerRef}
