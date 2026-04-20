@@ -75,7 +75,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [cash, setCash] = useState<string>("");
   const [amount, setAmount] = useState<number | string>(totalDue);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(
-    null
+    null,
   );
   const [openPaymentMethod, setOpenPaymentMethod] = useState(false);
   const [paymentMethodInput, setPaymentMethodInput] = useState("");
@@ -192,11 +192,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   width="24"
                   xmlns="http://www.w3.org/2000/svg"
                 >
-                  <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                  <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
                   <g
                     id="SVGRepo_tracerCarrier"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   ></g>
                   <g id="SVGRepo_iconCarrier">
                     {" "}
@@ -255,7 +255,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                         const localDate = moment.tz(
                           e.target.value,
                           "YYYY-MM-DD",
-                          timezone
+                          timezone,
                         );
                         setDate(localDate.toDate());
                       }}
@@ -381,7 +381,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       const localDate = moment.tz(
                         e.target.value,
                         "YYYY-MM-DD",
-                        timezone
+                        timezone,
                       );
                       setDate(localDate.toDate());
                     }}
@@ -440,7 +440,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       const localDate = moment.tz(
                         e.target.value,
                         "YYYY-MM-DD",
-                        timezone
+                        timezone,
                       );
                       setDate(localDate.toDate());
                     }}
@@ -513,7 +513,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                         onClick={handleNewPaymentMethod}
                         className={cn(
                           "text-nowrap rounded-md px-2 text-white",
-                          paymentMethodInput ? "bg-slate-700" : "bg-slate-400"
+                          paymentMethodInput ? "bg-slate-700" : "bg-slate-400",
                         )}
                         type="button"
                         disabled={!paymentMethodInput}
@@ -525,7 +525,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   items={paymentMethods}
                   onSearch={(search: string) =>
                     paymentMethods.filter((method) =>
-                      method.name.toLowerCase().includes(search.toLowerCase())
+                      method.name.toLowerCase().includes(search.toLowerCase()),
                     )
                   }
                   displayList={(paymentMethod: PaymentMethod) => (
@@ -548,7 +548,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       const localDate = moment.tz(
                         e.target.value,
                         "YYYY-MM-DD",
-                        timezone
+                        timezone,
                       );
                       setDate(localDate.toDate());
                     }}
