@@ -2,12 +2,15 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Store } from "lucide-react";
 import CarLoading from "@/components/common/CarLoading";
 import { useGetVirtualShops } from "@/hooks/virtual-shop/configure/useVirtualShopConfigure";
 import ShopCard from "./ShopCard";
+import EmptyCard from "@/components/common/EmptyCard";
+import { useRouter } from "next/navigation";
 
 export default function ShopListPage({ companyId }: { companyId: number }) {
+  const router = useRouter();
   const { data, isPending } = useGetVirtualShops(companyId);
 
   if (isPending) return <CarLoading />;
@@ -26,17 +29,33 @@ export default function ShopListPage({ companyId }: { companyId: number }) {
         <Link href="/dashboard/settings/virtual-shop-configure/shops/create">
           <Button className="flex items-center gap-2">
             <Plus className="w-4 h-4" />
-            Create New Shop
+            Configure New Shop
           </Button>
         </Link>
       </div>
 
       {/* Shop Grid */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {data?.map((shop: any) => (
-          <ShopCard key={shop.id} shop={shop} />
-        ))}
-      </div>
+      {data?.length > 0 ? (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {data?.map((shop: any) => (
+            <ShopCard key={shop.id} shop={shop} />
+          ))}
+        </div>
+      ) : (
+        <div className="p-6">
+          <EmptyCard
+            Icon={Store}
+            title="No shop configure yet"
+            description="Looks like you haven’t added any shop. Get started now."
+            actionText="Configure New Shop"
+            onAction={() =>
+              router.push(
+                "/dashboard/settings/virtual-shop-configure/shops/create",
+              )
+            }
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -112,11 +112,11 @@ export const staticPermissions = [
     permission_name: "sales-agent",
     status: false,
   },
-  // {
-  //   title: "Virtual Shop",
-  //   permission_name: "virtual-shop",
-  //   status: false,
-  // },
+  {
+    title: "Virtual Shop",
+    permission_name: "virtual-shop",
+    status: false,
+  },
   {
     title: "Reporting Automation",
     permission_name: "reportingAutomation",
