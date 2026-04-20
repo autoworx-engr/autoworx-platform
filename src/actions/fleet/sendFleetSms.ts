@@ -7,7 +7,6 @@ import { sendInfobipMessage } from "../communication/client/sendInfobipMessage";
 
 export async function sendFleetSms({ statementId }: { statementId: string }) {
   try {
-    console.log("Sending fleet statement sms");
     const user = await getUser();
     const fleetStatement = await db.fleetStatement.findUnique({
       where: { id: statementId },
@@ -65,29 +64,24 @@ export async function sendFleetSms({ statementId }: { statementId: string }) {
       where: { id: user.companyId },
       select: { smsGateway: true },
     });
-    try {
-      if (company?.smsGateway === "TWILIO") {
-        sendTwilioMessage({
-          clientId: fleetStatement?.invoice?.[0]?.client?.id!,
-          message: variabledBody || "",
-          attachments: [],
-        });
-      } else if (company?.smsGateway === "INFOBIP") {
-        sendInfobipMessage({
-          clientId: fleetStatement?.invoice?.[0]?.client?.id!,
-          message: variabledBody || "",
-          attachments: [],
-        });
-      }
-    } catch (error) {
-      console.log("🚀 ~ sendFleetSms ~ error:", error);
+    if (company?.smsGateway === "TWILIO") {
+      await sendTwilioMessage({
+        clientId: fleetStatement?.invoice?.[0]?.client?.id!,
+        message: variabledBody || "",
+        attachments: [],
+      });
+    } else if (company?.smsGateway === "INFOBIP") {
+      await sendInfobipMessage({
+        clientId: fleetStatement?.invoice?.[0]?.client?.id!,
+        message: variabledBody || "",
+        attachments: [],
+      });
     }
 
     return {
       success: true,
     };
-  } catch (error) {
-    console.log("🚀 ~ sendFleetSms ~ error:", error);
+  } catch {
     return {
       success: false,
       message: "Failed to send sms",

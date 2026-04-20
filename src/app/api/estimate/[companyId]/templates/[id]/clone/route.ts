@@ -223,9 +223,11 @@ export async function POST(
             });
 
             // Clone labor tags
-            const laborTagIds = item.labor.tags.map((t: any) =>
-              typeof t === "object" && "tagId" in t ? t.tagId : t?.tag?.id,
-            ).filter(Boolean);
+            const laborTagIds = item.labor.tags
+              .map((t: any) =>
+                typeof t === "object" && "tagId" in t ? t.tagId : t?.tag?.id,
+              )
+              .filter(Boolean);
 
             if (laborTagIds.length > 0) {
               await tx.laborTag.createMany({
@@ -269,9 +271,11 @@ export async function POST(
             });
 
             // Clone material tags
-            const matTagIds = mat.tags.map((t: any) =>
-              typeof t === "object" && "tagId" in t ? t.tagId : t?.tag?.id,
-            ).filter(Boolean);
+            const matTagIds = mat.tags
+              .map((t: any) =>
+                typeof t === "object" && "tagId" in t ? t.tagId : t?.tag?.id,
+              )
+              .filter(Boolean);
 
             if (matTagIds.length > 0) {
               await tx.materialTag.createMany({
@@ -284,9 +288,11 @@ export async function POST(
           }
 
           // Clone item tags
-          const itemTagIds = item.tags.map((t: any) =>
-            typeof t === "object" && "tagId" in t ? t.tagId : t?.tag?.id,
-          ).filter(Boolean);
+          const itemTagIds = item.tags
+            .map((t: any) =>
+              typeof t === "object" && "tagId" in t ? t.tagId : t?.tag?.id,
+            )
+            .filter(Boolean);
 
           if (itemTagIds.length > 0) {
             await tx.itemTag.createMany({

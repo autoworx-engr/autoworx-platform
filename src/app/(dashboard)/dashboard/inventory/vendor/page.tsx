@@ -26,7 +26,8 @@ export default async function Page({
 
         <NewVendor
           button={
-            <button className="
+            <button
+              className="
                 flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white
                 bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
                 shadow-[0_4px_14px_0_rgba(101,113,255,0.39)]
@@ -34,7 +35,8 @@ export default async function Page({
                 hover:-translate-y-0.5
                 active:translate-y-0 active:scale-100
                 transition-all duration-300 ease-in-out
-            ">
+            "
+            >
               Add New Vendor
             </button>
           }

@@ -5,9 +5,13 @@ import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
 import { ServerAction } from "@/types/action";
 import { TErrorHandler } from "@/types/globalError";
+import { calcStatementTotals } from "@/lib/fleet/calcStatementTotals";
+import { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
 
-export async function getUnpaidInvoicesForFleet(fleetId: number): Promise<ServerAction | TErrorHandler> {
+export async function getUnpaidInvoicesForFleet(
+  fleetId: number,
+): Promise<ServerAction | TErrorHandler> {
   try {
     const session = await getServerSession(authOptions);
     const companyId = session?.user.companyId;
@@ -50,7 +54,7 @@ export async function getUnpaidInvoicesForFleet(fleetId: number): Promise<Server
         column: true,
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
 
@@ -59,13 +63,14 @@ export async function getUnpaidInvoicesForFleet(fleetId: number): Promise<Server
       message: "Unpaid invoices retrieved successfully",
       data: unpaidInvoices,
     };
-  } catch (error: any) {
-    console.error("Error getting unpaid invoices for fleet:", error);
+  } catch (error: unknown) {
     return errorHandler(error);
   }
 }
 
-export async function getFleetStatements(fleetId?: number): Promise<ServerAction | TErrorHandler> {
+export async function getFleetStatements(
+  fleetId?: number,
+): Promise<ServerAction | TErrorHandler> {
   try {
     const session = await getServerSession(authOptions);
     const companyId = session?.user.companyId;
@@ -74,7 +79,7 @@ export async function getFleetStatements(fleetId?: number): Promise<ServerAction
       throw new Error("Company ID is required");
     }
 
-    const whereClause: any = {
+    const whereClause: Prisma.FleetStatementWhereInput = {
       Fleet: {
         client: {
           companyId: companyId,
@@ -103,44 +108,21 @@ export async function getFleetStatements(fleetId?: number): Promise<ServerAction
         },
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
 
-    // Calculate totals for each statement
-    const statementsWithTotals = statements.map(statement => {
-      const totalAmount = statement.invoice.reduce(
-        (sum, invoice) => sum + Number(invoice.grandTotal || 0),
-        0
-      );
-      
-      const totalPaid = statement.invoice.reduce(
-        (sum, invoice) => sum + Number(invoice.totalPayment || 0),
-        0
-      );
-      
-      const totalDue = statement.invoice.reduce(
-        (sum, invoice) => sum + Number(invoice.due || 0),
-        0
-      );
-
-      return {
-        ...statement,
-        totals: {
-          totalAmount,
-          totalPaid,
-          totalDue,
-        },
-      };
-    });
+    const statementsWithTotals = statements.map((statement) => ({
+      ...statement,
+      totals: calcStatementTotals(statement.invoice),
+    }));
 
     return {
       type: "success",
       message: "Fleet statements retrieved successfully",
       data: statementsWithTotals,
     };
-  } catch (error: any) {
-    console.error("Error getting fleet statements:", error);
+  } catch (error: unknown) {
     return errorHandler(error);
   }
 }

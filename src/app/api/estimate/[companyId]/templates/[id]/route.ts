@@ -363,7 +363,13 @@ export async function GET(
       db.task.findMany({ where: { invoiceTemplateId: id } }),
       db.invoiceInspection.findMany({
         where: { invoiceTemplateId: id },
-        select: { id: true, title: true, driver: true, passenger: true, notes: true },
+        select: {
+          id: true,
+          title: true,
+          driver: true,
+          passenger: true,
+          notes: true,
+        },
       }),
     ]);
 
@@ -469,7 +475,9 @@ export async function PATCH(
 
         // --- Inspections (full replace) ---
         if (Array.isArray(inspections)) {
-          await tx.invoiceInspection.deleteMany({ where: { invoiceTemplateId: id } });
+          await tx.invoiceInspection.deleteMany({
+            where: { invoiceTemplateId: id },
+          });
           const validInspections = (inspections as any[]).filter(
             (ins) =>
               ins.title?.toString().trim() ||
@@ -618,7 +626,9 @@ export async function PATCH(
 
                 // Item tags (full replace)
                 if (Array.isArray(item.tagIds)) {
-                  await tx.itemTag.deleteMany({ where: { itemId: existingItem.id } });
+                  await tx.itemTag.deleteMany({
+                    where: { itemId: existingItem.id },
+                  });
                   if (item.tagIds.length > 0) {
                     await tx.itemTag.createMany({
                       data: (item.tagIds as number[]).map((tagId) => ({
@@ -760,10 +770,14 @@ export async function PATCH(
         if (subtotal !== undefined) templateUpdate.subtotal = Number(subtotal);
         if (discount !== undefined) templateUpdate.discount = Number(discount);
         if (tax !== undefined) templateUpdate.tax = Number(tax);
-        if (serviceFee !== undefined) templateUpdate.serviceFee = Number(serviceFee);
-        if (grandTotal !== undefined) templateUpdate.grandTotal = Number(grandTotal);
-        if (internalNotes !== undefined) templateUpdate.internalNotes = internalNotes;
-        if (customerNotes !== undefined) templateUpdate.customerNotes = customerNotes;
+        if (serviceFee !== undefined)
+          templateUpdate.serviceFee = Number(serviceFee);
+        if (grandTotal !== undefined)
+          templateUpdate.grandTotal = Number(grandTotal);
+        if (internalNotes !== undefined)
+          templateUpdate.internalNotes = internalNotes;
+        if (customerNotes !== undefined)
+          templateUpdate.customerNotes = customerNotes;
         if (damageNotes !== undefined) templateUpdate.damageNotes = damageNotes;
         if (Array.isArray(items)) {
           templateUpdate.serviceIndex = JSON.stringify(serviceIndex);
