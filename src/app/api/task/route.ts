@@ -277,7 +277,7 @@ export async function POST(req: NextRequest) {
     } catch (calendarError) {
       console.error("Calendar Sync Error:", calendarError);
     }
-    revalidatePath("/dashboard/task/day");
+    revalidatePath("/dashboard/task");
     return NextResponse.json(
       {
         success: true,

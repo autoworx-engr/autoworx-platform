@@ -25,14 +25,20 @@ export function CalendarSearchDropdown({
   handleResultClick,
   dropdownRef,
 }: CalendarSearchDropdownProps) {
-  if (isTaskError && isAppointmentError) {
+  if (isTaskError || isAppointmentError) {
+    const message =
+      isTaskError && isAppointmentError
+        ? "Failed to load tasks and appointments"
+        : isTaskError
+          ? "Failed to load tasks"
+          : "Failed to load appointments";
     return (
       <div
         ref={dropdownRef}
         className="absolute z-50 mt-1 w-full rounded-md border border-input bg-background p-4 shadow-md"
       >
         <p className="text-center text-muted-foreground text-red-400">
-          Failed to load appointment or tasks
+          {message}
         </p>
       </div>
     );
