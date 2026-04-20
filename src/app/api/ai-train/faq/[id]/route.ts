@@ -34,10 +34,8 @@ import { validateCompanyId } from "../../utils";
  *       500:
  *         description: Internal server error
  */
-export async function DELETE(
-  req: Request,
-  { params }: { params: { id: number } },
-) {
+export async function DELETE(req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const validation = validateCompanyId(req);
     if (validation instanceof NextResponse) return validation;

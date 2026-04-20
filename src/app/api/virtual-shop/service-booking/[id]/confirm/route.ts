@@ -10,9 +10,10 @@ import { errorHandler } from "@/error-boundary/globalErrorHandler";
  */
 export async function GET(
   _req: Request,
-  { params }: { params: { id: string } },
+  props: { params: Promise<{ id: string }> },
 ) {
   try {
+    const params = await props.params;
     const shopBookingId = Number(params.id);
     if (!shopBookingId || !Number.isFinite(shopBookingId)) {
       return NextResponse.json(

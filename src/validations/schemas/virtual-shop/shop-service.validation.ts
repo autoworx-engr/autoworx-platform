@@ -136,6 +136,21 @@ const baseShopServiceSchema = z.object({
   isActive: z
     .boolean({ invalid_type_error: "Active status must be a boolean value" })
     .optional(),
+  customDuration: z
+    .union([z.string(), z.number()], {
+      invalid_type_error: "Custom duration must be a string or number",
+    })
+    .refine(
+      (val) => {
+        if (val === null || val === undefined) return true;
+        const numVal = Number(val);
+        return !isNaN(numVal) && numVal >= 0;
+      },
+      {
+        message: "Custom duration must be a non-negative number",
+      },
+    )
+    .optional(),
 });
 
 export const createShopServiceSchema = baseShopServiceSchema;

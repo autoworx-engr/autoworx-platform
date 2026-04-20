@@ -77,6 +77,9 @@ interface BookingContextType {
 
   // Reset
   resetBooking: () => void;
+
+  // Session
+  sessionToken: string;
 }
 
 const BookingContext = createContext<BookingContextType | null>(null);
@@ -102,6 +105,7 @@ export const BookingProvider: React.FC<{ children: React.ReactNode }> = ({
   const [settings, setSettings] = useState<ShopSettings>(defaultSettings);
   const [services, setServices] = useState<Service[]>([]);
   const [isReturningClient, setIsReturningClient] = useState(false);
+  const [sessionToken] = useState(() => crypto.randomUUID());
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -198,6 +202,7 @@ export const BookingProvider: React.FC<{ children: React.ReactNode }> = ({
         isReturningClient,
         setIsReturningClient,
         resetBooking,
+        sessionToken,
       }}
     >
       {children}

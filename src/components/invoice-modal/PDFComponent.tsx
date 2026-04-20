@@ -617,7 +617,13 @@ const PDFComponent = function PDF({
     totals.map(([k, v]) => [String(k), v]),
   );
 
-  const leftFields = ["subtotal", "discount", "tax", "vehicle extra cost", "shop supplies"];
+  const leftFields = [
+    "subtotal",
+    "discount",
+    "tax",
+    "vehicle extra cost",
+    "shop supplies",
+  ];
   const rightFields = ["grand total", "deposit", "payment", "refunded", "due"];
 
   const formatTotalsValue = (field: string, value: unknown) => {
@@ -634,11 +640,9 @@ const PDFComponent = function PDF({
 
   const paymentEntries = (invoice.payments ?? [])
     .filter((payment) => payment.invoiceId === invoice.id)
-    .reverse()
+    .reverse();
 
-  const getPaymentMethodText = (
-    payment: (typeof paymentEntries)[number],
-  ) => {
+  const getPaymentMethodText = (payment: (typeof paymentEntries)[number]) => {
     if (payment.type === "OTHER") {
       return payment.other?.paymentMethod?.name || "OTHER";
     }
@@ -972,7 +976,7 @@ const PDFInvoiceItems = ({
         acc +
         (material && material.sell
           ? parseFloat(material.sell.toString()) *
-          Number(material.quantity ?? 0)
+            Number(material.quantity ?? 0)
           : 0)
       );
     }, 0);
@@ -1011,7 +1015,7 @@ const PDFInvoiceItems = ({
               if (!material) return null;
               const lineTotal = material.sell
                 ? parseFloat(material.sell.toString()) *
-                Number(material.quantity ?? 0)
+                  Number(material.quantity ?? 0)
                 : 0;
               return (
                 <View key={index} style={styles.lineItem}>

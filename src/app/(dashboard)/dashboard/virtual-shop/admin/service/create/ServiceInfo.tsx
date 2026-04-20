@@ -7,6 +7,7 @@ import { Dispatch, SetStateAction } from "react";
 export type ServiceInfoState = {
   serviceTitle: string;
   description: string;
+  customDuration: string;
   imageName: string;
   imageUrl: string;
   vehicleTypeModifiers: {
@@ -33,8 +34,14 @@ export default function ServiceInfo({
   onImageSelect,
   errors,
 }: ServiceInfoProps) {
-  const { serviceTitle, description, imageName, imageUrl, vehicleTypeModifiers } =
-    value;
+  const {
+    serviceTitle,
+    description,
+    customDuration,
+    imageName,
+    imageUrl,
+    vehicleTypeModifiers,
+  } = value;
   const shouldShowExistingImage = Boolean(imageUrl && !imageName);
 
   const setVehicleTypeModifiers = (
@@ -48,7 +55,9 @@ export default function ServiceInfo({
     }));
   };
 
-  const handleImageChange: React.ChangeEventHandler<HTMLInputElement> = (event) => {
+  const handleImageChange: React.ChangeEventHandler<HTMLInputElement> = (
+    event,
+  ) => {
     const file = event.target.files?.[0] || null;
 
     onChange((prev) => ({
@@ -61,25 +70,59 @@ export default function ServiceInfo({
 
   return (
     <div className="h-full w-full space-y-4 rounded-md border border-slate-200 bg-white p-4">
-      <div className="space-y-1">
-        <label className="text-sm font-medium text-slate-700">
-          Service Title <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="text"
-          value={serviceTitle}
-          onChange={(event) =>
-            onChange((prev) => ({ ...prev, serviceTitle: event.target.value }))
-          }
-          placeholder="Enter service title"
-          className={cn(
-            "w-full rounded-md border px-3 py-2 text-sm outline-none focus:border-slate-400",
-            errors?.serviceTitle ? "border-red-500" : "border-slate-300",
-            slimInputClassName,
-          )}
-        />
-      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-1">
+          <label className="text-sm font-medium text-slate-700">
+            Service Title <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            value={serviceTitle}
+            onChange={(event) =>
+              onChange((prev) => ({
+                ...prev,
+                serviceTitle: event.target.value,
+              }))
+            }
+            placeholder="Enter service title"
+            className={cn(
+              "w-full rounded-md border px-3 py-2 text-sm outline-none focus:border-slate-400",
+              errors?.serviceTitle ? "border-red-500" : "border-slate-300",
+              slimInputClassName,
+            )}
+          />
+        </div>
 
+        <div className="space-y-1">
+          <label className="text-sm font-medium text-slate-700">
+            Duration (minutes)
+          </label>
+          <input
+            type="number"
+            min={0}
+            step={1}
+            inputMode="numeric"
+            value={customDuration}
+            onKeyDown={(event) => {
+              if (["e", "E", "+", "-", "."].includes(event.key)) {
+                event.preventDefault();
+              }
+            }}
+            onChange={(event) => {
+              const nextValue = event.target.value;
+
+              if (nextValue === "" || /^\d+$/.test(nextValue)) {
+                onChange((prev) => ({ ...prev, customDuration: nextValue }));
+              }
+            }}
+            placeholder="e.g. 120"
+            className={cn(
+              "w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-400",
+              slimInputClassName,
+            )}
+          />
+        </div>
+      </div>
       <div className="space-y-1">
         <label className="text-sm font-medium text-slate-700">
           Description <span className="text-red-500">*</span>
@@ -100,7 +143,9 @@ export default function ServiceInfo({
       </div>
 
       <div className="space-y-1">
-        <label className="text-sm font-medium text-slate-700">Service Image</label>
+        <label className="text-sm font-medium text-slate-700">
+          Service Image
+        </label>
         <div className="flex items-center gap-3">
           {shouldShowExistingImage && (
             <img
@@ -139,7 +184,9 @@ export default function ServiceInfo({
             { key: "truck", label: "Truck" },
           ].map((vehicleType) => (
             <div key={vehicleType.key} className="space-y-1">
-              <label className="text-xs text-slate-500">{vehicleType.label}</label>
+              <label className="text-xs text-slate-500">
+                {vehicleType.label}
+              </label>
               <input
                 type="number"
                 min={0}
@@ -152,8 +199,8 @@ export default function ServiceInfo({
                   ] === "0"
                     ? ""
                     : vehicleTypeModifiers[
-                    vehicleType.key as keyof typeof vehicleTypeModifiers
-                    ]
+                        vehicleType.key as keyof typeof vehicleTypeModifiers
+                      ]
                 }
                 onKeyDown={(event) => {
                   if (["e", "E", "+", "-"].includes(event.key)) {

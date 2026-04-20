@@ -70,10 +70,8 @@ import { db } from "@/lib/db";
  *         description: Failed to fetch client appointments
  */
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const clientId = parseInt(params.id);
     if (isNaN(clientId)) {

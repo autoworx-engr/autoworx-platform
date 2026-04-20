@@ -3,10 +3,11 @@ import BookingPage from "./pages/BookingPage";
 import { Metadata } from "next";
 
 type Props = {
-  params: { subdomain: string };
+  params: Promise<{ subdomain: string }>;
 };
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params;
   const shop = await getShopBySlugServer(params.subdomain);
 
   if (!shop || shop.isActive === false) {
@@ -27,7 +28,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function VirtualShop({ params }: Props) {
+export default async function VirtualShop(props: Props) {
+  const params = await props.params;
   const shop = await getShopBySlugServer(params.subdomain);
 
   return (

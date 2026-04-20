@@ -52,7 +52,7 @@ import { deleteObject } from "@/actions/s3/deleteObject";
  *       500:
  *         description: Delete failed
  */
-export async function POST(req: NextRequest, res: NextResponse) {
+export async function POST(req: NextRequest) {
   try {
     // const fileNames = [];
 
@@ -106,7 +106,7 @@ export async function POST(req: NextRequest, res: NextResponse) {
 }
 
 // Delete the file
-export async function DELETE(req: NextRequest, res: NextResponse) {
+export async function DELETE(req: NextRequest) {
   try {
     const json = await req.json();
     let { filePath } = json;

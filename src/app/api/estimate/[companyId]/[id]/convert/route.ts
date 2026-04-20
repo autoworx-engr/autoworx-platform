@@ -51,11 +51,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { companyId: string; id: string } },
+  { params }: { params: Promise<{ companyId: string; id: string }> },
 ) {
   try {
-    const companyId = Number(params.companyId);
-    const { id } = params;
+    const { companyId: companyIdParam, id } = await params;
+    const companyId = Number(companyIdParam);
 
     if (!companyId || isNaN(companyId)) {
       return NextResponse.json(

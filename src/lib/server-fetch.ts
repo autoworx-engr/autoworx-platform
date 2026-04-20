@@ -38,7 +38,7 @@ export async function serverFetch(
 
   // Get all cookies to forward authentication context.
   // Note: this function requires next/headers and should only be used in Server Components.
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const cookiesString = cookieStore
     .getAll()
     .map((cookie) => `${cookie.name}=${cookie.value}`)

@@ -101,7 +101,7 @@ export default function LeadInfinityScroll({
 
   useEffect(() => {
     const observer = new IntersectionObserver(
-      entries => {
+      (entries) => {
         if (entries[0].isIntersecting && !scrollLoading && hasMore) {
           setScrollLoading(true);
           fetchMoreLeads().finally(() => setScrollLoading(false));

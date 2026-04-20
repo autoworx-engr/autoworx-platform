@@ -1,8 +1,5 @@
 import { authOptions } from "@/authOptions";
-import {
-  ShopData,
-  ShopServicesResponse,
-} from "@/service/virtual-shop/api";
+import { ShopData, ShopServicesResponse } from "@/service/virtual-shop/api";
 import { getServerSession } from "next-auth";
 import ServicesTab from "../../../components/ServicesTab";
 

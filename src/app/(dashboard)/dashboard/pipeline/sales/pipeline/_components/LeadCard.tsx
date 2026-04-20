@@ -5,7 +5,10 @@ import {
   useColumnDispatch,
   useColumnState,
 } from "@/context/sales-pipeline.context";
-import { useRemoveLeadMutation, useUpdateLeadColumnMutation } from "@/hooks/pipeline/usePipelineLeads";
+import {
+  useRemoveLeadMutation,
+  useUpdateLeadColumnMutation,
+} from "@/hooks/pipeline/usePipelineLeads";
 import { cn } from "@/lib/cn";
 import { errorToast, successToast } from "@/lib/toast";
 import { LeadWithSalesUser } from "@/types/invoiceLead";
@@ -20,7 +23,6 @@ import { memo, useEffect, useRef, useState } from "react";
 import ColumnDropdown from "./ColumnDropdown";
 import LeadActions from "./LeadActions";
 import LeadTags from "./LeadTags";
-
 
 type LeadCardProps = {
   leadData: LeadWithSalesUser;
@@ -69,15 +71,15 @@ export default memo(function LeadCard({
 
     try {
       const currentColumnIndex = pipelineColumns.findIndex(
-        (col) => col.id === leadData.columnId
+        (col) => col.id === leadData.columnId,
       );
       const destinationColumnIndex = pipelineColumns.findIndex(
-        (col) => col.id === parseInt(newColumnId)
+        (col) => col.id === parseInt(newColumnId),
       );
       if (currentColumnIndex === -1 || destinationColumnIndex === -1) return;
 
       const leadIndex = pipelineColumns[currentColumnIndex].leads.findIndex(
-        (l) => l.id === leadData.id
+        (l) => l.id === leadData.id,
       );
 
       dispatch({
@@ -95,7 +97,10 @@ export default memo(function LeadCard({
         },
       });
 
-      await updateColumn({ leadId: leadData.id, columnId: parseInt(newColumnId) });
+      await updateColumn({
+        leadId: leadData.id,
+        columnId: parseInt(newColumnId),
+      });
       setShowColumnSelect(false);
       successToast("Job moved successfully");
     } catch (error) {
@@ -136,7 +141,7 @@ export default memo(function LeadCard({
         onDragEnter: () => setIsDropTarget(true),
         onDragLeave: () => setIsDropTarget(false),
         onDrop: () => setIsDropTarget(false),
-      })
+      }),
     );
   }, [leadData.id, columnIndex, leadIndex, isDragDisabled]);
 
@@ -158,7 +163,7 @@ export default memo(function LeadCard({
         "max-w-auto relative mx-1 my-1 h-fit rounded-xl border bg-background p-1 duration-300 hover:bg-slate-100 cursor-grab active:cursor-grabbing",
         highlight && "bg-yellow-100",
         isDragging && "opacity-20 grayscale bg-slate-200 ",
-        isDropTarget && "ring-2 ring-blue-500 bg-blue-50"
+        isDropTarget && "ring-2 ring-blue-500 bg-blue-50",
       )}
     >
       <div className="relative flex justify-between">

@@ -5,11 +5,11 @@ import UseProductForm from "../../UseProductForm";
 import ReplenishProductForm from "../../ReplenishProductForm";
 import { getCompanyId } from "@/lib/companyId";
 
-export default async function Page({
-  params: { id },
-}: {
-  params: { id: string };
-}) {
+export default async function Page(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+
+  const { id } = params;
+
   console.log({ id });
   if (!id) return notFound();
 

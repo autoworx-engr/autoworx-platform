@@ -28,7 +28,6 @@ import {
 import { updateServiceAutomationTrigger } from "@/service/service-maintenance-automation-trigger/api";
 import { sendInvoiceDeliveredNotification } from "@/lib/notification/invoice-notify";
 import { updateInvoiceAutomationTrigger } from "@/service/invoice-automation-trigger/api";
-import { Decimal } from "@prisma/client/runtime/library";
 
 interface UpdateEstimateInput {
   id: string;
@@ -84,12 +83,12 @@ const hasInvoiceChanged = (
   const normalizedText = (value: string | null | undefined) => value ?? "";
 
   const decimalChanged = (
-    dbValue: Decimal | null | undefined,
+    dbValue: Prisma.Decimal | null | undefined,
     newValue: number,
   ) => {
     return (
-      new Decimal(newValue ?? 0).toString() !==
-      (dbValue ?? new Decimal(0)).toString()
+      new Prisma.Decimal(newValue ?? 0).toString() !==
+      (dbValue ?? new Prisma.Decimal(0)).toString()
     );
   };
 

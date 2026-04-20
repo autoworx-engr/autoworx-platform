@@ -33,7 +33,7 @@ export default function RevenueMobileCard({
   const refundedAmount =
     invoice?.Refund?.reduce(
       (acc, refund) => acc + Number(refund.amount || 0),
-      0
+      0,
     ) || 0;
 
   const profit = Number(invoice.profitPrice?.toString() || 0);
@@ -42,7 +42,7 @@ export default function RevenueMobileCard({
   const formattedDate = FormatUtcToTimezone(
     invoice.deliveredAt,
     timezone,
-    "MMM Do, YYYY"
+    "MMM Do, YYYY",
   );
 
   // Display the actual cost (what we spent)
@@ -57,7 +57,7 @@ export default function RevenueMobileCard({
   // Inventory losses (lost products)
   if (invoice.inventoryLossAmount > 0) {
     const inventoryMaterialNames = invoice.InventoryProductHistory?.map(
-      (item) => item.product?.name
+      (item) => item.product?.name,
     ).filter(Boolean);
     lossDetails.push(`Inventory Loss: ${inventoryMaterialNames?.join(", ")}`);
   }
@@ -68,7 +68,7 @@ export default function RevenueMobileCard({
     invoice.materialLossDetails?.length > 0
   ) {
     const materialNames = invoice.materialLossDetails.map(
-      (detail) => `${detail.name} ($${detail.loss.toFixed(2)})`
+      (detail) => `${detail.name} ($${detail.loss.toFixed(2)})`,
     );
     lossDetails.push(`Material Loss: ${materialNames.join(", ")}`);
   }
@@ -76,7 +76,7 @@ export default function RevenueMobileCard({
   // Labor losses
   if (invoice.laborLossAmount > 0) {
     lossDetails.push(
-      `Labor Loss: Technician cost exceeds charges ($${invoice.laborLossAmount.toFixed(2)})`
+      `Labor Loss: Technician cost exceeds charges ($${invoice.laborLossAmount.toFixed(2)})`,
     );
   }
 
@@ -135,11 +135,11 @@ export default function RevenueMobileCard({
                   preserveAspectRatio="xMidYMid meet"
                   fill="#000000"
                 >
-                  <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                  <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
                   <g
                     id="SVGRepo_tracerCarrier"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   ></g>
                   <g id="SVGRepo_iconCarrier">
                     {" "}

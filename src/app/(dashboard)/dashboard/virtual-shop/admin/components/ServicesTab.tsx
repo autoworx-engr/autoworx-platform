@@ -86,14 +86,15 @@ export default function ServicesTab({
     try {
       await deleteService({ id: service.id, shopId });
       router.refresh();
-    } catch {
-    }
+    } catch {}
   };
 
   const handleAddService = () => {
     if (!shopId) return;
 
-    router.push(`/dashboard/virtual-shop/admin/service/create?shopId=${shopId}`);
+    router.push(
+      `/dashboard/virtual-shop/admin/service/create?shopId=${shopId}`,
+    );
   };
 
   const handlePageChange = (nextPage: number, nextPageSize: number) => {
@@ -146,7 +147,9 @@ export default function ServicesTab({
         <div className="flex flex-col gap-2">
           {!shopId ? (
             <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
-              <p className="text-sm text-gray-500">Configure your shop first.</p>
+              <p className="text-sm text-gray-500">
+                Configure your shop first.
+              </p>
               <a
                 href="/dashboard/settings/virtual-shop-configure"
                 target="_blank"
@@ -174,7 +177,8 @@ export default function ServicesTab({
                 No Services Found
               </h3>
               <p className="max-w-[280px] text-sm font-medium leading-relaxed text-slate-400">
-                We couldn't find any services. Try adjusting your search or add a new service.
+                We couldn't find any services. Try adjusting your search or add
+                a new service.
               </p>
             </div>
           ) : (

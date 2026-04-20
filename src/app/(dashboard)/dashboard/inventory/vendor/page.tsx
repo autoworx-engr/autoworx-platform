@@ -9,11 +9,13 @@ import TopVendors from "./TopVendors";
 import VendorCard from "./VendorCard";
 import VendorHeader from "../VendorHeader";
 
-export default async function Page({
-  searchParams: { vendorId },
-}: {
-  searchParams: { vendorId: string };
+export default async function Page(props: {
+  searchParams: Promise<{ vendorId: string }>;
 }) {
+  const searchParams = await props.searchParams;
+
+  const { vendorId } = searchParams;
+
   const companyId = await getCompanyId();
   const vendors = await db.vendor.findMany({
     where: { companyId },

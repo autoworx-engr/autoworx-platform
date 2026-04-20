@@ -62,7 +62,7 @@ export async function getStripeAccount(companyId: number) {
 
     return {
       success: true,
-      data: account,
+      data: JSON.parse(JSON.stringify(account)),
       companyId,
       enabled: account.charges_enabled,
     };

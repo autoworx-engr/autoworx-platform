@@ -12,9 +12,9 @@ import { CannedUploadModal } from "@/app/(dashboard)/dashboard/estimate/canned/C
 import { Button } from "@/components/ui/button";
 
 type propsType = {
-  params: {
+  params: Promise<{
     id?: string;
-  };
+  }>;
 };
 
 const ModernChartData = (props: any) => (
@@ -29,7 +29,7 @@ const ModernChartData = (props: any) => (
   </div>
 );
 const Page = async (props: propsType) => {
-  const { params } = props;
+  const params = await props.params;
   const { id } = params;
   const company = await db.company.findUnique({
     where: { id: Number(id) },

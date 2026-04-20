@@ -5,22 +5,23 @@ import { ColumnProvider } from "@/context/sales-pipeline.context";
 import { serverFetchJson } from "@/lib/server-fetch";
 
 type TProps = {
-  searchParams: {
+  searchParams: Promise<{
     searchTerm?: string;
     orderBy?: "asc" | "desc" | undefined;
-  };
+  }>;
 };
 
 export default async function SalesPipelinePage({ searchParams }: TProps) {
-  const orderBy = searchParams.orderBy;
+  const resolvedSearchParams = await searchParams;
+  const { searchTerm, orderBy } = resolvedSearchParams;
 
   const { data: parsed } = await serverFetchJson(
     "/api/pipeline/sales/pipeline",
     {
       params: {
-        searchTerm: searchParams?.searchTerm,
+        searchTerm,
         initialLoad: "true",
-        orderBy: orderBy,
+        orderBy,
       },
     },
   );
@@ -33,13 +34,13 @@ export default async function SalesPipelinePage({ searchParams }: TProps) {
   return (
     <div className="space-y-8">
       <div className="mb-4 px-2 flex items-center gap-2">
-        <SearchSection searchValue={searchParams.searchTerm} />
-        <OrderSelect searchParams={searchParams} />
+        <SearchSection searchValue={searchTerm} />
+        <OrderSelect searchParams={resolvedSearchParams} />
       </div>
       <ColumnProvider
         initialColumns={pipelineColumns}
         companyUsers={[]}
-        searchTerm={searchParams.searchTerm}
+        searchTerm={searchTerm}
         orderBy={orderBy}
       >
         <SalesPipelineSection />

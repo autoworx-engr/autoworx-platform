@@ -3,7 +3,6 @@ import { authOptions } from "@/authOptions";
 import { cn } from "@/lib/cn";
 import { db } from "@/lib/db";
 import { Invoice, Prisma, Refund } from "@prisma/client";
-import { Decimal } from "@prisma/client/runtime/library";
 import moment from "moment-timezone";
 import { getServerSession } from "next-auth";
 import { Suspense } from "react";
@@ -15,7 +14,7 @@ import FilterHeader from "./FilterHeader";
 import RevenueDisplay from "./RevenueDisplay";
 
 type TProps = {
-  searchParams: {
+  searchParams: Promise<{
     category?: string;
     startDate?: string;
     endDate?: string;
@@ -27,7 +26,7 @@ type TProps = {
     filterRevenue?: string;
     page?: string;
     take?: string;
-  };
+  }>;
 };
 
 export type TSliderData = {
@@ -70,7 +69,8 @@ export type TInvoice = Prisma.InvoiceGetPayload<{
   };
 }>;
 
-export default async function RevenueReportPage({ searchParams }: TProps) {
+export default async function RevenueReportPage(props: TProps) {
+  const searchParams = await props.searchParams;
   const session = await getServerSession(authOptions);
   const { timezone } = (await getCompanyTimezone()) || {
     timezone: moment.tz.guess(),
@@ -599,9 +599,9 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
         // Only sum positive profits since we've already filtered out losses
         const refundedAmount =
           invoice?.Refund?.reduce(
-            (acc, refund) => acc.plus(refund.amount || new Decimal(0)),
-            new Decimal(0),
-          ) || new Decimal(0);
+            (acc, refund) => acc.plus(refund.amount || new Prisma.Decimal(0)),
+            new Prisma.Decimal(0),
+          ) || new Prisma.Decimal(0);
 
         const totalProfit =
           Number((invoice as any).profitPrice) - Number(refundedAmount);

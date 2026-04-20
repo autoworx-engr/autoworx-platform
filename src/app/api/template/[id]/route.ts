@@ -23,9 +23,9 @@ import { db } from "@/lib/db";
  *       404:
  *         description: Template not found
  */
-export async function GET(req: Request, context: { params: { id: string } }) {
+export async function GET(req: Request, context: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = context.params;
+    const { id } = (await context.params);
 
     // Fetch main template
     const estimateTemplate = await db.invoiceTemplate.findUnique({

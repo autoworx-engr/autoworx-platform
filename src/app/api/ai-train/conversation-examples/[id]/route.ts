@@ -22,10 +22,8 @@ import { NextRequest, NextResponse } from "next/server";
  *       404:
  *         description: Not found
  */
-export async function GET(
-  _: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function GET(_: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const id = Number(params.id);
 
   const data = await db.conversationExample.findUnique({ where: { id } });
@@ -76,10 +74,8 @@ export async function GET(
  *       404:
  *         description: Not found
  */
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const id = Number(params.id);
   const body = await req.json();
 
@@ -127,10 +123,8 @@ export async function PATCH(
  *       404:
  *         description: Not found
  */
-export async function DELETE(
-  _: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function DELETE(_: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const id = Number(params.id);
 
   await db.conversationExample.delete({ where: { id } });

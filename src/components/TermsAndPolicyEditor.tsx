@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./Tabs";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
+import ReactQuill from "react-quill-new";
+import "react-quill-new/dist/quill.snow.css";
 import {
   updateLeadTermsPolicy,
   getCompanyLeadTermsPolicy,
@@ -24,7 +24,9 @@ export function TermsAndPolicyEditor() {
   useEffect(() => {
     const loadExistingData = async () => {
       try {
-        const existingData = await getCompanyLeadTermsPolicy();
+        const existingData: Awaited<
+          ReturnType<typeof getCompanyLeadTermsPolicy>
+        > = await getCompanyLeadTermsPolicy();
         if (existingData) {
           setTermsContent(existingData.leadTerms || "");
           setPolicyContent(existingData.leadPolicy || "");
@@ -128,7 +130,10 @@ export function TermsAndPolicyEditor() {
                   </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="terms" className="space-y-4 rounded-tl-none">
+                <TabsContent
+                  value="terms"
+                  className="space-y-4 rounded-tl-none"
+                >
                   <div className="space-y-2">
                     <Label htmlFor="terms-editor">
                       Terms of Service Content
@@ -147,7 +152,10 @@ export function TermsAndPolicyEditor() {
                   </div>
                 </TabsContent>
 
-                <TabsContent value="policy" className="space-y-4 rounded-tl-none">
+                <TabsContent
+                  value="policy"
+                  className="space-y-4 rounded-tl-none"
+                >
                   <div className="space-y-2">
                     <Label htmlFor="policy-editor">
                       Privacy Policy Content

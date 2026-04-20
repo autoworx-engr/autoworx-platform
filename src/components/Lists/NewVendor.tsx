@@ -1,5 +1,6 @@
 "use client";
 
+import type { JSX } from "react";
 import { newVendor } from "@/actions/vendor/newVendor";
 import {
   Dialog,

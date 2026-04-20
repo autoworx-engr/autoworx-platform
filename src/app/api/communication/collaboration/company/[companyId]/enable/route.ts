@@ -33,10 +33,8 @@ import { NextRequest, NextResponse } from "next/server";
  *       500:
  *         description: Server error
  */
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { companyId: string } },
-) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ companyId: string }> }) {
+  const params = await props.params;
   try {
     const companyId = Number(params.companyId);
 

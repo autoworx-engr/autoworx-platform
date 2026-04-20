@@ -16,7 +16,7 @@ import FilterHeader from "./FilterHeader";
 import InventoryDisplay from "./InventoryDisplay";
 
 type TProps = {
-  searchParams: {
+  searchParams: Promise<{
     category?: string;
     startDate?: string;
     endDate?: string;
@@ -27,10 +27,11 @@ type TProps = {
     types?: string;
     page?: string;
     take?: string;
-  };
+  }>;
 };
 
-export default async function InventoryReportPage({ searchParams }: TProps) {
+export default async function InventoryReportPage(props: TProps) {
+  const searchParams = await props.searchParams;
   const session = await getServerSession(authOptions);
   const { timezone } = (await getCompanyTimezone()) || {};
 

@@ -10,11 +10,10 @@ export const metadata: Metadata = {
   title: "Communication Hub - Internal",
 };
 
-export default async function InternalPage({
-  searchParams,
-}: {
-  searchParams: { id?: string };
+export default async function InternalPage(props: {
+  searchParams: Promise<{ id?: string }>;
 }) {
+  const searchParams = await props.searchParams;
   const { id: selectedUserId } = searchParams;
   const session = await getServerSession(authOptions);
   if (!session) {
@@ -23,10 +22,10 @@ export default async function InternalPage({
 
   // Fetch users with their latest messages using the new action
   const result = await fetchUsersWithLatestMessages();
-  
+
   let usersWithLatestMessages: any[] = [];
   let messages: any[] = [];
-  
+
   if (result.success && result.data) {
     usersWithLatestMessages = result.data.users;
     messages = result.data.messages;
@@ -104,7 +103,11 @@ export default async function InternalPage({
         messages={messages}
         selectedUser={
           selectedUser
-            ? { ...selectedUser, unreadCount: 0, latestMessage: null } as (User & { unreadCount: number; latestMessage?: any })
+            ? ({
+                ...selectedUser,
+                unreadCount: 0,
+                latestMessage: null,
+              } as User & { unreadCount: number; latestMessage?: any })
             : null
         }
       />

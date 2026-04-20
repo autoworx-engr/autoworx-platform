@@ -73,6 +73,7 @@ export const Checkout = () => {
     isReturningClient,
     setIsReturningClient,
     settings,
+    sessionToken,
   } = useBooking();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -132,6 +133,36 @@ export const Checkout = () => {
     form.vehicleMake,
   );
 
+  // Release the slot hold — called on Back and on window close
+  const releaseHold = useCallback(() => {
+    if (!shop?.id || !sessionToken) return;
+    fetch("/api/virtual-shop/service-booking/hold", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ shopId: shop.id, sessionToken }),
+      keepalive: true, // ensures the request survives page unload
+    }).catch(() => {}); // silent — best-effort
+  }, [shop?.id, sessionToken]);
+
+  // Release hold when the user closes or refreshes the tab (sendBeacon is most reliable here)
+  useEffect(() => {
+    const handleUnload = () => {
+      if (!shop?.id || !sessionToken) return;
+      const data = JSON.stringify({ shopId: shop.id, sessionToken });
+      // sendBeacon sends a POST-like fire-and-forget; we use a Blob with method hint
+      // since sendBeacon doesn't support DELETE, we use fetch with keepalive instead
+      fetch("/api/virtual-shop/service-booking/hold", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: data,
+        keepalive: true,
+      }).catch(() => {});
+    };
+
+    window.addEventListener("beforeunload", handleUnload);
+    return () => window.removeEventListener("beforeunload", handleUnload);
+  }, [shop?.id, sessionToken]);
+
   // Timer
   useEffect(() => {
     if (timeLeft <= 0) {
@@ -154,10 +185,23 @@ export const Checkout = () => {
   const formatTime = (s: number) =>
     `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
 
-  const handleAddTime = () => {
+  const handleAddTime = useCallback(async () => {
+    if (shop?.id && sessionToken && selectedDate && selectedSlot) {
+      await fetch("/api/virtual-shop/service-booking/hold", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          shopId: shop.id,
+          sessionToken,
+          date: format(selectedDate, "yyyy-MM-dd"),
+          startTime: selectedSlot.time,
+          duration: cartDurationMinutes || 30,
+        }),
+      }).catch(() => {});
+    }
     setTimeLeft(TIMER_SECONDS);
     setTimerExpired(false);
-  };
+  }, [shop?.id, sessionToken, selectedDate, selectedSlot, cartDurationMinutes]);
 
   const handlePhoneLookup = useCallback(async () => {
     if (!shop?.id) return;
@@ -476,6 +520,7 @@ export const Checkout = () => {
         year: parsedYear,
         notes: form.notes.trim() || undefined,
         giftCardCode: appliedGiftCard?.code || undefined,
+        sessionToken,
       });
 
       const client = response?.data?.client;
@@ -514,7 +559,6 @@ export const Checkout = () => {
       setEstimateId(response?.data?.estimateId ?? null);
 
       setIsReturningClient(true);
-      successToast(response?.message || "Booking created successfully");
 
       const newBookingId = response?.data?.shopBookingId;
       const responseStatus = response?.data?.status;
@@ -561,6 +605,7 @@ export const Checkout = () => {
         return;
       }
 
+      successToast(response?.message || "Booking confirmed successfully");
       setStep("confirmation");
     } catch (error) {
       const message =
@@ -693,7 +738,10 @@ export const Checkout = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setStep("datetime")}
+            onClick={() => {
+              releaseHold();
+              setStep("datetime");
+            }}
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
@@ -1089,7 +1137,13 @@ export const Checkout = () => {
             <Button onClick={handleAddTime} className="gap-2">
               <Timer className="w-4 h-4" /> Add 10 More Minutes
             </Button>
-            <Button variant="outline" onClick={() => setStep("services")}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                releaseHold();
+                setStep("services");
+              }}
+            >
               Return to Booking
             </Button>
           </div>

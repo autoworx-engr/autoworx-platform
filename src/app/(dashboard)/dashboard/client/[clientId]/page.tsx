@@ -12,16 +12,17 @@ import OrderList from "../OrderList";
 import VehicleList from "../VehicleList";
 
 type Props = {
-  params: {
+  params: Promise<{
     clientId: string;
-  };
-  searchParams: {
+  }>;
+  searchParams: Promise<{
     vehicleId?: string;
-  };
+  }>;
 };
 
 const Page = async (props: Props) => {
-  const { params, searchParams } = props;
+  const params = await props.params;
+  const searchParams = await props.searchParams;
   const { clientId } = params;
   const { vehicleId } = searchParams;
 

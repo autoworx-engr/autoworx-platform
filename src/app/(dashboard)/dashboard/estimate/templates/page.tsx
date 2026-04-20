@@ -9,18 +9,19 @@ import Header from "../Header";
 import NavigationTabs from "../NavigationTabs";
 import TemplateTable from "./TemplateTable";
 
-async function TemplatesPage({
-  searchParams,
-}: Readonly<{
-  searchParams: {
-    startDate?: string;
-    endDate?: string;
-    status?: string;
-    searchTerm?: string;
-    page?: string;
-    take?: string;
-  };
-}>) {
+async function TemplatesPage(
+  props: Readonly<{
+    searchParams: Promise<{
+      startDate?: string;
+      endDate?: string;
+      status?: string;
+      searchTerm?: string;
+      page?: string;
+      take?: string;
+    }>;
+  }>,
+) {
+  const searchParams = await props.searchParams;
   const session = await getServerSession(authOptions);
   const companyId = session?.user.companyId;
   const { timezone } = await getCompanyTimezone();
@@ -32,7 +33,7 @@ async function TemplatesPage({
   const estimateTemplatesPromise = estimateTemplateFetchAndTransformData(
     companyId,
     searchParams,
-    timezone
+    timezone,
   );
   if (!companyId) {
     throw new Error("Company ID is required to create an email template.");

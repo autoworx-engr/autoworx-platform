@@ -22,7 +22,8 @@ import { NextResponse } from "next/server";
  *         description: Internal server error
  */
 
-export async function GET(_: Request, { params }: { params: { id: number } }) {
+export async function GET(_: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const playbook = await db.servicePlaybook.findUnique({
       where: { id: Number(params.id) },
@@ -170,10 +171,8 @@ export async function GET(_: Request, { params }: { params: { id: number } }) {
  *         description: Internal server error
  */
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: { id: number } },
-) {
+export async function PATCH(req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const body = await req.json();
 
@@ -240,10 +239,8 @@ export async function PATCH(
  *         description: Internal server error
  */
 
-export async function DELETE(
-  _: Request,
-  { params }: { params: { id: number } },
-) {
+export async function DELETE(_: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     await db.servicePlaybook.delete({
       where: { id: Number(params.id) },

@@ -1,10 +1,13 @@
 import { PUBLIC_DYNAMIC_API_ROUTES } from "@/constants/public-route";
-import { URLPattern } from "next/server";
+
+function routeToRegex(route: string): RegExp {
+  const escaped = route.replace(/[.+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = escaped.replace(/:([^/]+)/g, "[^/]+");
+  return new RegExp(`^${pattern}$`);
+}
 
 export const isDynamicPublicApiRoute = (pathname: string) => {
-  const isPublic = PUBLIC_DYNAMIC_API_ROUTES.some((route) => {
-    const pattern = new URLPattern({ pathname: route });
-    return pattern.test({ pathname: pathname });
-  });
-  return isPublic;
+  return PUBLIC_DYNAMIC_API_ROUTES.some((route) =>
+    routeToRegex(route).test(pathname),
+  );
 };

@@ -9,6 +9,7 @@ import {
   TransactionType,
   GiftCardPurchaseType,
 } from "@prisma/client";
+import { type TransactionClient } from "@/lib/db";
 import { nanoid } from "nanoid";
 import { z } from "zod";
 
@@ -40,7 +41,7 @@ export const giftCardPurchaseSchema = z.object({
 
 export type GiftCardPurchaseInput = z.infer<typeof giftCardPurchaseSchema>;
 
-type GiftCardPurchaseTx = Prisma.TransactionClient;
+type GiftCardPurchaseTx = TransactionClient;
 
 interface ShopPurchaseContext {
   id: number;

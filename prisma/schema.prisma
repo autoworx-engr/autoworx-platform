@@ -1,11 +1,9 @@
 generator client {
   provider      = "prisma-client-js"
-  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
   // directUrl   = env("DIRECT_URL")
 }
 
@@ -3330,3 +3328,17 @@ enum TransactionType {
   REFUND // Service was cancelled, money returned to card
 }
 // }
+
+model ShopSlotHold {
+  id           Int      @id @default(autoincrement())
+  shopId       Int      @map("shop_id")
+  sessionToken String   @map("session_token")
+  date         DateTime
+  startTime    String   @map("start_time")
+  endTime      String   @map("end_time")
+  expiresAt    DateTime @map("expires_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([shopId, date, expiresAt])
+}
+

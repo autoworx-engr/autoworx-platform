@@ -7,7 +7,8 @@ import { getCompanyId } from "@/lib/companyId";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
-export default async function Page({ params }: { params: { id: string } }) {
+export default async function Page(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const companyId = await getCompanyId();
   const employee = await db.user.findUnique({
     where: { id: parseInt(params.id), companyId },

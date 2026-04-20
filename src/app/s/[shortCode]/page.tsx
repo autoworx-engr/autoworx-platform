@@ -2,9 +2,9 @@ import { getShortLink, getShortLinkInfo } from "@/lib/shortener";
 import { Metadata } from "next";
 
 interface ShortLinkPageProps {
-  params: {
+  params: Promise<{
     shortCode: string;
-  };
+  }>;
 }
 
 export async function generateMetadata({ params }: ShortLinkPageProps): Promise<Metadata> {

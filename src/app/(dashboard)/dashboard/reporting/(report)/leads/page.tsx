@@ -1,4 +1,5 @@
-"use client";
+"use client";;
+import { use } from "react";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
 import dynamic from "next/dynamic";
 import PipelineCardContainer from "./PipelineCardContainer";
@@ -7,10 +8,10 @@ import PipelineCardContainer from "./PipelineCardContainer";
 const DesktopCharts = dynamic(() => import("./DesktopCharts"), { ssr: false });
 
 type TProps = {
-  searchParams: {
+  searchParams: Promise<{
     startDate?: string;
     endDate?: string;
-  };
+  }>;
 };
 
 type TSliderData = {
@@ -43,9 +44,10 @@ type TSliderData = {
 //   },
 // ];
 
-export default function PipelinePage({ searchParams }: TProps) {
+export default function PipelinePage(props: TProps) {
+  const searchParams = use(props.searchParams);
   const isDesktop = useIsDesktop();
-  
+
   return (
     <div className="grid grid-cols-1 gap-x-6 lg:grid-cols-5">
       <div className="space-y-5 col-span-1 lg:col-span-2">

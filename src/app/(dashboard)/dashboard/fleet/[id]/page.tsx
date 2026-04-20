@@ -9,16 +9,17 @@ import { ArrowLeft } from "lucide-react";
 import { notFound } from "next/navigation";
 
 type PropsType = {
-  params: {
+  params: Promise<{
     id?: string;
-  };
-  searchParams: {
+  }>;
+  searchParams: Promise<{
     search?: string;
-  };
+  }>;
 };
 
 const page = async (props: PropsType) => {
-  const { params, searchParams } = props;
+  const params = await props.params;
+  const searchParams = await props.searchParams;
   const { id } = params;
 
   const companyId = await getCompanyId();

@@ -6,11 +6,13 @@ import InvoiceModalBody from "@/components/invoice-modal/InvoiceModalBody";
 import { getCompanyId } from "@/lib/companyId";
 import ProtectedRouteForViewInvoice from "./ProtectedRouteForViewInvoice";
 
-export default async function ViewEstimate({
-  params: { id },
-}: {
-  params: { id: string };
+export default async function ViewEstimate(props: {
+  params: Promise<{ id: string }>;
 }) {
+  const params = await props.params;
+
+  const { id } = params;
+
   const companyId = await getCompanyId();
   const invoice = await db.invoice.findUnique({
     where: { id, companyId },

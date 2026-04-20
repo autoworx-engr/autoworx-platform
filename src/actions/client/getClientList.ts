@@ -4,7 +4,8 @@ import { db } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 
 export default async function getClientList(
-  params: Prisma.ClientFindManyArgs = {},
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  params: Record<string, any> = {},
   search?: string,
 ) {
   try {
@@ -12,7 +13,7 @@ export default async function getClientList(
     const whereConditions: Prisma.ClientWhereInput[] = [{ companyId }];
 
     if (params.where) {
-      whereConditions.push(params.where);
+      whereConditions.push(params.where as Prisma.ClientWhereInput);
     }
 
     if (search) {
@@ -66,7 +67,8 @@ export default async function getClientList(
       });
     }
 
-    const clients = await db.client.findMany({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const clients = await (db.client.findMany as any)({
       ...params,
       where: {
         AND: whereConditions,

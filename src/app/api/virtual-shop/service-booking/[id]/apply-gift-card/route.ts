@@ -15,9 +15,10 @@ import { confirmShopBooking } from "@/services/confirmShopBooking";
  */
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } },
+  props: { params: Promise<{ id: string }> },
 ) {
   try {
+    const params = await props.params;
     const shopBookingId = Number(params.id);
     if (!shopBookingId || !Number.isFinite(shopBookingId)) {
       throw new AppError(400, "Invalid booking ID");

@@ -25,10 +25,8 @@ import { NextRequest, NextResponse } from "next/server";
  *         description: Internal server error
  */
 
-export async function GET(
-  _: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function GET(_: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const id = Number(params.id);
 
   const document = await db.knowledgeBaseDocument.findUnique({
@@ -101,10 +99,8 @@ export async function GET(
  *         description: Internal server error
  */
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const id = Number(params.id);
     const body = await req.json();
@@ -168,10 +164,8 @@ export async function PATCH(
  *         description: Internal server error
  */
 
-export async function DELETE(
-  _: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function DELETE(_: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const id = Number(params.id);
 

@@ -142,6 +142,7 @@ export interface CreateVirtualShopServiceBookingPayload {
   notes?: string;
   giftCardCode?: string;
   depositAmount?: number;
+  sessionToken?: string;
 }
 
 export interface CreateVirtualShopServiceBookingResponse {
@@ -680,6 +681,7 @@ export const getAppointmentSlots = async function (
   shopId: number,
   date?: string,
   nextAvailable?: boolean,
+  duration?: number,
 ) {
   try {
     const response = await axios.get<AppointmentSlotsApiResponse>(
@@ -689,6 +691,7 @@ export const getAppointmentSlots = async function (
           shopId,
           date: date || undefined,
           nextAvailable: nextAvailable || undefined,
+          duration: duration || undefined,
         },
       },
     );

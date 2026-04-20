@@ -276,10 +276,11 @@ import { InvoiceType } from "@prisma/client";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { companyId: string } },
+  { params }: { params: Promise<{ companyId: string }> },
 ) {
   try {
-    const companyId = Number(params.companyId);
+    const { companyId: companyIdParam } = await params;
+    const companyId = Number(companyIdParam);
 
     if (!companyId || isNaN(companyId)) {
       return NextResponse.json(
@@ -394,10 +395,11 @@ export async function GET(
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { companyId: string } },
+  { params }: { params: Promise<{ companyId: string }> },
 ) {
   try {
-    const companyId = Number(params.companyId);
+    const { companyId: companyIdParam } = await params;
+    const companyId = Number(companyIdParam);
 
     if (!companyId || isNaN(companyId)) {
       return NextResponse.json(
