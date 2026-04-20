@@ -85,11 +85,11 @@ import { db } from "@/lib/db";
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { companyId: string; id: string } },
+  { params }: { params: Promise<{ companyId: string; id: string }> },
 ) {
   try {
-    const companyId = Number(params.companyId);
-    const { id } = params;
+    const { companyId: companyIdParam, id } = await params;
+    const companyId = Number(companyIdParam);
 
     if (!companyId || isNaN(companyId)) {
       return NextResponse.json(
