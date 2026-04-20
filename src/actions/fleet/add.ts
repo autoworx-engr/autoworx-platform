@@ -129,7 +129,7 @@ export async function addFleet(data: {
       return { fleet };
     });
 
-    revalidatePath("/fleet");
+    revalidatePath("/dashboard/fleet");
 
     return { type: "success", data: fleet };
   } catch (error: any) {
