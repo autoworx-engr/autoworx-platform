@@ -1,4 +1,4 @@
-import { convertInvoicePublic } from "@/actions/estimate/invoice/convert";
+import { convertInvoice } from "@/actions/estimate/invoice/convert";
 import { db } from "@/lib/db";
 import { sendPaymentReceivedNotification } from "@/lib/notification/payment-notify";
 import { settleGiftCardReloadPayment } from "@/services/giftCardReloadSettlementService";
@@ -340,7 +340,7 @@ export async function POST(req: NextRequest) {
         for (const invoice of invoicesWithDue) {
           const paymentAmount = Math.min(
             Number(invoice.due ?? 0),
-            statementBaseAmount - totalPaid
+            statementBaseAmount - totalPaid,
           );
 
           if (paymentAmount <= 0) break;
@@ -424,7 +424,7 @@ export async function POST(req: NextRequest) {
           // Convert estimate to invoice if needed
           try {
             if (invoice.type === "Estimate") {
-              convertInvoicePublic(invoice.id, paymentData.companyId);
+              convertInvoice(invoice.id, paymentData.companyId);
             }
           } catch (error) {
             console.log("🚀 ~ convert invoice public ~ error:", error);
@@ -663,7 +663,7 @@ export async function POST(req: NextRequest) {
 
         try {
           if (findInvoice?.type === "Estimate") {
-            convertInvoicePublic(paymentData.invoiceId, paymentData.companyId);
+            convertInvoice(paymentData.invoiceId, paymentData.companyId);
           }
         } catch (error) {
           console.log("🚀 ~ convert invoice public ~ error:", error);
