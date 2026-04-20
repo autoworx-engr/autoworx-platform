@@ -8,8 +8,6 @@ import { Priority, TaskAndAppointmentCreatedByEnum } from "@prisma/client";
 import { getGoogleCalendarToken } from "@/actions/calendar-settings/getGoogleCalendarAuth";
 import createGoogleCalendarEvent from "@/actions/task/google-calendar/createGoogleCalendarEvent";
 import { revalidatePath } from "next/cache";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/authOptions";
 
 /**
  * @swagger
@@ -300,42 +298,16 @@ export async function POST(req: NextRequest) {
  * @swagger
  * /api/task:
  *   get:
- *     summary: Get tasks for the authenticated user's company
+ *     summary: Get all tasks
  *     tags:
  *       - Task
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 100
- *           maximum: 100
- *         description: Maximum number of tasks to return (capped at 100)
  *     responses:
  *       200:
- *         description: List of tasks scoped to the caller's company
- *       401:
- *         description: Unauthorized
+ *         description: List of tasks
  */
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
-    const companyId = session?.user?.companyId;
-
-    if (!companyId) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 },
-      );
-    }
-
-    const { searchParams } = new URL(req.url);
-    const limit = Math.min(Number(searchParams.get("limit") ?? 100), 100);
-
     const tasks = await db.task.findMany({
-      where: { companyId },
       include: {
         taskUser: true,
         client: true,
@@ -344,7 +316,6 @@ export async function GET(req: NextRequest) {
       orderBy: {
         createdAt: "desc",
       },
-      take: limit,
     });
 
     return NextResponse.json({
