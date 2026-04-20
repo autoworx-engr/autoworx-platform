@@ -12,7 +12,7 @@ interface CalendarSearchDropdownProps {
   searchTerm: string;
   searchResults: SearchResult[];
   handleResultClick: (result: SearchResult) => void;
-  dropdownRef: React.RefObject<HTMLDivElement>;
+  dropdownRef: React.RefObject<HTMLDivElement | null>;
 }
 
 export function CalendarSearchDropdown({
