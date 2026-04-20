@@ -32,6 +32,7 @@ export default function Calendar({ type }: { type: CalendarType }) {
   const [isCalendarLoading, setIsCalendarLoading] = useState(false);
   const [selectedTeamMateIds, setSelectedTeamMateIds] = useState<number[]>([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
+  const { date: storeDate } = useCalendarStore();
   const [view, setView] = useState(
     type === "list"
       ? "listWeek"
@@ -174,6 +175,7 @@ export default function Calendar({ type }: { type: CalendarType }) {
               interactionPlugin,
             ]}
             initialView={view}
+            initialDate={storeDate ?? undefined}
             headerToolbar={false}
             firstDay={firstDay}
             navLinks={true}
