@@ -194,7 +194,7 @@
     "typescript": "^5"
   },
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=20.20.2"
   },
   "resolutions": {
     "string-width": "^4.2.3"
