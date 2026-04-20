@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import moment from "moment";
 import { useCalendarStore } from "@/stores/calendarStore";
@@ -20,9 +20,7 @@ export type SearchResult = {
 
 export function useCalendarSearch(type: string) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [allItems, setAllItems] = useState<SearchResult[]>([]);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -42,70 +40,53 @@ export function useCalendarSearch(type: string) {
     isError: isAppointmentError,
   } = useAppointmentSearchQuery(searchTerm);
 
-  useEffect(() => {
-    if (tasks.length > 0 || appointments.length > 0) {
-      setAllItems([
-        ...tasks.map((task) => ({
-          id: task.id,
-          title: task.title,
-          date: task?.date || "",
-          type: "task" as const,
-          startTime: task.startTime ?? "",
-          firstName: task.client?.firstName || "",
-          lastName: task.client?.lastName || "",
-          vehicle: task?.Invoice?.vehicle
-            ? `${task.Invoice.vehicle.year} ${task.Invoice.vehicle.make} ${task.Invoice.vehicle.model}`
-            : "",
-        })),
-        ...appointments.map((appointment) => ({
-          id: appointment.id,
-          title: appointment.title || "Untitled Appointment",
-          date: appointment?.date || "",
-          type: "appointment" as const,
-          startTime: appointment.startTime ?? "",
-          firstName: appointment.client?.firstName || "",
-          lastName: appointment.client?.lastName || "",
-          vehicle: appointment.vehicle
-            ? `${appointment.vehicle.year} ${appointment.vehicle.make} ${appointment.vehicle.model}`
-            : "",
-        })),
-      ]);
-    }
-  }, [tasks, appointments]);
+  const searchResults = useMemo<SearchResult[]>(() => {
+    const trimmed = searchTerm.trim().toLowerCase();
+    if (!trimmed) return [];
 
-  useEffect(() => {
-    if (searchTerm.trim() === "") {
-      setSearchResults([]);
-      return;
-    }
+    const allItems: SearchResult[] = [
+      ...tasks.map((task) => ({
+        id: task.id,
+        title: task.title,
+        date: task?.date || "",
+        type: "task" as const,
+        startTime: task.startTime ?? "",
+        firstName: task.client?.firstName || "",
+        lastName: task.client?.lastName || "",
+        vehicle: task?.Invoice?.vehicle
+          ? `${task.Invoice.vehicle.year} ${task.Invoice.vehicle.make} ${task.Invoice.vehicle.model}`
+          : "",
+      })),
+      ...appointments.map((appointment) => ({
+        id: appointment.id,
+        title: appointment.title || "Untitled Appointment",
+        date: appointment?.date || "",
+        type: "appointment" as const,
+        startTime: appointment.startTime ?? "",
+        firstName: appointment.client?.firstName || "",
+        lastName: appointment.client?.lastName || "",
+        vehicle: appointment.vehicle
+          ? `${appointment.vehicle.year} ${appointment.vehicle.make} ${appointment.vehicle.model}`
+          : "",
+      })),
+    ];
 
-    const trimmedSearchTerm = searchTerm.trim().toLowerCase();
-
-    const filteredResults = allItems.filter((item) => {
-      const title = (item.title || "").toLowerCase();
-      const firstName = (item.firstName || "").toLowerCase();
-      const lastName = (item.lastName || "").toLowerCase();
-      const fullName = `${firstName} ${lastName}`.trim();
-      const vehicle = (item.vehicle || "").toLowerCase();
-
-      const searchFields = [title, firstName, lastName, fullName, vehicle];
-
-      return searchFields.some(
-        (field) =>
-          field.includes(trimmedSearchTerm) ||
-          field.startsWith(trimmedSearchTerm) ||
-          field.split(" ").some((word) => word.startsWith(trimmedSearchTerm)),
-      );
-    });
-
-    filteredResults.sort((a, b) => {
-      const dateA = new Date(a.date);
-      const dateB = new Date(b.date);
-      return dateB.getTime() - dateA.getTime();
-    });
-
-    setSearchResults(filteredResults.slice(0, 10));
-  }, [searchTerm, allItems]);
+    return allItems
+      .filter((item) => {
+        const title = (item.title || "").toLowerCase();
+        const firstName = (item.firstName || "").toLowerCase();
+        const lastName = (item.lastName || "").toLowerCase();
+        const fullName = `${firstName} ${lastName}`.trim();
+        const vehicle = (item.vehicle || "").toLowerCase();
+        return [title, firstName, lastName, fullName, vehicle].some(
+          (field) =>
+            field.includes(trimmed) ||
+            field.split(" ").some((word) => word.startsWith(trimmed)),
+        );
+      })
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 10);
+  }, [searchTerm, tasks, appointments]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
