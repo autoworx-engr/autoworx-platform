@@ -24,7 +24,13 @@ jobs:
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
 
+      - name: Prisma Generate
+        run: yarn prisma generate
+        env:
+          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/postgres"
+
       - name: TypeScript check
         run: yarn tsc --noEmit
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"
+          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/postgres"
