@@ -29,6 +29,7 @@ type InitialServiceData = {
 const INITIAL_SERVICE_INFO: ServiceInfoState = {
   serviceTitle: "",
   description: "",
+  customDuration: "",
   imageName: "",
   imageUrl: "",
   vehicleTypeModifiers: {
@@ -527,6 +528,10 @@ export default function ServiceCreateClient({
           modifierSedan: serviceInfo.vehicleTypeModifiers.sedan,
           modifierSUV: serviceInfo.vehicleTypeModifiers.suv,
           modifierTruck: serviceInfo.vehicleTypeModifiers.truck,
+          customDuration:
+            serviceInfo.customDuration === ""
+              ? undefined
+              : Number(serviceInfo.customDuration),
           isActive: true,
           items: payloadItems,
         };
