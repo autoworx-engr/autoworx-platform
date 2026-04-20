@@ -11,7 +11,7 @@
     "start": "next start",
     "lint": "eslint .",
     "prettier": "prettier --ignore-path .gitignore --write \"**/*.+(js|ts|json)\"",
-    "prettier:fix": "npm run prettier --fix",
+    "prettier:fix": "yarn run prettier --fix",
     "tsc": "tsc",
     "test": "jest",
     "test:watch": "jest --watchAll",
