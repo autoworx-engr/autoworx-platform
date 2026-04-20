@@ -43,7 +43,10 @@ export const CartDrawer = () => {
           </DrawerTitle>
         </DrawerHeader>
 
-        <div className="px-4 space-y-3 overflow-y-auto flex-1">
+        <div
+          className="px-4 space-y-3 overflow-y-auto flex-1"
+          data-vaul-no-drag
+        >
           {cart.map((item) => {
             const vehicleExtra =
               item.service.vehicleTypePricing[
@@ -79,8 +82,10 @@ export const CartDrawer = () => {
                   </div>
                 </div>
                 <button
+                  type="button"
+                  data-vaul-no-drag
                   onClick={() => removeFromCart(item.service.id)}
-                  className="p-1.5 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                  className="p-1.5 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors relative z-50"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -105,8 +110,10 @@ export const CartDrawer = () => {
           </div>
           <DrawerClose asChild>
             <Button
+              type="button"
+              data-vaul-no-drag
               size="lg"
-              className="w-full gap-2"
+              className="w-full gap-2 relative z-50 touch-manipulation"
               onClick={() => setStep("datetime")}
             >
               Choose Date & Time <ArrowRight className="w-4 h-4" />
