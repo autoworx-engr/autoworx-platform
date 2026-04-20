@@ -30,13 +30,11 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts",
     "jest.config.ts",
     "global.d.ts",
     "src/app/(home)/components/first",
     "src/app/(dashboard)/dashboard/pipeline/shop/shopPipelineLayout.tsc",
-    "test.js",
-    ".next/dev/types/**/*.ts"
+    "test.js"
   ],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", ".next"]
 }
