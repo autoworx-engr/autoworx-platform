@@ -40,10 +40,18 @@ export default function NewFleet({
   const [tagOpenDropdown, setTagOpenDropdown] = useState(false);
   const [tag, setTag] = useState<Tag | undefined>(fleet?.tag!);
   const [profilePic, setProfilePic] = useState<File | null | string>(
-    fleet ? fleet.photo : null
+    fleet ? fleet.photo : null,
   );
 
   const { showError, clearError } = useFormErrorStore();
+  const [fleetName, setFleetName] = useState(fleet?.fleet?.fleetName ?? "");
+  const [contactName, setContactName] = useState(
+    fleet?.fleet?.contactName ?? "",
+  );
+  const [email, setEmail] = useState(fleet?.email ?? "");
+  const [address, setAddress] = useState(fleet?.address ?? "");
+  const [city, setCity] = useState(fleet?.city ?? "");
+  const [state, setState] = useState(fleet?.state ?? "");
   const [mobile, setMobile] = useState("+1");
   const [countryCode, setCountryCode] = useState("");
   const [countryIsoCode, setCountryIsoCode] = useState("");
@@ -51,10 +59,16 @@ export default function NewFleet({
 
   useEffect(() => {
     if (isEdit && fleet && open) {
+      setFleetName(fleet?.fleet?.fleetName ?? "");
+      setContactName(fleet?.fleet?.contactName ?? "");
+      setEmail(fleet?.email ?? "");
+      setAddress(fleet?.address ?? "");
+      setCity(fleet?.city ?? "");
+      setState(fleet?.state ?? "");
       setMobile(fleet?.mobile!);
       setProfilePic(fleet ? fleet.photo : null);
       setPreferredPaymentTerm(
-        fleet ? fleet?.fleet!.preferredPaymentTerm : null
+        fleet ? fleet?.fleet!.preferredPaymentTerm : null,
       );
       setZip(fleet?.zip ?? "");
     }
@@ -63,17 +77,8 @@ export default function NewFleet({
   async function handleSubmit() {
     clearError();
     let photo;
-    const fleetName = document.querySelector<HTMLInputElement>("#fleetName")
-      ?.value as string;
-    const contactName =
-      document.querySelector<HTMLInputElement>("#contactName")?.value;
-    const email = document.querySelector<HTMLInputElement>("#email")?.value;
-    // const mobile = document.querySelector<HTMLInputElement>("#mobile")?.value;
     const phone =
       countryCode && mobile ? `${countryCode}${mobile}` : mobile || "";
-    const address = document.querySelector<HTMLInputElement>("#address")?.value;
-    const city = document.querySelector<HTMLInputElement>("#city")?.value;
-    const state = document.querySelector<HTMLInputElement>("#state")?.value;
 
     if (!fleetName?.trim()) {
       showError({
@@ -186,8 +191,14 @@ export default function NewFleet({
   }
 
   const handleClose = () => {
-    clearError(); // ✅ Reset form errors when closing
-    setProfilePic(null); // ✅ Reset profile picture
+    clearError();
+    setFleetName("");
+    setContactName("");
+    setEmail("");
+    setAddress("");
+    setCity("");
+    setState("");
+    setProfilePic(null);
     setMobile("+1");
     setOpen(false);
   };
@@ -215,8 +226,8 @@ export default function NewFleet({
           <button className="text-xs text-[#6571FF]">+ Add New Fleet</button>
         )}
       </DialogTrigger>
-      <DialogContent 
-       onOpenAutoFocus={(e)=>e.preventDefault()}
+      <DialogContent
+        onOpenAutoFocus={(e) => e.preventDefault()}
         className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]"
         // form
       >
@@ -308,12 +319,10 @@ export default function NewFleet({
               name="fleetName"
               label="Fleet Name"
               required
-              defaultValue={fleet?.fleet?.fleetName!}
+              value={fleetName}
               onChange={(e) => {
-                const value = e.target.value;
-
-                // Validate on input change
-                if (!value.trim() && isEdit == false) {
+                setFleetName(e.target.value);
+                if (!e.target.value.trim() && !isEdit) {
                   showError({
                     field: "fleetName",
                     message: "Fleet name is required.",
@@ -325,7 +334,8 @@ export default function NewFleet({
             />
             <SlimInput
               name="contactName"
-              defaultValue={fleet?.fleet?.contactName!}
+              value={contactName}
+              onChange={(e) => setContactName(e.target.value)}
               label="Name of contact"
               required={true}
             />
@@ -336,20 +346,8 @@ export default function NewFleet({
               name="email"
               label="Email Address"
               required
-              defaultValue={fleet?.email!}
-              onChange={(e) => {
-                const value = e.target.value;
-
-                // Validate on input change
-                // if (!value.trim()) {
-                //   showError({
-                //     field: "email",
-                //     message: "Email is required.",
-                //   });
-                // } else {
-                //   clearError();
-                // }
-              }}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
             <div>
               <PhoneInput
@@ -372,7 +370,8 @@ export default function NewFleet({
               rootClassName="flex-1"
               name="address"
               required={false}
-              defaultValue={fleet?.address!}
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
             />
           </div>
 
@@ -380,12 +379,14 @@ export default function NewFleet({
             <SlimInput
               name="city"
               required={false}
-              defaultValue={fleet?.city!}
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
             />
             <SlimInput
               name="state"
               required={false}
-              defaultValue={fleet?.state!}
+              value={state}
+              onChange={(e) => setState(e.target.value)}
             />
             {/* Controlled zip input with digits-only validation */}
             <SlimInput
@@ -433,14 +434,11 @@ export default function NewFleet({
         <DialogFooter>
           <DialogClose
             className="
-              rounded-xl px-5 py-2.5 text-sm font-medium text-slate-500 
+              rounded-xl px-5 py-2.5 text-sm font-medium text-slate-500
               hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
               transition-colors border
             "
-            onClick={() => {
-              clearError();
-              setOpen(false);
-            }}
+            onClick={handleClose}
           >
             Cancel
           </DialogClose>

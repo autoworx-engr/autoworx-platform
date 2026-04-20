@@ -30,6 +30,7 @@ export const makeFleetStatementPaymentValidationSchema = z.object({
     required_error: "Payment method is required",
   }),
   notes: z.string().optional(),
+  date: z.date().optional(),
   // Additional payment data based on method
   checkNumber: z.string().optional(),
   creditCard: z.string().optional(),
@@ -37,5 +38,9 @@ export const makeFleetStatementPaymentValidationSchema = z.object({
   paymentMethodId: z.number().optional(),
 });
 
-export type CreateFleetStatementInput = z.infer<typeof createFleetStatementValidationSchema>;
-export type MakeFleetStatementPaymentInput = z.infer<typeof makeFleetStatementPaymentValidationSchema>;
+export type CreateFleetStatementInput = z.infer<
+  typeof createFleetStatementValidationSchema
+>;
+export type MakeFleetStatementPaymentInput = z.infer<
+  typeof makeFleetStatementPaymentValidationSchema
+>;

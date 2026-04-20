@@ -163,12 +163,14 @@ function ServiceBillSummary({
               {isToggleItem && (
                 <div
                   onClick={() => toggleSetter((prev) => !prev)}
-                  className={`relative flex h-5 w-9 cursor-pointer items-center rounded-full px-1 transition-all duration-200 ${toggleState ? "bg-[#6571FF]" : "bg-slate-200"
-                    }`}
+                  className={`relative flex h-5 w-9 cursor-pointer items-center rounded-full px-1 transition-all duration-200 ${
+                    toggleState ? "bg-[#6571FF]" : "bg-slate-200"
+                  }`}
                 >
                   <div
-                    className={`h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform duration-200 ease-in-out ${toggleState ? "translate-x-3.5" : "translate-x-0"
-                      }`}
+                    className={`h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform duration-200 ease-in-out ${
+                      toggleState ? "translate-x-3.5" : "translate-x-0"
+                    }`}
                   />
                 </div>
               )}
@@ -178,10 +180,11 @@ function ServiceBillSummary({
                 readOnly
                 value={
                   isToggleItem
-                    ? `${toggleState ? Number(data).toFixed(2) : 0}%${toggleState && Number(data) > 0
-                      ? ` | ${((subtotal * Number(data)) / 100).toFixed(2)}`
-                      : ""
-                    }`
+                    ? `${toggleState ? Number(data).toFixed(2) : 0}%${
+                        toggleState && Number(data) > 0
+                          ? ` | ${((subtotal * Number(data)) / 100).toFixed(2)}`
+                          : ""
+                      }`
                     : data
                 }
                 className="w-[200px] rounded-lg bg-gray-500 px-3 py-1 text-right text-sm font-bold text-white ring-1 ring-inset ring-slate-100 focus:outline-none"
@@ -339,8 +342,8 @@ export default function ServiceCreateClient({
         );
         const hasMaterial = Array.isArray(item?.materials)
           ? item.materials.some((material) =>
-            Boolean(material && String(material.name || "").trim()),
-          )
+              Boolean(material && String(material.name || "").trim()),
+            )
           : false;
 
         return {
@@ -365,12 +368,12 @@ export default function ServiceCreateClient({
       const invalidMaterialQuantity = (items || []).some((item) =>
         Array.isArray(item?.materials)
           ? item.materials.some((material) => {
-            if (!material || !String(material.name || "").trim()) {
-              return false;
-            }
+              if (!material || !String(material.name || "").trim()) {
+                return false;
+              }
 
-            return toSafeNumber(material.quantity) <= 0;
-          })
+              return toSafeNumber(material.quantity) <= 0;
+            })
           : false,
       );
 
@@ -415,17 +418,17 @@ export default function ServiceCreateClient({
         .map((item) => {
           const normalizedService = item.service
             ? {
-              id: Number(item.service.id),
-              name: item.service.name,
-              categoryId: item.service.categoryId ?? null,
-              description: item.service.description ?? null,
-              createdAt: toSafeDate(item.service.createdAt),
-              updatedAt: toSafeDate(item.service.updatedAt),
-              fromRequest: (item.service as any).fromRequest ?? null,
-              fromRequestedCompanyId:
-                (item.service as any).fromRequestedCompanyId ?? null,
-              companyId: Number(item.service.companyId || companyId),
-            }
+                id: Number(item.service.id),
+                name: item.service.name,
+                categoryId: item.service.categoryId ?? null,
+                description: item.service.description ?? null,
+                createdAt: toSafeDate(item.service.createdAt),
+                updatedAt: toSafeDate(item.service.updatedAt),
+                fromRequest: (item.service as any).fromRequest ?? null,
+                fromRequestedCompanyId:
+                  (item.service as any).fromRequestedCompanyId ?? null,
+                companyId: Number(item.service.companyId || companyId),
+              }
             : null;
 
           const normalizedMaterials = (item.materials || []).map((material) => {
@@ -464,25 +467,25 @@ export default function ServiceCreateClient({
           const normalizedLabor =
             item.labor && item.labor.name?.trim()
               ? {
-                name: item.labor.name,
-                categoryId: item.labor.categoryId ?? null,
-                notes: item.labor.notes ?? null,
-                tags: ((item.labor as any).tags || [])
-                  .filter((tag: any) => tag?.id && tag?.name)
-                  .map((tag: any) => ({
-                    id: Number(tag.id),
-                    name: String(tag.name),
-                    textColor: String(tag.textColor || "#000000"),
-                    bgColor: String(tag.bgColor || "#ffffff"),
-                    createdAt: toSafeDate(tag.createdAt),
-                    updatedAt: toSafeDate(tag.updatedAt),
-                    companyId: Number(tag.companyId || companyId),
-                  })),
-                hours: toSafeNumber(item.labor.hours),
-                charge: toSafeNumber(item.labor.charge),
-                discount: toSafeNumber(item.labor.discount),
-                cannedLabor: Boolean(item.labor.cannedLabor),
-              }
+                  name: item.labor.name,
+                  categoryId: item.labor.categoryId ?? null,
+                  notes: item.labor.notes ?? null,
+                  tags: ((item.labor as any).tags || [])
+                    .filter((tag: any) => tag?.id && tag?.name)
+                    .map((tag: any) => ({
+                      id: Number(tag.id),
+                      name: String(tag.name),
+                      textColor: String(tag.textColor || "#000000"),
+                      bgColor: String(tag.bgColor || "#ffffff"),
+                      createdAt: toSafeDate(tag.createdAt),
+                      updatedAt: toSafeDate(tag.updatedAt),
+                      companyId: Number(tag.companyId || companyId),
+                    })),
+                  hours: toSafeNumber(item.labor.hours),
+                  charge: toSafeNumber(item.labor.charge),
+                  discount: toSafeNumber(item.labor.discount),
+                  cannedLabor: Boolean(item.labor.cannedLabor),
+                }
               : null;
 
           const normalizedTags = (item.tags || [])

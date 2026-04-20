@@ -92,7 +92,7 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
   const handleEditStatement = () => {
     // Check if statement has any paid or partially paid invoices
     const hasPaidInvoices = invoices.some(
-      (inv: any) => inv.due === 0 || inv.due < inv.grandTotal
+      (inv: any) => inv.due === 0 || inv.due < inv.grandTotal,
     );
 
     if (hasPaidInvoices) {
@@ -175,7 +175,7 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
         paymentLink="https://yourcompany.com/pay"
         terms="Please pay within 7 days."
         policy="Service fees are non-refundable."
-      />
+      />,
     ).toBlob();
 
     const url = URL.createObjectURL(blob);
@@ -250,7 +250,7 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent
           ref={componentRef}
-          className="w-[98vw] max-w-4xl max-h-[98vh] overflow-hidden rounded-lg bg-white px-4 py-5 shadow-2xl sm:px-10 sm:w-[95vw] sm:max-h-[95vh] overflow-y-auto"
+          className="w-[98vw] max-w-4xl max-h-[98vh] rounded-lg bg-white px-4 py-5 shadow-2xl sm:px-10 sm:w-[95vw] sm:max-h-[95vh] overflow-y-auto"
         >
           {/* Header */}
           <DialogHeader className="mt-2 flex w-full flex-wrap items-center justify-center print:hidden">
@@ -263,7 +263,7 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
                   "flex items-center justify-center gap-1 rounded px-2 py-1 text-sm md:px-4 md:text-base transition-all",
                   canEdit
                     ? "bg-[#6571FF] text-white hover:bg-[#5461ee]"
-                    : "bg-gray-300 text-gray-500 cursor-not-allowed opacity-60"
+                    : "bg-gray-300 text-gray-500 cursor-not-allowed opacity-60",
                 )}
                 title={
                   !canEdit
@@ -276,8 +276,9 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
               </button>
 
               <button
-                className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-sm text-white md:px-4 md:text-base"
+                className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-sm text-white md:px-4 md:text-base disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handlePDFPrint}
+                disabled={loading}
               >
                 <svg
                   fill="#ffffff"
@@ -307,8 +308,12 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
                   onConfirm={handleEmail}
                   okText="Yes"
                   cancelText="No"
+                  disabled={loading}
                 >
-                  <button className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-sm text-white md:px-4 md:text-base">
+                  <button
+                    className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-sm text-white md:px-4 md:text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={loading}
+                  >
                     <Mail className="h-4 w-4 md:h-4 md:w-4" />
                     <span className="hidden md:inline">Email</span>
                   </button>
@@ -319,8 +324,12 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
                     onConfirm={handleSms}
                     okText="Yes"
                     cancelText="No"
+                    disabled={loading}
                   >
-                    <button className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-sm text-white md:px-4 md:text-base">
+                    <button
+                      className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-sm text-white md:px-4 md:text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={loading}
+                    >
                       <svg
                         fill="#ffffff"
                         height="24"
@@ -352,8 +361,9 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
               </div>
 
               <button
-                className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-sm text-white md:px-4 md:text-base"
+                className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-sm text-white md:px-4 md:text-base disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleCopyLink}
+                disabled={loading}
               >
                 <svg
                   viewBox="0 0 32 32"
@@ -385,11 +395,11 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
           </DialogHeader>
 
           {/* Company Info */}
-          <div className="flex w-full flex-row justify-between gap-4 md:flex-row md:items-center md:gap-0 2xl:py-1">
+          <div className="flex w-full flex-row justify-between gap-4 md:items-center md:gap-0 2xl:py-1">
             <div
               className={cn(
                 "flex aspect-square items-center justify-center text-center font-bold text-white",
-                company?.image ? "w-32" : "w-32 bg-gray-500"
+                company?.image ? "w-32" : "w-32 bg-gray-500",
               )}
             >
               {company?.image ? (
@@ -419,7 +429,11 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
               <h1 className="col-span-full text-center text-xl font-bold uppercase text-slate-500 md:text-left md:text-3xl">
                 Fleet Statement
               </h1>
-              <p className="font-semibold">{new Date().toLocaleDateString()}</p>
+              <p className="font-semibold">
+                {statement?.createdAt
+                  ? new Date(statement.createdAt).toLocaleDateString()
+                  : ""}
+              </p>
             </div>
             <div className="py-1 text-sm text-gray-600">
               <p>
@@ -433,7 +447,7 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
           </div>
 
           {/* Fleet Table */}
-          <div className="thin-scrollbar h-[200px] overflow-x-hidden">
+          <div className="thin-scrollbar max-h-[40vh] overflow-x-hidden overflow-y-auto">
             {loading ? (
               <div className="flex items-center justify-center py-8">
                 <div className="text-gray-500">Loading statement...</div>
@@ -457,8 +471,9 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
                   {invoices.map((invoice: any, index: number) => (
                     <tr
                       key={invoice.id}
-                      className={`border-b border-gray-100 transition-colors ${index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]"
-                        }`}
+                      className={`border-b border-gray-100 transition-colors ${
+                        index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]"
+                      }`}
                     >
                       <td className="border-b px-4 py-2 text-left text-[#6571FF]">
                         <InvoiceModal

@@ -7,8 +7,6 @@ import { sendInfobipEmail } from "../estimate/invoice/sendInfobipEmail";
 
 export async function sendFleetEmail({ statementId }: { statementId: string }) {
   try {
-    console.log("Sending fleet statement email");
-
     const user = await getUser();
     const fleetStatement = await db.fleetStatement.findUnique({
       where: { id: statementId },
@@ -54,12 +52,12 @@ export async function sendFleetEmail({ statementId }: { statementId: string }) {
     let variabledSubject = template.subject
       ?.replace(
         "<CLIENT>",
-        fleetStatement?.invoice?.[0].client?.firstName || "No client"
+        fleetStatement?.invoice?.[0].client?.firstName || "No client",
       )
       .replace(
         "<BUSINESS_NAME>",
         fleetStatement?.invoice?.[0]?.client?.company?.name ||
-          "No business name"
+          "No business name",
       );
     const clientName =
       (fleetStatement?.invoice?.[0]?.client?.firstName
@@ -95,15 +93,14 @@ export async function sendFleetEmail({ statementId }: { statementId: string }) {
           emailLastMessage: variabledBody || "",
           lastEmailBy: "Company",
         });
-      } catch (error) {
-        console.log("🚀 ~ sendFleetEmail ~ error:", error);
+      } catch {
+        // chat-track failure is non-critical; email was already sent
       }
     }
     return {
       success: true,
     };
-  } catch (error) {
-    console.log("🚀 ~ send FleetEmail ~ error:", error);
+  } catch {
     return {
       success: false,
       message: "Failed to send email",
