@@ -13,6 +13,6 @@ export default async function getHoliday(
     });
     return holidays;
   } catch (err: any) {
-    throw new Error("Failed to fetch holidays: ", err);
+    throw new Error(`Failed to fetch holidays: ${err?.message ?? err}`);
   }
 }

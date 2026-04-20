@@ -56,6 +56,6 @@ export async function createHoliday(
       data: holidaysFromDB,
     };
   } catch (err: any) {
-    throw new Error("Failed to create holiday: ", err);
+    throw new Error(`Failed to create holiday: ${err?.message ?? err}`);
   }
 }
