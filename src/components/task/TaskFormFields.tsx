@@ -60,11 +60,28 @@ export function TaskFormFields({
     return { value, label };
   });
 
-  const priorityItems = [
-    { id: "Low", color: "bg-[#6571FF]", shadow: "shadow-[#6571FF]/40" },
-    { id: "Medium", color: "bg-[#25AADD]", shadow: "shadow-[#25AADD]/40" },
-    { id: "High", color: "bg-[#006D77]", shadow: "shadow-[#006D77]/40" },
-  ];
+  const priorityStyles = {
+    Low: {
+      background: "linear-gradient(to right, #f5f3ff, #ede9fe)",
+      borderLeft: "3px solid #6d28d9",
+      color: "#6d28d9",
+      boxShadow: "0 2px 8px rgba(109, 40, 217, 0.15)",
+    },
+    Medium: {
+      background: "linear-gradient(to right, #f0f9ff, #e0f2fe)",
+      borderLeft: "3px solid #0284c7",
+      color: "#0284c7",
+      boxShadow: "0 2px 8px rgba(2, 132, 199, 0.15)",
+    },
+    High: {
+      background: "linear-gradient(to right, #b2f2bb, #d3f9d8)",
+      borderLeft: "3px solid #22a7b8",
+      color: "#22a7b8",
+      boxShadow: "0 2px 8px rgba(34, 167, 184, 0.15)",
+    },
+  };
+
+  const priorityItems = [{ id: "Low" }, { id: "Medium" }, { id: "High" }];
 
   return (
     <>
@@ -223,17 +240,21 @@ export function TaskFormFields({
         <div className="flex items-center gap-3">
           {priorityItems.map((item) => {
             const isActive = priority === item.id;
+            const style =
+              priorityStyles[item.id as keyof typeof priorityStyles];
+
             return (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => setPriority(item.id as Priority)}
                 className={cn(
-                  "relative flex w-full items-center justify-center gap-2 rounded-lg py-2.5 px-4 text-sm font-semibold transition-all duration-300 ease-out",
+                  "relative flex w-full items-center justify-center gap-2 rounded-lg py-2.5 px-4 text-sm font-bold transition-all duration-300 ease-out",
                   isActive
-                    ? `${item.color} text-white shadow-lg ${item.shadow} scale-[1.03]`
+                    ? "shadow-lg scale-[1.03]"
                     : "bg-slate-50 text-slate-500 ring-1 ring-slate-200 hover:bg-white hover:ring-slate-300 hover:-translate-y-0.5",
                 )}
+                style={isActive ? style : {}}
               >
                 {item.id}
                 {isActive && (
@@ -243,7 +264,7 @@ export function TaskFormFields({
                   />
                 )}
                 {isActive && (
-                  <div className="absolute inset-0 rounded-xl bg-gradient-to-tr from-white/10 to-transparent pointer-events-none" />
+                  <div className="absolute inset-0 rounded-lg bg-gradient-to-tr from-white/10 to-transparent pointer-events-none" />
                 )}
               </button>
             );
