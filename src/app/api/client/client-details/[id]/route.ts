@@ -48,7 +48,10 @@ const updateClientSchema = z.object({
  *       500:
  *         description: Internal server error
  */
-export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+export async function GET(
+  req: NextRequest,
+  props: { params: Promise<{ id: string }> },
+) {
   const params = await props.params;
   try {
     const clientId = parseInt(params.id);
@@ -156,7 +159,10 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
  *       500:
  *         description: Internal server error
  */
-export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+export async function PATCH(
+  req: NextRequest,
+  props: { params: Promise<{ id: string }> },
+) {
   const params = await props.params;
   try {
     const clientId = parseInt(params.id);
@@ -232,7 +238,10 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
  *       500:
  *         description: Internal server error
  */
-export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  req: NextRequest,
+  props: { params: Promise<{ id: string }> },
+) {
   const params = await props.params;
   try {
     const clientId = parseInt(params.id);

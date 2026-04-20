@@ -28,7 +28,10 @@ import { NextRequest } from "next/server";
  *       400:
  *         description: Missing recording SID
  */
-export async function GET(req: NextRequest, props: { params: Promise<{ recordingSid: string }> }) {
+export async function GET(
+  req: NextRequest,
+  props: { params: Promise<{ recordingSid: string }> },
+) {
   const params = await props.params;
   const { searchParams } = req.nextUrl;
 

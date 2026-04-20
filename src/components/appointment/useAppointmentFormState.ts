@@ -657,7 +657,7 @@ export function useAppointmentFormState({
     return `${i % 12 || 12} ${i < 12 ? "A" : "P"}M`;
   });
 
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const timeOptions = Array.from({ length: 24 * 4 }, (_, i) => {
     const hour = Math.floor(i / 4);

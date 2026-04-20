@@ -30,7 +30,10 @@ import { db } from "@/lib/db";
  *       200:
  *         description: Client tasks fetched successfully
  */
-export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+export async function GET(
+  req: NextRequest,
+  props: { params: Promise<{ id: string }> },
+) {
   const params = await props.params;
   try {
     const clientId = parseInt(params.id);

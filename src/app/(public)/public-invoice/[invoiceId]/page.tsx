@@ -6,18 +6,14 @@ import InvoiceModalBody from "../../../../components/invoice-modal/InvoiceModalB
 import ProtectedRouteForViewInvoice from "./ProtectedRouteForViewInvoice";
 import { FleetStatementModalBody } from "./FleetStatementModalBody";
 
-export default async function ViewEstimate(
-  props: {
-    params: Promise<{ invoiceId: string }>;
-    searchParams: Promise<{ fleet?: string }>;
-  }
-) {
+export default async function ViewEstimate(props: {
+  params: Promise<{ invoiceId: string }>;
+  searchParams: Promise<{ fleet?: string }>;
+}) {
   const searchParams = await props.searchParams;
   const params = await props.params;
 
-  const {
-    invoiceId
-  } = params;
+  const { invoiceId } = params;
 
   console.log("🚀 ~ ViewEstimate ~ invoiceId:", invoiceId);
   const isFleetStatement = (await searchParams?.fleet) === "true";

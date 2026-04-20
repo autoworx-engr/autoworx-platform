@@ -89,19 +89,19 @@ export default async function WorkforceReportPage(props: TProps) {
     // Filter by date range if specified
     const matchesDateRange = hasDateRange
       ? employee.Technician.some((tech) => {
-        const techDate = tech.dateClosed ? moment.utc(tech.dateClosed) : null;
-        return (
-          techDate &&
-          techDate.isBetween(convertedStart, convertedEnd, null, "[]")
-        );
-      })
+          const techDate = tech.dateClosed ? moment.utc(tech.dateClosed) : null;
+          return (
+            techDate &&
+            techDate.isBetween(convertedStart, convertedEnd, null, "[]")
+          );
+        })
       : true;
 
     // Filter by search query if specified
     const matchesSearch = searchParams?.search
       ? normalizeSearch(`${employee.firstName} ${employee.lastName}`)?.includes(
-        normalizeSearch(searchParams?.search || ""),
-      )
+          normalizeSearch(searchParams?.search || ""),
+        )
       : true;
 
     // console.log({
@@ -212,7 +212,6 @@ export default async function WorkforceReportPage(props: TProps) {
 
   return (
     <div className="space-y-5">
-
       <div className="mb-4 mt-1.5 grid grid-cols-1 md:grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
         {/* Current Month Payout */}
         <Calculation

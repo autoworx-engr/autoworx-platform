@@ -73,7 +73,10 @@ import { NextRequest, NextResponse } from "next/server";
  *                   nullable: true
  */
 
-export async function GET(_req: NextRequest, props: { params: Promise<{ id: string }> }) {
+export async function GET(
+  _req: NextRequest,
+  props: { params: Promise<{ id: string }> },
+) {
   const params = await props.params;
   try {
     const companyId = Number(params.id);
