@@ -79,12 +79,12 @@ export const KPIGrid = ({ kpis }: KPIGridProps) => {
           delay={250}
         />
 
-        <KPICard
+        {/* <KPICard
           title="Estimates Sent"
           value={(kpis.estimatesSent ?? 0).toString()}
           icon={FileText}
           delay={300}
-        />
+        /> */}
 
         <KPICard
           title="Payments Collected"
