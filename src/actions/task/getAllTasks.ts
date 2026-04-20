@@ -25,18 +25,17 @@ export default async function getAllTasks(params?: TaskQueryParams) {
       AND: [{ companyId }, ...(where ? [where] : [])],
     };
 
-    const tasks = (await db.task.findMany({
-      where: whereCondition,
-      ...(include ? { include } : {}),
-      ...(select ? { select } : {}),
-      ...(orderBy ? { orderBy } : {}),
-      ...(skip !== undefined ? { skip } : {}),
-      ...(take !== undefined ? { take } : {}),
-    })) as Task[];
-
-    const totalTasks = await db.task.count({
-      where: { companyId },
-    });
+    const [tasks, totalTasks] = await Promise.all([
+      db.task.findMany({
+        where: whereCondition,
+        ...(include ? { include } : {}),
+        ...(select ? { select } : {}),
+        ...(orderBy ? { orderBy } : {}),
+        ...(skip !== undefined ? { skip } : {}),
+        ...(take !== undefined ? { take } : {}),
+      }) as Promise<Task[]>,
+      db.task.count({ where: { companyId } }),
+    ]);
 
     return {
       data: tasks,

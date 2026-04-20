@@ -35,11 +35,13 @@ export async function assignTask({
     .map((t) => t.taskId);
 
   await db.$transaction([
-    ...toAdd.map((taskId) =>
-      db.taskUser.create({
-        data: { userId, taskId, eventId: "null-for-now" },
-      }),
-    ),
+    ...(toAdd.length > 0
+      ? [
+          db.taskUser.createMany({
+            data: toAdd.map((taskId) => ({ userId, taskId, eventId: null })),
+          }),
+        ]
+      : []),
     ...(toRemove.length > 0
       ? [
           db.taskUser.deleteMany({

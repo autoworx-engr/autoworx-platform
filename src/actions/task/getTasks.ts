@@ -49,28 +49,29 @@ export default async function getTasks(params?: TaskQueryParams) {
       ],
     };
 
-    const tasks = (await db.task.findMany({
-      where: whereCondition,
-      ...(include ? { include } : {}),
-      ...(select ? { select } : {}),
-      ...(orderBy ? { orderBy } : {}),
-      ...(skip !== undefined ? { skip } : {}),
-      ...(take !== undefined ? { take } : {}),
-    })) as Task[];
+    const countWhere: Prisma.TaskWhereInput = {
+      AND: [
+        { companyId },
+        {
+          OR: [
+            { userId: +userId },
+            { taskUser: { some: { userId: +userId } } },
+          ],
+        },
+      ],
+    };
 
-    const totalTasks = await db.task.count({
-      where: {
-        AND: [
-          { companyId },
-          {
-            OR: [
-              { userId: +userId },
-              { taskUser: { some: { userId: +userId } } },
-            ],
-          },
-        ],
-      },
-    });
+    const [tasks, totalTasks] = await Promise.all([
+      db.task.findMany({
+        where: whereCondition,
+        ...(include ? { include } : {}),
+        ...(select ? { select } : {}),
+        ...(orderBy ? { orderBy } : {}),
+        ...(skip !== undefined ? { skip } : {}),
+        ...(take !== undefined ? { take } : {}),
+      }) as Promise<Task[]>,
+      db.task.count({ where: countWhere }),
+    ]);
 
     return {
       data: tasks,

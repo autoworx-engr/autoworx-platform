@@ -62,51 +62,35 @@ export async function updateTask(
 }
 
 async function handleDragEventForGoogleCalendar(updatedTask: Task) {
-  let googleCalendarToken = (await getGoogleCalendarToken())
+  const googleCalendarToken = (await getGoogleCalendarToken())
     ?.googleCalendarToken;
 
   if (
-    googleCalendarToken &&
-    updatedTask.googleEventId &&
-    updatedTask.startTime &&
-    updatedTask.endTime &&
-    updatedTask.date &&
-    updatedTask.title &&
-    updatedTask.description
-  ) {
-    let taskForGoogleCalendar = {
-      title: updatedTask.title,
-      description: updatedTask.description,
-      assignedUsers: [],
-      priority: updatedTask.priority,
-      startTime: updatedTask.startTime,
-      endTime: updatedTask.endTime,
-      date: new Date(updatedTask.date).toISOString(),
-    };
+    !googleCalendarToken ||
+    !updatedTask.startTime ||
+    !updatedTask.endTime ||
+    !updatedTask.date ||
+    !updatedTask.title ||
+    !updatedTask.description
+  )
+    return;
 
+  const taskForGoogleCalendar = {
+    title: updatedTask.title,
+    description: updatedTask.description,
+    assignedUsers: [] as never[],
+    priority: updatedTask.priority,
+    startTime: updatedTask.startTime,
+    endTime: updatedTask.endTime,
+    date: new Date(updatedTask.date).toISOString(),
+  };
+
+  if (updatedTask.googleEventId) {
     await updateGoogleCalendarEvent(
       updatedTask.googleEventId,
       taskForGoogleCalendar,
     );
-  } else if (
-    googleCalendarToken &&
-    !updatedTask.googleEventId &&
-    updatedTask.startTime &&
-    updatedTask.endTime &&
-    updatedTask.date &&
-    updatedTask.title &&
-    updatedTask.description
-  ) {
-    let taskForGoogleCalendar = {
-      title: updatedTask.title,
-      description: updatedTask.description,
-      assignedUsers: [],
-      priority: updatedTask.priority,
-      startTime: updatedTask.startTime,
-      endTime: updatedTask.endTime,
-      date: new Date(updatedTask.date).toISOString(),
-    };
-
+  } else {
     let event = await createGoogleCalendarEvent(taskForGoogleCalendar);
 
     if (event && event.id) {

@@ -81,13 +81,13 @@ export async function createTask(
       });
       const userMap = new Map(assignedUsers.map((u) => [u.id, u]));
 
-      await db.$transaction([
-        ...task.assignedUsers.map((userId) =>
-          db.taskUser.create({
-            data: { taskId: newTask.id, userId, eventId: "null-for-now" },
-          }),
-        ),
-      ]);
+      await db.taskUser.createMany({
+        data: task.assignedUsers.map((userId) => ({
+          taskId: newTask.id,
+          userId,
+          eventId: null,
+        })),
+      });
 
       for (const userId of task.assignedUsers) {
         const assignedUser = userMap.get(userId);
@@ -101,11 +101,6 @@ export async function createTask(
       }
     }
 
-    // revalidatePath("/task");
-    // revalidatePath("/communication/client");
-
-    // if the task has date, start time and end time, then insert it in google calendar
-    // also need to check if google calendar token exists or not, if not, then no need of inserting
     try {
       let googleCalendarToken = (await getGoogleCalendarToken())
         ?.googleCalendarToken;

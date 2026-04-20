@@ -2,7 +2,6 @@
 
 import { db } from "@/lib/db";
 import { ServerAction } from "@/types/action";
-import { Priority } from "@prisma/client";
 
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { sendNewTaskAssignNotification } from "@/lib/notification/task-and-appointment-notify";
@@ -14,17 +13,6 @@ import {
 import { getGoogleCalendarToken } from "../calendar-settings/getGoogleCalendarAuth";
 import createGoogleCalendarEvent from "./google-calendar/createGoogleCalendarEvent";
 import updateGoogleCalendarEvent from "./google-calendar/updateGoogleCalendarEvent";
-
-interface TaskType {
-  title: string;
-  description: string;
-  assignedUsers: number[];
-  priority: Priority;
-  startTime?: string;
-  endTime?: string;
-  date?: string;
-  timezone: string;
-}
 
 export async function editTask({
   id,
@@ -52,12 +40,16 @@ export async function editTask({
 
     await db.$transaction([
       ...toRemove.map((user) => db.taskUser.delete({ where: { id: user.id } })),
-      ...(Array.isArray(toAdd)
-        ? toAdd.map((userId) =>
-            db.taskUser.create({
-              data: { taskId: id, userId, eventId: "null-for-now" },
+      ...(Array.isArray(toAdd) && toAdd.length > 0
+        ? [
+            db.taskUser.createMany({
+              data: toAdd.map((userId) => ({
+                taskId: id,
+                userId,
+                eventId: null,
+              })),
             }),
-          )
+          ]
         : []),
     ]);
 
@@ -135,9 +127,6 @@ export async function editTask({
     } catch (error) {
       console.log("🚀 ~ error:", error);
     }
-
-    // revalidatePath("/task");
-    // revalidatePath("/communication/client");
 
     return {
       type: "success",

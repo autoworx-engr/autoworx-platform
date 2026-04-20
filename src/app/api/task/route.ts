@@ -229,13 +229,13 @@ export async function POST(req: NextRequest) {
       });
       const userMap = new Map(assignedUserList.map((u) => [u.id, u]));
 
-      await db.$transaction(
-        (assignedUsers as number[]).map((userId) =>
-          db.taskUser.create({
-            data: { taskId: newTask.id, userId, eventId: null },
-          }),
-        ),
-      );
+      await db.taskUser.createMany({
+        data: (assignedUsers as number[]).map((userId) => ({
+          taskId: newTask.id,
+          userId,
+          eventId: null,
+        })),
+      });
 
       for (const userId of assignedUsers as number[]) {
         const assignedUser = userMap.get(userId);

@@ -131,14 +131,34 @@ export const EventDetailsSheet = ({
       return;
     }
 
+    // Optimistic: remove from all task query caches keyed by allTasks
+    type TaskLike = { id?: number };
+    const removeFromCache = (key: unknown[]) =>
+      queryClient.setQueryData(key, (old: unknown) =>
+        Array.isArray(old)
+          ? old.filter((t: TaskLike) => t?.id !== taskId)
+          : old,
+      );
+
+    const taskKeys = queryClient
+      .getQueryCache()
+      .getAll()
+      .filter((q) => (q.queryKey as unknown[])[0] === taskQueryKey.allTasks)
+      .map((q) => q.queryKey as unknown[]);
+
+    taskKeys.forEach(removeFromCache);
+    onOpenChange(false);
+
     const result = await deleteTask(taskId);
     if (result.type === "success") {
       successToast("Task Completed successfully.");
       invalidateCalendarQueries();
-      onOpenChange(false);
       return;
     }
 
+    // Rollback on failure
+    taskKeys.forEach((key) => queryClient.invalidateQueries({ queryKey: key }));
+    onOpenChange(true);
     errorToast("Failed to complete task. Please try again.");
   };
 
