@@ -112,23 +112,13 @@ export async function addAppointment(
       },
     });
 
-    // Loop the assigned users and add them to the Google Calendar
-    for (const user of appointment.assignedUsers) {
-      const assignedUser = await db.user.findUnique({
-        where: {
-          id: user,
-        },
-      });
-
-      // TODO: Add the task to the user's Google Calendar
-
-      // Create the task user
-      await db.appointmentUser.create({
-        data: {
+    if (appointment.assignedUsers.length > 0) {
+      await db.appointmentUser.createMany({
+        data: appointment.assignedUsers.map((userId) => ({
           appointmentId: newAppointment.id,
-          userId: user,
-          eventId: "null-for-now",
-        },
+          userId,
+          eventId: null,
+        })),
       });
     }
 
@@ -242,11 +232,6 @@ export async function addAppointment(
       confirmationMessage = confirmationMessage?.replace(
         "<CLIENT>",
         clientName,
-      );
-
-      confirmationMessage = confirmationMessage?.replace(
-        "<DATE>",
-        appointmentDate,
       );
 
       confirmationMessage = confirmationMessage?.replace(
