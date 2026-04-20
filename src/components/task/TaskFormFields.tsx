@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { Check } from "lucide-react";
 import { Select } from "antd";
 import { Priority } from "@prisma/client";
@@ -23,7 +24,7 @@ interface TaskFormFieldsProps {
   endTime: string;
   handleTimeChange: (value: string, type: "start" | "end") => void;
   assignedUsers: number[];
-  setAssignedUsers: (users: number[]) => void;
+  setAssignedUsers: React.Dispatch<React.SetStateAction<number[]>>;
   priority: Priority;
   setPriority: (priority: Priority) => void;
   onlyOneUser?: boolean;

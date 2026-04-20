@@ -167,7 +167,7 @@ export function useTaskForm({
       title,
       description,
       assignedUsers,
-      priority,
+      priority: priority as "Low" | "Medium" | "High",
       startTime,
       endTime,
       date:
@@ -175,7 +175,7 @@ export function useTaskForm({
           ? new Date(date).toISOString()
           : undefined,
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      createdBy: "user",
+      createdBy: "user" as "user" | "sales_agent",
     };
 
     if (fromEdit && taskId) {
@@ -193,8 +193,8 @@ export function useTaskForm({
       res = await createTask({
         ...commonTaskData,
         clientId,
-        leadId: leadId ?? undefined,
-        invoiceId: invoiceId ?? undefined,
+        leadId: leadId || undefined,
+        invoiceId: invoiceId || undefined,
       });
       if (res.type === "success") {
         onTaskCreated && onTaskCreated(res.data as Task);
