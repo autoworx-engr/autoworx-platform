@@ -79,10 +79,8 @@ import { NextRequest, NextResponse } from "next/server";
  *                   nullable: true
  */
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const clientId = Number(params.id);
     const { isSalesAgent } = await req.json();

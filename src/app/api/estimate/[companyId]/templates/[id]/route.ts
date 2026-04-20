@@ -282,11 +282,11 @@ import { db } from "@/lib/db";
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { companyId: string; id: string } },
+  { params }: { params: Promise<{ companyId: string; id: string }> },
 ) {
   try {
-    const companyId = Number(params.companyId);
-    const { id } = params;
+    const { companyId: companyIdParam, id } = await params;
+    const companyId = Number(companyIdParam);
 
     if (!companyId || isNaN(companyId)) {
       return NextResponse.json(
@@ -397,11 +397,11 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { companyId: string; id: string } },
+  { params }: { params: Promise<{ companyId: string; id: string }> },
 ) {
   try {
-    const companyId = Number(params.companyId);
-    const { id } = params;
+    const { companyId: companyIdParam, id } = await params;
+    const companyId = Number(companyIdParam);
 
     if (!companyId || isNaN(companyId)) {
       return NextResponse.json(
@@ -810,11 +810,11 @@ export async function PATCH(
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { companyId: string; id: string } },
+  { params }: { params: Promise<{ companyId: string; id: string }> },
 ) {
   try {
-    const companyId = Number(params.companyId);
-    const { id } = params;
+    const { companyId: companyIdParam, id } = await params;
+    const companyId = Number(companyIdParam);
 
     if (!companyId || isNaN(companyId)) {
       return NextResponse.json(

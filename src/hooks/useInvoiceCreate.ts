@@ -74,10 +74,10 @@ export function useInvoiceCreate(type: InvoiceType) {
           customerComments,
           photos,
           //@ts-ignore
-          items: items.map(item => ({
+          items: items.map((item) => ({
             ...item,
             materials: item.materials.length
-              ? item.materials.map(material => ({
+              ? item.materials.map((material) => ({
                   ...material,
                   categoryId: Number(material?.categoryId) || null,
                   cost: Number(material?.cost) || 0,
@@ -133,7 +133,7 @@ export function useInvoiceCreate(type: InvoiceType) {
         //@ts-ignore
         items: items.map(({ id, ...item }) => ({
           ...item,
-          materials: item.materials.map(material => ({
+          materials: item.materials.map((material) => ({
             ...material,
             categoryId: Number(material?.categoryId) || null,
             cost: Number(material?.cost) || 0,

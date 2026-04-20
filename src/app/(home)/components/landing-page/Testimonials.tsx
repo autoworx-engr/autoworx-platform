@@ -1,3 +1,4 @@
+"use client";
 // import { CarouselTestimonials } from "./CarouselTestimonials";
 import dynamic from "next/dynamic";
 

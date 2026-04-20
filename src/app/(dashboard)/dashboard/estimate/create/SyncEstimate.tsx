@@ -82,9 +82,7 @@ export default function SyncEstimate({
           : template?.serviceFee?.toString() || "0",
       ),
       vehicleExtraCost: parseFloat(
-        invoice
-          ? invoice?.vehicleExtraCost?.toString() || "0"
-          : "0",
+        invoice ? invoice?.vehicleExtraCost?.toString() || "0" : "0",
       ),
       deposit: parseFloat((invoice && invoice.deposit?.toString()) || "0"),
       grandTotal: parseFloat(

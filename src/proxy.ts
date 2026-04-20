@@ -48,14 +48,14 @@ function extractSubdomain(request: NextRequest): string | null {
   const isSubdomain =
     hostname !== rootDomainFormatted &&
     !ignoredSubdomains.some(
-      sub => hostname === `${sub}.${rootDomainFormatted}`,
+      (sub) => hostname === `${sub}.${rootDomainFormatted}`,
     ) &&
     hostname.endsWith(`.${rootDomainFormatted}`);
 
   return isSubdomain ? hostname.replace(`.${rootDomainFormatted}`, "") : null;
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const token = await getToken({ req: request });
   const { pathname } = request.nextUrl;
   const isPublicAssetRequest = /\.[a-zA-Z0-9]+$/.test(pathname);

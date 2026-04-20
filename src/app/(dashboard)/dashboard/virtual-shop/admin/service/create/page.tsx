@@ -30,7 +30,9 @@ export default async function Page({
   searchParams: { serviceId?: string; shopId?: string };
 }) {
   const companyId = await getCompanyId();
-  const serviceId = searchParams?.serviceId ? Number(searchParams.serviceId) : null;
+  const serviceId = searchParams?.serviceId
+    ? Number(searchParams.serviceId)
+    : null;
   const selectedShopId = searchParams?.shopId
     ? Number.parseInt(searchParams.shopId, 10)
     : null;
@@ -112,9 +114,9 @@ export default async function Page({
         })),
         labor: item.labor
           ? {
-            ...item.labor,
-            tags: item.labor.tags.map((tag) => tag.tag),
-          }
+              ...item.labor,
+              tags: item.labor.tags.map((tag) => tag.tag),
+            }
           : null,
         tags: item.tags.map((tag) => tag.tag),
         serviceDesc: item.serviceDesc || "",
@@ -157,7 +159,9 @@ export default async function Page({
   });
 
   labors.forEach((labor) => {
-    (labor as unknown as { tags: Tag[] }).tags = labor.tags.map((tag) => tag.tag);
+    (labor as unknown as { tags: Tag[] }).tags = labor.tags.map(
+      (tag) => tag.tag,
+    );
   });
 
   const materials: (Material & { tags: Tag[] })[] = products.map((product) => ({

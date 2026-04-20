@@ -37,14 +37,14 @@ export async function fetchAndTransformData(
   const statusIds = decodedStatus
     ? decodedStatus
         .split(",")
-        .map(id => {
+        .map((id) => {
           if (isNaN(Number(id))) {
             return undefined;
           } else {
             return Number(id);
           }
         })
-        .filter(id => id !== undefined)
+        .filter((id) => id !== undefined)
     : undefined;
 
   const decodedSearchTerm = decodeURIComponent(searchTerm || "").trim();

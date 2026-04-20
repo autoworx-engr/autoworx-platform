@@ -20,7 +20,13 @@ export const useRemoveLeadMutation = () => {
 
 export const useUpdateLeadColumnMutation = () => {
   return useMutation({
-    mutationFn: async ({ leadId, columnId }: { leadId: number; columnId: number }) => {
+    mutationFn: async ({
+      leadId,
+      columnId,
+    }: {
+      leadId: number;
+      columnId: number;
+    }) => {
       const res = await fetch(`/api/pipeline/sales/leads/${leadId}/column`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -38,7 +44,13 @@ export const useUpdateLeadColumnMutation = () => {
 
 export const useAssignLeadSalesUserMutation = () => {
   return useMutation({
-    mutationFn: async ({ leadId, salesUserId }: { leadId: number; salesUserId: number }) => {
+    mutationFn: async ({
+      leadId,
+      salesUserId,
+    }: {
+      leadId: number;
+      salesUserId: number;
+    }) => {
       const res = await fetch(`/api/pipeline/sales/leads/${leadId}/assign`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -56,7 +68,13 @@ export const useAssignLeadSalesUserMutation = () => {
 
 export const useAddLeadTagMutation = () => {
   return useMutation({
-    mutationFn: async ({ leadId, tagId }: { leadId: number; tagId: number }) => {
+    mutationFn: async ({
+      leadId,
+      tagId,
+    }: {
+      leadId: number;
+      tagId: number;
+    }) => {
       const res = await fetch(`/api/pipeline/sales/leads/${leadId}/tags`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -74,10 +92,19 @@ export const useAddLeadTagMutation = () => {
 
 export const useRemoveLeadTagMutation = () => {
   return useMutation({
-    mutationFn: async ({ leadId, tagId }: { leadId: number; tagId: number }) => {
-      const res = await fetch(`/api/pipeline/sales/leads/${leadId}/tags/${tagId}`, {
-        method: "DELETE",
-      });
+    mutationFn: async ({
+      leadId,
+      tagId,
+    }: {
+      leadId: number;
+      tagId: number;
+    }) => {
+      const res = await fetch(
+        `/api/pipeline/sales/leads/${leadId}/tags/${tagId}`,
+        {
+          method: "DELETE",
+        },
+      );
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
       return data;

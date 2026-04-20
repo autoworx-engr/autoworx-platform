@@ -158,9 +158,10 @@ import { getToken } from "next-auth/jwt";
  */
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } },
+  props: { params: Promise<{ id: string }> },
 ) {
   try {
+    const params = await props.params;
     const { id } = params;
 
     if (!id || isNaN(Number(id))) {
@@ -422,9 +423,10 @@ export async function GET(
  */
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  props: { params: Promise<{ id: string }> },
 ) {
   try {
+    const params = await props.params;
     const serviceId = parseInt(params.id, 10);
     if (isNaN(serviceId)) {
       throw new AppError(400, "Invalid Shop Service ID");
@@ -774,9 +776,10 @@ export async function PUT(
  */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  props: { params: Promise<{ id: string }> },
 ) {
   try {
+    const params = await props.params;
     const authHeader = req.headers.get("authorization") ?? "";
     const accessToken = authHeader.startsWith("Bearer ")
       ? authHeader.split(" ")[1]

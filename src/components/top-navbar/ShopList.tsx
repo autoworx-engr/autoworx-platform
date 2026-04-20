@@ -85,10 +85,11 @@ export default function ShopList({
           className={cn(
             iconOnly
               ? "inline-flex h-9 w-9 items-center justify-center rounded-md text-white outline-none transition-colors "
-              : `group flex w-full items-center justify-between rounded-xl border px-3 py-1.5 text-sm font-medium shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] outline-none transition-all duration-300 focus-visible:ring-2 focus-visible:ring-[#6571FF]/50 focus-visible:ring-offset-1 ${isVirtualShopAdminPath
-                ? "border-slate-200 bg-white/80 text-slate-800 backdrop-blur-md hover:border-slate-300 hover:bg-white hover:shadow-[0_4px_14px_-4px_rgba(0,0,0,0.1)] data-[state=open]:border-[#6571FF]/50 data-[state=open]:bg-white data-[state=open]:shadow-[0_4px_14px_-4px_rgba(101,113,255,0.15)] data-[state=open]:ring-2 data-[state=open]:ring-[#6571FF]/10"
-                : "border-[#6571FF]/20 bg-gradient-to-b from-[#6571FF]/5 to-[#6571FF]/[0.02] text-[#6571FF] hover:border-[#6571FF]/40 hover:from-[#6571FF]/10 hover:to-[#6571FF]/5 data-[state=open]:border-[#6571FF]/50 data-[state=open]:from-[#6571FF]/15 data-[state=open]:to-[#6571FF]/10 data-[state=open]:shadow-md"
-              }`,
+              : `group flex w-full items-center justify-between rounded-xl border px-3 py-1.5 text-sm font-medium shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] outline-none transition-all duration-300 focus-visible:ring-2 focus-visible:ring-[#6571FF]/50 focus-visible:ring-offset-1 ${
+                  isVirtualShopAdminPath
+                    ? "border-slate-200 bg-white/80 text-slate-800 backdrop-blur-md hover:border-slate-300 hover:bg-white hover:shadow-[0_4px_14px_-4px_rgba(0,0,0,0.1)] data-[state=open]:border-[#6571FF]/50 data-[state=open]:bg-white data-[state=open]:shadow-[0_4px_14px_-4px_rgba(101,113,255,0.15)] data-[state=open]:ring-2 data-[state=open]:ring-[#6571FF]/10"
+                    : "border-[#6571FF]/20 bg-gradient-to-b from-[#6571FF]/5 to-[#6571FF]/[0.02] text-[#6571FF] hover:border-[#6571FF]/40 hover:from-[#6571FF]/10 hover:to-[#6571FF]/5 data-[state=open]:border-[#6571FF]/50 data-[state=open]:from-[#6571FF]/15 data-[state=open]:to-[#6571FF]/10 data-[state=open]:shadow-md"
+                }`,
             triggerClassName,
           )}
         >
@@ -125,8 +126,11 @@ export default function ShopList({
               <ChevronDown
                 size={16}
                 strokeWidth={2.5}
-                className={`shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.87,_0,_0.13,_1)] group-data-[state=open]:rotate-180 ${isVirtualShopAdminPath ? "text-slate-400" : "text-[#6571FF]/70"
-                  }`}
+                className={`shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.87,_0,_0.13,_1)] group-data-[state=open]:rotate-180 ${
+                  isVirtualShopAdminPath
+                    ? "text-slate-400"
+                    : "text-[#6571FF]/70"
+                }`}
               />
             </>
           )}
@@ -153,10 +157,11 @@ export default function ShopList({
                   <DropdownMenuItem
                     key={shop.id}
                     onSelect={() => handleShopClick(shop.id)}
-                    className={`group relative flex w-full border border-slate-100 cursor-pointer select-none items-center justify-between rounded-lg px-2 py-1.5 text-sm font-medium outline-none transition-colors data-[highlighted]:bg-slate-100 data-[highlighted]:text-slate-900 ${isSelected && isVirtualShopAdminPath
-                      ? "bg-[#6571FF]/[0.04] text-[#6571FF] data-[highlighted]:bg-[#6571FF]/[0.08] data-[highlighted]:text-[#6571FF]"
-                      : "text-slate-700"
-                      }`}
+                    className={`group relative flex w-full border border-slate-100 cursor-pointer select-none items-center justify-between rounded-lg px-2 py-1.5 text-sm font-medium outline-none transition-colors data-[highlighted]:bg-slate-100 data-[highlighted]:text-slate-900 ${
+                      isSelected && isVirtualShopAdminPath
+                        ? "bg-[#6571FF]/[0.04] text-[#6571FF] data-[highlighted]:bg-[#6571FF]/[0.08] data-[highlighted]:text-[#6571FF]"
+                        : "text-slate-700"
+                    }`}
                   >
                     <div className="flex min-w-0 items-center gap-3">
                       {shop.logoUrl ? (

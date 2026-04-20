@@ -1,5 +1,6 @@
 'use client';
 
+import type { JSX } from 'react';
 import { Dialog, DialogTrigger } from '@/components/Dialog';
 
 import AddLeadModalBody from './AddLeadModalBody';

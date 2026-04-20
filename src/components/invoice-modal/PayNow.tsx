@@ -532,7 +532,9 @@ export function PayNow({
                   </div>
                   <div className="flex gap-2">
                     {tipPercentages.map((percent) => {
-                      const tipVal = parseFloat((baseAmount * (percent / 100)).toFixed(2));
+                      const tipVal = parseFloat(
+                        (baseAmount * (percent / 100)).toFixed(2),
+                      );
                       const isSelected =
                         selectedTipPercent === percent && !customTip;
                       return (
@@ -574,7 +576,10 @@ export function PayNow({
                       }}
                     />
                     <span className="text-sm font-medium text-gray-700">
-                      ${customTip ? parseFloat(customTip || "0").toFixed(2) : "0.00"}
+                      $
+                      {customTip
+                        ? parseFloat(customTip || "0").toFixed(2)
+                        : "0.00"}
                     </span>
                   </div>
                 </div>

@@ -44,7 +44,8 @@ export default function DepositsTab({ shopId = 0 }: DepositsTabProps) {
   const { mutateAsync: updateBookingSettings, isPending: isSaving } =
     useUpdateShopBookingSettings(shopId);
 
-  const label = depositType === "Percentage (%)" ? "Percentage (%)" : "Fixed Amount ($)";
+  const label =
+    depositType === "Percentage (%)" ? "Percentage (%)" : "Fixed Amount ($)";
   const depositTypeItems = [...DEPOSIT_TYPES];
 
   const handleDepositTypeChange = (item: (typeof DEPOSIT_TYPES)[number]) => {
@@ -72,8 +73,8 @@ export default function DepositsTab({ shopId = 0 }: DepositsTabProps) {
     }
 
     if (
-      bookingSettings.depositValue !== null
-      && bookingSettings.depositValue !== undefined
+      bookingSettings.depositValue !== null &&
+      bookingSettings.depositValue !== undefined
     ) {
       setAmount(String(bookingSettings.depositValue));
     } else {
@@ -93,7 +94,6 @@ export default function DepositsTab({ shopId = 0 }: DepositsTabProps) {
     }
 
     if (requireDeposit) {
-
       if (parsedAmount === null || parsedAmount < 0) {
         toast.error("Please enter a valid deposit amount");
         return;

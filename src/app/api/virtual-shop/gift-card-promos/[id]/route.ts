@@ -21,7 +21,7 @@ const updatePromoSchema = z
     isActive: z.boolean().optional(),
   })
   .refine(
-    data => {
+    (data) => {
       if (data.type === "Percentage" && data.value && data.value > 100) {
         return false;
       }
@@ -87,9 +87,10 @@ const updatePromoSchema = z
  */
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  props: { params: Promise<{ id: string }> },
 ) {
   try {
+    const params = await props.params;
     const authHeader = req.headers.get("authorization") ?? "";
     const accessToken = authHeader.startsWith("Bearer")
       ? authHeader.split(" ")[1]
@@ -128,7 +129,7 @@ export async function PATCH(
     if (!parsedBody.success) {
       throw new AppError(
         400,
-        `Validation Error: ${parsedBody.error.errors.map(e => e.message).join(", ")}`,
+        `Validation Error: ${parsedBody.error.errors.map((e) => e.message).join(", ")}`,
       );
     }
 
@@ -228,9 +229,10 @@ export async function PATCH(
  */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  props: { params: Promise<{ id: string }> },
 ) {
   try {
+    const params = await props.params;
     const authHeader = req.headers.get("authorization") ?? "";
     const accessToken = authHeader.startsWith("Bearer")
       ? authHeader.split(" ")[1]

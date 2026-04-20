@@ -1,14 +1,11 @@
 import { Metadata } from "next";
-import dynamic from "next/dynamic";
+import TaskAndActivityClient from "./TaskAndActivityClientDynamic";
 
 export const metadata: Metadata = {
   title: "Task and Activity Management",
 };
 
-const TaskAndActivityClient = dynamic(() => import("./TaskAndActivityClient"), {
-  ssr: false,
-});
-
-export default async function Page({ params }: { params: { type: string } }) {
+export default async function Page(props: { params: Promise<{ type: string }> }) {
+  const params = await props.params;
   return <TaskAndActivityClient params={params} />;
 }

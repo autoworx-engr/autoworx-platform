@@ -24,10 +24,10 @@ import { NextRequest, NextResponse } from "next/server";
  */
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { statementId: string } },
+  { params }: { params: Promise<{ statementId: string }> },
 ) {
   try {
-    const { statementId } = params;
+    const { statementId } = await params;
 
     const statement = await db.fleetStatement.findFirst({
       where: {

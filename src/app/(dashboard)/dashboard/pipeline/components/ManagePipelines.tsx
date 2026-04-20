@@ -20,8 +20,6 @@ interface ManagePipelinesModalProps {
   pipelineType: string;
 }
 
-
-
 export default function ManagePipelines({
   columns,
   onClose,
@@ -36,7 +34,7 @@ export default function ManagePipelines({
       columns.map((column) => ({
         ...column,
         isRestricted: restrictedColumns.includes(column.title),
-      }))
+      })),
     );
   }, [columns]);
 
@@ -194,5 +192,3 @@ export default function ManagePipelines({
     </DndProvider>
   );
 }
-
-

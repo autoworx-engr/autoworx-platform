@@ -35,9 +35,10 @@ import { NextRequest, NextResponse } from "next/server";
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  props: { params: Promise<{ id: string }> },
 ) {
   try {
+    const params = await props.params;
     const leadId = parseInt(params.id);
 
     if (isNaN(leadId)) {

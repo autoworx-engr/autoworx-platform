@@ -53,7 +53,9 @@ export default function VirtualShopTabs({
       return tabs[0]?.href;
     }
 
-    return tabs.find((tab) => pathname.startsWith(tab.href))?.href ?? tabs[0]?.href;
+    return (
+      tabs.find((tab) => pathname.startsWith(tab.href))?.href ?? tabs[0]?.href
+    );
   }, [pathname, tabs]);
 
   useEffect(() => {
@@ -96,20 +98,22 @@ export default function VirtualShopTabs({
                 <Link
                   href={href}
                   data-active={isActive}
-                  className={`group relative flex items-center gap-2.5 rounded-xl px-3 py-2 text-base font-medium transition-all duration-300 ease-out ${isActive
-                    ? "text-white shadow-md shadow-indigo-500/25 ring-1 ring-black/5 -translate-y-px"
-                    : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
-                    }`}
+                  className={`group relative flex items-center gap-2.5 rounded-xl px-3 py-2 text-base font-medium transition-all duration-300 ease-out ${
+                    isActive
+                      ? "text-white shadow-md shadow-indigo-500/25 ring-1 ring-black/5 -translate-y-px"
+                      : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
+                  }`}
                 >
                   {isActive && (
                     <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#6571FF] to-[#5a66ee] -z-10" />
                   )}
                   <Icon
                     size={18}
-                    className={`transition-colors duration-300 ${isActive
-                      ? "text-white"
-                      : "text-slate-400 group-hover:text-[#6571FF]"
-                      }`}
+                    className={`transition-colors duration-300 ${
+                      isActive
+                        ? "text-white"
+                        : "text-slate-400 group-hover:text-[#6571FF]"
+                    }`}
                   />
                   <span className="whitespace-nowrap">{label}</span>
                 </Link>

@@ -65,9 +65,10 @@ import { AppError } from "@/error-boundary/error";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { slug: string } },
+  props: { params: Promise<{ slug: string }> },
 ) {
   try {
+    const params = await props.params;
     const slug = params.slug;
 
     if (!slug) {

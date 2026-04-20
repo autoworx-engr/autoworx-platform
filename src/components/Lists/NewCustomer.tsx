@@ -1,5 +1,6 @@
 "use client";
 
+import type { JSX } from "react";
 import { addCustomer } from "@/actions/client/add";
 import { CLIENT_LIST_KEY } from "@/app/(dashboard)/dashboard/client/_hook/useClientQuery";
 import {

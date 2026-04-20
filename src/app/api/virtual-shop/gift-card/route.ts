@@ -122,7 +122,9 @@ export async function GET(req: Request) {
     if (from || to) {
       where.createdAt = {
         ...(from ? { gte: new Date(from) } : {}),
-        ...(to ? { lte: new Date(new Date(to).setHours(23, 59, 59, 999)) } : {}),
+        ...(to
+          ? { lte: new Date(new Date(to).setHours(23, 59, 59, 999)) }
+          : {}),
       };
     }
 

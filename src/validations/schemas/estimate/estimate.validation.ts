@@ -126,7 +126,7 @@ export const estimateCreateValidationSchema = z
       .default(false),
   })
   .refine(
-    data => {
+    (data) => {
       // Validate that grandTotal is correctly calculated
       // const calculatedTotal =
       //   data.subtotal - data.discount + data.tax - data.deposit;
@@ -141,7 +141,7 @@ export const estimateCreateValidationSchema = z
     },
   )
   .refine(
-    data => {
+    (data) => {
       // Validate that due amount is less than or equal to grand total
       return data.due <= data.grandTotal;
     },
@@ -265,7 +265,7 @@ export const estimateEditValidationSchema = z
   //   },
   // )
   .refine(
-    data => {
+    (data) => {
       // Validate that due amount is less than or equal to grand total
       return data.due <= data.grandTotal;
     },

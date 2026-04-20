@@ -21,10 +21,8 @@ import { Priority } from "@prisma/client";
  *       404:
  *         description: Task not found
  */
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const taskId = Number(params.id);
 
@@ -80,10 +78,8 @@ export async function GET(
  *       200:
  *         description: Task updated
  */
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const taskId = Number(params.id);
     const body = await req.json();
@@ -170,10 +166,8 @@ export async function PATCH(
  *       200:
  *         description: Task deleted
  */
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const taskId = Number(params.id);
 

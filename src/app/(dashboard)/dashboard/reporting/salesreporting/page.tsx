@@ -6,18 +6,19 @@ import { getSalesReportData } from "./getSalesReport";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import CarLoading from "../../../../../components/common/CarLoading";
 import FilterDateRange from "../components/filter/FilterByDateRange";
-import { useState } from "react";
+import { useState, use } from "react";
 import { TFilterModalState } from "../../estimate/CannedLabor";
 import moment from "moment";
 
 type TProps = {
-  searchParams: {
+  searchParams: Promise<{
     startDate?: string;
     endDate?: string;
-  };
+  }>;
 };
 
-export default function Page({ searchParams }: TProps) {
+export default function Page(props: TProps) {
+  const searchParams = use(props.searchParams);
   const timezone = useCompanyTimezone();
   const [activeModal, setActiveModal] = useState({
     dateRange: false,

@@ -55,7 +55,9 @@ export default function ServiceInfo({
     }));
   };
 
-  const handleImageChange: React.ChangeEventHandler<HTMLInputElement> = (event) => {
+  const handleImageChange: React.ChangeEventHandler<HTMLInputElement> = (
+    event,
+  ) => {
     const file = event.target.files?.[0] || null;
 
     onChange((prev) => ({
@@ -77,7 +79,10 @@ export default function ServiceInfo({
             type="text"
             value={serviceTitle}
             onChange={(event) =>
-              onChange((prev) => ({ ...prev, serviceTitle: event.target.value }))
+              onChange((prev) => ({
+                ...prev,
+                serviceTitle: event.target.value,
+              }))
             }
             placeholder="Enter service title"
             className={cn(
@@ -138,7 +143,9 @@ export default function ServiceInfo({
       </div>
 
       <div className="space-y-1">
-        <label className="text-sm font-medium text-slate-700">Service Image</label>
+        <label className="text-sm font-medium text-slate-700">
+          Service Image
+        </label>
         <div className="flex items-center gap-3">
           {shouldShowExistingImage && (
             <img
@@ -177,7 +184,9 @@ export default function ServiceInfo({
             { key: "truck", label: "Truck" },
           ].map((vehicleType) => (
             <div key={vehicleType.key} className="space-y-1">
-              <label className="text-xs text-slate-500">{vehicleType.label}</label>
+              <label className="text-xs text-slate-500">
+                {vehicleType.label}
+              </label>
               <input
                 type="number"
                 min={0}
@@ -190,8 +199,8 @@ export default function ServiceInfo({
                   ] === "0"
                     ? ""
                     : vehicleTypeModifiers[
-                    vehicleType.key as keyof typeof vehicleTypeModifiers
-                    ]
+                        vehicleType.key as keyof typeof vehicleTypeModifiers
+                      ]
                 }
                 onKeyDown={(event) => {
                   if (["e", "E", "+", "-"].includes(event.key)) {

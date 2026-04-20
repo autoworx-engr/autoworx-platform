@@ -28,6 +28,10 @@ export const sendTechnicianJobCompleteNotification = async ({
     // get all company admins and managers
     const getUsers = await getUsersByRole(companyUniqueId, sendRoles, {
       id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      phone: true,
     });
 
     // const vehicleInfo = await db.invoice.findUnique({

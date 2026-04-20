@@ -1,5 +1,6 @@
 "use client";
 
+import type { JSX } from "react";
 import React, { useState, useRef } from "react";
 import { Upload, X, File as FileIcon, Download } from "lucide-react";
 import {

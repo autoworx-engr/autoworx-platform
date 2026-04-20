@@ -1,5 +1,5 @@
-import { db } from "@/lib/db";
-import { Prisma, type PrismaClient } from "@prisma/client";
+import { db, type TransactionClient } from "@/lib/db";
+import { Prisma } from "@prisma/client";
 import { createInvoice } from "@/actions/estimate/invoice/create";
 import { addAppointment } from "@/actions/appointment/addAppointment";
 import { customAlphabet } from "nanoid";
@@ -8,10 +8,7 @@ import { sendBookingConfirmation } from "@/actions/communication/client/sendBook
 
 const roundMoney = (value: number) => Number(value.toFixed(2));
 
-type Tx = Omit<
-  PrismaClient,
-  "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
->;
+type Tx = TransactionClient;
 
 export interface ConfirmBookingParams {
   shopBookingId: number | string;
@@ -40,7 +37,11 @@ export interface ConfirmBookingResult {
 export async function confirmShopBooking(
   params: ConfirmBookingParams,
 ): Promise<ConfirmBookingResult> {
-  const { shopBookingId, cashPaid, giftCardCode: explicitGiftCardCode } = params;
+  const {
+    shopBookingId,
+    cashPaid,
+    giftCardCode: explicitGiftCardCode,
+  } = params;
   const bookingId = Number(shopBookingId);
   const incomingCash = roundMoney(Math.max(0, Number(cashPaid)));
 
@@ -80,9 +81,7 @@ export async function confirmShopBooking(
 
     // Resolve gift card code: explicit param takes priority, else use stored one
     const giftCardCode =
-      explicitGiftCardCode ||
-      (booking as any).pendingGiftCardCode ||
-      undefined;
+      explicitGiftCardCode || (booking as any).pendingGiftCardCode || undefined;
 
     // If already confirmed with an invoice, handle late gift card redemption
     if (booking.status === "CONFIRMED" && booking.invoiceId) {
@@ -124,9 +123,7 @@ export async function confirmShopBooking(
               },
             });
 
-            const origGT = roundMoney(
-              Number(booking.invoice?.grandTotal || 0),
-            );
+            const origGT = roundMoney(Number(booking.invoice?.grandTotal || 0));
             const newGT = roundMoney(origGT - gcAmt);
             const existingDeposit = roundMoney(
               Number(booking.invoice?.deposit || 0),
@@ -182,9 +179,7 @@ export async function confirmShopBooking(
     });
 
     // 3. Build invoice items
-    const allInvoiceItems = selectedServices.flatMap(
-      (srv) => srv.invoiceItems,
-    );
+    const allInvoiceItems = selectedServices.flatMap((srv) => srv.invoiceItems);
 
     const items = allInvoiceItems.map(({ id, ...item }) => ({
       ...item,
@@ -252,17 +247,13 @@ export async function confirmShopBooking(
         );
       }
 
-      const availableBalance = roundMoney(
-        Number(giftCard.currentBalance || 0),
-      );
+      const availableBalance = roundMoney(Number(giftCard.currentBalance || 0));
       if (availableBalance <= 0) {
         throw new Error("Gift card has no balance to redeem");
       }
 
       // Gift card covers what's left of the deposit after cash
-      const depositRequired = roundMoney(
-        Number(booking.depositRequired || 0),
-      );
+      const depositRequired = roundMoney(Number(booking.depositRequired || 0));
       const remainingAfterCash = roundMoney(
         Math.max(0, depositRequired - incomingCash),
       );
@@ -445,8 +436,7 @@ export async function confirmShopBooking(
             model: booking.vehicle.model,
           }
         : null,
-      services:
-        booking.services?.map((s) => ({ title: s.title })) || null,
+      services: booking.services?.map((s) => ({ title: s.title })) || null,
       isDeposit: true,
     });
 

@@ -34,7 +34,7 @@ export const requestEstimate = async (
     // }
 
     const { requestEstimateFromDB } = await db.$transaction(async (prisma) => {
-      const origin = headers().get("origin");
+      const origin = (await headers()).get("origin");
 
       const receiverCompanyDataFormDB = await prisma.company.findUnique({
         where: {

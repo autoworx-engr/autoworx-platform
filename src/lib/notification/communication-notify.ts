@@ -157,6 +157,7 @@ export const sendCollaborationMessageNotification = async ({
       lastName: true,
       email: true,
       phone: true,
+      companyId: true,
     });
 
     const sessionUser = await getUser();

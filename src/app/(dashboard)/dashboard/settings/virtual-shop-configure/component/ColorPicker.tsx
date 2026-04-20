@@ -1,8 +1,16 @@
 import React from "react";
 
 const PRESETS = [
-  "#4f6ef7","#e74c3c","#2ecc71","#f5a623",
-  "#9b59b6","#1abc9c","#e67e22","#34495e","#e91e63","#00bcd4",
+  "#4f6ef7",
+  "#e74c3c",
+  "#2ecc71",
+  "#f5a623",
+  "#9b59b6",
+  "#1abc9c",
+  "#e67e22",
+  "#34495e",
+  "#e91e63",
+  "#00bcd4",
 ];
 
 interface ColorPickerProps {
@@ -11,7 +19,11 @@ interface ColorPickerProps {
   onChange: (value: string) => void;
 }
 
-export const ColorPicker: React.FC<ColorPickerProps> = ({ label, value, onChange }) => {
+export const ColorPicker: React.FC<ColorPickerProps> = ({
+  label,
+  value,
+  onChange,
+}) => {
   return (
     <div>
       <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">
@@ -38,7 +50,6 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ label, value, onChange
         <span className="text-sm font-mono font-medium text-gray-800 flex-1">
           {value.toUpperCase()}
         </span>
-        
       </div>
 
       {/* Swatches */}
@@ -52,7 +63,8 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ label, value, onChange
             className="w-6 h-6 rounded-md border border-gray-200 hover:scale-110 transition-transform flex-shrink-0"
             style={{
               background: preset,
-              outline: value.toLowerCase() === preset ? `2px solid ${preset}` : "none",
+              outline:
+                value.toLowerCase() === preset ? `2px solid ${preset}` : "none",
               outlineOffset: "2px",
             }}
           />

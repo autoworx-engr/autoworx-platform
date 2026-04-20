@@ -12,7 +12,6 @@ export const useShopInfo = (initialData?: any) => {
     isError,
   } = useGetShopBySlug(slug, initialData);
 
-
   return {
     shop,
     isPending,

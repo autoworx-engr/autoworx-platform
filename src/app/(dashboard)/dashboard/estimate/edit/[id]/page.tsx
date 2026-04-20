@@ -23,13 +23,14 @@ import EstimateInspectionsTab from "../../create/tabs/EstimateInspectionsTab";
 import PaymentTab from "../../create/tabs/PaymentTab";
 import DynamicTemplateLoader from "../../DynamicTemplateLoader";
 
-export default async function Page({
-  params,
-  searchParams,
-}: {
-  params: { id: string };
-  searchParams: { clientId?: string; templateId?: string };
-}) {
+export default async function Page(
+  props: {
+    params: Promise<{ id: string }>;
+    searchParams: Promise<{ clientId?: string; templateId?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const session = await getServerSession(authOptions);
   const templateId = searchParams.templateId ? searchParams.templateId : null;
 

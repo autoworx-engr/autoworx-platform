@@ -5,19 +5,18 @@ import { cn } from "@/lib/cn";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import { Client, Vehicle } from "@prisma/client";
-import dynamic from "next/dynamic";
 import ClientEstimates from "./ClientEstimates";
 import SaveAttachment from "./SaveAttachment";
 import TaskActions from "./TaskActions";
-const AppointmentListClient = dynamic(() => import("./AppointmentListClient"), {
-  ssr: false,
-});
+import {
+  AppointmentListClient,
+  ClientNotes,
+} from "./ClientDescriptionDynamics";
+
 type TProps = {
   client?: Client | null;
   vehicles?: Partial<Vehicle>[];
 };
-
-const ClientNotes = dynamic(() => import("./ClientNotes"), { ssr: false });
 
 export default async function ClientDescription({ client, vehicles }: TProps) {
   if (!client) return null;

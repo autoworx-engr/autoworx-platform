@@ -3,30 +3,18 @@
 import UserBugReport from "@/components/bug-report/UserBugReport";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import getUser from "@/lib/getUser";
 import { stateStore } from "@/stores/stateStore";
-import { User } from "@prisma/client";
 import { Bug, Mail, RefreshCcw, ServerCrash } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 
 export default function ServerError({ error }: { error: Error }) {
   console.error("Server Error Log:", error);
-  const [user, setUser] = useState<User | null>(null);
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await getUser();
-        setUser(res);
-      } catch (error) {
-        console.error("Failed to fetch user:", error);
-      }
-    };
-    fetchUser();
-  }, []);
-
   const { setIsNewBugOpen } = stateStore();
+  const { data: session } = useSession();
+  const user = session?.user;
+
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-white to-gray-100 p-4">
       <Card className="w-full max-w-3xl space-y-8 p-6 md:p-12">

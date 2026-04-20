@@ -1,5 +1,10 @@
 import React from "react";
-import { GiftCardPurchaseSummary, GiftCardStatusFilter, STATUS_FILTERS, filterButtonClasses } from "./types";
+import {
+  GiftCardPurchaseSummary,
+  GiftCardStatusFilter,
+  STATUS_FILTERS,
+  filterButtonClasses,
+} from "./types";
 
 interface GiftCardStatusTabsProps {
   status: GiftCardStatusFilter;
@@ -7,7 +12,11 @@ interface GiftCardStatusTabsProps {
   onStatusChange: (status: GiftCardStatusFilter) => void;
 }
 
-export function GiftCardStatusTabs({ status, summary, onStatusChange }: GiftCardStatusTabsProps) {
+export function GiftCardStatusTabs({
+  status,
+  summary,
+  onStatusChange,
+}: GiftCardStatusTabsProps) {
   return (
     <div className="flex flex-wrap gap-2">
       {STATUS_FILTERS.map((f) => {
@@ -15,7 +24,9 @@ export function GiftCardStatusTabs({ status, summary, onStatusChange }: GiftCard
         const count =
           f === "ALL"
             ? summary.totalIssued
-            : (summary.statusBreakdown[f as keyof typeof summary.statusBreakdown] ?? 0);
+            : (summary.statusBreakdown[
+                f as keyof typeof summary.statusBreakdown
+              ] ?? 0);
         return (
           <button
             key={f}

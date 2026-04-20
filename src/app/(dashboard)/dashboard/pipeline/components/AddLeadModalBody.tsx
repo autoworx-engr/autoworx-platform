@@ -202,7 +202,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
           type: "success",
         });
 
-       successToast("Lead created successfully!");
+        successToast("Lead created successfully!");
         // Invalidate and refetch pipeline data
         await queryClient.invalidateQueries({
           queryKey: [salesPipelineKeyStr.salesPipeline],

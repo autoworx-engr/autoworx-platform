@@ -17,11 +17,12 @@ import { TemplateBillSummary } from "../TemplateBillSummary";
 import SyncEstimate from "../../create/SyncEstimate";
 import Header from "../../create/Header";
 
-export default async function Page({
-  searchParams,
-}: {
-  searchParams: { templateId?: string; isEdit?: boolean };
-}) {
+export default async function Page(
+  props: {
+    searchParams: Promise<{ templateId?: string; isEdit?: boolean }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const isEdit = searchParams?.isEdit;
   // console.log("isEdit", isEdit, "templateId", searchParams?.templateId);
   const companyId = await getCompanyId();
