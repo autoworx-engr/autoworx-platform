@@ -64,10 +64,11 @@ export async function createTask(
       data: taskData,
     });
 
-    for (const user of task.assignedUsers) {
-      const assignedUser = await db.user.findUnique({
+    if (task.assignedUsers.length > 0) {
+      const assignedUsers = await db.user.findMany({
         where: {
-          id: user,
+          id: { in: task.assignedUsers },
+          companyId: session.user.companyId,
         },
         select: {
           id: true,
@@ -78,24 +79,26 @@ export async function createTask(
           phone: true,
         },
       });
-      if (assignedUser) {
-        sendNewTaskAssignNotification({
-          taskTitle: task.title,
-          taskDate: task.date,
-          assignTaskUser: assignedUser,
-        });
+      const userMap = new Map(assignedUsers.map((u) => [u.id, u]));
+
+      await db.$transaction([
+        ...task.assignedUsers.map((userId) =>
+          db.taskUser.create({
+            data: { taskId: newTask.id, userId, eventId: "null-for-now" },
+          }),
+        ),
+      ]);
+
+      for (const userId of task.assignedUsers) {
+        const assignedUser = userMap.get(userId);
+        if (assignedUser) {
+          sendNewTaskAssignNotification({
+            taskTitle: task.title,
+            taskDate: task.date,
+            assignTaskUser: assignedUser,
+          });
+        }
       }
-
-      // TODO: Add the task to the user's Google Calendar
-
-      // Create the task user
-      await db.taskUser.create({
-        data: {
-          taskId: newTask.id,
-          userId: user,
-          eventId: "null-for-now",
-        },
-      });
     }
 
     // revalidatePath("/task");

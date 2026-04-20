@@ -50,49 +50,34 @@ export async function editTask({
       (userId) => !taskUsers.find((taskUser) => taskUser.userId === userId),
     );
 
-    // Remove the users
-    for (const user of toRemove) {
-      // TODO: Remove the task from the user's Google Calendar
+    await db.$transaction([
+      ...toRemove.map((user) => db.taskUser.delete({ where: { id: user.id } })),
+      ...(Array.isArray(toAdd)
+        ? toAdd.map((userId) =>
+            db.taskUser.create({
+              data: { taskId: id, userId, eventId: "null-for-now" },
+            }),
+          )
+        : []),
+    ]);
 
-      await db.taskUser.delete({
-        where: {
-          id: user.id,
+    if (Array.isArray(toAdd) && toAdd.length > 0) {
+      const addedUsers = await db.user.findMany({
+        where: { id: { in: toAdd } },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          companyId: true,
+          phone: true,
         },
       });
-    }
-
-    if (Array.isArray(toAdd)) {
-      // Add the users
-      for (const user of toAdd) {
-        // TODO: Add the task to the user's Google Calendar
-
-        const assignedUser = await db.user.findUnique({
-          where: { id: user },
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-            companyId: true,
-            phone: true,
-          },
-        });
-
-        if (assignedUser) {
-          sendNewTaskAssignNotification({
-            taskTitle: task.title,
-            taskDate: task.date,
-            assignTaskUser: assignedUser,
-          });
-        }
-
-        // Create the task user
-        await db.taskUser.create({
-          data: {
-            taskId: id,
-            userId: user,
-            eventId: "null-for-now",
-          },
+      for (const assignedUser of addedUsers) {
+        sendNewTaskAssignNotification({
+          taskTitle: task.title,
+          taskDate: task.date,
+          assignTaskUser: assignedUser,
         });
       }
     }

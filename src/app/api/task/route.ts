@@ -216,19 +216,29 @@ export async function POST(req: NextRequest) {
 
     // Create TaskUser (relation table)
     if (assignedUsers?.length > 0) {
-      for (const userId of assignedUsers as number[]) {
-        const assignedUser = await db.user.findUnique({
-          where: { id: userId },
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-            companyId: true,
-            phone: true,
-          },
-        });
+      const assignedUserList = await db.user.findMany({
+        where: { id: { in: assignedUsers as number[] }, companyId },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          companyId: true,
+          phone: true,
+        },
+      });
+      const userMap = new Map(assignedUserList.map((u) => [u.id, u]));
 
+      await db.$transaction(
+        (assignedUsers as number[]).map((userId) =>
+          db.taskUser.create({
+            data: { taskId: newTask.id, userId, eventId: null },
+          }),
+        ),
+      );
+
+      for (const userId of assignedUsers as number[]) {
+        const assignedUser = userMap.get(userId);
         if (assignedUser) {
           await sendNewTaskAssignNotification({
             taskTitle: title,
@@ -236,14 +246,6 @@ export async function POST(req: NextRequest) {
             assignTaskUser: assignedUser,
           });
         }
-
-        await db.taskUser.create({
-          data: {
-            taskId: newTask.id,
-            userId,
-            eventId: null,
-          },
-        });
       }
     }
     await sendNewTaskNotification({

@@ -1,46 +1,41 @@
 "use server";
 import { authOptions } from "@/authOptions";
 import { db } from "@/lib/db";
-import { EmployeeType, Prisma, Task } from "@prisma/client";
+import { Prisma, Task } from "@prisma/client";
 import { getServerSession } from "next-auth";
+import { TaskQueryParams } from "./getTasks";
 
-export default async function getAllTasks(params?: Prisma.TaskFindManyArgs) {
+export default async function getAllTasks(params?: TaskQueryParams) {
   const session = await getServerSession(authOptions);
   try {
     const companyId = session?.user?.companyId;
     if (!companyId) {
       throw new Error("Company ID is required to fetch tasks.");
     }
-    const employeeType = session?.user?.employeeType as EmployeeType;
-    let tasks: Task[] = [];
-    let totalTasks: number = 0;
-
-    const { where, ...restParams } = params || {};
     const userId = session?.user?.id;
     if (!userId) {
       throw new Error("User ID is required to fetch tasks.");
     }
 
-    // Get tasks created by user OR assigned to user
-    const whereCondition = {
-      companyId,
-      //   OR: [
-      //     { userId: +userId }, // Tasks created by the user
-      //     { taskUser: { some: { userId: +userId } } }, // Tasks assigned to the user
-      //   ],
-      ...(where || {}),
+    const { where, include, select, orderBy, skip, take } = params || {};
+
+    // companyId is always enforced as the outermost AND condition so no
+    // caller-supplied OR can escape the tenant boundary.
+    const whereCondition: Prisma.TaskWhereInput = {
+      AND: [{ companyId }, ...(where ? [where] : [])],
     };
 
-    tasks = await db.task.findMany({
+    const tasks = (await db.task.findMany({
       where: whereCondition,
-      ...restParams,
-    });
+      ...(include ? { include } : {}),
+      ...(select ? { select } : {}),
+      ...(orderBy ? { orderBy } : {}),
+      ...(skip !== undefined ? { skip } : {}),
+      ...(take !== undefined ? { take } : {}),
+    })) as Task[];
 
-    totalTasks = await db.task.count({
-      where: {
-        companyId,
-        // OR: [{ userId: +userId }, { taskUser: { some: { userId: +userId } } }],
-      },
+    const totalTasks = await db.task.count({
+      where: { companyId },
     });
 
     return {
