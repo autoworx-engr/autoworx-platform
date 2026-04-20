@@ -13,6 +13,7 @@ export async function createHoliday(
   selectedMonth: string,
   selectedYear: number,
 ) {
+  const companyId = holidays[0]?.companyId;
   try {
     const holidaysFromDB = await Promise.all(
       holidays.map(async (holiday) => {
@@ -40,6 +41,7 @@ export async function createHoliday(
     );
     await db.holiday.deleteMany({
       where: {
+        companyId,
         date: {
           notIn: holidaysFromDB.map((holiday) => holiday.date as string),
         },

@@ -6,8 +6,22 @@ export type CalendarFilterOption = {
   name: string;
 };
 
+type TaskUserEntry = {
+  userId: number;
+  user?: {
+    id: number;
+    firstName?: string | null;
+    lastName?: string | null;
+  };
+};
+
+type CalendarTask = {
+  taskUser?: TaskUserEntry[];
+  [key: string]: unknown;
+};
+
 type UseCalendarFiltersParams = {
-  tasks: any[];
+  tasks: CalendarTask[];
   appointments: any[];
   holidays: any[];
   selectedTeamMateIds: number[];
@@ -29,12 +43,11 @@ export function useCalendarFilters({
   const teamMateOptions = useMemo(() => {
     const matesMap = new Map<number, CalendarFilterOption>();
 
-    tasks.forEach((task: any) => {
-      task?.taskUser?.forEach((taskUser: any) => {
-        const user = taskUser?.user;
-        const userId = Number(user?.id ?? taskUser?.userId);
+    tasks.forEach((task) => {
+      task?.taskUser?.forEach((taskUser) => {
+        const userId = Number(taskUser.user?.id ?? taskUser.userId);
         if (!userId) return;
-        const fullName = [user?.firstName, user?.lastName]
+        const fullName = [taskUser.user?.firstName, taskUser.user?.lastName]
           .filter(Boolean)
           .join(" ")
           .trim();
@@ -81,9 +94,9 @@ export function useCalendarFilters({
   const filteredTasks = useMemo(() => {
     if (selectedTeamMateIds.length === 0) return tasks;
     const selectedSet = new Set(selectedTeamMateIds);
-    return tasks.filter((task: any) =>
-      task?.taskUser?.some((taskUser: any) => {
-        const id = Number(taskUser?.userId ?? taskUser?.user?.id);
+    return tasks.filter((task) =>
+      task?.taskUser?.some((taskUser) => {
+        const id = Number(taskUser.user?.id ?? taskUser.userId);
         return selectedSet.has(id);
       }),
     );
