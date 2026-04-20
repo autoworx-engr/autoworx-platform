@@ -3,6 +3,7 @@ import { getEmployees } from "@/actions/employee/get";
 import { updateInvoiceStatus } from "@/actions/estimate/invoice/updateInvoiceStatus";
 import { updateTechnicianStatustoComplete } from "@/actions/estimate/invoice/updateTechnicianStatustoComplete";
 import { updateAssignedTo } from "@/actions/pipelines/getWorkOrders";
+import { getWorkOrdersByColumn } from "@/actions/pipelines/getWorkOrdersPaginated";
 import {
   removeInvoiceTag,
   saveInvoiceTag,
@@ -30,6 +31,7 @@ import DroppableColumn from "./DroppableColumn";
 import PipelineLoadingSkeleton from "./PipelineLoadingSkeleton";
 import SearchScroll from "./SearchScroll";
 
+const PIPELINE_PAGE_SIZE = 10;
 interface PipelinesProps {
   pipelinesTitle: string;
   columns?: Column[];
@@ -37,6 +39,12 @@ interface PipelinesProps {
   loading?: boolean;
   isTechnician?: boolean;
 }
+
+type ColumnMeta = {
+  hasMore: boolean;
+  loadedCount: number;
+  isLoading: boolean;
+};
 
 export default function PipelinesCopy({
   pipelinesTitle: pipelineType,
@@ -48,29 +56,42 @@ export default function PipelinesCopy({
   const router = useRouter();
 
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
-
   const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(
     null,
   );
   const [pipelineData, setPipelineData] =
     useState<ShopPipelineData[]>(shopPipelineDataProp);
   const [companyUsers, setCompanyUsers] = useState<User[]>([]);
-
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  // References for scrolling to leads
+
   const columnRefs = useRef<(HTMLDivElement | null)[]>([]);
   const leadRefs = useRef<Map<string, HTMLLIElement>>(new Map());
-  const currentHighlightRef = useRef<HTMLLIElement | null>(null);
   const dragDropContextRef = useRef<HTMLDivElement | null>(null);
+  const loadingColumnsRef = useRef<Set<number>>(new Set());
   const [screenWidth, setScreenWidth] = useState<number>(window.innerWidth);
 
   const currentUser = useGetCurrentUser();
-
-  // Get search term from store
   const { searchTerm, resetStatus } = usePipelineFilterStore((state) => state);
   const [selectedSearchColumnId, setSelectedSearchColumnId] = useState<
     number | null
   >(null);
+
+  // Per-column pagination metadata keyed by column id
+  const [columnMeta, setColumnMeta] = useState<Record<number, ColumnMeta>>(
+    () => {
+      const initial: Record<number, ColumnMeta> = {};
+      for (const col of shopPipelineDataProp) {
+        if (col.id !== null) {
+          initial[col.id] = {
+            hasMore: col.hasMore ?? false,
+            loadedCount: col.leads.length,
+            isLoading: false,
+          };
+        }
+      }
+      return initial;
+    },
+  );
 
   function updateWidth() {
     setScreenWidth(window.innerWidth);
@@ -85,10 +106,21 @@ export default function PipelinesCopy({
 
   useEffect(() => {
     setPipelineData(shopPipelineDataProp);
-    // Reset refs when data changes
     columnRefs.current = new Array(shopPipelineDataProp.length).fill(null);
     leadRefs.current = new Map();
     setIsLoading(false);
+
+    const meta: Record<number, ColumnMeta> = {};
+    for (const col of shopPipelineDataProp) {
+      if (col.id !== null) {
+        meta[col.id] = {
+          hasMore: col.hasMore ?? false,
+          loadedCount: col.leads.length,
+          isLoading: false,
+        };
+      }
+    }
+    setColumnMeta(meta);
   }, [shopPipelineDataProp]);
 
   useEffect(() => {
@@ -103,19 +135,68 @@ export default function PipelinesCopy({
     fetchCompanyUsers();
   }, [router]);
 
+  const loadMoreForColumn = useCallback(
+    async (columnIndex: number) => {
+      const column = pipelineData[columnIndex];
+      if (!column?.id) return;
+
+      const meta = columnMeta[column.id];
+      if (!meta?.hasMore) return;
+
+      // Ref-based synchronous guard prevents duplicate in-flight requests
+      if (loadingColumnsRef.current.has(column.id)) return;
+      loadingColumnsRef.current.add(column.id);
+
+      setColumnMeta((prev) => ({
+        ...prev,
+        [column.id!]: { ...prev[column.id!], isLoading: true },
+      }));
+
+      try {
+        const result = await getWorkOrdersByColumn(
+          column.id,
+          meta.loadedCount,
+          PIPELINE_PAGE_SIZE,
+          isTechnician ? Number(currentUser?.id) : undefined,
+        );
+
+        setPipelineData((prev) => {
+          const next = [...prev];
+          next[columnIndex] = {
+            ...next[columnIndex],
+            leads: [...next[columnIndex].leads, ...result.leads],
+          };
+          return next;
+        });
+
+        setColumnMeta((prev) => ({
+          ...prev,
+          [column.id!]: {
+            hasMore: result.hasMore,
+            loadedCount: meta.loadedCount + result.leads.length,
+            isLoading: false,
+          },
+        }));
+      } catch {
+        setColumnMeta((prev) => ({
+          ...prev,
+          [column.id!]: { ...prev[column.id!], isLoading: false },
+        }));
+      } finally {
+        loadingColumnsRef.current.delete(column.id);
+      }
+    },
+    [pipelineData, columnMeta, isTechnician, currentUser?.id],
+  );
+
   // Filter pipeline data based on search term
   const filteredPipelineData = useMemo(() => {
     let result = pipelineData;
-
-    // First, if a specific column is selected in search filter,
-    // we can either filter the whole columns array, or just clear leads from other columns.
-    // Making other columns empty is usually better for a Kanban to maintain structure.
 
     if (searchTerm && searchTerm.trim() !== "") {
       const lowerSearchTerm = searchTerm.toLowerCase();
 
       result = result.map((column) => {
-        // If a column filter is active and it's not THIS column, return empty leads
         if (
           selectedSearchColumnId !== null &&
           column.id !== selectedSearchColumnId
@@ -126,22 +207,17 @@ export default function PipelinesCopy({
         return {
           ...column,
           leads: column.leads.filter((lead) => {
-            // Search by client name
             const nameMatch = (lead.name || "")
               .toLowerCase()
               .includes(lowerSearchTerm);
-
-            // Search by vehicle information
             const vehicleMatch =
               lead.vehicle &&
               lead.vehicle.toLowerCase().includes(lowerSearchTerm);
-
             return nameMatch || vehicleMatch;
           }),
         };
       });
     } else {
-      // If no search term but a column is selected
       if (selectedSearchColumnId !== null) {
         result = result.map((column) => {
           if (column.id !== selectedSearchColumnId) {
@@ -163,7 +239,6 @@ export default function PipelinesCopy({
     index: number;
   } | null>(null);
 
-  // State for appointment modal
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
 
   const [tag, setTag] = useState<Tag>();
@@ -189,7 +264,6 @@ export default function PipelinesCopy({
 
       const { columnIndex, leadIndex } = result;
 
-      // Scroll to the column first
       if (columnRefs.current[columnIndex]) {
         columnRefs.current[columnIndex]?.scrollIntoView({
           behavior: "smooth",
@@ -197,9 +271,7 @@ export default function PipelinesCopy({
           inline: "start",
         });
 
-        // Wait a bit for the column scroll to complete before scrolling to the lead
         setTimeout(() => {
-          // Generate the key the same way we do when creating refs
           const leadKey = `${columnIndex}-${leadIndex}`;
           const leadElement = leadRefs.current.get(leadKey);
 
@@ -209,7 +281,6 @@ export default function PipelinesCopy({
               block: "nearest",
             });
 
-            // Highlight the found item temporarily
             leadElement.classList.add(
               "bg-yellow-200",
               "border-yellow-300",
@@ -240,8 +311,6 @@ export default function PipelinesCopy({
     } else {
       setOpenDropdownIndex({ category: categoryIndex, index: leadIndex });
     }
-
-    // console.log(categoryIndex, leadIndex);
   };
 
   const createEmployeeSelectHandler =
@@ -251,13 +320,11 @@ export default function PipelinesCopy({
       const resolvedValue =
         typeof value === "function" ? value(selectedEmployees[key]) : value;
 
-      // Update the selected employee in the state
       setSelectedEmployees((prevState) => ({
         ...prevState,
         [key]: resolvedValue,
       }));
 
-      // Close the dropdown
       setOpenDropdownIndex(null);
 
       const invoiceId = pipelineData[categoryIndex].leads[leadIndex].invoiceId;
@@ -266,16 +333,11 @@ export default function PipelinesCopy({
         try {
           const response = await updateAssignedTo(invoiceId, resolvedValue.id);
           if (response.success) {
-            // Update pipelineData to persist the selected employee in the UI
             const updatedPipelineData = [...pipelineData];
             updatedPipelineData[categoryIndex].leads[leadIndex].assignedTo =
               resolvedValue;
-
             setPipelineData(updatedPipelineData);
           } else {
-            console.error("Failed to update assigned employee");
-          }
-          if (!response.success) {
             console.error("Failed to update assigned employee");
           }
         } catch (error) {
@@ -297,14 +359,12 @@ export default function PipelinesCopy({
     }));
   };
 
-  //for tag handling
   const handleTagSelect = async (
     categoryIndex: number,
     leadIndex: number,
     selectedTag: Tag | undefined,
   ) => {
     if (selectedTag) {
-      const key = `${categoryIndex}-${leadIndex}`;
       const invoiceId = pipelineData[categoryIndex].leads[leadIndex].invoiceId;
       try {
         const result = await saveInvoiceTag(invoiceId, selectedTag.id);
@@ -330,21 +390,17 @@ export default function PipelinesCopy({
     }
   };
 
-  // Handle tag removal
   const handleTagRemove = async (
     categoryIndex: number,
     leadIndex: number,
     tagToRemove: Tag,
   ) => {
-    const key = `${categoryIndex}-${leadIndex}`;
     const invoiceId = pipelineData[categoryIndex].leads[leadIndex].invoiceId;
 
     try {
-      // Remove the tag from the database
       const result = await removeInvoiceTag(invoiceId, tagToRemove.id);
 
       if (result) {
-        // Update the UI after removing the tag
         const updatedPipelineData = [...pipelineData];
         updatedPipelineData[categoryIndex].leads[leadIndex].tags =
           updatedPipelineData[categoryIndex].leads[leadIndex].tags.filter(
@@ -357,7 +413,6 @@ export default function PipelinesCopy({
     }
   };
 
-  //service
   const handleServiceDropdownToggle = (
     categoryIndex: number,
     leadIndex: number,
@@ -551,7 +606,6 @@ export default function PipelinesCopy({
 
   return (
     <>
-      {/* Add the search component at the top */}
       <div className="mb-4 px-2">
         <SearchScroll
           pipelineData={filteredPipelineData}
@@ -571,7 +625,9 @@ export default function PipelinesCopy({
             {filteredPipelineData.map((item, categoryIndex) => (
               <DroppableColumn
                 key={categoryIndex}
-                columnRefs={columnRefs}
+                setColumnRef={(el) => {
+                  columnRefs.current[categoryIndex] = el;
+                }}
                 categoryIndex={categoryIndex}
                 item={item}
                 openDropdownIndex={openDropdownIndex}
@@ -600,6 +656,17 @@ export default function PipelinesCopy({
                 setSelectedVehicleId={setSelectedVehicleId}
                 setIsAppointmentModalOpen={setIsAppointmentModalOpen}
                 searchTerm={searchTerm}
+                hasMore={
+                  item.id !== null
+                    ? (columnMeta[item.id]?.hasMore ?? false)
+                    : false
+                }
+                isLoadingMore={
+                  item.id !== null
+                    ? (columnMeta[item.id]?.isLoading ?? false)
+                    : false
+                }
+                onLoadMore={() => loadMoreForColumn(categoryIndex)}
               />
             ))}
           </div>
@@ -612,14 +679,12 @@ export default function PipelinesCopy({
           vehicleId={selectedVehicleId}
           isModalOpen={isAppointmentModalOpen}
           setIsModalOpen={setIsAppointmentModalOpen}
-          onAppointmentCreated={(appointment) => {
-            // Handle appointment created
+          onAppointmentCreated={() => {
             setIsAppointmentModalOpen(false);
             setSelectedClientId(null);
             setSelectedVehicleId(null);
           }}
-          onAppointmentUpdated={(appointment) => {
-            // Handle appointment updated
+          onAppointmentUpdated={() => {
             setIsAppointmentModalOpen(false);
             setSelectedClientId(null);
             setSelectedVehicleId(null);

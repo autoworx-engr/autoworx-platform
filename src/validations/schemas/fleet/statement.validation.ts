@@ -30,6 +30,7 @@ export const makeFleetStatementPaymentValidationSchema = z.object({
     required_error: "Payment method is required",
   }),
   notes: z.string().optional(),
+  date: z.date().optional(),
   // Additional payment data based on method
   checkNumber: z.string().optional(),
   creditCard: z.string().optional(),

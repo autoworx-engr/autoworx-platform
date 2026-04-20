@@ -75,7 +75,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [cash, setCash] = useState<string>("");
   const [amount, setAmount] = useState<number | string>(totalDue);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(
-    null
+    null,
   );
   const [openPaymentMethod, setOpenPaymentMethod] = useState(false);
   const [paymentMethodInput, setPaymentMethodInput] = useState("");
@@ -126,6 +126,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         amount: roundedAmount,
         paymentMethod: tab as PaymentType,
         notes,
+        date,
         ...(tab === "CARD" && {
           creditCard: card,
           cardType: cardType as CardType,
@@ -192,17 +193,17 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   width="24"
                   xmlns="http://www.w3.org/2000/svg"
                 >
-                  <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                  <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
                   <g
                     id="SVGRepo_tracerCarrier"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   ></g>
                   <g id="SVGRepo_iconCarrier">
                     {" "}
                     <path
-                      fill-rule="evenodd"
-                      clip-rule="evenodd"
+                      fillRule="evenodd"
+                      clipRule="evenodd"
                       d="M3.75 5.25L3 6V17.25L3.75 18H19.5L20.25 17.25V6L19.5 5.25H3.75ZM4.5 9V6.75H18.75V9H4.5ZM4.5 10.5V16.5H18.75V10.5H4.5ZM6.10217 14.25H7.67035V12.75H6.10217V14.25ZM13.1589 14.25H8.45435V12.75H13.1589V14.25Z"
                       fill={tab === "CARD" ? "#ffffff" : "#6571ff"}
                     ></path>{" "}
@@ -255,7 +256,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                         const localDate = moment.tz(
                           e.target.value,
                           "YYYY-MM-DD",
-                          timezone
+                          timezone,
                         );
                         setDate(localDate.toDate());
                       }}
@@ -381,7 +382,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       const localDate = moment.tz(
                         e.target.value,
                         "YYYY-MM-DD",
-                        timezone
+                        timezone,
                       );
                       setDate(localDate.toDate());
                     }}
@@ -440,7 +441,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       const localDate = moment.tz(
                         e.target.value,
                         "YYYY-MM-DD",
-                        timezone
+                        timezone,
                       );
                       setDate(localDate.toDate());
                     }}
@@ -513,7 +514,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                         onClick={handleNewPaymentMethod}
                         className={cn(
                           "text-nowrap rounded-md px-2 text-white",
-                          paymentMethodInput ? "bg-slate-700" : "bg-slate-400"
+                          paymentMethodInput ? "bg-slate-700" : "bg-slate-400",
                         )}
                         type="button"
                         disabled={!paymentMethodInput}
@@ -525,7 +526,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   items={paymentMethods}
                   onSearch={(search: string) =>
                     paymentMethods.filter((method) =>
-                      method.name.toLowerCase().includes(search.toLowerCase())
+                      method.name.toLowerCase().includes(search.toLowerCase()),
                     )
                   }
                   displayList={(paymentMethod: PaymentMethod) => (
@@ -548,7 +549,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       const localDate = moment.tz(
                         e.target.value,
                         "YYYY-MM-DD",
-                        timezone
+                        timezone,
                       );
                       setDate(localDate.toDate());
                     }}

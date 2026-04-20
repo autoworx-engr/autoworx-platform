@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { calcStatementTotals } from "@/lib/fleet/calcStatementTotals";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -22,7 +23,7 @@ import { NextRequest, NextResponse } from "next/server";
  *         description: Statement not found
  */
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: { statementId: string } },
 ) {
   try {
@@ -77,14 +78,9 @@ export async function GET(
 
     return NextResponse.json({
       ...statement,
-      totals: {
-        totalAmount,
-        totalPaid,
-        totalDue,
-      },
+      totals: calcStatementTotals(statement.invoice),
     });
-  } catch (error) {
-    console.error("Error fetching fleet statement:", error);
+  } catch {
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },

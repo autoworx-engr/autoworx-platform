@@ -29,12 +29,15 @@ type TMessage = {
 };
 
 const formatAttachmentSize = (fileSize: unknown) => {
-  const sizeInBytes = Number(fileSize);
+  const sizeInBytes =
+    typeof fileSize === "string" ? parseFloat(fileSize) : Number(fileSize);
 
-  if (!Number.isFinite(sizeInBytes) || sizeInBytes < 0) {
+  if (!Number.isFinite(sizeInBytes) || sizeInBytes <= 0) {
     return "Unknown size";
   }
 
+  if (sizeInBytes < 1024) return `${sizeInBytes} B`;
+  if (sizeInBytes < 1024 * 1024) return `${(sizeInBytes / 1024).toFixed(1)} KB`;
   return `${(sizeInBytes / (1024 * 1024)).toFixed(2)} MB`;
 };
 
@@ -320,47 +323,49 @@ export default function CompanyMessageBox({
                 {/* Attachments */}
                 {msg?.attachments &&
                   msg?.attachments.length > 0 &&
-                  msg?.attachments.map((attachment: any) => (
-                    <div
-                      key={attachment.fileUrl}
-                      className={cn(
-                        "flex items-center gap-2",
-                        isOwn ? "flex-row-reverse" : "flex-row",
-                      )}
-                    >
-                      {attachment.fileType?.includes("image") ? (
-                        <Image
-                          src={attachment.fileUrl}
-                          alt=""
-                          width={200}
-                          height={200}
-                          className="rounded-md border cursor-pointer"
-                        />
-                      ) : attachment.fileType?.includes("video") ? (
-                        <video
-                          src={attachment.fileUrl}
-                          className="h-40 w-60 rounded-md border cursor-pointer"
-                          controls
-                        />
-                      ) : (
-                        <div className="rounded-md bg-[#006D77] px-4 py-2 text-white">
-                          <p className="text-sm">{attachment.fileName}</p>
-                          <p className="text-xs">
-                            {formatAttachmentSize(attachment.fileSize)}
-                          </p>
-                        </div>
-                      )}
-
-                      <button
-                        onClick={() => handleDownload(attachment.fileUrl)}
+                  msg?.attachments.map((attachment: any) => {
+                    return (
+                      <div
+                        key={attachment.fileUrl}
+                        className={cn(
+                          "flex items-center gap-2",
+                          isOwn ? "flex-row-reverse" : "flex-row",
+                        )}
                       >
-                        <CloudDownload
-                          size={22}
-                          className="cursor-pointer text-gray-400"
-                        />
-                      </button>
-                    </div>
-                  ))}
+                        {attachment.fileType?.includes("image") ? (
+                          <Image
+                            src={attachment.fileUrl}
+                            alt=""
+                            width={200}
+                            height={200}
+                            className="rounded-md border cursor-pointer"
+                          />
+                        ) : attachment.fileType?.includes("video") ? (
+                          <video
+                            src={attachment.fileUrl}
+                            className="h-40 w-60 rounded-md border cursor-pointer"
+                            controls
+                          />
+                        ) : (
+                          <div className="rounded-md bg-[#006D77] px-4 py-2 text-white">
+                            <p className="text-sm">{attachment?.fileName}</p>
+                            <p className="text-xs">
+                              {attachment?.fileSize && attachment?.fileSize}
+                            </p>
+                          </div>
+                        )}
+
+                        <button
+                          onClick={() => handleDownload(attachment?.fileUrl)}
+                        >
+                          <CloudDownload
+                            size={22}
+                            className="cursor-pointer text-gray-400"
+                          />
+                        </button>
+                      </div>
+                    );
+                  })}
 
                 {/* Request Estimate */}
                 {msg?.requestEstimate && (

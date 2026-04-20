@@ -77,7 +77,7 @@ export async function editFleet(data: {
       return fleet;
     });
 
-    revalidatePath("/fleet");
+    revalidatePath("/dashboard/fleet");
 
     return { type: "success", data: updatedFleet };
   } catch (err) {
