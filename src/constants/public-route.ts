@@ -12,7 +12,6 @@ export const PUBLIC_API_ROUTES = [
   "/api/auth/callback/credentials",
   "/api/auth/csrf",
   "/api/sales-agent",
-  "/api/task",
   "/api/ai-train-company",
   "/api/notifications/client-abuse",
   // Webhook endpoints
