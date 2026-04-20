@@ -21,13 +21,13 @@ jobs:
           node-version: "20"
           cache: "yarn"
 
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Prisma Generate
+        run: yarn prisma generate
+
       - name: TypeScript check
-        # 3. Using yarn to execute the local tsc binary
         run: yarn tsc --noEmit
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"
-
-      - name: Install Dependencies
-        # 2. Combined redundant steps and used --frozen-lockfile for CI integrity
-        # Use 'yarn install --immutable' if you are using Yarn Berry (v2+)
-        run: yarn install --frozen-lockfile
