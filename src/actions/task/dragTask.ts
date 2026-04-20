@@ -16,54 +16,34 @@ type TTask = {
   timezone: string;
 };
 
-// TODO: later, use updateTask instead of dragTask
-export async function dragTask(task: TTask): Promise<ServerAction> {
-  const oldTask = await db.task.findUnique({
-    where: {
-      id: task.id,
-    },
-  });
-
-  let updatedTask = await db.task.update({
-    where: {
-      id: task.id,
-    },
-    data: {
-      date: new Date(task.date),
-      startTime: oldTask?.startTime || task.startTime,
-      endTime: oldTask?.endTime || task.endTime,
-    },
-  });
-
-  revalidatePath("/task");
-
-  // if the task has date, start time and end time, then insert it in google calendar
-  // also need to check if google calendar token exists or not, if not, then no need of inserting
-  // await handleDragEventForGoogleCalendar(updatedTask);
-
-  return {
-    type: "success",
-    data: updatedTask,
-  };
-}
-
-export async function updateTask(task: TTask): Promise<ServerAction> {
+/**
+ * `preserveTime`: when true, keeps the task's existing startTime/endTime if already set
+ * (used by month-view drag-and-drop which only moves the date, not the time slot).
+ */
+export async function updateTask(
+  task: TTask,
+  { preserveTime = false }: { preserveTime?: boolean } = {},
+): Promise<ServerAction> {
   try {
+    let startTime = task.startTime;
+    let endTime = task.endTime;
+
+    if (preserveTime) {
+      const existing = await db.task.findUnique({ where: { id: task.id } });
+      startTime = existing?.startTime ?? task.startTime;
+      endTime = existing?.endTime ?? task.endTime;
+      revalidatePath("/task");
+    }
+
     let updatedTask = await db.task.update({
-      where: {
-        id: task.id,
-      },
+      where: { id: task.id },
       data: {
-        date: task?.date,
-        startTime: task?.startTime,
-        endTime: task?.endTime,
+        date: new Date(task.date),
+        startTime,
+        endTime,
       },
     });
 
-    // revalidatePath("/task");
-
-    // if the task has date, start time and end time, then insert it in google calendar
-    // also need to check if google calendar token exists or not, if not, then no need of inserting
     try {
       await handleDragEventForGoogleCalendar(updatedTask);
     } catch (error) {
@@ -129,15 +109,10 @@ async function handleDragEventForGoogleCalendar(updatedTask: Task) {
 
     let event = await createGoogleCalendarEvent(taskForGoogleCalendar);
 
-    // if event is successfully created in google calendar, then save the event id in task model
     if (event && event.id) {
       await db.task.update({
-        where: {
-          id: updatedTask.id,
-        },
-        data: {
-          googleEventId: event.id,
-        },
+        where: { id: updatedTask.id },
+        data: { googleEventId: event.id },
       });
     }
   }
