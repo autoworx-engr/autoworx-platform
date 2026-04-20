@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { calcStatementTotals } from "@/lib/fleet/calcStatementTotals";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -21,10 +22,12 @@ import { NextRequest, NextResponse } from "next/server";
  *       404:
  *         description: Statement not found
  */
-export async function GET(request: NextRequest, props: { params: Promise<{ statementId: string }> }) {
-  const params = await props.params;
+export async function GET(
+  _request: NextRequest,
+  { params }: { params: Promise<{ statementId: string }> },
+) {
   try {
-    const { statementId } = params;
+    const { statementId } = await params;
 
     const statement = await db.fleetStatement.findFirst({
       where: {
@@ -53,39 +56,18 @@ export async function GET(request: NextRequest, props: { params: Promise<{ state
     if (!statement) {
       return NextResponse.json(
         { error: "Fleet statement not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
-    // Calculate totals
-    const totalAmount = statement.invoice.reduce(
-      (sum, invoice) => sum + Number(invoice.grandTotal || 0),
-      0
-    );
-
-    const totalPaid = statement.invoice.reduce(
-      (sum, invoice) => sum + Number(invoice.totalPayment || 0),
-      0
-    );
-
-    const totalDue = statement.invoice.reduce(
-      (sum, invoice) => sum + Number(invoice.due || 0),
-      0
-    );
-
     return NextResponse.json({
       ...statement,
-      totals: {
-        totalAmount,
-        totalPaid,
-        totalDue,
-      },
+      totals: calcStatementTotals(statement.invoice),
     });
-  } catch (error) {
-    console.error("Error fetching fleet statement:", error);
+  } catch {
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

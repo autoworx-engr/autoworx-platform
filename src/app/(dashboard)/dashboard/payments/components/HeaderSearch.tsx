@@ -35,7 +35,7 @@ export default function HeaderSearch({ activeTab }: HeaderSearchProps) {
             type="text"
             placeholder={
               activeTab === "transactions"
-                ? "Search by Invoice ID, Customer, Vehicle..."
+                ? "Search by Customer, Vehicle..."
                 : "Search..."
             }
             className="w-full bg-transparent text-sm font-medium text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none"

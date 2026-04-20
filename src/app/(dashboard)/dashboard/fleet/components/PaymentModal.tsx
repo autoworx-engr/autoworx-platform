@@ -126,6 +126,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         amount: roundedAmount,
         paymentMethod: tab as PaymentType,
         notes,
+        date,
         ...(tab === "CARD" && {
           creditCard: card,
           cardType: cardType as CardType,
@@ -201,8 +202,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   <g id="SVGRepo_iconCarrier">
                     {" "}
                     <path
-                      fill-rule="evenodd"
-                      clip-rule="evenodd"
+                      fillRule="evenodd"
+                      clipRule="evenodd"
                       d="M3.75 5.25L3 6V17.25L3.75 18H19.5L20.25 17.25V6L19.5 5.25H3.75ZM4.5 9V6.75H18.75V9H4.5ZM4.5 10.5V16.5H18.75V10.5H4.5ZM6.10217 14.25H7.67035V12.75H6.10217V14.25ZM13.1589 14.25H8.45435V12.75H13.1589V14.25Z"
                       fill={tab === "CARD" ? "#ffffff" : "#6571ff"}
                     ></path>{" "}
