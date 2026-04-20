@@ -14,6 +14,7 @@ import BugReport from "../bug-report/BugReport";
 import LogoutBtn from "../LogoutBtn";
 import { NotificationsPopover } from "../NotificationProvider";
 import QuickLink from "../QuickLink";
+import ShopList from "../top-navbar/ShopList";
 
 import MobileNavList from "./MobileNavList";
 import { CircleX, Menu, RotateCw, SquarePlay } from "lucide-react";
@@ -141,6 +142,7 @@ export default function MobileNav({ navList, permissions }: TProps) {
             </Link>
           </div>
           <div className="flex items-center gap-1 px-3">
+            <ShopList iconOnly className="mr-0 w-auto" />
             <button className="" onClick={() => window.location.reload()}>
               <RotateCw className="size-5 text-white" />
             </button>

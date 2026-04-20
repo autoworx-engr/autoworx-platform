@@ -29,6 +29,7 @@ type InitialServiceData = {
 const INITIAL_SERVICE_INFO: ServiceInfoState = {
   serviceTitle: "",
   description: "",
+  customDuration: "",
   imageName: "",
   imageUrl: "",
   vehicleTypeModifiers: {
@@ -355,13 +356,13 @@ export default function ServiceCreateClient({
 
       const hasAnySelectedRow = rowStates.some((row) => row.hasAny);
       const hasIncompleteSelectedRow = rowStates.some(
-        (row) => row.hasAny && !(row.hasService && row.hasLabor),
+        (row) => row.hasAny && !row.hasLabor,
       );
 
       if (!hasAnySelectedRow) {
-        nextErrors.items = "Service and labor is required";
+        nextErrors.items = "Labor is required";
       } else if (hasIncompleteSelectedRow) {
-        nextErrors.items = "Each selected row must include service and labor";
+        nextErrors.items = "Each selected row must include labor";
       }
 
       const invalidMaterialQuantity = (items || []).some((item) =>
@@ -530,6 +531,10 @@ export default function ServiceCreateClient({
           modifierSedan: serviceInfo.vehicleTypeModifiers.sedan,
           modifierSUV: serviceInfo.vehicleTypeModifiers.suv,
           modifierTruck: serviceInfo.vehicleTypeModifiers.truck,
+          customDuration:
+            serviceInfo.customDuration === ""
+              ? undefined
+              : Number(serviceInfo.customDuration),
           isActive: true,
           items: payloadItems,
         };

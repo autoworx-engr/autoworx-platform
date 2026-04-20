@@ -11,6 +11,7 @@ type InitialServiceData = {
   serviceInfo: {
     serviceTitle: string;
     description: string;
+    customDuration: string;
     imageName: string;
     imageUrl: string;
     vehicleTypeModifiers: {
@@ -92,6 +93,7 @@ export default async function Page({
       serviceInfo: {
         serviceTitle: shopService.title || "",
         description: shopService.description || "",
+        customDuration: String(shopService.duration ?? ""),
         imageName: "",
         imageUrl: shopService.imageUrl || "",
         vehicleTypeModifiers: {
