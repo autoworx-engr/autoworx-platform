@@ -162,6 +162,7 @@ export default function AppointmentModalBody(props: AppointmentModalBodyProps) {
               vehicle={vehicle}
               startTime={startTime!}
               date={date!}
+              timezone={state.timezone}
               times={times}
               setTimes={setTimes}
               confirmationTemplate={confirmationTemplate}

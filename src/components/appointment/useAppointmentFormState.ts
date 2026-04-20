@@ -580,7 +580,8 @@ export function useAppointmentFormState({
             confirmationEmailTemplateStatus: confirmationTemplateStatus,
             reminderEmailTemplateStatus: reminderTemplateStatus,
             times,
-            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            timezone:
+              timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
           },
         });
         if (res.type === "success") {

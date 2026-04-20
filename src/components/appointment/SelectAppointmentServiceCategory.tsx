@@ -113,7 +113,7 @@ export function SelectAppointmentServiceCategory({
       setSelectedColor(STATIC_CATEGORY_COLORS[0]);
       setIsOpen(false);
     } catch (error) {
-      void error;
+      console.error(error);
       toast.error("Failed to create category");
     } finally {
       setIsCreating(false);

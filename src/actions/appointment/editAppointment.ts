@@ -18,7 +18,7 @@ import { getGoogleCalendarToken } from "../calendar-settings/getGoogleCalendarAu
 import { sendInfobipEmail } from "../estimate/invoice/sendInfobipEmail";
 import createGoogleCalendarEvent from "../task/google-calendar/createGoogleCalendarEvent";
 import updateGoogleCalendarEvent from "../task/google-calendar/updateGoogleCalendarEvent";
-import { scheduleRemindersInNest } from "./addAppointment";
+import { scheduleRemindersInNest } from "./appointmentReminderScheduler";
 import { deleteRemindersInNest } from "./deleteAppointment";
 import { sendInfobipMessage } from "../communication/client/sendInfobipMessage";
 import { sendTwilioMessage } from "../communication/client/sendTwilioMessage";
@@ -85,7 +85,7 @@ export async function editAppointment({
               type: "Estimate",
               clientId: appointment.clientId,
               vehicleId: appointment.vehicleId,
-              userId: session.user.id as any,
+              userId: Number(session.user.id),
               companyId,
             },
           });

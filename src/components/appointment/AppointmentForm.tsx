@@ -85,6 +85,7 @@ export default function AppointmentForm({
   containerRef,
   settings,
   handleDate,
+  timezone,
 }: AppointmentFormProps) {
   const { Option } = Select;
 
@@ -468,6 +469,7 @@ export default function AppointmentForm({
             vehicle={vehicle}
             startTime={startTime!}
             date={date!}
+            timezone={timezone}
             times={times}
             setTimes={setTimes}
             confirmationTemplate={confirmationTemplate}

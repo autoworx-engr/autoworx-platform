@@ -219,5 +219,3 @@ export async function addAppointment(
     return errorHandler(error);
   }
 }
-
-export { scheduleRemindersInNest } from "./appointmentReminderScheduler";
