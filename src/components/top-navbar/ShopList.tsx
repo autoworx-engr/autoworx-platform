@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import { useGetVirtualShops } from "@/hooks/virtual-shop/configure/useVirtualShopConfigure";
 import { normalizeShops } from "./shopNavigation";
+import { cn } from "@/lib/cn";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,7 +18,17 @@ import Avatar from "../Avatar";
 
 const domain = new URL(process.env.NEXT_PUBLIC_APP_URL!).hostname;
 
-export default function ShopList() {
+type ShopListProps = {
+  className?: string;
+  iconOnly?: boolean;
+  triggerClassName?: string;
+};
+
+export default function ShopList({
+  className,
+  iconOnly = false,
+  triggerClassName,
+}: ShopListProps) {
   const router = useRouter();
   const pathname = usePathname();
   const currentUser = useGetCurrentUser();
@@ -68,48 +79,61 @@ export default function ShopList() {
   }
 
   return (
-    <div className="mr-3 w-56">
+    <div className={cn("mr-3 w-56", className)}>
       <DropdownMenu>
         <DropdownMenuTrigger
-          className={`group flex w-full items-center justify-between rounded-xl border px-3 py-1.5 text-sm font-medium shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] outline-none transition-all duration-300 focus-visible:ring-2 focus-visible:ring-[#6571FF]/50 focus-visible:ring-offset-1 ${
-            isVirtualShopAdminPath
-              ? "border-slate-200 bg-white/80 text-slate-800 backdrop-blur-md hover:border-slate-300 hover:bg-white hover:shadow-[0_4px_14px_-4px_rgba(0,0,0,0.1)] data-[state=open]:border-[#6571FF]/50 data-[state=open]:bg-white data-[state=open]:shadow-[0_4px_14px_-4px_rgba(101,113,255,0.15)] data-[state=open]:ring-2 data-[state=open]:ring-[#6571FF]/10"
-              : "border-[#6571FF]/20 bg-gradient-to-b from-[#6571FF]/5 to-[#6571FF]/[0.02] text-[#6571FF] hover:border-[#6571FF]/40 hover:from-[#6571FF]/10 hover:to-[#6571FF]/5 data-[state=open]:border-[#6571FF]/50 data-[state=open]:from-[#6571FF]/15 data-[state=open]:to-[#6571FF]/10 data-[state=open]:shadow-md"
-          }`}
+          className={cn(
+            iconOnly
+              ? "inline-flex h-9 w-9 items-center justify-center rounded-md text-white outline-none transition-colors "
+              : `group flex w-full items-center justify-between rounded-xl border px-3 py-1.5 text-sm font-medium shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] outline-none transition-all duration-300 focus-visible:ring-2 focus-visible:ring-[#6571FF]/50 focus-visible:ring-offset-1 ${
+                  isVirtualShopAdminPath
+                    ? "border-slate-200 bg-white/80 text-slate-800 backdrop-blur-md hover:border-slate-300 hover:bg-white hover:shadow-[0_4px_14px_-4px_rgba(0,0,0,0.1)] data-[state=open]:border-[#6571FF]/50 data-[state=open]:bg-white data-[state=open]:shadow-[0_4px_14px_-4px_rgba(101,113,255,0.15)] data-[state=open]:ring-2 data-[state=open]:ring-[#6571FF]/10"
+                    : "border-[#6571FF]/20 bg-gradient-to-b from-[#6571FF]/5 to-[#6571FF]/[0.02] text-[#6571FF] hover:border-[#6571FF]/40 hover:from-[#6571FF]/10 hover:to-[#6571FF]/5 data-[state=open]:border-[#6571FF]/50 data-[state=open]:from-[#6571FF]/15 data-[state=open]:to-[#6571FF]/10 data-[state=open]:shadow-md"
+                }`,
+            triggerClassName,
+          )}
         >
-          <div className="flex min-w-0 items-center gap-3">
-            {isVirtualShopAdminPath && selectedShop?.logoUrl ? (
-              <Avatar
-                photo={selectedShop.logoUrl}
-                width={24}
-                height={24}
-                className="shrink-0 rounded-full border border-slate-200/60 shadow-sm"
-                alt={selectedShop.storeName || "Shop"}
-              />
-            ) : isVirtualShopAdminPath ? (
-              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-slate-100 to-slate-200 border border-slate-200 shadow-sm">
-                <span className="text-[11px] font-bold text-slate-600">
-                  {selectedShop?.storeName?.charAt(0)?.toUpperCase() || "S"}
+          {iconOnly ? (
+            <Store size={18} strokeWidth={1.5} />
+          ) : (
+            <>
+              <div className="flex min-w-0 items-center gap-3">
+                {isVirtualShopAdminPath && selectedShop?.logoUrl ? (
+                  <Avatar
+                    photo={selectedShop.logoUrl}
+                    width={24}
+                    height={24}
+                    className="shrink-0 rounded-full border border-slate-200/60 shadow-sm"
+                    alt={selectedShop.storeName || "Shop"}
+                  />
+                ) : isVirtualShopAdminPath ? (
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-slate-100 to-slate-200 border border-slate-200 shadow-sm">
+                    <span className="text-[11px] font-bold text-slate-600">
+                      {selectedShop?.storeName?.charAt(0)?.toUpperCase() || "S"}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#6571FF]/10 text-[#6571FF]">
+                    <Store size={14} strokeWidth={2.5} />
+                  </div>
+                )}
+                <span className="truncate tracking-tight">
+                  {isVirtualShopAdminPath
+                    ? (selectedShop?.storeName ?? "Select Shop")
+                    : "Virtual Shops"}
                 </span>
               </div>
-            ) : (
-              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#6571FF]/10 text-[#6571FF]">
-                <Store size={14} strokeWidth={2.5} />
-              </div>
-            )}
-            <span className="truncate tracking-tight">
-              {isVirtualShopAdminPath
-                ? (selectedShop?.storeName ?? "Select Shop")
-                : "Virtual Shops"}
-            </span>
-          </div>
-          <ChevronDown
-            size={16}
-            strokeWidth={2.5}
-            className={`shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.87,_0,_0.13,_1)] group-data-[state=open]:rotate-180 ${
-              isVirtualShopAdminPath ? "text-slate-400" : "text-[#6571FF]/70"
-            }`}
-          />
+              <ChevronDown
+                size={16}
+                strokeWidth={2.5}
+                className={`shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.87,_0,_0.13,_1)] group-data-[state=open]:rotate-180 ${
+                  isVirtualShopAdminPath
+                    ? "text-slate-400"
+                    : "text-[#6571FF]/70"
+                }`}
+              />
+            </>
+          )}
         </DropdownMenuTrigger>
 
         <DropdownMenuPortal>

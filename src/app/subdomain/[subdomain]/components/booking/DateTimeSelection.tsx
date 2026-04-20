@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, CalendarDays, Clock, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format, startOfDay } from "date-fns";
+import { format } from "date-fns";
 import { useBooking } from "../../context/BookingContext";
 import { TimeSlot } from "../../data/types";
 import { useGetAppointmentSlots } from "@/hooks/virtual-shop/service/useShopService";
@@ -11,6 +11,7 @@ import { useParams } from "next/navigation";
 import { Calendar, ConfigProvider, theme } from "antd";
 import dayjs from "dayjs";
 import { Spinner } from "../ui/Spinner";
+import toast from "react-hot-toast";
 
 export const DateTimeSelection = () => {
   const {
@@ -19,10 +20,13 @@ export const DateTimeSelection = () => {
     setSelectedDate,
     selectedSlot,
     setSelectedSlot,
+    sessionToken,
+    cartDurationMinutes,
   } = useBooking();
   const params = useParams();
   const slug = String(params?.subdomain || "");
   const [showSlots, setShowSlots] = useState(false);
+  const [isHolding, setIsHolding] = useState(false);
 
   // Get shop from slug
   const { data: shop } = useGetShopBySlug(slug);
@@ -34,6 +38,8 @@ export const DateTimeSelection = () => {
     useGetAppointmentSlots(
       shop?.id,
       selectedDate ? format(selectedDate, "yyyy-MM-dd") : undefined,
+      false,
+      cartDurationMinutes || undefined,
     );
 
   // Fetch next available appointment info
@@ -41,6 +47,7 @@ export const DateTimeSelection = () => {
     shop?.id,
     undefined,
     true,
+    cartDurationMinutes || undefined,
   );
 
   const handleDateSelect = (value: dayjs.Dayjs) => {
@@ -97,6 +104,37 @@ export const DateTimeSelection = () => {
       </div>
     );
   }
+
+  const handleContinue = async () => {
+    if (!selectedSlot || !selectedDate || !shop?.id) return;
+
+    setIsHolding(true);
+    try {
+      const response = await fetch("/api/virtual-shop/service-booking/hold", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          shopId: shop.id,
+          sessionToken,
+          date: format(selectedDate, "yyyy-MM-dd"),
+          startTime: selectedSlot.time,
+          duration: cartDurationMinutes || 30,
+        }),
+      });
+
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.message || "Failed to hold slot");
+      }
+
+      setStep("checkout");
+    } catch (error: any) {
+      toast.error(error.message || "This slot is no longer available.");
+      setSelectedSlot(null);
+    } finally {
+      setIsHolding(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -249,9 +287,11 @@ export const DateTimeSelection = () => {
           <Button
             size="lg"
             className="gap-2"
-            onClick={() => setStep("checkout")}
+            onClick={handleContinue}
+            disabled={isHolding}
           >
-            Continue to Checkout <ArrowRight className="w-4 h-4" />
+            {isHolding ? <Spinner size={20} /> : "Continue to Checkout"}{" "}
+            <ArrowRight className="w-4 h-4" />
           </Button>
         </div>
       )}

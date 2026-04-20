@@ -19,7 +19,11 @@ const getDayOfWeekEnum = (date: Date): DayOfWeek => {
 };
 
 // 1. Get Available Slots For A Explicit Date
-export async function getAvailableSlots(shopId: number, dateString: string) {
+export async function getAvailableSlots(
+  shopId: number,
+  dateString: string,
+  duration?: number,
+) {
   try {
     const requestMoment = moment.utc(dateString);
     const selectedDate = requestMoment.toDate();
@@ -109,29 +113,68 @@ export async function getAvailableSlots(shopId: number, dateString: string) {
           lt: startOfNextDay,
         },
       },
-      select: { startTime: true },
+      select: { startTime: true, endTime: true },
+    });
+
+    const activeHolds = await db.shopSlotHold.findMany({
+      where: {
+        shopId: shopId,
+        date: {
+          gte: startOfSelectedDay,
+          lt: startOfNextDay,
+        },
+        expiresAt: { gt: new Date() },
+      },
+      select: { startTime: true, endTime: true },
     });
 
     // Check stacking
+    const effectiveDuration =
+      duration && duration > 0 ? duration : intervalMinutes;
     const availableSlots = baseSlots.filter((slotTime) => {
       const slotMoment = moment.utc(
         `${selectedDateStr} ${slotTime}`,
         "YYYY-MM-DD HH:mm",
       );
-      const slotEndMoment = slotMoment.clone().add(intervalMinutes, "minutes");
+      const slotEndMoment = slotMoment
+        .clone()
+        .add(effectiveDuration, "minutes");
 
       const appointmentsInSlot = existingAppointments.filter((app) => {
-        if (!app.startTime) return false;
-        const appMoment = moment.utc(
+        if (!app.startTime || !app.endTime) return false;
+        const appStartMoment = moment.utc(
           `${selectedDateStr} ${app.startTime}`,
           "YYYY-MM-DD HH:mm",
         );
+        const appEndMoment = moment.utc(
+          `${selectedDateStr} ${app.endTime}`,
+          "YYYY-MM-DD HH:mm",
+        );
+
         return (
-          appMoment.isSameOrAfter(slotMoment) &&
-          appMoment.isBefore(slotEndMoment)
+          slotEndMoment.isAfter(appStartMoment) &&
+          slotMoment.isBefore(appEndMoment)
         );
       });
-      return appointmentsInSlot.length < stackingLimit;
+
+      const holdsInSlot = activeHolds.filter((hold) => {
+        if (!hold.startTime || !hold.endTime) return false;
+        const holdStartMoment = moment.utc(
+          `${selectedDateStr} ${hold.startTime}`,
+          "YYYY-MM-DD HH:mm",
+        );
+        const holdEndMoment = moment.utc(
+          `${selectedDateStr} ${hold.endTime}`,
+          "YYYY-MM-DD HH:mm",
+        );
+
+        return (
+          slotEndMoment.isAfter(holdStartMoment) &&
+          slotMoment.isBefore(holdEndMoment)
+        );
+      });
+
+      return appointmentsInSlot.length + holdsInSlot.length < stackingLimit;
     });
 
     return { success: true, date: selectedDate, availableSlots };
@@ -141,12 +184,19 @@ export async function getAvailableSlots(shopId: number, dateString: string) {
 }
 
 // 2. Next Available Feature logic
-export async function getNextAvailableAppointment(shopId: number) {
+export async function getNextAvailableAppointment(
+  shopId: number,
+  duration?: number,
+) {
   const maxSearchDays = 30; // Search up to 30 days ahead
 
   for (let i = 0; i < maxSearchDays; i++) {
     const checkDate = moment().add(i, "days");
-    const result = await getAvailableSlots(shopId, checkDate.toISOString());
+    const result = await getAvailableSlots(
+      shopId,
+      checkDate.toISOString(),
+      duration,
+    );
 
     if (
       result.success &&
