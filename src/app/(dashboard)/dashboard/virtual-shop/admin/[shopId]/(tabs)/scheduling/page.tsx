@@ -1,15 +1,16 @@
 import SchedulingTab from "../../../components/SchedulingTab";
 
 type VirtualShopSchedulingPageProps = {
-  params: {
+  params: Promise<{
     shopId: string;
-  };
+  }>;
 };
 
-export default function VirtualShopSchedulingPage({
+export default async function VirtualShopSchedulingPage({
   params,
 }: VirtualShopSchedulingPageProps) {
-  const shopId = Number.parseInt(params.shopId, 10);
+  const resolvedParams = await params;
+  const shopId = Number.parseInt(resolvedParams.shopId, 10);
 
   return <SchedulingTab shopId={Number.isFinite(shopId) ? shopId : 0} />;
 }
