@@ -62,6 +62,9 @@ export default function TeamPipelines({
   const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(
     null,
   );
+  const [selectedAppointmentId, setSelectedAppointmentId] = useState<
+    number | null
+  >(null);
   const [pipelineData, setPipelineData] =
     useState<ShopPipelineData[]>(shopPipelineDataProp);
   const [companyUsers, setCompanyUsers] = useState<User[]>([]);
@@ -657,6 +660,7 @@ export default function TeamPipelines({
                 isTechnician={isTechnician}
                 setSelectedClientId={setSelectedClientId}
                 setSelectedVehicleId={setSelectedVehicleId}
+                setSelectedAppointmentId={setSelectedAppointmentId}
                 setIsAppointmentModalOpen={setIsAppointmentModalOpen}
                 searchTerm={searchTerm}
                 hasMore={
