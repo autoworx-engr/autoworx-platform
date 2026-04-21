@@ -69,6 +69,7 @@ type DroppableColumnProps = {
   isTechnician: boolean | undefined;
   setSelectedClientId: (value: SetStateAction<number | null>) => void;
   setSelectedVehicleId: (value: SetStateAction<number | null>) => void;
+  setSelectedAppointmentId: (value: SetStateAction<number | null>) => void;
   setIsAppointmentModalOpen: (value: SetStateAction<boolean>) => void;
   searchTerm?: string;
   hasMore?: boolean;
@@ -104,6 +105,7 @@ const DroppableColumn = ({
   isTechnician,
   setSelectedClientId,
   setSelectedVehicleId,
+  setSelectedAppointmentId,
   setIsAppointmentModalOpen,
   searchTerm,
   isTeamPipeline = false,
@@ -225,6 +227,7 @@ const DroppableColumn = ({
               isTechnician={isTechnician}
               setSelectedClientId={setSelectedClientId}
               setSelectedVehicleId={setSelectedVehicleId}
+              setSelectedAppointmentId={setSelectedAppointmentId}
               setIsAppointmentModalOpen={setIsAppointmentModalOpen}
               searchTerm={searchTerm}
             />

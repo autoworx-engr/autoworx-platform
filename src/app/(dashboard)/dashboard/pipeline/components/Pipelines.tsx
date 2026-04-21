@@ -59,6 +59,9 @@ export default function PipelinesCopy({
   const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(
     null,
   );
+  const [selectedAppointmentId, setSelectedAppointmentId] = useState<
+    number | null
+  >(null);
   const [pipelineData, setPipelineData] =
     useState<ShopPipelineData[]>(shopPipelineDataProp);
   const [companyUsers, setCompanyUsers] = useState<User[]>([]);
@@ -654,6 +657,7 @@ export default function PipelinesCopy({
                 isTechnician={isTechnician}
                 setSelectedClientId={setSelectedClientId}
                 setSelectedVehicleId={setSelectedVehicleId}
+                setSelectedAppointmentId={setSelectedAppointmentId}
                 setIsAppointmentModalOpen={setIsAppointmentModalOpen}
                 searchTerm={searchTerm}
                 hasMore={
@@ -675,20 +679,34 @@ export default function PipelinesCopy({
 
       {selectedClientId && (
         <AppointmentCreateOrEdit
+          key={`appt-${selectedClientId}-${selectedAppointmentId ?? "new"}`}
           fromLead
+          fromEdit={!!selectedAppointmentId}
+          appointmentId={selectedAppointmentId ?? undefined}
           clientId={selectedClientId}
           vehicleId={selectedVehicleId}
           isModalOpen={isAppointmentModalOpen}
-          setIsModalOpen={setIsAppointmentModalOpen}
+          setIsModalOpen={(open) => {
+            setIsAppointmentModalOpen(open);
+            if (!open) {
+              setSelectedClientId(null);
+              setSelectedVehicleId(null);
+              setSelectedAppointmentId(null);
+            }
+          }}
           onAppointmentCreated={() => {
             setIsAppointmentModalOpen(false);
             setSelectedClientId(null);
             setSelectedVehicleId(null);
+            setSelectedAppointmentId(null);
+            router.refresh();
           }}
           onAppointmentUpdated={() => {
             setIsAppointmentModalOpen(false);
             setSelectedClientId(null);
             setSelectedVehicleId(null);
+            setSelectedAppointmentId(null);
+            router.refresh();
           }}
         />
       )}

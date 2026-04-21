@@ -11,6 +11,7 @@ import {
   ArrowRightLeft,
   BookCheck,
   Calendar,
+  CalendarCheck,
   CirclePlus,
   MessageCircleMore,
 } from "lucide-react";
@@ -88,6 +89,7 @@ type DraggableLeadProps = {
   isTechnician: boolean | undefined;
   setSelectedClientId: (value: SetStateAction<number | null>) => void;
   setSelectedVehicleId: (value: SetStateAction<number | null>) => void;
+  setSelectedAppointmentId: (value: SetStateAction<number | null>) => void;
   setIsAppointmentModalOpen: (value: SetStateAction<boolean>) => void;
   searchTerm?: string;
   userId?: number;
@@ -121,6 +123,7 @@ const DraggableLead = ({
   isTechnician,
   setSelectedClientId,
   setSelectedVehicleId,
+  setSelectedAppointmentId,
   setIsAppointmentModalOpen,
   searchTerm,
   userId,
@@ -450,27 +453,37 @@ const DraggableLead = ({
           {!isTeamPipeline && (
             <button
               onClick={() => {
-                // removeClientIdFromParams();
                 if (!searchParams) return;
                 if (lead?.clientId) {
                   const params = new URLSearchParams(searchParams.toString());
                   params.set("clientId", lead?.clientId?.toString());
                   router.push(`${pathname}?${params.toString()}`);
-
-                  setSelectedClientId(lead?.clientId);
+                  setSelectedClientId(lead.clientId);
                 }
-
                 if (lead?.vehicleId) {
-                  setSelectedVehicleId(lead?.vehicleId);
+                  setSelectedVehicleId(lead.vehicleId);
+                }
+                if (lead?.appointment?.id) {
+                  setSelectedAppointmentId(lead.appointment.id);
+                } else {
+                  setSelectedAppointmentId(null);
                 }
                 setIsAppointmentModalOpen(true);
               }}
               className="group relative"
             >
-              <Calendar
-                size={18}
-                className={`mt-1 ${isTechnician ? "hidden" : ""}`}
-              />
+              {lead?.appointment ? (
+                <CalendarCheck
+                  size={18}
+                  color="#6571FF"
+                  className={`mt-1 ${isTechnician ? "hidden" : ""}`}
+                />
+              ) : (
+                <Calendar
+                  size={18}
+                  className={`mt-1 ${isTechnician ? "hidden" : ""}`}
+                />
+              )}
               <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
                 Appointment
               </span>
