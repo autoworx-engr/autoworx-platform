@@ -315,13 +315,13 @@ export const createAuthorizeNetPaymentLink = async ({
     orderSetting.setSettingValue('{"show": false}');
     settings.push(orderSetting);
 
-    // Hide billing & shipping address blocks on the hosted form.
-    // Note: the account's Payment Form > Form Fields settings must
-    // also NOT mark these fields as "Required", otherwise Authorize.Net
-    // can still enforce them even if they are hidden here.
+    // Show billing address block so customers can enter name on card
+    // and zip code. Only name and zip are required; other address
+    // fields should be set to optional in the Authorize.Net merchant
+    // portal (Payment Form > Form Fields).
     const billingOptions = new ApiContracts.SettingType();
     billingOptions.setSettingName("hostedPaymentBillingAddressOptions");
-    billingOptions.setSettingValue('{"show": false, "required": false}');
+    billingOptions.setSettingValue('{"show": true, "required": false}');
     settings.push(billingOptions);
 
     const shippingOptions = new ApiContracts.SettingType();
