@@ -73,6 +73,7 @@ export default async function VirtualShopServicesPage({
             shopId: String(shopId),
             page: String(page),
             limit: String(limit),
+            includeInactive: "true",
             ...(search ? { search } : {}),
           }).toString()}`,
           {
