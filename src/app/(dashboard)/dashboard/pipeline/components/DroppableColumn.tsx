@@ -67,10 +67,10 @@ type DroppableColumnProps = {
     leadIndex: number,
   ) => void;
   isTechnician: boolean | undefined;
-  setSelectedClientId: (value: SetStateAction<number | null>) => void;
-  setSelectedVehicleId: (value: SetStateAction<number | null>) => void;
-  setSelectedAppointmentId: (value: SetStateAction<number | null>) => void;
-  setIsAppointmentModalOpen: (value: SetStateAction<boolean>) => void;
+  setSelectedClientId?: (value: SetStateAction<number | null>) => void;
+  setSelectedVehicleId?: (value: SetStateAction<number | null>) => void;
+  setSelectedAppointmentId?: (value: SetStateAction<number | null>) => void;
+  setIsAppointmentModalOpen?: (value: SetStateAction<boolean>) => void;
   searchTerm?: string;
   hasMore?: boolean;
   isLoadingMore?: boolean;
