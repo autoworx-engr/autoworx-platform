@@ -31,14 +31,14 @@ export const SERVICE_COLORS: Record<
     accentColor: "#4b5563",
   },
   Holiday: {
-    gradient: ["#bbf7d0", "#a7f3d0"],
-    borderColor: "rgba(16, 185, 129, 0.45)",
-    accentColor: "#059669",
+    gradient: ["#ffe8cc", "#ffd8a8"],
+    borderColor: "rgba(234, 88, 12, 0.45)",
+    accentColor: "#ea580c",
   },
   Weekend: {
-    gradient: ["#ede9fe", "#ddd6fe"],
-    borderColor: "rgba(109, 40, 217, 0.35)",
-    accentColor: "#6d28d9",
+    gradient: ["#ffe8cc", "#ffd8a8"],
+    borderColor: "rgba(234, 88, 12, 0.35)",
+    accentColor: "#ea580c",
   },
 };
 
