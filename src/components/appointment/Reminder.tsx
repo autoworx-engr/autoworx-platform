@@ -16,7 +16,7 @@ import {
   UserRoundX,
   X,
 } from "lucide-react";
-import moment from "moment";
+import moment from "moment-timezone";
 import { useEffect, useRef, useState } from "react";
 import UpdateTemplate from "./UpdateTemplate";
 
@@ -43,6 +43,7 @@ type TReminderProps = {
   openReminder: boolean;
   setOpenReminder: React.Dispatch<React.SetStateAction<boolean>>;
   setOpenConfirmation: React.Dispatch<React.SetStateAction<boolean>>;
+  timezone: string;
 };
 
 export function Reminder({
@@ -64,6 +65,7 @@ export function Reminder({
   openReminder,
   setOpenReminder,
   setOpenConfirmation,
+  timezone,
 }: TReminderProps) {
   const [time, setTime] = useState<string>("");
   const [dateInput, setDateInput] = useState<string>("");
@@ -102,10 +104,10 @@ export function Reminder({
     }
 
     const firstConfirmationTemplate = templates.find(
-      (template: EmailTemplate) => template.type === "Confirmation"
+      (template: EmailTemplate) => template.type === "Confirmation",
     );
     const firstReminderTemplate = templates.find(
-      (template: EmailTemplate) => template.type === "Reminder"
+      (template: EmailTemplate) => template.type === "Reminder",
     );
 
     setConfirmationTemplate(firstConfirmationTemplate ?? null);
@@ -221,11 +223,16 @@ export function Reminder({
     // }
 
     // Check if reminder is before the appointment
-    const appointmentDateTime = moment(
+    const appointmentDateTime = moment.tz(
       `${date} ${startTime}`,
-      "YYYY-MM-DD HH:mm"
+      "YYYY-MM-DD HH:mm",
+      timezone,
     );
-    const reminderDateTime = moment(`${dateInput} ${time}`, "YYYY-MM-DD HH:mm");
+    const reminderDateTime = moment.tz(
+      `${dateInput} ${time}`,
+      "YYYY-MM-DD HH:mm",
+      timezone,
+    );
 
     if (reminderDateTime.isAfter(appointmentDateTime)) {
       showError({
@@ -307,7 +314,7 @@ export function Reminder({
             />
           }
           items={templates.filter(
-            (template: EmailTemplate) => template.type === "Confirmation"
+            (template: EmailTemplate) => template.type === "Confirmation",
           )}
           displayList={(template: EmailTemplate) => (
             <div className="group relative flex items-center justify-between">
@@ -357,7 +364,7 @@ export function Reminder({
             templates.filter(
               (template) =>
                 template.type === "Confirmation" &&
-                template.subject.toLowerCase().includes(search.toLowerCase())
+                template.subject.toLowerCase().includes(search.toLowerCase()),
             )
           }
           // openState={[openConfirmation, setOpenConfirmation]}
@@ -393,7 +400,7 @@ export function Reminder({
             />
           }
           items={templates.filter(
-            (template: EmailTemplate) => template.type === "Reminder"
+            (template: EmailTemplate) => template.type === "Reminder",
           )}
           displayList={(template: EmailTemplate) => (
             <div className="group relative flex items-center justify-between">
@@ -443,7 +450,7 @@ export function Reminder({
             templates.filter(
               (template) =>
                 template.type === "Reminder" &&
-                template.subject.toLowerCase().includes(search.toLowerCase())
+                template.subject.toLowerCase().includes(search.toLowerCase()),
             )
           }
           // openState={[openReminder, setOpenReminder]}
@@ -494,7 +501,7 @@ export function Reminder({
               {times.map((timeObj, index) => {
                 const timeObjMoment = moment(
                   `${timeObj.date} ${timeObj.time}`,
-                  "YYYY-MM-DD HH:mm"
+                  "YYYY-MM-DD HH:mm",
                 );
                 const formattedTime = timeObjMoment.format("MMM Do, YYYY");
                 const formattedHour = timeObjMoment.format("h:mm A");

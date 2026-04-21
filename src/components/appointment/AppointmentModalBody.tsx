@@ -523,7 +523,7 @@ export default function AppointmentModalBody({
             confirmationEmailTemplateStatus: confirmationTemplateStatus,
             reminderEmailTemplateStatus: reminderTemplateStatus,
             times,
-            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            timezone,
           },
         });
         if (res.type === "success") {
@@ -554,7 +554,7 @@ export default function AppointmentModalBody({
           confirmationEmailTemplateStatus: confirmationTemplateStatus,
           reminderEmailTemplateStatus: reminderTemplateStatus,
           times,
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          timezone,
         });
         if (res.type === "success") {
           onAppointmentCreated &&
@@ -1249,6 +1249,7 @@ export default function AppointmentModalBody({
                 openReminder={openReminder}
                 setOpenReminder={setOpenReminder}
                 setOpenConfirmation={setOpenConfirmation}
+                timezone={timezone}
               />
             ) : null}
           </div>
@@ -1290,6 +1291,7 @@ export default function AppointmentModalBody({
                 openReminder={openReminder}
                 setOpenReminder={setOpenReminder}
                 setOpenConfirmation={setOpenConfirmation}
+                timezone={timezone}
               />
             </>
           ) : null}
