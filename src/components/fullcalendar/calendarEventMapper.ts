@@ -41,8 +41,8 @@ export const buildCalendarEvents = ({
         .map((d) => DAY_NAME_TO_DOW[d.toLowerCase()])
         .filter((n) => n !== undefined),
     );
-    const start = moment(dateRange.start).startOf("month");
-    const end = moment(dateRange.end).endOf("month");
+    const start = moment.utc(dateRange.start).startOf("month");
+    const end = moment.utc(dateRange.end).endOf("month");
     const current = start.clone();
     while (current.isSameOrBefore(end, "day")) {
       const dow = current.day();
