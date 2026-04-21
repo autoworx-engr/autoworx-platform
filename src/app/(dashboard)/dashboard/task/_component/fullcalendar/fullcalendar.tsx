@@ -20,6 +20,7 @@ import { EventDetailsSheet } from "./EventDetailsSheet";
 import { getCalendarType } from "../../_utils/calendarView";
 import { useCalendarData } from "../../_hook/calendar/useCalendarData";
 import { useCalendarEventDateTimeUpdate } from "../../_hook/calendar/useCalendarEventDateTimeUpdate";
+import { useCalendarExternalDrop } from "../../_hook/calendar/useCalendarExternalDrop";
 import { useCalendarFilters } from "../../_hook/calendar/useCalendarFilters";
 import { useCalendarSettings } from "../../_hook/calendar/useCalendarSettings";
 import { useCalendarStoreSync } from "../../_hook/calendar/useCalendarStoreSync";
@@ -89,6 +90,7 @@ export default function Calendar({ type }: { type: CalendarType }) {
   const { handleDatesSet: syncStoreDatesSet } =
     useCalendarStoreSync(calendarRef);
   const handleEventDateTimeUpdate = useCalendarEventDateTimeUpdate();
+  const handleExternalDrop = useCalendarExternalDrop();
 
   const weekendDays = useMemo(
     () => [settings?.weekend1, settings?.weekend2].filter(Boolean) as string[],
@@ -203,6 +205,8 @@ export default function Calendar({ type }: { type: CalendarType }) {
             firstDay={firstDay}
             navLinks={true}
             editable={true}
+            droppable={true}
+            drop={handleExternalDrop}
             dayMaxEvents={2}
             allDaySlot={false}
             expandRows={true}

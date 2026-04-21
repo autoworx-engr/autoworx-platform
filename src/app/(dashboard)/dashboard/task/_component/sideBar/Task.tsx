@@ -3,8 +3,7 @@ import { useCalendarStore } from "@/stores/calendarStore";
 import { Task } from "@prisma/client";
 import { Popconfirm, Tooltip } from "antd";
 import moment from "moment";
-import React, { LegacyRef, useState, useEffect } from "react";
-import { useDrag } from "react-dnd";
+import React, { useState, useEffect } from "react";
 import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
 import { errorToast, successToast } from "@/lib/toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -45,26 +44,15 @@ export default function TaskComponent({ task }: TaskComponentProps) {
   const dateFormat = date.utc().format("YYYY-MM-DD");
   const queryClient = useQueryClient();
   const [popconfirmVisible, setPopconfirmVisible] = useState(false);
-  const [{ isDragging }, drag] = useDrag({
-    type: "task",
-    item: { type: "task", id: task.id },
-    collect: (monitor) => ({
-      isDragging: !!monitor.isDragging(),
-    }),
-  });
-  const queryDate = useDate();
-  const {
-    setDate,
-    date: taskDate,
-    setNavigating,
-    setStartTime,
-  } = useCalendarStore();
+  const [isDragging, setIsDragging] = useState(false);
+  const { setDate, setNavigating, setStartTime } = useCalendarStore();
   // console.log({ taskDate });
 
   const router = useRouter();
 
   const handleDragStart = (event: React.DragEvent) => {
     event.dataTransfer.setData("text/plain", `task|${task.id}`);
+    setIsDragging(true);
   };
   const handleDelete = async () => {
     try {
@@ -95,14 +83,8 @@ export default function TaskComponent({ task }: TaskComponentProps) {
   }, [popconfirmVisible]);
 
   const handleDragEnd = () => {
-    const existingDate = queryDate.utc().format("YYYY-MM-DD");
-    // Set navigation flag to prevent reset, then set date and navigate
-    setNavigating(true);
-    setDate(existingDate);
-    // router.push("/dashboard/task/day");
-
-    // Clear navigation flag after a short delay to allow navigation to complete
-    setTimeout(() => setNavigating(false), 30000);
+    setIsDragging(false);
+    setNavigating(false);
   };
 
   const revalidateTaskQueries = () => {
@@ -153,17 +135,19 @@ export default function TaskComponent({ task }: TaskComponentProps) {
         max-[1300px]:px-2 max-[1300px]:text-[14px]
         transition-all duration-300 ease-in-out
         hover:-translate-y-0.5
-        h-auto min-h-[40px] max-h-[56px] 
+        h-auto min-h-[40px] max-h-[56px]  select-none
         ${isDragging ? "opacity-70" : ""}
       `}
       style={{
         ...priorityStyle,
         cursor: task.startTime && task.endTime ? "pointer" : "move",
       }}
-      ref={
+      data-task-id={task.startTime && task.endTime ? undefined : task.id}
+      data-task-title={task.startTime && task.endTime ? undefined : task.title}
+      data-event={
         task.startTime && task.endTime
           ? undefined
-          : (drag as unknown as LegacyRef<HTMLDivElement>)
+          : JSON.stringify({ title: task.title, duration: "01:00:00" })
       }
       draggable={task.startTime && task.endTime ? false : true}
       onDragStart={task.startTime && task.endTime ? undefined : handleDragStart}
