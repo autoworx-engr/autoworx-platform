@@ -675,6 +675,7 @@ export default function PipelinesCopy({
 
       {selectedClientId && (
         <AppointmentCreateOrEdit
+          fromLead
           clientId={selectedClientId}
           vehicleId={selectedVehicleId}
           isModalOpen={isAppointmentModalOpen}

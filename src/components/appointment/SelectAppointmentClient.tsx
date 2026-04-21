@@ -6,13 +6,12 @@ import { Client } from "@prisma/client";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import Avatar from "../Avatar";
 
-import useClientListQuery from "@/hooks/query-hook/useClientListQuery";
+import useClientListInfiniteQuery from "@/hooks/query-hook/useClientListInfiniteQuery";
 import { queryKeys } from "@/lib/queryKeys";
 import { useQueryClient } from "@tanstack/react-query";
+import { usePathname } from "next/navigation";
 import NewCustomer from "../Lists/NewCustomer";
 import { SelectProps } from "../Lists/select-props";
-import { usePathname } from "next/navigation";
-import useClientListInfiniteQuery from "@/hooks/query-hook/useClientListInfiniteQuery";
 
 export function SelectAppointmentClient({
   name = "clientId",
@@ -50,15 +49,24 @@ export function SelectAppointmentClient({
   const pathname = usePathname();
 
   useEffect(() => {
+    if (fromLead && clientId) {
+      fetch(`/api/client/client-details/${clientId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.data) {
+            setClient(data.data);
+          }
+        })
+        .catch(() => {});
+      return;
+    }
     if (clientId && clientList.length > 0) {
       const matchedClient = clientList.find((c) => c.id === clientId);
       if (matchedClient) {
         setClient(matchedClient);
-      } else {
-        setClient(null);
       }
     }
-  }, [clientId, clientList]);
+  }, [fromLead, clientId, clientList]);
 
   useEffect(() => {
     if (newAddedCustomer && setOpenDropdown) {
