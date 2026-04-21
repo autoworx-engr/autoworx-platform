@@ -108,7 +108,7 @@ const Leads = ({ salesColumn }: TProps) => {
       source: null,
     });
     setSearch("");
-    // setDateRange([null, null]);
+    setDateRange([null, null]);
     setCurrentPage(1);
     // Clear the processed filters cache when clearing filters
     processedFiltersRef.current.clear();
@@ -466,15 +466,15 @@ const Leads = ({ salesColumn }: TProps) => {
           <div className="flex w-full max-w-4xl rounded-xl border bg-background p-2">
             <div className="flex w-full md:items-center gap-2 md:gap-4 md:flex-row flex-col">
               <SearchTerms search={search} setSearch={setSearch} />
-              <div className="items-center gap-2 md:gap-4 flex flex-1">
-                <div className="flex-1">
+              <div className="items-center gap-2 flex flex-1 flex-row">
+                <div className="flex-1 min-w-0">
                   <DateRange
                     dateRange={dateRange}
                     onOk={(start, end) => setDateRange([start, end])}
                     onCancel={() => setDateRange([null, null])}
                   />
                 </div>
-                <div className="relative flex-1">
+                <div className="relative flex-shrink-0 w-[100px] sm:w-auto sm:flex-1">
                   <DropdownMenuDemo
                     leads={initialLeads ?? []}
                     filter={filter}
