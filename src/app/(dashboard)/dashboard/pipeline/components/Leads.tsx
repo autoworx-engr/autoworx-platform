@@ -898,11 +898,11 @@ const DropdownMenuDemo = React.memo(function DropdownMenuDemo({
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
         <button
-          className="flex items-center gap-x-12 rounded-xl border px-4 py-2 flex-1"
+          className="flex items-center justify-between w-full rounded-xl border px-4 py-2"
           aria-label="Customise options"
         >
           <span>Filter</span>
-          <ChevronDown />
+          <ChevronDown size={16} />
         </button>
       </DropdownMenu.Trigger>
 
