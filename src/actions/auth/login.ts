@@ -24,7 +24,7 @@ export default async function login(credentials: {
 
     const isPasswordMatched = await bcrypt.compare(
       credentials.password,
-      user.password
+      user.password,
     );
 
     if (!isPasswordMatched) {

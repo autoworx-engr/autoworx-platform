@@ -37,7 +37,7 @@ export async function updatePipelineAutomationTrigger({
           leadId,
           columnId,
         }),
-      }
+      },
     );
 
     const data = await response.json();
@@ -101,7 +101,7 @@ export async function updatePipelineAutomationTriggerWithToken({
           leadId,
           columnId,
         }),
-      }
+      },
     );
 
     const data = await response.json();

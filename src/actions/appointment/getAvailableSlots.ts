@@ -73,21 +73,13 @@ export async function getAvailableSlots(shopId: number, dateString: string) {
     );
 
     const baseSlots: string[] = [];
-    // Compare time strictly - assuming server matches shop location
-    const now = moment(); // Keep current time check as local or whatever was expected
-    // isToday check should ideally not cross timezone boundaries maliciously, but requestMoment is UTC midnight.
-    // If we want to check if dateString is today locally:
+    const now = moment.utc();
     const isToday =
       requestMoment.format("YYYY-MM-DD") === now.format("YYYY-MM-DD");
 
     while (currentSlotTime.isBefore(endSlotTime)) {
       // Don't show past slots if booking for today
-      if (
-        !isToday ||
-        currentSlotTime.isAfter(
-          moment.utc(now.format("YYYY-MM-DD HH:mm"), "YYYY-MM-DD HH:mm"),
-        )
-      ) {
+      if (!isToday || currentSlotTime.isAfter(now)) {
         baseSlots.push(currentSlotTime.format("HH:mm"));
       }
       currentSlotTime.add(intervalMinutes, "minutes");
@@ -113,20 +105,23 @@ export async function getAvailableSlots(shopId: number, dateString: string) {
     });
 
     // Check stacking
-    const availableSlots = baseSlots.filter(slotTime => {
+    const availableSlots = baseSlots.filter((slotTime) => {
       const slotMoment = moment.utc(
         `${selectedDateStr} ${slotTime}`,
-        "YYYY-MM-DD HH:mm"
+        "YYYY-MM-DD HH:mm",
       );
       const slotEndMoment = slotMoment.clone().add(intervalMinutes, "minutes");
 
-      const appointmentsInSlot = existingAppointments.filter(app => {
+      const appointmentsInSlot = existingAppointments.filter((app) => {
         if (!app.startTime) return false;
         const appMoment = moment.utc(
           `${selectedDateStr} ${app.startTime}`,
-          "YYYY-MM-DD HH:mm"
+          "YYYY-MM-DD HH:mm",
         );
-        return appMoment.isSameOrAfter(slotMoment) && appMoment.isBefore(slotEndMoment);
+        return (
+          appMoment.isSameOrAfter(slotMoment) &&
+          appMoment.isBefore(slotEndMoment)
+        );
       });
       return appointmentsInSlot.length < stackingLimit;
     });

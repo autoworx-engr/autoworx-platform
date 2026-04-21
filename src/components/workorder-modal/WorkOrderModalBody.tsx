@@ -98,11 +98,11 @@ export default function WorkOrderModalBody({
       ? Object.values(techniciansPerItem).flat()
       : [];
 
-    allTechnicians.forEach(t => {
+    allTechnicians.forEach((t) => {
       const technicianName = t.name || "Unknown Technician";
 
       if (t.images && t.images.length > 0) {
-        t.images.forEach(image => {
+        t.images.forEach((image) => {
           finalPhotosArray.push({
             id: image.id,
             photo: image.fileUrl,
