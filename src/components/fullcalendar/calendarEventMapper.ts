@@ -3,8 +3,13 @@ import moment from "moment";
 import { darkenHex, isHexColor, lightenHex } from "./colorUtils";
 
 const DAY_NAME_TO_DOW: Record<string, number> = {
-  sunday: 0, monday: 1, tuesday: 2, wednesday: 3,
-  thursday: 4, friday: 5, saturday: 6,
+  sunday: 0,
+  monday: 1,
+  tuesday: 2,
+  wednesday: 3,
+  thursday: 4,
+  friday: 5,
+  saturday: 6,
 };
 
 type BuildCalendarEventsParams = {
@@ -17,7 +22,7 @@ type BuildCalendarEventsParams = {
 
 const getDateString = (dateValue: unknown): string => {
   if (!dateValue) return "";
-  return moment(dateValue as moment.MomentInput).format("YYYY-MM-DD");
+  return moment.utc(dateValue as moment.MomentInput).format("YYYY-MM-DD");
 };
 
 export const buildCalendarEvents = ({
