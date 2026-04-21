@@ -35,16 +35,28 @@ export default function Calendar({ type }: { type: CalendarType }) {
   const { date: storeDate } = useCalendarStore();
   const [view, setView] = useState(
     type === "list"
-      ? "listWeek"
+      ? "listDay"
       : type === "month"
         ? "dayGridMonth"
         : type === "week"
           ? "timeGridWeek"
           : "timeGridDay",
   );
-  const [dateRange, setDateRange] = useState({
-    start: moment().startOf("month").format("YYYY-MM-DD"),
-    end: moment().endOf("month").format("YYYY-MM-DD"),
+  const [dateRange, setDateRange] = useState(() => {
+    const today = moment().format("YYYY-MM-DD");
+    if (type === "list" || type === "day") {
+      return { start: today, end: today };
+    }
+    if (type === "week") {
+      return {
+        start: moment().startOf("week").format("YYYY-MM-DD"),
+        end: moment().endOf("week").format("YYYY-MM-DD"),
+      };
+    }
+    return {
+      start: moment().startOf("month").format("YYYY-MM-DD"),
+      end: moment().endOf("month").format("YYYY-MM-DD"),
+    };
   });
 
   const { data: session } = useSession();
@@ -98,6 +110,17 @@ export default function Calendar({ type }: { type: CalendarType }) {
     dateRange,
     weekendDays,
   });
+
+  const displayEvents = useMemo(() => {
+    if (view.startsWith("list")) {
+      return events.filter(
+        (e) =>
+          e.extendedProps?.type !== "holiday" &&
+          e.extendedProps?.type !== "weekend",
+      );
+    }
+    return events;
+  }, [events, view]);
 
   const loading = isCalendarLoading || isSettingsLoading || isDataLoading;
   const estRevenue = filteredAppointments.reduce(
@@ -194,7 +217,7 @@ export default function Calendar({ type }: { type: CalendarType }) {
             }}
             businessHours={businessHours}
             slotLaneClassNames={nonBusinessSlotClassNames}
-            events={events}
+            events={displayEvents}
             eventContent={(eventInfo: EventContentArg) => (
               <EventContent eventInfo={eventInfo} session={session} />
             )}
