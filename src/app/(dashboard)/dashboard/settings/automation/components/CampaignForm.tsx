@@ -1,5 +1,5 @@
 "use client";
-import React, { ChangeEvent, useEffect } from "react";
+import React, { ChangeEvent, useEffect, useMemo } from "react";
 import Selector from "./Selector";
 import { useState } from "react";
 import { Spin, TimePicker } from "antd";
@@ -39,6 +39,7 @@ import TooltipLabel from "./ToolTipLabel";
 import { getCampaignConditionHelp, getTargetHelp } from "./AllAutomationHelper";
 import InfoCard from "./InfoCard";
 import { TipBox } from "./TagautomationHelper";
+import { TEMPLATE_VARIABLES } from "./TemplateVariable";
 
 export type Campaign = {
   id?: number;
@@ -86,6 +87,7 @@ const CampaignForm = ({
   const today = moment.tz(companyTimezone).format("YYYY-MM-DD");
   const [error, setError] = useState<Record<string, string>>({});
   // const [loading, setLoading] = useState(false);
+  const [initialFormData, setInitialFormData] = useState<Campaign | null>(null);
   const [formData, setFormData] = useState<Campaign>({
     companyId: null,
     target: [],
@@ -141,7 +143,7 @@ const CampaignForm = ({
   useEffect(() => {
     const loadData = async () => {
       if (isEdit && id) {
-        setFormData({
+        const payload: Campaign = {
           companyId: data?.data.companyId,
           target: data?.data.target,
           targetCondition: data?.data.targetCondition,
@@ -158,7 +160,9 @@ const CampaignForm = ({
           smsBody: data?.data.smsBody || "",
           attachments: data?.data.attachments || [],
           createdBy: data?.data.createdBy,
-        });
+        };
+        setFormData(payload);
+        setInitialFormData(payload);
         setActiveTemplate(
           data?.data.communicationType === "BOTH"
             ? "SMS"
@@ -166,7 +170,7 @@ const CampaignForm = ({
         );
         // setLoading(false);
       } else {
-        setFormData({
+        const payload: Campaign = {
           companyId: null,
           target: [],
           targetCondition: "",
@@ -183,7 +187,9 @@ const CampaignForm = ({
           emailBody: "",
           smsBody: "",
           createdBy: null,
-        });
+        };
+        setFormData(payload);
+        setInitialFormData(payload);
       }
     };
     loadData();
@@ -222,6 +228,10 @@ const CampaignForm = ({
   const handleChange = (field: keyof Campaign, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
 
+    if (field === "communicationType") {
+      if (value === "SMS") setActiveTemplate("SMS");
+      if (value === "EMAIL") setActiveTemplate("EMAIL");
+    }
     if (error[field]) {
       setError((prev) => {
         const newErrors = { ...prev };
@@ -295,6 +305,11 @@ const CampaignForm = ({
       setFormData,
     });
   };
+
+  const isFormUnchanged = useMemo(() => {
+    if (!initialFormData) return false;
+    return JSON.stringify(formData) === JSON.stringify(initialFormData);
+  }, [formData, initialFormData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -449,17 +464,17 @@ const CampaignForm = ({
   };
 
   const selectedTargets = targetOptions
-    .filter((opt) => formData.target.includes(opt.id))
-    .map((opt) => opt.title)
+    .filter((opt) => formData?.target?.includes(opt.id))
+    .map((opt) => opt?.title)
     .join(", ");
 
-  const condition = targetConditions.find(
-    (c) => c.id === formData.targetCondition
+  const condition = targetConditions?.find(
+    (c) => c.id === formData?.targetCondition
   );
 
   const targetHelp = getTargetHelp({
     selectedTargets,
-    length: formData.target.length,
+    length: formData?.target?.length,
   });
 
   const conditionHelp = getCampaignConditionHelp({
@@ -716,78 +731,88 @@ const CampaignForm = ({
             {/* SMS Template */}
             {(activeTemplate === "SMS" ||
               formData.communicationType === "BOTH") && (
-              <Box
-                className={`mb-4 ${activeTemplate !== "SMS" ? "hidden" : ""}`}
-              >
-                <ActiveTemplate
-                  activeTemplate="SMS"
-                  rows={4}
-                  name="smsBody"
-                  setFormData={setFormData}
-                  value={formData.smsBody!}
-                  iconBtnClassName="absolute -bottom-9 right-0"
-                  attachments={formData.attachments}
-                  attachmentName="attachments"
-                  placeholder="Enter SMS template here..."
-                  handleChange={handleTemplateChange}
-                  handleFileAttachment={handleFileAttachment}
-                  attachmentType="sms"
-                  error={error.smsBody || error.emailBody || error.emailSubject}
-                  maxLength={maxLength}
-                  characterLength={length}
-                  isLimitExceeded={isLimitExceeded}
-                />
-              </Box>
-            )}
+                <Box
+                  className={`mb-4 ${activeTemplate !== "SMS" ? "hidden" : ""}`}
+                >
+                  <ActiveTemplate
+                    activeTemplate="SMS"
+                    rows={4}
+                    name="smsBody"
+                    setFormData={setFormData}
+                    value={formData.smsBody!}
+                    iconBtnClassName="absolute -bottom-9 right-0"
+                    attachments={formData.attachments}
+                    attachmentName="attachments"
+                    placeholder="Enter SMS template here..."
+                    handleChange={handleTemplateChange}
+                    handleFileAttachment={handleFileAttachment}
+                    attachmentType="sms"
+                    error={error.smsBody || error.emailBody || error.emailSubject}
+                    maxLength={maxLength}
+                    characterLength={length}
+                    isLimitExceeded={isLimitExceeded}
+                  />
+                </Box>
+              )}
 
             {/* EMAIL Template */}
             {(activeTemplate === "EMAIL" ||
               formData.communicationType === "BOTH") && (
-              <Box
-                className={`mb-4 ${activeTemplate !== "EMAIL" ? "hidden" : ""}`}
-              >
-                <ActiveTemplate
-                  activeTemplate="EMAIL"
-                  rows={6}
-                  subjectName="emailSubject"
-                  name="emailBody"
-                  setFormData={setFormData}
-                  subjectValue={formData.emailSubject!}
-                  value={formData.emailBody!}
-                  iconBtnClassName="absolute -bottom-16 right-0"
-                  attachments={formData.attachments}
-                  attachmentName="emailAttachment"
-                  placeholder="Enter email body here..."
-                  handleChange={handleTemplateChange}
-                  handleFileAttachment={handleFileAttachment}
-                  attachmentType="email"
-                  error={error.emailBody || error.smsBody || error.emailSubject}
-                  subjectError={!!error.emailSubject}
-                  maxLength={maxLength}
-                  characterLength={length}
-                  isLimitExceeded={isLimitExceeded}
-                />
-              </Box>
-            )}
+                <Box
+                  className={`mb-4 ${activeTemplate !== "EMAIL" ? "hidden" : ""}`}
+                >
+                  <ActiveTemplate
+                    activeTemplate="EMAIL"
+                    rows={6}
+                    subjectName="emailSubject"
+                    name="emailBody"
+                    setFormData={setFormData}
+                    subjectValue={formData.emailSubject!}
+                    value={formData.emailBody!}
+                    iconBtnClassName="absolute -bottom-16 right-0"
+                    attachments={formData.attachments}
+                    attachmentName="emailAttachment"
+                    placeholder="Enter email body here..."
+                    handleChange={handleTemplateChange}
+                    handleFileAttachment={handleFileAttachment}
+                    attachmentType="email"
+                    error={error.emailBody || error.smsBody || error.emailSubject}
+                    subjectError={!!error.emailSubject}
+                    maxLength={maxLength}
+                    characterLength={length}
+                    isLimitExceeded={isLimitExceeded}
+                  />
+                </Box>
+              )}
 
             {/* Template Variables */}
-            <AppointmentTemplateVariable hasBackground={true} />
+            <AppointmentTemplateVariable
+              VARIABLES={TEMPLATE_VARIABLES}
+              hasBackground={true}
+            />
             <TipBox
-        message="Click any variable to copy it, then paste it into your campaign message. Example: 'Hi <CLIENT>, check out our special offer for your <VEHICLE>!'"
-        variant="info"
-      />
+              message="Click any variable to copy it, then paste it into your campaign message. Example: 'Hi <CLIENT>, check out our special offer for your <VEHICLE>!'"
+              variant="info"
+            />
           </Box>
 
           {/* Submit Button */}
           <div className="flex justify-end pt-4">
             <button
               type="submit"
-              disabled={isUpdatePending || isCreatePending || isLimitExceeded}
-              className={`rounded-md px-4 py-2 text-sm font-medium text-white ${
-                isUpdatePending || isCreatePending || isLimitExceeded
-                  ? "cursor-not-allowed bg-indigo-300"
-                  : "bg-indigo-500 hover:bg-indigo-600"
-              }`}
+              disabled={
+                isUpdatePending ||
+                isCreatePending ||
+                isLimitExceeded ||
+                isFormUnchanged
+              }
+              className={`rounded-md px-4 py-2 text-sm font-medium text-white ${isUpdatePending ||
+                isCreatePending ||
+                isLimitExceeded ||
+                isFormUnchanged
+                ? "cursor-not-allowed bg-indigo-300"
+                : "bg-indigo-500 hover:bg-indigo-600"
+                }`}
             >
               {isUpdatePending || isCreatePending
                 ? isEdit && id

@@ -13,7 +13,7 @@ import {
   savePermissions,
   getPermissionsForRole,
 } from "@/actions/settings/teamManagement";
-import { errorToast } from "@/lib/toast";
+import { errorToast, successToast } from "@/lib/toast";
 import { useTeamManagementStore } from "@/stores/teamManagementStore";
 import { ArrowLeft } from "lucide-react";
 
@@ -44,9 +44,23 @@ const CustomizeUserRole = ({ user, onBack }: CustomizeUserRolesProps) => {
   const [permissions, setPermissions] = useState<PermissionType>({});
   const [rolePermissions, setRolePermissions] = useState<any>(null);
 
+  const persistPermissions = async (
+    updatedPermissions: PermissionType,
+    previousPermissions: PermissionType
+  ) => {
+    try {
+      await savePermissions(user.id, updatedPermissions);
+      successToast("Permissions updated");
+    } catch (error) {
+      console.error("Failed to update permission:", error);
+      errorToast("Failed to update permissions. Please try again.");
+      setPermissions(previousPermissions);
+    }
+  };
+
   useEffect(() => {
     // Fetch default and user-specific permissions
-    getUserPermissions(user.id, user.employeeType).then(data => {
+    getUserPermissions(user.id, user.employeeType).then((data) => {
       setPermissions(data || {});
     });
   }, [user.id, user.employeeType, refetch]);
@@ -78,45 +92,24 @@ const CustomizeUserRole = ({ user, onBack }: CustomizeUserRolesProps) => {
   };
 
   const handlePermissionChange = async (key: string, checked: boolean) => {
-    // Check if user is trying to enable a permission that's disabled at role level
-    if (checked && !isPermissionAllowedForRole(key)) {
-      errorToast(
-        "Cannot enable this permission because it is disabled for this role in the User Roles table"
-      );
-      return;
-    }
+    const previousPermissions = permissions;
+    const { id, ...prevWithoutId } = previousPermissions;
+    const updatedPermissions = { ...prevWithoutId, [key]: checked };
 
-    setPermissions(prev => {
-      const { id, ...prevWithoutId } = prev;
-      const updatedPermissions = { ...prevWithoutId, [key]: checked };
-      // Upsert the entire permissions object
-      savePermissions(user.id, updatedPermissions).catch(error => {
-        console.error("Failed to update permission:", error);
-      });
-      return updatedPermissions;
-    });
+    setPermissions(updatedPermissions);
+    await persistPermissions(updatedPermissions, previousPermissions);
   };
 
   const handleViewOnlyChange = async (
     viewOnlyKey: string,
     checked: boolean
   ) => {
-    // Check if user is trying to enable a view-only permission that's disabled at role level
-    // if (checked && !isPermissionAllowedForRole(viewOnlyKey)) {
-    //   errorToast(
-    //     "Cannot enable this permission because it is disabled for this role in the User Roles table"
-    //   );
-    //   return;
-    // }
+    const previousPermissions = permissions;
+    const { id, ...prevWithoutId } = previousPermissions;
+    const updatedPermissions = { ...prevWithoutId, [viewOnlyKey]: checked };
 
-    setPermissions(prev => {
-      const updatedPermissions = { ...prev, [viewOnlyKey]: checked };
-      // Upsert the entire permissions object
-      savePermissions(user.id, updatedPermissions).catch(error => {
-        console.error("Failed to update view-only permission:", error);
-      });
-      return updatedPermissions;
-    });
+    setPermissions(updatedPermissions);
+    await persistPermissions(updatedPermissions, previousPermissions);
   };
   const getUserType = () => {
     switch (user.employeeType) {
@@ -136,11 +129,11 @@ const CustomizeUserRole = ({ user, onBack }: CustomizeUserRolesProps) => {
   };
   const permissionModules: PermissionModule[] = getUserType();
   return (
-   <div className="p-0">
+    <div className="p-0">
       <div className="mb-6">
         <button
           onClick={onBack}
-          className="flex items-center text-indigo-600 hover:text-indigo-800 font-semibold transition duration-150"
+          className="flex items-center  hover:text-[#6571FF] font-semibold transition duration-150"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to User List
@@ -160,7 +153,7 @@ const CustomizeUserRole = ({ user, onBack }: CustomizeUserRolesProps) => {
         </div>
         <div className="ml-4">
           <h3 className="text-xl font-bold ">{name}</h3>
-          <p className="text-sm font-medium text-indigo-700">
+          <p className="text-sm font-medium text-[#6571FF]">
             {user.employeeType} Role
           </p>
         </div>
@@ -188,7 +181,10 @@ const CustomizeUserRole = ({ user, onBack }: CustomizeUserRolesProps) => {
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
             {permissionModules.map((module, index) => (
-              <tr key={index + 1} className="hover:bg-gray-50 transition duration-150">
+              <tr
+                key={index + 1}
+                className="hover:bg-gray-50 transition duration-150"
+              >
                 <td className="px-4 py-3   whitespace-nowrap">
                   {module.label}
                 </td>

@@ -7,7 +7,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import SelectCategory from "./Lists/SelectCategory";
 import { Category } from "@prisma/client";
-import { ChevronDown, Plus, X } from "lucide-react";
+import { ChevronDown, Plus, X, Check, AlertCircle, Search } from "lucide-react";
 
 export type SelectorWithAddProps = {
   label?: ReactNode;
@@ -25,7 +25,7 @@ export type SelectorWithAddProps = {
   allowClear?: boolean;
   allowAddNew?: boolean;
   addNewLabel?: string;
-  onAddNew?: (newItem: string, category?: Category) => void;
+  onAddNew?: (newItem: string, category?: Category | null) => void;
   addNewPlaceholder?: string;
   selectCategory?: boolean;
 };
@@ -69,7 +69,7 @@ export function SelectorWithAdd({
   const searchInputRef = useRef<HTMLInputElement>(null);
   const addNewInputRef = useRef<HTMLInputElement>(null);
 
-  const [category, setCategory] = useState<Category | undefined>(undefined);
+  const [category, setCategory] = useState<Category | null>(null);
 
   const [categoryOpen, setCategoryOpen] = useState(false);
   useEffect(() => {
@@ -98,11 +98,11 @@ export function SelectorWithAdd({
   }, []);
 
   // Focus search input when dropdown opens
-  useEffect(() => {
-    if (isOpen && isSearch && searchInputRef.current && !isAddingNew) {
-      searchInputRef.current.focus();
-    }
-  }, [isOpen, isSearch, isAddingNew]);
+  // useEffect(() => {
+  //   if (isOpen && isSearch && searchInputRef.current && !isAddingNew) {
+  //     searchInputRef.current.focus();
+  //   }
+  // }, [isOpen, isSearch, isAddingNew]);
 
   // Focus add new input when adding new item
   useEffect(() => {
@@ -125,8 +125,8 @@ export function SelectorWithAdd({
 
   const filteredOptions = searchTerm
     ? normalizedOptions.filter((opt) =>
-        opt.title.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+      opt.title.toLowerCase().includes(searchTerm.toLowerCase())
+    )
     : normalizedOptions;
 
   const handleSelect = (id: string) => {
@@ -135,7 +135,7 @@ export function SelectorWithAdd({
     setSearchTerm("");
     setIsAddingNew(false);
     setNewItemValue("");
-    setCategory(undefined);
+    setCategory(null);
     setCategoryOpen(false);
     if (onChange) {
       const selectedOption = normalizedOptions.find(
@@ -171,7 +171,7 @@ export function SelectorWithAdd({
     if (newItemValue.trim() && onAddNew) {
       onAddNew(newItemValue.trim(), category);
       setNewItemValue("");
-      setCategory(undefined);
+      setCategory(null);
       setIsAddingNew(false);
       setIsOpen(false);
       setCategoryOpen(false);
@@ -185,7 +185,7 @@ export function SelectorWithAdd({
     } else if (e.key === "Escape") {
       setIsAddingNew(false);
       setNewItemValue("");
-      setCategory(undefined);
+      setCategory(null);
       setCategoryOpen(false);
     }
   };
@@ -193,11 +193,11 @@ export function SelectorWithAdd({
   const handleAddNewCancel = () => {
     setIsAddingNew(false);
     setNewItemValue("");
-    setCategory(undefined);
+    setCategory(null);
     setCategoryOpen(false);
   };
 
-  const handleCategoryChange = (newCategory: Category | undefined) => {
+  const handleCategoryChange = (newCategory: Category | null) => {
     setCategory(newCategory);
   };
   const selectedLabel = normalizedOptions?.find(
@@ -207,92 +207,114 @@ export function SelectorWithAdd({
   const hasValue = selectedValue && selectedValue !== "";
 
   return (
-    <div className={cn("block", rootClassName)} ref={dropdownRef}>
-      <div className={cn("mb-1 font-medium text-gray-500", labelClassName)}>
+    <div className={cn("block group", rootClassName)} ref={dropdownRef}>
+      {/* Label Styling */}
+      <div className={cn("mb-1.5 flex items-center gap-1 font-semibold text-slate-600", labelClassName)}>
         {label ?? sentenceCase(name)}
-        {required && <span className="text-red-500"> *</span>}
+        {required && <span className="text-rose-500">*</span>}
       </div>
+
       <div className="relative">
         <button
           type="button"
           className={cn(
-            "flex w-full items-center justify-between rounded-sm border border-slate-400 bg-background px-2 py-0.5 text-left leading-6 outline-none",
-            error && "border-red-500 focus:border-red-500",
-            disabled && "cursor-not-allowed bg-gray-100 opacity-50"
+            "flex w-full items-center justify-between rounded-lg border-none px-3 py-2 text-left text-sm leading-6 transition-all duration-300 outline-none ring-1",
+            isOpen
+              ? "bg-white ring-[#6571FF] shadow-lg shadow-[#6571FF]/10"
+              : "bg-slate-50/50 ring-slate-200 hover:bg-white hover:ring-slate-300 hover:shadow-sm",
+            error && "ring-rose-500 focus:ring-rose-500",
+            disabled && "cursor-not-allowed bg-slate-100 opacity-60 ring-slate-200"
           )}
           onClick={() => !disabled && setIsOpen(!isOpen)}
           id={name}
           disabled={disabled}
         >
-          <span className={selectedLabel ? "" : "text-gray-400"}>
+          <span className={cn(
+            "truncate transition-colors",
+            selectedLabel ? "font-medium text-slate-700" : "text-slate-400"
+          )}>
             {selectedLabel || placeholder}
           </span>
-          <div className="flex items-center gap-1">
+
+          <div className="flex items-center gap-2">
             {hasValue && allowClear && !disabled && (
-              <button
-                type="button"
-                onClick={handleClear}
-                className="flex h-4 w-4 items-center justify-center rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600"
+              <div
+                onClick={(e) => { e.stopPropagation(); handleClear(e); }}
+                className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-200/50 text-slate-500 transition-all hover:bg-rose-100 hover:text-rose-600"
                 title="Clear selection"
               >
-                <X strokeWidth={2} className="h-2 w-2" />
-              </button>
+                <X strokeWidth={3} className="h-2.5 w-2.5" />
+              </div>
             )}
-            <ChevronDown className="text-gray-500" />
+            <ChevronDown className={cn(
+              "h-4 w-4 text-slate-400 transition-transform duration-300",
+              isOpen && "rotate-180 text-[#6571FF]"
+            )} />
           </div>
         </button>
 
+        {/* Dropdown Menu */}
         {isOpen && (
-          <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-sm border border-slate-200 bg-white shadow-md">
+          <div className="absolute z-50 mt-2 w-full overflow-hidden rounded-2xl border-none bg-white/90 shadow-2xl backdrop-blur-xl ring-1 ring-slate-200/60 animate-in fade-in slide-in-from-top-2 duration-200">
+
+            {/* Search Input Section */}
             {isSearch && !isAddingNew && (
-              <div className="sticky top-0 border-b border-slate-200 bg-white p-2">
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  className="w-full rounded-sm border border-slate-400 bg-background px-2 py-0.5 leading-6 outline-none"
-                  placeholder="Search..."
-                  value={searchTerm}
-                  onChange={handleSearchChange}
-                  onKeyDown={handleSearchKeyDown}
-                  onClick={(e) => e.stopPropagation()}
-                />
+              <div className="sticky top-0 z-20 border-b border-slate-100 bg-white/50 p-2.5">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    className="w-full rounded-lg bg-slate-100/50 py-1.5 pl-8 pr-3 text-sm text-slate-600 outline-none transition-all focus:bg-white focus:ring-2 focus:ring-[#6571FF]/20"
+                    placeholder="Search..."
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                    onKeyDown={handleSearchKeyDown}
+                    onClick={(e) => e.stopPropagation()}
+                    
+                  />
+                </div>
               </div>
             )}
 
+            {/* Add New Item Surface */}
             {isAddingNew ? (
-              <div className="p-3 border-b border-slate-200 bg-gray-50">
-                <div className="space-y-2">
+              <div className="border-b border-slate-100 bg-slate-50/50 p-4">
+                <div className="space-y-3">
                   <input
                     ref={addNewInputRef}
                     type="text"
-                    className="w-full rounded-sm border border-slate-400 bg-background px-2 py-0.5 leading-6 outline-none"
+                    className="w-full rounded-lg border-none bg-white px-3 py-2 text-sm text-slate-600 shadow-sm ring-1 ring-slate-200 outline-none transition-all focus:ring-2 focus:ring-[#6571FF]/40"
                     placeholder={addNewPlaceholder}
                     value={newItemValue}
                     onChange={(e) => setNewItemValue(e.target.value)}
                     onKeyDown={handleAddNewKeyDown}
                     onClick={(e) => e.stopPropagation()}
                   />
+
                   {selectCategory && (
-                    <SelectCategory
-                      onCategoryChange={handleCategoryChange}
-                      labelPosition="none"
-                      categoryData={category}
-                      categoryOpen={categoryOpen}
-                      setCategoryOpen={setCategoryOpen}
-                    />
+                    <div className="rounded-lg bg-white ring-1 ring-slate-100">
+                      <SelectCategory
+                        onCategoryChange={handleCategoryChange}
+                        labelPosition="none"
+                        categoryData={category}
+                        categoryOpen={categoryOpen}
+                        setCategoryOpen={setCategoryOpen}
+                      />
+                    </div>
                   )}
 
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 pt-1">
                     <button
                       onClick={handleAddNewSubmit}
                       disabled={!newItemValue.trim()}
-                      className="h-6 text-xs bg-[#6571FF] px-2 text-white rounded-md"
+                      className="flex-1 rounded-lg bg-[#6571FF] py-2 text-xs font-bold text-white shadow-md shadow-[#6571FF]/20 transition-all active:scale-95 disabled:opacity-50"
                     >
-                      Add
+                      Create New
                     </button>
                     <button
                       onClick={handleAddNewCancel}
-                      className="h-6 text-xs px-2  border rounded-md"
+                      className="rounded-lg bg-white px-3 py-2 text-xs font-semibold text-slate-500 ring-1 ring-slate-200 transition-all hover:bg-slate-50"
                     >
                       Cancel
                     </button>
@@ -301,37 +323,46 @@ export function SelectorWithAdd({
               </div>
             ) : (
               <>
-                <div className="max-h-[100px] overflow-y-auto">
+                {/* Scrollable Options List */}
+                <div className="max-h-56 overflow-y-auto p-1.5 thin-scrollbar">
                   {filteredOptions?.length > 0 ? (
-                    filteredOptions?.map((opt) => (
-                      <div
-                        key={opt?.id}
-                        className={cn(
-                          "cursor-pointer px-3 py-2 hover:bg-slate-100",
-                          selectedValue === opt?.id?.toString() &&
-                            "bg-blue-50 text-blue-700"
-                        )}
-                        onClick={() => handleSelect(opt?.id.toString())}
-                      >
-                        {opt?.title}
-                      </div>
-                    ))
+                    filteredOptions?.map((opt) => {
+                      const isSelected = selectedValue === opt?.id?.toString();
+                      return (
+                        <div
+                          key={opt?.id}
+                          className={cn(
+                            "group flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-sm transition-all duration-200",
+                            isSelected
+                              ? "bg-[#6571FF]/10 text-[#6571FF] font-semibold"
+                              : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                          )}
+                          onClick={() => handleSelect(opt?.id.toString())}
+                        >
+                          {opt?.title}
+                          {isSelected && <Check className="h-4 w-4" strokeWidth={3} />}
+                        </div>
+                      );
+                    })
                   ) : (
-                    <div className="px-3 py-2 text-sm text-gray-500">
-                      No matching options
+                    <div className="px-3 py-6 text-center">
+                      <p className="text-xs font-medium text-slate-400 italic">No matching results found</p>
                     </div>
                   )}
                 </div>
 
+                {/* Bottom Footer Action */}
                 {allowAddNew && onAddNew && (
-                  <div className="border-t border-slate-200">
-                    <div
-                      className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50"
+                  <div className="border-t border-slate-100 bg-slate-50/30 p-1.5">
+                    <button
+                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-[#6571FF] transition-all hover:bg-[#6571FF]/5 active:scale-[0.98]"
                       onClick={handleAddNewClick}
                     >
-                      <Plus className="h-3 w-3" />
+                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#6571FF]/10">
+                        <Plus className="h-3 w-3" strokeWidth={3} />
+                      </div>
                       {addNewLabel}
-                    </div>
+                    </button>
                   </div>
                 )}
               </>
@@ -339,7 +370,13 @@ export function SelectorWithAdd({
           </div>
         )}
       </div>
-      {error && <div className="mt-1 px-2 text-xs text-red-500">{error}</div>}
+
+      {error && (
+        <div className="mt-1.5 flex items-center gap-1 px-1 text-[11px] font-medium text-rose-500 animate-in fade-in slide-in-from-top-1">
+          <AlertCircle className="h-3 w-3" />
+          {error}
+        </div>
+      )}
     </div>
   );
 }

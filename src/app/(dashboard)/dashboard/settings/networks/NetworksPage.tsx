@@ -1,4 +1,6 @@
 "use client";
+import { acceptCompanyJoin } from "@/actions/communication/collaboration/acceptCompanyJoin";
+import { rejectCompanyJoin } from "@/actions/communication/collaboration/rejectCompanyJoin";
 import {
   connectWithCompany,
   findNearbyCompanies,
@@ -8,13 +10,15 @@ import {
   togglePhoneVisibility,
 } from "@/actions/settings/myNetwork";
 import { Switch } from "@/components/Switch";
+import { Button } from "@/components/ui/button";
+import { CompanyCard } from "@/components/ui/companyCard";
 import { useDebounceCallback } from "@/hooks/useDebounceCallback";
 import { errorToast, successToast } from "@/lib/toast";
 import Slider from "@mui/material/Slider";
 import { Company } from "@prisma/client";
 import { Search, Link as LinkIcon, MapPin, Phone, Globe } from "lucide-react";
 import Image from "next/image";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 function formatDate(date: Date) {
   const options: Intl.DateTimeFormatOptions = {
     year: "numeric",
@@ -28,11 +32,40 @@ type Props = {
   unconnectedCompanies: Company[] | [];
   currentCompany: Company | null;
   collaborationDates: Date[] | [];
+  pendingSent: {
+    company: Company;
+    createdAt: Date;
+    joinId: number;
+  }[];
+  pendingReceived: {
+    company: Company;
+    createdAt: Date;
+    joinId: number;
+  }[];
+  rejectSent: {
+    company: Company;
+    createdAt: Date;
+    joinId: number;
+  }[];
+  rejectReceived: {
+    company: Company;
+    createdAt: Date;
+    joinId: number;
+  }[];
+  active: {
+    company: Company;
+    joinedAt: Date;
+    joinId: number;
+  }[];
 };
 
 const NetworksPage = ({
   connectedCompanies: connectedCompaniesData = [],
-  collaborationDates = [],
+  pendingSent,
+  pendingReceived,
+  active,
+  rejectReceived,
+  rejectSent,
   unconnectedCompanies,
   currentCompany,
 }: Props) => {
@@ -45,8 +78,8 @@ const NetworksPage = ({
   const [nearbyCompaniesSearch, setNearbyCompaniesSearch] =
     useState<string>("");
 
-  const [connectedCompanies, setConnectedCompanies] = useState<Company[] | []>(
-    connectedCompaniesData
+  const [connectedCompanies, setConnectedCompanies] = useState<any[] | []>(
+    connectedCompaniesData,
   );
   const [nearbyCompanies, setNearbyCompanies] = useState<Company[] | []>([]);
   const [searchedNearbyCompanies, setSearchedNearbyCompanies] = useState<
@@ -67,12 +100,12 @@ const NetworksPage = ({
 
   const handleConnectWithCompany = async (
     companyId: number,
-    companyName: string
+    companyName: string,
   ) => {
-    const result = await connectWithCompany(companyId);
+    const result = await connectWithCompany({ targetCompanyId: companyId });
     if (result.success) {
       setNearbyCompanies((prevNearby) =>
-        prevNearby.filter((company) => company.id !== companyId)
+        prevNearby.filter((company) => company.id !== companyId),
       );
       setConnectedCompanies((prevConnected) => [
         ...prevConnected,
@@ -95,7 +128,7 @@ const NetworksPage = ({
       findNearbyCompanies(
         location.latitude,
         location.longitude,
-        nearByCompanyRange
+        nearByCompanyRange,
       ).then((res) => {
         setNearbyCompanies(res.data);
       });
@@ -109,7 +142,9 @@ const NetworksPage = ({
   useEffect(() => {
     if (nearbyCompaniesSearch.length > 0) {
       const filteredNearbyCompanies = nearbyCompanies.filter((company) =>
-        company.name.toLowerCase().includes(nearbyCompaniesSearch.toLowerCase())
+        company.name
+          .toLowerCase()
+          .includes(nearbyCompaniesSearch.toLowerCase()),
       );
       setSearchedNearbyCompanies(filteredNearbyCompanies);
     } else {
@@ -145,80 +180,209 @@ const NetworksPage = ({
           <h2 className="mb-6 text-2xl font-semibold text-gray-800">
             Collaborations
           </h2>
-          <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-2 shadow-xl min-h-[300px]">
-            {connectedCompanies.length === 0 && (
-              <p className="py-10 text-center text-sm text-gray-500">
-                No active collaborations found.
+
+          <div className="space-y-6 rounded-xl border bg-white p-4 shadow-xl min-h-[300px]">
+            {/* Active */}
+            <h3 className="text-xl font-semibold text-gray-800 pt-6">
+              Active Collaborations
+            </h3>
+
+            {active.length === 0 && (
+              <p className="text-sm text-gray-500 italic">
+                No active collaborations found
               </p>
             )}
-            <div className="max-h-[500px] overflow-y-auto space-y-4">
-              {connectedCompanies.map((company, index) => (
-                <div
-                  key={index}
-                  className="flex items-start rounded-lg border border-gray-200 bg-gray-50 p-4 transition duration-200 hover:border-indigo-300 hover:shadow-sm"
-                >
-                  <div className="mr-4 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-100">
-                    <Image
-                      src="/icons/business.png"
-                      alt={company.name}
-                      width={24}
-                      height={24}
-                      className="opacity-70"
-                    />
-                  </div>
-                  <div className="flex w-full items-start justify-between">
-                    <div>
-                      <p className="text-lg font-medium text-gray-800">
-                        {company.name}
-                      </p>
-                      <div className="mt-1 space-y-0.5 text-sm text-gray-500">
-                        {company.website && (
-                          <p className="flex items-center">
-                            <Globe size={14} className="mr-1 text-indigo-500" />
-                            <a
-                              href={company.website}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="hover:text-indigo-600 transition"
-                            >
-                              {company.website}
-                            </a>
-                          </p>
-                        )}
-                        {company.phone && (
-                          <p className="flex items-center">
-                            <Phone size={14} className="mr-1 text-indigo-500" />
-                            {company.phone}
-                          </p>
-                        )}
-                        {company.address && (
-                          <p className="flex items-center">
-                            <MapPin
-                              size={14}
-                              className="mr-1 text-indigo-500"
-                            />
-                            {company.address}
-                          </p>
-                        )}
+
+            <div className="space-y-4 lg:max-h-72 lg:overflow-y-auto thin-scrollbar pb-4">
+              {active.map(
+                ({
+                  company,
+                  joinId,
+                  joinedAt,
+                }: {
+                  company: Company;
+                  joinId: number;
+                  joinedAt: Date;
+                }) => (
+                  <CompanyCard
+                    key={joinId}
+                    company={company}
+                    rightSlot={
+                      <div className="text-right text-xs italic text-gray-500 pt-1">
+                        <p className="font-semibold text-gray-600">
+                          Collaborating Since
+                        </p>
+                        <p>{formatDate(joinedAt)}</p>
                       </div>
-                    </div>
-                    {/* Collaboration Date */}
-                    <div className="text-right text-xs italic text-gray-500 pt-1">
-                      <p className="font-semibold text-gray-600">
-                        Collaborating Since
-                      </p>
-                      <p>
-                        {collaborationDates[index]
-                          ? formatDate(collaborationDates[index])
-                          : "N/A"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                    }
+                  />
+                ),
+              )}
             </div>
+
+            {/* Pending */}
+            <h3 className="text-xl font-semibold text-gray-800">
+              Pending Collaborations
+            </h3>
+
+            {/* Pending Sent */}
+            {pendingSent.length > 0 && (
+              <>
+                <p className="text-sm text-gray-500">Requests sent by you</p>
+                <div className="space-y-4">
+                  {pendingSent.map((join: any) => {
+                    return (
+                      <CompanyCard
+                        key={join?.joinId}
+                        company={join?.company}
+                        rightSlot={
+                          <p className="text-sm italic text-gray-500 pt-1">
+                            Collaboration request pending
+                          </p>
+                        }
+                      />
+                    );
+                  })}
+                </div>
+              </>
+            )}
+
+            {/* Pending Received */}
+            {pendingReceived.length > 0 && (
+              <>
+                <p className="text-sm text-gray-500">Requests received</p>
+                <div className="space-y-4">
+                  {pendingReceived.map(
+                    ({
+                      company,
+                      joinId,
+                    }: {
+                      company: Company;
+                      joinId: number;
+                    }) => {
+                      return (
+                        <CompanyCard
+                          key={joinId}
+                          company={company}
+                          rightSlot={
+                            <div className="flex gap-2 pt-1">
+                              <button
+                                className="w-full disabled:bg-slate-200 bg-green-600 hover:bg-green-700 text-white font-medium py-0.5 px-3 rounded-lg shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                                onClick={() =>
+                                  acceptCompanyJoin(
+                                    joinId,
+                                    Number(currentCompany?.id),
+                                  )
+                                }
+                              >
+                                Accept
+                              </button>
+                              <button
+                                className="w-full disabled:bg-slate-200 bg-red-600 hover:bg-red-700 text-white font-medium py-0.5 px-3 rounded-lg shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                                onClick={() =>
+                                  rejectCompanyJoin(
+                                    joinId,
+                                    Number(currentCompany?.id),
+                                  )
+                                }
+                              >
+                                Reject
+                              </button>
+                            </div>
+                          }
+                        />
+                      );
+                    },
+                  )}
+                </div>
+              </>
+            )}
+
+            {pendingSent.length === 0 && pendingReceived.length === 0 && (
+              <p className="text-sm text-gray-500 italic">
+                No pending collaboration requests
+              </p>
+            )}
+
+            {/* Rejected */}
+            <h3 className="text-xl font-semibold text-gray-800">
+              Rejected Collaborations
+            </h3>
+
+            {/* Rejected Sent */}
+            {rejectSent?.length > 0 && (
+              <>
+                <p className="text-sm text-gray-500">
+                  Rejected Requests sent by you
+                </p>
+                <div className="space-y-4">
+                  {rejectSent?.map((join: any) => {
+                    return (
+                      <CompanyCard
+                        key={join?.joinId}
+                        company={join?.company}
+                        rightSlot={
+                          <p className="text-sm italic text-gray-500 pt-1">
+                            Collaboration request rejected
+                          </p>
+                        }
+                      />
+                    );
+                  })}
+                </div>
+              </>
+            )}
+
+            {/* 🟠 Reject Received */}
+            {rejectReceived?.length > 0 && (
+              <>
+                <p className="text-sm text-gray-500">
+                  Rejected Requests received
+                </p>
+                <div className="space-y-4">
+                  {rejectReceived?.map(
+                    ({
+                      company,
+                      joinId,
+                    }: {
+                      company: Company;
+                      joinId: number;
+                    }) => {
+                      return (
+                        <CompanyCard
+                          key={joinId}
+                          company={company}
+                          rightSlot={
+                            <div className="flex gap-2 pt-1">
+                              <button
+                                className="w-full disabled:bg-slate-200 bg-green-600 hover:bg-green-700 text-white font-medium py-0.5 px-3 rounded-lg shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                                onClick={() =>
+                                  acceptCompanyJoin(
+                                    joinId,
+                                    Number(currentCompany?.id),
+                                  )
+                                }
+                              >
+                                Accept
+                              </button>
+                            </div>
+                          }
+                        />
+                      );
+                    },
+                  )}
+                </div>
+              </>
+            )}
+
+            {rejectSent?.length === 0 && rejectReceived?.length === 0 && (
+              <p className="text-sm text-gray-500 italic">
+                No rejected collaboration
+              </p>
+            )}
           </div>
         </div>
+
         {/* Network Settings & Nearby Companies Section */}
         <div>
           {/* network settings */}
@@ -242,7 +406,7 @@ const NetworksPage = ({
                         if (res?.success) {
                           setBusinessVisibility(value);
                           successToast(
-                            "Business visibility updated successfully"
+                            "Business visibility updated successfully",
                           );
                         } else {
                           errorToast("Failed to update business visibility");
@@ -263,11 +427,11 @@ const NetworksPage = ({
                         if (res?.success) {
                           setPhoneVisibility(value);
                           successToast(
-                            "Business phone visibility updated successfully"
+                            "Business phone visibility updated successfully",
                           );
                         } else {
                           errorToast(
-                            "Failed to update Business phone visibility"
+                            "Failed to update Business phone visibility",
                           );
                         }
                       }}
@@ -286,11 +450,11 @@ const NetworksPage = ({
                         if (res?.success) {
                           setBusinessAddressVisibility(value);
                           successToast(
-                            "Business address visibility updated successfully"
+                            "Business address visibility updated successfully",
                           );
                         } else {
                           errorToast(
-                            "Failed to update business address visibility"
+                            "Failed to update business address visibility",
                           );
                         }
                       }}
@@ -320,9 +484,9 @@ const NetworksPage = ({
                                 });
                                 setLatLong(
                                   position.coords.latitude,
-                                  position.coords.longitude
+                                  position.coords.longitude,
                                 );
-                              }
+                              },
                             );
                             setLocationAllow(true);
                           } else {

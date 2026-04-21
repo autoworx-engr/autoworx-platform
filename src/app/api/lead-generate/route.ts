@@ -8,6 +8,39 @@ import { sendCRMDemoNotification } from "@/lib/notification/crm-demo-notifiy";
 import { sendNewLeadNotification } from "@/lib/notification/pipeline-notify";
 import { NextRequest, NextResponse } from "next/server";
 
+/**
+ * @swagger
+ * /api/lead-generate:
+ *   post:
+ *     summary: Generate new lead from Zapier
+ *     tags: [Leads]
+ *     parameters:
+ *       - in: header
+ *         name: X-TOKEN
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Lead created successfully
+ *       401:
+ *         description: Invalid token
+ *       500:
+ *         description: Server error
+ */
 export async function POST(request: NextRequest) {
   try {
     const token = request.headers.get("X-TOKEN");
@@ -47,17 +80,21 @@ export async function POST(request: NextRequest) {
     // console.log("🚀 ~ POST ~ opportunity:", opportunity);
     const crmMsg = body.message;
     const multipleServices = body.multiServices as number[] | undefined;
-
+    // now extract the source, services and vehicle info from opportunity
+    // the format is this: (source) vehicle | service
+    const source = opportunity.split(")")[0].replace("(", "").trim();
+    // console.log("🚀 ~ POST ~ source:", source);
+    const vehicleInfo = opportunity.split(")")[1].split("|")[0].trim();
+    // console.log("🚀 ~ POST ~ vehicleInfo:", vehicleInfo);
+    const services = opportunity.split(")")[1].split("|")[1].trim();
+    // console.log("🚀 ~ POST ~ services:", services);
     // console.log("crmMsg", crmMsg);
     //check if crm company
     const isCRMCompany = company.isCRMEnabled || false;
     // console.log("🚀 ~ POST ~ isCRMCompany:", isCRMCompany);
     if (isCRMCompany) {
       // For demo requests
-      const source = "Marketing Site";
-
-      let vehicleInfo = "N/A";
-      let services = crmMsg || "Service Request";
+      const source = body.source || "Marketing Site";
 
       // Create lead with demo-specific handling
       const newLead = await db.lead.create({
@@ -65,8 +102,8 @@ export async function POST(request: NextRequest) {
           clientName,
           clientEmail,
           clientPhone,
-          vehicleInfo,
-          services,
+          vehicleInfo: vehicleInfo || "N/A",
+          services: services || crmMsg || "Service Request",
           countryCode,
           source,
           serviceId: null,
@@ -113,6 +150,7 @@ export async function POST(request: NextRequest) {
             mobile: clientPhone,
             companyId: company.id,
             leadId: newLead.id,
+            isSalesAgent: true,
           },
         });
         await db.lead.update({
@@ -182,6 +220,12 @@ export async function POST(request: NextRequest) {
         clientName: newLead.clientName,
       });
 
+      // send a notification for new lead added
+      await sendNewLeadNotification({
+        companyId: company.id,
+        leadClientName: newLead.clientName,
+      });
+
       return Response.json(
         {
           id: newLead.id,
@@ -192,18 +236,9 @@ export async function POST(request: NextRequest) {
           opportunity_source: opportunity,
           countryCode: countryCode,
         },
-        { status: 201 }
+        { status: 201 },
       );
     }
-
-    // now extract the source, services and vehicle info from opportunity
-    // the format is this: (source) vehicle | service
-    const source = opportunity.split(")")[0].replace("(", "").trim();
-    // console.log("🚀 ~ POST ~ source:", source);
-    const vehicleInfo = opportunity.split(")")[1].split("|")[0].trim();
-    // console.log("🚀 ~ POST ~ vehicleInfo:", vehicleInfo);
-    const services = opportunity.split(")")[1].split("|")[1].trim();
-    // console.log("🚀 ~ POST ~ services:", services);
 
     // check if the required fields are provided
     if (!clientName || !vehicleInfo || !services || !source) {
@@ -212,7 +247,7 @@ export async function POST(request: NextRequest) {
         clientName,
         vehicleInfo,
         services,
-        source
+        source,
       );
       return Response.json({ error: "Invalid input" }, { status: 400 });
     }
@@ -232,7 +267,7 @@ export async function POST(request: NextRequest) {
     if (!newLeadsColumn) {
       return new Response(
         JSON.stringify({ error: "New Leads column not found" }),
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -283,6 +318,7 @@ export async function POST(request: NextRequest) {
           mobile: clientPhone,
           companyId: company.id,
           leadId: newLead.id,
+          isSalesAgent: true,
         },
       });
       await db.lead.update({
@@ -392,14 +428,14 @@ export async function POST(request: NextRequest) {
         opportunity_source: opportunity,
         countryCode: countryCode,
       },
-      { status: 201 }
+      { status: 201 },
     );
     // Add CORS headers
     response.headers.set("Access-Control-Allow-Origin", "*");
     response.headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
     response.headers.set(
       "Access-Control-Allow-Headers",
-      "Content-Type, X-TOKEN"
+      "Content-Type, X-TOKEN",
     );
 
     return response;
@@ -407,7 +443,7 @@ export async function POST(request: NextRequest) {
     // check if this is json parse error
     const errorResponse = Response.json(
       { error: error.message },
-      { status: 500 }
+      { status: 500 },
     );
     errorResponse.headers.set("Access-Control-Allow-Origin", "*");
     return errorResponse;

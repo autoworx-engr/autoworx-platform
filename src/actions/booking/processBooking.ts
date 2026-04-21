@@ -12,7 +12,7 @@ import { getBookingFormById } from "../settings/bookingForm";
 
 export async function findClientByPhone(
   phone: string,
-  companyId: string
+  companyId: string,
 ): Promise<Client | null> {
   try {
     const client = await db.client.findFirst({
@@ -53,6 +53,7 @@ export async function createClient(data: {
         zip: data.zip || "",
         customerCompany: data.customerCompany || "",
         companyId: parseInt(data.companyId),
+        isSalesAgent: true,
       },
     });
     return client;
@@ -111,7 +112,7 @@ export async function createAppointment(data: {
       const clientName =
         appointment?.client?.firstName || appointment?.client?.lastName || "";
       const appointmentDate = moment(
-        `${data.date}T${data.startTime}:00`
+        `${data.date}T${data.startTime}:00`,
       ).format("dddd, MMMM DD, h:mm A");
 
       const confirmationTemplate = `Hi ${clientName}, your ${appointment?.company?.name} appt is on ${appointmentDate}. Reply YES to confirm, NO to cancel, or text here to reschedule. STOP to opt out.`;
@@ -173,7 +174,7 @@ export async function createAppointment(data: {
 export async function getAppointmentByDateTime(
   companyId: number,
   date: string,
-  time?: string
+  time?: string,
 ) {
   try {
     const appointment = await db.appointment.findMany({
@@ -207,7 +208,7 @@ export async function processBooking(
     notes?: string; // Add notes to the formData type
   },
   companyId: string,
-  bookingId: number
+  bookingId: number,
 ) {
   try {
     // First, check if client exists by phone number
@@ -215,14 +216,14 @@ export async function processBooking(
     const alreadyBookedAppointment = await getAppointmentByDateTime(
       parseInt(companyId),
       formData.date,
-      formData.startTime
+      formData.startTime,
     );
     console.log("Already booked appointments:", alreadyBookedAppointment);
     const bookingForm = await getBookingFormById(bookingId);
     const stack = bookingForm?.stack ?? 6;
     if (alreadyBookedAppointment && alreadyBookedAppointment.length >= stack) {
       throw new Error(
-        "Selected time slot is fully booked. Please choose another time."
+        "Selected time slot is fully booked. Please choose another time.",
       );
     }
     if (!client) {

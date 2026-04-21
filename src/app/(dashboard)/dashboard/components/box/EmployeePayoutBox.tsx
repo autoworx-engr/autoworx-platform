@@ -24,7 +24,7 @@ export default async function EmployeePayoutBox({
   // Payout is a cost, so a higher rate/growth is typically seen as 'Negative' financially.
   // We'll calculate the rate cleanly and determine if the growth is positive or negative for the indicator.
   const payoutGrowthRate = parseFloat(
-    (employeePayout?.growth?.rate ?? 0).toFixed(2)
+    (employeePayout?.growth?.rate ?? 0).toFixed(2),
   );
 
   // For Payout, growth (isPositive = true) indicates a higher cost, which is usually negative for a dashboard.
@@ -54,13 +54,13 @@ export default async function EmployeePayoutBox({
           hover:shadow-xl hover:shadow-blue-500/10 dark:hover:shadow-indigo-500/10
 
         `,
-        className
+        className,
       )}
     >
       {/* Title and Link */}
       <BoxTitle
         title="Employee Payout"
-        redirectLink="/dashboard/reporting/teams"
+        redirectLink="/dashboard/reporting/teams?view=teams"
         className="mb-4 md:mb-6" // Consistent spacing
       />
 

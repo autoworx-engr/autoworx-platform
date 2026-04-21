@@ -15,6 +15,10 @@ import SelectCategory from "@/components/Lists/SelectCategory";
 import Selector from "@/components/Selector";
 import { SlimInput } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { cn } from "@/lib/cn";
+import { errorToast, successToast } from "@/lib/toast";
+import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import {
   Category,
@@ -22,12 +26,9 @@ import {
   InventoryProductType,
   Vendor,
 } from "@prisma/client";
+import { SquarePen } from "lucide-react";
 import { useEffect, useState } from "react";
 import { editProduct } from "../../../../actions/inventory/edit";
-import { errorHandler } from "@/error-boundary/globalErrorHandler";
-import { errorToast, successToast } from "@/lib/toast";
-import { useFormErrorStore } from "@/stores/form-error";
-import { SquarePen } from "lucide-react";
 
 type TProps = {
   productData: InventoryProduct & { category: Category; vendor: Vendor };
@@ -235,17 +236,17 @@ export default function EditProduct({ productData }: TProps) {
           <DialogTrigger>Edit Profile</DialogTrigger>
         </div>   */}
         <DialogContent
-          className="max-h-[80%] w-[96%] max-w-xl grid-rows-[auto,1fr,auto]"
+          className="max-h-[80%] w-[96%] max-w-xl grid-rows-[auto,1fr,auto] thin-scrollbar"
           form
         >
           <DialogHeader>
-            <DialogTitle>Edit product</DialogTitle>
+            <DialogTitle className="text-slate-600">Edit product</DialogTitle>
           </DialogHeader>
 
           <FormError />
 
-          <div className="grid-cols-2 gap-5 overflow-y-auto md:grid">
-            <div>
+          <div className="gap-5 overflow-y-auto pl-1 space-y-2">
+            <div className="space-y-2 grid grid-cols-1 md:grid-cols-2 gap-x-5">
               <SelectCategory
                 categoryData={category}
                 onCategoryChange={(selectedCategory) => {
@@ -256,6 +257,40 @@ export default function EditProduct({ productData }: TProps) {
                 setCategoryOpen={setCategoryOpen}
                 required={true}
               />
+
+              {/* radio buttons for product type */}
+              <div>
+                <label className="font-medium text-slate-600">
+                  Product Type
+                </label>
+                <div className="mt-1 flex gap-5">
+                  <div>
+                    <input
+                      id="product"
+                      type="radio"
+                      name="type"
+                      value={InventoryProductType.Product}
+                      onChange={handleChange}
+                      className="mr-1"
+                      checked={product.type === InventoryProductType.Product}
+                    />
+                    <label htmlFor="product">Products</label>
+                  </div>
+                  <div>
+                    <input
+                      id="supply"
+                      type="radio"
+                      name="type"
+                      value={InventoryProductType.Supply}
+                      onChange={handleChange}
+                      className="mr-1"
+                      checked={product.type === InventoryProductType.Supply}
+                    />
+                    <label htmlFor="supply">Supplies</label>
+                  </div>
+                </div>
+              </div>
+
               <SlimInput
                 value={product.productName as string}
                 name="productName"
@@ -276,18 +311,17 @@ export default function EditProduct({ productData }: TProps) {
                   }
                 }}
               />
-              <div>
-                <label>
-                  Vendor
-                  <span className="ml-1 text-red-500">*</span>
-                </label>
 
+              <div className="space-y-2">
+                <label className="font-medium text-slate-600">
+                  Vendor <span className="text-red-500">*</span>
+                </label>
                 <Selector
                   label={(vendor: Vendor | null) =>
                     vendor
                       ? vendor?.companyName ||
-                      vendor.name ||
-                      `Vendor ${vendor.id}`
+                        vendor.name ||
+                        `Vendor ${vendor.id}`
                       : "Vendor"
                   }
                   newButton={
@@ -299,7 +333,7 @@ export default function EditProduct({ productData }: TProps) {
                       button={
                         <button
                           type="button"
-                          className="text-xs text-[#6571FF]"
+                          className="text-xs text-[#6571FF] hover:underline"
                         >
                           + New Vendor
                         </button>
@@ -327,52 +361,32 @@ export default function EditProduct({ productData }: TProps) {
                 />
               </div>
             </div>
+
             <div className="py-2 md:py-0">
-              <label>Description</label>
+              <label className="font-medium text-slate-600">Description</label>
               <textarea
                 onChange={handleChange}
                 name="description"
                 required={false}
-                className="h-28 w-full rounded-sm border border-primary-foreground border-slate-400 bg-background px-2 py-0.5 leading-6 md:w-[95%]"
+                className={cn(
+                  "h-20 w-full rounded-md border border-slate-300 outline-none bg-background px-2 py-0.5 leading-6 transition-all duration-300 thin-scrollbar mt-1",
+                  "bg-white/80 backdrop-blur-sm dark:bg-slate-900/50", // Subtle glass texture
+                  "text-slate-600 dark:text-slate-300 placeholder:text-slate-400",
+                  "focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/40", // Brand focus state
+                  "disabled:opacity-50 disabled:cursor-not-allowed"
+                )}
                 value={product.description as string}
               />
-
-              <div>
-                <div>
-                  <input
-                    id="product"
-                    type="radio"
-                    name="type"
-                    value={InventoryProductType.Product}
-                    onChange={handleChange}
-                    className="mr-1"
-                    checked={product.type === InventoryProductType.Product}
-                  />
-                  <label htmlFor="product">Products</label>
-                </div>
-                <div>
-                  <input
-                    id="supply"
-                    type="radio"
-                    name="type"
-                    value={InventoryProductType.Supply}
-                    onChange={handleChange}
-                    className="mr-1"
-                    checked={product.type === InventoryProductType.Supply}
-                  />
-                  <label htmlFor="supply">Supplies</label>
-                </div>
-              </div>
             </div>
 
             {/* Desktop screen */}
-            <div className="col-span-3 mt-5 hidden w-full flex-wrap gap-5 md:flex md:w-[90%] md:flex-nowrap">
+            <div className="md:grid grid-cols-1 hidden md:grid-cols-3 w-full gap-5">
               <SlimInput
                 onChange={handleChange}
                 value={product.price as number}
                 name="price"
                 type="number"
-                required={false}
+                required
               />
               <SlimInput
                 onChange={(e) => {
@@ -409,7 +423,7 @@ export default function EditProduct({ productData }: TProps) {
               />
             </div>
             {/* mobile screen */}
-            <div className="block md:hidden">
+            <div className="block md:hidden space-y-4">
               <SlimInput
                 onChange={(e) => {
                   const value = e.target.value;
@@ -498,11 +512,25 @@ export default function EditProduct({ productData }: TProps) {
           </div>
 
           <DialogFooter>
-            <DialogClose className="rounded-lg border-2 border-slate-400 p-2">
+            <DialogClose
+              className="
+                rounded-xl mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500 
+                hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
+                transition-colors border
+              "
+            >
               Cancel
             </DialogClose>
             <Submit
-              className="mb-2 flex items-center justify-center rounded-lg border bg-[#6571FF] px-5 py-2 text-white md:mb-0"
+              className="
+                rounded-xl px-6 py-2.5 text-sm font-medium text-white
+                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                shadow-lg shadow-indigo-500/30
+                hover:shadow-xl hover:shadow-indigo-500/40
+                hover:-translate-y-0.5 hover:scale-[1.02]
+                active:translate-y-0 active:scale-100
+                transition-all duration-200
+              "
               formAction={handleSubmit}
             >
               Update

@@ -11,6 +11,7 @@ import Close from "./CloseEstimate";
 import { errorToast } from "@/lib/toast";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { laborCreateValidationSchema } from "@/validations/schemas/estimate/labor/labor.validation";
+import { cn } from "@/lib/cn";
 
 export default function LaborCreate() {
   const { categories } = useListsStore();
@@ -189,13 +190,14 @@ export default function LaborCreate() {
   }
 
   return (
-    <div className="flex flex-col gap-2 p-10 md:p-2.5">
-      <h3 className="w-full text-xl font-semibold">
+    <div className="flex flex-col gap-1 p-5 bg-white rounded-sm">
+      <h3 className="mb-2 text-xl font-bold tracking-tight text-slate-500">
         {data?.edit ? "Edit Labor Information" : "Labor Information"}
       </h3>
 
-      <div className="flex items-center gap-2">
-        <label htmlFor="name" className="w-28 text-start text-sm">
+      {/* Labor Name */}
+      <div className="flex items-center gap-3">
+        <label htmlFor="name" className="w-28 text-sm font-semibold tracking-wider text-slate-500">
           Labor Name
         </label>
         <input
@@ -203,24 +205,34 @@ export default function LaborCreate() {
           id="name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full rounded-md border-2 border-slate-400 p-1 text-xs"
+          className="h-10 flex-1 appearance-none rounded-xl bg-white px-4 text-sm font-medium border border-slate-200 transition-all focus:outline-none focus:border-[#6571FF]/30 focus:ring-2 focus:ring-[#6571FF]/30"
+          placeholder="e.g. Oil Change"
         />
       </div>
 
-      <SelectCategory
-        onCategoryChange={setCategory}
-        labelPosition="left"
-        categoryData={category}
-        categoryOpen={categoryOpen}
-        setCategoryOpen={setCategoryOpen}
-        className="max-w-full pl-0 min-[2000px]:pl-3"
-      />
+      {/* Category */}
+      <div className="flex items-center gap-3">
+        <label className="w-28 text-sm font-semibold tracking-wider text-slate-500">
+          Category
+        </label>
+        <div className="flex-1">
+          <SelectCategory
+            onCategoryChange={setCategory}
+            labelPosition="none"
+            categoryData={category}
+            categoryOpen={categoryOpen}
+            setCategoryOpen={setCategoryOpen}
+            className="max-w-full"
+          />
+        </div>
+      </div>
 
-      <div className="flex items-center gap-2">
-        <label htmlFor="tags" className="w-28 text-start text-sm">
+      {/* Tags */}
+      <div className="flex items-center gap-3">
+        <label htmlFor="tags" className="w-28 text-sm font-semibold tracking-wider text-slate-500">
           Tags
         </label>
-        <div className="w-full">
+        <div className="flex-1">
           <SelectTags
             value={tags}
             setValue={setTags}
@@ -229,20 +241,23 @@ export default function LaborCreate() {
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
-        <label htmlFor="notes" className="w-28 text-start text-sm">
+      {/* Notes */}
+      <div className="flex items-start gap-3">
+        <label htmlFor="notes" className="mt-2 w-28 text-sm font-semibold tracking-wider text-slate-500">
           Notes
         </label>
         <textarea
           id="notes"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          className="h-30 w-full rounded-md border-2 border-slate-400 p-1 text-xs"
+          className="h-24 flex-1 appearance-none rounded-xl bg-white p-3 text-sm font-medium border border-slate-200 transition-all focus:outline-none focus:border-[#6571FF]/30 focus:ring-2 focus:ring-[#6571FF]/30 resize-none"
+          placeholder="Additional details..."
         />
       </div>
 
-      <div className="flex items-center gap-2">
-        <label htmlFor="hours" className="w-28 text-start text-sm">
+      {/* Hours */}
+      <div className="flex items-center gap-3">
+        <label htmlFor="hours" className="w-28 text-sm font-semibold tracking-wider text-slate-500">
           No. of Hours
         </label>
         <input
@@ -263,13 +278,14 @@ export default function LaborCreate() {
               setHours(value);
             }
           }}
-          className="w-full rounded-md border-2 border-slate-400 p-1 text-xs"
+          className="h-10 flex-1 appearance-none rounded-xl bg-white px-4 text-sm font-medium border border-slate-200 transition-all focus:outline-none focus:border-[#6571FF]/30 focus:ring-2 focus:ring-[#6571FF]/30"
           placeholder="0"
         />
       </div>
 
-      <div className="flex items-center gap-2">
-        <label htmlFor="perhour" className="w-28 text-start text-sm">
+      {/* Charge ($/hr) */}
+      <div className="flex items-center gap-3">
+        <label htmlFor="perhour" className="w-28 text-sm font-semibold tracking-wider text-slate-500">
           $/hr
         </label>
         <input
@@ -290,13 +306,14 @@ export default function LaborCreate() {
               setCharge(value);
             }
           }}
-          className="w-full rounded-md border-2 border-slate-400 p-1 text-xs"
-          placeholder="0"
+          className="h-10 flex-1 appearance-none rounded-xl bg-white px-4 text-sm font-medium border border-slate-200 transition-all focus:outline-none focus:border-[#6571FF]/30 focus:ring-2 focus:ring-[#6571FF]/30"
+          placeholder="0.00"
         />
       </div>
 
-      <div className="flex items-center gap-2">
-        <label htmlFor="discount" className="w-28 text-start text-sm">
+      {/* Discount */}
+      <div className="flex items-center gap-3">
+        <label htmlFor="discount" className="w-28 text-sm font-semibold tracking-wider text-slate-500">
           Discount
         </label>
         <input
@@ -317,31 +334,65 @@ export default function LaborCreate() {
               setDiscount(value);
             }
           }}
-          className="w-full rounded-md border-2 border-slate-400 p-1 text-xs"
+          className="h-10 flex-1 appearance-none rounded-xl bg-white px-4 text-sm font-medium border border-slate-200 transition-all focus:outline-none focus:border-[#6571FF]/30 focus:ring-2 focus:ring-[#6571FF]/30"
           placeholder="0"
         />
       </div>
 
+      {/* Add to Canned Labor */}
       {!data.edit && (
-        <div className="ml-3 flex items-center gap-5">
-          <input
-            id="check"
-            type="checkbox"
-            checked={addToCannedLabor}
-            onChange={(e) => setAddToCannedLabor(e.target.checked)}
-          />
-          <label htmlFor="check">Add to Canned Labor</label>
+        <div className="ml-28 pl-3 flex items-center">
+          <label className="group flex cursor-pointer items-center gap-3">
+            <div className="relative flex items-center mt-1">
+              <input
+                type="checkbox"
+                checked={addToCannedLabor}
+                onChange={(e) => setAddToCannedLabor(e.target.checked)}
+                className="peer sr-only"
+              />
+
+              <div className={cn(
+                "flex h-6 w-6 items-center justify-center rounded-lg border-2 transition-all duration-200",
+                "border-slate-200 bg-white shadow-sm",
+                "peer-checked:border-[#6571FF] peer-checked:bg-[#6571FF] peer-checked:shadow-md peer-checked:shadow-[#6571FF]/20",
+                "group-hover:border-[#6571FF]/50 peer-focus:ring-2 peer-focus:ring-[#6571FF]/20"
+              )}>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="white"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className={cn(
+                    "h-3.5 w-3.5 transition-all duration-200",
+                    addToCannedLabor ? "scale-100 opacity-100" : "scale-50 opacity-0"
+                  )}
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
+            </div>
+
+            <span className={cn(
+              "font-semibold transition-colors duration-200",
+              addToCannedLabor ? "text-slate-800" : "text-slate-600"
+            )}>
+              Add to Canned Labor
+            </span>
+          </label>
         </div>
       )}
 
-      <div className="flex justify-center gap-5">
+      {/* Footer */}
+      <div className="mt-4 flex items-center justify-end gap-3 border-t border-slate-100 pt-6">
         <Close />
         <button
-          className="w-fit rounded-md bg-[#6571FF] p-1 px-5 text-white"
+          className="rounded-xl bg-[#6571FF] px-10 py-2.5 text-sm font-bold text-white shadow-lg shadow-[#6571FF]/30 transition-all hover:bg-[#525ceb] active:scale-95"
           onClick={data?.edit ? handleEdit : handleSubmit}
           type="button"
         >
-          Done
+          {data?.edit ? "Update Details" : "Done"}
         </button>
       </div>
     </div>

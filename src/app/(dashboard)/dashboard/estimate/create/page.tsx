@@ -37,8 +37,8 @@ export default async function Page({
 
   const client = clientId
     ? await db.client.findUnique({
-        where: { id: clientId },
-      })
+      where: { id: clientId },
+    })
     : null;
 
   const customers = await db.client.findMany({ where: { companyId } });
@@ -103,8 +103,8 @@ export default async function Page({
   );
 
   return (
-    <div className="gap-3 space-y-4 overflow-clip py-2 md:-my-2 md:min-h-[93vh] xl:grid xl:grid-cols-4 xl:space-y-0">
-      <div className="col-span-3 space-y-4">
+    <div className="gap-3 space-y-4 overflow-clip py-2 md:-my-2 md:min-h-[93vh] xl:flex xl:space-y-0">
+      <div className="w-full xl:min-w-[68%] flex flex-col gap-4">
         <Title>Estimate</Title>
 
         <SyncLists
@@ -127,9 +127,9 @@ export default async function Page({
 
         <Tabs
           defaultValue="create"
-          className="col-start-1 flex min-h-[40vh] lg:min-h-[69vh] flex-col overflow-clip"
+          className="col-start-1 flex min-h-[40vh] lg:min-h-[69vh] flex-col overflow-clip flex-1"
         >
-          <TabsList className="grid grid-cols-4 md:inline-flex">
+          <TabsList className="grid grid-cols-4 md:inline-flex -ml-4 rounded-bl-none p-0">
             <TabsTriggerCreate value="payments" className="order-4 md:order-1">
               Payments
             </TabsTriggerCreate>
@@ -150,18 +150,18 @@ export default async function Page({
             </TabsTriggerCreate>
           </TabsList>
 
-          <TabsContent value="create" className="h-full w-full">
+          <TabsContent value="create" className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2">
             <CreateTab />
           </TabsContent>
 
-          <TabsContent value="attachment">
+          <TabsContent value="attachment" className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2">
             <AttachmentTab />
           </TabsContent>
 
-          <TabsContent value="inspections">
+          <TabsContent value="inspections" className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2">
             <EstimateInspectionsTab />
           </TabsContent>
-          <TabsContent value="payments">
+          <TabsContent value="payments" className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2">
             <PaymentTab
               clientId={
                 searchParams.clientId
@@ -173,7 +173,7 @@ export default async function Page({
         </Tabs>
       </div>
 
-      <div className="app-shadow grid grid-rows-[1fr,auto,auto] divide-y rounded-md">
+      <div className="flex-grow w-full xl:max-w-[32%] app-shadow grid grid-rows-[1fr,auto,auto] divide-y rounded-md bg-slate-50 xl:max-h-[calc(100vh-5rem)] overflow-y-auto thin-scrollbar">
         <div>
           <ConvertButton
             type={InvoiceType.Estimate}

@@ -1,10 +1,11 @@
 import moment from "moment";
 
 export function convertDuration(durationInMinutes: number): string {
-  const duration = moment.duration(durationInMinutes, "minutes");
+  const duration = moment.duration(durationInMinutes, "hours");
   const hours = Math.floor(duration.asHours());
   const minutes = duration.minutes();
-  return `${hours} hrs ${minutes} mins`;
+  const seconds = duration.seconds();
+  return `${hours ? hours + "h" : ""}${minutes ? minutes + "m" : ""}${seconds ? seconds + "s" : ""}`.trim() || "0s";
 }
 
 export const convertMinutesToHours = (minutes: number): string => {

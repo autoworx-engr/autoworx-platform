@@ -7,14 +7,21 @@ import { clientSortByUpdatedMessage } from "../_utils";
 
 type TGetClientsProps = {
   companyId: number;
+  userId?: number;
   filter?: string;
   search?: string;
   take?: number;
 };
 
 export const getClients = cache(
-  async ({ companyId, filter, search, take = 20 }: TGetClientsProps) => {
-    const user = await getUserFromSession();
+  async ({
+    companyId,
+    filter,
+    search,
+    take = 20,
+    userId,
+  }: TGetClientsProps) => {
+    const user = await getUserFromSession(userId);
 
     // Base query object
     const baseWhere: Prisma.ClientWhereInput = {
@@ -54,6 +61,11 @@ export const getClients = cache(
               ...queryObj.where,
               conversationsTrack: {
                 OR: [{ emailIsRead: false }, { smsIsRead: false }],
+              },
+            },
+            orderBy: {
+              conversationsTrack: {
+                createdAt: "desc",
               },
             },
           });
@@ -112,5 +124,5 @@ export const getClients = cache(
       console.error("getClients: Error occurred:", err);
       throw err;
     }
-  }
+  },
 );

@@ -19,6 +19,7 @@ import FormError from "../FormError";
 import Submit from "../Submit";
 import { SelectProps } from "./select-props";
 import { ChevronDown, ChevronUp, Palette, Search, X } from "lucide-react";
+import { cn } from "@/lib/cn";
 type SelectedColor = { textColor: string; bgColor: string } | null;
 
 export function SelectTags({
@@ -61,47 +62,42 @@ export function SelectTags({
   }, [dropdownsOpen]);
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col max-w-sm sm:max-w-full">
       <input
         type="hidden"
         name={name}
         value={tags.map((x) => x.id).join(",")}
       />
-      <DropdownMenu
-        open={open}
-        onOpenChange={(open) => {
-          // !open && setOpen && setOpen(open);
-        }}
-      >
-        {tags &&
-          tags.length > 0 &&
-          tags.map((tag, i) => (
-            <div
-              key={tag.id}
-              className="relative mb-1 rounded px-2 text-sm"
-              style={{
-                backgroundColor: tag.bgColor,
-                color: tag.textColor,
-              }}
-            >
-              {tag.name}
-              <button
-                type="button"
-                onClick={() => {
-                  setTags((tags) => tags.toSpliced(i, 1));
+      <DropdownMenu open={open} onOpenChange={(open) => {}}>
+        {tags && tags.length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-2 max-w-[260px]">
+            {tags.map((tag, i) => (
+              <div
+                key={tag.id}
+                className="relative flex items-center rounded-lg px-2.5 py-1 text-xs font-semibold shadow-sm transition-all"
+                style={{
+                  backgroundColor: tag.bgColor,
+                  color: tag.textColor,
                 }}
-                className="absolute right-0 top-0 -translate-y-1/2 translate-x-1/2 text-[#6470FF]"
               >
-                <div className="rounded-full bg-[#6571FF] p-1 text-white">
-                  <X size={10} strokeWidth={3} />
-                </div>
-              </button>
-            </div>
-          ))}
+                {tag.name}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTags((tags) => tags.toSpliced(i, 1));
+                  }}
+                  className="ml-1.5 transition-transform hover:scale-110"
+                >
+                  <div className="rounded-full bg-white/20 p-0.5 hover:bg-white/40">
+                    <X size={10} strokeWidth={4} />
+                  </div>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
         <DropdownMenuTrigger
-          // onClick={() => {
-          //   setOpen && setOpen(!open);
-          // }}
           onClick={() => {
             setOpen && setOpen(!open);
             if (setDropdownsOpen) {
@@ -125,39 +121,37 @@ export function SelectTags({
                 });
               }
 
-              // Force dropdown to open and focus the search
               setOpen(true);
-              setTimeout(() => {
-                searchRef.current?.focus();
-              }, 50);
+              // setTimeout(() => {
+              //   searchRef.current?.focus();
+              // }, 50);
             }
           }}
-          className="flex min-h-10 w-full items-center justify-between rounded-md border-2 border-slate-400 px-4"
+          className="flex min-h-11 min-w-[150px] w-full items-center justify-between rounded-[10px] px-4 ring-1 ring-inset ring-slate-200 transition-all hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30"
         >
           <p className="text-sm font-medium text-slate-400">Tags</p>
-          <ChevronDown size={24} className="text-[#797979]" />
+          <ChevronDown size={18} className="text-slate-400" />
         </DropdownMenuTrigger>
-        {/* <div> */}
+
         <DropdownMenuPortal>
           <DropdownMenuContent
             side="bottom"
             align="start"
             sideOffset={8}
-            className="ll space-y-1 p-0"
+            className="z-50 w-full min-w-[240px] max-w-xs overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-2xl ring-1 ring-black/5"
           >
-            <DropdownMenuGroup className="">
-              {" "}
-              {/* Search */}
-              <div className="relative m-2">
+            <DropdownMenuGroup>
+              {/* Search Header */}
+              <div className="relative border-b border-slate-100 bg-slate-50/50 p-2">
                 <Search
                   size={16}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 transform text-[#797979]"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 transform text-slate-400"
                 />
                 <input
                   ref={searchRef}
                   type="text"
-                  placeholder="Search"
-                  className="w-full rounded-md border-2 border-slate-400 p-1 pl-6 pr-10 focus:outline-none"
+                  placeholder="Search tags..."
+                  className="h-9 w-full rounded-lg bg-white pl-9 pr-10 text-sm font-medium ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30"
                   onKeyDown={(e) => e.stopPropagation()}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -166,109 +160,109 @@ export function SelectTags({
                     setOpen && setOpen(false);
                     setSearchQuery("");
                   }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                 >
-                  <ChevronUp
-                    size={24}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 transform text-[#797979]"
-                  />
+                  <ChevronUp size={16} />
                 </button>
               </div>
-              <div className="max-h-[calc(100vh-60vh)] space-y-1 overflow-y-scroll">
+
+              {/* Tag List */}
+              <div className="thin-scrollbar my-1 max-h-[200px] overflow-y-auto px-2">
                 {tagList
                   .filter((x) => !tagIds.has(x.id))
                   .filter((x) =>
                     searchQuery
                       ? x.name.toLowerCase().includes(searchQuery.toLowerCase())
-                      : true
+                      : true,
                   )
-                  .map((tag) => {
-                    return (
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          setTags((tags) => {
-                            if (tags && tags.length > 0) {
-                              return [...tags, tag];
-                            }
-                            return [tag];
+                  .map((tag) => (
+                    <DropdownMenuItem
+                      className="mb-1 cursor-pointer rounded-lg p-0 focus:bg-transparent"
+                      onClick={(e) => {
+                        setTags((tags) => {
+                          if (tags && tags.length > 0) {
+                            return [...tags, tag];
+                          }
+                          return [tag];
+                        });
+                        setDropdownsOpen &&
+                          setDropdownsOpen({
+                            SERVICE: [-1, -1],
+                            MATERIAL: [-1, -1],
+                            LABOR: [-1, -1],
+                            TAG: [-1, -1],
                           });
-                          setDropdownsOpen &&
-                            setDropdownsOpen({
-                              SERVICE: [-1, -1],
-                              MATERIAL: [-1, -1],
-                              LABOR: [-1, -1],
-                              TAG: [-1, -1],
-                            });
-                          setOpen(false);
-                          setSearchQuery("");
+                        setOpen(false);
+                        setSearchQuery("");
+                      }}
+                      key={tag.id}
+                    >
+                      <div
+                        className="flex w-full items-center px-3 py-1.5 text-sm font-medium transition-opacity hover:opacity-80"
+                        style={{
+                          backgroundColor: tag.bgColor,
+                          color: tag.textColor,
+                          borderRadius: "6px",
                         }}
-                        key={tag.id}
                       >
-                        <div
-                          className="mx-4 cursor-pointer"
-                          style={{
-                            backgroundColor: tag.bgColor,
-                            color: tag.textColor,
-                          }}
-                        >
-                          <span> {tag.name}</span>
-                        </div>
-                      </DropdownMenuItem>
-                    );
-                  })}
+                        <span>{tag.name}</span>
+                      </div>
+                    </DropdownMenuItem>
+                  ))}
               </div>
             </DropdownMenuGroup>
+
             <FormError />
-            <DropdownMenuGroup>
-              {" "}
-              <div>
-                <div>
-                  <QuickAddForm
-                    onSuccess={(tag) => {
-                      setTags((tags) => [...tags, tag]);
-                      setDropdownsOpen &&
-                        setDropdownsOpen({
-                          SERVICE: [-1, -1],
-                          MATERIAL: [-1, -1],
-                          LABOR: [-1, -1],
-                          TAG: [-1, -1],
+
+            {/* Quick Add Footer */}
+            <DropdownMenuGroup className="border-t border-slate-100 bg-slate-50/50 p-3">
+              <QuickAddForm
+                onSuccess={(tag) => {
+                  setTags((tags) => [...tags, tag]);
+                  setDropdownsOpen &&
+                    setDropdownsOpen({
+                      SERVICE: [-1, -1],
+                      MATERIAL: [-1, -1],
+                      LABOR: [-1, -1],
+                      TAG: [-1, -1],
+                    });
+                  setOpen(false);
+                }}
+                setPickerOpen={setPickerOpen}
+                selectedColor={selectedColor}
+              />
+
+              {pickerOpen && (
+                <div className="mt-3 grid grid-cols-5 gap-2 rounded-xl bg-white p-2 shadow-inner ring-1 ring-slate-200">
+                  {INVOICE_COLORS.map((color, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => {
+                        setSelectedColor({
+                          textColor: color.textColor,
+                          bgColor: color.bgColor,
                         });
-                      setOpen(false);
-                    }}
-                    setPickerOpen={setPickerOpen}
-                    selectedColor={selectedColor}
-                  />
+                      }}
+                      style={{
+                        backgroundColor: color.bgColor,
+                        color: color.textColor,
+                      }}
+                      className={cn(
+                        "flex h-8 items-center justify-center rounded-lg text-xs font-bold transition-all hover:scale-105",
+                        selectedColor?.textColor === color.textColor
+                          ? "ring-2 ring-[#6571FF] ring-offset-1"
+                          : "ring-1 ring-transparent",
+                      )}
+                    >
+                      Aa
+                    </button>
+                  ))}
                 </div>
-                {pickerOpen && (
-                  <div className="grid grid-cols-4 gap-2 p-2">
-                    {INVOICE_COLORS.map((color, index) => (
-                      <button
-                        key={index}
-                        onClick={() => {
-                          setSelectedColor({
-                            textColor: color.textColor,
-                            bgColor: color.bgColor,
-                          });
-                        }}
-                        style={{
-                          backgroundColor: color.bgColor,
-                          color: color.textColor,
-                          border:
-                            selectedColor?.textColor === color.textColor
-                              ? `1px solid ${color.textColor}`
-                              : "none",
-                        }}
-                        className="rounded-md p-2"
-                      >
-                        Aa
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+              )}
             </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenuPortal>
-        {/* </div> */}
       </DropdownMenu>
     </div>
   );
@@ -307,33 +301,32 @@ function QuickAddForm({
 
   return (
     <div>
-      {" "}
-      <form ref={formRef} className="flex gap-2 p-2">
-        <span>
-          {" "}
+      <form ref={formRef} className="flex items-center gap-2">
+        <div className="relative flex-1">
           <input
             name="name"
             type="text"
             required
-            className="flex-1 rounded-sm border border-solid border-black p-1"
+            placeholder="New tag name..."
+            className="h-10 w-full rounded-lg bg-white px-2 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30 placeholder:text-slate-400"
             onKeyDown={(e) => e.stopPropagation()}
           />
-        </span>
+        </div>
 
         <button
-          className="rounded bg-[#6470FF] p-2 text-white"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600 transition-colors hover:bg-slate-200 hover:text-slate-900"
           onClick={() => setPickerOpen((prev: boolean) => !prev)}
           type="button"
+          title="Choose Color"
         >
-          <Palette size={20} />
+          <Palette size={18} strokeWidth={2.5} />
         </button>
 
         <Submit
-          className="rounded bg-slate-500 p-1 text-xs leading-3 text-white"
+          className="h-10 shrink-0 rounded-lg bg-[#6571FF] px-3 text-[11px] font-bold uppercase tracking-wider text-white shadow-sm shadow-[#6571FF]/30 transition-all hover:bg-[#525ceb] active:scale-95"
           formAction={handleSubmit}
         >
-          Quick
-          <br /> Add
+          Quick Add
         </Submit>
       </form>
     </div>

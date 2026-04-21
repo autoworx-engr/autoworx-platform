@@ -47,6 +47,7 @@ export default function WorkOrderModalBody({
 }) {
   const [dueDate, setDueDate] = useState<string | null>("");
   const isAdminOrManager = useIsAdminOrManager();
+  const [openService, setOpenService] = useState<number | null>(null);
   const { data, error, isLoading, isFetched } = useQuery({
     queryKey: queryKeys.getWorkOrderDataKey(invoiceId),
     queryFn: () => getWorkOrderData(invoiceId),
@@ -90,8 +91,6 @@ export default function WorkOrderModalBody({
     techniciansPerItem,
   } = data as IWorkOrderData;
 
-
-
   const getTechnicianPhotos = (): TechnicianPhoto[] => {
     const finalPhotosArray: TechnicianPhoto[] = [];
 
@@ -128,7 +127,7 @@ export default function WorkOrderModalBody({
         <div
           className={cn(
             "flex aspect-square items-center justify-center text-center font-bold text-white",
-            company?.image ? "w-32 md:w-44" : "w-32 bg-gray-500"
+            company?.image ? "w-32 md:w-44" : "w-32 bg-gray-500",
           )}
         >
           {company?.image ? (
@@ -224,15 +223,15 @@ export default function WorkOrderModalBody({
         />
 
         {/* see images dialog trigger (uses its own internal state) */}
-        {isAdminOrManager && (
-          <div className="absolute right-5 md:right-16 top-0">
+        {technicianPhotos.length > 0 && isAdminOrManager && (
+          <div className="absolute right-5 md:right-28 top-0">
             <Dialog>
               <DialogTrigger asChild>
                 <button className="md:bg-[#6571ff] md:text-white px-5 py-0.5 rounded-md">
-                  <span className="lg:hidden">
+                  <span className="md:hidden">
                     <LucideImage className="h-5 w-5 text-[#6571ff]" />
                   </span>
-                  <span className="hidden lg:inline">Attachments</span>
+                  <span className="hidden md:inline">Attachments</span>
                 </button>
               </DialogTrigger>
 

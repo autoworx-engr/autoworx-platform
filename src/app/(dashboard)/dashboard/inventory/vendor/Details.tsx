@@ -18,43 +18,45 @@ export default function Details({ vendor }: { vendor: Vendor | undefined }) {
     <div
       className={`${isActive ? "" : "hidden lg:block"} ${SHADOW_COLOR} relative h-[60%] overflow-y-auto thin-scrollbar w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 p-6 transition-shadow duration-300 hover:shadow-2xl`}
     >
-      <div
-        className="absolute right-3 top-3 cursor-pointer rounded-full transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-700 lg:hidden"
-        onClick={() => {
-          setActive(false);
-          router.back();
-        }}
-      >
-        <X size={24} className="text-slate-600 dark:text-slate-300" />
-      </div>
 
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-2xl font-extrabold" style={{ color: ACCENT_COLOR }}>
-          Vendor Details
-        </h3>
-        {/* Action Button */}
-        <div className="mt-auto">
-          <Link
-            href={`/dashboard/inventory/vendor/${vendor?.id}/history`}
-            className="inline-flex items-center gap-2 rounded-lg border-2 px-4 py-1.5 font-semibold transition-all duration-200 hover:shadow-md"
-            style={{
-              borderColor: ACCENT_COLOR,
-              color: ACCENT_COLOR
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = ACCENT_COLOR;
-              e.currentTarget.style.color = 'white';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.color = ACCENT_COLOR;
-            }}
-          >
-            <History size={18} />
-            View Purchase History
-          </Link>
-        </div>
-      </div>
+      {
+        vendor && (<div className="flex items-center justify-between mb-3">
+          <h3 className="text-2xl font-extrabold" style={{ color: ACCENT_COLOR }}>
+            Vendor Details
+          </h3>
+          {/* Action Button */}
+          <div className="mt-auto relative">
+            <div
+              className="absolute -top-1 -right-1 z-10 cursor-pointer rounded-full bg-slate-100 dark:bg-slate-700 p-0.5 border border-slate-200 dark:border-slate-600 transition-all duration-200 dark:hover:bg-slate-600"
+              onClick={() => {
+                setActive(false);
+                router.push("/dashboard/inventory/vendor");
+              }}
+            >
+              <X size={16} className="text-slate-600 dark:text-slate-300" />
+            </div>
+            <Link
+              href={`/dashboard/inventory/vendor/${vendor?.id}/history`}
+              className="inline-flex items-center gap-2 rounded-lg border-2 px-4 py-1.5 font-semibold transition-all duration-200 hover:shadow-md"
+              style={{
+                borderColor: ACCENT_COLOR,
+                color: ACCENT_COLOR
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = ACCENT_COLOR;
+                e.currentTarget.style.color = 'white';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = ACCENT_COLOR;
+              }}
+            >
+              <History size={18} />
+              View Purchase History
+            </Link>
+          </div>
+        </div>)
+      }
 
       {vendor === undefined ? (
         <div className="flex h-full w-full items-center justify-center">

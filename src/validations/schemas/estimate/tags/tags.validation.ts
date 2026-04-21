@@ -23,6 +23,6 @@ export const estimateTagsValidationSchema = z.object({
     message: "Company id is required",
     invalid_type_error: "companyId must be number",
   }),
-  createdAt: z.date({ message: "Created at is required" }),
-  updatedAt: z.date({ message: "Updated at is required" }),
+  createdAt: z.union([z.date(), z.string()]).optional(),
+  updatedAt: z.union([z.date(), z.string()]).optional(),
 });

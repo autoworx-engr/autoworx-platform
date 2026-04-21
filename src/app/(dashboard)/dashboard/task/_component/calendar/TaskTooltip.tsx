@@ -1,9 +1,10 @@
 import { Task } from "@prisma/client";
-import { SquarePen, Zap } from "lucide-react"; // Zap for priority icon
-
+import { SquarePen, X, Zap } from "lucide-react"; // Zap for priority icon
+import {useEffect, useRef} from "react";
 type TTaskTooltipProps = {
   event: Task;
   onModalOpen?: () => void;
+  onClose?: () => void;
 };
 
 // --- STYLES DEFINITION ---
@@ -14,11 +15,11 @@ const ACTION_COLOR = "#6571FF"; // Special action color for the edit button
 // --- END STYLES DEFINITION ---
 
 // Helper component for structured detail rows (re-used for consistency)
-const TooltipDetail: React.FC<{ icon: any, children: React.ReactNode, label: string }> = ({
-  icon: Icon,
-  children,
-  label
-}) => (
+const TooltipDetail: React.FC<{
+  icon: any;
+  children: React.ReactNode;
+  label: string;
+}> = ({ icon: Icon, children, label }) => (
   <p className={`flex items-start gap-2 text-sm ${SLATE_TEXT_COLOR}`}>
     <Icon size={16} className={`mt-0.5 min-w-[16px] ${INFO_TEXT_COLOR}`} />
     <span className="font-medium min-w-[80px] text-left">{label}:</span>
@@ -26,18 +27,64 @@ const TooltipDetail: React.FC<{ icon: any, children: React.ReactNode, label: str
   </p>
 );
 
-export default function TaskTooltip({ event, onModalOpen }: TTaskTooltipProps) {
+export default function TaskTooltip({
+  event,
+  onModalOpen,
+  onClose,
+}: TTaskTooltipProps) {
+  const tooltipRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Handle outside clicks
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        tooltipRef.current &&
+        !tooltipRef.current.contains(e.target as Node)
+      ) {
+        onClose?.();
+      }
+    };
+
+    // Handle scroll events
+    const handleScroll = () => {
+      onClose?.();
+    };
+
+    // Add event listeners
+    document.addEventListener("mousedown", handleClickOutside);
+    window.addEventListener("scroll", handleScroll, true);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("scroll", handleScroll, true);
+    };
+  }, [onClose]);
   return (
     // Outer div maintains click/drag isolation
     <div
+      ref={tooltipRef}
       onClick={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
       className="space-y-3"
     >
+      {/* Close (X) at top-right */}
+      <button
+        type="button"
+        aria-label="Close"
+        className="absolute right-0 top-0  p-1 text-slate-600"
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          onClose && onClose();
+        }}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <X className="h-4 w-4" />
+      </button>
 
       {/* 1. Title and Edit Button (Sleek Header) */}
       <div className="flex items-start justify-between pb-2 border-b border-slate-200 dark:border-slate-700">
-
         {/* Title: Professional, higher contrast typography */}
         <h3 className="text-xl font-extrabold text-slate-600 dark:text-white mr-4">
           {event.title}
@@ -64,20 +111,22 @@ export default function TaskTooltip({ event, onModalOpen }: TTaskTooltipProps) {
 
       {/* 2. Priority and Key Details */}
       <div className="space-y-2">
-
         {/* Task Priority (Using Zap/lightning icon) */}
         <TooltipDetail icon={Zap} label="Priority">
           <span className="font-bold uppercase text-amber-500 dark:text-amber-400">
             {event.priority}
           </span>
         </TooltipDetail>
-
       </div>
 
       {/* 3. Description (The main content, separated by a line) */}
       <div className="pt-3 border-t border-slate-200 dark:border-slate-700">
-        <p className={`text-sm italic font-semibold ${INFO_TEXT_COLOR} mb-1`}>Description:</p>
-        <p className={`text-sm ${SLATE_TEXT_COLOR} whitespace-pre-wrap`}>{event.description || 'No description provided.'}</p>
+        <p className={`text-sm italic font-semibold ${INFO_TEXT_COLOR} mb-1`}>
+          Description:
+        </p>
+        <p className={`text-sm ${SLATE_TEXT_COLOR} whitespace-pre-wrap`}>
+          {event.description || "No description provided."}
+        </p>
       </div>
     </div>
   );

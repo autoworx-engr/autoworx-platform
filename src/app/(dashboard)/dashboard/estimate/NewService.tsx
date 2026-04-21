@@ -1,10 +1,4 @@
 "use client";
-import SelectCategory from "@/components/Lists/SelectCategory";
-import { useEstimateCreateStore } from "@/stores/estimate-create";
-import { useEstimatePopupStore } from "@/stores/estimate-popup";
-import { useListsStore } from "@/stores/lists";
-import { Category } from "@prisma/client";
-import { useEffect, useState } from "react";
 import newService from "@/actions/estimate/service/newService";
 import {
   Dialog,
@@ -15,8 +9,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/Dialog";
-import { useFormErrorStore } from "@/stores/form-error";
+import SelectCategory from "@/components/Lists/SelectCategory";
 import { errorToast, successToast } from "@/lib/toast";
+import { useEstimateCreateStore } from "@/stores/estimate-create";
+import { useEstimatePopupStore } from "@/stores/estimate-popup";
+import { useFormErrorStore } from "@/stores/form-error";
+import { useListsStore } from "@/stores/lists";
+import { Category } from "@prisma/client";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 export default function NewService({
@@ -35,7 +35,7 @@ export default function NewService({
   const [name, setName] = useState("");
   const [nameError, setNameError] = useState("");
   const [nameTouched, setNameTouched] = useState(false);
-  const [category, setCategory] = useState<Category | undefined>();
+  const [category, setCategory] = useState<Category | null>(null);
   const [categoryError, setCategoryError] = useState("");
   const [description, setDescription] = useState("");
   const [categoryOpen, setCategoryOpen] = useState(false);
@@ -48,7 +48,7 @@ export default function NewService({
       if (data?.service && data.edit) {
         setName(data.service.name);
         setCategory(
-          categories.find((cat) => cat.id === data.service.categoryId)
+          categories.find((cat) => cat.id === data.service.categoryId) || null
         );
         setDescription(data.service.description);
       } else {
@@ -60,7 +60,7 @@ export default function NewService({
   // Reset form function
   const resetForm = () => {
     setName("");
-    setCategory(undefined);
+    setCategory(null);
     setDescription("");
     setNameError("");
     setCategoryError("");
@@ -83,7 +83,7 @@ export default function NewService({
     }
   };
 
-  const validateCategory = (category: Category | undefined) => {
+  const validateCategory = (category: Category | null | undefined) => {
     if (!category) {
       setCategoryError("Category is required");
       showError({
@@ -250,7 +250,8 @@ export default function NewService({
       </DialogTrigger>
 
       <DialogContent
-        className="max-h-[94vh] max-w-md grid-rows-[auto,1fr,auto] overflow-hidden"
+        className="max-h-[94vh] max-w-md grid-rows-[auto,1fr,auto]"
+        onOpenAutoFocus={(e) => e.preventDefault()}
         form
       >
         <DialogHeader className="border-b border-slate-200 pb-4">
@@ -276,13 +277,6 @@ export default function NewService({
                 value={name}
                 onChange={(e) => {
                   const value = e.target.value;
-
-                  if (value.length > 50) {
-                    setNameError(
-                      "Service name must be less than 50 characters"
-                    );
-                    return false;
-                  }
                   setName(value);
                   // Clear error when user starts typing
                   if (value.trim()) {
@@ -291,11 +285,10 @@ export default function NewService({
                   }
                 }}
                 onBlur={() => setNameTouched(true)}
-                className={`w-full px-4 py-2.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400 ${
-                  nameError
-                    ? "border-red-500 focus:ring-red-500"
-                    : "border-slate-300"
-                }`}
+                className={`w-full px-4 py-2.5 text-sm border rounded-lg outline-none transition-all placeholder:text-slate-400 ${nameError
+                    ? "border-red-500 focus:border-red-600"
+                    : "border-slate-300 focus:border-blue-500"
+                  }`}
                 aria-invalid={nameError ? "true" : "false"}
                 aria-describedby={nameError ? "name-error" : undefined}
               />
@@ -340,6 +333,7 @@ export default function NewService({
                 setCategoryOpen={setCategoryOpen}
                 required={true}
                 onBlur={() => validateCategory(category)}
+                allowEdit={true}
               />
               {categoryError && (
                 <p className="flex items-center gap-1 text-xs text-red-600">
@@ -361,23 +355,13 @@ export default function NewService({
 
             {/* Description */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label
-                  htmlFor="description"
-                  className="block text-sm font-medium text-slate-700"
-                >
-                  Description
-                </label>
-                <span
-                  className={`text-xs ${
-                    descriptionLength > maxDescriptionLength * 0.9
-                      ? "text-red-600 font-medium"
-                      : "text-slate-500"
-                  }`}
-                >
-                  {descriptionLength}/{maxDescriptionLength}
-                </span>
-              </div>
+              <label
+                htmlFor="description"
+                className="block text-sm font-medium text-slate-700"
+              >
+                Description
+              </label>
+
               <textarea
                 id="description"
                 placeholder="Add any additional details about this service..."
@@ -394,11 +378,21 @@ export default function NewService({
                   setDescription(value);
                 }}
                 rows={5}
-                className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400 resize-none"
+                className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg outline-none transition-all placeholder:text-slate-400 focus:border-blue-500"
               />
-              <p className="text-xs text-slate-500">
-                Provide a detailed description of what this service includes
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-slate-500">
+                  Provide a detailed description of what this service includes
+                </p>
+                <span
+                  className={`text-xs ${descriptionLength > maxDescriptionLength * 0.9
+                    ? "text-red-600 font-medium"
+                    : "text-slate-500"
+                    }`}
+                >
+                  {descriptionLength}/{maxDescriptionLength}
+                </span>
+              </div>
             </div>
 
             {/* Info Box */}

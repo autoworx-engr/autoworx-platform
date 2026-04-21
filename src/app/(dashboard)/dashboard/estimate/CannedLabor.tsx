@@ -1,8 +1,6 @@
 "use client";
 import { deleteLabor } from "@/actions/estimate/labor/deleteLabor";
 import { updateLabor } from "@/actions/estimate/labor/updateLabor";
-import SelectCategory from "@/components/Lists/SelectCategory";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Dialog,
   DialogClose,
@@ -12,6 +10,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/Dialog";
+import SelectCategory from "@/components/Lists/SelectCategory";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -28,8 +28,8 @@ import { formatCurrency } from "@/utils/formatCurrency";
 import { Category, Labor } from "@prisma/client";
 import { Pagination, Popconfirm } from "antd";
 import { SquarePen, Trash2 } from "lucide-react";
-import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import FilterBySearchBox from "../reporting/components/filter/FilterBySearchBox";
 import CannedFilterBySelection from "./CannedFilterBySelected";
 import NewLabor from "./NewLabor";
@@ -40,63 +40,56 @@ export type TFilterModalState = {
 
 export default function CannedLabor({
   labors,
+  total,
+  page,
+  take,
+  categories,
 }: {
   labors: (Labor & { category: Category })[];
+  total: number;
+  page: number;
+  take: number;
+  categories: Category[];
 }) {
   const params = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const selectedCategory = params.get("laborCategory") || "";
   const laborSearch = params.get("laborSearch") || "";
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(50);
   const [showPagination, setShowPagination] = useState(false);
-  const [filteredData, setFilteredData] =
-    useState<(Labor & { category: Category })[]>(labors);
   const [activeModal, setActiveModal] = useState<{ [key: string]: boolean }>(
-    {}
+    {},
   );
 
-  useEffect(() => {
-    const filtered = labors.filter((row) => {
-      const categoryName = row?.category?.name?.toLowerCase() || "";
-      const laborName = row?.name.toLowerCase();
-
-      const matchesSearch = laborSearch
-        ? laborName.includes(laborSearch.toLowerCase()) ||
-        categoryName.includes(laborSearch.toLowerCase())
-        : true;
-
-      const matchesCategory = selectedCategory
-        ? categoryName === selectedCategory.toLowerCase()
-        : true;
-
-      return matchesSearch && matchesCategory;
-    });
-
-    setFilteredData(filtered);
-    // Reset to page 1 whenever search or filter changes
-    setCurrentPage(1);
-  }, [laborSearch, selectedCategory, labors]);
+  // Ref to scroll to top
+  const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setShowPagination(filteredData?.length > 10);
-  }, [filteredData]);
+    setShowPagination(total > 10);
+  }, [total]);
 
-  const handlePageChange = (page: number, pageSize?: number) => {
-    setCurrentPage(page);
-    if (pageSize) setPageSize(pageSize);
+  const handlePageChange = (nextPage: number, nextPageSize?: number) => {
+    const searchParams = new URLSearchParams(params.toString());
+    searchParams.set("laborPage", nextPage.toString());
+
+    if (nextPageSize) {
+      searchParams.set("laborTake", nextPageSize.toString());
+    }
+
+    const newPath = `${pathname}?${searchParams.toString()}`;
+    router.push(newPath);
+
+    // Scroll to top when page changes
+    if (contentRef.current) {
+      contentRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
   };
 
-  const paginatedLabors = filteredData.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
-
   //  Category names for dropdown
-  const uniqueCategories = labors
-    .map((l) => l?.category)
-    .filter(
-      (c, i, arr) => c && arr.findIndex((a) => a?.id === c?.id) === i
-    ) as any;
+  const uniqueCategories = categories;
 
   const toggleModal = (modalName: string) => {
     setActiveModal((prev) => ({
@@ -113,7 +106,7 @@ export default function CannedLabor({
   };
 
   return (
-    <div className="h-full w-full flex flex-col">
+    <div ref={contentRef} className="h-full w-full flex flex-col">
       <section className="pb-4 border-b border-gray-200">
         <div className="flex items-center gap-x-4">
           <h3 className="text-2xl font-extrabold text-gray-800">
@@ -176,8 +169,8 @@ export default function CannedLabor({
             </TableRow>
           </TableHeader>
           <TableBody className="overflow-y-auto thin-scrollbar h-full">
-            {paginatedLabors.length > 0 ? (
-              paginatedLabors.map((labor, index) => (
+            {labors.length > 0 ? (
+              labors.map((labor, index) => (
                 <LaborComponent
                   key={labor.id}
                   index={index}
@@ -200,8 +193,8 @@ export default function CannedLabor({
       </div>
       {/* Mobile View */}
       <div className="grid gap-4 pb-4 md:hidden mt-4">
-        {paginatedLabors.length > 0 ? (
-          paginatedLabors.map((labor, i) => (
+        {labors.length > 0 ? (
+          labors.map((labor, i) => (
             <LaborComponent
               key={labor.id}
               labor={labor}
@@ -219,12 +212,29 @@ export default function CannedLabor({
         <div className=" hidden h-10 justify-end lg:flex flex-shrink-0 mt-4">
           <Pagination
             className="custom-pagination"
-            current={currentPage}
-            pageSize={pageSize}
-            total={labors.length}
+            current={page}
+            pageSize={take}
+            total={total}
             onChange={handlePageChange}
             showSizeChanger
             onShowSizeChange={handlePageChange}
+          />
+        </div>
+      )}
+
+      {/* Mobile View */}
+      {showPagination && (
+        <div className="flex justify-center lg:hidden flex-shrink-0 mt-4">
+          <Pagination
+            className="custom-pagination"
+            current={page}
+            pageSize={take}
+            total={total}
+            onChange={handlePageChange}
+            showSizeChanger
+            onShowSizeChange={handlePageChange}
+            simple={false}
+            size="small"
           />
         </div>
       )}
@@ -245,10 +255,11 @@ const LaborComponent = ({
   const [name, setName] = useState<string>(labor.name);
   const [nameError, setNameError] = useState<string>("");
   const [charge, setCharge] = useState<string>(
-    labor.charge ? Number(labor.charge).toFixed(2) : "0.00"
+    labor.charge ? Number(labor.charge).toFixed(2) : "0.00",
   );
+  const [notes, setNotes] = useState<string>((labor as any).notes || "");
   const [category, setCategory] = useState<Category | null>(
-    labor?.category || null
+    labor?.category || null,
   );
   const [categoryOpen, setCategoryOpen] = useState(false);
   const { categories } = useListsStore();
@@ -258,7 +269,7 @@ const LaborComponent = ({
   useEffect(() => {
     if (currentSelectedCategoryId && !category) {
       setCategory(
-        categories.find((cat) => cat.id === currentSelectedCategoryId)!
+        categories.find((cat) => cat.id === currentSelectedCategoryId)!,
       );
     }
   }, [currentSelectedCategoryId, category, categories]);
@@ -280,6 +291,7 @@ const LaborComponent = ({
       name,
       charge: parseFloat(charge) || 0,
       categoryId: category?.id || undefined,
+      notes: notes.trim() || undefined,
     });
 
     if (res.success) {
@@ -293,6 +305,22 @@ const LaborComponent = ({
     setIsPending(false);
   };
 
+  // Reusable Notes field
+  const NotesField = (
+    <div>
+      <label className="mb-2 block text-sm font-medium text-gray-700">
+        Notes
+      </label>
+      <textarea
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+        rows={3}
+        className="w-full rounded-lg border border-gray-300 p-2 text-base focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors resize-none"
+        placeholder="Add any notes about this labor item..."
+      />
+    </div>
+  );
+
   if (view === "card") {
     return (
       <Card
@@ -301,7 +329,7 @@ const LaborComponent = ({
           index !== undefined && index % 2 === 0
             ? "border-indigo-500 bg-white"
             : "border-teal-500 bg-gray-50",
-          "shadow-md hover:shadow-lg"
+          "shadow-md hover:shadow-lg",
         )}
       >
         <CardHeader className="p-4">
@@ -319,14 +347,14 @@ const LaborComponent = ({
                     <SquarePen className="w-5 h-5" />
                   </button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent onOpenAutoFocus={(e) => e.preventDefault()}>
                   <DialogHeader>
                     <DialogTitle>Edit Canned Labor</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4">
                     <div>
                       <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Labor Name
+                        Labor Name<span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
@@ -335,11 +363,12 @@ const LaborComponent = ({
                           setName(e.target.value);
                           if (nameError) setNameError("");
                         }}
+                        autoFocus={false}
                         className={cn(
                           "w-full rounded-lg border p-2 text-base focus:ring-2 focus:ring-indigo-500 transition-colors",
                           nameError
                             ? "border-red-500"
-                            : "border-gray-300 focus:border-indigo-500"
+                            : "border-gray-300 focus:border-indigo-500",
                         )}
                         placeholder="Labor Name"
                       />
@@ -349,14 +378,16 @@ const LaborComponent = ({
                     </div>
                     <div>
                       <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Category
+                        Category<span className="text-red-500">*</span>
                       </label>
+
                       <SelectCategory
                         onCategoryChange={setCategory}
                         labelPosition="none"
                         categoryData={category}
                         categoryOpen={categoryOpen}
                         setCategoryOpen={setCategoryOpen}
+                        allowEdit={true}
                       />
                     </div>
                     <div>
@@ -372,6 +403,7 @@ const LaborComponent = ({
                         placeholder="$/Hour"
                       />
                     </div>
+                    {NotesField}
                   </div>
                   <DialogFooter>
                     <DialogClose asChild>
@@ -406,7 +438,9 @@ const LaborComponent = ({
         <CardContent className="p-4 pt-0">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="mb-1 text-sm font-medium text-gray-500">Category</p>
+              <p className="mb-1 text-sm font-medium text-gray-500">
+                Category <span className="text-red-500">*</span>
+              </p>
               <p className="line-clamp-1 text-lg font-semibold text-indigo-600">
                 {labor.category?.name}
               </p>
@@ -427,7 +461,7 @@ const LaborComponent = ({
     <TableRow
       className={cn(
         "border-b border-gray-200 transition-colors hover:bg-indigo-50",
-        index % 2 === 0 ? "bg-white" : "bg-gray-50"
+        index % 2 === 0 ? "bg-white" : "bg-gray-50",
       )}
     >
       <TableCell className="py-3">
@@ -451,14 +485,17 @@ const LaborComponent = ({
               <SquarePen className="w-5 h-5" />
             </button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent
+            className="max-w-md"
+            onOpenAutoFocus={(e) => e.preventDefault()}
+          >
             <DialogHeader>
               <DialogTitle>Edit Canned Labor</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-700">
-                  Labor Name
+                  Labor Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -467,11 +504,12 @@ const LaborComponent = ({
                     setName(e.target.value);
                     if (nameError) setNameError("");
                   }}
+                  autoFocus={false}
                   className={cn(
                     "w-full rounded-lg border p-2 text-base focus:ring-2 focus:ring-indigo-500 transition-colors",
                     nameError
                       ? "border-red-500"
-                      : "border-gray-300 focus:border-indigo-500"
+                      : "border-gray-300 focus:border-indigo-500",
                   )}
                   placeholder="Labor Name"
                 />
@@ -481,7 +519,7 @@ const LaborComponent = ({
               </div>
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-700">
-                  Category
+                  Category <span className="text-red-500">*</span>
                 </label>
                 <SelectCategory
                   onCategoryChange={setCategory}
@@ -489,6 +527,8 @@ const LaborComponent = ({
                   categoryData={category}
                   categoryOpen={categoryOpen}
                   setCategoryOpen={setCategoryOpen}
+                  allowEdit={true}
+                  className="min-w-full"
                 />
               </div>
               <div>
@@ -504,6 +544,7 @@ const LaborComponent = ({
                   placeholder="$/Hour"
                 />
               </div>
+              {NotesField}
             </div>
             <DialogFooter>
               <DialogClose asChild>

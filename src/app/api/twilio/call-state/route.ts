@@ -3,6 +3,36 @@ import { getPusherInstance } from "@/lib/pusher/server";
 import { NextResponse } from "next/server";
 import { updateNewSMSChatTrack } from "@/actions/communication/client/chat-track";
 
+/**
+ * @swagger
+ * /api/twilio/call-state:
+ *   post:
+ *     summary: Update Twilio call state
+ *     tags: [Twilio]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               callSid:
+ *                 type: string
+ *               action:
+ *                 type: string
+ *                 enum: [accepted, rejected, ended]
+ *               companyId:
+ *                 type: integer
+ *               deviceId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Call state updated
+ *       400:
+ *         description: Missing required parameters
+ */
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -23,7 +53,7 @@ export async function POST(request: Request) {
       });
       return NextResponse.json(
         { error: "Missing required parameters" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -31,7 +61,7 @@ export async function POST(request: Request) {
       console.error("❌ [call-state] Invalid action:", action);
       return NextResponse.json(
         { error: "Invalid action. Must be 'accepted', 'rejected', or 'ended'" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -46,7 +76,7 @@ export async function POST(request: Request) {
     }
 
     console.log(
-      `📊 [DB] Attempting to update callSid: ${callSid} to status: ${status}`
+      `📊 [DB] Attempting to update callSid: ${callSid} to status: ${status}`,
     );
 
     // Try to update call status in database (use updateMany to avoid error if not found)
@@ -56,14 +86,14 @@ export async function POST(request: Request) {
       updateResult = await db.clientCall.updateMany({
         where: {
           callSid,
-          companyId,
+          companyId: Number(companyId),
         },
         data: {
           status,
         },
       });
       console.log(
-        `✅ [DB] Updated ${updateResult.count} call record(s) for callSid: ${callSid}`
+        `✅ [DB] Updated ${updateResult.count} call record(s) for callSid: ${callSid}`,
       );
 
       // If call was rejected (not answered), fetch the call details to create conversation track
@@ -76,7 +106,7 @@ export async function POST(request: Request) {
 
           if (updatedCall?.clientId) {
             console.log(
-              `📝 [DB] Creating "missed call" SMS record for client: ${updatedCall.clientId}`
+              `📝 [DB] Creating "missed call" SMS record for client: ${updatedCall.clientId}`,
             );
 
             // Create SMS record for missed call
@@ -91,7 +121,7 @@ export async function POST(request: Request) {
               },
             });
             console.log(
-              `✅ [DB] SMS record created for missed call, id: ${dbMessage.id}`
+              `✅ [DB] SMS record created for missed call, id: ${dbMessage.id}`,
             );
 
             // Create conversation track
@@ -107,7 +137,7 @@ export async function POST(request: Request) {
         } catch (trackError) {
           console.error(
             "❌ [DB] Failed to create conversation track:",
-            trackError
+            trackError,
           );
           // Continue anyway - this is not critical
         }
@@ -116,7 +146,7 @@ export async function POST(request: Request) {
       // If no records were updated, check what's actually in the database
       if (updateResult.count === 0) {
         console.warn(
-          `⚠️ [DB] No records found for callSid: ${callSid}, checking database...`
+          `⚠️ [DB] No records found for callSid: ${callSid}, checking database...`,
         );
         const existingCall = await db.clientCall.findFirst({
           where: { callSid },
@@ -132,16 +162,16 @@ export async function POST(request: Request) {
         if (existingCall) {
           console.log(`📋 [DB] Found call in database:`, existingCall);
           console.log(
-            `⚠️ [DB] Company mismatch? Expected: ${companyId}, Found: ${existingCall.companyId}`
+            `⚠️ [DB] Company mismatch? Expected: ${companyId}, Found: ${existingCall.companyId}`,
           );
         } else {
           console.warn(
-            `❌ [DB] No call record exists with callSid: ${callSid}`
+            `❌ [DB] No call record exists with callSid: ${callSid}`,
           );
           // Check for recent calls in this company
           const recentCalls = await db.clientCall.findMany({
             where: {
-              companyId,
+              companyId: Number(companyId),
               createdAt: {
                 gte: new Date(Date.now() - 5 * 60 * 1000), // Last 5 minutes
               },
@@ -157,7 +187,7 @@ export async function POST(request: Request) {
           });
           console.log(
             `📋 [DB] Recent calls for company ${companyId}:`,
-            recentCalls
+            recentCalls,
           );
         }
       }
@@ -207,7 +237,7 @@ export async function POST(request: Request) {
       });
 
       console.log(
-        `✅ [Pusher] Broadcasted ${eventName} for call ${callSid} to ${channelName} (deviceId: ${deviceId})`
+        `✅ [Pusher] Broadcasted ${eventName} for call ${callSid} to ${channelName} (deviceId: ${deviceId})`,
       );
     } catch (pusherError) {
       console.error("❌ [Pusher] Broadcast error:", pusherError);
@@ -229,7 +259,7 @@ export async function POST(request: Request) {
         error: "Internal Server Error",
         details: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

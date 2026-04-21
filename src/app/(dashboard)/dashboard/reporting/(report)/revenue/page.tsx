@@ -1,7 +1,7 @@
 import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 import { authOptions } from "@/authOptions";
+import { cn } from "@/lib/cn";
 import { db } from "@/lib/db";
-import { normalizeSearch } from "@/utils/normalizeSearch";
 import { Invoice, Prisma, Refund } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
 import moment from "moment-timezone";
@@ -13,7 +13,6 @@ import Analytics from "./Analytics";
 import AnalyticsVisibility from "./AnalyticsVisibility";
 import FilterHeader from "./FilterHeader";
 import RevenueDisplay from "./RevenueDisplay";
-import { cn } from "@/lib/cn";
 
 type TProps = {
   searchParams: {
@@ -76,7 +75,108 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
   const { timezone } = (await getCompanyTimezone()) || {
     timezone: moment.tz.guess(),
   };
-  const filterOR: any = [];
+
+  const containsInsensitive = (value: string): Prisma.StringFilter => ({
+    contains: value,
+    mode: "insensitive",
+  });
+
+  const searchTerm = searchParams.search?.trim();
+
+  const searchFilter: Prisma.InvoiceWhereInput | undefined = searchTerm
+    ? {
+        OR: [
+          {
+            id: {
+              ...containsInsensitive(searchTerm),
+            },
+          },
+          {
+            client: {
+              is: {
+                firstName: {
+                  ...containsInsensitive(searchTerm),
+                },
+              },
+            },
+          },
+          {
+            client: {
+              is: {
+                lastName: {
+                  ...containsInsensitive(searchTerm),
+                },
+              },
+            },
+          },
+          {
+            vehicle: {
+              is: {
+                make: {
+                  ...containsInsensitive(searchTerm),
+                },
+              },
+            },
+          },
+          {
+            vehicle: {
+              is: {
+                model: {
+                  ...containsInsensitive(searchTerm),
+                },
+              },
+            },
+          },
+          {
+            vehicle: {
+              is: {
+                submodel: {
+                  ...containsInsensitive(searchTerm),
+                },
+              },
+            },
+          },
+          {
+            vehicle: {
+              is: {
+                other: {
+                  ...containsInsensitive(searchTerm),
+                },
+              },
+            },
+          },
+          ...(() => {
+            const [firstNameTerm, ...lastNameParts] = searchTerm.split(/\s+/);
+            const lastNameTerm = lastNameParts.join(" ");
+
+            if (!firstNameTerm || !lastNameTerm) {
+              return [];
+            }
+
+            return [
+              {
+                client: {
+                  is: {
+                    AND: [
+                      {
+                        firstName: {
+                          ...containsInsensitive(firstNameTerm),
+                        },
+                      },
+                      {
+                        lastName: {
+                          ...containsInsensitive(lastNameTerm),
+                        },
+                      },
+                    ],
+                  },
+                },
+              } as Prisma.InvoiceWhereInput,
+            ];
+          })(),
+        ],
+      }
+    : undefined;
 
   const defaultTake = 50;
   const page = searchParams.page ? parseInt(searchParams.page, 10) : 1;
@@ -113,7 +213,7 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
               }
             : undefined,
       },
-      OR: filterOR.length > 0 ? filterOR : undefined,
+      ...(searchFilter || {}),
     },
     include: {
       Refund: true,
@@ -179,29 +279,8 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
     categoriesPromise,
   ]);
 
-  let filteredInvoicesWithOutDate: Invoice[] = [];
-  let filteredInvoices =
-    searchParams?.search && invoices
-      ? invoices.filter(invoice => {
-          if (!invoice.client && !invoice.id) {
-            return false;
-          }
-
-          const fullName = `${invoice?.client?.firstName} ${invoice?.client?.lastName}`;
-          const vehicle = `${invoice.vehicle?.make} ${invoice.vehicle?.model} ${invoice.vehicle?.submodel}`;
-          return (
-            normalizeSearch(fullName)?.includes(
-              normalizeSearch(searchParams?.search || "")
-            ) ||
-            normalizeSearch(invoice.id)?.includes(
-              normalizeSearch(searchParams?.search || "")
-            ) ||
-            normalizeSearch(vehicle)?.includes(
-              normalizeSearch(searchParams?.search || "")
-            )
-          );
-        })
-      : invoices;
+  let filteredInvoicesWithOutDate: TInvoice[] = [];
+  let filteredInvoices = invoices;
 
   if (searchParams.startDate && searchParams.endDate) {
     const formattedStartDate = searchParams.startDate
@@ -221,7 +300,7 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
       : null;
     filteredInvoicesWithOutDate = filteredInvoices;
 
-    filteredInvoices = filteredInvoices.filter(invoice => {
+    filteredInvoices = filteredInvoices.filter((invoice) => {
       if (!invoice.deliveredAt) {
         return false;
       }
@@ -234,26 +313,15 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
         invoiceDate.isBetween(convertedStart, convertedEnd, null, "[]")
       );
     });
-
-    // filterOR.push({
-    //   deliveredAt: {
-    //     gte:
-    //       formattedStartDate && new Date(`${formattedStartDate}T00:00:00.000Z`), // Start of the day
-    //     lte: formattedEndDate && new Date(`${formattedEndDate}T23:59:59.999Z`), // End of the day
-    //   },
-    // });
   }
 
-  const getService = services.map(service => service.name);
-  const getCategory = categories.map(category => category.name);
+  const getService = services.map((service) => service.name);
+  const getCategory = categories.map((category) => category.name);
   const maxPrice = Math.max(
-    ...filteredInvoices.map(invoice => Number(invoice.grandTotal))
+    ...filteredInvoices.map((invoice) => Number(invoice.grandTotal)),
   );
 
-  let maxCost = 0;
-  let maxProfit = 0;
-
-  const filteredInvoice = filteredInvoices.filter(invoice => {
+  const filteredInvoice = filteredInvoices.filter((invoice) => {
     const laborCost = invoice?.technician.reduce((acc, technician) => {
       acc += Number(technician?.amount);
       return acc;
@@ -280,12 +348,12 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
             materials: true;
             labor: true;
           };
-        }>
+        }>,
       ) => {
         const materialCostPrice = cur.materials.reduce(
           (acc, cur) =>
             acc + Number(cur?.cost || 0) * Number(cur?.quantity || 0),
-          0
+          0,
         );
 
         // Calculate material loss and track material names with losses
@@ -319,7 +387,7 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
               loss: number;
               isFromInventory: boolean;
             }[],
-          }
+          },
         );
 
         // Calculate labor loss (when technician amount > labor charge)
@@ -352,7 +420,7 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
           loss: number;
           isFromInventory: boolean;
         }[],
-      }
+      },
     );
 
     // Calculate total costs and profit correctly
@@ -370,8 +438,6 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
     (invoice as any).laborLossAmount = laborLossAmount;
     (invoice as any).totalLossAmount = totalLossAmount;
     (invoice as any).materialLossDetails = materialLossDetails;
-    maxCost = Math.max(maxCost, costPrice);
-    maxProfit = Math.max(maxProfit, profitPrice);
 
     // Filter based on filterRevenue selection (Profit filter should show only profitable invoices)
     if (searchParams.filterRevenue === "Profit" && finalProfitPrice <= 0) {
@@ -406,6 +472,15 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
       }
     }
   });
+
+  const maxCost = filteredInvoices.reduce(
+    (max, invoice) => Math.max(max, Number((invoice as any).costPrice || 0)),
+    0,
+  );
+  const maxProfit = filteredInvoices.reduce(
+    (max, invoice) => Math.max(max, Number((invoice as any).profitPrice || 0)),
+    0,
+  );
 
   // multiple filters
   const filterMultipleSliders: TSliderData[] = [
@@ -443,7 +518,7 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
     searchParams.startDate && searchParams.endDate
       ? filteredInvoicesWithOutDate
       : filteredInvoices
-  ).filter(invoice => {
+  ).filter((invoice) => {
     if (!invoice.deliveredAt) return false;
 
     const deliveredAt = moment.tz(invoice.deliveredAt, timezone);
@@ -456,7 +531,7 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
 
   const totalWeekProfit = weeklyInvoices.reduce(
     (total, invoice) => total + Number((invoice as Invoice).grandTotal || 0),
-    0
+    0,
   );
 
   // Calculate the total month profit (Invoice has a `profit` field)
@@ -469,7 +544,7 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
     searchParams.startDate && searchParams.endDate
       ? filteredInvoicesWithOutDate
       : filteredInvoices
-  ).filter(invoice => {
+  ).filter((invoice) => {
     if (!invoice.deliveredAt) return false;
 
     const deliveredAt = moment.tz(invoice.deliveredAt, timezone);
@@ -482,19 +557,19 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
 
   const totalMonthProfit = monthlyInvoices.reduce(
     (total, invoice) => total + Number((invoice as Invoice).grandTotal || 0),
-    0
+    0,
   );
 
   // Calculate the all time profit (Invoice has a `profit` field)
   const totalProfit = invoices.reduce(
     (total, invoice) => total + Number((invoice as Invoice).grandTotal || 0),
-    0
+    0,
   );
 
   // Calculate total revenue (sum of profits) for all invoices
   const totalRevenue = filteredInvoice.reduce(
     (total, invoice) => total + Number((invoice as Invoice).grandTotal || 0),
-    0
+    0,
   );
 
   // Calculate filtered revenue only when date range is applied
@@ -503,12 +578,12 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
       ? filteredInvoice.reduce(
           (total, invoice) =>
             total + Number((invoice as Invoice).grandTotal || 0),
-          0
+          0,
         )
       : totalRevenue; // Use total revenue when no date filter
 
   let getFilteredCategoryId = categories.find(
-    category => category.name === searchParams.category
+    (category) => category.name === searchParams.category,
   )?.id;
 
   let filterByValue = 0;
@@ -525,7 +600,7 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
         const refundedAmount =
           invoice?.Refund?.reduce(
             (acc, refund) => acc.plus(refund.amount || new Decimal(0)),
-            new Decimal(0)
+            new Decimal(0),
           ) || new Decimal(0);
 
         const totalProfit =
@@ -541,25 +616,17 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
   if (searchParams.category) {
     let filteredInvoiceItems = [];
 
+    const categoryServiceIds = new Set(
+      services
+        .filter((service) => service.categoryId === getFilteredCategoryId)
+        .map((service) => service.id),
+    );
+
     for (const invoice of filteredInvoices) {
       for (const item of invoice.invoiceItems) {
         let serviceId: any = item?.serviceId;
-        if (serviceId) {
-          const services = await db.service.findMany({
-            where: {
-              categoryId: getFilteredCategoryId,
-              id: serviceId,
-              companyId: session?.user?.companyId,
-            },
-            select: {
-              id: true,
-            },
-          });
-          for (const service of services) {
-            if (service.id === serviceId) {
-              filteredInvoiceItems.push(item);
-            }
-          }
+        if (serviceId && categoryServiceIds.has(serviceId)) {
+          filteredInvoiceItems.push(item);
         }
       }
     }
@@ -591,7 +658,7 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
 
     // Find the service ID for the selected service name
     const selectedService = services.find(
-      service => service.name === searchParams.service?.trim()
+      (service) => service.name === searchParams.service?.trim(),
     );
 
     if (selectedService) {
@@ -630,12 +697,19 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
     }
   }
 
+  const filteredTotalCount = filteredInvoice.length;
+  const startIndex = (page - 1) * take;
+  const paginatedFilteredInvoice = filteredInvoice.slice(
+    startIndex,
+    startIndex + take,
+  );
+
   return (
     <div className="space-y-5">
       <div
         className={cn(
           "grid grid-cols-1 md:grid-cols-2 gap-4",
-          searchParams.filterRevenue ? "lg:grid-cols-5" : "lg:grid-cols-4"
+          searchParams.filterRevenue ? "lg:grid-cols-5" : "lg:grid-cols-4",
         )}
       >
         <Calculation content="WEEK" amount={totalWeekProfit} />
@@ -673,7 +747,7 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
       {/* Conditional Rendering Based on Device */}
       <RevenueDisplay
         filteredInvoice={
-          filteredInvoice as (TInvoice & {
+          paginatedFilteredInvoice as (TInvoice & {
             refund: Refund;
             costPrice: number;
             profitPrice: number;
@@ -688,6 +762,7 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
             }[];
           })[]
         }
+        total={filteredTotalCount}
         timezone={timezone}
         page={page}
         take={take}

@@ -2,6 +2,31 @@ import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 
+/**
+ * @swagger
+ * /api/infobip/voice/incoming:
+ *   post:
+ *     summary: Infobip incoming call webhook
+ *     tags: [Infobip]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               from:
+ *                 type: string
+ *               to:
+ *                 type: string
+ *               callId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Incoming call processed
+ *       400:
+ *         description: Missing parameters
+ */
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -12,7 +37,7 @@ export async function POST(request: Request) {
     if (!from || !to) {
       return NextResponse.json(
         { error: "Missing 'from' or 'to' parameters." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -28,7 +53,7 @@ export async function POST(request: Request) {
     if (!infobipConfig) {
       return NextResponse.json(
         { error: "Infobip credentials not found" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -50,6 +75,7 @@ export async function POST(request: Request) {
           lastName: "Caller",
           mobile: from,
           companyId: infobipConfig.companyId,
+          isSalesAgent: true,
         },
       });
     }
@@ -78,7 +104,7 @@ export async function POST(request: Request) {
     console.error("Error handling incoming call:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

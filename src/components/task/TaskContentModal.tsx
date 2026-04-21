@@ -59,7 +59,8 @@ export default function TaskContentModal({
   onTaskUpdated,
   onTaskDeleted,
 }: NewTaskProps) {
-  const { data: companyUsers = [] } = useCompanyUsersQuery();
+  const { data: companyUsers = [], isLoading: isCompanyUsersLoading } =
+    useCompanyUsersQuery();
   const {
     data: taskData,
     isError,
@@ -67,7 +68,6 @@ export default function TaskContentModal({
   } = useTaskById(taskId!, {
     enabled: fromEdit && !!taskId,
   });
-
   const queryClient = useQueryClient();
   const timezone = useCompanyTimezone();
   const [title, setTitle] = useState("");
@@ -86,20 +86,20 @@ export default function TaskContentModal({
 
   // get task task data for update task
   useEffect(() => {
-    if (fromEdit && taskId && !taskData && !isFetched) {
+    if (fromEdit && taskId && !taskData && !isFetched && !companyUsers) {
       setIsLoading(true);
       return;
     }
 
     if (taskData && fromEdit) {
       const assignUsers = taskData?.taskUser?.map(
-        (taskUserData) => taskUserData.user.id
+        taskUserData => taskUserData.user.id,
       );
       setTitle(taskData?.title || "");
       setDescription(taskData?.description || "");
       setAssignedUsers(assignUsers);
       setDate(
-        taskData.date ? moment.utc(taskData.date).format("YYYY-MM-DD") : ""
+        taskData.date ? moment.utc(taskData.date).format("YYYY-MM-DD") : "",
       );
       setStartTime(taskData?.startTime || "");
       setEndTime(taskData?.endTime || "");
@@ -126,7 +126,7 @@ export default function TaskContentModal({
     } else if (isFetched && !taskData && fromEdit) {
       setIsLoading(false);
     }
-  }, [taskData, fromEdit, taskId, isFetched]);
+  }, [taskData, fromEdit, taskId, isFetched, companyUsers]);
 
   // Add function to generate a reasonable default end time based on start time
   const getDefaultEndTime = (start: string) => {
@@ -146,7 +146,7 @@ export default function TaskContentModal({
 
   const handleTimeChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    type: "start" | "end"
+    type: "start" | "end",
   ) => {
     let timeValue = e.target.value;
 
@@ -225,6 +225,14 @@ export default function TaskContentModal({
       return;
     }
 
+    if (startTime && endTime && startTime === endTime) {
+      showError({
+        field: "all",
+        message: "Start time and End time cannot be the same.",
+      });
+      return;
+    }
+
     setIsLoading(true);
     let res: any = null;
     if (fromEdit && taskId) {
@@ -242,6 +250,7 @@ export default function TaskContentModal({
               ? new Date(date).toISOString()
               : undefined,
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          createdBy: "user",
         },
       });
       if (res.type === "success") {
@@ -264,6 +273,7 @@ export default function TaskContentModal({
         date:
           date && date.trim() !== "" ? new Date(date).toISOString() : undefined,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        createdBy: "user",
       });
       if (res.type === "success") {
         onTaskCreated && onTaskCreated(res.data as Task);
@@ -352,29 +362,35 @@ export default function TaskContentModal({
 
   return (
     <DialogContent
-      className={cn(isLoading ? "block" : "flex flex-col", "min-h-[500px]")}
+      className={cn(
+        isLoading ? "block" : "flex flex-col",
+        "min-h-[500px] overflow-y-auto",
+      )}
     >
       <DialogHeader>
         <DialogTitle>{fromEdit ? "Update Task" : "Add Task"}</DialogTitle>
       </DialogHeader>
       <FormError />
-      {isLoading ? (
+      {isLoading || isCompanyUsersLoading ? (
         <div className="flex min-h-[500px] my-auto items-center justify-center py-10 text-center">
           <TaskSpinner />
         </div>
       ) : (
         <form>
           <div className="mb-4 flex flex-col">
-            <label htmlFor="title">
+            <label htmlFor="title" className="font-medium text-slate-600">
               Title <span className="text-[#E9405F]">*</span>
             </label>
 
             <input
               type="text"
               name="title"
-              className="mt-2 rounded-md border-2 border-gray-500 p-1"
+              className={cn(
+                "mt-2 rounded-md border-2 border-gray-500 p-1",
+                slimInputClassName,
+              )}
               value={title}
-              onChange={(e) => {
+              onChange={e => {
                 const value = e.target.value;
                 setTitle(value);
                 if (!value.trim()) {
@@ -386,25 +402,30 @@ export default function TaskContentModal({
                   clearError();
                 }
               }}
-              autoFocus
+              autoFocus={false}
             />
           </div>
 
           <div className="mb-4 flex flex-col">
-            <label htmlFor="description">Description</label>
+            <label htmlFor="description" className="font-medium text-slate-600">
+              Description
+            </label>
 
             <textarea
               name="description"
-              className="mt-2 rounded-md border-2 border-gray-500 p-1"
+              className={cn(
+                "mt-2 rounded-md border-2 border-gray-500 p-1",
+                slimInputClassName,
+              )}
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={e => setDescription(e.target.value)}
             />
           </div>
 
           <div id="timer-parent" className="mb-4 flex flex-col">
             {/* <label htmlFor="time">Time</label> */}
             <div className="flex items-center space-x-2">
-              <div className="flex w-full flex-col lg:flex-row lg:space-x-2">
+              <div className="flex w-full flex-col space-y-4 lg:flex-row lg:space-x-2 lg:space-y-0">
                 <SlimInput
                   name="date"
                   label="Date"
@@ -413,16 +434,16 @@ export default function TaskContentModal({
                   value={date ?? ""}
                   // min={minDate}
                   required
-                  onChange={(event) => setDate(event.currentTarget.value)}
+                  onChange={event => setDate(event.currentTarget.value)}
                 />
-                <div className="flex items-end gap-2">
+                <div className="flex items-end gap-2 mt-2 lg:mt-0">
                   {/* Start Time */}
                   <label className="flex flex-col items-start">
-                    <span className="mb-1 text-sm font-medium text-gray-500">
+                    <span className="mb-2 font-medium text-slate-600">
                       Start Time <span className="text-[#E9405F]">*</span>
                     </span>
                     <div>
-                      <Select
+                      {/* <Select
                         value={startTime}
                         onChange={(value) =>
                           handleTimeChange(
@@ -442,15 +463,62 @@ export default function TaskContentModal({
                             </p>
                           </Option>
                         ))}
+                      </Select> */}
+                      <Select
+                        value={startTime}
+                        onChange={value =>
+                          handleTimeChange(
+                            { target: { value } } as any,
+                            "start",
+                          )
+                        }
+                        // Remove inline styles to rely on Tailwind's precision
+                        style={{ width: "100%" }}
+                        className="
+                        h-[38px] w-full 
+                        rounded-lg border-none 
+                        bg-slate-50/50 
+                        ring-1 ring-slate-200 
+                        transition-all duration-300 
+                        hover:bg-white hover:ring-[#6571FF]/80 hover:scale-[1.01] hover:shadow-sm
+                        focus-within:ring-2 focus-within:ring-[#6571FF]/40 focus:outline-none
+                        text-slate-600 font-medium thin-scrollbar
+                      "
+                        // If your library supports custom dropdown styling:
+                        dropdownClassName="rounded-xl border-none shadow-2xl backdrop-blur-md bg-white/90"
+                      >
+                        <Option value="" className="text-slate-400 italic">
+                          Start Time
+                        </Option>
+
+                        {timeOptions.map(time => (
+                          <Option
+                            key={time.value}
+                            value={time.value}
+                            className="
+                            py-2 px-3 
+                            text-slate-600 
+                            transition-colors 
+                            hover:bg-[#6571FF]/10 
+                            hover:text-[#6571FF]
+                          "
+                          >
+                            <div className="flex items-center gap-2">
+                              {/* Subtle dot indicator for time slots */}
+                              <span className="h-1.5 w-1.5 rounded-full bg-slate-300 group-hover:bg-[#6571FF]" />
+                              {time.label}
+                            </div>
+                          </Option>
+                        ))}
                       </Select>
                     </div>
                   </label>
 
                   <label className="flex flex-col items-start">
-                    <span className="mb-1 text-sm font-medium text-gray-500">
+                    <span className="mb-2 font-medium text-slate-600">
                       End Time <span className="text-[#E9405F]">*</span>
                     </span>
-                    <Select
+                    {/* <Select
                       value={endTime}
                       onChange={(value) =>
                         handleTimeChange({ target: { value } } as any, "end")
@@ -465,12 +533,92 @@ export default function TaskContentModal({
                           {time.label}
                         </Option>
                       ))}
+                    </Select> */}
+                    <Select
+                      value={endTime}
+                      onChange={value =>
+                        handleTimeChange({ target: { value } } as any, "end")
+                      }
+                      // Remove inline styles to rely on Tailwind's precision
+                      style={{ width: "100%" }}
+                      className="
+                        h-[38px] w-full 
+                        rounded-lg border-none 
+                        bg-slate-50/50 
+                        ring-1 ring-slate-200 
+                        transition-all duration-300 
+                        hover:bg-white hover:ring-[#6571FF]/80 hover:scale-[1.01] hover:shadow-sm
+                        focus-within:ring-2 focus-within:ring-[#6571FF]/40 focus:outline-none
+                        text-slate-600 font-medium thin-scrollbar
+                      "
+                      // If your library supports custom dropdown styling:
+                      dropdownClassName="rounded-xl border-none shadow-2xl backdrop-blur-md bg-white/90"
+                    >
+                      <Option value="" className="text-slate-400 italic">
+                        End Time
+                      </Option>
+
+                      {timeOptions.map(time => (
+                        <Option
+                          key={time.value}
+                          value={time.value}
+                          className="
+                            py-2 px-3 
+                            text-slate-600
+                            transition-colors 
+                            hover:bg-[#6571FF]/10 
+                            hover:text-[#6571FF]
+                          "
+                        >
+                          <div className="flex items-center gap-2">
+                            {/* Subtle dot indicator for time slots */}
+                            <span className="h-1.5 w-1.5 rounded-full bg-slate-300 group-hover:bg-[#6571FF]" />
+                            {time.label}
+                          </div>
+                        </Option>
+                      ))}
                     </Select>
                   </label>
                 </div>
               </div>
             </div>
           </div>
+
+          {taskData?.client && taskData?.createdBy === "sales_agent" && (
+            <div className="mb-4 flex flex-col">
+              <label className="font-medium text-slate-600">
+                Client Information
+              </label>
+
+              <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
+                {/* Client Name (Read Only) */}
+                <div className="flex flex-col">
+                  <span className="text-xs text-slate-500">Client Name</span>
+                  <span className="text-sm font-medium text-slate-700">
+                    {(() => {
+                      const firstName = taskData.client.firstName ?? "";
+                      const lastName = taskData.client.lastName ?? "";
+                      const mobile = taskData.client.mobile ?? "";
+
+                      if (!firstName || firstName === mobile) {
+                        return "N/A";
+                      }
+
+                      return `${firstName} ${lastName}`.trim();
+                    })()}
+                  </span>
+                </div>
+
+                {/* Client Mobile (Read Only) */}
+                <div className="flex flex-col">
+                  <span className="text-xs text-slate-500">Mobile</span>
+                  <span className="text-sm font-medium text-slate-700">
+                    {taskData.client.mobile || "N/A"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* custom radio. show user name and image (column)*/}
           {/* TODO: */}
@@ -484,7 +632,7 @@ export default function TaskContentModal({
             />
           )}
 
-          <div className="mb-4 flex flex-col">
+          {/* <div className="mb-4 flex flex-col">
             <label>Priority</label>
             <div className="flex items-center gap-5">
               <button
@@ -518,12 +666,68 @@ export default function TaskContentModal({
                 )}
               </button>
             </div>
+          </div> */}
+          <div className="mb-6 flex flex-col space-y-3">
+            <label className="font-medium text-slate-600">Priority Level</label>
+            <div className="flex items-center gap-3">
+              {[
+                {
+                  id: "Low",
+                  color: "bg-[#6571FF]",
+                  shadow: "shadow-[#6571FF]/40",
+                  ring: "ring-[#6571FF]",
+                },
+                {
+                  id: "Medium",
+                  color: "bg-[#25AADD]",
+                  shadow: "shadow-[#25AADD]/40",
+                  ring: "ring-[#25AADD]",
+                },
+                {
+                  id: "High",
+                  color: "bg-[#006D77]",
+                  shadow: "shadow-[#006D77]/40",
+                  ring: "ring-[#006D77]",
+                },
+              ].map(item => {
+                const isActive = priority === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setPriority(item.id as Priority)}
+                    className={`
+                      relative flex w-full items-center justify-center gap-2 rounded-lg py-2.5 px-4
+                      text-sm font-semibold transition-all duration-300 ease-out
+                      ${
+                        isActive
+                          ? `${item.color} text-white shadow-lg ${item.shadow} scale-[1.03]`
+                          : "bg-slate-50 text-slate-500 ring-1 ring-slate-200 hover:bg-white hover:ring-slate-300 hover:-translate-y-0.5"
+                      }
+          `}
+                  >
+                    {item.id}
+                    {isActive && (
+                      <Check
+                        className="h-4 w-4 animate-in zoom-in duration-300"
+                        strokeWidth={3}
+                      />
+                    )}
+
+                    {/* Subtle shine overlay for the active button */}
+                    {isActive && (
+                      <div className="absolute inset-0 rounded-xl bg-gradient-to-tr from-white/10 to-transparent pointer-events-none" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <div
             className={cn(
               "flex justify-between gap-10 md:gap-0",
-              !fromEdit && "justify-end"
+              !fromEdit && "justify-end",
             )}
           >
             {fromEdit && taskId && (
@@ -547,13 +751,25 @@ export default function TaskContentModal({
               <DialogClose asChild>
                 <button
                   type="button"
-                  className=" rounded-md border px-4 py-1 lg:mt-0"
+                  className="
+                rounded-xl mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500 
+                hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
+                transition-colors border
+              "
                 >
                   Cancel
                 </button>
               </DialogClose>
               <Submit
-                className="rounded-md border bg-[#6571FF] px-4 py-1 text-white disabled:opacity-50"
+                className="
+                rounded-xl px-6 py-2.5 text-sm font-medium text-white
+                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                shadow-lg shadow-indigo-500/30
+                hover:shadow-xl hover:shadow-indigo-500/40
+                hover:-translate-y-0.5 hover:scale-[1.02]
+                active:translate-y-0 active:scale-100
+                transition-all duration-200
+              "
                 formAction={handleSubmit}
                 disabled={isLoading || (fromEdit && !isFetched)}
               >

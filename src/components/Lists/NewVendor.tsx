@@ -11,14 +11,14 @@ import {
   DialogTrigger,
 } from "@/components/Dialog";
 import FormError from "@/components/FormError";
+import { successToast } from "@/lib/toast";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import { Vendor } from "@prisma/client";
 import { useRef, useState } from "react";
+import PhoneInput from "../PhoneInput";
 import { SlimInput } from "../SlimInput";
 import { SlimTextarea } from "../SlimTextarea";
-import { errorToast, successToast } from "@/lib/toast";
-import PhoneInput from "../PhoneInput";
 
 export default function NewVendor({
   bgShadow,
@@ -33,10 +33,10 @@ export default function NewVendor({
   const [companyName, setCompanyName] = useState("");
   const { showError, clearError } = useFormErrorStore();
 
-    const phoneDataRef = useRef({
+  const phoneDataRef = useRef({
     mobile: "",
     country: "",
-    countryIsoCode: ""
+    countryIsoCode: "",
   });
 
   const { mobile, country, countryIsoCode } = phoneDataRef.current;
@@ -49,7 +49,7 @@ export default function NewVendor({
     const company =
       document.querySelector<HTMLInputElement>("#companyName")?.value;
     // const phone = document.querySelector<HTMLInputElement>("#phone")?.value;
-    const phone = country && mobile ? `${country}${mobile}` : mobile || ""
+    const phone = country && mobile ? `${country}${mobile}` : mobile || "";
     const email = document.querySelector<HTMLInputElement>("#email")?.value;
     const address = document.querySelector<HTMLInputElement>("#address")?.value;
     const city = document.querySelector<HTMLInputElement>("#city")?.value;
@@ -101,6 +101,14 @@ export default function NewVendor({
       return;
     }
 
+    if (zip && !/^\d+$/.test(zip)) {
+      showError({
+        field: "zip",
+        message: "Zip code should contain only numbers.",
+      });
+      return;
+    }
+
     // Validate phone format if provided
     // if (phone && !/^\+?\d*$/.test(phone)) {
     //   showError({
@@ -135,7 +143,7 @@ export default function NewVendor({
       zip,
       website,
       notes,
-      countryCode: countryIsoCode
+      countryCode: countryIsoCode,
     });
 
     if (res.type === "success") {
@@ -177,19 +185,27 @@ export default function NewVendor({
     >
       <DialogTrigger asChild>{button}</DialogTrigger>
 
-      <DialogContent className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]">
+      <DialogContent
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]"
+      >
         <DialogHeader>
-          <DialogTitle>Add New Vendor</DialogTitle>
+          <DialogTitle className="text-slate-600">Add New Vendor</DialogTitle>
         </DialogHeader>
 
         <FormError />
 
-        <div className="grid gap-2 overflow-y-auto sm:grid-cols-2">
-          <SlimInput id="contactName" name="contactName" />
+        <div className="grid gap-2 overflow-y-auto sm:grid-cols-2 px-1">
+          <SlimInput
+            id="contactName"
+            name="contactName"
+            placeholder="Enter contact name"
+          />
           <div className="space-y-1">
             <SlimInput
               id="companyName"
               name="companyName"
+              placeholder="Enter company"
               required
               value={companyName}
               maxLength={50}
@@ -238,23 +254,24 @@ export default function NewVendor({
             }}
           /> */}
 
-           <PhoneInput
-                                    label="Phone"
-                                    placeholder="1234567890"
-                                    required={false}
-                                    // value={mobile}
-                                    onChange={(phone, code, isoCode) => {
-                                      phoneDataRef.current = {
-                                        mobile: phone,
-                                        country: code,
-                                        countryIsoCode: isoCode || ""
-                                      };
-                                      clearError()
-                                    }}
-                                  />
+          <PhoneInput
+            label="Phone"
+            placeholder="1234567890"
+            required={true}
+            // value={mobile}
+            onChange={(phone, code, isoCode) => {
+              phoneDataRef.current = {
+                mobile: phone,
+                country: code,
+                countryIsoCode: isoCode || "",
+              };
+              clearError();
+            }}
+          />
           <SlimInput
             id="email"
             name="email"
+            placeholder="Enter email address"
             required={false}
             onChange={(e) => {
               const value = e.target.value;
@@ -268,31 +285,48 @@ export default function NewVendor({
               }
             }}
           />
-          <SlimInput id="address" name="address" required={false} />
-          <div className="flex flex-col gap-3 lg:flex-row">
-            <SlimInput id="city" name="city" required={false} />
-            <SlimInput id="state" name="state" required={false} />
-            <SlimInput
-              id="zip"
-              name="zip"
-              required={false}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (value && !/^\d*$/.test(value)) {
-                  showError({
-                    field: "zip",
-                    message: "Zip code should contain only numbers.",
-                  });
-                } else {
-                  clearError();
-                }
-              }}
-            />
-          </div>
+          <SlimInput
+            id="address"
+            name="address"
+            required={false}
+            placeholder="Street address"
+          />
+          <SlimInput
+            id="city"
+            name="city"
+            required={false}
+            placeholder="City"
+          />
+          <SlimInput
+            id="state"
+            name="state"
+            required={false}
+            placeholder="State"
+          />
+          <SlimInput
+            id="zip"
+            name="zip"
+            placeholder="Zip Code"
+            required={false}
+            onChange={(e) => {
+              const value = e.target.value;
+              // value && !/^\d*$/.test(value)
+              if (value === "" || /^\d+$/.test(value)) {
+                showError({
+                  field: "zip",
+                  message: "Zip code should contain only numbers.",
+                });
+              } else {
+                clearError();
+              }
+            }}
+          />
+
           <div className="space-y-2 sm:col-span-2">
             <SlimInput
               id="website"
               name="website"
+              placeholder="Enter website URL"
               required={false}
               onChange={(e) => {
                 const value = e.target.value;
@@ -311,7 +345,12 @@ export default function NewVendor({
                 }
               }}
             />
-            <SlimTextarea id="notes" name="notes" required={false} />
+            <SlimTextarea
+              id="notes"
+              name="notes"
+              required={false}
+              placeholder="Additional notes"
+            />
           </div>
         </div>
 

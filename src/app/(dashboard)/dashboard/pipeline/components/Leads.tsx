@@ -1,45 +1,63 @@
 "use client";
-import { cn } from "@/lib/cn";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import Link from "next/link";
-import React, {
-  useEffect,
-  useState,
-  useTransition,
-  useCallback,
-  useMemo,
-  useRef,
-} from "react";
+import { createLeadDraftEstimate } from "@/actions/pipelines/createLeadDraftEstimate";
 import {
   getLeadsWithCountOptimized as getLeadsWithCount,
   updateLeadColumn,
 } from "@/actions/pipelines/getLeads";
 import { getCompanyUser } from "@/actions/user/getCompanyUser";
+import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
 import DateRange from "@/components/DateRange";
 import ResponsiveSalesPipelineCard from "@/components/mobile-responsive/pipeline/ResponsiveSalesPipelineCard";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { cn } from "@/lib/cn";
 import { errorToast, successToast } from "@/lib/toast";
+import { updatePipelineAutomationTrigger } from "@/service/pipeline-automation-trigger/api";
 import { usePopupStore } from "@/stores/popup";
 import { LeadWithSalesUser } from "@/types/invoiceLead";
 import SessionUserType from "@/types/sessionUserType";
-import { Column, User } from "@prisma/client";
-import { Pagination, Select, Spin } from "antd";
+import { Appointment, Column, User } from "@prisma/client";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { Pagination, Select } from "antd";
+import {
+  Calendar,
+  CalendarCheck,
+  ChevronDown,
+  MessageCircleMore,
+  Search,
+} from "lucide-react";
 import moment from "moment";
 import { customAlphabet } from "nanoid";
 import Image from "next/image";
+import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import toast from "react-hot-toast";
-import AppointmentBtn from "./AppointmentBtn";
+import { LeadsMobileSkeleton } from "./LeadsMobileSkeleton";
+import { LeadsTableSkeleton } from "./LeadsTableSkeleton";
 import { NewAppointmentPipeline } from "./NewAppointmentPipeline";
 import SelectComponent from "./Select";
 import TaskForm from "./TaskForm";
-import { createLeadDraftEstimate } from "@/actions/pipelines/createLeadDraftEstimate";
-import { ChevronDown, MessageCircleMore, Search } from "lucide-react";
-import { LeadsTableSkeleton } from "./LeadsTableSkeleton";
-import { LeadsMobileSkeleton } from "./LeadsMobileSkeleton";
 
 type TProps = {
   salesColumn: Column[];
+};
+
+const formatDisplayName = (name?: string | null) => {
+  if (!name) return "N/A";
+
+  const cleanedName = name
+    .replace(/\b(undefined|null)\b/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return cleanedName || "N/A";
 };
 
 const Leads = ({ salesColumn }: TProps) => {
@@ -60,7 +78,7 @@ const Leads = ({ salesColumn }: TProps) => {
 
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
   const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(
-    null
+    null,
   );
 
   const [search, setSearch] = useState<string>("");
@@ -90,7 +108,7 @@ const Leads = ({ salesColumn }: TProps) => {
       source: null,
     });
     setSearch("");
-    setDateRange([null, null]);
+    // setDateRange([null, null]);
     setCurrentPage(1);
     // Clear the processed filters cache when clearing filters
     processedFiltersRef.current.clear();
@@ -112,16 +130,28 @@ const Leads = ({ salesColumn }: TProps) => {
           setTimeout(() => reject(new Error("Request timeout")), 10000); // 10 second timeout
         });
 
-        const fetchPromise = getLeadsWithCount({
-          take: pageSize,
-          skip: skip,
-          searchTerm: search,
-          assignedTo: filter.assignedTo,
-          source: filter.source,
-          service: filter.service,
-          status: filter.status,
-          dateRange: dateRange,
-        });
+        const queryParams = new URLSearchParams();
+        if (pageSize) queryParams.append("take", pageSize.toString());
+        if (skip !== undefined) queryParams.append("skip", skip.toString());
+        if (search) queryParams.append("searchTerm", search);
+        if (filter.assignedTo)
+          queryParams.append("assignedTo", filter.assignedTo);
+        if (filter.source) queryParams.append("source", filter.source);
+        if (filter.service) queryParams.append("service", filter.service);
+        if (filter.status) queryParams.append("status", filter.status);
+        if (dateRange?.[0])
+          queryParams.append("startDate", dateRange[0].toISOString());
+        if (dateRange?.[1])
+          queryParams.append("endDate", dateRange[1].toISOString());
+
+        const fetchPromise = fetch(
+          `/api/pipeline/sales/leads?${queryParams.toString()}`,
+        )
+          .then((res) => res.json())
+          .then((res) => {
+            if (!res.success) throw new Error(res.error);
+            return res.data;
+          });
 
         const { leads: updatedLeads, totalCount: count } = (await Promise.race([
           fetchPromise,
@@ -149,7 +179,7 @@ const Leads = ({ salesColumn }: TProps) => {
               () => {
                 fetchLeads(retryCount + 1);
               },
-              1000 * (retryCount + 1)
+              1000 * (retryCount + 1),
             ); // Exponential backoff
             return;
           }
@@ -190,7 +220,7 @@ const Leads = ({ salesColumn }: TProps) => {
         setCurrentPage(page);
       }
     },
-    [pageSize]
+    [pageSize],
   );
 
   // Reset page to 1 when search changes
@@ -253,12 +283,12 @@ const Leads = ({ salesColumn }: TProps) => {
 
           // Filter sales users based on current user
           const salesUsers = companyUsers.filter(
-            (user) => user.employeeType === "Sales"
+            (user) => user.employeeType === "Sales",
           );
 
           if (userData?.employeeType === "Sales") {
             const currentSalesUser = salesUsers.find(
-              (user) => user.id.toString() === userData?.id.toString()
+              (user) => user.id.toString() === userData?.id.toString(),
             );
             setCompanyUsers(currentSalesUser ? [currentSalesUser] : []);
           } else {
@@ -308,7 +338,7 @@ const Leads = ({ salesColumn }: TProps) => {
           errorToast(
             res?.errorSource && res?.errorSource.length > 0
               ? res?.errorSource[0].message
-              : res.message
+              : res.message,
           );
         }
       } catch (err) {
@@ -316,11 +346,11 @@ const Leads = ({ salesColumn }: TProps) => {
         errorToast(
           formattedError?.errorSource && formattedError?.errorSource.length > 0
             ? formattedError?.errorSource[0].message
-            : formattedError.message
+            : formattedError.message,
         );
       }
     },
-    [router]
+    [router],
   ); // Only depend on router
   //sort leads by time created in descending order (already sorted by backend)
   // leads?.sort((a, b) => {
@@ -361,7 +391,14 @@ const Leads = ({ salesColumn }: TProps) => {
       newColumnId: number;
     }) => {
       try {
-        const updatedLead = await updateLeadColumn(leadId, newColumnId);
+        const res = await fetch(`/api/pipeline/sales/lead/${leadId}/column`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ newColumnId }),
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
+        const updatedLead = data.data;
         const column = updatedLead.column;
         setLeads((prevLeads) =>
           prevLeads.map((lead) => {
@@ -369,16 +406,56 @@ const Leads = ({ salesColumn }: TProps) => {
               return { ...lead, column };
             }
             return lead;
-          })
+          }),
         );
         toast.success("Lead status updated successfully");
       } catch (err) {
         toast.error("Error updating lead status");
       }
     },
-    []
+    [],
   ); // No dependencies needed
 
+  const handleUpdateAppointmentInLead = useCallback(
+    async (
+      appointment: Appointment,
+      { leadId, columnId }: { leadId: number; columnId: number },
+    ) => {
+      setLeads((prevLeads) =>
+        prevLeads.map((lead) => {
+          if (lead.id === leadId) {
+            return {
+              ...lead,
+              client: lead.client
+                ? {
+                    ...lead.client,
+                    appointments: [appointment],
+                  }
+                : null,
+            };
+          }
+          return lead;
+        }),
+      );
+
+      // Trigger pipeline automation
+      try {
+        const lead = leads.find((l) => l.id === leadId);
+        if (lead) {
+          await updatePipelineAutomationTrigger({
+            condition: "APPOINTMENT_SCHEDULED",
+            companyId: lead.companyId,
+            leadId: leadId,
+            columnId: columnId,
+          });
+        }
+      } catch (err) {
+        console.error("Automation run failed", err);
+      }
+    },
+    [leads],
+  );
+  console.log("leads", leads);
   return (
     <div className="space-y-8 px-3">
       {/* TODO */}
@@ -390,6 +467,7 @@ const Leads = ({ salesColumn }: TProps) => {
             <div className="hidden items-center gap-4 lg:flex">
               <div className="m-2 px-4">
                 <DateRange
+                  dateRange={dateRange}
                   onOk={(start, end) => setDateRange([start, end])}
                   onCancel={() => setDateRange([null, null])}
                 />
@@ -429,7 +507,7 @@ const Leads = ({ salesColumn }: TProps) => {
                 {leads &&
                   leads.map((lead, index) => {
                     const timeCreated = moment(lead.createdAt).format(
-                      "MM/DD/YYYY"
+                      "MM/DD/YYYY",
                     );
 
                     return (
@@ -437,20 +515,23 @@ const Leads = ({ salesColumn }: TProps) => {
                         key={lead.id + 1}
                         className={cn(
                           "rounded-md",
-                          index % 2 === 0 ? "bg-background" : "bg-blue-100"
+                          index % 2 === 0 ? "bg-background" : "bg-blue-100",
                         )}
                       >
                         <td className="border-b px-4 py-2 text-left">
                           <Link
-                            href="#"
+                            href={`/dashboard/client/${lead.clientId}`}
                             className="block h-full w-full text-[#6571FF]"
                           >
                             {(currentPage - 1) * pageSize + index + 1}
                           </Link>
                         </td>
                         <td className="border-b px-4 py-2 text-left">
-                          <Link href="#" className="block h-full w-full">
-                            {lead.clientName}
+                          <Link
+                            href={`/dashboard/client/${lead.clientId}`}
+                            className="block h-full w-full"
+                          >
+                            {formatDisplayName(lead.clientName)}
                           </Link>
                         </td>
                         <td className="border-b px-4 py-2 text-left">
@@ -487,7 +568,7 @@ const Leads = ({ salesColumn }: TProps) => {
                                 (optionA?.label ?? "")
                                   .toLowerCase()
                                   .localeCompare(
-                                    (optionB?.label ?? "").toLowerCase()
+                                    (optionB?.label ?? "").toLowerCase(),
                                   )
                               }
                               options={salesColumn.map((column) => ({
@@ -499,7 +580,7 @@ const Leads = ({ salesColumn }: TProps) => {
                                   handleColumnChange({
                                     leadId: lead.id,
                                     newColumnId: value as number,
-                                  })
+                                  }),
                                 )
                               }
                             />
@@ -526,7 +607,7 @@ const Leads = ({ salesColumn }: TProps) => {
                               onClick={() =>
                                 handleCreateDraftEstimate({
                                   leadId: lead.id,
-                                  clientId: lead?.client?.id,
+                                  clientId: Number(lead?.clientId),
                                   vehicleId: lead?.client?.vehicle?.id,
                                 })
                               }
@@ -559,34 +640,53 @@ const Leads = ({ salesColumn }: TProps) => {
                                 Draft estimate
                               </span>
                             </button>
-                            <AppointmentBtn
-                              onOpenAppointment={() => {
-                                if (lead?.client?.id) {
-                                  const params = new URLSearchParams(
-                                    searchParams!
-                                  );
-                                  params.set(
-                                    "clientId",
-                                    lead?.client?.id?.toString()
-                                  );
-                                  router.push(
-                                    `${pathname}?${params.toString()}`
-                                  );
-                                  setSelectedClientId(lead?.client?.id);
-                                }
-                                lead?.client?.vehicle?.id &&
-                                  setSelectedVehicleId(
-                                    lead?.client?.vehicle?.id
-                                  );
-                                open("ADD_TASK");
-                              }}
-                              appointment={
+                            {(() => {
+                              const appointment =
                                 (lead?.client?.appointments?.length ?? 0) > 0
                                   ? lead?.client?.appointments?.[0]
-                                  : undefined
-                              }
-                            />
+                                  : undefined;
+                              return (
+                                <AppointmentCreateOrEdit
+                                  fromEdit={!!appointment}
+                                  fromLead
+                                  appointmentId={appointment?.id}
+                                  triggerIcon={
+                                    <button className="group relative">
+                                      {!!appointment ? (
+                                        <CalendarCheck
+                                          size={18}
+                                          color="#6571FF"
+                                        />
+                                      ) : (
+                                        <Calendar size={18} color="#66738C" />
+                                      )}
 
+                                      <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                                        New Appointment
+                                      </span>
+                                    </button>
+                                  }
+                                  vehicleId={lead?.client?.vehicle?.id}
+                                  clientId={lead?.client?.id}
+                                  onAppointmentCreated={(
+                                    appointment: Appointment,
+                                  ) => {
+                                    handleUpdateAppointmentInLead(appointment, {
+                                      leadId: lead.id,
+                                      columnId: lead.columnId!,
+                                    });
+                                  }}
+                                  onAppointmentUpdated={(
+                                    appointment: Appointment,
+                                  ) => {
+                                    handleUpdateAppointmentInLead(appointment, {
+                                      leadId: lead.id,
+                                      columnId: lead.columnId!,
+                                    });
+                                  }}
+                                />
+                              );
+                            })()}
                             <div className="group relative ">
                               <TaskForm
                                 companyUsers={companyUsers}
@@ -632,8 +732,8 @@ const Leads = ({ salesColumn }: TProps) => {
         // </div>
 
         <>
-         <LeadsTableSkeleton/>
-         <LeadsMobileSkeleton/>
+          <LeadsTableSkeleton />
+          <LeadsMobileSkeleton />
         </>
       ) : (
         <div className="my-20 flex w-full justify-center text-gray-500">
@@ -680,18 +780,28 @@ const SearchTerms = React.memo(function SearchTerms({
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setSearch(e.target.value);
     },
-    [setSearch]
+    [setSearch],
   );
 
   return (
-    <div className="relative min-w-0 flex-1">
-      <Search size={20} className="absolute left-3 top-2.5 text-gray-400" />
+    <div className="relative min-w-0 flex-1 group">
+      <Search
+        size={18}
+        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-[#6571FF]"
+      />
+
       <input
         type="text"
         value={search}
-        placeholder="Search by client, vehicle, services, lead source"
-        className="w-full rounded border border-gray-300 p-2 pl-10"
+        placeholder="Search by client, vehicle, services..."
         onChange={handleSearchChange}
+        className={cn(
+          "w-full h-11 pl-12 pr-4 rounded-xl border-2 border-slate-100 bg-white",
+          "text-sm font-medium text-slate-700 placeholder:text-slate-400 outline-none",
+          "transition-all duration-300 ease-in-out",
+          "hover:border-slate-200 hover:bg-slate-50/30",
+          "focus:border-[#6571FF]/40 focus:bg-white focus:ring-4 focus:ring-[#6571FF]/10",
+        )}
       />
     </div>
   );
@@ -760,7 +870,7 @@ const DropdownMenuDemo = React.memo(function DropdownMenuDemo({
               ?.lastName,
         })),
       };
-    }, [leads]); // Only recalculate when leads change
+    }, [leads]);
 
   return (
     <DropdownMenu.Root>
@@ -779,7 +889,7 @@ const DropdownMenuDemo = React.memo(function DropdownMenuDemo({
           className="data-[side=top]:animate-slideDownAndFade data-[side=right]:animate-slideLeftAndFade data-[side=bottom]:animate-slideUpAndFade data-[side=left]:animate-slideRightAndFade min-w-[220px] rounded-md bg-background p-[5px] py-8 shadow-[0px_10px_38px_-10px_rgba(22,_23,_24,_0.35),_0px_10px_20px_-15px_rgba(22,_23,_24,_0.2)] will-change-[opacity,transform]"
           sideOffset={5}
         >
-          <div className="flex flex-col gap-y-2">
+          <div className="flex flex-col gap-y-2 px-4">
             <SelectComponent
               label="Assigned To"
               items={[
@@ -795,7 +905,7 @@ const DropdownMenuDemo = React.memo(function DropdownMenuDemo({
               value={
                 filter?.assignedTo
                   ? salesPersonItems.find(
-                      (item) => item.value === filter?.assignedTo
+                      (item) => item.value === filter?.assignedTo,
                     )?.value || ""
                   : ""
               }
@@ -842,7 +952,12 @@ const DropdownMenuDemo = React.memo(function DropdownMenuDemo({
             <div className="px-4 pt-2">
               <button
                 onClick={clearFilters}
-                className="w-full rounded-md bg-gray-100 px-4 py-2 text-sm text-gray-700 hover:bg-gray-200"
+                className={cn(
+                  "group mt-4 flex w-full items-center justify-center gap-2 rounded-lg py-2 transition-all duration-200 ",
+                  "hover:bg-red-50", // Soft background shift
+                  " text-slate-500 hover:text-red-500", // Typography style
+                  "active:scale-95 border border-slate-200 hover:border-red-100", // Tactile feedback
+                )}
               >
                 Clear All Filters
               </button>

@@ -8,6 +8,7 @@ import { cn } from "@/lib/cn";
 import { useEstimateFilterStore } from "@/stores/estimate-filter";
 import { usePipelineFilterStore } from "@/stores/PipelineFilterStore";
 import SessionUserType from "@/types/sessionUserType";
+import { Pagination } from "antd";
 import moment from "moment";
 import { useEffect, useState } from "react";
 import Filter from "./Filter";
@@ -19,6 +20,12 @@ const WorkOrders = () => {
   const { search } = useEstimateFilterStore();
   const { dateRange, status, service, resetStatus } = usePipelineFilterStore();
   const [currentUser, setCurrentUser] = useState<SessionUserType>();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, dateRange, status, service]);
 
   useEffect(() => {
     resetStatus();
@@ -52,7 +59,7 @@ const WorkOrders = () => {
         invoice.vehicle?.make?.toLowerCase().includes(searchLower) ||
         invoice.vehicle?.model?.toLowerCase().includes(searchLower) ||
         invoice.invoiceItems.some((item) =>
-          item.service?.name?.toLowerCase().includes(searchLower)
+          item.service?.name?.toLowerCase().includes(searchLower),
         )
       );
     })();
@@ -83,8 +90,8 @@ const WorkOrders = () => {
     const matchesTechnician = isTechnician
       ? invoice.invoiceItems.some((item) =>
           item.service?.Technician.some(
-            (tech) => tech.userId === Number(currentUserId)
-          )
+            (tech) => tech.userId === Number(currentUserId),
+          ),
         )
       : true;
     const matchesColumnTitle = invoice.column?.title !== "Delivered";
@@ -99,12 +106,23 @@ const WorkOrders = () => {
       matchesColumnTitle
     );
   });
-  filteredInvoices?.sort((a, b) => {
+
+  const sortedInvoices = filteredInvoices?.sort((a, b) => {
     return (
       new Date(b.workOrderCreatedAt as Date).getTime() -
       new Date(a.workOrderCreatedAt as Date).getTime()
     );
   });
+
+  const paginatedInvoices = sortedInvoices?.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
+
+  const handlePageChange = (page: number, size?: number) => {
+    setCurrentPage(page);
+    if (size) setPageSize(size);
+  };
 
   return (
     <div className="mx-1 space-y-8 bg-background px-3 py-1">
@@ -112,8 +130,8 @@ const WorkOrders = () => {
       <div>
         {/* card list view  */}
         <div className="overflow-y-auto lg:hidden">
-          {filteredInvoices &&
-            filteredInvoices.map((invoice, index) => {
+          {paginatedInvoices &&
+            paginatedInvoices.map((invoice, index) => {
               return (
                 <ResponsiveShopPipelineCard
                   key={index}
@@ -122,80 +140,117 @@ const WorkOrders = () => {
                 />
               );
             })}
+          {sortedInvoices && sortedInvoices.length > 10 && (
+            <div className="mt-4 flex justify-center">
+              <Pagination
+                current={currentPage}
+                pageSize={pageSize}
+                total={sortedInvoices.length}
+                onChange={handlePageChange}
+                simple
+              />
+            </div>
+          )}
         </div>
         {!invoices ? (
           <WorkOrdersTableSkeleton rows={15} />
-        ) : !filteredInvoices ? (
+        ) : !paginatedInvoices ? (
           <div className="flex h-[70vh] pb-10 w-full items-center justify-center">
             <CarLoading />
           </div>
         ) : (
-          <table className="hidden w-full h-full shadow-md lg:table">
-            <thead className="bg-background">
-              <tr className="h-10 border-b">
-                <th className="border-b px-4 py-2 text-left">Work Order#</th>
-                <th className="border-b px-4 py-2 text-left">Client </th>
-                <th className="border-b px-4 py-2 text-left">Vehicle Info</th>
-                <th className="border-b px-4 py-2 text-left">Services</th>
-                <th className="border-b px-4 py-2 text-left">Time Created</th>
-                <th className="border-b px-4 py-2 text-left">Due Date</th>
-                <th className="border-b px-4 py-2 text-left">Status</th>
-              </tr>
-            </thead>
+          <>
+            <table className="hidden w-full h-full shadow-md lg:table">
+              <thead className="bg-background">
+                <tr className="h-10 border-b">
+                  <th className="border-b px-4 py-2 text-left">Work Order#</th>
+                  <th className="border-b px-4 py-2 text-left">Client </th>
+                  <th className="border-b px-4 py-2 text-left">Vehicle Info</th>
+                  <th className="border-b px-4 py-2 text-left">Services</th>
+                  <th className="border-b px-4 py-2 text-left">Time Created</th>
+                  <th className="border-b px-4 py-2 text-left">Due Date</th>
+                  <th className="border-b px-4 py-2 text-left">Status</th>
+                </tr>
+              </thead>
 
-            <tbody>
-              {filteredInvoices?.map((invoice, index) => {
-                const id = invoice.id;
-                const client =
-                  (invoice.client?.firstName ?? "") +
-                  " " +
-                  (invoice.client?.lastName ?? "");
-                const vehicle = `${invoice.vehicle?.year ?? ""} ${invoice.vehicle?.make ?? ""} ${invoice.vehicle?.model ?? ""} ${invoice.vehicle?.other ?? ""}`;
-                const serviceString = invoice.invoiceItems
-                  .map((item) => item.service?.name)
-                  .join(", ");
-                // TODO: this hasn't been tested properly. Need to test it.
-                const timeCreated = moment(invoice.workOrderCreatedAt).format(
-                  "MM/DD/YYYY"
-                );
-                const dueDate = invoice.dueDate
-                  ? moment(invoice.dueDate).format("MM/DD/YYYY")
-                  : null;
+              <tbody>
+                {paginatedInvoices.length > 0 ? (
+                  paginatedInvoices?.map((invoice, index) => {
+                    const id = invoice.id;
+                    const client =
+                      (invoice.client?.firstName ?? "") +
+                      " " +
+                      (invoice.client?.lastName ?? "");
+                    const vehicle = `${invoice.vehicle?.year ?? ""} ${invoice.vehicle?.make ?? ""} ${invoice.vehicle?.model ?? ""} ${invoice.vehicle?.other ?? ""}`;
+                    const serviceString = invoice.invoiceItems
+                      .map((item) => item.service?.name)
+                      .join(", ");
+                    // TODO: this hasn't been tested properly. Need to test it.
+                    const timeCreated = moment(invoice.workOrderCreatedAt).format(
+                      "MM/DD/YYYY",
+                    );
+                    const dueDate = invoice.dueDate
+                      ? moment(invoice.dueDate).format("MM/DD/YYYY")
+                      : null;
 
-                return (
-                  <tr
-                    key={index}
-                    className={cn(
-                      "rounded-md",
-                      index % 2 === 0 ? "bg-background" : "bg-blue-100"
-                    )}
-                  >
-                    <td className="border-b px-4 py-2 text-left">
-                      <WorkOrderModal
-                        invoiceId={id}
-                        buttonChild={
-                          <button className="text-[#6571FF]">{id}</button>
-                        }
-                      />
-                    </td>
-                    <td className="border-b px-4 py-2 text-left">{client}</td>
-                    <td className="border-b px-4 py-2 text-left">{vehicle}</td>
-                    <td className="border-b px-4 py-2 text-left">
-                      {serviceString}
-                    </td>
-                    <td className="border-b px-4 py-2 text-left">
-                      {timeCreated}
-                    </td>
+                    return (
+                      <tr
+                        key={index}
+                        className={cn(
+                          "rounded-md",
+                          index % 2 === 0 ? "bg-background" : "bg-blue-100",
+                        )}
+                      >
+                        <td className="border-b px-4 py-2 text-left">
+                          <WorkOrderModal
+                            invoiceId={id}
+                            buttonChild={
+                              <button className="text-[#6571FF]">{id}</button>
+                            }
+                          />
+                        </td>
+                        <td className="border-b px-4 py-2 text-left">{client}</td>
+                        <td className="border-b px-4 py-2 text-left">
+                          {vehicle}
+                        </td>
+                        <td className="border-b px-4 py-2 text-left">
+                          {serviceString}
+                        </td>
+                        <td className="border-b px-4 py-2 text-left">
+                          {timeCreated}
+                        </td>
 
-                    <td className="border-b px-4 py-2 text-left">{dueDate}</td>
-                    <td className="border-b px-4 py-2 text-left">
-                      {invoice.column?.title}
+                        <td className="border-b px-4 py-2 text-left">
+                          {dueDate}
+                        </td>
+                        <td className="border-b px-4 py-2 text-left">
+                          {invoice.column?.title}
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={8} className="text-center py-10">
+                      No work orders found.
                     </td>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
+            {sortedInvoices && sortedInvoices.length > 10 && (
+              <div className="mt-4 hidden items-center justify-end lg:flex">
+                <Pagination
+                  current={currentPage}
+                  pageSize={pageSize}
+                  total={sortedInvoices.length}
+                  onChange={handlePageChange}
+                  showSizeChanger
+                  onShowSizeChange={handlePageChange}
+                />
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

@@ -11,7 +11,7 @@ import {
   DialogTrigger,
 } from "@/components/Dialog";
 import Selector from "@/components/Selector";
-import { SlimInput } from "@/components/SlimInput";
+import { SlimInput, slimInputClassName } from "@/components/SlimInput";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { useInvoiceCreate } from "@/hooks/useInvoiceCreate";
@@ -22,6 +22,7 @@ import { useListsStore } from "@/stores/lists";
 import { additionalDataValidation } from "@/validations/schemas/payment/payment.validation";
 import { CardType, PaymentMethod, PaymentType } from "@prisma/client";
 import * as Tabs from "@radix-ui/react-tabs";
+import { CreditCard } from "lucide-react";
 import moment from "moment-timezone";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -36,16 +37,20 @@ function TabTrigger({
   children: React.ReactNode;
   tab: string;
 }) {
+  const isActive = tab === value;
   return (
     <Tabs.Trigger
       value={value}
-      className="flex items-center gap-1 rounded-md bg-[#6571FF] p-1 px-5 text-white transition-all"
-      style={{
-        backgroundColor: tab === value ? "#6571FF" : "transparent",
-        border: tab === value ? "none" : "1px solid #6571FF",
-        color: tab === value ? "white" : "#6571FF",
-      }}
+      className={cn(
+        "group relative flex items-center justify-center gap-2.5 rounded-xl px-3 py-2 text-base font-medium transition-all duration-300 ease-out",
+        isActive
+          ? "text-white shadow-md shadow-indigo-500/25 ring-1 ring-black/5 translate-y-[-1px]"
+          : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200 [&>svg]:text-slate-400 [&>svg]:group-hover:text-[#6571FF]",
+      )}
     >
+      {isActive && (
+        <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#6571FF] to-[#5a66ee] -z-10" />
+      )}
       {children}
     </Tabs.Trigger>
   );
@@ -69,7 +74,7 @@ export default function MakePayment() {
   const router = useRouter();
   const pathaname = usePathname();
   const [pending, startTransition] = useTransition();
-  const isEditPage = pathaname?.includes("/estimate/edit/");
+  const isEditPage = pathaname?.includes("/dashboard/estimate/edit/");
 
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState("CARD");
@@ -83,7 +88,7 @@ export default function MakePayment() {
   const [cash, setCash] = useState<string>("");
   const [amount, setAmount] = useState<number | string>(0);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(
-    null
+    null,
   );
 
   const [openPaymentMethod, setOpenPaymentMethod] = useState(false);
@@ -150,6 +155,12 @@ export default function MakePayment() {
       errorToast(`amount exceeds the due of $${roundedDue}  `);
       return;
     }
+
+    if (tab === "DEPOSIT" && formatAmount(deposit) > due) {
+      errorToast("Deposit amount cannot be greater than due amount");
+      return;
+    }
+
     try {
       await additionalDataValidation.parseAsync({
         creditCard: card,
@@ -163,7 +174,9 @@ export default function MakePayment() {
 
       if (res1 && res1.type === "globalError") {
         errorToast(
-          res1?.errorSource?.length ? res1.errorSource[0].message : res1.message
+          res1?.errorSource?.length
+            ? res1.errorSource[0].message
+            : res1.message,
         );
         return;
       }
@@ -199,6 +212,12 @@ export default function MakePayment() {
         }
         // Add deposit
         if (tab === "DEPOSIT") {
+          console.log(
+            "🚀 ~ handleSubmit ~ formatAmount(deposit) :",
+            formatAmount(deposit),
+          );
+          console.log("🚀 ~ handleSubmit ~ due:", due);
+
           if (depositMethod === "") {
             errorToast("Deposit method is required");
             return;
@@ -227,13 +246,13 @@ export default function MakePayment() {
         successToast("Payment recorded successfully");
         reset();
 
-        // Refresh the page to get updated data from server
-        router.refresh();
-
-        !isEditPage && router.push("/dashboard/estimate/invoices");
+        // Redirect to the estimate/invoice list page after first payment
+        router.push("/dashboard/estimate/invoices");
       } else if (res2?.type === "globalError") {
         errorToast(
-          res2?.errorSource?.length ? res2.errorSource[0].message : res2.message
+          res2?.errorSource?.length
+            ? res2.errorSource[0].message
+            : res2.message,
         );
       }
     } catch (err) {
@@ -241,7 +260,7 @@ export default function MakePayment() {
       errorToast(
         formattedError?.errorSource?.length
           ? formattedError.errorSource[0].message
-          : formattedError.message
+          : formattedError.message,
       );
     }
   }
@@ -260,7 +279,7 @@ export default function MakePayment() {
         });
       } else if (res.type === "globalError") {
         errorToast(
-          res?.errorSource?.length ? res.errorSource[0].message : res.message
+          res?.errorSource?.length ? res.errorSource[0].message : res.message,
         );
       }
     } catch (err) {
@@ -268,7 +287,7 @@ export default function MakePayment() {
       errorToast(
         formattedError?.errorSource?.length
           ? formattedError.errorSource[0].message
-          : formattedError.message
+          : formattedError.message,
       );
     }
   }
@@ -305,7 +324,12 @@ export default function MakePayment() {
         <button
           onClick={openMakePaymentDialog}
           type="button"
-          className={`w-full rounded-md  p-2  ${isDueZero ? "cursor-not-allowed bg-gray-500" : "bg-background text-[#006d77]"}`}
+          className={cn(
+            "w-full rounded-lg py-3 px-4 font-bold transition-all active:scale-95",
+            isDueZero
+              ? "cursor-not-allowed bg-slate-200 text-slate-400"
+              : "bg-white text-[#006d77] shadow-lg shadow-black/10 hover:bg-slate-50",
+          )}
           disabled={isDueZero}
         >
           Make Payment
@@ -320,30 +344,21 @@ export default function MakePayment() {
           </DialogHeader>
 
           <Tabs.Root className="mt-5" value={tab} onValueChange={setTab as any}>
-            <Tabs.List className="grid grid-cols-3 justify-between gap-3 md:flex">
+            <Tabs.List className="grid grid-cols-3 justify-between gap-1.5 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm md:flex">
               <TabTrigger value="CARD" tab={tab}>
                 <svg
                   viewBox="0 0 24 24"
-                  fill="#ffffff"
                   height="24"
                   width="24"
                   xmlns="http://www.w3.org/2000/svg"
+                  className={tab === "CARD" ? "text-white" : "text-[#6571FF]"}
                 >
-                  <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                  <g
-                    id="SVGRepo_tracerCarrier"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  ></g>
-                  <g id="SVGRepo_iconCarrier">
-                    {" "}
-                    <path
-                      fill-rule="evenodd"
-                      clip-rule="evenodd"
-                      d="M3.75 5.25L3 6V17.25L3.75 18H19.5L20.25 17.25V6L19.5 5.25H3.75ZM4.5 9V6.75H18.75V9H4.5ZM4.5 10.5V16.5H18.75V10.5H4.5ZM6.10217 14.25H7.67035V12.75H6.10217V14.25ZM13.1589 14.25H8.45435V12.75H13.1589V14.25Z"
-                      fill={tab === "CARD" ? "#ffffff" : "#6571ff"}
-                    ></path>{" "}
-                  </g>
+                  <path
+                    fillRule="evenodd"
+                    clipRule="evenodd"
+                    d="M3.75 5.25L3 6V17.25L3.75 18H19.5L20.25 17.25V6L19.5 5.25H3.75ZM4.5 9V6.75H18.75V9H4.5ZM4.5 10.5V16.5H18.75V10.5H4.5ZM6.10217 14.25H7.67035V12.75H6.10217V14.25ZM13.1589 14.25H8.45435V12.75H13.1589V14.25Z"
+                    fill="currentColor"
+                  />
                 </svg>
                 Card
               </TabTrigger>
@@ -491,7 +506,7 @@ export default function MakePayment() {
                 </div>
                 <div className="">
                   <label
-                    className="mb-1 px-2 text-sm font-medium md:text-base"
+                    className="mb-1 text-sm text-slate-600 font-medium md:text-base"
                     htmlFor="notes"
                   >
                     Notes
@@ -499,7 +514,10 @@ export default function MakePayment() {
                   <textarea
                     name="notes"
                     id="notes"
-                    className="h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none"
+                    className={cn(
+                      "h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none",
+                      slimInputClassName,
+                    )}
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                   />
@@ -519,7 +537,7 @@ export default function MakePayment() {
                       const localDate = moment.tz(
                         e.target.value,
                         "YYYY-MM-DD",
-                        timezone
+                        timezone,
                       );
                       setDate(localDate.toDate());
                     }}
@@ -551,7 +569,7 @@ export default function MakePayment() {
 
               <div className="mt-5">
                 <label
-                  className="mb-1 px-2 text-sm font-medium md:text-base"
+                  className="mb-1 text-sm text-slate-600 font-medium md:text-base"
                   htmlFor="notes"
                 >
                   Notes
@@ -559,7 +577,10 @@ export default function MakePayment() {
                 <textarea
                   name="notes"
                   id="notes"
-                  className="h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none"
+                  className={cn(
+                    "h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none",
+                    slimInputClassName,
+                  )}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                 />
@@ -578,7 +599,7 @@ export default function MakePayment() {
                       const localDate = moment.tz(
                         e.target.value,
                         "YYYY-MM-DD",
-                        timezone
+                        timezone,
                       );
                       setDate(localDate.toDate());
                     }}
@@ -609,7 +630,7 @@ export default function MakePayment() {
 
               <div className="mt-5">
                 <label
-                  className="mb-1 px-2 text-sm font-medium md:text-base"
+                  className="mb-1 text-sm text-slate-600 font-medium md:text-base"
                   htmlFor="notes"
                 >
                   Notes
@@ -617,7 +638,10 @@ export default function MakePayment() {
                 <textarea
                   name="notes"
                   id="notes"
-                  className="h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none"
+                  className={cn(
+                    "h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none",
+                    slimInputClassName,
+                  )}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                 />
@@ -650,7 +674,7 @@ export default function MakePayment() {
                         onClick={handleNewPaymentMethod}
                         className={cn(
                           "text-nowrap rounded-md px-2 text-white",
-                          paymentMethodInput ? "bg-slate-700" : "bg-slate-400"
+                          paymentMethodInput ? "bg-slate-700" : "bg-slate-400",
                         )}
                         type="button"
                         disabled={!paymentMethodInput}
@@ -662,7 +686,7 @@ export default function MakePayment() {
                   items={paymentMethods}
                   onSearch={(search: string) =>
                     paymentMethods.filter((method) =>
-                      method.name.toLowerCase().includes(search.toLowerCase())
+                      method.name.toLowerCase().includes(search.toLowerCase()),
                     )
                   }
                   displayList={(paymentMethod: PaymentMethod) => (
@@ -674,7 +698,7 @@ export default function MakePayment() {
                 />
               </div>
 
-              <div className="mt-5 flex justify-between gap-3">
+              <div className="mt-6 flex justify-between gap-3">
                 <div>
                   <SlimInput
                     labelClassName="text-sm md:text-base"
@@ -685,7 +709,7 @@ export default function MakePayment() {
                       const localDate = moment.tz(
                         e.target.value,
                         "YYYY-MM-DD",
-                        timezone
+                        timezone,
                       );
                       setDate(localDate.toDate());
                     }}
@@ -705,7 +729,7 @@ export default function MakePayment() {
 
               <div className="mt-5">
                 <label
-                  className="mb-1 px-2 text-sm font-medium md:text-base"
+                  className="mb-1 text-sm text-slate-600 font-medium md:text-base"
                   htmlFor="notes"
                 >
                   Notes
@@ -713,7 +737,10 @@ export default function MakePayment() {
                 <textarea
                   name="notes"
                   id="notes"
-                  className="h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none"
+                  className={cn(
+                    "h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none",
+                    slimInputClassName,
+                  )}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                 />
@@ -731,7 +758,7 @@ export default function MakePayment() {
                       const localDate = moment.tz(
                         e.target.value,
                         "YYYY-MM-DD",
-                        timezone
+                        timezone,
                       );
                       setDate(localDate.toDate());
                     }}
@@ -764,7 +791,7 @@ export default function MakePayment() {
 
               <div className="mt-5">
                 <label
-                  className="mb-1 px-2 text-sm font-medium md:text-base"
+                  className="mb-1 text-sm text-slate-600 font-medium md:text-base"
                   htmlFor="depositNotes"
                 >
                   Deposit Notes
@@ -772,22 +799,33 @@ export default function MakePayment() {
                 <textarea
                   name="depositNotes"
                   id="depositNotes"
-                  className="h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none"
+                  className={cn(
+                    "h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none",
+                    slimInputClassName,
+                  )}
                   value={depositNotes}
                   onChange={(e) => setDepositNotes(e.target.value)}
                 />
               </div>
             </Tabs.Content>
-            <DialogFooter className="mt-5 flex justify-center gap-2 md:gap-5">
+            <DialogFooter className="mt-5 flex justify-center gap-2 md:gap-3">
               <button
                 type="button"
-                className="rounded-md border-2 border-slate-400 p-2 px-5"
+                className="rounded-xl mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500 
+                hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
+                transition-colors border"
                 onClick={() => setOpen(false)}
               >
                 Cancel
               </button>
               <button
-                className="rounded-md bg-[#6571FF] p-2 px-5 text-white disabled:bg-gray-400"
+                className="rounded-xl px-6 py-2.5 text-sm font-medium text-white
+                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                shadow-lg shadow-indigo-500/30
+                hover:shadow-xl hover:shadow-indigo-500/40
+                hover:-translate-y-0.5 hover:scale-[1.02]
+                active:translate-y-0 active:scale-100
+                transition-all duration-200"
                 formAction={() => startTransition(handleSubmit)}
                 disabled={pending}
                 type="submit"

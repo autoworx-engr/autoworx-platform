@@ -1,7 +1,17 @@
 import { Appointment, Client, User } from "@prisma/client";
-import { MessageCircleMore, SquarePen, Clock, Mail, Phone, User as UserIcon, Users } from "lucide-react";
+import {
+  Clock,
+  Mail,
+  MessageCircleMore,
+  Phone,
+  SquarePen,
+  User as UserIcon,
+  Users,
+  X,
+} from "lucide-react";
 import moment from "moment";
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 
 type TAppointmentTooltipProps = {
   event: Appointment & {
@@ -9,6 +19,7 @@ type TAppointmentTooltipProps = {
     assignedUsers?: User[];
   };
   onModalOpen?: () => void;
+  onClose?: () => void;
 };
 
 // --- STYLES DEFINITION ---
@@ -21,11 +32,11 @@ const ACTION_COLOR = "#6571FF"; // Special action color for the edit button
 // --- END STYLES DEFINITION ---
 
 // Helper component for structured detail rows
-const TooltipDetail: React.FC<{ icon: any, children: React.ReactNode, label: string }> = ({
-  icon: Icon,
-  children,
-  label
-}) => (
+const TooltipDetail: React.FC<{
+  icon: any;
+  children: React.ReactNode;
+  label: string;
+}> = ({ icon: Icon, children, label }) => (
   <p className={`flex items-start gap-2 text-sm ${SLATE_TEXT_COLOR}`}>
     <Icon size={16} className={`mt-0.5 min-w-[16px] ${INFO_TEXT_COLOR}`} />
     <span className="font-medium text-left">{label}:</span>
@@ -33,27 +44,78 @@ const TooltipDetail: React.FC<{ icon: any, children: React.ReactNode, label: str
   </p>
 );
 
-
 export default function AppointmentTooltip({
   event,
   onModalOpen,
+  onClose,
 }: TAppointmentTooltipProps) {
+  const tooltipRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Handle outside clicks
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        tooltipRef.current &&
+        !tooltipRef.current.contains(e.target as Node)
+      ) {
+        onClose?.();
+      }
+    };
+
+    // Handle scroll events
+    const handleScroll = () => {
+      onClose?.();
+    };
+
+    // Add event listeners
+    document.addEventListener("mousedown", handleClickOutside);
+    window.addEventListener("scroll", handleScroll, true);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("scroll", handleScroll, true);
+    };
+  }, [onClose]);
+
   return (
     <div
+      ref={tooltipRef}
       onClick={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
     >
-      <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
-        <h3 className="font-semibold text-lg max-w-sm truncate">{event.title}</h3>
+      {/* Close (X) at top-right */}
+      <button
+        type="button"
+        aria-label="Close"
+        className="absolute right-0 top-0  p-1 text-slate-600"
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          onClose && onClose();
+        }}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <X className="h-4 w-4" />
+      </button>
+      <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-2 pr-2">
+        <h3 className="font-semibold text-lg max-w-sm truncate">
+          {event.title}
+        </h3>
         {/* Chat Link */}
         <div className="flex gap-2">
-          <Link
-            href={`/dashboard/communication/client/${event.clientId}?chat=true`}
-            className="rounded-full bg-[#6571FF] p-2 text-white"
-            title="Open Chat"
-          >
-            <MessageCircleMore strokeWidth={2.5} className="h-4 w-4 cursor-pointer mx-auto" />
-          </Link>
+          {event.clientId && (
+            <Link
+              href={`/dashboard/communication/client/${event.clientId}?chat=true`}
+              className="rounded-full bg-[#6571FF] p-2 text-white"
+              title="Open Chat"
+            >
+              <MessageCircleMore
+                strokeWidth={2.5}
+                className="h-4 w-4 cursor-pointer mx-auto"
+              />
+            </Link>
+          )}
           <button
             type="button"
             className="rounded-full bg-[#6571FF] p-2 text-white"
@@ -73,7 +135,6 @@ export default function AppointmentTooltip({
 
       {/* 2. Time and Core Details */}
       <div className="space-y-2 py-2">
-
         {/* Time Range */}
         <TooltipDetail icon={Clock} label="Time">
           <span className="font-semibold text-cyan-600 dark:text-cyan-400">
@@ -126,11 +187,12 @@ export default function AppointmentTooltip({
       {/* 3. Notes (Subtle Footer) */}
       {event?.notes && (
         <div className="pt-3 border-t border-slate-200 dark:border-slate-700">
-          <p className={`text-sm italic font-semibold ${INFO_TEXT_COLOR} mb-1`}>Notes:</p>
+          <p className={`text-sm italic font-semibold ${INFO_TEXT_COLOR} mb-1`}>
+            Notes:
+          </p>
           <p className={`text-xs ${SLATE_TEXT_COLOR}`}>{event.notes}</p>
         </div>
       )}
     </div>
-
-  )
+  );
 }

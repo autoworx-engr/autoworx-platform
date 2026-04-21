@@ -1,7 +1,7 @@
 "use client";
 import { format } from "date-fns";
 import { Calendar } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { DateRangePicker } from "react-date-range";
 import "react-date-range/dist/styles.css"; // main style file
 import "react-date-range/dist/theme/default.css"; // theme css file
@@ -9,22 +9,48 @@ import "react-date-range/dist/theme/default.css"; // theme css file
 const PaymentDateRange = ({
   onOk,
   onCancel,
+  dateRange: dateRangeProp,
 }: {
   onOk: (start: Date, end: Date) => void;
   onCancel: () => void;
+  dateRange?: [Date | null, Date | null];
 }) => {
-  const [state, setState] = useState({
-    selection: {
-      startDate: new Date(),
-      endDate: new Date(),
+  const selectedStart = dateRangeProp?.[0] ?? null;
+  const selectedEnd = dateRangeProp?.[1] ?? null;
+
+  const getSelectionFromProps = useCallback(
+    () => ({
+      startDate: selectedStart || new Date(),
+      endDate: selectedEnd || new Date(),
       key: "selection",
-    },
+    }),
+    [selectedStart, selectedEnd],
+  );
+
+  const [state, setState] = useState({
+    selection: getSelectionFromProps(),
   });
   const ref = useRef<HTMLDivElement>(null);
 
   const [showPicker, setShowPicker] = useState(false);
-  const [tempRange, setTempRange] = useState(state.selection);
-  const [isRangeSelected, setIsRangeSelected] = useState(false);
+  const [tempRange, setTempRange] = useState(getSelectionFromProps());
+  const isRangeSelected =
+    selectedStart !== undefined &&
+    selectedStart !== null &&
+    selectedEnd !== undefined &&
+    selectedEnd !== null;
+
+  useEffect(() => {
+    const syncedSelection = getSelectionFromProps();
+    setState({ selection: syncedSelection });
+    setTempRange(syncedSelection);
+  }, [selectedStart, selectedEnd, getSelectionFromProps]);
+
+  const handleClickOutside = (event: any) => {
+    if (ref.current && !ref.current.contains(event.target)) {
+      setShowPicker(false);
+    }
+  };
 
   useEffect(() => {
     document.addEventListener("mousedown", handleClickOutside);
@@ -42,35 +68,30 @@ const PaymentDateRange = ({
   };
 
   const handleOk = () => {
+    if (!tempRange.startDate || !tempRange.endDate) {
+      return;
+    }
+
     setState({ selection: tempRange });
     setShowPicker(false);
-    setIsRangeSelected(true);
     onOk(tempRange.startDate, tempRange.endDate);
   };
 
-  const handleClickOutside = (event: any) => {
-    if (ref.current && !ref.current.contains(event.target)) {
-      setShowPicker(false);
-    }
-  };
-
-  const handleCancel = () => {
-    togglePicker();
-    // reset everything
-    setState({
-      selection: {
-        startDate: new Date(),
-        endDate: new Date(),
-        key: "selection",
-      },
-    });
-    setIsRangeSelected(false);
-    setTempRange({
+  const handleClear = () => {
+    const resetSelection = {
       startDate: new Date(),
       endDate: new Date(),
       key: "selection",
-    });
+    };
+    setState({ selection: resetSelection });
+    setTempRange(resetSelection);
+    setShowPicker(false);
     onCancel();
+  };
+
+  const handleCancel = () => {
+    setShowPicker(false);
+    setTempRange(state.selection);
   };
 
   const formatRange = (start: Date, end: Date) => {
@@ -85,18 +106,23 @@ const PaymentDateRange = ({
         onClick={togglePicker}
         className={`
             flex w-full items-center justify-between gap-3 rounded-xl px-4 py-2.5 text-sm transition-all duration-300 ease-out
-            ${showPicker
-            ? 'bg-white ring-2 ring-[#6571FF] shadow-md shadow-indigo-500/10 dark:bg-slate-900'
-            : 'bg-white ring-1 ring-slate-200 hover:ring-indigo-500/50 hover:shadow-sm dark:bg-slate-900 dark:ring-slate-700'
-          }
+            ${
+              showPicker
+                ? "bg-white ring-2 ring-[#6571FF] shadow-md shadow-indigo-500/10 dark:bg-slate-900"
+                : "bg-white ring-1 ring-slate-200 hover:ring-indigo-500/50 hover:shadow-sm dark:bg-slate-900 dark:ring-slate-700"
+            }
         `}
       >
-        <span className={`font-medium ${isRangeSelected ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400'}`}>
+        <span
+          className={`font-medium truncate ${isRangeSelected ? "text-slate-700 dark:text-slate-200" : "text-slate-400"}`}
+        >
           {isRangeSelected
             ? formatRange(state.selection.startDate, state.selection.endDate)
             : "Select Date Range"}
         </span>
-        <Calendar className={`w-4 h-4 ${showPicker || isRangeSelected ? 'text-[#6571FF]' : 'text-slate-400'}`} />
+        <Calendar
+          className={`w-4 h-4 ${showPicker || isRangeSelected ? "text-[#6571FF]" : "text-slate-400"}`}
+        />
       </button>
 
       {showPicker && (
@@ -114,10 +140,16 @@ const PaymentDateRange = ({
           />
           <div className="mt-2 flex justify-end gap-3 border-t border-slate-100 pt-4 dark:border-slate-800">
             <button
-              onClick={handleCancel}
+              onClick={handleClear}
               className="rounded-lg px-4 py-2 text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-700 dark:hover:bg-slate-800 dark:text-slate-400"
             >
               Clear
+            </button>
+            <button
+              onClick={handleCancel}
+              className="rounded-lg px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+            >
+              Cancel
             </button>
             <button
               onClick={handleOk}

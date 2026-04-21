@@ -1,13 +1,14 @@
-import newCategory from "@/actions/category/newCategory";
 import deleteCategory from "@/actions/category/deleteCategory";
+import newCategory from "@/actions/category/newCategory";
 import Selector from "@/components/Selector";
 import { cn } from "@/lib/cn";
 import { useListsStore } from "@/stores/lists";
 import { Category } from "@prisma/client";
-import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
 import { Popconfirm } from "antd";
 import { X } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 export default function SelectCategory({
   categoryData = null,
@@ -18,20 +19,23 @@ export default function SelectCategory({
   required = false,
   onBlur,
   className,
+  allowEdit = false,
 }: {
   categoryData?: Category | null;
-  onCategoryChange: (category: Category) => void;
+  onCategoryChange: (category: Category | null) => void;
   labelPosition?: "top" | "left" | "none";
   categoryOpen?: boolean;
   setCategoryOpen?: any;
   required?: boolean;
   onBlur?: () => void;
   className?: string;
+  allowEdit?: boolean;
 }) {
   const { categories } = useListsStore();
   const [error, setError] = useState<string | null>();
   const [category, setCategory] = useState<Category | null>(categoryData);
   const [categoryInput, setCategoryInput] = useState("");
+  const pathname = usePathname();
 
   useEffect(() => {
     if (categoryData) {
@@ -62,7 +66,9 @@ export default function SelectCategory({
     const res = await deleteCategory({ categoryId });
 
     if (res.type === "success") {
-      setCategory(null);
+      if (category?.id === categoryId) {
+        setCategory(null);
+      }
       useListsStore.setState((state) => {
         return {
           categories: state.categories.filter((cat) => cat.id !== categoryId),
@@ -78,9 +84,7 @@ export default function SelectCategory({
   }
 
   useEffect(() => {
-    if (category) {
-      onCategoryChange(category);
-    }
+    onCategoryChange(category);
   }, [category]);
 
   return (
@@ -92,7 +96,7 @@ export default function SelectCategory({
       {labelPosition !== "none" && (
         <div className="relative">
           <label
-            className={cn("text-semibold", {
+            className={cn("font-medium text-slate-600", {
               "w-28 text-end text-sm": labelPosition === "left",
             })}
           >
@@ -110,67 +114,85 @@ export default function SelectCategory({
           category
             ? category.name || `Category ${category.id}`
             : required
-              ? "Category*"
+              ? "Select Category*"
               : "Category"
         }
         newButton={
-          <div className="flex gap-2">
-            <div>
-              <input
-                type="text"
-                placeholder="Category Name"
-                value={categoryInput}
-                onChange={(e) => {
-                  const value = e.target.value;
+          <div className="flex flex-col gap-2 p-2">
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  placeholder="New Category..."
+                  value={categoryInput}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value.length > 25) {
+                      setError("Category must be less than 25 characters");
+                      return;
+                    }
+                    setError(""); // Clear error when typing
+                    setCategoryInput(value);
+                  }}
+                  className={cn(
+                    "w-full rounded-lg bg-slate-50 px-3 py-2 text-sm font-medium outline-none transition-all",
+                    "ring-1 ring-inset ring-slate-200 placeholder:text-slate-400",
+                    "focus:bg-white focus:ring-2 focus:ring-[#6571FF]/40",
+                    error && "ring-red-200 focus:ring-red-400",
+                  )}
+                />
+              </div>
 
-                  if (value.length > 25) {
-                    setError("Category must be less than 25 characters");
-                    return false;
-                  }
-                  setCategoryInput(e.target.value);
-                }}
-                className="w-full rounded-md border-2 border-slate-400 p-1"
-              />
-              {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
+              <button
+                onClick={handleNewCategory}
+                type="button"
+                disabled={!categoryInput || !!error}
+                className={cn(
+                  "rounded-lg px-4 text-xs font-bold uppercase tracking-wider text-white transition-all active:scale-95",
+                  categoryInput && !error
+                    ? "bg-[#6571FF] shadow-lg shadow-[#6571FF]/20 hover:bg-[#525ee5]"
+                    : "bg-slate-300 cursor-not-allowed",
+                )}
+              >
+                Quick Add
+              </button>
             </div>
-
-            <button
-              onClick={handleNewCategory}
-              className={cn(
-                "text-nowrap rounded-md px-2 text-white",
-                categoryInput ? "bg-slate-700" : "bg-slate-400"
-              )}
-              type="button"
-              disabled={!categoryInput}
-            >
-              Quick Add
-            </button>
+            {error && (
+              <p className="ml-1 text-[10px] font-bold uppercase tracking-tight text-red-500 animate-in fade-in slide-in-from-top-1">
+                {error}
+              </p>
+            )}
           </div>
         }
         items={categories}
         displayList={(category: Category) => (
-          <div className="flex items-center justify-between">
-            <p>{category.name} </p>
-            <Popconfirm
-              title="Delete the category"
-              description="Are you sure to delete this category?"
-              okText="Yes"
-              cancelText="No"
-              onConfirm={() => handleDeleteCategory(category?.id)}
-            >
-              <span
-                onClick={(e) => {
-                  e.stopPropagation();
-                }}
+          <div className="flex items-center justify-between group py-0.5">
+            <p className="text-sm font-medium text-slate-700 group-hover:text-[#6571FF] transition-colors">
+              {category.name}
+            </p>
+            
+            <div onClick={(e) => e.stopPropagation()}>
+              <Popconfirm
+                title="Delete Category"
+                description="Are you sure you want to remove this?"
+                okText="Delete"
+                cancelText="Cancel"
+                onConfirm={() => handleDeleteCategory(category?.id)}
+                onPopupClick={(e) => e.stopPropagation()}
               >
-                <X size={20} cursor="pointer" color="#f87171" />
-              </span>
-            </Popconfirm>
+                <div
+                  className="rounded-lg p-1.5 hover:bg-red-50 text-slate-300 hover:text-red-500 transition-all cursor-pointer"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <X size={16} strokeWidth={2.5} />
+                </div>
+              </Popconfirm>
+            </div>
           </div>
         )}
         onSearch={(search: string) =>
           categories.filter((cat) =>
-            cat.name.toLowerCase().includes(search.toLowerCase())
+            cat.name.toLowerCase().includes(search.toLowerCase()),
           )
         }
         openState={[
@@ -179,15 +201,15 @@ export default function SelectCategory({
             const newValue =
               typeof open === "function" ? open(categoryOpen as boolean) : open;
             setCategoryOpen && setCategoryOpen(newValue);
-            // Trigger validation when dropdown closes
-            if (!newValue && onBlur) {
-              onBlur();
-            }
+            if (!newValue && onBlur) onBlur();
           },
         ]}
         selectedItem={category}
         setSelectedItem={setCategory}
         className={className}
+        disabledDropdown={
+          !allowEdit && !!category && pathname.includes("/estimate/")
+        }
       />
     </div>
   );

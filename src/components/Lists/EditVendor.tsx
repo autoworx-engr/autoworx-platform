@@ -1,7 +1,6 @@
 "use client";
 
-import { Vendor } from "@prisma/client";
-import { useRef, useState } from "react";
+import { editVendor } from "@/actions/vendor/editVendor";
 import {
   Dialog,
   DialogClose,
@@ -11,14 +10,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/Dialog";
-import { SlimInput } from "../SlimInput";
-import { useListsStore } from "@/stores/lists";
-import { editVendor } from "@/actions/vendor/editVendor";
-import { SlimTextarea } from "../SlimTextarea";
 import FormError from "@/components/FormError";
-import { useFormErrorStore } from "@/stores/form-error";
 import { successToast } from "@/lib/toast";
+import { useFormErrorStore } from "@/stores/form-error";
+import { useListsStore } from "@/stores/lists";
+import { Vendor } from "@prisma/client";
+import { useRef, useState } from "react";
 import PhoneInput from "../PhoneInput";
+import { SlimInput } from "../SlimInput";
+import { SlimTextarea } from "../SlimTextarea";
 
 type ServerAction =
   | { type: "success"; data: Vendor }
@@ -201,14 +201,17 @@ export default function EditVendor({
     >
       <DialogTrigger asChild>{button}</DialogTrigger>
 
-      <DialogContent className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]">
+      <DialogContent
+        className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>Edit Vendor</DialogTitle>
         </DialogHeader>
 
         <FormError />
 
-        <div className="grid gap-2 overflow-y-auto sm:grid-cols-2">
+        <div className="grid gap-2 overflow-y-auto sm:grid-cols-2 px-1">
           <SlimInput
             name="contactName"
             defaultValue={vendor.name ?? ""}
@@ -268,7 +271,7 @@ export default function EditVendor({
           <PhoneInput
             label="Phone"
             placeholder="1234567890"
-            required={false}
+            required={true}
             defaultValue={vendor.phone!}
             // value={phoneNumber}
             defaultIsoCode={vendor.countryCode!}
@@ -302,34 +305,34 @@ export default function EditVendor({
             defaultValue={vendor.address ?? ""}
             required={false}
           />
-          <div className="flex flex-col gap-3 lg:flex-row">
-            <SlimInput
-              name="city"
-              defaultValue={vendor.city ?? ""}
-              required={false}
-            />
-            <SlimInput
-              name="state"
-              defaultValue={vendor.state ?? ""}
-              required={false}
-            />
-            <SlimInput
-              name="zip"
-              defaultValue={vendor.zip ?? ""}
-              required={false}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (value && !/^\d*$/.test(value)) {
-                  showError({
-                    field: "zip",
-                    message: "Zip code should contain only numbers.",
-                  });
-                } else {
-                  clearError();
-                }
-              }}
-            />
-          </div>
+          {/* <div className="flex flex-col gap-3 lg:flex-row"> */}
+          <SlimInput
+            name="city"
+            defaultValue={vendor.city ?? ""}
+            required={false}
+          />
+          <SlimInput
+            name="state"
+            defaultValue={vendor.state ?? ""}
+            required={false}
+          />
+          <SlimInput
+            name="zip"
+            defaultValue={vendor.zip ?? ""}
+            required={false}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value && !/^\d*$/.test(value)) {
+                showError({
+                  field: "zip",
+                  message: "Zip code should contain only numbers.",
+                });
+              } else {
+                clearError();
+              }
+            }}
+          />
+          {/* </div> */}
 
           <div className="space-y-2 sm:col-span-2">
             <SlimInput
@@ -364,7 +367,11 @@ export default function EditVendor({
 
         <DialogFooter>
           <DialogClose
-            className="rounded-lg border-2 border-slate-400 p-2"
+            className="
+                rounded-xl px-5 py-2.5 text-sm font-medium text-slate-500 
+                hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
+                transition-colors border
+              "
             onClick={() => {
               clearError();
             }}
@@ -372,7 +379,15 @@ export default function EditVendor({
             Cancel
           </DialogClose>
           <button
-            className="rounded-lg border bg-[#6571FF] px-5 py-2 text-white"
+            className="
+                rounded-xl px-6 py-2.5 text-sm font-medium text-white
+                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                shadow-lg shadow-indigo-500/30
+                hover:shadow-xl hover:shadow-indigo-500/40
+                hover:-translate-y-0.5 hover:scale-[1.02]
+                active:translate-y-0 active:scale-100
+                transition-all duration-200
+              "
             onClick={handleSubmit}
           >
             Save Changes

@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
 import { useInventoryDatabaseSearchStore } from "@/stores/inventoryDatabaseSearchStore";
-import InventoryList from "./InventoryList";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import InventoryList from "./InventoryList";
 
 type Props = {
   supplies: any[];
@@ -59,7 +59,7 @@ export default function ClientInventoryList({
     resetFilters();
   }, []);
 
-  const { data, isLoading, isError } = useQuery<ProductsResponse>({
+  const { data, isLoading, isFetching, isError } = useQuery<ProductsResponse>({
     queryKey: ["inventory-database", search, categoryName, page, limit],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -95,6 +95,7 @@ export default function ClientInventoryList({
       searchParams={searchParams}
       totalProducts={totalProducts}
       totalSupplies={totalSupplies}
+      isLoading={isLoading || isFetching}
       isFullWidth={view === "database"}
       databaseContent={data?.data || []}
       totalDatabaseItems={data?.meta.totalCount || 0}

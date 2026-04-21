@@ -16,11 +16,13 @@ export function leadReducer<T>(
         case actionTypes.MORE_LEADS: {
             const { columnId, leads } = action.payload as {
                 columnId: number;
-                leads: T[];
+                leads: any[];
             };
             return state.map(column => {
                 if (column.id === columnId) {
-                    const updatedLeads = [...column.leads, ...leads];
+                    const existingLeadIds = new Set(column.leads.map((lead) => lead.id));
+                    const newLeads = leads.filter((lead) => !existingLeadIds.has(lead.id));
+                    const updatedLeads = [...column.leads, ...newLeads];
                     return {
                         ...column,
                         leads: updatedLeads,
@@ -83,7 +85,7 @@ export function leadReducer<T>(
             const sourceColumn = state[sourceColumnIndex];
             const destinationColumn = state[destinationColumnIndex];
 
-            // Remove the lead from the source column
+            // Find the lead to drag
             const findDraggableLead = sourceColumn.leads.find(
                 lead => lead.id.toString() === draggableId
             );
@@ -92,18 +94,60 @@ export function leadReducer<T>(
                 return state; // If the lead is not found, do nothing
             }
 
-            const updatedSourceLeads = sourceColumn.leads.filter(
-                lead => lead.id.toString() !== draggableId
-            );
+            // Check if dragging within the same column
+            const isSameColumn = sourceColumnIndex === destinationColumnIndex;
 
-            destinationColumn.leads.splice(0, 0, {
-                ...findDraggableLead,
-                columnId: destinationColumn.id,
-            });
+            if (isSameColumn) {
+                // Handle same column reordering
+                const updatedLeads = sourceColumn.leads.filter(
+                    lead => lead.id.toString() !== draggableId
+                );
+                
+                // Calculate new position based on old and new indices
+                let newIndex = destination.index;
+                if (source.index < destination.index) {
+                    newIndex = destination.index - 1;
+                }
+                
+                // Ensure newIndex is within bounds
+                newIndex = Math.max(0, Math.min(newIndex, updatedLeads.length));
+                
+                // Insert at new position
+                updatedLeads.splice(newIndex, 0, findDraggableLead);
+                
+                // Return new state with updated column
+                return state.map(column => {
+                    if (column.id === sourceColumn.id) {
+                        return {
+                            ...column,
+                            leads: updatedLeads,
+                        };
+                    }
+                    return column;
+                });
+            } else {
+                
+                // Remove the lead from the source column
+                const updatedSourceLeads = sourceColumn.leads.filter(
+                    lead => lead.id.toString() !== draggableId
+                );
+
+                // Create the new list for destination column
+                const updatedDestinationLeads = [...destinationColumn.leads];
+                
+                // Insert at destination index
+                let insertIndex = destination.index;
+                insertIndex = Math.max(0, Math.min(insertIndex, updatedDestinationLeads.length));
+                
+                // Insert the lead at the correct position
+                updatedDestinationLeads.splice(insertIndex, 0, {
+                    ...findDraggableLead,
+                    columnId: destinationColumn.id,
+                });
 
                 const updatedDestinationColumn = {
                     ...destinationColumn,
-                    leads: destinationColumn.leads,
+                    leads: updatedDestinationLeads,
                     totalLeads: destinationColumn.totalLeads + 1,
                 };
 
@@ -113,15 +157,16 @@ export function leadReducer<T>(
                     totalLeads: sourceColumn.totalLeads - 1,
                 };
 
-            return state.map(column => {
-                if (column.id === sourceColumn.id) {
-                    return updatedSourceColumn; // Update the source column
-                }
-                if (column.id === destinationColumn.id) {
-                    return updatedDestinationColumn; // Update the destination column
-                }
-                return column; // Return other columns unchanged
-            });
+                return state.map(column => {
+                    if (column.id === sourceColumn.id) {
+                        return updatedSourceColumn;
+                    }
+                    if (column.id === destinationColumn.id) {
+                        return updatedDestinationColumn;
+                    }
+                    return column;
+                });
+            }
         }
 
         case actionTypes.REMOVE_LEAD: {
@@ -379,6 +424,11 @@ export function leadReducer<T>(
                     }
                     return column;
                 });
+            }
+
+            const columnIdsInState = new Set(state.map(c => c.id));
+            if (!columnIdsInState.has(previousColumnId) || !columnIdsInState.has(updatedLead?.columnId)) {
+                return state;
             }
 
             const findPrevLead = state

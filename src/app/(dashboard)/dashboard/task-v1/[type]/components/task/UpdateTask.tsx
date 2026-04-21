@@ -43,7 +43,7 @@ export default function UpdateTask() {
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description);
   const [assignedUsers, setAssignedUsers] = useState<number[]>(
-    task?.assignedUsers?.map((user) => user.id) || []
+    task?.assignedUsers?.map(user => user.id) || [],
   );
   const { clearError, showError } = useFormErrorStore();
   const [priority, setPriority] = useState<Priority>(task.priority);
@@ -51,7 +51,7 @@ export default function UpdateTask() {
   const [startTime, setStartTime] = useState<string>(task.startTime || "");
   const [endTime, setEndTime] = useState<string>(task.endTime || "");
   const [date, setDate] = useState<string>(
-    moment.utc(task.date).format("YYYY-MM-DD")
+    moment.utc(task.date).format("YYYY-MM-DD"),
   );
 
   // Add state for minimum date and time validation
@@ -64,7 +64,7 @@ export default function UpdateTask() {
 
   const handleTimeChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    type: "start" | "end"
+    type: "start" | "end",
   ) => {
     let timeValue = e.target.value;
 
@@ -141,6 +141,7 @@ export default function UpdateTask() {
           //   ? new Date(date).toISOString()
           //   : new Date().toISOString(),
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          createdBy: "user",
         },
       });
       if (res.type === "globalError") {
@@ -188,7 +189,7 @@ export default function UpdateTask() {
               name="title"
               className="mt-2 rounded-md border-2 border-gray-500 p-1"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={e => setTitle(e.target.value)}
               autoFocus
             />
           </div>
@@ -200,7 +201,7 @@ export default function UpdateTask() {
               name="description"
               className="mt-2 rounded-md border-2 border-gray-500 p-1"
               value={description || ""}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={e => setDescription(e.target.value)}
             />
           </div>
 
@@ -214,7 +215,7 @@ export default function UpdateTask() {
                   rootClassName="grow"
                   type="date"
                   value={date ?? ""}
-                  onChange={(event) => setDate(event.currentTarget.value)}
+                  onChange={event => setDate(event.currentTarget.value)}
                 />
                 <div className="flex items-end gap-2">
                   {/* Start Time */}
@@ -225,10 +226,10 @@ export default function UpdateTask() {
                     <div>
                       <Select
                         value={startTime}
-                        onChange={(value) =>
+                        onChange={value =>
                           handleTimeChange(
                             { target: { value } } as any,
-                            "start"
+                            "start",
                           )
                         }
                         style={{ width: "100%", height: 34 }}
@@ -236,7 +237,7 @@ export default function UpdateTask() {
                       >
                         <Option value="">Start Time</Option>
 
-                        {timeOptions.map((time) => (
+                        {timeOptions.map(time => (
                           <Option key={time.value} value={time.value}>
                             <p className="text-base text-gray-600">
                               {time.label}
@@ -253,7 +254,7 @@ export default function UpdateTask() {
                     </span>
                     <Select
                       value={endTime}
-                      onChange={(value) =>
+                      onChange={value =>
                         handleTimeChange({ target: { value } } as any, "end")
                       }
                       style={{ width: "100%", height: 34 }}
@@ -261,7 +262,7 @@ export default function UpdateTask() {
                     >
                       <Option value="">End Time</Option>
 
-                      {timeOptions.map((time) => (
+                      {timeOptions.map(time => (
                         <Option key={time.value} value={time.value}>
                           {time.label}
                         </Option>

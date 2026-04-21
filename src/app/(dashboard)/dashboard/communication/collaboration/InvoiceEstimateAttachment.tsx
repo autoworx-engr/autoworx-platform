@@ -23,6 +23,9 @@ export default function InvoiceEstimateAttachment({
             if (!files?.length) return;
             setPhotos((prevPhotos) => [...prevPhotos, ...Array.from(files)]);
           }}
+          onClick={(e) => {
+            (e.target as HTMLInputElement).value = "";
+          }}
         />
         <svg
           width="50"
@@ -46,13 +49,21 @@ export default function InvoiceEstimateAttachment({
           className="relative flex aspect-square h-32 w-32 shrink-0 snap-center rounded border border-solid border-slate-500 object-contain"
           key={i}
         >
-          <Image
-            src={URL.createObjectURL(photo)}
-            className="my-auto h-24 w-32"
-            alt={`image-${i}`}
-            width={128}
-            height={128}
-          />
+          {photo.type.startsWith("image/") ? (
+            <Image
+              src={URL.createObjectURL(photo)}
+              className="my-auto h-24 w-32"
+              alt={`image-${i}`}
+              width={128}
+              height={128}
+            />
+          ) : (
+            <video
+              src={URL.createObjectURL(photo)}
+              className="my-auto h-24 w-32"
+              controls
+            />
+          )}
 
           <button
             type="button"

@@ -209,6 +209,10 @@ export default async function Page({
     );
   });
 
+  const status = invoice?.columnId
+    ? await db.column.findUnique({ where: { id: invoice?.columnId } })
+    : null;
+
   let materials = [] as any[];
 
   materials.push(
@@ -220,8 +224,8 @@ export default async function Page({
     }))
   );
   return (
-    <div className="gap-3 space-y-4 overflow-clip py-2 md:-my-2 md:min-h-[93vh] xl:grid xl:grid-cols-4 xl:space-y-0">
-      <div className="col-span-3 space-y-4">
+    <div className="gap-3 space-y-4 overflow-clip py-2 md:-my-2 md:min-h-[93vh] xl:flex xl:space-y-0">
+      <div className="w-full xl:min-w-[68%] flex flex-col gap-3">
         <Title>Template</Title>
 
         <SyncLists
@@ -238,7 +242,7 @@ export default async function Page({
           paymentMethods={paymentMethods}
           client={null}
         />
-        <Header />
+        <Header status={status!} />
         {isEdit && (
           <SyncEstimate
             template={invoice}
@@ -255,7 +259,7 @@ export default async function Page({
           defaultValue="create"
           className="col-start-1 flex min-h-[40vh] lg:min-h-[69vh] flex-col overflow-clip"
         >
-          <TabsList className="grid grid-cols-4 md:inline-flex">
+          <TabsList className="grid grid-cols-4 md:inline-flex -ml-4 rounded-bl-none">
             <TabsTriggerCreate
               value="inspections"
               className="order-3 md:order-2"
@@ -286,11 +290,15 @@ export default async function Page({
         </Tabs>
       </div>
 
-      <div className="app-shadow grid grid-rows-[1fr,auto,auto] divide-y rounded-md">
+      <div className="flex-grow w-full xl:max-w-[32%] app-shadow grid grid-rows-[1fr,auto,auto] divide-y rounded-md">
         <div>
           <Create />
         </div>
-        <TemplateBillSummary isEdit={isEdit} />
+        <TemplateBillSummary
+          isEdit={isEdit}
+          isEstimateServiceFee={Number(invoice?.serviceFee) > 0}
+          isEstimateTax={Number(invoice?.tax) > 0}
+        />
       </div>
     </div>
   );

@@ -110,7 +110,7 @@ export default function SelectColor<T>({
           onClick={() => setIsOpen(true)}
           className={cn(
             "flex w-full items-center justify-between rounded-md border-2 border-slate-400 px-4 py-1",
-            isOpen && "invisible"
+            isOpen && "invisible",
           )}
         >
           {/* Display selected item or label */}
@@ -158,7 +158,7 @@ export default function SelectColor<T>({
                     className={cn(
                       "w-full p-1 px-2 text-left hover:bg-gray-100",
                       border &&
-                        "relative left-1/2 my-1 w-[95%] -translate-x-1/2 rounded-md border-2 border-slate-400 py-[0.3rem]"
+                        "relative left-1/2 my-1 w-[95%] -translate-x-1/2 rounded-md border-2 border-slate-400 py-[0.3rem]",
                     )}
                   >
                     {displayList(item)}
@@ -171,7 +171,7 @@ export default function SelectColor<T>({
                     className={cn(
                       "w-full p-1 px-2 text-left hover:bg-gray-100",
                       border &&
-                        "relative left-1/2 my-1 w-[95%] -translate-x-1/2 rounded-md border-2 border-slate-400 py-[0.3rem]"
+                        "relative left-1/2 my-1 w-[95%] -translate-x-1/2 rounded-md border-2 border-slate-400 py-[0.3rem]",
                     )}
                   >
                     {displayList(item)}

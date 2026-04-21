@@ -1,5 +1,32 @@
+import { db } from "@/lib/db";
+import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
 import { NextRequest, NextResponse } from "next/server";
 
+/**
+ * @swagger
+ * /api/infobip/voice/webrtc-call-config:
+ *   post:
+ *     summary: Infobip WebRTC call configuration webhook
+ *     tags: [Infobip]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               to:
+ *                 type: string
+ *               from:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Call configuration returned
+ *       400:
+ *         description: Missing destination phone number
+ *       500:
+ *         description: Server error
+ */
 /**
  * Infobip WebRTC Call Configuration Webhook
  *
@@ -25,12 +52,35 @@ export async function POST(request: NextRequest) {
       console.error("❌ [Infobip WebRTC] No destination phone number provided");
       return NextResponse.json(
         { error: "No destination phone number" },
-        { status: 400 }
+        { status: 400 },
+      );
+    }
+
+    const infobipConfig = await db.infobipConfig.findFirst({
+      where: {
+        phoneNumber: {
+          contains: (from || "").replace("+", ""),
+        },
+      },
+    });
+
+    if (!infobipConfig) {
+      return NextResponse.json(
+        { error: "Infobip configuration not found" },
+        { status: 400 },
+      );
+    }
+
+    const entitlements = await getCompanyEntitlements(infobipConfig.companyId);
+    if (!entitlements.canUseVoice) {
+      return NextResponse.json(
+        { error: "Voice calling is not enabled for this plan." },
+        { status: 403 },
       );
     }
 
     console.log(
-      `📞 [Infobip WebRTC] Configuring call to: ${destinationPhoneNumber}`
+      `📞 [Infobip WebRTC] Configuring call to: ${destinationPhoneNumber}`,
     );
 
     // Return the call configuration
@@ -59,7 +109,7 @@ export async function POST(request: NextRequest) {
         error: "Internal server error",
         message: error?.message,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

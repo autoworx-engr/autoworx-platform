@@ -47,12 +47,12 @@ export default function VehicleList({
           <table className="min-w-full border-collapse">
             <thead className="sticky top-0 z-10 bg-white">
               <tr className="h-12 border-b border-slate-200 text-sm font-semibold uppercase text-slate-500">
-                <th className="px-6 py-3 text-center">Year</th>
-                <th className="px-6 py-3 text-center">Make</th>
-                <th className="px-6 py-3 text-center">Model</th>
-                <th className="px-6 py-3 text-center">Plate</th>
-                <th className="px-6 py-3 text-center">Other</th>
-                <th className="px-6 py-3 text-center">Actions</th>
+                <th className="px-6 py-3 text-left">Year</th>
+                <th className="px-6 py-3 text-left">Make</th>
+                <th className="px-6 py-3 text-left">Model</th>
+                <th className="px-6 py-3 text-left">Plate</th>
+                <th className="px-6 py-3 text-left">Other</th>
+                <th className="px-6 py-3 text-left">Actions</th>
               </tr>
             </thead>
 
@@ -74,22 +74,22 @@ export default function VehicleList({
                     );
                   }}
                 >
-                  <td className="text-nowrap px-4 py-1 text-left 2xl:px-10">
+                  <td className="text-nowrap px-6 py-4 text-left">
                     {vehicle?.year || ""}
                   </td>
-                  <td className="text-nowrap px-4 py-1 text-left 2xl:px-10">
+                  <td className="text-nowrap px-6 py-4 text-left">
                     {vehicle.make}
                   </td>
-                  <td className="px-4 py-1 text-left 2xl:px-10">
+                  <td className="px-6 py-4 text-left">
                     {vehicle.model}
                   </td>
-                  <td className="px-4 py-1 text-left 2xl:px-10">
+                  <td className="px-6 py-4 text-left">
                     {vehicle.license}
                   </td>
-                  <td className="px-4 py-1 text-left 2xl:px-10">
+                  <td className="px-6 py-4 text-left">
                     {vehicle.other}
                   </td>
-                  <td className="px-4 py-1 text-left 2xl:px-10">
+                  <td className="px-6 py-4 text-left">
                     <div className="flex items-center gap-x-4 text-xl">
                       {" "}
                       <span onClick={(e) => e.stopPropagation()}>

@@ -6,41 +6,54 @@ import { padId } from "@/lib/padId";
 import { Pagination } from "antd";
 import { SquarePen } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import DeleteFleet from "./DeleteFleet";
 
-const FleetListTable = ({ filteredFleets }: { filteredFleets: any }) => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [showPagination, setShowPagination] = useState(false);
+type TFleetListTableProps = {
+  fleets?: any[];
+  filteredFleets?: any[];
+  total?: number;
+  page?: number;
+  take?: number;
+};
 
-  useEffect(() => {
-    if (filteredFleets.length > 10) {
-      setShowPagination(true);
-    } else {
-      setShowPagination(false);
-    }
-  }, [filteredFleets]);
+const FleetListTable = ({
+  fleets,
+  filteredFleets,
+  total,
+  page,
+  take,
+}: TFleetListTableProps) => {
+  const pathname = usePathname();
+  const router = useRouter();
+  const params = useSearchParams();
 
-  const handlePageChange = (page: number, pageSize?: number) => {
-    setCurrentPage(page);
-    if (pageSize) {
-      setPageSize(pageSize);
+  const rows = fleets ?? filteredFleets ?? [];
+  const currentPage = page ?? 1;
+  const pageSize = take ?? 10;
+  const totalCount = total ?? rows.length;
+
+  const handlePageChange = (nextPage: number, nextPageSize?: number) => {
+    const searchParams = new URLSearchParams(params.toString());
+    searchParams.set("page", nextPage.toString());
+
+    if (nextPageSize) {
+      searchParams.set("take", nextPageSize.toString());
     }
+
+    const newPath = `${pathname}?${searchParams.toString()}`;
+    router.push(newPath);
   };
 
-  const paginatedFleets = filteredFleets.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  const showPagination = totalCount > 0;
 
   return (
     <>
       {/* Desktop Table */}
-      <div className="hidden lg:block overflow-hidden rounded-xl p-2 bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-slate-800 shadow-sm">
-        <div className="md:overflow-x-auto">
-          <table className="w-full">
-            <thead className="">
+      <div className="hidden lg:block rounded-xl bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-slate-800 shadow-sm overflow-hidden p-2">
+        <div className="max-h-[60vh] overflow-y-auto overflow-x-auto custom-scrollbar">
+          <table className="w-full border-separate border-spacing-0">
+            <thead className="sticky top-0 bg-background">
               <tr className="h-10 border-b">
                 <th className="border-b px-4 py-2 text-left">Fleet ID</th>
                 <th className="border-b px-4 py-2 text-left">Fleet Name</th>
@@ -52,14 +65,14 @@ const FleetListTable = ({ filteredFleets }: { filteredFleets: any }) => {
             </thead>
 
             <tbody>
-              {paginatedFleets.map((client: any, index: number) => (
+              {rows.map((client: any, index: number) => (
                 <tr
                   key={index}
                   className={cn(
                     " duration-200 hover:bg-slate-50 dark:hover:bg-slate-800/50",
                     index % 2 !== 0
                       ? "bg-blue-50/80 dark:bg-slate-900"
-                      : "bg-white dark:bg-slate-900"
+                      : "bg-white dark:bg-slate-900",
                   )}
                 >
                   <td className="border-b px-4 py-2 text-left">
@@ -125,7 +138,7 @@ const FleetListTable = ({ filteredFleets }: { filteredFleets: any }) => {
                 className="custom-pagination"
                 current={currentPage}
                 pageSize={pageSize}
-                total={filteredFleets.length}
+                total={totalCount}
                 onChange={handlePageChange}
                 showSizeChanger
                 onShowSizeChange={handlePageChange}
@@ -136,7 +149,7 @@ const FleetListTable = ({ filteredFleets }: { filteredFleets: any }) => {
       </div>
 
       {/* Mobile Card View */}
-      <div className="lg:hidden space-y-3">
+      {/* <div className="lg:hidden space-y-3">
         {paginatedFleets.map((client: any, index: number) => (
           <div
             key={index}
@@ -218,7 +231,7 @@ const FleetListTable = ({ filteredFleets }: { filteredFleets: any }) => {
             />
           </div>
         )}
-      </div>
+      </div> */}
     </>
   );
 };

@@ -17,7 +17,7 @@ export async function fetchAndTransformData(
     searchTerm?: string;
     take?: string;
   } = {},
-  timezone: string
+  timezone: string,
 ) {
   const page = Number(searchParams.page) || 1;
   const take = Number(searchParams.take) || defaultTake;
@@ -37,14 +37,14 @@ export async function fetchAndTransformData(
   const statusIds = decodedStatus
     ? decodedStatus
         .split(",")
-        .map((id) => {
+        .map(id => {
           if (isNaN(Number(id))) {
             return undefined;
           } else {
             return Number(id);
           }
         })
-        .filter((id) => id !== undefined)
+        .filter(id => id !== undefined)
     : undefined;
 
   const decodedSearchTerm = decodeURIComponent(searchTerm || "").trim();
@@ -89,7 +89,8 @@ export async function fetchAndTransformData(
       v.year,
       col.title AS status,
       col."textColor",
-      col."bgColor"
+      col."bgColor",
+      i."is_shop_booking" AS "isShopBooking"
     FROM "Invoice" i
     LEFT JOIN "Client" c ON i."customer_id" = c.id
     LEFT JOIN "Vehicle" v ON i."vehicle_id" = v.id
@@ -122,9 +123,8 @@ export async function fetchAndTransformData(
 
   const sortedData = data.sort(
     (a: { status: string }, b: { status: string }) =>
-      getStatusPriority(a?.status) - getStatusPriority(b?.status)
+      getStatusPriority(a?.status) - getStatusPriority(b?.status),
   );
-
   return {
     totalEstimate,
     data: sortedData?.map((item: any) => ({
@@ -139,6 +139,7 @@ export async function fetchAndTransformData(
       textColor: item.textColor,
       bgColor: item.bgColor,
       deliveredAt: item.deliveredAt,
+      isShopBooking: item.isShopBooking,
     })),
   };
 }

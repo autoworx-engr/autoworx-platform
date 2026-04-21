@@ -1,16 +1,59 @@
 import { getInfobipCredentials } from "@/actions/communication/client/sendInfobipMessage";
+import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
+import {
+  assertCompanyAccess,
+  requireBillingSession,
+} from "@/lib/platform-billing/guards";
 import { NextRequest, NextResponse } from "next/server";
 
+/**
+ * @swagger
+ * /api/infobip/voice/token:
+ *   post:
+ *     summary: Get Infobip WebRTC token
+ *     tags: [Infobip]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               identity:
+ *                 type: string
+ *               companyId:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: WebRTC token generated
+ *       400:
+ *         description: Credentials not found
+ *       500:
+ *         description: Server error
+ */
 export async function POST(request: NextRequest) {
-  const { identity, companyId } = await request.json();
+  const { identity, companyId: rawCompanyId } = await request.json();
+  const companyId = Number(rawCompanyId);
+
+  const entitlements = await getCompanyEntitlements(companyId);
+  if (!entitlements.canUseVoice) {
+    return NextResponse.json(
+      { error: "Voice calling is not enabled for this plan." },
+      { status: 403 },
+    );
+  }
 
   try {
-    const infobipCredentials = await getInfobipCredentials({ companyId });
+    const infobipCredentials = await getInfobipCredentials({
+      companyId,
+    });
 
     if (!infobipCredentials?.data) {
       return NextResponse.json(
         { error: "Infobip credentials not found" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -23,7 +66,7 @@ export async function POST(request: NextRequest) {
     if (!infobipApiKey || !infobipBaseUrl || !infobipApplicationId) {
       return NextResponse.json(
         { error: "Infobip configuration not found" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -53,7 +96,7 @@ export async function POST(request: NextRequest) {
           },
           timeToLive: 3600, // Token valid for 1 hour
         }),
-      }
+      },
     );
     console.log("🚀 ~ POST ~ tokenResponse:", tokenResponse);
 
@@ -62,7 +105,7 @@ export async function POST(request: NextRequest) {
       console.error("Infobip token error:", errorData);
       return NextResponse.json(
         { error: `Failed to generate token: ${JSON.stringify(errorData)}` },
-        { status: tokenResponse.status }
+        { status: tokenResponse.status },
       );
     }
 
@@ -70,17 +113,17 @@ export async function POST(request: NextRequest) {
 
     // Debug: log the tokenData returned by Infobip so we can inspect its structure
     try {
-      console.log('📋 [Infobip Token] tokenData:', tokenData);
-      if (tokenData?.token && typeof tokenData.token === 'string') {
+      console.log("📋 [Infobip Token] tokenData:", tokenData);
+      if (tokenData?.token && typeof tokenData.token === "string") {
         // Try to decode JWT payload if token looks like a JWT
-        const parts = tokenData.token.split('.');
+        const parts = tokenData.token.split(".");
         if (parts.length === 3) {
-          const payload = Buffer.from(parts[1], 'base64').toString('utf8');
-          console.log('📋 [Infobip Token] decoded token payload:', payload);
+          const payload = Buffer.from(parts[1], "base64").toString("utf8");
+          console.log("📋 [Infobip Token] decoded token payload:", payload);
         }
       }
     } catch (err) {
-      console.warn('Unable to decode tokenData for inspection', err);
+      console.warn("Unable to decode tokenData for inspection", err);
     }
 
     return NextResponse.json({

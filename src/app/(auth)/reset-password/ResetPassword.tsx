@@ -1,14 +1,13 @@
 "use client";
 
+import CarLoading from "@/components/common/CarLoading";
 import FormError from "@/components/FormError";
 import Input from "@/components/Input";
 import Password from "@/components/Password";
+import { useFormErrorStore } from "@/stores/form-error";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import SubmitButton from "./SubmitButton";
-import { Spin } from "antd";
-import { useRouter } from "next/navigation";
-import { useFormErrorStore } from "@/stores/form-error";
-import CarLoading from "@/components/common/CarLoading";
 
 export default function ResetPassword({
   uriToken,
@@ -22,6 +21,25 @@ export default function ResetPassword({
   const [timer, setTimer] = useState(30); // 30-second timer for resend
   const router = useRouter();
   const { showError } = useFormErrorStore();
+  const [password, setPassword] = useState("");
+  // const [isStrong, setIsStrong] = useState(false);
+
+  const strongPasswordRegex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
+
+  const isStrong = strongPasswordRegex.test(password);
+
+  const getStrengthScore = (password: string) => {
+    let score = 0;
+    if (password.length >= 8) score++;
+    if (/[a-z]/.test(password)) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/\d/.test(password)) score++;
+    if (/[^A-Za-z\d]/.test(password)) score++;
+    return score;
+  };
+
+  const strength = getStrengthScore(password);
 
   useEffect(() => {
     if (uriToken) {
@@ -62,82 +80,139 @@ export default function ResetPassword({
   }
 
   return (
-    <form className="mx-auto mt-56 max-w-md rounded-md border p-6">
-      {/* Title */}
-      <h1 className="mb-4 text-center text-2xl font-semibold">
-        {token ? "Reset Password" : "Verify OTP"}
-      </h1>
+    <div className="min-h-screen w-full flex items-center justify-center bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-50 via-slate-100 to-blue-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 p-4">
+      <form className="relative w-full max-w-md overflow-hidden rounded-2xl border border-white/30 bg-white/80 p-8 shadow-2xl backdrop-blur-2xl dark:bg-slate-900/90 dark:border-slate-700/50">
+        <div className="absolute top-0 left-0 h-[2px] w-full bg-gradient-to-r from-transparent via-[#00b8b0] to-transparent opacity-50" />
 
-      <FormError />
-
-      {!token && (
-        <>
-          {/* OTP Verification */}
-          <div className="mb-4">
-            <label htmlFor="otp" className="mb-2 block">
-              OTP
-            </label>
-            <Input
-              name="otp"
-              type="text"
-              required
-              autoFocus
-              className="w-full rounded-md border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+        <div className="mb-8 text-center flex flex-col items-center gap-3">
+          <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 shadow-inner dark:bg-slate-800/70 dark:text-slate-100">
+            <span className="h-2 w-2 rounded-full bg-[#6571FF]" />
+            {token ? "New password" : "Verify email"}
           </div>
-          <SubmitButton
-            action="verify-otp"
-            email={email as string}
-            onSuccess={(token) => setToken(token)}
-          />
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 bg-clip-text text-transparent dark:from-white dark:via-slate-200 dark:to-white">
+            {token ? "Reset password" : "Check your email"}
+          </h1>
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            {token
+              ? "Create a new password for your account."
+              : "We sent a code to your email. Enter it below to continue."}
+          </p>
+        </div>
 
-          {/* Resend Email */}
-          <div className="mt-4 text-center">
-            <button
-              type="button"
-              onClick={handleResendEmail}
-              disabled={!resendAvailable}
-              className={`text-sm underline ${
-                resendAvailable
-                  ? "text-blue-500 hover:text-blue-700"
-                  : "text-gray-400"
-              }`}
-            >
-              {resendAvailable
-                ? "Resend Email"
-                : `Resend available in ${timer}s`}
-            </button>
-          </div>
+        <FormError />
 
-          {/* Change Email */}
-          <div className="mt-2 text-center">
-            <button
-              type="button"
-              onClick={() => router.push("/forgot-password")}
-              className="text-sm text-blue-500 underline hover:text-blue-700"
-            >
-              Change Email
-            </button>
-          </div>
-        </>
-      )}
+        {!token && (
+          <>
+            <div className="space-y-4">
+              <div className="group transition-all duration-300">
+                <label
+                  htmlFor="otp"
+                  className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
+                >
+                  Verification code
+                </label>
+                <Input
+                  name="otp"
+                  type="text"
+                  required
+                  autoFocus
+                  placeholder="000000"
+                  className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 text-slate-900 transition-colors focus:border-[#6571FF]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:focus:border-[#6571FF]"
+                />
+              </div>
 
-      {token && (
-        <>
-          {/* Password Reset */}
-          <div className="mb-4">
-            <label htmlFor="newPassword" className="mb-2 block">
-              New Password
-            </label>
-            <Password
-              name="newPassword"
-              required
-              className="w-full rounded-md border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <SubmitButton action="reset-password" token={token} />
-        </>
-      )}
-    </form>
+              <div className="rounded-xl border border-slate-200/70 bg-white/60 px-4 py-3 text-xs text-slate-600 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/60 dark:text-slate-300">
+                The code is valid for 15 minutes. Check your spam folder if you
+                don't see it.
+              </div>
+            </div>
+
+            <div className="mt-8">
+              <SubmitButton
+                action="verify-otp"
+                email={email as string}
+                onSuccess={(token) => setToken(token)}
+              />
+            </div>
+
+            <div className="mt-6 space-y-2 text-center text-sm">
+              <button
+                type="button"
+                onClick={handleResendEmail}
+                disabled={!resendAvailable}
+                className={`block mx-auto font-semibold transition-colors ${
+                  resendAvailable
+                    ? "text-[#6571FF] hover:text-[#5059d4]"
+                    : "text-slate-400 cursor-not-allowed"
+                }`}
+              >
+                {resendAvailable
+                  ? "Resend code"
+                  : `Resend available in ${timer}s`}
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push("/forgot-password")}
+                className="block mx-auto text-slate-600 hover:text-[#6571FF] transition-colors dark:text-slate-400 dark:hover:text-[#6571FF]"
+              >
+                Use a different email
+              </button>
+            </div>
+          </>
+        )}
+
+        {token && (
+          <>
+            <div className="space-y-4">
+              <div className="group transition-all duration-300">
+                <label
+                  htmlFor="newPassword"
+                  className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
+                >
+                  New password
+                </label>
+                <Password
+                  name="newPassword"
+                  placeholder="Enter your new password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-[#6571FF]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:focus:border-[#6571FF]"
+                />
+                <div className="w-full h-2 bg-slate-200 rounded mt-2">
+                  <div
+                    // className="h-2 rounded transition-all"
+                    className={`h-2 rounded transition-all duration-300 ${
+                      strength <= 2
+                        ? "bg-red-500"
+                        : strength <= 4
+                          ? "bg-yellow-500"
+                          : "bg-green-500"
+                    }`}
+                    style={{ width: `${(strength / 5) * 100}%` }}
+                  />
+                </div>
+                <p
+                  className={`text-xs mt-2 ${isStrong ? "text-green-500" : "text-red-500"}`}
+                >
+                  {isStrong
+                    ? "Strong password ✓"
+                    : "Must include uppercase, lowercase, number and symbol (min 8 chars)"}
+                </p>
+              </div>
+
+              {/* <div className="rounded-xl border border-slate-200/70 bg-white/60 px-4 py-3 text-xs text-slate-600 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/60 dark:text-slate-300">
+                Use at least 8 characters with a mix of uppercase, lowercase,
+                numbers, and symbols.
+              </div> */}
+            </div>
+
+            <div className="mt-8">
+              <SubmitButton action="reset-password" token={token} />
+            </div>
+          </>
+        )}
+      </form>
+    </div>
   );
 }

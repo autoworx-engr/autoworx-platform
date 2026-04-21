@@ -42,25 +42,39 @@ export type PermissionsResult =
       userPermissions: Permission | null;
     };
 
-export default async function getPermissions(): Promise<PermissionsResult | null> {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) return null;
-  const companyId = session.user?.companyId;
+export default async function getPermissions(
+  companyId?: number,
+  userId?: number,
+): Promise<PermissionsResult | null> {
+  let cId = companyId;
+  let uId = userId;
+
+  if (!cId) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) return null;
+    cId = Number(session?.user?.companyId);
+  }
+
+  if (!uId) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) return null;
+    uId = Number(session?.user.id);
+  }
 
   const user = await db.user.findFirst({
-    where: { id: +session.user.id },
+    where: { id: uId },
   });
 
   if (!user) return null;
 
   let companyPermissions = null;
   let userPermissions = await db.permission.findFirst({
-    where: { userId: +user.id, companyId },
+    where: { userId: +user.id, companyId: cId },
   });
   switch (user.employeeType) {
     case "Manager":
       companyPermissions = await db.permissionForManager.findFirst({
-        where: { companyId },
+        where: { companyId: cId },
       });
       return {
         role: "Manager",
@@ -71,7 +85,7 @@ export default async function getPermissions(): Promise<PermissionsResult | null
 
     case "Sales":
       companyPermissions = await db.permissionForSales.findFirst({
-        where: { companyId },
+        where: { companyId: cId },
       });
       return {
         role: "Sales",
@@ -82,7 +96,7 @@ export default async function getPermissions(): Promise<PermissionsResult | null
 
     case "Technician":
       companyPermissions = await db.permissionForTechnician.findFirst({
-        where: { companyId },
+        where: { companyId: cId },
       });
       return {
         role: "Technician",
@@ -93,7 +107,7 @@ export default async function getPermissions(): Promise<PermissionsResult | null
 
     case "Other":
       companyPermissions = await db.permissionForOther.findFirst({
-        where: { companyId },
+        where: { companyId: cId },
       });
       return {
         role: "Other",

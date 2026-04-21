@@ -32,6 +32,7 @@ export const createTaskValidationSchema = z.object({
       return !isNaN(Date.parse(date));
     }, "Invalid date format"),
   timezone: z.string().optional(),
+  createdBy: z.enum(["user", "sales_agent"]),
 });
 
 export const updateTaskValidationSchema = z.object({

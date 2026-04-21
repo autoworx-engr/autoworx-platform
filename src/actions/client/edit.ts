@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { ServerAction } from "@/types/action";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { TErrorHandler } from "@/types/globalError";
+import { normalizePhoneForStorage } from "@/utils/normalizePhone";
 import { updateClientValidationSchema } from "@/validations/schemas/client/client.validation";
 
 export async function editClient(data: {
@@ -24,7 +25,7 @@ export async function editClient(data: {
   sourceId?: number;
   isPremium?: boolean;
   skipEmailCheck?: boolean; // New optional parameter
-  countryCode?:string
+  countryCode?: string;
 }): Promise<ServerAction | TErrorHandler> {
   try {
     await updateClientValidationSchema.parseAsync(data);
@@ -46,6 +47,11 @@ export async function editClient(data: {
       }
     }
 
+    // Normalize phone number to digits-only for consistent matching
+    const normalizedMobile = data.mobile
+      ? normalizePhoneForStorage(data.mobile)
+      : data.mobile;
+
     const updatedClientInfo = await db.client.update({
       where: {
         id: data.id, // Use `id` here to locate the record
@@ -54,8 +60,8 @@ export async function editClient(data: {
         firstName: data.firstName,
         lastName: data.lastName,
         email: data.email,
-        mobile: data.mobile,
-        countryCode:data.countryCode,
+        mobile: normalizedMobile,
+        countryCode: data.countryCode,
         customerCompany: data.customerCompany,
         address: data.address,
         city: data.city,

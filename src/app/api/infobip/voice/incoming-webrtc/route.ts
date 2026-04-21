@@ -1,7 +1,33 @@
 import { db } from "@/lib/db";
+import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendPushNotification } from "@/actions/notification/sendPushNotification";
 
+/**
+ * @swagger
+ * /api/infobip/voice/incoming-webrtc:
+ *   post:
+ *     summary: Infobip WebRTC incoming call webhook
+ *     tags: [Infobip]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               from:
+ *                 type: string
+ *               to:
+ *                 type: string
+ *               callId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Incoming call processed
+ *       400:
+ *         description: Missing parameters
+ */
 // Webhook endpoint for Infobip WebRTC incoming calls
 // This is called by Infobip when someone dials your number
 export async function POST(request: NextRequest) {
@@ -17,7 +43,7 @@ export async function POST(request: NextRequest) {
     if (!from || !to) {
       return NextResponse.json(
         { error: "Missing 'from' or 'to' parameters." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -34,7 +60,15 @@ export async function POST(request: NextRequest) {
       console.error(`No Infobip config found for number: ${to}`);
       return NextResponse.json(
         { error: "Infobip configuration not found" },
-        { status: 400 }
+        { status: 400 },
+      );
+    }
+
+    const entitlements = await getCompanyEntitlements(infobipConfig.companyId);
+    if (!entitlements.canUseVoice) {
+      return NextResponse.json(
+        { error: "Voice calling is not enabled for this plan." },
+        { status: 403 },
       );
     }
 
@@ -55,6 +89,7 @@ export async function POST(request: NextRequest) {
           lastName: "Caller",
           mobile: from,
           companyId: infobipConfig.companyId,
+          isSalesAgent: true,
         },
       });
     }
@@ -102,14 +137,14 @@ export async function POST(request: NextRequest) {
         }).catch((error) => {
           console.error(
             `Failed to send push notification to user ${user.id}:`,
-            error
+            error,
           );
-        })
+        }),
       );
 
       await Promise.allSettled(notificationPromises);
       console.log(
-        `📱 Push notifications sent to ${companyUsers.length} user(s)`
+        `📱 Push notifications sent to ${companyUsers.length} user(s)`,
       );
     } catch (notificationError) {
       console.error("Error sending push notifications:", notificationError);
@@ -139,7 +174,7 @@ export async function POST(request: NextRequest) {
     console.error("❌ [Infobip WebRTC] Error handling incoming call:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

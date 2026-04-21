@@ -2,7 +2,14 @@
 import { cn } from "@/lib/cn";
 import { Item } from "@/stores/estimate-create";
 import { useEstimatePopupStore } from "@/stores/estimate-popup";
-import { ChevronDown, ChevronUp, Search, SquarePen, X } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Plus,
+  Search,
+  SquarePen,
+  X,
+} from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
 type MobileItemSelectorProps<T> = {
@@ -66,9 +73,9 @@ export default function MobileItemSelector<T>({
     setIsOpen(!isOpen);
     // Force dropdown to open and focus the search
     // setIsOpen(true);
-    setTimeout(() => {
-      searchRef.current?.focus();
-    }, 50);
+    // setTimeout(() => {
+    //   searchRef.current?.focus();
+    // }, 50);
   };
 
   // Handle search
@@ -130,101 +137,115 @@ export default function MobileItemSelector<T>({
       {/* Main Button */}
       <button
         className={cn(
-          "relative flex h-10 w-full items-center justify-between rounded-md border-2 border-slate-400 px-4",
-          !selected && "text-slate-400"
+          "relative flex h-11 w-full items-center justify-between rounded-2xl bg-slate-50 px-4 transition-all",
+          "ring-1 ring-inset ring-slate-200 hover:bg-slate-100",
+          isOpen && "ring-2 ring-[#6571FF]/40 bg-white shadow-sm",
+          !selected && "text-slate-400 font-normal",
+          selected && "text-slate-600 font-bold",
         )}
         onClick={handleClick}
       >
-        <span className="truncate text-sm font-medium">
-          {selected ? (selected as any)[display] : label}
+        <span className="truncate text-sm">
+          {selected ? (selected as any)[display] : `Select ${label}`}
         </span>
-        {isOpen ? (
-          <ChevronUp className="ml-2" />
-        ) : (
-          <ChevronDown className="ml-2" />
-        )}
 
-        {/* Edit/Delete buttons for selected items */}
+        <div
+          className={cn(
+            "transition-transform duration-200",
+            isOpen ? "rotate-180" : "rotate-0",
+          )}
+        >
+          <ChevronDown
+            size={18}
+            className={isOpen ? "text-[#6571FF]" : "text-slate-400"}
+          />
+        </div>
+
+        {/* Edit/Delete badges - Floating style */}
         {selected && (
-          <>
+          <div className="absolute -top-2.5 -right-1 flex items-center gap-1.5">
             {onEdit && (
               <button
-                className="absolute -top-3 right-3.5"
+                className="flex h-6 w-6 items-center justify-center rounded-full bg-[#6571FF] text-white shadow-lg shadow-[#6571FF]/30 transition-transform hover:scale-110 active:scale-90"
                 onClick={(e) => {
                   e.stopPropagation();
                   onEdit();
                 }}
               >
-                <div className="rounded-full bg-[#6571FF] p-1 text-white">
-                  <SquarePen className="w-3 h-3 cursor-pointer" />
-                </div>
+                <SquarePen className="w-3 h-3" />
               </button>
             )}
             {onDelete && (alwaysShowDeleteButton || selected) && (
               <button
-                className="absolute -right-2 -top-3"
+                className="flex h-6 w-6 items-center justify-center rounded-full bg-red-100 text-red-500 shadow-lg transition-transform hover:scale-110 active:scale-90"
                 onClick={(e) => {
                   e.stopPropagation();
                   setSelected(null);
                   onDelete();
                 }}
               >
-                <div className="rounded-full bg-[#6571FF] p-1 text-white">
-                  <X size={10} />
-                </div>
+                <X size={14} />
               </button>
             )}
-          </>
+          </div>
         )}
       </button>
 
       {/* Dropdown Content */}
       {isOpen && (
-        <div className="absolute left-0 right-0 z-50 mt-1 rounded-md border-2 border-slate-400 bg-background shadow-lg">
+        <div className="absolute left-0 right-0 z-50 mt-2 rounded-2xl border-none bg-white p-2 shadow-2xl ring-1 ring-black/5 animate-in fade-in zoom-in-95 duration-200">
           {/* Search Input */}
           {onSearch && (
-            <div className="relative m-2">
+            <div className="relative mb-2">
               <Search
-                size={18}
-                className="absolute left-2 top-1/2 -translate-y-1/2 text-[#797979]"
+                size={16}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
               />
               <input
                 type="text"
                 ref={searchRef}
-                placeholder="Search..."
+                placeholder={`Find ${label.toLowerCase()}...`}
                 value={searchText}
-                className="w-full rounded-md border-2 border-slate-400 p-2 pl-8"
+                className="w-full rounded-xl bg-slate-50 py-2 pl-9 pr-4 text-sm font-medium outline-none ring-1 ring-inset ring-slate-100 focus:ring-2 focus:ring-[#6571FF]/20 transition-all"
                 onChange={(e) => handleSearch(e.target.value)}
               />
             </div>
           )}
 
           {/* Options List */}
-          <div className="max-h-48 overflow-y-auto p-2">
+          <div className="max-h-52 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
             {filteredList.map((item, i) => (
               <button
                 key={i}
-                className="my-1 w-full rounded-md border border-[#6571FF] p-2 text-left text-[#6571FF]"
+                className={cn(
+                  "w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-all",
+                  "hover:bg-[#6571FF]/5 hover:text-[#6571FF]",
+                  selected && (selected as any).id === (item as any).id
+                    ? "bg-[#6571FF] text-white"
+                    : "text-slate-600",
+                )}
                 onClick={() => handleSelect(item)}
               >
                 {(item as any)[display]}
               </button>
             ))}
+            {filteredList.length === 0 && (
+              <div className="py-4 text-center text-xs text-slate-400">
+                No results found
+              </div>
+            )}
           </div>
 
           {/* New Item Button */}
-          <div className="border-t-2 border-slate-400 p-2">
+          <div className="mt-2 border-t border-slate-50 pt-2">
             <button
-              className="text-[#6571FF]"
+              className="flex w-full items-center justify-center gap-2 rounded-xl py-2 text-sm font-semibold text-[#6571FF] hover:bg-[#6571FF]/5 transition-colors"
               onClick={() => {
-                openPopup(type, {
-                  itemId: item.id,
-                  materialIndex,
-                });
+                openPopup(type, { itemId: item.id, materialIndex });
                 setIsOpen(false);
               }}
             >
-              + New {label}
+              <Plus size={14} /> New {label}
             </button>
           </div>
         </div>

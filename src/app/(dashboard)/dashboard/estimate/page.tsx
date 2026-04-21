@@ -1,3 +1,4 @@
+import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 import { authOptions } from "@/authOptions";
 import { SyncLists } from "@/components/SyncLists";
 import Title from "@/components/Title";
@@ -8,7 +9,6 @@ import { getServerSession } from "next-auth";
 import Header from "./Header";
 import NavigationTabs from "./NavigationTabs";
 import Table from "./Table";
-import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 
 export default async function EstimatesPage({
   searchParams,
@@ -32,7 +32,7 @@ export default async function EstimatesPage({
     InvoiceType.Estimate,
     companyId,
     searchParams,
-    timezone
+    timezone,
   );
 
   const categoriesPromise = db.category.findMany({
@@ -53,17 +53,19 @@ export default async function EstimatesPage({
   ]);
 
   return (
-    <div>
+    <div className="p-2 md:p-0">
       <Title>Estimates</Title>
 
       <SyncLists categories={categories} tags={tags} statuses={statuses} />
 
-      <Header
-        searchTerm={searchParams.searchTerm}
-        startDate={searchParams.startDate}
-        endDate={searchParams.endDate}
-        status={searchParams.status}
-      />
+      <div className="w-full">
+        <Header
+          searchTerm={searchParams.searchTerm}
+          startDate={searchParams.startDate}
+          endDate={searchParams.endDate}
+          status={searchParams.status}
+        />
+      </div>
 
       {/* Use the NavigationTabs component with the 'a-estimate' tab as active */}
       <NavigationTabs activeTab="a-estimate">

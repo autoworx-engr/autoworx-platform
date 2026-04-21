@@ -40,17 +40,13 @@ export function SelectClient({
   }, [searchTerm]);
 
   // Use infinite query for client list
-  const {
-    data: infiniteData,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useClientListInfiniteQuery(debouncedSearchTerm);
+
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useClientListInfiniteQuery(debouncedSearchTerm);
 
   // Flatten the infinite data into a single array`
-  const clientList = useMemo(() => {
-    return infiniteData?.pages.flatMap((page) => page?.clients) ?? [];
-  }, [infiniteData]);
+
+  const clientList = data?.pages.flatMap((page) => page.clients) ?? [];
 
   const newAddedCustomer = useListsStore((x) => x.newAddedCustomer);
   const searchParams = useSearchParams();
@@ -97,6 +93,7 @@ export function SelectClient({
       <input type="hidden" name={name} value={client?.id ?? ""} />
 
       <Selector
+        className="max-w-[300px]"
         label={(client: Client | null) =>
           client ? `${client.firstName} ${client.lastName ?? ""}` : "Client"
         }

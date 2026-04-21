@@ -106,7 +106,7 @@ export default function HolidayCalendar() {
             value={holidaysFormatted}
             onChange={handleHolidayChanges}
             onMonthChange={handleMonthChange}
-            plugins={[<DatePanel key="datepanel" />]}
+            plugins={[<DatePanel className="sm:w-36" />]}
             className="w-full bg-white"
             showOtherDays
           />
@@ -114,13 +114,14 @@ export default function HolidayCalendar() {
           {/* Action buttons */}
           <div className="mt-4 flex w-full items-center justify-between border-t pt-4">
             <button
+              disabled={!queryClient.getQueryData<any[]>([calenderQueryKey.holidays, selectedMonth, selectedYear])?.length}
               onClick={handleAllHolidaysClear}
               className="rounded-md border px-3 py-1.5 hover:bg-gray-100"
             >
               Clear All
             </button>
             <button
-              disabled={pending || isLoading}
+              disabled={!queryClient.getQueryData<any[]>([calenderQueryKey.holidays, selectedMonth, selectedYear])?.length || pending || isLoading}
               onClick={() => startTransition(() => handleAddHoliday(false))}
               className="rounded-md border bg-green-100 px-3 py-1.5 font-medium hover:bg-green-200 disabled:bg-gray-300"
             >

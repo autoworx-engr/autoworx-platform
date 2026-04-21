@@ -88,7 +88,7 @@ export default function NewTask({
 
   const handleTimeChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    type: "start" | "end"
+    type: "start" | "end",
   ) => {
     let timeValue = e.target.value;
 
@@ -151,7 +151,7 @@ export default function NewTask({
 
     if (date && (!startTime || !endTime)) {
       return errorToast(
-        "Start time and End time are required when a date is selected!"
+        "Start time and End time are required when a date is selected!",
       );
     }
 
@@ -170,6 +170,7 @@ export default function NewTask({
       clientId,
       date: date ? new Date(date).toISOString() : undefined,
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      createdBy: "user",
     });
 
     // revalidated communications client task
@@ -222,12 +223,12 @@ export default function NewTask({
       <DialogTrigger asChild>
         {/* if its a task which will be created from C.Hub Client, then it will show a different styled button  */}
         {isClientTask ? (
-          <button className="flex items-center justify-center gap-1 rounded-full bg-blue-600 px-6 py-2 text-[15px] text-white">
+          <button className="flex items-center justify-center gap-1 rounded-full bg-[#6571FF] px-6 py-2 text-[15px] text-white">
             <Plus className="" />
             <span>Add task</span>
           </button>
         ) : (
-          <button className="flex w-full min-w-32 items-center justify-center gap-1 rounded-md bg-blue-600 px-2 py-2 text-[15px] text-white max-[1300px]:py-1">
+          <button className="flex w-full min-w-32 items-center justify-center gap-1 rounded-md bg-[#6571FF] px-2 py-2 text-[15px] text-white max-[1300px]:py-1">
             <Plus className="" />
             <span className="block">Add Task</span>
           </button>
@@ -292,7 +293,7 @@ export default function NewTask({
                         onChange={(value) =>
                           handleTimeChange(
                             { target: { value } } as any,
-                            "start"
+                            "start",
                           )
                         }
                         style={{ width: "100%", height: 34 }}

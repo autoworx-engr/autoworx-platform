@@ -5,20 +5,26 @@ import { DialogContent } from "@/components/Dialog";
 
 import { Company } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import PhoneInput from "@/components/PhoneInput";
 import ServiceSelectAndAdd from "@/components/ServiceSelectAndAdd";
+import { SlimInput, slimInputClassName } from "@/components/SlimInput";
 import {
   useGetAllYears,
   useGetMake,
   useGetModelsByYearAndMake,
 } from "@/hooks/useCarData";
+import { cn } from "@/lib/cn";
 import { salesPipelineKeyStr } from "@/utils/enums/query-key-constant";
+import toast from "react-hot-toast";
 import Selector from "../../settings/automation/components/Selector";
-import PhoneInput from "@/components/PhoneInput";
+import { errorToast, successToast } from "@/lib/toast";
 
 const AddLeads = ({ onClose }: { onClose?: () => void }) => {
   const queryClient = useQueryClient();
+  const router = useRouter();
   const [phoneNumber, setPhoneNumber] = useState("");
   const [countryCode, setCountryCode] = useState("");
   const [isoCode, setIsoCode] = useState("");
@@ -62,7 +68,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
   });
 
   const handleServiceChange = (
-    value: string | { id: string | number; title: string }
+    value: string | { id: string | number; title: string },
   ) => {
     if (typeof value === "object") {
       // Store the full object separately
@@ -185,8 +191,9 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
             countryCode: formData.countryCode,
             serviceId: formData.service,
             opportunity_source: opportunitySource,
+            source: formData.source,
           }),
-        }
+        },
       );
 
       if (response.ok) {
@@ -195,6 +202,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
           type: "success",
         });
 
+       successToast("Lead created successfully!");
         // Invalidate and refetch pipeline data
         await queryClient.invalidateQueries({
           queryKey: [salesPipelineKeyStr.salesPipeline],
@@ -203,6 +211,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
           queryKey: [salesPipelineKeyStr.salesPipelineCount],
         });
 
+        router.refresh();
         onClose?.();
 
         // Reset form fields except source and token
@@ -226,12 +235,14 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
           message: "Failed to create lead. Please try again.",
           type: "error",
         });
+        errorToast("Failed to create lead. Please try again.");
       }
     } catch (error) {
       setFormStatus({
         message: "An error occurred. Please try again later.",
         type: "error",
       });
+      errorToast("An error occurred. Please try again later.");
     } finally {
       setIsSubmitting(false);
     }
@@ -261,47 +272,44 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
     { title: "Phone Call", id: "Phone Call" },
   ];
 
-  console.log("formData", formData);
   return (
     <DialogContent
-      className="max-h-[calc(100vh-2rem)] overflow-y-auto"
+      className="max-h-full flex flex-col"
       onCloseAutoFocus={() => setFormStatus({ message: "", type: null })}
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <label
-            htmlFor="name"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Full Name<span className="text-red-500"> *</span>
-          </label>
-          <input
-            id="name"
-            type="text"
+      {/* Header */}
+      <div className="shrink-0 px-2 pt-6 pb-2 md:px-4">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-600 dark:text-slate-100">
+          Add Lead
+        </h1>
+        <p className="mt-1 text-sm text-slate-500">
+          Enter details for the new lead opportunity
+        </p>
+      </div>
+
+      {/* Scrollable body */}
+      <form
+        id="add-lead-form"
+        onSubmit={handleSubmit}
+        className="flex-1 space-y-4 overflow-y-auto px-2 py-2 thin-scrollbar scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent md:px-4"
+      >
+        {/* Contact Information */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <SlimInput
             name="name"
+            label="Full Name"
             placeholder="John Doe"
             value={formData.name}
             onChange={handleChange}
             required
-            className="w-full rounded-sm border border-slate-400 bg-background px-2 py-0.5 leading-6 outline-none"
           />
-        </div>
-
-        <div className="space-y-2">
-          <label
-            htmlFor="email"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Email Address
-          </label>
-          <input
-            id="email"
-            type="email"
+          <SlimInput
             name="email"
+            type="email"
+            label="Email Address"
             placeholder="john@example.com"
             value={formData.email}
             onChange={handleChange}
-            className="w-full rounded-sm border border-slate-400 bg-background px-2 py-0.5 leading-6 outline-none"
           />
         </div>
 
@@ -317,13 +325,17 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
           error={fieldErrors.phone}
         />
         {/* Vehicle Information Section */}
-        <div className="border-t border-gray-200 pb-1 pt-2">
-          <h3 className="text-md font-medium text-gray-700">
-            Vehicle Information<span className="text-red-500"> *</span>
+        <div className="border-t border-slate-200 pb-1 pt-3 dark:border-slate-700">
+          <h3 className="text-base font-semibold text-slate-600 dark:text-slate-300">
+            Vehicle Information <span className="text-[#E9405F]">*</span>
           </h3>
+          <p className="mt-0.5 text-xs text-slate-400">
+            Select year, make &amp; model — or use the field below for unlisted
+            vehicles
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Selector
             name="vehicle_year"
             label="Year"
@@ -336,8 +348,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
             isSearch={true}
             isClear={true}
             required={true}
-            disabled={formData.others != ""} // Disable this field as per your requirement
-            // error={isYearFetchError ? "Failed to fetch years" : undefined}
+            disabled={formData.others !== ""}
           />
           <Selector
             name="vehicle_make"
@@ -351,16 +362,13 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
             isSearch={true}
             isClear={true}
             required={true}
-            disabled={formData.others != ""} // Disable this field as per your requirement
-            // error={isMakeFetchError ? "Failed to fetch Makes" : undefined}
+            disabled={formData.others !== ""}
           />
-
           <Selector
             name="vehicle_model"
             label="Model"
             placeholder="Select model"
             options={vehicleModelOptions || []}
-            // rootClassName="w-1/3"
             value={formData.vehicle_model || ""}
             onChange={(value) =>
               setFormData((prev) => ({ ...prev, vehicle_model: value }))
@@ -368,8 +376,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
             isSearch={true}
             isClear={true}
             required={true}
-            disabled={formData.others != ""} // Disable this field as per your requirement
-            // error={isModelsFetchError ? "Failed to fetch Models" : undefined}
+            disabled={formData.others !== ""}
           />
         </div>
 
@@ -398,8 +405,11 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
               formData.vehicle_model != ""
                 ? true
                 : false
-            } // Disable this field as per your requirement
-            className="w-full rounded-sm border border-slate-400 bg-background px-2 py-0.5 leading-6 outline-none"
+            }
+            className={cn(
+              "w-full rounded-sm border border-slate-400 bg-background px-2 py-0.5 leading-6 outline-none",
+              slimInputClassName,
+            )}
           />
         </div>
 
@@ -438,7 +448,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
 
         <button
           type="submit"
-          className="w-full rounded-md bg-[#6571FF] px-4 py-2 font-medium text-white transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full rounded-lg bg-gradient-to-r from-[#6571FF] to-[#5a66ee] px-4 py-2 font-medium text-white transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50"
           disabled={isSubmitting || !!fieldErrors.phone}
         >
           {isSubmitting ? "Adding..." : "Add Lead"}

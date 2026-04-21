@@ -20,6 +20,8 @@ type FormData = {
   apiKeySid: string;
   apiKeySecret: string;
   phoneNumberSid: string;
+  fcmPushCredentialSid?: string;
+  apnPushCredentialSid?: string;
 };
 
 const SmsGetwayForm: React.FC = () => {
@@ -35,6 +37,10 @@ const SmsGetwayForm: React.FC = () => {
     apiKeySid: twilioCredentials?.apiKeySid ?? "",
     apiKeySecret: twilioCredentials?.apiKeySecret ?? "",
     phoneNumberSid: twilioCredentials?.phoneNumberSid ?? "",
+    fcmPushCredentialSid:
+      (twilioCredentials as any)?.fcmPushCredentialSid ?? "",
+    apnPushCredentialSid:
+      (twilioCredentials as any)?.apnPushCredentialSid ?? "",
   });
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -101,6 +107,10 @@ const SmsGetwayForm: React.FC = () => {
       apiKeySid: twilioCredentials?.apiKeySid ?? "",
       apiKeySecret: twilioCredentials?.apiKeySecret ?? "",
       phoneNumberSid: twilioCredentials?.phoneNumberSid ?? "",
+      fcmPushCredentialSid:
+        (twilioCredentials as any)?.fcmPushCredentialSid ?? "",
+      apnPushCredentialSid:
+        (twilioCredentials as any)?.apnPushCredentialSid ?? "",
     });
   }, [twilioCredentials]);
 
@@ -189,6 +199,42 @@ const SmsGetwayForm: React.FC = () => {
             onChange={handleChange}
             value={formData.phoneNumberSid}
             required
+            className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+          />
+        </div>
+
+        {/* FCM Push Credential SID (optional, per subaccount) */}
+        <div className="mb-4">
+          <label
+            htmlFor="fcmPushCredentialSid"
+            className="block text-sm font-medium text-gray-700"
+          >
+            FCM Push Credential SID (Android)
+          </label>
+          <input
+            type="text"
+            id="fcmPushCredentialSid"
+            name="fcmPushCredentialSid"
+            onChange={handleChange}
+            value={formData.fcmPushCredentialSid || ""}
+            className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+          />
+        </div>
+
+        {/* APN Push Credential SID (optional, per subaccount) */}
+        <div className="mb-4">
+          <label
+            htmlFor="apnPushCredentialSid"
+            className="block text-sm font-medium text-gray-700"
+          >
+            APN Push Credential SID (iOS)
+          </label>
+          <input
+            type="text"
+            id="apnPushCredentialSid"
+            name="apnPushCredentialSid"
+            onChange={handleChange}
+            value={formData.apnPushCredentialSid || ""}
             className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
           />
         </div>

@@ -6,7 +6,7 @@ import { cn } from "@/lib/cn";
 import { ProductCardProps } from "@/types/inventory";
 import { Category, InventoryProduct, User, Vendor } from "@prisma/client";
 import { Pagination, Popconfirm, Tooltip } from "antd"; // Importing the Pagination component from Ant Design
-import { X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import EditProduct from "./EditProduct";
@@ -70,24 +70,30 @@ export default function ProductTable({
     <>
       {/* card list  */}
       <div className="mt-4 space-y-2 lg:hidden ">
-        {products.map((product, index) => {
-          return (
-            <div key={index}>
-              <InventoryResponsiveCard
-                user={user}
-                viewTab={viewTab!}
-                search={search!}
-                product={
-                  {
-                    ...product,
-                    price: product.price?.toString(),
-                  } as ProductCardProps
-                }
-                index={index}
-              />
+        {
+          products.length === 0 ? (
+            <div className="flex items-center justify-center gap-2">
+              <Search size={20} /> No {viewTab === "products" ? "products" : "supplies"} found {search?.get("search") && <span>for <mark>{search?.get("search")}</mark></span>}
             </div>
-          );
-        })}
+          ) :
+            products.map((product, index) => {
+              return (
+                <div key={index}>
+                  <InventoryResponsiveCard
+                    user={user}
+                    viewTab={viewTab!}
+                    search={search!}
+                    product={
+                      {
+                        ...product,
+                        price: product.price?.toString(),
+                      } as ProductCardProps
+                    }
+                    index={index}
+                  />
+                </div>
+              );
+            })}
 
         {/* Mobile Pagination */}
         {showPagination && (
@@ -111,7 +117,7 @@ export default function ProductTable({
 
       <div className="thin-scrollbar hidden lg:block pb-4 h-[calc(70vh-78px)] overflow-auto overflow-x-clip">
         <table className="w-full">
-          <thead className="bg-background">
+          <thead className="bg-background sticky top-0 ">
             <tr className="h-10 border-b">
               <th className="px-4 text-left">#</th>
               <th className="px-4 text-left">Name</th>
@@ -126,7 +132,13 @@ export default function ProductTable({
           </thead>
 
           <tbody className="max-h-[40vh] overflow-y-auto">
-            {products.map((product, index) => {
+            {products.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="text-center p-20">
+                  <span className="flex items-center justify-center gap-2"><Search size={20} /> No {viewTab === "products" ? "products" : "supplies"} found {search?.get("search") && <span>for <mark>{search?.get("search")}</mark></span>}</span>
+                </td>
+              </tr>
+            ) : products.map((product, index) => {
               const params = new URLSearchParams(search);
               params.set("productId", product.id.toString());
               return (

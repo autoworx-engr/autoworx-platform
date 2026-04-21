@@ -13,13 +13,27 @@ import {
 /**
  * Calculate salary payouts for a technician based on their salary type and work history.
  * Returns current period payout, previous month payout, and YTD totals.
- * 
+ *
  * For HOURLY: Calculates based on clock in/out records and break time
  * For WEEKLY/BI_WEEKLY/MONTHLY: Uses salary-based calculations from salaryPayout.ts
  */
-export async function getSalaryPayouts(timezone: string) {
+export async function getSalaryPayouts(
+  timezone: string,
+  currentUserId?: number,
+  currentCompanyId?: number,
+) {
   try {
-    const { companyId, userId } = await getEssentials();
+    let userId = currentUserId;
+    let companyId = currentCompanyId;
+
+    if (!userId) {
+      const data = await getEssentials();
+      userId = data?.userId;
+    }
+    if (!companyId) {
+      const data = await getEssentials();
+      companyId = data?.companyId;
+    }
 
     // Get user's salary information from salary history
     const user = await db.user.findUnique({
@@ -43,7 +57,7 @@ export async function getSalaryPayouts(timezone: string) {
         },
       },
     });
-
+    console.log("user", user);
     if (!user) {
       return {
         currentPeriodPayout: 0,
@@ -64,7 +78,7 @@ export async function getSalaryPayouts(timezone: string) {
 
     // Get the current active salary
     const currentSalary = user.salaryHistory[0];
-    
+
     if (!currentSalary) {
       return {
         currentPeriodPayout: 0,
@@ -83,13 +97,17 @@ export async function getSalaryPayouts(timezone: string) {
       };
     }
 
-
-
     // For non-hourly salary types, use the calculation functions from salaryPayout.ts
     if (currentSalary.salaryType !== "HOURLY") {
-      const currentMonthPayout = await calculateSalaryCurrentMonthEarnings();
-      const previousMonthPayout = await calculateSalaryPreviousMonthEarnings();
-      const totalPayout = await calculateSalaryTotalEarnings();
+      const currentMonthPayout = await calculateSalaryCurrentMonthEarnings(
+        userId,
+        companyId,
+      );
+      const previousMonthPayout = await calculateSalaryPreviousMonthEarnings(
+        userId,
+        companyId,
+      );
+      const totalPayout = await calculateSalaryTotalEarnings(userId, companyId);
 
       return {
         currentPeriodPayout: currentMonthPayout,
@@ -99,7 +117,9 @@ export async function getSalaryPayouts(timezone: string) {
         totalHours: 0,
         salaryInfo: {
           salaryType: currentSalary.salaryType,
-          salaryAmount: parseFloat(Number(currentSalary.salaryAmount).toFixed(2)),
+          salaryAmount: parseFloat(
+            Number(currentSalary.salaryAmount).toFixed(2),
+          ),
           previousMonthPayout,
           currentMonthPayout,
           totalPayout,
@@ -109,7 +129,11 @@ export async function getSalaryPayouts(timezone: string) {
     }
 
     // For hourly, use the existing hourly calculation
-    return await calculateHourlyPayout(userId, currentSalary.salaryAmount, timezone);
+    return await calculateHourlyPayout(
+      userId,
+      currentSalary.salaryAmount,
+      timezone,
+    );
   } catch (error) {
     console.error("getSalaryPayouts error:", error);
     return {
@@ -136,7 +160,7 @@ export async function getSalaryPayouts(timezone: string) {
 async function calculateHourlyPayout(
   userId: number,
   hourlyRate: any,
-  timezone: string
+  timezone: string,
 ) {
   const startOfMonth = new Date();
   startOfMonth.setDate(1);
@@ -195,7 +219,7 @@ async function calculateHourlyPayout(
   totalHours -= totalBreakMinutes / 60;
 
   const currentPeriodPayout = parseFloat(
-    (totalHours * Number(hourlyRate)).toFixed(2)
+    (totalHours * Number(hourlyRate)).toFixed(2),
   );
 
   return {
@@ -204,7 +228,7 @@ async function calculateHourlyPayout(
     payPeriodStart: startOfMonth,
     payPeriodEnd: endOfMonth,
     totalHours,
-    salaryInfo: { 
+    salaryInfo: {
       salaryType: "HOURLY",
       hourlyRate: parseFloat(Number(hourlyRate).toFixed(2)),
       currentMonthPayout: currentPeriodPayout,

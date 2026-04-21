@@ -41,14 +41,14 @@ export default function ChatHead({
 
   const isCallingAccess = companyFeaturePermission.find(
     (permission) =>
-      permission.permission_name === companyPermissionModule.CALLING_ACCESS
+      permission.permission_name === companyPermissionModule.CALLING_ACCESS,
   );
 
   const handleTabChange = (tab: string) => {
-    if (tab === "PHONE" && !isCallingAccess?.enabled) {
-      setShowPremiumModal(true);
-      return;
-    }
+    // if (tab === "PHONE" && !isCallingAccess?.enabled) {
+    //   setShowPremiumModal(true);
+    //   return;
+    // }
 
     setSelected(tab);
     if (searchParams) {
@@ -62,7 +62,7 @@ export default function ChatHead({
   };
 
   const clientConversationTrack = useClientCommunicationStore(
-    (state) => state.clientConversationTrack
+    (state) => state.clientConversationTrack,
   );
 
   // useEffect(() => {
@@ -89,7 +89,7 @@ export default function ChatHead({
         .unbind("client-notify")
         .unsubscribe(`client-notify-${user?.companyId}-${initialClient?.id}`);
     };
-  }, []);
+  }, [user?.companyId, initialClient?.id, clientConversationTrack]);
 
   return (
     <div
@@ -107,7 +107,7 @@ export default function ChatHead({
         className={cn(
           "relative rounded-full p-3 transition-all",
           "hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/70",
-          selected === "EMAIL" ? "bg-white/30" : "bg-transparent"
+          selected === "EMAIL" ? "bg-white/30" : "bg-transparent",
         )}
       >
         {/* unread badge */}
@@ -132,7 +132,7 @@ export default function ChatHead({
         className={cn(
           "relative rounded-full transition-all",
           "hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/70",
-          selected === "SMS" ? "bg-white/30" : "bg-transparent"
+          selected === "SMS" ? "bg-white/30" : "bg-transparent",
         )}
       >
         {clientConversationTrack && !clientConversationTrack?.smsIsRead && (
@@ -180,17 +180,17 @@ export default function ChatHead({
         className={cn(
           "relative rounded-full p-3 transition-all",
           "hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/70",
-          selected === "PHONE" ? "bg-white/30" : "bg-transparent"
+          selected === "PHONE" ? "bg-white/30" : "bg-transparent",
         )}
       >
         <Phone className="w-5 h-5 fill-current text-white" />
       </button>
 
-      <PremiumModal
+      {/* <PremiumModal
         open={showPremiumModal}
         onClose={() => setShowPremiumModal(false)}
         featureName="calling feature"
-      />
+      /> */}
     </div>
   );
 }

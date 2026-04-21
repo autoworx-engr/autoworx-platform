@@ -22,6 +22,7 @@ export default function InventoryList({
   searchParams,
   totalProducts,
   totalSupplies,
+  isLoading,
 }: {
   products: any;
   supplies: any;
@@ -30,6 +31,7 @@ export default function InventoryList({
   isFullWidth?: boolean;
   databaseContent: any[];
   totalDatabaseItems: number;
+  isLoading?: boolean;
   categories: any[];
   onPageChange: (page: number) => void;
   onLimitChange: (limit: number) => void;
@@ -57,7 +59,7 @@ export default function InventoryList({
   return (
     <Tabs
       value={view}
-      className={`col-start-1 mt-3 flex min-h-0 w-full flex-col overflow-clip text-xs lg:h-[83vh] 2xl:text-base ${isFullWidth ? "md:w-full" : "md:w-1/2"} `}
+      className={`col-start-1 mt-3 flex min-h-0 w-full flex-col overflow-clip text-xs lg:h-[83vh] 2xl:text-base ${isFullWidth ? "md:w-full" : "lg:w-1/2"} `}
     >
       <TabsList>
         <TabsTrigger
@@ -151,6 +153,7 @@ export default function InventoryList({
               <DatabaseTable
                 totalItems={totalDatabaseItems}
                 data={databaseContent}
+                isLoading={isLoading}
               />
             </div>
           </div>

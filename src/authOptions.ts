@@ -3,9 +3,12 @@ import { NextAuthOptions } from "next-auth";
 import { JWT } from "next-auth/jwt";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
-import login from "./actions/auth/login";
 import { db } from "./lib/db";
 import { env } from "next-runtime-env";
+
+import nextAxios from "./helpers/next-axios";
+import { getUserByEmail } from "./actions/user/getUserById";
+import { getTwoFactorConfirmationByUserId } from "./app/(auth)/login/actions/getTwoFactorConfirmationByUserId";
 
 declare module "next-auth" {
   interface Session {
@@ -48,7 +51,7 @@ const refreshAccessToken = async (token: JWT) => {
         body: JSON.stringify({
           refreshAccessToken: token.refreshToken,
         }),
-      }
+      },
     );
 
     if (!response.ok) {
@@ -64,7 +67,7 @@ const refreshAccessToken = async (token: JWT) => {
 
     const verifyToken = jwt.verify(
       accessToken,
-      process.env.ACCESS_SECRET || ""
+      process.env.ACCESS_SECRET || "",
     ) as jwt.JwtPayload;
 
     const accessTokenExpires = (verifyToken?.exp ?? 0) * 1000;
@@ -101,12 +104,30 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      authorize: async credentials => {
+      authorize: async (credentials) => {
+        console.log("credentials", credentials);
         if (!credentials?.email || !credentials?.password) return null;
-        const loggedInUser = await login({
+        const { data: existingUser } = await getUserByEmail(credentials.email);
+        // 2FA CHECK
+        if (existingUser?.twoFactorEnabled) {
+          const twoFactorConfirmation = await getTwoFactorConfirmationByUserId(
+            existingUser.id,
+          );
+
+          if (!twoFactorConfirmation) {
+            return null; // REJECT: 2FA not completed
+          }
+
+          // CONSUME THE CONFIRMATION (One-time use)
+          await db.twoFactorConfirmation.delete({
+            where: { id: twoFactorConfirmation.id },
+          });
+        }
+        const response = await nextAxios.post("/auth/login", {
           email: credentials.email,
           password: credentials.password,
         });
+        const loggedInUser = response.data.data;
         return loggedInUser;
       },
     }),
@@ -120,7 +141,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         const verifyToken = jwt.verify(
           user.accessToken,
-          process.env.ACCESS_SECRET || ""
+          process.env.ACCESS_SECRET || "",
         ) as jwt.JwtPayload;
 
         const accessTokenExpires = (verifyToken?.exp ?? 0) * 1000;

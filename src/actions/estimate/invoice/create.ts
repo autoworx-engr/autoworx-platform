@@ -41,6 +41,7 @@ type TCreateInvoiceProps = {
   discount: number;
   tax: number;
   serviceFee: number;
+  vehicleExtraCost?: number;
   deposit: number;
   depositNotes: string;
   depositMethod: string;
@@ -52,6 +53,7 @@ type TCreateInvoiceProps = {
   policy: string;
   customerNotes: string;
   customerComments: string;
+  isShopBooking?: boolean;
 
   photos: { id?: number; photo?: string }[];
   items: {
@@ -67,6 +69,8 @@ type TCreateInvoiceProps = {
   columnId?: number;
   inspections: InspectionType[];
   damageNotes: string | null;
+
+  forceCompanyId?: number;
 };
 
 export async function createInvoice({
@@ -78,6 +82,7 @@ export async function createInvoice({
   discount,
   tax,
   serviceFee,
+  vehicleExtraCost,
   deposit,
   depositNotes,
   depositMethod,
@@ -98,6 +103,9 @@ export async function createInvoice({
   columnId,
   inspections,
   damageNotes,
+  isShopBooking = false,
+
+  forceCompanyId,
 }: TCreateInvoiceProps): Promise<ServerAction | TErrorHandler> {
   try {
     // Step 1: Validate input data using Zod schema
@@ -112,6 +120,7 @@ export async function createInvoice({
       discount,
       tax,
       serviceFee,
+      vehicleExtraCost,
       deposit,
       depositNotes,
       depositMethod,
@@ -132,17 +141,21 @@ export async function createInvoice({
       columnId,
       inspections,
       damageNotes,
+      isShopBooking,
     });
 
-    // Step 2: Get authenticated session and company ID
     const session = await getServerSession(authOptions);
-    const companyId = session?.user.companyId;
+    // Step 2: Get authenticated session and company ID
+    let companyId = forceCompanyId;
 
     if (!companyId) {
-      throw new Error("Company ID is required to create an email template.");
+      companyId = session?.user.companyId;
+      if (!companyId) {
+        throw new Error("Company ID is required to create an email template.");
+      }
     }
 
-    const invoice = await db.$transaction(async (db) => {
+    const invoice = await db.$transaction(async db => {
       // Step 3: Determine the column ID for invoice placement
       let finalColumnId = columnId;
       let isWorkOrder = false;
@@ -203,7 +216,7 @@ export async function createInvoice({
       const totalCost = items.reduce((acc, item) => {
         const materialCostPrice = item.materials.reduce(
           (acc, cur) => acc + Number(cur?.cost) * Number(cur?.quantity),
-          0
+          0,
         );
         const laborCostPrice =
           Number(item.labor?.charge) * Number(item.labor?.hours);
@@ -223,6 +236,7 @@ export async function createInvoice({
           discount,
           tax,
           serviceFee,
+          vehicleExtraCost,
           deposit,
           grandTotal,
           due,
@@ -232,12 +246,13 @@ export async function createInvoice({
           customerNotes,
           customerComments,
           companyId,
-          userId: session.user.id as any,
+          userId: session?.user.id as any,
           columnId: finalColumnId,
           isWorkOrder,
           workOrderCreatedAt: isWorkOrder ? new Date() : null,
           convertedAt: new Date(),
           damageNotes,
+          isShopBooking,
         },
         include: {
           client: {
@@ -262,7 +277,7 @@ export async function createInvoice({
         }
       }
       //save the inspections
-      const inspectionsToSave = inspections.filter((inspection) => {
+      const inspectionsToSave = inspections.filter(inspection => {
         const hasTitle =
           !!inspection.title && inspection.title.toString().trim() !== "";
         const hasFlags = !!inspection.driver || !!inspection.passenger;
@@ -273,7 +288,7 @@ export async function createInvoice({
 
       if (inspectionsToSave.length > 0) {
         await Promise.all(
-          inspectionsToSave.map(async (inspection) => {
+          inspectionsToSave.map(async inspection => {
             return db.invoiceInspection.create({
               data: {
                 invoiceId: newInvoice.id,
@@ -283,7 +298,7 @@ export async function createInvoice({
                 notes: inspection.notes,
               },
             });
-          })
+          }),
         );
       }
       // Check if inventory product quantities are available when status is not "Pending"
@@ -304,7 +319,7 @@ export async function createInvoice({
         const productsWithQuantity = getProductWithQuantity(materials);
 
         await Promise.all(
-          productsWithQuantity.map(async (product) => {
+          productsWithQuantity.map(async product => {
             if (!product.id) return;
             const findInventoryProduct = await db.inventoryProduct.findUnique({
               where: { id: product.id },
@@ -316,30 +331,30 @@ export async function createInvoice({
               product.quantity > Number(findInventoryProduct?.quantity || 0)
             ) {
               throw new Error(
-                `The quantity "${product.name}" is not enough in the inventory`
+                `The quantity "${product.name}" is not enough in the inventory`,
               );
             }
             return null;
-          })
+          }),
         );
       }
 
       // Step 7: Process and upload photos
       await Promise.all(
-        photos.map(async (photo) => {
+        photos.map(async photo => {
           return db.invoicePhoto.create({
             data: {
               invoiceId: newInvoice.id,
               photo: photo.photo ?? "",
             },
           });
-        })
+        }),
       );
 
       // Step 8: Process invoice items (services, materials, labor, tags)
       const serviceIndex: (number | undefined)[] = [];
       await Promise.all(
-        items.map(async (item) => {
+        items.map(async item => {
           const service = item.service;
           serviceIndex.push(service?.id);
           const materials = item.materials;
@@ -363,14 +378,14 @@ export async function createInvoice({
 
             // Create labor tags
             await Promise.all(
-              labor.tags.map(async (tag) => {
+              labor.tags.map(async tag => {
                 return db.laborTag.create({
                   data: {
                     laborId: newLabor.id,
                     tagId: tag.id,
                   },
                 });
-              })
+              }),
             );
 
             laborId = newLabor.id;
@@ -388,7 +403,7 @@ export async function createInvoice({
 
           // Create materials
           await Promise.all(
-            materials.map(async (material) => {
+            materials.map(async material => {
               if (!material || !material.name) return;
               if (Number(material?.quantity || 0) <= 0) {
                 throw new Error("Material quantity should be greater than 0");
@@ -417,31 +432,31 @@ export async function createInvoice({
               });
               // Create material tag
               await Promise.all(
-                material.tags.map(async (tag) => {
+                material.tags.map(async tag => {
                   return db.materialTag.create({
                     data: {
                       materialId: newMat.id,
                       tagId: tag.id,
                     },
                   });
-                })
+                }),
               );
               return null;
-            })
+            }),
           );
 
           // Process tags
           await Promise.all(
-            tags.map(async (tag) => {
+            tags.map(async tag => {
               return db.itemTag.create({
                 data: {
                   itemId: invoiceItem.id,
                   tagId: tag.id,
                 },
               });
-            })
+            }),
           );
-        })
+        }),
       );
 
       await db.invoice.update({
@@ -477,7 +492,7 @@ export async function createInvoice({
 
     // Create associated tasks
     await Promise.all(
-      tasks.map(async (task) => {
+      tasks.map(async task => {
         if (!task) return;
 
         const taskSplit = task.task.split(":");
@@ -490,8 +505,9 @@ export async function createInvoice({
           invoiceId: invoice.id,
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           clientId,
+          createdBy: "user",
         });
-      })
+      }),
     );
 
     // send notification for invoice creation

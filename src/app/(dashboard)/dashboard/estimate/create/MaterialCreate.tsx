@@ -13,6 +13,9 @@ import Close from "./CloseEstimate";
 import { errorToast } from "@/lib/toast";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import Decimal from "decimal.js";
+import { Plus } from "lucide-react";
+import { slimInputClassName } from "@/components/SlimInput";
+import { cn } from "@/lib/cn";
 
 export type EstimateMaterial = {
   id: number;
@@ -40,8 +43,11 @@ export type EstimateMaterial = {
 };
 
 export default function MaterialCreate() {
-  const { categories } = useListsStore();
-  const { vendors } = useListsStore();
+  const {
+    categories,
+    vendors,
+    materials: inventoryMaterials,
+  } = useListsStore();
 
   const { currentSelectedCategoryId } = useEstimateCreateStore();
 
@@ -55,6 +61,7 @@ export default function MaterialCreate() {
   const [sell, setSell] = useState<number>();
   const [discount, setDiscount] = useState<number>();
   const [addToInventory, setAddToInventory] = useState<boolean>(false);
+  const [inventoryError, setInventoryError] = useState<string | null>(null);
 
   const { close, data } = useEstimatePopupStore();
   const itemId = data?.itemId;
@@ -66,6 +73,27 @@ export default function MaterialCreate() {
   const [categoryOpen, setCategoryOpen] = useState(false);
 
   // const { actionType } = useActionStoreCreateEdit();
+
+  const selectedInventoryMaterial = inventoryMaterials.find(
+    (m) => m.name.toLowerCase() === name.toLowerCase(),
+  );
+
+  useEffect(() => {
+    if (selectedInventoryMaterial) {
+      const available = Number(selectedInventoryMaterial.quantity || 0);
+      if (quantity && quantity > available) {
+        setInventoryError(
+          `Insufficient inventory. Only ${available} available.`,
+        );
+      } else if (available === 0) {
+        setInventoryError("Out of stock (0 available).");
+      } else {
+        setInventoryError(null);
+      }
+    } else {
+      setInventoryError(null);
+    }
+  }, [quantity, selectedInventoryMaterial]);
 
   useEffect(() => {
     if (data.material && data.edit) {
@@ -87,7 +115,7 @@ export default function MaterialCreate() {
       const costValue = parseFloat(data.material.cost);
       setCost(costValue === 0 ? undefined : costValue);
       const sellValue = parseFloat(
-        data.material.sell === 0 ? undefined : data.material.sell
+        data.material.sell === 0 ? undefined : data.material.sell,
       );
       setSell(sellValue);
       const discountValue = parseFloat(data.material.discount);
@@ -108,13 +136,13 @@ export default function MaterialCreate() {
                   notes: data.material.notes,
                   quantity: quantityValue || 0,
                   cost: Number(
-                    costValue === 0 ? undefined : costValue || 0
+                    costValue === 0 ? undefined : costValue || 0,
                   ) as any,
                   sell: Number(
-                    sellValue === 0 ? undefined : sellValue || 0
+                    sellValue === 0 ? undefined : sellValue || 0,
                   ) as any,
                   discount: Number(
-                    discountValue === 0 ? undefined : discountValue || 0
+                    discountValue === 0 ? undefined : discountValue || 0,
                   ) as any,
                   addToInventory: data.material.addToInventory,
                 };
@@ -148,7 +176,7 @@ export default function MaterialCreate() {
   useEffect(() => {
     if (currentSelectedCategoryId) {
       setCategory(
-        categories.find((cat) => cat.id === currentSelectedCategoryId)!
+        categories.find((cat) => cat.id === currentSelectedCategoryId)!,
       );
     }
   }, [currentSelectedCategoryId]);
@@ -165,7 +193,9 @@ export default function MaterialCreate() {
     }
 
     if (!quantity || quantity <= 0) {
-      errorToast("Material Quantity must be at least 1");
+      errorToast("Material Quantity must be at least 1", {
+        id: "material-quantity-min-1",
+      });
       return;
     }
 
@@ -274,7 +304,7 @@ export default function MaterialCreate() {
           close();
         } else if (res.type === "globalError") {
           errorToast(
-            res.errorSource?.length ? res.errorSource[0].message : res.message
+            res.errorSource?.length ? res.errorSource[0].message : res.message,
           );
         } else {
           errorToast(res.message!);
@@ -284,7 +314,7 @@ export default function MaterialCreate() {
         errorToast(
           formattedError.errorSource?.length
             ? formattedError.errorSource[0].message
-            : formattedError.message
+            : formattedError.message,
         );
       }
     } else {
@@ -368,7 +398,9 @@ export default function MaterialCreate() {
     }
 
     if (!quantity || quantity <= 0) {
-      errorToast("Material Quantity must be at least 1");
+      errorToast("Material Quantity must be at least 1", {
+        id: "material-quantity-min-1",
+      });
       return;
     }
 
@@ -423,100 +455,100 @@ export default function MaterialCreate() {
   }, [categoryOpen, vendorOpen, tagsOpen]);
 
   return (
-    <div className="flex flex-col gap-2 p-10 md:p-5">
-      <h3 className="w-full text-xl font-semibold">
-        {/* Materials/Parts Information */}
+    <div className="flex flex-col gap-1 p-1.5 sm:p-5 bg-white rounded-sm">
+      <h3 className="mb-2 text-xl font-bold tracking-tight text-slate-500">
         {data.edit ? "Edit Materials/Parts" : "Materials/Parts Information"}
       </h3>
 
-      <div className="flex items-center gap-2">
-        <label htmlFor="name" className="w-28 text-start text-sm">
-          Material/
-          <br /> Parts Name
+      {/* Name Input */}
+      <div className="flex items-center gap-3">
+        <label
+          htmlFor="name"
+          className="min-w-20 max-w-24 sm:min-w-0 sm:max-w-24 text-sm font-semibold tracking-wider text-slate-500"
+        >
+          Material / Parts Name
         </label>
         <input
           type="text"
           id="name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full rounded-md border-2 border-slate-400 p-1 text-xs"
+          className="h-10 w-full sm:flex-1 rounded-[10px] bg-white px-4 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30"
+          placeholder="e.g. Brake Pads"
         />
       </div>
 
-      <SelectCategory
-        onCategoryChange={setCategory}
-        labelPosition="left"
-        categoryData={category}
-        categoryOpen={categoryOpen}
-        setCategoryOpen={setCategoryOpen}
-        className="max-w-full pl-0 min-[2000px]:pl-3"
-      />
-
-      <div className="flex items-center gap-2">
-        <label className="w-28 text-start text-sm">Vendor</label>
-
-        <Selector
-          label={(vendor: Vendor | null) =>
-            vendor ? vendor.companyName || vendor.name || "" : "Vendor"
-          }
-          newButton={
-            <NewVendor
-              button={
-                <button type="button" className="text-xs text-[#6571FF]">
-                  + New Vendor
-                </button>
-              }
-              afterSubmit={(vendor) => {
-                useListsStore.setState(({ vendors }) => ({
-                  vendors: [...vendors, vendor],
-                }));
-
-                useEstimateCreateStore.setState((state) => {
-                  const items = state.items.map((item) => {
-                    if (item.id === itemId) {
-                      return {
-                        ...item,
-                        vendor,
-                      };
-                    }
-                    return item;
-                  });
-                  return { items };
-                });
-
-                setVendor(vendor);
-                setVendorOpen(false);
-              }}
-            />
-          }
-          items={vendors}
-          onSearch={(search: string) =>
-            vendors.filter(
-              (vendor) =>
-                (vendor?.companyName?.toLowerCase() || "").includes(
-                  search.toLowerCase()
-                ) ||
-                (vendor?.name?.toLowerCase() || "").includes(
-                  search.toLowerCase()
-                )
-            )
-          }
-          displayList={(vendor: Vendor) => (
-            <p>{vendor?.companyName || vendor.name}</p>
-          )}
-          openState={[vendorOpen, setVendorOpen]}
-          selectedItem={vendor}
-          setSelectedItem={setVendor}
-          className="max-w-full "
-        />
+      {/* Category Selector */}
+      <div className="flex items-center gap-3">
+        <label className="w-24 text-sm font-semibold tracking-wider text-slate-500">
+          Category
+        </label>
+        <div className="flex-1">
+          <SelectCategory
+            onCategoryChange={setCategory}
+            labelPosition="none" // Controlled by the external label above
+            categoryData={category}
+            categoryOpen={categoryOpen}
+            setCategoryOpen={setCategoryOpen}
+            className="max-w-full"
+          />
+        </div>
       </div>
 
-      {/* TODO: add to backend */}
-      <div className="flex items-center gap-2">
-        <label htmlFor="tags" className="w-28 text-start text-sm">
+      {/* Vendor Selector */}
+      <div className="flex items-center gap-3">
+        <label className="w-24 text-sm font-semibold tracking-wider text-slate-500">
+          Vendor
+        </label>
+        <div className="flex-1">
+          <Selector
+            label={(vendor: Vendor | null) =>
+              vendor ? vendor.companyName || vendor.name || "" : "Select Vendor"
+            }
+            newButton={
+              <NewVendor
+                button={
+                  <button
+                    type="button"
+                    className="flex items-center gap-1 text-xs font-semibold text-[#6571FF] hover:underline"
+                  >
+                    <Plus size={12} /> New Vendor
+                  </button>
+                }
+                afterSubmit={(vendor) => {
+                  /* logic remains same */
+                  setVendor(vendor);
+                  setVendorOpen(false);
+                }}
+              />
+            }
+            items={vendors}
+            onSearch={(search: string) =>
+              vendors.filter((vendor) =>
+                (vendor.companyName || vendor.name || "")
+                  .toLowerCase()
+                  .includes(search.toLowerCase()),
+              )
+            }
+            displayList={(vendor: Vendor) => (
+              <p className="text-sm font-medium">
+                {vendor?.companyName || vendor.name}
+              </p>
+            )}
+            openState={[vendorOpen, setVendorOpen]}
+            selectedItem={vendor}
+            setSelectedItem={setVendor}
+            className="max-w-full"
+          />
+        </div>
+      </div>
+
+      {/* Tags Selector */}
+      <div className="flex items-center gap-3 py-0.5">
+        <label className="w-24 text-sm font-semibold tracking-wider text-slate-500">
           Tags
         </label>
-        <div className="w-full">
+        <div className="flex-1">
           <SelectTags
             value={tags}
             setValue={setTags}
@@ -525,146 +557,158 @@ export default function MaterialCreate() {
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
-        <label htmlFor="notes" className="w-28 text-start text-sm">
+      {/* Pricing & Quantity Grid */}
+      {[
+        {
+          id: "qt",
+          label: "Quantity",
+          val: quantity,
+          set: setQuantity,
+          placeholder: "0",
+          type: "number",
+        },
+        {
+          id: "price",
+          label: "Cost Price",
+          val: cost,
+          set: setCost,
+          placeholder: "0.00",
+          type: "number",
+          disabled: data.edit,
+        },
+        {
+          id: "sell",
+          label: "Sell Price",
+          val: sell,
+          set: setSell,
+          placeholder: "0.00",
+          type: "number",
+        },
+        {
+          id: "discount",
+          label: "Discount",
+          val: discount,
+          set: setDiscount,
+          placeholder: "0",
+          type: "number",
+        },
+      ].map((field) => (
+        <div key={field.id} className="mb-0.5">
+          <div className="flex items-center gap-3">
+            <label
+              htmlFor={field.id}
+              className="w-24 text-sm font-semibold text-slate-500"
+            >
+              {field.label}
+            </label>
+            <input
+              type={field.type}
+              id={field.id}
+              value={field.val ?? ""}
+              disabled={field.disabled}
+              min="0"
+              onChange={(e) => {
+                if (e.target.value === "") {
+                  field.set(undefined);
+                } else {
+                  const parsed = parseFloat(e.target.value);
+                  field.set(parsed < 0 ? 0 : parsed);
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "-" || e.key === "e") e.preventDefault();
+              }}
+              className={cn(
+                "w-full flex-1 rounded-[10px] border px-3 py-1.5 text-base font-medium leading-6 outline-none transition-all duration-300",
+                field.id === "qt" && inventoryError
+                  ? "border-red-500 ring-1 ring-red-500/20"
+                  : "border-slate-300/80",
+              )}
+              placeholder={field.placeholder}
+            />
+          </div>
+          {field.id === "qt" && inventoryError && (
+            <p className="ml-[6.7rem] mt-1 text-xs font-medium text-red-500">
+              {inventoryError}
+            </p>
+          )}
+        </div>
+      ))}
+
+      {/* Notes Textarea */}
+      <div className="flex items-start gap-3">
+        <label
+          htmlFor="notes"
+          className="mt-2 w-24 text-sm font-semibold tracking-wider text-slate-500"
+        >
           Notes
         </label>
         <textarea
           id="notes"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          className="w-full rounded-md border-2 border-slate-400 p-1 text-xs"
+          className="h-24 flex-1 rounded-xl bg-white border border-slate-100 p-3 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30 resize-none"
+          placeholder="Additional details..."
         />
       </div>
 
-      <div className="flex items-center gap-2">
-        <label htmlFor="qt" className="w-28 text-start text-sm">
-          Quantity
-        </label>
-        <input
-          type="number"
-          id="qt"
-          min="0"
-          value={quantity || ""}
-          onChange={(e) => {
-            const inputValue = e.target.value;
-            if (inputValue === "" || inputValue === "-" || inputValue === "0") {
-              setQuantity(undefined);
-              return;
-            }
-            const value = parseFloat(inputValue);
-            if (isNaN(value) || value <= 0) {
-              setQuantity(undefined);
-            } else {
-              setQuantity(value);
-            }
-          }}
-          className="w-full rounded-md border-2 border-slate-400 p-1 text-xs"
-          placeholder="0"
-        />
-      </div>
-
-      <div className="flex items-center gap-2">
-        <label htmlFor="price" className="w-28 text-start text-sm">
-          Cost Price
-        </label>
-        <input
-          type="number"
-          id="price"
-          min="0"
-          value={cost ?? ""}
-          onChange={(e) => {
-            const inputValue = e.target.value;
-            if (inputValue === "" || inputValue === "-" || inputValue === "0") {
-              setCost(undefined);
-              return;
-            }
-            const value = parseFloat(inputValue);
-            if (isNaN(value) || value <= 0) {
-              setCost(undefined);
-            } else {
-              setCost(value);
-            }
-          }}
-          className="w-full rounded-md border-2 border-slate-400 p-1 text-xs"
-          placeholder="0"
-          disabled={data.edit}
-        />
-      </div>
-
-      <div className="flex items-center gap-2">
-        <label htmlFor="sell" className="w-28 text-start text-sm">
-          Sell Price
-        </label>
-        <input
-          type="number"
-          id="sell"
-          min="0"
-          value={sell ?? ""}
-          onChange={(e) => {
-            const inputValue = e.target.value;
-            if (inputValue === "" || inputValue === "-" || inputValue === "0") {
-              setSell(undefined);
-              return;
-            }
-            const value = parseFloat(inputValue);
-            if (isNaN(value) || value <= 0) {
-              setSell(undefined);
-            } else {
-              setSell(value);
-            }
-          }}
-          className="w-full rounded-md border-2 border-slate-400 p-1 text-xs"
-          placeholder="0"
-        />
-      </div>
-
-      <div className="flex items-center gap-2">
-        <label htmlFor="discount" className="w-28 text-start text-sm">
-          Discount
-        </label>
-        <input
-          type="number"
-          id="discount"
-          min="0"
-          value={discount ?? ""}
-          onChange={(e) => {
-            const inputValue = e.target.value;
-            if (inputValue === "" || inputValue === "-" || inputValue === "0") {
-              setDiscount(undefined);
-              return;
-            }
-            const value = parseFloat(inputValue);
-            if (isNaN(value) || value < 0) {
-              setDiscount(undefined);
-            } else {
-              setDiscount(value);
-            }
-          }}
-          className="w-full rounded-md border-2 border-slate-400 p-1 text-xs"
-          placeholder="0"
-        />
-      </div>
-
+      {/* Inventory Checkbox */}
       {!data.edit && (
-        <label className="ml-5 flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={addToInventory}
-            onChange={(e) => setAddToInventory(e.target.checked)}
-          />
-          <span>Add to Inventory</span>
-        </label>
+        <div className="ml-[6.7rem] flex items-center">
+          <label className="group flex cursor-pointer items-center gap-3">
+            <div className="relative flex items-center mt-1">
+              <input
+                type="checkbox"
+                checked={addToInventory}
+                onChange={(e) => setAddToInventory(e.target.checked)}
+                className="peer sr-only"
+              />
+              <div
+                className={cn(
+                  "flex h-6 w-6 items-center justify-center rounded-lg border-2 transition-all duration-200",
+                  "border-slate-200 bg-white shadow-sm",
+                  "peer-checked:border-[#6571FF] peer-checked:bg-[#6571FF] peer-checked:shadow-md peer-checked:shadow-[#6571FF]/20",
+                  "group-hover:border-[#6571FF]/50 peer-focus:ring-2 peer-focus:ring-[#6571FF]/20",
+                )}
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="white"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className={cn(
+                    "h-3.5 w-3.5 transition-transform duration-200",
+                    addToInventory ? "scale-100" : "scale-0",
+                  )}
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
+            </div>
+
+            <span
+              className={cn(
+                "text-sm font-semibold transition-colors",
+                addToInventory ? "text-slate-800" : "text-slate-600",
+              )}
+            >
+              Add to Inventory
+            </span>
+          </label>
+        </div>
       )}
 
-      <div className="flex justify-center gap-5">
+      {/* Form Actions */}
+      <div className="mt-4 flex items-center justify-end gap-3">
         <Close />
         <button
-          className="w-fit rounded-md bg-[#6571FF] p-1 px-5 text-white"
+          className="rounded-xl bg-[#6571FF] px-10 py-2.5 text-sm font-bold text-white shadow-lg shadow-[#6571FF]/30 transition-all hover:bg-[#525ceb] active:scale-95"
           onClick={data.edit ? handleEdit : handleSubmit}
           type="button"
         >
-          Done
+          {data.edit ? "Update Details" : "Done"}
         </button>
       </div>
     </div>

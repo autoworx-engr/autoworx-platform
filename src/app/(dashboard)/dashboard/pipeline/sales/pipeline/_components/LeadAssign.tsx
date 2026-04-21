@@ -1,17 +1,16 @@
-import { Tooltip } from "antd";
-import React, { useEffect, useRef, useState } from "react";
-import SalesSelector from "../../../components/SalesSelector";
-import { User } from "@prisma/client";
-import { LeadWithSalesUser } from "@/types/invoiceLead";
-import { updateLeadSalesUser } from "@/actions/pipelines/updateLeadSalesUser";
-import {
-  useColumnDispatch,
-  useCompanyUsers,
-} from "@/context/sales-pipeline.context";
 import { actionTypes } from "@/constants/lead.constant";
-import { errorToast, successToast } from "@/lib/toast";
+import {
+  useColumnDispatch
+} from "@/context/sales-pipeline.context";
+import { useAssignLeadSalesUserMutation } from "@/hooks/pipeline/usePipelineLeads";
 import useCompanyUsersQuery from "@/hooks/query-hook/useCompanyUsersQuery";
+import { errorToast, successToast } from "@/lib/toast";
+import { LeadWithSalesUser } from "@/types/invoiceLead";
+import { User } from "@prisma/client";
+import { Tooltip } from "antd";
 import { CirclePlus } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import SalesSelector from "../../../components/SalesSelector";
 
 type TSalesUserSelect = {
   leadId: number;
@@ -32,6 +31,7 @@ export default function LeadAssign({ lead, salesUser }: TProps) {
   const [isSalesSelectorOpen, setIsSalesSelectorOpen] = useState(false);
   const { data: companyUsers = [] } = useCompanyUsersQuery();
   const dispatch = useColumnDispatch();
+  const { mutateAsync: assignUser } = useAssignLeadSalesUserMutation();
 
   const handleSalesUserSelect = async ({
     leadId,
@@ -48,7 +48,7 @@ export default function LeadAssign({ lead, salesUser }: TProps) {
         },
       });
       setIsSalesSelectorOpen(false);
-      await updateLeadSalesUser(leadId, user?.id!);
+      await assignUser({ leadId, salesUserId: user?.id! });
       successToast("Sales user assigned successfully");
     } catch (err) {
       console.error("selected sales user error", err);
@@ -96,11 +96,13 @@ export default function LeadAssign({ lead, salesUser }: TProps) {
           </div>
         </Tooltip>
       ) : (
-        <CirclePlus
-          size={22}
-          className="mt-1 cursor-pointer"
-          onClick={() => setIsSalesSelectorOpen((prev) => !prev)}
-        />
+        <Tooltip title="Assign sales user" placement="right">
+          <CirclePlus
+            size={22}
+            className="mt-1 cursor-pointer"
+            onClick={() => setIsSalesSelectorOpen((prev) => !prev)}
+          />
+        </Tooltip>
       )}
       {isSalesSelectorOpen && (
         <div ref={salesSelectorRef} className="absolute right-0 top-6 z-10">

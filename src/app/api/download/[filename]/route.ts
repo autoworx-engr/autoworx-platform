@@ -3,6 +3,26 @@ import fs from "fs";
 import path from "path";
 import os from "os";
 
+/**
+ * @swagger
+ * /api/download/{filename}:
+ *   get:
+ *     summary: Download file by filename
+ *     tags: [Download]
+ *     parameters:
+ *       - in: path
+ *         name: filename
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: File downloaded
+ *       404:
+ *         description: File not found
+ *       500:
+ *         description: Server error
+ */
 export async function GET(
   req: NextRequest,
   { params }: { params: { filename: string } }

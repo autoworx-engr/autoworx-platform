@@ -7,11 +7,8 @@ import DateRange from "@/app/(dashboard)/dashboard/payments/components/PaymentDa
 import AttendanceTableSkeleton from "@/components/ui/AttendanceTableSkeleton";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { useServerGet } from "@/hooks/useServerGet";
-import {
-  convertDuration,
-  convertMinutesToHours,
-  getTotalBreaksValue,
-} from "@/lib/convertDurations";
+import { convertDuration, getTotalBreaksValue } from "@/lib/convertDurations";
+import { decimalHoursToHHMM } from "@/lib/decimalHoursToHHMM";
 import { Info, Pencil, Save, X } from "lucide-react";
 import moment from "moment-timezone";
 import { useParams } from "next/navigation";
@@ -79,6 +76,7 @@ const Dashboard = () => {
   const [updateSuccess, setUpdateSuccess] = useState<string | null>(null);
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
+  const [hasManualDateRange, setHasManualDateRange] = useState(false);
 
   const params = useParams();
   const employeeId = Number(params?.id);
@@ -100,7 +98,7 @@ const Dashboard = () => {
     employeeId,
     startDate || undefined,
     endDate || undefined,
-    refetch
+    refetch,
   );
 
   const getInfoContent = (label: string): string | undefined => {
@@ -110,7 +108,7 @@ const Dashboard = () => {
 
   const handleEditClick = (
     rowIndex: number,
-    field: "clockedIn" | "clockedOut"
+    field: "clockedIn" | "clockedOut",
   ) => {
     const data = attendanceInfo?.attInfo[rowIndex];
     if (!data || !isEditable(data, field)) return;
@@ -158,7 +156,7 @@ const Dashboard = () => {
         date,
         editingState.field,
         timeWithDate,
-        data.id
+        data.id,
       );
 
       if (result.success) {
@@ -198,7 +196,7 @@ const Dashboard = () => {
 
   const isEditable = (
     data: AttendanceData | AttendanceRecord,
-    field: "clockedIn" | "clockedOut"
+    field: "clockedIn" | "clockedOut",
   ) => {
     // Check if the field exists and is not a string (like "Absent", "No Show", etc.)
     return (
@@ -209,7 +207,7 @@ const Dashboard = () => {
   const renderTimeCell = (
     data: AttendanceData | AttendanceRecord,
     field: "clockedIn" | "clockedOut",
-    rowIndex: number
+    rowIndex: number,
   ) => {
     const isCurrentlyEditing =
       editingState?.rowIndex === rowIndex && editingState?.field === field;
@@ -281,15 +279,12 @@ const Dashboard = () => {
     },
     {
       label: "Total Hours",
-      value: `${convertMinutesToHours(isNaN(Number(attendanceInfo?.totalHoursWorked)) ? 0 : Number(attendanceInfo?.totalHoursWorked))} Hours`,
-      //  percentage: attendanceInfo?.growthRateTotalHoursWorked?.rate || "0%",
-      percentage: (() => {
-        const rate = attendanceInfo?.growthRateTotalHoursWorked?.rate;
-        if (rate === null || rate === undefined || isNaN(Number(rate))) {
-          return "0%";
-        }
-        return rate;
+      value: (() => {
+        const total = Number(attendanceInfo?.totalHoursWorked) || 0;
+        return decimalHoursToHHMM(total);
       })(),
+
+      percentage: attendanceInfo?.growthRateTotalHoursWorked?.rate || "0%",
       isPositive:
         attendanceInfo?.growthRateTotalHoursWorked?.isPositive || false,
     },
@@ -308,6 +303,10 @@ const Dashboard = () => {
       <div className="relative flex h-auto w-full flex-col gap-8 rounded border bg-background p-1 lg:p-6">
         <div className="left-3 top-3 w-fit">
           <DateRange
+            dateRange={[
+              hasManualDateRange && startDate ? new Date(startDate) : null,
+              hasManualDateRange && endDate ? new Date(endDate) : null,
+            ]}
             onOk={(start: any, end: any) => {
               let startDateObj: Date;
               let endDateObj: Date;
@@ -355,16 +354,25 @@ const Dashboard = () => {
               // When user selects dates from DateRangePicker, they're in local browser time
               // We need to ensure these dates are interpreted correctly by the server
               // Format as YYYY-MM-DD which will be interpreted by the server in company timezone
+              // const formattedStartDate = moment
+              //   .utc(startDateObj)
+              //   .format("YYYY-MM-DD");
+              // const formattedEndDate = moment
+              //   .utc(endDateObj)
+              //   .format("YYYY-MM-DD");
               const formattedStartDate =
                 moment(startDateObj).format("YYYY-MM-DD");
               const formattedEndDate = moment(endDateObj).format("YYYY-MM-DD");
 
               // Update state with the new dates
+
               setStartDate(formattedStartDate);
               setEndDate(formattedEndDate);
+              setHasManualDateRange(true);
             }}
             onCancel={() => {
-              // Reset to current week
+              // Clear manual filter in UI and keep fallback current week data
+              setHasManualDateRange(false);
               if (timezone) {
                 const currentWeekStart = moment.tz(timezone).startOf("week");
                 const currentWeekEnd = moment.tz(timezone).endOf("week");
@@ -409,31 +417,38 @@ const Dashboard = () => {
                         {attendanceInfo?.attInfo?.map((data, index) => {
                           // Fix date processing to avoid timezone shifts
                           // If data.date is a string in YYYY-MM-DD format, parse it as local date
+
                           let dateMoment;
                           if (typeof data.date === "string") {
                             dateMoment = moment.tz(`${data.date}`, timezone);
                           } else {
-                            // FIX: Parse as-is without shifting time
-                            dateMoment = moment(data.date).tz(timezone, true);
+                            dateMoment = moment.tz(data.date, timezone);
                           }
 
-                          const dayOfWeek = dateMoment.day();
+                          // Get the timezone offset in hours relative to UTC
+                          const offsetHours = dateMoment.utcOffset() / 60;
+
+                          let utcMoment = moment.tz(data.date, timezone);
+                          if (offsetHours < 0) {
+                            utcMoment.add(1, "day");
+                          }
+                          const dayOfWeek = utcMoment.day();
                           const dayAbbr = daysOfWeek[dayOfWeek];
-                          const dayDate = dateMoment.date();
+                          const dayDate = utcMoment.date();
 
                           const effectiveHours = isNaN(Number(data.hours))
                             ? data.hours
                             : convertDuration(
-                              Number(data.hours) - Number(data.totalBreaks)
-                            );
-
+                                Number(data.hours) - Number(data.totalBreaks),
+                              );
                           return (
                             <tr
                               key={index}
-                              className={`group ${index % 2 === 0
-                                ? "border-b bg-blue-50"
-                                : "border-b bg-background"
-                                }`}
+                              className={`group ${
+                                index % 2 === 0
+                                  ? "border-b bg-blue-50"
+                                  : "border-b bg-background"
+                              }`}
                             >
                               <td className="bg-background px-2 py-2 font-medium sm:px-4">
                                 {dayAbbr}-{dayDate}
@@ -487,8 +502,9 @@ const Dashboard = () => {
                       {metric.value}
                     </div>
                     <div
-                      className={`mt-1 flex items-center justify-end gap-1 text-sm font-medium ${metric.isPositive ? 'text-emerald-500' : 'text-rose-500'
-                        }`}
+                      className={`mt-1 flex items-center justify-end gap-1 text-sm font-medium ${
+                        metric.isPositive ? "text-emerald-500" : "text-rose-500"
+                      }`}
                     >
                       {metric.isPositive ? (
                         <svg
@@ -512,7 +528,10 @@ const Dashboard = () => {
                           role="img"
                           className="transition duration-300 hover:scale-110"
                         >
-                          <path d="M12 15.5L5 8.5h14l-7 7z" fill="currentColor" />
+                          <path
+                            d="M12 15.5L5 8.5h14l-7 7z"
+                            fill="currentColor"
+                          />
                         </svg>
                       )}
                       <div className="text-nowrap">{metric.percentage}</div>

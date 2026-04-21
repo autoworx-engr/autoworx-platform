@@ -33,6 +33,7 @@ interface EstimateCreateStore {
   discount: number;
   tax: number;
   serviceFee: number;
+  vehicleExtraCost: number;
   deposit: number;
   grandTotal: number;
   type: string;
@@ -58,6 +59,7 @@ interface EstimateCreateStore {
   setDiscount: (discount: number) => void;
   setTax: (tax: number) => void;
   setServiceFee: (serviceFee: number) => void;
+  setVehicleExtraCost: (vehicleExtraCost: number) => void;
   setGrandTotal: (grandTotal: number) => void;
   setDue: (due: number) => void;
   setDeposit: (deposit: number) => void;
@@ -90,7 +92,7 @@ interface EstimateCreateStore {
   }) => void;
 }
 
-export const useEstimateCreateStore = create<EstimateCreateStore>((set) => ({
+export const useEstimateCreateStore = create<EstimateCreateStore>(set => ({
   invoiceId: "",
   type: "",
   title: "",
@@ -99,6 +101,7 @@ export const useEstimateCreateStore = create<EstimateCreateStore>((set) => ({
   discount: 0,
   tax: 0,
   serviceFee: 0,
+  vehicleExtraCost: 0,
   deposit: 0,
   grandTotal: 0,
   due: 0,
@@ -128,6 +131,7 @@ export const useEstimateCreateStore = create<EstimateCreateStore>((set) => ({
   setDiscount: (discount: number) => set({ discount }),
   setTax: (tax: number) => set({ tax }),
   setServiceFee: (serviceFee: number) => set({ serviceFee }),
+  setVehicleExtraCost: (vehicleExtraCost: number) => set({ vehicleExtraCost }),
   setGrandTotal: (grandTotal: number) => set({ grandTotal }),
   setDue: (due: number) => set({ due }),
   setDeposit: (deposit: number) => set({ deposit }),
@@ -161,7 +165,7 @@ export const useEstimateCreateStore = create<EstimateCreateStore>((set) => ({
 
   setInspections: (inspections: InspectionType[]) => set({ inspections }),
   updateInspection: (index: number, inspection: InspectionType) =>
-    set((state) => {
+    set(state => {
       const updatedInspections = [...state.inspections];
       updatedInspections[index] = inspection;
       return { inspections: updatedInspections };
@@ -177,6 +181,7 @@ export const useEstimateCreateStore = create<EstimateCreateStore>((set) => ({
       deposit: 0,
       tax: 0,
       serviceFee: 0,
+      vehicleExtraCost: 0,
       grandTotal: 0,
       totalPayment: 0,
       due: 0,
@@ -198,8 +203,9 @@ export const useEstimateCreateStore = create<EstimateCreateStore>((set) => ({
       })),
       damageNotes: "",
     }),
+
   removeMaterial({ itemIndex, materialIndex }) {
-    set((state) => {
+    set(state => {
       const items = state.items.map((item, index) => {
         if (index === itemIndex && item.materials.length > 0) {
           const materials = item.materials.filter((material, i) => {

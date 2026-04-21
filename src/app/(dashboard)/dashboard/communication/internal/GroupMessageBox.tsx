@@ -12,6 +12,7 @@ type TProps = {
   setGroupsList: React.Dispatch<
     React.SetStateAction<(Group & { users: User[] })[]>
   >;
+  existingGroups: Array<Group & { users: User[] }>;
   totalMessageBox: number;
   group: Group & { users: User[] };
 };
@@ -20,6 +21,7 @@ export default function GroupMessageBox({
   group,
   totalMessageBox,
   setGroupsList,
+  existingGroups,
 }: TProps) {
   const [groupMessages, setGroupMessages] = useState<any[]>([]);
   const { data: session } = useSession();
@@ -49,8 +51,10 @@ export default function GroupMessageBox({
           }),
         );
     };
-    fetchGroupMessages();
-  }, []);
+    if (session?.user?.id) {
+      fetchGroupMessages();
+    }
+  }, [group.id, session?.user?.id]);
 
   // for group real-time messages
   useEffect(() => {
@@ -97,7 +101,7 @@ export default function GroupMessageBox({
     return () => {
       channel.unbind("message");
     };
-  }, []);
+  }, [group.id, session?.user?.id, setGroupsList]);
 
   return (
     <MessageBox
@@ -108,6 +112,7 @@ export default function GroupMessageBox({
       setMessages={setGroupMessages}
       totalMessageBox={totalMessageBox}
       setGroupsList={setGroupsList}
+      existingGroups={existingGroups}
     />
   );
 }

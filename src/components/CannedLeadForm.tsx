@@ -5,6 +5,7 @@ import { deleteLeadLink } from "@/actions/lead/deleteLeadLink";
 import Image from "next/image";
 import { successToast } from "@/lib/toast";
 import { Skeleton } from "@mui/material";
+import { Popconfirm } from "antd";
 import moment from "moment";
 import { ClipboardCheck, Clock, Copy, Download, Link, QrCode, Trash2, X } from "lucide-react";
 
@@ -93,14 +94,14 @@ const CannedLeadForm = ({ companyId }: { companyId: number }) => {
     setTimeout(() => setCopiedLink(null), 1000);
   };
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 md:px-8">
+    <div className="mx-auto w-full max-w-6xl">
       <h2 className="mb-4 flex items-center text-2xl font-bold ">
         <Clock className="h-6 w-6 mr-2 text-gray-600" />
         Saved Lead Links History
       </h2>
 
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
-        <div className="p-4 sm:p-6">
+        <div className="p-4">
           {isLoading ? (
             <div className="space-y-6">
               {[1, 2, 3].map((item) => (
@@ -148,9 +149,8 @@ const CannedLeadForm = ({ companyId }: { companyId: number }) => {
                   {groupedEntries[source].map((entry) => (
                     <div
                       key={entry.id}
-                      className={`rounded-xl border-2 ${
-                        entry.showQR ? "border-blue-500 bg-blue-50" : "border-gray-200 bg-white"
-                      } transition-all duration-300 hover:shadow-lg`}
+                      className={`rounded-xl border-2 ${entry.showQR ? "border-blue-500 bg-blue-50" : "border-gray-200 bg-white"
+                        } transition-all duration-300 hover:shadow-lg`}
                     >
                       <div className="p-4 sm:p-5">
                         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
@@ -168,11 +168,10 @@ const CannedLeadForm = ({ companyId }: { companyId: number }) => {
                           <div className="flex space-x-2 self-end sm:self-auto">
                             {/* Copy Button */}
                             <button
-                              className={`rounded-full p-2 transition-colors duration-200 focus:outline-none focus:ring-2 ${
-                                copiedLink === entry.id
-                                  ? "bg-green-100 text-green-600 focus:ring-green-400"
-                                  : "hover:bg-gray-100 text-gray-800 focus:ring-blue-400"
-                              }`}
+                              className={`rounded-full p-2 transition-colors duration-200 focus:outline-none focus:ring-2 ${copiedLink === entry.id
+                                ? "bg-green-100 text-green-600 focus:ring-green-400"
+                                : "hover:bg-gray-100 text-gray-800 focus:ring-blue-400"
+                                }`}
                               onClick={() => handleCopyLink(entry)}
                               aria-label="Copy link"
                               title="Copy link"
@@ -185,11 +184,10 @@ const CannedLeadForm = ({ companyId }: { companyId: number }) => {
                             </button>
                             {/* QR Code Button */}
                             <button
-                              className={`rounded-full p-2 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 ${
-                                entry.showQR
-                                  ? "bg-blue-200 text-blue-700"
-                                  : "hover:bg-gray-100 text-gray-800"
-                              }`}
+                              className={`rounded-full p-2 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 ${entry.showQR
+                                ? "bg-blue-200 text-blue-700"
+                                : "hover:bg-gray-100 text-gray-800"
+                                }`}
                               onClick={() => handleToggleQR(entry.id)}
                               aria-label="Show QR code"
                               title="Show QR code"
@@ -199,14 +197,21 @@ const CannedLeadForm = ({ companyId }: { companyId: number }) => {
                               />
                             </button>
                             {/* Delete Button */}
-                            <button
-                              className="rounded-full p-2 transition-colors duration-200 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-400 text-red-600"
-                              onClick={() => handleDeleteLink(entry.id)}
-                              aria-label="Delete link"
-                              title="Delete link"
+                            <Popconfirm
+                              title="Delete lead link"
+                              description="Are you sure you want to delete this link?"
+                              okText="Yes"
+                              cancelText="No"
+                              onConfirm={() => handleDeleteLink(entry.id)}
                             >
-                              <Trash2 className="h-6 w-6" />
-                            </button>
+                              <button
+                                className="rounded-full p-2 transition-colors duration-200 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-400 text-red-600"
+                                aria-label="Delete link"
+                                title="Delete link"
+                              >
+                                <Trash2 className="h-6 w-6" />
+                              </button>
+                            </Popconfirm>
                           </div>
                         </div>
 
@@ -236,7 +241,7 @@ const CannedLeadForm = ({ companyId }: { companyId: number }) => {
                               }}
                               className="order-2 w-full sm:w-auto flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium transition-colors duration-200 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400 sm:order-1"
                             >
-                                <Download className="h-4 w-4 mr-2" />
+                              <Download className="h-4 w-4 mr-2" />
                               Copy QR Code
                             </button>
                             <div className="order-1 rounded-xl border border-gray-200 bg-white p-3 shadow-md sm:order-2">

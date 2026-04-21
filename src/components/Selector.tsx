@@ -2,6 +2,7 @@ import { cn } from "@/lib/cn";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuPortal,
   DropdownMenuTrigger,
 } from "@radix-ui/react-dropdown-menu";
 import {
@@ -17,14 +18,14 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { ChevronDown, ChevronUp, Search } from "lucide-react";
+import { Check, ChevronDown, Search, X } from "lucide-react";
 
 interface SelectorProps<T> {
   label: (item: T | null) => string;
   items: T[];
   border?: boolean;
   footer?: React.ReactNode;
-  newButton: React.ReactNode;
+  newButton?: React.ReactNode;
   displayList: (item: T) => JSX.Element;
   onSearch?: (search: string) => T[];
   onSelect?: (item: T) => void;
@@ -34,33 +35,15 @@ interface SelectorProps<T> {
   clickabled?: boolean;
   disabledDropdown?: boolean;
   className?: string;
-  // Infinite scroll props
   hasNextPage?: boolean;
   fetchNextPage?: () => void;
   isFetchingNextPage?: boolean;
   useInfiniteScroll?: boolean;
+  showSearch?: boolean;
+  usePortal?: boolean;
+  isLoading?: boolean;
 }
 
-/**
- * Selector Component
- *
- * This component is a reusable dropdown selector with search functionality.
- *
- * @template T - The type of items in the dropdown list.
- * @param {SelectorProps<T>} props - The props for the Selector component.
- * @param {(item: T | null) => string} props.label - A function to render the label for the selected item or the default label if no item is selected.
- * @param {T[]} props.items - The list of items to display in the dropdown.
- * @param {React.ReactNode} props.newButton - A button or element to display at the bottom of the dropdown.
- * @param {(item: T) => JSX.Element} props.displayList - A function to render each item in the list.
- * @param {(search: string) => T[]} [props.onSearch] - A function to handle search input and return the filtered items.
- * @param {(item: T) => void} [props.onSelect] - A function to handle item selection.
- * @param {[boolean, React.Dispatch<React.SetStateAction<boolean>>]} [props.openState] - Optional state for controlling the open state from outside.
- * @param {T | null | undefined} [props.selectedItem] - The currently selected item.
- * @param {React.Dispatch<React.SetStateAction<T | null>>} [props.setSelectedItem] - Function to set the selected item.
- * @param {boolean} [props.clickabled] - Optional prop to enable/disable item selection.
- * @param {boolean} [props.disabledDropdown] - Optional prop to disable the dropdown.
- * @returns {JSX.Element} The rendered Selector component.
- */
 export default function Selector<T>({
   label,
   items,
@@ -76,244 +59,281 @@ export default function Selector<T>({
   clickabled = true,
   disabledDropdown = false,
   className,
-  // Infinite scroll props
   hasNextPage = false,
   fetchNextPage,
   isFetchingNextPage = false,
   useInfiniteScroll = false,
+  showSearch = true,
+  usePortal = false,
+  isLoading = false,
 }: SelectorProps<T>): JSX.Element {
-  // Using provided open state or setting local state
   const [searchTerm, setSearchTerm] = useState("");
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const [isOpen, setIsOpen] = openState || useState(false);
-  // Local state to manage the list of items to display
+  const [localOpen, setLocalOpen] = useState(false);
+  const [useCompactTriggerBehavior, setUseCompactTriggerBehavior] =
+    useState(false);
+  const [isOpen, setIsOpen] = openState || [localOpen, setLocalOpen];
   const [filteredItems, setFilteredItems] = useState<T[]>(items);
-  // Local state to manage the selected item
   const [selected, setSelected] = useState<T | null | undefined>(selectedItem);
 
-  // Ref for the scrollable container
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Update item list when items prop changes
   useEffect(() => {
     setFilteredItems(items);
   }, [items]);
+  // useEffect(() => {
+  //   setSelected(selectedItem);
+  // }, [selectedItem]);
 
   // Update selected item when selectedItem prop changes
   useEffect(() => {
     setSelected(selectedItem);
   }, [selectedItem]);
 
-  // Infinite scroll handler
-  const handleScroll = useCallback(() => {
-    if (
-      !useInfiniteScroll ||
-      !scrollContainerRef.current ||
-      !hasNextPage ||
-      isFetchingNextPage
-    ) {
-      return;
-    }
-
-    const { scrollTop, scrollHeight, clientHeight } =
-      scrollContainerRef.current;
-    const isNearBottom = scrollTop + clientHeight >= scrollHeight - 10;
-
-    if (isNearBottom && fetchNextPage) {
-      fetchNextPage();
-    }
-  }, [useInfiniteScroll, hasNextPage, isFetchingNextPage, fetchNextPage]);
-
-  // Attach scroll event listener
   useEffect(() => {
-    const scrollContainer = scrollContainerRef.current;
-    if (useInfiniteScroll && scrollContainer) {
-      scrollContainer.addEventListener("scroll", handleScroll);
-      return () => scrollContainer.removeEventListener("scroll", handleScroll);
-    }
-  }, [handleScroll, useInfiniteScroll]);
+    const updateViewportBehavior = () => {
+      setUseCompactTriggerBehavior(window.innerWidth < 660);
+    };
 
-  /**
-   * Handle search input change
-   *
-   * @param {ChangeEvent<HTMLInputElement>} e - The change event of the input field.
-   */
+    updateViewportBehavior();
+    window.addEventListener("resize", updateViewportBehavior);
+
+    return () => {
+      window.removeEventListener("resize", updateViewportBehavior);
+    };
+  }, []);
+
+  // Infinite scroll handler
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (!useInfiniteScroll || !hasNextPage || isFetchingNextPage) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+
+    const isNearBottom = scrollTop + clientHeight >= scrollHeight - 20;
+
+    if (isNearBottom) {
+      fetchNextPage?.();
+    }
+  };
+
   function handleSearchChange(e: ChangeEvent<HTMLInputElement>) {
     const searchQuery = e.target.value;
     setSearchTerm(searchQuery);
     if (onSearch) {
-      const searchResults = onSearch(searchQuery);
-      setFilteredItems(searchResults);
+      setFilteredItems(onSearch(searchQuery));
     } else {
       const searchedItems = searchQuery.trim()
-        ? filteredItems.filter((item: any) => {
-            return (
+        ? items.filter(
+            (item: any) =>
               item.clientName
-                .toLowerCase()
+                ?.toLowerCase()
                 .includes(searchQuery.toLowerCase()) ||
               item.id
-                .toString()
+                ?.toString()
                 .toLowerCase()
-                .includes(searchQuery.toLowerCase())
-            );
-          })
+                .includes(searchQuery.toLowerCase()),
+          )
         : items;
-
       setFilteredItems(searchedItems);
     }
   }
 
-  /**
-   * Handle item selection
-   *
-   * @param {T} item - The selected item.
-   */
   function handleSelectItem(item: T) {
     setSelected(item);
     if (setSelectedItem) setSelectedItem(item);
     if (onSelect) onSelect(item);
-    if (setIsOpen) setIsOpen(false);
-    if (onSearch) {
-      const searchResults = onSearch("");
-      setFilteredItems(searchResults);
-    }
-    setSearchTerm(""); // Clear search term on selection
+    setIsOpen(false);
+    setSearchTerm("");
+    setFilteredItems(items);
   }
 
-  /**
-   * Handle dropdown close
-   */
-  function handleCloseDropdown() {
-    setIsOpen(false);
-  }
+  const dropdownInnerContent = (
+    <>
+      {/* Search Area */}
+      {showSearch && (
+        <div className="relative px-2 py-2 border-b border-slate-100">
+          <Search
+            size={14}
+            strokeWidth={2.5}
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+          />
+          <input
+            type="text"
+            placeholder="Search..."
+            className="w-full rounded-md bg-slate-50 py-1.5 pl-8 pr-3 text-sm outline-none border border-transparent focus:border-[#6571FF]/40 focus:bg-white placeholder:text-slate-400 transition-colors duration-150"
+            onChange={handleSearchChange}
+            value={searchTerm}
+          />
+        </div>
+      )}
+
+      {/* Items list */}
+      <div
+        ref={scrollContainerRef}
+        onScroll={handleScroll}
+        className="flex max-h-48 flex-col overflow-y-auto py-1 thin-scrollbar"
+      >
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-6 px-4">
+            <p className="text-sm text-slate-400">Loading...</p>
+          </div>
+        ) : filteredItems?.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-6 px-4">
+            <Search size={18} className="text-slate-300 mb-1.5" />
+            <p className="text-sm text-slate-400">No results found</p>
+          </div>
+        ) : (
+          filteredItems?.map((item, index) => {
+            const key = (item as any)?.id
+              ? `item-${(item as any).id}`
+              : `index-${index}`;
+
+            const isSelected =
+              selected !== null &&
+              ((item as any)?.id && (selected as any)?.id
+                ? (item as any).id === (selected as any).id
+                : item === selected);
+
+            if (clickabled) {
+              return (
+                <button
+                  onClick={() => handleSelectItem(item)}
+                  type="button"
+                  key={key}
+                  className={cn(
+                    "flex w-full items-center gap-2 px-2.5 py-2 text-left text-sm transition-colors duration-100",
+                    "hover:bg-[#6571FF]/5 active:bg-[#6571FF]/10",
+                    isSelected && "bg-[#6571FF]/10",
+                    border &&
+                      "border-b border-slate-100 rounded-md last:border-b-0",
+                  )}
+                >
+                  <div className="flex-1 min-w-0">{displayList(item)}</div>
+                  {isSelected && (
+                    <Check
+                      size={14}
+                      strokeWidth={3}
+                      className="shrink-0 text-[#6571FF]"
+                    />
+                  )}
+                </button>
+              );
+            } else {
+              return (
+                <div
+                  key={key}
+                  className={cn(
+                    "flex w-full items-center gap-2 px-2.5 py-2 text-left text-sm",
+                    "hover:bg-[#6571FF]/5",
+                    border && "border-b border-slate-100 last:border-b-0",
+                  )}
+                >
+                  <div className="flex-1 min-w-0">{displayList(item)}</div>
+                </div>
+              );
+            }
+          })
+        )}
+
+        {/* Loading indicator for infinite scroll */}
+        {isFetchingNextPage && (
+          <div className="flex items-center justify-center gap-2 py-3">
+            <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-200 border-t-[#6571FF]" />
+            <span className="text-xs text-slate-400">Loading...</span>
+          </div>
+        )}
+      </div>
+
+      {/* Footer / Action area */}
+      {(newButton || footer) && (
+        <div className="border-t border-slate-100 p-1.5">
+          {newButton}
+          {footer && <div className="mt-1">{footer}</div>}
+        </div>
+      )}
+    </>
+  );
+
+  const contentClassName = cn(
+    "z-50 w-[var(--radix-popper-anchor-width)] min-w-[220px] overflow-hidden rounded-lg",
+    "border border-slate-200 bg-white shadow-lg",
+    "animate-in fade-in-0 zoom-in-95 duration-150",
+  );
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-      <div className={cn("w-full max-w-96", className)}>
+      <div
+        className={cn("w-full max-w-sm transition-all duration-300", className)}
+      >
         <DropdownMenuTrigger
+          onPointerDown={
+            useCompactTriggerBehavior ? (e) => e.preventDefault() : undefined
+          }
+          onFocus={
+            useCompactTriggerBehavior ? (e) => e.preventDefault() : undefined
+          }
+          onClick={(e) => {
+            if (!useCompactTriggerBehavior) {
+              return;
+            }
+            e.stopPropagation();
+            setIsOpen(!isOpen);
+          }}
           disabled={disabledDropdown}
-          onClick={() => setIsOpen && setIsOpen(true)}
           className={cn(
-            "flex h-10 w-full items-center  justify-between rounded-md border-2 border-slate-400 px-4",
-            isOpen && "invisible"
+            "group flex h-9 mt-1 w-[99%] items-center justify-between rounded-lg px-4 transition-all duration-300 outline-none",
+            "bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm hover:shadow-md",
+            "ring-1 ring-slate-200 dark:ring-slate-800",
+            isOpen
+              ? "ring-2 ring-[#6571FF]/60 border-transparent"
+              : "hover:ring-slate-300",
+            disabledDropdown && "opacity-50 cursor-not-allowed",
           )}
         >
-          {/* Display selected item or label */}
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <p className="text-sm font-medium text-slate-700 cursor-default">
-                  {selected
-                    ? label(selected).length > 25
-                      ? label(selected).substring(0, 25) + "..."
-                      : label(selected)
-                    : label(null)}
-                </p>
+                <span className="text-sm font-medium text-slate-600 dark:text-slate-300 truncate pr-2">
+                  {selected ? label(selected) : label(null)}
+                </span>
               </TooltipTrigger>
               {selected && label(selected).length > 25 && (
-                <TooltipContent>
+                <TooltipContent className="bg-slate-900 text-white border-none shadow-xl">
                   <p>{label(selected)}</p>
                 </TooltipContent>
               )}
             </Tooltip>
           </TooltipProvider>
-          {!disabledDropdown && <ChevronDown className="ms-4 text-[#797979]" />}
+
+          {!disabledDropdown && (
+            <ChevronDown
+              size={18}
+              className={cn(
+                "text-slate-400 transition-transform duration-300",
+                isOpen && "rotate-180 text-[#6571FF]",
+              )}
+            />
+          )}
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent
-          align="start"
-          sideOffset={-40}
-          className="z-50 w-[300px] rounded-lg border-2 border-slate-400 bg-background md:w-full"
-          style={{
-            minWidth: "var(--radix-popper-anchor-width)",
-            // maxWidth: "var(--radix-popper-anchor-width)",
-          }}
-        >
-          {/* Search input */}
-          <div className="relative m-2">
-            <Search
-              size={18}
-              className="absolute left-2 top-1/2 -translate-y-1/2 transform text-[#797979]"
-            />
-            <input
-              type="text"
-              placeholder="Search"
-              className="w-full rounded-md border-2 border-slate-400 p-1 pl-6 pr-10 focus:outline-none"
-              onChange={handleSearchChange}
-              value={searchTerm}
-            />
-            <button onClick={handleCloseDropdown}>
-              <ChevronUp className="absolute right-2 top-1/2 -translate-y-1/2 transform text-[#797979]" />
-            </button>
-          </div>
-
-          {/* Display list of items */}
-          <div
-            ref={scrollContainerRef}
-            className="mb-5 flex max-h-40 flex-col overflow-y-auto"
+        {usePortal ? (
+          <DropdownMenuPortal>
+            <DropdownMenuContent
+              align="start"
+              sideOffset={4}
+              className={contentClassName}
+            >
+              {dropdownInnerContent}
+            </DropdownMenuContent>
+          </DropdownMenuPortal>
+        ) : (
+          <DropdownMenuContent
+            align="start"
+            sideOffset={4}
+            className={contentClassName}
           >
-            {filteredItems?.map((item, index) => {
-              // Use a unique key that combines the item's id if available, otherwise fall back to index
-              const key = (item as any)?.id
-                ? `item-${(item as any).id}`
-                : `index-${index}`;
-
-              if (clickabled) {
-                return (
-                  <button
-                    onClick={() => {
-                      handleSelectItem(item);
-                    }}
-                    type="button"
-                    key={key}
-                    className={cn(
-                      "w-full p-1 px-2 text-left hover:bg-gray-100",
-                      border &&
-                        "relative left-1/2 my-1 w-[95%] -translate-x-1/2 rounded-md border-2 border-slate-400 py-[0.3rem]"
-                    )}
-                  >
-                    {displayList(item)}
-                  </button>
-                );
-              } else {
-                return (
-                  <div
-                    key={key}
-                    className={cn(
-                      "w-full p-1 px-2 text-left hover:bg-gray-100",
-                      border &&
-                        "relative left-1/2 my-1 w-[95%] -translate-x-1/2 rounded-md border-2 border-slate-400 py-[0.3rem]"
-                    )}
-                  >
-                    {displayList(item)}
-                  </div>
-                );
-              }
-            })}
-
-            {/* Loading indicator for infinite scroll */}
-            {useInfiniteScroll && isFetchingNextPage && (
-              <div className="flex justify-center py-2">
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600"></div>
-              </div>
-            )}
-
-            {/* End of list indicator */}
-            {useInfiniteScroll && !hasNextPage && filteredItems.length > 0 && (
-              <div className="py-2 text-center text-xs text-gray-500">
-                No more items to load
-              </div>
-            )}
-          </div>
-          {/* Footer content like Clear button */}
-          {footer && (
-            <div className="mt-1 border-t pt-1" onClick={handleCloseDropdown}>
-              {footer}
-            </div>
-          )}
-          {/* New button */}
-          <div className="border-t-2 border-slate-400 p-2">{newButton}</div>
-        </DropdownMenuContent>
+            {dropdownInnerContent}
+          </DropdownMenuContent>
+        )}
       </div>
     </DropdownMenu>
   );

@@ -24,6 +24,9 @@ type TProps = {
   buttonClassName?: string;
   children?: React.ReactNode;
   dropdownIcon?: React.ReactNode;
+  showClearButton?: boolean;
+  clearLabel?: string;
+  onClear?: () => void;
 };
 
 export function DropdownSelection({
@@ -36,9 +39,19 @@ export function DropdownSelection({
   buttonClassName,
   children,
   dropdownIcon,
+  showClearButton = false,
+  clearLabel = "Clear",
+  onClear,
 }: TProps) {
+  const [isOpen, setIsOpen] = React.useState(false);
+
+  const handleClear = () => {
+    onClear?.();
+    setIsOpen(false);
+  };
+
   return (
-    <DropdownMenu>
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
         {children ? (
           children
@@ -49,7 +62,7 @@ export function DropdownSelection({
               "flex items-center justify-center gap-x-1 text-xs lg:gap-x-2 lg:text-base",
               "rounded-xl px-3 py-2 transition-transform duration-500 ease-out transform hover:scale-[1.02]",
               // base appearance
-              "bg-white/60 dark:bg-slate-900/40 backdrop-blur-sm",
+              "bg-white dark:bg-slate-900/40",
               // default ring + hover
               "ring-1 ring-slate-900/5 dark:ring-slate-700/20 hover:ring-[#6470fd]/50 hover:shadow-sm",
               // when menu is open (radix sets aria-expanded)
@@ -81,7 +94,7 @@ export function DropdownSelection({
       <DropdownMenuContent
         className={cn(
           "w-56 max-h-80 overflow-y-auto thin-scrollbar",
-          "rounded-2xl p-2 backdrop-blur-md bg-white/60 dark:bg-slate-900/50",
+          "rounded-2xl p-2 m-2 backdrop-blur-md bg-white dark:bg-slate-900/50",
           "ring-1 ring-slate-900/5 dark:ring-slate-700/20 shadow-lg border-transparent",
           "transition-all duration-200",
           contentClassName
@@ -106,8 +119,8 @@ export function DropdownSelection({
                 key={value}
                 value={value}
                 className={cn(
-                  "group flex items-center justify-between px-3 py-2 rounded-lg text-sm",
-                  "text-slate-600 dark:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-slate-800/60",
+                  "group flex items-center justify-between px-3 py-2 rounded-lg text-sm border-b border-slate-200 dark:border-slate-800",
+                  "text-slate-600 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60",
                   "transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#6470fd]/20",
                   "data-[state=checked]:bg-[#6470fd] data-[state=checked]:text-white",
                   "data-[state=checked]:shadow-[0_8px_30px_rgba(100,112,253,0.12)]"
@@ -123,8 +136,8 @@ export function DropdownSelection({
               key={defaultValue}
               value={defaultValue || ""}
               className={cn(
-                "group flex items-center justify-between px-3 py-2 rounded-lg text-sm",
-                "text-slate-600 dark:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-slate-800/60",
+                "group flex items-center justify-between px-3 py-2 rounded-lg text-sm border-b border-slate-200 dark:border-slate-800",
+                "text-slate-600 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60",
                 "transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#6470fd]/20",
                 "data-[state=checked]:bg-[#6470fd] data-[state=checked]:text-white",
                 "data-[state=checked]:shadow-[0_8px_30px_rgba(100,112,253,0.12)]"
@@ -136,6 +149,18 @@ export function DropdownSelection({
             </DropdownMenuRadioItem>
           )}
         </DropdownMenuRadioGroup>
+        {showClearButton && onClear && (
+          <div className="sticky bottom-0 mt-2 rounded-2xl backdrop-blur-md dark:bg-slate-900/70">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full rounded-lg text-sm font-semibold text-white hover:text-white bg-rose-500 hover:bg-rose-600 dark:text-slate-200 dark:hover:text-white"
+              onClick={handleClear}
+            >
+              {clearLabel}
+            </Button>
+          </div>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

@@ -16,6 +16,7 @@ import useWeekStartEndDays from "../../../_hook/lib/useWeekStartEndDays";
 import AppointmentTooltip from "../AppointmentTooltip";
 import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
 import { Clock, Mail, Phone, User as UserIcon, Users } from "lucide-react";
+import CalendarTooltip from "../CalendarTooltip";
 
 // Gradient priority classes for tasks
 const priorityClasses = {
@@ -51,9 +52,11 @@ export default function DayTask({
   const startRowTime = moment("00:00", "HH:mm");
   const startEventTime = moment(event.startTime, "HH:mm");
   const diffRowAndEventTime = startEventTime.diff(startRowTime, "minutes");
-
+  const [openTooltipId, setOpenTooltipId] = useState<string | number | null>(
+    null,
+  );
   const { weekStartDate, weekEndDate } = useWeekStartEndDays();
-
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const revalidateTaskQueries = () => {
     queryClient.invalidateQueries({
       queryKey: [taskQueryKey.allTasks, dateFormat],
@@ -98,7 +101,7 @@ export default function DayTask({
   // @ts-ignore
   const backgroundColor = event.priority
     ? //@ts-ignore
-    priorityClasses[event.priority]
+      priorityClasses[event.priority]
     : "rgb(255, 255, 255)";
 
   const APPOINTMENT_TEXT_COLOR = "text-slate-600 dark:text-slate-300";
@@ -114,13 +117,17 @@ export default function DayTask({
   if (!isRefAvailable) return null;
 
   console.log("Rendering Task: ", event);
+  const isTooltipOpen = openTooltipId === event.id;
   return (
-    <Tooltip key={event.id}>
+    <Tooltip key={event.id} open={isTooltipOpen} onOpenChange={() => {}}>
       <ResizeTaskTooltip
         rowsLength={rowsLength}
         task={event}
         height={height}
-        className={cn(isDragOver && "z-20 opacity-50", `bg-white ${backgroundColor}`)}
+        className={cn(
+          isDragOver && "z-20 opacity-50",
+          `bg-white ${backgroundColor}`,
+        )}
         style={{
           left: calculateLeftPosition,
           top,
@@ -136,23 +143,33 @@ export default function DayTask({
             height: "100%",
           }}
           task={event}
+          onClick={(e: React.MouseEvent) => {
+            e.stopPropagation();
+            e.preventDefault();
+            setOpenTooltipId(isTooltipOpen ? null : event.id);
+          }}
         >
           {
             <>
               {event.type === "appointment" ? (
                 <div className="relative flex h-full flex-col items-start pr-3">
-
                   {/* Content Area */}
                   <div className="flex-1 overflow-auto thin-scrollbar w-full space-y-0.5">
-
                     {/* Title */}
-                    <h3 className={`text-md font-extrabold text-start ${BASE_TEXT_COLOR} mb-1`}>
+                    <h3
+                      className={`text-md font-extrabold text-start ${BASE_TEXT_COLOR} mb-1`}
+                    >
                       {event.title}
                     </h3>
 
                     {/* Time Range (Top Priority Detail) */}
-                    <p className={`flex items-center gap-1 text-xs font-semibold ${APPOINTMENT_TEXT_COLOR}`}>
-                      <Clock size={14} className="text-cyan-600 dark:text-cyan-400" />
+                    <p
+                      className={`flex items-center gap-1 text-xs font-semibold ${APPOINTMENT_TEXT_COLOR}`}
+                    >
+                      <Clock
+                        size={14}
+                        className="text-cyan-600 dark:text-cyan-400"
+                      />
                       {moment(event.startTime, "HH:mm").format("h:mm A")} –{" "}
                       {moment(event.endTime, "HH:mm").format("h:mm A")}
                     </p>
@@ -161,8 +178,11 @@ export default function DayTask({
                     {event.client && (
                       <div className="flex items-center gap-1 text-sm truncate">
                         <UserIcon size={14} />
-                        <p className={`text-start text-sm ${APPOINTMENT_TEXT_COLOR} truncate`}>
-                          Client: <span className="font-semibold">{`${event.client.firstName} ${event.client.lastName || ""}`}</span>
+                        <p
+                          className={`text-start text-sm ${APPOINTMENT_TEXT_COLOR} truncate`}
+                        >
+                          Client:{" "}
+                          <span className="font-semibold">{`${event.client.firstName} ${event.client.lastName || ""}`}</span>
                         </p>
                       </div>
                     )}
@@ -197,24 +217,29 @@ export default function DayTask({
 
                     {/* Assigned To (Iconified) */}
                     {event?.assignedUsers?.length > 0 && (
-                      <p className={`flex items-center gap-1 text-sm ${INFO_TEXT_COLOR} truncate`}>
+                      <p
+                        className={`flex items-center gap-1 text-sm ${INFO_TEXT_COLOR} truncate`}
+                      >
                         <Users size={14} />
                         {event.assignedUsers
                           .slice(0, 1)
                           .map(
-                            (user: User) => `${user.firstName} ${user.lastName}`
+                            (user: User) =>
+                              `${user.firstName} ${user.lastName}`,
                           )}
                       </p>
                     )}
 
                     {/* Draft Estimate / Notes Preview (Subtle, less space-consuming) */}
                     {(event.draftEstimate || event.notes) && (
-                      <p className={`text-xs italic pt-1 ${INFO_TEXT_COLOR} truncate`}>
-                        {event.draftEstimate && `Estimate: ${event.draftEstimate} | `}
+                      <p
+                        className={`text-xs italic pt-1 ${INFO_TEXT_COLOR} truncate`}
+                      >
+                        {event.draftEstimate &&
+                          `Estimate: ${event.draftEstimate} | `}
                         {event.notes && `Notes: ${event.notes}`}
                       </p>
                     )}
-
                   </div>
 
                   {/* Status Indicator Bar (Applied to the container, slightly thicker, full height) */}
@@ -232,7 +257,7 @@ export default function DayTask({
             </>
           }
         </DraggableTaskTooltip>
-        {event.type !== "appointment" ? (
+        {/* {event.type !== "appointment"  ? (
           <>
             <TooltipContent className="w-72 rounded-md border border-slate-400 bg-background p-3">
               <TaskTooltip
@@ -266,8 +291,43 @@ export default function DayTask({
               onAppointmentDeleted={revalidateAppointmentQueries}
             />
           </>
+        )} */}
+
+        {isTooltipOpen && (
+          <CalendarTooltip
+            event={event}
+            onClose={() => setOpenTooltipId(null)}
+            onEditOpen={() => {
+          setOpenTooltipId(null); 
+          setIsEditModalOpen(true); 
+        }}
+          />
         )}
       </ResizeTaskTooltip>
+
+      {isEditModalOpen && (
+  <>
+    {event.type === "appointment" ? (
+      <AppointmentCreateOrEdit
+        fromEdit
+        appointmentId={event.id}
+        isModalOpen={isEditModalOpen}
+        setIsModalOpen={setIsEditModalOpen}
+        onAppointmentUpdated={revalidateAppointmentQueries}
+        onAppointmentDeleted={revalidateAppointmentQueries}
+      />
+    ) : (
+      <TaskCreateOrEdit
+        fromEdit
+        taskId={event.id}
+        isModalOpen={isEditModalOpen}
+        setIsModalOpen={setIsEditModalOpen}
+        onTaskUpdated={revalidateTaskQueries}
+        onTaskDelete={revalidateTaskQueries}
+      />
+    )}
+  </>
+)}
     </Tooltip>
   );
 }

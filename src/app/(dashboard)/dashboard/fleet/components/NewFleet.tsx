@@ -10,17 +10,16 @@ import {
 } from "@/components/Dialog";
 import FormError from "@/components/FormError";
 import { SelectClientTags } from "@/components/Lists/SelectClientTags";
+import PhoneInput from "@/components/PhoneInput";
 import { SlimInput } from "@/components/SlimInput";
+import { successToast } from "@/lib/toast";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import { Client, Fleet, Tag } from "@prisma/client";
+import { CircleUserRound, SquarePen } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 import { RotatingLines } from "react-loader-spinner";
 import SelectComponent from "./Select";
-import Image from "next/image";
-import { successToast } from "@/lib/toast";
-import { CircleUserRound, SquarePen, UserIcon } from "lucide-react";
-import PhoneInput from "@/components/PhoneInput";
 
 export default function NewFleet({
   fleet,
@@ -48,6 +47,7 @@ export default function NewFleet({
   const [mobile, setMobile] = useState("+1");
   const [countryCode, setCountryCode] = useState("");
   const [countryIsoCode, setCountryIsoCode] = useState("");
+  const [zip, setZip] = useState(fleet?.zip ?? "");
 
   useEffect(() => {
     if (isEdit && fleet && open) {
@@ -56,6 +56,7 @@ export default function NewFleet({
       setPreferredPaymentTerm(
         fleet ? fleet?.fleet!.preferredPaymentTerm : null
       );
+      setZip(fleet?.zip ?? "");
     }
   }, [isEdit, fleet, open]);
 
@@ -73,7 +74,6 @@ export default function NewFleet({
     const address = document.querySelector<HTMLInputElement>("#address")?.value;
     const city = document.querySelector<HTMLInputElement>("#city")?.value;
     const state = document.querySelector<HTMLInputElement>("#state")?.value;
-    const zip = document.querySelector<HTMLInputElement>("#zip")?.value;
 
     if (!fleetName?.trim()) {
       showError({
@@ -100,6 +100,15 @@ export default function NewFleet({
       showError({
         field: "mobile",
         message: "Mobile is required.",
+      });
+      return;
+    }
+
+    // Validate zip code — digits only
+    if (zip && !/^\d+$/.test(zip)) {
+      showError({
+        field: "zip",
+        message: "Zip code must contain digits only.",
       });
       return;
     }
@@ -206,34 +215,54 @@ export default function NewFleet({
           <button className="text-xs text-[#6571FF]">+ Add New Fleet</button>
         )}
       </DialogTrigger>
-      <DialogContent
+      <DialogContent 
+       onOpenAutoFocus={(e)=>e.preventDefault()}
         className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]"
         // form
       >
-        <div className="mt-8 flex items-center justify-between">
+        <div className="mt-8 flex items-center justify-between px-2 md:px-4">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-slate-600 dark:text-slate-100">
               {isEdit ? "Edit" : "Add"} Fleet
             </h1>
             <p className="text-sm text-slate-500 mt-1">
-              Enter details for the new fleet
+              Enter details for the {isEdit ? "fleet" : "new fleet"}
             </p>
           </div>
 
           {profilePic ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={
-                typeof profilePic === "string"
-                  ? profilePic
-                  : URL.createObjectURL(profilePic)
-              }
-              alt="profile"
-              className="h-16 w-16 cursor-pointer rounded-full object-cover ring-4 ring-white dark:ring-slate-800 shadow-md transition-transform group-hover:scale-105"
-              onClick={() => {
-                setProfilePic(null);
-              }}
-            />
+            <div className="relative group">
+              <div className="relative h-16 w-16 rounded-full overflow-hidden ring-4 ring-white dark:ring-slate-800 shadow-md transition-transform group-hover:scale-105">
+                <img
+                  src={
+                    typeof profilePic === "string"
+                      ? profilePic
+                      : URL.createObjectURL(profilePic)
+                  }
+                  alt="profile"
+                  className="h-full w-full object-cover"
+                />
+              </div>
+              <label
+                htmlFor="profilePicture"
+                className="absolute bottom-0 right-0 p-1 bg-[#6571FF] rounded-full shadow-sm cursor-pointer transition-colors"
+              >
+                <SquarePen className="w-3 h-3 text-white" />
+              </label>
+              <input
+                type="file"
+                name="profilePicture"
+                id="profilePicture"
+                hidden
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setProfilePic(file);
+                  }
+                }}
+              />
+            </div>
           ) : (
             <label
               className="
@@ -265,7 +294,7 @@ export default function NewFleet({
                 </span>
               </div>
               <div className="p-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 group-hover:text-[#6571FF] group-hover:bg-white transition-colors">
-                <UserIcon size={32} strokeWidth={2} />
+                <CircleUserRound size={32} strokeWidth={2} />
               </div>
             </label>
           )}
@@ -273,8 +302,8 @@ export default function NewFleet({
 
         <FormError />
 
-        <div className="space-y-2 overflow-y-auto">
-          <div className="flex items-center justify-between gap-x-2">
+        <div className="space-y-4 overflow-y-auto py-2 px-2 md:px-4 thin-scrollbar scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <SlimInput
               name="fleetName"
               label="Fleet Name"
@@ -302,7 +331,7 @@ export default function NewFleet({
             />
           </div>
 
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <SlimInput
               name="email"
               label="Email Address"
@@ -322,30 +351,7 @@ export default function NewFleet({
                 // }
               }}
             />
-            {/* <SlimInput
-              type="tel"
-              name="mobile"
-              label="Mobile Number"
-              required
-              defaultValue={mobile}
-              onChange={(e) => {
-                const value = e.target.value;
-
-                // Ensure the value starts with +1 and only allows numeric values
-                if (value.startsWith("+1") && /^\+1\d*$/.test(value)) {
-                  setMobile(value);
-                  clearError();
-                } else {
-                  showError({
-                    field: "mobile",
-                    message:
-                      "Invalid phone number format. Only numbers are allowed.",
-                  });
-                }
-              }}
-            /> */}
-
-            <div className="md:w-[248px]">
+            <div>
               <PhoneInput
                 required
                 defaultValue={fleet?.mobile || ""}
@@ -370,7 +376,7 @@ export default function NewFleet({
             />
           </div>
 
-          <div className="flex items-center justify-between gap-x-2">
+          <div className="grid grid-cols-3 gap-3">
             <SlimInput
               name="city"
               required={false}
@@ -381,13 +387,30 @@ export default function NewFleet({
               required={false}
               defaultValue={fleet?.state!}
             />
-            <SlimInput name="zip" required={false} defaultValue={fleet?.zip!} />
+            {/* Controlled zip input with digits-only validation */}
+            <SlimInput
+              name="zip"
+              required={false}
+              value={zip}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === "" || /^\d+$/.test(value)) {
+                  setZip(value);
+                  clearError();
+                } else {
+                  showError({
+                    field: "zip",
+                    message: "Zip code must contain digits only.",
+                  });
+                }
+              }}
+            />
           </div>
 
-          <div className="flex items-center justify-between gap-x-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="w-full">
               <SelectComponent
-                label="Preferred Payment Term"
+                label="Payment Term"
                 items={paymentTerms}
                 value={preferredPaymentTerm}
                 onChange={(value) => setPreferredPaymentTerm(value)}

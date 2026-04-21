@@ -1,15 +1,24 @@
 "use client";
-import { CalendarSettings } from "@prisma/client";
 
+import { CalendarSettings, EmployeeType } from "@prisma/client";
 import { DialogClose, DialogFooter } from "@/components/Dialog";
 import Submit from "@/components/Submit";
-// import ConnectGoogle from "./ConnectGoogle";
 import { updateCalendarSettings } from "@/actions/appointment/updateCalendarSettings";
-import ConnectGoogle from "./ConnectGoogle";
 import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { calenderQueryKey } from "../../_constant";
+import ConnectGoogle from "./ConnectGoogle";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
-const week = [
+const WEEK_DAYS = [
   "Saturday",
   "Sunday",
   "Monday",
@@ -22,16 +31,40 @@ const week = [
 type TGeneralProps = {
   settings: CalendarSettings;
   onClose: () => void;
+  authUser?: any;
 };
 
-export default function General({ settings, onClose }: TGeneralProps) {
+export default function General({
+  settings,
+  onClose,
+  authUser,
+}: TGeneralProps) {
+  const isAdmin = authUser?.user.employeeType === EmployeeType?.Admin;
+  const isManager = authUser?.user.employeeType === EmployeeType?.Manager;
+
+  const [error, setError] = useState<string | null>(null);
+  const [weekStart, setWeekStart] = useState(settings?.weekStart ?? "Monday");
+  const [weekend1, setWeekend1] = useState(settings?.weekend1 ?? "Saturday");
+  const [weekend2, setWeekend2] = useState(settings?.weekend2 ?? "Sunday");
+
   const queryClient = useQueryClient();
+
   async function handleSave(data: FormData) {
-    const weekStart = data.get("week-start") as string;
     const dayStart = data.get("day-start") as string;
     const dayEnd = data.get("day-end") as string;
-    const weekend1 = data.get("weekend-1") as string;
-    const weekend2 = data.get("weekend-2") as string;
+
+    if (!dayStart || !dayEnd) {
+      setError("Start time and end time are required");
+      return;
+    }
+
+    const [sh, sm] = dayStart.split(":").map(Number);
+    const [eh, em] = dayEnd.split(":").map(Number);
+
+    if (eh * 60 + em <= sh * 60 + sm) {
+      setError("End time should not be earlier than start time");
+      return;
+    }
 
     await updateCalendarSettings({
       weekStart,
@@ -40,126 +73,138 @@ export default function General({ settings, onClose }: TGeneralProps) {
       weekend1,
       weekend2,
     });
+
     queryClient.invalidateQueries({
       queryKey: [calenderQueryKey.calendarSettings],
     });
     queryClient.invalidateQueries({
       queryKey: [calenderQueryKey.weekStartEndDaysSettings],
     });
-
     onClose();
   }
+
   return (
-    <form className="flex flex-col gap-5">
-      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between">
-        <div>
-          <label htmlFor="week-start" className="font-medium">
-            Week Starts
-          </label>
-          <select
-            id="week-start"
-            name="week-start"
-            className="w-full rounded-md border-2 border-gray-400 bg-background p-1 px-2 sm:w-32"
-            defaultValue={settings && settings.weekStart}
-          >
-            <option value="Sunday">Sunday</option>
-            <option value="Monday">Monday</option>
-            <option value="Tuesday">Tuesday</option>
-            <option value="Wednesday">Wednesday</option>
-            <option value="Thursday">Thursday</option>
-            <option value="Friday">Friday</option>
-            <option value="Saturday">Saturday</option>
-          </select>
-        </div>
+    <>
+      {error && <p className="text-center text-sm text-red-500">{error}</p>}
 
-        <div>
-          <label htmlFor="day-start" className="font-medium">
-            Day starts
-          </label>
-          <input
-            type="time"
-            id="day-start"
-            name="day-start"
-            defaultValue={settings ? settings.dayStart : "10:00"}
-            className="w-full rounded-md border-2 border-slate-400 p-1 sm:w-auto"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="day-end" className="font-medium">
-            Day ends
-          </label>
-          <input
-            type="time"
-            id="day-end"
-            name="day-end"
-            defaultValue={settings ? settings.dayEnd : "18:00"}
-            className="w-full rounded-md border-2 border-slate-400 p-1 sm:w-auto"
-          />
-        </div>
-      </div>
-
-      <div>
-        <div>
-          <p className="font-medium">Show Weekends</p>
-          <div className="flex gap-5">
-            <div className="w-full">
-              <select
-                id="weekend-1"
-                name="weekend-1"
-                className="w-full rounded-md border border-[#6571FF] bg-[#DDE0FF] p-1 text-center text-[#6571FF] focus:border-[#6571FF] focus:bg-background focus:text-black"
-                defaultValue={settings && settings.weekend1}
-              >
-                {week.map((day) => (
-                  <option key={day} value={day}>
-                    {day}
-                  </option>
-                ))}
-              </select>
+      {isAdmin || isManager ? (
+        <form className="flex flex-col gap-6">
+          {/* Row 1: Week Starts · Day starts · Day ends */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {/* Week Starts */}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="week-start">Week Starts</Label>
+              <Select value={weekStart} onValueChange={setWeekStart}>
+                <SelectTrigger size="md" id="week-start" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {WEEK_DAYS.map((day) => (
+                    <SelectItem key={day} value={day}>
+                      {day}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            <div className="w-full">
-              <select
-                id="weekend-2"
-                name="weekend-2"
-                className="w-full rounded-md border border-[#6571FF] bg-[#DDE0FF] p-1 text-center text-[#6571FF] focus:border-[#6571FF] focus:bg-background focus:text-black"
-                defaultValue={settings && settings.weekend2}
-              >
-                {week.map((day) => (
-                  <option key={day} value={day}>
-                    {day}
-                  </option>
-                ))}
-              </select>
+            {/* Day starts */}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="day-start">Day starts</Label>
+              <Input
+                type="time"
+                id="day-start"
+                name="day-start"
+                defaultValue={settings?.dayStart ?? "10:00"}
+                className="w-full"
+              />
+            </div>
+
+            {/* Day ends */}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="day-end">Day ends</Label>
+              <Input
+                type="time"
+                id="day-end"
+                name="day-end"
+                defaultValue={settings?.dayEnd ?? "18:00"}
+                className="w-full"
+              />
             </div>
           </div>
-        </div>
-      </div>
 
-      <div className="h-36 rounded-md bg-[#FAFAFA] p-3">
-        <div className="flex flex-wrap justify-between gap-2">
-          <p className="font-semibold md:mt-[6px]">Google Calendar Api</p>
-          <ConnectGoogle />
-        </div>
-      </div>
+          {/* Row 2: Show Weekends */}
+          <div className="flex flex-col gap-1.5">
+            <Label>Show Weekends</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <Select value={weekend1} onValueChange={setWeekend1}>
+                <SelectTrigger
+                  size="md"
+                  className="w-full border-[#6571FF] bg-[#EEF0FF] text-[#6571FF] focus:ring-[#6571FF]"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {WEEK_DAYS.map((day) => (
+                    <SelectItem key={day} value={day}>
+                      {day}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-      {/* Footer */}
-      <DialogFooter>
-        <DialogClose asChild>
-          <button
-            type="button"
-            className="rounded-md border-2 border-slate-400 p-1"
-          >
-            Cancel
-          </button>
-        </DialogClose>
-        <Submit
-          className="mb-2 rounded-md bg-[#6571FF] p-1 px-5 text-white md:mb-0"
-          formAction={handleSave}
-        >
-          Save
-        </Submit>
-      </DialogFooter>
-    </form>
+              <Select value={weekend2} onValueChange={setWeekend2}>
+                <SelectTrigger
+                  size="md"
+                  className="w-full border-[#6571FF] bg-[#EEF0FF] text-[#6571FF] focus:ring-[#6571FF]"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {WEEK_DAYS.map((day) => (
+                    <SelectItem key={day} value={day}>
+                      {day}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Row 3: Google Calendar */}
+          <div className="rounded-md bg-slate-50 p-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="font-semibold">Google Calendar Api</p>
+              <ConnectGoogle />
+            </div>
+          </div>
+
+          {/* Footer */}
+          <DialogFooter>
+            <DialogClose asChild>
+              <button
+                type="button"
+                className="mt-2 rounded-xl border px-5 py-2.5 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 sm:mt-0"
+              >
+                Cancel
+              </button>
+            </DialogClose>
+            <Submit
+              className="rounded-xl bg-gradient-to-r from-[#6571FF] to-[#5a66ee] px-6 py-2.5 text-sm font-medium text-white shadow-lg shadow-indigo-500/30 transition-all duration-200 hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-xl hover:shadow-indigo-500/40 active:translate-y-0 active:scale-100"
+              formAction={handleSave}
+            >
+              Save
+            </Submit>
+          </DialogFooter>
+        </form>
+      ) : (
+        <div className="rounded-md bg-slate-50 p-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="font-semibold">Google Calendar Api</p>
+            <ConnectGoogle />
+          </div>
+        </div>
+      )}
+    </>
   );
 }

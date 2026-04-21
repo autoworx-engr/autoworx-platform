@@ -13,8 +13,7 @@ import DayCalendar from "./DayCalendar";
 import MonthCalendar from "./MonthCalendar";
 import WeekCalendar from "./WeekCalendar";
 import { CalendarDays, ChevronDown } from "lucide-react";
-
-const BUTTON_STYLE = "app-shadow rounded-md p-2 text-[#797979]";
+import { Button } from "@/components/ui/button";
 
 type DateSelectorProps = {
   type: CalendarType;
@@ -23,8 +22,8 @@ type DateSelectorProps = {
 
 // Custom hook for detecting clicks outside an element
 function useOnClickOutside(
-  ref: React.RefObject<HTMLElement>,
-  handler: () => void
+  ref: React.RefObject<HTMLElement | null>,
+  handler: () => void,
 ) {
   useEffect(() => {
     const listener = (event: MouseEvent | TouchEvent) => {
@@ -97,15 +96,8 @@ function DateSelector({ type, weekStart = 1 }: DateSelectorProps) {
         dow: weekStartNumber,
       },
     });
-    // Parse the year and week number
-    const [year, weekNum] = newWeek.split("-W").map(Number);
-
-    // Calculate the first day of the selected week
-    const firstDayOfWeek = moment()
-      .year(year)
-      .isoWeek(weekNum)
-      .startOf("isoWeeks")
-      .format("YYYY-MM-DD");
+    const { startDate } = getWeekInfoFromWeekStr(newWeek, weekStart);
+    const firstDayOfWeek = startDate;
     setDate(firstDayOfWeek);
 
     setIsOpen(false);
@@ -170,29 +162,19 @@ function DateSelector({ type, weekStart = 1 }: DateSelectorProps) {
   };
 
   const TRANSITION_UTILITY = "transition-all duration-300 ease-in-out";
-  const baseStyle = `
-    flex min-w-[150px] items-center justify-between gap-2 text-xs lg:text-sm
-    p-2 bg-white/50 backdrop-blur-sm border
-    rounded-md ring-1 ring-slate-900/5 dark:bg-slate-900/50 dark:ring-slate-700/50 
-    cursor-pointer 
-    ${TRANSITION_UTILITY}
-    focus:outline-none focus:ring-2 focus:ring-[#6571FF]
-  `;
-  const interactiveStyle = `
-    hover:bg-white/80 dark:hover:bg-slate-800/80
-    hover:-translate-y-0.5 hover:shadow-md 
-  `;
+
   const textStyle = "text-slate-600 dark:text-slate-300";
   const iconStyle = "text-slate-400 dark:text-slate-500";
 
   return (
-    <div className="relative" ref={dropdownRef}>
-      <button
+    <div className="relative flex-1 lg:flex-none" ref={dropdownRef}>
+      <Button
         type="button"
-        className={`${baseStyle} ${interactiveStyle}`}
+        variant="outline"
         onClick={() => setIsOpen(!isOpen)}
+        className="flex-1 lg:flex-none w-full lg:w-auto"
       >
-        <span className="flex items-center gap-2">
+        <span className="flex flex-1 lg:flex-none items-center gap-2">
           {/* Calendar Icon: Subtle coloring */}
           <CalendarDays size={18} className={iconStyle} />
           {/* Display Value: Core data using specified text color */}
@@ -207,7 +189,7 @@ function DateSelector({ type, weekStart = 1 }: DateSelectorProps) {
           className={`${iconStyle} ${TRANSITION_UTILITY} ${isOpen ? "rotate-180" : ""
             }`}
         />
-      </button>
+      </Button>
 
       {isOpen && (
         <div className="absolute z-50 mt-1 w-auto min-w-[280px] rounded-md border border-gray-200 bg-white shadow-lg">

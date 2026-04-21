@@ -7,6 +7,29 @@ import { NextRequest, NextResponse } from "next/server";
 
 const pusher = getPusherInstance();
 
+/**
+ * @swagger
+ * /api/twilio:
+ *   post:
+ *     summary: Twilio SMS webhook
+ *     tags: [Twilio]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/x-www-form-urlencoded:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               From:
+ *                 type: string
+ *               To:
+ *                 type: string
+ *               Body:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: SMS received and processed
+ */
 export async function POST(req: NextRequest) {
   try {
     let body;
@@ -18,7 +41,7 @@ export async function POST(req: NextRequest) {
       body = Object.fromEntries(new URLSearchParams(formData).entries());
     } else {
       throw new Error(
-        "Unsupported content type: Twilio webhook expects form-encoded data"
+        "Unsupported content type: Twilio webhook expects form-encoded data",
       );
     }
 
@@ -81,22 +104,79 @@ export async function POST(req: NextRequest) {
     // Send a success response
     return Response.json(
       { message: "Webhook subscription successful", data: body },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error: any) {
     console.error("Subscription error:", error);
     return Response.json(
       { message: "Webhook subscription failed", error: error?.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
-export async function GET() {
-  const companyId = await getCompanyId();
+/**
+ * @swagger
+ * /api/twilio:
+ *  get:
+ *     summary: Get Twilio credentials
+ *     tags: [Twilio]
+ *     parameters:
+ *       - in: query
+ *         name: companyId
+ *         schema:
+ *           type: number
+ *         description: Company ID (optional)
+ *     responses:
+ *       200:
+ *         description: Twilio credentials retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: number
+ *                 accountSid:
+ *                   type: string
+ *                 authToken:
+ *                   type: string
+ *                   nullable: true
+ *                 phoneNumber:
+ *                   type: string
+ *                 apiKeySid:
+ *                   type: string
+ *                 apiKeySecret:
+ *                   type: string
+ *                 twimlAppSid:
+ *                   type: string
+ *                 phoneNumberSid:
+ *                   type: string
+ *                 companyId:
+ *                   type: number
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *                 updatedAt:
+ *                   type: string
+ *                   format: date-time
+ *                 notifyServiceSid:
+ *                   type: string
+ *                   nullable: true
+ *                 voipPushCredentialSid:
+ *                   type: string
+ *                   nullable: true
+ *       404:
+ *         description: Twilio credentials not found
+ */
+
+export async function GET(req: NextRequest, res: NextResponse) {
+  const url = new URL(req.url);
+  const companyId = Number(url.searchParams.get("companyId"));
+  const cId = companyId ? companyId : await getCompanyId();
 
   const credentials = await db.twilioCredentials.findFirst({
-    where: { companyId },
+    where: { companyId: cId },
   });
 
   if (!credentials) {

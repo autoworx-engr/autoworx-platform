@@ -8,19 +8,22 @@ import FormError from "@/components/FormError";
 import NewClientSource from "@/components/Lists/NewClientSource";
 import SelectClientSource from "@/components/Lists/SelectClientSource";
 import { SelectClientTags } from "@/components/Lists/SelectClientTags";
+import PhoneInput from "@/components/PhoneInput";
 import { SlimInput } from "@/components/SlimInput";
 import { DEFAULT_IMAGE_URL } from "@/lib/consts";
 import { successToast } from "@/lib/toast";
+import { useClientFilterStore } from "@/stores/clientFilter";
 import { useFormErrorStore } from "@/stores/form-error";
 import { Client, Source, Tag } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { CircleUserRound, SquarePen, X } from "lucide-react";
+import { SquarePen, CircleUserRound as UserIcon, X } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { RotatingLines } from "react-loader-spinner";
 import { CLIENT_LIST_KEY } from "./_hook/useClientQuery";
-import { useClientFilterStore } from "@/stores/clientFilter";
-import PhoneInput from "@/components/PhoneInput";
+import useClientByIdQuery, {
+  CLIENT_DETAIL_KEY,
+} from "./_hook/useClientQueryById";
 
 type TEditClientModalBodyProps = {
   client: Client & {
@@ -34,6 +37,12 @@ export default function EditClientModalBody({
   client,
   onClose,
 }: TEditClientModalBodyProps) {
+  const { data: clientData, isLoading } = useClientByIdQuery(client.id);
+
+  // Use fresh data once loaded, fall back to prop while loading
+  const resolvedClient = clientData;
+  // const resolvedClient = clientData ?? client;
+
   const [clientSource, setClientSource] = useState<Source | null>(
     client.source
   );
@@ -44,25 +53,40 @@ export default function EditClientModalBody({
 
   const [openClientSource, setOpenClientSource] = useState(false);
   const [tagOpenDropdown, setTagOpenDropdown] = useState(false);
-  const [tag, setTag] = useState<Tag | undefined>(client.tag!);
-  const [isPremium, setIsPremium] = useState<boolean>(client.isFleet!);
+  const [tag, setTag] = useState<Tag | undefined>(client.tag ?? undefined);
+  const [isPremium, setIsPremium] = useState<boolean>(client.isFleet ?? false);
   const [profilePic, setProfilePic] = useState<string | null>(
     client.photo !== DEFAULT_IMAGE_URL ? client.photo : null
   );
   const [newProfilePic, setNewProfilePic] = useState<File | null>(null);
   const [clientSources, setClientSources] = useState<Source[]>([]);
   const { showError, clearError } = useFormErrorStore();
+  const [zip, setZip] = useState(client.zip ?? "");
+
+  // Initialize ref with existing client data so submit works without touching the field
   const phoneDataRef = useRef({
-    phoneNumber: "",
+    phoneNumber: client.mobile ?? "",
     countryCode: "",
-    isoCode: "",
+    isoCode: client.countryCode ?? "",
   });
+
+  // Sync all state when fresh clientData arrives from the query
   useEffect(() => {
-    setIsPremium(client?.isFleet!);
-    setTag(client.tag || undefined);
-    setClientSource(client.source || null);
-    setProfilePic(client.photo !== DEFAULT_IMAGE_URL ? client.photo : null);
-  }, [client]);
+    if (!clientData) return;
+    setIsPremium(clientData.isFleet ?? false);
+    setTag(clientData.tag ?? undefined);
+    setClientSource(clientData.source ?? null);
+    setProfilePic(
+      clientData.photo !== DEFAULT_IMAGE_URL ? clientData.photo : null
+    );
+    setZip(clientData.zip ?? "");
+    // Sync phone ref with fresh data
+    phoneDataRef.current = {
+      phoneNumber: clientData.mobile ?? "",
+      countryCode: "",
+      isoCode: clientData.countryCode ?? "",
+    };
+  }, [clientData]);
 
   async function getClientSources() {
     const data = await getSources();
@@ -71,11 +95,9 @@ export default function EditClientModalBody({
 
   async function deleteClientSource(id: number) {
     await deleteSource(id);
-
-    setClientSources((prev: Source[]) => {
-      return prev.filter((source) => source.id !== id);
-    });
-
+    setClientSources((prev: Source[]) =>
+      prev.filter((source) => source.id !== id)
+    );
     if (clientSource?.id === id) {
       setClientSource(null);
     }
@@ -89,7 +111,6 @@ export default function EditClientModalBody({
     const lastName =
       document.querySelector<HTMLInputElement>("#lastName")?.value;
     const email = document.querySelector<HTMLInputElement>("#email")?.value;
-    // const mobile = document.querySelector<HTMLInputElement>("#mobile")?.value;
     const { phoneNumber, countryCode, isoCode } = phoneDataRef.current;
     const mobile =
       countryCode && phoneNumber
@@ -100,24 +121,30 @@ export default function EditClientModalBody({
     const address = document.querySelector<HTMLInputElement>("#address")?.value;
     const city = document.querySelector<HTMLInputElement>("#city")?.value;
     const state = document.querySelector<HTMLInputElement>("#state")?.value;
-    const zip = document.querySelector<HTMLInputElement>("#zip")?.value;
+
     if (!firstName?.trim()) {
+      showError({ field: "firstName", message: "First name is required." });
+      return;
+    }
+
+    if (!mobile || mobile.length < 10) {
       showError({
-        field: "firstName",
-        message: "First name is required.",
+        field: "mobile",
+        message: "Please enter a valid phone number (at least 10 digits).",
       });
       return;
     }
 
-    // For email
-    // if (!email?.trim()) {
-    //   showError({
-    //     field: "email",
-    //     message: "Email is required.",
-    //   });
-    //   return;
-    // }
-    // delete the old photo
+    // Final guard: ensure no non-digit slipped through
+    if (zip && !/^\d+$/.test(zip)) {
+      showError({
+        field: "zip",
+        message: "Zip code must contain digits only.",
+      });
+      return;
+    }
+
+    // Delete old photo if replacing
     if (newProfilePic && profilePic !== DEFAULT_IMAGE_URL) {
       await fetch("/api/upload", {
         method: "DELETE",
@@ -125,7 +152,7 @@ export default function EditClientModalBody({
       });
     }
 
-    // update photo
+    // Upload new photo
     if (newProfilePic) {
       const formData = new FormData();
       formData.append("file", newProfilePic);
@@ -145,7 +172,7 @@ export default function EditClientModalBody({
     }
 
     const res = await editClient({
-      id: client.id,
+      id: resolvedClient?.id ?? client.id,
       firstName,
       lastName,
       email,
@@ -175,6 +202,9 @@ export default function EditClientModalBody({
       queryClient.invalidateQueries({
         queryKey: [CLIENT_LIST_KEY, search, currentPage, pageSize],
       });
+      queryClient.invalidateQueries({
+        queryKey: [CLIENT_DETAIL_KEY, resolvedClient?.id],
+      });
       clearError();
       onClose();
       successToast("Client updated successfully");
@@ -186,32 +216,43 @@ export default function EditClientModalBody({
   }, []);
 
   return (
-    <DialogContent className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]">
-      <div className="mt-8 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Edit Client</h1>
+    <DialogContent
+      className="max-h-full max-w-2xl grid-rows-[auto,1fr,auto]"
+      onOpenAutoFocus={(e) => e.preventDefault()}
+    >
+      <div className="mt-8 flex items-center justify-between px-2">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-600 dark:text-slate-100">
+            Edit Client
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Update details for the client
+          </p>
+        </div>
 
         {newProfilePic || profilePic ? (
-          <label className="relative cursor-pointer" htmlFor="profilePicture">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <div className="relative h-20 w-20 rounded-full border border-slate-400 hover:border-dashed hover:opacity-80 overflow-hidden">
+          <div className="relative group">
+            <div className="relative h-16 w-16 rounded-full overflow-hidden ring-4 ring-white dark:ring-slate-800 shadow-md transition-transform group-hover:scale-105">
               <Image
                 src={
                   newProfilePic
                     ? URL.createObjectURL(newProfilePic)
                     : profilePic || ""
                 }
-                width={80}
-                height={80}
+                width={64}
+                height={64}
                 alt="profile"
                 className="h-full w-full object-cover"
                 unoptimized={newProfilePic !== null}
                 crossOrigin="anonymous"
               />
             </div>
-            <span className="absolute bottom-0 left-1 text-lg p-1 rounded-full bg-[#6571FF]">
-              <SquarePen className="w-3 h-3 cursor-pointer text-white " />
-            </span>
-
+            <label
+              htmlFor="profilePicture"
+              className="absolute bottom-0 right-0 p-1 bg-[#6571FF] rounded-full shadow-sm cursor-pointer hover:bg-gray-100 transition-colors"
+            >
+              <SquarePen className="w-3 h-3 text-white" />
+            </label>
             <input
               type="file"
               name="profilePicture"
@@ -220,15 +261,20 @@ export default function EditClientModalBody({
               accept="image/*"
               onChange={(e) => {
                 const file = e.target.files?.[0];
-                if (file) {
-                  setNewProfilePic(file);
-                }
+                if (file) setNewProfilePic(file);
               }}
             />
-          </label>
+          </div>
         ) : (
           <label
-            className="flex cursor-pointer items-center justify-center gap-x-2 rounded-full border border-slate-400 pl-2"
+            className="
+              group flex cursor-pointer items-center justify-center gap-x-3
+              rounded-full pl-4 pr-2 py-1.5
+              bg-white dark:bg-slate-800
+              border border-dashed border-slate-300 dark:border-slate-600
+              hover:border-[#6571FF] hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20
+              transition-all duration-300
+            "
             htmlFor="profilePicture"
           >
             <input
@@ -239,35 +285,32 @@ export default function EditClientModalBody({
               accept="image/*"
               onChange={(e) => {
                 const file = e.target.files?.[0];
-                if (file) {
-                  setNewProfilePic(file);
-                }
+                if (file) setNewProfilePic(file);
               }}
             />
-            <span className="lg:hidden">Upload picture</span>
-            <span className="hidden lg:block">Upload a profile picture</span>
-            <CircleUserRound
-              size={48}
-              strokeWidth={1.5}
-              className="text-gray-400"
-            />
+            <div className="flex flex-col items-end">
+              <span className="text-sm font-semibold text-slate-600 dark:text-slate-300 group-hover:text-[#6571FF] transition-colors">
+                Upload Photo
+              </span>
+            </div>
+            <div className="p-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 group-hover:text-[#6571FF] group-hover:bg-white transition-colors">
+              <UserIcon size={32} strokeWidth={2} />
+            </div>
           </label>
         )}
       </div>
 
       <FormError />
 
-      <div className="space-y-2 overflow-y-auto">
-        <div className="flex items-center justify-between gap-2">
+      <div className="space-y-2 overflow-y-auto px-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-2">
           <SlimInput
             name="firstName"
             label="First Name"
             required
-            defaultValue={client.firstName!}
+            defaultValue={resolvedClient?.firstName!}
             onChange={(e) => {
               const value = e.target.value;
-
-              // Validate on input change
               if (!value.trim()) {
                 showError({
                   field: "firstName",
@@ -280,38 +323,25 @@ export default function EditClientModalBody({
           />
           <SlimInput
             name="lastName"
+            label="Last Name"
             required={false}
-            defaultValue={client.lastName!}
+            defaultValue={resolvedClient?.lastName!}
           />
         </div>
 
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           <SlimInput
             name="email"
             label="Email"
-            defaultValue={client.email!}
-            onChange={(e) => {
-              const value = e.target.value;
-
-              // Validate on input change
-              // if (!value.trim()) {
-              //   showError({
-              //     field: "email",
-              //     message: "Email is required.",
-              //   });
-              // } else {
-              //   clearError();
-              // }
-            }}
+            defaultValue={resolvedClient?.email!}
           />
-          <div className="md:w-[248px]">
+          <div className="w-full">
             <PhoneInput
               label="Mobile"
               placeholder="1234567890"
-              required={false}
-              defaultValue={client.mobile!}
-              // value={phoneNumber}
-              defaultIsoCode={client.countryCode!}
+              required
+              defaultValue={resolvedClient?.mobile!}
+              defaultIsoCode={resolvedClient?.countryCode!}
               onChange={(phone, code, iso) => {
                 phoneDataRef.current = {
                   phoneNumber: phone,
@@ -329,31 +359,51 @@ export default function EditClientModalBody({
             rootClassName="flex-1"
             name="address"
             required={false}
-            defaultValue={client.address!}
+            defaultValue={resolvedClient?.address!}
           />
         </div>
 
         <div className="flex items-center justify-between gap-x-2">
-          <SlimInput name="city" required={false} defaultValue={client.city!} />
+          <SlimInput
+            name="city"
+            required={false}
+            defaultValue={resolvedClient?.city!}
+          />
           <SlimInput
             name="state"
             required={false}
-            defaultValue={client.state!}
+            defaultValue={resolvedClient?.state!}
           />
-          <SlimInput name="zip" required={false} defaultValue={client.zip!} />
+          {/* Controlled zip — blocks non-digit input */}
+          <SlimInput
+            name="zip"
+            required={false}
+            value={zip}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value === "" || /^\d+$/.test(value)) {
+                setZip(value);
+                clearError();
+              } else {
+                showError({
+                  field: "zip",
+                  message: "Zip code must contain digits only.",
+                });
+              }
+            }}
+          />
         </div>
 
-        <div className="flex items-center justify-between gap-x-4">
+        <div className="grid grid-cols-2 gap-x-4">
           <SlimInput
             name="customerCompany"
             required={false}
-            defaultValue={client.customerCompany!}
+            defaultValue={resolvedClient?.customerCompany!}
             label="Company"
           />
 
           <div className="w-full">
-            <p className="mb-1 font-medium">Client Source</p>
-            {/* TODO: use `Selector` component and make the hieght auto */}
+            <p className="mb-1 font-medium text-slate-600">Client Source</p>
             <SelectClientSource
               clickabled={false}
               label={(clientSrc) =>
@@ -382,9 +432,7 @@ export default function EditClientModalBody({
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => {
-                        deleteClientSource(clientSource.id);
-                      }}
+                      onClick={() => deleteClientSource(clientSource.id)}
                     >
                       <X className="w-5 h-5" />
                     </button>
@@ -393,19 +441,19 @@ export default function EditClientModalBody({
               )}
               selectedItem={clientSource}
               setSelectedItem={setClientSource}
-              onSearch={(search: string) => {
-                return clientSources.filter((clientSource: Source) =>
-                  clientSource.name.toLowerCase().includes(search.toLowerCase())
-                );
-              }}
+              onSearch={(search: string) =>
+                clientSources.filter((s: Source) =>
+                  s.name.toLowerCase().includes(search.toLowerCase())
+                )
+              }
               openState={[openClientSource, setOpenClientSource]}
             />
           </div>
         </div>
-        <div className="flex items-center gap-x-4">
-          <div className="">
-            {/* BUG: when making the root `form`, this dropdown doesn't work */}
-            <p className="mb-1 font-medium">Tag</p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
+          <div className="w-full">
+            <p className="mb-1 font-medium text-slate-600">Tag</p>
             <SelectClientTags
               value={tag}
               setValue={setTag}
@@ -414,14 +462,32 @@ export default function EditClientModalBody({
             />
           </div>
           <div>
-            <label className="flex cursor-pointer select-none items-center gap-2">
-              <input
-                type="checkbox"
-                checked={isPremium}
-                onChange={(e) => setIsPremium(e.target.checked)}
-                className="h-4 w-4 accent-[#6571FF]"
-              />
-              <span className="font-medium">Add as a Fleet</span>
+            <label className="flex cursor-pointer select-none items-center gap-3 mt-9 group">
+              <div className="relative flex items-center">
+                <input
+                  type="checkbox"
+                  checked={isPremium}
+                  onChange={(e) => setIsPremium(e.target.checked)}
+                  className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border-2 border-slate-300 transition-all checked:border-[#6571FF] checked:bg-[#6571FF] hover:border-[#6571FF]"
+                />
+                <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 transition-opacity peer-checked:opacity-100">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-3.5 w-3.5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+              </div>
+              <span className="font-medium text-slate-700 dark:text-slate-300 group-hover:text-[#6571FF] transition-colors">
+                Add as a Fleet
+              </span>
             </label>
           </div>
         </div>
@@ -429,7 +495,11 @@ export default function EditClientModalBody({
 
       <DialogFooter>
         <DialogClose
-          className="mt-1 rounded-lg border-2 border-slate-400 p-2 lg:mt-0"
+          className="
+            rounded-xl mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500
+            hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
+            transition-colors border
+          "
           onClick={() => {
             clearError();
             onClose();
@@ -438,10 +508,19 @@ export default function EditClientModalBody({
           Cancel
         </DialogClose>
         <button
-          disabled={pending}
+          disabled={pending || isLoading}
           type="button"
           onClick={() => startTransition(handleSubmit)}
-          className="rounded-lg border bg-[#6571FF] px-5 py-2 text-white"
+          className="
+            rounded-xl px-6 py-2.5 text-sm font-medium text-white
+            bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+            shadow-lg shadow-indigo-500/30
+            hover:shadow-xl hover:shadow-indigo-500/40
+            hover:-translate-y-0.5 hover:scale-[1.02]
+            active:translate-y-0 active:scale-100
+            transition-all duration-200
+            disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:scale-100
+          "
         >
           {pending ? (
             <div className="flex flex-col items-center justify-center">

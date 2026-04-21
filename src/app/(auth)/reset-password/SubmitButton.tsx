@@ -1,6 +1,5 @@
 "use client";
 import Submit from "@/components/Submit";
-import { successToast } from "@/lib/toast";
 import { useFormErrorStore } from "@/stores/form-error";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -45,6 +44,18 @@ export default function SubmitButton({
     if (action === "reset-password") {
       const newPassword = formData.get("newPassword") as string;
 
+      const strongPasswordRegex =
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
+
+      if (!strongPasswordRegex.test(newPassword)) {
+        showError({
+          message:
+            "Password must be at least 8 characters and include uppercase, lowercase, number, and symbol.",
+          field: "newPassword",
+        });
+        return;
+      }
+
       const res = await fetch("/api/auth/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -62,8 +73,8 @@ export default function SubmitButton({
 
       const responseData = await res.json(); // Resolve the JSON response
       const res2 = await signIn("credentials", {
-        email: responseData.email, 
-        password: newPassword, 
+        email: responseData.email,
+        password: newPassword,
         redirect: false,
       });
 
@@ -88,10 +99,10 @@ export default function SubmitButton({
 
   return (
     <Submit
-      className="mx-auto mt-4 block rounded-md bg-blue-500 px-10 py-2 text-white"
+      className="mx-auto w-full mt-4 rounded-md bg-gradient-to-r from-[#6571FF] to-[#5a66ee] px-10 py-2 text-white min-h-[44px] flex items-center justify-center"
       formAction={handler}
     >
-      {action === "verify-otp" ? "Verify OTP" : "Reset Password"}
+      {action === "verify-otp" ? "Verify code" : "Reset password"}
     </Submit>
   );
 }

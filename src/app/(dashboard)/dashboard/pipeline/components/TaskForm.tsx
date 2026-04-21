@@ -18,10 +18,10 @@ function TaskListPopup({
 }) {
   return (
     <div
-      className={`absolute ${isTechnician ? "-left-6" : "-left-20"} z-[9999] mt-1 hidden h-[90px] max-h-[110px] w-[200px] transform overflow-y-auto rounded-lg border border-[#66738C] bg-background p-2 group-hover:block`}
+      className={`absolute ${isTechnician ? "-left-6" : "-left-20"} z-50 mt-1 hidden h-[90px] max-h-[110px] w-[200px] transform overflow-y-auto rounded-lg border border-[#66738C] bg-background p-2 group-hover:block`}
       style={{ top: "-6rem" }}
     >
-      {tasks.map((task) => (
+      {tasks.map(task => (
         <div
           key={task.id}
           className="mb-2 rounded-[3px] p-1 text-white cursor-pointer hover:opacity-80 transition-opacity"
@@ -33,7 +33,7 @@ function TaskListPopup({
                   ? "#25AADD"
                   : "#006D77",
           }}
-          onClick={(e) => {
+          onClick={e => {
             e.stopPropagation();
             onTaskClick(task.id);
           }}
@@ -84,16 +84,16 @@ export default function TaskForm({
     onAutomationTrigger && onAutomationTrigger();
     onCommunicationAutomationTrigger && onCommunicationAutomationTrigger();
     onUpdateTaskInLead && onUpdateTaskInLead(task);
-    setTasks((prevTasks) => [...prevTasks, task]);
-    setTotalTasks && setTotalTasks((prev) => prev + 1);
+    setTasks(prevTasks => [...prevTasks, task]);
+    setTotalTasks && setTotalTasks(prev => prev + 1);
   };
 
   const handleTaskUpdated = (task: Task) => {
     onUpdateTaskInLead && onUpdateTaskInLead(task);
-    setTasks((prevTasks) =>
-      prevTasks.map((existingTask) =>
-        existingTask.id === task.id ? task : existingTask
-      )
+    setTasks(prevTasks =>
+      prevTasks.map(existingTask =>
+        existingTask.id === task.id ? task : existingTask,
+      ),
     );
     setIsEditModalOpen(false);
     setEditTaskId(null);
@@ -105,7 +105,8 @@ export default function TaskForm({
     setIsEditModalOpen(true);
   };
 
-  const isShowTaskCount = totalTasksCount > 0;
+  const currentTaskCount = Math.max(totalTasksCount, tasks.length);
+  const isShowTaskCount = currentTaskCount > 0;
 
   const triggerButton = (
     <div className="relative cursor-pointer">
@@ -120,7 +121,7 @@ export default function TaskForm({
       </div>
       {isShowTaskCount && (
         <span className="absolute -top-2 left-2 rounded-full bg-red-500 px-1 py-0.5 text-[10px] text-white leading-none min-w-[16px] text-center">
-          {totalTasksCount}
+          {currentTaskCount}
         </span>
       )}
     </div>

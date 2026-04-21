@@ -24,13 +24,13 @@ export const fetchLastMailsMailgun = async () => {
   }
 };
 
-export const getUnreadMessageCount = async () => {
+export const getUnreadMessageCount = async (companyId?: number) => {
   try {
-    const companyId = await getCompanyId();
+    const cId = companyId || (await getCompanyId());
     let count = 0;
     const lastMailgunMails = (await fetchLastMailsMailgun())?.data ?? [];
     const clients = await db.client.findMany({
-      where: { companyId },
+      where: { companyId: cId },
       include: {
         MailgunEmail: {
           orderBy: {

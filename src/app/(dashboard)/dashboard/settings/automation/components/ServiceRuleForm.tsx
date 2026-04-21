@@ -1,40 +1,34 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import Selector from "./Selector";
-import { Box, Paper, Typography, Switch } from "@mui/material";
-import { ArrowRight } from "lucide-react";
-import MultiSelect from "./MultiSelect";
 import { SlimInput } from "@/components/SlimInput";
+import { Box, Paper, Switch, Typography } from "@mui/material";
+import { ArrowRight } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
 import ActiveTemplate from "./ActiveTemplate";
 import { timeDelays } from "./constants";
+import MultiSelect from "./MultiSelect";
+import Selector from "./Selector";
 
+import { useCreateServiceMaintenanceAutomationRule } from "@/hooks/service-maintenance-automation/useCreateServiceMaintenanceAutomationRule";
+import { usePipelineStagesStore } from "@/stores/pipelineStagesStore";
 import { TAttachments } from "@/types/automation";
 import {
-  handleFileAttachmentUtils,
   handleFileSelection,
   uploadAllAttachments,
 } from "@/utils/handleFileAttachment";
-import { useCreateServiceMaintenanceAutomationRule } from "@/hooks/service-maintenance-automation/useCreateServiceMaintenanceAutomationRule";
-import { usePipelineStagesStore } from "@/stores/pipelineStagesStore";
 
-import {
-  Company,
-  Service,
-  TwilioCredentials,
-  InfobipConfig,
-} from "@prisma/client";
-import { useServiceStore } from "@/stores/serviceStore";
-import { parseTimeDelayToSeconds } from "@/utils/parseTimeDelayToSeconds";
-import { useFindOneServiceMaintenanceAutomationRule } from "@/hooks/service-maintenance-automation/useFindOneServiceMaintenanceAutomationRule";
-import { parseSecondsToTimeDelay } from "@/utils/parseSecondsToTimeDelay";
-import { useUpdateServiceMaintenanceAutomationRule } from "@/hooks/service-maintenance-automation/useUpdateServiceMaintenanceAutomationRule";
-import { errorToast } from "@/lib/toast";
-import { useCharacterLimit } from "@/hooks/useCharecterLimit";
 import CarLoading from "@/components/common/CarLoading";
 import { AppointmentTemplateVariable } from "@/components/Lists/NewTemplate";
-import TooltipLabel from "./ToolTipLabel";
+import { useFindOneServiceMaintenanceAutomationRule } from "@/hooks/service-maintenance-automation/useFindOneServiceMaintenanceAutomationRule";
+import { useUpdateServiceMaintenanceAutomationRule } from "@/hooks/service-maintenance-automation/useUpdateServiceMaintenanceAutomationRule";
+import { useCharacterLimit } from "@/hooks/useCharecterLimit";
+import { errorToast } from "@/lib/toast";
+import { useServiceStore } from "@/stores/serviceStore";
+import { parseSecondsToTimeDelay } from "@/utils/parseSecondsToTimeDelay";
+import { parseTimeDelayToSeconds } from "@/utils/parseTimeDelayToSeconds";
+import { Company, InfobipConfig, TwilioCredentials } from "@prisma/client";
 import InfoCard from "./InfoCard";
 import { TipBox } from "./TagautomationHelper";
+import TooltipLabel from "./ToolTipLabel";
 type RuleFormProps = {
   initialData?: Rule;
   mode: "create" | "edit" | undefined;
@@ -65,15 +59,16 @@ export type Rule = {
 
 // Template variables
 const template_variable_options = [
-  { name: "<CONTACT>", description: "Contact" },
+  { name: "<CLIENT>", description: "Client name" },
   { name: "<INTEREST>", description: "Interest" },
-  { name: "<VEHICLE>", description: "Vehicle" },
+  { name: "<VEHICLE>", description: "Vehicle details" },
   { name: "<SERVICE>", description: "Service" },
   { name: "<BUSINESS_NAME>", description: "Your business name" },
-  { name: "<BUSINESS_PHONE>", description: "Your business phone" },
-  { name: "<BUSINESS_ADDRESS>", description: "Your business address" },
+  { name: "<PHONE>", description: "Your business phone number" },
+  { name: "<ADDRESS>", description: "Your business address" },
   { name: "<VIDEO_DIRECTION>", description: "Video direction" },
   { name: "<GOOGLE_MAP_LINK>", description: "Google map link" },
+  { name: "<GOOGLE_REVIEW_LINK>", description: "Google review link" },
 ];
 
 const ServiceRuleForm: React.FC<RuleFormProps> = ({
@@ -86,6 +81,7 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
   twilio,
 }) => {
   // const [loading, setLoading] = useState(false);
+  const [initialFormData, setInitialFormData] = useState<Rule | null>(null);
   const [formData, setFormData] = useState<Rule>({
     title: "",
     selectedServiceIds: [],
@@ -134,7 +130,7 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
   useEffect(() => {
     if (isEdit && id) {
       const timeDelay = parseSecondsToTimeDelay(data?.data?.timeDelay);
-      setFormData({
+      const initialData: Rule = {
         companyId: data?.data.companyId,
         title: data?.data.title,
         selectedServiceIds: data?.data.serviceMaintenanceStage?.map(
@@ -152,11 +148,13 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
         emailBody: data?.data.emailBody || "",
         smsBody: data?.data.smsBody || "",
         createdBy: data?.data.createdBy,
-      });
+      };
+      setFormData(initialData);
+      setInitialFormData(initialData);
       setActiveTemplate(data?.data.templateType);
       // setLoading(false);
     } else {
-      setFormData({
+      const initialData: Rule = {
         title: "",
         selectedServiceIds: [],
         conditionColumnId: null,
@@ -169,9 +167,16 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
         smsBody: "",
         createdBy: null,
         companyId: null,
-      });
+      };
+      setFormData(initialData);
+      setInitialFormData(initialData);
     }
   }, [isEdit, id, data, mode]);
+
+  const isFormUnchanged = useMemo(() => {
+    if (!initialFormData) return false;
+    return JSON.stringify(formData) === JSON.stringify(initialFormData);
+  }, [formData, initialFormData]);
 
   useEffect(() => {
     fetchStages("shop");
@@ -271,6 +276,9 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
       }
     }
 
+    if (!formData.targetColumnId)
+      newError.targetColumnId = "Action is required.";
+
     if (errors.length > 0) {
       errors.forEach((err) => errorToast(err));
 
@@ -297,6 +305,7 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
             ? null
             : Number(formData.targetColumnId) || null,
         conditionColumnId: Number(formData.conditionColumnId),
+        // selectedServiceIds: formData.selectedServiceIds.map((id) => Number(id)),
         timeDelay: seconds,
         createdBy: userEmail,
         companyId: companyId,
@@ -336,18 +345,25 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
   };
 
   const getConditionActionHelp = () => {
-    const conditionId = formData.conditionColumnId;
-    const actionId = formData.targetColumnId;
+    const conditionId = formData?.conditionColumnId;
+    const actionId = formData?.targetColumnId;
 
     if (conditionId == null || actionId == null) return null;
 
     const findStageName = (id: any) => {
-      const st: any = stages.find((s: any) => Number(s.id) === Number(id));
-      return st?.title ?? st?.name ?? String(id);
+      const st: any = stages?.find((s: any) => Number(s.id) === Number(id));
+      console.log("Finding stage for ID:", id, "Found:", st); // Debug line
+      return st?.title ?? st?.name ?? "";
+      // return st?.title ?? st?.name ?? String(id);
     };
 
     const conditionName = findStageName(conditionId);
     const actionName = findStageName(actionId);
+
+    // Add this check to prevent showing generic message when stages aren't found
+    if (conditionName === "" || actionName === "") {
+      return null;
+    }
 
     const helpConfig = {
       status_transition: {
@@ -385,6 +401,7 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
               labelClassName="text-gray-500"
               onChange={(e) => handleChange("title", e.target.value)}
               error={error.title}
+              required
             />
 
             {/* Service */}
@@ -447,7 +464,13 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
                 name="condition"
                 // label="Condition"
                 options={stages}
-                value={formData.conditionColumnId!}
+                // value={formData.conditionColumnId!}
+                value={
+                  typeof formData.conditionColumnId === "number"
+                    ? formData.conditionColumnId
+                    : undefined
+                }
+                placeholder="Select a condition"
                 onChange={(value) => handleChange("conditionColumnId", value)}
                 required
                 disabled={stageLoading}
@@ -497,6 +520,7 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
                 disabled={stageLoading}
                 isClear={true}
                 labelClassName="hidden"
+                error={error.targetColumnId}
               />
 
               {conditionActionHelp && (
@@ -600,13 +624,20 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
             {/* Save & Cancel Buttons */}
             <div className="flex justify-end pt-4">
               <button
-                disabled={isUpdatePending || isCreatePending || isLimitExceeded}
+                disabled={
+                  isUpdatePending ||
+                  isCreatePending ||
+                  isLimitExceeded ||
+                  isFormUnchanged
+                }
                 type="submit"
-                className={`rounded-md px-4 py-2 text-sm font-medium text-white ${
-                  isUpdatePending || isCreatePending || isLimitExceeded
+                className={`rounded-md px-4 py-2 text-sm font-medium text-white ${isUpdatePending ||
+                    isCreatePending ||
+                    isLimitExceeded ||
+                    isFormUnchanged
                     ? "cursor-not-allowed bg-indigo-300"
                     : "bg-indigo-500 hover:bg-indigo-600"
-                }`}
+                  }`}
               >
                 {isUpdatePending || isCreatePending
                   ? isEdit && id
