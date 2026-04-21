@@ -138,7 +138,9 @@ export function CalendarSearchDropdown({
                       <div className="flex items-center gap-2">
                         <Clock className="h-4 w-4" />
                         <time className="text-xs font-medium">
-                          {moment(result.startTime, "HH:mm").format("h:mm A")}
+                          {moment
+                            .utc(result.startTime, "HH:mm")
+                            .format("h:mm A")}
                         </time>
                       </div>
                     )}

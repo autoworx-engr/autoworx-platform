@@ -25,7 +25,7 @@ export default function Tasks() {
   });
   const { weekStartDate, weekEndDate } = useWeekStartEndDays();
   const date = useDate();
-  const dateFormat = date.format("YYYY-MM-DD");
+  const dateFormat = date.utc().format("YYYY-MM-DD");
   const {
     data,
     isLoading,
