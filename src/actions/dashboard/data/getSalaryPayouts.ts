@@ -1,9 +1,9 @@
 "use server";
 
-import { authOptions } from "@/authOptions";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import { getServerSession } from "next-auth";
+import { getEssentials } from "@/lib/auth-utils";
 import {
   calculateSalaryCurrentMonthEarnings,
   calculateSalaryPreviousMonthEarnings,
@@ -26,13 +26,10 @@ export async function getSalaryPayouts(
     let userId = currentUserId;
     let companyId = currentCompanyId;
 
-    if (!userId) {
+    if (!userId || !companyId) {
       const data = await getEssentials();
-      userId = data?.userId;
-    }
-    if (!companyId) {
-      const data = await getEssentials();
-      companyId = data?.companyId;
+      if (!userId) userId = data?.userId;
+      if (!companyId) companyId = data?.companyId;
     }
 
     // Get user's salary information from salary history
@@ -236,19 +233,5 @@ async function calculateHourlyPayout(
       totalPayout: currentPeriodPayout, // For now, same as current
     },
     error: null,
-  };
-}
-
-/**
- * Get essential information including companyId and userId.
- */
-async function getEssentials() {
-  const companyId = await getCompanyId();
-  const session = await getServerSession(authOptions);
-  const userId = Number(session?.user?.id as string);
-
-  return {
-    companyId,
-    userId,
   };
 }
