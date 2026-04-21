@@ -458,17 +458,17 @@ const DraggableLead = ({
                   const params = new URLSearchParams(searchParams.toString());
                   params.set("clientId", lead?.clientId?.toString());
                   router.push(`${pathname}?${params.toString()}`);
-                  setSelectedClientId(lead.clientId);
+                  setSelectedClientId?.(lead.clientId);
                 }
                 if (lead?.vehicleId) {
-                  setSelectedVehicleId(lead.vehicleId);
+                  setSelectedVehicleId?.(lead.vehicleId);
                 }
                 if (lead?.appointment?.id) {
-                  setSelectedAppointmentId(lead.appointment.id);
+                  setSelectedAppointmentId?.(lead.appointment.id);
                 } else {
-                  setSelectedAppointmentId(null);
+                  setSelectedAppointmentId?.(null);
                 }
-                setIsAppointmentModalOpen(true);
+                setIsAppointmentModalOpen?.(true);
               }}
               className="group relative"
             >
