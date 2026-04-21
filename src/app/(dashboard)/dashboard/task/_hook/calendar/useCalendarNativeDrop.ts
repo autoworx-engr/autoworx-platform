@@ -58,6 +58,7 @@ function findDropTime(e: React.DragEvent<HTMLDivElement>): string | null {
 
 export function useCalendarNativeDrop(storeDate: string | null) {
   const queryClient = useQueryClient();
+  const timezone = useCompanyTimezone();
 
   return useCallback(
     async (e: React.DragEvent<HTMLDivElement>) => {
@@ -73,8 +74,6 @@ export function useCalendarNativeDrop(storeDate: string | null) {
       const timeStr = findDropTime(e);
 
       if (!dateStr) return;
-
-      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
       let startTime: string | null = null;
       let endTime: string | null = null;
@@ -119,6 +118,6 @@ export function useCalendarNativeDrop(storeDate: string | null) {
         errorToast("Failed to schedule task.");
       }
     },
-    [queryClient, storeDate],
+    [queryClient, storeDate, timezone],
   );
 }
