@@ -48,7 +48,8 @@ const counterToDurationMinutes = (hours: number, minutes: number) => {
   return safeHours * 60 + safeMinutes;
 };
 
-const toCounterInputValue = (value: number) => (value > 0 ? String(value) : "");
+const toCounterInputValue = (value: number) =>
+  value > 0 ? String(value) : "00";
 
 type ServiceInfoProps = {
   value: ServiceInfoState;
