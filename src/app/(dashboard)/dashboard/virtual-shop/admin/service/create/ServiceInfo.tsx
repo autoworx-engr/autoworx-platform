@@ -1,7 +1,9 @@
 "use client";
 
 import { slimInputClassName } from "@/components/SlimInput";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/Tooltip";
 import { cn } from "@/lib/utils";
+import { Info } from "lucide-react";
 import { Dispatch, SetStateAction } from "react";
 
 export type ServiceInfoState = {
@@ -89,8 +91,22 @@ export default function ServiceInfo({
         </div>
 
         <div className="space-y-1">
-          <label className="text-sm font-medium text-slate-700">
+          <label className="flex items-center gap-1.5 text-sm font-medium text-slate-700 mt-1">
             Duration (minutes)
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex items-center text-slate-400 transition-colors hover:text-slate-600"
+                  aria-label="Duration information"
+                >
+                  <Info size={14} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs text-xs leading-relaxed">
+                If no duration is entered, the system will automatically use the labor hours as the duration
+              </TooltipContent>
+            </Tooltip>
           </label>
           <input
             type="number"
