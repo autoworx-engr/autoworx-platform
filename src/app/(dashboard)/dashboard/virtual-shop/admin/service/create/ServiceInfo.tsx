@@ -208,7 +208,7 @@ export default function ServiceInfo({
 
         <div className="space-y-1">
           <label className="flex items-center gap-1.5 text-sm font-medium text-slate-700 mt-1">
-            Duration
+            Duration (HH:MM)
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
