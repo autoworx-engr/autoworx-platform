@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     console.error("Error fetching unique categories:", error);
     return NextResponse.json(
       { error: "Failed to fetch unique categories" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

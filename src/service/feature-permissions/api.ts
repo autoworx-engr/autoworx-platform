@@ -19,7 +19,10 @@ export const allCompanyFeaturePermissions = async (companyId: number) => {
 
     return response.data;
   } catch (error) {
-    console.error(`Failed to fetch feature permissions for company ${companyId}:`, error);
+    console.error(
+      `Failed to fetch feature permissions for company ${companyId}:`,
+      error,
+    );
     return null;
   }
 };

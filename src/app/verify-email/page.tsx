@@ -6,7 +6,9 @@ type TVerifyEmailPageProps = {
     token: string;
   }>;
 };
-export default async function EmailVerificationPage(props: TVerifyEmailPageProps) {
+export default async function EmailVerificationPage(
+  props: TVerifyEmailPageProps,
+) {
   const searchParams = await props.searchParams;
   const { token } = searchParams;
   const { payload } = await jwtVerifyToken(token ?? "");

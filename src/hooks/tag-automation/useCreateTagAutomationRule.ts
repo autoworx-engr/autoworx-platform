@@ -1,4 +1,3 @@
-
 import { errorToast, successToast } from "@/lib/toast";
 import { createTagAutomationRule } from "@/service/tag-automation/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -8,8 +7,7 @@ export const useCreateTagAutomationRule = () => {
 
   return useMutation({
     mutationKey: ["tag-automation"],
-    mutationFn: async (payload: any) =>
-      await createTagAutomationRule(payload),
+    mutationFn: async (payload: any) => await createTagAutomationRule(payload),
     onSuccess: () => {
       successToast("Tag automation rule created successfully!");
       queryClient.invalidateQueries({ queryKey: ["tag-automation"] });

@@ -179,7 +179,7 @@ export default function NewCustomer({
         sourceId: clientSource?.id,
         photo,
       },
-      pathname
+      pathname,
     );
 
     if (res?.type === "globalError") {
@@ -497,7 +497,7 @@ export default function NewCustomer({
                     return clientSources.filter((clientSource: Source) =>
                       clientSource.name
                         .toLowerCase()
-                        .includes(search.toLowerCase())
+                        .includes(search.toLowerCase()),
                     );
                   }}
                   openState={[openClientSource, setOpenClientSource]}

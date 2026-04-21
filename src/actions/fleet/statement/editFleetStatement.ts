@@ -62,7 +62,7 @@ export async function editFleetStatement(data: {
 
     if (hasPaidInvoices) {
       throw new Error(
-        "Cannot edit statement with paid or partially paid invoices."
+        "Cannot edit statement with paid or partially paid invoices.",
       );
     }
 
@@ -86,7 +86,7 @@ export async function editFleetStatement(data: {
 
     if (newInvoices.length !== data.invoiceIds.length) {
       throw new Error(
-        "invoices are not found, don't belong to the fleet, are already paid"
+        "invoices are not found, don't belong to the fleet, are already paid",
       );
     }
 

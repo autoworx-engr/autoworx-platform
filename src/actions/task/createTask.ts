@@ -64,10 +64,11 @@ export async function createTask(
       data: taskData,
     });
 
-    for (const user of task.assignedUsers) {
-      const assignedUser = await db.user.findUnique({
+    if (task.assignedUsers.length > 0) {
+      const assignedUsers = await db.user.findMany({
         where: {
-          id: user,
+          id: { in: task.assignedUsers },
+          companyId: session.user.companyId,
         },
         select: {
           id: true,
@@ -78,31 +79,28 @@ export async function createTask(
           phone: true,
         },
       });
-      if (assignedUser) {
-        sendNewTaskAssignNotification({
-          taskTitle: task.title,
-          taskDate: task.date,
-          assignTaskUser: assignedUser,
-        });
-      }
+      const userMap = new Map(assignedUsers.map((u) => [u.id, u]));
 
-      // TODO: Add the task to the user's Google Calendar
-
-      // Create the task user
-      await db.taskUser.create({
-        data: {
+      await db.taskUser.createMany({
+        data: task.assignedUsers.map((userId) => ({
           taskId: newTask.id,
-          userId: user,
-          eventId: "null-for-now",
-        },
+          userId,
+          eventId: null,
+        })),
       });
+
+      for (const userId of task.assignedUsers) {
+        const assignedUser = userMap.get(userId);
+        if (assignedUser) {
+          sendNewTaskAssignNotification({
+            taskTitle: task.title,
+            taskDate: task.date,
+            assignTaskUser: assignedUser,
+          });
+        }
+      }
     }
 
-    // revalidatePath("/task");
-    // revalidatePath("/communication/client");
-
-    // if the task has date, start time and end time, then insert it in google calendar
-    // also need to check if google calendar token exists or not, if not, then no need of inserting
     try {
       let googleCalendarToken = (await getGoogleCalendarToken())
         ?.googleCalendarToken;

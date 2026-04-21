@@ -39,7 +39,7 @@ export async function deleteEstimateTemplate({
                 invoiceItemId?: number | null;
                 quantity: number;
               }[],
-              material
+              material,
             ) => {
               const product = acc.find((p) => p?.id === material.productId);
               if (product) {
@@ -56,7 +56,7 @@ export async function deleteEstimateTemplate({
               }
               return acc;
             },
-            []
+            [],
           )
         : [];
 

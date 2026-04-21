@@ -49,4 +49,3 @@ export function useServerGet<T>(
 
   return { data, loading, error, setData, setLoading, setError };
 }
-

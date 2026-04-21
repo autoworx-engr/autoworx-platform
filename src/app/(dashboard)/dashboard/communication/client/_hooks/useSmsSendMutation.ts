@@ -46,8 +46,7 @@ export default function useSmsSendMutation(clientId: number) {
         url,
         name: files[ind].name,
         isVoiceNote:
-          isAudio(files[ind].name) ||
-          files[ind].type.startsWith("audio/"),
+          isAudio(files[ind].name) || files[ind].type.startsWith("audio/"),
       }));
 
       let response;
@@ -68,20 +67,20 @@ export default function useSmsSendMutation(clientId: number) {
     },
 
     // 🔁 Optimistic update
-    onMutate: async newClientSms => {
+    onMutate: async (newClientSms) => {
       await queryClient.cancelQueries({
         queryKey: smsQueryKey.allSmsByClientId(newClientSms.clientId),
       });
 
       let previousClientSms = queryClient.getQueryData(
-        smsQueryKey.allSmsByClientId(newClientSms.clientId)
+        smsQueryKey.allSmsByClientId(newClientSms.clientId),
       );
 
       const optimisticMessage = {
         id: newClientSms.id,
         clientId: newClientSms.clientId,
         message: newClientSms.message,
-        attachments: newClientSms.files.map(file => ({
+        attachments: newClientSms.files.map((file) => ({
           name: file.name,
           url: URL.createObjectURL(file), // Temporary blob URL
           isVoiceNote: isAudio(file.name) || file.type.startsWith("audio/"),
@@ -109,7 +108,7 @@ export default function useSmsSendMutation(clientId: number) {
                 nextPage: number;
                 hasMore: boolean;
               },
-              index: number
+              index: number,
             ) => {
               if (index === 0) {
                 return {
@@ -118,13 +117,13 @@ export default function useSmsSendMutation(clientId: number) {
                 };
               }
               return page;
-            }
+            },
           );
           return {
             ...oldData,
             pages: updatedPages,
           };
-        }
+        },
       );
 
       return { previousClientSms };
@@ -137,7 +136,7 @@ export default function useSmsSendMutation(clientId: number) {
       // Rollback day page appointments
       queryClient.setQueryData(
         smsQueryKey.allSmsByClientId(clientId),
-        context?.previousClientSms
+        context?.previousClientSms,
       );
     },
 

@@ -128,20 +128,23 @@ export const humanPersonas: Record<string, HumanPersona> = {
 };
 
 // System prompt that makes AI feel human
-export function generateHumanSystemPrompt(persona: HumanPersona, shopName: string): string {
+export function generateHumanSystemPrompt(
+  persona: HumanPersona,
+  shopName: string,
+): string {
   const { personality, conversationRules } = persona;
-  
+
   return `You are ${persona.name}, a real person who works at ${shopName}. You're NOT an AI assistant - you're a friendly team member who genuinely loves cars and helping people.
 
 ## Your Personality
-- You're ${personality.warmth >= 7 ? 'warm and approachable' : 'professional but friendly'}
+- You're ${personality.warmth >= 7 ? "warm and approachable" : "professional but friendly"}
 - ${personality.humor >= 6 ? "You have a good sense of humor and aren't afraid to joke around when appropriate" : "You keep things professional but pleasant"}
 - ${personality.empathy >= 7 ? "You really listen and try to understand what people actually need" : "You're helpful and attentive"}
 - ${personality.enthusiasm >= 7 ? "You get genuinely excited about cool car projects" : "You're knowledgeable and confident"}
 
 ## How You Talk
 ${conversationRules.useContrations ? "- Use contractions naturally (I'm, you're, we'll, that's)" : ""}
-${conversationRules.useSlang ? "- Use casual language when it fits (\"that's sick\", \"no worries\", \"gotcha\")" : ""}
+${conversationRules.useSlang ? '- Use casual language when it fits ("that\'s sick", "no worries", "gotcha")' : ""}
 - ${personality.formality <= 4 ? "Keep it casual - like texting a friend who knows cars" : "Stay professional but not stiff"}
 - ${conversationRules.mirrorCustomerTone ? "Match the customer's energy - if they're excited, be excited with them" : ""}
 ${conversationRules.useEmojis ? "- Use emojis sparingly but naturally 😊" : ""}
@@ -186,9 +189,11 @@ export const humanResponses = {
     "Awesome - what's your ride?",
   ],
   reactToVehicle: {
-    luxury: "Oh nice, that's a beautiful car! Those look amazing with a good wrap.",
+    luxury:
+      "Oh nice, that's a beautiful car! Those look amazing with a good wrap.",
     sports: "Hell yeah, that's a fun one! What color were you thinking?",
-    truck: "Solid choice! We do a ton of trucks. They look great with a color change.",
+    truck:
+      "Solid choice! We do a ton of trucks. They look great with a color change.",
     generic: "Nice! Good canvas to work with. What were you thinking?",
   },
   pricing: [
@@ -201,9 +206,11 @@ export const humanResponses = {
     "Want to come check it out in person? Way easier to show you than explain over text.",
   ],
   empathy: {
-    frustrated: "Ugh, I totally get it. That's frustrating. Let's figure this out.",
+    frustrated:
+      "Ugh, I totally get it. That's frustrating. Let's figure this out.",
     excited: "I love the enthusiasm! This is gonna look sick.",
-    uncertain: "No worries at all - that's what I'm here for. Let's walk through it.",
+    uncertain:
+      "No worries at all - that's what I'm here for. Let's walk through it.",
   },
   closing: [
     "Anything else I can help with? No rush!",

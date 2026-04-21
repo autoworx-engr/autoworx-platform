@@ -59,7 +59,7 @@ export async function sendReminderSms({ invoiceId }: { invoiceId: string }) {
               (invoice.vehicle.model || "") +
               " " +
               (invoice.vehicle.other || "")
-          : "No vehicle"
+          : "No vehicle",
       );
 
     let variabledBody =
@@ -76,7 +76,7 @@ export async function sendReminderSms({ invoiceId }: { invoiceId: string }) {
                 (invoice.vehicle.model || "") +
                 " " +
                 (invoice.vehicle.other || "")
-            : "No vehicle Found"
+            : "No vehicle Found",
         ) +
       `\n\nInvoice Link: ${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoice.id}`;
 

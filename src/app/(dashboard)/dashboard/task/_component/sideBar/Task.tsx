@@ -9,7 +9,7 @@ import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
 import { errorToast, successToast } from "@/lib/toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useDate } from "../../../task-v1/[type]/Calendar/Day";
+import { useDate } from "../../_hook/lib/useDate";
 import { taskQueryKey } from "../../_constant";
 import useWeekStartEndDays from "../../_hook/lib/useWeekStartEndDays";
 import { CircleCheckBig, SquarePen } from "lucide-react";

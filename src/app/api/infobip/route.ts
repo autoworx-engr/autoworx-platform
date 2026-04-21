@@ -41,7 +41,7 @@ export async function GET() {
     console.error("Get Infobip config error:", error);
     return NextResponse.json(
       { error: "Failed to get Infobip configuration" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -49,6 +49,6 @@ export async function GET() {
 export async function POST() {
   return NextResponse.json(
     { message: "Use /api/infobip/sms/send for sending messages" },
-    { status: 200 }
+    { status: 200 },
   );
 }

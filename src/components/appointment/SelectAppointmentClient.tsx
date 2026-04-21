@@ -70,12 +70,6 @@ export function SelectAppointmentClient({
           return oldData ? [...oldData, newAddedCustomer] : [newAddedCustomer];
         },
       );
-      queryClient.setQueryData(
-        [queryKeys.clientList],
-        (oldData: Client[] | undefined) => {
-          return oldData ? [...oldData, newAddedCustomer] : [newAddedCustomer];
-        },
-      );
     }
   }, [newAddedCustomer]);
 
@@ -94,7 +88,9 @@ export function SelectAppointmentClient({
         label={(client: Partial<Client> | null) =>
           client ? `${client.firstName} ${client.lastName ?? ""}` : "Client"
         }
-        disabledDropdown={Boolean((fromLead && clientId) || client?.fromRequest)}
+        disabledDropdown={Boolean(
+          (fromLead && clientId) || client?.fromRequest,
+        )}
         newButton={
           <NewCustomer
             // @ts-ignore

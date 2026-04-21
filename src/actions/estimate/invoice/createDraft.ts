@@ -71,7 +71,7 @@ export async function createDraftEstimate({
         },
       });
     }
-    //udpate the lead to set estimateCreated to true
+    //update the lead to set estimateCreated to true
     const theClientOfLead = await db.client.findUnique({
       where: {
         id: clientId,

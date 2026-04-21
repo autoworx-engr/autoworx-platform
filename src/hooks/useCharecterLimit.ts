@@ -6,6 +6,6 @@ export function useCharacterLimit(value: string, maxLength: number) {
     // const remaining = maxLength - length;
     const isLimitExceeded = length > maxLength;
 
-    return { length,  isLimitExceeded };
+    return { length, isLimitExceeded };
   }, [value, maxLength]);
 }

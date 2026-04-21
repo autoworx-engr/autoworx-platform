@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     if (!phone) {
       return NextResponse.json(
         { error: "Phone number is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
     console.error("Error fetching client by phone:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

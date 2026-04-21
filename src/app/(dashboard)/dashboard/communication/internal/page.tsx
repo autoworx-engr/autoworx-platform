@@ -10,11 +10,9 @@ export const metadata: Metadata = {
   title: "Communication Hub - Internal",
 };
 
-export default async function InternalPage(
-  props: {
-    searchParams: Promise<{ id?: string }>;
-  }
-) {
+export default async function InternalPage(props: {
+  searchParams: Promise<{ id?: string }>;
+}) {
   const searchParams = await props.searchParams;
   const { id: selectedUserId } = searchParams;
   const session = await getServerSession(authOptions);
@@ -105,7 +103,11 @@ export default async function InternalPage(
         messages={messages}
         selectedUser={
           selectedUser
-            ? { ...selectedUser, unreadCount: 0, latestMessage: null } as (User & { unreadCount: number; latestMessage?: any })
+            ? ({
+                ...selectedUser,
+                unreadCount: 0,
+                latestMessage: null,
+              } as User & { unreadCount: number; latestMessage?: any })
             : null
         }
       />

@@ -6,6 +6,6 @@ export const useFindOneInventoryAutomationRule = (id: number) => {
     queryKey: ["inventory-automation", id],
     queryFn: async () => findOneInventoryAutomationRules(id),
     enabled: !!id,
-    staleTime: 3600 * 1000
+    staleTime: 3600 * 1000,
   });
 };

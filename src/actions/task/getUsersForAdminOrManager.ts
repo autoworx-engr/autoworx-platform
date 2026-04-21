@@ -8,7 +8,7 @@ import type { Prisma } from "@prisma/client";
 
 export default async function getUsersForAdminOrManager(
   searchTerm: string = "",
-  params?: Prisma.UserFindManyArgs
+  params?: Prisma.UserFindManyArgs,
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -39,7 +39,7 @@ export default async function getUsersForAdminOrManager(
               contains: trimmedSearch,
               mode: "insensitive",
             },
-          }
+          },
         );
 
         if (searchWords.length >= 2) {

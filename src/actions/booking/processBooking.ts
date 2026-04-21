@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { Client, Appointment } from "@prisma/client";
 import moment from "moment-timezone";
 import { sendNewAppointmentNotification } from "@/lib/notification/task-and-appointment-notify";
-import { scheduleRemindersInNest } from "../appointment/addAppointment";
+import { scheduleRemindersInNest } from "../appointment/appointmentReminderScheduler";
 import { sendInfobipEmail } from "../estimate/invoice/sendInfobipEmail";
 import { sendTwilioMessage } from "../communication/client/sendTwilioMessage";
 import { sendInfobipMessage } from "../communication/client/sendInfobipMessage";

@@ -24,9 +24,13 @@ export const createServiceMaintenanceAutomationRule = async (payload: any) => {
   }
 };
 
-export const AllServiceMaintenanceAutomationRules = async (companyId:number) => {
+export const AllServiceMaintenanceAutomationRules = async (
+  companyId: number,
+) => {
   try {
-    const response = await axiosInstance.get(`/service-automation-rule?companyId=${companyId}`);
+    const response = await axiosInstance.get(
+      `/service-automation-rule?companyId=${companyId}`,
+    );
     return response.data.data;
   } catch (error) {
     throw error;
@@ -35,9 +39,7 @@ export const AllServiceMaintenanceAutomationRules = async (companyId:number) => 
 
 export const findOneServiceMaintenanceAutomationRules = async (id: number) => {
   try {
-    const response = await axiosInstance.get(
-      `/service-automation-rule/${id}`,
-    );
+    const response = await axiosInstance.get(`/service-automation-rule/${id}`);
     return response.data;
   } catch (error) {
     throw error;

@@ -32,7 +32,7 @@ export default function useClientListInfiniteQuery(search?: string) {
           take: PAGE_SIZE,
           orderBy: { createdAt: "desc" },
         },
-        search
+        search,
       );
 
       return {

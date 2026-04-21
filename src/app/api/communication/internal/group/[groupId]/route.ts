@@ -22,7 +22,10 @@ import { NextResponse } from "next/server";
  *         description: Group not found
  */
 
-export const GET = async (req: Request, props: { params: Promise<{ groupId: string }> }) => {
+export const GET = async (
+  req: Request,
+  props: { params: Promise<{ groupId: string }> },
+) => {
   const params = await props.params;
   try {
     const groupId = params?.groupId;

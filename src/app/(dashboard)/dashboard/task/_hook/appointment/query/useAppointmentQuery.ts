@@ -1,7 +1,34 @@
 import getAppointments from "@/actions/task/getAppointments";
-import { Appointment, AppointmentUser, User } from "@prisma/client";
+import { Appointment } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 import { appointmentQueryKey } from "../../../_constant";
+
+export type CalendarAppointmentUser = {
+  id: number;
+  firstName: string | null;
+  lastName: string | null;
+};
+
+export type CalendarAppointment = Omit<Appointment, never> & {
+  assignedUsers: CalendarAppointmentUser[];
+  client: {
+    id: number;
+    firstName: string | null;
+    lastName: string | null;
+    email: string | null;
+    mobile: string | null;
+  } | null;
+  vehicle: {
+    model: string | null;
+    make: string | null;
+    year: number | null;
+  } | null;
+  serviceCategory: {
+    id: number;
+    name: string;
+    color: string | null;
+  } | null;
+};
 
 export default function useAppointmentQuery(
   startDate: string,
@@ -58,20 +85,19 @@ export default function useAppointmentQuery(
           },
         },
       });
-      const appointments = response.data as (Appointment & {
-        appointmentUsers: (AppointmentUser & { user: User })[];
+      const raw = response.data as (Appointment & {
+        appointmentUsers: { user: CalendarAppointmentUser }[];
+        client: CalendarAppointment["client"];
+        vehicle: CalendarAppointment["vehicle"];
+        serviceCategory: CalendarAppointment["serviceCategory"];
       })[];
 
-      // Transform appointmentUsers to assignedUsers to match CalendarAppointment interface
-      return appointments.map((appointment) => {
-        const { appointmentUsers, ...appointmentData } = appointment;
-        return {
+      return raw.map(
+        ({ appointmentUsers, ...appointmentData }): CalendarAppointment => ({
           ...appointmentData,
-          assignedUsers: appointmentUsers.map(
-            (appointmentUser) => appointmentUser.user,
-          ),
-        };
-      });
+          assignedUsers: appointmentUsers.map((au) => au.user),
+        }),
+      );
     },
   });
 }

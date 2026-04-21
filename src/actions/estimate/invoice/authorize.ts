@@ -17,7 +17,7 @@ export async function authorizeInvoice(
   invoiceId: string,
   authorizedName: string,
   url: string,
-  invoiceType: string
+  invoiceType: string,
 ): Promise<ServerAction | TErrorHandler> {
   try {
     const updatedInvoice = await db.invoice.update({
@@ -74,7 +74,7 @@ export async function authorizeInvoice(
             });
 
             throw new Error(
-              `The quantity of "${product.name}" is not enough in the inventory, You need ${product.quantity} but only have ${findInventoryProduct.quantity} quantity`
+              `The quantity of "${product.name}" is not enough in the inventory, You need ${product.quantity} but only have ${findInventoryProduct.quantity} quantity`,
             );
           }
           await db.inventoryProductHistory.create({
@@ -102,7 +102,7 @@ export async function authorizeInvoice(
               },
             },
           });
-        })
+        }),
       );
     }
 
@@ -160,7 +160,7 @@ export async function authorizeInvoice(
 }
 
 export async function deleteInvoiceAuthorize(
-  invoiceId: string
+  invoiceId: string,
 ): Promise<ServerAction | TErrorHandler> {
   try {
     await db.invoice.update({

@@ -53,7 +53,7 @@ export async function getAppointmentByIdForEdit(
       customers,
       vehicles,
       emailTemplates,
-      settings
+      settings,
     ] = await Promise.all([
       appointment.confirmationEmailTemplateId
         ? db.emailTemplate.findUnique({
@@ -85,7 +85,7 @@ export async function getAppointmentByIdForEdit(
         where: {
           companyId: appointment.companyId,
         },
-      }) as Promise<CalendarSettings>
+      }) as Promise<CalendarSettings>,
     ]);
 
     return {
