@@ -750,6 +750,66 @@ export async function updateLeadColumn(leadId: number, newColumnId: number) {
   }
 }
 
+type TLeadFilterOptions = {
+  services: string[];
+  sources: string[];
+  statuses: string[];
+  salesUsers: { id: number; firstName: string; lastName: string | null }[];
+};
+
+export const getLeadFilterOptions = async (): Promise<TLeadFilterOptions> => {
+  const companyId = await getCompanyId();
+
+  const [servicesData, sourcesData, columnGroupData, salesUsersData] =
+    await Promise.all([
+      db.lead.findMany({
+        where: { companyId, services: { not: null } },
+        select: { services: true },
+        distinct: ["services"],
+      }),
+      db.lead.findMany({
+        where: { companyId, source: { not: null } },
+        select: { source: true },
+        distinct: ["source"],
+      }),
+      db.lead.groupBy({
+        by: ["columnId"],
+        where: { companyId, columnId: { not: null } },
+      }),
+      db.lead.findMany({
+        where: { companyId, assignedSalesUserId: { not: null } },
+        select: {
+          assignedSalesUserId: true,
+          salesUser: { select: { id: true, firstName: true, lastName: true } },
+        },
+        distinct: ["assignedSalesUserId"],
+      }),
+    ]);
+
+  const columnIds = columnGroupData
+    .map((g) => g.columnId)
+    .filter((id): id is number => id !== null);
+
+  const columnsData =
+    columnIds.length > 0
+      ? await db.column.findMany({
+          where: { id: { in: columnIds } },
+          select: { title: true },
+        })
+      : [];
+
+  return {
+    services: servicesData.map((l) => l.services).filter(Boolean) as string[],
+    sources: sourcesData.map((l) => l.source).filter(Boolean) as string[],
+    statuses: [...new Set(columnsData.map((c) => c.title))],
+    salesUsers: salesUsersData.map((l) => l.salesUser).filter(Boolean) as {
+      id: number;
+      firstName: string;
+      lastName: string | null;
+    }[],
+  };
+};
+
 // get leads count by column id
 export async function getLeadsCountByColumnId(
   columnId: number,

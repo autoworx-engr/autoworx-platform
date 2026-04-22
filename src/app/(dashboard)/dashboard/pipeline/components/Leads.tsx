@@ -61,7 +61,6 @@ const formatDisplayName = (name?: string | null) => {
 };
 
 const Leads = ({ salesColumn }: TProps) => {
-  const [initialLeads, setInitialLeads] = useState<LeadWithSalesUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const [leads, setLeads] = useState<LeadWithSalesUser[]>([]);
@@ -93,6 +92,12 @@ const Leads = ({ salesColumn }: TProps) => {
     service: null,
     source: null,
   });
+  const [filterOptions, setFilterOptions] = useState<{
+    services: string[];
+    sources: string[];
+    statuses: string[];
+    salesUsers: { id: number; firstName: string; lastName: string | null }[];
+  }>({ services: [], sources: [], statuses: [], salesUsers: [] });
   const { popup, open, close } = usePopupStore();
 
   // Ref to track processed search/filter combinations to prevent duplicate requests
@@ -159,7 +164,6 @@ const Leads = ({ salesColumn }: TProps) => {
         ])) as { leads: LeadWithSalesUser[]; totalCount: number };
 
         if (!controller.signal.aborted) {
-          setInitialLeads(updatedLeads);
           setLeads(updatedLeads);
           setTotalCount(count);
           setShowPagination(count > 10);
@@ -267,6 +271,16 @@ const Leads = ({ salesColumn }: TProps) => {
       clearTimeout(debounceTimeout);
     };
   }, [search, filter, dateRange]);
+
+  // Fetch filter options once on mount — independent of pagination/filters
+  useEffect(() => {
+    fetch("/api/pipeline/sales/leads/filter-options")
+      .then((res) => res.json())
+      .then((res) => {
+        if (res.success) setFilterOptions(res.data);
+      })
+      .catch(() => {});
+  }, []);
 
   // Combine user and company users API calls to reduce sequential requests
   useEffect(() => {
@@ -476,7 +490,7 @@ const Leads = ({ salesColumn }: TProps) => {
                 </div>
                 <div className="relative flex-1">
                   <DropdownMenuDemo
-                    leads={initialLeads ?? []}
+                    filterOptions={filterOptions}
                     filter={filter}
                     setFilter={setFilter}
                     clearFilters={clearFilters}
@@ -829,70 +843,51 @@ const SearchTerms = React.memo(function SearchTerms({
   );
 });
 
+type TFilterOptions = {
+  services: string[];
+  sources: string[];
+  statuses: string[];
+  salesUsers: { id: number; firstName: string; lastName: string | null }[];
+};
+
 const DropdownMenuDemo = React.memo(function DropdownMenuDemo({
-  leads,
+  filterOptions,
   setFilter,
   filter,
   clearFilters,
 }: {
-  leads: LeadWithSalesUser[];
+  filterOptions: TFilterOptions;
   setFilter: any;
   filter: {
     [key: string]: string;
   };
   clearFilters: () => void;
 }) {
-  // Memoize expensive computations to prevent recalculation on every render
-  const { statusItems, serviceItems, sourceItems, salesPersonItems } =
-    useMemo(() => {
-      const uniqueStatuses = new Set<string>();
-      const uniqueServices = new Set<string>();
-      const uniqueSources = new Set<string>();
-      const salesPersonsId = new Set<number>();
-
-      leads?.forEach((lead) => {
-        if (lead.column?.title) {
-          uniqueStatuses.add(lead.column.title);
-        }
-        if (lead.services) {
-          uniqueServices.add(lead.services);
-        }
-        if (lead.source) {
-          uniqueSources.add(lead.source);
-        }
-        if (lead.salesUser?.id) {
-          salesPersonsId.add(lead.salesUser?.id);
-        }
-      });
-
-      return {
-        statusItems: Array.from(uniqueStatuses).map((statusName, index) => ({
-          id: `status-${index}`,
-          value: statusName,
-          label: statusName,
-        })),
-        serviceItems: Array.from(uniqueServices).map((serviceName, index) => ({
-          id: `service-${index}`,
-          value: serviceName,
-          label: serviceName,
-        })),
-        sourceItems: Array.from(uniqueSources).map((sourceName, index) => ({
-          id: `source-${index}`,
-          value: sourceName,
-          label: sourceName,
-        })),
-        salesPersonItems: Array.from(salesPersonsId).map((personId, index) => ({
-          id: `person-${index}`,
-          value: personId.toString(),
-          label:
-            leads?.find((lead) => lead.salesUser?.id === personId)?.salesUser
-              ?.firstName +
-            " " +
-            leads?.find((lead) => lead.salesUser?.id === personId)?.salesUser
-              ?.lastName,
-        })),
-      };
-    }, [leads]);
+  const { statusItems, serviceItems, sourceItems, salesPersonItems } = useMemo(
+    () => ({
+      statusItems: filterOptions.statuses.map((s, i) => ({
+        id: `status-${i}`,
+        value: s,
+        label: s,
+      })),
+      serviceItems: filterOptions.services.map((s, i) => ({
+        id: `service-${i}`,
+        value: s,
+        label: s,
+      })),
+      sourceItems: filterOptions.sources.map((s, i) => ({
+        id: `source-${i}`,
+        value: s,
+        label: s,
+      })),
+      salesPersonItems: filterOptions.salesUsers.map((u, i) => ({
+        id: `person-${i}`,
+        value: u.id.toString(),
+        label: `${u.firstName} ${u.lastName ?? ""}`.trim(),
+      })),
+    }),
+    [filterOptions],
+  );
 
   return (
     <DropdownMenu.Root>
