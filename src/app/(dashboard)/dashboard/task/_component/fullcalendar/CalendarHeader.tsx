@@ -47,6 +47,7 @@ const VIEW_OPTIONS = [
   { value: "day", label: "Day", fcView: "timeGridDay" },
   { value: "week", label: "Week", fcView: "timeGridWeek" },
   { value: "month", label: "Month", fcView: "dayGridMonth" },
+  { value: "list", label: "List", fcView: "listDay" },
 ] as const;
 
 interface CalendarHeaderProps {

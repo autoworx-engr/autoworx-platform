@@ -1,15 +1,16 @@
 import GiftCardsTab from "../../../components/GiftCardsTab";
 
 type VirtualShopGiftCardsPageProps = {
-  params: {
+  params: Promise<{
     shopId: string;
-  };
+  }>;
 };
 
-export default function VirtualShopGiftCardsPage({
+export default async function VirtualShopGiftCardsPage({
   params,
 }: VirtualShopGiftCardsPageProps) {
-  const shopId = Number.parseInt(params.shopId, 10);
+  const resolvedParams = await params;
+  const shopId = Number.parseInt(resolvedParams.shopId, 10);
 
   return <GiftCardsTab shopId={Number.isFinite(shopId) ? shopId : 0} />;
 }

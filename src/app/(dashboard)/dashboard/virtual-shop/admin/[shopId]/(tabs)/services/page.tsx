@@ -8,9 +8,9 @@ const DEFAULT_LIMIT = 10;
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100] as const;
 
 type VirtualShopServicesPageProps = {
-  params: {
+  params: Promise<{
     shopId: string;
-  };
+  }>;
   searchParams?: Promise<{
     page?: string;
     limit?: string;
@@ -40,6 +40,7 @@ export default async function VirtualShopServicesPage({
   params,
   searchParams,
 }: VirtualShopServicesPageProps) {
+  const resolvedParams = await params;
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const session = await getServerSession(authOptions);
   const accessToken = session?.accessToken;
@@ -50,7 +51,7 @@ export default async function VirtualShopServicesPage({
     DEFAULT_LIMIT,
     PAGE_SIZE_OPTIONS,
   );
-  const shopId = Number.parseInt(params.shopId, 10);
+  const shopId = Number.parseInt(resolvedParams.shopId, 10);
 
   let initialShopConfig: ShopData | null = null;
   let servicesResponse: ShopServicesResponse | undefined;
@@ -72,6 +73,7 @@ export default async function VirtualShopServicesPage({
             shopId: String(shopId),
             page: String(page),
             limit: String(limit),
+            includeInactive: "true",
             ...(search ? { search } : {}),
           }).toString()}`,
           {

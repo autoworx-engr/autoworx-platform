@@ -34,7 +34,7 @@ const navbarList = [
   },
   {
     title: "Communication Hub",
-    icon: "/icons/navbar/Community.svg",
+    icon: "/icons/navbar/Community4.svg",
     path: "/dashboard/communication",
     subnav: [
       {
