@@ -51,6 +51,13 @@ import { getToken } from "next-auth/jwt";
  *           type: string
  *         description: Search keyword to filter services by title (case-insensitive).
  *       - in: query
+ *         name: includeInactive
+ *         required: false
+ *         schema:
+ *           type: boolean
+ *           default: false
+ *         description: When true, returns both active and inactive services. When omitted or false, returns active services only.
+ *       - in: query
  *         name: sortOrder
  *         required: false
  *         schema:
@@ -211,6 +218,7 @@ export async function GET(req: Request) {
     const shopId = searchParams.get("shopId");
     const category = searchParams.get("category");
     const search = searchParams.get("search");
+    const includeInactive = searchParams.get("includeInactive") === "true";
     // Default to 'desc' if not provided, strongly type the allowed values
     const sortOrder = (
       searchParams.get("sortOrder") === "asc" ? "asc" : "desc"
@@ -227,7 +235,7 @@ export async function GET(req: Request) {
 
     const whereClause: Prisma.ShopServiceWhereInput = {
       shopId: parseInt(shopId, 10),
-      isActive: true,
+      ...(includeInactive ? {} : { isActive: true }),
     };
 
     if (category && category !== "All") {
