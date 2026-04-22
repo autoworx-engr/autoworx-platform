@@ -3,7 +3,6 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/authOptions";
 import { db } from "@/lib/db";
-import { revalidateTag } from "next/cache";
 
 type CreateAppointmentTitleData = {
   name: string;

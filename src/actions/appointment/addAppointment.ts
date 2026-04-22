@@ -183,38 +183,36 @@ export async function addAppointment(
 
     // revalidatePath("/dashboard/task");
 
-    const vehicle = await db.vehicle.findFirst({
-      where: {
-        id: appointment.vehicleId,
-      },
-    });
-
-    const company = await db.company.findFirst({
-      where: {
-        id: client?.companyId,
-      },
-      select: {
-        timezone: true,
-        name: true,
-        address: true,
-        phone: true,
-        smsGateway: true,
-      },
-    });
-
-    // get the confirmation email template
-    const confirmationEmailTemplate = await db.emailTemplate.findFirst({
-      where: {
-        id: appointment.confirmationEmailTemplateId,
-      },
-    });
-
-    // get the reminder email template
-    const reminderEmailTemplate = await db.emailTemplate.findFirst({
-      where: {
-        id: appointment.reminderEmailTemplateId,
-      },
-    });
+    const [vehicle, company, confirmationEmailTemplate, reminderEmailTemplate] =
+      await Promise.all([
+        db.vehicle.findFirst({
+          where: {
+            id: appointment.vehicleId,
+          },
+        }),
+        db.company.findFirst({
+          where: {
+            id: client?.companyId,
+          },
+          select: {
+            timezone: true,
+            name: true,
+            address: true,
+            phone: true,
+            smsGateway: true,
+          },
+        }),
+        db.emailTemplate.findFirst({
+          where: {
+            id: appointment.confirmationEmailTemplateId,
+          },
+        }),
+        db.emailTemplate.findFirst({
+          where: {
+            id: appointment.reminderEmailTemplateId,
+          },
+        }),
+      ]);
 
     const appointmentDate = moment(
       `${appointment.date}T${appointment.startTime}:00`,
@@ -250,11 +248,6 @@ export async function addAppointment(
       );
 
       confirmationMessage = confirmationMessage?.replace(
-        "<DATE>",
-        appointmentDate,
-      );
-
-      confirmationMessage = confirmationMessage?.replace(
         "<BUSINESS_NAME>",
         company?.name ?? "",
       );
@@ -274,7 +267,7 @@ export async function addAppointment(
         // send email
         if (client) {
           try {
-            sendInfobipEmail({
+            await sendInfobipEmail({
               clientId: client.id,
               subject: confirmationSubject,
               text: confirmationMessage,
@@ -284,13 +277,13 @@ export async function addAppointment(
           }
           try {
             if (company?.smsGateway === "TWILIO") {
-              sendTwilioMessage({
+              await sendTwilioMessage({
                 clientId: client.id,
                 message: confirmationMessage,
                 attachments: [],
               });
             } else if (company?.smsGateway === "INFOBIP") {
-              sendInfobipMessage({
+              await sendInfobipMessage({
                 clientId: client.id,
                 message: confirmationMessage,
                 attachments: [],
@@ -321,7 +314,7 @@ export async function addAppointment(
         let i = 0;
 
         for (const time of appointment.times) {
-          scheduleRemindersInNest({
+          await scheduleRemindersInNest({
             id: newAppointment.id.toString(),
             date: new Date(`${time.date}T00:00:00.000Z`),
             time: time.time,

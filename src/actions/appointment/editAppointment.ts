@@ -49,9 +49,7 @@ export async function editAppointment({
   try {
     await updateAppointmentValidationSchema.parseAsync({ id, appointment });
     const session = await getServerSession(authOptions);
-    console.log("🚀 ~ editAppointment ~ session:", session);
     const companyId = session?.user.companyId;
-    console.log("🚀 ~ editAppointment ~ companyId:", companyId);
 
     if (!companyId) {
       throw new Error("Company ID is required to create an email template.");
@@ -221,11 +219,6 @@ export async function editAppointment({
       );
 
       confirmationMessage = confirmationMessage?.replace(
-        "<DATE>",
-        appointmentDate,
-      );
-
-      confirmationMessage = confirmationMessage?.replace(
         "<BUSINESS_NAME>",
         company?.name ?? "",
       );
@@ -251,13 +244,13 @@ export async function editAppointment({
               text: confirmationMessage,
             });
             if (company?.smsGateway === "TWILIO") {
-              sendTwilioMessage({
+              await sendTwilioMessage({
                 clientId: client.id,
                 message: confirmationMessage,
                 attachments: [],
               });
             } else if (company?.smsGateway === "INFOBIP") {
-              sendInfobipMessage({
+              await sendInfobipMessage({
                 clientId: client.id,
                 message: confirmationMessage,
                 attachments: [],
@@ -341,7 +334,7 @@ export async function editAppointment({
 
         // if event is successfully created in google calendar, then save the event id in task model
         if (event && event.id) {
-          db.appointment.update({
+          await db.appointment.update({
             where: {
               id: updatedAppointment.id,
             },

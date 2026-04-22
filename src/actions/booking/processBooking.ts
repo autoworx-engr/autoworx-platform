@@ -88,6 +88,11 @@ export async function createAppointment(data: {
           },
         },
       });
+      if (!defaultUser) {
+        throw new Error(
+          "No Admin or Manager found for this company to assign the appointment.",
+        );
+      }
       userId = defaultUser?.id || 1; // Fallback to user ID 1 if no admin/manager found
     }
 
