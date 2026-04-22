@@ -20,6 +20,7 @@ import { EventDetailsSheet } from "./EventDetailsSheet";
 import { getCalendarType } from "../../_utils/calendarView";
 import { useCalendarData } from "../../_hook/calendar/useCalendarData";
 import { useCalendarEventDateTimeUpdate } from "../../_hook/calendar/useCalendarEventDateTimeUpdate";
+import { useCalendarNativeDrop } from "../../_hook/calendar/useCalendarNativeDrop";
 import { useCalendarFilters } from "../../_hook/calendar/useCalendarFilters";
 import { useCalendarSettings } from "../../_hook/calendar/useCalendarSettings";
 import { useCalendarStoreSync } from "../../_hook/calendar/useCalendarStoreSync";
@@ -35,16 +36,28 @@ export default function Calendar({ type }: { type: CalendarType }) {
   const { date: storeDate } = useCalendarStore();
   const [view, setView] = useState(
     type === "list"
-      ? "listWeek"
+      ? "listDay"
       : type === "month"
         ? "dayGridMonth"
         : type === "week"
           ? "timeGridWeek"
           : "timeGridDay",
   );
-  const [dateRange, setDateRange] = useState({
-    start: moment().startOf("month").format("YYYY-MM-DD"),
-    end: moment().endOf("month").format("YYYY-MM-DD"),
+  const [dateRange, setDateRange] = useState(() => {
+    const today = moment().format("YYYY-MM-DD");
+    if (type === "list" || type === "day") {
+      return { start: today, end: today };
+    }
+    if (type === "week") {
+      return {
+        start: moment().startOf("week").format("YYYY-MM-DD"),
+        end: moment().endOf("week").format("YYYY-MM-DD"),
+      };
+    }
+    return {
+      start: moment().startOf("month").format("YYYY-MM-DD"),
+      end: moment().endOf("month").format("YYYY-MM-DD"),
+    };
   });
 
   const { data: session } = useSession();
@@ -77,6 +90,7 @@ export default function Calendar({ type }: { type: CalendarType }) {
   const { handleDatesSet: syncStoreDatesSet } =
     useCalendarStoreSync(calendarRef);
   const handleEventDateTimeUpdate = useCalendarEventDateTimeUpdate();
+  const handleNativeDrop = useCalendarNativeDrop(storeDate);
 
   const weekendDays = useMemo(
     () => [settings?.weekend1, settings?.weekend2].filter(Boolean) as string[],
@@ -98,6 +112,17 @@ export default function Calendar({ type }: { type: CalendarType }) {
     dateRange,
     weekendDays,
   });
+
+  const displayEvents = useMemo(() => {
+    if (view.startsWith("list")) {
+      return events.filter(
+        (e) =>
+          e.extendedProps?.type !== "holiday" &&
+          e.extendedProps?.type !== "weekend",
+      );
+    }
+    return events;
+  }, [events, view]);
 
   const loading = isCalendarLoading || isSettingsLoading || isDataLoading;
   const estRevenue = filteredAppointments.reduce(
@@ -165,7 +190,11 @@ export default function Calendar({ type }: { type: CalendarType }) {
       />
 
       <div className={`flex-1 w-full relative ${styles.calendarBody}`}>
-        <div className="w-full h-full overflow-x-auto">
+        <div
+          className="w-full h-full overflow-x-auto"
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={handleNativeDrop}
+        >
           <FullCalendar
             ref={calendarRef}
             plugins={[
@@ -194,7 +223,7 @@ export default function Calendar({ type }: { type: CalendarType }) {
             }}
             businessHours={businessHours}
             slotLaneClassNames={nonBusinessSlotClassNames}
-            events={events}
+            events={displayEvents}
             eventContent={(eventInfo: EventContentArg) => (
               <EventContent eventInfo={eventInfo} session={session} />
             )}

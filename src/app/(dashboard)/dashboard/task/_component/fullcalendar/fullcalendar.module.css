@@ -22,13 +22,59 @@
 
 .calendarScope :global(.fc-list-table) {
   width: 100% !important;
-  table-layout: fixed;
+  table-layout: auto !important;
 }
 
-.calendarScope :global(.fc-list-day-cushion),
-.calendarScope :global(.fc-list-event-title),
+.calendarScope :global(.fc-list-day-cushion) {
+  padding: 6px 14px !important;
+}
+
 .calendarScope :global(.fc-list-event-time) {
-  padding: 42px 16px !important;
+  padding: 5px 8px !important;
+  white-space: nowrap;
+  width: 1% !important;
+}
+
+.calendarScope :global(.fc-list-event-title) {
+  padding: 5px 8px 5px 0 !important;
+  width: 99% !important;
+}
+
+/* Desktop: flex row with justify-between */
+@media (min-width: 641px) {
+  .calendarScope :global(.fc-list-event) {
+    display: flex !important;
+    flex-grow: 1 !important;
+  }
+
+  .calendarScope :global(.fc-list-event-time) {
+    display: flex !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
+    flex-grow: 1 !important;
+    padding: 5px 16px !important;
+  }
+
+  .calendarScope :global(.fc-list-event-title) {
+    flex: 1 !important;
+    width: auto !important;
+    padding: 5px 16px 5px 0 !important;
+  }
+}
+
+.calendarScope :global(.fc-list-event-graphic) {
+  display: none !important;
+}
+
+.calendarScope :global(.fc-list-event td) {
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+}
+
+@media (max-width: 640px) {
+  .calendarScope :global(.fc-list-event-time) {
+    font-size: 11px !important;
+  }
 }
 
 .calendarScope :global(.fc-button-primary) {

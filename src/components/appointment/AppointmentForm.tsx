@@ -281,9 +281,11 @@ export default function AppointmentForm({
                   <div className="flex flex-col items-start overflow-hidden text-left">
                     {selectedDraftOption ? (
                       <>
-                        <span className="w-full text-sm truncate font-semibold text-slate-900 dark:text-white">
-                          {selectedDraftOption.vehicle}
-                        </span>
+                        <div className="flex items-center gap-1.5 w-full min-w-0">
+                          <span className="truncate text-sm font-semibold text-slate-900 dark:text-white">
+                            {selectedDraftOption.vehicle}
+                          </span>
+                        </div>
                         <span className="text-xs text-slate-500">
                           ID: {selectedDraftOption.id} • $
                           {selectedDraftOption.price.toFixed(2)}
@@ -291,7 +293,7 @@ export default function AppointmentForm({
                       </>
                     ) : (
                       <span className="text-slate-500">
-                        Select Draft Estimate
+                        Select Invoice/Estimate
                       </span>
                     )}
                   </div>
@@ -332,17 +334,29 @@ export default function AppointmentForm({
                           }}
                           className="group flex cursor-pointer flex-col gap-1 rounded-lg px-3 py-2.5 outline-none hover:bg-slate-50 data-[highlighted]:bg-[#6571FF]/10 dark:hover:bg-slate-800"
                         >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
-                              {item.vehicle}
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">
+                                {item.vehicle}
+                              </span>
                             </div>
-                            <span className="text-sm font-bold text-[#6571FF]">
+                            <span className="shrink-0 text-sm font-bold text-[#6571FF]">
                               ${item.price.toFixed(2)}
                             </span>
                           </div>
                           <div className="flex items-center gap-1 text-xs text-slate-400">
                             <Hash size={10} />
-                            {item.id}
+                            {item.id}{" "}
+                            <span
+                              className={cn(
+                                "shrink-0 rounded px-1.5 text-[8px] font-bold uppercase tracking-wide",
+                                item.type === "Invoice"
+                                  ? "bg-emerald-100 text-emerald-700"
+                                  : "bg-violet-100 text-violet-700",
+                              )}
+                            >
+                              {item.type}
+                            </span>
                           </div>
                         </DropdownMenu.Item>
                       ))
