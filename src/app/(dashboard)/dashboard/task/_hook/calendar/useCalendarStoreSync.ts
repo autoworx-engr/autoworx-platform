@@ -27,7 +27,7 @@ export function useCalendarStoreSync(
       // knows to skip the store update (preventing an infinite loop and
       // preventing the flag from getting stuck in the "true" state).
       isNavigatingFromCalendar.current = true;
-      calApi.gotoDate(date);
+      setTimeout(() => calApi.gotoDate(date), 0);
     }
   }, [date, calendarRef]);
 

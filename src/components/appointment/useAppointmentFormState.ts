@@ -2,6 +2,7 @@
 
 import { addAppointment } from "@/actions/appointment/addAppointment";
 import { editAppointment } from "@/actions/appointment/editAppointment";
+import { getClientEstimate } from "@/app/(dashboard)/dashboard/communication/client/_actions/getClientEstimate";
 import useSettingsQuery from "@/app/(dashboard)/dashboard/task/_hook/settings/query/useSettingsQuery";
 import useAppointmentQueryById from "@/hooks/query-hook/useAppointmentQueryById";
 import useEstimatesQueryByClient from "@/hooks/query-hook/useEstimatesQueryByClient";
@@ -14,7 +15,7 @@ import { formatTime12Hour } from "@/utils/formateTime12Hours";
 import { normalizeTime } from "@/utils/normalizeTime";
 import { formatTime } from "@/utils/taskAndActivity";
 import { addOneHour } from "@/utils/time";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   Appointment,
   Client,
@@ -89,6 +90,16 @@ export function useAppointmentFormState({
       { id: true, clientId: true, grandTotal: true, vehicle: true },
       { enabled: !!client?.id },
     );
+
+  const { data: invoices = [] } = useQuery({
+    queryKey: queryKeys.invoicesByClientId(client?.id!),
+    queryFn: () =>
+      getClientEstimate(client?.id!, {
+        where: { clientId: client?.id!, type: "Invoice" },
+        select: { id: true, clientId: true, grandTotal: true, vehicle: true },
+      }),
+    enabled: !!client?.id,
+  });
 
   const timezone = useCompanyTimezone();
   const today = moment.tz(timezone).format("YYYY-MM-DD");
@@ -165,25 +176,26 @@ export function useAppointmentFormState({
     clearError();
   }, [clearError, today]);
 
-  const draftEstimateOptions = useMemo(
-    () =>
-      estimates.map((estimate) => {
-        const vehicleLabel =
-          [
-            (estimate as any)?.vehicle?.year,
-            (estimate as any)?.vehicle?.make,
-            (estimate as any)?.vehicle?.model,
-          ]
-            .filter(Boolean)
-            .join(" ") || (estimate as any)?.vehicle?.other;
-        return {
-          id: String(estimate.id),
-          price: Number((estimate as any)?.grandTotal ?? 0),
-          vehicle: vehicleLabel,
-        };
-      }),
-    [estimates],
-  );
+  const draftEstimateOptions = useMemo(() => {
+    const toOption = (item: any, type: "Invoice" | "Estimate") => {
+      const vehicleLabel =
+        [item?.vehicle?.year, item?.vehicle?.make, item?.vehicle?.model]
+          .filter(Boolean)
+          .join(" ") ||
+        item?.vehicle?.other ||
+        "";
+      return {
+        id: String(item.id),
+        price: Number(item?.grandTotal ?? 0),
+        vehicle: vehicleLabel,
+        type,
+      };
+    };
+    return [
+      ...invoices.map((inv) => toOption(inv, "Invoice")),
+      ...estimates.map((est) => toOption(est, "Estimate")),
+    ];
+  }, [estimates, invoices]);
 
   const filteredDraftEstimateOptions = useMemo(() => {
     const term = draftSearch.toLowerCase();

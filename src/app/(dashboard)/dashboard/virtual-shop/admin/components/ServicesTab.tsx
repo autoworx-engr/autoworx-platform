@@ -111,17 +111,27 @@ export default function ServicesTab({
     <div className="flex flex-col gap-4">
       {/* Toolbar */}
       <div className="flex items-center gap-3">
-        <div className="relative flex-1 max-w-xs">
-          <Search
-            size={15}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-          />
+        <div
+          className="
+            group relative flex w-full items-center gap-x-3 rounded-xl
+            bg-white px-4 py-2.5 lg:w-[300px] xl:w-[400px]
+            ring-1 ring-slate-200
+            shadow-sm transition-all duration-300 ease-out
+            focus-within:ring-2 focus-within:ring-indigo-500/20
+            focus-within:shadow-md focus-within:shadow-indigo-500/5
+            hover:ring-slate-300
+          "
+        >
+          <span className="text-slate-400 transition-colors duration-300 group-focus-within:text-[#6571FF]">
+            <Search className="h-5 w-5" />
+          </span>
           <input
+            name="search"
             type="text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search services..."
-            className="w-full rounded-md border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-[#6571FF] focus:ring-1 focus:ring-[#6571FF]"
+            className="w-full bg-transparent text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none"
           />
         </div>
 

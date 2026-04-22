@@ -134,65 +134,90 @@ export const EventContent = ({
         )}
       </div>
     );
+  const isListView = view.type.startsWith("list");
+
+  const eventBody = (
+    <div className="flex flex-col gap-0.5">
+      <div className="items-center flex-wrap">
+        <p
+          className="text-[8px] font-bold uppercase tracking-wide"
+          style={{
+            background: colors.borderColor + "20",
+            color: colors.accentColor,
+          }}
+        >
+          {serviceType}
+        </p>
+        {originalData.client ? (
+          <p className="font-bold text-sm text-gray-900">
+            {originalData.client.firstName} {originalData.client.lastName}
+          </p>
+        ) : (
+          <p className="font-bold text-sm text-gray-900">{event.title}</p>
+        )}
+        {originalData.vehicle && (
+          <p className="text-xs text-gray-600">
+            {originalData.vehicle.year} {originalData.vehicle.make}{" "}
+            {originalData.vehicle.model}
+          </p>
+        )}
+        {originalData.title && props.serviceType?.includes("Appointment") && (
+          <p className="text-xs text-gray-600 mt-0.5">{originalData.title}</p>
+        )}
+        {originalData.invoiceGrandTotal !== undefined &&
+          originalData.invoiceGrandTotal > 0 && (
+            <p className="text-xs font-semibold text-gray-700 mt-0.5">
+              $
+              {Number(originalData.invoiceGrandTotal).toLocaleString(
+                undefined,
+                { minimumFractionDigits: 0, maximumFractionDigits: 2 },
+              )}
+            </p>
+          )}
+      </div>
+
+      {originalData?.taskUser && originalData.taskUser.length > 0 && (
+        <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+          <span className="text-gray-500 text-[10px]">Assigned to:</span>
+          <span className="text-gray-700 text-[10px]">
+            {originalData.taskUser
+              .map((tu) =>
+                tu?.user ? `${tu.user.firstName} ${tu.user.lastName}` : null,
+              )
+              .filter(Boolean)
+              .join(", ")}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+
+  // List view — flat card, full width, no fixed height
+  if (isListView) {
+    return (
+      <div
+        style={{
+          background: `linear-gradient(to bottom, ${colors.gradient.join(", ")})`,
+          border: `1px solid ${colors.borderColor}`,
+          borderRadius: "8px",
+          padding: "6px 10px",
+          width: "100%",
+          color: "#1f2937",
+        }}
+        className="cursor-pointer hover:opacity-90 transition-opacity text-xs leading-snug"
+      >
+        {eventBody}
+      </div>
+    );
+  }
+
   // Week and Day view rendering (Vertical block style)
   return (
     <div
       style={containerStyle}
       className="flex flex-col text-xs leading-tight h-full cursor-pointer hover:opacity-90 transition-opacity"
     >
-      <div className="flex flex-col gap-0.5">
-        <div className="items-center flex-wrap">
-          <p
-            className="text-[8px] font-bold uppercase tracking-wide"
-            style={{
-              background: colors.borderColor + "20",
-              color: colors.accentColor,
-            }}
-          >
-            {serviceType}
-          </p>
-          {originalData.client ? (
-            <p className="font-bold text-sm text-gray-900">
-              {originalData.client.firstName} {originalData.client.lastName}
-            </p>
-          ) : (
-            <p className="font-bold text-sm text-gray-900">{event.title}</p>
-          )}
-          {originalData.vehicle && (
-            <p className="text-xs text-gray-600">
-              {originalData.vehicle.year} {originalData.vehicle.make}{" "}
-              {originalData.vehicle.model}
-            </p>
-          )}
-          {originalData.title && props.serviceType?.includes("Appointment") && (
-            <p className="text-xs text-gray-600 mt-0.5">{originalData.title}</p>
-          )}
-          {originalData.invoiceGrandTotal !== undefined &&
-            originalData.invoiceGrandTotal > 0 && (
-              <p className="text-xs font-semibold text-gray-700 mt-0.5">
-                $
-                {Number(originalData.invoiceGrandTotal).toLocaleString(
-                  undefined,
-                  { minimumFractionDigits: 0, maximumFractionDigits: 2 },
-                )}
-              </p>
-            )}
-        </div>
-
-        {originalData?.taskUser && originalData.taskUser.length > 0 && (
-          <div className="flex items-center gap-1 mt-0.5 flex-wrap">
-            <span className="text-gray-500 text-[10px]">Assigned to:</span>
-            <span className="text-gray-700 text-[10px]">
-              {originalData.taskUser
-                .map((tu) =>
-                  tu?.user ? `${tu.user.firstName} ${tu.user.lastName}` : null,
-                )
-                .filter(Boolean)
-                .join(", ")}
-            </span>
-          </div>
-        )}
-      </div>
+      {eventBody}
     </div>
   );
 };

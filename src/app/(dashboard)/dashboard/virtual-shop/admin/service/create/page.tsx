@@ -27,23 +27,27 @@ type InitialServiceData = {
 export default async function Page({
   searchParams,
 }: {
-  searchParams: { serviceId?: string; shopId?: string };
+  searchParams?: Promise<{ serviceId?: string; shopId?: string }>;
 }) {
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const companyId = await getCompanyId();
-  const serviceId = searchParams?.serviceId
-    ? Number(searchParams.serviceId)
-    : null;
-  const selectedShopId = searchParams?.shopId
-    ? Number.parseInt(searchParams.shopId, 10)
-    : null;
+  const parsedServiceId = resolvedSearchParams?.serviceId
+    ? Number(resolvedSearchParams.serviceId)
+    : Number.NaN;
+  const serviceId =
+    Number.isInteger(parsedServiceId) && parsedServiceId > 0
+      ? parsedServiceId
+      : null;
+
+  const parsedShopId = resolvedSearchParams?.shopId
+    ? Number.parseInt(resolvedSearchParams.shopId, 10)
+    : Number.NaN;
+  const selectedShopId =
+    Number.isInteger(parsedShopId) && parsedShopId > 0 ? parsedShopId : null;
 
   let initialServiceData: InitialServiceData | null = null;
 
   if (serviceId !== null) {
-    if (!Number.isInteger(serviceId) || serviceId <= 0) {
-      return notFound();
-    }
-
     const shopService = await db.shopService.findFirst({
       where: {
         id: serviceId,

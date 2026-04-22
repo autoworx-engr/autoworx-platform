@@ -5,10 +5,13 @@ import moment from "moment";
 export default function DisplayDate({ type }: { type: CalendarType }) {
   const { date, week, month } = useCalendarStore();
 
-  const param = type === "day" ? date : type === "week" ? week : month;
+  const param =
+    type === "day" || type === "list" ? date : type === "week" ? week : month;
 
-  const longFormat = type === "day" ? "dddd, D MMMM YYYY" : "MMMM YYYY"; // Full format
-  const shortFormat = type === "day" ? "ddd, D MMM YY" : "MMM YY"; // Short format
+  const longFormat =
+    type === "day" || type === "list" ? "dddd, D MMMM YYYY" : "MMMM YYYY";
+  const shortFormat =
+    type === "day" || type === "list" ? "ddd, D MMM YY" : "MMM YY";
 
   const formattedDateLong = moment(param).isValid()
     ? moment(param).format(longFormat)

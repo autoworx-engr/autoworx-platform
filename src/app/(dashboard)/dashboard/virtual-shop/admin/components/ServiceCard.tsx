@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Loader2, SquarePen, Trash2 } from "lucide-react";
+import { ImageIcon, Loader2, SquarePen, Trash2 } from "lucide-react";
 import { Popconfirm, Tooltip } from "antd";
 import { Switch } from "@/components/Switch";
 import { useRouter } from "nextjs-toploader/app";
@@ -69,8 +69,8 @@ export default function ServiceCard({
               className="object-cover"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-xs font-medium text-slate-400">
-              No Image
+            <div className="flex h-full w-full items-center justify-center bg-slate-100 text-slate-300">
+              <ImageIcon size={50} strokeWidth={1.5} />
             </div>
           )}
         </div>
