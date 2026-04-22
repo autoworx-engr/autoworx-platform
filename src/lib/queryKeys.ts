@@ -6,6 +6,7 @@ export const queryKeys = {
     "estimates-by-client-id",
     clientId,
   ],
+  invoicesByClientId: (clientId: number) => ["invoices-by-client-id", clientId],
   appointmentById: (appointmentId: number) => [
     "appointment-by-id",
     appointmentId,

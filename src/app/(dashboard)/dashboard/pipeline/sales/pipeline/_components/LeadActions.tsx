@@ -277,7 +277,7 @@ export default function LeadActions({ lead }: TProps) {
       : undefined;
   const fromEdit = !!appointment?.id;
   const vehicleId = lead?.vehicleId;
-  const clientId = lead?.client?.id;
+  const clientId = lead?.client?.id ?? lead?.clientId ?? undefined;
   return (
     <>
       <div className="flex justify-between">
@@ -317,6 +317,7 @@ export default function LeadActions({ lead }: TProps) {
           </button>
           {/* TODO: shown a mark when create a appointment */}
           <AppointmentCreateOrEdit
+            key={`lead-${lead.id}-appt-${appointment?.id ?? "new"}`}
             fromEdit={fromEdit}
             fromLead
             appointmentId={fromEdit ? appointment?.id : undefined}

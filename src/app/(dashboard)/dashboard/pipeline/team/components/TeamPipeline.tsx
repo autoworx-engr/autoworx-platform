@@ -8,7 +8,6 @@ import {
   removeInvoiceTag,
   saveInvoiceTag,
 } from "@/actions/pipelines/invoiceTag";
-import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
 import { errorToast, successToast } from "@/lib/toast";
 import { updateTagAutomationTrigger } from "@/service/tag-automation-trigger/api";
 import { usePipelineFilterStore } from "@/stores/PipelineFilterStore";
@@ -58,10 +57,6 @@ export default function TeamPipelines({
 }: PipelinesProps) {
   const router = useRouter();
 
-  const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
-  const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(
-    null,
-  );
   const [pipelineData, setPipelineData] =
     useState<ShopPipelineData[]>(shopPipelineDataProp);
   const [companyUsers, setCompanyUsers] = useState<User[]>([]);
@@ -239,8 +234,6 @@ export default function TeamPipelines({
     category: number;
     index: number;
   } | null>(null);
-
-  const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
 
   const [tag, setTag] = useState<Tag>();
   const [tagDropdownStates, setTagDropdownStates] = useState<{
@@ -655,9 +648,6 @@ export default function TeamPipelines({
                 handleTagSelect={handleTagSelect}
                 handleServiceDropdownToggle={handleServiceDropdownToggle}
                 isTechnician={isTechnician}
-                setSelectedClientId={setSelectedClientId}
-                setSelectedVehicleId={setSelectedVehicleId}
-                setIsAppointmentModalOpen={setIsAppointmentModalOpen}
                 searchTerm={searchTerm}
                 hasMore={
                   item.id !== null
@@ -674,25 +664,6 @@ export default function TeamPipelines({
             ))}
           </div>
         </div>
-      )}
-
-      {selectedClientId && (
-        <AppointmentCreateOrEdit
-          clientId={selectedClientId}
-          vehicleId={selectedVehicleId}
-          isModalOpen={isAppointmentModalOpen}
-          setIsModalOpen={setIsAppointmentModalOpen}
-          onAppointmentCreated={() => {
-            setIsAppointmentModalOpen(false);
-            setSelectedClientId(null);
-            setSelectedVehicleId(null);
-          }}
-          onAppointmentUpdated={() => {
-            setIsAppointmentModalOpen(false);
-            setSelectedClientId(null);
-            setSelectedVehicleId(null);
-          }}
-        />
       )}
     </>
   );

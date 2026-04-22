@@ -4,7 +4,7 @@ import { slimInputClassName } from "@/components/SlimInput";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/Tooltip";
 import { cn } from "@/lib/utils";
 import { Info } from "lucide-react";
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
 
 export type ServiceInfoState = {
   serviceTitle: string;
@@ -19,6 +19,37 @@ export type ServiceInfoState = {
     truck: string;
   };
 };
+
+const getInitialCounterFromDuration = (durationValue: string) => {
+  const totalMinutes = Number.parseInt(durationValue, 10);
+
+  if (!Number.isFinite(totalMinutes) || totalMinutes <= 0) {
+    return { hours: 0, minutes: 0 };
+  }
+
+  return {
+    hours: Math.floor(totalMinutes / 60),
+    minutes: totalMinutes % 60,
+  };
+};
+
+const normalizeCounterValue = (nextValue: number) => {
+  if (!Number.isFinite(nextValue) || nextValue < 0) {
+    return 0;
+  }
+
+  return Math.floor(nextValue);
+};
+
+const counterToDurationMinutes = (hours: number, minutes: number) => {
+  const safeHours = normalizeCounterValue(hours);
+  const safeMinutes = Math.min(59, normalizeCounterValue(minutes));
+
+  return safeHours * 60 + safeMinutes;
+};
+
+const toCounterInputValue = (value: number) =>
+  value > 0 ? String(value) : "00";
 
 type ServiceInfoProps = {
   value: ServiceInfoState;
@@ -45,6 +76,49 @@ export default function ServiceInfo({
     vehicleTypeModifiers,
   } = value;
   const shouldShowExistingImage = Boolean(imageUrl && !imageName);
+  const initialCounter = useMemo(
+    () => getInitialCounterFromDuration(customDuration),
+    [customDuration],
+  );
+  const [durationHoursInput, setDurationHoursInput] = useState(
+    toCounterInputValue(initialCounter.hours),
+  );
+  const [durationMinutesInput, setDurationMinutesInput] = useState(
+    toCounterInputValue(initialCounter.minutes),
+  );
+
+  useEffect(() => {
+    const incomingDuration = Number.parseInt(customDuration, 10);
+    const normalizedIncomingDuration =
+      Number.isFinite(incomingDuration) && incomingDuration > 0
+        ? incomingDuration
+        : 0;
+
+    const parsedHours = durationHoursInput.trim()
+      ? normalizeCounterValue(Number(durationHoursInput))
+      : 0;
+    const parsedMinutes = durationMinutesInput.trim()
+      ? Math.min(59, normalizeCounterValue(Number(durationMinutesInput)))
+      : 0;
+
+    const durationFromCounter = counterToDurationMinutes(
+      parsedHours,
+      parsedMinutes,
+    );
+
+    if (durationFromCounter === normalizedIncomingDuration) {
+      return;
+    }
+
+    setDurationHoursInput(toCounterInputValue(initialCounter.hours));
+    setDurationMinutesInput(toCounterInputValue(initialCounter.minutes));
+  }, [
+    customDuration,
+    durationHoursInput,
+    durationMinutesInput,
+    initialCounter.hours,
+    initialCounter.minutes,
+  ]);
 
   const setVehicleTypeModifiers = (
     updater: (
@@ -68,6 +142,43 @@ export default function ServiceInfo({
     }));
 
     onImageSelect(file);
+  };
+
+  const handleDurationCounterChange = (
+    nextHoursInput: string,
+    nextMinutesInput: string,
+  ) => {
+    if (nextHoursInput !== "" && !/^\d+$/.test(nextHoursInput)) {
+      return;
+    }
+
+    if (nextMinutesInput !== "" && !/^\d+$/.test(nextMinutesInput)) {
+      return;
+    }
+
+    const safeHours = nextHoursInput.trim()
+      ? normalizeCounterValue(Number(nextHoursInput))
+      : 0;
+    const safeMinutes = nextMinutesInput.trim()
+      ? Math.min(59, normalizeCounterValue(Number(nextMinutesInput)))
+      : 0;
+    const totalMinutes = counterToDurationMinutes(safeHours, safeMinutes);
+
+    setDurationHoursInput(
+      nextHoursInput.trim() && safeHours !== Number(nextHoursInput)
+        ? String(safeHours)
+        : nextHoursInput,
+    );
+    setDurationMinutesInput(
+      nextMinutesInput.trim() && safeMinutes !== Number(nextMinutesInput)
+        ? String(safeMinutes)
+        : nextMinutesInput,
+    );
+
+    onChange((prev) => ({
+      ...prev,
+      customDuration: totalMinutes > 0 ? String(totalMinutes) : "",
+    }));
   };
 
   return (
@@ -97,7 +208,7 @@ export default function ServiceInfo({
 
         <div className="space-y-1">
           <label className="flex items-center gap-1.5 text-sm font-medium text-slate-700 mt-1">
-            Duration (minutes)
+            Duration (HH:MM)
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
@@ -109,34 +220,61 @@ export default function ServiceInfo({
                 </button>
               </TooltipTrigger>
               <TooltipContent className="max-w-xs text-xs leading-relaxed">
-                If no duration is entered, the system will automatically use the labor hours as the duration
+                Set hours and minutes. It will be automatically converted to
+                total minutes for saving.
               </TooltipContent>
             </Tooltip>
           </label>
-          <input
-            type="number"
-            min={0}
-            step={1}
-            inputMode="numeric"
-            value={customDuration}
-            onKeyDown={(event) => {
-              if (["e", "E", "+", "-", "."].includes(event.key)) {
-                event.preventDefault();
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              min={0}
+              step={1}
+              inputMode="numeric"
+              value={durationHoursInput}
+              onKeyDown={(event) => {
+                if (["e", "E", "+", "-", "."].includes(event.key)) {
+                  event.preventDefault();
+                }
+              }}
+              onChange={(event) =>
+                handleDurationCounterChange(
+                  event.target.value,
+                  durationMinutesInput,
+                )
               }
-            }}
-            onChange={(event) => {
-              const nextValue = event.target.value;
-
-              if (nextValue === "" || /^\d+$/.test(nextValue)) {
-                onChange((prev) => ({ ...prev, customDuration: nextValue }));
+              placeholder="HH"
+              className={cn(
+                "w-20 rounded-md border border-slate-200 px-3 py-2 text-center text-sm font-semibold outline-none focus:border-[#6571FF] focus:ring-2 focus:ring-[#6571FF]/20",
+                slimInputClassName,
+              )}
+            />
+            <span className="text-lg font-bold text-slate-500">:</span>
+            <input
+              type="number"
+              min={0}
+              max={59}
+              step={1}
+              inputMode="numeric"
+              value={durationMinutesInput}
+              onKeyDown={(event) => {
+                if (["e", "E", "+", "-", "."].includes(event.key)) {
+                  event.preventDefault();
+                }
+              }}
+              onChange={(event) =>
+                handleDurationCounterChange(
+                  durationHoursInput,
+                  event.target.value,
+                )
               }
-            }}
-            placeholder="e.g. 120"
-            className={cn(
-              "w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-400",
-              slimInputClassName,
-            )}
-          />
+              placeholder="MM"
+              className={cn(
+                "w-20 rounded-md border border-slate-200 px-3 py-2 text-center text-sm font-semibold outline-none focus:border-[#6571FF] focus:ring-2 focus:ring-[#6571FF]/20",
+                slimInputClassName,
+              )}
+            />
+          </div>
         </div>
       </div>
       <div className="space-y-1">

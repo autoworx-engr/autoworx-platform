@@ -16,33 +16,40 @@ export default function ShopListPage({ companyId }: { companyId: number }) {
   if (isPending) return <CarLoading />;
 
   return (
-    <div className="p-6 space-y-6">
+    <section className="space-y-6 px-4 py-5 sm:px-6 sm:py-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold">Your Shops</h1>
-          <p className="text-sm text-gray-500">
-            Manage all your virtual stores
-          </p>
-        </div>
+      <div className="rounded-2xl border bg-white p-4 shadow-sm sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-semibold tracking-tight text-slate-800">
+              Your Shops
+            </h1>
+            <p className="max-w-md text-sm text-slate-500">
+              Manage all your virtual stores
+            </p>
+          </div>
 
-        <Link href="/dashboard/settings/virtual-shop-configure/shops/create">
-          <Button className="flex items-center gap-2">
-            <Plus className="w-4 h-4" />
-            Configure New Shop
-          </Button>
-        </Link>
+          <Link
+            href="/dashboard/settings/virtual-shop-configure/shops/create"
+            className="w-full sm:w-auto"
+          >
+            <Button className="flex w-full items-center justify-center gap-2 sm:w-auto bg-[#6571FF] hover:bg-[#6571FF]/90 focus-visible:bg-[#6571FF]/90">
+              <Plus className="h-4 w-4" />
+              Configure New Shop
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Shop Grid */}
       {data?.length > 0 ? (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-3">
           {data?.map((shop: any) => (
             <ShopCard key={shop.id} shop={shop} />
           ))}
         </div>
       ) : (
-        <div className="p-6">
+        <div className="rounded-2xl border bg-white p-4 shadow-sm sm:p-6">
           <EmptyCard
             Icon={Store}
             title="No shop configure yet"
@@ -56,6 +63,6 @@ export default function ShopListPage({ companyId }: { companyId: number }) {
           />
         </div>
       )}
-    </div>
+    </section>
   );
 }

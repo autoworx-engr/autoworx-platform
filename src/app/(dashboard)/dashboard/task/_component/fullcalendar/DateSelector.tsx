@@ -66,7 +66,7 @@ function DateSelector({ type, weekStart = 1 }: DateSelectorProps) {
   const getDisplayValue = () => {
     if (type === "week" && week) {
       const { displayRange } = getWeekInfoFromWeekStr(week, weekStart);
-      return displayRange; // Return the formatted week range
+      return displayRange;
     }
     if (type === "month" && month) {
       return moment(month, "YYYY-MM").format("MMM YYYY");
@@ -77,13 +77,9 @@ function DateSelector({ type, weekStart = 1 }: DateSelectorProps) {
   const handleDaySelection = (newDate: string) => {
     setDate(newDate);
     setIsOpen(false);
-    if (type !== "day") {
-      // Set navigation flag to prevent reset, then navigate
+    if (type !== "day" && type !== "list") {
       setNavigating(true);
       router.push("day");
-
-      // Clear navigation flag after a short delay to allow navigation to complete
-      // setTimeout(() => setNavigating(false), 30000);
     }
   };
 
@@ -115,7 +111,6 @@ function DateSelector({ type, weekStart = 1 }: DateSelectorProps) {
   const handleMonthSelection = (newMonth: string) => {
     setMonth(newMonth);
 
-    // Also update the date to the first day of the month
     const firstDayOfMonth = moment(newMonth)
       .startOf("month")
       .format("YYYY-MM-DD");
@@ -123,12 +118,8 @@ function DateSelector({ type, weekStart = 1 }: DateSelectorProps) {
 
     setIsOpen(false);
     if (type !== "month") {
-      // Set navigation flag to prevent reset, then navigate
       setNavigating(true);
       router.push("month");
-
-      // Clear navigation flag after a short delay to allow navigation to complete
-      // setTimeout(() => setNavigating(false), 30000);
     }
   };
 
@@ -155,6 +146,14 @@ function DateSelector({ type, weekStart = 1 }: DateSelectorProps) {
         <MonthCalendar
           selectedMonth={month || moment().format("YYYY-MM")}
           onSelect={handleMonthSelection}
+        />
+      );
+    } else if (type === "list") {
+      return (
+        <DayCalendar
+          selectedDate={date || moment().format("YYYY-MM-DD")}
+          onSelect={handleDaySelection}
+          weekStart={weekStart}
         />
       );
     }
