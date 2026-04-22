@@ -131,10 +131,10 @@ const UserList: React.FC = () => {
                             />
                           </div>
                           <div className="ml-4 min-w-0">
-                            <h4 className="truncate text-base font-semibold text-slate-800">
+                            <h4 className="truncate text-base font-semibold text-slate-600">
                               {name}
                             </h4>
-                            <p className="text-xs font-medium uppercase tracking-wide text-indigo-600">
+                            <p className="text-xs font-medium uppercase tracking-wide text-indigo-400">
                               {user.employeeType}
                             </p>
                           </div>
@@ -143,7 +143,7 @@ const UserList: React.FC = () => {
                         <div className="shrink-0">
                           <button
                             onClick={() => handleEditClick(user)}
-                            className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700 transition-colors hover:bg-indigo-100"
+                            className="inline-flex items-center gap-2 rounded-full border border-[#6571FF]/20 bg-[#6571FF]/10 px-3 py-1.5 text-xs font-semibold text-[#6571FF]/90 transition-colors hover:bg-indigo-100"
                             title={`Edit ${user.firstName}'s permissions`}
                             aria-label={`Edit ${name} permissions`}
                           >
