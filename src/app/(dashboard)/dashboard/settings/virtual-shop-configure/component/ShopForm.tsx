@@ -436,6 +436,7 @@ export default function ShopForm({
 
         <Switch
           checked={form.isActive}
+          className="data-[state=checked]:!bg-[#6571FF] data-[state=unchecked]:bg-slate-200"
           disabled={isCreating || isUpdating || isFetching}
           onCheckedChange={(checked) =>
             setForm((p) => ({
