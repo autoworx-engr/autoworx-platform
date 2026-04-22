@@ -405,7 +405,8 @@ export default function SideNavbar({ navList, permissions }: TProps) {
                     <Link
                       className={cn(
                         "rounded-sm p-2 hover:bg-background/25",
-                        modifiedPathName === item.path && "!bg-black invert",
+                        modifiedPathName === item.path &&
+                          "!bg-white [&_img]:brightness-0 [&_img]:saturate-100 [&_img]:contrast-150",
                       )}
                       href={item.link}
                     >
@@ -474,7 +475,7 @@ export default function SideNavbar({ navList, permissions }: TProps) {
                 href="/dashboard/settings/my-account"
                 className={`rounded-sm p-2 hover:bg-background/25 hover:opacity-50 ${
                   modifiedPathName === "/dashboard/settings" &&
-                  "!bg-black invert"
+                  "!bg-white [&_img]:brightness-0 [&_img]:saturate-100 [&_img]:contrast-150"
                 }`}
               >
                 <Image
@@ -539,8 +540,11 @@ function Dropdown({
               type="button"
               className={cn(
                 "rounded-sm p-2 hover:bg-background/25",
-                open && activeDropdown === index && "!bg-black invert",
-                active && "!bg-black invert",
+                open &&
+                  activeDropdown === index &&
+                  "!bg-white [&_img]:brightness-0 [&_img]:saturate-100 [&_img]:contrast-150",
+                active &&
+                  "!bg-white [&_img]:brightness-0 [&_img]:saturate-100 [&_img]:contrast-150",
               )}
             >
               {icon}
