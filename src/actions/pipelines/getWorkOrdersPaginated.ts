@@ -5,21 +5,34 @@ import { db } from "@/lib/db";
 import { ShopLead } from "@/types/invoiceLead";
 import { Technician } from "@prisma/client";
 
-const INCLUDE = {
-  client: true,
-  vehicle: true,
-  invoiceItems: {
-    include: {
-      service: {
-        include: { Technician: true },
+function makeInclude() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return {
+    client: {
+      include: {
+        appointments: {
+          where: { date: { gte: today } },
+          orderBy: { date: "asc" as const },
+          take: 1,
+          select: { id: true, date: true, startTime: true, endTime: true },
+        },
       },
     },
-  },
-  tags: { select: { id: true, tag: true } },
-  tasks: true,
-  assignedTo: true,
-  column: true,
-} as const;
+    vehicle: true,
+    invoiceItems: {
+      include: {
+        service: {
+          include: { Technician: true },
+        },
+      },
+    },
+    tags: { select: { id: true, tag: true } },
+    tasks: true,
+    assignedTo: true,
+    column: true,
+  };
+}
 
 function toShopLead(invoice: any): ShopLead {
   const completed: string[] = [];
@@ -48,6 +61,8 @@ function toShopLead(invoice: any): ShopLead {
     allTechnicians.push(...techs);
   }
 
+  const latestAppointment = invoice.client?.appointments?.[0] ?? null;
+
   return {
     invoiceId: invoice.id,
     name: `${invoice.client?.firstName ?? ""} ${invoice.client?.lastName ?? ""}`.trim(),
@@ -66,6 +81,7 @@ function toShopLead(invoice: any): ShopLead {
     columnId: invoice.columnId,
     dueBalance: Number(invoice.due),
     technicians: allTechnicians,
+    appointment: latestAppointment,
   };
 }
 
@@ -100,7 +116,7 @@ export async function getWorkOrdersByColumn(
   const [invoices, total] = await Promise.all([
     db.invoice.findMany({
       where,
-      include: INCLUDE,
+      include: makeInclude(),
       orderBy: [{ deliveredAt: "desc" }, { createdAt: "desc" }],
       skip,
       take,
@@ -159,7 +175,7 @@ export async function getWorkOrdersByTechnician(
   const [invoices, total] = await Promise.all([
     db.invoice.findMany({
       where,
-      include: INCLUDE,
+      include: makeInclude(),
       orderBy: { createdAt: "desc" },
       skip,
       take,

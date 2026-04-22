@@ -7,7 +7,7 @@ export const updateUserValidationSchema = z.object({
   email: requiredEmailValidationSchema,
   image: z.string().url().optional(),
   phone: phoneValidationSchema.optional(),
-  countryCode:z.string().optional(),
+  countryCode: z.string().optional(),
   address: z.string().optional(),
   city: z.string().nullable().optional(),
   state: z.string().nullable().optional(),

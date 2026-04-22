@@ -18,7 +18,7 @@ export async function newPaymentMethod(
     if (!companyId) {
       throw new Error("Company ID is required to create an email template.");
     }
-    await createNewPaymentMethodValidation.parseAsync(name)
+    await createNewPaymentMethodValidation.parseAsync(name);
 
     const paymentMethod = await db.paymentMethod.create({
       data: {

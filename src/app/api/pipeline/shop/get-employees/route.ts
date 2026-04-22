@@ -113,7 +113,8 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = req.nextUrl;
 
-    const excludeCurrentUser = searchParams.get("excludeCurrentUser") === "true";
+    const excludeCurrentUser =
+      searchParams.get("excludeCurrentUser") === "true";
     const type = searchParams.get("type") as EmployeeType | null;
     const notType = searchParams.get("notType") as EmployeeType | null;
     const pageParam = searchParams.get("page");

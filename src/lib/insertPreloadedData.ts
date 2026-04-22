@@ -5,7 +5,7 @@ export const insertPreloadedData = async (companyId: number) => {
   // console.log("insertPreloadedData companyId", companyId);
   // Insert preloaded categories
   const categories = await db.category.createMany({
-    data: preloadedCategories.map(category => ({
+    data: preloadedCategories.map((category) => ({
       ...category,
       companyId,
     })),

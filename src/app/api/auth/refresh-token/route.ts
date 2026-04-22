@@ -38,7 +38,7 @@ export async function POST(request: Request) {
 
     const payload = jwt.verify(
       refreshAccessToken,
-      process.env.REFRESH_SECRET || ""
+      process.env.REFRESH_SECRET || "",
     );
 
     if (!payload || typeof payload !== "object" || !payload.email) {
@@ -71,7 +71,7 @@ export async function POST(request: Request) {
       },
       {
         status: 200,
-      }
+      },
     );
   } catch (error) {
     console.error("refresh token request error:", error);

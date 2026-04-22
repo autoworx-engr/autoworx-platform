@@ -23,7 +23,7 @@ export async function GET(req: Request) {
     console.error("Error fetching companies:", error);
     return NextResponse.json(
       { error: "All company fetch failed" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

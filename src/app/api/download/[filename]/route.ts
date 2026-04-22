@@ -23,7 +23,10 @@ import os from "os";
  *       500:
  *         description: Server error
  */
-export async function GET(req: NextRequest, props: { params: Promise<{ filename: string }> }) {
+export async function GET(
+  _req: NextRequest,
+  props: { params: Promise<{ filename: string }> },
+) {
   const params = await props.params;
   try {
     // serverless-safe writable path

@@ -21,7 +21,7 @@ async function getClientByLead(leadId: number) {
 
   if (!client) {
     throw new Error(
-      "No client found for this lead. Please attach a client before creating an estimate."
+      "No client found for this lead. Please attach a client before creating an estimate.",
     );
   }
 
@@ -39,7 +39,7 @@ async function getPendingColumn(companyId: number) {
 
   if (!column) {
     throw new Error(
-      "Pending column not found. Please configure your pipeline columns properly."
+      "Pending column not found. Please configure your pipeline columns properly.",
     );
   }
 
@@ -48,7 +48,7 @@ async function getPendingColumn(companyId: number) {
 
 // Main
 export const createLeadDraftEstimate = async function (
-  draftEstimate: TCreateDraftEstimateValidationSchema
+  draftEstimate: TCreateDraftEstimateValidationSchema,
 ): Promise<ServerAction | TErrorHandler> {
   try {
     const session = await getServerSession(authOptions);
@@ -59,7 +59,7 @@ export const createLeadDraftEstimate = async function (
 
     if (!leadId || !clientId) {
       throw new Error(
-        "Lead ID and Client ID are required to create an estimate."
+        "Lead ID and Client ID are required to create an estimate.",
       );
     }
 

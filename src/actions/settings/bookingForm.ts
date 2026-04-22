@@ -33,7 +33,7 @@ export async function updateBookingForm(
   bookingId: number,
   data: Partial<
     Omit<BookingForm, "id" | "companyId" | "createdAt" | "updatedAt">
-  >
+  >,
 ) {
   try {
     const updatedBookingForm = await db.bookingForm.update({

@@ -37,10 +37,10 @@ export const fetchUsersWithLatestMessages = async () => {
     });
 
     // Calculate unread counts and latest message info per user
-    const usersWithLatestMessages = users.map(user => {
+    const usersWithLatestMessages = users.map((user) => {
       // Find all messages between current user and this user (including group messages for now)
       const userMessages = messages.filter(
-        message =>
+        (message) =>
           (message.from === currentUserId && message.to === user.id) ||
           (message.from === user.id && message.to === currentUserId),
       );
@@ -50,11 +50,11 @@ export const fetchUsersWithLatestMessages = async () => {
 
       // Count unread messages (messages sent to current user that haven't been read)
       const unreadMessages = userMessages.filter(
-        message => message.to === currentUserId && message.from === user.id,
+        (message) => message.to === currentUserId && message.from === user.id,
       );
 
       // Check if any of these messages are unread via ChatTrack
-      const hasUnreadMessage = unreadMessages.some(message => {
+      const hasUnreadMessage = unreadMessages.some((message) => {
         // We'll check this via a separate query since we need ChatTrack info
         return false; // For now, we'll handle this separately
       });
@@ -78,9 +78,9 @@ export const fetchUsersWithLatestMessages = async () => {
 
     // Update unread counts based on ChatTrack data and sort by latest message
     const finalUsersWithLatestMessages = usersWithLatestMessages
-      .map(user => {
+      .map((user) => {
         const userChatTrack = userChatTracks.find(
-          track =>
+          (track) =>
             (track.senderId === user.id &&
               track.receiverId === currentUserId) ||
             (track.senderId === currentUserId && track.receiverId === user.id),
@@ -88,7 +88,7 @@ export const fetchUsersWithLatestMessages = async () => {
 
         // Check if there are unread messages for this user
         const hasUnreadMessage = userChatTracks.some(
-          track =>
+          (track) =>
             track.receiverId === currentUserId &&
             track.senderId === user.id &&
             !track.isRead,

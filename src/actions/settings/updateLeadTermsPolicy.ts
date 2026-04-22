@@ -28,7 +28,7 @@ export const updateLeadTermsPolicy = async (
 
     const validatedData = dataValidation.data;
     const companyId = await getCompanyId();
-    
+
     await db.company.update({
       where: { id: companyId },
       data: {

@@ -9,7 +9,6 @@ import toast from "react-hot-toast";
 
 const STATIC_CATEGORY_COLORS = [
   "#60A5FA",
-  "#FB923C",
   "#34D399",
   "#A78BFA",
   "#F87171",
@@ -17,7 +16,6 @@ const STATIC_CATEGORY_COLORS = [
   "#EC4899",
   "#FACC15",
   "#4ADE80",
-  "#F97316",
 ];
 
 type SelectAppointmentServiceCategoryProps = {
@@ -113,7 +111,7 @@ export function SelectAppointmentServiceCategory({
       setSelectedColor(STATIC_CATEGORY_COLORS[0]);
       setIsOpen(false);
     } catch (error) {
-      void error;
+      console.error(error);
       toast.error("Failed to create category");
     } finally {
       setIsCreating(false);
@@ -127,7 +125,7 @@ export function SelectAppointmentServiceCategory({
       <Selector
         className="min-w-full"
         label={(category: Category | null) =>
-          category ? category.name : "Select service category"
+          category ? category.name : "Select Service Category"
         }
         newButton={
           canCreateCategory ? (

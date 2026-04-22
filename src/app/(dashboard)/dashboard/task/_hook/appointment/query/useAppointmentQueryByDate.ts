@@ -31,7 +31,6 @@ export default function useAppointmentQueryByDate(date: string) {
               lastName: true,
               email: true,
               mobile: true,
-              
             },
           },
         },

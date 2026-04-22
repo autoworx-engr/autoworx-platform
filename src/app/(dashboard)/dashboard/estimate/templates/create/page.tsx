@@ -17,11 +17,9 @@ import { TemplateBillSummary } from "../TemplateBillSummary";
 import SyncEstimate from "../../create/SyncEstimate";
 import Header from "../../create/Header";
 
-export default async function Page(
-  props: {
-    searchParams: Promise<{ templateId?: string; isEdit?: boolean }>;
-  }
-) {
+export default async function Page(props: {
+  searchParams: Promise<{ templateId?: string; isEdit?: boolean }>;
+}) {
   const searchParams = await props.searchParams;
   const isEdit = searchParams?.isEdit;
   // console.log("isEdit", isEdit, "templateId", searchParams?.templateId);
@@ -93,17 +91,17 @@ export default async function Page(
 
       const technicians =
         item.service?.Technician?.filter(
-          (tech: any) => tech.invoiceId === invoice.id
+          (tech: any) => tech.invoiceId === invoice.id,
         ) || [];
 
       if (technicians.length) {
         if (Array.isArray(technicians) && technicians.length > 0) {
           const statuses = technicians.map((tech) =>
-            tech.status?.toLowerCase().trim()
+            tech.status?.toLowerCase().trim(),
           );
 
           const isServiceComplete = statuses.every(
-            (status) => status === "complete"
+            (status) => status === "complete",
           );
 
           if (isServiceComplete) {
@@ -127,7 +125,7 @@ export default async function Page(
       items.sort(
         (
           a: InvoiceItem & { service: Service },
-          b: InvoiceItem & { service: Service }
+          b: InvoiceItem & { service: Service },
         ) => {
           const indexA =
             a.service?.id !== undefined
@@ -139,7 +137,7 @@ export default async function Page(
               : Infinity;
 
           return indexA - indexB;
-        }
+        },
       );
     }
 
@@ -188,7 +186,7 @@ export default async function Page(
   // spread all `tag` objects into `tags` array
   products.forEach((product) => {
     (product as unknown as { tags: Tag[] }).tags = product.tags.map(
-      (tag) => tag.tag
+      (tag) => tag.tag,
     );
   });
 
@@ -206,7 +204,7 @@ export default async function Page(
   // spread all `tag` objects into `tags` array
   labors.forEach((labor) => {
     (labor as unknown as { tags: Tag[] }).tags = labor.tags.map(
-      (tag) => tag.tag
+      (tag) => tag.tag,
     );
   });
 
@@ -222,7 +220,7 @@ export default async function Page(
       cost: product.price,
       tags: product.tags,
       productId: product.id,
-    }))
+    })),
   );
   return (
     <div className="gap-3 space-y-4 overflow-clip py-2 md:-my-2 md:min-h-[93vh] xl:flex xl:space-y-0">

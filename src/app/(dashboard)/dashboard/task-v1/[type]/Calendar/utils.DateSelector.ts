@@ -43,7 +43,10 @@ export const getCurrentWeekInfo = (weekStart = 1) => {
 };
 
 // Function to parse week string and get week info
-export const getWeekInfoFromWeekStr = (weekStr: string, weekStart: number | string = 1) => {
+export const getWeekInfoFromWeekStr = (
+  weekStr: string,
+  weekStart: number | string = 1,
+) => {
   // Apply the week start setting
   moment.updateLocale("en", {
     week: {

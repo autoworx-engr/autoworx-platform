@@ -8,6 +8,6 @@ export default function useSettingsQuery() {
       const response = await fetch("/api/calendar-settings");
       const data = await response.json();
       return data;
-    }
+    },
   });
 }

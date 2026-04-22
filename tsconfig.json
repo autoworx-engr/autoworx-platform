@@ -34,7 +34,9 @@
     "global.d.ts",
     "src/app/(home)/components/first",
     "src/app/(dashboard)/dashboard/pipeline/shop/shopPipelineLayout.tsc",
-    "test.js"
+    "test.js",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
   ],
   "exclude": ["node_modules", ".next"]
 }

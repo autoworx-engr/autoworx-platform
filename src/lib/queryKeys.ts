@@ -6,6 +6,7 @@ export const queryKeys = {
     "estimates-by-client-id",
     clientId,
   ],
+  invoicesByClientId: (clientId: number) => ["invoices-by-client-id", clientId],
   appointmentById: (appointmentId: number) => [
     "appointment-by-id",
     appointmentId,
@@ -38,16 +39,10 @@ export const queryKeys = {
     "company-knowledge",
     params,
   ],
-  overallFaqs: (params?: { companyId?: number }) => [
-    "overall-faqs",
-    params,
-  ],
+  overallFaqs: (params?: { companyId?: number }) => ["overall-faqs", params],
   aiPersonality: (params?: { companyId?: number }) => [
     "ai-personality",
     params,
   ],
-  smsDelay: (params?: {companyId?:number})=>[
-    "sms-delay",
-    params
-  ]
+  smsDelay: (params?: { companyId?: number }) => ["sms-delay", params],
 };

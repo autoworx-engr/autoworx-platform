@@ -35,7 +35,7 @@ export async function GET() {
     console.error("Get Infobip phone number error:", error);
     return NextResponse.json(
       { error: "Failed to get phone number" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

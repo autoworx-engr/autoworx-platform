@@ -28,7 +28,7 @@ import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useDrop } from "react-dnd";
 import { assignAppointmentDate } from "@/actions/appointment/assignAppointmentDate";
-import { dragTask } from "@/actions/task/dragTask";
+import { updateTask } from "@/actions/task/dragTask";
 import { useEffect, useState } from "react";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { setDate } from "date-fns";
@@ -62,7 +62,7 @@ function rotatedDays(startDay: number) {
                 "Thursday",
                 "Friday",
                 "Saturday",
-              ]
+              ],
       );
     };
 
@@ -200,7 +200,7 @@ export default function Month({
 
     const holiday = holidays.find((holiday: any) => {
       const holidayDateLocal = new Date(holiday.date).toLocaleDateString(
-        "en-CA"
+        "en-CA",
       );
       return holidayDateLocal === currDateLocal;
     });
@@ -226,7 +226,7 @@ export default function Month({
     } else if (type === "task") {
       // Get the id of the task from the dataTransfer object
       const taskId = parseInt(
-        event.dataTransfer.getData("text/plain").split("|")[1]
+        event.dataTransfer.getData("text/plain").split("|")[1],
       );
 
       // Find the task in your state
@@ -234,23 +234,26 @@ export default function Month({
 
       if (task) {
         // Add task to database
-        await dragTask({
-          id: task.id,
-          date: new Date(date),
-          startTime,
-          endTime,
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        });
+        await updateTask(
+          {
+            id: task.id,
+            date: new Date(date),
+            startTime,
+            endTime,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          },
+          { preserveTime: true },
+        );
       }
     } else {
       // Get the id of the appointment from the dataTransfer object
       const appointmentId = parseInt(
-        event.dataTransfer.getData("text/plain").split("|")[1]
+        event.dataTransfer.getData("text/plain").split("|")[1],
       );
 
       // Find the appointment in your state
       const appointment = appointments.find(
-        (appointment) => appointment.id == appointmentId
+        (appointment) => appointment.id == appointmentId,
       );
 
       if (appointment) {
@@ -308,7 +311,7 @@ export default function Month({
               <TooltipTrigger
                 type="button"
                 className={cn(
-                  "relative flex h-full cursor-default flex-col border-b border-r border-neutral-200 p-2"
+                  "relative flex h-full cursor-default flex-col border-b border-r border-neutral-200 p-2",
                 )}
                 onClick={(event) => {
                   if (
@@ -351,7 +354,7 @@ export default function Month({
                         today.getMonth() === cell[0]?.getMonth() &&
                         today.getDate() === cell[0]?.getDate()
                         ? "text-[#6571FF]"
-                        : "text-[#797979]"
+                        : "text-[#797979]",
                     )}
                   >
                     {cell[0]?.getDate() || ""}
@@ -388,7 +391,7 @@ export default function Month({
                                     onClick={() =>
                                       open("UPDATE_APPOINTMENT", {
                                         appointment: appointmentsFull.find(
-                                          (a) => a.id === appointment.id
+                                          (a) => a.id === appointment.id,
                                         ),
                                         employees: companyUsers,
                                         customers,
@@ -431,18 +434,18 @@ export default function Month({
                                     .slice(0, 1)
                                     .map(
                                       (user: User) =>
-                                        `${user.firstName} ${user.lastName}`
+                                        `${user.firstName} ${user.lastName}`,
                                     )}
                                 </p>
 
                                 <p>
                                   {moment(
                                     appointment.startTime,
-                                    "HH:mm"
+                                    "HH:mm",
                                   ).format("hh:mm A")}{" "}
                                   To{" "}
                                   {moment(appointment.endTime, "HH:mm").format(
-                                    "hh:mm A"
+                                    "hh:mm A",
                                   )}
                                 </p>
                               </div>
@@ -517,17 +520,17 @@ export default function Month({
                                         if (
                                           event.target instanceof Node &&
                                           event.currentTarget.contains(
-                                            event.target
+                                            event.target,
                                           )
                                         ) {
                                           // Convert Date object to string to avoid timezone issues
                                           const dateString =
                                             cell[0] instanceof Date
                                               ? cell[0].toLocaleDateString(
-                                                  "en-CA"
+                                                  "en-CA",
                                                 ) // 'YYYY-MM-DD' format
                                               : moment(cell[0]).format(
-                                                  "YYYY-MM-DD"
+                                                  "YYYY-MM-DD",
                                                 );
 
                                           // Set navigation flag to prevent reset, then set date and navigate
@@ -537,7 +540,7 @@ export default function Month({
                                           // Clear navigation flag after a short delay to allow navigation to complete
                                           setTimeout(
                                             () => setNavigating(false),
-                                            30000
+                                            30000,
                                           );
                                         }
                                         router.push("/dashboard/task/day");
@@ -548,7 +551,7 @@ export default function Month({
                                   )}
                                 </Tooltip>
                               );
-                            }
+                            },
                           )}
                       </div>
                     )}
@@ -568,7 +571,7 @@ export default function Month({
                           holiday?.id ? "z-20" : "z-10",
                           cell[1].length || cell[2].length
                             ? "-bottom-12"
-                            : "-bottom-24"
+                            : "-bottom-24",
                         )}
                       >
                         <span className="block lg:hidden">H</span>{" "}
@@ -582,7 +585,7 @@ export default function Month({
                           />
                         )}
                       </div>
-                    )
+                    ),
                 )}
               </TooltipTrigger>
 
@@ -626,7 +629,7 @@ export default function Month({
                                 >
                                   <p>{appointment.title}</p>
                                 </div>
-                              )
+                              ),
                             )}
                           </div>
                         </>

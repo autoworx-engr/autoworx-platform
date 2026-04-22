@@ -9,7 +9,10 @@ import receiveTwiloMessage from "@/lib/pusher/receiveTwiloMessage";
 import { getPusherInstance } from "@/lib/pusher/server";
 import { sendSMSToAgent } from "@/service/ai-agent/api";
 import { allCompanyFeaturePermissions } from "@/service/feature-permissions/api";
-import { normalizePhoneForStorage, phoneLookupWhereClause } from "@/utils/normalizePhone";
+import {
+  normalizePhoneForStorage,
+  phoneLookupWhereClause,
+} from "@/utils/normalizePhone";
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -175,7 +178,19 @@ export async function POST(
         for (const file of images) {
           // Extract file extension from URL
           const fileExtension = file.split(".").pop()?.split("?")[0] || "jpg";
-          const audioExts = ["ogg","mp3","m4a","wav","webm","aac","amr","3gp","opus","oga","flac"];
+          const audioExts = [
+            "ogg",
+            "mp3",
+            "m4a",
+            "wav",
+            "webm",
+            "aac",
+            "amr",
+            "3gp",
+            "opus",
+            "oga",
+            "flac",
+          ];
           const isVoice = audioExts.includes(fileExtension.toLowerCase());
           let atc = await db.clientSmsAttachments.create({
             data: {
@@ -332,4 +347,3 @@ function mimeToExtension(mime: string): string {
   };
   return map[mime.split(";")[0].trim()] || "bin";
 }
-

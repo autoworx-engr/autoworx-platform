@@ -35,7 +35,7 @@ export async function editMyAccountInfo({
       city,
       state,
       zip,
-      countryCode
+      countryCode,
     });
     const session = await getServerSession(authOptions);
     const userId = session?.user.id;

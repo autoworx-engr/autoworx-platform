@@ -25,7 +25,7 @@ export default async function newService({
         categoryId,
         description,
         canned,
-      }
+      },
     );
     const session = await getServerSession(authOptions);
     const companyId = session?.user.companyId;

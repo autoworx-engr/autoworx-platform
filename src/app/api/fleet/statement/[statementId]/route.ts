@@ -60,6 +60,22 @@ export async function GET(
       );
     }
 
+    // Calculate totals
+    const totalAmount = statement.invoice.reduce(
+      (sum, invoice) => sum + Number(invoice.grandTotal || 0),
+      0,
+    );
+
+    const totalPaid = statement.invoice.reduce(
+      (sum, invoice) => sum + Number(invoice.totalPayment || 0),
+      0,
+    );
+
+    const totalDue = statement.invoice.reduce(
+      (sum, invoice) => sum + Number(invoice.due || 0),
+      0,
+    );
+
     return NextResponse.json({
       ...statement,
       totals: calcStatementTotals(statement.invoice),

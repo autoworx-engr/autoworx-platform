@@ -22,7 +22,10 @@ import { NextResponse } from "next/server";
  *       404:
  *         description: Image not found
  */
-export async function GET(req: Request, props: { params: Promise<{ filename: string }> }) {
+export async function GET(
+  req: Request,
+  props: { params: Promise<{ filename: string }> },
+) {
   const params = await props.params;
   const { filename } = params;
   // ✅ use system temp dir, safe in serverless (Vercel/Lambda/etc.)

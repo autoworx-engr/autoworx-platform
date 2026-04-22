@@ -5,7 +5,9 @@ export const metadata: Metadata = {
   title: "Task and Activity Management",
 };
 
-export default async function Page(props: { params: Promise<{ type: string }> }) {
+export default async function Page(props: {
+  params: Promise<{ type: string }>;
+}) {
   const params = await props.params;
   return <TaskAndActivityClient params={params} />;
 }

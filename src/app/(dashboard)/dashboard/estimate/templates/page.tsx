@@ -19,7 +19,7 @@ async function TemplatesPage(
       page?: string;
       take?: string;
     }>;
-  }>
+  }>,
 ) {
   const searchParams = await props.searchParams;
   const session = await getServerSession(authOptions);
@@ -33,7 +33,7 @@ async function TemplatesPage(
   const estimateTemplatesPromise = estimateTemplateFetchAndTransformData(
     companyId,
     searchParams,
-    timezone
+    timezone,
   );
   if (!companyId) {
     throw new Error("Company ID is required to create an email template.");

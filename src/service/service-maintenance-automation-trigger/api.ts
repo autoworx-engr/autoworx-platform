@@ -8,12 +8,12 @@ type TUpdateServiceAutomationTrigger = {
   columnId: number;
 };
 export const updateServiceAutomationTrigger = async function (
-  payload: TUpdateServiceAutomationTrigger
+  payload: TUpdateServiceAutomationTrigger,
 ) {
   try {
     const response = await serverAxios.patch(
       "/service-automation-trigger",
-      payload
+      payload,
     );
     return response.data;
   } catch (error) {

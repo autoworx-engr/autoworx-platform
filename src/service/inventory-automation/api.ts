@@ -26,7 +26,9 @@ export const createInventoryAutomationRule = async (payload: any) => {
 
 export const AllInventoryAutomationRules = async (companyId: number) => {
   try {
-    const response = await axiosInstance.get(`/inventory-automation-rule?companyId=${companyId}`);
+    const response = await axiosInstance.get(
+      `/inventory-automation-rule?companyId=${companyId}`,
+    );
     return response.data;
   } catch (error) {
     throw error;

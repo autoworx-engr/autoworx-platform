@@ -93,13 +93,12 @@ export const getLeads = async ({
           include: {
             appointments: {
               where: {
-                date: {
-                  gte: `${todayTimeString}Z`,
-                },
+                date: { gte: moment(todayTimeString) as any },
               },
               orderBy: {
-                date: "desc",
+                date: "asc",
               },
+              take: 1,
               select: {
                 id: true,
                 title: true,
@@ -148,13 +147,12 @@ export const getLeads = async ({
             include: {
               appointments: {
                 where: {
-                  date: {
-                    gte: `${todayTimeString}Z`,
-                  },
+                  date: { gte: moment(todayTimeString) as any },
                 },
                 orderBy: {
-                  date: "desc",
+                  date: "asc",
                 },
+                take: 1,
                 select: {
                   id: true,
                   title: true,
@@ -173,23 +171,7 @@ export const getLeads = async ({
           }))!;
         }
 
-        const appointments = client?.appointments.filter((appointment: any) => {
-          if (
-            appointment.date &&
-            appointment.endTime &&
-            appointment.startTime
-          ) {
-            const end = moment.tz(
-              `${moment(appointment.date).format("YYYY-MM-DD")}T${appointment.endTime}`,
-              "YYYY-MM-DDTHH:mm",
-              timezone ?? "",
-            );
-
-            // Show appointment only if endTime is same or after now
-            return end.isSameOrAfter(now);
-          }
-          return false;
-        });
+        const appointments = client?.appointments ?? [];
 
         const vehicle = lead.vehicleId ? vehicleMap.get(lead.vehicleId) : null;
 
@@ -324,13 +306,12 @@ export const getLeadsWithCount = async ({
             include: {
               appointments: {
                 where: {
-                  date: {
-                    gte: moment(todayTimeString) as any,
-                  },
+                  date: { gte: moment(todayTimeString) as any },
                 },
                 orderBy: {
-                  date: "desc",
+                  date: "asc",
                 },
+                take: 1,
                 select: {
                   id: true,
                   title: true,
@@ -379,13 +360,12 @@ export const getLeadsWithCount = async ({
             include: {
               appointments: {
                 where: {
-                  date: {
-                    gte: moment(todayTimeString) as any,
-                  },
+                  date: { gte: moment(todayTimeString) as any },
                 },
                 orderBy: {
-                  date: "desc",
+                  date: "asc",
                 },
+                take: 1,
                 select: {
                   id: true,
                   title: true,
@@ -403,24 +383,7 @@ export const getLeadsWithCount = async ({
             },
           }))!;
         }
-        const appointments = client?.appointments.filter((appointment: any) => {
-          if (
-            !appointment.date ||
-            !moment(appointment.date).isSameOrAfter(todayStart)
-          ) {
-            return false;
-          }
-
-          if (
-            moment(appointment.date).startOf("day").isSame(todayStart) &&
-            appointment.endTime &&
-            moment(appointment.endTime, "HH:mm").isBefore(now)
-          ) {
-            return false;
-          }
-
-          return true;
-        });
+        const appointments = client?.appointments ?? [];
 
         const vehicle = lead.vehicleId ? vehicleMap.get(lead.vehicleId) : null;
 
@@ -557,13 +520,12 @@ export const getLeadsWithCountOptimized = async ({
             include: {
               appointments: {
                 where: {
-                  date: {
-                    gte: `${todayTimeString}Z`,
-                  },
+                  date: { gte: moment(todayTimeString) as any },
                 },
                 orderBy: {
-                  date: "desc",
+                  date: "asc",
                 },
+                take: 1,
                 select: {
                   id: true,
                   title: true,
@@ -571,7 +533,6 @@ export const getLeadsWithCountOptimized = async ({
                   startTime: true,
                   endTime: true,
                 },
-                take: 3, // Limit appointments
               },
               conversationsTrack: {
                 select: {
@@ -598,7 +559,6 @@ export const getLeadsWithCountOptimized = async ({
         : [];
 
     const vehicleMap = new Map(vehicles.map((v) => [v.id, v]));
-    const now = moment().tz(timezone ?? "UTC");
 
     // Process leads more efficiently without additional database calls
     const leadsDataWithClient: LeadWithSalesUser[] = leadsData.map((lead) => {
@@ -607,17 +567,7 @@ export const getLeadsWithCountOptimized = async ({
           client.companyId === companyId && client.leadId === lead.id,
       );
 
-      const appointments = client?.appointments.filter((appointment: any) => {
-        if (appointment.date && appointment.endTime && appointment.startTime) {
-          const end = moment.tz(
-            `${moment(appointment.date).format("YYYY-MM-DD")}T${appointment.endTime}`,
-            "YYYY-MM-DDTHH:mm",
-            timezone ?? "",
-          );
-          return end.isSameOrAfter(now);
-        }
-        return false;
-      });
+      const appointments = client?.appointments ?? [];
 
       const vehicle = lead.vehicleId ? vehicleMap.get(lead.vehicleId) : null;
 

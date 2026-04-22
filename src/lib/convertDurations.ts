@@ -5,7 +5,10 @@ export function convertDuration(durationInMinutes: number): string {
   const hours = Math.floor(duration.asHours());
   const minutes = duration.minutes();
   const seconds = duration.seconds();
-  return `${hours ? hours + "h" : ""}${minutes ? minutes + "m" : ""}${seconds ? seconds + "s" : ""}`.trim() || "0s";
+  return (
+    `${hours ? hours + "h" : ""}${minutes ? minutes + "m" : ""}${seconds ? seconds + "s" : ""}`.trim() ||
+    "0s"
+  );
 }
 
 export const convertMinutesToHours = (minutes: number): string => {

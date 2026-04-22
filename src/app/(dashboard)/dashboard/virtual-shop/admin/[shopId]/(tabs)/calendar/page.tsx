@@ -17,9 +17,9 @@ type PageSearchParams = {
 };
 
 type VirtualShopCalendarPageProps = {
-  params: {
+  params: Promise<{
     shopId: string;
-  };
+  }>;
   searchParams?: Promise<PageSearchParams>;
 };
 
@@ -122,11 +122,12 @@ export default async function VirtualShopCalendarPage({
   params,
   searchParams,
 }: VirtualShopCalendarPageProps) {
+  const resolvedParams = await params;
   const now = new Date();
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const session = await getServerSession(authOptions);
   const accessToken = session?.accessToken;
-  const shopId = Number.parseInt(params.shopId, 10);
+  const shopId = Number.parseInt(resolvedParams.shopId, 10);
 
   const viewMode =
     first(resolvedSearchParams?.mode) === "list" ? "list" : "grid";

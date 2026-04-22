@@ -202,7 +202,7 @@ export const GET = async (request: NextRequest) => {
       },
     });
 
-    const oppositeCompanies = connectedCompanies.map(join => {
+    const oppositeCompanies = connectedCompanies.map((join) => {
       if (join.companyOneId === userCompanyId) {
         return join.companyTwo;
       } else {
@@ -212,10 +212,10 @@ export const GET = async (request: NextRequest) => {
 
     // Filter users in oppositeCompanies based on their collaboration permissions
     const filteredOppositeCompanies = await Promise.all(
-      oppositeCompanies.map(async company => {
+      oppositeCompanies.map(async (company) => {
         // Filter users who have collaboration permission
         const filteredUsers = await Promise.all(
-          company.users.map(async user => {
+          company.users.map(async (user) => {
             try {
               const permissions = await getUserPermissions(
                 user.id,
@@ -234,7 +234,7 @@ export const GET = async (request: NextRequest) => {
           }),
         );
 
-        const filtered = filteredUsers.filter(user => user !== null);
+        const filtered = filteredUsers.filter((user) => user !== null);
 
         return {
           ...company,
@@ -245,7 +245,7 @@ export const GET = async (request: NextRequest) => {
 
     // Remove companies that have no users with collaboration permission
     const finalCompanies = filteredOppositeCompanies.filter(
-      company => company.users.length > 0,
+      (company) => company.users.length > 0,
     );
 
     const hasNextPage = pageNum * limitNum < totalRecords;

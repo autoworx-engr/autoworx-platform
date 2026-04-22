@@ -98,7 +98,7 @@ export async function GET(req: NextRequest, props: RouteParams) {
     if (isNaN(leadId)) {
       return NextResponse.json(
         { success: false, message: "leadId must be a valid number" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -107,7 +107,7 @@ export async function GET(req: NextRequest, props: RouteParams) {
     if (!data) {
       return NextResponse.json(
         { success: false, message: "Lead not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -122,7 +122,7 @@ export async function GET(req: NextRequest, props: RouteParams) {
         success: false,
         message: error?.message || "Failed to retrieve lead",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

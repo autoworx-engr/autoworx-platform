@@ -11,8 +11,8 @@ export const useCreateCompanyPermission = () => {
     mutationFn: async (payloads: PermissionCreate[]) => {
       return await Promise.all(
         payloads.map((p) =>
-          createPermission(p.companyId, p.permission_name, p.title, p.enabled)
-        )
+          createPermission(p.companyId, p.permission_name, p.title, p.enabled),
+        ),
       );
     },
     onSuccess: () => {
