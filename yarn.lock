@@ -2327,7 +2327,7 @@
   resolved "https://registry.yarnpkg.com/@popperjs/core/-/core-2.11.8.tgz#6b79032e760a0899cd4204710beede972a3a185f"
   integrity sha512-P1st0aksCrn9sGZhp8GMYwBnQsbvAWsZAX44oXNNvLHGqAOcoVxmjZiohstwQ7SqKnbR47akdNi+uleWD8+g6A==
 
-"@prisma/adapter-pg@^7.5.0":
+"@prisma/adapter-pg@^7.7.0":
   version "7.7.0"
   resolved "https://registry.yarnpkg.com/@prisma/adapter-pg/-/adapter-pg-7.7.0.tgz#6a40a98b78b47cfac22467d6ffbbed7248625269"
   integrity sha512-q33Ta8sKbgzEpAy0lx45tAq//yMv0qcb+8nj+TCA3P4wiAY+OBFEFk/NDkZncAfHaNJeGo5WJpJdpbL+ijYx8g==
@@ -2342,7 +2342,7 @@
   resolved "https://registry.yarnpkg.com/@prisma/client-runtime-utils/-/client-runtime-utils-7.7.0.tgz#7d45c5754358e9d4d006a137818ebdb5f0c4dcb6"
   integrity sha512-BLyd0UpFYOtyJFTHm7jS9vesHW7P83abibodQMiIofqjBKzDHQ1VAsQkdfvXyYDkPlONPfOTz7/rv3x/+CQqvQ==
 
-"@prisma/client@^7.5.0":
+"@prisma/client@^7.7.0":
   version "7.7.0"
   resolved "https://registry.yarnpkg.com/@prisma/client/-/client-7.7.0.tgz#68110e87288c4fdb5b3b928d4cff589b0ac6c33b"
   integrity sha512-5Ar4OsZpJ54s21sy5oDNNW9gQtd4NuxCaiM7+JDTOU07D6VvlpLjYzAVCMB1+JzokN+08dAVomlx+b7bhJd3ww==
@@ -11167,7 +11167,7 @@ pretty-ms@^9.2.0:
   dependencies:
     parse-ms "^4.0.0"
 
-prisma@^7.5.0:
+prisma@^7.7.0:
   version "7.7.0"
   resolved "https://registry.yarnpkg.com/prisma/-/prisma-7.7.0.tgz#b1d6b189b66937983fe731c25ad16fa8d41bddae"
   integrity sha512-HlgwRBt1uEFB9LStHL4HLYDvoi4BNu1rYA0hPG0zCAEyK9SaZBqp7E5Rjpc3Qh8Lex/ye/svoHZ0OWoFNhWxuQ==
