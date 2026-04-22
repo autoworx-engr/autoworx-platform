@@ -4,6 +4,10 @@ import {
   getLeadsWithCountOptimized as getLeadsWithCount,
   updateLeadColumn,
 } from "@/actions/pipelines/getLeads";
+import {
+  getLeadFilterOptions,
+  LeadFilterOptions,
+} from "@/actions/pipelines/getLeadFilterOptions";
 import { getCompanyUser } from "@/actions/user/getCompanyUser";
 import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
 import DateRange from "@/components/DateRange";
@@ -73,6 +77,10 @@ const Leads = ({ salesColumn }: TProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const [companyUsers, setCompanyUsers] = useState<User[]>([]);
+  const [filterOptions, setFilterOptions] = useState<LeadFilterOptions>({
+    sources: [],
+    services: [],
+  });
 
   const [pending, startTransition] = useTransition();
 
@@ -273,10 +281,13 @@ const Leads = ({ salesColumn }: TProps) => {
     const fetchUserAndCompanyUsers = async () => {
       try {
         // Parallel API calls instead of sequential
-        const [userResponse, companyUsers] = await Promise.all([
+        const [userResponse, companyUsers, options] = await Promise.all([
           fetch("/api/getUser"),
           getCompanyUser(),
+          getLeadFilterOptions(),
         ]);
+
+        setFilterOptions(options);
 
         if (userResponse.ok) {
           const userData = await userResponse.json();
@@ -476,7 +487,9 @@ const Leads = ({ salesColumn }: TProps) => {
                 </div>
                 <div className="relative flex-shrink-0 w-[100px] sm:w-auto sm:flex-1">
                   <DropdownMenuDemo
-                    leads={initialLeads ?? []}
+                    filterOptions={filterOptions}
+                    salesColumn={salesColumn}
+                    companyUsers={companyUsers}
                     filter={filter}
                     setFilter={setFilter}
                     clearFilters={clearFilters}
@@ -830,69 +843,61 @@ const SearchTerms = React.memo(function SearchTerms({
 });
 
 const DropdownMenuDemo = React.memo(function DropdownMenuDemo({
-  leads,
+  filterOptions,
+  salesColumn,
+  companyUsers,
   setFilter,
   filter,
   clearFilters,
 }: {
-  leads: LeadWithSalesUser[];
+  filterOptions: LeadFilterOptions;
+  salesColumn: Column[];
+  companyUsers: User[];
   setFilter: any;
   filter: {
     [key: string]: string;
   };
   clearFilters: () => void;
 }) {
-  // Memoize expensive computations to prevent recalculation on every render
-  const { statusItems, serviceItems, sourceItems, salesPersonItems } =
-    useMemo(() => {
-      const uniqueStatuses = new Set<string>();
-      const uniqueServices = new Set<string>();
-      const uniqueSources = new Set<string>();
-      const salesPersonsId = new Set<number>();
+  const statusItems = useMemo(
+    () =>
+      salesColumn.map((col, index) => ({
+        id: `status-${index}`,
+        value: col.title,
+        label: col.title,
+      })),
+    [salesColumn],
+  );
 
-      leads?.forEach((lead) => {
-        if (lead.column?.title) {
-          uniqueStatuses.add(lead.column.title);
-        }
-        if (lead.services) {
-          uniqueServices.add(lead.services);
-        }
-        if (lead.source) {
-          uniqueSources.add(lead.source);
-        }
-        if (lead.salesUser?.id) {
-          salesPersonsId.add(lead.salesUser?.id);
-        }
-      });
+  const serviceItems = useMemo(
+    () =>
+      filterOptions.services.map((serviceName, index) => ({
+        id: `service-${index}`,
+        value: serviceName,
+        label: serviceName,
+      })),
+    [filterOptions.services],
+  );
 
-      return {
-        statusItems: Array.from(uniqueStatuses).map((statusName, index) => ({
-          id: `status-${index}`,
-          value: statusName,
-          label: statusName,
-        })),
-        serviceItems: Array.from(uniqueServices).map((serviceName, index) => ({
-          id: `service-${index}`,
-          value: serviceName,
-          label: serviceName,
-        })),
-        sourceItems: Array.from(uniqueSources).map((sourceName, index) => ({
-          id: `source-${index}`,
-          value: sourceName,
-          label: sourceName,
-        })),
-        salesPersonItems: Array.from(salesPersonsId).map((personId, index) => ({
-          id: `person-${index}`,
-          value: personId.toString(),
-          label:
-            leads?.find((lead) => lead.salesUser?.id === personId)?.salesUser
-              ?.firstName +
-            " " +
-            leads?.find((lead) => lead.salesUser?.id === personId)?.salesUser
-              ?.lastName,
-        })),
-      };
-    }, [leads]);
+  const sourceItems = useMemo(
+    () =>
+      filterOptions.sources.map((sourceName, index) => ({
+        id: `source-${index}`,
+        value: sourceName,
+        label: sourceName,
+      })),
+    [filterOptions.sources],
+  );
+
+  const salesPersonItems = useMemo(
+    () =>
+      companyUsers.map((user, index) => ({
+        id: `person-${index}`,
+        value: user.id.toString(),
+        label: `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim(),
+      })),
+    [companyUsers],
+  );
 
   return (
     <DropdownMenu.Root>
