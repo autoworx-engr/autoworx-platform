@@ -15,6 +15,7 @@ import FleetSubHeading from "./FleetSubHeading";
 import { editFleetStatement } from "@/actions/fleet/statement/editFleetStatement";
 import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
 import { useFleetInvoiceStore } from "@/stores/fleetInvoiceStore";
+import toast from "react-hot-toast";
 
 interface EditFleetStatementModalProps {
   isOpen: boolean;
@@ -45,7 +46,7 @@ const EditFleetStatementModal = ({
   const invoices = [
     ...currentInvoices,
     ...allInvoices.filter(
-      (inv) => !currentInvoices.some((curr) => curr.id === inv.id)
+      (inv) => !currentInvoices.some((curr) => curr.id === inv.id),
     ),
   ];
 
@@ -67,7 +68,7 @@ const EditFleetStatementModal = ({
 
   const handleUpdate = async () => {
     if (selectedItems.length === 0) {
-      message.error("Please select at least one invoice");
+      toast.error("Please select at least one invoice");
       return;
     }
 
@@ -77,18 +78,18 @@ const EditFleetStatementModal = ({
         statementId,
         invoiceIds: selectedItems,
       });
-
+      console.log("result", result);
       if (result.type === "success") {
-        // message.success(result.message);
+        // toast.success(result.message);
         onClose();
         if (onStatementUpdated) {
           onStatementUpdated();
         }
       } else {
-        message.error(result.message || "Failed to update statement");
+        toast.error(result.message || "Failed to update statement");
       }
     } catch (error) {
-      message.error("Failed to update statement");
+      toast.error("Failed to update statement");
     } finally {
       setLoading(false);
     }
@@ -106,7 +107,10 @@ const EditFleetStatementModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent onOpenAutoFocus={(e)=>e.preventDefault()} className="flex max-h-[80vh] w-[95vw] max-w-4xl flex-col overflow-hidden sm:w-full [&>button]:hidden">
+      <DialogContent
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        className="flex max-h-[80vh] w-[95vw] max-w-4xl flex-col overflow-hidden sm:w-full [&>button]:hidden"
+      >
         <DialogHeader>
           <DialogTitle>
             <FleetSubHeading text="Edit Fleet Statement" />
@@ -145,7 +149,7 @@ const EditFleetStatementModal = ({
                   key={invoice.id}
                   className={cn(
                     "cursor-pointer rounded-md border py-3",
-                    index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]"
+                    index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]",
                   )}
                 >
                   <td className="px-3 py-3">

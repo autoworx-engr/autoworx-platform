@@ -27,6 +27,8 @@ export function SelectVehicle({
   const clientId = search?.get("clientId");
 
   useEffect(() => {
+    if (!vehicleList?.length) return;
+
     const clientVehicles = clientId
       ? vehicleList?.filter((vehicle) => vehicle.clientId === +clientId)
       : [];
@@ -41,14 +43,14 @@ export function SelectVehicle({
         }
       } else {
         const matchedVehicle = clientVehicles?.find(
-          (vehicle) => vehicle.id === value?.id
+          (vehicle) => vehicle.id === value?.id,
         );
         const finalVehicle = matchedVehicle ?? selectedVehicle;
         setVehicle(finalVehicle);
         useListsStore.setState({ vehicle: finalVehicle });
       }
     }
-  }, [newAddedVehicle, clientId, vehicleList]);
+  }, [newAddedVehicle, clientId, vehicleList, isEdit, setVehicle, value]);
 
   useEffect(() => {
     return () => {
@@ -56,7 +58,7 @@ export function SelectVehicle({
         useListsStore.setState({ newAddedVehicle: null });
       }
     };
-  }, []);
+  }, [newAddedVehicle]);
 
   const handleClear = () => {
     setVehicle(null);
@@ -76,28 +78,30 @@ export function SelectVehicle({
             : "Vehicle"
         }
         newButton={
-          clientId && <NewVehicle
-            clientId={Number(clientId)}
-            onAdd={(vehicle: Vehicle) => {
-              setVehicle(vehicle);
-              useListsStore.setState({ vehicle });
-              useListsStore.setState(({ vehicles }) => ({
-                vehicles: [...vehicles, vehicle],
-                newAddedVehicle: vehicle,
-              }));
-              vehicle && setOpenDropdown && setOpenDropdown(false);
-            }}
-          />
+          clientId && (
+            <NewVehicle
+              clientId={Number(clientId)}
+              onAdd={(vehicle: Vehicle) => {
+                setVehicle(vehicle);
+                useListsStore.setState({ vehicle });
+                useListsStore.setState(({ vehicles }) => ({
+                  vehicles: [...vehicles, vehicle],
+                  newAddedVehicle: vehicle,
+                }));
+                vehicle && setOpenDropdown && setOpenDropdown(false);
+              }}
+            />
+          )
         }
         items={vehicleList?.filter(
-          (vehicle) => vehicle.clientId === +clientId!
+          (vehicle) => vehicle.clientId === +clientId!,
         )}
         onSearch={(search: string) =>
           vehicleList.filter(
             (vehicle) =>
               vehicle.make?.toLowerCase().includes(search.toLowerCase()) ||
               vehicle.model?.toLowerCase().includes(search.toLowerCase()) ||
-              vehicle.other?.toLowerCase().includes(search.toLowerCase())
+              vehicle.other?.toLowerCase().includes(search.toLowerCase()),
           )
         }
         openState={[
