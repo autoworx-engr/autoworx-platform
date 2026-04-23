@@ -23,22 +23,22 @@ const EmptyCard: React.FC<EmptyCardProps> = ({
         <div className="flex justify-center mb-4">
           {Icon && (
             <div className="flex justify-center mb-4">
-              <div className="bg-blue-100 p-3 rounded-full">
-                <Icon className="w-6 h-6 text-blue-600" />
+              <div className="bg-[#6571FF]/10 p-3 rounded-full">
+                <Icon className="w-6 h-6 text-[#6571FF]" />
               </div>
             </div>
           )}
         </div>
 
         {/* Content */}
-        <h2 className="text-xl font-semibold text-gray-800 mb-2">{title}</h2>
+        <h2 className="text-2xl font-semibold text-gray-600 mb-2">{title}</h2>
         <p className="text-gray-500 mb-4">{description}</p>
 
         {/* Button */}
         {onAction && (
           <button
             onClick={onAction}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            className="px-4 py-2 bg-[#6571FF] text-white rounded-lg hover:bg-[#5a67d8] transition"
           >
             {actionText}
           </button>
