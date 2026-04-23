@@ -66,3 +66,5 @@ bun.lock
 .pnpm-lock.yaml
 pnpm-workspace.yaml
 .claude
+
+.test
