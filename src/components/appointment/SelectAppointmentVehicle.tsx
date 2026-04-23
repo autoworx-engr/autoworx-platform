@@ -37,7 +37,7 @@ export function SelectAppointmentVehicle({
     Number(clientId),
     {
       enabled: isClientIdNumber,
-    }
+    },
   );
 
   useEffect(() => {
@@ -64,9 +64,9 @@ export function SelectAppointmentVehicle({
         }
       } else {
         const matchedVehicle = clientVehicles?.find(
-          (vehicle) => vehicle.id === value?.id
+          (vehicle) => vehicle.id === value?.id,
         );
-        const finalVehicle = matchedVehicle ?? selectedVehicle;
+        const finalVehicle = matchedVehicle ?? value ?? selectedVehicle;
 
         setVehicle(finalVehicle);
         // useListsStore.setState({ vehicle: finalVehicle });
@@ -118,7 +118,7 @@ export function SelectAppointmentVehicle({
                     return oldVehicle && oldVehicle.length > 0
                       ? [...oldVehicle, vehicle]
                       : [];
-                  }
+                  },
                 );
                 vehicle && setOpenDropdown && setOpenDropdown(false);
               }}
@@ -130,7 +130,7 @@ export function SelectAppointmentVehicle({
             clientVehicles.filter(
               (vehicle) =>
                 vehicle.model?.toLowerCase().includes(search.toLowerCase()) ||
-                vehicle.other?.toLowerCase().includes(search.toLowerCase())
+                vehicle.other?.toLowerCase().includes(search.toLowerCase()),
             )
           }
           openState={[
