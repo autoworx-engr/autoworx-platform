@@ -1,6 +1,7 @@
 "use server";
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { TECHNICIAN_STATUS } from "@/lib/consts";
 
 export const createInvoiceRedo = async (
   redoTechnicians: {
@@ -27,7 +28,7 @@ export const createInvoiceRedo = async (
               id: technicianInfo.technicianId,
             },
             data: {
-              status: "In Progress",
+              status: TECHNICIAN_STATUS.IN_PROGRESS,
             },
           });
         });

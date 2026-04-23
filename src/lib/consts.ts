@@ -50,3 +50,10 @@ export const WORK_ORDER_STATUS_COLOR: { [key: string]: string } = {
   Complete: "#0f766e",
   Cancel: "#DC3545",
 };
+
+export const TECHNICIAN_STATUS = {
+  PENDING: "Pending",
+  IN_PROGRESS: "In Progress",
+  COMPLETE: "Complete",
+  CANCEL: "Cancel",
+};
