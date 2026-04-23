@@ -41,9 +41,9 @@ export function SelectVehicle({
         }
       } else {
         const matchedVehicle = clientVehicles?.find(
-          (vehicle) => vehicle.id === value?.id
+          (vehicle) => vehicle.id === value?.id,
         );
-        const finalVehicle = matchedVehicle ?? selectedVehicle;
+        const finalVehicle = matchedVehicle ?? value ?? selectedVehicle;
         setVehicle(finalVehicle);
         useListsStore.setState({ vehicle: finalVehicle });
       }
@@ -76,28 +76,30 @@ export function SelectVehicle({
             : "Vehicle"
         }
         newButton={
-          clientId && <NewVehicle
-            clientId={Number(clientId)}
-            onAdd={(vehicle: Vehicle) => {
-              setVehicle(vehicle);
-              useListsStore.setState({ vehicle });
-              useListsStore.setState(({ vehicles }) => ({
-                vehicles: [...vehicles, vehicle],
-                newAddedVehicle: vehicle,
-              }));
-              vehicle && setOpenDropdown && setOpenDropdown(false);
-            }}
-          />
+          clientId && (
+            <NewVehicle
+              clientId={Number(clientId)}
+              onAdd={(vehicle: Vehicle) => {
+                setVehicle(vehicle);
+                useListsStore.setState({ vehicle });
+                useListsStore.setState(({ vehicles }) => ({
+                  vehicles: [...vehicles, vehicle],
+                  newAddedVehicle: vehicle,
+                }));
+                vehicle && setOpenDropdown && setOpenDropdown(false);
+              }}
+            />
+          )
         }
         items={vehicleList?.filter(
-          (vehicle) => vehicle.clientId === +clientId!
+          (vehicle) => vehicle.clientId === +clientId!,
         )}
         onSearch={(search: string) =>
           vehicleList.filter(
             (vehicle) =>
               vehicle.make?.toLowerCase().includes(search.toLowerCase()) ||
               vehicle.model?.toLowerCase().includes(search.toLowerCase()) ||
-              vehicle.other?.toLowerCase().includes(search.toLowerCase())
+              vehicle.other?.toLowerCase().includes(search.toLowerCase()),
           )
         }
         openState={[
