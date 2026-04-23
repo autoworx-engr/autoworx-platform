@@ -17,9 +17,9 @@ type PageSearchParams = {
 };
 
 type VirtualShopEstimatesPageProps = {
-  params: {
+  params: Promise<{
     shopId: string;
-  };
+  }>;
   searchParams?: Promise<PageSearchParams>;
 };
 
@@ -236,6 +236,7 @@ export default async function VirtualShopEstimatesPage({
   params,
   searchParams,
 }: VirtualShopEstimatesPageProps) {
+  const resolvedParams = await params;
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const search = first(resolvedSearchParams?.search)?.trim() || "";
   const rawStatus = (
@@ -252,7 +253,7 @@ export default async function VirtualShopEstimatesPage({
 
   const session = await getServerSession(authOptions);
   const accessToken = session?.accessToken;
-  const shopId = Number.parseInt(params.shopId, 10);
+  const shopId = Number.parseInt(resolvedParams.shopId, 10);
 
   if (!accessToken || !Number.isFinite(shopId)) {
     return <ShopNotFound />;

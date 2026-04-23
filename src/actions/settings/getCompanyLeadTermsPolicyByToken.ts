@@ -26,7 +26,10 @@ export async function getCompanyLeadTermsPolicyByToken(token: string): Promise<{
       leadPolicy: company.leadPolicy ?? "",
     };
   } catch (error) {
-    console.error("Error fetching company lead terms and policy by token:", error);
+    console.error(
+      "Error fetching company lead terms and policy by token:",
+      error,
+    );
     return null;
   }
 }

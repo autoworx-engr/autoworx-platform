@@ -42,7 +42,7 @@ export async function updateMeterial({
       cost,
       sell,
       discount,
-    })
+    });
     const updatedMaterial = await db.material.update({
       where: { id },
       data: {

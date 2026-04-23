@@ -15,7 +15,7 @@ import { difference, getDateRanges, growthRate } from "./lib";
 export async function getLeadInfo(
   timezone: string,
   startDate?: string,
-  endDate?: string
+  endDate?: string,
 ) {
   // Convert string dates to Date objects if provided
   let startDateObj: Date | undefined;
@@ -38,25 +38,25 @@ export async function getLeadInfo(
 
   const convertedLeadsPerMonthPromise = getConvertedLeadsPerMonth(
     startDateObj,
-    endDateObj
+    endDateObj,
   );
   const leadsBySourcePromise = getLeadsBySource(
     timezone,
     startDateObj,
-    endDateObj
+    endDateObj,
   );
   const averageConversionTimePromise = getAverageConversionTime(
     startDateObj,
-    endDateObj
+    endDateObj,
   );
   const leadToOpportunityRatioPromise = getLeadToOpportunityRatio(
     timezone,
     startDateObj,
-    endDateObj
+    endDateObj,
   );
   const avgResponseTimePromise = getAverageTimeToContact(
     startDateObj,
-    endDateObj
+    endDateObj,
   );
 
   let lostLeadsPromise;
@@ -69,7 +69,7 @@ export async function getLeadInfo(
   const averageDealSizePromise = getAverageDealSize(
     timezone,
     startDateObj,
-    endDateObj
+    endDateObj,
   );
 
   // For growth rate calculation, handle same-day ranges with moment
@@ -114,7 +114,7 @@ export async function getLeadInfo(
 export async function getAverageDealSize(
   timezone: string,
   startDate?: Date,
-  endDate?: Date
+  endDate?: Date,
 ): Promise<number> {
   const companyId = await getCompanyId();
   const {
@@ -168,15 +168,15 @@ export async function getAverageDealSize(
   }
 
   // Extract the invoices
-  const invoiceGrandTotals = leads.flatMap(lead =>
-    lead.Client.flatMap(client =>
-      client.Invoice.map(invoice => invoice.grandTotal)
-    )
+  const invoiceGrandTotals = leads.flatMap((lead) =>
+    lead.Client.flatMap((client) =>
+      client.Invoice.map((invoice) => invoice.grandTotal),
+    ),
   );
   const invoiceLength = invoiceGrandTotals.length;
   // Filter out null values and sum the totals
   const total = invoiceGrandTotals
-    .filter(grandTotal => grandTotal !== null)
+    .filter((grandTotal) => grandTotal !== null)
     .reduce((acc, curr) => acc + (curr ? Number(curr) : 0), 0);
 
   // Calculate and return only the average
@@ -186,7 +186,7 @@ export async function getAverageDealSize(
 export const getMonthlyQualifiedAndUnqualifiedLeads = async (
   startDate?: Date,
   endDate?: Date,
-  timezone: string = "America/Detroit"
+  timezone: string = "America/Detroit",
 ): Promise<{ month: string; qualified: number; unqualified: number }[]> => {
   const companyId = await getCompanyId();
 
@@ -203,10 +203,10 @@ export const getMonthlyQualifiedAndUnqualifiedLeads = async (
   }
 
   const leadsData = await Promise.all(
-    months.map(async month => {
+    months.map(async (month) => {
       const monthStart = moment.tz(
         { year: month.year(), month: month.month(), day: 1 },
-        timezone
+        timezone,
       );
 
       const effectiveStartDate = monthStart
@@ -248,7 +248,7 @@ export const getMonthlyQualifiedAndUnqualifiedLeads = async (
         qualified: qualifiedLeads,
         unqualified: unqualifiedLeads,
       };
-    })
+    }),
   );
 
   return leadsData;
@@ -256,7 +256,7 @@ export const getMonthlyQualifiedAndUnqualifiedLeads = async (
 
 export const getConvertedLeadsPerMonth = async (
   startDate?: Date,
-  endDate?: Date
+  endDate?: Date,
 ): Promise<{ month: string; converted: number }[]> => {
   const companyId = await getCompanyId();
   const months = eachMonthOfInterval({
@@ -265,7 +265,7 @@ export const getConvertedLeadsPerMonth = async (
   });
 
   const convertedLeadsData = await Promise.all(
-    months.map(async month => {
+    months.map(async (month) => {
       const startOfMonthDate = startOfMonth(month);
       const endOfMonthDate = endOfMonth(month);
 
@@ -294,7 +294,7 @@ export const getConvertedLeadsPerMonth = async (
         month: month.toLocaleString("default", { month: "short" }),
         converted: convertedLeads,
       };
-    })
+    }),
   );
 
   return convertedLeadsData;
@@ -302,7 +302,7 @@ export const getConvertedLeadsPerMonth = async (
 export async function getLeadsBySource(
   timezone: string,
   startDate?: Date,
-  endDate?: Date
+  endDate?: Date,
 ) {
   const {
     currentMonthStart,
@@ -342,7 +342,7 @@ export async function getLeadsBySource(
     },
   });
 
-  return leadsBySource.map(lead => ({
+  return leadsBySource.map((lead) => ({
     source: lead.source,
     leads: lead._count.id,
   }));
@@ -351,7 +351,7 @@ export async function getLeadsBySource(
 // Get average conversion time
 export const getAverageConversionTime = async (
   startDate?: Date,
-  endDate?: Date
+  endDate?: Date,
 ): Promise<number> => {
   const companyId = await getCompanyId();
   const convertedColumn = await db.column.findFirst({
@@ -389,7 +389,7 @@ export const getAverageConversionTime = async (
       sum +
       differenceInHours(
         new Date(lead.columnChangedAt ?? new Date()),
-        new Date(lead.createdAt)
+        new Date(lead.createdAt),
       )
     );
   }, 0);
@@ -400,7 +400,7 @@ export const getAverageConversionTime = async (
 export const getLeadToOpportunityRatio = async (
   timezone: string,
   startDate?: Date,
-  endDate?: Date
+  endDate?: Date,
 ): Promise<number> => {
   const companyId = await getCompanyId();
   const {
@@ -446,7 +446,7 @@ export const getLeadToOpportunityRatio = async (
 
 export const getAverageTimeToContact = async (
   startDate?: Date,
-  endDate?: Date
+  endDate?: Date,
 ): Promise<number> => {
   const ongoingColumn = await db.column.findFirst({
     where: {
@@ -483,7 +483,7 @@ export const getAverageTimeToContact = async (
       sum +
       differenceInHours(
         new Date(lead.columnChangedAt ?? new Date()),
-        new Date(lead.createdAt)
+        new Date(lead.createdAt),
       )
     );
   }, 0);
@@ -493,7 +493,7 @@ export const getAverageTimeToContact = async (
 
 export const getLeadsLost = async (
   startDate?: Date,
-  endDate?: Date
+  endDate?: Date,
 ): Promise<number> => {
   const lostColumn = await db.column.findFirst({
     where: {
@@ -525,70 +525,70 @@ export const getGrowthRates = async (timezone: string) => {
   } = getDateRanges(timezone);
   const previousAverageConversionTime = await getAverageConversionTime(
     previousMonthStart,
-    previousMonthEnd
+    previousMonthEnd,
   );
   const currentAverageConversionTime = await getAverageConversionTime(
     currentMonthStart,
-    currentMonthEnd
+    currentMonthEnd,
   );
 
   const previousLeadToOpportunityRatio = await getLeadToOpportunityRatio(
     timezone,
     previousMonthStart,
-    previousMonthEnd
+    previousMonthEnd,
   );
   const currentLeadToOpportunityRatio = await getLeadToOpportunityRatio(
     timezone,
     currentMonthStart,
-    currentMonthEnd
+    currentMonthEnd,
   );
 
   const previousAvgResponseTime = await getAverageTimeToContact(
     previousMonthStart,
-    previousMonthEnd
+    previousMonthEnd,
   );
   const currentAvgResponseTime = await getAverageTimeToContact(
     currentMonthStart,
-    currentMonthEnd
+    currentMonthEnd,
   );
 
   const previousLostLeads = await getLeadsLost(
     previousMonthStart,
-    previousMonthEnd
+    previousMonthEnd,
   );
   const currentLostLeads = await getLeadsLost(
     currentMonthStart,
-    currentMonthEnd
+    currentMonthEnd,
   );
 
   const previousAverageDealSize = await getAverageDealSize(
     timezone,
     previousMonthStart,
-    previousMonthEnd
+    previousMonthEnd,
   );
   const currentAverageDealSize = await getAverageDealSize(
     timezone,
     currentMonthStart,
-    currentMonthEnd
+    currentMonthEnd,
   );
 
   return {
     averageConversionTimeGR: growthRate(
       currentAverageConversionTime,
-      previousAverageConversionTime
+      previousAverageConversionTime,
     ),
     leadToOpportunityRatioGR: difference(
       currentLeadToOpportunityRatio,
-      previousLeadToOpportunityRatio
+      previousLeadToOpportunityRatio,
     ),
     avgResponseTimeGR: growthRate(
       currentAvgResponseTime,
-      previousAvgResponseTime
+      previousAvgResponseTime,
     ),
     lostLeadsGR: growthRate(currentLostLeads, previousLostLeads),
     averageDealSizeGR: growthRate(
       currentAverageDealSize,
-      previousAverageDealSize
+      previousAverageDealSize,
     ),
   };
 };
@@ -597,7 +597,7 @@ export const getGrowthRates = async (timezone: string) => {
 async function getCustomRangeGrowthRates(
   startDate: Date,
   endDate: Date,
-  timezone: string
+  timezone: string,
 ) {
   // For same-day selections, use previous day as comparison
   if (moment(startDate).isSame(endDate, "day")) {
@@ -612,67 +612,67 @@ async function getCustomRangeGrowthRates(
     // Get metrics for both periods
     const previousAverageConversionTime = await getAverageConversionTime(
       previousStartDate,
-      previousEndDate
+      previousEndDate,
     );
     const currentAverageConversionTime = await getAverageConversionTime(
       startDate,
-      endDate
+      endDate,
     );
 
     const previousLeadToOpportunityRatio = await getLeadToOpportunityRatio(
       timezone,
       previousStartDate,
-      previousEndDate
+      previousEndDate,
     );
     const currentLeadToOpportunityRatio = await getLeadToOpportunityRatio(
       timezone,
       startDate,
-      endDate
+      endDate,
     );
 
     const previousAvgResponseTime = await getAverageTimeToContact(
       previousStartDate,
-      previousEndDate
+      previousEndDate,
     );
     const currentAvgResponseTime = await getAverageTimeToContact(
       startDate,
-      endDate
+      endDate,
     );
 
     const previousLostLeads = await getLeadsLost(
       previousStartDate,
-      previousEndDate
+      previousEndDate,
     );
     const currentLostLeads = await getLeadsLost(startDate, endDate);
 
     const previousAverageDealSize = await getAverageDealSize(
       timezone,
       previousStartDate,
-      previousEndDate
+      previousEndDate,
     );
     const currentAverageDealSize = await getAverageDealSize(
       timezone,
       startDate,
-      endDate
+      endDate,
     );
 
     return {
       averageConversionTimeGR: growthRate(
         currentAverageConversionTime,
-        previousAverageConversionTime
+        previousAverageConversionTime,
       ),
       leadToOpportunityRatioGR: growthRate(
         currentLeadToOpportunityRatio,
-        previousLeadToOpportunityRatio
+        previousLeadToOpportunityRatio,
       ),
       avgResponseTimeGR: growthRate(
         currentAvgResponseTime,
-        previousAvgResponseTime
+        previousAvgResponseTime,
       ),
       lostLeadsGR: growthRate(currentLostLeads, previousLostLeads),
       averageDealSizeGR: growthRate(
         currentAverageDealSize,
-        previousAverageDealSize
+        previousAverageDealSize,
       ),
     };
   } else {
@@ -687,67 +687,67 @@ async function getCustomRangeGrowthRates(
     // Get metrics for both periods
     const previousAverageConversionTime = await getAverageConversionTime(
       previousStartDate,
-      previousEndDate
+      previousEndDate,
     );
     const currentAverageConversionTime = await getAverageConversionTime(
       startDate,
-      endDate
+      endDate,
     );
 
     const previousLeadToOpportunityRatio = await getLeadToOpportunityRatio(
       timezone,
       previousStartDate,
-      previousEndDate
+      previousEndDate,
     );
     const currentLeadToOpportunityRatio = await getLeadToOpportunityRatio(
       timezone,
       startDate,
-      endDate
+      endDate,
     );
 
     const previousAvgResponseTime = await getAverageTimeToContact(
       previousStartDate,
-      previousEndDate
+      previousEndDate,
     );
     const currentAvgResponseTime = await getAverageTimeToContact(
       startDate,
-      endDate
+      endDate,
     );
 
     const previousLostLeads = await getLeadsLost(
       previousStartDate,
-      previousEndDate
+      previousEndDate,
     );
     const currentLostLeads = await getLeadsLost(startDate, endDate);
 
     const previousAverageDealSize = await getAverageDealSize(
       timezone,
       previousStartDate,
-      previousEndDate
+      previousEndDate,
     );
     const currentAverageDealSize = await getAverageDealSize(
       timezone,
       startDate,
-      endDate
+      endDate,
     );
 
     return {
       averageConversionTimeGR: growthRate(
         currentAverageConversionTime,
-        previousAverageConversionTime
+        previousAverageConversionTime,
       ),
       leadToOpportunityRatioGR: growthRate(
         currentLeadToOpportunityRatio,
-        previousLeadToOpportunityRatio
+        previousLeadToOpportunityRatio,
       ),
       avgResponseTimeGR: growthRate(
         currentAvgResponseTime,
-        previousAvgResponseTime
+        previousAvgResponseTime,
       ),
       lostLeadsGR: growthRate(currentLostLeads, previousLostLeads),
       averageDealSizeGR: growthRate(
         currentAverageDealSize,
-        previousAverageDealSize
+        previousAverageDealSize,
       ),
     };
   }

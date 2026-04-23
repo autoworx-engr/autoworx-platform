@@ -22,8 +22,8 @@ import { NextRequest, NextResponse } from "next/server";
  *         description: Server error
  */
 export async function GET(
-  request: NextRequest,
-  searchParams: { params: Promise<{ email: string }> }
+  _request: NextRequest,
+  searchParams: { params: Promise<{ email: string }> },
 ) {
   const email = (await searchParams?.params)?.email;
 

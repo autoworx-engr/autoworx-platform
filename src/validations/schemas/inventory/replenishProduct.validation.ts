@@ -12,7 +12,7 @@ export const replenishProductValidationSchema = z.object({
     },
     {
       message: "Quantity must be a positive number",
-    }
+    },
   ),
   vendorId: z.number().int("Vendor ID must be an integer").optional(),
   price: z

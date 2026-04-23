@@ -1,4 +1,4 @@
-"use client";;
+"use client";
 import { use } from "react";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
 import dynamic from "next/dynamic";

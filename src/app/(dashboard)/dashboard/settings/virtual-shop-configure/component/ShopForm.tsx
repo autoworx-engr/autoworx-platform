@@ -5,7 +5,7 @@ import { debounce } from "@/utils/debounce";
 import { SlimInput } from "@/components/SlimInput";
 import { SlimTextarea } from "@/components/SlimTextarea";
 import CarLoading from "@/components/common/CarLoading";
-import { Loader2 } from "lucide-react";
+import { Loader2, Palette, Store } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   useConfigureShop,
@@ -121,7 +121,7 @@ export default function ShopForm({
 
       debouncedSetSlug(slug);
     }
-  }, [form.storeName]);
+  }, [debouncedSetSlug, form.storeName, shopId]);
 
   /** validation */
   const validate = () => {
@@ -210,8 +210,7 @@ export default function ShopForm({
       }
 
       router.push("/dashboard/settings/virtual-shop-configure");
-    } catch (err) {
-      console.error(err);
+    } catch {
     } finally {
       setIsUploading(false);
     }
@@ -222,88 +221,121 @@ export default function ShopForm({
   if (isFetching && shopId) return <CarLoading />;
 
   return (
-    <div className=" mx-auto p-6 space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold">
-          {shopId ? "Update Shop" : "Create Shop"}
-        </h1>
-        <p className="text-sm text-gray-500">
-          Configure your store details and branding
-        </p>
+    <div className="mx-auto w-full max-w-6xl space-y-4 px-0 py-4 sm:space-y-6 sm:px-6 sm:py-6">
+      <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <div className="absolute -right-14 -top-14 h-40 w-40 rounded-full bg-[#6571FF]/10 blur-2xl" />
+        <div className="absolute -bottom-16 right-12 h-36 w-36 rounded-full bg-[#6571FF]/10 blur-2xl" />
+
+        <div className="relative z-10 flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#6571FF]/10 text-[#6571FF]">
+            <Store className="h-5 w-5" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-slate-600">
+              {shopId ? "Update Shop" : "Create Shop"}
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">
+              Configure your store details and branding
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* BASIC INFO */}
-      <div className="p-4 border rounded-xl space-y-4">
-        <SlimInput
-          name="storeName"
-          value={form.storeName}
-          placeholder="Store name"
-          onChange={(e) =>
-            setForm((prev) => ({
-              ...prev,
-              storeName: e.target.value,
-            }))
-          }
-          onBlur={() => {
-            setTouched({ storeName: true });
-            validate();
-          }}
-          className={
-            touched.storeName && errors.storeName ? "border-red-400" : ""
-          }
-        />
+      <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <div className="grid grid-cols-1 gap-4">
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
+              Store name
+            </label>
+            <SlimInput
+              name="storeName"
+              value={form.storeName}
+              placeholder="Store name"
+              onChange={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  storeName: e.target.value,
+                }))
+              }
+              onBlur={() => {
+                setTouched({ storeName: true });
+                validate();
+              }}
+              className={
+                touched.storeName && errors.storeName
+                  ? "border-red-400"
+                  : "bg-slate-50/60"
+              }
+            />
+          </div>
 
-        {errors.storeName && (
-          <p className="text-xs text-red-500">{errors.storeName}</p>
-        )}
+          {errors.storeName && (
+            <p className="text-xs text-red-500">{errors.storeName}</p>
+          )}
 
-        <div className="flex border rounded-lg overflow-hidden">
-          <span className="px-3 py-2 text-sm text-gray-400 bg-gray-50">
-            https://
-          </span>
-          <input
-            value={form.slug}
-            onChange={(e) =>
-              setForm((p) => ({
-                ...p,
-                slug: e.target.value,
-              }))
-            }
-            className="flex-1 px-2 text-sm outline-none"
-          />
-          <span className="px-3 py-2 text-sm text-gray-400 bg-gray-50">
-            .{domain}
-          </span>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
+              Store URL
+            </label>
+            <div className="flex overflow-hidden rounded-lg border border-slate-200 bg-white">
+              <span className="px-3 py-2 text-xs text-slate-400 sm:text-sm">
+                https://
+              </span>
+              <input
+                value={form.slug}
+                onChange={(e) =>
+                  setForm((p) => ({
+                    ...p,
+                    slug: e.target.value,
+                  }))
+                }
+                className="min-w-0 flex-1 px-2 py-2 text-sm outline-none"
+              />
+              <span className="truncate px-3 py-2 text-xs text-slate-400 sm:text-sm">
+                .{domain}
+              </span>
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
+              Description
+            </label>
+            <SlimTextarea
+              value={form.description}
+              name="description"
+              placeholder="Description..."
+              maxLength={150}
+              onChange={(e) => {
+                const value = e.target.value;
+
+                setForm((p) => ({
+                  ...p,
+                  description: value,
+                }));
+
+                // real-time validation
+                setErrors((prev) => ({
+                  ...prev,
+                  description:
+                    value.length > 150
+                      ? "Max 150 characters allowed"
+                      : undefined,
+                }));
+              }}
+              onBlur={() => {
+                setTouched((p) => ({ ...p, description: true }));
+                validate();
+              }}
+              className={
+                touched.description && errors.description
+                  ? "border-red-400"
+                  : "bg-slate-50/60"
+              }
+            />
+          </div>
         </div>
-
-        <SlimTextarea
-          value={form.description}
-          name="description"
-          placeholder="Description..."
-          maxLength={150}
-          onChange={(e) => {
-            const value = e.target.value;
-
-            setForm((p) => ({
-              ...p,
-              description: value,
-            }));
-
-            // real-time validation
-            setErrors((prev) => ({
-              ...prev,
-              description:
-                value.length > 150 ? "Max 150 characters allowed" : undefined,
-            }));
-          }}
-          onBlur={() => {
-            setTouched((p) => ({ ...p, description: true }));
-            validate();
-          }}
-          className={
-            touched.description && errors.description ? "border-red-400" : ""
-          }
-        />
 
         <div className="flex justify-between text-xs">
           {errors.description && touched.description ? (
@@ -316,7 +348,7 @@ export default function ShopForm({
             className={
               (form.description || "").length > 150
                 ? "text-red-500"
-                : "text-gray-400"
+                : "text-slate-400"
             }
           >
             {(form.description || "").length}/150
@@ -324,73 +356,92 @@ export default function ShopForm({
         </div>
       </div>
 
-      {/* FILES */}
-      <div className="p-4 border rounded-xl space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <FileUpload
-            label="Logo"
-            previewUrl={previews.logo || form.logoUrl}
-            hint="Square image"
-            onChange={handleFileChange("logo")}
-            onRemove={() => {
-              setFiles((prev) => ({ ...prev, logo: null }));
-              setPreviews((prev) => ({ ...prev, logo: "" }));
-              setForm((prev) => ({ ...prev, logoUrl: "" }));
-            }}
-            height="h-32"
-            width="w-32"
-            circular={true}
-          />
+      {/* FILES + THEME */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+        <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+          <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
+            <Store className="h-4 w-4 text-slate-500" />
+            Brand assets
+          </div>
 
-          <FileUpload
-            label="Banner"
-            previewUrl={previews.banner || form.bannerUrl}
-            onChange={handleFileChange("banner")}
-            onRemove={() => {
-              setFiles((p) => ({ ...p, banner: null }));
-              setForm((p) => ({ ...p, bannerUrl: "" }));
-            }}
-          />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <FileUpload
+              label="Logo"
+              previewUrl={previews.logo || form.logoUrl}
+              hint="Square image"
+              onChange={handleFileChange("logo")}
+              onRemove={() => {
+                setFiles((prev) => ({ ...prev, logo: null }));
+                setPreviews((prev) => ({ ...prev, logo: "" }));
+                setForm((prev) => ({ ...prev, logoUrl: "" }));
+              }}
+              height="h-32"
+              width="w-32"
+              circular={true}
+            />
+
+            <FileUpload
+              label="Banner"
+              previewUrl={previews.banner || form.bannerUrl}
+              onChange={handleFileChange("banner")}
+              onRemove={() => {
+                setFiles((p) => ({ ...p, banner: null }));
+                setForm((p) => ({ ...p, bannerUrl: "" }));
+              }}
+            />
+          </div>
+        </div>
+
+        <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+          <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
+            <Palette className="h-4 w-4 text-slate-500" />
+            Theme
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+            <ColorPicker
+              label="Primary color"
+              value={form.themeConfig.primaryColor}
+              onChange={(val) =>
+                setForm((p) => ({
+                  ...p,
+                  themeConfig: { ...p.themeConfig, primaryColor: val },
+                }))
+              }
+            />
+
+            <Select
+              label="Font"
+              value={form.themeConfig.fontFamily}
+              options={fonts}
+              onChange={(val) =>
+                setForm((p) => ({
+                  ...p,
+                  themeConfig: { ...p.themeConfig, fontFamily: val },
+                }))
+              }
+            />
+          </div>
         </div>
       </div>
 
-      {/* THEME */}
-      <div className="p-4 border rounded-xl grid grid-cols-2 gap-4">
-        <ColorPicker
-          label="Primary color"
-          value={form.themeConfig.primaryColor}
-          onChange={(val) =>
-            setForm((p) => ({
-              ...p,
-              themeConfig: { ...p.themeConfig, primaryColor: val },
-            }))
-          }
-        />
-
-        <Select
-          label="Font"
-          value={form.themeConfig.fontFamily}
-          options={fonts}
-          onChange={(val) =>
-            setForm((p) => ({
-              ...p,
-              themeConfig: { ...p.themeConfig, fontFamily: val },
-            }))
-          }
-        />
-      </div>
-
       {/* ACTIVE */}
-      <div className="flex justify-between items-center border p-4 rounded-xl">
-        <span className="text-sm font-medium">Active</span>
+      <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div>
+          <p className="text-sm font-medium text-slate-700">Active</p>
+          <p className="text-xs text-slate-500">
+            Toggle whether this shop is visible to customers.
+          </p>
+        </div>
 
         <Switch
           checked={form.isActive}
+          className="data-[state=checked]:!bg-[#6571FF] data-[state=unchecked]:bg-slate-200"
           disabled={isCreating || isUpdating || isFetching}
           onCheckedChange={(checked) =>
             setForm((p) => ({
               ...p,
-              isActive: !p.isActive,
+              isActive: checked,
             }))
           }
         />
@@ -400,11 +451,11 @@ export default function ShopForm({
       <button
         onClick={handleSubmit}
         disabled={isLoading}
-        className="w-full py-2.5 rounded-lg text-white bg-blue-600 flex justify-center items-center gap-2"
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#6571FF] py-3 font-medium text-white shadow-sm transition-colors hover:bg-[#6571FF]/90 disabled:cursor-not-allowed disabled:opacity-70"
       >
         {isLoading ? (
           <>
-            <Loader2 className="animate-spin w-4 h-4" />
+            <Loader2 className="h-4 w-4 animate-spin" />
             Saving...
           </>
         ) : shopId ? (

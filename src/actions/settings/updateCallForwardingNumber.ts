@@ -8,7 +8,7 @@ import { TErrorHandler } from "@/types/globalError";
 import { revalidatePath } from "next/cache";
 
 export const updateCallForwardingNumber = async (
-  callForwardingNumber: string | null
+  callForwardingNumber: string | null,
 ): Promise<ServerAction | TErrorHandler> => {
   try {
     const companyId = await getCompanyId();

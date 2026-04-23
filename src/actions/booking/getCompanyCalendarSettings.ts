@@ -5,8 +5,8 @@ import { db } from "@/lib/db";
 export async function getCompanyCalendarSettings(companyId: string) {
   try {
     const calendarSettings = await db.calendarSettings.findFirst({
-      where: { 
-        companyId: parseInt(companyId) 
+      where: {
+        companyId: parseInt(companyId),
       },
     });
 

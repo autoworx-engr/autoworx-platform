@@ -8,8 +8,7 @@ export const useDeleteTagAutomationRule = () => {
 
   return useMutation({
     mutationKey: ["delete-tag-automation"],
-    mutationFn: async (id: string) =>
-      await deleteTagAutomationRule(id),
+    mutationFn: async (id: string) => await deleteTagAutomationRule(id),
     onSuccess: () => {
       successToast("Tag automation rule deleted successfully!");
       queryClient.invalidateQueries({ queryKey: ["tag-automation"] });

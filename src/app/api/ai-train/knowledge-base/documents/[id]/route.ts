@@ -25,7 +25,10 @@ import { NextRequest, NextResponse } from "next/server";
  *         description: Internal server error
  */
 
-export async function GET(_: NextRequest, props: { params: Promise<{ id: string }> }) {
+export async function GET(
+  _: NextRequest,
+  props: { params: Promise<{ id: string }> },
+) {
   const params = await props.params;
   const id = Number(params.id);
 
@@ -99,7 +102,10 @@ export async function GET(_: NextRequest, props: { params: Promise<{ id: string 
  *         description: Internal server error
  */
 
-export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+export async function PATCH(
+  req: NextRequest,
+  props: { params: Promise<{ id: string }> },
+) {
   const params = await props.params;
   try {
     const id = Number(params.id);
@@ -164,7 +170,10 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
  *         description: Internal server error
  */
 
-export async function DELETE(_: NextRequest, props: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  _: NextRequest,
+  props: { params: Promise<{ id: string }> },
+) {
   const params = await props.params;
   try {
     const id = Number(params.id);

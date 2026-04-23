@@ -58,7 +58,10 @@ import { db } from "@/lib/db";
  *                   items:
  *                     type: object
  */
-export async function GET(req: NextRequest, props: { params: Promise<{ clientId: string }> }) {
+export async function GET(
+  req: NextRequest,
+  props: { params: Promise<{ clientId: string }> },
+) {
   const params = await props.params;
   try {
     const clientId = Number(params.clientId);

@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     if (!invoiceId) {
       return NextResponse.json(
         { error: "Invoice ID is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
     if (session?.user) {
       return NextResponse.json(
         { message: "Authenticated users are not tracked" },
-        { status: 200 }
+        { status: 200 },
       );
     }
 
@@ -56,13 +56,13 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(
       { message: "Invoice view tracked successfully" },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error tracking invoice view:", error);
     return NextResponse.json(
       { error: "Failed to track invoice view" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

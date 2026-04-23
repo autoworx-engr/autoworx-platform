@@ -47,12 +47,12 @@ export default async function InventoryReportPage(props: TProps) {
   if (searchParams.startDate && searchParams.endDate) {
     const formattedStartDate = moment(
       decodeURIComponent(searchParams.startDate),
-      "MM-DD-YYYY"
+      "MM-DD-YYYY",
     ).format("YYYY-MM-DD");
 
     const formattedEndDate = moment(
       decodeURIComponent(searchParams.endDate),
-      "MM-DD-YYYY"
+      "MM-DD-YYYY",
     ).format("YYYY-MM-DD");
 
     startDate = new Date(`${formattedStartDate}T00:00:00.000Z`);
@@ -110,12 +110,12 @@ export default async function InventoryReportPage(props: TProps) {
 
   // Get unique categories
   const getCategory = Array.from(
-    new Set(inventoryProducts.map((product) => `${product?.category?.name}`))
+    new Set(inventoryProducts.map((product) => `${product?.category?.name}`)),
   ).map((uniqueName) => uniqueName);
 
   // Get unique types
   const getType = Array.from(
-    new Set(allInventoryProducts.map((product) => `${product?.type}`))
+    new Set(allInventoryProducts.map((product) => `${product?.type}`)),
   ).map((uniqueName) => uniqueName);
 
   const purchasesData = ["Product", "Supply"].map((type) => {
@@ -129,7 +129,7 @@ export default async function InventoryReportPage(props: TProps) {
             }
             return sum;
           },
-          0
+          0,
         );
         return acc + productPurchase;
       }, 0);
@@ -142,8 +142,8 @@ export default async function InventoryReportPage(props: TProps) {
 
   const filterInventoryProducts = inventoryProducts.filter((product) =>
     normalizeSearch(product.name)?.includes(
-      normalizeSearch(searchParams?.search || "")
-    )
+      normalizeSearch(searchParams?.search || ""),
+    ),
   );
 
   return (

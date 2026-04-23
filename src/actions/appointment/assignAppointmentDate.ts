@@ -158,11 +158,6 @@ export async function assignAppointmentDate({
     };
   } catch (error) {
     console.error("Error assigning appointment date:", error);
-
-    // Return an error action
-    // return {
-    //   type: "error",
-    // };
-    throw error;
+    return { type: "error" };
   }
 }

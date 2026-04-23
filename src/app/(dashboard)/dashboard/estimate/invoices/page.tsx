@@ -20,7 +20,7 @@ export default async function InvoicesPage(
       page?: string;
       take?: string;
     }>;
-  }>
+  }>,
 ) {
   const searchParams = await props.searchParams;
   const session = await getServerSession(authOptions);
@@ -33,7 +33,7 @@ export default async function InvoicesPage(
     InvoiceType.Invoice,
     companyId,
     searchParams,
-    timezone
+    timezone,
   );
 
   const categories = await db.category.findMany({ where: { companyId } });

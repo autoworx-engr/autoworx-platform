@@ -1,6 +1,6 @@
 export const getFileFromCanvas = (
   canvas: HTMLCanvasElement,
-  fileName: string
+  fileName: string,
 ) => {
   const dataURL = canvas.toDataURL("image/png");
   const byteString = atob(dataURL.split(",")[1]);

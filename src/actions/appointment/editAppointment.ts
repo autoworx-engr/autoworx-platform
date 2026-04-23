@@ -18,7 +18,7 @@ import { getGoogleCalendarToken } from "../calendar-settings/getGoogleCalendarAu
 import { sendInfobipEmail } from "../estimate/invoice/sendInfobipEmail";
 import createGoogleCalendarEvent from "../task/google-calendar/createGoogleCalendarEvent";
 import updateGoogleCalendarEvent from "../task/google-calendar/updateGoogleCalendarEvent";
-import { scheduleRemindersInNest } from "./addAppointment";
+import { scheduleRemindersInNest } from "./appointmentReminderScheduler";
 import { deleteRemindersInNest } from "./deleteAppointment";
 import { sendInfobipMessage } from "../communication/client/sendInfobipMessage";
 import { sendTwilioMessage } from "../communication/client/sendTwilioMessage";
@@ -83,7 +83,7 @@ export async function editAppointment({
               type: "Estimate",
               clientId: appointment.clientId,
               vehicleId: appointment.vehicleId,
-              userId: session.user.id as any,
+              userId: Number(session.user.id),
               companyId,
             },
           });
@@ -127,29 +127,13 @@ export async function editAppointment({
       },
     });
 
-    // Loop the assigned users and add them to the Google Calendar
-    for (const user of appointment.assignedUsers) {
-      // const isAlreadyAssigned = await db.appointmentUser.findFirst({
-      //   where: {
-      //     appointmentId: id,
-      //     userId: user,
-      //   },
-      // });
-
-      // if (isAlreadyAssigned) {
-      //   // If the user is already assigned, skip adding them again
-      //   continue;
-      // }
-
-      // TODO: Add the task to the user's Google Calendar
-
-      // Create the task user
-      await db.appointmentUser.create({
-        data: {
+    if (appointment.assignedUsers.length > 0) {
+      await db.appointmentUser.createMany({
+        data: appointment.assignedUsers.map((userId) => ({
           appointmentId: id,
-          userId: user,
-          eventId: "null-for-now",
-        },
+          userId,
+          eventId: null,
+        })),
       });
     }
 
@@ -278,7 +262,7 @@ export async function editAppointment({
       let i = 0;
       for (const time of appointment?.times ?? []) {
         try {
-          scheduleRemindersInNest({
+          await scheduleRemindersInNest({
             id: updatedAppointment.id.toString(),
             date: new Date(`${time.date}T00:00:00.000Z`),
             time: time.time,
@@ -295,13 +279,13 @@ export async function editAppointment({
     try {
       updatedAppointment.date &&
         updatedAppointment.startTime &&
-        scheduleRemindersInNest({
+        (await scheduleRemindersInNest({
           id: updatedAppointment.id.toString(),
           date: updatedAppointment.date, // e.g., "2025-07-20"
           time: updatedAppointment.startTime, // e.g., "15:00"
           timezone:
             company?.timezone || updatedAppointment.timezone || "Etc/UTC",
-        });
+        }));
     } catch (error) {
       console.log("🚀 ~ error:", error);
     }
@@ -319,7 +303,7 @@ export async function editAppointment({
         updatedAppointment.endTime &&
         updatedAppointment.date
       ) {
-        updateGoogleCalendarEvent(
+        await updateGoogleCalendarEvent(
           updatedAppointment.googleEventId,
           appointment,
         );

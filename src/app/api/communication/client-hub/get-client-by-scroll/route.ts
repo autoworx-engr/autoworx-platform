@@ -88,7 +88,7 @@ export async function GET(req: NextRequest) {
     if (!skipParam || !takeParam) {
       return NextResponse.json(
         { success: false, message: "skip and take are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -99,7 +99,7 @@ export async function GET(req: NextRequest) {
     if (isNaN(skip) || isNaN(take)) {
       return NextResponse.json(
         { success: false, message: "skip and take must be valid numbers" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -116,7 +116,7 @@ export async function GET(req: NextRequest) {
         success: false,
         message: error?.message || "Failed to retrieve clients",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

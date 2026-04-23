@@ -24,14 +24,14 @@ export async function getOrCreateShortLinkAction({
         invoiceId,
         clientName,
         user.id,
-        user.companyId
+        user.companyId,
       );
     } else {
       result = await getOrCreateInvoiceShortLink(
         invoiceId,
         clientName,
         user.id,
-        user.companyId
+        user.companyId,
       );
     }
 

@@ -46,6 +46,12 @@ export interface ShopLead {
   assignedTo: User | Employee | null;
   columnId: number | null;
   dueBalance: number;
+  appointment?: {
+    id: number;
+    date: Date | null;
+    startTime: string | null;
+    endTime: string | null;
+  } | null;
 }
 export interface SalesLead {
   leadId: number;

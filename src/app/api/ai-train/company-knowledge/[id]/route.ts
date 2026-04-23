@@ -29,7 +29,10 @@ import { validateCompanyId } from "../../utils";
  *       500:
  *         description: Internal server error
  */
-export async function GET(req: Request, props: { params: Promise<{ id: string }> }) {
+export async function GET(
+  req: Request,
+  props: { params: Promise<{ id: string }> },
+) {
   const params = await props.params;
   try {
     const validation = validateCompanyId(req);
@@ -126,7 +129,10 @@ export async function GET(req: Request, props: { params: Promise<{ id: string }>
  *       500:
  *         description: Internal server error
  */
-export async function PATCH(req: Request, props: { params: Promise<{ id: string }> }) {
+export async function PATCH(
+  req: Request,
+  props: { params: Promise<{ id: string }> },
+) {
   const params = await props.params;
   try {
     const body = await req.json();
@@ -205,7 +211,10 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
  *       500:
  *         description: Internal server error
  */
-export async function DELETE(req: Request, props: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  req: Request,
+  props: { params: Promise<{ id: string }> },
+) {
   const params = await props.params;
   try {
     const validation = validateCompanyId(req);

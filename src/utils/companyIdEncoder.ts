@@ -2,7 +2,7 @@
 export function encodeCompanyId(companyId: string): string {
   // Base64 encode the company ID with a prefix to make it less obvious
   const encoded = Buffer.from(
-    `awx_${companyId}_${Date.now().toString(36)}`
+    `awx_${companyId}_${Date.now().toString(36)}`,
   ).toString("base64");
   return encoded.replace(/[+=]/g, "").substring(0, 16); // Remove padding and truncate
 }

@@ -64,8 +64,8 @@ export async function updateLabor({
               laborId: id,
               tagId: tag.id,
             },
-          })
-        )
+          }),
+        ),
       );
     }
 

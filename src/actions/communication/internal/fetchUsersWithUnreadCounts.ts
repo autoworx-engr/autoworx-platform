@@ -33,16 +33,17 @@ export const fetchUsersWithUnreadCounts = async () => {
     });
 
     // Calculate simple unread indicator per user (0 or 1)
-    const usersWithUnreadCounts = users.map(user => {
-      const hasUnreadMessage = userChatTrack.some(chat => 
-        chat.receiverId === parseInt(session?.user?.id!) && 
-        chat.senderId === user.id && 
-        !chat.isRead
+    const usersWithUnreadCounts = users.map((user) => {
+      const hasUnreadMessage = userChatTrack.some(
+        (chat) =>
+          chat.receiverId === parseInt(session?.user?.id!) &&
+          chat.senderId === user.id &&
+          !chat.isRead,
       );
-      
+
       return {
         ...user,
-        unreadCount: hasUnreadMessage ? 1 : 0
+        unreadCount: hasUnreadMessage ? 1 : 0,
       };
     });
 
@@ -50,14 +51,14 @@ export const fetchUsersWithUnreadCounts = async () => {
       success: true,
       data: {
         users: usersWithUnreadCounts,
-        userChatTrack
-      }
+        userChatTrack,
+      },
     };
   } catch (error) {
     console.error("Error fetching users with unread counts:", error);
     return {
       success: false,
-      error: "Failed to fetch users with unread counts"
+      error: "Failed to fetch users with unread counts",
     };
   }
 };

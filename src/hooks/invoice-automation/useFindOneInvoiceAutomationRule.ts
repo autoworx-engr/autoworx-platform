@@ -6,6 +6,6 @@ export const useFindOneInvoiceAutomationRule = (id: number) => {
     queryKey: ["invoice-automation", id],
     queryFn: async () => findOneInvoiceAutomationRules(id),
     enabled: !!id,
-    staleTime: 3600 * 1000
+    staleTime: 3600 * 1000,
   });
 };

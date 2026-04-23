@@ -159,7 +159,10 @@ import { NextRequest, NextResponse } from "next/server";
  *                   example: Failed to delete review
  */
 
-export async function PATCH(req: NextRequest, props: { params: Promise<{ Id: string }> }) {
+export async function PATCH(
+  req: NextRequest,
+  props: { params: Promise<{ Id: string }> },
+) {
   const params = await props.params;
   try {
     const id = Number(params.Id);
@@ -187,7 +190,10 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ Id: str
   }
 }
 
-export async function DELETE(req: NextRequest, props: { params: Promise<{ Id: string }> }) {
+export async function DELETE(
+  req: NextRequest,
+  props: { params: Promise<{ Id: string }> },
+) {
   const params = await props.params;
   try {
     const id = Number(params.Id);

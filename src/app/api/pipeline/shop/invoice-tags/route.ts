@@ -111,7 +111,10 @@ export async function GET(req: NextRequest) {
 
     if (result.type === "error") {
       return NextResponse.json(
-        { success: false, message: result.message || "Failed to fetch invoice tags" },
+        {
+          success: false,
+          message: result.message || "Failed to fetch invoice tags",
+        },
         { status: 500 },
       );
     }

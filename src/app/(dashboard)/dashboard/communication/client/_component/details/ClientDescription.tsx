@@ -135,7 +135,7 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
                     attachment={attachment}
                     allAttachments={allEmailAttachments}
                   />
-                ))
+                )),
               )
             ) : (
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -165,7 +165,7 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
                     attachment={attachment}
                     allAttachments={allSmsAttachments}
                   />
-                ))
+                )),
               )
             ) : (
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -212,7 +212,7 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
                     "bg-[#6571FF]": task.priority === "Low",
                     "bg-[#25AADD]": task.priority === "Medium",
                     "bg-[#006d77]": task.priority === "High",
-                  }
+                  },
                 )}
                 title={task.title}
               >
