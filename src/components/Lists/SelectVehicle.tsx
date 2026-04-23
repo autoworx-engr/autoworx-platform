@@ -45,7 +45,7 @@ export function SelectVehicle({
         const matchedVehicle = clientVehicles?.find(
           (vehicle) => vehicle.id === value?.id,
         );
-        const finalVehicle = matchedVehicle ?? selectedVehicle;
+        const finalVehicle = matchedVehicle ?? value ?? selectedVehicle;
         setVehicle(finalVehicle);
         useListsStore.setState({ vehicle: finalVehicle });
       }

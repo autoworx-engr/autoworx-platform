@@ -615,7 +615,7 @@ const Leads = ({ salesColumn }: TProps) => {
                           <td className="border-b px-4 py-2 text-left">
                             <div className="flex items-center gap-2">
                               <Link
-                                href={`/dashboard/communication/client/${lead?.client?.id}?source=lead`}
+                                href={`/dashboard/communication/client/${lead?.client?.id ?? lead?.clientId}?source=lead`}
                                 className="group relative"
                               >
                                 <MessageCircleMore

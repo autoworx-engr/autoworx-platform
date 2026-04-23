@@ -8,14 +8,14 @@ import {
 } from "@/components/Dialog";
 import { cn } from "@/lib/cn";
 import { Invoice } from "@prisma/client";
-import { Checkbox, message } from "antd";
+import { Checkbox } from "antd";
 import { useEffect, useState } from "react";
 import FleetSubHeading from "./FleetSubHeading";
 
 import { editFleetStatement } from "@/actions/fleet/statement/editFleetStatement";
 import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
 import { useFleetInvoiceStore } from "@/stores/fleetInvoiceStore";
-import toast from "react-hot-toast";
+import { errorToast, successToast } from "@/lib/toast";
 
 interface EditFleetStatementModalProps {
   isOpen: boolean;
@@ -68,7 +68,7 @@ const EditFleetStatementModal = ({
 
   const handleUpdate = async () => {
     if (selectedItems.length === 0) {
-      toast.error("Please select at least one invoice");
+      errorToast("Please select at least one invoice");
       return;
     }
 
@@ -78,18 +78,18 @@ const EditFleetStatementModal = ({
         statementId,
         invoiceIds: selectedItems,
       });
-      console.log("result", result);
+
       if (result.type === "success") {
-        // toast.success(result.message);
+        successToast(result.message || "Statement updated successfully");
         onClose();
         if (onStatementUpdated) {
           onStatementUpdated();
         }
       } else {
-        toast.error(result.message || "Failed to update statement");
+        errorToast(result.message || "Failed to update statement");
       }
     } catch (error) {
-      toast.error("Failed to update statement");
+      errorToast("Failed to update statement");
     } finally {
       setLoading(false);
     }
