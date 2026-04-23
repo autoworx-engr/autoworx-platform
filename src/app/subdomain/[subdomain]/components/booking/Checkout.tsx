@@ -1,27 +1,11 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-} from "@/components/ui/input-otp";
 
-import {
-  ArrowLeft,
-  Clock,
-  Shield,
-  AlertTriangle,
-  Timer,
-  CheckCircle2,
-  Loader2,
-} from "lucide-react";
-import { format, addMinutes, parse } from "date-fns";
-import { useBooking } from "../../context/BookingContext";
-import { BookingTotals, CustomerInfo } from "../../data/types";
+import Selector from "@/app/(dashboard)/dashboard/settings/automation/components/Selector";
+import { getPaymentGatewayInfo } from "@/app/(dashboard)/dashboard/settings/payments/getPaymentGatewayInfo";
 import {
   Dialog,
   DialogContent,
@@ -30,15 +14,6 @@ import {
   DialogTitle,
 } from "@/components/Dialog";
 import { PayNow } from "@/components/invoice-modal/PayNow";
-import { getPaymentGatewayInfo } from "@/app/(dashboard)/dashboard/settings/payments/getPaymentGatewayInfo";
-import { useServerGet } from "@/hooks/useServerGet";
-import { useParams, useSearchParams, useRouter } from "next/navigation";
-import {
-  useCreateVirtualShopServiceBooking,
-  useGetShopBySlug,
-  useLookupClientByPhone,
-} from "@/hooks/virtual-shop/service/useShopService";
-import axios from "axios";
 import PhoneInput from "@/components/PhoneInput";
 import { SlimInput } from "@/components/SlimInput";
 import { SlimTextarea } from "@/components/SlimTextarea";
@@ -47,8 +22,26 @@ import {
   useGetMake,
   useGetModelsByYearAndMake,
 } from "@/hooks/useCarData";
-import Selector from "@/app/(dashboard)/dashboard/settings/automation/components/Selector";
+import { useServerGet } from "@/hooks/useServerGet";
+import {
+  useCreateVirtualShopServiceBooking,
+  useGetShopBySlug,
+  useLookupClientByPhone,
+} from "@/hooks/virtual-shop/service/useShopService";
 import { errorToast, successToast } from "@/lib/toast";
+import axios from "axios";
+import { addMinutes, format, parse } from "date-fns";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Clock,
+  Loader2,
+  Shield,
+  Timer,
+} from "lucide-react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useBooking } from "../../context/BookingContext";
+import { BookingTotals, CustomerInfo } from "../../data/types";
 
 const TIMER_SECONDS = 600; // 10 min
 
