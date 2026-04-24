@@ -327,3 +327,20 @@ type TLead = {
 | Search           | Client-side filtering in some views                           | Server-side with `searchTerm` query param                                                  |
 
 The four routes documented here are **read-only for leads** — lead mutations (move, assign, add tag, create estimate, remove) go through separate RTK Query endpoints that hit the NestJS automation backend, not these Next.js routes.
+
+---
+
+## Merge Notes for Dev Team
+
+### Branch: taiseer/mobile-pipeline-api-clean (base: development)
+
+**Conflict risk: Very Low**
+
+All changes are isolated inside `src/app/api/pipeline/sales/` — no shared infrastructure, middleware, or config files were modified.
+
+- 3 new files (no conflict possible): `_shared.ts`, `tags/route.ts`, `docs/MOBILE_API_ROUTES.md`
+- 9 modified/new route files — all within `src/app/api/pipeline/sales/` (dedicated mobile API folder)
+- No changes to: Prisma schema, middleware, auth config, layout files, or any shared utilities
+- Safe to merge independently of other PRs
+
+**Merge order:** This PR should be merged BEFORE the mobile app PR (`taiseer/sales-pipeline-mobile` in autoworx-native), as the mobile app depends on these API routes.
