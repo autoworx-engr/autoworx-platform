@@ -11,13 +11,12 @@ import {
 import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
 import { errorToast, successToast } from "@/lib/toast";
 import { updateTagAutomationTrigger } from "@/service/tag-automation-trigger/api";
-import { usePipelineFilterStore } from "@/stores/PipelineFilterStore";
 import { Column, Employee, ShopPipelineData } from "@/types/invoiceLead";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { Tag, User } from "@prisma/client";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   SetStateAction,
   useCallback,
@@ -74,7 +73,12 @@ export default function PipelinesCopy({
   const [screenWidth, setScreenWidth] = useState<number>(window.innerWidth);
 
   const currentUser = useGetCurrentUser();
-  const { searchTerm, resetStatus } = usePipelineFilterStore((state) => state);
+  const urlSearchParams = useSearchParams();
+  const searchTerm = urlSearchParams.get("search") ?? "";
+  const searchTermRef = useRef(searchTerm);
+  useEffect(() => {
+    searchTermRef.current = searchTerm;
+  }, [searchTerm]);
   const [selectedSearchColumnId, setSelectedSearchColumnId] = useState<
     number | null
   >(null);
@@ -102,10 +106,9 @@ export default function PipelinesCopy({
 
   useEffect(() => {
     updateWidth();
-    resetStatus();
     window.addEventListener("resize", updateWidth);
     return () => window.removeEventListener("resize", updateWidth);
-  }, [resetStatus]);
+  }, []);
 
   useEffect(() => {
     setPipelineData(shopPipelineDataProp);
@@ -161,6 +164,7 @@ export default function PipelinesCopy({
           meta.loadedCount,
           PIPELINE_PAGE_SIZE,
           isTechnician ? Number(currentUser?.id) : undefined,
+          searchTermRef.current || undefined,
         );
 
         setPipelineData((prev) => {
@@ -189,50 +193,16 @@ export default function PipelinesCopy({
         loadingColumnsRef.current.delete(column.id);
       }
     },
-    [pipelineData, columnMeta, isTechnician, currentUser?.id],
+    [pipelineData, columnMeta, isTechnician, currentUser],
   );
 
-  // Filter pipeline data based on search term
+  // Filter pipeline data: search is server-side; only apply client-side column visibility filter
   const filteredPipelineData = useMemo(() => {
-    let result = pipelineData;
-
-    if (searchTerm && searchTerm.trim() !== "") {
-      const lowerSearchTerm = searchTerm.toLowerCase();
-
-      result = result.map((column) => {
-        if (
-          selectedSearchColumnId !== null &&
-          column.id !== selectedSearchColumnId
-        ) {
-          return { ...column, leads: [] };
-        }
-
-        return {
-          ...column,
-          leads: column.leads.filter((lead) => {
-            const nameMatch = (lead.name || "")
-              .toLowerCase()
-              .includes(lowerSearchTerm);
-            const vehicleMatch =
-              lead.vehicle &&
-              lead.vehicle.toLowerCase().includes(lowerSearchTerm);
-            return nameMatch || vehicleMatch;
-          }),
-        };
-      });
-    } else {
-      if (selectedSearchColumnId !== null) {
-        result = result.map((column) => {
-          if (column.id !== selectedSearchColumnId) {
-            return { ...column, leads: [] };
-          }
-          return column;
-        });
-      }
-    }
-
-    return result;
-  }, [pipelineData, searchTerm, selectedSearchColumnId]);
+    if (selectedSearchColumnId === null) return pipelineData;
+    return pipelineData.map((column) =>
+      column.id !== selectedSearchColumnId ? { ...column, leads: [] } : column,
+    );
+  }, [pipelineData, selectedSearchColumnId]);
 
   const [selectedEmployees, setSelectedEmployees] = useState<{
     [key: string]: Employee | null;

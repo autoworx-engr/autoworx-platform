@@ -27,6 +27,8 @@ export function SelectVehicle({
   const clientId = search?.get("clientId");
 
   useEffect(() => {
+    if (!vehicleList?.length) return;
+
     const clientVehicles = clientId
       ? vehicleList?.filter((vehicle) => vehicle.clientId === +clientId)
       : [];
@@ -48,7 +50,7 @@ export function SelectVehicle({
         useListsStore.setState({ vehicle: finalVehicle });
       }
     }
-  }, [newAddedVehicle, clientId, vehicleList]);
+  }, [newAddedVehicle, clientId, vehicleList, isEdit, setVehicle, value]);
 
   useEffect(() => {
     return () => {
@@ -56,7 +58,7 @@ export function SelectVehicle({
         useListsStore.setState({ newAddedVehicle: null });
       }
     };
-  }, []);
+  }, [newAddedVehicle]);
 
   const handleClear = () => {
     setVehicle(null);
