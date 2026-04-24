@@ -1,45 +1,16 @@
-import { updateLeadSalesUser } from "@/actions/pipelines/updateLeadSalesUser";
+import { db } from "@/lib/db";
+import { sendLeadAssignNotification } from "@/lib/notification/pipeline-notify";
 import { NextRequest, NextResponse } from "next/server";
+import { extractCompanyId, pipelineError } from "../../../_shared";
 
-/**
- * @swagger
- * /api/pipeline/sales/leads/{id}/assign:
- *   put:
- *     summary: Update lead sales user assignment
- *     tags: [Sales Pipeline Leads]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: Lead ID
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - salesUserId
- *             properties:
- *               salesUserId:
- *                 type: integer
- *     responses:
- *       200:
- *         description: Lead sales user updated successfully
- *       400:
- *         description: Missing salesUserId or invalid lead ID
- *       500:
- *         description: Failed to update lead sales user
- */
 export async function PUT(
   request: NextRequest,
-  props: { params: Promise<{ id: string }> },
+  { params }: { params: { id: string } },
 ) {
   try {
-    const params = await props.params;
-    const leadId = parseInt(params.id);
+    const companyId = await extractCompanyId(request);
+
+    const leadId = parseInt(params.id, 10);
     if (isNaN(leadId)) {
       return NextResponse.json(
         { success: false, error: "Invalid lead ID" },
@@ -47,23 +18,55 @@ export async function PUT(
       );
     }
 
-    const { salesUserId } = await request.json();
-    if (!salesUserId) {
+    const body = await request.json();
+
+    // salesUserId may be a number (assign) or null (unassign).
+    // The mobile sends `{ salesUserId: number | null }`.
+    if (!("salesUserId" in body)) {
       return NextResponse.json(
         { success: false, error: "salesUserId is required" },
         { status: 400 },
       );
     }
 
-    const updatedLead = await updateLeadSalesUser(
-      leadId,
-      parseInt(salesUserId),
-    );
-    return NextResponse.json({ success: true, data: updatedLead });
+    const salesUserId: number | null =
+      body.salesUserId === null ? null : parseInt(body.salesUserId, 10);
+
+    if (salesUserId !== null && isNaN(salesUserId)) {
+      return NextResponse.json(
+        { success: false, error: "salesUserId must be a number or null" },
+        { status: 400 },
+      );
+    }
+
+    await db.lead.update({
+      where: { id: leadId, companyId },
+      data: {
+        assignedSalesUserId: salesUserId,
+        assignedDate: salesUserId !== null ? new Date() : null,
+      },
+    });
+
+    if (salesUserId !== null) {
+      const lead = await db.lead.findUnique({
+        where: { id: leadId },
+        select: { clientName: true },
+      });
+      sendLeadAssignNotification({
+        companyId,
+        leadClientName: lead?.clientName ?? "",
+        assignedEmployeeId: salesUserId,
+      }).catch((err: unknown) =>
+        console.error("[assign] notification error:", err),
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Lead assignment updated",
+    });
   } catch (error) {
-    return NextResponse.json(
-      { success: false, error: (error as Error).message },
-      { status: 500 },
-    );
+    console.error("[assign] error:", error);
+    return pipelineError(error, "Failed to update lead assignment");
   }
 }

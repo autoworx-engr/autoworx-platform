@@ -1,34 +1,15 @@
-import { removeLeadFromPipeline } from "@/actions/pipelines/updateLeadSalesUser";
+import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+import { extractCompanyId, pipelineError } from "../../../_shared";
 
-/**
- * @swagger
- * /api/pipeline/sales/leads/{id}/remove:
- *   put:
- *     summary: Remove lead from pipeline
- *     tags: [Sales Pipeline Leads]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: Lead ID
- *     responses:
- *       200:
- *         description: Lead removed from pipeline successfully
- *       400:
- *         description: Invalid lead ID
- *       500:
- *         description: Failed to remove lead from pipeline
- */
 export async function PUT(
   request: NextRequest,
-  props: { params: Promise<{ id: string }> },
+  { params }: { params: { id: string } },
 ) {
   try {
-    const params = await props.params;
-    const leadId = parseInt(params.id);
+    const companyId = await extractCompanyId(request);
+
+    const leadId = parseInt(params.id, 10);
     if (isNaN(leadId)) {
       return NextResponse.json(
         { success: false, error: "Invalid lead ID" },
@@ -36,12 +17,17 @@ export async function PUT(
       );
     }
 
-    const updatedLead = await removeLeadFromPipeline(leadId);
-    return NextResponse.json({ success: true, data: updatedLead });
+    await db.lead.update({
+      where: { id: leadId, companyId },
+      data: { columnId: null, isQualified: false },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Lead removed from pipeline",
+    });
   } catch (error) {
-    return NextResponse.json(
-      { success: false, error: (error as Error).message },
-      { status: 500 },
-    );
+    console.error("[remove] error:", error);
+    return pipelineError(error, "Failed to remove lead from pipeline");
   }
 }

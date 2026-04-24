@@ -1,45 +1,15 @@
-import { saveLeadTag } from "@/actions/pipelines/leadTag";
+import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+import { extractCompanyId, pipelineError } from "../../../_shared";
 
-/**
- * @swagger
- * /api/pipeline/sales/leads/{id}/tags:
- *   post:
- *     summary: Add tag to lead
- *     tags: [Sales Pipeline Leads]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: Lead ID
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - tagId
- *             properties:
- *               tagId:
- *                 type: integer
- *     responses:
- *       200:
- *         description: Tag added to lead successfully
- *       400:
- *         description: Missing tagId or invalid lead ID
- *       500:
- *         description: Failed to add lead tag
- */
 export async function POST(
   request: NextRequest,
-  props: { params: Promise<{ id: string }> },
+  { params }: { params: { id: string } },
 ) {
   try {
-    const params = await props.params;
-    const leadId = parseInt(params.id);
+    const companyId = await extractCompanyId(request);
+
+    const leadId = parseInt(params.id, 10);
     if (isNaN(leadId)) {
       return NextResponse.json(
         { success: false, error: "Invalid lead ID" },
@@ -47,20 +17,39 @@ export async function POST(
       );
     }
 
-    const { tagId } = await request.json();
-    if (!tagId) {
+    const body = await request.json();
+    const tagId = parseInt(body.tagId, 10);
+    if (isNaN(tagId)) {
       return NextResponse.json(
         { success: false, error: "tagId is required" },
         { status: 400 },
       );
     }
 
-    const newTag = await saveLeadTag(leadId, parseInt(tagId));
-    return NextResponse.json({ success: true, data: newTag });
+    // Verify the lead belongs to this company.
+    const lead = await db.lead.findFirst({
+      where: { id: leadId, companyId },
+      select: { id: true },
+    });
+    if (!lead) {
+      return NextResponse.json(
+        { success: false, error: "Lead not found" },
+        { status: 404 },
+      );
+    }
+
+    const leadTag = await db.leadTags.create({
+      data: { leadId, tagId },
+      select: { id: true, leadId: true, tagId: true },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Tag added",
+      data: leadTag,
+    });
   } catch (error) {
-    return NextResponse.json(
-      { success: false, error: (error as Error).message },
-      { status: 500 },
-    );
+    console.error("[add-tag] error:", error);
+    return pipelineError(error, "Failed to add tag");
   }
 }

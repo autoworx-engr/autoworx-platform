@@ -1,106 +1,94 @@
-import {
-  getColumnsByType,
-  createColumn,
-} from "@/actions/pipelines/pipelinesColumn";
-import { NextRequest, NextResponse } from "next/server";
+// TODO: Rate limiting — GET is called on every mobile screen mount.
 
-/**
- * @swagger
- * /api/pipeline/sales/columns:
- *   get:
- *     summary: Get pipeline columns by type
- *     tags: [Sales Pipeline Columns]
- *     parameters:
- *       - in: query
- *         name: type
- *         required: true
- *         schema:
- *           type: string
- *         description: Pipeline type (e.g. sales, shop)
- *     responses:
- *       200:
- *         description: Pipeline columns fetched successfully
- *       400:
- *         description: Type is required
- *       500:
- *         description: Failed to fetch columns
- */
+import { createColumn } from "@/actions/pipelines/pipelinesColumn";
+import { db } from "@/lib/db";
+import { NextRequest, NextResponse } from "next/server";
+import { extractCompanyId, pipelineError } from "../_shared";
+
+const VALID_TYPES = ["sales", "shop"] as const;
+type ColumnType = (typeof VALID_TYPES)[number];
+
+const columnSelect = {
+  id: true,
+  title: true,
+  type: true,
+  order: true,
+  bgColor: true,
+  textColor: true,
+  companyId: true,
+} as const;
+
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const type = searchParams.get("type");
+    const companyId = await extractCompanyId(request);
+    const rawType = request.nextUrl.searchParams.get("type") ?? "sales";
+    const type: ColumnType = (VALID_TYPES as readonly string[]).includes(
+      rawType,
+    )
+      ? (rawType as ColumnType)
+      : "sales";
 
-    if (!type) {
-      return NextResponse.json(
-        { success: false, error: "Type is required" },
-        { status: 400 },
-      );
-    }
-
-    const columns = await getColumnsByType(type);
+    const columns = await db.column.findMany({
+      where: { type, companyId },
+      orderBy: { order: "asc" },
+      select: columnSelect,
+    });
 
     return NextResponse.json({ success: true, data: columns });
-  } catch (error: any) {
-    console.error("Error in GET /api/pipeline/sales/columns:", error);
-    return NextResponse.json(
-      { success: false, error: error.message || "Failed to fetch columns" },
-      { status: 500 },
-    );
+  } catch (error) {
+    return pipelineError(error, "Failed to fetch columns");
   }
 }
 
-/**
- * @swagger
- * /api/pipeline/sales/columns:
- *   post:
- *     summary: Create a new pipeline column
- *     tags: [Sales Pipeline Columns]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - title
- *               - type
- *             properties:
- *               title:
- *                 type: string
- *               type:
- *                 type: string
- *               textColor:
- *                 type: string
- *               bgColor:
- *                 type: string
- *     responses:
- *       200:
- *         description: Pipeline column created successfully
- *       400:
- *         description: Title and type are required
- *       500:
- *         description: Failed to create column
- */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { title, type, textColor, bgColor } = body;
-
-    if (!title || !type) {
+    const body: unknown = await request.json();
+    if (!body || typeof body !== "object") {
       return NextResponse.json(
-        { success: false, error: "Title and type are required" },
+        { success: false, error: "Invalid request body" },
         { status: 400 },
       );
     }
 
-    const newColumn = await createColumn(title, type, textColor, bgColor);
+    const { title, type, textColor, bgColor } = body as Record<string, unknown>;
+
+    if (typeof title !== "string" || !title.trim()) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "title is required and must be a non-empty string",
+        },
+        { status: 400 },
+      );
+    }
+    if (
+      typeof type !== "string" ||
+      !(VALID_TYPES as readonly string[]).includes(type)
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `type must be one of: ${VALID_TYPES.join(", ")}`,
+        },
+        { status: 400 },
+      );
+    }
+
+    const sanitizedTitle = title.trim().slice(0, 100);
+    const sanitizedTextColor =
+      typeof textColor === "string" ? textColor.trim().slice(0, 20) : undefined;
+    const sanitizedBgColor =
+      typeof bgColor === "string" ? bgColor.trim().slice(0, 20) : undefined;
+
+    const newColumn = await createColumn(
+      sanitizedTitle,
+      type,
+      sanitizedTextColor,
+      sanitizedBgColor,
+    );
 
     return NextResponse.json({ success: true, data: newColumn });
-  } catch (error: any) {
-    console.error("Error in POST /api/pipeline/columns:", error);
-    return NextResponse.json(
-      { success: false, error: error.message || "Failed to create column" },
-      { status: 500 },
-    );
+  } catch (error) {
+    return pipelineError(error, "Failed to create column");
   }
 }

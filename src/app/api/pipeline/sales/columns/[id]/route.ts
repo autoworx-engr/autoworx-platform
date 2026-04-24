@@ -48,9 +48,8 @@ import { NextRequest, NextResponse } from "next/server";
  */
 export async function PUT(
   request: NextRequest,
-  props: { params: Promise<{ id: string }> },
+  { params }: { params: { id: string } },
 ) {
-  const params = await props.params;
   try {
     const id = parseInt(params.id);
     if (isNaN(id)) {
@@ -111,9 +110,8 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  props: { params: Promise<{ id: string }> },
+  { params }: { params: { id: string } },
 ) {
-  const params = await props.params;
   try {
     const id = parseInt(params.id);
     if (isNaN(id)) {

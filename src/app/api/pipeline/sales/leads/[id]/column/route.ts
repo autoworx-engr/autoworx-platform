@@ -1,46 +1,15 @@
-import { updateLeadColumn } from "@/actions/pipelines/getLeads";
+import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+import { extractCompanyId, pipelineError } from "../../../_shared";
 
-/**
- * @swagger
- * /api/pipeline/sales/leads/{id}/column:
- *   put:
- *     summary: Update lead column
- *     tags: [Sales Pipeline Leads]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: Lead ID
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - columnId
- *             properties:
- *               columnId:
- *                 type: integer
- *     responses:
- *       200:
- *         description: Lead column updated successfully
- *       400:
- *         description: Missing columnId or invalid lead ID
- *       500:
- *         description: Failed to update lead column
- */
 export async function PUT(
   request: NextRequest,
-  props: { params: Promise<{ id: string }> },
+  { params }: { params: { id: string } },
 ) {
   try {
-    const params = await props.params;
-    const leadId = parseInt(params.id);
+    const companyId = await extractCompanyId(request);
 
+    const leadId = parseInt(params.id, 10);
     if (isNaN(leadId)) {
       return NextResponse.json(
         { success: false, error: "Invalid lead ID" },
@@ -48,22 +17,38 @@ export async function PUT(
       );
     }
 
-    const { columnId, newColumnId } = await request.json();
-    const finalColumnId = columnId ?? newColumnId;
+    const body = await request.json();
+    const rawColumnId = body.columnId ?? body.newColumnId;
+    const columnId = parseInt(rawColumnId, 10);
 
-    if (!finalColumnId) {
+    if (isNaN(columnId)) {
       return NextResponse.json(
         { success: false, error: "columnId is required" },
         { status: 400 },
       );
     }
 
-    const updatedLead = await updateLeadColumn(leadId, parseInt(finalColumnId));
-    return NextResponse.json({ success: true, data: updatedLead });
+    // Verify the column belongs to this company so a user can't move leads
+    // across company boundaries.
+    const column = await db.column.findFirst({
+      where: { id: columnId, companyId },
+      select: { id: true },
+    });
+    if (!column) {
+      return NextResponse.json(
+        { success: false, error: "Column not found" },
+        { status: 404 },
+      );
+    }
+
+    await db.lead.update({
+      where: { id: leadId, companyId },
+      data: { columnId, columnChangedAt: new Date() },
+    });
+
+    return NextResponse.json({ success: true, message: "Lead column updated" });
   } catch (error) {
-    return NextResponse.json(
-      { success: false, error: (error as Error).message },
-      { status: 500 },
-    );
+    console.error("[column] error:", error);
+    return pipelineError(error, "Failed to update lead column");
   }
 }
