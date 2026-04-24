@@ -392,3 +392,44 @@ Long-lived page tokens derived from a long-lived user token do not expire as lon
 - **Story mention handling**: subscribe to and display story mentions as a new message type
 - **Message reaction support**: Meta supports emoji reactions on messages — surfacing these in the UI
 - **Handover protocol**: allow AutoWorx to participate in Meta's handover protocol alongside other inbox tools
+
+---
+
+## Merge Notes for Dev Team
+
+### Branch: taiseer/meta-integration (base: development)
+
+**Conflict risk: Low–Medium**
+
+Most changes are new files (no conflict possible). The files that touch shared infrastructure are limited and well-scoped.
+
+**New files (safe — no conflict possible):**
+
+- All files under `src/app/api/meta/` (webhook, callback, OAuth routes)
+- All files under `src/actions/meta/` (connect, disconnect, connectPage, sendMessage)
+- All files under `src/app/(dashboard)/dashboard/settings/communications/meta-select/`
+- All files under `src/app/(dashboard)/dashboard/communication/client/_component/conversations/meta/`
+- All files under `src/app/(dashboard)/dashboard/communication/client/_actions/` (meta-specific)
+- All files under `src/app/(dashboard)/dashboard/communication/client/_hooks/` (meta-specific)
+- `src/lib/encryption.ts`, `README-META.md`, `CLAUDE.md` additions
+
+**Modified files to review:**
+
+- `src/app/(dashboard)/dashboard/settings/communications/page.tsx` — adds MetaIntegrationCard and DB query; check for conflicts if anyone else modified the settings page.
+- `src/app/(dashboard)/dashboard/communication/client/_component/ClientItem.tsx` — adds Meta unread indicator and message preview; high conflict risk if the communication hub UI was touched on development.
+- `src/app/(dashboard)/dashboard/communication/client/_component/conversations/ChatHead.tsx` — adds Meta tab button; medium risk.
+- `prisma/schema.prisma` — adds `MetaCredentials`, `ClientMetaMessage`, `ClientMetaAttachments` models and new fields on `Client` and `ClientConversationTrack`; always review schema diffs carefully.
+- `src/constants/public-route.ts` — adds `/api/meta/webhook` to PUBLIC_API_ROUTES.
+- `src/middleware.ts` (if modified) — verify JWT bypass for webhook route is correct.
+
+**Dependencies:** No dependency on other open PRs. Can be merged independently.
+
+**Post-merge steps:**
+
+1. Run `npx prisma migrate deploy` (or apply the SQL migration manually)
+2. Run `npx prisma generate` to regenerate the Prisma client with new models
+3. Set required environment variables: `META_APP_ID`, `META_APP_SECRET`, `META_REDIRECT_URI`, `ENCRYPTION_KEY`
+4. Configure the Meta webhook URL in the Meta Developer dashboard (`/api/meta/webhook`)
+5. Subscribe to `page` and `instagram` webhook objects in the Meta app settings
+
+**Known schema migration note:** The `ClientConversationTrack` model has new fields (`metaIsRead`, `metaUnReadCount`, `metaLastMessage`, `metaLastPlatform`). If development has new migrations that also touch `ClientConversationTrack`, resolve conflicts in the migration file carefully.
