@@ -69,6 +69,10 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const session = await getServerSession(authOptions);
+  const employeeType = session?.user?.employeeType;
+  const canReceiveCalls = ["Admin", "Manager", "Sales"].includes(
+    employeeType as string,
+  );
 
   // if (!session) {
   //   redirect("/login");
@@ -138,7 +142,9 @@ export default async function RootLayout({
         <QueryProvider>
           <AuthSessionProvider>
             <TooltipProvider delayDuration={150}>
-              <Layout session={session}>{children}</Layout>
+              <Layout session={session} canReceiveCalls={canReceiveCalls}>
+                {children}
+              </Layout>
             </TooltipProvider>
           </AuthSessionProvider>
         </QueryProvider>
