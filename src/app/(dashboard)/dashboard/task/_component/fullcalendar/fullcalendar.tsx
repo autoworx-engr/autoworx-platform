@@ -73,6 +73,7 @@ export default function Calendar({ type }: { type: CalendarType }) {
     }, 300);
     return () => clearTimeout(timer);
   }, [scrollToTime]);
+
   const {
     settings,
     isLoading: isSettingsLoading,
