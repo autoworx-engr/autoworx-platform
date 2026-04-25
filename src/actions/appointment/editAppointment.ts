@@ -123,7 +123,6 @@ export async function editAppointment({
         data: appointment.assignedUsers.map((userId) => ({
           appointmentId: id,
           userId,
-          eventId: null,
         })),
       });
     }
@@ -202,19 +201,19 @@ export async function editAppointment({
         // send email
         if (client) {
           try {
-            sendInfobipEmail({
+            await sendInfobipEmail({
               clientId: client.id,
               subject: confirmationSubject,
               text: confirmationMessage,
             });
             if (company?.smsGateway === "TWILIO") {
-              sendTwilioMessage({
+              await sendTwilioMessage({
                 clientId: client.id,
                 message: confirmationMessage,
                 attachments: [],
               });
             } else if (company?.smsGateway === "INFOBIP") {
-              sendInfobipMessage({
+              await sendInfobipMessage({
                 clientId: client.id,
                 message: confirmationMessage,
                 attachments: [],
