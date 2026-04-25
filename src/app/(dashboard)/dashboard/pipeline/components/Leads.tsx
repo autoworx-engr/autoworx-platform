@@ -20,15 +20,8 @@ import { usePopupStore } from "@/stores/popup";
 import { LeadWithSalesUser } from "@/types/invoiceLead";
 import SessionUserType from "@/types/sessionUserType";
 import { Appointment, Column, User } from "@prisma/client";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Pagination, Select } from "antd";
-import {
-  Calendar,
-  CalendarCheck,
-  ChevronDown,
-  MessageCircleMore,
-  Search,
-} from "lucide-react";
+import { Calendar, CalendarCheck, MessageCircleMore } from "lucide-react";
 import moment from "moment";
 import { customAlphabet } from "nanoid";
 import Image from "next/image";
@@ -37,16 +30,16 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React, {
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
   useTransition,
 } from "react";
-import toast from "react-hot-toast";
+
+import LeadsFilterDropdown, { LeadFilter } from "./LeadsFilterDropdown";
+import LeadsSearch from "./LeadsSearch";
 import { LeadsMobileSkeleton } from "./LeadsMobileSkeleton";
 import { LeadsTableSkeleton } from "./LeadsTableSkeleton";
 import { NewAppointmentPipeline } from "./NewAppointmentPipeline";
-import SelectComponent from "./Select";
 import TaskForm from "./TaskForm";
 
 type TProps = {
@@ -95,7 +88,7 @@ const Leads = ({ salesColumn }: TProps) => {
     null,
   ]);
   const [currentUser, setCurrentUser] = useState<SessionUserType>();
-  const [filter, setFilter] = useState<any>({
+  const [filter, setFilter] = useState<LeadFilter>({
     assignedTo: null,
     status: null,
     service: null,
@@ -420,9 +413,9 @@ const Leads = ({ salesColumn }: TProps) => {
             return lead;
           }),
         );
-        toast.success("Lead status updated successfully");
+        successToast("Lead status updated successfully");
       } catch (err) {
-        toast.error("Error updating lead status");
+        errorToast("Error updating lead status");
       }
     },
     [],
@@ -476,7 +469,7 @@ const Leads = ({ salesColumn }: TProps) => {
         <div className="mt-5 flex w-full flex-col-reverse justify-between gap-4 md:flex-row md:items-center">
           <div className="flex w-full max-w-4xl rounded-xl border bg-background p-2">
             <div className="flex w-full md:items-center gap-2 md:gap-4 md:flex-row flex-col">
-              <SearchTerms search={search} setSearch={setSearch} />
+              <LeadsSearch search={search} setSearch={setSearch} />
               <div className="items-center gap-2 flex flex-1 flex-row">
                 <div className="flex-1 min-w-0">
                   <DateRange
@@ -486,7 +479,7 @@ const Leads = ({ salesColumn }: TProps) => {
                   />
                 </div>
                 <div className="relative flex-shrink-0 w-[100px] sm:w-auto sm:flex-1">
-                  <DropdownMenuDemo
+                  <LeadsFilterDropdown
                     filterOptions={filterOptions}
                     salesColumn={salesColumn}
                     companyUsers={companyUsers}
@@ -803,197 +796,5 @@ const Leads = ({ salesColumn }: TProps) => {
     </div>
   );
 };
-
-const SearchTerms = React.memo(function SearchTerms({
-  search,
-  setSearch,
-}: {
-  search: string;
-  setSearch: React.Dispatch<React.SetStateAction<string>>;
-}) {
-  const handleSearchChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setSearch(e.target.value);
-    },
-    [setSearch],
-  );
-
-  return (
-    <div className="relative min-w-0 flex-1 group">
-      <Search
-        size={18}
-        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-[#6571FF]"
-      />
-
-      <input
-        type="text"
-        value={search}
-        placeholder="Search by client, vehicle, services..."
-        onChange={handleSearchChange}
-        className={cn(
-          "w-full h-11 pl-12 pr-4 rounded-xl border  bg-white",
-          "text-sm font-medium text-slate-700 placeholder:text-slate-400 outline-none",
-          "transition-all duration-300 ease-in-out",
-          "hover:border-slate-200 hover:bg-slate-50/30",
-          "focus:border-[#6571FF]/40 focus:bg-white focus:ring-4 focus:ring-[#6571FF]/10",
-        )}
-      />
-    </div>
-  );
-});
-
-const DropdownMenuDemo = React.memo(function DropdownMenuDemo({
-  filterOptions,
-  salesColumn,
-  companyUsers,
-  setFilter,
-  filter,
-  clearFilters,
-}: {
-  filterOptions: LeadFilterOptions;
-  salesColumn: Column[];
-  companyUsers: User[];
-  setFilter: any;
-  filter: {
-    [key: string]: string;
-  };
-  clearFilters: () => void;
-}) {
-  const statusItems = useMemo(
-    () =>
-      salesColumn.map((col, index) => ({
-        id: `status-${index}`,
-        value: col.title,
-        label: col.title,
-      })),
-    [salesColumn],
-  );
-
-  const serviceItems = useMemo(
-    () =>
-      filterOptions.services.map((serviceName, index) => ({
-        id: `service-${index}`,
-        value: serviceName,
-        label: serviceName,
-      })),
-    [filterOptions.services],
-  );
-
-  const sourceItems = useMemo(
-    () =>
-      filterOptions.sources.map((sourceName, index) => ({
-        id: `source-${index}`,
-        value: sourceName,
-        label: sourceName,
-      })),
-    [filterOptions.sources],
-  );
-
-  const salesPersonItems = useMemo(
-    () =>
-      companyUsers.map((user, index) => ({
-        id: `person-${index}`,
-        value: user.id.toString(),
-        label: `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim(),
-      })),
-    [companyUsers],
-  );
-
-  return (
-    <DropdownMenu.Root>
-      <DropdownMenu.Trigger asChild>
-        <button
-          className="flex items-center justify-between w-full rounded-xl border px-4 py-2"
-          aria-label="Customise options"
-        >
-          <span>Filter</span>
-          <ChevronDown size={16} />
-        </button>
-      </DropdownMenu.Trigger>
-
-      <DropdownMenu.Portal>
-        <DropdownMenu.Content
-          className="data-[side=top]:animate-slideDownAndFade data-[side=right]:animate-slideLeftAndFade data-[side=bottom]:animate-slideUpAndFade data-[side=left]:animate-slideRightAndFade min-w-[220px] rounded-md bg-background p-[5px] py-8 shadow-[0px_10px_38px_-10px_rgba(22,_23,_24,_0.35),_0px_10px_20px_-15px_rgba(22,_23,_24,_0.2)] will-change-[opacity,transform]"
-          sideOffset={5}
-        >
-          <div className="flex flex-col gap-y-2 px-4">
-            <SelectComponent
-              label="Assigned To"
-              items={[
-                { id: "all", value: "All", label: "All" },
-                ...salesPersonItems,
-              ]}
-              onChange={(value) =>
-                setFilter({
-                  ...filter,
-                  assignedTo: value === "All" ? null : value,
-                })
-              }
-              value={
-                filter?.assignedTo
-                  ? salesPersonItems.find(
-                      (item) => item.value === filter?.assignedTo,
-                    )?.value || ""
-                  : ""
-              }
-            />
-
-            <SelectComponent
-              label="Services"
-              items={[
-                { id: "all", value: "All", label: "All" },
-                ...serviceItems,
-              ]}
-              onChange={(value) =>
-                setFilter({
-                  ...filter,
-                  service: value === "All" ? null : value,
-                })
-              }
-              value={filter?.service || ""}
-            />
-
-            <SelectComponent
-              label="Sources"
-              items={[
-                { id: "all", value: "All", label: "All" },
-                ...sourceItems,
-              ]}
-              onChange={(value) =>
-                setFilter({ ...filter, source: value === "All" ? null : value })
-              }
-              value={filter?.source || ""}
-            />
-            <SelectComponent
-              label="Status"
-              items={[
-                { id: "all", value: "All", label: "All" },
-                ...statusItems,
-              ]}
-              onChange={(value) =>
-                setFilter({ ...filter, status: value === "All" ? null : value })
-              }
-              value={filter?.status || ""}
-            />
-
-            <div className="px-4 pt-2">
-              <button
-                onClick={clearFilters}
-                className={cn(
-                  "group mt-4 flex w-full items-center justify-center gap-2 rounded-lg py-2 transition-all duration-200 ",
-                  "hover:bg-red-50", // Soft background shift
-                  " text-slate-500 hover:text-red-500", // Typography style
-                  "active:scale-95 border border-slate-200 hover:border-red-100", // Tactile feedback
-                )}
-              >
-                Clear All Filters
-              </button>
-            </div>
-          </div>
-        </DropdownMenu.Content>
-      </DropdownMenu.Portal>
-    </DropdownMenu.Root>
-  );
-});
 
 export default Leads;
