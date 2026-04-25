@@ -6,6 +6,7 @@ import ClientList from "../../dashboard/client/ClientList";
 export default async function Page() {
   const clients = await db.client.findMany({
     orderBy: { createdAt: "desc" },
+    take: 50,
     include: {
       tag: true,
       source: true,
