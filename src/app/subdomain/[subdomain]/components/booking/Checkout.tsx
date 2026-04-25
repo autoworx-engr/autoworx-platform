@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import Selector from "@/app/(dashboard)/dashboard/settings/automation/components/Selector";
 import { getPaymentGatewayInfo } from "@/app/(dashboard)/dashboard/settings/payments/getPaymentGatewayInfo";
 import {
   Dialog,
@@ -17,11 +16,6 @@ import { PayNow } from "@/components/invoice-modal/PayNow";
 import PhoneInput from "@/components/PhoneInput";
 import { SlimInput } from "@/components/SlimInput";
 import { SlimTextarea } from "@/components/SlimTextarea";
-import {
-  useGetAllYears,
-  useGetMake,
-  useGetModelsByYearAndMake,
-} from "@/hooks/useCarData";
 import { useServerGet } from "@/hooks/useServerGet";
 import {
   useCreateVirtualShopServiceBooking,
@@ -40,6 +34,10 @@ import {
   Timer,
 } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import {
+  CheckoutVehicleSection,
+  ExistingVehicle,
+} from "./CheckoutVehicleSection";
 import { useBooking } from "../../context/BookingContext";
 import { BookingTotals, CustomerInfo } from "../../data/types";
 
@@ -82,9 +80,6 @@ export const Checkout = () => {
   const { mutateAsync: lookupClient, isPending: isLookingUp } =
     useLookupClientByPhone();
 
-  const { data: years }: any = useGetAllYears();
-  const { data: makes }: any = useGetMake();
-
   const [selectedCountryCode, setSelectedCountryCode] = useState("US");
   const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
   const [timerExpired, setTimerExpired] = useState(false);
@@ -110,6 +105,9 @@ export const Checkout = () => {
   const [payableDepositAmount, setPayableDepositAmount] = useState<
     number | null
   >(null);
+  const [existingVehicles, setExistingVehicles] = useState<ExistingVehicle[]>(
+    [],
+  );
   const hasHandledStripeReturn = useRef(false);
   const [form, setForm] = useState<CustomerInfo>({
     fullName: "",
@@ -120,11 +118,6 @@ export const Checkout = () => {
     vehicleModel: "",
     notes: "",
   });
-
-  const { data: models }: any = useGetModelsByYearAndMake(
-    form.vehicleYear,
-    form.vehicleMake,
-  );
 
   // Release the slot hold — called on Back and on window close
   const releaseHold = useCallback(() => {
@@ -207,13 +200,24 @@ export const Checkout = () => {
 
       if (response.success && response.data) {
         const client = response.data;
+        const vehicles = Array.isArray(client.Vehicle) ? client.Vehicle : [];
+        const latestVehicle = vehicles[0];
+
+        setExistingVehicles(vehicles);
         setForm((prev) => ({
           ...prev,
           fullName: `${client.firstName || ""} ${client.lastName || ""}`.trim(),
           email: client.email || "",
+          vehicleYear:
+            latestVehicle?.year !== null && latestVehicle?.year !== undefined
+              ? String(latestVehicle.year)
+              : prev.vehicleYear,
+          vehicleMake: latestVehicle?.make || prev.vehicleMake,
+          vehicleModel: latestVehicle?.model || prev.vehicleModel,
         }));
         setIsReturningClient(true);
       } else {
+        setExistingVehicles([]);
         setForm((prev) => ({
           ...prev,
           fullName: "",
@@ -227,19 +231,6 @@ export const Checkout = () => {
       setPhoneLookedUp(true);
     }
   }, [form.phone, shop?.id, lookupClient, setIsReturningClient]);
-
-  const handleOtpCheck = useCallback((val: string) => {
-    setOtpValue(val);
-    if (val === "1234") {
-      setOtpVerified(true);
-      // Auto-fill name & email but NOT vehicle info
-      setForm((prev) => ({
-        ...prev,
-        fullName: "John Doe",
-        email: "john@example.com",
-      }));
-    }
-  }, []);
 
   const handleApplyGiftCard = useCallback(async () => {
     const normalizedCode = giftCardCode.trim().toUpperCase();
@@ -610,27 +601,6 @@ export const Checkout = () => {
   const update = (field: keyof CustomerInfo, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
-  const vehicleOptions =
-    makes?.data?.map((vehicle: any) => ({
-      title: vehicle.name ?? "Unknown",
-      name: vehicle.name ?? "Unknown",
-      id: vehicle.name,
-    })) || [];
-
-  const vehicleModelOptions =
-    models?.data?.map((vehicle: any) => ({
-      title: vehicle.name ?? "Unknown",
-      name: vehicle.name ?? "Unknown",
-      id: vehicle.name,
-    })) || [];
-
-  const yearOptions =
-    years?.data?.map((y: string | number) => ({
-      title: y.toString(),
-      name: y.toString(),
-      id: y.toString(),
-    })) || [];
-
   const bookingSettings = shop?.bookingSettings;
   const isDepositEnabled =
     bookingSettings?.isDepositEnabled ?? settings.depositRequired;
@@ -924,7 +894,11 @@ export const Checkout = () => {
                         ...prev,
                         fullName: "",
                         email: "",
+                        vehicleYear: "",
+                        vehicleMake: "",
+                        vehicleModel: "",
                       }));
+                      setExistingVehicles([]);
                       setPhoneLookedUp(false);
                       setIsReturningClient(false);
                     }
@@ -955,40 +929,6 @@ export const Checkout = () => {
             )} */}
             </div>
           </div>
-
-          {/* OTP for returning clients — shown right after phone lookup */}
-          {/* {isReturningClient && showOtp && !otpVerified && (
-          <div className="rounded-xl border bg-card p-4 space-y-3 text-center">
-            <Shield className="w-8 h-8 mx-auto text-primary" />
-            <p className="text-sm font-medium">
-              Welcome back! Verify your identity
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Enter the 4-digit code sent to your phone. (Use:{" "}
-              <strong>1234</strong>)
-            </p>
-            <div className="flex justify-center">
-              <InputOTP
-                maxLength={4}
-                value={otpValue}
-                onChange={handleOtpCheck}
-              >
-                <InputOTPGroup>
-                  <InputOTPSlot index={0} />
-                  <InputOTPSlot index={1} />
-                  <InputOTPSlot index={2} />
-                  <InputOTPSlot index={3} />
-                </InputOTPGroup>
-              </InputOTP>
-            </div>
-            {otpVerified && (
-              <p className="text-xs text-primary flex items-center justify-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5" /> Verified! Fields
-                auto-populated.
-              </p>
-            )}
-          </div>
-        )} */}
 
           {/* Remaining fields — shown after phone lookup (or OTP verified for returning) */}
           {phoneLookedUp && (true || !isReturningClient || otpVerified) && (
@@ -1025,48 +965,13 @@ export const Checkout = () => {
 
           {phoneLookedUp && (true || !isReturningClient || otpVerified) && (
             <>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pt-2">
-                Vehicle Information
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <Selector
-                  name="vehicleYear"
-                  label="Year"
-                  placeholder="Year"
-                  options={years?.data || []}
-                  value={form.vehicleYear || ""}
-                  onChange={(value: string) => update("vehicleYear", value)}
-                  isSearch={true}
-                  isClear={true}
-                  required={true}
-                />
-                <Selector
-                  name="vehicleMake"
-                  label="Make"
-                  placeholder="Make"
-                  options={vehicleOptions || []}
-                  value={form.vehicleMake || ""}
-                  onChange={(value: string) => {
-                    update("vehicleMake", value);
-                    update("vehicleModel", "");
-                  }}
-                  isSearch={true}
-                  isClear={true}
-                  required={true}
-                />
-                <Selector
-                  name="vehicleModel"
-                  label="Model"
-                  placeholder="Model"
-                  options={vehicleModelOptions || []}
-                  value={form.vehicleModel || ""}
-                  onChange={(value: string) => update("vehicleModel", value)}
-                  isSearch={true}
-                  isClear={true}
-                  required={true}
-                  disabled={!form.vehicleMake}
-                />
-              </div>
+              <CheckoutVehicleSection
+                existingVehicles={existingVehicles}
+                vehicleYear={form.vehicleYear}
+                vehicleMake={form.vehicleMake}
+                vehicleModel={form.vehicleModel}
+                onVehicleChange={update}
+              />
 
               <div className="space-y-1.5">
                 <SlimTextarea
