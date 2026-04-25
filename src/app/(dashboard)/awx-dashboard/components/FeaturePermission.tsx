@@ -93,7 +93,7 @@ export default function FeaturePermission({
       ];
       createPermissionMutation(permissionsToCreate, {
         onError: (error) => {
-          console.error("Failed to auto-create Communication Hub:", error);
+          errorHandler(error);
         },
       });
     }
@@ -261,7 +261,6 @@ export default function FeaturePermission({
           {
             permission_name: update.permission_name,
             title: staticItem?.title ?? update.permission_name,
-            children: staticItem?.children ?? [],
             status: update.enabled,
           },
           update.enabled,
