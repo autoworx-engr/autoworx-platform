@@ -25,7 +25,7 @@ export const FleetStatementModalBody: React.FC<
   const invoices = statement?.invoice || [];
 
   const companyId = company?.id;
-  const { data: stripeAccountData } = useServerGet(getStripeAccount, companyId);
+  useServerGet(getStripeAccount, companyId);
   const { data: gatewayInfo } = useServerGet(getPaymentGatewayInfo, companyId);
 
   // Calculate totals
@@ -49,7 +49,7 @@ export const FleetStatementModalBody: React.FC<
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto bg-white rounded-lg shadow-sm">
+    <div className="w-full max-w-5xl mx-auto bg-white rounded-lg shadow-sm overflow-y-auto">
       {/* Header Section with Company Info */}
       <div className="px-6 py-8 sm:px-10 border-b border-gray-200">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
@@ -122,90 +122,104 @@ export const FleetStatementModalBody: React.FC<
 
       {/* Invoice Table */}
       <div className="px-6 sm:px-10 pb-6">
-        <div className="overflow-x-auto rounded-lg border border-gray-200">
+        <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
           <table className="w-full min-w-full">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+              <tr className="bg-[#0D7C84] text-white">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">
                   Invoice#
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">
                   Year
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">
                   Make
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">
                   Model
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">
                   VIN
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider">
                   Amount
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider">
                   Paid
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider">
                   Due
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">
                   Status
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {invoices.map((invoice: any, index: number) => (
-                <tr
-                  key={invoice.id}
-                  className="hover:bg-gray-50 transition-colors"
-                >
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    <InvoiceModal
-                      invoiceId={invoice?.id}
-                      buttonChild={
-                        <button className="text-blue-600 hover:text-blue-800 font-medium hover:underline">
-                          {invoice?.id}
-                        </button>
-                      }
-                      buttonChildClassName="text-blue-600 hover:text-blue-800"
-                    />
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                    {invoice.vehicle?.year || "2015"}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                    {invoice.vehicle?.make || "Make"}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                    {invoice.vehicle?.model || "Model"}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                    {invoice.vehicle?.vin || "N/A"}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-900 font-medium text-right whitespace-nowrap">
-                    ${Number(invoice.grandTotal || 0).toFixed(2)}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-700 text-right whitespace-nowrap">
-                    ${Number(invoice.totalPayment || 0).toFixed(2)}
-                  </td>
-                  <td className="px-4 py-3 text-sm font-semibold text-right whitespace-nowrap">
-                    <span
-                      className={cn(
-                        invoice.due > 0 ? "text-red-600" : "text-green-600",
-                      )}
-                    >
-                      ${Number(invoice.due || 0).toFixed(2)}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-center whitespace-nowrap">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                      {invoice.column?.title || "Pending"}
-                    </span>
-                  </td>
-                </tr>
-              ))}
+            <tbody className="bg-white divide-y divide-gray-100">
+              {invoices.map((invoice: any, idx: number) => {
+                const due = Number(invoice.due || 0);
+                const isPaid = due === 0;
+                return (
+                  <tr
+                    key={invoice.id}
+                    className={cn(
+                      "transition-colors hover:bg-teal-50/40",
+                      idx % 2 === 0 ? "bg-white" : "bg-gray-50/60",
+                    )}
+                  >
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <InvoiceModal
+                        invoiceId={invoice?.id}
+                        buttonChild={
+                          <button className="text-[#0D7C84] hover:text-teal-700 font-semibold hover:underline text-sm">
+                            #{invoice?.id}
+                          </button>
+                        }
+                        buttonChildClassName="text-[#0D7C84]"
+                      />
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
+                      {invoice.vehicle?.year || "—"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
+                      {invoice.vehicle?.make || "—"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
+                      {invoice.vehicle?.model || "—"}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap font-mono">
+                      {invoice.vehicle?.vin || "—"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-800 font-medium text-right whitespace-nowrap">
+                      {formatCurrency(Number(invoice.grandTotal || 0))}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-green-700 font-medium text-right whitespace-nowrap">
+                      {formatCurrency(Number(invoice.totalPayment || 0))}
+                    </td>
+                    <td className="px-4 py-3 text-sm font-semibold text-right whitespace-nowrap">
+                      <span
+                        className={cn(
+                          isPaid ? "text-green-600" : "text-red-600",
+                        )}
+                      >
+                        {formatCurrency(due)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-center whitespace-nowrap">
+                      <span
+                        className={cn(
+                          "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold",
+                          isPaid
+                            ? "bg-green-100 text-green-700"
+                            : "bg-amber-50 text-amber-700 border border-amber-200",
+                        )}
+                      >
+                        {invoice.column?.title || (isPaid ? "Paid" : "Unpaid")}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -252,7 +266,7 @@ export const FleetStatementModalBody: React.FC<
 
               <div className="bg-white rounded-lg px-6 py-4 text-center">
                 <span className="text-[#0D7C84] font-bold text-lg">
-                  Amount Due: {formatCurrency(totals.totalDue)}
+                  {totals.totalDue > 0 ? "Balance Outstanding" : "Fully Paid ✓"}
                 </span>
               </div>
             </div>

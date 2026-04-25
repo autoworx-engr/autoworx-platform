@@ -126,7 +126,7 @@ export default function ShopList({
               <ChevronDown
                 size={16}
                 strokeWidth={2.5}
-                className={`shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.87,_0,_0.13,_1)] group-data-[state=open]:rotate-180 ${
+                className={`shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.87,0,0.13,1)] group-data-[state=open]:rotate-180 ${
                   isVirtualShopAdminPath
                     ? "text-slate-400"
                     : "text-[#6571FF]/70"

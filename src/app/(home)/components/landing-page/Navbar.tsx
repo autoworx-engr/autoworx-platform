@@ -36,6 +36,7 @@ export default function Navbar() {
                 width={100}
                 height={24}
                 className="h-6 w-auto"
+                style={{ width: "auto" }}
               />
             </Link>
             <Image
@@ -44,6 +45,7 @@ export default function Navbar() {
               className="h-3 w-auto"
               width={100}
               height={12}
+              style={{ width: "auto" }}
             />
           </div>
         </div>
@@ -69,6 +71,7 @@ export default function Navbar() {
                   width={40}
                   height={40}
                   className="h-10 w-auto"
+                  style={{ width: "auto" }}
                   priority
                 />
               </div>
@@ -79,6 +82,7 @@ export default function Navbar() {
                   width={140}
                   height={40}
                   className="h-10 w-auto max-w-[150px]"
+                  style={{ width: "auto" }}
                 />
               </div>
             </div>
@@ -134,6 +138,7 @@ export default function Navbar() {
             className="h-11 w-auto"
             width={100}
             height={44}
+            style={{ width: "auto" }}
           />
           <Image
             src={"/landing/navAutoworkxLogo.svg"}
@@ -141,6 +146,7 @@ export default function Navbar() {
             width={100}
             height={16}
             className="h-4 w-auto"
+            style={{ width: "auto" }}
           />
         </Link>
 

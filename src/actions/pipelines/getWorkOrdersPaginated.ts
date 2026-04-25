@@ -85,11 +85,34 @@ function toShopLead(invoice: any): ShopLead {
   };
 }
 
+function makeSearchCondition(search?: string) {
+  if (!search?.trim()) return null;
+  const term = search.trim();
+  return {
+    OR: [
+      {
+        client: {
+          firstName: { contains: term, mode: "insensitive" as const },
+        },
+      },
+      {
+        client: {
+          lastName: { contains: term, mode: "insensitive" as const },
+        },
+      },
+      { vehicle: { make: { contains: term, mode: "insensitive" as const } } },
+      { vehicle: { model: { contains: term, mode: "insensitive" as const } } },
+      { vehicle: { other: { contains: term, mode: "insensitive" as const } } },
+    ],
+  };
+}
+
 export async function getWorkOrdersByColumn(
   columnId: number,
   skip: number,
   take: number,
   filterByUserId?: number,
+  search?: string,
 ) {
   const companyId = await getCompanyId();
 
@@ -100,18 +123,23 @@ export async function getWorkOrdersByColumn(
     isWorkOrder: true,
   };
 
-  const where = filterByUserId
-    ? {
-        ...baseWhere,
-        invoiceItems: {
-          some: {
-            service: {
-              Technician: { some: { userId: filterByUserId } },
-            },
-          },
+  const andConditions: any[] = [];
+
+  if (filterByUserId) {
+    andConditions.push({
+      invoiceItems: {
+        some: {
+          service: { Technician: { some: { userId: filterByUserId } } },
         },
-      }
-    : baseWhere;
+      },
+    });
+  }
+
+  const searchCondition = makeSearchCondition(search);
+  if (searchCondition) andConditions.push(searchCondition);
+
+  const where =
+    andConditions.length > 0 ? { ...baseWhere, AND: andConditions } : baseWhere;
 
   const [invoices, total] = await Promise.all([
     db.invoice.findMany({
@@ -136,6 +164,7 @@ export async function getWorkOrdersByTechnician(
   skip: number,
   take: number,
   filterByUserId?: number,
+  search?: string,
 ) {
   const companyId = await getCompanyId();
 
@@ -147,30 +176,27 @@ export async function getWorkOrdersByTechnician(
     },
   };
 
-  const where = filterByUserId
-    ? {
-        companyId,
-        type: "Invoice" as const,
-        isWorkOrder: true,
-        AND: [
-          techFilter,
-          {
-            invoiceItems: {
-              some: {
-                service: {
-                  Technician: { some: { userId: filterByUserId } },
-                },
-              },
-            },
-          },
-        ],
-      }
-    : {
-        companyId,
-        type: "Invoice" as const,
-        isWorkOrder: true,
-        ...techFilter,
-      };
+  const andConditions: any[] = [techFilter];
+
+  if (filterByUserId) {
+    andConditions.push({
+      invoiceItems: {
+        some: {
+          service: { Technician: { some: { userId: filterByUserId } } },
+        },
+      },
+    });
+  }
+
+  const searchCondition = makeSearchCondition(search);
+  if (searchCondition) andConditions.push(searchCondition);
+
+  const where = {
+    companyId,
+    type: "Invoice" as const,
+    isWorkOrder: true,
+    AND: andConditions,
+  };
 
   const [invoices, total] = await Promise.all([
     db.invoice.findMany({
