@@ -19,6 +19,7 @@ type TGetLeads = {
   searchTerm?: string;
   take?: number;
   skip?: number;
+  companyId?: number;
 };
 
 type TGetLeadsWithCount = {
@@ -39,11 +40,11 @@ export const getLeads = async ({
   take,
   skip,
   searchTerm = "",
+  companyId: companyIdOverride,
 }: TGetLeads): Promise<LeadWithSalesUser[]> => {
-  const companyId = await getCompanyId();
+  const companyId = companyIdOverride ?? (await getCompanyId());
   const companyTimezone = await getCompanyTimezone();
   const timezone = companyTimezone?.timezone;
-  console.log("orderBy from getLeads", orderBy);
 
   try {
     const query: Prisma.LeadWhereInput = {
