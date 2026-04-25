@@ -9,7 +9,12 @@ const PIPELINE_PAGE_SIZE = 10;
 
 const Pipelines = dynamic(() => import("../../components/Pipelines"));
 
-const PipelinePage = async () => {
+const PipelinePage = async (props: {
+  searchParams: Promise<{ search?: string }>;
+}) => {
+  const searchParams = await props.searchParams;
+  const search = searchParams.search;
+
   const session = await getServerSession(authOptions);
   const currentUser = session?.user;
   const isTechnician = currentUser?.employeeType === "Technician";
@@ -27,6 +32,7 @@ const PipelinePage = async () => {
               0,
               PIPELINE_PAGE_SIZE,
               isTechnician ? Number(currentUser?.id) : undefined,
+              search,
             )
           : Promise.resolve({ leads: [], total: 0, hasMore: false }),
       ),

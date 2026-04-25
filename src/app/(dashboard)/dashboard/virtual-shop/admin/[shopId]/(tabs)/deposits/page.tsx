@@ -1,15 +1,16 @@
 import DepositsTab from "../../../components/DepositsTab";
 
 type VirtualShopDepositsPageProps = {
-  params: {
+  params: Promise<{
     shopId: string;
-  };
+  }>;
 };
 
-export default function VirtualShopDepositsPage({
+export default async function VirtualShopDepositsPage({
   params,
 }: VirtualShopDepositsPageProps) {
-  const shopId = Number.parseInt(params.shopId, 10);
+  const resolvedParams = await params;
+  const shopId = Number.parseInt(resolvedParams.shopId, 10);
 
   return <DepositsTab shopId={Number.isFinite(shopId) ? shopId : 0} />;
 }

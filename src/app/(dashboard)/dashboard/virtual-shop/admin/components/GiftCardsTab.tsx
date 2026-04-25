@@ -117,6 +117,7 @@ function SettingInput({
   min,
   required = false,
   className,
+  placeholder,
 }: {
   label: string;
   value: string;
@@ -125,6 +126,7 @@ function SettingInput({
   min?: string;
   required?: boolean;
   className?: string;
+  placeholder?: string;
 }) {
   return (
     <div className={`flex flex-col gap-1.5 ${className ?? ""}`}>
@@ -157,6 +159,7 @@ function SettingInput({
           }
         }}
         className="w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 outline-none focus:border-[#6571FF] focus:ring-1 focus:ring-[#6571FF]"
+        placeholder={placeholder}
       />
     </div>
   );
@@ -750,6 +753,7 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                   value={newTemplateName}
                   onChange={setNewTemplateName}
                   required
+                  placeholder="Enter template name"
                 />
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-semibold text-gray-700">
@@ -763,7 +767,7 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                     onChange={(e) =>
                       setNewTemplateImageFile(e.target.files?.[0] ?? null)
                     }
-                    className="w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 outline-none file:mr-3 file:rounded-md file:border-0 file:bg-[#6571FF] file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-white hover:file:bg-[#5560ee]"
+                    className="min-h-10 w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm text-gray-700 outline-none file:mr-3 file:rounded-md file:border-0 file:bg-[#6571FF] file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-white hover:file:bg-[#5560ee]"
                   />
                 </div>
                 <div className="flex items-end">
@@ -776,7 +780,7 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                       !newTemplateName.trim() ||
                       !newTemplateImageFile
                     }
-                    className="flex h-[42px] w-fit items-center gap-1.5 rounded-md bg-[#6571FF] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#5560ee] disabled:opacity-60"
+                    className="flex h-10 w-fit items-center gap-1.5 rounded-md bg-[#6571FF] px-4 text-sm font-medium text-white transition-colors hover:bg-[#5560ee] disabled:opacity-60"
                   >
                     {isCreatingTemplate || isUploadingTemplateImage ? (
                       <Loader2 size={14} className="animate-spin" />
@@ -872,16 +876,18 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                 </div>
               ))}
 
-              <div className="flex justify-end">
-                <Button
-                  type="button"
-                  onClick={handleSaveTemplates}
-                  disabled={isUpdatingTemplate || !accessToken}
-                  className="bg-[#6571FF] hover:bg-[#5560ee]"
-                >
-                  {isUpdatingTemplate ? "Saving..." : "Save Changes"}
-                </Button>
-              </div>
+              {designs.length > 0 && (
+                <div className="flex justify-end">
+                  <Button
+                    type="button"
+                    onClick={handleSaveTemplates}
+                    disabled={isUpdatingTemplate || !accessToken}
+                    className="bg-[#6571FF] hover:bg-[#5560ee]"
+                  >
+                    {isUpdatingTemplate ? "Saving..." : "Save Changes"}
+                  </Button>
+                </div>
+              )}
             </div>
           </Section>
 

@@ -1,12 +1,16 @@
 "use client";
 import { sendFleetEmail } from "@/actions/fleet/sendFleetEmail";
 import { sendFleetSms } from "@/actions/fleet/sendFleetSms";
-import { getFleetStatement } from "@/actions/fleet/statement";
+import {
+  getFleetStatement,
+  getUnpaidInvoicesForFleet,
+} from "@/actions/fleet/statement";
 import { getOrCreateShortLinkAction } from "@/actions/shortener/getOrCreateShortLink";
 import { Dialog, DialogContent, DialogHeader } from "@/components/Dialog";
 import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
 import { cn } from "@/lib/cn";
 import { errorToast, successToast } from "@/lib/toast";
+import { useFleetInvoiceStore } from "@/stores/fleetInvoiceStore";
 import { useTwilioStore } from "@/stores/useTwilioStore";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { pdf } from "@react-pdf/renderer";
@@ -34,8 +38,10 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
   const [statement, setStatement] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
-  const [editModalOpen, setEditModalOpen] = useState(false); // Add this state
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
   const { credentials, fetchCredentials } = useTwilioStore();
+  const { setAllInvoices } = useFleetInvoiceStore();
 
   const componentRef = useRef(null);
 
@@ -89,10 +95,10 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
   };
 
   // Add edit handler
-  const handleEditStatement = () => {
-    // Check if statement has any paid or partially paid invoices
+  const handleEditStatement = async () => {
     const hasPaidInvoices = invoices.some(
-      (inv: any) => inv.due === 0 || inv.due < inv.grandTotal,
+      (inv: any) =>
+        Number(inv.due) === 0 || Number(inv.due) < Number(inv.grandTotal),
     );
 
     if (hasPaidInvoices) {
@@ -100,9 +106,21 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
       return;
     }
 
-    if (totals.totalDue === 0) {
+    if (Number(totals.totalDue) === 0) {
       errorToast("Cannot edit a fully paid statement");
       return;
+    }
+
+    setEditLoading(true);
+    try {
+      if (fleet?.id) {
+        const result = await getUnpaidInvoicesForFleet(fleet.id);
+        if (result.type === "success") {
+          setAllInvoices(result.data as any);
+        }
+      }
+    } finally {
+      setEditLoading(false);
     }
 
     setEditModalOpen(true);
@@ -127,8 +145,11 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
 
   // Check if statement can be edited
   const canEdit =
-    totals.totalDue > 0 &&
-    !invoices.some((inv: any) => inv.due === 0 || inv.due < inv.grandTotal);
+    Number(totals.totalDue) > 0 &&
+    !invoices.some(
+      (inv: any) =>
+        Number(inv.due) === 0 || Number(inv.due) < Number(inv.grandTotal),
+    );
 
   const handlePDFPrint = async () => {
     if (!statement) return;
@@ -258,10 +279,10 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
               {/* Replace Link with button */}
               <button
                 onClick={handleEditStatement}
-                disabled={!canEdit}
+                disabled={!canEdit || editLoading}
                 className={cn(
                   "flex items-center justify-center gap-1 rounded px-2 py-1 text-sm md:px-4 md:text-base transition-all",
-                  canEdit
+                  canEdit && !editLoading
                     ? "bg-[#6571FF] text-white hover:bg-[#5461ee]"
                     : "bg-gray-300 text-gray-500 cursor-not-allowed opacity-60",
                 )}
@@ -272,7 +293,9 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
                 }
               >
                 <SquarePen className="h-3 w-3 md:h-4 md:w-4" />
-                <span className="hidden md:inline">Edit</span>
+                <span className="hidden md:inline">
+                  {editLoading ? "Loading..." : "Edit"}
+                </span>
               </button>
 
               <button

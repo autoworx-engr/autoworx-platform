@@ -11,7 +11,7 @@ const PIPELINE_PAGE_SIZE = 10;
 const TeamPipelines = dynamic(() => import("../components/TeamPipeline"));
 
 const PipelinePage = async (props: {
-  searchParams: Promise<{ type?: string }>;
+  searchParams: Promise<{ type?: string; search?: string }>;
 }) => {
   const searchParams = await props.searchParams;
   const session = await getServerSession(authOptions);
@@ -19,6 +19,8 @@ const PipelinePage = async (props: {
   const isTechnician = currentUser?.employeeType === "Technician";
 
   const employeeType = searchParams.type;
+  const search = searchParams.search;
+
   const techniciansColumn = await getEmployeeColumnByCompany(
     employeeType as EmployeeType,
   );
@@ -37,6 +39,7 @@ const PipelinePage = async (props: {
           0,
           PIPELINE_PAGE_SIZE,
           isTechnician ? Number(currentUser?.id) : undefined,
+          search,
         ),
       ),
     );
