@@ -12,6 +12,7 @@ import { useDate } from "../../_hook/lib/useDate";
 import { taskQueryKey } from "../../_constant";
 import useWeekStartEndDays from "../../_hook/lib/useWeekStartEndDays";
 import { CircleCheckBig, SquarePen } from "lucide-react";
+import { sendTaskCompleteNotification } from "@/lib/notification/task-and-appointment-notify";
 
 // Colors matching FullCalendar task event colors
 const priorityStyles = {
@@ -54,7 +55,7 @@ export default function TaskComponent({ task }: TaskComponentProps) {
     event.dataTransfer.setData("text/plain", `task|${task.id}`);
     setIsDragging(true);
   };
-  const handleDelete = async () => {
+  const handleConfirm = async () => {
     try {
       await deleteTask(task.id);
       successToast("Task Completed successfully.");
@@ -202,7 +203,7 @@ export default function TaskComponent({ task }: TaskComponentProps) {
           onOpenChange={setPopconfirmVisible}
           onConfirm={(e) => {
             e?.stopPropagation();
-            handleDelete();
+            handleConfirm();
           }}
           onCancel={(e) => {
             e?.stopPropagation();

@@ -1,5 +1,6 @@
 "use client";
 
+import { editTask } from "@/actions/task/editTask.ts";
 import {
   Dialog,
   DialogClose,
@@ -12,22 +13,21 @@ import Submit from "@/components/Submit";
 import { usePopupStore } from "@/stores/popup";
 import type { CalendarTask } from "@/types/db";
 import type { Priority, User } from "@prisma/client";
-import { editTask } from "@/actions/task/editTask.ts";
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 // @ts-ignore
 import { deleteTask } from "@/actions/task/deleteTask.ts";
 import FormError from "@/components/FormError";
 import { SlimInput } from "@/components/SlimInput";
-import { useFormErrorStore } from "@/stores/form-error";
-import { addOneHour } from "@/utils/time";
-import moment from "moment";
-import AssignTaskDropDown from "./AssignTaskDropDown";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { useCalendarStore } from "@/stores/calendarStore";
+import { useFormErrorStore } from "@/stores/form-error";
 import { formatTime12Hour } from "@/utils/formateTime12Hours";
+import { addOneHour } from "@/utils/time";
 import { Select } from "antd";
 import { Check, Trash2 } from "lucide-react";
+import moment from "moment";
+import AssignTaskDropDown from "./AssignTaskDropDown";
 
 export default function UpdateTask() {
   const router = useRouter();
@@ -43,7 +43,7 @@ export default function UpdateTask() {
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description);
   const [assignedUsers, setAssignedUsers] = useState<number[]>(
-    task?.assignedUsers?.map(user => user.id) || [],
+    task?.assignedUsers?.map((user) => user.id) || [],
   );
   const { clearError, showError } = useFormErrorStore();
   const [priority, setPriority] = useState<Priority>(task.priority);
@@ -189,7 +189,7 @@ export default function UpdateTask() {
               name="title"
               className="mt-2 rounded-md border-2 border-gray-500 p-1"
               value={title}
-              onChange={e => setTitle(e.target.value)}
+              onChange={(e) => setTitle(e.target.value)}
               autoFocus
             />
           </div>
@@ -201,7 +201,7 @@ export default function UpdateTask() {
               name="description"
               className="mt-2 rounded-md border-2 border-gray-500 p-1"
               value={description || ""}
-              onChange={e => setDescription(e.target.value)}
+              onChange={(e) => setDescription(e.target.value)}
             />
           </div>
 
@@ -215,7 +215,7 @@ export default function UpdateTask() {
                   rootClassName="grow"
                   type="date"
                   value={date ?? ""}
-                  onChange={event => setDate(event.currentTarget.value)}
+                  onChange={(event) => setDate(event.currentTarget.value)}
                 />
                 <div className="flex items-end gap-2">
                   {/* Start Time */}
@@ -226,7 +226,7 @@ export default function UpdateTask() {
                     <div>
                       <Select
                         value={startTime}
-                        onChange={value =>
+                        onChange={(value) =>
                           handleTimeChange(
                             { target: { value } } as any,
                             "start",
@@ -237,7 +237,7 @@ export default function UpdateTask() {
                       >
                         <Option value="">Start Time</Option>
 
-                        {timeOptions.map(time => (
+                        {timeOptions.map((time) => (
                           <Option key={time.value} value={time.value}>
                             <p className="text-base text-gray-600">
                               {time.label}
@@ -254,7 +254,7 @@ export default function UpdateTask() {
                     </span>
                     <Select
                       value={endTime}
-                      onChange={value =>
+                      onChange={(value) =>
                         handleTimeChange({ target: { value } } as any, "end")
                       }
                       style={{ width: "100%", height: 34 }}
@@ -262,7 +262,7 @@ export default function UpdateTask() {
                     >
                       <Option value="">End Time</Option>
 
-                      {timeOptions.map(time => (
+                      {timeOptions.map((time) => (
                         <Option key={time.value} value={time.value}>
                           {time.label}
                         </Option>

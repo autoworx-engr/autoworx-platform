@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { deleteTask } from "@/actions/task/deleteTask";
+import { completeTask } from "@/actions/task/completeTask";
 import {
   appointmentQueryKey,
   taskQueryKey,
@@ -149,7 +149,7 @@ export const EventDetailsSheet = ({
     taskKeys.forEach(removeFromCache);
     onOpenChange(false);
 
-    const result = await deleteTask(taskId);
+    const result = await completeTask(taskId);
     if (result.type === "success") {
       successToast("Task Completed successfully.");
       invalidateCalendarQueries();
