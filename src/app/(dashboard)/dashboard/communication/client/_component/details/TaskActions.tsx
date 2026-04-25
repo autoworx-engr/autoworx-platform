@@ -1,6 +1,6 @@
 "use client";
 
-import { deleteTask } from "@/actions/task/deleteTask";
+import { completeTask } from "@/actions/task/completeTask";
 import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
 import { Task, User } from "@prisma/client";
 import { CircleCheckBig, SquarePen } from "lucide-react";
@@ -30,7 +30,7 @@ export default function TaskActions({ task }: TProps) {
         className="disabled:text-gray-400"
         onClick={() =>
           startTransaction(async () => {
-            await deleteTask(task.id);
+            await completeTask(task.id);
           })
         }
       >
