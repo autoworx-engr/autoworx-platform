@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
     if (!body.companyId) {
       return NextResponse.json(
         { success: false, message: "Company id is required!" },
-        { status: 404 },
+        { status: 400 },
       );
     }
 

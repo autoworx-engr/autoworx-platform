@@ -21,9 +21,14 @@ export const getGroupMessagesById = async (groupId: number) => {
     where: {
       id: groupId,
     },
-    include: {
+    select: {
+      id: true,
       messages: {
-        include: {
+        select: {
+          groupId: true,
+          from: true,
+          message: true,
+          createdAt: true,
           attachment: true,
         },
       },

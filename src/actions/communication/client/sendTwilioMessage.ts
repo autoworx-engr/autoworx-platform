@@ -130,47 +130,50 @@ export async function sendTwilioMessage({
         mediaUrl: attachments.map((file) => file.url),
       });
 
-      const dbMessage = await db.clientSMS.create({
-        data: {
-          from: twilioCredentials.phoneNumber,
-          to,
-          message: message ?? "",
-          sentBy: "Company",
-          userId: user?.id,
-          isRead: true,
-          clientId,
-          companyId: twilioCredentials.companyId,
-          isSalesAgent,
-        },
+      const data = await db.$transaction(async (tx) => {
+        const created = await tx.clientSMS.create({
+          data: {
+            from: twilioCredentials!.phoneNumber,
+            to,
+            message: message ?? "",
+            sentBy: "Company",
+            userId: user?.id,
+            isRead: true,
+            clientId,
+            companyId: twilioCredentials!.companyId,
+            isSalesAgent,
+          },
+        });
+
+        if (attachments && attachments.length > 0) {
+          await tx.clientSmsAttachments.createMany({
+            data: attachments.map((file) => ({
+              name: file.name,
+              url: file.url,
+              isVoiceNote: file.isVoiceNote ?? false,
+              clientSMSId: created.id,
+            })),
+          });
+        }
+
+        if (client && client?.isSalesAgent) {
+          await tx.client.update({
+            where: { id: clientId },
+            data: { isSalesAgent: false },
+          });
+        }
+
+        return tx.clientSMS.findFirst({
+          where: { id: created.id },
+          include: { attachments: true },
+        });
       });
 
-      if (client && client?.isSalesAgent) {
-        await db.client.update({
-          where: {
-            id: clientId,
-          },
-          data: {
-            isSalesAgent: false,
-          },
-        });
-      }
-
-      const processedAttachments = [];
-      for (const file of attachments) {
-        let atc = await db.clientSmsAttachments.create({
-          data: {
-            name: file.name,
-            url: file.url,
-            isVoiceNote: file.isVoiceNote ?? false,
-            clientSMSId: dbMessage.id,
-          },
-        });
-        processedAttachments.push({
-          name: file.name,
-          url: file.url,
-          isVoiceNote: file.isVoiceNote ?? false,
-        });
-      }
+      const processedAttachments = (attachments ?? []).map((file) => ({
+        name: file.name,
+        url: file.url,
+        isVoiceNote: file.isVoiceNote ?? false,
+      }));
 
       await updateNewSMSChatTrack({
         clientId,
@@ -179,18 +182,9 @@ export async function sendTwilioMessage({
         attachments: processedAttachments,
       });
 
-      let data = await db.clientSMS.findFirst({
-        where: {
-          id: dbMessage.id,
-        },
-        include: {
-          attachments: true,
-        },
-      });
-
       try {
         if (client?.Lead?.id && client?.Lead?.columnId) {
-          if (data?.sentBy == "Company") {
+          if (data?.sentBy === "Company") {
             await updatePipelineAutomationTrigger({
               companyId: client.companyId,
               condition: "MESSAGE_SENT_CLIENT",

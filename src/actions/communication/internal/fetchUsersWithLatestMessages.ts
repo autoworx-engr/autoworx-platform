@@ -36,35 +36,24 @@ export const fetchUsersWithLatestMessages = async () => {
       },
     });
 
-    // Calculate unread counts and latest message info per user
-    const usersWithLatestMessages = users.map((user) => {
-      // Find all messages between current user and this user (including group messages for now)
-      const userMessages = messages.filter(
-        (message) =>
-          (message.from === currentUserId && message.to === user.id) ||
-          (message.from === user.id && message.to === currentUserId),
-      );
+    // Build a single-pass index of latest message per counterpart user. Messages
+    // are already ordered by createdAt desc, so the first hit per counterpart is
+    // the latest. Avoids O(n*m) per-user filtering.
+    const latestByCounterpart = new Map<number, (typeof messages)[number]>();
+    for (const message of messages) {
+      const counterpartId =
+        message.from === currentUserId ? message.to : message.from;
+      if (counterpartId == null) continue;
+      if (!latestByCounterpart.has(counterpartId)) {
+        latestByCounterpart.set(counterpartId, message);
+      }
+    }
 
-      // Get the latest message
-      const latestMessage = userMessages.length > 0 ? userMessages[0] : null;
-
-      // Count unread messages (messages sent to current user that haven't been read)
-      const unreadMessages = userMessages.filter(
-        (message) => message.to === currentUserId && message.from === user.id,
-      );
-
-      // Check if any of these messages are unread via ChatTrack
-      const hasUnreadMessage = unreadMessages.some((message) => {
-        // We'll check this via a separate query since we need ChatTrack info
-        return false; // For now, we'll handle this separately
-      });
-
-      return {
-        ...user,
-        latestMessage,
-        unreadCount: hasUnreadMessage ? 1 : 0,
-      };
-    });
+    const usersWithLatestMessages = users.map((user) => ({
+      ...user,
+      latestMessage: latestByCounterpart.get(user.id) ?? null,
+      unreadCount: 0,
+    }));
 
     // Now check for unread status via ChatTrack for users who have messages
     const userChatTracks = await db.chatTrack.findMany({
