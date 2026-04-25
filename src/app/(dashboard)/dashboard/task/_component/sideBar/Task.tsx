@@ -13,6 +13,7 @@ import { taskQueryKey } from "../../_constant";
 import useWeekStartEndDays from "../../_hook/lib/useWeekStartEndDays";
 import { CircleCheckBig, SquarePen } from "lucide-react";
 import { sendTaskCompleteNotification } from "@/lib/notification/task-and-appointment-notify";
+import { completeTask } from "@/actions/task/completeTask";
 
 // Colors matching FullCalendar task event colors
 const priorityStyles = {
@@ -57,7 +58,7 @@ export default function TaskComponent({ task }: TaskComponentProps) {
   };
   const handleConfirm = async () => {
     try {
-      await deleteTask(task.id);
+      await completeTask(task.id);
       successToast("Task Completed successfully.");
       queryClient.invalidateQueries({
         queryKey: taskQueryKey.allTaskByScroll,
@@ -113,7 +114,6 @@ export default function TaskComponent({ task }: TaskComponentProps) {
         : [];
     });
     revalidateTaskQueries();
-    successToast("Task deleted successfully.");
   };
 
   const priorityStyle =
