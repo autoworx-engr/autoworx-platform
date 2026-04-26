@@ -89,6 +89,7 @@ export const Checkout = () => {
   const [phoneLookedUp, setPhoneLookedUp] = useState(false);
   const [showPayNowModal, setShowPayNowModal] = useState(false);
   const [createdBookingId, setCreatedBookingId] = useState<string>("");
+  const [termsAgreed, setTermsAgreed] = useState(false);
   const [isResolvingBookingReturn, setIsResolvingBookingReturn] =
     useState(false);
   const [giftCardCode, setGiftCardCode] = useState("");
@@ -987,30 +988,52 @@ export const Checkout = () => {
                 />
               </div>
 
-              {/* Policies */}
-              <div className="rounded-lg bg-muted/50 p-3 space-y-1.5 text-xs text-muted-foreground">
-                <p className="flex items-center gap-1.5">
-                  <Shield className="w-3.5 h-3.5 text-primary" /> Your info is
-                  secure and encrypted.
-                </p>
-                <p>
-                  By confirming, an <strong>Autoworx client account</strong>{" "}
-                  will be created automatically. Future bookings will use OTP
-                  verification for faster checkout.
-                </p>
-                <p>
-                  Free cancellation up to 24 hours before your appointment.{" "}
-                  <a href="#" className="text-primary underline">
-                    Cancellation Policy
-                  </a>
-                </p>
-              </div>
+              {(shop?.termsConditions || shop?.privacyPolicy) && (
+                <div className="rounded-lg border bg-card p-4 space-y-3">
+                  {shop?.termsConditions && (
+                    <div>
+                      <p className="text-xs font-semibold text-foreground mb-1">
+                        Terms &amp; Conditions
+                      </p>
+                      <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+                        {shop.termsConditions}
+                      </p>
+                    </div>
+                  )}
+                  {shop?.privacyPolicy && (
+                    <div>
+                      <p className="text-xs font-semibold text-foreground mb-1">
+                        Privacy Policy
+                      </p>
+                      <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+                        {shop.privacyPolicy}
+                      </p>
+                    </div>
+                  )}
+                  <label className="flex items-start gap-2.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={termsAgreed}
+                      onChange={(e) => setTermsAgreed(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-input accent-primary"
+                    />
+                    <span className="text-xs text-muted-foreground leading-snug">
+                      I have read and agree to the terms &amp; conditions and
+                      privacy policy above.
+                    </span>
+                  </label>
+                </div>
+              )}
 
               <Button
                 type="submit"
                 size="lg"
                 className="w-full"
-                disabled={isBookingSubmitting}
+                disabled={
+                  isBookingSubmitting ||
+                  (!!(shop?.termsConditions || shop?.privacyPolicy) &&
+                    !termsAgreed)
+                }
               >
                 {isBookingSubmitting ? "Confirming..." : "Confirm Booking"}
               </Button>
