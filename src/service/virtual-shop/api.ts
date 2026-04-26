@@ -749,6 +749,12 @@ export const lookupClientByPhone = async function ({
         lastName: string;
         email: string;
         mobile: string;
+        Vehicle: {
+          id: number;
+          year: number | null;
+          make: string | null;
+          model: string | null;
+        }[];
       } | null;
     }>("/api/virtual-shop/client-lookup/by-phone", {
       params: { phone, shopId },
