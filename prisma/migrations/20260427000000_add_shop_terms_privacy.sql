@@ -1,0 +1,3 @@
+ALTER TABLE "shops"
+  ADD COLUMN IF NOT EXISTS "terms_conditions" VARCHAR(1500),
+  ADD COLUMN IF NOT EXISTS "privacy_policy" VARCHAR(1500);

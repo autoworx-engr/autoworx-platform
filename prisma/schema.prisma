@@ -2944,6 +2944,8 @@ model Shop {
   bannerUrl       String?             @map("banner_url")
   themeConfig     Json?               @map("theme_config") // Store { primaryColor: '#3b82f6', font: 'Inter' }
   isActive        Boolean             @default(true) @map("is_active")
+  termsConditions String?             @map("terms_conditions") @db.VarChar(1500)
+  privacyPolicy   String?             @map("privacy_policy") @db.VarChar(1500)
   createdAt       DateTime            @default(now()) @map("created_at")
   updatedAt       DateTime            @updatedAt @map("updated_at")
   company         Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)

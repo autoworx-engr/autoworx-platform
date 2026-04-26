@@ -22,6 +22,8 @@ export interface ShopData {
   themeConfig?: ThemeConfig;
   companyId?: number;
   isActive?: boolean;
+  termsConditions?: string | null;
+  privacyPolicy?: string | null;
   company?: ShopCompanyPricing | null;
   bookingSettings?: ShopBookingSettingsData | null;
 }
