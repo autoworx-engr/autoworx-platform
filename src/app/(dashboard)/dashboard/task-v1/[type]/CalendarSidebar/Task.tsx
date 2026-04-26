@@ -4,12 +4,12 @@ import { useCalendarStore } from "@/stores/calendarStore";
 import { usePopupStore } from "@/stores/popup";
 import { Task, User } from "@prisma/client";
 import { Tooltip } from "antd";
+import { CircleCheckBig, SquarePen } from "lucide-react";
 import moment from "moment";
+import { useRouter } from "next/navigation";
 import React, { LegacyRef } from "react";
 import { useDrag } from "react-dnd";
 import { useDate } from "../Calendar/Day";
-import { useRouter } from "next/navigation";
-import { CircleCheckBig, SquarePen } from "lucide-react";
 
 export default function TaskComponent({
   task,

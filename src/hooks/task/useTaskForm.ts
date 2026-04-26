@@ -250,6 +250,7 @@ export function useTaskForm({
         });
         setUpdateVariable();
         onTaskDeleted && onTaskDeleted(id);
+        successToast("Task deleted successfully.");
         onClose && onClose();
       } else {
         errorToast("Failed to delete task");

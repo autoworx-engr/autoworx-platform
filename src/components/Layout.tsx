@@ -189,9 +189,11 @@ const mobileSuperAdminNav = [
 export default function Layout({
   session,
   children,
+  canReceiveCalls = false,
 }: {
   session: Session | null;
   children: React.ReactNode;
+  canReceiveCalls?: boolean;
 }) {
   const pathname = usePathname(); // Get the current route path
   const isSuperAdminRoute = pathname?.startsWith("/awx-dashboard");
@@ -259,10 +261,10 @@ export default function Layout({
       }
     };
 
-    if (session && currentUser?.companyId) {
+    if (session && currentUser?.companyId && canReceiveCalls) {
       fetchVoiceConfig();
     }
-  }, [session, currentUser?.companyId]);
+  }, [session, currentUser?.companyId, canReceiveCalls]);
 
   // onesignal icon moveable
   useEffect(() => {
@@ -335,10 +337,12 @@ export default function Layout({
   return (
     <VoiceDeviceProvider>
       <div className="w-full overflow-y-hidden">
-        <VoiceAutoSetup
-          phoneNumber={voicePhoneNumber}
-          provider={voiceProvider}
-        />
+        {canReceiveCalls && (
+          <VoiceAutoSetup
+            phoneNumber={voicePhoneNumber}
+            provider={voiceProvider}
+          />
+        )}
         <SideNavbar
           navList={isSuperAdminRoute ? superAdminNavList : navbarList}
           permissions={permissions}
