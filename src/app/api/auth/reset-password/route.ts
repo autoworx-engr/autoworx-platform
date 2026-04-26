@@ -40,7 +40,9 @@ export async function POST(req: Request) {
     );
   }
 
-  const hashedPassword = await hash(newPassword, 10);
+  const salt_rounded = Number(process.env.SALT_ROUNDS ?? 12);
+
+  const hashedPassword = await hash(newPassword, salt_rounded);
 
   await db.$transaction([
     db.user.update({
