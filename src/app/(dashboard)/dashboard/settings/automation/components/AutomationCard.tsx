@@ -242,14 +242,14 @@ const AutomationCard: FC<AutomationCardProps> = ({
             <SquarePen size={20} />
           </button>
 
-          {(type === "pipeline" && isPipelineUpdating) ||
-          (type === "communication" && isCommunicationUpdating) ||
-          (type === "marketing" && isMarketingUpdating) ||
-          (type === "service-maintenance" && isServiceUpdating) ||
-          (type === "tag" && isTagUpdating) ||
-          (type === "inventory" && isInventoryUpdating) ||
-          (type === "invoice" && isInvoiceUpdating) ||
-          (type === "reporting" && isReportingUpdating) ? (
+          {(type === "pipeline" && isPipelineDeleting) ||
+          (type === "communication" && isCommunicationDeleting) ||
+          (type === "marketing" && isMarketingDeleting) ||
+          (type === "service-maintenance" && isServiceDeleting) ||
+          (type === "tag" && isTagDeleting) ||
+          (type === "inventory" && isInventoryDeleting) ||
+          (type === "invoice" && isInvoiceDeleting) ||
+          (type === "reporting" && isReportingDeleting) ? (
             <button>
               <Spin />
             </button>

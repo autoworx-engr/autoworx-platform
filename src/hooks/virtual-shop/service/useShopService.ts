@@ -178,9 +178,16 @@ export const useGetAppointmentSlots = (
 };
 
 export const useCreateVirtualShopServiceBooking = () => {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: (payload: CreateVirtualShopServiceBookingPayload) =>
       createVirtualShopServiceBooking(payload),
+    onSuccess: (_response, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["appointment-slots", variables?.shopId],
+      });
+    },
   });
 };
 
