@@ -42,22 +42,19 @@ export async function POST(req: Request) {
 
   const hashedPassword = await hash(newPassword, 10);
 
-  await db.user.update({
-    where: { id: resetToken.userId },
-    data: { password: hashedPassword },
-  });
-
-  const user = await db.user.findUnique({
-    where: { id: resetToken.userId },
-  });
-
-  await db.passwordResetToken.delete({ where: { id: resetToken.id } });
+  await db.$transaction([
+    db.user.update({
+      where: { id: resetToken.userId },
+      data: { password: hashedPassword },
+    }),
+    db.passwordResetToken.delete({ where: { id: resetToken.id } }),
+  ]);
 
   return NextResponse.json(
     {
       success: true,
       message: "Password reset successful",
-      email: user?.email,
+      email: resetToken.user.email,
     },
     { status: 200 },
   );

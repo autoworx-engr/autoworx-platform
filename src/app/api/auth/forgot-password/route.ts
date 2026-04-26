@@ -249,25 +249,18 @@ export async function POST(req: Request) {
   if (!user)
     return NextResponse.json({ error: "User not found" }, { status: 404 });
 
-  // Delete any existing OTPs for the user
-  await db.passwordResetToken.deleteMany({
-    where: { userId: user.id },
-  });
-
   // Generate new token and OTP
   const token = randomUUID();
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   const expiresAt = addMinutes(new Date(), 15); // OTP valid for 15 minutes
 
-  // Create a new password reset token
-  await db.passwordResetToken.create({
-    data: {
-      token,
-      otp,
-      userId: user.id,
-      expiresAt,
-    },
-  });
+  // Atomically replace any existing token with the new one
+  await db.$transaction([
+    db.passwordResetToken.deleteMany({ where: { userId: user.id } }),
+    db.passwordResetToken.create({
+      data: { token, otp, userId: user.id, expiresAt },
+    }),
+  ]);
 
   const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${token}`;
 
