@@ -20,6 +20,6 @@ export const updateInvoiceAutomationTrigger = async function (
     return response.data;
   } catch (error) {
     const err = errorHandler(error);
-    // throw err;
+    throw err;
   }
 };

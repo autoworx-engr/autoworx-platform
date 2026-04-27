@@ -51,6 +51,7 @@ export async function updatePipelineAutomationTrigger({
 
     if (data.statusCode === 401) {
       console.error("Error updating pipeline automation trigger:", data.errors);
+      throw new Error(data.errors);
     }
 
     return {

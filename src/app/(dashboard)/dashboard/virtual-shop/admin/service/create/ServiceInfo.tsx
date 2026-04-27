@@ -58,8 +58,7 @@ const counterToDurationMinutes = (hours: number, minutes: number) => {
   return safeHours * 60 + safeMinutes;
 };
 
-const toCounterInputValue = (value: number) =>
-  value > 0 ? String(value) : "00";
+const toCounterInputValue = (value: number) => (value > 0 ? String(value) : "");
 
 type ServiceInfoProps = {
   value: ServiceInfoState;
@@ -173,11 +172,17 @@ export default function ServiceInfo({
     nextHoursInput: string,
     nextMinutesInput: string,
   ) => {
-    if (nextHoursInput !== "" && !/^\d+$/.test(nextHoursInput)) {
+    if (
+      nextHoursInput !== "" &&
+      (!/^\d+$/.test(nextHoursInput) || nextHoursInput.length > 2)
+    ) {
       return;
     }
 
-    if (nextMinutesInput !== "" && !/^\d+$/.test(nextMinutesInput)) {
+    if (
+      nextMinutesInput !== "" &&
+      (!/^\d+$/.test(nextMinutesInput) || nextMinutesInput.length > 2)
+    ) {
       return;
     }
 
@@ -210,7 +215,7 @@ export default function ServiceInfo({
   const displayImageName = imageName || (imageUrl ? "Current image" : "");
 
   return (
-    <div className="h-full w-full space-y-5 rounded-xl border border-slate-200/80 bg-white p-5 shadow-sm">
+    <div className="w-full space-y-5 rounded-xl border border-slate-200/80 bg-white p-5 shadow-sm">
       {/* ── Row 1: Title + Duration ────────────────────────────────── */}
       <div className="grid gap-5 md:grid-cols-2">
         {/* Service Title */}
@@ -294,7 +299,7 @@ export default function ServiceInfo({
                   slimInputClassName,
                 )}
               />
-              <span className="pointer-events-none absolute bottom-0.5 left-0 right-0 text-center text-[10px] font-medium text-slate-400">
+              <span className="pointer-events-none absolute bottom-0 left-0 right-0 text-center text-[10px] font-medium text-slate-400">
                 HH
               </span>
             </div>
@@ -328,7 +333,7 @@ export default function ServiceInfo({
                   slimInputClassName,
                 )}
               />
-              <span className="pointer-events-none absolute bottom-0.5 left-0 right-0 text-center text-[10px] font-medium text-slate-400">
+              <span className="pointer-events-none absolute bottom-0 left-0 right-0 text-center text-[10px] font-medium text-slate-400">
                 MM
               </span>
             </div>

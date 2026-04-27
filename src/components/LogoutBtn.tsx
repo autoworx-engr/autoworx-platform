@@ -1,6 +1,5 @@
 "use client";
 
-import { env } from "next-runtime-env";
 import { cn } from "@/lib/cn";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
@@ -27,8 +26,8 @@ export default function LogoutBtn({ className, ...props }: TProps) {
         redirect: false,
       });
 
-      const redirectUrl = env("NEXT_PUBLIC_APP_URL")
-        ? env("NEXT_PUBLIC_APP_URL") + "/login"
+      const redirectUrl = process.env.NEXT_PUBLIC_APP_URL
+        ? process.env.NEXT_PUBLIC_APP_URL + "/login"
         : "https://autoworx.tech/login";
 
       try {

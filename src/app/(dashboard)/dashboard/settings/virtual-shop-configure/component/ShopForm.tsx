@@ -30,6 +30,8 @@ type ShopFormData = {
   bannerUrl?: string;
   themeConfig: ThemeConfig;
   isActive: boolean;
+  termsConditions?: string;
+  privacyPolicy?: string;
 };
 
 const domain = new URL(process.env.NEXT_PUBLIC_APP_URL!).hostname;
@@ -63,6 +65,8 @@ export default function ShopForm({
       fontFamily: "Inter",
     },
     isActive: true,
+    termsConditions: "",
+    privacyPolicy: "",
   });
 
   const [files, setFiles] = useState<{
@@ -78,11 +82,15 @@ export default function ShopForm({
   const [errors, setErrors] = useState<{
     storeName?: string;
     description?: string;
+    termsConditions?: string;
+    privacyPolicy?: string;
   }>({});
 
   const [touched, setTouched] = useState<{
     storeName?: boolean;
     description?: boolean;
+    termsConditions?: boolean;
+    privacyPolicy?: boolean;
   }>({});
   const [isUploading, setIsUploading] = useState(false);
 
@@ -108,6 +116,8 @@ export default function ShopForm({
           fontFamily: "Inter",
         },
         isActive: data.isActive ?? true,
+        termsConditions: data.termsConditions ?? "",
+        privacyPolicy: data.privacyPolicy ?? "",
       });
     }
   }, [data]);
@@ -133,6 +143,14 @@ export default function ShopForm({
 
     if (form.description && form.description.length > 150) {
       newErrors.description = "Max 150 characters allowed";
+    }
+
+    if (form.termsConditions && form.termsConditions.length > 1500) {
+      newErrors.termsConditions = "Max 1500 characters allowed";
+    }
+
+    if (form.privacyPolicy && form.privacyPolicy.length > 1500) {
+      newErrors.privacyPolicy = "Max 1500 characters allowed";
     }
 
     setErrors(newErrors);
@@ -421,6 +439,105 @@ export default function ShopForm({
                 }))
               }
             />
+          </div>
+        </div>
+      </div>
+
+      {/* TERMS & POLICY */}
+      <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-slate-700">
+            Terms & Conditions
+          </label>
+          <SlimTextarea
+            value={form.termsConditions}
+            name="termsConditions"
+            placeholder="Enter your terms and conditions..."
+            maxLength={1500}
+            onChange={(e) => {
+              const value = e.target.value;
+              setForm((p) => ({ ...p, termsConditions: value }));
+              setErrors((prev) => ({
+                ...prev,
+                termsConditions:
+                  value.length > 1500
+                    ? "Max 1500 characters allowed"
+                    : undefined,
+              }));
+            }}
+            onBlur={() => {
+              setTouched((p) => ({ ...p, termsConditions: true }));
+              validate();
+            }}
+            className={
+              touched.termsConditions && errors.termsConditions
+                ? "border-red-400"
+                : "bg-slate-50/60"
+            }
+          />
+          <div className="mt-1 flex justify-between text-xs">
+            {touched.termsConditions && errors.termsConditions ? (
+              <p className="text-red-500">{errors.termsConditions}</p>
+            ) : (
+              <span />
+            )}
+            <span
+              className={
+                (form.termsConditions || "").length > 1500
+                  ? "text-red-500"
+                  : "text-slate-400"
+              }
+            >
+              {(form.termsConditions || "").length}/1500
+            </span>
+          </div>
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-slate-700">
+            Privacy Policy
+          </label>
+          <SlimTextarea
+            value={form.privacyPolicy}
+            name="privacyPolicy"
+            placeholder="Enter your privacy policy..."
+            maxLength={1500}
+            onChange={(e) => {
+              const value = e.target.value;
+              setForm((p) => ({ ...p, privacyPolicy: value }));
+              setErrors((prev) => ({
+                ...prev,
+                privacyPolicy:
+                  value.length > 1500
+                    ? "Max 1500 characters allowed"
+                    : undefined,
+              }));
+            }}
+            onBlur={() => {
+              setTouched((p) => ({ ...p, privacyPolicy: true }));
+              validate();
+            }}
+            className={
+              touched.privacyPolicy && errors.privacyPolicy
+                ? "border-red-400"
+                : "bg-slate-50/60"
+            }
+          />
+          <div className="mt-1 flex justify-between text-xs">
+            {touched.privacyPolicy && errors.privacyPolicy ? (
+              <p className="text-red-500">{errors.privacyPolicy}</p>
+            ) : (
+              <span />
+            )}
+            <span
+              className={
+                (form.privacyPolicy || "").length > 1500
+                  ? "text-red-500"
+                  : "text-slate-400"
+              }
+            >
+              {(form.privacyPolicy || "").length}/1500
+            </span>
           </div>
         </div>
       </div>

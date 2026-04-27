@@ -5,7 +5,6 @@ import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import { google } from "googleapis";
 import moment from "moment-timezone"; // Use moment-timezone
-import { env } from "next-runtime-env";
 import { TaskType } from "../createTask";
 import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 import { getGoogleCalendarToken } from "@/actions/calendar-settings/getGoogleCalendarAuth";
@@ -17,8 +16,8 @@ async function createGoogleCalendarEvent(
 
   const refreshToken = (await getGoogleCalendarToken())?.googleCalendarToken;
 
-  const clientId = env("GMAIL_CLIENT_ID");
-  const clientSecret = env("GMAIL_CLIENT_SECRET");
+  const clientId = process.env.GMAIL_CLIENT_ID;
+  const clientSecret = process.env.GMAIL_CLIENT_SECRET;
 
   const oAuth2Client = new google.auth.OAuth2(clientId, clientSecret);
 

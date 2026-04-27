@@ -3,7 +3,6 @@ import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import crypto from "crypto";
 import { google } from "googleapis";
-import { env } from "next-runtime-env";
 import { redirect } from "next/navigation";
 
 export async function getGoogleCalendarToken() {
@@ -16,9 +15,9 @@ export async function getGoogleCalendarToken() {
 
 export async function generateAuthURL() {
   const oauth2Client = new google.auth.OAuth2(
-    env("GMAIL_CLIENT_ID"),
-    env("GMAIL_CLIENT_SECRET"),
-    `${env("NEXT_PUBLIC_APP_URL")}/dashboard/task/auth`,
+    process.env.GMAIL_CLIENT_ID,
+    process.env.GMAIL_CLIENT_SECRET,
+    `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/task/auth`,
   );
 
   const scopes = [

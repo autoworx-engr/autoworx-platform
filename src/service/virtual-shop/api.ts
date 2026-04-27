@@ -22,6 +22,8 @@ export interface ShopData {
   themeConfig?: ThemeConfig;
   companyId?: number;
   isActive?: boolean;
+  termsConditions?: string | null;
+  privacyPolicy?: string | null;
   company?: ShopCompanyPricing | null;
   bookingSettings?: ShopBookingSettingsData | null;
 }
@@ -749,6 +751,12 @@ export const lookupClientByPhone = async function ({
         lastName: string;
         email: string;
         mobile: string;
+        Vehicle: {
+          id: number;
+          year: number | null;
+          make: string | null;
+          model: string | null;
+        }[];
       } | null;
     }>("/api/virtual-shop/client-lookup/by-phone", {
       params: { phone, shopId },
