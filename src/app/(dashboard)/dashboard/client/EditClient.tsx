@@ -47,7 +47,11 @@ export default function EditCustomer({
           </button>
         </DialogTrigger>
         {open && (
-          <EditClientModalBody client={client} onClose={() => setOpen(false)} />
+          <EditClientModalBody
+            key={client.id}
+            client={client}
+            onClose={() => setOpen(false)}
+          />
         )}
       </Dialog>
     </>

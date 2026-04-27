@@ -72,8 +72,7 @@ export const deleteClientTag = async (tagId: number) => {
       throw new Error("Company ID is required");
     }
 
-    // Check if tag belongs to current company and is a client tag
-    const tag = await db.tag.findFirst({
+    const result = await db.tag.deleteMany({
       where: {
         id: tagId,
         companyId: companyId,
@@ -81,19 +80,13 @@ export const deleteClientTag = async (tagId: number) => {
       },
     });
 
-    if (!tag) {
-      throw new Error("Tag not found or not authorized");
+    if (result.count === 0) {
+      return { type: "error", message: "Tag not found or not authorized" };
     }
-
-    await db.tag.delete({
-      where: {
-        id: tagId,
-      },
-    });
 
     return { type: "success", message: "Client tag deleted successfully" };
   } catch (error) {
-    console.error("Error deleting client tag:", error);
+    // console.error("Error deleting client tag:", error);
     return { type: "error", message: "Failed to delete client tag" };
   }
 };
