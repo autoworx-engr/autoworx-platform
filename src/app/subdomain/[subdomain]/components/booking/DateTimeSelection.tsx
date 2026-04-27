@@ -1,6 +1,13 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, CalendarDays, Clock, Zap } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  CalendarDays,
+  Clock,
+  Phone,
+  Zap,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useBooking } from "../../context/BookingContext";
@@ -227,6 +234,39 @@ export const DateTimeSelection = () => {
                 <CalendarDays className="w-4 h-4 text-primary" />
                 {format(selectedDate, "EEEE, MMMM d, yyyy")}
               </div>
+
+              {/* Contact Us banner when all slots are unavailable due to service duration */}
+              {timeSlots.length > 0 &&
+                timeSlots.every((s) => !s.available) &&
+                shop?.company?.phone && (
+                  <div
+                    className="flex items-center justify-between rounded-lg border px-4 py-3 text-sm"
+                    style={{
+                      borderColor: `${primaryColor}50`,
+                      backgroundColor: `${primaryColor}10`,
+                    }}
+                  >
+                    <p className="font-medium" style={{ color: primaryColor }}>
+                      Service duration exceeds available hours. Contact us to
+                      schedule.
+                    </p>
+                    <a href={`tel:${shop.company.phone}`}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1.5 shrink-0"
+                        style={{
+                          borderColor: `${primaryColor}70`,
+                          color: primaryColor,
+                        }}
+                      >
+                        <Phone className="w-3.5 h-3.5" />
+                        {shop.company.phone}
+                      </Button>
+                    </a>
+                  </div>
+                )}
+
               {Object.entries(grouped).map(([period, slots]) => {
                 if (slots.length === 0) return null;
                 return (
@@ -258,7 +298,7 @@ export const DateTimeSelection = () => {
                   </div>
                 );
               })}
-              {timeSlots.filter((s) => s.available).length === 0 && (
+              {timeSlots.length === 0 && (
                 <div className="text-center py-8 space-y-3">
                   <p className="text-sm text-muted-foreground">
                     No available slots on this day.

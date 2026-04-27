@@ -263,9 +263,6 @@ export default function ShopForm({
       <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <div className="grid grid-cols-1 gap-4">
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">
-              Store name
-            </label>
             <SlimInput
               name="storeName"
               value={form.storeName}
@@ -317,9 +314,6 @@ export default function ShopForm({
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">
-              Description
-            </label>
             <SlimTextarea
               value={form.description}
               name="description"
@@ -444,11 +438,8 @@ export default function ShopForm({
       </div>
 
       {/* TERMS & POLICY */}
-      <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+      <div className="space-y-2 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-slate-700">
-            Terms & Conditions
-          </label>
           <SlimTextarea
             value={form.termsConditions}
             name="termsConditions"
@@ -494,9 +485,6 @@ export default function ShopForm({
         </div>
 
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-slate-700">
-            Privacy Policy
-          </label>
           <SlimTextarea
             value={form.privacyPolicy}
             name="privacyPolicy"

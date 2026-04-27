@@ -10,6 +10,7 @@ export interface ThemeConfig {
 export interface ShopCompanyPricing {
   tax?: number | string | null;
   serviceFee?: number | string | null;
+  phone?: string | null;
 }
 
 export interface ShopData {
@@ -195,6 +196,7 @@ export interface CreateVirtualShopServiceBookingResponse {
 interface AppointmentSlotsApiResponse {
   success: boolean;
   date?: string;
+  slots?: AppointmentSlot[];
   availableSlots?: string[];
   data?: AppointmentSlot[];
 }
@@ -699,14 +701,16 @@ export const getAppointmentSlots = async function (
     );
 
     const payload = response.data;
-    const normalizedData: AppointmentSlot[] = Array.isArray(payload.data)
-      ? payload.data
-      : Array.isArray(payload.availableSlots)
-        ? payload.availableSlots.map((time) => ({
-            time,
-            available: true,
-          }))
-        : [];
+    const normalizedData: AppointmentSlot[] = Array.isArray(payload.slots)
+      ? payload.slots
+      : Array.isArray(payload.data)
+        ? payload.data
+        : Array.isArray(payload.availableSlots)
+          ? payload.availableSlots.map((time) => ({
+              time,
+              available: true,
+            }))
+          : [];
 
     return {
       success: payload.success,
