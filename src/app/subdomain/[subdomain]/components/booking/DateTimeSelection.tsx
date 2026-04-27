@@ -236,20 +236,19 @@ export const DateTimeSelection = () => {
               </div>
 
               {/* Contact Us banner when all slots are unavailable due to service duration */}
-              {timeSlots.length > 0 &&
-                timeSlots.every((s) => !s.available) &&
-                shop?.company?.phone && (
-                  <div
-                    className="flex items-center justify-between rounded-lg border px-4 py-3 text-sm"
-                    style={{
-                      borderColor: `${primaryColor}50`,
-                      backgroundColor: `${primaryColor}10`,
-                    }}
-                  >
-                    <p className="font-medium" style={{ color: primaryColor }}>
-                      Service duration exceeds available hours. Contact us to
-                      schedule.
-                    </p>
+              {timeSlots.length > 0 && timeSlots.every((s) => !s.available) && (
+                <div
+                  className="flex items-center justify-between gap-3 rounded-lg border px-4 py-3 text-sm"
+                  style={{
+                    borderColor: `${primaryColor}50`,
+                    backgroundColor: `${primaryColor}10`,
+                  }}
+                >
+                  <p className="font-medium" style={{ color: primaryColor }}>
+                    Service duration exceeds available hours. Contact us to
+                    schedule.
+                  </p>
+                  {shop?.company?.phone && (
                     <a href={`tel:${shop.company.phone}`}>
                       <Button
                         size="sm"
@@ -264,8 +263,9 @@ export const DateTimeSelection = () => {
                         {shop.company.phone}
                       </Button>
                     </a>
-                  </div>
-                )}
+                  )}
+                </div>
+              )}
 
               {Object.entries(grouped).map(([period, slots]) => {
                 if (slots.length === 0) return null;
