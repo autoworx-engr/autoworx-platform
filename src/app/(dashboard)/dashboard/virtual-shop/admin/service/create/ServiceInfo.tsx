@@ -215,7 +215,7 @@ export default function ServiceInfo({
   const displayImageName = imageName || (imageUrl ? "Current image" : "");
 
   return (
-    <div className="h-full w-full space-y-5 rounded-xl border border-slate-200/80 bg-white p-5 shadow-sm">
+    <div className="w-full space-y-5 rounded-xl border border-slate-200/80 bg-white p-5 shadow-sm">
       {/* ── Row 1: Title + Duration ────────────────────────────────── */}
       <div className="grid gap-5 md:grid-cols-2">
         {/* Service Title */}
