@@ -212,6 +212,8 @@ export async function PATCH(
       bannerUrl,
       themeConfig,
       isActive,
+      termsConditions,
+      privacyPolicy,
     } = body;
 
     const existingShop = await db.shop.findUnique({
@@ -236,6 +238,8 @@ export async function PATCH(
         bannerUrl,
         themeConfig,
         isActive,
+        termsConditions: termsConditions ?? null,
+        privacyPolicy: privacyPolicy ?? null,
       },
     });
 
