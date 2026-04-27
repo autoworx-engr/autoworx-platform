@@ -1,7 +1,7 @@
 "use client";
 import { cn } from "@/lib/cn";
 import { useMemo, useState } from "react";
-import { CompanyStat } from "../page";
+import { CompanyStat, PlatformStats } from "../page";
 import { Card, CardContent } from "@/components/ui/card";
 import Avatar from "@/components/Avatar";
 import Link from "next/link";
@@ -13,9 +13,49 @@ import moment from "moment";
 
 type Props = {
   companies: CompanyStat[];
+  platformStats: PlatformStats;
 };
 
-const AWXDashboard = ({ companies }: Props) => {
+const subscriptionBadge = (
+  status: string | null,
+): { text: string; className: string } => {
+  const map: Record<string, { text: string; className: string }> = {
+    ACTIVE: {
+      text: "ACTIVE",
+      className:
+        "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20 px-3 py-1 rounded-full font-semibold whitespace-nowrap",
+    },
+    TRIALING: {
+      text: "TRIALING",
+      className:
+        "bg-sky-50 text-sky-700 ring-1 ring-sky-600/20 px-3 py-1 rounded-full font-semibold whitespace-nowrap",
+    },
+    PAST_DUE: {
+      text: "PAST DUE",
+      className:
+        "bg-amber-50 text-amber-700 ring-1 ring-amber-600/20 px-3 py-1 rounded-full font-semibold whitespace-nowrap",
+    },
+    CANCELED: {
+      text: "CANCELED",
+      className:
+        "bg-rose-50 text-rose-700 ring-1 ring-rose-600/20 px-3 py-1 rounded-full font-semibold whitespace-nowrap",
+    },
+    UNPAID: {
+      text: "UNPAID",
+      className:
+        "bg-orange-50 text-orange-700 ring-1 ring-orange-600/20 px-3 py-1 rounded-full font-semibold whitespace-nowrap",
+    },
+  };
+  return (
+    map[status ?? ""] ?? {
+      text: "NO SUBSCRIPTION",
+      className:
+        "bg-slate-50 text-slate-700 ring-1 ring-slate-600/20 px-3 py-1 rounded-full font-semibold",
+    }
+  );
+};
+
+const AWXDashboard = ({ companies, platformStats }: Props) => {
   const { data: reports, isFetching, isLoading } = useGetAllBugReports(20);
   const [inputValue, setInputValue] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -38,29 +78,26 @@ const AWXDashboard = ({ companies }: Props) => {
     debounceSearch(value);
   };
 
-  const getStatusStyles = (status: string | undefined) => {
-    if (status?.toUpperCase() === "PAID") {
-      // Modernized status tag for success state
-      return {
-        text: "PAID",
-        className:
-          "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20 px-3 py-1 rounded-full font-semibold whitespace-nowrap",
-      };
-    }
-    return {
-      text: "STATUS UNKNOWN",
-      className:
-        "bg-slate-50 text-slate-700 ring-1 ring-slate-600/20 px-3 py-1 rounded-full font-semibold",
-    };
-  };
-
   const statistics = [
-    { title: "Total Revenue", value: "567" },
-    { title: "Total Contracts", value: "737" },
-    { title: "Churn Rate", value: "567" },
-    { title: "Growth Rate", value: "567" },
+    {
+      title: "Monthly Revenue",
+      value: `$${platformStats.monthlyRevenue.toLocaleString()}`,
+    },
+    {
+      title: "Active Contracts",
+      value: platformStats.totalActiveContracts,
+    },
+    {
+      title: "Churn Rate",
+      value: `${platformStats.churnRate}%`,
+    },
+    {
+      title: "Growth Rate",
+      value: `${platformStats.growthRate}%`,
+    },
     { title: "Bugs", value: reports?.length ?? 0 },
   ];
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-4 text-xs 2xl:text-base">
       <div className="flex flex-col gap-y-8">
@@ -91,7 +128,6 @@ const AWXDashboard = ({ companies }: Props) => {
                   <div className="mb-2 text-base font-semibold text-slate-500 dark:text-slate-400 sm:text-xl">
                     {stat.title}
                   </div>
-                  {/* Apply a subtle gradient text color for the value */}
                   <div className="text-3xl font-bold sm:text-[44px] bg-clip-text text-transparent bg-gradient-to-r from-[#00b8b0] to-[#0098da]">
                     {stat.value}
                   </div>
@@ -107,7 +143,7 @@ const AWXDashboard = ({ companies }: Props) => {
               Company List
             </h3>
 
-            {/* Search Input with Modern Styling */}
+            {/* Search Input */}
             <div className="relative min-w-0 flex-1 pb-8">
               <Search className="absolute w-4 h-4 left-3 top-2.5 text-slate-400 2xl:left-3 2xl:top-3" />
               <input
@@ -131,7 +167,7 @@ const AWXDashboard = ({ companies }: Props) => {
                     </p>
                   )}
                   {filteredCompanies.map((company, index) => {
-                    const statusStyles = getStatusStyles("PAID");
+                    const badge = subscriptionBadge(company.subscriptionStatus);
                     return (
                       <Link
                         href={`/awx-dashboard/statistics/${company?.id}`}
@@ -162,7 +198,6 @@ const AWXDashboard = ({ companies }: Props) => {
                             <p className="text-sm italic text-slate-500 dark:text-slate-400 truncate">
                               {company.adminEmail}
                             </p>
-                            {/* Use text-slate-600 for data points */}
                             <p className="text-slate-600 dark:text-slate-300">
                               Users :{" "}
                               <span className="font-bold">
@@ -184,7 +219,7 @@ const AWXDashboard = ({ companies }: Props) => {
                           </div>
                         </div>
 
-                        {/* Separator with subtle gradient/color */}
+                        {/* Separator */}
                         <div className="my-4 h-px w-full bg-slate-300 dark:bg-slate-600 lg:mx-4 lg:my-0 lg:h-20 lg:w-px"></div>
 
                         {/* payment info */}
@@ -193,7 +228,8 @@ const AWXDashboard = ({ companies }: Props) => {
                             Subscribed to{" "}
                             <b>
                               <i className="font-extrabold text-[#6571FF]">
-                                Autoworx Basic Plan
+                                {company.subscriptionPlanName ??
+                                  "No Plan Assigned"}
                               </i>
                             </b>
                           </p>
@@ -203,16 +239,12 @@ const AWXDashboard = ({ companies }: Props) => {
                               {moment(company.createdAt).format("D MMMM, YYYY")}
                             </i>
                           </p>
-                          {/* <p className=" text-base md:text-lg italic">
-                              Expires On :{" "}
-                              <i className="font-semibold text-slate-700 dark:text-slate-200">8 August, 2024</i>
-                            </p> */}
                           <div className="pt-2 flex items-center gap-3">
                             <p className="text-base md:text-lg font-semibold text-slate-700 dark:text-slate-200">
                               Payment Status :
                             </p>
-                            <span className={statusStyles.className}>
-                              {statusStyles.text}
+                            <span className={badge.className}>
+                              {badge.text}
                             </span>
                           </div>
                         </div>
@@ -224,7 +256,7 @@ const AWXDashboard = ({ companies }: Props) => {
             </div>
           </div>
 
-          {/* Reports Sections */}
+          {/* Reports Section */}
           <div className="col-span-1">
             <ReportsSection
               reports={reports!}

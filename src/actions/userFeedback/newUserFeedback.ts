@@ -9,8 +9,6 @@ import {
   UserFeedback,
   UserFeedbackAttachment,
 } from "@prisma/client";
-import { env } from "next-runtime-env";
-
 export async function newUserFeedback(data: {
   whatHappened: string;
   whatExpected: string;
@@ -58,7 +56,7 @@ async function createAsanaTask(
   const res = await fetch(`${ASANA_BASE_URL}/tasks`, {
     method: "POST",
     headers: {
-      authorization: `Bearer ${env("ASANA_PERSONAL_TOKEN")}`,
+      authorization: `Bearer ${process.env.ASANA_PERSONAL_TOKEN}`,
       "content-type": "application/json",
     },
     body: JSON.stringify({
@@ -75,7 +73,7 @@ async function createAsanaTask(
           // Autoworx Software
           "1208787725739116",
         ],
-        workspace: `${env("ASANA_WORKSPACE")}`,
+        workspace: `${process.env.ASANA_WORKSPACE}`,
       },
     }),
   });

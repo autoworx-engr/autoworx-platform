@@ -1,6 +1,6 @@
 "use client";
 
-import { deleteTask } from "@/actions/task/deleteTask";
+import { completeTask } from "@/actions/task/completeTask";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
 import { CirclePlus, X } from "lucide-react";
 import { create } from "mutative";
@@ -49,7 +49,7 @@ export function TasksInput({ tasks }: TasksInputProps) {
                 useEstimateCreateStore.setState(({ tasks }) => ({
                   tasks: tasks.toSpliced(i, 1),
                 }));
-                task.id && (await deleteTask(task.id));
+                task.id && (await completeTask(task.id));
               }}
               className="absolute right-0 top-0 -translate-y-1/2 translate-x-1/2 text-[#6470FF]"
             >

@@ -9,18 +9,6 @@ import { getGoogleCalendarToken } from "../calendar-settings/getGoogleCalendarAu
 
 export async function deleteTask(id: number): Promise<ServerAction> {
   try {
-    // find the task users
-    const taskUsers = await db.taskUser.findMany({
-      where: {
-        taskId: id,
-      },
-    });
-
-    // remove the task users
-    // for (const user of taskUsers) {
-    // TODO: Remove the task from the user's Google Calendar
-    // }
-
     // remove the task
     let deletedTask = await db.task.delete({
       where: {
@@ -29,7 +17,6 @@ export async function deleteTask(id: number): Promise<ServerAction> {
     });
 
     // delete task from google calendar
-
     try {
       let googleCalendarToken = (await getGoogleCalendarToken())
         ?.googleCalendarToken;
@@ -38,24 +25,18 @@ export async function deleteTask(id: number): Promise<ServerAction> {
         await deleteGoogleCalendarEvent(deletedTask.googleEventId);
       }
     } catch (error) {
-      console.log("🚀 ~ deleteTask ~ error:", error);
+      // console.log("🚀 ~ deleteTask ~ error:", error);
     }
-
-    await sendTaskCompleteNotification({
-      companyId: deletedTask.companyId,
-      taskDate: deletedTask.date && deletedTask?.date,
-      taskTitle: deletedTask?.title,
-      assignTaskUserId: taskUsers.map((user) => user.userId),
-    });
 
     revalidatePath("/task");
     revalidatePath("/communication/client");
 
     return {
       type: "success",
+      data: deletedTask,
     };
   } catch (error) {
-    console.log("🚀 ~ deleteTask ~ error:", error);
+    // console.log("🚀 ~ deleteTask ~ error:", error);
     return {
       type: "error",
     };

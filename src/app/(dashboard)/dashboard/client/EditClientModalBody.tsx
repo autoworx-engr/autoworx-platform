@@ -15,15 +15,26 @@ import { successToast } from "@/lib/toast";
 import { useClientFilterStore } from "@/stores/clientFilter";
 import { useFormErrorStore } from "@/stores/form-error";
 import { Client, Source, Tag } from "@prisma/client";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { SquarePen, CircleUserRound as UserIcon, X } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { RotatingLines } from "react-loader-spinner";
 import { CLIENT_LIST_KEY } from "./_hook/useClientQuery";
 import useClientByIdQuery, {
   CLIENT_DETAIL_KEY,
 } from "./_hook/useClientQueryById";
+
+const CLIENT_SOURCES_KEY = "client-sources";
+
+function useClientSourcesQuery() {
+  return useQuery({
+    queryKey: [CLIENT_SOURCES_KEY],
+    queryFn: async () => {
+      return getSources();
+    },
+  });
+}
 
 type TEditClientModalBodyProps = {
   client: Client & {
@@ -38,13 +49,13 @@ export default function EditClientModalBody({
   onClose,
 }: TEditClientModalBodyProps) {
   const { data: clientData, isLoading } = useClientByIdQuery(client.id);
+  const { data: queryClientSources = [] } = useClientSourcesQuery();
 
-  // Use fresh data once loaded, fall back to prop while loading
-  const resolvedClient = clientData;
-  // const resolvedClient = clientData ?? client;
-
+  const resolvedClient = clientData ?? client;
+  console.log("Resolved client data:", resolvedClient); // Debug log to check client data
+  console.log("Client: ", client); // Debug log to check initial client prop
   const [clientSource, setClientSource] = useState<Source | null>(
-    client.source
+    resolvedClient.source,
   );
   const [pending, startTransition] = useTransition();
 
@@ -53,50 +64,30 @@ export default function EditClientModalBody({
 
   const [openClientSource, setOpenClientSource] = useState(false);
   const [tagOpenDropdown, setTagOpenDropdown] = useState(false);
-  const [tag, setTag] = useState<Tag | undefined>(client.tag ?? undefined);
-  const [isPremium, setIsPremium] = useState<boolean>(client.isFleet ?? false);
+  const [tag, setTag] = useState<Tag | undefined>(
+    resolvedClient.tag ?? undefined,
+  );
+  const [isPremium, setIsPremium] = useState<boolean>(
+    resolvedClient.isFleet ?? false,
+  );
   const [profilePic, setProfilePic] = useState<string | null>(
-    client.photo !== DEFAULT_IMAGE_URL ? client.photo : null
+    resolvedClient.photo !== DEFAULT_IMAGE_URL ? resolvedClient.photo : null,
   );
   const [newProfilePic, setNewProfilePic] = useState<File | null>(null);
-  const [clientSources, setClientSources] = useState<Source[]>([]);
   const { showError, clearError } = useFormErrorStore();
-  const [zip, setZip] = useState(client.zip ?? "");
+  const [zip, setZip] = useState(resolvedClient.zip ?? "");
 
   // Initialize ref with existing client data so submit works without touching the field
   const phoneDataRef = useRef({
-    phoneNumber: client.mobile ?? "",
+    phoneNumber: resolvedClient.mobile ?? "",
     countryCode: "",
-    isoCode: client.countryCode ?? "",
+    isoCode: resolvedClient.countryCode ?? "",
   });
-
-  // Sync all state when fresh clientData arrives from the query
-  useEffect(() => {
-    if (!clientData) return;
-    setIsPremium(clientData.isFleet ?? false);
-    setTag(clientData.tag ?? undefined);
-    setClientSource(clientData.source ?? null);
-    setProfilePic(
-      clientData.photo !== DEFAULT_IMAGE_URL ? clientData.photo : null
-    );
-    setZip(clientData.zip ?? "");
-    // Sync phone ref with fresh data
-    phoneDataRef.current = {
-      phoneNumber: clientData.mobile ?? "",
-      countryCode: "",
-      isoCode: clientData.countryCode ?? "",
-    };
-  }, [clientData]);
-
-  async function getClientSources() {
-    const data = await getSources();
-    setClientSources(data);
-  }
 
   async function deleteClientSource(id: number) {
     await deleteSource(id);
-    setClientSources((prev: Source[]) =>
-      prev.filter((source) => source.id !== id)
+    queryClient.setQueryData<Source[]>([CLIENT_SOURCES_KEY], (prev = []) =>
+      prev.filter((source) => source.id !== id),
     );
     if (clientSource?.id === id) {
       setClientSource(null);
@@ -144,15 +135,8 @@ export default function EditClientModalBody({
       return;
     }
 
-    // Delete old photo if replacing
-    if (newProfilePic && profilePic !== DEFAULT_IMAGE_URL) {
-      await fetch("/api/upload", {
-        method: "DELETE",
-        body: JSON.stringify({ filePath: profilePic }),
-      });
-    }
-
-    // Upload new photo
+    // Upload new photo first — delete old only after confirmed success
+    // (Prevents data loss: if upload fails, old photo must remain intact)
     if (newProfilePic) {
       const formData = new FormData();
       formData.append("file", newProfilePic);
@@ -163,16 +147,24 @@ export default function EditClientModalBody({
       });
 
       if (!uploadRes.ok) {
-        console.error("Failed to upload photos");
+        console.error("Failed to upload photo");
         return uploadRes.json();
       }
 
       const json = await uploadRes.json();
       photo = json.data[0];
+
+      // Only delete the old photo now that the new one is safely stored
+      if (profilePic && profilePic !== DEFAULT_IMAGE_URL) {
+        await fetch("/api/upload", {
+          method: "DELETE",
+          body: JSON.stringify({ filePath: profilePic }),
+        });
+      }
     }
 
     const res = await editClient({
-      id: resolvedClient?.id ?? client.id,
+      id: resolvedClient.id,
       firstName,
       lastName,
       email,
@@ -210,10 +202,6 @@ export default function EditClientModalBody({
       successToast("Client updated successfully");
     }
   }
-
-  useEffect(() => {
-    getClientSources();
-  }, []);
 
   return (
     <DialogContent
@@ -336,21 +324,40 @@ export default function EditClientModalBody({
             defaultValue={resolvedClient?.email!}
           />
           <div className="w-full">
-            <PhoneInput
-              label="Mobile"
-              placeholder="1234567890"
-              required
-              defaultValue={resolvedClient?.mobile!}
-              defaultIsoCode={resolvedClient?.countryCode!}
-              onChange={(phone, code, iso) => {
-                phoneDataRef.current = {
-                  phoneNumber: phone,
-                  countryCode: code,
-                  isoCode: iso || "",
-                };
-                clearError();
-              }}
-            />
+            {clientData ? (
+              <PhoneInput
+                key={`mobile-${clientData.id}`}
+                label="Mobile"
+                placeholder="1234567890"
+                required
+                defaultValue={clientData.mobile!}
+                defaultIsoCode={clientData.countryCode!}
+                onChange={(phone, code, iso) => {
+                  phoneDataRef.current = {
+                    phoneNumber: phone,
+                    countryCode: code,
+                    isoCode: iso || "",
+                  };
+                  clearError();
+                }}
+              />
+            ) : (
+              <div className="w-full">
+                <label className="flex items-center gap-1 text-base font-medium text-slate-700 dark:text-slate-200 transition-colors duration-300">
+                  Mobile
+                  <span className="text-red-500 ml-1">*</span>
+                </label>
+                <div className="mt-1.5 py-1 flex items-center rounded-lg border border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-900">
+                  <input
+                    type="tel"
+                    value=""
+                    readOnly
+                    aria-label="Mobile"
+                    className="w-full px-4 py-[2px] bg-transparent text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -411,12 +418,18 @@ export default function EditClientModalBody({
               }
               newButton={
                 <NewClientSource
-                  setClientSources={setClientSources}
+                  setClientSources={(updater) => {
+                    queryClient.setQueryData<Source[]>(
+                      [CLIENT_SOURCES_KEY],
+                      (prev = []) =>
+                        typeof updater === "function" ? updater(prev) : updater,
+                    );
+                  }}
                   setClientSource={setClientSource}
                   setOpenClientSource={setOpenClientSource}
                 />
               }
-              items={clientSources}
+              items={queryClientSources}
               displayList={(clientSource: Source) => (
                 <div className="flex">
                   <button
@@ -442,8 +455,8 @@ export default function EditClientModalBody({
               selectedItem={clientSource}
               setSelectedItem={setClientSource}
               onSearch={(search: string) =>
-                clientSources.filter((s: Source) =>
-                  s.name.toLowerCase().includes(search.toLowerCase())
+                queryClientSources.filter((s: Source) =>
+                  s.name.toLowerCase().includes(search.toLowerCase()),
                 )
               }
               openState={[openClientSource, setOpenClientSource]}

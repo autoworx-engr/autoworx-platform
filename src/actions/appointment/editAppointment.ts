@@ -123,6 +123,7 @@ export async function editAppointment({
         data: appointment.assignedUsers.map((userId) => ({
           appointmentId: id,
           userId,
+          eventId: "",
         })),
       });
     }

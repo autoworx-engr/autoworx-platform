@@ -10,7 +10,6 @@ import { db } from "@/lib/db";
 import getUser from "@/lib/getUser";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { CircleAlert } from "lucide-react";
-import { env } from "next-runtime-env";
 import Image from "next/image";
 import QRCode from "qrcode";
 import EditProduct from "./EditProduct";
@@ -43,7 +42,7 @@ export default async function Sidebar({
 
   const imgUrl = product
     ? await QRCode.toDataURL(
-        `${env("NEXT_PUBLIC_APP_URL")}/dashboard/inventory/use/${product.id}`,
+        `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/inventory/use/${product.id}`,
       )
     : null;
 

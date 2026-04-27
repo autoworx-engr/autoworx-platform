@@ -1,10 +1,10 @@
 import React from "react";
 import ReportSkeletonCard from "./ReportSkeletonCard";
-import ReportCard from "./ReportCard";
+import ReportCard, { BugReport } from "./ReportCard";
 import ReportNotFoundCard from "./ReportNotFoundCard";
 
 type ReportsSectionProps = {
-  reports: any[];
+  reports: BugReport[];
   isLoading: boolean;
   isFetching: boolean;
 };
@@ -28,7 +28,7 @@ const ReportsSection = ({
             [1, 2, 3, 4].map((i) => <ReportSkeletonCard key={i} />)
           ) : reports?.length > 0 ? (
             // Render actual report cards
-            reports?.map((report: any) => (
+            reports?.map((report) => (
               <ReportCard key={report?.id} report={report} />
             ))
           ) : (

@@ -2,7 +2,7 @@
 import { useGetAllCompanyBugReports } from "@/hooks/bug-reports/useGetAllCompanyBugReports";
 import React from "react";
 import ReportSkeletonCard from "./ReportSkeletonCard";
-import ReportCard from "./ReportCard";
+import ReportCard, { BugReport } from "./ReportCard";
 import ReportNotFoundCard from "./ReportNotFoundCard";
 
 const CompanyReportSection = () => {
@@ -15,8 +15,8 @@ const CompanyReportSection = () => {
         <div className="custom-scrollbar h-full space-y-2 overflow-y-auto">
           {isFetching || isLoading ? (
             [1, 2, 3, 4].map((i) => <ReportSkeletonCard key={i} />)
-          ) : reports!?.length > 0 ? (
-            reports?.map((report: any) => (
+          ) : (reports ?? []).length > 0 ? (
+            (reports ?? []).map((report: BugReport) => (
               <ReportCard key={report?.id} report={report} />
             ))
           ) : (
