@@ -17,9 +17,9 @@ import TooltipLabel from "./ToolTipLabel";
 import InfoCard from "./InfoCard";
 import { getInventoryActionHelp } from "./InventoryAutomationHelper";
 import { TipBox } from "./TagautomationHelper";
-import { useCreateReportingAutomationRule } from "@/hooks/reporting-automation/useCreateInventoryAutomationRule";
-import { useUpdateReportingAutomationRule } from "@/hooks/reporting-automation/useUpdateInventoryAutomationRule";
-import { useFindOneReportingAutomationRule } from "@/hooks/reporting-automation/useFindOneInventoryAutomationRule";
+import { useCreateReportingAutomationRule } from "@/hooks/reporting-automation/useCreateReportingAutomationRule";
+import { useFindOneReportingAutomationRule } from "@/hooks/reporting-automation/useFindOneReportingAutomationRule";
+import { useUpdateReportingAutomationRule } from "@/hooks/reporting-automation/useUpdateReportingAutomationRule";
 
 type RuleFormProps = {
   initialData?: Rule;
@@ -50,7 +50,6 @@ const ReportingAutomationRuleForm: React.FC<RuleFormProps> = ({
   user,
   companyId,
 }) => {
-  const [loading, setLoading] = useState(false);
   const [initialFormData, setInitialFormData] = useState<Rule | null>(
     initialData || null,
   );
@@ -203,7 +202,7 @@ const ReportingAutomationRuleForm: React.FC<RuleFormProps> = ({
   );
   return (
     <>
-      {loading || isLoading || isFetching ? (
+      {isLoading || isFetching ? (
         <div className="flex h-[800px] w-full animate-pulse items-center justify-center rounded-md bg-gray-200 p-4 shadow-sm md:p-6">
           <CarLoading />
         </div>
@@ -253,7 +252,6 @@ const ReportingAutomationRuleForm: React.FC<RuleFormProps> = ({
 
                   <Selector
                     name="frequency"
-                    // label="Frequency"
                     options={ReportingAutomationFrequency}
                     value={formData.frequency!}
                     onChange={(value) => handleChange("frequency", value)}
@@ -286,7 +284,6 @@ const ReportingAutomationRuleForm: React.FC<RuleFormProps> = ({
                   />
                   <Selector
                     name="action"
-                    // label="Action"
                     options={ReportingActions}
                     value={formData.action}
                     onChange={(value) => handleChange("action", value)}
@@ -314,7 +311,6 @@ const ReportingAutomationRuleForm: React.FC<RuleFormProps> = ({
                   )}
                 </div>
 
-
                 <div className="relative">
                   <TooltipLabel
                     label="Send to Team"
@@ -328,7 +324,6 @@ const ReportingAutomationRuleForm: React.FC<RuleFormProps> = ({
                     onChange={(value) =>
                       handleChange("teamMemberUserIds", value)
                     }
-                    // label="Send to Team"
                     placeholder="Select options"
                     required={false}
                     disabled={!employees}

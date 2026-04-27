@@ -12,9 +12,10 @@ import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
 import { cn } from "@/lib/cn";
 import { useFleetInvoiceStore } from "@/stores/fleetInvoiceStore";
 import { Invoice } from "@prisma/client";
-import { Checkbox, message } from "antd";
+import { Checkbox } from "antd";
 import { useEffect, useState } from "react";
 import FleetSubHeading from "./FleetSubHeading";
+import { errorToast, successToast } from "@/lib/toast";
 
 const CreateStatementModal = ({
   unPaidInvoices,
@@ -59,12 +60,12 @@ const CreateStatementModal = ({
 
   const handleCreate = async () => {
     if (selectedItems.length === 0) {
-      message.error("Please select at least one invoice");
+      errorToast("Please select at least one invoice");
       return;
     }
 
     if (!fleetId) {
-      message.error("Fleet ID is required to create a statement");
+      errorToast("Fleet ID is required to create a statement");
       return;
     }
 
@@ -76,7 +77,7 @@ const CreateStatementModal = ({
       });
 
       if (result.type === "success") {
-        message.success(result.message || "Statement created successfully");
+        successToast(result.message || "Statement created successfully");
 
         // Close modal first
         setOpen(false);
@@ -89,11 +90,11 @@ const CreateStatementModal = ({
           onStatementCreated();
         }
       } else {
-        message.error(result.message || "Failed to create statement");
+        errorToast(result.message || "Failed to create statement");
       }
     } catch (error) {
       console.error("Error creating statement:", error);
-      message.error("Failed to create statement");
+      errorToast("Failed to create statement");
     } finally {
       setLoading(false);
     }
@@ -158,7 +159,7 @@ const CreateStatementModal = ({
                       key={invoice.id}
                       className={cn(
                         "cursor-pointer rounded-md border py-3",
-                        index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]"
+                        index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]",
                       )}
                     >
                       <td className="px-3 py-3">

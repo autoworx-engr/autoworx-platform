@@ -4,7 +4,6 @@ import { JWT } from "next-auth/jwt";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { db } from "./lib/db";
-import { env } from "next-runtime-env";
 
 import nextAxios from "./helpers/next-axios";
 import { getUserByEmail } from "./actions/user/getUserById";
@@ -95,7 +94,7 @@ export const authOptions: NextAuthOptions = {
     signIn: "/login",
     error: "/auth/error",
   },
-  secret: env("NEXTAUTH_SECRET"),
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     CredentialsProvider({
       id: "credentials",
@@ -132,8 +131,8 @@ export const authOptions: NextAuthOptions = {
       },
     }),
     GoogleProvider({
-      clientId: env("GOOGLE_CLIENT_ID") ?? "",
-      clientSecret: env("GOOGLE_CLIENT_SECRET") ?? "",
+      clientId: process.env.GOOGLE_CLIENT_ID ?? "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
     }),
   ],
   callbacks: {

@@ -1,7 +1,6 @@
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import { google } from "googleapis";
-import { env } from "next-runtime-env";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { NextRequest, NextResponse } from "next/server";
@@ -14,7 +13,7 @@ export async function GET(request: NextRequest) {
     const oauth2Client = new google.auth.OAuth2(
       process.env.GMAIL_CLIENT_ID,
       process.env.GMAIL_CLIENT_SECRET,
-      `${env("NEXT_PUBLIC_APP_URL")}/dashboard/task/auth`,
+      `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/task/auth`,
     );
 
     const { tokens } = await oauth2Client.getToken(code);

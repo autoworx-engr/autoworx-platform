@@ -93,10 +93,10 @@ export async function addAppointment(
 
     if (appointment.assignedUsers.length > 0) {
       await db.appointmentUser.createMany({
-        data: appointment.assignedUsers.map((uid) => ({
+        data: appointment.assignedUsers.map((uid: number) => ({
           appointmentId: newAppointment.id,
           userId: uid,
-          eventId: null,
+          eventId: "",
         })),
       });
     }

@@ -92,7 +92,10 @@ export function useCalendarFilters({
   }, [appointments]);
 
   const filteredTasks = useMemo(() => {
-    if (selectedTeamMateIds.length === 0) return tasks;
+    if (selectedTeamMateIds.length === 0) {
+      return selectedCategoryIds.length > 0 ? [] : tasks;
+    }
+
     const selectedSet = new Set(selectedTeamMateIds);
     return tasks.filter((task) =>
       task?.taskUser?.some((taskUser) => {
@@ -100,15 +103,35 @@ export function useCalendarFilters({
         return selectedSet.has(id);
       }),
     );
-  }, [tasks, selectedTeamMateIds]);
+  }, [tasks, selectedTeamMateIds, selectedCategoryIds]);
 
   const filteredAppointments = useMemo(() => {
-    if (selectedCategoryIds.length === 0) return appointments;
-    const catSet = new Set(selectedCategoryIds);
-    return appointments.filter((appointment: any) =>
-      catSet.has(Number(appointment?.serviceCategory?.id)),
-    );
-  }, [appointments, selectedCategoryIds]);
+    const hasTeamMateFilter = selectedTeamMateIds.length > 0;
+    const hasCategoryFilter = selectedCategoryIds.length > 0;
+
+    if (!hasTeamMateFilter && !hasCategoryFilter) return appointments;
+
+    const selectedTeamMateSet = new Set(selectedTeamMateIds);
+    const selectedCategorySet = new Set(selectedCategoryIds);
+
+    return appointments.filter((appointment: any) => {
+      const matchesTeamMate = hasTeamMateFilter
+        ? appointment?.assignedUsers?.some((assignedUser: any) =>
+            selectedTeamMateSet.has(Number(assignedUser?.id)),
+          )
+        : false;
+
+      const matchesCategory = hasCategoryFilter
+        ? selectedCategorySet.has(Number(appointment?.serviceCategory?.id))
+        : false;
+
+      if (hasTeamMateFilter && hasCategoryFilter) {
+        return matchesTeamMate || matchesCategory;
+      }
+
+      return hasTeamMateFilter ? matchesTeamMate : matchesCategory;
+    });
+  }, [appointments, selectedTeamMateIds, selectedCategoryIds]);
 
   const events = useMemo(() => {
     return buildCalendarEvents({

@@ -2,10 +2,10 @@
 "use server";
 
 import { db } from "@/lib/db";
-import moment from "moment";
+import moment from "moment-timezone";
 import { DayOfWeek } from "@prisma/client";
 
-const getDayOfWeekEnum = (date: Date): DayOfWeek => {
+const getDayOfWeekEnum = (dateStr: string, timezone: string): DayOfWeek => {
   const days: DayOfWeek[] = [
     "SUNDAY",
     "MONDAY",
@@ -15,7 +15,7 @@ const getDayOfWeekEnum = (date: Date): DayOfWeek => {
     "FRIDAY",
     "SATURDAY",
   ];
-  return days[moment.utc(date).day()];
+  return days[moment.tz(dateStr, "YYYY-MM-DD", timezone).day()];
 };
 
 // 1. Get Available Slots For A Explicit Date
@@ -25,19 +25,20 @@ export async function getAvailableSlots(
   duration?: number,
 ) {
   try {
-    const requestMoment = moment.utc(dateString);
-    const selectedDate = requestMoment.toDate();
-
-    const dayOfWeek = getDayOfWeekEnum(selectedDate);
-
     const shop = await db.shop.findUnique({
-      where: {
-        id: shopId,
-      },
+      where: { id: shopId },
       select: {
         companyId: true,
+        company: { select: { timezone: true } },
       },
     });
+
+    const timezone = shop?.company?.timezone || "UTC";
+
+    // Parse the selected date in the company's timezone
+    const requestMoment = moment.tz(dateString, timezone);
+    const selectedDateStr = requestMoment.format("YYYY-MM-DD");
+    const dayOfWeek = getDayOfWeekEnum(selectedDateStr, timezone);
 
     // Fetch shop settings (stacking Limit & intervals) and today's availability
     const shopSettings = await db.shopBookingSetting.findUnique({
@@ -57,7 +58,11 @@ export async function getAvailableSlots(
       !todayAvailability.startTime ||
       !todayAvailability.endTime
     ) {
-      return { success: true, date: selectedDate, availableSlots: [] };
+      return {
+        success: true,
+        date: requestMoment.toDate(),
+        availableSlots: [],
+      };
     }
 
     const intervalMinutes = shopSettings.slotInterval || 30;
@@ -65,41 +70,38 @@ export async function getAvailableSlots(
       ? shopSettings.stackingLimit
       : 1;
 
-    // Build the base slots array using moment
-    const selectedDateStr = requestMoment.format("YYYY-MM-DD");
-    let currentSlotTime = moment.utc(
+    // Build slots in the company's timezone
+    let currentSlotTime = moment.tz(
       `${selectedDateStr} ${todayAvailability.startTime}`,
       "YYYY-MM-DD HH:mm",
+      timezone,
     );
-    const endSlotTime = moment.utc(
+    const endSlotTime = moment.tz(
       `${selectedDateStr} ${todayAvailability.endTime}`,
       "YYYY-MM-DD HH:mm",
+      timezone,
     );
 
-    const baseSlots: string[] = [];
-    const now = moment.utc();
-    const isToday =
-      requestMoment.format("YYYY-MM-DD") === now.format("YYYY-MM-DD");
+    const now = moment.tz(timezone);
+    const isToday = selectedDateStr === now.format("YYYY-MM-DD");
 
+    const baseSlots: string[] = [];
     while (currentSlotTime.isBefore(endSlotTime)) {
-      // Don't show past slots if booking for today
-      if (
-        !isToday ||
-        currentSlotTime.isAfter(
-          moment.utc(now.format("YYYY-MM-DD HH:mm"), "YYYY-MM-DD HH:mm"),
-        )
-      ) {
+      if (!isToday || currentSlotTime.isAfter(now)) {
         baseSlots.push(currentSlotTime.format("HH:mm"));
       }
       currentSlotTime.add(intervalMinutes, "minutes");
     }
 
-    // Fetch existing appointments on this date
-    const startOfSelectedDay = requestMoment.clone().startOf("day").toDate();
-    const startOfNextDay = requestMoment
-      .clone()
-      .add(1, "days")
+    // Day boundaries anchored to company timezone midnight (converted to UTC for DB)
+    const startOfSelectedDay = moment
+      .tz(selectedDateStr, "YYYY-MM-DD", timezone)
       .startOf("day")
+      .toDate();
+    const startOfNextDay = moment
+      .tz(selectedDateStr, "YYYY-MM-DD", timezone)
+      .startOf("day")
+      .add(1, "day")
       .toDate();
 
     const existingAppointments = await db.appointment.findMany({
@@ -129,9 +131,10 @@ export async function getAvailableSlots(
     const effectiveDuration =
       duration && duration > 0 ? duration : intervalMinutes;
     const availableSlots = baseSlots.filter((slotTime) => {
-      const slotMoment = moment.utc(
+      const slotMoment = moment.tz(
         `${selectedDateStr} ${slotTime}`,
         "YYYY-MM-DD HH:mm",
+        timezone,
       );
       const slotEndMoment = slotMoment
         .clone()
@@ -139,13 +142,15 @@ export async function getAvailableSlots(
 
       const appointmentsInSlot = existingAppointments.filter((app) => {
         if (!app.startTime || !app.endTime) return false;
-        const appStartMoment = moment.utc(
+        const appStartMoment = moment.tz(
           `${selectedDateStr} ${app.startTime}`,
           "YYYY-MM-DD HH:mm",
+          timezone,
         );
-        const appEndMoment = moment.utc(
+        const appEndMoment = moment.tz(
           `${selectedDateStr} ${app.endTime}`,
           "YYYY-MM-DD HH:mm",
+          timezone,
         );
 
         return (
@@ -156,13 +161,15 @@ export async function getAvailableSlots(
 
       const holdsInSlot = activeHolds.filter((hold) => {
         if (!hold.startTime || !hold.endTime) return false;
-        const holdStartMoment = moment.utc(
+        const holdStartMoment = moment.tz(
           `${selectedDateStr} ${hold.startTime}`,
           "YYYY-MM-DD HH:mm",
+          timezone,
         );
-        const holdEndMoment = moment.utc(
+        const holdEndMoment = moment.tz(
           `${selectedDateStr} ${hold.endTime}`,
           "YYYY-MM-DD HH:mm",
+          timezone,
         );
 
         return (
@@ -174,7 +181,7 @@ export async function getAvailableSlots(
       return appointmentsInSlot.length + holdsInSlot.length < stackingLimit;
     });
 
-    return { success: true, date: selectedDate, availableSlots };
+    return { success: true, date: requestMoment.toDate(), availableSlots };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
@@ -185,15 +192,20 @@ export async function getNextAvailableAppointment(
   shopId: number,
   duration?: number,
 ) {
-  const maxSearchDays = 30; // Search up to 30 days ahead
+  const maxSearchDays = 30;
+
+  const shop = await db.shop.findUnique({
+    where: { id: shopId },
+    select: { company: { select: { timezone: true } } },
+  });
+  const timezone = shop?.company?.timezone || "UTC";
 
   for (let i = 0; i < maxSearchDays; i++) {
-    const checkDate = moment().add(i, "days");
-    const result = await getAvailableSlots(
-      shopId,
-      checkDate.toISOString(),
-      duration,
-    );
+    const checkDateStr = moment
+      .tz(timezone)
+      .add(i, "days")
+      .format("YYYY-MM-DD");
+    const result = await getAvailableSlots(shopId, checkDateStr, duration);
 
     if (
       result.success &&
@@ -202,7 +214,7 @@ export async function getNextAvailableAppointment(
     ) {
       return {
         success: true,
-        date: checkDate.toDate(),
+        date: moment.tz(checkDateStr, "YYYY-MM-DD", timezone).toDate(),
         availableSlots: result.availableSlots,
       };
     }
