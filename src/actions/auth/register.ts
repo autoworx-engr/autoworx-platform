@@ -10,7 +10,6 @@ import { TErrorHandler } from "@/types/globalError";
 import { createUserValidation } from "@/validations/schemas/auth/user.validation";
 import bcrypt from "bcryptjs";
 import httpStatus from "http-status";
-import { env } from "next-runtime-env";
 import { Prisma } from "@prisma/client";
 import { initialCreateBookingForm } from "../settings/bookingForm";
 import { uploadNotificationSettings } from "../settings/updateNotification";
@@ -30,7 +29,7 @@ interface Response {
   error?: TErrorHandler;
 }
 
-const ACCESS_CODE = env("ACCESS_CODE");
+const ACCESS_CODE = process.env.ACCESS_CODE;
 
 const insertDefaultColumns = async (
   companyId: number,

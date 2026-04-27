@@ -1,8 +1,7 @@
 import type { MetadataRoute } from "next";
-import { env } from "next-runtime-env";
 
 export default function manifest(): MetadataRoute.Manifest {
-  const baseUrl = env("NEXT_PUBLIC_SITE_URL") || "";
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "";
   // console.log("Menifest function is being call")
   return {
     name: "Autoworx",

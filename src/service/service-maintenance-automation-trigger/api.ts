@@ -1,5 +1,5 @@
 "use server";
-import axiosInstance from "@/helpers/axios";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { serverAxios } from "@/helpers/server-axios";
 
 type TUpdateServiceAutomationTrigger = {
@@ -17,6 +17,7 @@ export const updateServiceAutomationTrigger = async function (
     );
     return response.data;
   } catch (error) {
-    console.log("🚀 ~ error:", error);
+    const err = errorHandler(error);
+    throw err;
   }
 };

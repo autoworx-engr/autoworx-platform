@@ -1,4 +1,3 @@
-import { findOneCommunicationAutomationRules } from "@/service/communication-automation/api";
 import { findOneTagAutomationRule } from "@/service/tag-automation/api";
 import { useQuery } from "@tanstack/react-query";
 

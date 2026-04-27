@@ -1,12 +1,9 @@
 "use server";
 import { db } from "@/lib/db";
 import { PaymentParams } from "@/lib/payment-gateway";
-import { env } from "next-runtime-env";
 import Stripe from "stripe";
 
-const stripe = new Stripe(
-  (process.env.STRIPE_SECRET_KEY || env("STRIPE_SECRET_KEY")) as string,
-);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
 export const createStripePaymentLink = async ({
   companyId,
@@ -90,8 +87,7 @@ export const createStripePaymentLink = async ({
           ? `BOOKING-${shopBookingId}`
           : `GIFTCARD-${paymentId}`;
 
-    const appUrl =
-      process.env.NEXT_PUBLIC_APP_URL || env("NEXT_PUBLIC_APP_URL") || "";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
     const appendQuery = (url: string, query: string) =>
       url.includes("?") ? `${url}&${query}` : `${url}?${query}`;
     const isVirtualShopGiftCardPayment =
