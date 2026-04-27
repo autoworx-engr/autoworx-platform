@@ -44,7 +44,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(request: NextRequest) {
   try {
     const token = request.headers.get("X-TOKEN");
-    // console.log("🚀 ~ POST ~ token:", token);
+    console.log("🚀 ~ POST ~ token:", token);
 
     if (!token) {
       return NextResponse.json("Invalid token", { status: 401 });
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
         zapierToken: token,
       },
     });
-    // console.log("🚀 ~ POST ~ company:", company);
+    console.log("🚀 ~ POST ~ company:", company);
 
     if (!company) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
@@ -64,34 +64,34 @@ export async function POST(request: NextRequest) {
 
     // take data from the body
     const body = await request.json();
-    // console.log("🚀 ~ POST ~ body:", body);
+    console.log("🚀 ~ POST ~ body:", body);
 
     const clientName = body.name;
-    // console.log("🚀 ~ POST ~ clientName:", clientName);
+    console.log("🚀 ~ POST ~ clientName:", clientName);
     const clientEmail = body?.email;
     const clientPhone = body?.phone;
     const countryCode = body?.countryCode;
-    // console.log("🚀 ~ POST ~ clientPhone:", clientPhone);
+    console.log("🚀 ~ POST ~ clientPhone:", clientPhone);
     const customerCountry = body.customer_country;
-    // console.log("🚀 ~ POST ~ customerCountry:", customerCountry);
+    console.log("🚀 ~ POST ~ customerCountry:", customerCountry);
     const serviceId = +body.serviceId;
-    // console.log("🚀 ~ POST ~ serviceId:", serviceId);
+    console.log("🚀 ~ POST ~ serviceId:", serviceId);
     const opportunity = body.opportunity_source;
-    // console.log("🚀 ~ POST ~ opportunity:", opportunity);
+    console.log("🚀 ~ POST ~ opportunity:", opportunity);
     const crmMsg = body.message;
     const multipleServices = body.multiServices as number[] | undefined;
     // now extract the source, services and vehicle info from opportunity
     // the format is this: (source) vehicle | service
     const source = opportunity.split(")")[0].replace("(", "").trim();
-    // console.log("🚀 ~ POST ~ source:", source);
+    console.log("🚀 ~ POST ~ source:", source);
     const vehicleInfo = opportunity.split(")")[1].split("|")[0].trim();
-    // console.log("🚀 ~ POST ~ vehicleInfo:", vehicleInfo);
+    console.log("🚀 ~ POST ~ vehicleInfo:", vehicleInfo);
     const services = opportunity.split(")")[1].split("|")[1].trim();
-    // console.log("🚀 ~ POST ~ services:", services);
-    // console.log("crmMsg", crmMsg);
+    console.log("🚀 ~ POST ~ services:", services);
+    console.log("crmMsg", crmMsg);
     //check if crm company
     const isCRMCompany = company.isCRMEnabled || false;
-    // console.log("🚀 ~ POST ~ isCRMCompany:", isCRMCompany);
+    console.log("🚀 ~ POST ~ isCRMCompany:", isCRMCompany);
     if (isCRMCompany) {
       // For demo requests
       const source = body.source || "Marketing Site";
@@ -253,7 +253,7 @@ export async function POST(request: NextRequest) {
     }
 
     const companyId = company.id;
-    // console.log("🚀 ~ POST ~ companyId:", companyId);
+    console.log("🚀 ~ POST ~ companyId:", companyId);
     // Fetch the ID of the "New Leads" column
     const newLeadsColumn = await db.column.findFirst({
       where: {
@@ -293,7 +293,7 @@ export async function POST(request: NextRequest) {
             : undefined,
       },
     });
-    // console.log("🚀 ~ POST ~ newLead:", newLead);
+    console.log("🚀 ~ POST ~ newLead:", newLead);
 
     //naming correction for the client from lead
     const clientNameParts = clientName.trim().split(" ");
