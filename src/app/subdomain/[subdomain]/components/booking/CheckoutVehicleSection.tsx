@@ -1,5 +1,13 @@
-import { Button } from "@/components/ui/button";
-import { SlimInput } from "@/components/SlimInput";
+"use client";
+
+import Selector from "@/app/(dashboard)/dashboard/settings/automation/components/Selector";
+import {
+  useGetAllYears,
+  useGetMake,
+  useGetModelsByYearAndMake,
+} from "@/hooks/useCarData";
+import { cn } from "@/lib/cn";
+import { Car, CheckCircle2 } from "lucide-react";
 import { CustomerInfo } from "../../data/types";
 
 export type ExistingVehicle = {
@@ -26,33 +34,22 @@ export function CheckoutVehicleSection({
   vehicleModel,
   onVehicleChange,
 }: CheckoutVehicleSectionProps) {
-  const suggestedVehicleYears = Array.from(
-    new Set(
-      existingVehicles
-        .map((vehicle) =>
-          vehicle.year !== null && vehicle.year !== undefined
-            ? String(vehicle.year)
-            : "",
-        )
-        .filter(Boolean),
-    ),
+  const { data: years }: any = useGetAllYears();
+  const { data: makes }: any = useGetMake();
+  const { data: models }: any = useGetModelsByYearAndMake(
+    vehicleYear,
+    vehicleMake,
   );
 
-  const suggestedVehicleMakes = Array.from(
-    new Set(
-      existingVehicles
-        .map((vehicle) => (vehicle.make || "").trim())
-        .filter(Boolean),
-    ),
-  );
+  const makeOptions = makes?.data?.map((v: any) => ({
+    title: v.name ?? "Unknown",
+    id: v.name,
+  }));
 
-  const suggestedVehicleModels = Array.from(
-    new Set(
-      existingVehicles
-        .map((vehicle) => (vehicle.model || "").trim())
-        .filter(Boolean),
-    ),
-  );
+  const modelOptions = models?.data?.map((v: any) => ({
+    title: v.name ?? "Unknown",
+    id: v.name,
+  }));
 
   return (
     <>
@@ -61,37 +58,70 @@ export function CheckoutVehicleSection({
       </p>
 
       {existingVehicles.length > 0 && (
-        <div className="rounded-md border border-border/70 bg-muted/30 p-3 space-y-2">
-          <p className="text-xs font-medium text-muted-foreground">
-            Existing vehicles found for this phone. Select one or type a new
-            vehicle below.
+        <div className="rounded-xl border border-border bg-card p-3 space-y-2.5">
+          <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+            <Car className="w-3.5 h-3.5" />
+            Vehicles on file — select to auto-fill
           </p>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {existingVehicles.map((vehicle) => {
-              const year =
-                vehicle.year !== null && vehicle.year !== undefined
-                  ? String(vehicle.year)
-                  : "";
+              const year = vehicle.year != null ? String(vehicle.year) : "";
               const make = (vehicle.make || "").trim();
               const model = (vehicle.model || "").trim();
               const label = [year, make, model].filter(Boolean).join(" ");
 
               if (!label) return null;
 
+              const isSelected =
+                vehicleYear === year &&
+                vehicleMake === make &&
+                vehicleModel === model;
+
               return (
-                <Button
+                <button
                   key={vehicle.id}
                   type="button"
-                  variant="outline"
-                  size="sm"
                   onClick={() => {
                     onVehicleChange("vehicleYear", year);
                     onVehicleChange("vehicleMake", make);
                     onVehicleChange("vehicleModel", model);
                   }}
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg border p-3 text-left transition-all duration-150 w-full",
+                    isSelected
+                      ? "border-primary/50 bg-primary/5 ring-1 ring-primary/30"
+                      : "border-border hover:border-muted-foreground/30 hover:bg-muted/40 bg-background",
+                  )}
                 >
-                  {label}
-                </Button>
+                  <div
+                    className={cn(
+                      "flex items-center justify-center rounded-full w-8 h-8 shrink-0",
+                      isSelected ? "bg-primary/10" : "bg-muted",
+                    )}
+                  >
+                    {isSelected ? (
+                      <CheckCircle2 className="w-4 h-4 text-primary" />
+                    ) : (
+                      <Car className="w-4 h-4 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p
+                      className={cn(
+                        "text-sm font-semibold truncate leading-tight",
+                        isSelected ? "text-primary" : "text-foreground",
+                      )}
+                    >
+                      {[make, model].filter(Boolean).join(" ") ||
+                        "Unknown vehicle"}
+                    </p>
+                    {year && (
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {year}
+                      </p>
+                    )}
+                  </div>
+                </button>
               );
             })}
           </div>
@@ -99,62 +129,62 @@ export function CheckoutVehicleSection({
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <SlimInput
-          id="vehicleYear"
+        {/* hint shown only when the user has opened at least one dropdown and typed something not found */}
+        <p className="col-span-full text-xs text-muted-foreground">
+          Can&rsquo;t find your vehicle? Type it in the search box — a{" "}
+          <span className="font-medium text-foreground">
+            Use &ldquo;…&rdquo;
+          </span>{" "}
+          option will appear so you can add it.
+        </p>
+        <Selector
           name="vehicleYear"
           label="Year"
           required
-          labelClassName="text-xs font-medium"
-          className="h-10 text-sm font-normal rounded-md border-input bg-background px-3 py-2"
+          placeholder="Select or type year"
+          options={years?.data || []}
           value={vehicleYear}
-          onChange={(e) => onVehicleChange("vehicleYear", e.target.value)}
-          placeholder="e.g. 2020"
-          inputMode="numeric"
-          list="existing-vehicle-years"
+          onChange={(value) => {
+            onVehicleChange("vehicleYear", value);
+            if (vehicleMake) onVehicleChange("vehicleMake", "");
+            if (vehicleModel) onVehicleChange("vehicleModel", "");
+          }}
+          isSearch
+          isClear
         />
 
-        <SlimInput
-          id="vehicleMake"
+        <Selector
           name="vehicleMake"
           label="Make"
           required
-          labelClassName="text-xs font-medium"
-          className="h-10 text-sm font-normal rounded-md border-input bg-background px-3 py-2"
+          placeholder="Select or type make"
+          options={makeOptions || []}
           value={vehicleMake}
-          onChange={(e) => onVehicleChange("vehicleMake", e.target.value)}
-          placeholder="e.g. Toyota"
-          list="existing-vehicle-makes"
+          onChange={(value) => {
+            onVehicleChange("vehicleMake", value);
+            if (vehicleModel) onVehicleChange("vehicleModel", "");
+          }}
+          isSearch
+          isClear
         />
 
-        <SlimInput
-          id="vehicleModel"
+        <Selector
           name="vehicleModel"
           label="Model"
           required
-          labelClassName="text-xs font-medium"
-          className="h-10 text-sm font-normal rounded-md border-input bg-background px-3 py-2"
+          placeholder={
+            !vehicleYear || !vehicleMake
+              ? "Select year & make first"
+              : "Select or type model"
+          }
+          options={modelOptions || []}
           value={vehicleModel}
-          onChange={(e) => onVehicleChange("vehicleModel", e.target.value)}
-          placeholder="e.g. Camry"
-          list="existing-vehicle-models"
+          onChange={(value) => onVehicleChange("vehicleModel", value)}
+          isSearch
+          isClear
+          disabled={!vehicleYear || !vehicleMake}
         />
       </div>
-
-      <datalist id="existing-vehicle-years">
-        {suggestedVehicleYears.map((value) => (
-          <option key={value} value={value} />
-        ))}
-      </datalist>
-      <datalist id="existing-vehicle-makes">
-        {suggestedVehicleMakes.map((value) => (
-          <option key={value} value={value} />
-        ))}
-      </datalist>
-      <datalist id="existing-vehicle-models">
-        {suggestedVehicleModels.map((value) => (
-          <option key={value} value={value} />
-        ))}
-      </datalist>
     </>
   );
 }
