@@ -42,7 +42,7 @@ const OrderList = ({
                 key={index}
                 className={cn(
                   "rounded-md",
-                  index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]"
+                  index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]",
                 )}
               >
                 <td className="text-nowrap px-4 py-2 text-left text-[#6571FF] 2xl:px-10">
@@ -53,7 +53,7 @@ const OrderList = ({
                   />
                 </td>
                 <td className="text-nowrap px-4 py-2 text-left 2xl:px-10">
-                  {invoice.grandTotal as any}
+                  {invoice?.grandTotal ? invoice?.grandTotal.toString() : "0"}
                 </td>
                 <td className="px-4 py-2 text-left 2xl:px-10">
                   <p
