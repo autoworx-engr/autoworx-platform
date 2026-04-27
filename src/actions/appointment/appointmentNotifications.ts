@@ -64,18 +64,26 @@ export async function sendAppointmentConfirmation({
     .replace("<ADDRESS>", company?.address ?? "");
 
   try {
-    sendInfobipEmail({ clientId: client.id, subject, text: message });
+    await sendInfobipEmail({ clientId: client.id, subject, text: message });
   } catch (error) {
-    console.log("🚀 ~ error:", error);
+    console.error("sendInfobipEmail error:", error);
   }
 
   try {
     if (company?.smsGateway === "TWILIO") {
-      sendTwilioMessage({ clientId: client.id, message, attachments: [] });
+      await sendTwilioMessage({
+        clientId: client.id,
+        message,
+        attachments: [],
+      });
     } else if (company?.smsGateway === "INFOBIP") {
-      sendInfobipMessage({ clientId: client.id, message, attachments: [] });
+      await sendInfobipMessage({
+        clientId: client.id,
+        message,
+        attachments: [],
+      });
     }
   } catch (error) {
-    console.log("🚀 ~ error:", error);
+    console.error("SMS send error:", error);
   }
 }
