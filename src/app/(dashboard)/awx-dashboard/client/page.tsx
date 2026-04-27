@@ -6,13 +6,15 @@ import ClientList from "../../dashboard/client/ClientList";
 export default async function Page() {
   const clients = await db.client.findMany({
     orderBy: { createdAt: "desc" },
-    include: { tag: true, source: true, company: {
-      select: { name: true },
-    }, },
+    take: 50,
+    include: {
+      tag: true,
+      source: true,
+      company: {
+        select: { name: true },
+      },
+    },
   });
-
-  
-
 
   return (
     <div className="h-full w-full space-y-8 bg-[#F8F9FA] px-2">
