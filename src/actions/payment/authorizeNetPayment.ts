@@ -1,7 +1,6 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { env } from "next-runtime-env";
 const ApiContracts = require("authorizenet").APIContracts;
 const ApiControllers = require("authorizenet").APIControllers;
 const SDKConstants = require("authorizenet").Constants;
@@ -343,8 +342,7 @@ export const createAuthorizeNetPaymentLink = async ({
     // domain. Prefer the current page origin if provided, because
     // multi-domain setups (e.g. test.dev.* vs dev.*) can break
     // postMessage handling when this is hard-coded.
-    const configuredAppUrl =
-      process.env.NEXT_PUBLIC_APP_URL || env("NEXT_PUBLIC_APP_URL") || "";
+    const configuredAppUrl = process.env.NEXT_PUBLIC_APP_URL || "";
 
     let communicatorBaseUrl = configuredAppUrl;
     if (redirectUrl) {
