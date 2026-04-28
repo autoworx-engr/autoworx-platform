@@ -120,6 +120,10 @@ export function useTaskForm({
       setStartTime(value);
       setEndTime(addOneHour(value));
     } else if (type === "end") {
+      if (startTime && value <= startTime) {
+        errorToast("End time cannot be before or equal to start time!");
+        return;
+      }
       setEndTime(value);
     }
   };
