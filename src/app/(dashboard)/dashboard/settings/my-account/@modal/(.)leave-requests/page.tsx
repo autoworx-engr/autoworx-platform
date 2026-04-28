@@ -13,8 +13,9 @@ const page = async (props: Props) => {
       companyId: user.companyId,
     },
     orderBy: {
-      createdAt: 'desc',
+      createdAt: "desc",
     },
+    take: 100,
   });
   return <LeaveRequest leaveRequests={leaveRequests} user={user} />;
 };

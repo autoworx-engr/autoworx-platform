@@ -19,6 +19,7 @@ export async function sendEmailVerificationMail() {
     }
     const user = await db.user.findUnique({
       where: { id: userId },
+      select: { id: true, email: true, emailVerified: true },
     });
     if (!user) {
       return { type: "fail", message: "User not found" };
