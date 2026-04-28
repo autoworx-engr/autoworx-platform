@@ -3,7 +3,7 @@
 import Selector from "@/components/Selector";
 import { useListsStore } from "@/stores/lists";
 import { Client } from "@prisma/client";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import Avatar from "../Avatar";
 
 import useClientListInfiniteQuery from "@/hooks/query-hook/useClientListInfiniteQuery";
@@ -48,8 +48,13 @@ export function SelectAppointmentClient({
   const queryClient = useQueryClient();
   const pathname = usePathname();
 
+  // Guard so we only auto-select the initial client once, not on every clientList refetch
+  const initialClientSet = useRef(false);
+
   useEffect(() => {
+    if (initialClientSet.current) return;
     if (fromLead && clientId) {
+      initialClientSet.current = true;
       fetch(`/api/client/client-details/${clientId}`)
         .then((res) => res.json())
         .then((data) => {
@@ -63,6 +68,7 @@ export function SelectAppointmentClient({
     if (clientId && clientList.length > 0) {
       const matchedClient = clientList.find((c) => c.id === clientId);
       if (matchedClient) {
+        initialClientSet.current = true;
         setClient(matchedClient);
       }
     }
