@@ -47,8 +47,6 @@ export default function LeadInfinityScroll({
 
   const leadsLength = leads?.length ?? 0;
 
-  console.log({ orderBy });
-
   const fetchMoreLeads = useCallback(async () => {
     try {
       if (columnId) {
@@ -86,18 +84,16 @@ export default function LeadInfinityScroll({
   }, [columnId, leadsLength, searchTerm, dispatch, orderBy]);
 
   useEffect(() => {
-    if (leadsLength >= defaultTakeLeads) {
-      setHasMore(true);
-    }
-  }, [leadsLength]);
-
-  useEffect(() => {
     if (searchTerm) {
       setHasMore(false);
-    } else if (leadsLength >= defaultTakeLeads) {
-      setHasMore(true);
+    } else {
+      setHasMore(
+        totalLeads !== undefined
+          ? leadsLength < totalLeads
+          : leadsLength >= defaultTakeLeads,
+      );
     }
-  }, [searchTerm, leadsLength]);
+  }, [searchTerm, leadsLength, totalLeads]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(

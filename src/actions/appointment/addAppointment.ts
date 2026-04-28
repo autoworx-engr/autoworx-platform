@@ -139,24 +139,22 @@ export async function addAppointment(
       }
     }
 
-    const vehicle = await db.vehicle.findFirst({
-      where: { id: appointment.vehicleId },
-    });
-
-    const company = await db.company.findFirst({
-      where: { id: client?.companyId },
-      select: {
-        timezone: true,
-        name: true,
-        address: true,
-        phone: true,
-        smsGateway: true,
-      },
-    });
-
-    const confirmationEmailTemplate = await db.emailTemplate.findFirst({
-      where: { id: appointment.confirmationEmailTemplateId },
-    });
+    const [vehicle, company, confirmationEmailTemplate] = await Promise.all([
+      db.vehicle.findFirst({ where: { id: appointment.vehicleId } }),
+      db.company.findFirst({
+        where: { id: client?.companyId },
+        select: {
+          timezone: true,
+          name: true,
+          address: true,
+          phone: true,
+          smsGateway: true,
+        },
+      }),
+      db.emailTemplate.findFirst({
+        where: { id: appointment.confirmationEmailTemplateId },
+      }),
+    ]);
 
     await sendAppointmentConfirmation({
       client,
@@ -173,7 +171,7 @@ export async function addAppointment(
       if (newAppointment.date && newAppointment.startTime) {
         let i = 0;
         for (const time of appointment.times) {
-          scheduleRemindersInNest({
+          await scheduleRemindersInNest({
             id: newAppointment.id.toString(),
             date: new Date(`${time.date}T00:00:00.000Z`),
             time: time.time,
@@ -186,16 +184,16 @@ export async function addAppointment(
     }
 
     try {
-      newAppointment.date &&
-        newAppointment.startTime &&
-        scheduleRemindersInNest({
+      if (newAppointment.date && newAppointment.startTime) {
+        await scheduleRemindersInNest({
           id: newAppointment.id.toString(),
           date: newAppointment.date,
           time: newAppointment.startTime,
           timezone: company?.timezone || newAppointment.timezone || "Etc/UTC",
         });
+      }
     } catch (error) {
-      console.log("🚀 ~ error:", error);
+      console.error("scheduleRemindersInNest error:", error);
     }
 
     await syncAppointmentToGoogleCalendar(newAppointment.id, appointment);

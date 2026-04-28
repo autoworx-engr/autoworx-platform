@@ -1,7 +1,20 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { errorToast } from "@/lib/toast";
+import { salesPipelineKeyStr } from "@/utils/enums/query-key-constant";
+
+function invalidatePipelineQueries(
+  queryClient: ReturnType<typeof useQueryClient>,
+) {
+  queryClient.invalidateQueries({
+    queryKey: [salesPipelineKeyStr.salesPipeline],
+  });
+  queryClient.invalidateQueries({
+    queryKey: [salesPipelineKeyStr.salesPipelineCount],
+  });
+}
 
 export const useRemoveLeadMutation = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (leadId: number) => {
       const res = await fetch(`/api/pipeline/sales/leads/${leadId}/remove`, {
@@ -11,6 +24,7 @@ export const useRemoveLeadMutation = () => {
       if (!data.success) throw new Error(data.error);
       return data;
     },
+    onSuccess: () => invalidatePipelineQueries(queryClient),
     onError: (error: Error) => {
       errorToast("Failed to remove lead from pipeline.");
       console.error(error);
@@ -19,6 +33,7 @@ export const useRemoveLeadMutation = () => {
 };
 
 export const useUpdateLeadColumnMutation = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
       leadId,
@@ -36,6 +51,7 @@ export const useUpdateLeadColumnMutation = () => {
       if (!data.success) throw new Error(data.error);
       return data;
     },
+    onSuccess: () => invalidatePipelineQueries(queryClient),
     onError: (error: Error) => {
       console.error("Failed to move job across columns:", error);
     },
@@ -43,6 +59,7 @@ export const useUpdateLeadColumnMutation = () => {
 };
 
 export const useAssignLeadSalesUserMutation = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
       leadId,
@@ -60,6 +77,7 @@ export const useAssignLeadSalesUserMutation = () => {
       if (!data.success) throw new Error(data.error);
       return data;
     },
+    onSuccess: () => invalidatePipelineQueries(queryClient),
     onError: (error: Error) => {
       console.error("Failed to assign sales user:", error);
     },
@@ -67,6 +85,7 @@ export const useAssignLeadSalesUserMutation = () => {
 };
 
 export const useAddLeadTagMutation = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
       leadId,
@@ -84,13 +103,15 @@ export const useAddLeadTagMutation = () => {
       if (!data.success) throw new Error(data.error);
       return data;
     },
+    onSuccess: () => invalidatePipelineQueries(queryClient),
     onError: (error: Error) => {
-      console.error("Failed to add logic tag:", error);
+      console.error("Failed to add lead tag:", error);
     },
   });
 };
 
 export const useRemoveLeadTagMutation = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
       leadId,
@@ -109,8 +130,9 @@ export const useRemoveLeadTagMutation = () => {
       if (!data.success) throw new Error(data.error);
       return data;
     },
+    onSuccess: () => invalidatePipelineQueries(queryClient),
     onError: (error: Error) => {
-      console.error("Failed to unequip logic tag:", error);
+      console.error("Failed to remove lead tag:", error);
     },
   });
 };
