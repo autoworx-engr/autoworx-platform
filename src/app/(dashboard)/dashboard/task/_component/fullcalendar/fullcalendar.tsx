@@ -182,7 +182,7 @@ export default function Calendar({ type }: { type: CalendarType }) {
 
   return (
     <div
-      className={`w-full h-full calendar-wrapper flex flex-col bg-white rounded-lg shadow-sm border ${styles.calendarScope}`}
+      className={`flex-1 min-w-0 h-full calendar-wrapper flex flex-col bg-white rounded-lg shadow-sm border ${styles.calendarScope}`}
     >
       <CalendarHeader
         calendarRef={calendarRef}
@@ -198,7 +198,7 @@ export default function Calendar({ type }: { type: CalendarType }) {
         onSelectedCategoryIdsChange={setSelectedCategoryIds}
       />
 
-      <div className={`flex-1 w-full relative ${styles.calendarBody}`}>
+      <div className={`flex-1 relative ${styles.calendarBody}`}>
         <div
           className="w-full h-full overflow-x-auto"
           onDragOver={(e) => e.preventDefault()}
