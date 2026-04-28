@@ -1,7 +1,6 @@
 import { db } from "@/lib/db";
 import fs from "fs";
 import { google } from "googleapis";
-import { env } from "next-runtime-env";
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import { pipeline, Readable } from "stream";
@@ -240,7 +239,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const oAuth2Client = new google.auth.OAuth2(
       process.env.GMAIL_CLIENT_ID,
       process.env.GMAIL_CLIENT_SECRET,
-      `${env("NEXT_PUBLIC_APP_URL")}/dashboard/communication/client/auth`,
+      `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/communication/client/auth`,
     );
 
     const company = await db.company.findFirst({

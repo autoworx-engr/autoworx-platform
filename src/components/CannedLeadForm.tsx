@@ -7,7 +7,16 @@ import { successToast } from "@/lib/toast";
 import { Skeleton } from "@mui/material";
 import { Popconfirm } from "antd";
 import moment from "moment";
-import { ClipboardCheck, Clock, Copy, Download, Link, QrCode, Trash2, X } from "lucide-react";
+import {
+  ClipboardCheck,
+  Clock,
+  Copy,
+  Download,
+  Link,
+  QrCode,
+  Trash2,
+  X,
+} from "lucide-react";
 
 type LeadFormEntry = {
   id: number;
@@ -25,6 +34,7 @@ const CannedLeadForm = ({ companyId }: { companyId: number }) => {
   const [entries, setEntries] = useState<LeadFormEntry[]>([]);
   const [copiedLink, setCopiedLink] = useState<number | null>(null);
   useEffect(() => {
+    if (!companyId) return;
     const fetch = async () => {
       setIsLoading(true);
       try {
@@ -36,7 +46,7 @@ const CannedLeadForm = ({ companyId }: { companyId: number }) => {
       }
     };
     fetch();
-  }, []);
+  }, [companyId, fetchLeadLinks]);
 
   useEffect(() => {
     const data = leadLinks.map((link: any) => ({
@@ -56,8 +66,8 @@ const CannedLeadForm = ({ companyId }: { companyId: number }) => {
       prevEntries.map((entry) =>
         entry.id === id
           ? { ...entry, showQR: !entry.showQR }
-          : { ...entry, showQR: false }
-      )
+          : { ...entry, showQR: false },
+      ),
     );
   };
 
@@ -69,7 +79,7 @@ const CannedLeadForm = ({ companyId }: { companyId: number }) => {
       acc[entry.source].push(entry);
       return acc;
     },
-    {}
+    {},
   );
 
   const handleDeleteLink = async (id: number) => {
@@ -78,7 +88,7 @@ const CannedLeadForm = ({ companyId }: { companyId: number }) => {
       // Optionally, you can refetch the lead links after deletion
       await fetchLeadLinks(companyId);
       setEntries((prevEntries) =>
-        prevEntries.filter((entry) => entry.id !== id)
+        prevEntries.filter((entry) => entry.id !== id),
       );
     } catch (error) {
       console.error("Error deleting lead link:", error);
@@ -86,9 +96,7 @@ const CannedLeadForm = ({ companyId }: { companyId: number }) => {
   };
 
   const handleCopyLink = (entry: LeadFormEntry) => {
-    navigator.clipboard.writeText(
-      entry.shortUrl || entry.generatedLink
-    );
+    navigator.clipboard.writeText(entry.shortUrl || entry.generatedLink);
     successToast("Copied to clipboard!");
     setCopiedLink(entry.id);
     setTimeout(() => setCopiedLink(null), 1000);
@@ -139,7 +147,8 @@ const CannedLeadForm = ({ companyId }: { companyId: number }) => {
                 No Lead Links Found
               </h3>
               <p className="max-w-md text-sm text-gray-500">
-                It looks empty here. Generate and save your first lead link on the left side to get started!
+                It looks empty here. Generate and save your first lead link on
+                the left side to get started!
               </p>
             </div>
           ) : (
@@ -149,8 +158,11 @@ const CannedLeadForm = ({ companyId }: { companyId: number }) => {
                   {groupedEntries[source].map((entry) => (
                     <div
                       key={entry.id}
-                      className={`rounded-xl border-2 ${entry.showQR ? "border-blue-500 bg-blue-50" : "border-gray-200 bg-white"
-                        } transition-all duration-300 hover:shadow-lg`}
+                      className={`rounded-xl border-2 ${
+                        entry.showQR
+                          ? "border-blue-500 bg-blue-50"
+                          : "border-gray-200 bg-white"
+                      } transition-all duration-300 hover:shadow-lg`}
                     >
                       <div className="p-4 sm:p-5">
                         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
@@ -168,10 +180,11 @@ const CannedLeadForm = ({ companyId }: { companyId: number }) => {
                           <div className="flex space-x-2 self-end sm:self-auto">
                             {/* Copy Button */}
                             <button
-                              className={`rounded-full p-2 transition-colors duration-200 focus:outline-none focus:ring-2 ${copiedLink === entry.id
-                                ? "bg-green-100 text-green-600 focus:ring-green-400"
-                                : "hover:bg-gray-100 text-gray-800 focus:ring-blue-400"
-                                }`}
+                              className={`rounded-full p-2 transition-colors duration-200 focus:outline-none focus:ring-2 ${
+                                copiedLink === entry.id
+                                  ? "bg-green-100 text-green-600 focus:ring-green-400"
+                                  : "hover:bg-gray-100 text-gray-800 focus:ring-blue-400"
+                              }`}
                               onClick={() => handleCopyLink(entry)}
                               aria-label="Copy link"
                               title="Copy link"
@@ -184,17 +197,16 @@ const CannedLeadForm = ({ companyId }: { companyId: number }) => {
                             </button>
                             {/* QR Code Button */}
                             <button
-                              className={`rounded-full p-2 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 ${entry.showQR
-                                ? "bg-blue-200 text-blue-700"
-                                : "hover:bg-gray-100 text-gray-800"
-                                }`}
+                              className={`rounded-full p-2 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 ${
+                                entry.showQR
+                                  ? "bg-blue-200 text-blue-700"
+                                  : "hover:bg-gray-100 text-gray-800"
+                              }`}
                               onClick={() => handleToggleQR(entry.id)}
                               aria-label="Show QR code"
                               title="Show QR code"
                             >
-                              <QrCode
-                                className={`h-6 w-6`}
-                              />
+                              <QrCode className={`h-6 w-6`} />
                             </button>
                             {/* Delete Button */}
                             <Popconfirm
@@ -232,11 +244,9 @@ const CannedLeadForm = ({ companyId }: { companyId: number }) => {
                                 } catch (err) {
                                   // Fallback for Firefox/Safari: copy URL as text
                                   await navigator.clipboard.writeText(
-                                    entry.QRCode!
+                                    entry.QRCode!,
                                   );
-                                  successToast(
-                                    "QR code image copied as link"
-                                  );
+                                  successToast("QR code image copied as link");
                                 }
                               }}
                               className="order-2 w-full sm:w-auto flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium transition-colors duration-200 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400 sm:order-1"

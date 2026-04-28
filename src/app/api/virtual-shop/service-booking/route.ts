@@ -993,8 +993,6 @@ export async function POST(req: Request) {
       sessionToken,
     } = parsedBody;
 
-    console.log("booking body", parsedBody);
-
     const shopServiceIds = shopServices
       .map((s: any) => s.shopServiceId)
       .filter(Boolean);

@@ -14,10 +14,11 @@ const page = async () => {
     .filter((plan) => plan.name !== "Feature Catalog")
     .map((plan) => ({
       ...plan,
-      price: Number(plan.price),
+      // Convert Decimal to number safely – toFixed avoids floating-point drift
+      price: parseFloat(plan.price.toFixed(2)),
     }));
 
-   return <PlatformPlanManager initialPlans={plansData} />;
+  return <PlatformPlanManager initialPlans={plansData} />;
 };
 
 export default page;

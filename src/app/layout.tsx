@@ -5,7 +5,6 @@ import QueryProvider from "@/components/QueryProvider";
 import { TooltipProvider } from "@/components/Tooltip";
 import type { Metadata, Viewport } from "next";
 import { getServerSession } from "next-auth";
-import { env, PublicEnvScript } from "next-runtime-env";
 import { Inter } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import TopLoader from "../components/TopLoader";
@@ -22,12 +21,12 @@ export const metadata: Metadata = {
     default: "AutoWorx",
   },
   openGraph: {
-    url: env("NEXT_PUBLIC_SITE_URL"),
+    url: process.env.NEXT_PUBLIC_SITE_URL,
     description:
       "Autoworx makes running your shop easier than ever! From hassle-free client management to streamlining garage operations...",
     images: [
       {
-        url: `${env("NEXT_PUBLIC_SITE_URL")}/icons/autoworx-logo.webp`,
+        url: `${process.env.NEXT_PUBLIC_SITE_URL}/icons/autoworx-logo.webp`,
         alt: "AutoWorx Logo",
       },
     ],
@@ -40,7 +39,7 @@ export const metadata: Metadata = {
     title: "AutoWorx",
     startupImage: [
       {
-        url: `${env("NEXT_PUBLIC_SITE_URL")}/icons/pwa/icon-512x512.png`,
+        url: `${process.env.NEXT_PUBLIC_SITE_URL}/icons/pwa/icon-512x512.png`,
         media: "(device-width: 768px) and (device-height: 1024px)",
       },
     ],
@@ -86,8 +85,6 @@ export default async function RootLayout({
           data-website-id="2123305e-6384-415f-adf6-79271e62313f"
           strategy="afterInteractive"
         />
-        <PublicEnvScript />
-
         {/* <link
           rel="apple-touch-icon"
           sizes="512x512"

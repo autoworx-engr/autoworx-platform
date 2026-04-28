@@ -1,13 +1,10 @@
 import { db } from "@/lib/db";
 import { getBoss } from "@/lib/pgboss";
 import { QUEUE_STRIPE } from "@/lib/queue-names";
-import { env } from "next-runtime-env";
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 
-const stripe = new Stripe(
-  (process.env.STRIPE_SECRET_KEY || env("STRIPE_SECRET_KEY")) as string,
-);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
 export async function POST(req: NextRequest) {
   const signature = req.headers.get("stripe-signature");
@@ -24,8 +21,7 @@ export async function POST(req: NextRequest) {
     event = stripe.webhooks.constructEvent(
       rawBody,
       signature,
-      (process.env.STRIPE_WEBHOOK_SECRET ||
-        env("STRIPE_WEBHOOK_SECRET")) as string,
+      process.env.STRIPE_WEBHOOK_SECRET as string,
     );
   } catch (error: any) {
     return NextResponse.json(

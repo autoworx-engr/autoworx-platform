@@ -9,7 +9,7 @@ import { getEmployeesForPaginate } from "@/actions/employee/get";
 
 export default async function Page() {
   const companyId = await getCompanyId();
-  const { employees, totalEmployees } = await await getEmployeesForPaginate({
+  const { employees, totalEmployees } = await getEmployeesForPaginate({
     companyId,
     take: 50,
     page: 1,

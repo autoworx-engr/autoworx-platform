@@ -1,12 +1,11 @@
 "use client";
 
-import { getCompany } from "@/actions/settings/getCompany";
+import { createLeadFromForm } from "@/actions/lead/createLeadFromForm";
 import { DialogContent } from "@/components/Dialog";
 
-import { Company } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 
 import PhoneInput from "@/components/PhoneInput";
 import ServiceSelectAndAdd from "@/components/ServiceSelectAndAdd";
@@ -38,7 +37,6 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
     others: "",
     service: "" as string | { id: string | number; title: string },
     source: "",
-    token: "",
     countryCode: "US",
   });
 
@@ -81,23 +79,6 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
       setFormData((prev) => ({ ...prev, service: value }));
     }
   };
-
-  // Extract source and token from URL on component mount
-  useEffect(() => {
-    const fetchTokenAndSetSource = async () => {
-      try {
-        const res: Company | null = await getCompany();
-        setFormData((prev) => ({
-          ...prev,
-          token: res?.zapierToken || "",
-        }));
-      } catch (err) {
-        console.error("Failed to fetch token", err);
-      }
-    };
-
-    fetchTokenAndSetSource();
-  }, []);
 
   useEffect(() => {
     const fullPhone = `${countryCode}${phoneNumber}`;
@@ -176,67 +157,44 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
       // Construct the opportunity source string in the required format
       const opportunitySource = `(${formData.source}) ${vehicleInfo} | ${serviceTitle}`;
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_APP_URL}/api/lead-generate`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-TOKEN": formData.token,
-          },
-          body: JSON.stringify({
-            name: formData.name,
-            email: formData.email,
-            phone: formData.phone,
-            countryCode: formData.countryCode,
-            serviceId: formData.service,
-            opportunity_source: opportunitySource,
-            source: formData.source,
-          }),
-        },
-      );
+      await createLeadFromForm({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        countryCode: formData.countryCode,
+        serviceId: String(formData.service),
+        opportunity_source: opportunitySource,
+        source: formData.source,
+      });
 
-      if (response.ok) {
-        setFormStatus({
-          message: "Lead created successfully!",
-          type: "success",
-        });
+      setFormStatus({ message: "Lead created successfully!", type: "success" });
+      successToast("Lead created successfully!");
 
-        successToast("Lead created successfully!");
-        // Invalidate and refetch pipeline data
-        await queryClient.invalidateQueries({
-          queryKey: [salesPipelineKeyStr.salesPipeline],
-        });
-        await queryClient.invalidateQueries({
-          queryKey: [salesPipelineKeyStr.salesPipelineCount],
-        });
+      await queryClient.invalidateQueries({
+        queryKey: [salesPipelineKeyStr.salesPipeline],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: [salesPipelineKeyStr.salesPipelineCount],
+      });
 
-        router.refresh();
-        onClose?.();
+      router.refresh();
+      onClose?.();
 
-        // Reset form fields except source and token
-        setFormData({
-          ...formData,
-          name: "",
-          email: "",
-          phone: "",
-          vehicle_year: "",
-          vehicle_make: "",
-          vehicle_model: "",
-          others: "",
-          service: "",
-          source: "",
-          countryCode: "US",
-        });
-        setPhoneNumber("");
-        setCountryCode("+1");
-      } else {
-        setFormStatus({
-          message: "Failed to create lead. Please try again.",
-          type: "error",
-        });
-        errorToast("Failed to create lead. Please try again.");
-      }
+      setFormData({
+        ...formData,
+        name: "",
+        email: "",
+        phone: "",
+        vehicle_year: "",
+        vehicle_make: "",
+        vehicle_model: "",
+        others: "",
+        service: "",
+        source: "",
+        countryCode: "US",
+      });
+      setPhoneNumber("");
+      setCountryCode("+1");
     } catch (error) {
       setFormStatus({
         message: "An error occurred. Please try again later.",

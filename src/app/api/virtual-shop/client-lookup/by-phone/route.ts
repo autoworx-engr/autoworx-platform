@@ -53,6 +53,15 @@ export async function GET(request: NextRequest) {
         lastName: true,
         email: true,
         mobile: true,
+        Vehicle: {
+          select: {
+            id: true,
+            year: true,
+            make: true,
+            model: true,
+          },
+          orderBy: { updatedAt: "desc" },
+        },
       },
     });
 
