@@ -9,6 +9,7 @@ import {
   SetStateAction,
   useEffect,
   useMemo,
+  useRef,
   useState,
   useCallback,
 } from "react";
@@ -55,6 +56,7 @@ export function SelectClient({
   const params = new URLSearchParams(searchParams!);
 
   const clientId = params.get("clientId");
+  const initialClientSet = useRef(false);
 
   useEffect(() => {
     if (newAddedCustomer && setOpenDropdown) {
@@ -63,18 +65,27 @@ export function SelectClient({
     }
   }, [newAddedCustomer]);
 
+  // Auto-select from URL clientId — guard with ref so clientList refetches don't loop
   useEffect(() => {
+    if (initialClientSet.current || !clientId) return;
     if (!invoice) {
       const getClient = clientList?.find(
-        (client: Client) => client?.id === Number(clientId)
+        (client: Client) => client?.id === Number(clientId),
       );
-      getClient && setClient(getClient);
+      if (getClient) {
+        initialClientSet.current = true;
+        setClient(getClient);
+      }
     }
   }, [clientList]);
 
   useEffect(() => {
+    initialClientSet.current = false;
+  }, [clientId]);
+
+  useEffect(() => {
     const getClient = clientList?.find(
-      (client: Client) => client?.id === Number(clientId)
+      (client: Client) => client?.id === Number(clientId),
     );
     getClient && useListsStore.setState({ client: getClient });
     getClient && setClient(getClient);
