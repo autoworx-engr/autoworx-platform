@@ -12,36 +12,12 @@ import {
 import StripeStatus from "./StripeStatus";
 import AuthorizeNetConfig from "./AuthorizeNetConfig";
 import Image from "next/image";
-import { CircleCheckBig, ExternalLink } from "lucide-react";
+import Link from "next/link";
+import { CircleCheckBig, ExternalLink, History } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
 import { successToast, errorToast } from "@/lib/toast";
 import { getPaymentGatewayInfo } from "./getPaymentGatewayInfo";
-
-function Toggle({
-  checked,
-  onChange,
-}: {
-  checked: boolean;
-  onChange: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={onChange}
-      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#6571ff] focus:ring-offset-2 ${
-        checked ? "bg-[#6571ff]" : "bg-gray-200"
-      }`}
-    >
-      <span
-        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ${
-          checked ? "translate-x-4" : "translate-x-0"
-        }`}
-      />
-    </button>
-  );
-}
 
 export default function PaymentsPage() {
   const { data: session } = useSession();
@@ -122,9 +98,19 @@ export default function PaymentsPage() {
         </p>
       </div>
 
+      {/* Webhook events link */}
+      <div className="flex justify-end">
+        <Link
+          href="/dashboard/settings/payments/webhook-events"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-500 transition-colors hover:border-[#6571ff] hover:text-[#6571ff]"
+        >
+          <History className="h-3.5 w-3.5" />
+          View Webhook Events
+        </Link>
+      </div>
+
       {/* Top row: Gateway + Options side by side */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
         {/* Gateway Selection */}
         <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
           <div className="border-b border-gray-100 px-4 py-3">
@@ -149,7 +135,9 @@ export default function PaymentsPage() {
                   }`}
                 >
                   <RadioGroupItem value={value} id={value} />
-                  <span className="text-sm font-medium text-gray-700">{label}</span>
+                  <span className="text-sm font-medium text-gray-700">
+                    {label}
+                  </span>
                 </label>
               ))}
             </RadioGroup>
@@ -171,7 +159,7 @@ export default function PaymentsPage() {
                   Let customers add a tip when paying
                 </p>
               </div>
-              <Toggle checked={tipEnabled} onChange={handleTipToggle} />
+              <Switch checked={tipEnabled} onCheckedChange={handleTipToggle} />
             </div>
           </div>
         </div>
@@ -179,7 +167,6 @@ export default function PaymentsPage() {
 
       {/* Bottom row: Stripe + Authorize.Net side by side */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
         {/* Stripe */}
         <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
           <div className="border-b border-gray-100 px-4 py-3 flex items-center justify-between">
@@ -195,12 +182,26 @@ export default function PaymentsPage() {
           </div>
           <div className="flex flex-col items-center px-4 py-5 gap-3">
             <div className="flex items-center gap-3">
-              <Image src="/icons/Logo2.png" alt="Autoworx" width={32} height={32} className="h-8 w-8" />
+              <Image
+                src="/icons/Logo2.png"
+                alt="Autoworx"
+                width={32}
+                height={32}
+                className="h-8 w-8"
+              />
               <span className="text-gray-300 text-lg">↔</span>
-              <Image src="/icons/stripe.png" alt="Stripe" width={32} height={32} className="h-8 w-8" />
+              <Image
+                src="/icons/stripe.png"
+                alt="Stripe"
+                width={32}
+                height={32}
+                className="h-8 w-8"
+              />
             </div>
             <div className="text-center">
-              <p className="text-sm font-semibold text-gray-700">Connect to Stripe</p>
+              <p className="text-sm font-semibold text-gray-700">
+                Connect to Stripe
+              </p>
               <p className="text-xs text-gray-400 mt-0.5 max-w-xs">
                 Handle payments and manage revenue seamlessly
               </p>
@@ -212,7 +213,11 @@ export default function PaymentsPage() {
               className="inline-flex items-center gap-1.5 rounded-lg bg-[#6571ff] px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#5561ef] hover:shadow-md"
             >
               <ExternalLink className="h-3.5 w-3.5" />
-              {stripeData?.success ? "Reconnect" : stripeLoading ? "Loading..." : "Connect with Stripe"}
+              {stripeData?.success
+                ? "Reconnect"
+                : stripeLoading
+                  ? "Loading..."
+                  : "Connect with Stripe"}
             </button>
             {stripeData?.success && <StripeStatus data={stripeData} />}
           </div>
@@ -225,6 +230,7 @@ export default function PaymentsPage() {
             companyId={companyId || 0}
             isConfigured={authorizeNetData?.configured || false}
             hasApiLoginId={authorizeNetData?.hasApiLoginId || false}
+            hasSignatureKey={authorizeNetData?.hasSignatureKey || false}
             onUpdate={() => {}}
           />
         )}

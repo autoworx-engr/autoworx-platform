@@ -8,7 +8,7 @@ import Link from "next/link";
 import ReportsSection from "../components/ReportsSection";
 import { useGetAllBugReports } from "@/hooks/bug-reports/useGetAllBugReports";
 import { useDebounce } from "@/hooks/useDebounce";
-import { Search } from "lucide-react";
+import { History, Search } from "lucide-react";
 import moment from "moment";
 
 type Props = {
@@ -68,12 +68,21 @@ const AWXDashboard = ({ companies }: Props) => {
           <h1 className="text-2xl font-bold text-slate-700 dark:text-slate-200">
             AWX Dashboard
           </h1>
-          <Link
-            href="/awx-dashboard/plans"
-            className="rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white transition hover:bg-slate-800"
-          >
-            Manage Plans
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/awx-dashboard/webhook-events"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 px-4 py-2 text-xs font-bold text-slate-700 transition hover:border-[#6571ff] hover:text-[#6571ff]"
+            >
+              <History className="h-3.5 w-3.5" />
+              Webhook Events
+            </Link>
+            <Link
+              href="/awx-dashboard/plans"
+              className="rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white transition hover:bg-slate-800"
+            >
+              Manage Plans
+            </Link>
+          </div>
         </div>
 
         {/* Statistics Section  */}

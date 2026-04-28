@@ -10,14 +10,6 @@ async function createAuthorizeNetWebhook(
 ) {
   try {
     const rawUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/authorize-net/webhook`;
-
-    if (!rawUrl) {
-      console.warn(
-        "AUTHORIZE_NET_WEBHOOK_URL or NEXT_PUBLIC_APP_URL not set; skipping auto webhook creation.",
-      );
-      return;
-    }
-
     let webhookUrl: string;
     try {
       const parsed = new URL(rawUrl);
@@ -160,14 +152,16 @@ async function createAuthorizeNetWebhook(
 export async function saveAuthorizeNetCredentials(
   apiLoginId: string,
   transactionKey: string,
+  signatureKey: string,
 ) {
   try {
     const user = await getUser();
 
-    if (!apiLoginId || !transactionKey) {
+    if (!apiLoginId || !transactionKey || !signatureKey) {
       return {
         success: false,
-        message: "API Login ID and Transaction Key are required",
+        message:
+          "API Login ID, Transaction Key, and Signature Key are required",
       };
     }
 
@@ -184,17 +178,7 @@ export async function saveAuthorizeNetCredentials(
       };
     }
 
-    try {
-      // Best-effort: create webhook subscription in Authorize.Net
-      await createAuthorizeNetWebhook(apiLoginId, transactionKey);
-    } catch (error) {
-      console.error("Error creating Authorize.Net webhook:", error);
-      // throw new Error("Failed to create Authorize.Net webhook");
-      return {
-        success: false,
-        message: "Failed to save credentials",
-      };
-    }
+    await createAuthorizeNetWebhook(apiLoginId, transactionKey);
 
     // Save credentials
     await db.company.update({
@@ -202,6 +186,7 @@ export async function saveAuthorizeNetCredentials(
       data: {
         authorizeNetApiLoginId: apiLoginId,
         authorizeNetTransactionKey: transactionKey,
+        authorizeNetSignatureKey: signatureKey,
       },
     });
 
@@ -224,6 +209,7 @@ export async function getAuthorizeNetStatus(companyId: number) {
       select: {
         authorizeNetApiLoginId: true,
         authorizeNetTransactionKey: true,
+        authorizeNetSignatureKey: true,
         paymentGateway: true,
       },
     });
@@ -233,7 +219,9 @@ export async function getAuthorizeNetStatus(companyId: number) {
     }
 
     const isConfigured = !!(
-      company.authorizeNetApiLoginId && company.authorizeNetTransactionKey
+      company.authorizeNetApiLoginId &&
+      company.authorizeNetTransactionKey &&
+      company.authorizeNetSignatureKey
     );
 
     return {
@@ -241,6 +229,7 @@ export async function getAuthorizeNetStatus(companyId: number) {
       configured: isConfigured,
       paymentGateway: company.paymentGateway,
       hasApiLoginId: !!company.authorizeNetApiLoginId,
+      hasSignatureKey: !!company.authorizeNetSignatureKey,
     };
   } catch (error: any) {
     return {
@@ -300,6 +289,7 @@ export async function removeAuthorizeNetCredentials(companyId: number) {
       data: {
         authorizeNetApiLoginId: null,
         authorizeNetTransactionKey: null,
+        authorizeNetSignatureKey: null,
       },
     });
 

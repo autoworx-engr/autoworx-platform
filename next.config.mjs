@@ -33,6 +33,7 @@ const nextConfig = {
       },
     ],
   },
+  serverExternalPackages: ["pg-boss"],
   reactStrictMode: false,
   productionBrowserSourceMaps: process.env.NODE_ENV === "development",
 };

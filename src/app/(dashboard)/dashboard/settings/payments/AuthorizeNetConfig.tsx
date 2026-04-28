@@ -15,6 +15,7 @@ interface AuthorizeNetConfigProps {
   companyId: number;
   isConfigured: boolean;
   hasApiLoginId: boolean;
+  hasSignatureKey: boolean;
   onUpdate: () => void;
 }
 
@@ -22,16 +23,20 @@ export default function AuthorizeNetConfig({
   companyId,
   isConfigured,
   hasApiLoginId,
+  hasSignatureKey,
   onUpdate,
 }: AuthorizeNetConfigProps) {
   const [apiLoginId, setApiLoginId] = useState("");
   const [transactionKey, setTransactionKey] = useState("");
+  const [signatureKey, setSignatureKey] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showForm, setShowForm] = useState(!isConfigured);
 
   const handleSave = async () => {
-    if (!apiLoginId || !transactionKey) {
-      errorToast("Please enter both API Login ID and Transaction Key");
+    if (!apiLoginId || !transactionKey || !signatureKey) {
+      errorToast(
+        "Please enter API Login ID, Transaction Key, and Signature Key",
+      );
       return;
     }
 
@@ -39,7 +44,8 @@ export default function AuthorizeNetConfig({
     try {
       const result = await saveAuthorizeNetCredentials(
         apiLoginId,
-        transactionKey
+        transactionKey,
+        signatureKey,
       );
 
       if (result.success) {
@@ -47,12 +53,12 @@ export default function AuthorizeNetConfig({
         setShowForm(false);
         setApiLoginId("");
         setTransactionKey("");
+        setSignatureKey("");
         onUpdate();
       } else {
         errorToast(result.message || "Failed to save credentials");
       }
     } catch (error) {
-      console.log("🚀 ~ handleSave ~ error:", error);
       errorToast("An error occurred while saving credentials");
     } finally {
       setIsLoading(false);
@@ -95,7 +101,11 @@ export default function AuthorizeNetConfig({
         <div className="mb-5 flex items-center gap-3">
           <img src="/icons/Logo2.png" alt="Autoworx" className="h-10 w-10" />
           <span className="mx-4 text-2xl">↔️</span>
-          <img src="/icons/authorizenet.png" alt="Authorize.Net" className="w-28" />
+          <img
+            src="/icons/authorizenet.png"
+            alt="Authorize.Net"
+            className="w-28"
+          />
         </div>
         <p className="mb-1 text-lg font-semibold text-gray-700 text-center">
           Connect Autoworx to Authorize.Net
@@ -130,7 +140,10 @@ export default function AuthorizeNetConfig({
         ) : (
           <div className="w-full max-w-md space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="apiLoginId" className="text-sm font-medium text-gray-700">
+              <Label
+                htmlFor="apiLoginId"
+                className="text-sm font-medium text-gray-700"
+              >
                 API Login ID
               </Label>
               <Input
@@ -145,7 +158,10 @@ export default function AuthorizeNetConfig({
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="transactionKey" className="text-sm font-medium text-gray-700">
+              <Label
+                htmlFor="transactionKey"
+                className="text-sm font-medium text-gray-700"
+              >
                 Transaction Key
               </Label>
               <Input
@@ -154,6 +170,24 @@ export default function AuthorizeNetConfig({
                 placeholder="Enter your Transaction Key"
                 value={transactionKey}
                 onChange={(e) => setTransactionKey(e.target.value)}
+                disabled={isLoading}
+                className="rounded-lg border-gray-200 transition-colors focus:border-[#6571ff] focus:ring-[#6571ff]/20"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label
+                htmlFor="signatureKey"
+                className="text-sm font-medium text-gray-700"
+              >
+                Signature Key
+              </Label>
+              <Input
+                id="signatureKey"
+                type="password"
+                placeholder="Enter your Webhook Signature Key"
+                value={signatureKey}
+                onChange={(e) => setSignatureKey(e.target.value)}
                 disabled={isLoading}
                 className="rounded-lg border-gray-200 transition-colors focus:border-[#6571ff] focus:ring-[#6571ff]/20"
               />
@@ -175,8 +209,9 @@ export default function AuthorizeNetConfig({
                   <span className="font-semibold">Transaction Key</span>
                 </li>
                 <li>
-                  Generate a <span className="font-semibold">Signature Key</span>{" "}
-                  for webhooks
+                  Go to{" "}
+                  <span className="font-semibold">Account → Webhooks</span> and
+                  copy your <span className="font-semibold">Signature Key</span>
                 </li>
               </ol>
             </div>
@@ -184,7 +219,9 @@ export default function AuthorizeNetConfig({
             <div className="flex justify-center gap-3 pt-2">
               <Button
                 onClick={handleSave}
-                disabled={isLoading || !apiLoginId || !transactionKey}
+                disabled={
+                  isLoading || !apiLoginId || !transactionKey || !signatureKey
+                }
                 className="rounded-lg bg-[#6571ff] px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#5561ef] hover:shadow-md disabled:opacity-50"
               >
                 {isLoading ? "Saving..." : "Save Credentials"}
@@ -195,6 +232,7 @@ export default function AuthorizeNetConfig({
                     setShowForm(false);
                     setApiLoginId("");
                     setTransactionKey("");
+                    setSignatureKey("");
                   }}
                   variant="outline"
                   disabled={isLoading}

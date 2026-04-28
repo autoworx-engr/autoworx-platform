@@ -705,11 +705,13 @@ model Company {
   stripeAccountId                  String?
   authorizeNetApiLoginId           String?                            @map("authorize_net_api_login_id")
   authorizeNetTransactionKey       String?                            @map("authorize_net_transaction_key")
+  authorizeNetSignatureKey         String?                            @map("authorize_net_signature_key")
   paymentGateway                   PaymentGateway                     @default(STRIPE)
   tipEnabled                       Boolean                            @default(true) @map("tip_enabled")
   timezone                         String?
   stripePayment                    StripePayment[]
   authorizeNetPayment              AuthorizeNetPayment[]
+  webhookEvents                    WebhookEvent[]
   leadLink                         LeadLink[]
   PipelineAutomationRule           PipelineAutomationRule[]
   ServiceMaintenanceAutomationRule ServiceMaintenanceAutomationRule[]
@@ -2017,6 +2019,25 @@ model AuthorizeNetPayment {
   company       Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@map("authorize_net_payments")
+}
+
+model WebhookEvent {
+  id          Int       @id @default(autoincrement())
+  eventId     String    @unique @map("event_id")
+  gateway     String
+  companyId   Int?      @map("company_id")
+  payload     Json
+  status      String    @default("PENDING")
+  attempts    Int       @default(0)
+  lastError   String?   @map("last_error")
+  receivedAt  DateTime  @default(now()) @map("received_at")
+  processedAt DateTime? @map("processed_at")
+  company     Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([gateway])
+  @@index([companyId])
+  @@map("webhook_events")
 }
 
 model PaymentMethod {
