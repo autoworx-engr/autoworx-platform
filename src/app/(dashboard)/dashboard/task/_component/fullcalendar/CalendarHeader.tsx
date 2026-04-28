@@ -221,18 +221,20 @@ export function CalendarHeader({
           </Select>
         </div>
 
-        <DateSelector type={type} weekStart={settings?.weekStart} />
+        <div className="flex items-center gap-2">
+          <DateSelector type={type} weekStart={settings?.weekStart} />
 
-        <CalendarFilterDropdown
-          teamMates={teamMates}
-          categories={categories}
-          selectedTeamMateIds={selectedTeamMateIds}
-          selectedCategoryIds={selectedCategoryIds}
-          onSelectedTeamMateIdsChange={onSelectedTeamMateIdsChange}
-          onSelectedCategoryIdsChange={onSelectedCategoryIdsChange}
-        />
+          <CalendarFilterDropdown
+            teamMates={teamMates}
+            categories={categories}
+            selectedTeamMateIds={selectedTeamMateIds}
+            selectedCategoryIds={selectedCategoryIds}
+            onSelectedTeamMateIdsChange={onSelectedTeamMateIdsChange}
+            onSelectedCategoryIdsChange={onSelectedCategoryIdsChange}
+          />
 
-        <Settings />
+          <Settings />
+        </div>
 
         {/* Push right */}
         <div className="flex-1" />
