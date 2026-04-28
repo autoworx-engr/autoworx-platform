@@ -113,7 +113,9 @@ export function CalendarHeader({
     router.push(`/dashboard/task/${value}`);
     const fcView =
       VIEW_OPTIONS.find((v) => v.value === value)?.fcView ?? "timeGridDay";
-    calendarRef.current?.getApi().changeView(fcView);
+    const targetDate = moment().utc().format("YYYY-MM-DD");
+
+    calendarRef.current?.getApi().changeView(fcView, targetDate);
   };
 
   const handleAppointmentCreate = async (
