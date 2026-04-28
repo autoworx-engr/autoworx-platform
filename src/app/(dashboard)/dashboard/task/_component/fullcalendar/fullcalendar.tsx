@@ -10,6 +10,7 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import moment from "moment";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { useCalendarStore } from "@/stores/calendarStore";
 import styles from "./fullcalendar.module.css";
 import { CalendarHeader } from "./CalendarHeader";
@@ -33,7 +34,8 @@ export default function Calendar({ type }: { type: CalendarType }) {
   const [isCalendarLoading, setIsCalendarLoading] = useState(false);
   const [selectedTeamMateIds, setSelectedTeamMateIds] = useState<number[]>([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
-  const { date: storeDate } = useCalendarStore();
+  const { date: storeDate, setDate, setNavigating } = useCalendarStore();
+  const router = useRouter();
   const [view, setView] = useState(
     type === "list"
       ? "listDay"
@@ -154,6 +156,12 @@ export default function Calendar({ type }: { type: CalendarType }) {
     setIsSheetOpen(true);
   };
 
+  const handleNavLinkDayClick = (date: Date) => {
+    setDate(moment(date).format("YYYY-MM-DD"));
+    setNavigating(true);
+    router.push("day");
+  };
+
   const handleDatesSet = (arg: any) => {
     setView(arg.view.type);
     syncStoreDatesSet(arg);
@@ -209,6 +217,7 @@ export default function Calendar({ type }: { type: CalendarType }) {
             headerToolbar={false}
             firstDay={firstDay}
             navLinks={true}
+            navLinkDayClick={handleNavLinkDayClick}
             editable={true}
             dayMaxEvents={2}
             allDaySlot={false}
