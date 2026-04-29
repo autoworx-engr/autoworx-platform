@@ -14,11 +14,33 @@ export async function registerReconciliationWorker(boss: PgBoss) {
 
   await boss.work(QUEUE_RECONCILE, async () => {
     const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+    // Give up after 12 hours — ~10 reconciliation cycles × 5 pg-boss retries each
+    const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
+
+    // Terminal: permanently stuck events → mark FAILED so they stop cycling
+    const gaveUp = await db.webhookEvent.findMany({
+      where: { status: "PENDING", receivedAt: { lt: twelveHoursAgo } },
+      select: { id: true, eventId: true, gateway: true, lastError: true },
+    });
+
+    if (gaveUp.length > 0) {
+      await db.webhookEvent.updateMany({
+        where: { id: { in: gaveUp.map((e) => e.id) } },
+        data: { status: "FAILED" },
+      });
+      for (const event of gaveUp) {
+        console.error(`[reconciliation] gave up on event`, {
+          eventId: event.eventId,
+          gateway: event.gateway,
+          lastError: event.lastError,
+        });
+      }
+    }
 
     const stuck = await db.webhookEvent.findMany({
       where: {
         status: "PENDING",
-        receivedAt: { lt: twoHoursAgo },
+        receivedAt: { gte: twelveHoursAgo, lt: twoHoursAgo },
       },
       select: {
         id: true,
