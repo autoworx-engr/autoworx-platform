@@ -160,6 +160,8 @@ export async function POST(req: NextRequest) {
       reminderEmailTemplateStatus,
       times,
       timezone,
+      forceCompanyId,
+      forceUserId,
     } = body;
 
     // Basic validation (extra safety before Zod)
@@ -198,6 +200,8 @@ export async function POST(req: NextRequest) {
       reminderEmailTemplateStatus,
       times,
       timezone,
+      forceCompanyId,
+      forceUserId,
     });
 
     // Handle server action error format
