@@ -214,19 +214,37 @@ export const getMonthlyQualifiedAndUnqualifiedLeads = async (
         .startOf("month")
         .startOf("day")
         .toDate();
-      const effectiveEndDate = monthStart
-        .clone()
-        .add(1, "month")
-        .startOf("month")
-        .subtract(1, "second")
-        .toDate();
+      const rangeStart = startDate ? startDate : effectiveStartDate;
+      const rangeEnd = endDate
+        ? endDate
+        : monthStart
+            .clone()
+            .add(1, "month")
+            .startOf("month")
+            .subtract(1, "second")
+            .toDate();
+      const effectiveEndDate = new Date(
+        Math.min(
+          rangeEnd.getTime(),
+          monthStart
+            .clone()
+            .add(1, "month")
+            .startOf("month")
+            .subtract(1, "second")
+            .toDate()
+            .getTime(),
+        ),
+      );
+      const boundedStartDate = new Date(
+        Math.max(rangeStart.getTime(), effectiveStartDate.getTime()),
+      );
 
       const qualifiedLeads = await db.lead.count({
         where: {
           companyId,
           isQualified: true,
           createdAt: {
-            gte: effectiveStartDate,
+            gte: boundedStartDate,
             lte: effectiveEndDate,
           },
         },
@@ -237,7 +255,7 @@ export const getMonthlyQualifiedAndUnqualifiedLeads = async (
           companyId,
           isQualified: false,
           createdAt: {
-            gte: effectiveStartDate,
+            gte: boundedStartDate,
             lte: effectiveEndDate,
           },
         },
