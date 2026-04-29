@@ -1,9 +1,5 @@
 "use server";
-import {
-  sendMail,
-  sendVerificationMail,
-} from "@/actions/two-factor/send2faMail";
-import { getEmailVerificationTemplate } from "@/actions/two-factor/template";
+import { sendVerificationMail } from "@/actions/two-factor/send2faMail";
 import { authOptions } from "@/authOptions";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";

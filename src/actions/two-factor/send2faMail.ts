@@ -2,7 +2,10 @@ import {
   InfobipEmailRequest,
   sendInfobipEmailAPI,
 } from "../estimate/invoice/sendInfobipEmail";
-import { getEmailVerificationTemplate, getOTPEmailTemplate } from "./template";
+import {
+  getEmailVerificationTemplate,
+  getOTPEmailTemplate,
+} from "@/lib/emails-template/two-factor";
 
 type TSendMailProps = {
   to: string;
