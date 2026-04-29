@@ -36,7 +36,6 @@ type LeadCardProps = {
 export default memo(function LeadCard({
   leadData,
   highlight = false,
-  index,
   columnIndex,
   isDragDisabled,
   leadIndex,
@@ -60,6 +59,7 @@ export default memo(function LeadCard({
       });
     } catch (error) {
       console.error(error);
+      errorToast("Failed to remove lead.");
     }
   };
 
@@ -69,19 +69,23 @@ export default memo(function LeadCard({
       return;
     }
 
+    const currentColumnIndex = pipelineColumns.findIndex(
+      (col) => col.id === leadData.columnId,
+    );
+    const destinationColumnIndex = pipelineColumns.findIndex(
+      (col) => col.id === parseInt(newColumnId),
+    );
+    if (currentColumnIndex === -1 || destinationColumnIndex === -1) return;
+
+    const leadIndex = pipelineColumns[currentColumnIndex].leads.findIndex(
+      (l) => l.id === leadData.id,
+    );
+    // Capture original destination length before the optimistic dispatch
+    const originalDestLength =
+      pipelineColumns[destinationColumnIndex].leads.length;
+
     try {
-      const currentColumnIndex = pipelineColumns.findIndex(
-        (col) => col.id === leadData.columnId,
-      );
-      const destinationColumnIndex = pipelineColumns.findIndex(
-        (col) => col.id === parseInt(newColumnId),
-      );
-      if (currentColumnIndex === -1 || destinationColumnIndex === -1) return;
-
-      const leadIndex = pipelineColumns[currentColumnIndex].leads.findIndex(
-        (l) => l.id === leadData.id,
-      );
-
+      // Optimistic update
       dispatch({
         type: actionTypes.DRAG_END,
         payload: {
@@ -91,7 +95,7 @@ export default memo(function LeadCard({
           },
           destination: {
             droppableId: destinationColumnIndex.toString(),
-            index: pipelineColumns[destinationColumnIndex].leads.length,
+            index: originalDestLength,
           },
           draggableId: leadData.id.toString(),
         },
@@ -104,6 +108,21 @@ export default memo(function LeadCard({
       setShowColumnSelect(false);
       successToast("Job moved successfully");
     } catch (error) {
+      // Rollback: move lead back to its original column and position
+      dispatch({
+        type: actionTypes.DRAG_END,
+        payload: {
+          source: {
+            droppableId: destinationColumnIndex.toString(),
+            index: originalDestLength,
+          },
+          destination: {
+            droppableId: currentColumnIndex.toString(),
+            index: leadIndex,
+          },
+          draggableId: leadData.id.toString(),
+        },
+      });
       errorToast("Failed to move job.");
     }
   };

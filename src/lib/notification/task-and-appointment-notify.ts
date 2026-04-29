@@ -209,7 +209,7 @@ export const sendAppointmentUpdateNotification = async ({
       redirectUrl: `/dashboard/task/day?date=${formattedDate}`,
       description: clientName
         ? `Appointment with ${clientName} on ${formattedDate} at ${formattedTime} has been created. Check your Autoworx calendar.`
-        : `Appointment ${title} on ${formattedDate} at ${formattedTime} has been created. Check your Autoworx calendar.`,
+        : `Appointment ${title} on ${formattedDate} at ${formattedTime} has been updated. Check your Autoworx calendar.`,
     };
 
     const uniqueUsersToNotify = new Map<number, any>();
