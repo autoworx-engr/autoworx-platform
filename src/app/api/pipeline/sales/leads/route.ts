@@ -87,10 +87,15 @@ export async function GET(request: NextRequest) {
 
     const startDateStr = searchParams.get("startDate");
     const endDateStr = searchParams.get("endDate");
-    let dateRange: [Date | null, Date | null] | undefined = undefined;
+    let dateRange: [string | null, string | null] | undefined = undefined;
 
     if (startDateStr && endDateStr) {
-      dateRange = [new Date(startDateStr), new Date(endDateStr)];
+      // Extract only the YYYY-MM-DD part so the action can parse it directly
+      // in the company timezone — prevents off-by-one-day errors when the
+      // browser timezone differs from the company timezone.
+      const toDateOnly = (iso: string): string | null =>
+        iso.match(/^(\d{4}-\d{2}-\d{2})/)?.[1] ?? null;
+      dateRange = [toDateOnly(startDateStr), toDateOnly(endDateStr)];
     }
 
     const result = await getLeadsWithCountOptimized({
