@@ -9,7 +9,9 @@ export async function register() {
     await import("@/workers/authorize-net-payment.worker");
   const { registerReconciliationWorker } =
     await import("@/workers/reconciliation.worker");
-  const { QUEUE_STRIPE, QUEUE_AUTHORIZE_NET } =
+  const { processPlatformBillingEvent } =
+    await import("@/workers/platform-billing.worker");
+  const { QUEUE_STRIPE, QUEUE_AUTHORIZE_NET, QUEUE_PLATFORM_BILLING } =
     await import("@/lib/queue-names");
 
   const boss = getBoss();
@@ -25,6 +27,7 @@ export async function register() {
   await Promise.all([
     boss.createQueue(QUEUE_STRIPE, retryOptions),
     boss.createQueue(QUEUE_AUTHORIZE_NET, retryOptions),
+    boss.createQueue(QUEUE_PLATFORM_BILLING, retryOptions),
   ]);
 
   await boss.work(
@@ -50,6 +53,23 @@ export async function register() {
       for (const job of jobs) {
         try {
           await processAuthorizeNetPayment(job.data.eventId);
+        } catch (err: any) {
+          await db.webhookEvent.update({
+            where: { eventId: job.data.eventId },
+            data: { lastError: err?.message ?? "Unknown error" },
+          });
+          throw err;
+        }
+      }
+    },
+  );
+
+  await boss.work(
+    QUEUE_PLATFORM_BILLING,
+    async (jobs: { data: { eventId: string } }[]) => {
+      for (const job of jobs) {
+        try {
+          await processPlatformBillingEvent(job.data.eventId);
         } catch (err: any) {
           await db.webhookEvent.update({
             where: { eventId: job.data.eventId },

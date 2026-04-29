@@ -1,13 +1,18 @@
 import { db } from "@/lib/db";
-import { QUEUE_AUTHORIZE_NET, QUEUE_STRIPE } from "@/lib/queue-names";
+import {
+  QUEUE_AUTHORIZE_NET,
+  QUEUE_PLATFORM_BILLING,
+  QUEUE_RECONCILE,
+  QUEUE_STRIPE,
+} from "@/lib/queue-names";
 import type { PgBoss } from "pg-boss";
 
 export async function registerReconciliationWorker(boss: PgBoss) {
-  await boss.createQueue("reconcile-webhooks");
+  await boss.createQueue(QUEUE_RECONCILE);
 
-  await boss.schedule("reconcile-webhooks", "0 * * * *", {});
+  await boss.schedule(QUEUE_RECONCILE, "0 * * * *", {});
 
-  await boss.work("reconcile-webhooks", async () => {
+  await boss.work(QUEUE_RECONCILE, async () => {
     const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
 
     const stuck = await db.webhookEvent.findMany({
@@ -41,12 +46,16 @@ export async function registerReconciliationWorker(boss: PgBoss) {
       });
     }
 
-    const stripeJobs = stuck
-      .filter((e) => e.gateway === "STRIPE")
-      .map((e) => ({ data: { eventId: e.eventId } }));
-    const authNetJobs = stuck
-      .filter((e) => e.gateway !== "STRIPE")
-      .map((e) => ({ data: { eventId: e.eventId } }));
+    const toJobs = (events: typeof stuck) =>
+      events.map((e) => ({ data: { eventId: e.eventId } }));
+
+    const stripeJobs = toJobs(stuck.filter((e) => e.gateway === "STRIPE"));
+    const platformJobs = toJobs(
+      stuck.filter((e) => e.gateway === "PLATFORM_AUTHORIZE_NET"),
+    );
+    const authNetJobs = toJobs(
+      stuck.filter((e) => e.gateway === "AUTHORIZE_NET"),
+    );
 
     await Promise.all([
       stripeJobs.length > 0
@@ -54,6 +63,9 @@ export async function registerReconciliationWorker(boss: PgBoss) {
         : Promise.resolve(),
       authNetJobs.length > 0
         ? boss.insert(QUEUE_AUTHORIZE_NET, authNetJobs)
+        : Promise.resolve(),
+      platformJobs.length > 0
+        ? boss.insert(QUEUE_PLATFORM_BILLING, platformJobs)
         : Promise.resolve(),
     ]);
   });
