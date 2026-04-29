@@ -298,7 +298,8 @@ function mapPayment(payment: PaymentListRecord): ReturnPayment {
   const giftCardPurchaserName =
     !invoiceClientName &&
     (parsedNotes.source === "virtual_shop_gift_card" ||
-      parsedNotes.source === "virtual_shop_gift_card_purchase")
+      parsedNotes.source === "virtual_shop_gift_card_purchase" ||
+      parsedNotes.source === "virtual_shop_gift_card_reload")
       ? (parsedNotes.purchaserName as string | undefined)
       : undefined;
 
