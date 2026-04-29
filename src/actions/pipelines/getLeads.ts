@@ -305,7 +305,12 @@ export const getLeadsWithCount = async ({
             include: {
               appointments: {
                 where: {
-                  date: { gte: moment.utc(todayTimeString).toDate() },
+                  date: {
+                    gte: moment
+                      .tz(await getCompanyTimezone())
+                      .startOf("day")
+                      .toDate(),
+                  },
                 },
                 orderBy: {
                   date: "asc",
