@@ -1,9 +1,11 @@
 "use server";
 import { db } from "@/lib/db";
 
+type AttachmentSummary = { name?: string; url?: string };
+
 // Helper function to create descriptive attachment message
 function createAttachmentMessage(
-  attachments: any[],
+  attachments: AttachmentSummary[],
   textMessage?: string,
 ): string {
   if (!attachments || attachments.length === 0) {
@@ -108,7 +110,7 @@ type TUpdateClientEmailChatTrack = {
   clientId: number;
   emailLastMessage: string;
   lastEmailBy: string; // Who sent the email (Company or Client)
-  attachments?: any[]; // Array of attachments to create descriptive message
+  attachments?: AttachmentSummary[]; // Array of attachments to create descriptive message
 };
 
 // update client email conversation track
@@ -161,7 +163,7 @@ type TUpdateClientSMSChatTrack = {
   clientId: number;
   smsLastMessage: string;
   lastMessageBy: string;
-  attachments?: any[]; // Array of attachments to create descriptive message
+  attachments?: AttachmentSummary[]; // Array of attachments to create descriptive message
 };
 
 export async function updateNewSMSChatTrack({
@@ -266,29 +268,29 @@ export async function unreadClientSmsAndEmail(clientId: number) {
       return initialCreateClientChatTrack(clientId);
     }
 
-    let updatedData = findClientChatTrack;
-
-    if (updatedData?.lastMessageBy === "Client") {
-      updatedData = await db.clientConversationTrack.update({
+    // Atomic conditional unread updates via updateMany so we don't throw when
+    // the row is already in the desired state (e.g. concurrent reader).
+    if (findClientChatTrack.lastMessageBy === "Client") {
+      await db.clientConversationTrack.updateMany({
         where: { clientId, smsIsRead: true },
         data: {
           smsIsRead: false,
-          smsUnReadCount: { increment: 1 }, // or set to specific number
+          smsUnReadCount: { increment: 1 },
         },
       });
     }
 
-    if (updatedData?.lastEmailBy === "Client") {
-      updatedData = await db.clientConversationTrack.update({
+    if (findClientChatTrack.lastEmailBy === "Client") {
+      await db.clientConversationTrack.updateMany({
         where: { clientId, emailIsRead: true },
         data: {
           emailIsRead: false,
-          emailIsUnReadCount: { increment: 1 }, // or set to specific number
+          emailIsUnReadCount: { increment: 1 },
         },
       });
     }
 
-    return updatedData;
+    return db.clientConversationTrack.findUnique({ where: { clientId } });
   } catch (err) {
     throw err;
   }

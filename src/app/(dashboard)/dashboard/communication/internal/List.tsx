@@ -1,4 +1,3 @@
-import { fetchUsersWithLatestMessages } from "@/actions/communication/internal/fetchUsersWithLatestMessages";
 import { getGroupById } from "@/actions/communication/internal/query";
 import Avatar from "@/components/Avatar";
 import { cn } from "@/lib/cn";
@@ -7,9 +6,11 @@ import { useChatTrackStore } from "@/stores/chatTrackStore";
 import { ChatTrack, Group, Message, User } from "@prisma/client";
 import { Search } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import CreateGroupModal from "./CreateGroupModal";
 import UserSelectButton from "./UserSelectButton";
+import InfiniteScroll from "react-infinite-scroll-component";
+import { useInfiniteUsersList } from "./_hooks/useInfiniteUsersList";
 
 type TListProps = {
   users: (User & { unreadCount: number; latestMessage?: Message | null })[];
@@ -43,16 +44,44 @@ export default function List({
   addChatItem,
 }: TListProps) {
   const { data: session } = useSession();
+  const companyId = session?.user?.companyId ?? 0;
+
   const [searchTerm, setSearchTerm] = useState("");
   const [sideBarGroupsLists, setSideBarGroupLists] = useState(groups);
+
+  // Paginated users list. Server pre-orders by latest-message activity, so the
+  // flat array we receive is already in display order on a per-page basis.
+  const {
+    data: usersInfinite,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteUsersList({ companyId, search: searchTerm });
+
+  const paginatedUsers = useMemo(() => {
+    const pages = usersInfinite?.pages ?? [];
+    return pages.flatMap((p) => p.data) as (User & {
+      unreadCount: number;
+      latestMessage?: Message | null;
+    })[];
+  }, [usersInfinite]);
+
+  // userState mirrors the paginated users (so the existing Pusher / sort
+  // useEffects in this file keep working) and is re-seeded whenever react-query
+  // delivers a new page or a search-term re-key.
   const [userState, setUserState] =
     useState<
       (User & { unreadCount: number; latestMessage?: Message | null })[]
     >(users);
+
+  useEffect(() => {
+    if (paginatedUsers.length === 0 && !usersInfinite) return;
+    setUserState(paginatedUsers);
+  }, [paginatedUsers, usersInfinite]);
+
   const [chatTrackState, setChatTrackState] =
     useState<(ChatTrack & { message?: Message | null })[]>(userChatTrack);
   const [messagesState, setMessagesState] = useState<Message[]>(messages);
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const { lastMessage } = useChatTrackStore();
 
@@ -63,7 +92,7 @@ export default function List({
         unreadCount: number;
         latestMessage?: Message | null;
       })[],
-      groupsToSort: (Group & { users: User[] })[]
+      groupsToSort: (Group & { users: User[] })[],
     ) => {
       // Create a combined array with type indicators
       const combinedItems = [
@@ -76,7 +105,7 @@ export default function List({
                 (message.from === user.id &&
                   message.to === parseInt(session?.user?.id!)) ||
                 (message.from === parseInt(session?.user?.id!) &&
-                  message.to === user.id)
+                  message.to === user.id),
             );
             return userMessages.length > 0
               ? userMessages[0]
@@ -88,7 +117,7 @@ export default function List({
           data: group,
           latestMessage: (() => {
             const groupMessages = messagesState.filter(
-              (message) => message.groupId === group.id
+              (message) => message.groupId === group.id,
             );
             return groupMessages.length > 0 ? groupMessages[0] : null;
           })(),
@@ -107,7 +136,7 @@ export default function List({
         // Check if lastMessage from store affects these items and use it if it's more recent
         if (lastMessage && lastMessage.message) {
           const lastMessageTimestamp = new Date(
-            lastMessage.message.updatedAt
+            lastMessage.message.updatedAt,
           ).getTime();
 
           if (a.type === "user") {
@@ -165,7 +194,7 @@ export default function List({
 
       return { sortedUsers, sortedGroups };
     },
-    [messagesState, lastMessage, session?.user?.id]
+    [messagesState, lastMessage, session?.user?.id],
   );
 
   // Update states when props change and sort immediately
@@ -173,7 +202,7 @@ export default function List({
     // Sort users and groups together
     const { sortedUsers, sortedGroups } = sortUsersAndGroupsByLatestMessage(
       users,
-      groups
+      groups,
     );
     setUserState(sortedUsers);
     setSideBarGroupLists(sortedGroups);
@@ -192,60 +221,15 @@ export default function List({
     if (userState.length > 0 || sideBarGroupsLists.length > 0) {
       const { sortedUsers, sortedGroups } = sortUsersAndGroupsByLatestMessage(
         userState,
-        sideBarGroupsLists
+        sideBarGroupsLists,
       );
       setUserState(sortedUsers);
       setSideBarGroupLists(sortedGroups);
     }
   }, [messagesState, lastMessage, sortUsersAndGroupsByLatestMessage]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Fetch latest data when component mounts (for navigating from other pages)
-  useEffect(() => {
-    const refreshData = async () => {
-      setIsRefreshing(true);
-      try {
-        const result = await fetchUsersWithLatestMessages();
-        if (result.success && result.data) {
-          setUserState(result.data.users);
-          setMessagesState(result.data.messages);
-          // We can still use existing chat track data for other purposes
-        }
-      } catch (error) {
-        console.error("Failed to refresh user data:", error);
-      } finally {
-        setIsRefreshing(false);
-      }
-    };
-
-    // Only refresh if we have a session
-    if (session?.user?.id) {
-      refreshData();
-    }
-  }, [session?.user?.id]); // Only run when session changes or component mounts
-
-  // Fetch latest data when component mounts (for navigating from other pages)
-  useEffect(() => {
-    const refreshData = async () => {
-      setIsRefreshing(true);
-      try {
-        const result = await fetchUsersWithLatestMessages();
-        if (result.success && result.data) {
-          setUserState(result.data.users);
-          setMessagesState(result.data.messages);
-          // We can still use existing chat track data for other purposes
-        }
-      } catch (error) {
-        console.error("Failed to refresh user data:", error);
-      } finally {
-        setIsRefreshing(false);
-      }
-    };
-
-    // Only refresh if we have a session
-    if (session?.user?.id) {
-      refreshData();
-    }
-  }, [session?.user?.id]); // Only run when session changes or component mounts
+  // (refresh-on-mount full-table fetch removed; useInfiniteUsersList now drives
+  // initial load and re-fetches as the user scrolls or types into search.)
 
   // Listen for new messages and update user unread counts
   useEffect(() => {
@@ -272,7 +256,7 @@ export default function List({
         // Add the new message to the messages state
         setMessagesState((prevMessages) => {
           const messageExists = prevMessages.some(
-            (msg) => msg.id === data.message.id
+            (msg) => msg.id === data.message.id,
           );
           if (messageExists) {
             return prevMessages;
@@ -280,7 +264,7 @@ export default function List({
           // Add new message and sort by most recent first
           return [data.message, ...prevMessages].sort(
             (a, b) =>
-              new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+              new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
           );
         });
 
@@ -289,7 +273,7 @@ export default function List({
           setSideBarGroupLists((prevGroups) => {
             const { sortedGroups } = sortUsersAndGroupsByLatestMessage(
               userState,
-              prevGroups
+              prevGroups,
             );
             return sortedGroups;
           });
@@ -307,7 +291,7 @@ export default function List({
                 };
               }
               return user;
-            })
+            }),
           );
         } else if (data.message.from === parseInt(session.user.id!)) {
           // Update the latest message for the receiver even if we sent it
@@ -320,14 +304,14 @@ export default function List({
                 };
               }
               return user;
-            })
+            }),
           );
         }
 
         // Update the chat track state with the new message (for compatibility)
         setChatTrackState((prevChatTracks) => {
           const existingTrackIndex = prevChatTracks.findIndex(
-            (track) => track.id === data.id
+            (track) => track.id === data.id,
           );
 
           let updatedTracks;
@@ -354,7 +338,7 @@ export default function List({
               return { ...user, unreadCount: 0 };
             }
             return user;
-          })
+          }),
         );
 
         // Update chat track state to mark messages as read
@@ -367,7 +351,7 @@ export default function List({
               return { ...track, isRead: true };
             }
             return track;
-          })
+          }),
         );
       }
     };
@@ -402,7 +386,7 @@ export default function List({
                 if (!ignore) {
                   setSideBarGroupLists((prevGroups) => {
                     const isExistInGroup = prevGroups.find(
-                      (g) => g.id === groupId
+                      (g) => g.id === groupId,
                     );
                     let updatedGroups;
                     if (!isExistInGroup) {
@@ -413,15 +397,15 @@ export default function List({
                     // Sort groups after adding new one
                     const { sortedGroups } = sortUsersAndGroupsByLatestMessage(
                       userState,
-                      updatedGroups
+                      updatedGroups,
                     );
                     return sortedGroups;
                   });
                 }
               }
-            }
+            },
           );
-        }
+        },
       );
     return () => {
       ignore = false;
@@ -443,7 +427,7 @@ export default function List({
                 if (!ignore) {
                   setSideBarGroupLists((prevGroups) => {
                     const isAlreadyExistInGroup = prevGroups.find(
-                      (group) => group.id === groupId
+                      (group) => group.id === groupId,
                     );
                     let updatedGroups;
                     if (isAlreadyExistInGroup) {
@@ -460,7 +444,7 @@ export default function List({
                     // Sort groups after updating
                     const { sortedGroups } = sortUsersAndGroupsByLatestMessage(
                       userState,
-                      updatedGroups
+                      updatedGroups,
                     );
                     return sortedGroups;
                   });
@@ -477,7 +461,7 @@ export default function List({
               } else {
                 setSideBarGroupLists((prevGroups) => {
                   const isAlreadyExistInGroup = prevGroups.find(
-                    (group) => group.id === groupId
+                    (group) => group.id === groupId,
                   );
                   if (isAlreadyExistInGroup) {
                     return prevGroups.filter((group) => group.id !== groupId);
@@ -487,13 +471,13 @@ export default function List({
                 });
                 setGroupsList((groupLists: any) => {
                   return groupLists.filter(
-                    (group: any) => group.id !== groupId
+                    (group: any) => group.id !== groupId,
                   );
                 });
               }
-            }
+            },
           );
-        }
+        },
       );
     return () => {
       ignore = false;
@@ -514,7 +498,7 @@ export default function List({
               if (!ignore) {
                 setSideBarGroupLists((prevGroups) => {
                   const isAlreadyExistInGroup = prevGroups.find(
-                    (group) => group.id === groupId
+                    (group) => group.id === groupId,
                   );
                   let updatedGroups;
                   if (isAlreadyExistInGroup) {
@@ -531,7 +515,7 @@ export default function List({
                   // Sort groups after adding/updating member
                   const { sortedGroups } = sortUsersAndGroupsByLatestMessage(
                     userState,
-                    updatedGroups
+                    updatedGroups,
                   );
                   return sortedGroups;
                 });
@@ -546,7 +530,7 @@ export default function List({
                 });
               }
             }
-          }
+          },
         );
       });
     return () => {
@@ -560,7 +544,7 @@ export default function List({
     if (userState.length > 0 || sideBarGroupsLists.length > 0) {
       const { sortedUsers, sortedGroups } = sortUsersAndGroupsByLatestMessage(
         userState,
-        sideBarGroupsLists
+        sideBarGroupsLists,
       );
       setUserState(sortedUsers);
       setSideBarGroupLists(sortedGroups);
@@ -572,7 +556,7 @@ export default function List({
     if (users.length > 0 || groups.length > 0) {
       const { sortedUsers, sortedGroups } = sortUsersAndGroupsByLatestMessage(
         users,
-        groups
+        groups,
       );
       setUserState(sortedUsers);
       setSideBarGroupLists(sortedGroups);
@@ -585,7 +569,7 @@ export default function List({
     const combinedItems = [
       ...sideBarGroupsLists.map((group) => {
         const groupMessages = messagesState.filter(
-          (message) => message.groupId === group.id
+          (message) => message.groupId === group.id,
         );
         const latestMessage =
           groupMessages.length > 0 ? groupMessages[0] : null;
@@ -605,7 +589,7 @@ export default function List({
             (message.from === user.id &&
               message.to === parseInt(session?.user?.id!)) ||
             (message.from === parseInt(session?.user?.id!) &&
-              message.to === user.id)
+              message.to === user.id),
         );
         const latestMessage =
           userMessages.length > 0 ? userMessages[0] : user.latestMessage;
@@ -624,7 +608,7 @@ export default function List({
     // Check if lastMessage from store affects any items
     if (lastMessage && lastMessage.message) {
       const lastMessageTimestamp = new Date(
-        lastMessage.message.updatedAt
+        lastMessage.message.updatedAt,
       ).getTime();
       const lastMsg = lastMessage.message; // Store reference to avoid repeated null checks
 
@@ -664,7 +648,7 @@ export default function List({
     userId: number,
     updates: Partial<
       User & { unreadCount: number; latestMessage?: Message | null }
-    >
+    >,
   ) => {
     setUserState((prevUsers) =>
       prevUsers.map((user) => {
@@ -672,7 +656,7 @@ export default function List({
           return { ...user, ...updates };
         }
         return user;
-      })
+      }),
     );
   };
 
@@ -680,7 +664,7 @@ export default function List({
     <div
       className={cn(
         "app-shadow max-h-[92vh] w-full rounded-lg bg-background p-3 sm:block sm:w-[25%]",
-        className
+        className,
       )}
     >
       {/* Header */}
@@ -708,159 +692,175 @@ export default function List({
           className={cn(
             "w-full rounded-md border bg-white pl-9 pr-9 py-2 text-sm text-zinc-700 placeholder-zinc-400 outline-none",
             "border-zinc-300 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20",
-            "dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+            "dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200",
           )}
         />
       </div>
 
-      <div className="thin-scrollbar mt-2 flex h-[88%] flex-col gap-2 overflow-y-auto max-[2127px]:h-[87%]">
-        {/* Combined list of groups and users sorted by latest message */}
-        {getCombinedSortedList()
-          .filter((item) => {
-            if (item.type === "group") {
-              return item.data.name
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase());
-            } else {
-              const user = item.data;
-              return (
-                user.firstName
-                  ?.toLowerCase()
-                  .includes(searchTerm.toLowerCase()) ||
-                user.lastName
-                  ?.toLowerCase()
-                  .includes(searchTerm.toLowerCase()) ||
-                `${user.firstName?.toLowerCase()} ${user.lastName?.toLowerCase()}`.includes(
-                  searchTerm.toLowerCase()
-                ) ||
-                user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                user.phone?.toLowerCase().includes(searchTerm.toLowerCase())
-              );
-            }
-          })
-          .map((item) => {
-            if (item.type === "group") {
-              const group = item.data;
-              const isSelectedGroup = !!groupsList.find(
-                (g) => g.id === group.id
-              );
+      <div
+        id="internalSidebarScroll"
+        className="thin-scrollbar mt-2 flex h-[88%] flex-col gap-2 overflow-y-auto max-[2127px]:h-[87%]"
+      >
+        <InfiniteScroll
+          // Keep the parent state count as dataLength so InfiniteScroll knows to
+          // call `next` again when the user scrolls past the loaded set.
+          dataLength={userState.length}
+          next={() => {
+            void fetchNextPage();
+          }}
+          hasMore={!!hasNextPage}
+          loader={
+            isFetchingNextPage ? (
+              <div className="py-2 text-center text-xs text-zinc-500">
+                Loading more…
+              </div>
+            ) : null
+          }
+          scrollableTarget="internalSidebarScroll"
+          style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
+        >
+          {/* Combined list of groups and users sorted by latest message */}
+          {getCombinedSortedList()
+            .filter((item) => {
+              // Users are filtered server-side (the `search` arg participates in
+              // the query key, so changing the box re-fetches a fresh page set).
+              // Groups still need a client-side filter — they aren't paginated
+              // through the same hook.
+              if (item.type === "group") {
+                return item.data.name
+                  .toLowerCase()
+                  .includes(searchTerm.toLowerCase());
+              }
+              return true;
+            })
+            .map((item) => {
+              if (item.type === "group") {
+                const group = item.data;
+                const isSelectedGroup = !!groupsList.find(
+                  (g) => g.id === group.id,
+                );
 
-              return (
-                <button
-                  key={`group-${group.id}`}
-                  className={cn(
-                    `group relative flex items-center w-full gap-2 rounded-2xl p-3 sm:p-4`,
-                    // base card feel
-                    "border border-transparent shadow-sm transition-all duration-200",
-                    // hover/active polish
-                    "hover:shadow-md active:scale-[0.99]",
-                    isSelectedGroup
-                      ? [
-                          "bg-gradient-to-r from-teal-700 to-teal-600",
-                          "ring-1 ring-teal-500/60",
-                        ].join(" ")
-                      : [
-                          "bg-white dark:bg-zinc-900/60",
-                          "border-zinc-200/70 dark:border-white/10",
-                          "hover:border-zinc-300/80 dark:hover:border-white/20",
-                        ].join(" ")
-                  )}
-                  onClick={() => {
-                    // Use the helper function if available, otherwise fallback to old logic
-                    if (addChatItem) {
-                      addChatItem(group, "group");
-                    } else {
-                      // Fallback logic
-                      setGroupsList((groupList) => {
-                        const existingGroupIndex = groupList.findIndex(
-                          (g) => g?.id === group.id
-                        );
-
-                        if (existingGroupIndex !== -1) {
-                          return groupList;
-                        } else {
-                          const totalChatBoxes =
-                            groupList.length + usersList.length;
-
-                          if (totalChatBoxes >= 4) {
-                            const newGroupList = [...groupList];
-                            if (newGroupList.length >= 1) {
-                              newGroupList[newGroupList.length - 1] = group;
-                              return newGroupList;
-                            } else {
-                              return [group];
-                            }
-                          } else {
-                            return [...groupList, group];
-                          }
-                        }
-                      });
-                    }
-                  }}
-                >
-                  <div
+                return (
+                  <button
+                    key={`group-${group.id}`}
                     className={cn(
-                      "grid items-center",
-                      group.users.length === 1 ? "grid-cols-1" : "grid-cols-2"
+                      `group relative flex items-center w-full gap-2 rounded-2xl p-3 sm:p-4`,
+                      // base card feel
+                      "border border-transparent shadow-sm transition-all duration-200",
+                      // hover/active polish
+                      "hover:shadow-md active:scale-[0.99]",
+                      isSelectedGroup
+                        ? [
+                            "bg-gradient-to-r from-teal-700 to-teal-600",
+                            "ring-1 ring-teal-500/60",
+                          ].join(" ")
+                        : [
+                            "bg-white dark:bg-zinc-900/60",
+                            "border-zinc-200/70 dark:border-white/10",
+                            "hover:border-zinc-300/80 dark:hover:border-white/20",
+                          ].join(" "),
                     )}
+                    onClick={() => {
+                      // Use the helper function if available, otherwise fallback to old logic
+                      if (addChatItem) {
+                        addChatItem(group, "group");
+                      } else {
+                        // Fallback logic
+                        setGroupsList((groupList) => {
+                          const existingGroupIndex = groupList.findIndex(
+                            (g) => g?.id === group.id,
+                          );
+
+                          if (existingGroupIndex !== -1) {
+                            return groupList;
+                          } else {
+                            const totalChatBoxes =
+                              groupList.length + usersList.length;
+
+                            if (totalChatBoxes >= 4) {
+                              const newGroupList = [...groupList];
+                              if (newGroupList.length >= 1) {
+                                newGroupList[newGroupList.length - 1] = group;
+                                return newGroupList;
+                              } else {
+                                return [group];
+                              }
+                            } else {
+                              return [...groupList, group];
+                            }
+                          }
+                        });
+                      }
+                    }}
                   >
-                    {group.users.length > 0 &&
-                      group.users?.slice(0, 4).map((user) => {
-                        return (
-                          <Avatar
-                            photo={user?.image}
-                            width={40}
-                            height={40}
-                            key={user?.id}
-                          />
-                        );
-                      })}
-                  </div>
-                  <div className="flex flex-col">
-                    <p
+                    <div
                       className={cn(
-                        "text-[14px] font-bold text-[#797979]",
-                        isSelectedGroup && "text-white hover:text-[#797979]"
+                        "grid items-center",
+                        group.users.length === 1
+                          ? "grid-cols-1"
+                          : "grid-cols-2",
                       )}
                     >
-                      {group?.name}
-                    </p>
-                  </div>
-                </button>
-              );
-            } else {
-              const user = item.data;
-              const isSelectedUser = !!usersList.find((u) => u.id === user.id);
+                      {group.users.length > 0 &&
+                        group.users?.slice(0, 4).map((user) => {
+                          return (
+                            <Avatar
+                              photo={user?.image}
+                              width={40}
+                              height={40}
+                              key={user?.id}
+                            />
+                          );
+                        })}
+                    </div>
+                    <div className="flex flex-col">
+                      <p
+                        className={cn(
+                          "text-[14px] font-bold text-[#797979]",
+                          isSelectedGroup && "text-white hover:text-[#797979]",
+                        )}
+                      >
+                        {group?.name}
+                      </p>
+                    </div>
+                  </button>
+                );
+              } else {
+                const user = item.data;
+                const isSelectedUser = !!usersList.find(
+                  (u) => u.id === user.id,
+                );
 
-              // Get the latest chat track for this user (most recent message)
-              const userChatTracks = chatTrackState.filter(
-                (chat) =>
-                  chat.receiverId === user.id || chat.senderId === user.id
-              );
+                // Get the latest chat track for this user (most recent message)
+                const userChatTracks = chatTrackState.filter(
+                  (chat) =>
+                    chat.receiverId === user.id || chat.senderId === user.id,
+                );
 
-              const traceLastMessage =
-                userChatTracks.length > 0
-                  ? userChatTracks.reduce((latest, current) =>
-                      new Date(current.updatedAt) > new Date(latest.updatedAt)
-                        ? current
-                        : latest
-                    )
-                  : undefined;
+                const traceLastMessage =
+                  userChatTracks.length > 0
+                    ? userChatTracks.reduce((latest, current) =>
+                        new Date(current.updatedAt) > new Date(latest.updatedAt)
+                          ? current
+                          : latest,
+                      )
+                    : undefined;
 
-              return (
-                <UserSelectButton
-                  key={`user-${user.id}`}
-                  groupListLength={groupsList?.length}
-                  isSelectedUser={isSelectedUser}
-                  traceLastMessage={traceLastMessage}
-                  user={user}
-                  setUsersList={setUsersList}
-                  updateUserState={updateUserState}
-                  addChatItem={addChatItem}
-                />
-              );
-            }
-          })}
+                return (
+                  <UserSelectButton
+                    key={`user-${user.id}`}
+                    groupListLength={groupsList?.length}
+                    isSelectedUser={isSelectedUser}
+                    traceLastMessage={traceLastMessage}
+                    user={user}
+                    setUsersList={setUsersList}
+                    updateUserState={updateUserState}
+                    addChatItem={addChatItem}
+                  />
+                );
+              }
+            })}
+        </InfiniteScroll>
       </div>
     </div>
   );
