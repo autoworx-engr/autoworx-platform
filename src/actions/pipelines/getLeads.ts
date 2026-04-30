@@ -59,7 +59,10 @@ export const getLeads = async ({
       }),
     };
 
-    const todayStart = moment.tz(timezone ?? "UTC").startOf("day").toDate();
+    const todayStart = moment
+      .tz(timezone ?? "UTC")
+      .startOf("day")
+      .toDate();
     // console.log({ orderBy });
 
     const leadsData = await db.lead.findMany({
@@ -282,7 +285,10 @@ export const getLeadsWithCount = async ({
         }),
     };
 
-    const todayStart = moment.tz(timezone ?? "UTC").startOf("day").toDate();
+    const todayStart = moment
+      .tz(timezone ?? "UTC")
+      .startOf("day")
+      .toDate();
 
     const [totalCount, leadsData] = await Promise.all([
       db.lead.count({ where: query }),
@@ -507,7 +513,10 @@ export const getLeadsWithCountOptimized = async ({
         }),
     };
 
-    const todayStart = moment.tz(timezone ?? "UTC").startOf("day").toDate();
+    const todayStart = moment
+      .tz(timezone ?? "UTC")
+      .startOf("day")
+      .toDate();
 
     // Run count and data queries in parallel
     const [totalCount, leadsData] = await Promise.all([
