@@ -28,7 +28,9 @@ type TGetLeadsWithCount = {
   source?: string;
   service?: string;
   status?: string;
-  dateRange?: [Date | null, Date | null];
+  // YYYY-MM-DD strings so the action can parse them directly in the company
+  // timezone — avoids off-by-one-day errors when browser tz ≠ company tz.
+  dateRange?: [string | null, string | null];
 };
 
 export const getLeads = async ({
@@ -250,16 +252,33 @@ export const getLeadsWithCount = async ({
       ...(dateRange &&
         dateRange[0] &&
         dateRange[1] && {
-          createdAt: {
-            gte: moment
-              .tz(dateRange[0], timezone ?? "UTC")
-              .startOf("day")
-              .toDate(),
-            lte: moment
-              .tz(dateRange[1], timezone ?? "UTC")
-              .endOf("day")
-              .toDate(),
-          },
+          // Converted leads use columnChangedAt to match the admin dashboard metric
+          // (when the lead moved to Converted), not when it was created.
+          ...(status === "Converted"
+            ? {
+                columnChangedAt: {
+                  gte: moment
+                    .tz(dateRange[0], "YYYY-MM-DD", timezone ?? "UTC")
+                    .startOf("day")
+                    .toDate(),
+                  lte: moment
+                    .tz(dateRange[1], "YYYY-MM-DD", timezone ?? "UTC")
+                    .endOf("day")
+                    .toDate(),
+                },
+              }
+            : {
+                createdAt: {
+                  gte: moment
+                    .tz(dateRange[0], "YYYY-MM-DD", timezone ?? "UTC")
+                    .startOf("day")
+                    .toDate(),
+                  lte: moment
+                    .tz(dateRange[1], "YYYY-MM-DD", timezone ?? "UTC")
+                    .endOf("day")
+                    .toDate(),
+                },
+              }),
         }),
     };
 
@@ -458,16 +477,33 @@ export const getLeadsWithCountOptimized = async ({
       ...(dateRange &&
         dateRange[0] &&
         dateRange[1] && {
-          createdAt: {
-            gte: moment
-              .tz(dateRange[0], timezone ?? "UTC")
-              .startOf("day")
-              .toDate(),
-            lte: moment
-              .tz(dateRange[1], timezone ?? "UTC")
-              .endOf("day")
-              .toDate(),
-          },
+          // Converted leads use columnChangedAt to match the admin dashboard metric
+          // (when the lead moved to Converted), not when it was created.
+          ...(status === "Converted"
+            ? {
+                columnChangedAt: {
+                  gte: moment
+                    .tz(dateRange[0], "YYYY-MM-DD", timezone ?? "UTC")
+                    .startOf("day")
+                    .toDate(),
+                  lte: moment
+                    .tz(dateRange[1], "YYYY-MM-DD", timezone ?? "UTC")
+                    .endOf("day")
+                    .toDate(),
+                },
+              }
+            : {
+                createdAt: {
+                  gte: moment
+                    .tz(dateRange[0], "YYYY-MM-DD", timezone ?? "UTC")
+                    .startOf("day")
+                    .toDate(),
+                  lte: moment
+                    .tz(dateRange[1], "YYYY-MM-DD", timezone ?? "UTC")
+                    .endOf("day")
+                    .toDate(),
+                },
+              }),
         }),
     };
 
