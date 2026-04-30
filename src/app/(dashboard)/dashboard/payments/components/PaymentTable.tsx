@@ -233,16 +233,19 @@ export default function PaymentTable() {
                       </td>
                       <td className="border-b px-4 py-2">{item.method}</td>{" "}
                       <td className="border-b px-4 py-2">
-                        <RefundModal
-                          paymentId={item.id}
-                          paymentType={item.paymentType}
-                          totalAmount={item.amount}
-                          refundedAmount={item.refundedAmount}
-                          refundMethod={item.refundMethod}
-                          refundReason={item.refundReason}
-                          refundDate={item.refundDate}
-                          onRefundSuccess={onRefreshPayments}
-                        />
+                        {item.method !== "Virtual Shop Gift Card" &&
+                          item.method !== "Virtual Shop Gift Card Reload" && (
+                            <RefundModal
+                              paymentId={item.id}
+                              paymentType={item.paymentType}
+                              totalAmount={item.amount}
+                              refundedAmount={item.refundedAmount}
+                              refundMethod={item.refundMethod}
+                              refundReason={item.refundReason}
+                              refundDate={item.refundDate}
+                              onRefundSuccess={onRefreshPayments}
+                            />
+                          )}
                       </td>
                     </tr>
                   ))
@@ -325,18 +328,21 @@ export default function PaymentTable() {
                       {item.cashReceived ? item.cashReceived : "N/A"}
                     </p>
                   </div>{" "}
-                  <div className="flex justify-end">
-                    <RefundModal
-                      paymentId={item.id}
-                      paymentType={item.paymentType}
-                      totalAmount={item.amount}
-                      refundedAmount={item.refundedAmount}
-                      refundMethod={item.refundMethod}
-                      refundReason={item.refundReason}
-                      refundDate={item.refundDate}
-                      onRefundSuccess={onRefreshPayments}
-                    />
-                  </div>
+                  {item.method !== "Virtual Shop Gift Card" &&
+                    item.method !== "Virtual Shop Gift Card Reload" && (
+                      <div className="flex justify-end">
+                        <RefundModal
+                          paymentId={item.id}
+                          paymentType={item.paymentType}
+                          totalAmount={item.amount}
+                          refundedAmount={item.refundedAmount}
+                          refundMethod={item.refundMethod}
+                          refundReason={item.refundReason}
+                          refundDate={item.refundDate}
+                          onRefundSuccess={onRefreshPayments}
+                        />
+                      </div>
+                    )}
                 </div>
               </div>
             ))
