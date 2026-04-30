@@ -183,6 +183,7 @@ export function useTaskForm({
         id: taskId,
         task: commonTaskData,
       });
+
       if (res.type === "success") {
         queryClient.invalidateQueries({
           queryKey: taskQueryKey.taskById(taskId.toString()),

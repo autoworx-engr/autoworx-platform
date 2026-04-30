@@ -14,6 +14,7 @@ import { getServerSession } from "next-auth";
 import { sendAppointmentConfirmation } from "./appointmentNotifications";
 import { scheduleRemindersInNest } from "./appointmentReminderScheduler";
 import { syncAppointmentToGoogleCalendar } from "./appointmentCalendarSync";
+import { revalidatePath } from "next/cache";
 
 export interface AppointmentToAdd {
   title: string;
@@ -210,6 +211,8 @@ export async function addAppointment(
     } catch (error) {
       console.log("🚀 ~ addAppointment ~ error:", error);
     }
+
+    revalidatePath("/dashboard/communication/client/${clientId}");
 
     return { type: "success", data: newAppointment };
   } catch (error) {
