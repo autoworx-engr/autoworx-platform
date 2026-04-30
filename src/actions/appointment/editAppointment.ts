@@ -22,6 +22,7 @@ import { scheduleRemindersInNest } from "./appointmentReminderScheduler";
 import { deleteRemindersInNest } from "./deleteAppointment";
 import { sendInfobipMessage } from "../communication/client/sendInfobipMessage";
 import { sendTwilioMessage } from "../communication/client/sendTwilioMessage";
+import { revalidatePath } from "next/cache";
 
 export interface AppointmentToUpdate {
   title: string;
@@ -323,6 +324,7 @@ export async function editAppointment({
     });
 
     // revalidatePath("/task");
+    revalidatePath("/dashboard/communication/client/${clientId}");
     return {
       type: "success",
       data: updatedAppointment,

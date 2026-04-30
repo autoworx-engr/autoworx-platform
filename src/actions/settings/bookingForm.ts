@@ -3,7 +3,7 @@
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import { encodeCompanyId } from "@/utils/companyIdEncoder";
-import { BookingForm } from "@prisma/client";
+import { BookingForm, Prisma } from "@prisma/client";
 
 export async function getBooking(companyId: number) {
   try {
@@ -47,11 +47,14 @@ export async function updateBookingForm(
   }
 }
 
-export async function initialCreateBookingForm(cId?: number) {
+export async function initialCreateBookingForm(
+  cId?: number,
+  tx?: Prisma.TransactionClient,
+) {
+  const client = tx ?? db;
   try {
     const companyId = cId ? cId : await getCompanyId();
-    // Generate booking URL with encoded company_id as query parameter
-    const bookingForm = await db.bookingForm.create({
+    const bookingForm = await client.bookingForm.create({
       data: {
         title: "Appointment Booking Form",
         companyId: companyId,
@@ -60,16 +63,13 @@ export async function initialCreateBookingForm(cId?: number) {
         bookingUrl: "",
       },
     });
-    // Generate booking URL with encoded company_id as query parameter
     const encodedCompanyId = companyId
       ? encodeCompanyId(companyId.toString() + "_" + bookingForm.id)
       : "default";
     const bookingUrl = `${process.env.NEXT_PUBLIC_APP_URL}/booking-url?ref=${encodedCompanyId}`;
-
-    // Generate QR code URL
     const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(bookingUrl)}`;
 
-    const updatedBookingForm = await db.bookingForm.update({
+    const updatedBookingForm = await client.bookingForm.update({
       where: { id: bookingForm.id },
       data: {
         bookingUrl,

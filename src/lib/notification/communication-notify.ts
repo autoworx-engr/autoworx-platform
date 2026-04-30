@@ -115,7 +115,7 @@ export const sendInternalMessageNotification = async ({
   try {
     const sessionUser = await getUser();
     const toUser = await getUser(toUserId);
-    const redirectUrl = `/dashboard/communication/internal`;
+    const redirectUrl = `/dashboard/communication/internal?id=${sessionUser?.id}`;
     const sessionUserFullName = `${sessionUser.firstName} ${sessionUser.lastName}`;
     const description = `New internal message from ${sessionUserFullName}. View it in Autoworx`;
     const title = "New Internal Message";

@@ -525,6 +525,8 @@ export async function getConvertedLeadsPerMonth(
         },
       },
     });
+    console.log("currentMonthStart", currentMonthStart);
+    console.log("currentMonthEnd", currentMonthEnd);
 
     const previousConvertedLeads = await db.lead.count({
       where: {
@@ -539,6 +541,8 @@ export async function getConvertedLeadsPerMonth(
         },
       },
     });
+    console.log("currentConvertedLeads", currentConvertedLeads);
+    console.log("previousConvertedLeads", previousConvertedLeads);
     return {
       current: currentConvertedLeads,
       previous: previousConvertedLeads,

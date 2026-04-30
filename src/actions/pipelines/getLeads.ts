@@ -5,13 +5,11 @@ import { sendLeadStageChangeOrCloseNotification } from "@/lib/notification/pipel
 import { LeadWithSalesUser } from "@/types/invoiceLead";
 import { Prisma } from "@prisma/client";
 import moment from "moment-timezone";
-import { updatePipelineAutomationTrigger } from "../automation/pipeline/triggerPipelineAutomation";
-import { getCompanyTimezone } from "../settings/getCompanyTimezone";
-import { updateCommunicationAutomationTrigger } from "../automation/communication/triggerCommunicationAutomation";
-import { updateTagAutomationTrigger } from "../automation/tag/triggerTagAutomation";
 import { revalidatePath } from "next/cache";
-
-import { actionTypes } from "@/constants/lead.constant";
+import { updateCommunicationAutomationTrigger } from "../automation/communication/triggerCommunicationAutomation";
+import { updatePipelineAutomationTrigger } from "../automation/pipeline/triggerPipelineAutomation";
+import { updateTagAutomationTrigger } from "../automation/tag/triggerTagAutomation";
+import { getCompanyTimezone } from "../settings/getCompanyTimezone";
 
 type TGetLeads = {
   columnId?: number;
@@ -30,7 +28,9 @@ type TGetLeadsWithCount = {
   source?: string;
   service?: string;
   status?: string;
-  dateRange?: [Date | null, Date | null];
+  // YYYY-MM-DD strings so the action can parse them directly in the company
+  // timezone — avoids off-by-one-day errors when browser tz ≠ company tz.
+  dateRange?: [string | null, string | null];
 };
 
 export const getLeads = async ({
@@ -59,12 +59,10 @@ export const getLeads = async ({
       }),
     };
 
-    const todayTimeString = moment()
-      .tz(timezone ?? "")
+    const todayStart = moment
+      .tz(timezone ?? "UTC")
       .startOf("day")
-      .format("YYYY-MM-DDTHH:mm:ss");
-
-    const now = moment().tz(timezone ?? "");
+      .toDate();
     // console.log({ orderBy });
 
     const leadsData = await db.lead.findMany({
@@ -93,7 +91,7 @@ export const getLeads = async ({
           include: {
             appointments: {
               where: {
-                date: { gte: moment(todayTimeString) as any },
+                date: { gte: todayStart },
               },
               orderBy: {
                 date: "asc",
@@ -147,7 +145,7 @@ export const getLeads = async ({
             include: {
               appointments: {
                 where: {
-                  date: { gte: moment(todayTimeString) as any },
+                  date: { gte: todayStart },
                 },
                 orderBy: {
                   date: "asc",
@@ -257,26 +255,40 @@ export const getLeadsWithCount = async ({
       ...(dateRange &&
         dateRange[0] &&
         dateRange[1] && {
-          createdAt: {
-            gte: moment
-              .tz(dateRange[0], timezone ?? "UTC")
-              .startOf("day")
-              .toDate(),
-            lte: moment
-              .tz(dateRange[1], timezone ?? "UTC")
-              .endOf("day")
-              .toDate(),
-          },
+          // Converted leads use columnChangedAt to match the admin dashboard metric
+          // (when the lead moved to Converted), not when it was created.
+          ...(status === "Converted"
+            ? {
+                columnChangedAt: {
+                  gte: moment
+                    .tz(dateRange[0], "YYYY-MM-DD", timezone ?? "UTC")
+                    .startOf("day")
+                    .toDate(),
+                  lte: moment
+                    .tz(dateRange[1], "YYYY-MM-DD", timezone ?? "UTC")
+                    .endOf("day")
+                    .toDate(),
+                },
+              }
+            : {
+                createdAt: {
+                  gte: moment
+                    .tz(dateRange[0], "YYYY-MM-DD", timezone ?? "UTC")
+                    .startOf("day")
+                    .toDate(),
+                  lte: moment
+                    .tz(dateRange[1], "YYYY-MM-DD", timezone ?? "UTC")
+                    .endOf("day")
+                    .toDate(),
+                },
+              }),
         }),
     };
 
-    const todayTimeString = moment()
-      .tz(timezone ?? "")
+    const todayStart = moment
+      .tz(timezone ?? "UTC")
       .startOf("day")
-      .format("YYYY-MM-DDTHH:mm:ss");
-
-    const now = moment();
-    const todayStart = moment(todayTimeString);
+      .toDate();
 
     const [totalCount, leadsData] = await Promise.all([
       db.lead.count({ where: query }),
@@ -306,7 +318,7 @@ export const getLeadsWithCount = async ({
             include: {
               appointments: {
                 where: {
-                  date: { gte: moment(todayTimeString) as any },
+                  date: { gte: todayStart },
                 },
                 orderBy: {
                   date: "asc",
@@ -360,7 +372,7 @@ export const getLeadsWithCount = async ({
             include: {
               appointments: {
                 where: {
-                  date: { gte: moment(todayTimeString) as any },
+                  date: { gte: todayStart },
                 },
                 orderBy: {
                   date: "asc",
@@ -471,23 +483,40 @@ export const getLeadsWithCountOptimized = async ({
       ...(dateRange &&
         dateRange[0] &&
         dateRange[1] && {
-          createdAt: {
-            gte: moment
-              .tz(dateRange[0], timezone ?? "UTC")
-              .startOf("day")
-              .toDate(),
-            lte: moment
-              .tz(dateRange[1], timezone ?? "UTC")
-              .endOf("day")
-              .toDate(),
-          },
+          // Converted leads use columnChangedAt to match the admin dashboard metric
+          // (when the lead moved to Converted), not when it was created.
+          ...(status === "Converted"
+            ? {
+                columnChangedAt: {
+                  gte: moment
+                    .tz(dateRange[0], "YYYY-MM-DD", timezone ?? "UTC")
+                    .startOf("day")
+                    .toDate(),
+                  lte: moment
+                    .tz(dateRange[1], "YYYY-MM-DD", timezone ?? "UTC")
+                    .endOf("day")
+                    .toDate(),
+                },
+              }
+            : {
+                createdAt: {
+                  gte: moment
+                    .tz(dateRange[0], "YYYY-MM-DD", timezone ?? "UTC")
+                    .startOf("day")
+                    .toDate(),
+                  lte: moment
+                    .tz(dateRange[1], "YYYY-MM-DD", timezone ?? "UTC")
+                    .endOf("day")
+                    .toDate(),
+                },
+              }),
         }),
     };
 
-    const todayTimeString = moment()
+    const todayStart = moment
       .tz(timezone ?? "UTC")
       .startOf("day")
-      .format("YYYY-MM-DDTHH:mm:ss");
+      .toDate();
 
     // Run count and data queries in parallel
     const [totalCount, leadsData] = await Promise.all([
@@ -520,7 +549,7 @@ export const getLeadsWithCountOptimized = async ({
             include: {
               appointments: {
                 where: {
-                  date: { gte: moment(todayTimeString) as any },
+                  date: { gte: todayStart },
                 },
                 orderBy: {
                   date: "asc",
