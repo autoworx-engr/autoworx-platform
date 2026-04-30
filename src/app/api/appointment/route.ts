@@ -172,13 +172,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (
-      !assignedUsers ||
-      !Array.isArray(assignedUsers) ||
-      assignedUsers.length === 0
-    ) {
+    if (!assignedUsers || !Array.isArray(assignedUsers)) {
       return NextResponse.json(
-        { success: false, message: "assignedUsers must be a non-empty array" },
+        { success: false, message: "assignedUsers must be an array" },
         { status: 400 },
       );
     }
