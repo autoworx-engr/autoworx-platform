@@ -1691,6 +1691,11 @@ model Message {
   @@index([to], name: "fk_messages_to")
   @@index([from], name: "fk_messages_from")
   @@index([groupId], name: "fk_messages_group")
+  // Covering indexes for the paginated internal chat queries:
+  // direct-message thread lookups order by createdAt within a (from, to) pair,
+  // and group-message pages page through messages of one groupId by createdAt.
+  @@index([from, to, createdAt(sort: Desc)], name: "msg_from_to_created")
+  @@index([groupId, createdAt(sort: Desc)], name: "msg_group_created")
 }
 
 model CollaborationMessage {

@@ -49,17 +49,39 @@ export default function MessageBox({
   setGroupsList,
   existingGroups,
   section,
+  isLoadingOlder = false,
+  onScrollContainerRef,
+  topSlot,
 }: {
   user?: User; // TODO: type this
   setUsersList?: React.Dispatch<React.SetStateAction<any[]>>;
   setGroupsList?: React.Dispatch<React.SetStateAction<any[]>>;
-  messages: (TMessage & { attachment: Attachment | null })[];
+  messages: (TMessage & {
+    attachment: Attachment | Attachment[] | null;
+  })[];
   totalMessageBox: number;
   setMessages: React.Dispatch<React.SetStateAction<any[]>>;
   fromGroup?: boolean;
   group?: Group & { users: User[] };
   existingGroups?: Array<Group & { users: User[] }>;
   section: TSection;
+  /**
+   * When true, suppress the auto-scroll-to-bottom effect. Set this from a
+   * parent that is paginating older messages (`isFetchingNextPage`) so
+   * prepending older rows doesn't yank the view back to the bottom.
+   */
+  isLoadingOlder?: boolean;
+  /**
+   * Callback ref invoked with the inner scroll container DOM node so a
+   * parent (e.g. UserMessageBox) can wire up a scroll listener for
+   * reverse pagination. Optional — collaboration callers ignore it.
+   */
+  onScrollContainerRef?: (el: HTMLDivElement | null) => void;
+  /**
+   * Optional content rendered above the message list — used as a
+   * "loading older messages…" indicator while a new page is being fetched.
+   */
+  topSlot?: React.ReactNode;
 }) {
   const { data: session } = useSession();
   const attachmentRef = useRef<HTMLInputElement>(null);
@@ -85,7 +107,39 @@ export default function MessageBox({
   const [groupName, setGroupName] = useState(group?.name || "");
   const [isGroupNameEdited, setIsGroupNameEdited] = useState(false);
 
+  // Track which last-message id we've already scrolled to. We scroll to the
+  // bottom only when a genuinely new last-message id appears (initial load /
+  // new outgoing or incoming real-time message). We must NOT scroll when older
+  // pages are prepended (scroll-up reverse pagination).
+  //
+  // Two guards:
+  //   1. `isLoadingOlder` (= isFetchingNextPage) — blocks while the fetch is
+  //      in flight.
+  //   2. `wasLoadingOlderRef` — blocks on the EXACT render where
+  //      `isLoadingOlder` flips true→false (i.e. the page just landed).
+  //      Without this the effect would fire with `isLoadingOlder = false` and
+  //      the stale `lastId` check might not save us in every edge case.
+  const lastSeenIdRef = useRef<unknown>(null);
+  const wasLoadingOlderRef = useRef(false);
   useLayoutEffect(() => {
+    if (isLoadingOlder) {
+      wasLoadingOlderRef.current = true;
+      return;
+    }
+    // Just finished loading an older page — skip this render so the parent's
+    // useLayoutEffect (adjustAfterPagesChange) can restore scroll position
+    // without us fighting it.
+    if (wasLoadingOlderRef.current) {
+      wasLoadingOlderRef.current = false;
+      return;
+    }
+
+    const last = messages[messages.length - 1] as any;
+    const lastId = last?.id ?? last?.createdAt ?? null;
+    if (lastId == null) return;
+    if (lastId === lastSeenIdRef.current && !isImageLoaded) return;
+    lastSeenIdRef.current = lastId;
+
     const frame = requestAnimationFrame(() => {
       if (messageBoxRef.current) {
         messageBoxRef.current.scrollTop = messageBoxRef.current.scrollHeight;
@@ -94,7 +148,15 @@ export default function MessageBox({
     });
 
     return () => cancelAnimationFrame(frame);
-  }, [messages, isImageLoaded, totalMessageBox]);
+  }, [messages, isImageLoaded, totalMessageBox, isLoadingOlder]);
+
+  // Expose the inner scroll container to a parent that wants to wire up
+  // reverse-pagination on scroll-up.
+  useEffect(() => {
+    if (!onScrollContainerRef) return;
+    onScrollContainerRef(messageBoxRef.current);
+    return () => onScrollContainerRef(null);
+  }, [onScrollContainerRef]);
 
   async function handleSendMessage(e: any) {
     e.preventDefault();
@@ -450,6 +512,7 @@ export default function MessageBox({
         )}
         ref={messageBoxRef}
       >
+        {topSlot}
         {messages.map((message: TMessage, index: number) => {
           let lastDate = "";
           const messageDate = format(
