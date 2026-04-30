@@ -41,7 +41,7 @@ export async function editMyAccountInfo({
     const userId = session?.user.id;
 
     if (!userId) {
-      throw new Error("User ID is required to create an email template.");
+      throw new Error("User ID is required to update account info.");
     }
     const updatedUser = await db.user.update({
       where: {
@@ -60,7 +60,7 @@ export async function editMyAccountInfo({
         countryCode,
       },
     });
-    revalidatePath("/settings/my-account");
+    revalidatePath("/dashboard/settings/my-account");
     return { type: "success", data: updatedUser };
   } catch (error) {
     return errorHandler(error);
@@ -77,7 +77,7 @@ export async function changePassword(
     const userId = session?.user.id;
 
     if (!userId) {
-      throw new Error("User ID is required to create an email template.");
+      throw new Error("User ID is required to change password.");
     }
     const user = await db.user.findUnique({
       where: {
