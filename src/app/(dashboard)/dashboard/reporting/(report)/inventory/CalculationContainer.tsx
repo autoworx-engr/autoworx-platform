@@ -5,8 +5,8 @@ import { getCompanyId } from "@/lib/companyId";
 import CalculationWithTooltip from "@/app/(dashboard)/dashboard/reporting/components/CalculationWithTooltip";
 
 interface CalculationContainerProps {
-  startDate: string;
-  endDate: string;
+  startDate: string | undefined;
+  endDate: string | undefined;
   getType: string | string[];
   typeFilterApplied: boolean;
   purchasesData: { type: string; salePrice: number }[];
@@ -41,11 +41,11 @@ export default async function CalculationContainer({
       companyId,
       ...(start &&
         end && {
-        createdAt: {
-          gte: start,
-          lte: end,
-        },
-      }),
+          createdAt: {
+            gte: start,
+            lte: end,
+          },
+        }),
     },
     select: {
       price: true,
@@ -60,11 +60,11 @@ export default async function CalculationContainer({
       companyId,
       ...(start &&
         end && {
-        createdAt: {
-          gte: start,
-          lte: end,
-        },
-      }),
+          createdAt: {
+            gte: start,
+            lte: end,
+          },
+        }),
     },
     select: {
       price: true,

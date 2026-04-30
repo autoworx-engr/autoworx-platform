@@ -310,7 +310,7 @@ export default async function PaymentReportPage(props: TProps) {
         <Calculation
           content="TOTAL PAYMENT (Filtered)"
           amount={
-            searchParams?.paymentMethod === "Refund"
+            searchParams?.paymentMethod?.toUpperCase() === "REFUND"
               ? totalRefunded
               : filteredTotalAmount
           }
