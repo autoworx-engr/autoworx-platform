@@ -24,6 +24,7 @@ import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  Fragment,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -464,7 +465,12 @@ export default function MessageBox({
           const showDateSeparator = messageDate !== lastDate;
           lastDate = messageDate;
           return (
-            <>
+            <Fragment
+              key={
+                message.userId ??
+                `${message.createdAt?.toISOString?.() ?? index}-${index}`
+              }
+            >
               {showDateSeparator && (
                 <div className="block py-2 text-center text-xs text-gray-500">
                   {formatDate(
@@ -479,7 +485,7 @@ export default function MessageBox({
                 onDownload={handleDownload}
                 setIsImageLoaded={setIsImageLoaded}
               />
-            </>
+            </Fragment>
           );
         })}
       </div>
