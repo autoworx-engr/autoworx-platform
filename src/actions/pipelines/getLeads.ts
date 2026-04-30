@@ -5,13 +5,11 @@ import { sendLeadStageChangeOrCloseNotification } from "@/lib/notification/pipel
 import { LeadWithSalesUser } from "@/types/invoiceLead";
 import { Prisma } from "@prisma/client";
 import moment from "moment-timezone";
-import { updatePipelineAutomationTrigger } from "../automation/pipeline/triggerPipelineAutomation";
-import { getCompanyTimezone } from "../settings/getCompanyTimezone";
-import { updateCommunicationAutomationTrigger } from "../automation/communication/triggerCommunicationAutomation";
-import { updateTagAutomationTrigger } from "../automation/tag/triggerTagAutomation";
 import { revalidatePath } from "next/cache";
-
-import { actionTypes } from "@/constants/lead.constant";
+import { updateCommunicationAutomationTrigger } from "../automation/communication/triggerCommunicationAutomation";
+import { updatePipelineAutomationTrigger } from "../automation/pipeline/triggerPipelineAutomation";
+import { updateTagAutomationTrigger } from "../automation/tag/triggerTagAutomation";
+import { getCompanyTimezone } from "../settings/getCompanyTimezone";
 
 type TGetLeads = {
   columnId?: number;
@@ -59,12 +57,7 @@ export const getLeads = async ({
       }),
     };
 
-    const todayTimeString = moment()
-      .tz(timezone ?? "")
-      .startOf("day")
-      .format("YYYY-MM-DDTHH:mm:ss");
-
-    const now = moment().tz(timezone ?? "");
+    const todayStart = moment.tz(timezone ?? "UTC").startOf("day").toDate();
     // console.log({ orderBy });
 
     const leadsData = await db.lead.findMany({
@@ -93,7 +86,7 @@ export const getLeads = async ({
           include: {
             appointments: {
               where: {
-                date: { gte: moment(todayTimeString) as any },
+                date: { gte: todayStart },
               },
               orderBy: {
                 date: "asc",
@@ -147,7 +140,7 @@ export const getLeads = async ({
             include: {
               appointments: {
                 where: {
-                  date: { gte: moment(todayTimeString) as any },
+                  date: { gte: todayStart },
                 },
                 orderBy: {
                   date: "asc",
@@ -270,13 +263,7 @@ export const getLeadsWithCount = async ({
         }),
     };
 
-    const todayTimeString = moment()
-      .tz(timezone ?? "")
-      .startOf("day")
-      .format("YYYY-MM-DDTHH:mm:ss");
-
-    const now = moment();
-    const todayStart = moment(todayTimeString);
+    const todayStart = moment.tz(timezone ?? "UTC").startOf("day").toDate();
 
     const [totalCount, leadsData] = await Promise.all([
       db.lead.count({ where: query }),
@@ -306,7 +293,7 @@ export const getLeadsWithCount = async ({
             include: {
               appointments: {
                 where: {
-                  date: { gte: moment(todayTimeString) as any },
+                  date: { gte: todayStart },
                 },
                 orderBy: {
                   date: "asc",
@@ -360,7 +347,7 @@ export const getLeadsWithCount = async ({
             include: {
               appointments: {
                 where: {
-                  date: { gte: moment(todayTimeString) as any },
+                  date: { gte: todayStart },
                 },
                 orderBy: {
                   date: "asc",
@@ -484,10 +471,7 @@ export const getLeadsWithCountOptimized = async ({
         }),
     };
 
-    const todayTimeString = moment()
-      .tz(timezone ?? "UTC")
-      .startOf("day")
-      .format("YYYY-MM-DDTHH:mm:ss");
+    const todayStart = moment.tz(timezone ?? "UTC").startOf("day").toDate();
 
     // Run count and data queries in parallel
     const [totalCount, leadsData] = await Promise.all([
@@ -520,7 +504,7 @@ export const getLeadsWithCountOptimized = async ({
             include: {
               appointments: {
                 where: {
-                  date: { gte: moment(todayTimeString) as any },
+                  date: { gte: todayStart },
                 },
                 orderBy: {
                   date: "asc",

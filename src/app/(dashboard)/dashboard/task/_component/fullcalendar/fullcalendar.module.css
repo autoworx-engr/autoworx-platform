@@ -116,6 +116,22 @@
   min-height: 600px;
 }
 
+/* week/day view width fix */
+.calendarScope :global(.fc-timegrid .fc-scroller-harness),
+.calendarScope :global(.fc-timegrid .fc-timegrid-body),
+.calendarScope :global(.fc-timegrid .fc-timegrid-body table),
+.calendarScope :global(.fc-timegrid .fc-col-header) {
+  width: 100% !important;
+}
+
+/* month view width fix */
+.calendarScope :global(.fc-daygrid .fc-scroller-harness),
+.calendarScope :global(.fc-daygrid-body),
+.calendarScope :global(.fc-daygrid-body table),
+.calendarScope :global(.fc-daygrid .fc-col-header) {
+  width: 100% !important;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);

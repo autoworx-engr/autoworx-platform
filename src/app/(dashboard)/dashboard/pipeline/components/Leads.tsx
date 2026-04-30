@@ -431,6 +431,7 @@ const Leads = ({ salesColumn }: TProps) => {
           if (lead.id === leadId) {
             return {
               ...lead,
+              latestAppointment: appointment,
               client: lead.client
                 ? {
                     ...lead.client,
@@ -658,9 +659,10 @@ const Leads = ({ salesColumn }: TProps) => {
                               </button>
                               {(() => {
                                 const appointment =
-                                  (lead?.client?.appointments?.length ?? 0) > 0
+                                  lead?.latestAppointment ??
+                                  ((lead?.client?.appointments?.length ?? 0) > 0
                                     ? lead?.client?.appointments?.[0]
-                                    : undefined;
+                                    : undefined);
                                 return (
                                   <AppointmentCreateOrEdit
                                     fromEdit={!!appointment}
@@ -678,7 +680,7 @@ const Leads = ({ salesColumn }: TProps) => {
                                         )}
 
                                         <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-                                          New Appointment
+                                          Appointment
                                         </span>
                                       </button>
                                     }
