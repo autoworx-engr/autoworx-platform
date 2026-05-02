@@ -58,7 +58,7 @@ export default function PaymentsPage() {
     if (companyId) {
       const result = await updatePaymentGateway(
         companyId,
-        value as "STRIPE" | "AUTHORIZE_NET" | "BOTH",
+        value as "STRIPE" | "AUTHORIZE_NET",
       );
       if (result.success) {
         successToast("Payment gateway updated");
@@ -83,9 +83,8 @@ export default function PaymentsPage() {
   };
 
   const gatewayOptions = [
-    { value: "STRIPE", label: "Stripe Only" },
-    { value: "AUTHORIZE_NET", label: "Authorize.Net Only" },
-    { value: "BOTH", label: "Both" },
+    { value: "STRIPE", label: "Stripe" },
+    { value: "AUTHORIZE_NET", label: "Authorize.Net" },
   ];
 
   return (
@@ -231,6 +230,9 @@ export default function PaymentsPage() {
             isConfigured={authorizeNetData?.configured || false}
             hasApiLoginId={authorizeNetData?.hasApiLoginId || false}
             hasSignatureKey={authorizeNetData?.hasSignatureKey || false}
+            initialApiLoginId={authorizeNetData?.apiLoginId || ""}
+            initialTransactionKey={authorizeNetData?.transactionKey || ""}
+            initialSignatureKey={authorizeNetData?.signatureKey || ""}
             onUpdate={() => {}}
           />
         )}

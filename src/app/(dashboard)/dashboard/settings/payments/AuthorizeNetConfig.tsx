@@ -16,6 +16,9 @@ interface AuthorizeNetConfigProps {
   isConfigured: boolean;
   hasApiLoginId: boolean;
   hasSignatureKey: boolean;
+  initialApiLoginId?: string;
+  initialTransactionKey?: string;
+  initialSignatureKey?: string;
   onUpdate: () => void;
 }
 
@@ -24,11 +27,14 @@ export default function AuthorizeNetConfig({
   isConfigured,
   hasApiLoginId,
   hasSignatureKey,
+  initialApiLoginId = "",
+  initialTransactionKey = "",
+  initialSignatureKey = "",
   onUpdate,
 }: AuthorizeNetConfigProps) {
-  const [apiLoginId, setApiLoginId] = useState("");
-  const [transactionKey, setTransactionKey] = useState("");
-  const [signatureKey, setSignatureKey] = useState("");
+  const [apiLoginId, setApiLoginId] = useState(initialApiLoginId);
+  const [transactionKey, setTransactionKey] = useState(initialTransactionKey);
+  const [signatureKey, setSignatureKey] = useState(initialSignatureKey);
   const [isLoading, setIsLoading] = useState(false);
   const [showForm, setShowForm] = useState(!isConfigured);
 
@@ -51,9 +57,6 @@ export default function AuthorizeNetConfig({
       if (result.success) {
         successToast("Authorize.Net credentials saved successfully!");
         setShowForm(false);
-        setApiLoginId("");
-        setTransactionKey("");
-        setSignatureKey("");
         onUpdate();
       } else {
         errorToast(result.message || "Failed to save credentials");
@@ -230,9 +233,9 @@ export default function AuthorizeNetConfig({
                 <Button
                   onClick={() => {
                     setShowForm(false);
-                    setApiLoginId("");
-                    setTransactionKey("");
-                    setSignatureKey("");
+                    setApiLoginId(initialApiLoginId);
+                    setTransactionKey(initialTransactionKey);
+                    setSignatureKey(initialSignatureKey);
                   }}
                   variant="outline"
                   disabled={isLoading}

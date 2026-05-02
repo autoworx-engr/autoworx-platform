@@ -230,6 +230,9 @@ export async function getAuthorizeNetStatus(companyId: number) {
       paymentGateway: company.paymentGateway,
       hasApiLoginId: !!company.authorizeNetApiLoginId,
       hasSignatureKey: !!company.authorizeNetSignatureKey,
+      apiLoginId: company.authorizeNetApiLoginId ?? "",
+      transactionKey: company.authorizeNetTransactionKey ?? "",
+      signatureKey: company.authorizeNetSignatureKey ?? "",
     };
   } catch (error: any) {
     return {
