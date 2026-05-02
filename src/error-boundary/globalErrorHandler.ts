@@ -105,7 +105,12 @@ export const errorHandler = (error: any): TErrorHandler => {
   //   }
 
   // send error response to client
-  console.log("Global Error Handler:");
+  console.log("Global Error Handler:", {
+    message,
+    statusCode,
+    path: error?.path || "",
+    stack: error?.stack,
+  });
   return {
     success: false,
     type: "globalError",
