@@ -25,7 +25,7 @@ export const starUnstarClient = async ({
       },
     });
     // TODO: test for client-demo
-    revalidatePath("/dashboard/communication/client");
+    revalidatePath("/dashboard/communication/client/${clientId}");
     return { success: true };
   } catch (error) {
     console.error("", error);

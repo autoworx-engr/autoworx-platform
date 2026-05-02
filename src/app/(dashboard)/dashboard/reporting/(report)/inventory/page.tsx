@@ -33,6 +33,8 @@ type TProps = {
 export default async function InventoryReportPage(props: TProps) {
   const searchParams = await props.searchParams;
   const session = await getServerSession(authOptions);
+  const companyId = session?.user?.companyId;
+  if (!companyId) throw new Error("Unauthorized");
   const { timezone } = (await getCompanyTimezone()) || {};
 
   const defaultTake = 50;
@@ -63,7 +65,7 @@ export default async function InventoryReportPage(props: TProps) {
 
   const inventoryProducts = await db.inventoryProduct.findMany({
     where: {
-      companyId: session?.user?.companyId,
+      companyId,
       category: {
         name: searchParams?.category || undefined,
       },
@@ -101,7 +103,7 @@ export default async function InventoryReportPage(props: TProps) {
 
   const allInventoryProducts = await db.inventoryProduct.findMany({
     where: {
-      companyId: session?.user?.companyId,
+      companyId,
     },
     select: {
       type: true,
@@ -150,8 +152,16 @@ export default async function InventoryReportPage(props: TProps) {
     <div className="space-y-5">
       <Suspense fallback="loading...">
         <CalculationContainer
-          startDate={decodeURIComponent(searchParams?.startDate as string)}
-          endDate={decodeURIComponent(searchParams?.endDate as string)}
+          startDate={
+            searchParams?.startDate
+              ? decodeURIComponent(searchParams.startDate)
+              : undefined
+          }
+          endDate={
+            searchParams?.endDate
+              ? decodeURIComponent(searchParams.endDate)
+              : undefined
+          }
           getType={getType}
           typeFilterApplied={!!searchParams.types}
           purchasesData={purchasesData}
@@ -177,8 +187,16 @@ export default async function InventoryReportPage(props: TProps) {
           <Analytics
             timezone={timezone}
             leftChart={searchParams.leftChart}
-            startDate={decodeURIComponent(searchParams?.startDate as string)}
-            endDate={decodeURIComponent(searchParams?.endDate as string)}
+            startDate={
+              searchParams?.startDate
+                ? decodeURIComponent(searchParams.startDate)
+                : undefined
+            }
+            endDate={
+              searchParams?.endDate
+                ? decodeURIComponent(searchParams.endDate)
+                : undefined
+            }
             types={searchParams.types}
           />
         </AnalyticsVisibility>
