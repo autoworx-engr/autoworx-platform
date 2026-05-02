@@ -37,7 +37,7 @@ const InvoiceList = ({
 }) => {
   const unpaidInvoices = invoiceData?.filter(
     (item: any) =>
-      item.due !== null && Number(item.due) > 0 && !item.fleetStatementId // Exclude invoices that are already in a statement
+      item.due !== null && Number(item.due) > 0 && !item.fleetStatementId, // Exclude invoices that are already in a statement
   );
 
   const { search } = searchParams;
@@ -46,10 +46,10 @@ const InvoiceList = ({
   const filteredInvoices = invoiceData?.filter((item: any) => {
     const matchSearch = search
       ? item?.id?.toLowerCase().includes(search.toLowerCase()) ||
-      item?.vehicle?.vin?.toLowerCase().includes(search.toLowerCase()) ||
-      item?.vehicle?.make?.toLowerCase().includes(search.toLowerCase()) ||
-      item?.vehicle?.year?.toString().includes(search) ||
-      item?.vehicle?.other?.toLowerCase().includes(search)
+        item?.vehicle?.vin?.toLowerCase().includes(search.toLowerCase()) ||
+        item?.vehicle?.make?.toLowerCase().includes(search.toLowerCase()) ||
+        item?.vehicle?.year?.toString().includes(search) ||
+        item?.vehicle?.other?.toLowerCase().includes(search)
       : true;
 
     return matchSearch;
@@ -58,7 +58,7 @@ const InvoiceList = ({
   const filteredStatements = invoiceData?.filter((item: any) => {
     const matchedSearch = search
       ? item?.id?.toLowerCase().includes(search.toLowerCase()) ||
-      item?.invoice?.length.toString().includes(search)
+        item?.invoice?.length.toString().includes(search)
       : true;
 
     return matchedSearch;
@@ -68,16 +68,20 @@ const InvoiceList = ({
     <div className="">
       {/* <FleetSubHeading text={`${type} List`} /> */}
 
-      <div className="flex  items-center justify-between gap-4">
-        <FilterBySearchBox searchText={searchParams?.search as string} />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="w-full sm:max-w-md">
+          <FilterBySearchBox searchText={searchParams?.search as string} />
+        </div>
 
         {/* Only show CreateStatementModal for Invoice type and when fleetId is available */}
         {type === "Invoice" && fleetId && (
-          <CreateStatementModal
-            unPaidInvoices={unpaidInvoices as Invoice[]}
-            fleetId={fleetId}
-            onStatementCreated={onStatementCreated}
-          />
+          <div className="sm:flex-shrink-0">
+            <CreateStatementModal
+              unPaidInvoices={unpaidInvoices as Invoice[]}
+              fleetId={fleetId}
+              onStatementCreated={onStatementCreated}
+            />
+          </div>
         )}
       </div>
 
