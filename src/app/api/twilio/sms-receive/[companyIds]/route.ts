@@ -290,7 +290,7 @@ export async function POST(
         });
       }
     }
-    revalidatePath("/dashboard/communication/client");
+    revalidatePath("/dashboard/communication/client/${clientId}");
     // Send a success response
     return Response.json(
       { message: "Webhook subscription successful", data: body },
