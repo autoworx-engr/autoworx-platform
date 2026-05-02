@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Column } from "@prisma/client";
-import { toast } from "react-hot-toast";
+import { successToast, errorToast } from "@/lib/toast";
 
 export interface LocalColumn {
   id: number | null;
@@ -156,10 +156,11 @@ export const useSavePipelineColumns = (
         queryKey: ["pipeline-columns", pipelineType],
       });
       router.refresh();
+      successToast("Pipeline columns saved successfully.");
       onClose();
     },
     onError: (error: Error) => {
-      toast.error(error.message);
+      errorToast(error.message);
     },
   });
 };
