@@ -51,7 +51,6 @@ export function Reminder({
   vehicle,
   startTime,
   date,
-  timezone,
   times,
   setTimes,
   confirmationTemplate,
@@ -66,6 +65,7 @@ export function Reminder({
   openReminder,
   setOpenReminder,
   setOpenConfirmation,
+  timezone,
 }: TReminderProps) {
   const [time, setTime] = useState<string>("");
   const [dateInput, setDateInput] = useState<string>("");

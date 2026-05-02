@@ -48,18 +48,34 @@ export default function SearchScroll({
   );
   const filterRef = useRef<HTMLDivElement>(null);
 
-  // Sync local input state when URL search param changes externally
+  // Always-current searchParams ref so the debounce callback never reads a stale closure
+  const searchParamsRef = useRef(searchParams);
   useEffect(() => {
-    setSearchTerm(urlSearch);
+    searchParamsRef.current = searchParams;
+  }, [searchParams]);
+
+  // Track the last value we pushed to the URL to distinguish self-pushes from
+  // external URL changes (e.g. another component clearing filters)
+  const lastPushedRef = useRef(urlSearch);
+
+  // Only sync URL → input when the change came from outside this component
+  useEffect(() => {
+    if (urlSearch !== lastPushedRef.current) {
+      setSearchTerm(urlSearch);
+      lastPushedRef.current = urlSearch;
+    }
   }, [urlSearch]);
 
   const handleSearchChange = useDebounce((value: string) => {
-    const params = new URLSearchParams(searchParams?.toString() ?? "");
+    const params = new URLSearchParams(
+      searchParamsRef.current?.toString() ?? "",
+    );
     if (value) {
       params.set("search", value);
     } else {
       params.delete("search");
     }
+    lastPushedRef.current = value;
     startTransition(() => {
       router.replace(
         params.toString() ? `${pathname}?${params.toString()}` : pathname,
@@ -159,9 +175,12 @@ export default function SearchScroll({
   const handleClearSearch = () => {
     setSearchTerm("");
     setSearchResults([]);
+    lastPushedRef.current = "";
     // Cancel any pending debounce so it doesn't re-add the search param after we clear it
     handleSearchChange("");
-    const params = new URLSearchParams(searchParams?.toString() ?? "");
+    const params = new URLSearchParams(
+      searchParamsRef.current?.toString() ?? "",
+    );
     params.delete("search");
     router.replace(
       params.toString() ? `${pathname}?${params.toString()}` : pathname,
@@ -209,14 +228,12 @@ export default function SearchScroll({
     <div className="flex flex-col gap-2 rounded-lg border border-slate-100 bg-background p-2 shadow-sm sm:flex-row sm:items-center sm:justify-between mx-2">
       {/* Search input */}
       <div className="relative group flex flex-1 h-10 max-w-lg items-center rounded-md sm:w-auto">
-        {isPending ? (
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin rounded-full border-2 border-[#6571FF] border-t-transparent" />
-        ) : (
+        {
           <Search
             size={18}
             className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-[#6571FF]"
           />
-        )}
+        }
         <input
           type="text"
           value={searchTerm}

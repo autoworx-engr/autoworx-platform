@@ -131,6 +131,10 @@ export async function POST(request: NextRequest) {
       const clientNameParts = clientName.trim().split(" ");
       const firstName = clientNameParts.shift() || "";
       const lastName = clientNameParts.join(" ");
+      const vehicleParts = vehicleInfo?.split(/\s+/) || [];
+      const year = parseInt(vehicleParts[0]) || undefined;
+      const make = vehicleParts[1] || "";
+      const model = vehicleParts.slice(2).join(" ") || "";
 
       let newClient = clientPhone
         ? await db.client.findFirst({
@@ -153,12 +157,25 @@ export async function POST(request: NextRequest) {
             isSalesAgent: true,
           },
         });
+
+        const newVehicle = await db.vehicle.create({
+          data: {
+            year: year,
+            make: make ? make : vehicleParts?.length > 0 ? vehicleParts[0] : "",
+            model: model,
+            companyId: company.id,
+            clientId: newClient.id,
+          },
+        });
+
         await db.lead.update({
           where: {
+            companyId: company.id,
             id: newLead.id,
           },
           data: {
             clientId: newClient.id,
+            vehicleId: newVehicle.id,
           },
         });
       } else {
@@ -176,12 +193,24 @@ export async function POST(request: NextRequest) {
             companyId: company.id,
           },
         });
+        const newVehicle = await db.vehicle.create({
+          data: {
+            year: year,
+            make: make ? make : vehicleParts?.length > 0 ? vehicleParts[0] : "",
+            model: model,
+            companyId: company.id,
+            clientId: updatedClient.id,
+          },
+        });
+
         await db.lead.update({
           where: {
+            companyId: company.id,
             id: newLead.id,
           },
           data: {
             clientId: updatedClient.id,
+            vehicleId: newVehicle.id,
           },
         });
       }

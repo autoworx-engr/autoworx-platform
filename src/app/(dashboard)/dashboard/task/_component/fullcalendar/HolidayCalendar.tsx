@@ -1,14 +1,13 @@
 import { createHoliday } from "@/actions/task/createHoliday";
-import getHoliday from "@/actions/task/getHoliday";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCalendarStore } from "@/stores/calendarStore";
+import { useQueryClient } from "@tanstack/react-query";
 import moment from "moment";
 import { useSession } from "next-auth/react";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import toast from "react-hot-toast";
 import { Calendar, DateObject } from "react-multi-date-picker";
 import DatePanel from "react-multi-date-picker/plugins/date_panel";
 import { calenderQueryKey } from "../../_constant";
-import { useCalendarStore } from "@/stores/calendarStore";
 import useHolidaysQuery from "../../_hook/useHolidaysQuery";
 
 export default function HolidayCalendar() {
@@ -25,15 +24,26 @@ export default function HolidayCalendar() {
     }));
 
   const queryClient = useQueryClient();
+  const [isDirty, setIsDirty] = useState(false);
+
+  // Reset dirty flag when month/year changes (new context = fresh state)
+  useEffect(() => {
+    setIsDirty(false);
+  }, [selectedMonth, selectedYear]);
 
   const { data: holidays = [], isLoading } = useHolidaysQuery(
     selectedMonth,
     selectedYear,
   );
 
-  const holidaysFormatted = holidays?.map(
-    (holiday) => new DateObject(holiday.date),
-  );
+  const holidaysFormatted = holidays?.map((holiday) => {
+    // Use UTC date string to avoid timezone shift — e.g. "2026-04-22T00:00:00Z"
+    // interpreted in local time could show as Apr 21 in UTC-X timezones.
+    const dateOnly = moment
+      .utc(holiday.date as unknown as string)
+      .format("YYYY-MM-DD");
+    return new DateObject(dateOnly);
+  });
 
   // Save holidays when month changes or Apply is clicked
   const handleAddHoliday = async (fromMonthChange: boolean = false) => {
@@ -62,6 +72,7 @@ export default function HolidayCalendar() {
           queryKey: [calenderQueryKey.holidays],
         });
         toast.success("Holidays set successfully");
+        setIsDirty(false);
       }
     } catch (err) {
       console.error(err);
@@ -82,6 +93,7 @@ export default function HolidayCalendar() {
       [calenderQueryKey.holidays, selectedMonth, selectedYear],
       [],
     );
+    setIsDirty(true);
   };
 
   const handleHolidayChanges = (values: DateObject[]) => {
@@ -95,6 +107,7 @@ export default function HolidayCalendar() {
       [calenderQueryKey.holidays, selectedMonth, selectedYear],
       holidays,
     );
+    setIsDirty(true);
   };
 
   return (
@@ -106,7 +119,7 @@ export default function HolidayCalendar() {
             value={holidaysFormatted}
             onChange={handleHolidayChanges}
             onMonthChange={handleMonthChange}
-            plugins={[<DatePanel className="sm:w-36" />]}
+            plugins={[<DatePanel key="date-panel" className="sm:w-36" />]}
             className="w-full bg-white"
             showOtherDays
           />
@@ -127,17 +140,9 @@ export default function HolidayCalendar() {
               Clear All
             </button>
             <button
-              disabled={
-                !queryClient.getQueryData<any[]>([
-                  calenderQueryKey.holidays,
-                  selectedMonth,
-                  selectedYear,
-                ])?.length ||
-                pending ||
-                isLoading
-              }
+              disabled={!isDirty || pending || isLoading}
               onClick={() => startTransition(() => handleAddHoliday(false))}
-              className="rounded-md border bg-green-100 px-3 py-1.5 font-medium hover:bg-green-200 disabled:bg-gray-300"
+              className="rounded-md border bg-green-100 px-3 py-1.5 font-medium hover:bg-green-200 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Apply
             </button>

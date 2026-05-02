@@ -184,14 +184,13 @@ export default function NewFleet({
         newAddedCustomer: res.data,
       }));
       setClient && setClient(res?.data);
-      setMobile("+1");
-      clearError();
+      resetForm();
       setOpen(false);
       successToast(`Fleet ${isEdit ? "updated" : "created"} successfully`);
     }
   }
 
-  const handleClose = () => {
+  const resetForm = () => {
     clearError();
     setFleetName("");
     setContactName("");
@@ -199,8 +198,18 @@ export default function NewFleet({
     setAddress("");
     setCity("");
     setState("");
-    setProfilePic(null);
     setMobile("+1");
+    setCountryCode("");
+    setCountryIsoCode("");
+    setZip("");
+    setProfilePic(null);
+    setTag(undefined);
+    setPreferredPaymentTerm(null);
+    setTagOpenDropdown(false);
+  };
+
+  const handleClose = () => {
+    resetForm();
     setOpen(false);
   };
 

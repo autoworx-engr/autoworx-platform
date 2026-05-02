@@ -13,6 +13,7 @@ import {
 import { getGoogleCalendarToken } from "../calendar-settings/getGoogleCalendarAuth";
 import createGoogleCalendarEvent from "./google-calendar/createGoogleCalendarEvent";
 import updateGoogleCalendarEvent from "./google-calendar/updateGoogleCalendarEvent";
+import { revalidatePath } from "next/cache";
 
 export async function editTask({
   id,
@@ -127,7 +128,7 @@ export async function editTask({
     } catch (error) {
       console.log("🚀 ~ error:", error);
     }
-
+    revalidatePath("/dashboard/communication/client/${clientId}");
     return {
       type: "success",
       data: updatedTask,

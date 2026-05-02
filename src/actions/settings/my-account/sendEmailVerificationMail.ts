@@ -1,9 +1,5 @@
 "use server";
-import {
-  sendMail,
-  sendVerificationMail,
-} from "@/actions/two-factor/send2faMail";
-import { getEmailVerificationTemplate } from "@/actions/two-factor/template";
+import { sendVerificationMail } from "@/actions/two-factor/send2faMail";
 import { authOptions } from "@/authOptions";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
@@ -19,6 +15,7 @@ export async function sendEmailVerificationMail() {
     }
     const user = await db.user.findUnique({
       where: { id: userId },
+      select: { id: true, email: true, emailVerified: true },
     });
     if (!user) {
       return { type: "fail", message: "User not found" };

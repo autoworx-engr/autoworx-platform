@@ -8,19 +8,19 @@ export const deleteLeaveRequest = async (leaveRequest: LeaveRequest) => {
   try {
     const user = await getUser();
     if (user.id !== leaveRequest.userId) {
-      throw new Error("");
+      throw new Error("Unauthorized: you do not own this leave request");
     }
     await db.leaveRequest.delete({
       where: {
         id: leaveRequest.id,
       },
     });
-    revalidatePath("/settings/my-account/leave-requests");
+    revalidatePath("/dashboard/settings/my-account/leave-requests");
     return {
       success: true,
       message: "Leave Request Deleted Successfully",
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
     return { success: false, message: "Delete Leave Request Failed" };
   }
 };

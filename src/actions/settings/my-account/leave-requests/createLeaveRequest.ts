@@ -28,7 +28,7 @@ export const createLeaveRequest = async (
     });
 
     // send notification for leave request
-    sendLeaveRequestNotification({
+    await sendLeaveRequestNotification({
       companyId: user.companyId,
       startDate: leaveRequestData.startDate,
       endDate: leaveRequestData.endDate,
@@ -36,14 +36,14 @@ export const createLeaveRequest = async (
       employeeId: user.id,
     });
 
-    revalidatePath("/settings/my-account/leave-requests");
+    revalidatePath("/dashboard/settings/my-account/leave-requests");
 
     return {
       success: true,
       message: "Leave Request Submitted Successfully",
       data: leaveRequest,
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
     return { success: false, message: "Create Leave Request Failed" };
   }
 };

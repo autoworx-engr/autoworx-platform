@@ -1,6 +1,16 @@
+import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
 
-const prisma = new PrismaClient();
+const databaseUrl = process.env.DIRECT_URL || process.env.DATABASE_URL || "";
+
+if (!databaseUrl) {
+  throw new Error("DIRECT_URL or DATABASE_URL is required to sync sequences.");
+}
+
+const prisma = new PrismaClient({
+  adapter: new PrismaPg({ connectionString: databaseUrl }),
+});
 
 async function syncSequences() {
   console.log("Starting PostgreSQL sequence synchronization...");

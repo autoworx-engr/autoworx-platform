@@ -43,19 +43,32 @@ export const getClients = cache(
       }));
     }
 
+    // Over-fetch a small multiple of `take` so the JS multi-priority sort still
+    // has enough candidates near the top, without scanning the whole table.
+    const dbTake = Math.max(take * 3, 60);
+
+    // Always order by latest conversation activity at the DB layer first; the
+    // JS sort refines tiebreakers on this small page.
+    const dbOrderBy: Prisma.ClientOrderByWithRelationInput[] = [
+      { conversationsTrack: { sendAt: "desc" } },
+      { conversationsTrack: { updatedAt: "desc" } },
+      { createdAt: "desc" },
+    ];
+
     const queryObj: Prisma.ClientFindManyArgs = {
       where: baseWhere,
       include: {
         conversationsTrack: true,
       },
+      orderBy: dbOrderBy,
+      take: dbTake,
     };
     let clients: (Client & { conversationsTrack?: ClientConversationTrack })[] =
       [];
     try {
       switch (filter) {
-        case "Unread":
-          // Get all clients with unread messages, then sort and limit
-          const allUnreadClients = await db.client.findMany({
+        case "Unread": {
+          const unreadClients = await db.client.findMany({
             ...queryObj,
             where: {
               ...queryObj.where,
@@ -63,32 +76,29 @@ export const getClients = cache(
                 OR: [{ emailIsRead: false }, { smsIsRead: false }],
               },
             },
-            orderBy: {
-              conversationsTrack: {
-                createdAt: "desc",
-              },
-            },
           });
-          const sortedUnreadClients =
-            clientSortByUpdatedMessage(allUnreadClients);
-          clients = sortedUnreadClients.slice(0, take) as typeof clients;
+          clients = clientSortByUpdatedMessage(unreadClients).slice(
+            0,
+            take,
+          ) as typeof clients;
           break;
-        case "Starred":
-          // Get all starred clients, then sort and limit
-          const allStarredClients = await db.client.findMany({
+        }
+        case "Starred": {
+          const starredClients = await db.client.findMany({
             ...queryObj,
             where: {
               ...queryObj.where,
               isStarred: true,
             },
           });
-          const sortedStarredClients =
-            clientSortByUpdatedMessage(allStarredClients);
-          clients = sortedStarredClients.slice(0, take) as typeof clients;
+          clients = clientSortByUpdatedMessage(starredClients).slice(
+            0,
+            take,
+          ) as typeof clients;
           break;
-        case "Assigned":
-          // Get all assigned clients, then sort and limit
-          const allAssignedClients = await db.client.findMany({
+        }
+        case "Assigned": {
+          const assignedClients = await db.client.findMany({
             ...queryObj,
             where: {
               ...queryObj.where,
@@ -99,25 +109,20 @@ export const getClients = cache(
               },
             },
           });
-          const sortedAssignedClients =
-            clientSortByUpdatedMessage(allAssignedClients);
-          clients = sortedAssignedClients.slice(0, take) as typeof clients;
+          clients = clientSortByUpdatedMessage(assignedClients).slice(
+            0,
+            take,
+          ) as typeof clients;
           break;
-        default:
-          // For the initial load, we need to get ALL clients, sort them properly,
-          // and then take the top 'take' number of clients
-          // This ensures we get the actual top clients, not just a random 20
-          const allClients = await db.client.findMany({
-            ...queryObj,
-            // Remove the 'take' limit here - we need all clients to sort properly
-          });
-
-          // Apply proper sorting to get the actual top clients
-          const sortedAllClients = clientSortByUpdatedMessage(allClients);
-
-          // Now take only the top 'take' number of clients
-          clients = sortedAllClients.slice(0, take) as typeof clients;
+        }
+        default: {
+          const candidateClients = await db.client.findMany(queryObj);
+          clients = clientSortByUpdatedMessage(candidateClients).slice(
+            0,
+            take,
+          ) as typeof clients;
           break;
+        }
       }
       return clients || [];
     } catch (err) {
