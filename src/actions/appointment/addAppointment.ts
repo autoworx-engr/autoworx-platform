@@ -96,7 +96,7 @@ export async function addAppointment(
         data: appointment.assignedUsers.map((uid) => ({
           appointmentId: newAppointment.id,
           userId: uid,
-          eventId: null,
+          eventId: "",
         })),
       });
     }

@@ -200,13 +200,13 @@ export async function POST(req: NextRequest) {
       forceUserId,
     });
 
-    // Handle server action error format
-    if (result?.type === "error") {
+    // Handle server action error format (both "error" and "globalError" types)
+    if (result?.type === "error" || result?.type === "globalError") {
       return NextResponse.json(
         {
           success: false,
           message: result.message || "Failed to create appointment",
-          field: result.field || null,
+          field: (result as any).field || null,
         },
         { status: 400 },
       );
