@@ -146,7 +146,6 @@ export default async function CalculationContainer({
 
   const showSupplyFilter =
     !hasTypeFilter || (Array.isArray(getType) && getType.includes("Supply"));
-
   return (
     <div className="mb-4 mt-1.5 grid grid-cols-1 md:grid-cols-2 gap-4 xl:grid-cols-4">
       <Calculation content="Total Products" amount={totalProductPrice} />

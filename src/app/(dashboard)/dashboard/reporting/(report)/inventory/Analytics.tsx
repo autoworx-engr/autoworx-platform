@@ -54,12 +54,12 @@ export default async function Analytics({
         some: {
           date: {
             gte:
-              startDate !== "undefined"
-                ? moment.utc(startDate!, "MM/DD/YYYY").toDate()
+              startDate && startDate !== "undefined"
+                ? moment.utc(startDate, "MM/DD/YYYY").toDate()
                 : new Date(`${formattedLast30Days}T00:00:00.000Z`),
             lte:
-              endDate !== "undefined"
-                ? moment.utc(endDate!, "MM/DD/YYYY").endOf("day").toDate()
+              endDate && endDate !== "undefined"
+                ? moment.utc(endDate, "MM/DD/YYYY").endOf("day").toDate()
                 : new Date(`${formattedToday}T23:59:59.999Z`),
           },
         },
@@ -72,12 +72,12 @@ export default async function Analytics({
         where: {
           date: {
             gte:
-              startDate !== "undefined"
-                ? moment.utc(startDate!, "MM/DD/YYYY").toDate()
+              startDate && startDate !== "undefined"
+                ? moment.utc(startDate, "MM/DD/YYYY").toDate()
                 : new Date(`${formattedLast30Days}T00:00:00.000Z`),
             lte:
-              endDate !== "undefined"
-                ? moment.utc(endDate!, "MM/DD/YYYY").endOf("day").toDate()
+              endDate && endDate !== "undefined"
+                ? moment.utc(endDate, "MM/DD/YYYY").endOf("day").toDate()
                 : new Date(`${formattedToday}T23:59:59.999Z`),
           },
         },
