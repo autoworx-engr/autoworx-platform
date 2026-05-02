@@ -611,7 +611,7 @@ export default function BusinessForm({ company }: TProps) {
           <button
             disabled={isPending || !hasChanges()}
             type="submit"
-            className="rounded-xl bg-slate-900 px-6 py-2.5 text-white text-base font-semibold transition duration-150 hover:bg-slate-800 disabled:bg-slate-300 disabled:cursor-not-allowed shadow-lg flex items-center justify-center"
+            className="rounded-xl bg-[#6571FF] px-6 py-2.5 text-white text-base font-semibold transition duration-150 hover:bg-[#5a64e8] disabled:bg-slate-300 disabled:cursor-not-allowed shadow-lg flex items-center justify-center"
           >
             {isPending ? (
               <>Saving...</>
