@@ -32,26 +32,12 @@ export async function POST(request: Request) {
   try {
     const formData = await request.formData();
 
-    // Log all form data for debugging
-    const allData: Record<string, any> = {};
-    formData.forEach((value, key) => {
-      allData[key] = value;
-    });
-    console.log("📋 [Call-Status] All FormData:", allData);
-
     const callSid = formData.get("CallSid") as string;
     const dialCallStatus = formData.get("DialCallStatus") as string;
     const callStatus = formData.get("CallStatus") as string;
 
-    console.log("📥 [Call-Status] Received:", {
-      callSid,
-      dialCallStatus,
-      callStatus,
-    });
-
     if (!callSid) {
       console.error("❌ [Call-Status] Missing CallSid");
-      // Return empty TwiML so Twilio doesn't play "application error"
       const errResponse = new twiml.VoiceResponse();
       return new Response(errResponse.toString(), {
         status: 400,
@@ -59,137 +45,125 @@ export async function POST(request: Request) {
       });
     }
 
-    // Find the call record
-    const call = await db.clientCall.findFirst({
-      where: { callSid },
-      include: {
-        client: true,
-        company: {
-          select: {
-            id: true,
-            name: true,
-            smsGateway: true,
-            missedCallTextBackEnabled: true,
-          },
-        },
-      },
-    });
+    // Respond immediately — processing happens async to avoid Twilio 15s timeout
+    processCallStatus({ callSid, dialCallStatus, callStatus }).catch((err) =>
+      console.error("❌ [Call-Status] Async processing error:", err),
+    );
 
-    if (!call) {
-      console.error("❌ [Call-Status] Call not found for callSid:", callSid);
-      // Return empty TwiML so Twilio doesn't play "application error"
-      const notFoundResponse = new twiml.VoiceResponse();
-      return new Response(notFoundResponse.toString(), {
-        status: 200,
-        headers: { "Content-Type": "text/xml" },
-      });
-    }
-
-    console.log("📞 [Call-Status] Call found:", {
-      callId: call.id,
-      clientId: call.clientId,
-      status: call.status,
-      dialCallStatus,
-      callStatus,
-    });
-
-    // Check if the call was not answered
-    // DialCallStatus can be: completed, answered, busy, no-answer, failed, canceled
-    // We want to send SMS for: no-answer, busy, failed, canceled
-    const missedStatuses = ["no-answer", "busy", "failed", "canceled"];
-    const isMissedCall =
-      dialCallStatus && missedStatuses.includes(dialCallStatus);
-
-    if (isMissedCall && call.client) {
-      // Check company toggle and plan entitlement before sending
-      if (!call.company?.missedCallTextBackEnabled) {
-        console.log(
-          "⏭️ [Call-Status] Missed call text back is disabled for company, skipping SMS",
-        );
-      } else {
-        const entitlements = await getCompanyEntitlements(call.company.id);
-        if (!entitlements.canUseSms || !entitlements.missedCallTextBack) {
-          console.log(
-            "⏭️ [Call-Status] Missed call text back not included in plan, skipping SMS",
-          );
-        } else {
-          console.log(
-            "🔔 [Call-Status] Missed call detected, sending alert to client:",
-            call.client.mobile,
-          );
-          try {
-            const companyName = call.company?.name || "our business";
-            const message = `Sorry we missed your call! Feel free to text this number with what you need in the meantime and we’ll get back to you as soon as possible. - ${companyName}`;
-
-            if (call.company?.smsGateway === "TWILIO") {
-              const response = await sendTwilioMessage({
-                companyId: call.company?.id,
-                clientId: call.client.id,
-                message: message,
-                attachments: [],
-                systemCall: true,
-              });
-              if (!response.success) throw new Error(`SMS sending failed`);
-              console.log("✅ [Call-Status] Missed call SMS sent via Twilio");
-            } else if (call.company?.smsGateway === "INFOBIP") {
-              const response = await sendInfobipMessage({
-                companyId: call.company?.id,
-                clientId: call.client.id,
-                message: message,
-                attachments: [],
-                systemCall: true,
-              });
-              if (!response.success) throw new Error(`SMS sending failed`);
-              console.log("✅ [Call-Status] Missed call SMS sent via Infobip");
-            } else {
-              console.warn(
-                "⚠️ [Call-Status] No SMS gateway configured for company:",
-                call.company?.id,
-              );
-            }
-          } catch (error) {
-            console.error(
-              "❌ [Call-Status] Failed to send missed call SMS:",
-              error,
-            );
-            // Don't throw - we still want to update the call status
-          }
-        }
-      }
-    }
-
-    // Update call status based on DialCallStatus
-    const dialStatus = dialCallStatus ?? "";
-    let newStatus: string = call.status ?? "ringing";
-    if (dialStatus === "answered" || dialStatus === "completed") {
-      newStatus = "completed";
-    } else if (missedStatuses.includes(dialStatus)) {
-      newStatus = "no-answer";
-    }
-
-    if (newStatus !== call.status) {
-      await db.clientCall.update({
-        where: { id: call.id },
-        data: { status: newStatus },
-      });
-      console.log(
-        `✅ [Call-Status] Updated call status from ${call.status} to ${newStatus}`,
-      );
-    }
-
-    // Return empty TwiML so Twilio hangs up gracefully instead of playing
-    // "We're sorry, an application error has occurred"
     const voiceResponse = new twiml.VoiceResponse();
     return new Response(voiceResponse.toString(), {
       headers: { "Content-Type": "text/xml" },
     });
   } catch (error) {
     console.error("❌ [Call-Status] Error handling call status:", error);
-    // Return empty TwiML even on error so Twilio can hang up cleanly
     const errResponse = new twiml.VoiceResponse();
     return new Response(errResponse.toString(), {
       status: 500,
       headers: { "Content-Type": "text/xml" },
     });
+  }
+}
+
+async function processCallStatus({
+  callSid,
+  dialCallStatus,
+  callStatus,
+}: {
+  callSid: string;
+  dialCallStatus: string;
+  callStatus: string;
+}) {
+  const call = await db.clientCall.findFirst({
+    where: { callSid },
+    include: {
+      client: true,
+      company: {
+        select: {
+          id: true,
+          name: true,
+          smsGateway: true,
+          missedCallTextBackEnabled: true,
+        },
+      },
+    },
+  });
+
+  if (!call) {
+    console.error("❌ [Call-Status] Call not found for callSid:", callSid);
+    return;
+  }
+
+  const missedStatuses = ["no-answer", "busy", "failed", "canceled"];
+  const isMissedCall =
+    dialCallStatus && missedStatuses.includes(dialCallStatus);
+
+  if (isMissedCall && call.client) {
+    if (!call.company?.missedCallTextBackEnabled) {
+      console.log(
+        "⏭️ [Call-Status] Missed call text back disabled, skipping SMS",
+      );
+    } else {
+      const entitlements = await getCompanyEntitlements(call.company.id);
+      if (!entitlements.canUseSms || !entitlements.missedCallTextBack) {
+        console.log(
+          "⏭️ [Call-Status] Missed call text back not in plan, skipping SMS",
+        );
+      } else {
+        try {
+          const companyName = call.company?.name || "our business";
+          const message = `Sorry we missed your call! Feel free to text this number with what you need in the meantime and we’ll get back to you as soon as possible. - ${companyName}`;
+
+          if (call.company?.smsGateway === "TWILIO") {
+            const response = await sendTwilioMessage({
+              companyId: call.company?.id,
+              clientId: call.client.id,
+              message,
+              attachments: [],
+              systemCall: true,
+            });
+            if (!response.success) throw new Error(`SMS sending failed`);
+            console.log("✅ [Call-Status] Missed call SMS sent via Twilio");
+          } else if (call.company?.smsGateway === "INFOBIP") {
+            const response = await sendInfobipMessage({
+              companyId: call.company?.id,
+              clientId: call.client.id,
+              message,
+              attachments: [],
+              systemCall: true,
+            });
+            if (!response.success) throw new Error(`SMS sending failed`);
+            console.log("✅ [Call-Status] Missed call SMS sent via Infobip");
+          } else {
+            console.warn(
+              "⚠️ [Call-Status] No SMS gateway configured for company:",
+              call.company?.id,
+            );
+          }
+        } catch (error) {
+          console.error(
+            "❌ [Call-Status] Failed to send missed call SMS:",
+            error,
+          );
+        }
+      }
+    }
+  }
+
+  const dialStatus = dialCallStatus ?? "";
+  let newStatus: string = call.status ?? "ringing";
+  if (dialStatus === "answered" || dialStatus === "completed") {
+    newStatus = "completed";
+  } else if (missedStatuses.includes(dialStatus)) {
+    newStatus = "no-answer";
+  }
+
+  if (newStatus !== call.status) {
+    await db.clientCall.update({
+      where: { id: call.id },
+      data: { status: newStatus },
+    });
+    console.log(
+      `✅ [Call-Status] Updated call status from ${call.status} to ${newStatus}`,
+    );
   }
 }
