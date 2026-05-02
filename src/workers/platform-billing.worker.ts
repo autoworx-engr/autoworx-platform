@@ -63,10 +63,7 @@ async function handleSubscriptionPayment(
         transaction?.subscriptionId ||
         transaction?.subscription?.subscriptionId;
     } catch (err) {
-      console.error(
-        "Failed to resolve subscription from transaction details:",
-        err,
-      );
+      throw err;
     }
   }
 
