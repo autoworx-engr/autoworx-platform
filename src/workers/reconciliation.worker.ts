@@ -21,6 +21,7 @@ export async function registerReconciliationWorker(boss: PgBoss) {
     const gaveUp = await db.webhookEvent.findMany({
       where: { status: "PENDING", receivedAt: { lt: twelveHoursAgo } },
       select: { id: true, eventId: true, gateway: true, lastError: true },
+      take: 100,
     });
 
     if (gaveUp.length > 0) {

@@ -2,7 +2,11 @@
 
 import { db } from "@/lib/db";
 import { getBoss } from "@/lib/pgboss";
-import { QUEUE_AUTHORIZE_NET, QUEUE_STRIPE } from "@/lib/queue-names";
+import {
+  QUEUE_AUTHORIZE_NET,
+  QUEUE_PLATFORM_BILLING,
+  QUEUE_STRIPE,
+} from "@/lib/queue-names";
 
 export async function getWebhookEvents({
   status,
@@ -43,7 +47,12 @@ export async function retryWebhookEvent(eventId: string, gateway: string) {
   });
 
   const boss = getBoss();
-  const queue = gateway === "STRIPE" ? QUEUE_STRIPE : QUEUE_AUTHORIZE_NET;
+  const queue =
+    gateway === "STRIPE"
+      ? QUEUE_STRIPE
+      : gateway === "PLATFORM_AUTHORIZE_NET"
+        ? QUEUE_PLATFORM_BILLING
+        : QUEUE_AUTHORIZE_NET;
   await boss.send(queue, { eventId });
 
   return { success: true };

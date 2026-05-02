@@ -83,5 +83,12 @@ export async function register() {
 
   await registerReconciliationWorker(boss);
 
+  const shutdown = async () => {
+    await boss.stop({ timeout: 10000 });
+    process.exit(0);
+  };
+  process.once("SIGTERM", shutdown);
+  process.once("SIGINT", shutdown);
+
   console.log("[pg-boss] workers registered");
 }

@@ -1,5 +1,4 @@
 import type { PgBoss } from "pg-boss";
-// eslint-disable-next-line no-eval
 const { PgBoss: PgBossCtor } = eval("require")(
   "pg-boss",
 ) as typeof import("pg-boss");
