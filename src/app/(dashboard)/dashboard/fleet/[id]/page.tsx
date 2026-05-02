@@ -56,13 +56,13 @@ const page = async (props: PropsType) => {
           Fleet Details
         </h1>
 
-        <NewFleet
+        {/* <NewFleet
           buttonElement={
             <button className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#6571FF] to-[#8088FF] px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-[#6571FF]/40 transition-all duration-300 hover:from-[#505aff] hover:to-[#6571FF] hover:shadow-xl">
               + Add New Fleet
             </button>
           }
-        />
+        /> */}
       </div>
       {/* Fleet Details */}
       <FleetDetails fleet={client} />
