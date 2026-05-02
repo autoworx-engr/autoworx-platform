@@ -84,8 +84,9 @@ async function handleSubscriptionPayment(
   });
 
   if (!subscription) {
-    console.error("PlatformSubscription not found for ARB ID:", subscriptionId);
-    return;
+    throw new Error(
+      `PlatformSubscription not found for ARB ID: ${subscriptionId}`,
+    );
   }
 
   // Backfill companyId on the WebhookEvent row for observability

@@ -10,7 +10,10 @@ const globalForBoss = globalThis as unknown as { boss: PgBoss | null };
 
 export function getBoss(): PgBoss {
   if (!globalForBoss.boss) {
-    globalForBoss.boss = new PgBossCtor(connectionString);
+    globalForBoss.boss = new PgBossCtor({
+      connectionString,
+      max: 3,
+    });
   }
   return globalForBoss.boss;
 }
