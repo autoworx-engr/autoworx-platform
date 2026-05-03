@@ -1,5 +1,12 @@
 "use client";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import SmsMessage from "./SmsMessage";
 import useInfinitySmsQueryByClientId from "../../../_hooks/useInfinitySmsQuery";
 import { Spinner } from "@/components/ui/spinner";
@@ -35,30 +42,32 @@ export default function SmsBox({ clientId }: { clientId: number }) {
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const [lastSeenId, setLastSeenId] = useState<string | number | null>(null);
 
-  // Track scroll position before loading more messages to maintain position
-  const [prevScrollHeight, setPrevScrollHeight] = useState(0);
+  // Track scroll position before loading more messages to maintain position.
+  // Must be a ref (not state) — using state caused a premature re-render that
+  // fired the restoration effect before new data arrived (scrollDiff = 0),
+  // resetting the ref to 0 so restoration never actually happened.
+  const prevScrollHeightRef = useRef(0);
   const isLoadingOlderRef = useRef(false);
 
   // Delay top-loading until initial autoscroll settles
   const [isReady, setIsReady] = useState(false);
 
-  // Maintain scroll position after loading older messages
-  useEffect(() => {
-    if (prevScrollHeight > 0 && containerRef.current) {
-      const container = containerRef.current;
-      const newScrollHeight = container.scrollHeight;
-      const scrollDiff = newScrollHeight - prevScrollHeight;
-
-      if (scrollDiff > 0) {
-        // Use setTimeout to ensure DOM has updated
-        setTimeout(() => {
-          container.scrollTop = container.scrollTop + scrollDiff;
-        }, 0);
-      }
-
-      setPrevScrollHeight(0);
+  // Restore scroll position synchronously after older messages are prepended.
+  // useLayoutEffect runs after the DOM commit but before paint — no visible
+  // jump. Keyed only on pages.length so it fires exactly once per new page.
+  useLayoutEffect(() => {
+    if (prevScrollHeightRef.current <= 0) return;
+    const container = containerRef.current;
+    if (!container) {
+      prevScrollHeightRef.current = 0;
+      return;
     }
-  }, [data?.pages?.length, prevScrollHeight]); // Track pages length instead of messages length
+    const scrollDiff = container.scrollHeight - prevScrollHeightRef.current;
+    if (scrollDiff > 0) {
+      container.scrollTop = container.scrollTop + scrollDiff;
+    }
+    prevScrollHeightRef.current = 0;
+  }, [data?.pages?.length]);
 
   // Auto-scroll to bottom when a new message is sent or received
   useEffect(() => {
@@ -108,7 +117,7 @@ export default function SmsBox({ clientId }: { clientId: number }) {
     }
 
     isLoadingOlderRef.current = true;
-    setPrevScrollHeight(el.scrollHeight);
+    prevScrollHeightRef.current = el.scrollHeight;
     void fetchNextPage().finally(() => {
       isLoadingOlderRef.current = false;
     });
@@ -126,9 +135,14 @@ export default function SmsBox({ clientId }: { clientId: number }) {
     setShouldAutoScroll(atBottom);
   }, [maybeLoadOlderMessages]);
 
+  // Trigger an initial check when the component becomes ready (e.g. not
+  // enough messages to fill the screen). Do NOT include data?.pages?.length
+  // here — firing on every page load caused an infinite-fetch loop because
+  // scroll restoration hadn't happened yet when this ran.
   useEffect(() => {
-    maybeLoadOlderMessages();
-  }, [isReady, data?.pages?.length, maybeLoadOlderMessages]);
+    if (isReady) maybeLoadOlderMessages();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isReady]);
 
   // Fix: Reset ready state when clientId changes
   useEffect(() => {
