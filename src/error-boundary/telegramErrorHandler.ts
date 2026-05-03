@@ -4,7 +4,8 @@
  * Integrates with the deduplication system to prevent spam
  */
 
-import { errorHandler, TGenericErrorResponse } from "./globalErrorHandler";
+import { errorHandler } from "./globalErrorHandler";
+import { TErrorHandler } from "@/types/globalError";
 import { sendTelegramAlert, formatTelegramErrorMessage } from "@/lib/telegram";
 import {
   generateErrorFingerprint,
@@ -82,7 +83,7 @@ function truncateStack(stack: string | undefined | null, maxLines = 8): string {
 export function telegramErrorHandler(
   error: unknown,
   context?: TelegramErrorContext,
-): TGenericErrorResponse {
+): TErrorHandler {
   // Get standard error response
   const errorResponse = errorHandler(error);
 
