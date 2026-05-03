@@ -1,6 +1,7 @@
 import { getEmployeesForPaginate } from "@/actions/employee/get";
 import { getCompanyId } from "@/lib/companyId";
 import { EmployeeType } from "@prisma/client";
+import { format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 
 export const EMPLOYEE_LIST_KEY = "employees";
@@ -46,7 +47,10 @@ export default function useEmployeeQuery({
           searchParams: searchTerm || undefined,
           dateRange:
             dateRange?.startDate && dateRange?.endDate
-              ? { startDate: dateRange.startDate, endDate: dateRange.endDate }
+              ? {
+                  startDate: format(dateRange.startDate, "yyyy-MM-dd"),
+                  endDate: format(dateRange.endDate, "yyyy-MM-dd"),
+                }
               : undefined,
         },
       });
