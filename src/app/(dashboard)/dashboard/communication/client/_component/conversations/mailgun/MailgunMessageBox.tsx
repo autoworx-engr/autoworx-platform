@@ -82,13 +82,15 @@ export default function MailgunMessageBox({
           <div className="flex-1 overflow-hidden">
             <MaiGunBox conversations={conversations} clientId={clientId} />
           </div>
-          <div className="flex-shrink-0">
-            <SendMail
-              clientId={clientId}
-              companyId={user!.companyId}
-              setConversations={setConversations}
-            />
-          </div>
+          {user && (
+            <div className="flex-shrink-0">
+              <SendMail
+                clientId={clientId}
+                companyId={user.companyId}
+                setConversations={setConversations}
+              />
+            </div>
+          )}
         </div>
       ) : (
         <RedirectToSettings
