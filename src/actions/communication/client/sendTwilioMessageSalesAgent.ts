@@ -128,7 +128,7 @@ export async function sendTwilioMessageSalesAgent({
         }
       } catch (error) {}
 
-      revalidatePath("/dashboard/communication/client");
+      revalidatePath("/dashboard/communication/client/${clientId}");
 
       return {
         success: true,

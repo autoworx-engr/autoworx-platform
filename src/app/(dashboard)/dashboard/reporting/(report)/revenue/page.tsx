@@ -72,6 +72,8 @@ export type TInvoice = Prisma.InvoiceGetPayload<{
 export default async function RevenueReportPage(props: TProps) {
   const searchParams = await props.searchParams;
   const session = await getServerSession(authOptions);
+  const companyId = session?.user?.companyId;
+  if (!companyId) throw new Error("Unauthorized");
   const { timezone } = (await getCompanyTimezone()) || {
     timezone: moment.tz.guess(),
   };
@@ -186,7 +188,7 @@ export default async function RevenueReportPage(props: TProps) {
 
   const invoicesPromise = db.invoice.findMany({
     where: {
-      companyId: session?.user?.companyId,
+      companyId,
       type: "Invoice",
       column: {
         companyId: session?.user?.companyId,
@@ -260,7 +262,7 @@ export default async function RevenueReportPage(props: TProps) {
 
   const servicesPromise = db.service.findMany({
     where: {
-      companyId: session?.user?.companyId,
+      companyId,
     },
     include: {
       category: true,
@@ -269,7 +271,7 @@ export default async function RevenueReportPage(props: TProps) {
 
   const categoriesPromise = db.category.findMany({
     where: {
-      companyId: session?.user?.companyId,
+      companyId,
     },
   });
 
@@ -317,8 +319,9 @@ export default async function RevenueReportPage(props: TProps) {
 
   const getService = services.map((service) => service.name);
   const getCategory = categories.map((category) => category.name);
-  const maxPrice = Math.max(
-    ...filteredInvoices.map((invoice) => Number(invoice.grandTotal)),
+  const maxPrice = filteredInvoices.reduce(
+    (max, invoice) => Math.max(max, Number(invoice.grandTotal)),
+    0,
   );
 
   const filteredInvoice = filteredInvoices.filter((invoice) => {
@@ -439,38 +442,39 @@ export default async function RevenueReportPage(props: TProps) {
     (invoice as any).totalLossAmount = totalLossAmount;
     (invoice as any).materialLossDetails = materialLossDetails;
 
-    // Filter based on filterRevenue selection (Profit filter should show only profitable invoices)
     if (searchParams.filterRevenue === "Profit" && finalProfitPrice <= 0) {
-      return false; // Exclude invoices with zero or negative profit
+      return false;
     }
 
     if (!searchParams.price && !searchParams.cost && !searchParams.profit) {
       return true;
     }
-    // filter by price of invoice
+
+    let matches = true;
+
     if (searchParams.price) {
       const [minPrice, maxPrice] = searchParams.price.split("-").map(Number);
-      if (
+      matches =
+        matches &&
         Number(invoice?.grandTotal) >= minPrice &&
-        Number(invoice?.grandTotal) <= maxPrice
-      ) {
-        return true;
-      }
+        Number(invoice?.grandTotal) <= maxPrice;
     }
-    // filter by cost of invoice
+
     if (searchParams.cost) {
       const [minCost, maxCost] = searchParams.cost.split("-").map(Number);
-      if (costPrice >= minCost && costPrice <= maxCost) {
-        return true;
-      }
+      matches =
+        matches && totalCostPrice >= minCost && totalCostPrice <= maxCost;
     }
-    // filter by profit of invoice
+
     if (searchParams.profit) {
       const [minProfit, maxProfit] = searchParams.profit.split("-").map(Number);
-      if (profitPrice >= minProfit && profitPrice <= maxProfit) {
-        return true;
-      }
+      matches =
+        matches &&
+        finalProfitPrice >= minProfit &&
+        finalProfitPrice <= maxProfit;
     }
+
+    return matches;
   });
 
   const maxCost = filteredInvoices.reduce(

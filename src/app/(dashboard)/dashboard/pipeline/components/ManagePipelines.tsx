@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 
-import { toast } from "react-hot-toast";
+import { errorToast } from "@/lib/toast";
 import { INVOICE_COLORS } from "@/lib/consts";
 import { Column } from "@prisma/client";
 import { GripVertical, Lock, Plus, Tally2, X } from "lucide-react";
@@ -67,7 +67,7 @@ export default function ManagePipelines({
 
     //prevent from deletion
     if (columnToDelete.isRestricted) {
-      toast.error("Deletion of restricted column is not allowed.");
+      errorToast("Deletion of restricted column is not allowed.");
       return;
     }
 

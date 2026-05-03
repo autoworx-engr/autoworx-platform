@@ -368,7 +368,7 @@ export async function POST(req: NextRequest) {
         }
       }
     }
-    revalidatePath("/dashboard/communication/client");
+    revalidatePath("/dashboard/communication/client/${clientId}");
     return NextResponse.json(
       {
         message: "Webhook processed successfully",

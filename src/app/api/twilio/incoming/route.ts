@@ -124,76 +124,20 @@ export async function POST(request: Request) {
 
     const callId = callSid || uuidv4();
 
-    console.log("📝 [Incoming] Creating ClientCall record with:", {
-      callSid: callId,
+    // Fire-and-forget: DB logging + push notifications don't affect TwiML response
+    logCallAndNotify({
+      callId,
       from,
       to,
-      companyId: twilioCredentials.companyId,
+      companyId,
       clientId: client.id,
-    });
-
-    // Create ClientCall record for incoming call
-    const createdCall = await db.clientCall.create({
-      data: {
-        callSid: callId,
-        from,
-        to,
-        status: "ringing",
-        direction: "inbound",
-        sentBy: "Client",
-        companyId: companyId,
-        clientId: client.id,
-      },
-    });
-
-    console.log("✅ [Incoming] ClientCall created successfully:", {
-      id: createdCall.id,
-      callSid: createdCall.callSid,
-      status: createdCall.status,
-    });
-
-    // Send push notifications to admin, manager, and sales users only
-    try {
-      const companyUsers = await db.user.findMany({
-        where: {
-          companyId: companyId,
-          employeeType: {
-            in: ["Admin", "Manager", "Sales"],
-          },
-        },
-        select: {
-          id: true,
-        },
-      });
-
-      const callerName =
+      callerName:
         client.firstName && client.lastName
           ? `${client.firstName} ${client.lastName}`.trim()
-          : client.firstName || client.lastName || from;
-
-      // Send push notification to each user
-      const notificationPromises = companyUsers.map((user) =>
-        sendPushNotification({
-          userId: user.id,
-          title: "📞 Incoming Call",
-          body: `Call from ${callerName}`,
-          deepLink: `/dashboard/communication/client/${client.id}`,
-        }).catch((error) => {
-          console.error(
-            `Failed to send push notification to user ${user.id}:`,
-            error,
-          );
-        }),
-      );
-
-      await Promise.allSettled(notificationPromises);
-      console.log(
-        `📱 Push notifications sent to ${companyUsers.length} user(s)`,
-      );
-    } catch (notificationError) {
-      console.error("Error sending push notifications:", notificationError);
-      // Continue even if notifications fail
-    }
+          : client.firstName || client.lastName || from,
+    }).catch((err) =>
+      console.error("❌ [Incoming] Async log/notify error:", err),
+    );
 
     // Generate TwiML to dial the user's browser/device
     const voiceResponse = new twiml.VoiceResponse();
@@ -281,4 +225,57 @@ export async function POST(request: Request) {
       status: 500,
     });
   }
+}
+
+async function logCallAndNotify({
+  callId,
+  from,
+  to,
+  companyId,
+  clientId,
+  callerName,
+}: {
+  callId: string;
+  from: string;
+  to: string;
+  companyId: number;
+  clientId: number;
+  callerName: string;
+}) {
+  await db.clientCall.create({
+    data: {
+      callSid: callId,
+      from,
+      to,
+      status: "ringing",
+      direction: "inbound",
+      sentBy: "Client",
+      companyId,
+      clientId,
+    },
+  });
+
+  const companyUsers = await db.user.findMany({
+    where: {
+      companyId,
+      employeeType: { in: ["Admin", "Manager", "Sales"] },
+    },
+    select: { id: true },
+  });
+
+  await Promise.allSettled(
+    companyUsers.map((user) =>
+      sendPushNotification({
+        userId: user.id,
+        title: "📞 Incoming Call",
+        body: `Call from ${callerName}`,
+        deepLink: `/dashboard/communication/client/${clientId}`,
+      }).catch((err) =>
+        console.error(
+          `Failed to send push notification to user ${user.id}:`,
+          err,
+        ),
+      ),
+    ),
+  );
 }
