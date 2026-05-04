@@ -6,6 +6,31 @@
 
 const TELEGRAM_API_URL = "https://api.telegram.org";
 
+/** Escape dynamic text for Telegram parse_mode HTML (avoids API 400 on < > &). */
+function escapeTelegramHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+/**
+ * Chat ID for alerts: development vs production from env.
+ * Prefer TELEGRAM_CHAT_ID_DEVELOPMENT / TELEGRAM_CHAT_ID_PRODUCTION.
+ * TELEGRAM_CHAT_ID is a legacy fallback when the stage-specific ID is unset.
+ */
+export function resolveTelegramChatId(): string | undefined {
+  const devId = process.env.TELEGRAM_CHAT_ID_DEVELOPMENT?.trim();
+  const prodId = process.env.TELEGRAM_CHAT_ID_PRODUCTION?.trim();
+  const legacyId = process.env.TELEGRAM_CHAT_ID?.trim();
+
+  if (process.env.NODE_ENV === "production") {
+    return prodId || legacyId;
+  }
+
+  return devId || legacyId;
+}
+
 interface TelegramSendMessageResponse {
   ok: boolean;
   result?: {
@@ -58,12 +83,14 @@ function stripSensitiveData(text: string): string {
  * Send a message to Telegram (fire-and-forget, never blocks)
  */
 export async function sendTelegramAlert(message: string): Promise<void> {
-  const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
+  const botToken = process.env.TELEGRAM_BOT_TOKEN?.trim();
+  const chatId = resolveTelegramChatId();
 
   if (!botToken || !chatId) {
+    const stage =
+      process.env.NODE_ENV === "production" ? "production" : "development";
     console.warn(
-      "[Telegram] Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID env vars",
+      `[Telegram] Missing TELEGRAM_BOT_TOKEN or chat ID for ${stage}. Set TELEGRAM_CHAT_ID_${stage === "production" ? "PRODUCTION" : "DEVELOPMENT"} (or TELEGRAM_CHAT_ID as fallback).`,
     );
     return;
   }
@@ -125,21 +152,31 @@ export function formatTelegramErrorMessage(params: {
     stack,
   } = params;
 
+  const safeMsg = escapeTelegramHtml(stripSensitiveData(errorMessage));
+  const safeRoute = escapeTelegramHtml(route);
+  const safeMethod = escapeTelegramHtml(method);
+  const safeUrl = escapeTelegramHtml(requestUrl);
+  const safeEvent = escapeTelegramHtml(eventName);
+  const safeUser = escapeTelegramHtml(userId ?? "N/A");
+  const safeReqId = escapeTelegramHtml(requestId);
+
   const lines = [
     "\uD83D\uDEA8 Error Detected",
     "",
-    `<b>Message:</b> ${stripSensitiveData(errorMessage)}`,
-    `<b>Route:</b> ${route}`,
-    `<b>Method:</b> ${method}`,
-    `<b>URL:</b> ${requestUrl}`,
-    `<b>Event:</b> ${eventName}`,
-    `<b>User:</b> ${userId ?? "N/A"}`,
-    `<b>RequestId:</b> <code>${requestId}</code>`,
+    `<b>Message:</b> ${safeMsg}`,
+    `<b>Route:</b> ${safeRoute}`,
+    `<b>Method:</b> ${safeMethod}`,
+    `<b>URL:</b> ${safeUrl}`,
+    `<b>Event:</b> ${safeEvent}`,
+    `<b>User:</b> ${safeUser}`,
+    `<b>RequestId:</b> <code>${safeReqId}</code>`,
     "",
   ];
 
   if (stack) {
-    const truncatedStack = stripSensitiveData(truncateStack(stack));
+    const truncatedStack = escapeTelegramHtml(
+      stripSensitiveData(truncateStack(stack)),
+    );
     lines.push(`<b>Stack:</b>`);
     lines.push(`<code>${truncatedStack}</code>`);
   }

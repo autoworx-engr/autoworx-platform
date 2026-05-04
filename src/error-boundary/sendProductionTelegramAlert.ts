@@ -70,7 +70,17 @@ function generateFallbackRequestId(): string {
 }
 
 /**
- * Queue a deduplicated Telegram alert (non-blocking). Only runs on the server in production for 5xx.
+ * Telegram 5xx alerts run in production by default.
+ * In development, set TELEGRAM_ALERTS_IN_DEV=true (or 1) to test without changing NODE_ENV.
+ */
+function telegramAlertsEnabledForCurrentEnv(): boolean {
+  if (process.env.NODE_ENV === "production") return true;
+  const flag = process.env.TELEGRAM_ALERTS_IN_DEV;
+  return flag === "true" || flag === "1";
+}
+
+/**
+ * Queue a deduplicated Telegram alert (non-blocking). Server-only; 5xx only.
  */
 export function queueProductionTelegramAlert(params: {
   errorMessage: string;
@@ -79,7 +89,7 @@ export function queueProductionTelegramAlert(params: {
   context?: ProductionTelegramContext;
 }): void {
   if (typeof window !== "undefined") return;
-  if (process.env.NODE_ENV !== "production") return;
+  if (!telegramAlertsEnabledForCurrentEnv()) return;
   if (params.statusCode < 500) return;
 
   const requestContext = getCurrentRequestContext();
