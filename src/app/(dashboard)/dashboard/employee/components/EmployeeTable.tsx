@@ -209,9 +209,7 @@ const EmployeeTable = ({
                           href={`/dashboard/employee/${employee.id}?view=details`}
                         >
                           {employee.joinDate
-                            ? moment
-                                .utc(employee.joinDate, timezone)
-                                .format("MM/DD/YYYY")
+                            ? moment.utc(employee.joinDate).format("MM/DD/YYYY")
                             : "N/A"}
                         </Link>
                       </td>
