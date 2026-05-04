@@ -39,7 +39,7 @@ type EmployeeParams = {
   filter?: {
     type?: EmployeeType;
     searchParams?: string;
-    dateRange?: { startDate: Date; endDate: Date };
+    dateRange?: { startDate: string; endDate: string };
   };
 };
 export const getEmployeesForPaginate = cache(
@@ -71,10 +71,8 @@ export const getEmployeesForPaginate = cache(
       filter.dateRange.startDate &&
       filter.dateRange.endDate
     ) {
-      const start = new Date(filter.dateRange.startDate);
-      start.setHours(0, 0, 0, 0);
-      const end = new Date(filter.dateRange.endDate);
-      end.setHours(23, 59, 59, 999);
+      const start = new Date(filter.dateRange.startDate + "T00:00:00.000Z");
+      const end = new Date(filter.dateRange.endDate + "T23:59:59.999Z");
 
       whereClause.joinDate = {
         gte: start,

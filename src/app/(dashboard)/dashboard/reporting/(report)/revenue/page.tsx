@@ -317,8 +317,12 @@ export default async function RevenueReportPage(props: TProps) {
     });
   }
 
-  const getService = services.map((service) => service.name);
-  const getCategory = categories.map((category) => category.name);
+  const getService = services
+    .map((service) => service.name.trim())
+    .filter((name) => name.length > 0);
+  const getCategory = categories
+    .map((category) => category.name.trim())
+    .filter((name) => name.length > 0);
   const maxPrice = filteredInvoices.reduce(
     (max, invoice) => Math.max(max, Number(invoice.grandTotal)),
     0,
