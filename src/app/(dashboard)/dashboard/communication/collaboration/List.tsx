@@ -41,7 +41,7 @@ export default function List({
   };
 
   return (
-    <div className="app-shadow h-screen w-full overflow-y-auto rounded-lg bg-background p-3 sm:block sm:h-[83vh] sm:w-[30%]">
+    <div className="app-shadow h-screen w-full overflow-y-auto rounded-lg bg-background p-3 md:h-[83vh] md:w-[30%]">
       <CollaborationToggle
         companyId={companyId}
         initialValue={isCollaborators ?? false}
