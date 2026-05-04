@@ -29,8 +29,8 @@ export default function Page(props: TProps) {
     filterRevenue: false,
   });
 
-  let startDate: Date | undefined;
-  let endDate: Date | undefined;
+  let startDate: string | undefined;
+  let endDate: string | undefined;
 
   if (searchParams.startDate && searchParams.endDate) {
     const formattedStartDate = moment(
@@ -43,8 +43,8 @@ export default function Page(props: TProps) {
       "MM-DD-YYYY",
     ).format("YYYY-MM-DD");
 
-    startDate = new Date(`${formattedStartDate}T00:00:00.000Z`);
-    endDate = new Date(`${formattedEndDate}T23:59:59.999Z`);
+    startDate = `${formattedStartDate}T00:00:00.000Z`;
+    endDate = `${formattedEndDate}T23:59:59.999Z`;
   }
 
   const { data } = useServerGet(
