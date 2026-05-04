@@ -165,8 +165,6 @@ export async function POST(req: Request) {
       attachments = updatedMessage.attachment;
     }
 
-    /* ---------------- COMPANY CHAT TRACK ---------------- */
-
     let chatTrack;
 
     if (createdMessage?.id) {
@@ -186,7 +184,7 @@ export async function POST(req: Request) {
       toCompanyId,
       senderUserId,
       message,
-      attachment: createdMessage?.attachment,
+      attachments: attachments,
       requestEstimateId,
       requestEstimate: createdMessage?.requestEstimate,
       senderUser: createdMessage.senderUser,
@@ -198,7 +196,7 @@ export async function POST(req: Request) {
       toCompanyId,
       senderUserId,
       message,
-      attachment: createdMessage?.attachment,
+      attachments: attachments,
       requestEstimateId,
       requestEstimate: createdMessage?.requestEstimate,
       senderUser: createdMessage.senderUser,
@@ -207,7 +205,9 @@ export async function POST(req: Request) {
     };
 
     // Send to receiver company channel
+
     await pusher.trigger(`company-${fromCompanyId}`, "message", payloadFrom);
+
     await pusher.trigger(`company-${toCompanyId}`, "message", payloadTo);
 
     await pusher.trigger(
