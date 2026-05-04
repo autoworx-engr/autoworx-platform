@@ -814,7 +814,7 @@ export const Checkout = () => {
         </div>
       )}
 
-      {!hasPendingBookingPayment && (
+      {!hasPendingBookingPayment && isDepositEnabled && (
         <div className="rounded-xl border bg-card p-4 space-y-3">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             Gift Card Redemption (Optional)
