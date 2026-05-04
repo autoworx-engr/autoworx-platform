@@ -210,7 +210,7 @@ const EmployeeTable = ({
                         >
                           {employee.joinDate
                             ? moment
-                                .tz(employee.joinDate, timezone)
+                                .utc(employee.joinDate, timezone)
                                 .format("MM/DD/YYYY")
                             : "N/A"}
                         </Link>
