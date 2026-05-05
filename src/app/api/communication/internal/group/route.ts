@@ -242,7 +242,7 @@ export const GET = async (req: NextRequest) => {
     const pageNum = parseInt(searchParams.get("page") || "1");
     const limitNum = parseInt(searchParams.get("limit") || "20");
     const search = searchParams.get("search") || "";
-    const sortBy = searchParams.get("sortBy") || "createdAt";
+    const sortBy = searchParams.get("sortBy") || "updatedAt";
     const sortOrder = searchParams.get("sortOrder") || "desc";
 
     const where: any = {
@@ -271,6 +271,11 @@ export const GET = async (req: NextRequest) => {
     const totalGroups = await db.group.count({
       where,
     });
+
+    console.log(
+      "[GET /api/internal/group] group list order:",
+      groups.map((g) => ({ id: g.id, name: g.name, updatedAt: g.updatedAt })),
+    );
 
     return NextResponse.json(
       {
