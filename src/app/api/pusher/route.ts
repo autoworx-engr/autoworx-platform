@@ -193,6 +193,14 @@ export async function POST(req: Request) {
       data: messageData,
     });
 
+    // Touch Group.updatedAt so group list sorts by most recent message activity
+    if (type === sendType.Group) {
+      await db.group.update({
+        where: { id: to },
+        data: { updatedAt: new Date() },
+      });
+    }
+
     // create chat tracker for track last message
     const isChatTrackExist = await db.chatTrack.findFirst({
       where: {
