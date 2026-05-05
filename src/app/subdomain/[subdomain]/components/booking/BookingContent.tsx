@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useBooking } from "../../context/BookingContext";
 import { ProgressBar } from "./ProgressBar";
 import { ServiceMenu } from "./ServiceMenu";
@@ -10,6 +10,7 @@ import { Checkout } from "./Checkout";
 import { Confirmation } from "./Confirmation";
 import { CartDrawer } from "./CartDrawer";
 import { BookingHeader } from "./BookingHeader";
+import { EmergencyRequestModal } from "./EmergencyRequestModal";
 import { useShopInfo } from "@/hooks/virtual-shop/useShopInfo";
 import ShopNotFound from "../giftcards/ShopNotFound";
 import {
@@ -28,6 +29,7 @@ const toNumber = (value: unknown) => {
 };
 
 const BookingContent = ({ initialShop }: { initialShop?: any }) => {
+  const [isEmergencyModalOpen, setIsEmergencyModalOpen] = useState(false);
   const {
     step,
     setStep,
@@ -146,7 +148,11 @@ const BookingContent = ({ initialShop }: { initialShop?: any }) => {
   return (
     <div className="min-h-screen bg-background text-sm">
       {/* Header */}
-      <BookingHeader rightElement="giftcard" onLogoClick={handleLogoClick}>
+      <BookingHeader
+        rightElement="giftcard"
+        onLogoClick={handleLogoClick}
+        onEmergencyRequest={() => setIsEmergencyModalOpen(true)}
+      >
         <ProgressBar current={step} />
       </BookingHeader>
 
@@ -160,6 +166,12 @@ const BookingContent = ({ initialShop }: { initialShop?: any }) => {
 
       {/* Cart FAB */}
       {step === "services" && <CartDrawer />}
+
+      {/* Emergency Request Modal */}
+      <EmergencyRequestModal
+        isOpen={isEmergencyModalOpen}
+        onClose={() => setIsEmergencyModalOpen(false)}
+      />
     </div>
   );
 };
