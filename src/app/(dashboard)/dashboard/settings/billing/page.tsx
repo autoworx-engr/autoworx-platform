@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import moment from "moment-timezone";
-import { Award, CreditCard, History, Zap, Loader2 } from "lucide-react";
+import { Award, History, Zap, Loader2 } from "lucide-react";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { PricePlans } from "./PricePlans";
 import {
@@ -17,17 +17,6 @@ import { PlatformSubscriptionStatus } from "@prisma/client";
 import { cancelSubscription } from "@/actions/platform-billing/cancel";
 import { AlertCircle } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-
-const paymentHistory = [
-  { amount: "$100", method: "Credit Card", date: "2024-08-01" },
-  { amount: "$200", method: "PayPal", date: "2024-08-02" },
-  { amount: "$150", method: "Bank Transfer", date: "2024-08-03" },
-  { amount: "$250", method: "Credit Card", date: "2024-08-04" },
-  { amount: "$250", method: "Credit Card", date: "2024-08-04" },
-  { amount: "$250", method: "Credit Card", date: "2024-08-04" },
-  { amount: "$250", method: "Credit Card", date: "2024-08-04" },
-  { amount: "$250", method: "Credit Card", date: "2024-08-04" },
-];
 
 const planColors: { [key: string]: string } = {
   "Starter (Text Only)": "text-gray-500",
@@ -305,36 +294,3 @@ export default function Page() {
     </div>
   );
 }
-
-// {
-//   /* Payment Methods Section */
-// }
-// <div className="w-full">
-//   <h2 className="mb-4 flex items-center text-2xl font-bold ">
-//     <CreditCard className="w-6 h-6 mr-2 text-[#6571FF]" />
-//     Payment Methods
-//   </h2>
-//   <div className="flex flex-wrap justify-start gap-4">
-//     {/* Payment method cards */}
-//     {subscription?.billingCustomer?.paymentMethods?.length > 0 ? (
-//       subscription.billingCustomer.paymentMethods.map((pm: any) => (
-//         <div
-//           key={pm.id}
-//           className="flex flex-col h-32 w-full justify-center rounded-lg border border-gray-300 bg-white p-4 shadow-sm hover:shadow-md transition sm:w-48"
-//         >
-//           <p className="text-sm font-bold text-gray-400 uppercase">
-//             {pm.cardType || "Card"}
-//           </p>
-//           <p className="mt-auto text-xl font-bold text-gray-700">
-//             •••• {pm.last4}
-//           </p>
-//           <p className="text-xs text-gray-500">Exp: {pm.expiry}</p>
-//         </div>
-//       ))
-//     ) : (
-//       <div className="flex h-24 w-full items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 sm:h-32 sm:w-40">
-//         <p className="text-sm font-medium text-gray-400">No cards saved</p>
-//       </div>
-//     )}
-//   </div>
-// </div>;

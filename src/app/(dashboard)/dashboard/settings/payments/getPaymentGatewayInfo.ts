@@ -1,18 +1,11 @@
 "use server";
 
+import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 
-export async function getPaymentGatewayInfo(companyId: number) {
+export async function getPaymentGatewayInfo() {
   try {
-    if (!companyId) {
-      return {
-        success: false,
-        message: "Company ID not found",
-        hasStripe: false,
-        hasAuthorizeNet: false,
-        paymentGateway: null,
-      };
-    }
+    const companyId = await getCompanyId();
 
     const company = await db.company.findUnique({
       where: { id: companyId },
@@ -31,7 +24,7 @@ export async function getPaymentGatewayInfo(companyId: number) {
         message: "Company not found",
         hasStripe: false,
         hasAuthorizeNet: false,
-        paymentGateway: null,
+        paymentGateway: null as string | null,
       };
     }
 

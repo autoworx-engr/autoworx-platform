@@ -1,11 +1,9 @@
 "use client";
 import { updateNotification } from "@/actions/settings/updateNotification";
 import { getNotificationTitle } from "@/lib/notification-permission";
-import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import { NotificationSettingsV2 } from "@prisma/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import MySwitch from "./MySwitch";
-import { getTwilioCredentials } from "@/actions/communication/client/sendTwilioMessage";
 import { errorToast } from "@/lib/toast";
 import { isSmsAvailable } from "@/actions/communication/client/createTwilioCredentials";
 
@@ -24,13 +22,11 @@ export default function NotificationTableRow({
   isPayment = false,
 }: TProps) {
   const settingTitle = getNotificationTitle(setting.notification_type || "");
-  const user = useGetCurrentUser();
 
   const queryClient = useQueryClient();
   const { mutate } = useMutation({
     mutationFn: ({ switchKey, value }: TMutationFnProps) => {
       return updateNotification({
-        userId: Number(user?.id),
         section: setting.section!,
         notificationType: setting.notification_type!,
         switchKey,

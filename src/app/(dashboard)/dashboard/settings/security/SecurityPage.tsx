@@ -2,14 +2,22 @@
 import { regenerateZapierToken } from "@/actions/settings/regenerateZapierToken";
 import { successToast } from "@/lib/toast";
 import { Copy, Eye, EyeOff } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Company } from "@prisma/client";
 
-export default function SecurityPage({ company }: { company: any }) {
+export default function SecurityPage({
+  company,
+}: {
+  company: Pick<Company, "zapierToken"> | null;
+}) {
   const [showToken, setShowToken] = useState(false);
   const [isTokenGenerating, setIsTokenGenerating] = useState(false);
-  if (!company?.zapierToken) {
-    regenerateZapierToken();
-  }
+
+  useEffect(() => {
+    if (!company?.zapierToken) {
+      regenerateZapierToken();
+    }
+  }, []);
   return (
     <div className=" w-full  items-start">
       <div className="space-y-4">
