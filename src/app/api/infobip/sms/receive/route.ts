@@ -306,6 +306,7 @@ export async function POST(req: NextRequest) {
             companyId: infobipConfig.companyId,
             clientId: client.id,
             clientName: client.firstName + " " + client.lastName,
+            message: cleanedMessageText,
           });
 
           // Trigger Pusher notification

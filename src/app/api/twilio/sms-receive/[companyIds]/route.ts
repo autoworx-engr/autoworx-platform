@@ -280,6 +280,8 @@ async function processIncomingSMS(
         companyId: +companyId,
         clientId: client.id,
         clientName: client.firstName + " " + client.lastName,
+        message: body.Body,
+        hasMedia: Number(body.NumMedia) > 0,
       });
 
       const channelName = `message-${client.id}`;

@@ -52,10 +52,14 @@ export const sendClientEmailNotification = async ({
 };
 
 // send notification for when client message
+const MESSAGE_PREVIEW_MAX_LENGTH = 100;
+
 type TClientMessageNotification = {
   companyId: number;
   clientName?: string;
   clientId: number;
+  message?: string;
+  hasMedia?: boolean;
   sendRoles?: EmployeeType[];
 };
 
@@ -63,11 +67,11 @@ export const sendClientMessageNotification = async ({
   companyId,
   clientId,
   clientName,
+  message,
+  hasMedia,
   sendRoles = ["Admin", "Manager", "Sales"],
 }: TClientMessageNotification) => {
   try {
-    // update technician status to complete
-    // get all company admins and managers
     const getUsers = await getUsersByRole(companyId, sendRoles, {
       id: true,
       firstName: true,
@@ -78,7 +82,20 @@ export const sendClientMessageNotification = async ({
 
     const redirectUrl = `/dashboard/communication/client/${clientId}`;
 
-    const description = `Message from ${clientName} received. View and respond in Autoworx`;
+    const trimmedMessage = message?.trim();
+    let preview: string;
+    if (trimmedMessage) {
+      const truncated =
+        trimmedMessage.length > MESSAGE_PREVIEW_MAX_LENGTH
+          ? trimmedMessage.slice(0, MESSAGE_PREVIEW_MAX_LENGTH) + "..."
+          : trimmedMessage;
+      preview = `"${truncated}"`;
+    } else if (hasMedia) {
+      preview = "Sent a photo";
+    } else {
+      preview = "Sent you a message";
+    }
+    const description = `${clientName}: ${preview}`;
     const title = "New Client Message";
 
     for (const user of getUsers) {
