@@ -547,6 +547,7 @@ model Client {
   fleet                  Fleet?
   isSalesAgent           Boolean                  @default(true)
   shopBookings           ShopBooking[]
+  emergencyBookingRequests EmergencyBookingRequest[]
 
   @@index([companyId], name: "fk_customers_company")
   @@map("Client")
@@ -2265,6 +2266,7 @@ model User {
   twoFactorConfirmation          TwoFactorConfirmation?
   collaborationMessages          CollaborationMessage[]
   reviews                        Reviews[]
+  reviewedEmergencyRequests      EmergencyBookingRequest[] @relation("EmergencyReviewer")
 
   @@index([companyId], name: "fk_users_company")
 }
@@ -2577,6 +2579,7 @@ model Vehicle {
   invoices        Invoice[]
   requestEstimate RequestEstimate? @relation("Vehicle")
   shopBookings    ShopBooking[]
+  emergencyBookingRequests EmergencyBookingRequest[]
 
   @@index([companyId], name: "fk_vehicles_company")
 }
@@ -2957,6 +2960,7 @@ model Shop {
   shopServices    ShopService[]
   bookingSettings ShopBookingSetting?
   shopBookings    ShopBooking[]
+  emergencyBookingRequests EmergencyBookingRequest[]
 
   // Gift Card Relations (shop-level isolation)
   giftCardSetting   GiftCardSetting?
@@ -3100,6 +3104,7 @@ model ShopBooking {
   services    ShopBookingService[]
   vehicle     Vehicle?             @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
   appointment Appointment?         @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  emergencyBookingRequest EmergencyBookingRequest?
 
   @@index([shopId])
   @@index([clientId])
@@ -3349,3 +3354,101 @@ model ShopSlotHold {
   @@index([shopId, date, expiresAt])
 }
 
+
+// Emergency Booking Request Model
+model EmergencyBookingRequest {
+  id       Int  @id @default(autoincrement())
+  shopId   Int  @map("shop_id")
+  clientId Int? @map("client_id")
+
+  // Contact Information (in case client is guest)
+  contactName  String  @map("contact_name") @db.VarChar(255)
+  contactEmail String  @map("contact_email") @db.VarChar(255)
+  contactPhone String  @map("contact_phone") @db.VarChar(50)
+  
+  // Emergency Details
+  urgencyLevel    UrgencyLevel      @default(URGENT) @map("urgency_level")
+  reasonCategory  EmergencyReason   @map("reason_category")
+  description     String            @db.Text
+  
+  // Requested Time (user preference)
+  requestedDate String? @map("requested_date") // User's preferred date
+  requestedTime String? @map("requested_time") // User's preferred time
+  flexibleTiming Boolean @default(true) @map("flexible_timing") // Can they be flexible?
+  
+  // Vehicle Info
+  vehicleId    Int?    @map("vehicle_id")
+  vehicleMake  String? @map("vehicle_make") @db.VarChar(100)
+  vehicleModel String? @map("vehicle_model") @db.VarChar(100)
+  vehicleYear  Int?    @map("vehicle_year")
+  
+  // Services Requested (stored as JSON for flexibility)
+  requestedServices Json @map("requested_services") // Array of service IDs or descriptions
+  
+  // Status & Resolution
+  status           EmergencyRequestStatus @default(PENDING)
+  priority         Int                    @default(5) // 1-10, higher = more urgent
+  
+  // Admin Response
+  reviewedBy       Int?      @map("reviewed_by")
+  reviewedAt       DateTime? @map("reviewed_at")
+  adminNotes       String?   @map("admin_notes") @db.Text
+  rejectionReason  String?   @map("rejection_reason") @db.Text
+  
+  // Proposed Alternative (if original time not available)
+  proposedDate     String?   @map("proposed_date")
+  proposedTime     String?   @map("proposed_time")
+  alternativeNotes String?   @map("alternative_notes") @db.Text
+  
+  // Final Booking (once approved)
+  shopBookingId Int? @unique @map("shop_booking_id")
+  shopBooking   ShopBooking? @relation(fields: [shopBookingId], references: [id])
+  
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  expiresAt DateTime @map("expires_at") // Auto-expire if not reviewed within X hours
+  
+  // Relations
+  shop        Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  client      Client?       @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  vehicle     Vehicle?      @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+  reviewer    User?         @relation("EmergencyReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
+  
+  @@index([shopId, status])
+  @@index([shopId, createdAt])
+  @@index([urgencyLevel, priority])
+  @@index([expiresAt])
+  @@map("emergency_booking_requests")
+}
+
+
+// Enums
+enum UrgencyLevel {
+  CRITICAL   // Immediate safety issue (accident, breakdown blocking road)
+  URGENT     // Same-day needed (car won't start, important trip tomorrow)
+  HIGH       // Within 24-48 hours
+  NORMAL     // Within a week
+}
+
+enum EmergencyReason {
+  ACCIDENT_DAMAGE      // Vehicle involved in accident
+  BREAKDOWN            // Car won't start or drive
+  SAFETY_CONCERN       // Brakes, steering, lights not working
+  PRE_TRAVEL_CHECK     // Urgent trip coming up
+  WEATHER_DAMAGE       // Storm/hail damage
+  TOWING_RELATED       // Just towed in, needs immediate attention
+  SCHEDULED_CONFLICT   // Previous appointment issue
+  OTHER
+}
+
+enum EmergencyRequestStatus {
+  PENDING              // Waiting for admin review
+  UNDER_REVIEW         // Admin is actively reviewing
+  APPROVED             // Admin approved, booking created
+  ALTERNATIVE_PROPOSED // Admin proposed different time
+  CLIENT_CONFIRMED     // Client confirmed alternative time
+  REJECTED             // Cannot accommodate
+  EXPIRED              // Not reviewed within time window
+  CANCELLED            // Client cancelled the request
+}
