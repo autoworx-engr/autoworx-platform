@@ -3366,8 +3366,6 @@ model EmergencyBookingRequest {
   contactPhone String  @map("contact_phone") @db.VarChar(50)
   
   // Emergency Details
-  urgencyLevel    UrgencyLevel      @default(URGENT) @map("urgency_level")
-  reasonCategory  EmergencyReason   @map("reason_category")
   description     String            @db.Text
   
   // Requested Time (user preference)
@@ -3413,30 +3411,11 @@ model EmergencyBookingRequest {
   
   @@index([shopId, status])
   @@index([shopId, createdAt])
-  @@index([urgencyLevel, priority])
+  @@index([priority])
   @@index([expiresAt])
   @@map("emergency_booking_requests")
 }
 
-
-// Enums
-enum UrgencyLevel {
-  CRITICAL   // Immediate safety issue (accident, breakdown blocking road)
-  URGENT     // Same-day needed (car won't start, important trip tomorrow)
-  HIGH       // Within 24-48 hours
-  NORMAL     // Within a week
-}
-
-enum EmergencyReason {
-  ACCIDENT_DAMAGE      // Vehicle involved in accident
-  BREAKDOWN            // Car won't start or drive
-  SAFETY_CONCERN       // Brakes, steering, lights not working
-  PRE_TRAVEL_CHECK     // Urgent trip coming up
-  WEATHER_DAMAGE       // Storm/hail damage
-  TOWING_RELATED       // Just towed in, needs immediate attention
-  SCHEDULED_CONFLICT   // Previous appointment issue
-  OTHER
-}
 
 enum EmergencyRequestStatus {
   PENDING              // Waiting for admin review

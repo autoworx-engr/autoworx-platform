@@ -12,17 +12,6 @@ const schema = z.object({
   contactName: z.string().min(1).max(255),
   contactEmail: z.string().email().max(255),
   contactPhone: z.string().min(1).max(50),
-  urgencyLevel: z.enum(["CRITICAL", "URGENT", "HIGH", "NORMAL"]),
-  reasonCategory: z.enum([
-    "ACCIDENT_DAMAGE",
-    "BREAKDOWN",
-    "SAFETY_CONCERN",
-    "PRE_TRAVEL_CHECK",
-    "WEATHER_DAMAGE",
-    "TOWING_RELATED",
-    "SCHEDULED_CONFLICT",
-    "OTHER",
-  ]),
   description: z.string().min(1),
   requestedDate: z.string().optional(),
   requestedTime: z.string().optional(),
@@ -52,26 +41,9 @@ const schema = z.object({
     .default([]),
 });
 
-const PRIORITY_MAP: Record<string, number> = {
-  CRITICAL: 10,
-  URGENT: 8,
-  HIGH: 6,
-  NORMAL: 4,
-};
-
-const EXPIRY_HOURS_MAP: Record<string, number> = {
-  CRITICAL: 0.5,
-  URGENT: 2,
-  HIGH: 6,
-  NORMAL: 24,
-};
-
-const REVIEW_TIME_MAP: Record<string, string> = {
-  CRITICAL: "Within 15 minutes",
-  URGENT: "Within 30 minutes",
-  HIGH: "Within 2 hours",
-  NORMAL: "Within 24 hours",
-};
+const DEFAULT_PRIORITY = 8;
+const DEFAULT_EXPIRY_HOURS = 2;
+const DEFAULT_REVIEW_TIME = "Within 30 minutes";
 
 /**
  * @swagger
@@ -333,9 +305,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const priority = PRIORITY_MAP[data.urgencyLevel] ?? 5;
-    const expiryHours = EXPIRY_HOURS_MAP[data.urgencyLevel] ?? 24;
-    const expiresAt = new Date(Date.now() + expiryHours * 60 * 60 * 1000);
+    const expiresAt = new Date(
+      Date.now() + DEFAULT_EXPIRY_HOURS * 60 * 60 * 1000,
+    );
 
     const emergencyRequest = await db.emergencyBookingRequest.create({
       data: {
@@ -344,8 +316,6 @@ export async function POST(request: NextRequest) {
         contactName: data.contactName,
         contactEmail: data.contactEmail,
         contactPhone: normalizedPhone,
-        urgencyLevel: data.urgencyLevel,
-        reasonCategory: data.reasonCategory,
         description: data.description,
         requestedDate: data.requestedDate ?? null,
         requestedTime: data.requestedTime ?? null,
@@ -355,7 +325,7 @@ export async function POST(request: NextRequest) {
         vehicleModel: vehicleModel ?? null,
         vehicleYear: vehicleYear ?? null,
         requestedServices: data.requestedServices,
-        priority,
+        priority: DEFAULT_PRIORITY,
         expiresAt,
       },
       select: { id: true },
@@ -364,8 +334,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       requestId: emergencyRequest.id,
-      estimatedReviewTime:
-        REVIEW_TIME_MAP[data.urgencyLevel] ?? "Within 30 minutes",
+      estimatedReviewTime: DEFAULT_REVIEW_TIME,
       message:
         "Emergency request submitted. Our team will contact you shortly.",
       trackingUrl: `/emergency-status/${emergencyRequest.id}`,

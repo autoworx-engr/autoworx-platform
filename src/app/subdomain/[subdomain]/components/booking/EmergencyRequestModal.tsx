@@ -7,9 +7,7 @@ import { useShopInfo } from "@/hooks/virtual-shop/useShopInfo";
 import { CheckoutVehicleSection } from "./CheckoutVehicleSection";
 import { useEmergencyRequest } from "./emergency/useEmergencyRequest";
 import { EmergencyServiceSelector } from "./emergency/EmergencyServiceSelector";
-import { EmergencyUrgencySelector } from "./emergency/EmergencyUrgencySelector";
 import { EmergencySuccessView } from "./emergency/EmergencySuccessView";
-import { REASON_CATEGORIES } from "./emergency/types";
 
 interface EmergencyRequestModalProps {
   isOpen: boolean;
@@ -69,7 +67,7 @@ export const EmergencyRequestModal = ({
             <AlertTriangle className="w-5 h-5 flex-shrink-0" />
             <div>
               <h2 className="font-bold text-lg leading-tight">
-                Emergency Service Request
+                Urgent Service Request
               </h2>
               <p className="text-xs text-primary-foreground/70">
                 Our team will respond as quickly as possible
@@ -140,35 +138,9 @@ export const EmergencyRequestModal = ({
               </div>
             </section>
 
-            {/* Urgency */}
-            <section className="space-y-3">
-              <SectionLabel>Urgency Level *</SectionLabel>
-              <EmergencyUrgencySelector
-                value={form.urgencyLevel}
-                onChange={(level) => set("urgencyLevel", level)}
-              />
-            </section>
-
-            {/* Reason */}
-            <section className="space-y-2">
-              <SectionLabel>Reason *</SectionLabel>
-              <select
-                value={form.reasonCategory}
-                onChange={(e) => set("reasonCategory", e.target.value)}
-                required
-                className={INPUT_CLASS}
-              >
-                {REASON_CATEGORIES.map((r) => (
-                  <option key={r.value} value={r.value}>
-                    {r.label}
-                  </option>
-                ))}
-              </select>
-            </section>
-
             {/* Description */}
             <section className="space-y-2">
-              <SectionLabel>Describe the Issue *</SectionLabel>
+              <SectionLabel>Notes *</SectionLabel>
               <textarea
                 value={form.description}
                 onChange={(e) => set("description", e.target.value)}
@@ -264,7 +236,7 @@ export const EmergencyRequestModal = ({
               ) : (
                 <>
                   <AlertTriangle className="w-4 h-4" />
-                  Submit Emergency Request
+                  Submit Urgent Request
                 </>
               )}
             </Button>

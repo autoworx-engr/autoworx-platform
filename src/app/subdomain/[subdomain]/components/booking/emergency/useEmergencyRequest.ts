@@ -108,8 +108,6 @@ export function useEmergencyRequest(shopId?: number, onClose?: () => void) {
       contactName: form.contactName,
       contactEmail: form.contactEmail,
       contactPhone: form.contactPhone,
-      urgencyLevel: form.urgencyLevel,
-      reasonCategory: form.reasonCategory,
       description: form.description,
       requestedDate: form.requestedDate || undefined,
       requestedTime: form.requestedTime || undefined,

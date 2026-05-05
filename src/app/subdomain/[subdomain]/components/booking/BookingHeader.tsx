@@ -92,7 +92,7 @@ export const BookingHeader = ({
                 className="rounded-xl gap-2 bg-primary hover:bg-primary/90 text-primary-foreground transition-all font-bold shadow-lg border-none"
               >
                 <AlertTriangle className="w-4 h-4" />
-                <span className="hidden sm:inline">Emergency</span>
+                <span className="hidden sm:inline">Urgent Request</span>
               </Button>
             )}
 
