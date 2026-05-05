@@ -89,7 +89,7 @@ export const BookingHeader = ({
                 type="button"
                 size="sm"
                 onClick={onEmergencyRequest}
-                className="rounded-xl gap-2 bg-red-600 hover:bg-red-700 text-white transition-all font-bold shadow-lg border-none"
+                className="rounded-xl gap-2 bg-primary hover:bg-primary/90 text-primary-foreground transition-all font-bold shadow-lg border-none"
               >
                 <AlertTriangle className="w-4 h-4" />
                 <span className="hidden sm:inline">Emergency</span>
