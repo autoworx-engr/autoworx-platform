@@ -195,6 +195,45 @@ export async function sendTwilioMessage({
         }
       } catch (error) {}
 
+      // const isSalesAgentEnabled = entitlements.awxSalesAgent;
+
+      // //sales agent
+      // const isCompanySalesAgent = company?.isSalesAgent === true;
+      // const isClientSalesAgent = client?.isSalesAgent === true;
+      // console.log("isCompanySalesAgent", isCompanySalesAgent);
+      // console.log("isClientSalesAgent", isClientSalesAgent);
+      // console.log("isSalesAgentEnabled", isSalesAgentEnabled);
+      // console.log("data", data);
+      // console.log("data", twilioCredentials?.phoneNumber);
+      // console.log(
+      //   "isMatch number 2",
+      //   twilioCredentials?.phoneNumber == data?.from,
+      // );
+      // console.log(
+      //   "isMatch number",
+      //   twilioCredentials?.phoneNumber === data?.from,
+      // );
+      // if (isCompanySalesAgent && isClientSalesAgent && isSalesAgentEnabled) {
+      //   if (data && data?.from === twilioCredentials?.phoneNumber) {
+      //     console.log("Send sms to agent");
+      //     try {
+      //       await sendSMSToAgent({
+      //         company_id: client.companyId,
+      //         message: data?.message,
+      //         send_from: data?.from,
+      //         send_to: data?.to,
+      //         client_id: client?.id,
+      //       });
+      //     } catch (error) {
+      //       console.log("error", error);
+      //       return Response.json(
+      //         { message: `Sales agent error: ${error}` },
+      //         { status: 200 },
+      //       );
+      //     }
+      //   }
+      // }
+
       revalidatePath("/dashboard/communication/client/${clientId}");
 
       return {
