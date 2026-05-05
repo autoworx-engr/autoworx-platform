@@ -122,6 +122,7 @@ const searchParamsValidation = z.object({
 });
 
 const createServiceBookingSchema = z.object({
+  sessionToken: z.string().optional(),
   shopId: z
     .union([z.string(), z.number()], {
       required_error: "Shop ID is required",
@@ -989,6 +990,7 @@ export async function POST(req: Request) {
       year,
       notes,
       giftCardCode,
+      sessionToken,
     } = parsedBody;
 
     const shopServiceIds = shopServices
@@ -998,420 +1000,750 @@ export async function POST(req: Request) {
     const firstName = fullName?.split(" ")[0] || "Guest";
     const lastName = fullName?.split(" ").slice(1).join(" ") || undefined;
 
-    return await db.$transaction(async (tx) => {
-      // 2. Validate Shop
-      const shop = await tx.shop.findUnique({
-        where: { id: Number(shopId) },
-        include: {
-          company: {
-            select: {
-              name: true,
-              smsGateway: true,
-              terms: true,
-              policy: true,
-              tax: true,
-              serviceFee: true,
+    return await db.$transaction(
+      async (tx) => {
+        // 2. Validate Shop
+        const shop = await tx.shop.findUnique({
+          where: { id: Number(shopId) },
+          include: {
+            company: {
+              select: {
+                name: true,
+                smsGateway: true,
+                terms: true,
+                policy: true,
+                tax: true,
+                serviceFee: true,
+              },
             },
           },
-        },
-      });
-
-      if (!shop) {
-        throw new AppError(404, "Shop not found with the provided ID.");
-      }
-
-      const findCompanyAdminUser = await tx.user.findFirst({
-        where: {
-          companyId: shop?.companyId,
-          employeeType: "Admin",
-        },
-      });
-
-      if (!findCompanyAdminUser) {
-        throw new AppError(
-          404,
-          "Company admin not found for the provided shop.",
-        );
-      }
-
-      const companyId = shop.companyId;
-
-      // 3. Find or Create Client
-      const normalizedPhone = normalizePhoneForStorage(phone);
-      const phoneClauses = phoneLookupWhereClause(phone) ?? [];
-      const clientLookupConditions: any[] = [...phoneClauses];
-      if (email) clientLookupConditions.push({ email });
-      let client = await tx.client.findFirst({
-        where: { companyId, OR: clientLookupConditions },
-      });
-
-      if (!client) {
-        const clientResult = await addCustomer({
-          firstName,
-          lastName,
-          mobile: normalizedPhone,
-          email,
-          forceCompanyId: companyId,
         });
 
-        if (clientResult.type !== "success" || !clientResult.data) {
-          throw new AppError(
-            400,
-            clientResult.type === "globalError" || clientResult.type === "error"
-              ? clientResult.message
-              : "Failed to create customer via shared action",
-          );
+        if (!shop) {
+          throw new AppError(404, "Shop not found with the provided ID.");
         }
-        client = clientResult.data;
-        createdClientId = client?.id ?? null;
 
-        if (client) {
-          const column = await tx.column.findFirst({
-            where: {
-              title: "New Leads",
-              companyId: shop.companyId,
-              type: "sales",
-            },
-          });
-          await tx.lead.create({
-            data: {
-              clientName: `${firstName} ${lastName}`,
-              clientEmail: email,
-              clientPhone: phone,
-              companyId: shop.companyId,
-              source: "Virtual Shop",
-              vehicleInfo: `${year} ${make} ${model}`,
-              services: shopServiceIds.map((id) => id).join(", "),
-              clientId: client.id,
-              columnId: column?.id,
-            },
-          });
-        }
-      }
-
-      // 4. Find or Create Vehicle
-      let vehicle = await tx.vehicle.findFirst({
-        where: {
-          clientId: client?.id,
-          year: parseInt(year.toString()),
-          make,
-          model,
-          companyId,
-        },
-      });
-
-      if (!vehicle) {
-        const vehicleResponse = await addVehicle({
-          year: parseInt(year.toString()),
-          make,
-          model,
-          submodel: "",
-          type: "",
-          transmission: "",
-          engineSize: "",
-          license: "",
-          vin: "",
-          notes: "",
-          other: "",
-          clientId: client?.id!,
-          forceCompanyId: companyId,
+        const findCompanyAdminUser = await tx.user.findFirst({
+          where: {
+            companyId: shop?.companyId,
+            employeeType: "Admin",
+          },
         });
-        if (vehicleResponse.type === "success") {
-          vehicle = vehicleResponse.data;
-          createdVehicleId = vehicle?.id ?? null;
-        }
-      }
 
-      // 5. Find ShopBookingSetting & check Availability
-      const bookingSettings = await tx.shopBookingSetting.findUnique({
-        where: { shopId: shop.id },
-        include: { availabilities: true },
-      });
-
-      if (!bookingSettings) {
-        throw new AppError(404, "Shop booking settings not found.");
-      }
-
-      const dayOfWeekKey = moment(appointmentDate)
-        .format("dddd")
-        .toUpperCase() as
-        | "MONDAY"
-        | "TUESDAY"
-        | "WEDNESDAY"
-        | "THURSDAY"
-        | "FRIDAY"
-        | "SATURDAY"
-        | "SUNDAY";
-
-      const availability = bookingSettings.availabilities.find(
-        (a) => a.dayOfWeek === dayOfWeekKey,
-      );
-
-      if (!availability || !availability.isOpen) {
-        throw new AppError(
-          400,
-          `Shop is not open on ${dayOfWeekKey.toLowerCase()}s.`,
-        );
-      }
-
-      // Validate time bounds
-      if (availability.startTime && availability.endTime) {
-        const reqTime = moment(appointmentStartTime, "HH:mm");
-        const shopStart = moment(availability.startTime, "HH:mm");
-        const shopEnd = moment(availability.endTime, "HH:mm");
-
-        if (reqTime.isBefore(shopStart) || reqTime.isAfter(shopEnd)) {
+        if (!findCompanyAdminUser) {
           throw new AppError(
-            400,
-            `Appointment time must be between ${availability.startTime} and ${availability.endTime}.`,
+            404,
+            "Company admin not found for the provided shop.",
           );
         }
-      }
 
-      // 6. Check Capacity (Stacking context)
-      // Check existing appointments for this exact slot
-      const existingAppointmentsCount = await tx.appointment.count({
-        where: {
-          companyId,
-          date: new Date(appointmentDate),
-          startTime: appointmentStartTime,
-        },
-      });
+        const companyId = shop.companyId;
 
-      if (
-        bookingSettings.isStackingEnabled &&
-        existingAppointmentsCount >= bookingSettings.stackingLimit
-      ) {
-        throw new AppError(
-          400,
-          `No available slots for ${appointmentDate} at ${appointmentStartTime}. Limit reached.`,
+        // 3. Find or Create Client
+        const normalizedPhone = normalizePhoneForStorage(phone);
+        const phoneClauses = phoneLookupWhereClause(phone) ?? [];
+        const clientLookupConditions: any[] = [...phoneClauses];
+
+        // if (email) clientLookupConditions.push({ email });
+
+        let client = await tx.client.findFirst({
+          where: { companyId, OR: clientLookupConditions },
+        });
+
+        if (!client) {
+          const clientResult = await addCustomer({
+            firstName,
+            lastName,
+            mobile: normalizedPhone,
+            email,
+            forceCompanyId: companyId,
+          });
+
+          if (clientResult.type !== "success" || !clientResult.data) {
+            throw new AppError(
+              400,
+              clientResult.type === "globalError" ||
+                clientResult.type === "error"
+                ? clientResult.message
+                : "Failed to create customer via shared action",
+            );
+          }
+          client = clientResult.data;
+          createdClientId = client?.id ?? null;
+
+          if (client) {
+            const column = await tx.column.findFirst({
+              where: {
+                title: "New Leads",
+                companyId: shop.companyId,
+                type: "sales",
+              },
+            });
+            await tx.lead.create({
+              data: {
+                clientName: `${firstName} ${lastName}`,
+                clientEmail: email,
+                clientPhone: phone,
+                companyId: shop.companyId,
+                source: "Virtual Shop",
+                vehicleInfo: `${year} ${make} ${model}`,
+                services: shopServiceIds.map((id) => id).join(", "),
+                clientId: client.id,
+                columnId: column?.id,
+              },
+            });
+          }
+        }
+
+        // 4. Find or Create Vehicle
+        let vehicle = await tx.vehicle.findFirst({
+          where: {
+            clientId: client?.id,
+            year: parseInt(year.toString()),
+            make,
+            model,
+            companyId,
+          },
+        });
+
+        if (!vehicle) {
+          const vehicleResponse = await addVehicle({
+            year: parseInt(year.toString()),
+            make,
+            model,
+            submodel: "",
+            type: "",
+            transmission: "",
+            engineSize: "",
+            license: "",
+            vin: "",
+            notes: "",
+            other: "",
+            clientId: client?.id!,
+            forceCompanyId: companyId,
+          });
+          if (vehicleResponse.type === "success") {
+            vehicle = vehicleResponse.data;
+            createdVehicleId = vehicle?.id ?? null;
+          }
+        }
+
+        // 5. Lock ShopBookingSetting to prevent concurrent slot race conditions
+        await tx.$executeRawUnsafe(
+          'SELECT 1 FROM "shop_booking_settings" WHERE "shop_id" = $1 FOR UPDATE',
+          Number(shop.id),
         );
-      } else if (
-        !bookingSettings.isStackingEnabled &&
-        existingAppointmentsCount > 0
-      ) {
-        throw new AppError(
-          400,
-          `No available slots for ${appointmentDate} at ${appointmentStartTime}. Slot is already booked.`,
-        );
-      }
 
-      // 7. Retrieve Service Invoice Items & Calculate Totals
-      const selectedServices = await tx.shopService.findMany({
-        where: {
-          id: { in: shopServiceIds },
-          shopId: shop.id,
-        },
-        include: {
-          invoiceItems: {
-            include: {
-              service: true,
-              materials: {
-                include: {
-                  tags: {
-                    include: {
-                      tag: true,
+        const bookingSettings = await tx.shopBookingSetting.findUnique({
+          where: { shopId: shop.id },
+          include: { availabilities: true },
+        });
+
+        if (!bookingSettings) {
+          throw new AppError(404, "Shop booking settings not found.");
+        }
+
+        const dayOfWeekKey = moment(appointmentDate)
+          .format("dddd")
+          .toUpperCase() as
+          | "MONDAY"
+          | "TUESDAY"
+          | "WEDNESDAY"
+          | "THURSDAY"
+          | "FRIDAY"
+          | "SATURDAY"
+          | "SUNDAY";
+
+        const availability = bookingSettings.availabilities.find(
+          (a) => a.dayOfWeek === dayOfWeekKey,
+        );
+
+        if (!availability || !availability.isOpen) {
+          throw new AppError(
+            400,
+            `Shop is not open on ${dayOfWeekKey.toLowerCase()}s.`,
+          );
+        }
+
+        // Validate time bounds
+        if (availability.startTime && availability.endTime) {
+          const reqTime = moment(appointmentStartTime, "HH:mm");
+          const shopStart = moment(availability.startTime, "HH:mm");
+          const shopEnd = moment(availability.endTime, "HH:mm");
+
+          if (reqTime.isBefore(shopStart) || reqTime.isAfter(shopEnd)) {
+            throw new AppError(
+              400,
+              `Appointment time must be between ${availability.startTime} and ${availability.endTime}.`,
+            );
+          }
+        }
+
+        // 6. Retrieve Service Invoice Items to calculate duration
+        const selectedServices = await tx.shopService.findMany({
+          where: {
+            id: { in: shopServiceIds },
+            shopId: shop.id,
+          },
+          include: {
+            invoiceItems: {
+              include: {
+                service: true,
+                materials: {
+                  include: {
+                    tags: {
+                      include: {
+                        tag: true,
+                      },
                     },
                   },
                 },
-              },
-              labor: {
-                include: {
-                  tags: {
-                    include: {
-                      tag: true,
+                labor: {
+                  include: {
+                    tags: {
+                      include: {
+                        tag: true,
+                      },
                     },
                   },
                 },
-              },
-              tags: {
-                include: {
-                  tag: true,
+                tags: {
+                  include: {
+                    tag: true,
+                  },
                 },
               },
             },
           },
-        },
-      });
+        });
 
-      if (selectedServices.length === 0) {
-        throw new AppError(400, "No valid services selected for this shop.");
-      }
-
-      const allInvoiceItems = selectedServices.flatMap((srv) => {
-        return srv.invoiceItems;
-      });
-
-      const items = allInvoiceItems.map(({ id, ...item }) => ({
-        ...item,
-        materials: item.materials.map((material) => ({
-          ...material,
-          quantity: (Number(material.quantity) || 0) as any,
-          cost: (Number(material.cost) || 0) as any,
-          sell: (Number(material.sell) || 0) as any,
-          discount: (Number(material.discount) || 0) as any,
-          tags: material.tags.map((mt: any) => mt.tag),
-        })),
-        labor: item.labor
-          ? {
-              ...item.labor,
-              hours: (Number(item.labor.hours) || 0) as any,
-              charge: (Number(item.labor.charge) || 0) as any,
-              discount: (Number(item.labor.discount) || 0) as any,
-              tags: item.labor.tags.map((lt: any) => lt.tag),
-            }
-          : null,
-        tags: item.tags.map((it: any) => it.tag),
-      }));
-
-      const vehicleExtraCost = selectedServices.reduce((acc, srv) => {
-        const userInput = shopServices.find(
-          (s: any) => s.shopServiceId === srv.id,
-        );
-        if (userInput?.vehicleType) {
-          const vt = userInput.vehicleType.toLowerCase();
-          if (vt === "truck") return acc + Number(srv.modifierTruck || 0);
-          if (vt === "suv") return acc + Number(srv.modifierSUV || 0);
-          if (vt === "sedan") return acc + Number(srv.modifierSedan || 0);
-          if (vt === "coupe") return acc + Number(srv.modifierCoupe || 0);
+        if (selectedServices.length === 0) {
+          throw new AppError(400, "No valid services selected for this shop.");
         }
-        return acc;
-      }, 0);
 
-      let totalServiceCost = selectedServices.reduce(
-        (acc, cur) => acc + Number(cur.price),
-        0,
-      );
+        let totalDuration = selectedServices.reduce(
+          (acc, cur) => acc + Number(cur.duration || 30),
+          0,
+        );
 
-      const subtotal = totalServiceCost + vehicleExtraCost;
+        // 7. Check Capacity (Stacking context + duration overlaps + active holds)
+        const intervalMinutes = bookingSettings.slotInterval || 30;
+        const proposedAppointmentEndMoment = moment
+          .utc(`${appointmentDate} ${appointmentStartTime}`, "YYYY-MM-DD HH:mm")
+          .add(totalDuration > 0 ? totalDuration : intervalMinutes, "minutes");
 
-      const estimateId = customAlphabet("1234567890", 10)();
+        const existingAppointments = await tx.appointment.findMany({
+          where: {
+            companyId,
+            date: new Date(appointmentDate),
+          },
+          select: { startTime: true, endTime: true },
+        });
 
-      const taxRate = bookingSettings.isTaxEnabled
-        ? Number(shop.company.tax)
-        : 0;
-      const serviceFeeRate = bookingSettings.isServiceFeeEnabled
-        ? Number(shop.company.serviceFee)
-        : 0;
+        const activeHolds = await tx.shopSlotHold.findMany({
+          where: {
+            shopId: shop.id,
+            date: new Date(appointmentDate),
+            expiresAt: { gt: new Date() },
+          },
+          select: { startTime: true, endTime: true, sessionToken: true },
+        });
 
-      // Tax and fee computed on subtotal
-      const taxAmount = (subtotal * taxRate) / 100;
-      const serviceFeeAmount = (subtotal * serviceFeeRate) / 100;
+        const slotMoment = moment.utc(
+          `${appointmentDate} ${appointmentStartTime}`,
+          "YYYY-MM-DD HH:mm",
+        );
 
-      const adjustedGrandTotal = roundMoney(
-        subtotal + taxAmount + serviceFeeAmount,
-      );
+        const appointmentsInSlot = existingAppointments.filter((app) => {
+          if (!app.startTime || !app.endTime) return false;
+          const appStartMoment = moment.utc(
+            `${appointmentDate} ${app.startTime}`,
+            "YYYY-MM-DD HH:mm",
+          );
+          const appEndMoment = moment.utc(
+            `${appointmentDate} ${app.endTime}`,
+            "YYYY-MM-DD HH:mm",
+          );
+          return (
+            proposedAppointmentEndMoment.isAfter(appStartMoment) &&
+            slotMoment.isBefore(appEndMoment)
+          );
+        });
 
-      const isDepositEnabled = bookingSettings.isDepositEnabled;
-      const depositType = bookingSettings.depositType;
-      const depositValue = Number(bookingSettings.depositValue || 0);
-      const calculatedDepositAmount = !isDepositEnabled
-        ? 0
-        : depositType === "PERCENTAGE"
-          ? Number(((adjustedGrandTotal * depositValue) / 100).toFixed(2))
-          : depositValue;
-      const requiredDepositAmount = roundMoney(
-        Math.min(adjustedGrandTotal, Math.max(0, calculatedDepositAmount)),
-      );
+        const holdsInSlot = activeHolds.filter((hold) => {
+          if (hold.sessionToken === sessionToken) return false; // This user owns this hold
+          if (!hold.startTime || !hold.endTime) return false;
+          const holdStartMoment = moment.utc(
+            `${appointmentDate} ${hold.startTime}`,
+            "YYYY-MM-DD HH:mm",
+          );
+          const holdEndMoment = moment.utc(
+            `${appointmentDate} ${hold.endTime}`,
+            "YYYY-MM-DD HH:mm",
+          );
+          return (
+            proposedAppointmentEndMoment.isAfter(holdStartMoment) &&
+            slotMoment.isBefore(holdEndMoment)
+          );
+        });
 
-      // Helper: create ShopBookingService snapshot entries
-      const createServiceSnapshots = async (shopBookingId: number) => {
+        const totalConcurrent = appointmentsInSlot.length + holdsInSlot.length;
+
+        if (
+          bookingSettings.isStackingEnabled &&
+          totalConcurrent >= bookingSettings.stackingLimit
+        ) {
+          throw new AppError(
+            400,
+            `No available slots for ${appointmentDate} at ${appointmentStartTime}. Limit reached or slot was just reserved.`,
+          );
+        } else if (!bookingSettings.isStackingEnabled && totalConcurrent > 0) {
+          throw new AppError(
+            400,
+            `No available slots for ${appointmentDate} at ${appointmentStartTime}. Slot is already booked or reserved.`,
+          );
+        }
+
+        const allInvoiceItems: any[] = [];
         for (const srv of selectedServices) {
+          let cachedDefaultService: any = null;
+
+          const getDefaultService = async () => {
+            if (cachedDefaultService) return cachedDefaultService;
+            cachedDefaultService = await db.service.findFirst({
+              where: { name: srv.title, companyId },
+            });
+            if (!cachedDefaultService) {
+              cachedDefaultService = await db.service.create({
+                data: {
+                  name: srv.title,
+                  description: srv.description || srv.title,
+                  companyId,
+                },
+              });
+            }
+            return cachedDefaultService;
+          };
+
+          if (!srv.invoiceItems || srv.invoiceItems.length === 0) {
+            const defaultService = await getDefaultService();
+            allInvoiceItems.push({
+              id: 0,
+              serviceId: defaultService.id,
+              service: defaultService,
+              materials: [],
+              labor: null,
+              tags: [],
+            });
+          } else {
+            for (const item of srv.invoiceItems) {
+              if (!item.service) {
+                const defaultService = await getDefaultService();
+                item.serviceId = defaultService.id;
+                item.service = defaultService as any;
+              }
+              allInvoiceItems.push(item);
+            }
+          }
+        }
+
+        const items = allInvoiceItems.map(({ id, ...item }) => ({
+          ...item,
+          materials: item.materials.map((material: any) => ({
+            ...material,
+            quantity: (Number(material.quantity) || 0) as any,
+            cost: (Number(material.cost) || 0) as any,
+            sell: (Number(material.sell) || 0) as any,
+            discount: (Number(material.discount) || 0) as any,
+            tags: material.tags.map((mt: any) => mt.tag),
+          })),
+          labor: item.labor
+            ? {
+                ...item.labor,
+                hours: (Number(item.labor.hours) || 0) as any,
+                charge: (Number(item.labor.charge) || 0) as any,
+                discount: (Number(item.labor.discount) || 0) as any,
+                tags: item.labor.tags.map((lt: any) => lt.tag),
+              }
+            : null,
+          tags: item.tags.map((it: any) => it.tag),
+        }));
+
+        const vehicleExtraCost = selectedServices.reduce((acc, srv) => {
           const userInput = shopServices.find(
             (s: any) => s.shopServiceId === srv.id,
           );
-          let modifierPrice = 0;
-          let modifierType: string | null = null;
-
           if (userInput?.vehicleType) {
             const vt = userInput.vehicleType.toLowerCase();
-            if (vt === "truck") {
-              modifierType = "Truck";
-              modifierPrice = Number(srv.modifierTruck || 0);
-            } else if (vt === "suv") {
-              modifierType = "SUV";
-              modifierPrice = Number(srv.modifierSUV || 0);
-            } else if (vt === "sedan") {
-              modifierType = "Sedan";
-              modifierPrice = Number(srv.modifierSedan || 0);
-            } else if (vt === "coupe") {
-              modifierType = "Coupe";
-              modifierPrice = Number(srv.modifierCoupe || 0);
-            } else {
-              modifierType = userInput.vehicleType;
+            if (vt === "truck") return acc + Number(srv.modifierTruck || 0);
+            if (vt === "suv") return acc + Number(srv.modifierSUV || 0);
+            if (vt === "sedan") return acc + Number(srv.modifierSedan || 0);
+            if (vt === "coupe") return acc + Number(srv.modifierCoupe || 0);
+          }
+          return acc;
+        }, 0);
+
+        let totalServiceCost = selectedServices.reduce(
+          (acc, cur) => acc + Number(cur.price),
+          0,
+        );
+
+        const subtotal = totalServiceCost + vehicleExtraCost;
+
+        const estimateId = customAlphabet("1234567890", 10)();
+
+        const taxRate = bookingSettings.isTaxEnabled
+          ? Number(shop.company.tax)
+          : 0;
+        const serviceFeeRate = bookingSettings.isServiceFeeEnabled
+          ? Number(shop.company.serviceFee)
+          : 0;
+
+        // Tax and fee computed on subtotal
+        const taxAmount = (subtotal * taxRate) / 100;
+        const serviceFeeAmount = (subtotal * serviceFeeRate) / 100;
+
+        const adjustedGrandTotal = roundMoney(
+          subtotal + taxAmount + serviceFeeAmount,
+        );
+
+        const isDepositEnabled = bookingSettings.isDepositEnabled;
+        const depositType = bookingSettings.depositType;
+        const depositValue = Number(bookingSettings.depositValue || 0);
+        const calculatedDepositAmount = !isDepositEnabled
+          ? 0
+          : depositType === "PERCENTAGE"
+            ? Number(((adjustedGrandTotal * depositValue) / 100).toFixed(2))
+            : depositValue;
+        const requiredDepositAmount = roundMoney(
+          Math.min(adjustedGrandTotal, Math.max(0, calculatedDepositAmount)),
+        );
+
+        // Helper: create ShopBookingService snapshot entries
+        const createServiceSnapshots = async (shopBookingId: number) => {
+          for (const srv of selectedServices) {
+            const userInput = shopServices.find(
+              (s: any) => s.shopServiceId === srv.id,
+            );
+            let modifierPrice = 0;
+            let modifierType: string | null = null;
+
+            if (userInput?.vehicleType) {
+              const vt = userInput.vehicleType.toLowerCase();
+              if (vt === "truck") {
+                modifierType = "Truck";
+                modifierPrice = Number(srv.modifierTruck || 0);
+              } else if (vt === "suv") {
+                modifierType = "SUV";
+                modifierPrice = Number(srv.modifierSUV || 0);
+              } else if (vt === "sedan") {
+                modifierType = "Sedan";
+                modifierPrice = Number(srv.modifierSedan || 0);
+              } else if (vt === "coupe") {
+                modifierType = "Coupe";
+                modifierPrice = Number(srv.modifierCoupe || 0);
+              } else {
+                modifierType = userInput.vehicleType;
+              }
             }
+
+            await tx.shopBookingService.create({
+              data: {
+                shopBookingId,
+                shopServiceId: srv.id,
+                title: srv.title,
+                price: srv.price,
+                duration: srv.duration,
+                modifierType: modifierType as any,
+                modifierPrice,
+              },
+            });
+          }
+        };
+
+        // ── Gift card validation (no redemption yet) ──
+        let giftCardBalance = 0;
+        const normalizedGiftCardCode =
+          giftCardCode?.trim().toUpperCase() || null;
+
+        if (normalizedGiftCardCode && requiredDepositAmount > 0) {
+          const gc = await tx.issuedGiftCard.findFirst({
+            where: { code: normalizedGiftCardCode, companyId },
+            select: { id: true, status: true, currentBalance: true },
+          });
+
+          if (!gc) throw new AppError(404, "Gift card not found for this shop");
+          if (gc.status !== "ACTIVE") {
+            throw new AppError(
+              400,
+              `Cannot redeem a ${gc.status.toLowerCase()} gift card.`,
+            );
           }
 
-          await tx.shopBookingService.create({
-            data: {
-              shopBookingId,
-              shopServiceId: srv.id,
-              title: srv.title,
-              price: srv.price,
-              duration: srv.duration,
-              modifierType: modifierType as any,
-              modifierPrice,
-            },
-          });
+          giftCardBalance = roundMoney(Number(gc.currentBalance || 0));
+          if (giftCardBalance <= 0) {
+            throw new AppError(400, "Gift card has no balance to redeem");
+          }
         }
-      };
 
-      // ── Gift card validation (no redemption yet) ──
-      let giftCardBalance = 0;
-      const normalizedGiftCardCode = giftCardCode?.trim().toUpperCase() || null;
+        const giftCovered = roundMoney(
+          Math.min(giftCardBalance, requiredDepositAmount),
+        );
+        const payableNow = roundMoney(
+          Math.max(0, requiredDepositAmount - giftCovered),
+        );
 
-      if (normalizedGiftCardCode && requiredDepositAmount > 0) {
-        const gc = await tx.issuedGiftCard.findFirst({
-          where: { code: normalizedGiftCardCode, companyId },
-          select: { id: true, status: true, currentBalance: true },
-        });
+        // ── DEPOSIT REQUIRED + NEEDS PAYMENT: create PENDING booking ──
+        if (requiredDepositAmount > 0 && payableNow > 0) {
+          const shopBooking = await tx.shopBooking.create({
+            data: {
+              shopId: shop.id,
+              clientId: client?.id,
+              vehicleId: vehicle?.id,
+              appointmentDate,
+              appointmentTime: appointmentStartTime,
+              status: "PENDING",
+              depositRequired: requiredDepositAmount,
+              pendingGiftCardCode: normalizedGiftCardCode || undefined,
+              customerNotes: notes || undefined,
+            } as any,
+          });
+          await createServiceSnapshots(shopBooking.id);
 
-        if (!gc) throw new AppError(404, "Gift card not found for this shop");
-        if (gc.status !== "ACTIVE") {
-          throw new AppError(
-            400,
-            `Cannot redeem a ${gc.status.toLowerCase()} gift card.`,
+          if (sessionToken) {
+            await tx.shopSlotHold.deleteMany({
+              where: { shopId: shop.id, sessionToken },
+            });
+          }
+
+          return NextResponse.json(
+            {
+              success: true,
+              message:
+                "Booking created. Please complete the deposit to confirm.",
+              data: {
+                shopBookingId: shopBooking.id,
+                status: shopBooking.status,
+                client: {
+                  firstName: client?.firstName,
+                  lastName: client?.lastName,
+                  email: client?.email,
+                  mobile: client?.mobile,
+                },
+                vehicle: {
+                  year: vehicle?.year,
+                  make: vehicle?.make,
+                  model: vehicle?.model,
+                },
+                services: selectedServices.map((srv) => ({
+                  title: srv.title,
+                  price: srv.price,
+                })),
+                totals: {
+                  subtotal,
+                  tax: taxAmount,
+                  serviceFee: serviceFeeAmount,
+                  grandTotal: adjustedGrandTotal,
+                  giftCardRedeemed: 0,
+                  depositRequired: requiredDepositAmount,
+                  depositPaid: 0,
+                  balanceDue: adjustedGrandTotal,
+                  payableNow,
+                  giftCardCovered: giftCovered,
+                },
+              },
+            },
+            { status: 200 },
           );
         }
 
-        giftCardBalance = roundMoney(Number(gc.currentBalance || 0));
-        if (giftCardBalance <= 0) {
-          throw new AppError(400, "Gift card has no balance to redeem");
+        // ── Gift card covers deposit fully: redeem now ──
+        let giftCardRedeemedAmount = 0;
+        if (giftCovered > 0 && normalizedGiftCardCode) {
+          const gc = await tx.issuedGiftCard.findFirst({
+            where: { code: normalizedGiftCardCode, companyId },
+            select: { id: true, currentBalance: true },
+          });
+
+          if (gc) {
+            giftCardRedeemedAmount = giftCovered;
+            const newBal = roundMoney(
+              Number(gc.currentBalance || 0) - giftCovered,
+            );
+
+            await tx.issuedGiftCard.updateMany({
+              where: {
+                id: gc.id,
+                companyId,
+                currentBalance: { gte: new Prisma.Decimal(giftCovered) },
+              },
+              data: {
+                currentBalance: new Prisma.Decimal(newBal),
+                status: newBal <= 0 ? "DEPLETED" : "ACTIVE",
+              },
+            });
+
+            await tx.giftCardTransaction.create({
+              data: {
+                giftCardId: gc.id,
+                type: "REDEMPTION",
+                amount: new Prisma.Decimal(-giftCovered),
+                balanceAfter: new Prisma.Decimal(newBal),
+                referenceId: `SHOP-BOOKING-GC-FULL`,
+                notes: "Gift card fully covered deposit at booking",
+              },
+            });
+          }
         }
-      }
 
-      const giftCovered = roundMoney(
-        Math.min(giftCardBalance, requiredDepositAmount),
-      );
-      const payableNow = roundMoney(
-        Math.max(0, requiredDepositAmount - giftCovered),
-      );
+        const finalGrandTotal = roundMoney(
+          adjustedGrandTotal - giftCardRedeemedAmount,
+        );
 
-      // ── DEPOSIT REQUIRED + NEEDS PAYMENT: create PENDING booking ──
-      if (requiredDepositAmount > 0 && payableNow > 0) {
+        // ── CONFIRMED: no deposit needed OR gift card covers deposit ──
+        const estimateResult = await createInvoice({
+          invoiceId: estimateId,
+          type: "Estimate",
+          clientId: client?.id,
+          vehicleId: vehicle?.id,
+          subtotal,
+          discount: giftCardRedeemedAmount,
+          tax: taxRate,
+          serviceFee: serviceFeeRate,
+          vehicleExtraCost,
+          deposit: 0,
+          depositNotes: "",
+          depositMethod: "",
+          grandTotal: finalGrandTotal,
+          due: finalGrandTotal,
+          internalNotes: "",
+          terms: shop.company.terms || "",
+          policy: shop.company.policy || "",
+          customerNotes: notes || "",
+          customerComments: "",
+          photos: [],
+          items,
+          tasks: [],
+          inspections: [],
+          damageNotes: "",
+          forceCompanyId: companyId,
+          isShopBooking: true,
+        });
+
+        if (estimateResult.type !== "success" || !estimateResult.data) {
+          throw new AppError(
+            400,
+            estimateResult.type === "globalError" ||
+              estimateResult.type === "error"
+              ? estimateResult.message
+              : "Failed to create estimate via shared action",
+          );
+        }
+
+        const estimate = estimateResult.data;
+        createdEstimateId = estimate.id;
+
+        if (client?.leadId) {
+          await tx.lead.update({
+            where: { id: client?.leadId },
+            data: { isEstimateCreated: true },
+          });
+        }
+
+        const slotInterval = bookingSettings.slotInterval;
+        const endTime = moment(appointmentStartTime, "HH:mm")
+          .add(totalDuration > 0 ? totalDuration : slotInterval, "minutes")
+          .format("HH:mm");
+
+        const appointmentResult = await addAppointment({
+          title: `${year} ${make} ${model} - ${fullName}`,
+          date: appointmentDate,
+          startTime: appointmentStartTime,
+          endTime,
+          clientId: client?.id,
+          vehicleId: vehicle?.id,
+          notes: notes || undefined,
+          draftEstimate: estimate.id,
+          timezone: "UTC",
+          assignedUsers: [findCompanyAdminUser.id],
+          forceCompanyId: companyId,
+          forceUserId: findCompanyAdminUser?.id,
+        });
+
+        if (appointmentResult.type !== "success" || !appointmentResult.data) {
+          throw new AppError(
+            400,
+            appointmentResult.type === "globalError" ||
+              appointmentResult.type === "error"
+              ? appointmentResult.message
+              : "Failed to create appointment via shared action",
+          );
+        }
+
+        const appointment = appointmentResult.data;
+        createdAppointmentId = appointment.id;
+
         const shopBooking = await tx.shopBooking.create({
           data: {
             shopId: shop.id,
             clientId: client?.id,
             vehicleId: vehicle?.id,
+            appointmentId: appointment.id,
+            invoiceId: estimate.id,
             appointmentDate,
             appointmentTime: appointmentStartTime,
-            status: "PENDING",
-            depositRequired: requiredDepositAmount,
-            pendingGiftCardCode: normalizedGiftCardCode || undefined,
+            status: "CONFIRMED",
             customerNotes: notes || undefined,
-          } as any,
+          },
         });
 
         await createServiceSnapshots(shopBooking.id);
 
+        await sendBookingConfirmation({
+          client: {
+            id: client!.id,
+            firstName: client!.firstName,
+            email: client?.email,
+            mobile: client?.mobile,
+          },
+          shop: {
+            companyId: shop.companyId,
+            company: shop.company,
+          },
+          appointment: {
+            date: appointmentDate,
+            startTime: appointmentStartTime,
+          },
+          vehicle: vehicle
+            ? {
+                year: vehicle.year,
+                make: vehicle.make,
+                model: vehicle.model,
+              }
+            : null,
+          services: selectedServices.map((s: any) => ({ title: s.title })),
+          isDeposit: false,
+        });
+
+        if (sessionToken) {
+          await tx.shopSlotHold.deleteMany({
+            where: { shopId: shop.id, sessionToken },
+          });
+        }
+
         return NextResponse.json(
           {
             success: true,
-            message: "Booking created. Please complete the deposit to confirm.",
+            message: "Virtual shop service created successfully",
             data: {
+              appointmentId: appointment.id,
+              estimateId: estimate.id,
               shopBookingId: shopBooking.id,
               status: shopBooking.status,
+              appointment: {
+                date: appointment.date,
+                startTime: appointment.startTime,
+              },
               client: {
                 firstName: client?.firstName,
                 lastName: client?.lastName,
@@ -1428,234 +1760,25 @@ export async function POST(req: Request) {
                 price: srv.price,
               })),
               totals: {
-                subtotal,
+                subtotal: Number(estimate.subtotal),
                 tax: taxAmount,
                 serviceFee: serviceFeeAmount,
-                grandTotal: adjustedGrandTotal,
-                giftCardRedeemed: 0,
-                depositRequired: requiredDepositAmount,
+                grandTotal: Number(estimate.grandTotal),
+                giftCardRedeemed: giftCardRedeemedAmount,
+                depositRequired: 0,
                 depositPaid: 0,
-                balanceDue: adjustedGrandTotal,
-                payableNow,
-                giftCardCovered: giftCovered,
+                balanceDue: Number(estimate.due),
               },
             },
           },
           { status: 200 },
         );
-      }
-
-      // ── Gift card covers deposit fully: redeem now ──
-      let giftCardRedeemedAmount = 0;
-      if (giftCovered > 0 && normalizedGiftCardCode) {
-        const gc = await tx.issuedGiftCard.findFirst({
-          where: { code: normalizedGiftCardCode, companyId },
-          select: { id: true, currentBalance: true },
-        });
-
-        if (gc) {
-          giftCardRedeemedAmount = giftCovered;
-          const newBal = roundMoney(
-            Number(gc.currentBalance || 0) - giftCovered,
-          );
-
-          await tx.issuedGiftCard.updateMany({
-            where: {
-              id: gc.id,
-              companyId,
-              currentBalance: { gte: new Prisma.Decimal(giftCovered) },
-            },
-            data: {
-              currentBalance: new Prisma.Decimal(newBal),
-              status: newBal <= 0 ? "DEPLETED" : "ACTIVE",
-            },
-          });
-
-          await tx.giftCardTransaction.create({
-            data: {
-              giftCardId: gc.id,
-              type: "REDEMPTION",
-              amount: new Prisma.Decimal(-giftCovered),
-              balanceAfter: new Prisma.Decimal(newBal),
-              referenceId: `SHOP-BOOKING-GC-FULL`,
-              notes: "Gift card fully covered deposit at booking",
-            },
-          });
-        }
-      }
-
-      const finalGrandTotal = roundMoney(
-        adjustedGrandTotal - giftCardRedeemedAmount,
-      );
-
-      // ── CONFIRMED: no deposit needed OR gift card covers deposit ──
-      const estimateResult = await createInvoice({
-        invoiceId: estimateId,
-        type: "Estimate",
-        clientId: client?.id,
-        vehicleId: vehicle?.id,
-        subtotal,
-        discount: giftCardRedeemedAmount,
-        tax: taxRate,
-        serviceFee: serviceFeeRate,
-        vehicleExtraCost,
-        deposit: 0,
-        depositNotes: "",
-        depositMethod: "",
-        grandTotal: finalGrandTotal,
-        due: finalGrandTotal,
-        internalNotes: "",
-        terms: shop.company.terms || "",
-        policy: shop.company.policy || "",
-        customerNotes: notes || "",
-        customerComments: "",
-        photos: [],
-        items,
-        tasks: [],
-        inspections: [],
-        damageNotes: "",
-        forceCompanyId: companyId,
-        isShopBooking: true,
-      });
-
-      if (estimateResult.type !== "success" || !estimateResult.data) {
-        throw new AppError(
-          400,
-          estimateResult.type === "globalError" ||
-            estimateResult.type === "error"
-            ? estimateResult.message
-            : "Failed to create estimate via shared action",
-        );
-      }
-
-      const estimate = estimateResult.data;
-      createdEstimateId = estimate.id;
-
-      if (client?.leadId) {
-        await tx.lead.update({
-          where: { id: client?.leadId },
-          data: { isEstimateCreated: true },
-        });
-      }
-
-      const slotInterval = bookingSettings.slotInterval;
-      const endTime = moment(appointmentStartTime, "HH:mm")
-        .add(slotInterval, "minutes")
-        .format("HH:mm");
-
-      const appointmentResult = await addAppointment({
-        title: `${year} ${make} ${model} - ${fullName}`,
-        date: appointmentDate,
-        startTime: appointmentStartTime,
-        endTime,
-        clientId: client?.id,
-        vehicleId: vehicle?.id,
-        notes: notes || undefined,
-        draftEstimate: estimate.id,
-        timezone: "UTC",
-        assignedUsers: [findCompanyAdminUser.id],
-        forceCompanyId: companyId,
-        forceUserId: findCompanyAdminUser?.id,
-      });
-
-      if (appointmentResult.type !== "success" || !appointmentResult.data) {
-        throw new AppError(
-          400,
-          appointmentResult.type === "globalError" ||
-            appointmentResult.type === "error"
-            ? appointmentResult.message
-            : "Failed to create appointment via shared action",
-        );
-      }
-
-      const appointment = appointmentResult.data;
-      createdAppointmentId = appointment.id;
-
-      const shopBooking = await tx.shopBooking.create({
-        data: {
-          shopId: shop.id,
-          clientId: client?.id,
-          vehicleId: vehicle?.id,
-          appointmentId: appointment.id,
-          invoiceId: estimate.id,
-          appointmentDate,
-          appointmentTime: appointmentStartTime,
-          status: "CONFIRMED",
-          customerNotes: notes || undefined,
-        },
-      });
-
-      await createServiceSnapshots(shopBooking.id);
-
-      await sendBookingConfirmation({
-        client: {
-          id: client!.id,
-          firstName: client!.firstName,
-          email: client?.email,
-          mobile: client?.mobile,
-        },
-        shop: {
-          companyId: shop.companyId,
-          company: shop.company,
-        },
-        appointment: {
-          date: appointmentDate,
-          startTime: appointmentStartTime,
-        },
-        vehicle: vehicle
-          ? {
-              year: vehicle.year,
-              make: vehicle.make,
-              model: vehicle.model,
-            }
-          : null,
-        services: selectedServices.map((s: any) => ({ title: s.title })),
-        isDeposit: false,
-      });
-
-      return NextResponse.json(
-        {
-          success: true,
-          message: "Virtual shop service created successfully",
-          data: {
-            appointmentId: appointment.id,
-            estimateId: estimate.id,
-            shopBookingId: shopBooking.id,
-            status: shopBooking.status,
-            appointment: {
-              date: appointment.date,
-              startTime: appointment.startTime,
-            },
-            client: {
-              firstName: client?.firstName,
-              lastName: client?.lastName,
-              email: client?.email,
-              mobile: client?.mobile,
-            },
-            vehicle: {
-              year: vehicle?.year,
-              make: vehicle?.make,
-              model: vehicle?.model,
-            },
-            services: selectedServices.map((srv) => ({
-              title: srv.title,
-              price: srv.price,
-            })),
-            totals: {
-              subtotal: Number(estimate.subtotal),
-              tax: taxAmount,
-              serviceFee: serviceFeeAmount,
-              grandTotal: Number(estimate.grandTotal),
-              giftCardRedeemed: giftCardRedeemedAmount,
-              depositRequired: 0,
-              depositPaid: 0,
-              balanceDue: Number(estimate.due),
-            },
-          },
-        },
-        { status: 200 },
-      );
-    });
+      },
+      {
+        timeout: 30000,
+        maxWait: 30000,
+      },
+    );
   } catch (error: any) {
     console.log("error in service-booking", error);
 

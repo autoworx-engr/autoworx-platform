@@ -3,25 +3,33 @@ import { getEmployees } from "@/actions/employee/get";
 import { updateInvoiceStatus } from "@/actions/estimate/invoice/updateInvoiceStatus";
 import { updateTechnicianStatustoComplete } from "@/actions/estimate/invoice/updateTechnicianStatustoComplete";
 import { updateAssignedTo } from "@/actions/pipelines/getWorkOrders";
+import { getWorkOrdersByTechnician } from "@/actions/pipelines/getWorkOrdersPaginated";
 import {
   removeInvoiceTag,
   saveInvoiceTag,
 } from "@/actions/pipelines/invoiceTag";
-import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
 import { errorToast, successToast } from "@/lib/toast";
 import { updateTagAutomationTrigger } from "@/service/tag-automation-trigger/api";
-import { usePipelineFilterStore } from "@/stores/PipelineFilterStore";
-import { Column, Employee, ShopPipelineData } from "@/types/invoiceLead";
+import { Employee, ShopPipelineData } from "@/types/invoiceLead";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { EmployeeType, Tag, User } from "@prisma/client";
-import { useRouter } from "next/navigation";
-import { SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  SetStateAction,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import toast from "react-hot-toast";
 import DroppableColumn from "../../components/DroppableColumn";
 import PipelineLoadingSkeleton from "../../components/PipelineLoadingSkeleton";
 import SearchScroll from "../../components/SearchScroll";
+
+const PIPELINE_PAGE_SIZE = 10;
 
 interface PipelinesProps {
   pipelinesTitle: string;
@@ -31,6 +39,12 @@ interface PipelinesProps {
   isTechnician?: boolean;
   employeeType?: EmployeeType;
 }
+
+type ColumnMeta = {
+  hasMore: boolean;
+  loadedCount: number;
+  isLoading: boolean;
+};
 
 export default function TeamPipelines({
   pipelinesTitle: pipelineType,
@@ -42,31 +56,44 @@ export default function TeamPipelines({
 }: PipelinesProps) {
   const router = useRouter();
 
-  const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
-  //   console.log("selectedClientId==>", selectedClientId);
-  const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(
-    null,
-  );
   const [pipelineData, setPipelineData] =
     useState<ShopPipelineData[]>(shopPipelineDataProp);
   const [companyUsers, setCompanyUsers] = useState<User[]>([]);
-
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  // References for scrolling to leads
+
   const columnRefs = useRef<(HTMLDivElement | null)[]>([]);
   const leadRefs = useRef<Map<string, HTMLLIElement>>(new Map());
   const dragDropContextRef = useRef<HTMLDivElement | null>(null);
+  const loadingColumnsRef = useRef<Set<number>>(new Set());
   const [screenWidth, setScreenWidth] = useState<number>(window.innerWidth);
 
   const currentUser = useGetCurrentUser();
-  //   console.log("Current User:", currentUser);
-
-  // Get search term from store
-  const { searchTerm, resetStatus } = usePipelineFilterStore((state) => state);
-
+  const urlSearchParams = useSearchParams();
+  const searchTerm = urlSearchParams.get("search") ?? "";
+  const searchTermRef = useRef(searchTerm);
+  useEffect(() => {
+    searchTermRef.current = searchTerm;
+  }, [searchTerm]);
   const [selectedSearchColumnId, setSelectedSearchColumnId] = useState<
     number | null
   >(null);
+
+  // Per-column pagination metadata keyed by technician id (column id)
+  const [columnMeta, setColumnMeta] = useState<Record<number, ColumnMeta>>(
+    () => {
+      const initial: Record<number, ColumnMeta> = {};
+      for (const col of shopPipelineDataProp) {
+        if (col.id !== null) {
+          initial[col.id] = {
+            hasMore: col.hasMore ?? false,
+            loadedCount: col.leads.length,
+            isLoading: false,
+          };
+        }
+      }
+      return initial;
+    },
+  );
 
   function updateWidth() {
     setScreenWidth(window.innerWidth);
@@ -74,17 +101,27 @@ export default function TeamPipelines({
 
   useEffect(() => {
     updateWidth();
-    resetStatus();
     window.addEventListener("resize", updateWidth);
     return () => window.removeEventListener("resize", updateWidth);
-  }, [resetStatus]);
+  }, []);
 
   useEffect(() => {
     setPipelineData(shopPipelineDataProp);
-    // Reset refs when data changes
     columnRefs.current = new Array(shopPipelineDataProp.length).fill(null);
     leadRefs.current = new Map();
     setIsLoading(false);
+
+    const meta: Record<number, ColumnMeta> = {};
+    for (const col of shopPipelineDataProp) {
+      if (col.id !== null) {
+        meta[col.id] = {
+          hasMore: col.hasMore ?? false,
+          loadedCount: col.leads.length,
+          isLoading: false,
+        };
+      }
+    }
+    setColumnMeta(meta);
   }, [shopPipelineDataProp]);
 
   useEffect(() => {
@@ -99,57 +136,67 @@ export default function TeamPipelines({
     fetchCompanyUsers();
   }, [router]);
 
-  // Filter pipeline data based on search term
-  const filteredPipelineData = useMemo(() => {
-    let result = pipelineData;
+  const loadMoreForColumn = useCallback(
+    async (columnIndex: number) => {
+      const column = pipelineData[columnIndex];
+      if (!column?.id) return;
 
-    // First, if a specific column is selected in search filter,
-    // we can either filter the whole columns array, or just clear leads from other columns.
-    // Making other columns empty is usually better for a Kanban to maintain structure.
+      const meta = columnMeta[column.id];
+      if (!meta?.hasMore) return;
 
-    if (searchTerm && searchTerm.trim() !== "") {
-      const lowerSearchTerm = searchTerm.toLowerCase();
+      if (loadingColumnsRef.current.has(column.id)) return;
+      loadingColumnsRef.current.add(column.id);
 
-      result = result.map((column) => {
-        // If a column filter is active and it's not THIS column, return empty leads
-        if (
-          selectedSearchColumnId !== null &&
-          column.id !== selectedSearchColumnId
-        ) {
-          return { ...column, leads: [] };
-        }
+      setColumnMeta((prev) => ({
+        ...prev,
+        [column.id!]: { ...prev[column.id!], isLoading: true },
+      }));
 
-        return {
-          ...column,
-          leads: column.leads.filter((lead) => {
-            // Search by client name
-            const nameMatch = (lead.name || "")
-              .toLowerCase()
-              .includes(lowerSearchTerm);
+      try {
+        const result = await getWorkOrdersByTechnician(
+          column.id,
+          meta.loadedCount,
+          PIPELINE_PAGE_SIZE,
+          isTechnician ? Number(currentUser?.id) : undefined,
+          searchTermRef.current || undefined,
+        );
 
-            // Search by vehicle information
-            const vehicleMatch =
-              lead.vehicle &&
-              lead.vehicle.toLowerCase().includes(lowerSearchTerm);
-
-            return nameMatch || vehicleMatch;
-          }),
-        };
-      });
-    } else {
-      // If no search term but a column is selected
-      if (selectedSearchColumnId !== null) {
-        result = result.map((column) => {
-          if (column.id !== selectedSearchColumnId) {
-            return { ...column, leads: [] };
-          }
-          return column;
+        setPipelineData((prev) => {
+          const next = [...prev];
+          next[columnIndex] = {
+            ...next[columnIndex],
+            leads: [...next[columnIndex].leads, ...result.leads],
+          };
+          return next;
         });
-      }
-    }
 
-    return result;
-  }, [pipelineData, searchTerm, selectedSearchColumnId]);
+        setColumnMeta((prev) => ({
+          ...prev,
+          [column.id!]: {
+            hasMore: result.hasMore,
+            loadedCount: meta.loadedCount + result.leads.length,
+            isLoading: false,
+          },
+        }));
+      } catch {
+        setColumnMeta((prev) => ({
+          ...prev,
+          [column.id!]: { ...prev[column.id!], isLoading: false },
+        }));
+      } finally {
+        loadingColumnsRef.current.delete(column.id);
+      }
+    },
+    [pipelineData, columnMeta, isTechnician, currentUser],
+  );
+
+  // Filter pipeline data: search is server-side; only apply client-side column visibility filter
+  const filteredPipelineData = useMemo(() => {
+    if (selectedSearchColumnId === null) return pipelineData;
+    return pipelineData.map((column) =>
+      column.id !== selectedSearchColumnId ? { ...column, leads: [] } : column,
+    );
+  }, [pipelineData, selectedSearchColumnId]);
 
   const [selectedEmployees, setSelectedEmployees] = useState<{
     [key: string]: Employee | null;
@@ -158,9 +205,6 @@ export default function TeamPipelines({
     category: number;
     index: number;
   } | null>(null);
-
-  // State for appointment modal
-  const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
 
   const [tag, setTag] = useState<Tag>();
   const [tagDropdownStates, setTagDropdownStates] = useState<{
@@ -179,52 +223,49 @@ export default function TeamPipelines({
     [key: string]: boolean;
   }>({});
 
-  const handleSearchResult = useCallback((
-    result: { columnIndex: number; leadIndex: number } | null,
-  ) => {
-    if (!result) return;
+  const handleSearchResult = useCallback(
+    (result: { columnIndex: number; leadIndex: number } | null) => {
+      if (!result) return;
 
-    const { columnIndex, leadIndex } = result;
+      const { columnIndex, leadIndex } = result;
 
-    // Scroll to the column first
-    if (columnRefs.current[columnIndex]) {
-      columnRefs.current[columnIndex]?.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
-        inline: "start",
-      });
+      if (columnRefs.current[columnIndex]) {
+        columnRefs.current[columnIndex]?.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: "start",
+        });
 
-      // Wait a bit for the column scroll to complete before scrolling to the lead
-      setTimeout(() => {
-        // Generate the key the same way we do when creating refs
-        const leadKey = `${columnIndex}-${leadIndex}`;
-        const leadElement = leadRefs.current.get(leadKey);
+        setTimeout(() => {
+          const leadKey = `${columnIndex}-${leadIndex}`;
+          const leadElement = leadRefs.current.get(leadKey);
 
-        if (leadElement) {
-          leadElement.scrollIntoView({
-            behavior: "smooth",
-            block: "nearest",
-          });
+          if (leadElement) {
+            leadElement.scrollIntoView({
+              behavior: "smooth",
+              block: "nearest",
+            });
 
-          // Highlight the found item temporarily
-          leadElement.classList.add(
-            "bg-yellow-200",
-            "border-yellow-300",
-            "scale-[1.02]",
-            "transition-transform",
-          );
-          setTimeout(() => {
-            leadElement.classList.remove(
+            leadElement.classList.add(
               "bg-yellow-200",
               "border-yellow-300",
               "scale-[1.02]",
               "transition-transform",
             );
-          }, 2000);
-        }
-      }, 300);
-    }
-  }, []);
+            setTimeout(() => {
+              leadElement.classList.remove(
+                "bg-yellow-200",
+                "border-yellow-300",
+                "scale-[1.02]",
+                "transition-transform",
+              );
+            }, 2000);
+          }
+        }, 300);
+      }
+    },
+    [],
+  );
 
   const handleDropdownToggle = (categoryIndex: number, leadIndex: number) => {
     if (
@@ -235,8 +276,6 @@ export default function TeamPipelines({
     } else {
       setOpenDropdownIndex({ category: categoryIndex, index: leadIndex });
     }
-
-    console.log(categoryIndex, leadIndex);
   };
 
   const createEmployeeSelectHandler =
@@ -246,13 +285,11 @@ export default function TeamPipelines({
       const resolvedValue =
         typeof value === "function" ? value(selectedEmployees[key]) : value;
 
-      // Update the selected employee in the state
       setSelectedEmployees((prevState) => ({
         ...prevState,
         [key]: resolvedValue,
       }));
 
-      // Close the dropdown
       setOpenDropdownIndex(null);
 
       const invoiceId = pipelineData[categoryIndex].leads[leadIndex].invoiceId;
@@ -261,16 +298,11 @@ export default function TeamPipelines({
         try {
           const response = await updateAssignedTo(invoiceId, resolvedValue.id);
           if (response.success) {
-            // Update pipelineData to persist the selected employee in the UI
             const updatedPipelineData = [...pipelineData];
             updatedPipelineData[categoryIndex].leads[leadIndex].assignedTo =
               resolvedValue;
-
             setPipelineData(updatedPipelineData);
           } else {
-            console.error("Failed to update assigned employee");
-          }
-          if (!response.success) {
             console.error("Failed to update assigned employee");
           }
         } catch (error) {
@@ -292,14 +324,12 @@ export default function TeamPipelines({
     }));
   };
 
-  //for tag handling
   const handleTagSelect = async (
     categoryIndex: number,
     leadIndex: number,
     selectedTag: Tag | undefined,
   ) => {
     if (selectedTag) {
-      const key = `${categoryIndex}-${leadIndex}`;
       const invoiceId = pipelineData[categoryIndex].leads[leadIndex].invoiceId;
       try {
         const result = await saveInvoiceTag(invoiceId, selectedTag.id);
@@ -325,21 +355,17 @@ export default function TeamPipelines({
     }
   };
 
-  // Handle tag removal
   const handleTagRemove = async (
     categoryIndex: number,
     leadIndex: number,
     tagToRemove: Tag,
   ) => {
-    const key = `${categoryIndex}-${leadIndex}`;
     const invoiceId = pipelineData[categoryIndex].leads[leadIndex].invoiceId;
 
     try {
-      // Remove the tag from the database
       const result = await removeInvoiceTag(invoiceId, tagToRemove.id);
 
       if (result) {
-        // Update the UI after removing the tag
         const updatedPipelineData = [...pipelineData];
         updatedPipelineData[categoryIndex].leads[leadIndex].tags =
           updatedPipelineData[categoryIndex].leads[leadIndex].tags.filter(
@@ -352,7 +378,6 @@ export default function TeamPipelines({
     }
   };
 
-  //service
   const handleServiceDropdownToggle = (
     categoryIndex: number,
     leadIndex: number,
@@ -546,7 +571,6 @@ export default function TeamPipelines({
 
   return (
     <>
-      {/* Add the search component at the top */}
       <div className="mb-4 px-2">
         <SearchScroll
           pipelineData={filteredPipelineData}
@@ -562,13 +586,15 @@ export default function TeamPipelines({
         <div className="h-full w-full overflow-hidden px-2">
           <div
             ref={dragDropContextRef}
-            className="thin-scrollbar flex touch-pan-x snap-x snap-mandatory flex-nowrap justify-between gap-2 overflow-x-auto"
+            className="thin-scrollbar flex touch-pan-x snap-x snap-mandatory flex-nowrap justify-start gap-2 overflow-x-auto"
           >
             {filteredPipelineData.map((item, categoryIndex) => (
               <DroppableColumn
                 isTeamPipeline={true}
                 key={categoryIndex}
-                columnRefs={columnRefs}
+                setColumnRef={(el) => {
+                  columnRefs.current[categoryIndex] = el;
+                }}
                 categoryIndex={categoryIndex}
                 item={item}
                 openDropdownIndex={openDropdownIndex}
@@ -593,35 +619,22 @@ export default function TeamPipelines({
                 handleTagSelect={handleTagSelect}
                 handleServiceDropdownToggle={handleServiceDropdownToggle}
                 isTechnician={isTechnician}
-                setSelectedClientId={setSelectedClientId}
-                setSelectedVehicleId={setSelectedVehicleId}
-                setIsAppointmentModalOpen={setIsAppointmentModalOpen}
                 searchTerm={searchTerm}
+                hasMore={
+                  item.id !== null
+                    ? (columnMeta[item.id]?.hasMore ?? false)
+                    : false
+                }
+                isLoadingMore={
+                  item.id !== null
+                    ? (columnMeta[item.id]?.isLoading ?? false)
+                    : false
+                }
+                onLoadMore={() => loadMoreForColumn(categoryIndex)}
               />
             ))}
           </div>
         </div>
-      )}
-
-      {selectedClientId && (
-        <AppointmentCreateOrEdit
-          clientId={selectedClientId}
-          vehicleId={selectedVehicleId}
-          isModalOpen={isAppointmentModalOpen}
-          setIsModalOpen={setIsAppointmentModalOpen}
-          onAppointmentCreated={(appointment) => {
-            // Handle appointment created
-            setIsAppointmentModalOpen(false);
-            setSelectedClientId(null);
-            setSelectedVehicleId(null);
-          }}
-          onAppointmentUpdated={(appointment) => {
-            // Handle appointment updated
-            setIsAppointmentModalOpen(false);
-            setSelectedClientId(null);
-            setSelectedVehicleId(null);
-          }}
-        />
       )}
     </>
   );

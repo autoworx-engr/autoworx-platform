@@ -36,29 +36,28 @@ export async function POST(req: Request) {
   if (!resetToken || resetToken.expiresAt < new Date()) {
     return NextResponse.json(
       { error: "Invalid or expired token" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
-  const hashedPassword = await hash(newPassword, 10);
+  const salt_rounded = Number(process.env.SALT_ROUNDS ?? 12);
 
-  await db.user.update({
-    where: { id: resetToken.userId },
-    data: { password: hashedPassword },
-  });
+  const hashedPassword = await hash(newPassword, salt_rounded);
 
-  const user = await db.user.findUnique({
-    where: { id: resetToken.userId },
-  });
-
-  await db.passwordResetToken.delete({ where: { id: resetToken.id } });
+  await db.$transaction([
+    db.user.update({
+      where: { id: resetToken.userId },
+      data: { password: hashedPassword },
+    }),
+    db.passwordResetToken.delete({ where: { id: resetToken.id } }),
+  ]);
 
   return NextResponse.json(
     {
       success: true,
       message: "Password reset successful",
-      email: user?.email,
+      email: resetToken.user.email,
     },
-    { status: 200 }
+    { status: 200 },
   );
 }

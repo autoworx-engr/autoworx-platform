@@ -51,6 +51,13 @@ import { getToken } from "next-auth/jwt";
  *           type: string
  *         description: Search keyword to filter services by title (case-insensitive).
  *       - in: query
+ *         name: includeInactive
+ *         required: false
+ *         schema:
+ *           type: boolean
+ *           default: false
+ *         description: When true, returns both active and inactive services. When omitted or false, returns active services only.
+ *       - in: query
  *         name: sortOrder
  *         required: false
  *         schema:
@@ -151,9 +158,15 @@ import { getToken } from "next-auth/jwt";
  *                       isActive:
  *                         type: boolean
  *                         example: true
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
+ *                       updatedAt:
+ *                         type: string
+ *                         format: date-time
  *                       invoiceItems:
  *                         type: array
- *                         description: Nested invoice items containing detailed breakdown of the service, labor, and materials.
+ *                         description: Nested invoice items containing detailed breakdown of the service, labor, materials, and tags.
  *                         items:
  *                           type: object
  *                           properties:
@@ -167,18 +180,27 @@ import { getToken } from "next-auth/jwt";
  *                             laborId:
  *                               type: integer
  *                               nullable: true
- *                               example: null
+ *                               example: 202
  *                             service:
  *                               type: object
  *                               nullable: true
  *                               example: { "id": 5, "name": "Basic Wash", "categoryId": 2 }
+ *                             labor:
+ *                               type: object
+ *                               nullable: true
+ *                               example: { "id": 202, "name": "Standard Labor", "hours": 1, "charge": 80 }
  *                             materials:
  *                               type: array
  *                               items:
  *                                 type: object
  *                               example: [{ "id": 50, "name": "Premium Wax", "cost": 10, "sell": 15 }]
+ *                             tags:
+ *                               type: array
+ *                               items:
+ *                                 type: object
+ *                               example: [{ "id": 1, "name": "Exterior" }]
  *       400:
- *         description: Missing requires parameter (shopId).
+ *         description: Missing required parameter (shopId).
  *         content:
  *           application/json:
  *             schema:
@@ -196,6 +218,7 @@ export async function GET(req: Request) {
     const shopId = searchParams.get("shopId");
     const category = searchParams.get("category");
     const search = searchParams.get("search");
+    const includeInactive = searchParams.get("includeInactive") === "true";
     // Default to 'desc' if not provided, strongly type the allowed values
     const sortOrder = (
       searchParams.get("sortOrder") === "asc" ? "asc" : "desc"
@@ -212,7 +235,7 @@ export async function GET(req: Request) {
 
     const whereClause: Prisma.ShopServiceWhereInput = {
       shopId: parseInt(shopId, 10),
-      isActive: true,
+      ...(includeInactive ? {} : { isActive: true }),
     };
 
     if (category && category !== "All") {
@@ -326,6 +349,10 @@ export async function GET(req: Request) {
  *               modifierTruck:
  *                 type: string
  *                 example: "100"
+ *               customDuration:
+ *                 type: number
+ *                 description: Custom duration for the service in minutes.
+ *                 example: 120
  *               isActive:
  *                 type: boolean
  *                 example: true
@@ -359,23 +386,19 @@ export async function GET(req: Request) {
  *           example:
  *             shopId: 1
  *             title: "Full Ceramic Coating & Detail"
- *             companyId: 4
- *             description: "Complete exterior paint correction and c..."
+ *             description: "Complete exterior paint correction and ceramic coating application."
  *             imageUrl: "https://example.com/ceramic-coating.jpg"
  *             modifierCoupe: "0"
  *             modifierSedan: "50"
  *             modifierSUV: "100"
  *             modifierTruck: "150"
  *             isActive: true
+ *             customDuration: 120
  *             items:
  *               - service:
  *                   id: 2526
- *                   name: "Test Door Serffvice 6"
+ *                   name: "Test Door Service 6"
  *                   description: "Full exterior paint correction service."
- *                   companyId: 4
- *                   categoryId: 421
- *                   createdAt: "2024-01-15T08:00:00.000Z"
- *                   updatedAt: "2024-06-10T12:00:00.000Z"
  *                 labor:
  *                   name: "Master Detailer"
  *                   notes: "Apply carefully"
@@ -383,7 +406,6 @@ export async function GET(req: Request) {
  *                   hours: 2
  *                   charge: 150
  *                   discount: 0
- *                   cannedLabor: false
  *                 materials:
  *                   - name: "ISO 70% ALC"
  *                     notes: "Apply in shaded area only"
@@ -391,11 +413,7 @@ export async function GET(req: Request) {
  *                     cost: 45
  *                     sell: 150
  *                     discount: 0
- *                     companyId: 4
  *                     productId: 1
- *                     createdAt: "2024-01-15T08:00:00.000Z"
- *                     updatedAt: "2024-06-10T12:00:00.000Z"
- *                     tags: []
  *                 tags: []
  *     responses:
  *       201:
@@ -414,15 +432,50 @@ export async function GET(req: Request) {
  *                     id:
  *                       type: integer
  *                       example: 10
+ *                     shopId:
+ *                       type: integer
+ *                       example: 1
  *                     title:
  *                       type: string
  *                       example: "Full Detail Package"
+ *                     description:
+ *                       type: string
+ *                       example: "Complete interior and exterior detailing."
  *                     price:
  *                       type: number
  *                       example: 299
  *                     duration:
  *                       type: integer
  *                       example: 300
+ *                     category:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                       example: ["Detailing"]
+ *                     imageUrl:
+ *                       type: string
+ *                       example: "https://example.com/image.jpg"
+ *                     modifierCoupe:
+ *                       type: number
+ *                       example: 0
+ *                     modifierSedan:
+ *                       type: number
+ *                       example: 50
+ *                     modifierSUV:
+ *                       type: number
+ *                       example: 75
+ *                     modifierTruck:
+ *                       type: number
+ *                       example: 100
+ *                     isActive:
+ *                       type: boolean
+ *                       example: true
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
+ *                     updatedAt:
+ *                       type: string
+ *                       format: date-time
  *       400:
  *         description: Missing required fields or validation failure.
  *         content:
@@ -431,12 +484,6 @@ export async function GET(req: Request) {
  *               $ref: '#/components/schemas/ErrorResponse'
  *       401:
  *         description: Unauthorized.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *       403:
- *         description: Company ID not found.
  *         content:
  *           application/json:
  *             schema:
@@ -473,6 +520,7 @@ type TCreateShopServiceRequest = {
   modifierSUV?: string;
   modifierTruck?: string;
   isActive?: boolean;
+  customDuration?: string | number;
 };
 
 export async function POST(req: NextRequest) {
@@ -517,6 +565,7 @@ export async function POST(req: NextRequest) {
       modifierSUV,
       modifierTruck,
       isActive,
+      customDuration,
     } = body;
 
     if (!shopId || !title) {
@@ -537,7 +586,7 @@ export async function POST(req: NextRequest) {
     let totalDuration = 0;
     const categoryIdsToFetch = new Set<number>();
 
-    items?.forEach(item => {
+    items?.forEach((item) => {
       // Gather category IDs
       if (item.service?.categoryId) {
         categoryIdsToFetch.add(item.service.categoryId);
@@ -553,7 +602,7 @@ export async function POST(req: NextRequest) {
       }
 
       // Calculate Materials
-      item.materials?.forEach(mat => {
+      item.materials?.forEach((mat) => {
         if (!mat || !mat.name) return;
         const matQuantity = Number(mat.quantity) || 0;
         const matSell = Number(mat.sell) || 0;
@@ -562,18 +611,27 @@ export async function POST(req: NextRequest) {
       });
     });
 
-    // Default duration to 30 mins if no labor hours were specified
-    if (totalDuration === 0) totalDuration = 30;
+    // Handle duration: use customDuration if provided, otherwise fallback to calculated totalDuration
+    let finalDuration = totalDuration;
+    if (customDuration !== undefined && customDuration !== null) {
+      const parsedCustomDuration = Number(customDuration);
+      if (!isNaN(parsedCustomDuration)) {
+        finalDuration = parsedCustomDuration;
+      }
+    }
+
+    // Default duration to 30 mins if no duration was specified/calculated
+    if (finalDuration === 0) finalDuration = 30;
 
     // Fetch all categories in ONE query outside the transaction
     const fetchedCategories = await db.category.findMany({
       where: { id: { in: Array.from(categoryIdsToFetch) } },
       select: { name: true },
     });
-    const categories = fetchedCategories.map(c => c.name);
+    const categories = fetchedCategories.map((c) => c.name);
 
     // 3. DATABASE TRANSACTION
-    const newShopService = await db.$transaction(async tx => {
+    const newShopService = await db.$transaction(async (tx) => {
       // Because we pre-calculated everything, we can create the final record immediately.
       // No need to update it at the end of the transaction!
       const serviceRecord = await tx.shopService.create({
@@ -582,7 +640,7 @@ export async function POST(req: NextRequest) {
           title,
           description,
           price: totalPrice,
-          duration: totalDuration,
+          duration: finalDuration,
           imageUrl,
           category: categories, // Properly populates the categories array now
           modifierCoupe: modifierCoupe ? parseFloat(modifierCoupe) : 0,
@@ -595,7 +653,7 @@ export async function POST(req: NextRequest) {
 
       if (items && items.length > 0) {
         await Promise.all(
-          items.map(async item => {
+          items.map(async (item) => {
             let laborId;
 
             if (item.labor) {
@@ -615,7 +673,7 @@ export async function POST(req: NextRequest) {
               // Use createMany instead of a loop for tags
               if (item.labor.tags?.length) {
                 await tx.laborTag.createMany({
-                  data: item.labor.tags.map(tag => ({
+                  data: item.labor.tags.map((tag) => ({
                     laborId: newLabor.id,
                     tagId: tag.id,
                   })),
@@ -633,7 +691,7 @@ export async function POST(req: NextRequest) {
 
             if (item.materials?.length) {
               await Promise.all(
-                item.materials.map(async material => {
+                item.materials.map(async (material) => {
                   if (!material || !material.name) return;
                   const newMat = await tx.material.create({
                     data: {
@@ -654,7 +712,7 @@ export async function POST(req: NextRequest) {
                   // Use createMany instead of a loop for tags
                   if (material.tags?.length) {
                     await tx.materialTag.createMany({
-                      data: material.tags.map(tag => ({
+                      data: material.tags.map((tag) => ({
                         materialId: newMat.id,
                         tagId: tag.id,
                       })),
@@ -667,7 +725,7 @@ export async function POST(req: NextRequest) {
             // Use createMany instead of a loop for item tags
             if (item.tags?.length) {
               await tx.itemTag.createMany({
-                data: item.tags.map(tag => ({
+                data: item.tags.map((tag) => ({
                   itemId: invoiceItem.id,
                   tagId: tag.id,
                 })),

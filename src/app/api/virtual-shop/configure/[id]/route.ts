@@ -93,9 +93,10 @@ import { AppError } from "@/error-boundary/error";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  props: { params: Promise<{ id: string }> },
 ) {
   try {
+    const params = await props.params;
     const id = Number(params.id);
 
     if (!id) {
@@ -192,9 +193,10 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  props: { params: Promise<{ id: string }> },
 ) {
   try {
+    const params = await props.params;
     const id = Number(params.id);
 
     if (!id) {
@@ -210,6 +212,8 @@ export async function PATCH(
       bannerUrl,
       themeConfig,
       isActive,
+      termsConditions,
+      privacyPolicy,
     } = body;
 
     const existingShop = await db.shop.findUnique({
@@ -234,6 +238,8 @@ export async function PATCH(
         bannerUrl,
         themeConfig,
         isActive,
+        termsConditions: termsConditions ?? null,
+        privacyPolicy: privacyPolicy ?? null,
       },
     });
 
@@ -283,9 +289,10 @@ export async function PATCH(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  props: { params: Promise<{ id: string }> },
 ) {
   try {
+    const params = await props.params;
     const id = Number(params.id);
 
     if (!id) {

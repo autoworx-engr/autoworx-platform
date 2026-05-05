@@ -35,8 +35,9 @@ import { NextRequest, NextResponse } from "next/server";
  */
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { companyId: string } },
+  props: { params: Promise<{ companyId: string }> },
 ) {
+  const params = await props.params;
   try {
     const companyId = Number(params.companyId);
 

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Column } from "@prisma/client";
-import { toast } from "react-hot-toast";
+import { successToast, errorToast } from "@/lib/toast";
 
 export interface LocalColumn {
   id: number | null;
@@ -62,33 +62,41 @@ interface SavePipelineParams {
 
 import { useRouter } from "next/navigation";
 
-export const useSavePipelineColumns = (pipelineType: string, onClose: () => void) => {
+export const useSavePipelineColumns = (
+  pipelineType: string,
+  onClose: () => void,
+) => {
   const queryClient = useQueryClient();
   const router = useRouter();
 
   return useMutation({
-    mutationFn: async ({ localColumns, deletedColumns }: SavePipelineParams) => {
+    mutationFn: async ({
+      localColumns,
+      deletedColumns,
+    }: SavePipelineParams) => {
       // Check for renamed restricted columns
       const renamedRestrictedColumns = localColumns.filter(
         (column) =>
-          column.isRestricted && !restrictedColumns.includes(column.title.trim())
+          column.isRestricted &&
+          !restrictedColumns.includes(column.title.trim()),
       );
 
       if (renamedRestrictedColumns.length > 0) {
         throw new Error(
-          `The restricted column "${renamedRestrictedColumns[0].title}" cannot be renamed.`
+          `The restricted column "${renamedRestrictedColumns[0].title}" cannot be renamed.`,
         );
       }
 
       // Check if any non-restricted column has a restricted title
       const invalidColumns = localColumns.filter(
         (column) =>
-          !column.isRestricted && restrictedColumns.includes(column.title.trim())
+          !column.isRestricted &&
+          restrictedColumns.includes(column.title.trim()),
       );
 
       if (invalidColumns.length > 0) {
         throw new Error(
-          `The column "${invalidColumns[0].title}" is a restricted title and cannot be used.`
+          `The column "${invalidColumns[0].title}" is a restricted title and cannot be used.`,
         );
       }
 
@@ -144,12 +152,15 @@ export const useSavePipelineColumns = (pipelineType: string, onClose: () => void
       await Promise.all([...columnsToSave, ...columnsToDelete]);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["pipeline-columns", pipelineType] });
+      queryClient.invalidateQueries({
+        queryKey: ["pipeline-columns", pipelineType],
+      });
       router.refresh();
+      successToast("Pipeline columns saved successfully.");
       onClose();
     },
     onError: (error: Error) => {
-      toast.error(error.message);
+      errorToast(error.message);
     },
   });
 };

@@ -11,12 +11,12 @@ type TUpdateTagAutomationTrigger = {
   conditionType?: "pipeline" | "communication" | "post_tag" | null;
 };
 export const updateTagAutomationTrigger = async function (
-  payload: TUpdateTagAutomationTrigger
+  payload: TUpdateTagAutomationTrigger,
 ) {
   try {
     const response = await axiosInstance.patch(
       "/tag-automation-trigger",
-      payload
+      payload,
     );
 
     return response.data;

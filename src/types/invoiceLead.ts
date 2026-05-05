@@ -46,6 +46,12 @@ export interface ShopLead {
   assignedTo: User | Employee | null;
   columnId: number | null;
   dueBalance: number;
+  appointment?: {
+    id: number;
+    date: Date | null;
+    startTime: string | null;
+    endTime: string | null;
+  } | null;
 }
 export interface SalesLead {
   leadId: number;
@@ -89,6 +95,12 @@ export interface LeadWithSalesUser extends Lead {
     lastName: string | null;
   } | null;
   tasks: Task[];
+  latestAppointment?: {
+    id: number;
+    date: Date | null;
+    startTime: string | null;
+    endTime: string | null;
+  } | null;
   client?:
     | (Client & {
         vehicle?: Vehicle | null;
@@ -119,6 +131,8 @@ export interface ShopPipelineData {
   id: number | null;
   title: string;
   leads: ShopLead[];
+  hasMore?: boolean;
+  totalCount?: number;
 }
 export interface SalesPipelineData {
   id: number | null;

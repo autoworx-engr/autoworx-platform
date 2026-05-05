@@ -9,22 +9,25 @@ import { createVehicleValidationSchema } from "@/validations/schemas/vehicle/veh
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
 
-export async function addVehicle(data: {
-  year: number;
-  make: string;
-  model: string;
-  submodel: string;
-  type: string;
-  colorId?: number;
-  transmission: string;
-  engineSize: string;
-  license: string;
-  vin: string;
-  notes: string;
-  other: string;
-  clientId: number;
-  forceCompanyId?: number;
-}, pathname?: string): Promise<ServerAction | TErrorHandler> {
+export async function addVehicle(
+  data: {
+    year: number;
+    make: string;
+    model: string;
+    submodel: string;
+    type: string;
+    colorId?: number;
+    transmission: string;
+    engineSize: string;
+    license: string;
+    vin: string;
+    notes: string;
+    other: string;
+    clientId: number;
+    forceCompanyId?: number;
+  },
+  pathname?: string,
+): Promise<ServerAction | TErrorHandler> {
   try {
     const session = await getServerSession(authOptions);
     let companyId = data.forceCompanyId;
@@ -65,7 +68,7 @@ export async function addVehicle(data: {
       },
     });
 
-    if(pathname?.includes('/dashboard/client')) {
+    if (pathname?.includes("/dashboard/client")) {
       revalidatePath(pathname);
     }
 

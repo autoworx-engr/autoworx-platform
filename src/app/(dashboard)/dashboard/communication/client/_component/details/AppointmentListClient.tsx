@@ -12,7 +12,7 @@ export default function AppointmentListClient({
   appointments: Appointment[];
 }) {
   const [appointmentModalId, setAppointmentModalId] = useState<number | null>(
-    null
+    null,
   );
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
 
@@ -22,7 +22,7 @@ export default function AppointmentListClient({
   const current = useMemo(() => {
     return (appointments || []).filter((a) => {
       try {
-        const dateStr = moment(a.date).format("YYYY-MM-DD");
+        const dateStr = moment.utc(a.date).format("YYYY-MM-DD");
         const start = moment(`${dateStr} ${a.startTime}`, "YYYY-MM-DD HH:mm");
         const end = moment(`${dateStr} ${a.endTime}`, "YYYY-MM-DD HH:mm");
         return now.isBetween(start, end, null, "[]");
@@ -36,10 +36,12 @@ export default function AppointmentListClient({
     return (appointments || [])
       .filter(
         (a) =>
-          moment(a.date).startOf("day").valueOf() >= startOfToday.valueOf() &&
-          !currentIds.has(a.id)
+          moment.utc(a.date).startOf("day").valueOf() >=
+            startOfToday.valueOf() && !currentIds.has(a.id),
       )
-      .sort((x, y) => moment(x.date).valueOf() - moment(y.date).valueOf());
+      .sort(
+        (x, y) => moment.utc(x.date).valueOf() - moment.utc(y.date).valueOf(),
+      );
   }, [appointments]);
 
   const openEditor = (id: number) => {
@@ -54,7 +56,7 @@ export default function AppointmentListClient({
           Appointments
         </h3>
         <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-600 dark:bg-white/10 dark:text-zinc-300">
-          {upcoming?.length || 0}
+          {Number(current?.length) + Number(upcoming?.length) || 0}
         </span>
       </header>
 

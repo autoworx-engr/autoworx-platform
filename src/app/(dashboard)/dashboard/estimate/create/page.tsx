@@ -20,11 +20,10 @@ import PaymentTab from "./tabs/PaymentTab";
 import EstimateInspectionsTab from "./tabs/EstimateInspectionsTab";
 import DynamicTemplateLoader from "../DynamicTemplateLoader";
 
-export default async function Page({
-  searchParams,
-}: {
-  searchParams: { clientId?: string; templateId?: string };
+export default async function Page(props: {
+  searchParams: Promise<{ clientId?: string; templateId?: string }>;
 }) {
+  const searchParams = await props.searchParams;
   const companyId = await getCompanyId();
   const clientId = searchParams.clientId
     ? parseInt(searchParams.clientId)
@@ -37,8 +36,8 @@ export default async function Page({
 
   const client = clientId
     ? await db.client.findUnique({
-      where: { id: clientId },
-    })
+        where: { id: clientId },
+      })
     : null;
 
   const customers = await db.client.findMany({ where: { companyId } });
@@ -69,9 +68,9 @@ export default async function Page({
   });
 
   // spread all `tag` objects into `tags` array
-  products.forEach(product => {
+  products.forEach((product) => {
     (product as unknown as { tags: Tag[] }).tags = product.tags.map(
-      tag => tag.tag
+      (tag) => tag.tag,
     );
   });
 
@@ -87,19 +86,21 @@ export default async function Page({
   });
 
   // spread all `tag` objects into `tags` array
-  labors.forEach(labor => {
-    (labor as unknown as { tags: Tag[] }).tags = labor.tags.map(tag => tag.tag);
+  labors.forEach((labor) => {
+    (labor as unknown as { tags: Tag[] }).tags = labor.tags.map(
+      (tag) => tag.tag,
+    );
   });
 
   let materials = [] as any[];
 
   materials.push(
-    ...products.map(product => ({
+    ...products.map((product) => ({
       ...product,
       cost: product.price,
       tags: product.tags,
       productId: product.id,
-    }))
+    })),
   );
 
   return (
@@ -150,18 +151,30 @@ export default async function Page({
             </TabsTriggerCreate>
           </TabsList>
 
-          <TabsContent value="create" className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2">
+          <TabsContent
+            value="create"
+            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2"
+          >
             <CreateTab />
           </TabsContent>
 
-          <TabsContent value="attachment" className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2">
+          <TabsContent
+            value="attachment"
+            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2"
+          >
             <AttachmentTab />
           </TabsContent>
 
-          <TabsContent value="inspections" className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2">
+          <TabsContent
+            value="inspections"
+            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2"
+          >
             <EstimateInspectionsTab />
           </TabsContent>
-          <TabsContent value="payments" className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2">
+          <TabsContent
+            value="payments"
+            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2"
+          >
             <PaymentTab
               clientId={
                 searchParams.clientId

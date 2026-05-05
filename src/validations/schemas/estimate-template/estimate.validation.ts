@@ -74,7 +74,7 @@ export const estimateTemplateCreateValidationSchema = z
           .string({ invalid_type_error: "Photo URL must be a string" })
           .url()
           .optional(),
-      })
+      }),
     ),
 
     items: z.array(createItemValidationSchema.optional()),
@@ -85,7 +85,7 @@ export const estimateTemplateCreateValidationSchema = z
           .number({ invalid_type_error: "Task ID must be a number" })
           .optional(),
         task: z.string({ invalid_type_error: "Task must be a string" }),
-      })
+      }),
     ),
     columnId: z
       .number({ invalid_type_error: "Column ID must be a number" })
@@ -99,7 +99,7 @@ export const estimateTemplateCreateValidationSchema = z
     {
       message: "Grand total must equal subtotal - discount + tax",
       path: ["grandTotal"],
-    }
+    },
   );
 
 export const estimateTemplateEditValidationSchema = z.object({
@@ -153,7 +153,7 @@ export const estimateTemplateEditValidationSchema = z.object({
           .string({ invalid_type_error: "Photo URL must be a string" })
           .url()
           .optional(),
-      })
+      }),
     )
     .optional(),
 
@@ -169,7 +169,7 @@ export const estimateTemplateEditValidationSchema = z.object({
         task: z
           .string({ invalid_type_error: "Task must be a string" })
           .min(1, "Task description is required."),
-      })
+      }),
     )
     .optional(),
 });

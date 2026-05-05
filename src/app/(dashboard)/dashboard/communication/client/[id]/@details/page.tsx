@@ -2,15 +2,17 @@ import { redirect } from "next/navigation";
 import DetailsBox from "../../_component/details/DetailsBox";
 
 type TProps = {
-  params: {
+  params: Promise<{
     id: string;
-  };
-  searchParams: {
+  }>;
+  searchParams: Promise<{
     details: string;
-  };
+  }>;
 };
 
-export default function DetailsPage({ params, searchParams }: TProps) {
+export default async function DetailsPage(props: TProps) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   if (isNaN(parseInt(params.id))) {
     return redirect(`/404`);
   }

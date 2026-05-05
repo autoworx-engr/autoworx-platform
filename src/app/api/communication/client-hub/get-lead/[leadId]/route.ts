@@ -85,19 +85,20 @@ import { getLead } from "@/app/(dashboard)/dashboard/communication/client/_actio
  */
 
 type RouteParams = {
-  params: {
-    leadId: number;
-  };
+  params: Promise<{
+    leadId: string;
+  }>;
 };
 
-export async function GET(req: NextRequest, { params }: RouteParams) {
+export async function GET(req: NextRequest, props: RouteParams) {
+  const params = await props.params;
   try {
-    const { leadId } = params;
+    const leadId = Number(params.leadId);
 
     if (isNaN(leadId)) {
       return NextResponse.json(
         { success: false, message: "leadId must be a valid number" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -106,7 +107,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     if (!data) {
       return NextResponse.json(
         { success: false, message: "Lead not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -121,7 +122,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
         success: false,
         message: error?.message || "Failed to retrieve lead",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

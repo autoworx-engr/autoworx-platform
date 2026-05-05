@@ -78,8 +78,8 @@ type CompanyFeaturePermissionKeys =
   | "serviceEstimator"
   | "automation"
   | "visualization"
-  | "sales-agent";
-// | "virtual-shop";
+  | "sales-agent"
+  | "virtual-shop";
 
 export const FEATURE_PERMISSIONS_MAP: Record<
   string,
@@ -106,7 +106,7 @@ export const FEATURE_PERMISSIONS_MAP: Record<
   "/dashboard/settings": "businessSettings",
   "/dashboard/settings/team-management": "businessSettings",
   "/dashboard/settings/automation": "automation",
-  // "/dashboard/settings/virtual-shop-configure": "virtual-shop",
+  "/dashboard/settings/virtual-shop-configure": "virtual-shop",
   "/dashboard/settings/sales-agent": "sales-agent",
   "/dashboard/settings/payments": "businessSettings",
   "/dashboard/settings/estimates": "businessSettings",

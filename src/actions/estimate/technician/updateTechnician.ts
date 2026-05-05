@@ -28,7 +28,7 @@ export const updateTechnician = async (
   technicianId: number,
   payload: TechnicianInput,
   vehicleParts: Partial<VehicleParts>[],
-  imageUrls: string[]
+  imageUrls: string[],
 ): Promise<ServerAction | TErrorHandler> => {
   try {
     // if (!payload) {
@@ -46,7 +46,7 @@ export const updateTechnician = async (
           0,
           0,
           0,
-          0
+          0,
         )
       : payload.date;
 
@@ -54,7 +54,6 @@ export const updateTechnician = async (
       ...payload,
       date: normalizedDate,
     });
-
 
     const existingTechnician = await db.technician.findUnique({
       where: { id: technicianId },
@@ -65,7 +64,7 @@ export const updateTechnician = async (
     });
 
     if (!existingTechnician) {
-      return {success: false, message:"Technician not exist in database"}
+      return { success: false, message: "Technician not exist in database" };
     }
 
     const existingUrls = existingTechnician.images.map((img) => img.fileUrl);

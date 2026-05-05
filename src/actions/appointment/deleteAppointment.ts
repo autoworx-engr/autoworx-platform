@@ -15,7 +15,7 @@ export async function deleteAppointment(id: number): Promise<ServerAction> {
     });
 
     try {
-      deleteRemindersInNest(deletedAppointment.id.toString());
+      await deleteRemindersInNest(deletedAppointment.id.toString());
     } catch (error) {
       console.log("🚀 ~ deleteAppointment ~ error:", error);
     }
@@ -28,7 +28,7 @@ export async function deleteAppointment(id: number): Promise<ServerAction> {
         ?.googleCalendarToken;
 
       if (googleCalendarToken && deletedAppointment.googleEventId) {
-        deleteGoogleCalendarEvent(deletedAppointment.googleEventId);
+        await deleteGoogleCalendarEvent(deletedAppointment.googleEventId);
       }
     } catch (error) {
       console.log("🚀 ~ deleteAppointment ~ error:", error);
@@ -55,7 +55,7 @@ export async function deleteRemindersInNest(id: string) {
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
     console.log("🚀 ~ deleteRemindersInNest ~ end:");
     return data;

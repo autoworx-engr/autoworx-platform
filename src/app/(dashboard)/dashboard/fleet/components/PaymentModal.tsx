@@ -38,16 +38,20 @@ function TabTrigger({
   children: React.ReactNode;
   tab: string;
 }) {
+  const isActive = tab === value;
   return (
     <Tabs.Trigger
       value={value}
-      className="flex items-center gap-1 rounded-md bg-[#6571FF] p-1 px-5 text-white transition-all"
-      style={{
-        backgroundColor: tab === value ? "#6571FF" : "transparent",
-        border: tab === value ? "none" : "1px solid #6571FF",
-        color: tab === value ? "white" : "#6571FF",
-      }}
+      className={cn(
+        "group relative flex items-center justify-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-300 ease-out md:text-base",
+        isActive
+          ? "text-white shadow-md shadow-indigo-500/25 ring-1 ring-black/5 translate-y-[-1px]"
+          : "text-slate-500 hover:bg-slate-100 hover:text-slate-900 [&>svg]:text-slate-400 [&>svg]:group-hover:text-[#6571FF]",
+      )}
     >
+      {isActive && (
+        <div className="absolute inset-0 -z-10 rounded-xl bg-gradient-to-r from-[#6571FF] to-[#5a66ee]" />
+      )}
       {children}
     </Tabs.Trigger>
   );
@@ -75,7 +79,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [cash, setCash] = useState<string>("");
   const [amount, setAmount] = useState<number | string>(totalDue);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(
-    null
+    null,
   );
   const [openPaymentMethod, setOpenPaymentMethod] = useState(false);
   const [paymentMethodInput, setPaymentMethodInput] = useState("");
@@ -126,6 +130,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         amount: roundedAmount,
         paymentMethod: tab as PaymentType,
         notes,
+        date,
         ...(tab === "CARD" && {
           creditCard: card,
           cardType: cardType as CardType,
@@ -183,7 +188,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           </DialogHeader>
 
           <Tabs.Root className="mt-5" value={tab} onValueChange={setTab as any}>
-            <Tabs.List className="grid grid-cols-4 justify-between gap-3 md:flex">
+            <Tabs.List className="grid grid-cols-4 gap-1.5 rounded-2xl border border-slate-200 bg-white/50 p-1.5 shadow-sm md:flex">
               <TabTrigger value="CARD" tab={tab}>
                 <svg
                   viewBox="0 0 24 24"
@@ -192,20 +197,19 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   width="24"
                   xmlns="http://www.w3.org/2000/svg"
                 >
-                  <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                  <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
                   <g
                     id="SVGRepo_tracerCarrier"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   ></g>
                   <g id="SVGRepo_iconCarrier">
-                    {" "}
                     <path
-                      fill-rule="evenodd"
-                      clip-rule="evenodd"
+                      fillRule="evenodd"
+                      clipRule="evenodd"
                       d="M3.75 5.25L3 6V17.25L3.75 18H19.5L20.25 17.25V6L19.5 5.25H3.75ZM4.5 9V6.75H18.75V9H4.5ZM4.5 10.5V16.5H18.75V10.5H4.5ZM6.10217 14.25H7.67035V12.75H6.10217V14.25ZM13.1589 14.25H8.45435V12.75H13.1589V14.25Z"
                       fill={tab === "CARD" ? "#ffffff" : "#6571ff"}
-                    ></path>{" "}
+                    ></path>
                   </g>
                 </svg>
                 Card
@@ -255,7 +259,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                         const localDate = moment.tz(
                           e.target.value,
                           "YYYY-MM-DD",
-                          timezone
+                          timezone,
                         );
                         setDate(localDate.toDate());
                       }}
@@ -381,7 +385,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       const localDate = moment.tz(
                         e.target.value,
                         "YYYY-MM-DD",
-                        timezone
+                        timezone,
                       );
                       setDate(localDate.toDate());
                     }}
@@ -440,7 +444,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       const localDate = moment.tz(
                         e.target.value,
                         "YYYY-MM-DD",
-                        timezone
+                        timezone,
                       );
                       setDate(localDate.toDate());
                     }}
@@ -513,7 +517,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                         onClick={handleNewPaymentMethod}
                         className={cn(
                           "text-nowrap rounded-md px-2 text-white",
-                          paymentMethodInput ? "bg-slate-700" : "bg-slate-400"
+                          paymentMethodInput ? "bg-slate-700" : "bg-slate-400",
                         )}
                         type="button"
                         disabled={!paymentMethodInput}
@@ -525,7 +529,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   items={paymentMethods}
                   onSearch={(search: string) =>
                     paymentMethods.filter((method) =>
-                      method.name.toLowerCase().includes(search.toLowerCase())
+                      method.name.toLowerCase().includes(search.toLowerCase()),
                     )
                   }
                   displayList={(paymentMethod: PaymentMethod) => (
@@ -548,7 +552,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       const localDate = moment.tz(
                         e.target.value,
                         "YYYY-MM-DD",
-                        timezone
+                        timezone,
                       );
                       setDate(localDate.toDate());
                     }}
@@ -584,16 +588,16 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               </div>
             </Tabs.Content>
 
-            <DialogFooter className="mt-5 flex justify-center gap-2 md:gap-5">
+            <DialogFooter className="mt-5 flex justify-center gap-2 md:gap-3">
               <button
                 type="button"
-                className="rounded-md border-2 border-slate-400 p-2 px-5"
+                className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
                 onClick={handleCancel}
               >
                 Cancel
               </button>
               <button
-                className="rounded-md bg-[#6571FF] p-2 px-5 text-white disabled:bg-gray-400"
+                className="rounded-xl bg-gradient-to-r from-[#6571FF] to-[#5a66ee] px-6 py-2.5 text-sm font-medium text-white shadow-lg shadow-indigo-500/30 transition-all duration-200 hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-xl hover:shadow-indigo-500/40 active:translate-y-0 active:scale-100 disabled:opacity-60"
                 onClick={handleSubmit}
                 disabled={loading}
                 type="button"

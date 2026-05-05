@@ -6,6 +6,7 @@ import {
   EmployeeType,
   NotificationSection,
   NotificationType,
+  Prisma,
 } from "@prisma/client";
 
 type TUpdateNotification = {
@@ -54,9 +55,11 @@ export const uploadNotificationSettings = async (
   userId: number,
   userRole: EmployeeType,
   companyId: number,
+  tx?: Prisma.TransactionClient,
 ) => {
+  const client = tx ?? db;
   try {
-    const findNotificationCount = await db.notificationSettingsV2.count({
+    const findNotificationCount = await client.notificationSettingsV2.count({
       where: {
         userId,
         companyId,
@@ -68,7 +71,7 @@ export const uploadNotificationSettings = async (
     if (findNotificationCount === notificationSettings?.length) {
       return;
     } else if (findNotificationCount > notificationSettings?.length) {
-      await db.notificationSettingsV2.deleteMany({
+      await client.notificationSettingsV2.deleteMany({
         where: {
           userId,
           companyId,
@@ -85,7 +88,7 @@ export const uploadNotificationSettings = async (
     await Promise.all(
       notificationSettings.map(async (notification) => {
         const findNotificationSetting =
-          await db.notificationSettingsV2.findFirst({
+          await client.notificationSettingsV2.findFirst({
             where: {
               userId,
               section: notification.section,
@@ -97,7 +100,7 @@ export const uploadNotificationSettings = async (
           return;
         }
 
-        await db.notificationSettingsV2.create({
+        await client.notificationSettingsV2.create({
           data: {
             userId,
             section: notification.section,

@@ -42,7 +42,6 @@ export type Rule = {
   day: string;
   condition: string;
   action: string;
-  // vendor: string;
   teamMemberUserIds: number[];
 };
 
@@ -55,9 +54,8 @@ const InventoryRuleForm: React.FC<RuleFormProps> = ({
   user,
   companyId,
 }) => {
-  const [loading, setLoading] = useState(false);
   const [initialFormData, setInitialFormData] = useState<Rule | null>(
-    initialData || null
+    initialData || null,
   );
   // Default empty rule
   const [formData, setFormData] = useState<Rule>(
@@ -68,9 +66,8 @@ const InventoryRuleForm: React.FC<RuleFormProps> = ({
       condition: "",
       action: "",
       day: "",
-      // vendor: "",
       teamMemberUserIds: [],
-    }
+    },
   );
 
   const { mutate: createRule, isPending: isCreatePending } =
@@ -78,7 +75,7 @@ const InventoryRuleForm: React.FC<RuleFormProps> = ({
   const { mutate: updateRule, isPending: isUpdatePending } =
     useUpdateInventoryAutomationRule();
   const { data, isLoading, isFetching } = useFindOneInventoryAutomationRule(
-    Number(id)
+    Number(id),
   );
   const [error, setError] = useState<Record<string, string>>({});
 
@@ -93,7 +90,7 @@ const InventoryRuleForm: React.FC<RuleFormProps> = ({
           action: data?.data.action,
           day: data?.data.day,
           teamMemberUserIds: data?.data?.teamMembers?.map(
-            (item: any) => item.userId
+            (item: any) => item.userId,
           ),
         };
         setFormData(payload);
@@ -212,7 +209,7 @@ const InventoryRuleForm: React.FC<RuleFormProps> = ({
   const actionHelpContent = getInventoryActionHelp(formData?.action || "");
   return (
     <>
-      {loading || isLoading || isFetching ? (
+      {isLoading || isFetching ? (
         <div className="flex h-[800px] w-full animate-pulse items-center justify-center rounded-md bg-gray-200 p-4 shadow-sm md:p-6">
           <CarLoading />
         </div>
@@ -262,7 +259,6 @@ const InventoryRuleForm: React.FC<RuleFormProps> = ({
 
                   <Selector
                     name="frequency"
-                    // label="Frequency"
                     options={Frequency}
                     value={formData.frequency!}
                     onChange={(value) => handleChange("frequency", value)}
@@ -314,7 +310,6 @@ const InventoryRuleForm: React.FC<RuleFormProps> = ({
                   />
                   <Selector
                     name="condition"
-                    // label="Condition"
                     options={InventoryConditions}
                     value={formData.condition}
                     onChange={(value) => handleChange("condition", value)}
@@ -344,7 +339,6 @@ const InventoryRuleForm: React.FC<RuleFormProps> = ({
                   />
                   <Selector
                     name="action"
-                    // label="Action"
                     options={InventoryActions}
                     value={formData.action}
                     onChange={(value) => handleChange("action", value)}
@@ -402,7 +396,6 @@ const InventoryRuleForm: React.FC<RuleFormProps> = ({
                     onChange={(value) =>
                       handleChange("teamMemberUserIds", value)
                     }
-                    // label="Send to Team"
                     placeholder="Select options"
                     required={false}
                     disabled={!employees}
@@ -415,11 +408,14 @@ const InventoryRuleForm: React.FC<RuleFormProps> = ({
                 <div className="flex justify-end pt-4">
                   <button
                     type="submit"
-                    disabled={isCreatePending || isUpdatePending || isFormUnchanged}
-                    className={`rounded-md px-4 py-2 text-sm font-medium text-white ${isUpdatePending || isCreatePending || isFormUnchanged
-                      ? "cursor-not-allowed bg-indigo-300"
-                      : "bg-indigo-500 hover:bg-indigo-600"
-                      }`}
+                    disabled={
+                      isCreatePending || isUpdatePending || isFormUnchanged
+                    }
+                    className={`rounded-md px-4 py-2 text-sm font-medium text-white ${
+                      isUpdatePending || isCreatePending || isFormUnchanged
+                        ? "cursor-not-allowed bg-indigo-300"
+                        : "bg-indigo-500 hover:bg-indigo-600"
+                    }`}
                   >
                     {isUpdatePending || isCreatePending
                       ? isEdit && id

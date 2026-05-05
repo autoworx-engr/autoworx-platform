@@ -28,18 +28,18 @@ export async function GET() {
     if (!awxcrmcompany) {
       return NextResponse.json(
         { error: "No CRM-enabled company found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
     return NextResponse.json(
       { token: awxcrmcompany.zapierToken },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error fetching data:", error);
     return NextResponse.json(
       { error: "Failed to fetch data" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

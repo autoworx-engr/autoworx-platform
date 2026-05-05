@@ -23,9 +23,16 @@ interface Permissions {
 export default function UserRolesTable() {
   const [permissions, setPermissions] = useState<Permissions | null>(null); // To trigger re-render when serviceStore changes
   const roles = ["Manager", "Sales", "Technician", "Other"];
+  const viewOnlyModules = new Set([
+    "Sales:workforceManagement",
+    "Sales:reporting",
+    "Sales:inventoryAll",
+    "Technician:workforceManagement",
+    "Technician:reporting",
+  ]);
 
   const getModuleLabel = (moduleKey: string) =>
-    permissionModuleForAdminManager.find(module => module.key === moduleKey)
+    permissionModuleForAdminManager.find((module) => module.key === moduleKey)
       ?.label ?? moduleKey;
 
   useEffect(() => {
@@ -36,8 +43,8 @@ export default function UserRolesTable() {
         if (data) {
           setPermissions(data);
         }
-      } catch (error) {
-        console.log("Error fetching permissions", error);
+      } catch (_error) {
+        errorToast("Failed to load permissions");
       }
     };
 
@@ -49,7 +56,7 @@ export default function UserRolesTable() {
     role: string,
     moduleKey: string,
     value: boolean,
-    isViewOnly = false
+    isViewOnly = false,
   ) => {
     if (!permissions) return;
 
@@ -67,18 +74,17 @@ export default function UserRolesTable() {
         useTeamManagementStore.setState({ refetch: !refetch });
         const moduleLabel = getModuleLabel(moduleKey);
         successToast(
-          `Updated ${role} - ${moduleLabel}${isViewOnly ? " (view only)" : ""}`
+          `Updated ${role} - ${moduleLabel}${isViewOnly ? " (view only)" : ""}`,
         );
       }
-    } catch (error) {
-      console.log("Error updating permission:", error);
+    } catch (_error) {
       errorToast("Failed to update permission");
     }
   };
 
   const getPermissionForRole = (
     role: string,
-    moduleKey: string
+    moduleKey: string,
   ): boolean | null => {
     if (!permissions) return null;
 
@@ -117,88 +123,123 @@ export default function UserRolesTable() {
   };
 
   return (
-    <div className="relative w-full ">
-      <div className=" px-6 pt-6">
-        <h2 className="text-2xl font-bold text-gray-800">
-          User Roles (Default)
-        </h2>
-        <p className="text-sm text-gray-500">
-          Set base permissions for each standard role.
-        </p>
+    <div className="w-full">
+      <div className="flex items-start justify-between gap-3 px-6 pb-4 pt-6">
+        <div>
+          <h2 className="text-xl font-bold text-slate-600 sm:text-2xl">
+            User Roles (Default)
+          </h2>
+          <p className="text-sm text-slate-500">
+            Set base permissions for each standard role.
+          </p>
+        </div>
       </div>
-      <div className="m-2 overflow-x-auto rounded-lg bg-background p-4 ">
-        <table className="min-w-full border-collapse">
-          <thead>
-            <tr>
-              <th className="border-b-2 border-black py-2 text-left">
-                Modules
-              </th>
-              {roles.map(role => (
-                <th
-                  key={role}
-                  className="border-b-2 border-black py-2 text-center"
-                >
-                  {role}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {permissionModuleForAdminManager.map((module, index) => (
-              <tr key={index + 1}>
-                <td className="py-2 text-left">{module.label}</td>
-                {roles.map(role => {
-                  const permission = getPermissionForRole(role, module.key);
-                  const isViewOnly = isViewOnlyForRole(role, module.key);
-                  const canViewOnly =
-                    (role === "Sales" &&
-                      module.key === "workforceManagement") ||
-                    (role === "Sales" && module.key === "reporting") ||
-                    (role === "Sales" && module.key === "inventoryAll") ||
-                    (role === "Technician" &&
-                      module.key === "workforceManagement") ||
-                    (role === "Technician" && module.key === "reporting");
 
-                  return (
-                    <td key={role} className="px-12 py-3 text-center">
-                      {permission !== null ? (
-                        <div className="flex items-center justify-center">
-                          <Switch
-                            checked={permission}
-                            className="max-w-2 shadow-md"
-                            onChange={checked =>
-                              handleToggle(role, module.key, checked)
-                            }
-                          />
-                        </div>
-                      ) : null}
+      <div className="px-4 pb-4">
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[720px] border-collapse text-sm">
+              <thead>
+                <tr className="bg-slate-50/90">
+                  <th className="sticky left-0 z-20 border-b border-slate-200 bg-slate-50 px-4 py-3 text-left font-semibold text-slate-600">
+                    Modules
+                  </th>
+                  {roles.map((role) => (
+                    <th
+                      key={role}
+                      className="border-b border-slate-200 px-5 py-3 text-center font-semibold text-slate-600"
+                    >
+                      {role}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {!permissions &&
+                  Array.from({ length: 8 }).map((_, index) => (
+                    <tr
+                      key={`skeleton-${index + 1}`}
+                      className="border-b border-slate-100 last:border-b-0 even:bg-slate-50/30"
+                    >
+                      <td className="sticky left-0 z-10 bg-inherit px-4 py-3">
+                        <div className="h-4 w-52 animate-pulse rounded bg-slate-200" />
+                      </td>
+                      {roles.map((role) => (
+                        <td key={role} className="px-5 py-3 text-center">
+                          <div className="mx-auto h-6 w-11 animate-pulse rounded-full bg-slate-200" />
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
 
-                      {canViewOnly && (
-                        <div className="group">
-                          <Checkbox
-                            className="relative left-0"
-                            checked={isViewOnly}
-                            onChange={e =>
-                              handleToggle(
-                                role,
-                                module.key,
-                                e.target.checked,
-                                true
-                              )
-                            }
-                          />
-                          <div className="fixed z-50 hidden -translate-y-14 rounded-lg border bg-[#66738C] p-1 text-sm text-white group-hover:block">
-                            View Only
-                          </div>
-                        </div>
-                      )}
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                {permissions &&
+                  permissionModuleForAdminManager.map((module, index) => (
+                    <tr
+                      key={index + 1}
+                      className="border-b border-slate-100 last:border-b-0 even:bg-slate-50/30"
+                    >
+                      <td className="sticky left-0 z-10 bg-inherit px-4 py-3 font-medium text-slate-600">
+                        {module.label}
+                      </td>
+                      {roles.map((role) => {
+                        const permission = getPermissionForRole(
+                          role,
+                          module.key,
+                        );
+                        const isViewOnly = isViewOnlyForRole(role, module.key);
+                        const canViewOnly = viewOnlyModules.has(
+                          `${role}:${module.key}`,
+                        );
+
+                        return (
+                          <td key={role} className="px-5 py-3 text-center">
+                            {permission !== null && (
+                              <div className="flex items-center justify-center">
+                                <Switch
+                                  checked={permission}
+                                  className="max-w-2 !bg-slate-200 shadow-sm [&.ant-switch-checked]:!bg-[#6571FF]/80 [&.ant-switch-checked]:!border-[#6571FF]"
+                                  onChange={(checked) =>
+                                    handleToggle(role, module.key, checked)
+                                  }
+                                  aria-label={`${role} permission for ${module.label}`}
+                                />
+                              </div>
+                            )}
+
+                            {canViewOnly && (
+                              <div className="mt-1 flex items-center justify-center gap-1 text-[11px] text-slate-500">
+                                <Checkbox
+                                  className="[&_.ant-checkbox-checked_.ant-checkbox-inner]:!border-[#6571FF] [&_.ant-checkbox-checked_.ant-checkbox-inner]:!bg-[#6571FF]/80"
+                                  checked={isViewOnly}
+                                  onChange={(e) =>
+                                    handleToggle(
+                                      role,
+                                      module.key,
+                                      e.target.checked,
+                                      true,
+                                    )
+                                  }
+                                  aria-label={`${role} view-only for ${module.label}`}
+                                />
+                              </div>
+                            )}
+
+                            {permission === null && !canViewOnly && (
+                              <span className="text-slate-400">-</span>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <p className="px-1 pt-2 text-xs text-slate-500">
+          Tip: Scroll horizontally on smaller screens to review all role
+          columns.
+        </p>
       </div>
     </div>
   );

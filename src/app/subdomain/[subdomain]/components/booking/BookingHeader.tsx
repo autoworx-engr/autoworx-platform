@@ -4,18 +4,35 @@ import { Button } from "@/components/ui/button";
 import { Gift, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useShopInfo } from "@/hooks/virtual-shop/useShopInfo";
+import { useRouter } from "next/navigation";
 
 interface BookingHeaderProps {
   rightElement?: "booking" | "giftcard";
   children?: React.ReactNode;
+  onLogoClick?: () => void;
 }
 
 export const BookingHeader = ({
   rightElement,
   children,
+  onLogoClick,
 }: BookingHeaderProps) => {
   const { shopName: hookShopName, shop } = useShopInfo();
   const shopName = hookShopName;
+  const router = useRouter();
+
+  const handleLogoClick = () => {
+    if (onLogoClick) {
+      onLogoClick();
+      return;
+    }
+    if (rightElement === "giftcard") {
+      router.push("/");
+      return;
+    }
+
+    router.push("/");
+  };
 
   const defaultBanner =
     "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&q=80&w=2000";
@@ -33,11 +50,15 @@ export const BookingHeader = ({
         <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
 
         {/* Floating Content Layout */}
-        <div className="absolute inset-0 container max-w-5xl mx-auto px-6 flex items-center justify-between">
-          <div className="flex items-center gap-5">
+        <div className="absolute inset-0 container max-w-5xl mx-auto px-6 flex items-center justify-between gap-6 md:gap-10">
+          <button
+            type="button"
+            className="flex items-center gap-5 group"
+            onClick={handleLogoClick}
+          >
             {/* Minimalist Logo */}
             {shop?.logoUrl && (
-              <div className="h-16 w-16 md:h-20 md:w-20 rounded-2xl overflow-hidden border-2 border-white/30 bg-white/10 backdrop-blur-md shadow-xl flex items-center justify-center p-2 transform transition-transform hover:scale-105">
+              <div className="h-16 w-16 md:h-20 md:w-20 rounded-2xl overflow-hidden border-2 border-white/30 bg-white/10 backdrop-blur-md shadow-xl flex items-center justify-center p-2 transform transition-transform group-hover:scale-105">
                 <img
                   src={shop.logoUrl}
                   alt={shopName}
@@ -57,7 +78,7 @@ export const BookingHeader = ({
                 </p>
               )}
             </div>
-          </div>
+          </button>
 
           {/* Compact Navigation */}
           <div className="flex items-center gap-3">

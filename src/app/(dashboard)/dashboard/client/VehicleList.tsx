@@ -64,13 +64,13 @@ export default function VehicleList({
                     "cursor-pointer rounded-md py-3",
                     index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]",
                     vehicleId &&
-                    vehicleId === vehicle?.id &&
-                    "border-2 border-[#6571FF]"
+                      vehicleId === vehicle?.id &&
+                      "border-2 border-[#6571FF]",
                   )}
                   onClick={() => {
                     // use replace to avoid adding a new history entry for each selection
                     router.replace(
-                      `/dashboard/client/${clientId}?vehicleId=${vehicle.id}`
+                      `/dashboard/client/${clientId}?vehicleId=${vehicle.id}`,
                     );
                   }}
                 >
@@ -80,15 +80,9 @@ export default function VehicleList({
                   <td className="text-nowrap px-6 py-4 text-left">
                     {vehicle.make}
                   </td>
-                  <td className="px-6 py-4 text-left">
-                    {vehicle.model}
-                  </td>
-                  <td className="px-6 py-4 text-left">
-                    {vehicle.license}
-                  </td>
-                  <td className="px-6 py-4 text-left">
-                    {vehicle.other}
-                  </td>
+                  <td className="px-6 py-4 text-left">{vehicle.model}</td>
+                  <td className="px-6 py-4 text-left">{vehicle.license}</td>
+                  <td className="px-6 py-4 text-left">{vehicle.other}</td>
                   <td className="px-6 py-4 text-left">
                     <div className="flex items-center gap-x-4 text-xl">
                       {" "}

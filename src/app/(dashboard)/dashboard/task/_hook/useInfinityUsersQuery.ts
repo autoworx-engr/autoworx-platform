@@ -16,7 +16,7 @@ const fetchUsers = async ({ pageParam = 1, searchTerm = "" }) => {
       orderBy: { createdAt: "desc" },
       take: defaultTake,
       skip: (pageParam - 1) * defaultTake,
-    }
+    },
   );
   const hasMore = defaultTake * pageParam < totalUsers;
   return {

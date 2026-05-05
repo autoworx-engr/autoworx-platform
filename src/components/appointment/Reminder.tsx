@@ -17,7 +17,7 @@ import {
   X,
 } from "lucide-react";
 import moment from "moment-timezone";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import UpdateTemplate from "./UpdateTemplate";
 
 type TReminderProps = {
@@ -25,6 +25,7 @@ type TReminderProps = {
   vehicle: Partial<Vehicle> | null;
   startTime: string;
   date: string;
+  timezone?: string;
   times: { time: string; date: string }[];
   setTimes: (times: { time: string; date: string }[]) => void;
   confirmationTemplate: EmailTemplate | null;
@@ -43,7 +44,6 @@ type TReminderProps = {
   openReminder: boolean;
   setOpenReminder: React.Dispatch<React.SetStateAction<boolean>>;
   setOpenConfirmation: React.Dispatch<React.SetStateAction<boolean>>;
-  timezone: string;
 };
 
 export function Reminder({
@@ -74,6 +74,15 @@ export function Reminder({
   const previousReminderTemplateIdRef = useRef<number | null>(null);
 
   const { data: templates = [] } = useTemplatesQuery();
+
+  const confirmationTemplates = useMemo(
+    () => templates.filter((t: EmailTemplate) => t.type === "Confirmation"),
+    [templates],
+  );
+  const reminderTemplates = useMemo(
+    () => templates.filter((t: EmailTemplate) => t.type === "Reminder"),
+    [templates],
+  );
 
   const queryClient = useQueryClient();
   const { showError, clearError, error } = useFormErrorStore();
@@ -223,16 +232,12 @@ export function Reminder({
     // }
 
     // Check if reminder is before the appointment
-    const appointmentDateTime = moment.tz(
-      `${date} ${startTime}`,
-      "YYYY-MM-DD HH:mm",
-      timezone,
-    );
-    const reminderDateTime = moment.tz(
-      `${dateInput} ${time}`,
-      "YYYY-MM-DD HH:mm",
-      timezone,
-    );
+    const appointmentDateTime = timezone
+      ? moment.tz(`${date} ${startTime}`, "YYYY-MM-DD HH:mm", timezone)
+      : moment(`${date} ${startTime}`, "YYYY-MM-DD HH:mm");
+    const reminderDateTime = timezone
+      ? moment.tz(`${dateInput} ${time}`, "YYYY-MM-DD HH:mm", timezone)
+      : moment(`${dateInput} ${time}`, "YYYY-MM-DD HH:mm");
 
     if (reminderDateTime.isAfter(appointmentDateTime)) {
       showError({
@@ -254,7 +259,7 @@ export function Reminder({
   if (!client) {
     return (
       <div className="flex lg:h-full h-full lg:min-h-[400px] w-full flex-col items-center justify-center gap-4 rounded-3xl bg-slate-50/50 p-8 text-center ring-1 ring-inset ring-slate-100 shadow-inner">
-        {/* Elevated Icon Conzzzzztainer */}
+        {/* Elevated Icon Container */}
         <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-white shadow-xl shadow-slate-200/50 ring-1 ring-slate-100">
           <UserRoundX
             size={40}
@@ -313,9 +318,7 @@ export function Reminder({
               startTime={startTime}
             />
           }
-          items={templates.filter(
-            (template: EmailTemplate) => template.type === "Confirmation",
-          )}
+          items={confirmationTemplates}
           displayList={(template: EmailTemplate) => (
             <div className="group relative flex items-center justify-between">
               <div className="flex items-center gap-3 text-left outline-none">
@@ -361,10 +364,8 @@ export function Reminder({
             setOpenConfirmation(false);
           }}
           onSearch={(search: string) =>
-            templates.filter(
-              (template) =>
-                template.type === "Confirmation" &&
-                template.subject.toLowerCase().includes(search.toLowerCase()),
+            confirmationTemplates.filter((template) =>
+              template.subject.toLowerCase().includes(search.toLowerCase()),
             )
           }
           // openState={[openConfirmation, setOpenConfirmation]}
@@ -399,9 +400,7 @@ export function Reminder({
               startTime={startTime}
             />
           }
-          items={templates.filter(
-            (template: EmailTemplate) => template.type === "Reminder",
-          )}
+          items={reminderTemplates}
           displayList={(template: EmailTemplate) => (
             <div className="group relative flex items-center justify-between">
               <div className="flex items-center gap-3 text-left outline-none">
@@ -447,10 +446,8 @@ export function Reminder({
             setOpenReminder(false);
           }}
           onSearch={(search: string) =>
-            templates.filter(
-              (template) =>
-                template.type === "Reminder" &&
-                template.subject.toLowerCase().includes(search.toLowerCase()),
+            reminderTemplates.filter((template) =>
+              template.subject.toLowerCase().includes(search.toLowerCase()),
             )
           }
           // openState={[openReminder, setOpenReminder]}

@@ -16,7 +16,7 @@ import FilterHeader from "./FilterHeader";
 import InventoryDisplay from "./InventoryDisplay";
 
 type TProps = {
-  searchParams: {
+  searchParams: Promise<{
     category?: string;
     startDate?: string;
     endDate?: string;
@@ -27,11 +27,14 @@ type TProps = {
     types?: string;
     page?: string;
     take?: string;
-  };
+  }>;
 };
 
-export default async function InventoryReportPage({ searchParams }: TProps) {
+export default async function InventoryReportPage(props: TProps) {
+  const searchParams = await props.searchParams;
   const session = await getServerSession(authOptions);
+  const companyId = session?.user?.companyId;
+  if (!companyId) throw new Error("Unauthorized");
   const { timezone } = (await getCompanyTimezone()) || {};
 
   const defaultTake = 50;
@@ -46,12 +49,12 @@ export default async function InventoryReportPage({ searchParams }: TProps) {
   if (searchParams.startDate && searchParams.endDate) {
     const formattedStartDate = moment(
       decodeURIComponent(searchParams.startDate),
-      "MM-DD-YYYY"
+      "MM-DD-YYYY",
     ).format("YYYY-MM-DD");
 
     const formattedEndDate = moment(
       decodeURIComponent(searchParams.endDate),
-      "MM-DD-YYYY"
+      "MM-DD-YYYY",
     ).format("YYYY-MM-DD");
 
     startDate = new Date(`${formattedStartDate}T00:00:00.000Z`);
@@ -62,7 +65,7 @@ export default async function InventoryReportPage({ searchParams }: TProps) {
 
   const inventoryProducts = await db.inventoryProduct.findMany({
     where: {
-      companyId: session?.user?.companyId,
+      companyId,
       category: {
         name: searchParams?.category || undefined,
       },
@@ -100,7 +103,7 @@ export default async function InventoryReportPage({ searchParams }: TProps) {
 
   const allInventoryProducts = await db.inventoryProduct.findMany({
     where: {
-      companyId: session?.user?.companyId,
+      companyId,
     },
     select: {
       type: true,
@@ -109,12 +112,12 @@ export default async function InventoryReportPage({ searchParams }: TProps) {
 
   // Get unique categories
   const getCategory = Array.from(
-    new Set(inventoryProducts.map((product) => `${product?.category?.name}`))
+    new Set(inventoryProducts.map((product) => `${product?.category?.name}`)),
   ).map((uniqueName) => uniqueName);
 
   // Get unique types
   const getType = Array.from(
-    new Set(allInventoryProducts.map((product) => `${product?.type}`))
+    new Set(allInventoryProducts.map((product) => `${product?.type}`)),
   ).map((uniqueName) => uniqueName);
 
   const purchasesData = ["Product", "Supply"].map((type) => {
@@ -128,7 +131,7 @@ export default async function InventoryReportPage({ searchParams }: TProps) {
             }
             return sum;
           },
-          0
+          0,
         );
         return acc + productPurchase;
       }, 0);
@@ -141,16 +144,24 @@ export default async function InventoryReportPage({ searchParams }: TProps) {
 
   const filterInventoryProducts = inventoryProducts.filter((product) =>
     normalizeSearch(product.name)?.includes(
-      normalizeSearch(searchParams?.search || "")
-    )
+      normalizeSearch(searchParams?.search || ""),
+    ),
   );
 
   return (
     <div className="space-y-5">
       <Suspense fallback="loading...">
         <CalculationContainer
-          startDate={decodeURIComponent(searchParams?.startDate as string)}
-          endDate={decodeURIComponent(searchParams?.endDate as string)}
+          startDate={
+            searchParams?.startDate
+              ? decodeURIComponent(searchParams.startDate)
+              : undefined
+          }
+          endDate={
+            searchParams?.endDate
+              ? decodeURIComponent(searchParams.endDate)
+              : undefined
+          }
           getType={getType}
           typeFilterApplied={!!searchParams.types}
           purchasesData={purchasesData}
@@ -176,8 +187,16 @@ export default async function InventoryReportPage({ searchParams }: TProps) {
           <Analytics
             timezone={timezone}
             leftChart={searchParams.leftChart}
-            startDate={decodeURIComponent(searchParams?.startDate as string)}
-            endDate={decodeURIComponent(searchParams?.endDate as string)}
+            startDate={
+              searchParams?.startDate
+                ? decodeURIComponent(searchParams.startDate)
+                : undefined
+            }
+            endDate={
+              searchParams?.endDate
+                ? decodeURIComponent(searchParams.endDate)
+                : undefined
+            }
             types={searchParams.types}
           />
         </AnalyticsVisibility>

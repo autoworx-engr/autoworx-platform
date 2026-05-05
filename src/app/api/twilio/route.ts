@@ -94,6 +94,8 @@ export async function POST(req: NextRequest) {
           companyId: company.companyId,
           clientId: client.id,
           clientName: client.firstName + " " + client.lastName,
+          message: body.Body,
+          hasMedia: Number(body.NumMedia) > 0,
         });
 
         const channelName = `message-${client.id}`;
@@ -170,7 +172,7 @@ export async function POST(req: NextRequest) {
  *         description: Twilio credentials not found
  */
 
-export async function GET(req: NextRequest, res: NextResponse) {
+export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const companyId = Number(url.searchParams.get("companyId"));
   const cId = companyId ? companyId : await getCompanyId();

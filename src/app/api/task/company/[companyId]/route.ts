@@ -60,8 +60,9 @@ import { db } from "@/lib/db";
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { companyId: string } },
+  props: { params: Promise<{ companyId: string }> },
 ) {
+  const params = await props.params;
   try {
     const companyId = Number(params.companyId);
 

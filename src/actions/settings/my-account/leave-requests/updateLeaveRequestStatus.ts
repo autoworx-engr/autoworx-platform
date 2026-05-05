@@ -12,7 +12,9 @@ export const updateLeaveRequestStatus = async (
     const user = await getUser();
 
     if (user.employeeType !== "Admin" && user.employeeType !== "Manager") {
-      throw new Error("");
+      throw new Error(
+        "Unauthorized: only Admin or Manager can update leave request status",
+      );
     }
 
     const updatedLeaveRequest = await db.leaveRequest.update({
@@ -24,7 +26,7 @@ export const updateLeaveRequestStatus = async (
       },
     });
 
-    revalidatePath("/settings/my-account/leave-requests");
+    revalidatePath("/dashboard/settings/my-account/leave-requests");
     revalidatePath("/");
 
     return {
@@ -32,7 +34,7 @@ export const updateLeaveRequestStatus = async (
       message: "Leave Request Status Updated Successfully",
       data: updatedLeaveRequest,
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
     return { success: false, message: "Leave Request Status Updating Failed" };
   }
 };

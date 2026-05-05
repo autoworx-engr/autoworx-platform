@@ -6,7 +6,11 @@ import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { z } from "zod";
 
 const updateTemplateSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters").max(255).optional(),
+  name: z
+    .string()
+    .min(2, "Name must be at least 2 characters")
+    .max(255)
+    .optional(),
   imageUrl: z.string().url("Must be a valid URL").optional(),
   isActive: z.boolean().optional(),
   isDefault: z.boolean().optional(),
@@ -56,9 +60,10 @@ const updateTemplateSchema = z.object({
  */
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> },
 ) {
   try {
+    const params = await props.params;
     const authHeader = req.headers.get("authorization") ?? "";
     const accessToken = authHeader.startsWith("Bearer")
       ? authHeader.split(" ")[1]
@@ -96,7 +101,7 @@ export async function PATCH(
     if (!parsedBody.success) {
       throw new AppError(
         400,
-        `Validation Error: ${parsedBody.error.errors.map(e => e.message).join(", ")}`
+        `Validation Error: ${parsedBody.error.errors.map((e) => e.message).join(", ")}`,
       );
     }
 
@@ -107,7 +112,10 @@ export async function PATCH(
 
     // Cross validation: check if trying to make/keep it default while setting it inactive
     if (finalIsDefault === true && finalIsActive === false) {
-      throw new AppError(400, "A template cannot be set as default if it is inactive");
+      throw new AppError(
+        400,
+        "A template cannot be set as default if it is inactive",
+      );
     }
 
     const updatedTemplate = await db.$transaction(async (tx) => {
@@ -135,7 +143,11 @@ export async function PATCH(
     });
 
     return NextResponse.json(
-      { success: true, message: "Template updated successfully", data: updatedTemplate },
+      {
+        success: true,
+        message: "Template updated successfully",
+        data: updatedTemplate,
+      },
       { status: 200 },
     );
   } catch (error: any) {
@@ -179,9 +191,10 @@ export async function PATCH(
  */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> },
 ) {
   try {
+    const params = await props.params;
     const authHeader = req.headers.get("authorization") ?? "";
     const accessToken = authHeader.startsWith("Bearer")
       ? authHeader.split(" ")[1]

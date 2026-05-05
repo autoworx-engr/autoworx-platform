@@ -1,8 +1,15 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, CalendarDays, Clock, Zap } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  CalendarDays,
+  Clock,
+  Phone,
+  Zap,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format, startOfDay } from "date-fns";
+import { format } from "date-fns";
 import { useBooking } from "../../context/BookingContext";
 import { TimeSlot } from "../../data/types";
 import { useGetAppointmentSlots } from "@/hooks/virtual-shop/service/useShopService";
@@ -11,6 +18,7 @@ import { useParams } from "next/navigation";
 import { Calendar, ConfigProvider, theme } from "antd";
 import dayjs from "dayjs";
 import { Spinner } from "../ui/Spinner";
+import toast from "react-hot-toast";
 
 export const DateTimeSelection = () => {
   const {
@@ -19,10 +27,13 @@ export const DateTimeSelection = () => {
     setSelectedDate,
     selectedSlot,
     setSelectedSlot,
+    sessionToken,
+    cartDurationMinutes,
   } = useBooking();
   const params = useParams();
   const slug = String(params?.subdomain || "");
   const [showSlots, setShowSlots] = useState(false);
+  const [isHolding, setIsHolding] = useState(false);
 
   // Get shop from slug
   const { data: shop } = useGetShopBySlug(slug);
@@ -34,6 +45,8 @@ export const DateTimeSelection = () => {
     useGetAppointmentSlots(
       shop?.id,
       selectedDate ? format(selectedDate, "yyyy-MM-dd") : undefined,
+      false,
+      cartDurationMinutes || undefined,
     );
 
   // Fetch next available appointment info
@@ -41,9 +54,9 @@ export const DateTimeSelection = () => {
     shop?.id,
     undefined,
     true,
+    cartDurationMinutes || undefined,
   );
 
- 
   const handleDateSelect = (value: dayjs.Dayjs) => {
     const date = value.toDate();
     setSelectedDate(date);
@@ -99,6 +112,37 @@ export const DateTimeSelection = () => {
     );
   }
 
+  const handleContinue = async () => {
+    if (!selectedSlot || !selectedDate || !shop?.id) return;
+
+    setIsHolding(true);
+    try {
+      const response = await fetch("/api/virtual-shop/service-booking/hold", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          shopId: shop.id,
+          sessionToken,
+          date: format(selectedDate, "yyyy-MM-dd"),
+          startTime: selectedSlot.time,
+          duration: cartDurationMinutes || 30,
+        }),
+      });
+
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.message || "Failed to hold slot");
+      }
+
+      setStep("checkout");
+    } catch (error: any) {
+      toast.error(error.message || "This slot is no longer available.");
+      setSelectedSlot(null);
+    } finally {
+      setIsHolding(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
@@ -149,7 +193,9 @@ export const DateTimeSelection = () => {
                           size="icon"
                           variant="ghost"
                           className="h-7 w-7"
-                          onClick={() => onChange(value.month(value.month() - 1))}
+                          onClick={() =>
+                            onChange(value.month(value.month() - 1))
+                          }
                         >
                           <ArrowLeft className="w-4 h-4" />
                         </Button>
@@ -157,7 +203,9 @@ export const DateTimeSelection = () => {
                           size="icon"
                           variant="ghost"
                           className="h-7 w-7"
-                          onClick={() => onChange(value.month(value.month() + 1))}
+                          onClick={() =>
+                            onChange(value.month(value.month() + 1))
+                          }
                         >
                           <ArrowRight className="w-4 h-4" />
                         </Button>
@@ -186,6 +234,39 @@ export const DateTimeSelection = () => {
                 <CalendarDays className="w-4 h-4 text-primary" />
                 {format(selectedDate, "EEEE, MMMM d, yyyy")}
               </div>
+
+              {/* Contact Us banner when all slots are unavailable due to service duration */}
+              {timeSlots.length > 0 && timeSlots.every((s) => !s.available) && (
+                <div
+                  className="flex items-center justify-between gap-3 rounded-lg border px-4 py-3 text-sm"
+                  style={{
+                    borderColor: `${primaryColor}50`,
+                    backgroundColor: `${primaryColor}10`,
+                  }}
+                >
+                  <p className="font-medium" style={{ color: primaryColor }}>
+                    Service duration exceeds available hours. Contact us to
+                    schedule.
+                  </p>
+                  {shop?.company?.phone && (
+                    <a href={`tel:${shop.company.phone}`}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1.5 shrink-0"
+                        style={{
+                          borderColor: `${primaryColor}70`,
+                          color: primaryColor,
+                        }}
+                      >
+                        <Phone className="w-3.5 h-3.5" />
+                        {shop.company.phone}
+                      </Button>
+                    </a>
+                  )}
+                </div>
+              )}
+
               {Object.entries(grouped).map(([period, slots]) => {
                 if (slots.length === 0) return null;
                 return (
@@ -217,7 +298,7 @@ export const DateTimeSelection = () => {
                   </div>
                 );
               })}
-              {timeSlots.filter((s) => s.available).length === 0 && (
+              {timeSlots.length === 0 && (
                 <div className="text-center py-8 space-y-3">
                   <p className="text-sm text-muted-foreground">
                     No available slots on this day.
@@ -246,9 +327,11 @@ export const DateTimeSelection = () => {
           <Button
             size="lg"
             className="gap-2"
-            onClick={() => setStep("checkout")}
+            onClick={handleContinue}
+            disabled={isHolding}
           >
-            Continue to Checkout <ArrowRight className="w-4 h-4" />
+            {isHolding ? <Spinner size={20} /> : "Continue to Checkout"}{" "}
+            <ArrowRight className="w-4 h-4" />
           </Button>
         </div>
       )}

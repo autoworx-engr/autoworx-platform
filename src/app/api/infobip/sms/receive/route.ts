@@ -10,7 +10,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { sendSMSToAgent } from "@/service/ai-agent/api";
 import { revalidatePath } from "next/cache";
 import { allCompanyFeaturePermissions } from "@/service/feature-permissions/api";
-import { normalizePhoneForStorage, phoneLookupWhereClause } from "@/utils/normalizePhone";
+import {
+  normalizePhoneForStorage,
+  phoneLookupWhereClause,
+} from "@/utils/normalizePhone";
 
 const pusher = getPusherInstance();
 
@@ -303,6 +306,7 @@ export async function POST(req: NextRequest) {
             companyId: infobipConfig.companyId,
             clientId: client.id,
             clientName: client.firstName + " " + client.lastName,
+            message: cleanedMessageText,
           });
 
           // Trigger Pusher notification
@@ -365,7 +369,7 @@ export async function POST(req: NextRequest) {
         }
       }
     }
-    revalidatePath("/dashboard/communication/client");
+    revalidatePath("/dashboard/communication/client/${clientId}");
     return NextResponse.json(
       {
         message: "Webhook processed successfully",
@@ -398,7 +402,6 @@ async function fetchInfobipMedia(url: string, contentType: string) {
 
   return new File([blob], fileName, { type: contentType });
 }
-
 
 // Optional: Add GET endpoint for testing webhook URL
 export async function GET() {

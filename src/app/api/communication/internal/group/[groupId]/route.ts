@@ -24,8 +24,9 @@ import { NextResponse } from "next/server";
 
 export const GET = async (
   req: Request,
-  { params }: { params: { groupId: string } },
+  props: { params: Promise<{ groupId: string }> },
 ) => {
+  const params = await props.params;
   try {
     const groupId = params?.groupId;
 

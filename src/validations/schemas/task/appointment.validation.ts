@@ -11,7 +11,7 @@ export const createAppointmentValidationSchema = z.object({
     .string({
       invalid_type_error: "Date must be a string",
     })
-    .refine(date => {
+    .refine((date) => {
       if (!date) return true;
       return !isNaN(Date.parse(date));
     }, "Invalid date format")
@@ -90,7 +90,7 @@ export const createAppointmentValidationSchema = z.object({
             required_error: "Date is required",
             invalid_type_error: "Date must be a string",
           })
-          .refine(date => !isNaN(Date.parse(date)), "Invalid date format"),
+          .refine((date) => !isNaN(Date.parse(date)), "Invalid date format"),
         time: z.string({
           required_error: "Time is required",
           invalid_type_error: "Time must be a string",

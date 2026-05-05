@@ -8,6 +8,7 @@ import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import NewVehicle from "./NewVehicle";
 import { SelectProps } from "./select-props";
 import { cn } from "@/lib/cn";
+import { Plus } from "lucide-react";
 
 export function SelectVehicle({
   name = "vehicleId",
@@ -27,6 +28,8 @@ export function SelectVehicle({
   const clientId = search?.get("clientId");
 
   useEffect(() => {
+    if (!vehicleList?.length) return;
+
     const clientVehicles = clientId
       ? vehicleList?.filter((vehicle) => vehicle.clientId === +clientId)
       : [];
@@ -41,14 +44,14 @@ export function SelectVehicle({
         }
       } else {
         const matchedVehicle = clientVehicles?.find(
-          (vehicle) => vehicle.id === value?.id
+          (vehicle) => vehicle.id === value?.id,
         );
-        const finalVehicle = matchedVehicle ?? selectedVehicle;
+        const finalVehicle = matchedVehicle ?? value ?? selectedVehicle;
         setVehicle(finalVehicle);
         useListsStore.setState({ vehicle: finalVehicle });
       }
     }
-  }, [newAddedVehicle, clientId, vehicleList]);
+  }, [newAddedVehicle, clientId, vehicleList, isEdit, setVehicle, value]);
 
   useEffect(() => {
     return () => {
@@ -56,7 +59,7 @@ export function SelectVehicle({
         useListsStore.setState({ newAddedVehicle: null });
       }
     };
-  }, []);
+  }, [newAddedVehicle]);
 
   const handleClear = () => {
     setVehicle(null);
@@ -76,28 +79,38 @@ export function SelectVehicle({
             : "Vehicle"
         }
         newButton={
-          clientId && <NewVehicle
-            clientId={Number(clientId)}
-            onAdd={(vehicle: Vehicle) => {
-              setVehicle(vehicle);
-              useListsStore.setState({ vehicle });
-              useListsStore.setState(({ vehicles }) => ({
-                vehicles: [...vehicles, vehicle],
-                newAddedVehicle: vehicle,
-              }));
-              vehicle && setOpenDropdown && setOpenDropdown(false);
-            }}
-          />
+          clientId && (
+            <NewVehicle
+              clientId={Number(clientId)}
+              newButton={
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-center gap-2 rounded-md bg-[#6571FF] px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-[#5A65F0]"
+                >
+                  <Plus className="w-4 h-4" /> New Vehicle
+                </button>
+              }
+              onAdd={(vehicle: Vehicle) => {
+                setVehicle(vehicle);
+                useListsStore.setState({ vehicle });
+                useListsStore.setState(({ vehicles }) => ({
+                  vehicles: [...vehicles, vehicle],
+                  newAddedVehicle: vehicle,
+                }));
+                vehicle && setOpenDropdown && setOpenDropdown(false);
+              }}
+            />
+          )
         }
         items={vehicleList?.filter(
-          (vehicle) => vehicle.clientId === +clientId!
+          (vehicle) => vehicle.clientId === +clientId!,
         )}
         onSearch={(search: string) =>
           vehicleList.filter(
             (vehicle) =>
               vehicle.make?.toLowerCase().includes(search.toLowerCase()) ||
               vehicle.model?.toLowerCase().includes(search.toLowerCase()) ||
-              vehicle.other?.toLowerCase().includes(search.toLowerCase())
+              vehicle.other?.toLowerCase().includes(search.toLowerCase()),
           )
         }
         openState={[
@@ -120,7 +133,7 @@ export function SelectVehicle({
                 handleClear();
                 setOpenDropdown && setOpenDropdown(false);
               }}
-              className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+              className="flex w-full items-center justify-center rounded-md border border-red-200 bg-red-50/70 px-3 py-2 text-sm font-semibold text-red-400 transition-colors duration-150 hover:bg-red-50"
             >
               Clear Vehicle
             </button>

@@ -17,7 +17,8 @@ const DateRange = ({
   dateRange?: [Date | null, Date | null];
 }) => {
   const pipelineStore = usePipelineFilterStore();
-  const currentRange = dateRangeProp || pipelineStore.dateRange;
+  const currentRange =
+    dateRangeProp !== undefined ? dateRangeProp : pipelineStore.dateRange;
   const isRangeSelected = currentRange[0] !== null && currentRange[1] !== null;
 
   const [state, setState] = useState({
@@ -64,7 +65,13 @@ const DateRange = ({
   }, []);
 
   const handleSelect = (ranges: any) => {
-    setTempRange(ranges.selection);
+    const { startDate, endDate, key } = ranges.selection;
+    // moveRangeOnFirstSelection=false keeps the previous endDate when user picks a
+    if (startDate > endDate) {
+      setTempRange({ startDate, endDate: startDate, key });
+    } else {
+      setTempRange(ranges.selection);
+    }
   };
 
   const togglePicker = () => {
@@ -112,8 +119,7 @@ const DateRange = ({
 
   return (
     <div ref={ref} className="relative z-50">
-      <button
-        onClick={togglePicker}
+      <div
         className={`
             flex w-full items-center justify-between gap-3 rounded-xl px-4 py-2.5 text-sm transition-all duration-300 ease-out
             ${
@@ -123,17 +129,56 @@ const DateRange = ({
             }
         `}
       >
-        <span
-          className={`font-medium ${isRangeSelected ? "text-slate-700 dark:text-slate-200" : "text-slate-400"}`}
+        <button
+          onClick={togglePicker}
+          className="flex flex-1 items-center gap-2 min-w-0"
+          type="button"
         >
-          {isRangeSelected
-            ? formatRange(state.selection.startDate, state.selection.endDate)
-            : "Select Date Range"}
-        </span>
-        <Calendar
-          className={`w-4 h-4 ${showPicker || isRangeSelected ? "text-[#6571FF]" : "text-slate-400"}`}
-        />
-      </button>
+          <span
+            className={`font-medium truncate ${isRangeSelected ? "text-slate-700 dark:text-slate-200" : "text-slate-400"}`}
+          >
+            {isRangeSelected
+              ? formatRange(state.selection.startDate, state.selection.endDate)
+              : "Select Date"}
+          </span>
+        </button>
+        {isRangeSelected ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCancel();
+            }}
+            className="text-slate-400 hover:text-red-500 transition-colors flex-shrink-0"
+            aria-label="Clear date range"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={togglePicker}
+            className="flex-shrink-0"
+          >
+            <Calendar
+              className={`w-4 h-4 ${showPicker ? "text-[#6571FF]" : "text-slate-400"}`}
+            />
+          </button>
+        )}
+      </div>
 
       {showPicker && (
         <div className="absolute left-0 top-full mt-2 z-50 w-[330px] lg:w-[560px] rounded-2xl border border-slate-100 bg-white p-3 lg:p-5 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.15)] ring-1 ring-slate-900/5 animate-in fade-in zoom-in-95 dark:bg-slate-900 dark:border-slate-800 dark:ring-white/10">

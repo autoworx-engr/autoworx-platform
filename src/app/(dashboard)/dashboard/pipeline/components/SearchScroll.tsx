@@ -1,6 +1,5 @@
 import { useDebounce } from "@/hooks/useDebounce";
 import { cn } from "@/lib/cn";
-import { usePipelineFilterStore } from "@/stores/PipelineFilterStore";
 import { EmployeeType } from "@prisma/client";
 import {
   ArrowDown,
@@ -11,7 +10,7 @@ import {
   X,
 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 
 interface SearchScrollProps {
   pipelineData: any[];
@@ -31,7 +30,13 @@ export default function SearchScroll({
   isTeamPipeline = false,
   employeeType,
 }: SearchScrollProps) {
-  const [searchTerm, setSearchTerm] = useState<string>("");
+  const pathname = usePathname() || "";
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
+
+  const urlSearch = searchParams?.get("search") ?? "";
+  const [searchTerm, setSearchTerm] = useState<string>(urlSearch);
   const [searchResults, setSearchResults] = useState<
     { columnIndex: number; leadIndex: number }[]
   >([]);
@@ -43,23 +48,40 @@ export default function SearchScroll({
   );
   const filterRef = useRef<HTMLDivElement>(null);
 
-  // const queryClient = useQueryClient();
+  // Always-current searchParams ref so the debounce callback never reads a stale closure
+  const searchParamsRef = useRef(searchParams);
+  useEffect(() => {
+    searchParamsRef.current = searchParams;
+  }, [searchParams]);
 
-  const pathname = usePathname() || "";
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  // Track the last value we pushed to the URL to distinguish self-pushes from
+  // external URL changes (e.g. another component clearing filters)
+  const lastPushedRef = useRef(urlSearch);
 
-  const isSalesPipeline = pathname.includes(
-    "/dashboard/pipeline/sales/pipeline",
-  );
-
-  const handleSearchChange = useDebounce(async (value: string) => {
-    try {
-      usePipelineFilterStore.setState({ searchTerm: value || "" });
-    } catch (err) {
-      // console.error("Error in handleSearchChange:", err);
+  // Only sync URL → input when the change came from outside this component
+  useEffect(() => {
+    if (urlSearch !== lastPushedRef.current) {
+      setSearchTerm(urlSearch);
+      lastPushedRef.current = urlSearch;
     }
-  }, 500);
+  }, [urlSearch]);
+
+  const handleSearchChange = useDebounce((value: string) => {
+    const params = new URLSearchParams(
+      searchParamsRef.current?.toString() ?? "",
+    );
+    if (value) {
+      params.set("search", value);
+    } else {
+      params.delete("search");
+    }
+    lastPushedRef.current = value;
+    startTransition(() => {
+      router.replace(
+        params.toString() ? `${pathname}?${params.toString()}` : pathname,
+      );
+    });
+  }, 300);
 
   // Handle clicks outside filter dropdown to close it
   useEffect(() => {
@@ -153,7 +175,16 @@ export default function SearchScroll({
   const handleClearSearch = () => {
     setSearchTerm("");
     setSearchResults([]);
-    usePipelineFilterStore.setState({ searchTerm: "" });
+    lastPushedRef.current = "";
+    // Cancel any pending debounce so it doesn't re-add the search param after we clear it
+    handleSearchChange("");
+    const params = new URLSearchParams(
+      searchParamsRef.current?.toString() ?? "",
+    );
+    params.delete("search");
+    router.replace(
+      params.toString() ? `${pathname}?${params.toString()}` : pathname,
+    );
     if (onSearchResult) onSearchResult(null);
   };
 
@@ -197,10 +228,12 @@ export default function SearchScroll({
     <div className="flex flex-col gap-2 rounded-lg border border-slate-100 bg-background p-2 shadow-sm sm:flex-row sm:items-center sm:justify-between mx-2">
       {/* Search input */}
       <div className="relative group flex flex-1 h-10 max-w-lg items-center rounded-md sm:w-auto">
-        <Search
-          size={18}
-          className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-[#6571FF]"
-        />
+        {
+          <Search
+            size={18}
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-[#6571FF]"
+          />
+        }
         <input
           type="text"
           value={searchTerm}

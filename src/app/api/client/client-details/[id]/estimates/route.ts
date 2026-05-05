@@ -32,8 +32,9 @@ import { db } from "@/lib/db";
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  props: { params: Promise<{ id: string }> },
 ) {
+  const params = await props.params;
   try {
     const clientId = parseInt(params.id);
     if (isNaN(clientId)) {
@@ -45,7 +46,10 @@ export async function GET(
 
     const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "10");
+    const limit = Math.min(
+      parseInt(searchParams.get("limit") || "10") || 10,
+      100,
+    );
     const skip = (page - 1) * limit;
 
     const [estimates, total] = await Promise.all([

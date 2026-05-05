@@ -2,7 +2,7 @@ import moment from "moment-timezone";
 export const formatTime12Hour = (
   hour24: number,
   minute: number,
-  timezone: string
+  timezone: string,
 ) => {
   // Create time in given timezone
   const time = moment.tz({ hour: hour24, minute }, timezone);

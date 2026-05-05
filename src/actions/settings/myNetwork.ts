@@ -88,7 +88,7 @@ export async function connectWithCompany({
     const title = "New Collaboration Invitation";
 
     await Promise.all(
-      targetUsers.map(user =>
+      targetUsers.map((user) =>
         sendUserNotifications({
           userId: user.id,
           userName: `${user.firstName} ${user.lastName}`,
@@ -311,8 +311,10 @@ export async function findNearbyCompanies(
     });
 
     // Extract connected company IDs
-    const connectedIds = connectedCompanyIds.flatMap(join =>
-      [join.companyOneId, join.companyTwoId].filter(id => id !== userCompanyId),
+    const connectedIds = connectedCompanyIds.flatMap((join) =>
+      [join.companyOneId, join.companyTwoId].filter(
+        (id) => id !== userCompanyId,
+      ),
     );
 
     // Step 2: Get all unconnected companies (excluding connected companies and your own company)
@@ -328,18 +330,20 @@ export async function findNearbyCompanies(
     });
 
     // Step 3: Filter unconnected companies by distance
-    const nearbyUnconnectedCompanies = unconnectedCompanies.filter(company => {
-      if (company.companyLatitude && company.companyLongitude) {
-        const distance = getDistanceFromLatLonInMiles(
-          latitude,
-          longitude,
-          company.companyLatitude,
-          company.companyLongitude,
-        );
-        return distance <= range[1] && distance >= range[0]; // Filter based on the distance range
-      }
-      return false;
-    });
+    const nearbyUnconnectedCompanies = unconnectedCompanies.filter(
+      (company) => {
+        if (company.companyLatitude && company.companyLongitude) {
+          const distance = getDistanceFromLatLonInMiles(
+            latitude,
+            longitude,
+            company.companyLatitude,
+            company.companyLongitude,
+          );
+          return distance <= range[1] && distance >= range[0]; // Filter based on the distance range
+        }
+        return false;
+      },
+    );
 
     return {
       success: true,

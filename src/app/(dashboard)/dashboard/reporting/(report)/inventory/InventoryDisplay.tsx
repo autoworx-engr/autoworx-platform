@@ -78,7 +78,7 @@ export default function InventoryDisplay({
     const purchaseHistory = product.InventoryProductHistory.filter(
       (history) => {
         return history.type === "Purchase";
-      }
+      },
     );
     const stockQuantity = product.quantity ?? 0;
     const { totalSalesPrice, quantitySold } = salesHistory.reduce(
@@ -91,21 +91,21 @@ export default function InventoryDisplay({
       {
         totalSalesPrice: 0,
         quantitySold: 0,
-      }
+      },
     );
 
     const averageSales = Math.round(
-      totalSalesPrice / (quantitySold || 1)
+      totalSalesPrice / (quantitySold || 1),
     ) as number;
 
     const totalPurchaseQuantity = purchaseHistory.reduce(
       (acc, history) => acc + Number(history.quantity),
-      0
+      0,
     );
 
     const totalPurchasePrice = purchaseHistory.reduce(
       (acc, history) => acc + Number(history.price) * Number(history.quantity),
-      0
+      0,
     );
 
     const averageCost =
@@ -129,7 +129,7 @@ export default function InventoryDisplay({
           stockQuantity: Number(stockQuantity),
         },
         productInfo: productInfo,
-      }))
+      })),
     );
     return acc;
   }, [] as TInventoryPurchaseHistory);
@@ -195,12 +195,18 @@ export default function InventoryDisplay({
                   <tr className="h-10 border-b">
                     <th className="border-b px-4 py-2 text-left">Product #</th>
                     <th className="border-b px-4 py-2 text-left">Name </th>
-                    <th className="border-b px-4 py-2 text-left">Average Cost</th>
-                    <th className="border-b px-4 py-2 text-left">Average Sell</th>
+                    <th className="border-b px-4 py-2 text-left">
+                      Average Cost
+                    </th>
+                    <th className="border-b px-4 py-2 text-left">
+                      Average Sell
+                    </th>
                     <th className="border-b px-4 py-2 text-left">Stock Qty.</th>
                     <th className="border-b px-4 py-2 text-left">Qty. Sold</th>
                     <th className="border-b px-4 py-2 text-left">Type</th>
-                    <th className="border-b px-4 py-2 text-left">ROI Average</th>
+                    <th className="border-b px-4 py-2 text-left">
+                      ROI Average
+                    </th>
                     <th className="border-b px-4 py-2 text-left">
                       Purchase Date
                     </th>
@@ -254,7 +260,7 @@ export default function InventoryDisplay({
             index={
               currentPage > 1 ? index + pageSize * (currentPage - 1) : index
             }
-          // timezone={timezone}
+            // timezone={timezone}
           />
         ))}
       </div>

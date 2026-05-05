@@ -64,7 +64,7 @@ export const addMailgunDomain = async ({
         Authorization:
           "Basic " +
           Buffer.from(
-            `${process.env.MAILGUN_USERNAME}:${process.env.MAILGUN_API_KEY}`
+            `${process.env.MAILGUN_USERNAME}:${process.env.MAILGUN_API_KEY}`,
           ).toString("base64"),
       },
       body: form,
@@ -114,10 +114,10 @@ export const verifyMailgunDomain = async (companyId?: number) => {
           Authorization:
             "Basic " +
             Buffer.from(
-              `${process.env.MAILGUN_USERNAME}:${process.env.MAILGUN_API_KEY}`
+              `${process.env.MAILGUN_USERNAME}:${process.env.MAILGUN_API_KEY}`,
             ).toString("base64"),
         },
-      }
+      },
     );
 
     const data = await resp.json();

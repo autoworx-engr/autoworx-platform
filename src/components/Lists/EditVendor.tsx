@@ -1,5 +1,6 @@
 "use client";
 
+import type { JSX } from "react";
 import { editVendor } from "@/actions/vendor/editVendor";
 import {
   Dialog,
@@ -53,10 +54,10 @@ export default function EditVendor({
 
     // Get values directly from DOM using document.querySelector
     const name = document.querySelector<HTMLInputElement>(
-      "[name='contactName']"
+      "[name='contactName']",
     )?.value as string;
     const company = document.querySelector<HTMLInputElement>(
-      "[name='companyName']"
+      "[name='companyName']",
     )?.value;
     // const phone =
     //   document.querySelector<HTMLInputElement>("[name='phone']")?.value;
@@ -127,7 +128,7 @@ export default function EditVendor({
     if (
       website &&
       !/^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/.test(
-        website
+        website,
       )
     ) {
       showError({
@@ -344,7 +345,7 @@ export default function EditVendor({
                 if (
                   value &&
                   !/^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/.test(
-                    value
+                    value,
                   )
                 ) {
                   showError({

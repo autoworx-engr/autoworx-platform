@@ -1,8 +1,8 @@
-'use server';
+"use server";
 
-import { db } from '@/lib/db';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/authOptions';
+import { db } from "@/lib/db";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/authOptions";
 
 // Get client tags only
 export const getClientTags = async () => {
@@ -11,23 +11,23 @@ export const getClientTags = async () => {
     const companyId = session?.user.companyId;
 
     if (!companyId) {
-      throw new Error('Company ID is required');
+      throw new Error("Company ID is required");
     }
 
     const tags = await db.tag.findMany({
       where: {
         companyId: companyId,
-        type: 'CLIENT',
+        type: "CLIENT",
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
 
-    return { type: 'success', data: tags };
+    return { type: "success", data: tags };
   } catch (error) {
-    console.error('Error fetching client tags:', error);
-    return { type: 'error', message: 'Failed to fetch client tags' };
+    console.error("Error fetching client tags:", error);
+    return { type: "error", message: "Failed to fetch client tags" };
   }
 };
 
@@ -42,23 +42,23 @@ export const createClientTag = async (data: {
     const companyId = session?.user.companyId;
 
     if (!companyId) {
-      throw new Error('Company ID is required');
+      throw new Error("Company ID is required");
     }
 
     const newTag = await db.tag.create({
       data: {
         name: data.name,
-        textColor: data.textColor || '#000000',
-        bgColor: data.bgColor || '#ffffff',
-        type: 'CLIENT',
+        textColor: data.textColor || "#000000",
+        bgColor: data.bgColor || "#ffffff",
+        type: "CLIENT",
         companyId: companyId,
       },
     });
 
-    return { type: 'success', data: newTag };
+    return { type: "success", data: newTag };
   } catch (error) {
     // console.error("Error creating client tag:", error);
-    return { type: 'error', message: 'Failed to create client tag' };
+    return { type: "error", message: "Failed to create client tag" };
   }
 };
 
@@ -69,31 +69,24 @@ export const deleteClientTag = async (tagId: number) => {
     const companyId = session?.user.companyId;
 
     if (!companyId) {
-      throw new Error('Company ID is required');
+      throw new Error("Company ID is required");
     }
 
-    // Check if tag belongs to current company and is a client tag
-    const tag = await db.tag.findFirst({
+    const result = await db.tag.deleteMany({
       where: {
         id: tagId,
         companyId: companyId,
-        type: 'CLIENT',
+        type: "CLIENT",
       },
     });
 
-    if (!tag) {
-      throw new Error('Tag not found or not authorized');
+    if (result.count === 0) {
+      return { type: "error", message: "Tag not found or not authorized" };
     }
 
-    await db.tag.delete({
-      where: {
-        id: tagId,
-      },
-    });
-
-    return { type: 'success', message: 'Client tag deleted successfully' };
+    return { type: "success", message: "Client tag deleted successfully" };
   } catch (error) {
-    console.error('Error deleting client tag:', error);
-    return { type: 'error', message: 'Failed to delete client tag' };
+    // console.error("Error deleting client tag:", error);
+    return { type: "error", message: "Failed to delete client tag" };
   }
 };

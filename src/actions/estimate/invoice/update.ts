@@ -28,7 +28,6 @@ import {
 import { updateServiceAutomationTrigger } from "@/service/service-maintenance-automation-trigger/api";
 import { sendInvoiceDeliveredNotification } from "@/lib/notification/invoice-notify";
 import { updateInvoiceAutomationTrigger } from "@/service/invoice-automation-trigger/api";
-import { Decimal } from "@prisma/client/runtime/library";
 
 interface UpdateEstimateInput {
   id: string;
@@ -72,25 +71,40 @@ interface UpdateEstimateInput {
 //     return new Promise(resolve => setTimeout(resolve, ms));
 // }
 
-     const hasInvoiceChanged = (
+const hasInvoiceChanged = (
   invoice: Invoice | null,
-  data: UpdateEstimateInput
+  data: UpdateEstimateInput,
 ): boolean => {
- if (!invoice) return false;
-  const decimalChanged = (dbValue: Decimal | null | undefined, newValue: number) => {
-    return new Decimal(newValue ?? 0).toString() !== (dbValue ?? new Decimal(0)).toString();
+  if (!invoice) return false;
+
+  const nullishEqual = <T>(a: T | null | undefined, b: T | null | undefined) =>
+    (a ?? null) === (b ?? null);
+
+  const normalizedText = (value: string | null | undefined) => value ?? "";
+
+  const decimalChanged = (
+    dbValue: Prisma.Decimal | null | undefined,
+    newValue: number,
+  ) => {
+    return (
+      new Prisma.Decimal(newValue ?? 0).toString() !==
+      (dbValue ?? new Prisma.Decimal(0)).toString()
+    );
   };
 
   return (
-    invoice.clientId !== data.clientId ||
-    invoice.vehicleId !== data.vehicleId ||
-    invoice.columnId !== data.columnId ||
-    invoice.internalNotes !== data.internalNotes ||
-    invoice.terms !== data.terms ||
-    invoice.policy !== data.policy ||
-    invoice.customerNotes !== data.customerNotes ||
-    invoice.customerComments !== data.customerComments ||
-    invoice.damageNotes !== data.damageNotes ||
+    !nullishEqual(invoice.clientId, data.clientId) ||
+    !nullishEqual(invoice.vehicleId, data.vehicleId) ||
+    !nullishEqual(invoice.columnId, data.columnId) ||
+    normalizedText(invoice.internalNotes) !==
+      normalizedText(data.internalNotes) ||
+    normalizedText(invoice.terms) !== normalizedText(data.terms) ||
+    normalizedText(invoice.policy) !== normalizedText(data.policy) ||
+    normalizedText(invoice.customerNotes) !==
+      normalizedText(data.customerNotes) ||
+    normalizedText(invoice.customerComments) !==
+      normalizedText(data.customerComments) ||
+    normalizedText(invoice.damageNotes) !== normalizedText(data.damageNotes) ||
     decimalChanged(invoice.subtotal, data.subtotal) ||
     decimalChanged(invoice.discount, data.discount) ||
     decimalChanged(invoice.tax, data.tax) ||
@@ -110,8 +124,6 @@ export async function updateInvoice(
 
     const companyId = await getCompanyId();
 
- 
-
     //find invoice from database
     const invoice = await db.invoice.findUnique({
       where: {
@@ -126,17 +138,15 @@ export async function updateInvoice(
       },
     });
 
-   const isChanged = hasInvoiceChanged(invoice, data);
+    const isChanged = hasInvoiceChanged(invoice, data);
 
     const column = await db.column.findUnique({
       where: { id: data.columnId },
     });
 
-  
-
     // use prisma transaction for better performance or safely save data in db
     const updatedInvoice = await db.$transaction(
-      async txDb => {
+      async (txDb) => {
         // await wait(21000);
 
         // merge all the same products and sum the quantity
@@ -148,7 +158,7 @@ export async function updateInvoice(
           if (itemMaterials) {
             materials = [
               ...materials,
-              ...itemMaterials.filter(material => material !== null),
+              ...itemMaterials.filter((material) => material !== null),
             ];
           }
         }
@@ -244,7 +254,7 @@ export async function updateInvoice(
 
         // create or update photos
         const updatedInvoicePhotos = await Promise.all(
-          data?.photos?.map(async photo => {
+          data?.photos?.map(async (photo) => {
             if (!photo.id) {
               return txDb.invoicePhoto.create({
                 data: {
@@ -263,7 +273,7 @@ export async function updateInvoice(
             invoiceId: data.id,
             id: {
               notIn: updatedInvoicePhotos
-                ?.map(photo => photo.id)
+                ?.map((photo) => photo.id)
                 .filter(Boolean) as number[],
             },
           },
@@ -277,7 +287,7 @@ export async function updateInvoice(
         });
 
         // create new inspections
-        const inspectionsToSave = data.inspections.filter(inspection => {
+        const inspectionsToSave = data.inspections.filter((inspection) => {
           const hasTitle =
             !!inspection.title && inspection.title.toString().trim() !== "";
           const hasFlags = !!inspection.driver || !!inspection.passenger;
@@ -288,7 +298,7 @@ export async function updateInvoice(
 
         if (inspectionsToSave.length > 0) {
           await Promise.all(
-            inspectionsToSave.map(async inspection => {
+            inspectionsToSave.map(async (inspection) => {
               return txDb.invoiceInspection.create({
                 data: {
                   invoiceId: data.id,
@@ -303,7 +313,7 @@ export async function updateInvoice(
         }
 
         const updatedInvoiceItem = await Promise.all(
-          data.items?.map(async item => {
+          data.items?.map(async (item) => {
             let findExistingItem = null;
             if (Number(item?.id)) {
               findExistingItem = await txDb.invoiceItem.findUnique({
@@ -385,7 +395,7 @@ export async function updateInvoice(
 
               if (item?.materials?.length > 0) {
                 materials = await Promise.all(
-                  item.materials.map(async material => {
+                  item.materials.map(async (material) => {
                     const hasMaterialInInvoice = await txDb.material.findFirst({
                       where: {
                         id: material?.id,
@@ -451,14 +461,14 @@ export async function updateInvoice(
                   id: {
                     notIn: materials
                       ?.filter(Boolean)
-                      .map(material => material?.id),
+                      .map((material) => material?.id),
                   },
                 },
               });
 
               const tags = item.tags;
 
-              const tagsCreatePromise = tags.map(async tag => {
+              const tagsCreatePromise = tags.map(async (tag) => {
                 let hasTagsExist = await txDb.itemTag.findFirst({
                   where: {
                     tagId: tag?.id,
@@ -483,7 +493,7 @@ export async function updateInvoice(
                 where: {
                   itemId: findExistingItem.id,
                   tagId: {
-                    notIn: tags.map(tag => tag.id),
+                    notIn: tags.map((tag) => tag.id),
                   },
                 },
               });
@@ -517,7 +527,7 @@ export async function updateInvoice(
 
               item?.materials?.length > 0 &&
                 (await Promise.all(
-                  item.materials.map(async material => {
+                  item.materials.map(async (material) => {
                     if (!material || !material.name) return;
                     if (Number(material?.quantity || 0) <= 0) {
                       throw new Error(
@@ -545,7 +555,7 @@ export async function updateInvoice(
 
               const tags = item.tags;
 
-              const tagsCreatePromise = tags.map(async tag => {
+              const tagsCreatePromise = tags.map(async (tag) => {
                 await txDb.itemTag.create({
                   data: {
                     itemId: newInvoiceItem.id,
@@ -567,7 +577,7 @@ export async function updateInvoice(
             NOT: {
               id: {
                 in: updatedInvoiceItem
-                  .map(item => item.id)
+                  .map((item) => item.id)
                   .filter(Boolean) as number[],
               },
             },
@@ -604,12 +614,20 @@ export async function updateInvoice(
             completedAt,
             deliveredAt,
             damageNotes: data.damageNotes,
-            authorizedName: fromPayment ? undefined : isChanged ? null : invoice?.authorizedName,
-            signatureImage: fromPayment ? undefined : isChanged ? null : invoice?.signatureImage,
+            authorizedName: fromPayment
+              ? undefined
+              : isChanged
+                ? null
+                : invoice?.authorizedName,
+            signatureImage: fromPayment
+              ? undefined
+              : isChanged
+                ? null
+                : invoice?.signatureImage,
             isViewed: false,
             serviceIndex: JSON.stringify(
               updatedInvoiceItem
-                .map(item => item?.id)
+                .map((item) => item?.id)
                 .filter(Boolean)
                 .sort((a, b) => a - b),
             ),
@@ -685,7 +703,7 @@ export async function updateInvoice(
 
     // task create or update this section
     const invoiceTasks = await Promise.all(
-      data?.tasks?.map(async task => {
+      data?.tasks?.map(async (task) => {
         // if task.id is undefined, create a new task
         if (task.id === undefined) {
           const response = await createTask({
@@ -722,7 +740,9 @@ export async function updateInvoice(
       where: {
         invoiceId: data.id,
         id: {
-          notIn: invoiceTasks.map(task => task?.id).filter(Boolean) as number[],
+          notIn: invoiceTasks
+            .map((task) => task?.id)
+            .filter(Boolean) as number[],
         },
       },
     });
@@ -772,7 +792,7 @@ export async function updateInvoice(
           );
 
           // Wait before retry (exponential backoff)
-          await new Promise(resolve =>
+          await new Promise((resolve) =>
             setTimeout(resolve, Math.pow(2, retryCount) * 1000),
           );
 

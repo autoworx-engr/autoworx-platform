@@ -66,7 +66,7 @@ export default function CompanyMessageBox({
     "/communication/collaboration",
   );
 
-  // 🔹 Load messages
+  // Load messages
   useEffect(() => {
     if (!companyId || !currentCompanyId) return;
 
@@ -89,7 +89,7 @@ export default function CompanyMessageBox({
     fetchMessages();
   }, [companyId, currentCompanyId]);
 
-  // 🔹 Auto scroll
+  // Auto scroll
   useEffect(() => {
     if (messageBoxRef.current) {
       messageBoxRef.current.scrollTop = messageBoxRef.current.scrollHeight;
@@ -118,17 +118,17 @@ export default function CompanyMessageBox({
       const toId = Number(data.toCompanyId);
       const currentId = Number(currentCompanyId);
       const chatId = Number(companyId);
-      console.log({
-        fromId,
-        toId,
-        currentId,
-        chatId,
-      });
       if (
         (fromId === currentId && toId === chatId) ||
         (fromId === chatId && toId === currentId)
       ) {
-        setMessages((prev) => [...prev, data]);
+        const normalizedMessage = {
+          ...data,
+          attachments: data.attachments ?? data.attachmentFiles ?? [],
+          isOwnMessage: fromId === currentId,
+        };
+
+        setMessages((prev) => [...prev, normalizedMessage]);
       }
     });
 
@@ -310,48 +310,49 @@ export default function CompanyMessageBox({
                 {/* Attachments */}
                 {msg?.attachments &&
                   msg?.attachments.length > 0 &&
-                  msg?.attachments.map((attachment: any) => (
-                    <div
-                      key={attachment.fileUrl}
-                      className={cn(
-                        "flex items-center gap-2",
-                        isOwn ? "flex-row-reverse" : "flex-row",
-                      )}
-                    >
-                      {attachment.fileType?.includes("image") ? (
-                        <Image
-                          src={attachment.fileUrl}
-                          alt=""
-                          width={200}
-                          height={200}
-                          className="rounded-md border cursor-pointer"
-                        />
-                      ) : attachment.fileType?.includes("video") ? (
-                        <video
-                          src={attachment.fileUrl}
-                          className="h-40 w-60 rounded-md border cursor-pointer"
-                          controls
-                        />
-                      ) : (
-                        <div className="rounded-md bg-[#006D77] px-4 py-2 text-white">
-                          <p className="text-sm">{attachment.fileName}</p>
-                          <p className="text-xs">
-                            {(attachment.fileSize / (1024 * 1024)).toFixed(2)}{" "}
-                            MB
-                          </p>
-                        </div>
-                      )}
-
-                      <button
-                        onClick={() => handleDownload(attachment.fileUrl)}
+                  msg?.attachments.map((attachment: any) => {
+                    return (
+                      <div
+                        key={attachment.fileUrl}
+                        className={cn(
+                          "flex items-center gap-2",
+                          isOwn ? "flex-row-reverse" : "flex-row",
+                        )}
                       >
-                        <CloudDownload
-                          size={22}
-                          className="cursor-pointer text-gray-400"
-                        />
-                      </button>
-                    </div>
-                  ))}
+                        {attachment.fileType?.includes("image") ? (
+                          <Image
+                            src={attachment.fileUrl}
+                            alt=""
+                            width={200}
+                            height={200}
+                            className="rounded-md border cursor-pointer"
+                          />
+                        ) : attachment.fileType?.includes("video") ? (
+                          <video
+                            src={attachment.fileUrl}
+                            className="h-40 w-60 rounded-md border cursor-pointer"
+                            controls
+                          />
+                        ) : (
+                          <div className="rounded-md bg-[#006D77] px-4 py-2 text-white">
+                            <p className="text-sm">{attachment?.fileName}</p>
+                            <p className="text-xs">
+                              {attachment?.fileSize && attachment?.fileSize}
+                            </p>
+                          </div>
+                        )}
+
+                        <button
+                          onClick={() => handleDownload(attachment?.fileUrl)}
+                        >
+                          <CloudDownload
+                            size={22}
+                            className="cursor-pointer text-gray-400"
+                          />
+                        </button>
+                      </div>
+                    );
+                  })}
 
                 {/* Request Estimate */}
                 {msg?.requestEstimate && (
@@ -360,7 +361,7 @@ export default function CompanyMessageBox({
                       <InvoiceModal
                         invoiceId={msg?.requestEstimate?.invoiceId}
                         buttonChild={
-                          <button className="w-96 rounded-md bg-[#006D77] p-1">
+                          <button className="w-full max-w-sm rounded-md bg-[#006D77] p-1">
                             <div className="flex items-center justify-center gap-x-2 rounded-md border border-white p-5">
                               <Image
                                 src="/icons/navbar/Invoices.svg"
@@ -380,7 +381,7 @@ export default function CompanyMessageBox({
                       <Link
                         href={`/dashboard/estimate/edit/${msg?.requestEstimate.invoiceId}`}
                         className={cn(
-                          "w-96 rounded-md bg-[#006D77] p-1",
+                          "w-full max-w-sm rounded-md bg-[#006D77] p-1",
                           !msg?.isOwnMessage && "bg-[#D9D9D9]",
                         )}
                       >

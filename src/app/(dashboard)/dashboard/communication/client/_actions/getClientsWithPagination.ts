@@ -44,71 +44,61 @@ export const getClientsWithPagination = cache(
       }));
     }
 
-    const queryObj: Prisma.ClientFindManyArgs = {
-      where: baseWhere,
-      include: {
-        conversationsTrack: true,
-      },
-    };
+    // Build the filter-specific where clause once, then push pagination and
+    // ordering down to the database instead of fetching every match into memory.
+    let where: Prisma.ClientWhereInput = baseWhere;
+    switch (filter) {
+      case "Unread":
+        where = {
+          ...baseWhere,
+          conversationsTrack: {
+            OR: [{ emailIsRead: false }, { smsIsRead: false }],
+          },
+        };
+        break;
+      case "Starred":
+        where = { ...baseWhere, isStarred: true };
+        break;
+      case "Assigned":
+        where = {
+          ...baseWhere,
+          Lead: { assignedSalesUserId: { in: [Number(user.id)] } },
+        };
+        break;
+      default:
+        // baseWhere is already correct
+        break;
+    }
+
+    const orderBy: Prisma.ClientOrderByWithRelationInput[] = [
+      { conversationsTrack: { sendAt: "desc" } },
+      { conversationsTrack: { updatedAt: "desc" } },
+      { createdAt: "desc" },
+    ];
 
     try {
-      let allClients: any[] = [];
+      const [pageClients, total] = await Promise.all([
+        db.client.findMany({
+          where,
+          include: { conversationsTrack: true },
+          orderBy,
+          skip,
+          take,
+        }),
+        db.client.count({ where }),
+      ]);
 
-      switch (filter) {
-        case "Unread":
-          allClients = await db.client.findMany({
-            ...queryObj,
-            where: {
-              ...queryObj.where,
-              conversationsTrack: {
-                OR: [{ emailIsRead: false }, { smsIsRead: false }],
-              },
-            },
-          });
-          break;
-
-        case "Starred":
-          allClients = await db.client.findMany({
-            ...queryObj,
-            where: {
-              ...queryObj.where,
-              isStarred: true,
-            },
-          });
-          break;
-
-        case "Assigned":
-          allClients = await db.client.findMany({
-            ...queryObj,
-            where: {
-              ...queryObj.where,
-              Lead: {
-                assignedSalesUserId: {
-                  in: [Number(user.id)],
-                },
-              },
-            },
-          });
-          break;
-
-        default:
-          allClients = await db.client.findMany(queryObj);
-      }
-
-      // 🔥 JS-level sorting
-      const sortedClients = clientSortByUpdatedMessage(allClients);
-
-      // ✅ Proper pagination
-      const paginatedClients = sortedClients.slice(skip, skip + take);
+      // Refine ordering on the small page (tiebreakers + has-messages priority).
+      const paginatedClients = clientSortByUpdatedMessage(pageClients);
 
       return {
         data: paginatedClients,
         meta: {
           page,
           take,
-          total: sortedClients.length,
-          totalPages: Math.ceil(sortedClients.length / take),
-          hasNextPage: skip + take < sortedClients.length,
+          total,
+          totalPages: Math.ceil(total / take),
+          hasNextPage: skip + take < total,
         },
       };
     } catch (err) {

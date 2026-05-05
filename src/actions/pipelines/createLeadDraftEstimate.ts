@@ -9,8 +9,13 @@ import { TErrorHandler } from "@/types/globalError";
 import { TCreateDraftEstimateValidationSchema } from "@/validations/schemas/pipeline/draftEstimate.validation";
 import { getServerSession } from "next-auth";
 
-async function getClientByLead(leadId: number) {
-  const client = await db.client.findFirst({
+type PrismaTx = Omit<
+  typeof db,
+  "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
+>;
+
+async function getClientByLead(tx: PrismaTx, leadId: number) {
+  const client = await tx.client.findFirst({
     where: { leadId },
     include: {
       Lead: {
@@ -21,15 +26,15 @@ async function getClientByLead(leadId: number) {
 
   if (!client) {
     throw new Error(
-      "No client found for this lead. Please attach a client before creating an estimate."
+      "No client found for this lead. Please attach a client before creating an estimate.",
     );
   }
 
   return client;
 }
 
-async function getPendingColumn(companyId: number) {
-  const column = await db.column.findFirst({
+async function getPendingColumn(tx: PrismaTx, companyId: number) {
+  const column = await tx.column.findFirst({
     where: {
       companyId,
       title: "Pending",
@@ -39,7 +44,7 @@ async function getPendingColumn(companyId: number) {
 
   if (!column) {
     throw new Error(
-      "Pending column not found. Please configure your pipeline columns properly."
+      "Pending column not found. Please configure your pipeline columns properly.",
     );
   }
 
@@ -48,7 +53,7 @@ async function getPendingColumn(companyId: number) {
 
 // Main
 export const createLeadDraftEstimate = async function (
-  draftEstimate: TCreateDraftEstimateValidationSchema
+  draftEstimate: TCreateDraftEstimateValidationSchema,
 ): Promise<ServerAction | TErrorHandler> {
   try {
     const session = await getServerSession(authOptions);
@@ -59,12 +64,12 @@ export const createLeadDraftEstimate = async function (
 
     if (!leadId || !clientId) {
       throw new Error(
-        "Lead ID and Client ID are required to create an estimate."
+        "Lead ID and Client ID are required to create an estimate.",
       );
     }
 
     const response = await db.$transaction(async (tx) => {
-      const client = await getClientByLead(leadId);
+      const client = await getClientByLead(tx, leadId);
 
       const existingEstimate = await tx.invoice.findFirst({
         where: { clientId: client.id },
@@ -78,7 +83,7 @@ export const createLeadDraftEstimate = async function (
         } satisfies ServerAction;
       }
 
-      const pendingColumn = await getPendingColumn(session.user.companyId);
+      const pendingColumn = await getPendingColumn(tx, session.user.companyId);
 
       await tx.lead.update({
         where: { id: leadId },
@@ -100,13 +105,13 @@ export const createLeadDraftEstimate = async function (
         },
       });
 
-      await sendEstimateCreateNotification({
-        companyId: newEstimate?.companyId,
-        invoiceId: newEstimate.id,
-        invoiceType: newEstimate.type,
-        clientName:
-          `${newEstimate.client?.firstName ?? ""} ${newEstimate.client?.lastName ?? ""}`.trim(),
-      });
+      // await sendEstimateCreateNotification({
+      //   companyId: newEstimate?.companyId,
+      //   invoiceId: newEstimate.id,
+      //   invoiceType: newEstimate.type,
+      //   clientName:
+      //     `${newEstimate.client?.firstName ?? ""} ${newEstimate.client?.lastName ?? ""}`.trim(),
+      // });
 
       return {
         type: "success",

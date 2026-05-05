@@ -2,7 +2,6 @@
 import { PermissionsResult } from "@/lib/getPermissions";
 import { create } from "zustand";
 
-
 type PermissionStore = {
   // if you prefer, store them in a single "permissions" object
   permissions: PermissionsResult | null;

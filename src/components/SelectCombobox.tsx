@@ -1,5 +1,6 @@
 "use client";
 
+import type { JSX } from "react";
 import { cn } from "@/lib/cn";
 import React, {
   ChangeEvent,

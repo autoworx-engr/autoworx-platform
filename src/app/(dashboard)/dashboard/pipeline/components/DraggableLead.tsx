@@ -1,5 +1,5 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { SetStateAction, useEffect, useRef, useState, useMemo } from "react";
+import { SetStateAction, useEffect, useRef, useState } from "react";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import {
   draggable,
@@ -11,6 +11,7 @@ import {
   ArrowRightLeft,
   BookCheck,
   Calendar,
+  CalendarCheck,
   CirclePlus,
   MessageCircleMore,
 } from "lucide-react";
@@ -86,9 +87,10 @@ type DraggableLeadProps = {
     leadIndex: number,
   ) => void;
   isTechnician: boolean | undefined;
-  setSelectedClientId: (value: SetStateAction<number | null>) => void;
-  setSelectedVehicleId: (value: SetStateAction<number | null>) => void;
-  setIsAppointmentModalOpen: (value: SetStateAction<boolean>) => void;
+  setSelectedClientId?: (value: SetStateAction<number | null>) => void;
+  setSelectedVehicleId?: (value: SetStateAction<number | null>) => void;
+  setSelectedAppointmentId?: (value: SetStateAction<number | null>) => void;
+  setIsAppointmentModalOpen?: (value: SetStateAction<boolean>) => void;
   searchTerm?: string;
   userId?: number;
 };
@@ -121,6 +123,7 @@ const DraggableLead = ({
   isTechnician,
   setSelectedClientId,
   setSelectedVehicleId,
+  setSelectedAppointmentId,
   setIsAppointmentModalOpen,
   searchTerm,
   userId,
@@ -180,14 +183,6 @@ const DraggableLead = ({
     return "";
   };
 
-  const isSearchMatch = useMemo(() => {
-    if (!searchTerm) return false;
-    const lowerSearchTerm = searchTerm.toLowerCase();
-    const nameMatch = (lead.name || "").toLowerCase().includes(lowerSearchTerm);
-    const vehicleMatch =
-      lead.vehicle && lead.vehicle.toLowerCase().includes(lowerSearchTerm);
-    return nameMatch || vehicleMatch;
-  }, [searchTerm, lead]);
   return (
     <li
       ref={(el) => {
@@ -196,7 +191,7 @@ const DraggableLead = ({
       }}
       className={`max-w-auto relative mx-1 my-1 h-fit animate-none rounded-xl border p-1 duration-300 hover:bg-slate-100 ${
         isTeamPipeline ? "cursor-default" : "cursor-grab active:cursor-grabbing"
-      } ${isDropTarget ? "ring-2 ring-blue-500 bg-blue-50" : ""} ${isSearchMatch ? "bg-yellow-100 border-yellow-300" : "bg-background"}`}
+      } ${isDropTarget ? "ring-2 ring-blue-500 bg-blue-50" : ""}  bg-background`}
       style={{
         opacity: isDragging ? 0.5 : 1,
       }}
@@ -458,27 +453,37 @@ const DraggableLead = ({
           {!isTeamPipeline && (
             <button
               onClick={() => {
-                // removeClientIdFromParams();
                 if (!searchParams) return;
                 if (lead?.clientId) {
                   const params = new URLSearchParams(searchParams.toString());
                   params.set("clientId", lead?.clientId?.toString());
                   router.push(`${pathname}?${params.toString()}`);
-
-                  setSelectedClientId(lead?.clientId);
+                  setSelectedClientId?.(lead.clientId);
                 }
-
                 if (lead?.vehicleId) {
-                  setSelectedVehicleId(lead?.vehicleId);
+                  setSelectedVehicleId?.(lead.vehicleId);
                 }
-                setIsAppointmentModalOpen(true);
+                if (lead?.appointment?.id) {
+                  setSelectedAppointmentId?.(lead.appointment.id);
+                } else {
+                  setSelectedAppointmentId?.(null);
+                }
+                setIsAppointmentModalOpen?.(true);
               }}
               className="group relative"
             >
-              <Calendar
-                size={18}
-                className={`mt-1 ${isTechnician ? "hidden" : ""}`}
-              />
+              {lead?.appointment ? (
+                <CalendarCheck
+                  size={18}
+                  color="#6571FF"
+                  className={`mt-1 ${isTechnician ? "hidden" : ""}`}
+                />
+              ) : (
+                <Calendar
+                  size={18}
+                  className={`mt-1 ${isTechnician ? "hidden" : ""}`}
+                />
+              )}
               <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
                 Appointment
               </span>

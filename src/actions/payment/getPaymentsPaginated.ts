@@ -42,6 +42,7 @@ const MAX_PAGE_SIZE = 200;
 const paymentListSelect = {
   id: true,
   invoiceId: true,
+  notes: true,
   date: true,
   amount: true,
   tip: true,
@@ -278,9 +279,29 @@ function buildWhereInput(
   return where;
 }
 
+function parseNotes(notes: string | null): Record<string, any> {
+  if (!notes) return {};
+  try {
+    return JSON.parse(notes);
+  } catch {
+    return {};
+  }
+}
+
 function mapPayment(payment: PaymentListRecord): ReturnPayment {
   const clientFirstName = payment.invoice?.client?.firstName ?? "";
   const clientLastName = payment.invoice?.client?.lastName ?? "";
+
+  const invoiceClientName = `${clientFirstName} ${clientLastName}`.trim();
+
+  const parsedNotes = parseNotes(payment.notes);
+  const giftCardPurchaserName =
+    !invoiceClientName &&
+    (parsedNotes.source === "virtual_shop_gift_card" ||
+      parsedNotes.source === "virtual_shop_gift_card_purchase" ||
+      parsedNotes.source === "virtual_shop_gift_card_reload")
+      ? (parsedNotes.purchaserName as string | undefined)
+      : undefined;
 
   const vehicle = [
     payment.invoice?.vehicle?.year,
@@ -296,7 +317,7 @@ function mapPayment(payment: PaymentListRecord): ReturnPayment {
     invoiceId: payment.invoiceId || "",
     client: {
       id: payment.invoice?.client?.id,
-      name: `${clientFirstName} ${clientLastName}`.trim(),
+      name: invoiceClientName || giftCardPurchaserName || "",
     },
     vehicle,
     date: payment.date as Date,

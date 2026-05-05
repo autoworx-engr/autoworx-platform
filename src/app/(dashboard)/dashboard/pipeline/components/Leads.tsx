@@ -4,6 +4,10 @@ import {
   getLeadsWithCountOptimized as getLeadsWithCount,
   updateLeadColumn,
 } from "@/actions/pipelines/getLeads";
+import {
+  getLeadFilterOptions,
+  LeadFilterOptions,
+} from "@/actions/pipelines/getLeadFilterOptions";
 import { getCompanyUser } from "@/actions/user/getCompanyUser";
 import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
 import DateRange from "@/components/DateRange";
@@ -16,15 +20,8 @@ import { usePopupStore } from "@/stores/popup";
 import { LeadWithSalesUser } from "@/types/invoiceLead";
 import SessionUserType from "@/types/sessionUserType";
 import { Appointment, Column, User } from "@prisma/client";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Pagination, Select } from "antd";
-import {
-  Calendar,
-  CalendarCheck,
-  ChevronDown,
-  MessageCircleMore,
-  Search,
-} from "lucide-react";
+import { Calendar, CalendarCheck, MessageCircleMore } from "lucide-react";
 import moment from "moment";
 import { customAlphabet } from "nanoid";
 import Image from "next/image";
@@ -33,16 +30,16 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React, {
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
   useTransition,
 } from "react";
-import toast from "react-hot-toast";
+
+import LeadsFilterDropdown, { LeadFilter } from "./LeadsFilterDropdown";
+import LeadsSearch from "./LeadsSearch";
 import { LeadsMobileSkeleton } from "./LeadsMobileSkeleton";
 import { LeadsTableSkeleton } from "./LeadsTableSkeleton";
 import { NewAppointmentPipeline } from "./NewAppointmentPipeline";
-import SelectComponent from "./Select";
 import TaskForm from "./TaskForm";
 
 type TProps = {
@@ -73,6 +70,10 @@ const Leads = ({ salesColumn }: TProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const [companyUsers, setCompanyUsers] = useState<User[]>([]);
+  const [filterOptions, setFilterOptions] = useState<LeadFilterOptions>({
+    sources: [],
+    services: [],
+  });
 
   const [pending, startTransition] = useTransition();
 
@@ -87,7 +88,7 @@ const Leads = ({ salesColumn }: TProps) => {
     null,
   ]);
   const [currentUser, setCurrentUser] = useState<SessionUserType>();
-  const [filter, setFilter] = useState<any>({
+  const [filter, setFilter] = useState<LeadFilter>({
     assignedTo: null,
     status: null,
     service: null,
@@ -108,7 +109,7 @@ const Leads = ({ salesColumn }: TProps) => {
       source: null,
     });
     setSearch("");
-    // setDateRange([null, null]);
+    setDateRange([null, null]);
     setCurrentPage(1);
     // Clear the processed filters cache when clearing filters
     processedFiltersRef.current.clear();
@@ -219,6 +220,7 @@ const Leads = ({ salesColumn }: TProps) => {
       } else {
         setCurrentPage(page);
       }
+      document.querySelector("main")?.scrollTo({ top: 0, behavior: "smooth" });
     },
     [pageSize],
   );
@@ -272,10 +274,13 @@ const Leads = ({ salesColumn }: TProps) => {
     const fetchUserAndCompanyUsers = async () => {
       try {
         // Parallel API calls instead of sequential
-        const [userResponse, companyUsers] = await Promise.all([
+        const [userResponse, companyUsers, options] = await Promise.all([
           fetch("/api/getUser"),
           getCompanyUser(),
+          getLeadFilterOptions(),
         ]);
+
+        setFilterOptions(options);
 
         if (userResponse.ok) {
           const userData = await userResponse.json();
@@ -391,7 +396,7 @@ const Leads = ({ salesColumn }: TProps) => {
       newColumnId: number;
     }) => {
       try {
-        const res = await fetch(`/api/pipeline/sales/lead/${leadId}/column`, {
+        const res = await fetch(`/api/pipeline/sales/leads/${leadId}/column`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ newColumnId }),
@@ -408,9 +413,9 @@ const Leads = ({ salesColumn }: TProps) => {
             return lead;
           }),
         );
-        toast.success("Lead status updated successfully");
+        successToast("Lead status updated successfully");
       } catch (err) {
-        toast.error("Error updating lead status");
+        errorToast("Error updating lead status");
       }
     },
     [],
@@ -426,6 +431,7 @@ const Leads = ({ salesColumn }: TProps) => {
           if (lead.id === leadId) {
             return {
               ...lead,
+              latestAppointment: appointment,
               client: lead.client
                 ? {
                     ...lead.client,
@@ -455,295 +461,319 @@ const Leads = ({ salesColumn }: TProps) => {
     },
     [leads],
   );
-  console.log("leads", leads);
+
   return (
-    <div className="space-y-8 px-3">
+    <div className="">
       {/* TODO */}
       {/* <Filter pipelineType={type} /> */}
-      <div className="mt-5 flex w-full flex-col-reverse justify-between gap-4 md:flex-row md:items-center">
-        <div className="flex w-full max-w-4xl rounded-lg border border-gray-300 bg-background p-2">
-          <div className="flex w-full items-center gap-4">
-            <SearchTerms search={search} setSearch={setSearch} />
-            <div className="hidden items-center gap-4 lg:flex">
-              <div className="m-2 px-4">
-                <DateRange
-                  dateRange={dateRange}
-                  onOk={(start, end) => setDateRange([start, end])}
-                  onCancel={() => setDateRange([null, null])}
-                />
-              </div>
-              <div className="relative">
-                <DropdownMenuDemo
-                  leads={initialLeads ?? []}
-                  filter={filter}
-                  setFilter={setFilter}
-                  clearFilters={clearFilters}
-                />
+      <div className="space-y-4 sm:space-y-6 md:space-y-8 px-3">
+        <div className="mt-5 flex w-full flex-col-reverse justify-between gap-4 md:flex-row md:items-center">
+          <div className="flex w-full max-w-4xl rounded-xl border bg-background p-2">
+            <div className="flex w-full md:items-center gap-2 md:gap-4 md:flex-row flex-col">
+              <LeadsSearch search={search} setSearch={setSearch} />
+              <div className="items-center gap-2 flex flex-1 flex-row">
+                <div className="flex-1 min-w-0">
+                  <DateRange
+                    dateRange={dateRange}
+                    onOk={(start, end) => setDateRange([start, end])}
+                    onCancel={() => setDateRange([null, null])}
+                  />
+                </div>
+                <div className="relative flex-shrink-0 w-[100px] sm:w-auto sm:flex-1">
+                  <LeadsFilterDropdown
+                    filterOptions={filterOptions}
+                    salesColumn={salesColumn}
+                    companyUsers={companyUsers}
+                    filter={filter}
+                    setFilter={setFilter}
+                    clearFilters={clearFilters}
+                  />
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {leads.length > 0 && !loading ? (
-        <>
-          <div className="hidden lg:block">
-            <table className="w-full shadow-md">
-              <thead className="bg-background">
-                <tr className="h-10 border-b">
-                  <th className="border-b px-4 py-2 text-left">Lead#</th>
-                  <th className="border-b px-4 py-2 text-left">Client </th>
-                  <th className="border-b px-4 py-2 text-left">Vehicle Info</th>
-                  <th className="border-b px-4 py-2 text-left">Services</th>
-                  <th className="border-b px-4 py-2 text-left">Assigned To</th>
-                  <th className="border-b px-4 py-2 text-left">Lead Source</th>
-                  <th className="border-b px-4 py-2 text-left">Status</th>
-                  <th className="border-b px-4 py-2 text-left">Actions</th>
-                  <th className="border-b px-4 py-2 text-left">Time Created</th>
-                </tr>
-              </thead>
+        {leads.length > 0 && !loading ? (
+          <>
+            <div className="hidden lg:block">
+              <table className="w-full shadow-md">
+                <thead className="bg-background">
+                  <tr className="h-10 border-b">
+                    <th className="border-b px-4 py-2 text-left">Lead#</th>
+                    <th className="border-b px-4 py-2 text-left">Client </th>
+                    <th className="border-b px-4 py-2 text-left">
+                      Vehicle Info
+                    </th>
+                    <th className="border-b px-4 py-2 text-left">Services</th>
+                    <th className="border-b px-4 py-2 text-left">
+                      Assigned To
+                    </th>
+                    <th className="border-b px-4 py-2 text-left">
+                      Lead Source
+                    </th>
+                    <th className="border-b px-4 py-2 text-left">Status</th>
+                    <th className="border-b px-4 py-2 text-left">Actions</th>
+                    <th className="border-b px-4 py-2 text-left">
+                      Time Created
+                    </th>
+                  </tr>
+                </thead>
 
-              <tbody>
-                {leads &&
-                  leads.map((lead, index) => {
-                    const timeCreated = moment(lead.createdAt).format(
-                      "MM/DD/YYYY",
-                    );
+                <tbody>
+                  {leads &&
+                    leads.map((lead, index) => {
+                      const timeCreated = moment
+                        .utc(lead.createdAt)
+                        .format("MM/DD/YYYY");
 
-                    return (
-                      <tr
-                        key={lead.id + 1}
-                        className={cn(
-                          "rounded-md",
-                          index % 2 === 0 ? "bg-background" : "bg-blue-100",
-                        )}
-                      >
-                        <td className="border-b px-4 py-2 text-left">
-                          <Link
-                            href={`/dashboard/client/${lead.clientId}`}
-                            className="block h-full w-full text-[#6571FF]"
-                          >
-                            {(currentPage - 1) * pageSize + index + 1}
-                          </Link>
-                        </td>
-                        <td className="border-b px-4 py-2 text-left">
-                          <Link
-                            href={`/dashboard/client/${lead.clientId}`}
-                            className="block h-full w-full"
-                          >
-                            {formatDisplayName(lead.clientName)}
-                          </Link>
-                        </td>
-                        <td className="border-b px-4 py-2 text-left">
-                          <Link href="#" className="block h-full w-full">
-                            {lead.vehicleInfo}
-                          </Link>
-                        </td>
-                        <td className="border-b px-4 py-2 text-left">
-                          <Link href="#" className="block h-full w-full">
-                            {lead.services}
-                          </Link>
-                        </td>
-                        <td className="border-b px-4 py-2 text-left">
-                          <Link href="#" className="block h-full w-full">
-                            {lead.salesUser?.firstName}{" "}
-                            {lead.salesUser?.lastName ?? ""}
-                          </Link>
-                        </td>
-                        <td className="border-b px-4 py-2 text-left">
-                          <Link href="#" className="block h-full w-full">
-                            {lead.source}
-                          </Link>
-                        </td>
-                        <td className="border-b px-4 py-2 text-left">
-                          {lead?.isQualified ? (
-                            <Select
-                              showSearch
-                              value={lead.column?.id ?? " "}
-                              style={{ width: 150 }}
-                              placeholder="Search to Select"
-                              optionFilterProp="label"
-                              disabled={pending}
-                              filterSort={(optionA, optionB) =>
-                                (optionA?.label ?? "")
-                                  .toLowerCase()
-                                  .localeCompare(
-                                    (optionB?.label ?? "").toLowerCase(),
-                                  )
-                              }
-                              options={salesColumn.map((column) => ({
-                                value: column.id,
-                                label: column.title,
-                              }))}
-                              onSelect={(value) =>
-                                startTransition(() =>
-                                  handleColumnChange({
-                                    leadId: lead.id,
-                                    newColumnId: value as number,
-                                  }),
-                                )
-                              }
-                            />
-                          ) : (
-                            "Unqualified"
+                      return (
+                        <tr
+                          key={lead.id + 1}
+                          className={cn(
+                            "rounded-md",
+                            index % 2 === 0 ? "bg-background" : "bg-blue-100",
                           )}
-                        </td>
-
-                        <td className="border-b px-4 py-2 text-left">
-                          <div className="flex items-center gap-2">
+                        >
+                          <td className="border-b px-4 py-2 text-left">
                             <Link
-                              href={`/dashboard/communication/client/${lead?.client?.id}?source=lead`}
-                              className="group relative"
+                              href={`/dashboard/client/${lead.clientId}`}
+                              className="block h-full w-full text-[#6571FF]"
                             >
-                              <MessageCircleMore
-                                size={20}
-                                className="duration-300 hover:text-[#6571FF]"
-                              />
-                              <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-                                Communications
-                              </span>
+                              {(currentPage - 1) * pageSize + index + 1}
                             </Link>
-                            <button
-                              onClick={() =>
-                                handleCreateDraftEstimate({
-                                  leadId: lead.id,
-                                  clientId: Number(lead?.clientId),
-                                  vehicleId: lead?.client?.vehicle?.id,
-                                })
-                              }
-                              className="group relative"
+                          </td>
+                          <td className="border-b px-4 py-2 text-left">
+                            <Link
+                              href={`/dashboard/client/${lead.clientId}`}
+                              className="block h-full w-full"
                             >
-                              {lead.isEstimateCreated ? (
-                                <div className="relative h-6 w-4">
-                                  <Image
-                                    alt="draftEstimateDone"
-                                    src="/icons/estimateDone.png"
-                                    fill
-                                    className="object-contain"
-                                    loading="lazy"
-                                    sizes="24px"
-                                  />
-                                </div>
-                              ) : (
-                                <div className="relative h-4 w-4">
-                                  <Image
-                                    src="/icons/draftEstimate.png"
-                                    alt="draftEstimate"
-                                    fill
-                                    sizes="16px"
-                                    className="object-contain duration-300 hover:opacity-80"
-                                    loading="lazy"
-                                  />
-                                </div>
-                              )}
-                              <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-                                Draft estimate
-                              </span>
-                            </button>
-                            {(() => {
-                              const appointment =
-                                (lead?.client?.appointments?.length ?? 0) > 0
-                                  ? lead?.client?.appointments?.[0]
-                                  : undefined;
-                              return (
-                                <AppointmentCreateOrEdit
-                                  fromEdit={!!appointment}
-                                  fromLead
-                                  appointmentId={appointment?.id}
-                                  triggerIcon={
-                                    <button className="group relative">
-                                      {!!appointment ? (
-                                        <CalendarCheck
-                                          size={18}
-                                          color="#6571FF"
-                                        />
-                                      ) : (
-                                        <Calendar size={18} color="#66738C" />
-                                      )}
-
-                                      <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-                                        New Appointment
-                                      </span>
-                                    </button>
-                                  }
-                                  vehicleId={lead?.client?.vehicle?.id}
-                                  clientId={lead?.client?.id}
-                                  onAppointmentCreated={(
-                                    appointment: Appointment,
-                                  ) => {
-                                    handleUpdateAppointmentInLead(appointment, {
+                              {formatDisplayName(lead.clientName)}
+                            </Link>
+                          </td>
+                          <td className="border-b px-4 py-2 text-left">
+                            <Link href="#" className="block h-full w-full">
+                              {lead.vehicleInfo}
+                            </Link>
+                          </td>
+                          <td className="border-b px-4 py-2 text-left">
+                            <Link href="#" className="block h-full w-full">
+                              {lead.services}
+                            </Link>
+                          </td>
+                          <td className="border-b px-4 py-2 text-left">
+                            <Link href="#" className="block h-full w-full">
+                              {lead.salesUser?.firstName}{" "}
+                              {lead.salesUser?.lastName ?? ""}
+                            </Link>
+                          </td>
+                          <td className="border-b px-4 py-2 text-left">
+                            <Link href="#" className="block h-full w-full">
+                              {lead.source}
+                            </Link>
+                          </td>
+                          <td className="border-b px-4 py-2 text-left">
+                            {lead?.isQualified ? (
+                              <Select
+                                showSearch
+                                value={lead.column?.id ?? " "}
+                                style={{ width: 150 }}
+                                placeholder="Search to Select"
+                                optionFilterProp="label"
+                                disabled={pending}
+                                filterSort={(optionA, optionB) =>
+                                  (optionA?.label ?? "")
+                                    .toLowerCase()
+                                    .localeCompare(
+                                      (optionB?.label ?? "").toLowerCase(),
+                                    )
+                                }
+                                options={salesColumn.map((column) => ({
+                                  value: column.id,
+                                  label: column.title,
+                                }))}
+                                onSelect={(value) =>
+                                  startTransition(() =>
+                                    handleColumnChange({
                                       leadId: lead.id,
-                                      columnId: lead.columnId!,
-                                    });
-                                  }}
-                                  onAppointmentUpdated={(
-                                    appointment: Appointment,
-                                  ) => {
-                                    handleUpdateAppointmentInLead(appointment, {
-                                      leadId: lead.id,
-                                      columnId: lead.columnId!,
-                                    });
-                                  }}
-                                />
-                              );
-                            })()}
-                            <div className="group relative ">
-                              <TaskForm
-                                companyUsers={companyUsers}
-                                leadId={lead.id}
-                                previousTasks={lead.tasks || []}
+                                      newColumnId: value as number,
+                                    }),
+                                  )
+                                }
                               />
-                              <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-                                Add Task
-                              </span>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="border-b px-4 py-2 text-left">
-                          <Link href="#" className="block h-full w-full">
-                            {timeCreated}
-                          </Link>
-                        </td>
-                      </tr>
-                    );
-                  })}
-              </tbody>
-            </table>
-          </div>
-          <div className="overflow-y-auto lg:hidden">
-            {leads &&
-              leads.map((lead, index) => {
-                return (
-                  <ResponsiveSalesPipelineCard
-                    key={index}
-                    lead={lead as any}
-                    index={index}
-                  />
-                );
-              })}
-          </div>
-        </>
-      ) : loading ? (
-        // <div
-        //   className="flex w-full items-center justify-center"
-        //   style={{ height: "calc(100vh - 300px)" }}
-        // >
-        //   <Spin size="large" />
-        // </div>
+                            ) : (
+                              "Unqualified"
+                            )}
+                          </td>
 
-        <>
-          <LeadsTableSkeleton />
-          <LeadsMobileSkeleton />
-        </>
-      ) : (
-        <div className="my-20 flex w-full justify-center text-gray-500">
-          No leads found.
-        </div>
-      )}
+                          <td className="border-b px-4 py-2 text-left">
+                            <div className="flex items-center gap-2">
+                              <Link
+                                href={`/dashboard/communication/client/${lead?.client?.id ?? lead?.clientId}?source=lead`}
+                                className="group relative"
+                              >
+                                <MessageCircleMore
+                                  size={20}
+                                  className="duration-300 hover:text-[#6571FF]"
+                                />
+                                <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                                  Communications
+                                </span>
+                              </Link>
+                              <button
+                                onClick={() =>
+                                  handleCreateDraftEstimate({
+                                    leadId: lead.id,
+                                    clientId: Number(lead?.clientId),
+                                    vehicleId: lead?.client?.vehicle?.id,
+                                  })
+                                }
+                                className="group relative"
+                              >
+                                {lead.isEstimateCreated ? (
+                                  <div className="relative h-6 w-4">
+                                    <Image
+                                      alt="draftEstimateDone"
+                                      src="/icons/estimateDone.png"
+                                      fill
+                                      className="object-contain"
+                                      loading="lazy"
+                                      sizes="24px"
+                                    />
+                                  </div>
+                                ) : (
+                                  <div className="relative h-4 w-4">
+                                    <Image
+                                      src="/icons/draftEstimate.png"
+                                      alt="draftEstimate"
+                                      fill
+                                      sizes="16px"
+                                      className="object-contain duration-300 hover:opacity-80"
+                                      loading="lazy"
+                                    />
+                                  </div>
+                                )}
+                                <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                                  Draft estimate
+                                </span>
+                              </button>
+                              {(() => {
+                                const appointment =
+                                  lead?.latestAppointment ??
+                                  ((lead?.client?.appointments?.length ?? 0) > 0
+                                    ? lead?.client?.appointments?.[0]
+                                    : undefined);
+                                return (
+                                  <AppointmentCreateOrEdit
+                                    fromEdit={!!appointment}
+                                    fromLead
+                                    appointmentId={appointment?.id}
+                                    triggerIcon={
+                                      <button className="group relative">
+                                        {!!appointment ? (
+                                          <CalendarCheck
+                                            size={18}
+                                            color="#6571FF"
+                                          />
+                                        ) : (
+                                          <Calendar size={18} color="#66738C" />
+                                        )}
+
+                                        <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                                          Appointment
+                                        </span>
+                                      </button>
+                                    }
+                                    vehicleId={lead?.client?.vehicle?.id}
+                                    clientId={lead?.client?.id}
+                                    onAppointmentCreated={(
+                                      appointment: Appointment,
+                                    ) => {
+                                      handleUpdateAppointmentInLead(
+                                        appointment,
+                                        {
+                                          leadId: lead.id,
+                                          columnId: lead.columnId!,
+                                        },
+                                      );
+                                    }}
+                                    onAppointmentUpdated={(
+                                      appointment: Appointment,
+                                    ) => {
+                                      handleUpdateAppointmentInLead(
+                                        appointment,
+                                        {
+                                          leadId: lead.id,
+                                          columnId: lead.columnId!,
+                                        },
+                                      );
+                                    }}
+                                  />
+                                );
+                              })()}
+                              <div className="group relative ">
+                                <TaskForm
+                                  companyUsers={companyUsers}
+                                  leadId={lead.id}
+                                  previousTasks={lead.tasks || []}
+                                />
+                                <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                                  Add Task
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="border-b px-4 py-2 text-left">
+                            <Link href="#" className="block h-full w-full">
+                              {timeCreated}
+                            </Link>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            </div>
+            <div className="overflow-y-auto lg:hidden">
+              {leads &&
+                leads.map((lead, index) => {
+                  return (
+                    <ResponsiveSalesPipelineCard
+                      key={index}
+                      lead={lead as any}
+                      index={index}
+                      onCreateDraftEstimate={handleCreateDraftEstimate}
+                      onUpdateAppointment={handleUpdateAppointmentInLead}
+                      companyUsers={companyUsers}
+                      salesColumn={salesColumn}
+                      onColumnChange={handleColumnChange}
+                    />
+                  );
+                })}
+            </div>
+          </>
+        ) : loading ? (
+          // <div
+          //   className="flex w-full items-center justify-center"
+          //   style={{ height: "calc(100vh - 300px)" }}
+          // >
+          //   <Spin size="large" />
+          // </div>
+
+          <>
+            <LeadsTableSkeleton />
+            <LeadsMobileSkeleton />
+          </>
+        ) : (
+          <div className="py-20 flex w-full justify-center text-gray-500">
+            No leads found.
+          </div>
+        )}
+      </div>
 
       {/* Pagination */}
       {showPagination && (
-        <div className="mt-4 flex justify-end">
+        <div className="py-4 sm:mx-3 px-3 flex justify-end sticky bottom-0 bg-background z-10">
           <Pagination
             className="custom-pagination"
             current={currentPage}
@@ -768,205 +798,5 @@ const Leads = ({ salesColumn }: TProps) => {
     </div>
   );
 };
-
-const SearchTerms = React.memo(function SearchTerms({
-  search,
-  setSearch,
-}: {
-  search: string;
-  setSearch: React.Dispatch<React.SetStateAction<string>>;
-}) {
-  const handleSearchChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setSearch(e.target.value);
-    },
-    [setSearch],
-  );
-
-  return (
-    <div className="relative min-w-0 flex-1 group">
-      <Search
-        size={18}
-        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-[#6571FF]"
-      />
-
-      <input
-        type="text"
-        value={search}
-        placeholder="Search by client, vehicle, services..."
-        onChange={handleSearchChange}
-        className={cn(
-          "w-full h-11 pl-12 pr-4 rounded-xl border-2 border-slate-100 bg-white",
-          "text-sm font-medium text-slate-700 placeholder:text-slate-400 outline-none",
-          "transition-all duration-300 ease-in-out",
-          "hover:border-slate-200 hover:bg-slate-50/30",
-          "focus:border-[#6571FF]/40 focus:bg-white focus:ring-4 focus:ring-[#6571FF]/10",
-        )}
-      />
-    </div>
-  );
-});
-
-const DropdownMenuDemo = React.memo(function DropdownMenuDemo({
-  leads,
-  setFilter,
-  filter,
-  clearFilters,
-}: {
-  leads: LeadWithSalesUser[];
-  setFilter: any;
-  filter: {
-    [key: string]: string;
-  };
-  clearFilters: () => void;
-}) {
-  // Memoize expensive computations to prevent recalculation on every render
-  const { statusItems, serviceItems, sourceItems, salesPersonItems } =
-    useMemo(() => {
-      const uniqueStatuses = new Set<string>();
-      const uniqueServices = new Set<string>();
-      const uniqueSources = new Set<string>();
-      const salesPersonsId = new Set<number>();
-
-      leads?.forEach((lead) => {
-        if (lead.column?.title) {
-          uniqueStatuses.add(lead.column.title);
-        }
-        if (lead.services) {
-          uniqueServices.add(lead.services);
-        }
-        if (lead.source) {
-          uniqueSources.add(lead.source);
-        }
-        if (lead.salesUser?.id) {
-          salesPersonsId.add(lead.salesUser?.id);
-        }
-      });
-
-      return {
-        statusItems: Array.from(uniqueStatuses).map((statusName, index) => ({
-          id: `status-${index}`,
-          value: statusName,
-          label: statusName,
-        })),
-        serviceItems: Array.from(uniqueServices).map((serviceName, index) => ({
-          id: `service-${index}`,
-          value: serviceName,
-          label: serviceName,
-        })),
-        sourceItems: Array.from(uniqueSources).map((sourceName, index) => ({
-          id: `source-${index}`,
-          value: sourceName,
-          label: sourceName,
-        })),
-        salesPersonItems: Array.from(salesPersonsId).map((personId, index) => ({
-          id: `person-${index}`,
-          value: personId.toString(),
-          label:
-            leads?.find((lead) => lead.salesUser?.id === personId)?.salesUser
-              ?.firstName +
-            " " +
-            leads?.find((lead) => lead.salesUser?.id === personId)?.salesUser
-              ?.lastName,
-        })),
-      };
-    }, [leads]);
-
-  return (
-    <DropdownMenu.Root>
-      <DropdownMenu.Trigger asChild>
-        <button
-          className="flex items-center gap-x-12 rounded-md border px-4 py-2"
-          aria-label="Customise options"
-        >
-          <span>Filter</span>
-          <ChevronDown />
-        </button>
-      </DropdownMenu.Trigger>
-
-      <DropdownMenu.Portal>
-        <DropdownMenu.Content
-          className="data-[side=top]:animate-slideDownAndFade data-[side=right]:animate-slideLeftAndFade data-[side=bottom]:animate-slideUpAndFade data-[side=left]:animate-slideRightAndFade min-w-[220px] rounded-md bg-background p-[5px] py-8 shadow-[0px_10px_38px_-10px_rgba(22,_23,_24,_0.35),_0px_10px_20px_-15px_rgba(22,_23,_24,_0.2)] will-change-[opacity,transform]"
-          sideOffset={5}
-        >
-          <div className="flex flex-col gap-y-2 px-4">
-            <SelectComponent
-              label="Assigned To"
-              items={[
-                { id: "all", value: "All", label: "All" },
-                ...salesPersonItems,
-              ]}
-              onChange={(value) =>
-                setFilter({
-                  ...filter,
-                  assignedTo: value === "All" ? null : value,
-                })
-              }
-              value={
-                filter?.assignedTo
-                  ? salesPersonItems.find(
-                      (item) => item.value === filter?.assignedTo,
-                    )?.value || ""
-                  : ""
-              }
-            />
-
-            <SelectComponent
-              label="Services"
-              items={[
-                { id: "all", value: "All", label: "All" },
-                ...serviceItems,
-              ]}
-              onChange={(value) =>
-                setFilter({
-                  ...filter,
-                  service: value === "All" ? null : value,
-                })
-              }
-              value={filter?.service || ""}
-            />
-
-            <SelectComponent
-              label="Sources"
-              items={[
-                { id: "all", value: "All", label: "All" },
-                ...sourceItems,
-              ]}
-              onChange={(value) =>
-                setFilter({ ...filter, source: value === "All" ? null : value })
-              }
-              value={filter?.source || ""}
-            />
-            <SelectComponent
-              label="Status"
-              items={[
-                { id: "all", value: "All", label: "All" },
-                ...statusItems,
-              ]}
-              onChange={(value) =>
-                setFilter({ ...filter, status: value === "All" ? null : value })
-              }
-              value={filter?.status || ""}
-            />
-
-            <div className="px-4 pt-2">
-              <button
-                onClick={clearFilters}
-                className={cn(
-                  "group mt-4 flex w-full items-center justify-center gap-2 rounded-lg py-2 transition-all duration-200 ",
-                  "hover:bg-red-50", // Soft background shift
-                  " text-slate-500 hover:text-red-500", // Typography style
-                  "active:scale-95 border border-slate-200 hover:border-red-100", // Tactile feedback
-                )}
-              >
-                Clear All Filters
-              </button>
-            </div>
-          </div>
-        </DropdownMenu.Content>
-      </DropdownMenu.Portal>
-    </DropdownMenu.Root>
-  );
-});
 
 export default Leads;

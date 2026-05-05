@@ -7,7 +7,7 @@ import { SalaryType } from "@prisma/client";
 
 interface SlimSalaryInputProps {
   onSalaryChange?: (
-    salaryData: { salaryType: SalaryType; salaryAmount: number } | null
+    salaryData: { salaryType: SalaryType; salaryAmount: number } | null,
   ) => void;
   salaryTypeOpen: boolean;
   setSalaryTypeOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -46,7 +46,7 @@ export default function SlimSalaryInput({
 
       // Get current salary type from the form
       const salaryTypeElement = document.querySelector<HTMLInputElement>(
-        "[name='salaryType']"
+        "[name='salaryType']",
       );
       const salaryType = salaryTypeElement?.value as SalaryType;
 

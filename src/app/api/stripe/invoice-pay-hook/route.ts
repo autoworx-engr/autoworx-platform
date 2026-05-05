@@ -1,15 +1,12 @@
-import { convertInvoicePublic } from "@/actions/estimate/invoice/convert";
+import { convertInvoice } from "@/actions/estimate/invoice/convert";
 import { db } from "@/lib/db";
 import { sendPaymentReceivedNotification } from "@/lib/notification/payment-notify";
 import { settleGiftCardReloadPayment } from "@/services/giftCardReloadSettlementService";
 import { confirmShopBooking } from "@/services/confirmShopBooking";
-import { env } from "next-runtime-env";
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 
-const stripe = new Stripe(
-  (process.env.STRIPE_SECRET_KEY || env("STRIPE_SECRET_KEY")) as string,
-);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
 const parsePaymentNotes = (notes: string | null) => {
   if (!notes) return {} as Record<string, any>;
@@ -61,8 +58,7 @@ export async function POST(req: NextRequest) {
     event = stripe.webhooks.constructEvent(
       rawBody,
       signature,
-      (process.env.STRIPE_WEBHOOK_SECRET ||
-        env("STRIPE_WEBHOOK_SECRET")) as string,
+      process.env.STRIPE_WEBHOOK_SECRET as string,
     );
 
     // Handle specific event types
@@ -340,7 +336,7 @@ export async function POST(req: NextRequest) {
         for (const invoice of invoicesWithDue) {
           const paymentAmount = Math.min(
             Number(invoice.due ?? 0),
-            statementBaseAmount - totalPaid
+            statementBaseAmount - totalPaid,
           );
 
           if (paymentAmount <= 0) break;
@@ -424,7 +420,7 @@ export async function POST(req: NextRequest) {
           // Convert estimate to invoice if needed
           try {
             if (invoice.type === "Estimate") {
-              convertInvoicePublic(invoice.id, paymentData.companyId);
+              convertInvoice(invoice.id, paymentData.companyId);
             }
           } catch (error) {
             console.log("🚀 ~ convert invoice public ~ error:", error);
@@ -663,7 +659,7 @@ export async function POST(req: NextRequest) {
 
         try {
           if (findInvoice?.type === "Estimate") {
-            convertInvoicePublic(paymentData.invoiceId, paymentData.companyId);
+            convertInvoice(paymentData.invoiceId, paymentData.companyId);
           }
         } catch (error) {
           console.log("🚀 ~ convert invoice public ~ error:", error);

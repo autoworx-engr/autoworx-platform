@@ -30,9 +30,10 @@ import { NextRequest, NextResponse } from "next/server";
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; tagId: string } },
+  props: { params: Promise<{ id: string; tagId: string }> },
 ) {
   try {
+    const params = await props.params;
     const leadId = parseInt(params.id);
     const tagId = parseInt(params.tagId);
 

@@ -18,10 +18,11 @@ import { getGoogleCalendarToken } from "../calendar-settings/getGoogleCalendarAu
 import { sendInfobipEmail } from "../estimate/invoice/sendInfobipEmail";
 import createGoogleCalendarEvent from "../task/google-calendar/createGoogleCalendarEvent";
 import updateGoogleCalendarEvent from "../task/google-calendar/updateGoogleCalendarEvent";
-import { scheduleRemindersInNest } from "./addAppointment";
+import { scheduleRemindersInNest } from "./appointmentReminderScheduler";
 import { deleteRemindersInNest } from "./deleteAppointment";
 import { sendInfobipMessage } from "../communication/client/sendInfobipMessage";
 import { sendTwilioMessage } from "../communication/client/sendTwilioMessage";
+import { revalidatePath } from "next/cache";
 
 export interface AppointmentToUpdate {
   title: string;
@@ -49,9 +50,7 @@ export async function editAppointment({
   try {
     await updateAppointmentValidationSchema.parseAsync({ id, appointment });
     const session = await getServerSession(authOptions);
-    console.log("🚀 ~ editAppointment ~ session:", session);
     const companyId = session?.user.companyId;
-    console.log("🚀 ~ editAppointment ~ companyId:", companyId);
 
     if (!companyId) {
       throw new Error("Company ID is required to create an email template.");
@@ -64,10 +63,6 @@ export async function editAppointment({
           id,
         },
       });
-      console.log(
-        "🚀 ~ editAppointment ~ existingAppointment:",
-        existingAppointment,
-      );
 
       if (existingAppointment?.draftEstimate !== appointment.draftEstimate) {
         // Create draft estimate (if doesn't exist)
@@ -76,7 +71,6 @@ export async function editAppointment({
             id: appointment.draftEstimate,
           },
         });
-        console.log("🚀 ~ editAppointment ~ draftEstimate:", draftEstimate);
 
         if (!draftEstimate) {
           await db.invoice.create({
@@ -85,7 +79,7 @@ export async function editAppointment({
               type: "Estimate",
               clientId: appointment.clientId,
               vehicleId: appointment.vehicleId,
-              userId: session.user.id as any,
+              userId: Number(session.user.id),
               companyId,
             },
           });
@@ -117,10 +111,6 @@ export async function editAppointment({
         timezone: appointment.timezone,
       },
     });
-    console.log(
-      "🚀 ~ editAppointment ~ updatedAppointment:",
-      updatedAppointment,
-    );
 
     // Delete all the assigned users for the appointment
     await db.appointmentUser.deleteMany({
@@ -129,65 +119,38 @@ export async function editAppointment({
       },
     });
 
-    // Loop the assigned users and add them to the Google Calendar
-    for (const user of appointment.assignedUsers) {
-      // const isAlreadyAssigned = await db.appointmentUser.findFirst({
-      //   where: {
-      //     appointmentId: id,
-      //     userId: user,
-      //   },
-      // });
-
-      // if (isAlreadyAssigned) {
-      //   // If the user is already assigned, skip adding them again
-      //   continue;
-      // }
-
-      // TODO: Add the task to the user's Google Calendar
-
-      // Create the task user
-      await db.appointmentUser.create({
-        data: {
+    if (appointment.assignedUsers.length > 0) {
+      await db.appointmentUser.createMany({
+        data: appointment.assignedUsers.map((userId) => ({
           appointmentId: id,
-          userId: user,
-          eventId: "null-for-now",
-        },
+          userId,
+          eventId: "",
+        })),
       });
     }
 
-    // get the confirmation email template
-    const confirmationEmailTemplate = await db.emailTemplate.findFirst({
-      where: {
-        id: appointment.confirmationEmailTemplateId,
-      },
-    });
-    const vehicle = await db.vehicle.findFirst({
-      where: {
-        id: appointment?.vehicleId,
-      },
-    });
-
-    let client: Client | null = null;
-    if (appointment.clientId) {
-      client = await db.client.findFirst({
-        where: {
-          id: appointment.clientId,
-        },
-      });
-    }
-
-    const company = await db.company.findFirst({
-      where: {
-        id: companyId,
-      },
-      select: {
-        timezone: true,
-        name: true,
-        address: true,
-        phone: true,
-        smsGateway: true,
-      },
-    });
+    // fetch related data in parallel
+    const [confirmationEmailTemplate, vehicle, maybeClient, company] =
+      await Promise.all([
+        db.emailTemplate.findFirst({
+          where: { id: appointment.confirmationEmailTemplateId },
+        }),
+        db.vehicle.findFirst({ where: { id: appointment?.vehicleId } }),
+        appointment.clientId
+          ? db.client.findFirst({ where: { id: appointment.clientId } })
+          : Promise.resolve(null),
+        db.company.findFirst({
+          where: { id: companyId },
+          select: {
+            timezone: true,
+            name: true,
+            address: true,
+            phone: true,
+            smsGateway: true,
+          },
+        }),
+      ]);
+    const client: Client | null = maybeClient;
 
     if (confirmationEmailTemplate) {
       const appointmentDate = moment(
@@ -221,11 +184,6 @@ export async function editAppointment({
       );
 
       confirmationMessage = confirmationMessage?.replace(
-        "<DATE>",
-        appointmentDate,
-      );
-
-      confirmationMessage = confirmationMessage?.replace(
         "<BUSINESS_NAME>",
         company?.name ?? "",
       );
@@ -245,26 +203,26 @@ export async function editAppointment({
         // send email
         if (client) {
           try {
-            sendInfobipEmail({
+            await sendInfobipEmail({
               clientId: client.id,
               subject: confirmationSubject,
               text: confirmationMessage,
             });
             if (company?.smsGateway === "TWILIO") {
-              sendTwilioMessage({
+              await sendTwilioMessage({
                 clientId: client.id,
                 message: confirmationMessage,
                 attachments: [],
               });
             } else if (company?.smsGateway === "INFOBIP") {
-              sendInfobipMessage({
+              await sendInfobipMessage({
                 clientId: client.id,
                 message: confirmationMessage,
                 attachments: [],
               });
             }
           } catch (error) {
-            console.log("🚀 ~ error:", error);
+            console.error("Confirmation send error:", error);
           }
         }
       }
@@ -278,14 +236,14 @@ export async function editAppointment({
     try {
       await deleteRemindersInNest(String(updatedAppointment.id));
     } catch (error) {
-      console.log("🚀 ~ editAppointment ~ error:", error);
+      console.error("deleteRemindersInNest error:", error);
     }
 
     if (updatedAppointment.date && updatedAppointment.startTime) {
       let i = 0;
       for (const time of appointment?.times ?? []) {
         try {
-          scheduleRemindersInNest({
+          await scheduleRemindersInNest({
             id: updatedAppointment.id.toString(),
             date: new Date(`${time.date}T00:00:00.000Z`),
             time: time.time,
@@ -294,7 +252,7 @@ export async function editAppointment({
             reminderIndex: i++,
           });
         } catch (error) {
-          console.log("🚀 ~ editAppointment ~ error:", error);
+          console.error("scheduleRemindersInNest error:", error);
         }
       }
     }
@@ -302,15 +260,15 @@ export async function editAppointment({
     try {
       updatedAppointment.date &&
         updatedAppointment.startTime &&
-        scheduleRemindersInNest({
+        (await scheduleRemindersInNest({
           id: updatedAppointment.id.toString(),
           date: updatedAppointment.date, // e.g., "2025-07-20"
           time: updatedAppointment.startTime, // e.g., "15:00"
           timezone:
             company?.timezone || updatedAppointment.timezone || "Etc/UTC",
-        });
+        }));
     } catch (error) {
-      console.log("🚀 ~ error:", error);
+      console.error("scheduleRemindersInNest error:", error);
     }
 
     try {
@@ -326,7 +284,7 @@ export async function editAppointment({
         updatedAppointment.endTime &&
         updatedAppointment.date
       ) {
-        updateGoogleCalendarEvent(
+        await updateGoogleCalendarEvent(
           updatedAppointment.googleEventId,
           appointment,
         );
@@ -341,7 +299,7 @@ export async function editAppointment({
 
         // if event is successfully created in google calendar, then save the event id in task model
         if (event && event.id) {
-          db.appointment.update({
+          await db.appointment.update({
             where: {
               id: updatedAppointment.id,
             },
@@ -352,7 +310,7 @@ export async function editAppointment({
         }
       }
     } catch (error) {
-      console.log("🚀 ~ error:", error);
+      console.error("Google Calendar sync error:", error);
     }
 
     // send a notification when create a new appointment
@@ -366,12 +324,12 @@ export async function editAppointment({
     });
 
     // revalidatePath("/task");
+    revalidatePath("/dashboard/communication/client/${clientId}");
     return {
       type: "success",
       data: updatedAppointment,
     };
   } catch (error) {
-    console.log("🚀 ~ error:", error);
     return errorHandler(error);
   }
 }

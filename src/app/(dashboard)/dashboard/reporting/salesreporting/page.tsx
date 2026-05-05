@@ -6,18 +6,19 @@ import { getSalesReportData } from "./getSalesReport";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import CarLoading from "../../../../../components/common/CarLoading";
 import FilterDateRange from "../components/filter/FilterByDateRange";
-import { useState } from "react";
+import { useState, use } from "react";
 import { TFilterModalState } from "../../estimate/CannedLabor";
 import moment from "moment";
 
 type TProps = {
-  searchParams: {
+  searchParams: Promise<{
     startDate?: string;
     endDate?: string;
-  };
+  }>;
 };
 
-export default function Page({ searchParams }: TProps) {
+export default function Page(props: TProps) {
+  const searchParams = use(props.searchParams);
   const timezone = useCompanyTimezone();
   const [activeModal, setActiveModal] = useState({
     dateRange: false,
@@ -28,8 +29,8 @@ export default function Page({ searchParams }: TProps) {
     filterRevenue: false,
   });
 
-  let startDate: Date | undefined;
-  let endDate: Date | undefined;
+  let startDate: string | undefined;
+  let endDate: string | undefined;
 
   if (searchParams.startDate && searchParams.endDate) {
     const formattedStartDate = moment(
@@ -42,8 +43,8 @@ export default function Page({ searchParams }: TProps) {
       "MM-DD-YYYY",
     ).format("YYYY-MM-DD");
 
-    startDate = new Date(`${formattedStartDate}T00:00:00.000Z`);
-    endDate = new Date(`${formattedEndDate}T23:59:59.999Z`);
+    startDate = `${formattedStartDate}T00:00:00.000Z`;
+    endDate = `${formattedEndDate}T23:59:59.999Z`;
   }
 
   const { data } = useServerGet(

@@ -6,7 +6,7 @@ import { Client, Source, Tag } from "@prisma/client";
 import { Pagination } from "antd";
 import useClientQuery from "./_hook/useClientQuery";
 import ClientListTable from "./ClientListTable";
-import { ClientTableSkeleton } from "./ClientTableSkeleton";
+import { ClientCardSkeleton, ClientTableSkeleton } from "./ClientTableSkeleton";
 
 export default function ClientList({
   clients = [],
@@ -62,9 +62,25 @@ export default function ClientList({
       {/* Mobile View */}
       <div className="lg:hidden">
         <div className="h-[60%] overflow-y-auto">
-          {clientData.map((employee, index) => (
-            <ResponsiveEmployeeCard key={index} data={employee} index={index} />
-          ))}
+          {isLoading ? (
+            <ClientCardSkeleton />
+          ) : isError ? (
+            <p className="px-4 py-6 text-center text-sm text-red-500">
+              Error loading clients.
+            </p>
+          ) : clientData.length === 0 ? (
+            <p className="px-4 py-6 text-center text-sm text-slate-500">
+              No clients found.
+            </p>
+          ) : (
+            clientData.map((employee, index) => (
+              <ResponsiveEmployeeCard
+                key={index}
+                data={employee}
+                index={index}
+              />
+            ))
+          )}
         </div>
 
         {/* Mobile Pagination */}

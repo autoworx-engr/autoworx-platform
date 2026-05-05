@@ -11,13 +11,12 @@ export default function PipelineInvoiceModal({ invoiceId }: TProps) {
   const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger>
+      <DialogTrigger asChild>
         <Image
           src="/icons/estimateDone.png"
           alt="draftEstimateDone"
           width={14}
           height={14}
-          className="mt-1.5"
         />
       </DialogTrigger>
 

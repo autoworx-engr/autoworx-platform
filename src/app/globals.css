@@ -7,6 +7,10 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  scrollbar-gutter: stable;
+}
+
 /* Hide Arrows From Input Number start here */
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {

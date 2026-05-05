@@ -263,8 +263,8 @@ export default function BusinessForm({ company }: TProps) {
     );
 
     newValidationErrors.teamSize = !businessSettings.teamSize
-  ? "Team size is required."
-  : "";
+      ? "Team size is required."
+      : "";
     newValidationErrors.businessPhone = validateBusinessPhone(
       businessSettings.businessPhone,
     );
@@ -274,7 +274,6 @@ export default function BusinessForm({ company }: TProps) {
     newValidationErrors.businessWebsite = validateBusinessWebsite(
       businessSettings.businessWebsite,
     );
-
 
     // Set validation errors
     setValidationErrors(newValidationErrors);
@@ -379,15 +378,25 @@ export default function BusinessForm({ company }: TProps) {
 
       <form
         onSubmit={(e) => startTransition(() => handleSubmit(e))}
-        className="space-y-6 pb-6"
+        className="space-y-8 pb-6"
       >
-        {/* Business Information Section */}
-        <div className="space-y-4">
-          <h4 className="text-lg font-bold text-gray-800 flex items-center border-b pb-2">
-            <Briefcase className="h-5 w-5 mr-2 text-gray-500" />
-            Core Business Info
-          </h4>
-          <div className="grid md:grid-cols-2 grid-cols-1 gap-x-8 gap-y-4">
+        <div className="rounded-2xl border border-slate-200/60 bg-gradient-to-br from-white to-slate-50/70 p-4 shadow-sm md:p-6">
+          <div className="flex items-center justify-between gap-3 border-b border-slate-200/70 pb-3">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-300 text-slate-500">
+                <Briefcase className="h-4.5 w-4.5" />
+              </span>
+              <div>
+                <h4 className="text-lg font-semibold text-slate-600">
+                  Core Business Info
+                </h4>
+                <p className="text-sm text-slate-500">
+                  Primary identity and public profile details.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-x-8">
             <SlimInput
               value={businessSettings.legalBusinessName}
               onChange={handleChange}
@@ -426,54 +435,56 @@ export default function BusinessForm({ company }: TProps) {
               name="businessType"
               error={validationErrors.businessType}
             />
-      
-<div className="flex flex-col gap-1.5 w-full">
-  <label className="flex items-center gap-1 text-base font-medium text-slate-600 dark:text-slate-200 transition-colors duration-300">
-    Team Size
-    <span className="text-rose-500 font-bold">*</span>
-    <Tooltip title="Your team size will be displayed on your Collaboration Profile." placement="top">
-      <IconComponent className="text-gray-400 hover:text-gray-600 cursor-help text-xs" />
-    </Tooltip>
-  </label>
+            <div className="flex flex-col gap-1.5 w-full">
+              <label className="flex items-center gap-1 text-base font-medium text-slate-600 dark:text-slate-200 transition-colors duration-300">
+                Team Size
+                <span className="text-rose-500 font-bold">*</span>
+                <Tooltip
+                  title="Your team size will be displayed on your Collaboration Profile."
+                  placement="top"
+                >
+                  <IconComponent className="text-gray-400 hover:text-gray-600 cursor-help text-xs" />
+                </Tooltip>
+              </label>
 
-  <Selector<{ id: string; label: string }>
-    label={(item) => item?.label ?? "Select Team Size"}
-    items={[
-      { id: "SMALL", label: "Small" },
-      { id: "MEDIUM", label: "Medium" },
-      { id: "LARGE", label: "Large" },
-    ]}
-    displayList={(item) => <span>{item.label}</span>}
-    selectedItem={
-      businessSettings.teamSize
-        ? {
-            id: businessSettings.teamSize,
-            label:
-              businessSettings.teamSize.charAt(0) +
-              businessSettings.teamSize.slice(1).toLowerCase(),
-          }
-        : null
-    }
-    onSelect={(item) =>
-      setBusinessSettings((prev) => ({
-        ...prev,
-        teamSize: item.id as typeof prev.teamSize,
-      }))
-    }
-    newButton={null}
-    showSearch={false}
-    className="max-w-full"
-  />
+              <Selector<{ id: string; label: string }>
+                label={(item) => item?.label ?? "Select Team Size"}
+                items={[
+                  { id: "SMALL", label: "Small" },
+                  { id: "MEDIUM", label: "Medium" },
+                  { id: "LARGE", label: "Large" },
+                ]}
+                displayList={(item) => <span>{item.label}</span>}
+                selectedItem={
+                  businessSettings.teamSize
+                    ? {
+                        id: businessSettings.teamSize,
+                        label:
+                          businessSettings.teamSize.charAt(0) +
+                          businessSettings.teamSize.slice(1).toLowerCase(),
+                      }
+                    : null
+                }
+                onSelect={(item) =>
+                  setBusinessSettings((prev) => ({
+                    ...prev,
+                    teamSize: item.id as typeof prev.teamSize,
+                  }))
+                }
+                newButton={null}
+                showSearch={false}
+                className="max-w-full"
+              />
 
-  {validationErrors.teamSize && (
-    <div className="animate-in slide-in-from-top-1 fade-in duration-200 mt-1 flex items-center gap-1.5 px-1">
-      <div className="h-1.5 w-1.5 rounded-full bg-rose-500" />
-      <span className="text-xs font-medium text-rose-500">{validationErrors.teamSize}</span>
-    </div>
-  )}
-</div>
-            
-
+              {validationErrors.teamSize && (
+                <div className="animate-in slide-in-from-top-1 fade-in duration-200 mt-1 flex items-center gap-1.5 px-1">
+                  <div className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+                  <span className="text-xs font-medium text-rose-500">
+                    {validationErrors.teamSize}
+                  </span>
+                </div>
+              )}
+            </div>
             <SlimInput
               required={false}
               value={businessSettings.industrySpecialization}
@@ -486,13 +497,21 @@ export default function BusinessForm({ company }: TProps) {
           </div>
         </div>
 
-        {/* Contact Information Section */}
-        <div className="space-y-4 pt-4 border-t border-gray-100">
-          <h4 className="text-lg font-bold text-gray-800 flex items-center border-b pb-2">
-            <Mail className="h-5 w-5 mr-2 text-gray-500" />
-            Contact & Digital Presence
-          </h4>
-          <div className="grid md:grid-cols-2 grid-cols-1 gap-x-8 gap-y-4">
+        <div className="rounded-2xl border border-slate-200/60 bg-white p-4 shadow-sm md:p-6">
+          <div className="flex items-center gap-2 border-b border-slate-200/70 pb-3">
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-300 text-slate-500">
+              <Mail className="h-4.5 w-4.5" />
+            </span>
+            <div>
+              <h4 className="text-lg font-semibold text-slate-600">
+                Contact & Digital Presence
+              </h4>
+              <p className="text-sm text-slate-500">
+                Where customers can reach you.
+              </p>
+            </div>
+          </div>
+          <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-x-8">
             <PhoneInput
               label="Business Phone"
               defaultValue={company?.phone || ""}
@@ -511,7 +530,7 @@ export default function BusinessForm({ company }: TProps) {
               error={validationErrors.businessEmail}
             />
           </div>
-          <div className="grid grid-cols-1">
+          <div className="mt-4 grid grid-cols-1">
             <SlimInput
               required={false}
               value={businessSettings.businessWebsite}
@@ -523,58 +542,76 @@ export default function BusinessForm({ company }: TProps) {
           </div>
         </div>
 
-        {/* Location & Timezone Section */}
-        <div className="space-y-4 pt-4 border-t border-gray-100">
-          <h4 className="text-lg font-bold text-gray-800 flex items-center border-b pb-2">
-            <MapPin className="h-5 w-5 mr-2 text-gray-500" />
-            Location & Preferences
-          </h4>
-
-          <Timezone
-            timezone={businessSettings?.timezone}
-            setBusinessSettings={setBusinessSettings}
-          />
-
-          <div className="grid grid-cols-1 gap-y-4">
-            <SlimInput
-              value={businessSettings.companyAddress}
-              onChange={handleChange}
-              label="Company Address"
-              name="companyAddress"
-              error={validationErrors.companyAddress}
-            />
+        <div className="rounded-2xl border border-slate-200/60 bg-slate-50/60 p-4 shadow-sm md:p-6">
+          <div className="flex items-center gap-2 border-b border-slate-200/70 pb-3">
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-300 text-slate-500 bg-white shadow-sm">
+              <MapPin className="h-4.5 w-4.5" />
+            </span>
+            <div>
+              <h4 className="text-lg font-semibold text-slate-600">
+                Location & Preferences
+              </h4>
+              <p className="text-sm text-slate-500">
+                Set timezone and address details.
+              </p>
+            </div>
           </div>
-          <div className="grid md:grid-cols-3 grid-cols-1 gap-x-8 gap-y-4">
-            <SlimInput
-              value={businessSettings.city}
-              onChange={handleChange}
-              label="City"
-              name="city"
-              error={validationErrors.city}
+
+          <div className="mt-5 space-y-4">
+            <Timezone
+              timezone={businessSettings?.timezone}
+              setBusinessSettings={setBusinessSettings}
             />
-            <SlimInput
-              value={businessSettings.state}
-              onChange={handleChange}
-              label="State"
-              name="state"
-              error={validationErrors.state}
-            />
-            <SlimInput
-              value={businessSettings.zip}
-              onChange={handleChange}
-              label="Zip"
-              name="zip"
-              error={validationErrors.zip}
-            />
+
+            <div className="grid grid-cols-1">
+              <SlimInput
+                value={businessSettings.companyAddress}
+                onChange={handleChange}
+                label="Company Address"
+                name="companyAddress"
+                error={validationErrors.companyAddress}
+              />
+            </div>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-x-8">
+              <SlimInput
+                value={businessSettings.city}
+                onChange={handleChange}
+                label="City"
+                name="city"
+                error={validationErrors.city}
+              />
+              <SlimInput
+                value={businessSettings.state}
+                onChange={handleChange}
+                label="State"
+                name="state"
+                error={validationErrors.state}
+              />
+              <SlimInput
+                value={businessSettings.zip}
+                onChange={handleChange}
+                label="Zip"
+                name="zip"
+                error={validationErrors.zip}
+              />
+            </div>
           </div>
         </div>
 
         {/* Save Button */}
-        <div className="text-right   border-gray-100">
+        <div className="flex flex-col items-start justify-between gap-3 rounded-2xl border border-slate-200/60 bg-white p-4 shadow-sm sm:flex-row sm:items-center md:p-6">
+          <div>
+            <h5 className="text-sm font-semibold text-slate-900">
+              Ready to save?
+            </h5>
+            <p className="text-sm text-slate-500">
+              Changes apply to your profile immediately.
+            </p>
+          </div>
           <button
             disabled={isPending || !hasChanges()}
             type="submit"
-            className="ml-auto rounded-lg bg-[#6571FF] px-8 py-2 text-white text-base font-semibold transition duration-150 hover:bg-[#5a64e8] disabled:bg-gray-400 disabled:cursor-not-allowed shadow-lg flex items-center justify-center float-right"
+            className="rounded-xl bg-[#6571FF] px-6 py-2.5 text-white text-base font-semibold transition duration-150 hover:bg-[#5a64e8] disabled:bg-slate-300 disabled:cursor-not-allowed shadow-lg flex items-center justify-center"
           >
             {isPending ? (
               <>Saving...</>

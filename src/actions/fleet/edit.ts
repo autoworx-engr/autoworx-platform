@@ -22,7 +22,7 @@ export async function editFleet(data: {
   photo?: string;
   preferredPaymentTerm?: string | null;
   clientId: number;
-  countryCode?:string
+  countryCode?: string;
 }): Promise<ServerAction | TErrorHandler> {
   try {
     await updateFleetValidationSchema.parseAsync(data);
@@ -60,7 +60,7 @@ export async function editFleet(data: {
           zip: data.zip || existingFleet.zip,
           tagId: data.tagId || existingFleet.tagId,
           photo: data.photo || existingFleet.photo,
-          countryCode:data.countryCode || existingFleet.countryCode,
+          countryCode: data.countryCode || existingFleet.countryCode,
         },
       });
       const fleet = await tsx.fleet.update({
@@ -77,7 +77,7 @@ export async function editFleet(data: {
       return fleet;
     });
 
-    revalidatePath("/fleet");
+    revalidatePath("/dashboard/fleet");
 
     return { type: "success", data: updatedFleet };
   } catch (err) {

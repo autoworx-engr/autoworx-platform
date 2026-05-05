@@ -30,8 +30,9 @@ import { NextRequest } from "next/server";
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { recordingSid: string } },
+  props: { params: Promise<{ recordingSid: string }> },
 ) {
+  const params = await props.params;
   const { searchParams } = req.nextUrl;
 
   const recordingSid = params.recordingSid;

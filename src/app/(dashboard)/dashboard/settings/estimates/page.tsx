@@ -5,17 +5,20 @@ import {
   updateTermsPolicy,
 } from "@/actions/settings/emailTemplates";
 import { SlimInput } from "@/components/SlimInput";
-import { Select } from "antd";
+import { Skeleton } from "antd";
 import { useEffect, useState } from "react";
 import EmailTemplates from "./EmailTemplates";
-import { successToast } from "@/lib/toast";
+import { errorToast, successToast } from "@/lib/toast";
 import { DollarSign, FileText, Percent, Info } from "lucide-react";
 import { cn } from "@/lib/utils"; // Ensure you have this utility for tailwind merging
 import Selector from "@/components/Selector";
 
 export default function EstimateAndInvoicePage() {
-  const [currencies, setCurrencies] = useState<{ value: string; label: string }[]>([]);
+  const [currencies, setCurrencies] = useState<
+    { value: string; label: string }[]
+  >([]);
   const [currency, setCurrency] = useState<string>("USD");
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const maxLength = 800;
   const [termPolicy, setTermPolicy] = useState<{
     terms?: string;
@@ -30,30 +33,38 @@ export default function EstimateAndInvoicePage() {
   const currentPolicyLength = termPolicy?.policy?.length ?? 0;
 
   useEffect(() => {
-    setDisabled(currentTermsLength > maxLength || currentPolicyLength > maxLength);
+    setDisabled(
+      currentTermsLength > maxLength || currentPolicyLength > maxLength,
+    );
   }, [currentTermsLength, currentPolicyLength]);
 
   useEffect(() => {
     async function getCurrencies() {
-      const response = await fetch("https://restcountries.com/v3.1/all?fields=currencies");
+      const response = await fetch(
+        "https://restcountries.com/v3.1/all?fields=currencies",
+      );
       const data = await response.json();
       const currenciesMap: Record<string, any> = {};
 
       data?.forEach((item: any) => {
         if (item.currencies) {
-          Object.entries(item.currencies).forEach(([code, curr]: [string, any]) => {
-            currenciesMap[code] = {
-              name: curr.name,
-              symbol: curr.symbol || "",
-            };
-          });
+          Object.entries(item.currencies).forEach(
+            ([code, curr]: [string, any]) => {
+              currenciesMap[code] = {
+                name: curr.name,
+                symbol: curr.symbol || "",
+              };
+            },
+          );
         }
       });
 
-      const currencyOptions = Object.entries(currenciesMap).map(([code, curr]) => ({
-        value: code,
-        label: `${curr.symbol ? curr.symbol + " " : ""}${code}`,
-      }));
+      const currencyOptions = Object.entries(currenciesMap).map(
+        ([code, curr]) => ({
+          value: code,
+          label: `${curr.symbol ? curr.symbol + " " : ""}${code}`,
+        }),
+      );
 
       setCurrencies(currencyOptions);
     }
@@ -65,12 +76,23 @@ export default function EstimateAndInvoicePage() {
         setTax(String(data.tax));
         setServiceFee(String(data.serviceFee));
         setCurrency(data.currency);
-      } catch (error) {
-        console.error("Error fetching settings:", error);
+      } catch (_error) {
+        errorToast("Failed to load settings");
       }
     };
-    getCurrencies();
-    fetchTermsPolicy();
+
+    const loadPageData = async () => {
+      setIsLoading(true);
+      try {
+        await Promise.all([getCurrencies(), fetchTermsPolicy()]);
+      } catch (_error) {
+        errorToast("Failed to load page data");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadPageData();
   }, []);
 
   const handleUpdateTermsPolicy = async () => {
@@ -80,15 +102,16 @@ export default function EstimateAndInvoicePage() {
         policy: termPolicy.policy?.trim() || "",
       });
       if (res?.success) successToast("Terms & Policy updated successfully");
-    } catch (error) {
-      console.error(error);
+    } catch (_error) {
+      errorToast("Failed to update terms and policy");
     }
   };
 
   const handleUpdateCurrency = async () => {
     try {
       const validTax = tax && !isNaN(Number(tax)) ? tax : "0";
-      const validServiceFee = serviceFee && !isNaN(Number(serviceFee)) ? serviceFee : "0";
+      const validServiceFee =
+        serviceFee && !isNaN(Number(serviceFee)) ? serviceFee : "0";
 
       await updateTaxCurrency({
         currency,
@@ -96,8 +119,8 @@ export default function EstimateAndInvoicePage() {
         serviceFee: validServiceFee,
       });
       successToast("Financial settings updated successfully");
-    } catch (error) {
-      console.error(error);
+    } catch (_error) {
+      errorToast("Failed to update financial settings");
     }
   };
 
@@ -114,69 +137,116 @@ export default function EstimateAndInvoicePage() {
               </div>
               <div>
                 <h2 className="text-xl font-bold text-slate-600">Financials</h2>
-                <p className="text-sm font-medium text-slate-400">Tax, Service Fee & Currency</p>
+                <p className="text-sm font-medium text-slate-400">
+                  Tax, Service Fee & Currency
+                </p>
               </div>
             </div>
           </div>
 
           <div className="space-y-4">
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-              <div className="relative">
-                <SlimInput
-                  name="taxAmount"
-                  value={tax}
-                  label="Tax Rate"
-                  className="w-full"
-                  onChange={(e) => /^\d*\.?\d*$/.test(e.target.value) && setTax(e.target.value)}
-                />
-                <Percent size={14} className="absolute bottom-3 right-3 text-slate-500 transition-colors group-focus-within:text-[#6571FF]" />
-              </div>
-
-              <div className="relative group">
-                <SlimInput
-                  name="serviceFee"
-                  value={serviceFee}
-                  label="Shop Supplies"
-                  className="w-full"
-                  onChange={(e) => /^\d*\.?\d*$/.test(e.target.value) && setServiceFee(e.target.value)}
-                />
-                <Percent size={14} className="absolute bottom-3 right-3 text-slate-500 transition-colors group-focus-within:text-[#6571FF]" />
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <label className="px-1 font-medium text-slate-600">Currency</label>
-                <Selector
-                  className="w-full"
-                  items={currencies}
-                  selectedItem={currencies.find((c) => c.value === currency)}
-                  label={(item) => item?.label || "Select currency"}
-                  displayList={(item) => (
-                    <div className="flex items-center justify-between text-sm text-slate-700">
-                      <span>{item.label}</span>
-                      <span className="text-xs text-slate-400">{item.value}</span>
+            {isLoading ? (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                  {Array.from({ length: 3 }).map((_, index) => (
+                    <div
+                      key={`financial-skeleton-${index + 1}`}
+                      className="space-y-2"
+                    >
+                      <Skeleton.Input active className="!h-4 !w-24" />
+                      <Skeleton.Input active className="!h-10 !w-full" />
                     </div>
-                  )}
-                  onSearch={(term) =>
-                    currencies.filter((c) =>
-                      `${c.label} ${c.value}`.toLowerCase().includes(term.toLowerCase())
-                    )
-                  }
-                  onSelect={(item) => setCurrency(item.value)}
-                  newButton={<div className="px-2 text-xs text-slate-400">Select a currency</div>}
-                  border
-                />
+                  ))}
+                </div>
+                <div className="flex justify-end pt-4">
+                  <Skeleton.Button active className="!h-10 !w-36" />
+                </div>
               </div>
-            </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                  <div className="relative">
+                    <SlimInput
+                      name="taxAmount"
+                      value={tax}
+                      label="Tax Rate"
+                      className="w-full"
+                      onChange={(e) =>
+                        /^\d*\.?\d*$/.test(e.target.value) &&
+                        setTax(e.target.value)
+                      }
+                    />
+                    <Percent
+                      size={14}
+                      className="absolute bottom-3 right-3 text-slate-500 transition-colors group-focus-within:text-[#6571FF]"
+                    />
+                  </div>
 
-            <div className="flex justify-end pt-4">
-              <button
-                onClick={handleUpdateCurrency}
-                className="group relative overflow-hidden rounded-xl bg-[#6571FF] px-6 py-2 font-medium text-white transition-all"
-              >
-                <span className="relative z-10">Save Financials</span>
-                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-              </button>
-            </div>
+                  <div className="relative group">
+                    <SlimInput
+                      name="serviceFee"
+                      value={serviceFee}
+                      label="Shop Supplies"
+                      className="w-full"
+                      onChange={(e) =>
+                        /^\d*\.?\d*$/.test(e.target.value) &&
+                        setServiceFee(e.target.value)
+                      }
+                    />
+                    <Percent
+                      size={14}
+                      className="absolute bottom-3 right-3 text-slate-500 transition-colors group-focus-within:text-[#6571FF]"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="px-1 font-medium text-slate-600">
+                      Currency
+                    </label>
+                    <Selector
+                      className="w-full"
+                      items={currencies}
+                      selectedItem={currencies.find(
+                        (c) => c.value === currency,
+                      )}
+                      label={(item) => item?.label || "Select currency"}
+                      displayList={(item) => (
+                        <div className="flex items-center justify-between text-sm text-slate-700">
+                          <span>{item.label}</span>
+                          <span className="text-xs text-slate-400">
+                            {item.value}
+                          </span>
+                        </div>
+                      )}
+                      onSearch={(term) =>
+                        currencies.filter((c) =>
+                          `${c.label} ${c.value}`
+                            .toLowerCase()
+                            .includes(term.toLowerCase()),
+                        )
+                      }
+                      onSelect={(item) => setCurrency(item.value)}
+                      newButton={
+                        <div className="px-2 text-xs text-slate-400">
+                          Select a currency
+                        </div>
+                      }
+                      border
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-4">
+                  <button
+                    onClick={handleUpdateCurrency}
+                    className="group relative overflow-hidden rounded-xl bg-[#6571FF] px-6 py-2 font-medium text-white transition-all"
+                  >
+                    <span className="relative z-10">Save Financials</span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </section>
 
@@ -187,48 +257,93 @@ export default function EstimateAndInvoicePage() {
               <FileText size={24} />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-slate-600">Legal Agreements</h2>
-              <p className="text-sm font-medium text-slate-400">Customer terms and privacy policies</p>
+              <h2 className="text-xl font-bold text-slate-600">
+                Legal Agreements
+              </h2>
+              <p className="text-sm font-medium text-slate-400">
+                Customer terms and privacy policies
+              </p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-            {[
-              { label: "Terms & Conditions", val: termPolicy.terms, key: "terms", len: currentTermsLength },
-              { label: "Privacy Policy", val: termPolicy.policy, key: "policy", len: currentPolicyLength },
-            ].map((field) => (
-              <div key={field.key} className="space-y-2">
-                <div className="flex items-center justify-between px-1">
-                  <label className="font-medium text-slate-500">{field.label}</label>
-                </div>
-                <div className="relative group">
-                  <textarea
-                    className={cn(
-                      "h-64 w-full resize-none rounded-2xl bg-slate-50/50 p-4 text-sm leading-relaxed text-slate-600 outline-none transition-all thin-scrollbar focus:bg-white focus:ring-4 focus:ring-[#6571FF]/5",
-                      field.len > maxLength ? "border-2 border-red-400" : "border border-slate-200 focus:border-[#6571FF]/30"
-                    )}
-                    value={field.val || ""}
-                    onChange={(e) => setTermPolicy({ ...termPolicy, [field.key]: e.target.value })}
+          {isLoading ? (
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+              {Array.from({ length: 2 }).map((_, index) => (
+                <div key={`legal-skeleton-${index + 1}`} className="space-y-3">
+                  <Skeleton.Input active className="!h-4 !w-32" />
+                  <Skeleton.Input
+                    active
+                    className="!h-64 !w-full !rounded-2xl"
                   />
-                  <div className={cn(
-                    "absolute -bottom-5 right-2 rounded-lg px-2 py-1 text-[10px] font-bold shadow-sm",
-                    field.len > maxLength ? "bg-red-50 text-red-500" : "bg-white text-slate-400"
-                  )}>
-                    {field.len} / {maxLength}
+                  <div className="flex justify-end">
+                    <Skeleton.Input active className="!h-4 !w-16" />
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+              {[
+                {
+                  label: "Terms & Conditions",
+                  val: termPolicy.terms,
+                  key: "terms",
+                  len: currentTermsLength,
+                },
+                {
+                  label: "Privacy Policy",
+                  val: termPolicy.policy,
+                  key: "policy",
+                  len: currentPolicyLength,
+                },
+              ].map((field) => (
+                <div key={field.key} className="space-y-2">
+                  <div className="flex items-center justify-between px-1">
+                    <label className="font-medium text-slate-500">
+                      {field.label}
+                    </label>
+                  </div>
+                  <div className="relative group">
+                    <textarea
+                      className={cn(
+                        "h-64 w-full resize-none rounded-2xl bg-slate-50/50 p-4 text-sm leading-relaxed text-slate-600 outline-none transition-all thin-scrollbar focus:bg-white focus:ring-4 focus:ring-[#6571FF]/5",
+                        field.len > maxLength
+                          ? "border-2 border-red-400"
+                          : "border border-slate-200 focus:border-[#6571FF]/30",
+                      )}
+                      value={field.val || ""}
+                      onChange={(e) =>
+                        setTermPolicy({
+                          ...termPolicy,
+                          [field.key]: e.target.value,
+                        })
+                      }
+                    />
+                    <div
+                      className={cn(
+                        "absolute -bottom-5 right-2 rounded-lg px-2 py-1 text-[10px] font-bold shadow-sm",
+                        field.len > maxLength
+                          ? "bg-red-50 text-red-500"
+                          : "bg-white text-slate-400",
+                      )}
+                    >
+                      {field.len} / {maxLength}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           <div className="flex justify-end mt-8">
             <button
-              disabled={disabled}
+              disabled={disabled || isLoading}
               onClick={handleUpdateTermsPolicy}
-              className={cn("group relative overflow-hidden rounded-xl  px-6 py-2 font-medium text-white transition-all",
-                disabled
+              className={cn(
+                "group relative overflow-hidden rounded-xl  px-6 py-2 font-medium text-white transition-all",
+                disabled || isLoading
                   ? "bg-slate-200 cursor-not-allowed opacity-50"
-                  : "bg-[#6571FF]"
+                  : "bg-[#6571FF]",
               )}
             >
               <span className="relative z-10">Update Documents</span>
@@ -240,10 +355,22 @@ export default function EstimateAndInvoicePage() {
 
       {/* RIGHT COLUMN */}
       <div className="sticky top-6 hidden md:block">
-        <EmailTemplates />
+        {isLoading ? (
+          <div className="rounded-xl border border-slate-200/60 bg-white p-6 shadow-sm">
+            <Skeleton active paragraph={{ rows: 8 }} />
+          </div>
+        ) : (
+          <EmailTemplates />
+        )}
       </div>
       <div className="md:hidden">
-        <EmailTemplates />
+        {isLoading ? (
+          <div className="rounded-xl border border-slate-200/60 bg-white p-6 shadow-sm">
+            <Skeleton active paragraph={{ rows: 6 }} />
+          </div>
+        ) : (
+          <EmailTemplates />
+        )}
       </div>
     </div>
   );

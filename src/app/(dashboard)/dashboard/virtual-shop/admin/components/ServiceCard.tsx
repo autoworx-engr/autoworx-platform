@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Loader2, SquarePen, Trash2 } from "lucide-react";
+import { ImageIcon, Loader2, SquarePen, Trash2 } from "lucide-react";
 import { Popconfirm, Tooltip } from "antd";
 import { Switch } from "@/components/Switch";
 import { useRouter } from "nextjs-toploader/app";
@@ -54,8 +54,7 @@ export default function ServiceCard({
         shopId,
       });
       router.refresh();
-    } catch {
-    }
+    } catch {}
   };
 
   return (
@@ -70,8 +69,8 @@ export default function ServiceCard({
               className="object-cover"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-xs font-medium text-slate-400">
-              No Image
+            <div className="flex h-full w-full items-center justify-center bg-slate-100 text-slate-300">
+              <ImageIcon size={50} strokeWidth={1.5} />
             </div>
           )}
         </div>
@@ -82,15 +81,16 @@ export default function ServiceCard({
               <span className="line-clamp-2 text-sm font-semibold text-slate-700 sm:text-base sm:line-clamp-1">
                 {service.name}
               </span>
-              {
-                service.category &&
+              {service.category && (
                 <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-500 sm:text-xs">
                   {service.category}
                 </span>
-              }
+              )}
             </div>
             <div className="flex items-center gap-2 text-xs sm:text-sm">
-              <span className="font-semibold text-slate-700">${service.price}</span>
+              <span className="font-semibold text-slate-700">
+                ${service.price}
+              </span>
               <span className="text-slate-400">•</span>
               <span className="text-slate-500">{service.duration} min</span>
             </div>

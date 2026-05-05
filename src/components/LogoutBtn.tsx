@@ -1,6 +1,5 @@
 "use client";
 
-import { env } from "next-runtime-env";
 import { cn } from "@/lib/cn";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
@@ -27,8 +26,8 @@ export default function LogoutBtn({ className, ...props }: TProps) {
         redirect: false,
       });
 
-      const redirectUrl = env("NEXT_PUBLIC_APP_URL")
-        ? env("NEXT_PUBLIC_APP_URL") + "/login"
+      const redirectUrl = process.env.NEXT_PUBLIC_APP_URL
+        ? process.env.NEXT_PUBLIC_APP_URL + "/login"
         : "https://autoworx.tech/login";
 
       try {
@@ -72,14 +71,14 @@ export default function LogoutBtn({ className, ...props }: TProps) {
         //   xmlns="http://www.w3.org/2000/svg"
         //   fill="currentColor"
         //   stroke="currentColor"
-        //   stroke-width="0.5"
+        //   strokeWidth="0.5"
         //   className="h-5 w-5 sm:h-7 sm:w-7 text-white sm:text-[#6571FF]"
         // >
-        //   <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+        //   <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
         //   <g
         //     id="SVGRepo_tracerCarrier"
-        //     stroke-linecap="round"
-        //     stroke-linejoin="round"
+        //     strokeLinecap="round"
+        //     strokeLinejoin="round"
         //   ></g>
         //   <g id="SVGRepo_iconCarrier">
         //     {" "}
@@ -95,13 +94,13 @@ export default function LogoutBtn({ className, ...props }: TProps) {
         //   className="h-5 w-5 sm:h-7 sm:w-7 text-white sm:text-[#6571FF]"
         //   fill="currentColor"
         //   stroke="currentColor"
-        //   stroke-width="0.0000345"
+        //   strokeWidth="0.0000345"
         // >
-        //   <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+        //   <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
         //   <g
         //     id="SVGRepo_tracerCarrier"
-        //     stroke-linecap="round"
-        //     stroke-linejoin="round"
+        //     strokeLinecap="round"
+        //     strokeLinejoin="round"
         //   ></g>
         //   <g id="SVGRepo_iconCarrier">
         //     {" "}
@@ -117,13 +116,13 @@ export default function LogoutBtn({ className, ...props }: TProps) {
           fill="currentColor"
           stroke="currentColor"
           className="h-5 w-5 sm:h-7 sm:w-7 text-white sm:text-[#6571FF]"
-          stroke-width="0.80"
+          strokeWidth="0.80"
         >
-          <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+          <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
           <g
             id="SVGRepo_tracerCarrier"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           ></g>
           <g id="SVGRepo_iconCarrier">
             {" "}

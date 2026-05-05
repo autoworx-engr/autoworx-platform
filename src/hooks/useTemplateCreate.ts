@@ -36,7 +36,7 @@ export function useTemplateCreate(type: InvoiceType) {
   const pathaname = usePathname();
 
   async function handleSubmit(
-    fromPayment?: boolean
+    fromPayment?: boolean,
   ): Promise<ServerAction | TErrorHandler> {
     const clientId = client?.id;
     const vehicleId = vehicle?.id;
@@ -98,7 +98,7 @@ export function useTemplateCreate(type: InvoiceType) {
           inspections,
           damageNotes,
         },
-        fromPayment
+        fromPayment,
       );
 
       if (res.type === "success") {

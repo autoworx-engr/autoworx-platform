@@ -6,19 +6,28 @@ import UserComponent from "./UserComponent";
 
 export default function Page() {
   return (
-    <div className="p-2"> {/* Added padding for overall page spacing */}
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">
-        Team Access & Permissions
-      </h1>
-      {/* Container for the two main components */}
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-2 w-full">
-        {/* User Roles Table (Default Permissions) */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-0">
+    <div className="space-y-6 rounded-2xl border border-slate-200/80 bg-gradient-to-br from-slate-50 via-white to-sky-50/40 p-4 sm:p-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-600 sm:text-3xl">
+            Team Access & Permissions
+          </h1>
+          <p className="mt-1 text-sm text-slate-600">
+            Manage role defaults and fine-tune permissions for individual team
+            members.
+          </p>
+        </div>
+        <span className="inline-flex w-fit items-center rounded-full bg-[#6571FF]/10 px-3 py-1 text-xs font-semibold text-[#6571FF]">
+          Security controls
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 2xl:grid-cols-[1.3fr_0.7fr]">
+        <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-shadow hover:shadow-md">
           <UserRolesTable />
         </div>
 
-        {/* User Component (Custom Permissions) */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-0">
+        <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-shadow hover:shadow-md">
           <UserComponent />
         </div>
       </div>

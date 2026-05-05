@@ -64,7 +64,7 @@ export default function ReportLayout({ children }: TProps) {
   useEffect(() => {
     if (tabsContainerRef.current && currentView) {
       const activeTab = tabsContainerRef.current.querySelector(
-        '[data-active="true"]'
+        '[data-active="true"]',
       ) as HTMLElement;
       if (activeTab) {
         const container = tabsContainerRef.current;
@@ -91,7 +91,7 @@ export default function ReportLayout({ children }: TProps) {
       {permissions?.role === "Admin" || permissions?.role === "Manager" ? (
         <div>
           <div className="flex flex-col p-5 lg:flex-row lg:items-center">
-            <h1 className="mb-4 text-center text-slate-600 text-2xl font-bold lg:mb-0 lg:mr-4 lg:text-left">
+            <h1 className="mb-4 text-center text-slate-600 text-2xl font-bold lg:mb-0 lg:mr-4 md:text-left">
               Reporting
             </h1>
 

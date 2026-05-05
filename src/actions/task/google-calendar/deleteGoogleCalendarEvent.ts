@@ -1,16 +1,14 @@
-
 import { getGoogleCalendarToken } from "@/actions/calendar-settings/getGoogleCalendarAuth";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import { google } from "googleapis";
-import { env } from "next-runtime-env";
 
 // Function to delete event in Google Calendar
 async function deleteGoogleCalendarEvent(eventId: string) {
   const refreshToken = (await getGoogleCalendarToken())?.googleCalendarToken;
 
-  const clientId = env("GMAIL_CLIENT_ID");
-  const clientSecret = env("GMAIL_CLIENT_SECRET");
+  const clientId = process.env.GMAIL_CLIENT_ID;
+  const clientSecret = process.env.GMAIL_CLIENT_SECRET;
 
   const oAuth2Client = new google.auth.OAuth2(clientId, clientSecret);
 

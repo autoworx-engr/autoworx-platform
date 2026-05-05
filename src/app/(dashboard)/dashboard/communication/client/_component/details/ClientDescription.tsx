@@ -5,19 +5,18 @@ import { cn } from "@/lib/cn";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import { Client, Vehicle } from "@prisma/client";
-import dynamic from "next/dynamic";
 import ClientEstimates from "./ClientEstimates";
 import SaveAttachment from "./SaveAttachment";
 import TaskActions from "./TaskActions";
-const AppointmentListClient = dynamic(() => import("./AppointmentListClient"), {
-  ssr: false,
-});
+import {
+  AppointmentListClient,
+  ClientNotes,
+} from "./ClientDescriptionDynamics";
+
 type TProps = {
   client?: Client | null;
   vehicles?: Partial<Vehicle>[];
 };
-
-const ClientNotes = dynamic(() => import("./ClientNotes"), { ssr: false });
 
 export default async function ClientDescription({ client, vehicles }: TProps) {
   if (!client) return null;
@@ -136,7 +135,7 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
                     attachment={attachment}
                     allAttachments={allEmailAttachments}
                   />
-                ))
+                )),
               )
             ) : (
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -166,7 +165,7 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
                     attachment={attachment}
                     allAttachments={allSmsAttachments}
                   />
-                ))
+                )),
               )
             ) : (
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -213,7 +212,7 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
                     "bg-[#6571FF]": task.priority === "Low",
                     "bg-[#25AADD]": task.priority === "Medium",
                     "bg-[#006d77]": task.priority === "High",
-                  }
+                  },
                 )}
                 title={task.title}
               >

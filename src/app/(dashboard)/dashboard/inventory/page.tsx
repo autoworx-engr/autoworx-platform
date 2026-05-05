@@ -24,7 +24,7 @@ async function getCategories() {
           Authorization: `Bearer ${token}`,
         },
         cache: "no-store",
-      }
+      },
     );
 
     if (!res.ok) throw new Error("Failed to fetch categories");
@@ -65,12 +65,12 @@ const getInventoryItem = cache(
         },
         ...(searchTerms.length > 0
           ? [
-            {
-              OR: searchTerms.flatMap((term) => [
-                { name: { contains: term.trim() } },
-              ]),
-            },
-          ]
+              {
+                OR: searchTerms.flatMap((term) => [
+                  { name: { contains: term.trim() } },
+                ]),
+              },
+            ]
           : []),
       ];
       const items = await db.inventoryProduct.findMany({
@@ -102,21 +102,30 @@ const getInventoryItem = cache(
       console.log(error);
       throw new Error(`Failed to fetch ${type.toLowerCase()}s`);
     }
-  }
+  },
 );
 
-export default async function Page({
-  searchParams: { productId, view, page = "1", limit = "50", search, category },
-}: {
-  searchParams: {
+export default async function Page(props: {
+  searchParams: Promise<{
     productId: string;
     view: string;
     page?: string;
     limit?: string;
     search?: string;
     category?: string;
-  };
+  }>;
 }) {
+  const searchParams = await props.searchParams;
+
+  const {
+    productId,
+    view,
+    page = "1",
+    limit = "50",
+    search,
+    category,
+  } = searchParams;
+
   const companyId = await getCompanyId();
   const { data: supplies, totalItems: totalSupplies } = await getInventoryItem({
     type: "Supply",
@@ -152,10 +161,10 @@ export default async function Page({
 
         {(user?.employeeType === "Admin" ||
           user?.employeeType === "Manager") && (
-            <div className="mt-2">
-              <AddNewProduct view={view} />
-            </div>
-          )}
+          <div className="mt-2">
+            <AddNewProduct view={view} />
+          </div>
+        )}
       </header>
 
       <div className="mb-5 flex h-full w-full flex-col justify-between gap-3 md:mb-0 lg:flex-wrap">

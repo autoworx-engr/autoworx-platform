@@ -34,7 +34,7 @@ const ClientListTable = ({
 
   return (
     <div className="hidden lg:block rounded-xl bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-slate-800 shadow-sm overflow-hidden p-2">
-      <div className="max-h-[70vh] overflow-y-auto overflow-x-auto">
+      <div className="max-h-[70vh] overflow-y-auto overflow-x-auto thin-scrollbar">
         <table className="w-full border-separate border-spacing-0">
           <thead className="sticky top-0 bg-background">
             <tr className="h-10 border-b">
@@ -57,7 +57,7 @@ const ClientListTable = ({
                   " duration-200 hover:bg-slate-50 dark:hover:bg-slate-800/50",
                   index % 2 !== 0
                     ? "bg-blue-50/80 dark:bg-slate-900"
-                    : "bg-white dark:bg-slate-900"
+                    : "bg-white dark:bg-slate-900",
                 )}
               >
                 <td className="border-b px-4 py-2 text-left">

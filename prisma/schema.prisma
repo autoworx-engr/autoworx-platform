@@ -1,11 +1,9 @@
 generator client {
   provider      = "prisma-client-js"
-  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
   // directUrl   = env("DIRECT_URL")
 }
 
@@ -53,7 +51,7 @@ model AppointmentUser {
   id            Int         @id @default(autoincrement())
   appointmentId Int         @map("appointment_id")
   userId        Int         @map("user_id")
-  eventId       String      @db.VarChar(100)
+  eventId       String?     @db.VarChar(100)
   createdAt     DateTime    @default(now()) @map("created_at")
   updatedAt     DateTime    @default(now()) @updatedAt @map("updated_at")
   appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
@@ -1693,6 +1691,11 @@ model Message {
   @@index([to], name: "fk_messages_to")
   @@index([from], name: "fk_messages_from")
   @@index([groupId], name: "fk_messages_group")
+  // Covering indexes for the paginated internal chat queries:
+  // direct-message thread lookups order by createdAt within a (from, to) pair,
+  // and group-message pages page through messages of one groupId by createdAt.
+  @@index([from, to, createdAt(sort: Desc)], name: "msg_from_to_created")
+  @@index([groupId, createdAt(sort: Desc)], name: "msg_group_created")
 }
 
 model CollaborationMessage {
@@ -2946,6 +2949,8 @@ model Shop {
   bannerUrl       String?             @map("banner_url")
   themeConfig     Json?               @map("theme_config") // Store { primaryColor: '#3b82f6', font: 'Inter' }
   isActive        Boolean             @default(true) @map("is_active")
+  termsConditions String?             @map("terms_conditions") @db.VarChar(1500)
+  privacyPolicy   String?             @map("privacy_policy") @db.VarChar(1500)
   createdAt       DateTime            @default(now()) @map("created_at")
   updatedAt       DateTime            @updatedAt @map("updated_at")
   company         Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
@@ -3330,3 +3335,17 @@ enum TransactionType {
   REFUND // Service was cancelled, money returned to card
 }
 // }
+
+model ShopSlotHold {
+  id           Int      @id @default(autoincrement())
+  shopId       Int      @map("shop_id")
+  sessionToken String   @map("session_token")
+  date         DateTime
+  startTime    String   @map("start_time")
+  endTime      String   @map("end_time")
+  expiresAt    DateTime @map("expires_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([shopId, date, expiresAt])
+}
+

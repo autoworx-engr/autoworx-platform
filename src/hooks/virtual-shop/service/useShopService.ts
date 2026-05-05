@@ -167,18 +167,27 @@ export const useGetAppointmentSlots = (
   shopId?: number,
   date?: string,
   nextAvailable?: boolean,
+  duration?: number,
 ) => {
   return useQuery({
-    queryKey: ["appointment-slots", shopId, date, nextAvailable],
-    queryFn: () => getAppointmentSlots(Number(shopId), date, nextAvailable),
+    queryKey: ["appointment-slots", shopId, date, nextAvailable, duration],
+    queryFn: () =>
+      getAppointmentSlots(Number(shopId), date, nextAvailable, duration),
     enabled: !!shopId && (!!date || !!nextAvailable),
   });
 };
 
 export const useCreateVirtualShopServiceBooking = () => {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: (payload: CreateVirtualShopServiceBookingPayload) =>
       createVirtualShopServiceBooking(payload),
+    onSuccess: (_response, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["appointment-slots", variables?.shopId],
+      });
+    },
   });
 };
 

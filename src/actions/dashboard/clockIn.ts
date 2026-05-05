@@ -42,7 +42,7 @@ export async function clockIn({ timezone }: { timezone: string }) {
       console.error("Failed to schedule auto-clockout:", error);
     }
 
-    revalidatePath("/");
+    revalidatePath("/dashboard");
 
     return { success: true, message: "Clocked In", data: clockedIn };
   } catch (error) {

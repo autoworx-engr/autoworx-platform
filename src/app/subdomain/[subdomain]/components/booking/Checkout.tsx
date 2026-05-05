@@ -1,27 +1,10 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-} from "@/components/ui/input-otp";
 
-import {
-  ArrowLeft,
-  Clock,
-  Shield,
-  AlertTriangle,
-  Timer,
-  CheckCircle2,
-  Loader2,
-} from "lucide-react";
-import { format, addMinutes, parse } from "date-fns";
-import { useBooking } from "../../context/BookingContext";
-import { BookingTotals, CustomerInfo } from "../../data/types";
+import { getPaymentGatewayInfo } from "@/app/(dashboard)/dashboard/settings/payments/getPaymentGatewayInfo";
 import {
   Dialog,
   DialogContent,
@@ -30,25 +13,33 @@ import {
   DialogTitle,
 } from "@/components/Dialog";
 import { PayNow } from "@/components/invoice-modal/PayNow";
-import { getPaymentGatewayInfo } from "@/app/(dashboard)/dashboard/settings/payments/getPaymentGatewayInfo";
+import PhoneInput from "@/components/PhoneInput";
+import { SlimInput } from "@/components/SlimInput";
+import { SlimTextarea } from "@/components/SlimTextarea";
 import { useServerGet } from "@/hooks/useServerGet";
-import { useParams, useSearchParams, useRouter } from "next/navigation";
 import {
   useCreateVirtualShopServiceBooking,
   useGetShopBySlug,
   useLookupClientByPhone,
 } from "@/hooks/virtual-shop/service/useShopService";
-import axios from "axios";
-import PhoneInput from "@/components/PhoneInput";
-import { SlimInput } from "@/components/SlimInput";
-import { SlimTextarea } from "@/components/SlimTextarea";
-import {
-  useGetAllYears,
-  useGetMake,
-  useGetModelsByYearAndMake,
-} from "@/hooks/useCarData";
-import Selector from "@/app/(dashboard)/dashboard/settings/automation/components/Selector";
 import { errorToast, successToast } from "@/lib/toast";
+import axios from "axios";
+import { addMinutes, format, parse } from "date-fns";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Clock,
+  Loader2,
+  Shield,
+  Timer,
+} from "lucide-react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import {
+  CheckoutVehicleSection,
+  ExistingVehicle,
+} from "./CheckoutVehicleSection";
+import { useBooking } from "../../context/BookingContext";
+import { BookingTotals, CustomerInfo } from "../../data/types";
 
 const TIMER_SECONDS = 600; // 10 min
 
@@ -73,6 +64,7 @@ export const Checkout = () => {
     isReturningClient,
     setIsReturningClient,
     settings,
+    sessionToken,
   } = useBooking();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -88,9 +80,6 @@ export const Checkout = () => {
   const { mutateAsync: lookupClient, isPending: isLookingUp } =
     useLookupClientByPhone();
 
-  const { data: years }: any = useGetAllYears();
-  const { data: makes }: any = useGetMake();
-
   const [selectedCountryCode, setSelectedCountryCode] = useState("US");
   const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
   const [timerExpired, setTimerExpired] = useState(false);
@@ -100,6 +89,7 @@ export const Checkout = () => {
   const [phoneLookedUp, setPhoneLookedUp] = useState(false);
   const [showPayNowModal, setShowPayNowModal] = useState(false);
   const [createdBookingId, setCreatedBookingId] = useState<string>("");
+  const [termsAgreed, setTermsAgreed] = useState(false);
   const [isResolvingBookingReturn, setIsResolvingBookingReturn] =
     useState(false);
   const [giftCardCode, setGiftCardCode] = useState("");
@@ -116,6 +106,9 @@ export const Checkout = () => {
   const [payableDepositAmount, setPayableDepositAmount] = useState<
     number | null
   >(null);
+  const [existingVehicles, setExistingVehicles] = useState<ExistingVehicle[]>(
+    [],
+  );
   const hasHandledStripeReturn = useRef(false);
   const [form, setForm] = useState<CustomerInfo>({
     fullName: "",
@@ -127,10 +120,35 @@ export const Checkout = () => {
     notes: "",
   });
 
-  const { data: models }: any = useGetModelsByYearAndMake(
-    form.vehicleYear,
-    form.vehicleMake,
-  );
+  // Release the slot hold — called on Back and on window close
+  const releaseHold = useCallback(() => {
+    if (!shop?.id || !sessionToken) return;
+    fetch("/api/virtual-shop/service-booking/hold", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ shopId: shop.id, sessionToken }),
+      keepalive: true, // ensures the request survives page unload
+    }).catch(() => {}); // silent — best-effort
+  }, [shop?.id, sessionToken]);
+
+  // Release hold when the user closes or refreshes the tab (sendBeacon is most reliable here)
+  useEffect(() => {
+    const handleUnload = () => {
+      if (!shop?.id || !sessionToken) return;
+      const data = JSON.stringify({ shopId: shop.id, sessionToken });
+      // sendBeacon sends a POST-like fire-and-forget; we use a Blob with method hint
+      // since sendBeacon doesn't support DELETE, we use fetch with keepalive instead
+      fetch("/api/virtual-shop/service-booking/hold", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: data,
+        keepalive: true,
+      }).catch(() => {});
+    };
+
+    window.addEventListener("beforeunload", handleUnload);
+    return () => window.removeEventListener("beforeunload", handleUnload);
+  }, [shop?.id, sessionToken]);
 
   // Timer
   useEffect(() => {
@@ -154,10 +172,23 @@ export const Checkout = () => {
   const formatTime = (s: number) =>
     `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
 
-  const handleAddTime = () => {
+  const handleAddTime = useCallback(async () => {
+    if (shop?.id && sessionToken && selectedDate && selectedSlot) {
+      await fetch("/api/virtual-shop/service-booking/hold", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          shopId: shop.id,
+          sessionToken,
+          date: format(selectedDate, "yyyy-MM-dd"),
+          startTime: selectedSlot.time,
+          duration: cartDurationMinutes || 30,
+        }),
+      }).catch(() => {});
+    }
     setTimeLeft(TIMER_SECONDS);
     setTimerExpired(false);
-  };
+  }, [shop?.id, sessionToken, selectedDate, selectedSlot, cartDurationMinutes]);
 
   const handlePhoneLookup = useCallback(async () => {
     if (!shop?.id) return;
@@ -170,13 +201,29 @@ export const Checkout = () => {
 
       if (response.success && response.data) {
         const client = response.data;
+        const vehicles = Array.isArray(client.Vehicle) ? client.Vehicle : [];
+        const latestVehicle = vehicles[0];
+
+        setExistingVehicles(vehicles);
         setForm((prev) => ({
           ...prev,
           fullName: `${client.firstName || ""} ${client.lastName || ""}`.trim(),
           email: client.email || "",
+          vehicleYear:
+            latestVehicle?.year !== null && latestVehicle?.year !== undefined
+              ? String(latestVehicle.year)
+              : prev.vehicleYear,
+          vehicleMake: latestVehicle?.make || prev.vehicleMake,
+          vehicleModel: latestVehicle?.model || prev.vehicleModel,
         }));
         setIsReturningClient(true);
       } else {
+        setExistingVehicles([]);
+        setForm((prev) => ({
+          ...prev,
+          fullName: "",
+          email: "",
+        }));
         setIsReturningClient(false);
       }
       setPhoneLookedUp(true);
@@ -185,19 +232,6 @@ export const Checkout = () => {
       setPhoneLookedUp(true);
     }
   }, [form.phone, shop?.id, lookupClient, setIsReturningClient]);
-
-  const handleOtpCheck = useCallback((val: string) => {
-    setOtpValue(val);
-    if (val === "1234") {
-      setOtpVerified(true);
-      // Auto-fill name & email but NOT vehicle info
-      setForm((prev) => ({
-        ...prev,
-        fullName: "John Doe",
-        email: "john@example.com",
-      }));
-    }
-  }, []);
 
   const handleApplyGiftCard = useCallback(async () => {
     const normalizedCode = giftCardCode.trim().toUpperCase();
@@ -471,6 +505,7 @@ export const Checkout = () => {
         year: parsedYear,
         notes: form.notes.trim() || undefined,
         giftCardCode: appliedGiftCard?.code || undefined,
+        sessionToken,
       });
 
       const client = response?.data?.client;
@@ -509,7 +544,6 @@ export const Checkout = () => {
       setEstimateId(response?.data?.estimateId ?? null);
 
       setIsReturningClient(true);
-      successToast(response?.message || "Booking created successfully");
 
       const newBookingId = response?.data?.shopBookingId;
       const responseStatus = response?.data?.status;
@@ -556,6 +590,7 @@ export const Checkout = () => {
         return;
       }
 
+      successToast(response?.message || "Booking confirmed successfully");
       setStep("confirmation");
     } catch (error) {
       const message =
@@ -566,27 +601,6 @@ export const Checkout = () => {
 
   const update = (field: keyof CustomerInfo, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
-
-  const vehicleOptions =
-    makes?.data?.map((vehicle: any) => ({
-      title: vehicle.name ?? "Unknown",
-      name: vehicle.name ?? "Unknown",
-      id: vehicle.name,
-    })) || [];
-
-  const vehicleModelOptions =
-    models?.data?.map((vehicle: any) => ({
-      title: vehicle.name ?? "Unknown",
-      name: vehicle.name ?? "Unknown",
-      id: vehicle.name,
-    })) || [];
-
-  const yearOptions =
-    years?.data?.map((y: string | number) => ({
-      title: y.toString(),
-      name: y.toString(),
-      id: y.toString(),
-    })) || [];
 
   const bookingSettings = shop?.bookingSettings;
   const isDepositEnabled =
@@ -688,7 +702,10 @@ export const Checkout = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setStep("datetime")}
+            onClick={() => {
+              releaseHold();
+              setStep("datetime");
+            }}
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
@@ -797,7 +814,7 @@ export const Checkout = () => {
         </div>
       )}
 
-      {!hasPendingBookingPayment && (
+      {!hasPendingBookingPayment && isDepositEnabled && (
         <div className="rounded-xl border bg-card p-4 space-y-3">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             Gift Card Redemption (Optional)
@@ -874,6 +891,15 @@ export const Checkout = () => {
                     setSelectedCountryCode(isoCode || "US");
 
                     if (phoneLookedUp) {
+                      setForm((prev) => ({
+                        ...prev,
+                        fullName: "",
+                        email: "",
+                        vehicleYear: "",
+                        vehicleMake: "",
+                        vehicleModel: "",
+                      }));
+                      setExistingVehicles([]);
                       setPhoneLookedUp(false);
                       setIsReturningClient(false);
                     }
@@ -904,40 +930,6 @@ export const Checkout = () => {
             )} */}
             </div>
           </div>
-
-          {/* OTP for returning clients — shown right after phone lookup */}
-          {/* {isReturningClient && showOtp && !otpVerified && (
-          <div className="rounded-xl border bg-card p-4 space-y-3 text-center">
-            <Shield className="w-8 h-8 mx-auto text-primary" />
-            <p className="text-sm font-medium">
-              Welcome back! Verify your identity
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Enter the 4-digit code sent to your phone. (Use:{" "}
-              <strong>1234</strong>)
-            </p>
-            <div className="flex justify-center">
-              <InputOTP
-                maxLength={4}
-                value={otpValue}
-                onChange={handleOtpCheck}
-              >
-                <InputOTPGroup>
-                  <InputOTPSlot index={0} />
-                  <InputOTPSlot index={1} />
-                  <InputOTPSlot index={2} />
-                  <InputOTPSlot index={3} />
-                </InputOTPGroup>
-              </InputOTP>
-            </div>
-            {otpVerified && (
-              <p className="text-xs text-primary flex items-center justify-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5" /> Verified! Fields
-                auto-populated.
-              </p>
-            )}
-          </div>
-        )} */}
 
           {/* Remaining fields — shown after phone lookup (or OTP verified for returning) */}
           {phoneLookedUp && (true || !isReturningClient || otpVerified) && (
@@ -974,48 +966,13 @@ export const Checkout = () => {
 
           {phoneLookedUp && (true || !isReturningClient || otpVerified) && (
             <>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pt-2">
-                Vehicle Information
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <Selector
-                  name="vehicleYear"
-                  label="Year"
-                  placeholder="Year"
-                  options={years?.data || []}
-                  value={form.vehicleYear || ""}
-                  onChange={(value: string) => update("vehicleYear", value)}
-                  isSearch={true}
-                  isClear={true}
-                  required={true}
-                />
-                <Selector
-                  name="vehicleMake"
-                  label="Make"
-                  placeholder="Make"
-                  options={vehicleOptions || []}
-                  value={form.vehicleMake || ""}
-                  onChange={(value: string) => {
-                    update("vehicleMake", value);
-                    update("vehicleModel", "");
-                  }}
-                  isSearch={true}
-                  isClear={true}
-                  required={true}
-                />
-                <Selector
-                  name="vehicleModel"
-                  label="Model"
-                  placeholder="Model"
-                  options={vehicleModelOptions || []}
-                  value={form.vehicleModel || ""}
-                  onChange={(value: string) => update("vehicleModel", value)}
-                  isSearch={true}
-                  isClear={true}
-                  required={true}
-                  disabled={!form.vehicleMake}
-                />
-              </div>
+              <CheckoutVehicleSection
+                existingVehicles={existingVehicles}
+                vehicleYear={form.vehicleYear}
+                vehicleMake={form.vehicleMake}
+                vehicleModel={form.vehicleModel}
+                onVehicleChange={update}
+              />
 
               <div className="space-y-1.5">
                 <SlimTextarea
@@ -1031,30 +988,52 @@ export const Checkout = () => {
                 />
               </div>
 
-              {/* Policies */}
-              <div className="rounded-lg bg-muted/50 p-3 space-y-1.5 text-xs text-muted-foreground">
-                <p className="flex items-center gap-1.5">
-                  <Shield className="w-3.5 h-3.5 text-primary" /> Your info is
-                  secure and encrypted.
-                </p>
-                <p>
-                  By confirming, an <strong>Autoworx client account</strong>{" "}
-                  will be created automatically. Future bookings will use OTP
-                  verification for faster checkout.
-                </p>
-                <p>
-                  Free cancellation up to 24 hours before your appointment.{" "}
-                  <a href="#" className="text-primary underline">
-                    Cancellation Policy
-                  </a>
-                </p>
-              </div>
+              {(shop?.termsConditions || shop?.privacyPolicy) && (
+                <div className="rounded-lg border bg-card p-4 space-y-3">
+                  {shop?.termsConditions && (
+                    <div>
+                      <p className="text-xs font-semibold text-foreground mb-1">
+                        Terms &amp; Conditions
+                      </p>
+                      <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+                        {shop.termsConditions}
+                      </p>
+                    </div>
+                  )}
+                  {shop?.privacyPolicy && (
+                    <div>
+                      <p className="text-xs font-semibold text-foreground mb-1">
+                        Privacy Policy
+                      </p>
+                      <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+                        {shop.privacyPolicy}
+                      </p>
+                    </div>
+                  )}
+                  <label className="flex items-start gap-2.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={termsAgreed}
+                      onChange={(e) => setTermsAgreed(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-input accent-primary"
+                    />
+                    <span className="text-xs text-muted-foreground leading-snug">
+                      I have read and agree to the terms &amp; conditions and
+                      privacy policy above.
+                    </span>
+                  </label>
+                </div>
+              )}
 
               <Button
                 type="submit"
                 size="lg"
                 className="w-full"
-                disabled={isBookingSubmitting}
+                disabled={
+                  isBookingSubmitting ||
+                  (!!(shop?.termsConditions || shop?.privacyPolicy) &&
+                    !termsAgreed)
+                }
               >
                 {isBookingSubmitting ? "Confirming..." : "Confirm Booking"}
               </Button>
@@ -1079,7 +1058,13 @@ export const Checkout = () => {
             <Button onClick={handleAddTime} className="gap-2">
               <Timer className="w-4 h-4" /> Add 10 More Minutes
             </Button>
-            <Button variant="outline" onClick={() => setStep("services")}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                releaseHold();
+                setStep("services");
+              }}
+            >
               Return to Booking
             </Button>
           </div>

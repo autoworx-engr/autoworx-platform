@@ -9,24 +9,27 @@ import TopVendors from "./TopVendors";
 import VendorCard from "./VendorCard";
 import VendorHeader from "../VendorHeader";
 
-export default async function Page({
-  searchParams: { vendorId },
-}: {
-  searchParams: { vendorId: string };
+export default async function Page(props: {
+  searchParams: Promise<{ vendorId: string }>;
 }) {
+  const searchParams = await props.searchParams;
+
+  const { vendorId } = searchParams;
+
   const companyId = await getCompanyId();
   const vendors = await db.vendor.findMany({
     where: { companyId },
   });
 
   return (
-    <div className="h-full w-full overflow-y-hidden p-2">
+    <div className="h-full w-full overflow-y-auto p-2 lg:overflow-y-hidden">
       <div className="flex items-center justify-between">
         <Title>Vendor List</Title>
 
         <NewVendor
           button={
-            <button className="
+            <button
+              className="
                 flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white
                 bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
                 shadow-[0_4px_14px_0_rgba(101,113,255,0.39)]
@@ -34,7 +37,8 @@ export default async function Page({
                 hover:-translate-y-0.5
                 active:translate-y-0 active:scale-100
                 transition-all duration-300 ease-in-out
-            ">
+            "
+            >
               Add New Vendor
             </button>
           }

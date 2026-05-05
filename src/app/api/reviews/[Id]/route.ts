@@ -161,8 +161,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { Id: string } },
+  props: { params: Promise<{ Id: string }> },
 ) {
+  const params = await props.params;
   try {
     const id = Number(params.Id);
     const body = await req.json();
@@ -191,8 +192,9 @@ export async function PATCH(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { Id: string } },
+  props: { params: Promise<{ Id: string }> },
 ) {
+  const params = await props.params;
   try {
     const id = Number(params.Id);
 

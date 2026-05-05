@@ -15,7 +15,10 @@ type UpdateGiftCardSettingsParams = {
   accessToken: string;
 };
 
-export const useGetGiftCardSettings = (shopId?: number, accessToken?: string) => {
+export const useGetGiftCardSettings = (
+  shopId?: number,
+  accessToken?: string,
+) => {
   return useQuery({
     queryKey: ["virtual-shop-gift-card-settings", shopId],
     queryFn: async () => {
@@ -34,7 +37,11 @@ export const useUpdateGiftCardSettings = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ shopId, payload, accessToken }: UpdateGiftCardSettingsParams) =>
+    mutationFn: ({
+      shopId,
+      payload,
+      accessToken,
+    }: UpdateGiftCardSettingsParams) =>
       updateGiftCardSettings(shopId, payload, accessToken),
     onSuccess: () => {
       queryClient.invalidateQueries({

@@ -12,23 +12,23 @@ export const createCouponValidationSchema = z
       .min(1, "Coupon code is required.")
       .regex(
         /^[A-Za-z0-9_-]+$/,
-        "Coupon code must be alphanumeric and may include dashes or underscores."
+        "Coupon code must be alphanumeric and may include dashes or underscores.",
       ),
     discountType: z
       .string()
-      .refine(val => ["Fixed", "Percentage"].includes(val), {
+      .refine((val) => ["Fixed", "Percentage"].includes(val), {
         message: "Discount type must be either 'percentage' or 'flat'.",
       }),
     discountValue: z
       .number()
       .positive("Discount value must be a positive number.")
-      .refine(val => val > 0, {
+      .refine((val) => val > 0, {
         message: "Discount value must be greater than 0.",
       }),
-    startDate: z.string().refine(val => !isNaN(Date.parse(val)), {
+    startDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
       message: "Start date must be a valid date.",
     }),
-    endDate: z.string().refine(val => !isNaN(Date.parse(val)), {
+    endDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
       message: "End date must be a valid date.",
     }),
     couponType: z.string(),
@@ -36,7 +36,7 @@ export const createCouponValidationSchema = z
     //     message: "Coupon type must be either 'single-use' or 'multi-use'.",
     //   }),
   })
-  .refine(val => {
+  .refine((val) => {
     const { startDate, endDate } = val;
     if (new Date(endDate) >= new Date(startDate)) {
       return true;
@@ -62,23 +62,23 @@ export const updateCouponValidationSchema = z
       .min(1, "Coupon code is required.")
       .regex(
         /^[A-Za-z0-9_-]+$/,
-        "Coupon code must be alphanumeric and may include dashes or underscores."
+        "Coupon code must be alphanumeric and may include dashes or underscores.",
       ),
     discountType: z
       .string()
-      .refine(val => ["Fixed", "Percentage"].includes(val), {
+      .refine((val) => ["Fixed", "Percentage"].includes(val), {
         message: "Discount type must be either 'percentage' or 'flat'.",
       }),
     discountValue: z
       .number()
       .positive("Discount value must be a positive number.")
-      .refine(val => val > 0, {
+      .refine((val) => val > 0, {
         message: "Discount value must be greater than 0.",
       }),
-    startDate: z.string().refine(val => !isNaN(Date.parse(val)), {
+    startDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
       message: "Start date must be a valid date.",
     }),
-    endDate: z.string().refine(val => !isNaN(Date.parse(val)), {
+    endDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
       message: "End date must be a valid date.",
     }),
     couponType: z.string(),
@@ -86,7 +86,7 @@ export const updateCouponValidationSchema = z
     //     message: "Coupon type must be either 'single-use' or 'multi-use'.",
     //   }),
   })
-  .refine(val => {
+  .refine((val) => {
     const { startDate, endDate } = val;
     if (new Date(endDate) >= new Date(startDate)) {
       return true;

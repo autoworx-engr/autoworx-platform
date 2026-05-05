@@ -29,7 +29,7 @@ interface EmployeeData {
   profilePicture?: string;
   password: string;
   confirmPassword: string;
-  countryCode?: string
+  countryCode?: string;
 }
 
 export async function addEmployee({
@@ -50,7 +50,7 @@ export async function addEmployee({
   profilePicture,
   password,
   confirmPassword,
-  countryCode
+  countryCode,
 }: EmployeeData): Promise<ServerAction | TErrorHandler> {
   try {
     const companyId = await getCompanyId();
@@ -114,7 +114,7 @@ export async function addEmployee({
     uploadNotificationSettings(
       newEmployee.id,
       newEmployee.employeeType,
-      newEmployee.companyId
+      newEmployee.companyId,
     );
 
     revalidatePath("/employee");

@@ -97,8 +97,9 @@ import { db } from "@/lib/db";
 // GET single company information
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } },
+  props: { params: Promise<{ id: string }> },
 ) {
+  const params = await props.params;
   try {
     const companyId = Number(params.id);
 

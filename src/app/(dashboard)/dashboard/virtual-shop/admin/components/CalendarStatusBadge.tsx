@@ -1,6 +1,11 @@
 "use client";
 
-import { AlertCircle, CheckCircle2, XCircle, type LucideIcon } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  XCircle,
+  type LucideIcon,
+} from "lucide-react";
 import type { AppointmentStatus } from "./CalendarTab.types";
 
 const STATUS_CONFIG: Record<
@@ -33,10 +38,16 @@ const STATUS_CONFIG: Record<
   },
 };
 
-export default function CalendarStatusBadge({ status }: { status: AppointmentStatus }) {
+export default function CalendarStatusBadge({
+  status,
+}: {
+  status: AppointmentStatus;
+}) {
   const { label, bg, text, icon: Icon } = STATUS_CONFIG[status];
   return (
-    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${bg} ${text}`}>
+    <span
+      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${bg} ${text}`}
+    >
       <Icon size={11} />
       {label}
     </span>

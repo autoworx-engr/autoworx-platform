@@ -24,7 +24,7 @@ export const serviceModelDataValidationSchema = z
     companyId: z.number().int().positive(),
   })
   .refine(
-    data => {
+    (data) => {
       // If fromRequest is true, fromRequestedCompanyId should be non-null
       if (data.fromRequest === true) {
         return data.fromRequestedCompanyId !== null;
@@ -38,7 +38,7 @@ export const serviceModelDataValidationSchema = z
     },
   )
   .refine(
-    data => {
+    (data) => {
       // Ensure updatedAt is not before createdAt
       return data.updatedAt >= data.createdAt;
     },

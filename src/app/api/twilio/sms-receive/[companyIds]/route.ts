@@ -9,7 +9,10 @@ import receiveTwiloMessage from "@/lib/pusher/receiveTwiloMessage";
 import { getPusherInstance } from "@/lib/pusher/server";
 import { sendSMSToAgent } from "@/service/ai-agent/api";
 import { allCompanyFeaturePermissions } from "@/service/feature-permissions/api";
-import { normalizePhoneForStorage, phoneLookupWhereClause } from "@/utils/normalizePhone";
+import {
+  normalizePhoneForStorage,
+  phoneLookupWhereClause,
+} from "@/utils/normalizePhone";
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -55,12 +58,10 @@ export async function POST(
     const { params } = context;
     const companyIdsParam = (await params)?.companyIds;
 
-    // Parse list of company IDs
     const companyIds = companyIdsParam.split(",").map((id) => parseInt(id, 10));
 
     let body;
 
-    // Check for Twilio's default content type
     const contentType = req.headers.get("content-type");
     if (contentType === "application/x-www-form-urlencoded") {
       const formData = await req.text();
@@ -71,83 +72,80 @@ export async function POST(
       );
     }
 
-    // Extract Media URLs (Twilio sends them as MediaUrl0, MediaUrl1, ...)
-    const mediaUrls: string[] = [];
-    const numMedia = parseInt(body.NumMedia, 10) || 0; // Number of media items
+    // Respond to Twilio immediately to avoid 15s timeout, then process async
+    processIncomingSMS(body, companyIds).catch((err) =>
+      console.error("SMS processing error:", err),
+    );
 
-    for (let i = 0; i < numMedia; i++) {
-      const mediaUrl = body[`MediaUrl${i}`];
-      if (mediaUrl) mediaUrls.push(mediaUrl);
-    }
+    return Response.json({ message: "Webhook received" }, { status: 200 });
+  } catch (error: any) {
+    console.error("Subscription error:", error);
+    return Response.json(
+      { message: "Webhook subscription failed", error: error?.message },
+      { status: 500 },
+    );
+  }
+}
 
-    // Get Twilio credentials for one of the companies to access auth details
-    const credential = await db.twilioCredentials.findFirst({
-      where: {
-        companyId: {
-          in: companyIds,
-        },
-        phoneNumber: {
-          contains: body.To.replace("+", ""),
-        },
+async function processIncomingSMS(
+  body: Record<string, string>,
+  companyIds: number[],
+) {
+  const mediaUrls: string[] = [];
+  const numMedia = parseInt(body.NumMedia, 10) || 0;
+
+  for (let i = 0; i < numMedia; i++) {
+    const mediaUrl = body[`MediaUrl${i}`];
+    if (mediaUrl) mediaUrls.push(mediaUrl);
+  }
+
+  const credential = await db.twilioCredentials.findFirst({
+    where: {
+      companyId: {
+        in: companyIds,
       },
-    });
+      phoneNumber: {
+        contains: body.To.replace("+", ""),
+      },
+    },
+  });
 
-    const formData = new FormData();
+  const formData = new FormData();
 
-    for (const url of mediaUrls) {
-      const file = await fetchTwilioMedia(
-        url,
-        credential?.apiKeySid || "",
-        credential?.apiKeySecret || "",
-      );
-      formData.append("file", file);
+  for (const url of mediaUrls) {
+    const file = await fetchTwilioMedia(
+      url,
+      credential?.apiKeySid || "",
+      credential?.apiKeySecret || "",
+    );
+    formData.append("file", file);
+  }
+
+  const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/upload`, {
+    method: "POST",
+    body: formData,
+  });
+
+  const imgs = await res.json();
+  const images = imgs?.data ?? [];
+
+  const normalizedFrom = normalizePhoneForStorage(body.From);
+  const phoneLookup = phoneLookupWhereClause(body.From);
+
+  for (const companyId of companyIds) {
+    const entitlements = await getCompanyEntitlements(companyId);
+    if (!entitlements.canUseSms) {
+      continue;
     }
-
-    const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/upload`, {
-      method: "POST",
-      body: formData,
+    const company = await db.company.findUnique({
+      where: { id: companyId },
     });
 
-    const imgs = await res.json();
-    const images = imgs?.data ?? [];
-
-    const normalizedFrom = normalizePhoneForStorage(body.From);
-    const phoneLookup = phoneLookupWhereClause(body.From);
-
-    for (const companyId of companyIds) {
-      const entitlements = await getCompanyEntitlements(companyId);
-      if (!entitlements.canUseSms) {
-        continue;
-      }
-      const company = await db.company.findUnique({
-        where: { id: companyId },
-      });
-
-      let client = phoneLookup
-        ? await db.client.findFirst({
-            where: {
-              OR: phoneLookup,
-              companyId: +companyId,
-            },
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              companyId: true,
-              Lead: true,
-              isSalesAgent: true,
-            },
-          })
-        : null;
-
-      if (!client) {
-        client = await db.client.create({
-          data: {
-            firstName: body.From,
-            lastName: " ",
-            mobile: normalizedFrom,
-            companyId: companyId,
-            isSalesAgent: true,
+    let client = phoneLookup
+      ? await db.client.findFirst({
+          where: {
+            OR: phoneLookup,
+            companyId: +companyId,
           },
           select: {
             id: true,
@@ -157,137 +155,159 @@ export async function POST(
             Lead: true,
             isSalesAgent: true,
           },
-        });
-      }
+        })
+      : null;
 
-      if (client) {
-        const dbMessage = await db.clientSMS.create({
-          data: {
-            from: body.From,
-            to: body.To,
-            message: body.Body,
-            sentBy: "Client",
-            clientId: client.id,
-            companyId: client.companyId,
-          },
-        });
-        let attachments = [];
-        for (const file of images) {
-          // Extract file extension from URL
-          const fileExtension = file.split(".").pop()?.split("?")[0] || "jpg";
-          const audioExts = ["ogg","mp3","m4a","wav","webm","aac","amr","3gp","opus","oga","flac"];
-          const isVoice = audioExts.includes(fileExtension.toLowerCase());
-          let atc = await db.clientSmsAttachments.create({
-            data: {
-              url: file,
-              name: `${dbMessage.id}_${Date.now()}.${fileExtension}`,
-              isVoiceNote: isVoice,
-              clientSMSId: dbMessage.id,
-            },
-          });
-          attachments.push(atc);
-        }
-
-        // update client sms conversation track
-        const clientConversationTrack = await updateNewSMSChatTrack({
-          clientId: client.id,
-          smsLastMessage: body.Body,
-          lastMessageBy: "Client",
-          attachments: attachments,
-        });
-
-        const currentClient = await db.client.findUnique({
-          where: { id: client?.id },
-        });
-
-        const permissions = await allCompanyFeaturePermissions(companyId);
-
-        const entitlements = await getCompanyEntitlements(client.companyId);
-        const isSalesAgentEnabled = entitlements.awxSalesAgent;
-
-        //sales agent
-        const isCompanySalesAgent = company?.isSalesAgent === true;
-        const isClientSalesAgent = currentClient?.isSalesAgent === true;
-
-        if (isCompanySalesAgent && isClientSalesAgent && isSalesAgentEnabled) {
-          if (dbMessage && dbMessage.to === credential?.phoneNumber) {
-            try {
-              await sendSMSToAgent({
-                company_id: client.companyId,
-                message: dbMessage?.message,
-                send_from: dbMessage?.from,
-                send_to: dbMessage?.to,
-                client_id: client?.id,
-              });
-            } catch (error) {
-              return Response.json(
-                { message: `Sales agent error: ${error}` },
-                { status: 200 },
-              );
-            }
-          }
-        }
-
-        // pusher trigger to send message to company admin real time
-
-        receiveTwiloMessage({ ...dbMessage, attachments });
-
-        if (clientConversationTrack) {
-          // send a notification to the client for updated message
-          sendClientMailOrSMSNotify(+companyId, clientConversationTrack);
-        }
-
-        const totalUnReadMessages = await db.clientConversationTrack.findFirst({
-          where: {
-            clientId: client.id,
-          },
-          select: {
-            smsUnReadCount: true,
-          },
-        });
-
-        sendClientMessageNotification({
-          companyId: +companyId,
-          clientId: client.id,
-          clientName: client.firstName + " " + client.lastName,
-        });
-
-        const channelName = `message-${client.id}`;
-
-        let updatedColumnId = client.Lead?.columnId;
-
-        if (client.Lead?.id && client.Lead?.columnId) {
-          const responseData = await updatePipelineAutomationTriggerWithToken({
-            condition: "MESSAGE_RECEIVED_CLIENT",
-            companyId: +companyId,
-            leadId: client.Lead?.id,
-            columnId: client.Lead?.columnId,
-          });
-
-          if (responseData?.data?.columnId) {
-            updatedColumnId = responseData.data.columnId;
-          }
-        }
-
-        pusher.trigger(channelName, "client", {
-          count: totalUnReadMessages?.smsUnReadCount,
-          updatedColumnId,
-        });
-      }
+    if (!client) {
+      client = await db.client.create({
+        data: {
+          firstName: body.From,
+          lastName: " ",
+          mobile: normalizedFrom,
+          companyId: companyId,
+          isSalesAgent: true,
+        },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          companyId: true,
+          Lead: true,
+          isSalesAgent: true,
+        },
+      });
     }
-    revalidatePath("/dashboard/communication/client");
-    // Send a success response
-    return Response.json(
-      { message: "Webhook subscription successful", data: body },
-      { status: 200 },
-    );
-  } catch (error: any) {
-    console.error("Subscription error:", error);
-    return Response.json(
-      { message: "Webhook subscription failed", error: error?.message },
-      { status: 500 },
-    );
+
+    if (client) {
+      const dbMessage = await db.clientSMS.create({
+        data: {
+          from: body.From,
+          to: body.To,
+          message: body.Body,
+          sentBy: "Client",
+          clientId: client.id,
+          companyId: client.companyId,
+        },
+      });
+      let attachments = [];
+      for (const file of images) {
+        // Extract file extension from URL
+        const fileExtension = file.split(".").pop()?.split("?")[0] || "jpg";
+        const audioExts = [
+          "ogg",
+          "mp3",
+          "m4a",
+          "wav",
+          "webm",
+          "aac",
+          "amr",
+          "3gp",
+          "opus",
+          "oga",
+          "flac",
+        ];
+        const isVoice = audioExts.includes(fileExtension.toLowerCase());
+        let atc = await db.clientSmsAttachments.create({
+          data: {
+            url: file,
+            name: `${dbMessage.id}_${Date.now()}.${fileExtension}`,
+            isVoiceNote: isVoice,
+            clientSMSId: dbMessage.id,
+          },
+        });
+        attachments.push(atc);
+      }
+
+      // update client sms conversation track
+      const clientConversationTrack = await updateNewSMSChatTrack({
+        clientId: client.id,
+        smsLastMessage: body.Body,
+        lastMessageBy: "Client",
+        attachments: attachments,
+      });
+
+      const currentClient = await db.client.findUnique({
+        where: { id: client?.id },
+      });
+
+      const permissions = await allCompanyFeaturePermissions(companyId);
+
+      const entitlements = await getCompanyEntitlements(client.companyId);
+      const isSalesAgentEnabled = entitlements.awxSalesAgent;
+
+      //sales agent
+      const isCompanySalesAgent = company?.isSalesAgent === true;
+      const isClientSalesAgent = currentClient?.isSalesAgent === true;
+
+      if (isCompanySalesAgent && isClientSalesAgent && isSalesAgentEnabled) {
+        if (dbMessage && dbMessage.to === credential?.phoneNumber) {
+          try {
+            await sendSMSToAgent({
+              company_id: client.companyId,
+              message: dbMessage?.message,
+              send_from: dbMessage?.from,
+              send_to: dbMessage?.to,
+              client_id: client?.id,
+            });
+          } catch (error) {
+            return Response.json(
+              { message: `Sales agent error: ${error}` },
+              { status: 200 },
+            );
+          }
+        }
+      }
+
+      // pusher trigger to send message to company admin real time
+
+      receiveTwiloMessage({ ...dbMessage, attachments });
+
+      if (clientConversationTrack) {
+        // send a notification to the client for updated message
+        sendClientMailOrSMSNotify(+companyId, clientConversationTrack);
+      }
+
+      const totalUnReadMessages = await db.clientConversationTrack.findFirst({
+        where: {
+          clientId: client.id,
+        },
+        select: {
+          smsUnReadCount: true,
+        },
+      });
+
+      sendClientMessageNotification({
+        companyId: +companyId,
+        clientId: client.id,
+        clientName: client.firstName + " " + client.lastName,
+        message: body.Body,
+        hasMedia: Number(body.NumMedia) > 0,
+      });
+
+      const channelName = `message-${client.id}`;
+
+      let updatedColumnId = client.Lead?.columnId;
+
+      if (client.Lead?.id && client.Lead?.columnId) {
+        const responseData = await updatePipelineAutomationTriggerWithToken({
+          condition: "MESSAGE_RECEIVED_CLIENT",
+          companyId: +companyId,
+          leadId: client.Lead?.id,
+          columnId: client.Lead?.columnId,
+        });
+
+        if (responseData?.data?.columnId) {
+          updatedColumnId = responseData.data.columnId;
+        }
+      }
+
+      pusher.trigger(channelName, "client", {
+        count: totalUnReadMessages?.smsUnReadCount,
+        updatedColumnId,
+      });
+    }
   }
+  revalidatePath("/dashboard/communication/client");
 }
 // 🔹 Function to Fetch Twilio Media and Convert to File
 async function fetchTwilioMedia(
@@ -332,4 +352,3 @@ function mimeToExtension(mime: string): string {
   };
   return map[mime.split(";")[0].trim()] || "bin";
 }
-
