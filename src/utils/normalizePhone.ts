@@ -1,14 +1,21 @@
 /**
- * Normalize a phone number to a consistent digits-only format.
- * For US numbers (11 digits starting with "1"), strips the leading "1" to store as 10 digits.
+ * Normalize a phone number to a consistent format for storage.
+ * If the number already has an international "+" prefix, preserve it (remove only spaces/dashes).
+ * For bare US numbers (11 digits starting with "1"), strips the leading "1" to store as 10 digits.
  * This ensures consistent matching regardless of how the number was originally entered
- * (e.g., "+16784787306", "(678) 478-7306", "6784787306" all normalize to "6784787306").
+ * (e.g., "(678) 478-7306", "6784787306" normalize to "6784787306";
+ *  "+16784787306" is preserved as "+16784787306").
  */
 export function normalizePhoneForStorage(
   phone: string | null | undefined,
 ): string {
   if (!phone) return "";
-  const digits = phone.replace(/\D/g, "");
+  const trimmed = phone.trim();
+  // Preserve international format — keep the "+" and remove only spaces/formatting chars
+  if (trimmed.startsWith("+")) {
+    return trimmed.replace(/[^\d+]/g, "");
+  }
+  const digits = trimmed.replace(/\D/g, "");
   // US numbers: strip leading country code "1" from 11-digit numbers
   if (digits.length === 11 && digits.startsWith("1")) {
     return digits.slice(1);

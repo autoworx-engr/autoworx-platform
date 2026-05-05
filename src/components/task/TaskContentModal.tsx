@@ -91,7 +91,6 @@ export default function TaskContentModal({
       )}
       onClick={(e) => {
         e.stopPropagation();
-        e.preventDefault();
       }}
     >
       <DialogHeader>

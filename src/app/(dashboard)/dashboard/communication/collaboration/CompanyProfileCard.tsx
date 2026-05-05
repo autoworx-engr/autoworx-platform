@@ -300,6 +300,8 @@ export default function CompanyProfileCard({
                         description="Are you sure to delete this review?"
                         okText="Yes"
                         cancelText="No"
+                        placement="bottomLeft"
+                        overlayStyle={{ maxWidth: 220 }}
                         onConfirm={() => handleDeleteReview(review.id)}
                       >
                         <button

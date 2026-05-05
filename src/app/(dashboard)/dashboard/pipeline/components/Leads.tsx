@@ -523,9 +523,9 @@ const Leads = ({ salesColumn }: TProps) => {
                 <tbody>
                   {leads &&
                     leads.map((lead, index) => {
-                      const timeCreated = moment(lead.createdAt).format(
-                        "MM/DD/YYYY",
-                      );
+                      const timeCreated = moment
+                        .utc(lead.createdAt)
+                        .format("MM/DD/YYYY");
 
                       return (
                         <tr

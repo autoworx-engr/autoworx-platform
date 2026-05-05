@@ -368,7 +368,7 @@ export async function sendInfobipMessage({
         console.error("Pipeline automation trigger error:", error);
       }
 
-      revalidatePath("/dashboard/communication/client");
+      revalidatePath("/dashboard/communication/client/${clientId}");
       // if (company?.isSalesAgent && client?.isSalesAgent) {
       //   if (dbMessage && dbMessage.to === infobipConfig.phoneNumber) {
       //     await sendSMSToAgent({

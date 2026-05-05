@@ -224,7 +224,7 @@ export default async function PaymentReportPage(props: TProps) {
     filteredTotalCount,
     filteredPayments,
     outStandingPayment,
-  ] = await db.$transaction([
+  ] = await Promise.all([
     db.payment.aggregate({
       where: {
         companyId,
@@ -310,7 +310,7 @@ export default async function PaymentReportPage(props: TProps) {
         <Calculation
           content="TOTAL PAYMENT (Filtered)"
           amount={
-            searchParams?.paymentMethod === "Refund"
+            searchParams?.paymentMethod?.toUpperCase() === "REFUND"
               ? totalRefunded
               : filteredTotalAmount
           }

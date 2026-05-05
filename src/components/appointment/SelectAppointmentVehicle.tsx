@@ -10,6 +10,7 @@ import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import NewVehicle from "../Lists/NewVehicle";
 import { SelectProps } from "../Lists/select-props";
 import { usePathname } from "next/navigation";
+import { Plus } from "lucide-react";
 
 export function SelectAppointmentVehicle({
   name = "vehicleId",
@@ -103,6 +104,14 @@ export function SelectAppointmentVehicle({
           newButton={
             <NewVehicle
               clientId={Number(clientId)}
+              newButton={
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-center gap-2 rounded-md bg-[#6571FF] px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-[#5A65F0]"
+                >
+                  <Plus className="w-4 h-4" /> New Vehicle
+                </button>
+              }
               onAdd={(vehicle: Vehicle) => {
                 if (pathname.includes("/dashboard/client")) {
                   return;
@@ -152,7 +161,7 @@ export function SelectAppointmentVehicle({
                   handleClear();
                   setOpenDropdown && setOpenDropdown(false);
                 }}
-                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                className="flex w-full items-center justify-center rounded-md border border-red-200 bg-red-50/70 px-3 py-2 text-sm font-semibold text-red-600 transition-colors duration-150 hover:bg-red-100"
               >
                 Clear Vehicle
               </button>
