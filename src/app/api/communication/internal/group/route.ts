@@ -272,11 +272,6 @@ export const GET = async (req: NextRequest) => {
       where,
     });
 
-    console.log(
-      "[GET /api/internal/group] group list order:",
-      groups.map((g) => ({ id: g.id, name: g.name, updatedAt: g.updatedAt })),
-    );
-
     return NextResponse.json(
       {
         success: true,
