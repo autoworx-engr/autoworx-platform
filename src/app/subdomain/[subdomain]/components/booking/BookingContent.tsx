@@ -30,6 +30,7 @@ const toNumber = (value: unknown) => {
 
 const BookingContent = ({ initialShop }: { initialShop?: any }) => {
   const [isEmergencyModalOpen, setIsEmergencyModalOpen] = useState(false);
+  const [hasNoSlots, setHasNoSlots] = useState(false);
   const {
     step,
     setStep,
@@ -93,7 +94,11 @@ const BookingContent = ({ initialShop }: { initialShop?: any }) => {
       setHasNextPage(hasNextPage);
       setHasPrevPage(hasPrevPage);
     }
-  }, [shopServices?.meta]);
+  }, [setHasNextPage, setHasPrevPage, setTotalPages, shopServices?.meta]);
+
+  useEffect(() => {
+    if (step !== "datetime") setHasNoSlots(false);
+  }, [step]);
 
   // Map and sync services to context
   useEffect(() => {
@@ -151,7 +156,11 @@ const BookingContent = ({ initialShop }: { initialShop?: any }) => {
       <BookingHeader
         rightElement="giftcard"
         onLogoClick={handleLogoClick}
-        onEmergencyRequest={() => setIsEmergencyModalOpen(true)}
+        onEmergencyRequest={
+          step === "datetime" && hasNoSlots
+            ? () => setIsEmergencyModalOpen(true)
+            : undefined
+        }
       >
         <ProgressBar current={step} />
       </BookingHeader>
@@ -159,7 +168,12 @@ const BookingContent = ({ initialShop }: { initialShop?: any }) => {
       {/* Content */}
       <main className="container max-w-5xl mx-auto px-4 py-8 relative">
         {step === "services" && <ServiceMenu isLoading={isServicesLoading} />}
-        {step === "datetime" && <DateTimeSelection />}
+        {step === "datetime" && (
+          <DateTimeSelection
+            onAvailabilityChange={(hasSlots) => setHasNoSlots(!hasSlots)}
+            onEmergencyRequest={() => setIsEmergencyModalOpen(true)}
+          />
+        )}
         {step === "checkout" && <Checkout />}
         {step === "confirmation" && <Confirmation />}
       </main>

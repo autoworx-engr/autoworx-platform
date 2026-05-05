@@ -31,7 +31,6 @@ export interface FormState {
   vehicleYear: string;
   vehicleMake: string;
   vehicleModel: string;
-  selectedServices: SelectedService[];
 }
 
 export const DEFAULT_FORM: FormState = {
@@ -45,7 +44,6 @@ export const DEFAULT_FORM: FormState = {
   vehicleYear: "",
   vehicleMake: "",
   vehicleModel: "",
-  selectedServices: [],
 };
 
 export interface SuccessData {

@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { AlertTriangle, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useShopInfo } from "@/hooks/virtual-shop/useShopInfo";
 import { CheckoutVehicleSection } from "./CheckoutVehicleSection";
 import { useEmergencyRequest } from "./emergency/useEmergencyRequest";
-import { EmergencyServiceSelector } from "./emergency/EmergencyServiceSelector";
 import { EmergencySuccessView } from "./emergency/EmergencySuccessView";
+import { useBooking } from "../../context/BookingContext";
+import { SelectedService } from "./emergency/types";
 
 interface EmergencyRequestModalProps {
   isOpen: boolean;
@@ -28,6 +29,17 @@ export const EmergencyRequestModal = ({
   onClose,
 }: EmergencyRequestModalProps) => {
   const { shopId } = useShopInfo();
+  const { cart } = useBooking();
+
+  const cartServices = useMemo<SelectedService[]>(
+    () =>
+      cart.map((item) => ({
+        serviceId: Number(item.service.id),
+        vehicleType: item.vehicleType ?? null,
+      })),
+    [cart],
+  );
+
   const {
     form,
     set,
@@ -38,11 +50,9 @@ export const EmergencyRequestModal = ({
     error,
     handlePhoneLookup,
     handleVehicleChange,
-    toggleService,
-    setServiceVehicleType,
     handleSubmit,
     handleClose,
-  } = useEmergencyRequest(shopId, onClose);
+  } = useEmergencyRequest(shopId, onClose, cartServices);
 
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "";
@@ -151,20 +161,35 @@ export const EmergencyRequestModal = ({
               />
             </section>
 
-            {/* Services */}
-            <section className="space-y-3">
-              <SectionLabel>
-                Services Needed{" "}
-                <span className="normal-case font-normal">(optional)</span>
-              </SectionLabel>
-              <EmergencyServiceSelector
-                shopId={shopId}
-                isOpen={isOpen}
-                selectedServices={form.selectedServices}
-                onToggle={toggleService}
-                onVehicleTypeChange={setServiceVehicleType}
-              />
-            </section>
+            {/* Services from cart */}
+            {cart.length > 0 && (
+              <section className="space-y-3">
+                <SectionLabel>
+                  Services Needed{" "}
+                  <span className="normal-case font-normal">(from cart)</span>
+                </SectionLabel>
+                <div className="border border-border rounded-xl divide-y divide-border overflow-hidden">
+                  {cart.map((item) => (
+                    <div
+                      key={item.service.id}
+                      className="flex items-center justify-between px-4 py-3 text-sm"
+                    >
+                      <span className="font-medium">{item.service.title}</span>
+                      <div className="flex items-center gap-3 text-muted-foreground">
+                        {item.vehicleType && (
+                          <span className="text-xs bg-muted px-2 py-0.5 rounded-md">
+                            {item.vehicleType}
+                          </span>
+                        )}
+                        {item.quantity > 1 && (
+                          <span className="text-xs">×{item.quantity}</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
 
             {/* Vehicle */}
             <section className="space-y-3">
