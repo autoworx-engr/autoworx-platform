@@ -3104,7 +3104,6 @@ model ShopBooking {
   services    ShopBookingService[]
   vehicle     Vehicle?             @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
   appointment Appointment?         @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
-  emergencyBookingRequest EmergencyBookingRequest?
 
   @@index([shopId])
   @@index([clientId])
@@ -3400,9 +3399,6 @@ model EmergencyBookingRequest {
   proposedTime     String?   @map("proposed_time")
   alternativeNotes String?   @map("alternative_notes") @db.Text
   
-  // Final Booking (once approved)
-  shopBookingId Int? @unique @map("shop_booking_id")
-  shopBooking   ShopBooking? @relation(fields: [shopBookingId], references: [id])
   
   // Timestamps
   createdAt DateTime @default(now()) @map("created_at")

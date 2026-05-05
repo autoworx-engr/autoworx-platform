@@ -41,6 +41,7 @@ export const EmergencyRequestModal = ({
     handlePhoneLookup,
     handleVehicleChange,
     toggleService,
+    setServiceVehicleType,
     handleSubmit,
     handleClose,
   } = useEmergencyRequest(shopId, onClose);
@@ -61,7 +62,7 @@ export const EmergencyRequestModal = ({
         onClick={handleClose}
       />
 
-      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-background rounded-2xl shadow-2xl border border-border">
+      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-none bg-background rounded-2xl shadow-2xl border border-border">
         {/* Header */}
         <div className="sticky top-0 z-10 bg-primary text-primary-foreground px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <div className="flex items-center gap-3">
@@ -187,8 +188,9 @@ export const EmergencyRequestModal = ({
               <EmergencyServiceSelector
                 shopId={shopId}
                 isOpen={isOpen}
-                selectedServiceIds={form.selectedServiceIds}
+                selectedServices={form.selectedServices}
                 onToggle={toggleService}
+                onVehicleTypeChange={setServiceVehicleType}
               />
             </section>
 

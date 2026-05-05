@@ -40,7 +40,15 @@ const schema = z.object({
     })
     .optional(),
   requestedServices: z
-    .array(z.object({ shpServiceId: z.number().int().positive().optional() }))
+    .array(
+      z.object({
+        shpServiceId: z.number().int().positive().optional(),
+        vehicleType: z
+          .enum(["Coupe", "Sedan", "SUV", "Truck"])
+          .optional()
+          .nullable(),
+      }),
+    )
     .default([]),
 });
 
@@ -176,6 +184,11 @@ const REVIEW_TIME_MAP: Record<string, string> = {
  *                     shpServiceId:
  *                       type: integer
  *                       example: 7
+ *                     vehicleType:
+ *                       type: string
+ *                       nullable: true
+ *                       enum: [Coupe, Sedan, SUV, Truck]
+ *                       example: SUV
  *     responses:
  *       200:
  *         description: Emergency request created successfully

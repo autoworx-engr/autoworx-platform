@@ -3,7 +3,13 @@
 import { useMemo, useState } from "react";
 import axios from "axios";
 import { ExistingVehicle } from "../CheckoutVehicleSection";
-import { DEFAULT_FORM, FormState, SuccessData } from "./types";
+import {
+  DEFAULT_FORM,
+  FormState,
+  SelectedService,
+  SuccessData,
+  VehicleType,
+} from "./types";
 
 export function useEmergencyRequest(shopId?: number, onClose?: () => void) {
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
@@ -70,12 +76,22 @@ export function useEmergencyRequest(shopId?: number, onClose?: () => void) {
     value: string,
   ) => set(field, value);
 
-  const toggleService = (serviceId: number) =>
+  const toggleService = (serviceId: number) => {
+    const exists = form.selectedServices.some((s) => s.serviceId === serviceId);
     set(
-      "selectedServiceIds",
-      form.selectedServiceIds.includes(serviceId)
-        ? form.selectedServiceIds.filter((id) => id !== serviceId)
-        : [...form.selectedServiceIds, serviceId],
+      "selectedServices",
+      exists
+        ? form.selectedServices.filter((s) => s.serviceId !== serviceId)
+        : [...form.selectedServices, { serviceId, vehicleType: null }],
+    );
+  };
+
+  const setServiceVehicleType = (serviceId: number, vehicleType: VehicleType) =>
+    set(
+      "selectedServices",
+      form.selectedServices.map((s) =>
+        s.serviceId === serviceId ? { ...s, vehicleType } : s,
+      ),
     );
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -107,8 +123,9 @@ export function useEmergencyRequest(shopId?: number, onClose?: () => void) {
               year: Number(form.vehicleYear),
             }
           : undefined,
-      requestedServices: form.selectedServiceIds.map((id) => ({
-        shpServiceId: id,
+      requestedServices: form.selectedServices.map((s) => ({
+        shpServiceId: s.serviceId,
+        vehicleType: s.vehicleType ?? undefined,
       })),
     };
 
@@ -148,6 +165,7 @@ export function useEmergencyRequest(shopId?: number, onClose?: () => void) {
     handlePhoneLookup,
     handleVehicleChange,
     toggleService,
+    setServiceVehicleType,
     handleSubmit,
     handleClose,
   };

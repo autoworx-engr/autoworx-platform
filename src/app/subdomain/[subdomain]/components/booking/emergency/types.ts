@@ -27,6 +27,28 @@ export const URGENCY_COLORS: Record<string, string> = {
 
 export type UrgencyLevel = "CRITICAL" | "URGENT" | "HIGH" | "NORMAL";
 
+export type VehicleType = "Coupe" | "Sedan" | "SUV" | "Truck";
+
+export const VEHICLE_TYPES: Array<{
+  value: VehicleType;
+  label: string;
+  modifierKey:
+    | "modifierCoupe"
+    | "modifierSedan"
+    | "modifierSUV"
+    | "modifierTruck";
+}> = [
+  { value: "Coupe", label: "Coupe", modifierKey: "modifierCoupe" },
+  { value: "Sedan", label: "Sedan", modifierKey: "modifierSedan" },
+  { value: "SUV", label: "SUV", modifierKey: "modifierSUV" },
+  { value: "Truck", label: "Truck", modifierKey: "modifierTruck" },
+];
+
+export interface SelectedService {
+  serviceId: number;
+  vehicleType: VehicleType | null;
+}
+
 export interface FormState {
   contactName: string;
   contactEmail: string;
@@ -40,7 +62,7 @@ export interface FormState {
   vehicleYear: string;
   vehicleMake: string;
   vehicleModel: string;
-  selectedServiceIds: number[];
+  selectedServices: SelectedService[];
 }
 
 export const DEFAULT_FORM: FormState = {
@@ -56,7 +78,7 @@ export const DEFAULT_FORM: FormState = {
   vehicleYear: "",
   vehicleMake: "",
   vehicleModel: "",
-  selectedServiceIds: [],
+  selectedServices: [],
 };
 
 export interface SuccessData {
