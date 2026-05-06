@@ -153,15 +153,7 @@ const BookingContent = ({ initialShop }: { initialShop?: any }) => {
   return (
     <div className="min-h-screen bg-background text-sm">
       {/* Header */}
-      <BookingHeader
-        rightElement="giftcard"
-        onLogoClick={handleLogoClick}
-        onEmergencyRequest={
-          step === "datetime" && hasNoSlots
-            ? () => setIsEmergencyModalOpen(true)
-            : undefined
-        }
-      >
+      <BookingHeader rightElement="giftcard" onLogoClick={handleLogoClick}>
         <ProgressBar current={step} />
       </BookingHeader>
 

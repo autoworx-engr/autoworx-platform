@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Gift, ArrowLeft, AlertTriangle } from "lucide-react";
+import { Gift, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useShopInfo } from "@/hooks/virtual-shop/useShopInfo";
 import { useRouter } from "next/navigation";
@@ -10,14 +10,12 @@ interface BookingHeaderProps {
   rightElement?: "booking" | "giftcard";
   children?: React.ReactNode;
   onLogoClick?: () => void;
-  onEmergencyRequest?: () => void;
 }
 
 export const BookingHeader = ({
   rightElement,
   children,
   onLogoClick,
-  onEmergencyRequest,
 }: BookingHeaderProps) => {
   const { shopName: hookShopName, shop } = useShopInfo();
   const shopName = hookShopName;
@@ -84,18 +82,6 @@ export const BookingHeader = ({
 
           {/* Compact Navigation */}
           <div className="flex items-center gap-3">
-            {onEmergencyRequest && (
-              <Button
-                type="button"
-                size="sm"
-                onClick={onEmergencyRequest}
-                className="rounded-xl gap-2 bg-primary hover:bg-primary/90 text-primary-foreground transition-all font-bold shadow-lg border-none"
-              >
-                <AlertTriangle className="w-4 h-4" />
-                <span className="hidden sm:inline">Urgent Request</span>
-              </Button>
-            )}
-
             {rightElement === "giftcard" && (
               <Link href={`/gift-cards`}>
                 <Button
