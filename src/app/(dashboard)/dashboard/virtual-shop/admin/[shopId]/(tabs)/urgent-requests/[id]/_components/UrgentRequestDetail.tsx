@@ -47,7 +47,7 @@ const STATUS_STYLES: Record<
   },
   UNDER_REVIEW: {
     label: "Under Review",
-    className: "bg-blue-100 text-blue-700 border-blue-200",
+    className: "bg-[#6571FF]/10 text-[#6571FF] border-[#6571FF]/20",
   },
   APPROVED: {
     label: "Approved",
@@ -55,7 +55,7 @@ const STATUS_STYLES: Record<
   },
   ALTERNATIVE_PROPOSED: {
     label: "Alt. Proposed",
-    className: "bg-purple-100 text-purple-700 border-purple-200",
+    className: "bg-[#6571FF]/10 text-[#6571FF] border-[#6571FF]/20",
   },
   CLIENT_CONFIRMED: {
     label: "Confirmed",
@@ -83,7 +83,7 @@ const STATUS_ACTIONS: {
   {
     value: "UNDER_REVIEW",
     label: "Mark Under Review",
-    className: "bg-blue-600 hover:bg-blue-700 text-white",
+    className: "bg-[#6571FF] hover:bg-[#5a66ee] text-white",
   },
   {
     value: "APPROVED",
@@ -93,7 +93,7 @@ const STATUS_ACTIONS: {
   {
     value: "ALTERNATIVE_PROPOSED",
     label: "Propose Alternative",
-    className: "bg-purple-600 hover:bg-purple-700 text-white",
+    className: "bg-[#6571FF]/80 hover:bg-[#6571FF] text-white",
   },
   {
     value: "REJECTED",
@@ -358,11 +358,11 @@ export default function UrgentRequestDetail({
 
           {/* Admin Notes — if already set */}
           {request.adminNotes && (
-            <section className="rounded-2xl border border-blue-100 bg-blue-50 p-5 shadow-sm space-y-2">
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-blue-500">
+            <section className="rounded-2xl border border-[#6571FF]/20 bg-[#6571FF]/5 p-5 shadow-sm space-y-2">
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-[#6571FF]">
                 Admin Notes
               </h2>
-              <p className="text-sm text-blue-800">{request.adminNotes}</p>
+              <p className="text-sm text-[#6571FF]/80">{request.adminNotes}</p>
             </section>
           )}
 
@@ -378,8 +378,8 @@ export default function UrgentRequestDetail({
           {(request.proposedDate ||
             request.proposedTime ||
             request.alternativeNotes) && (
-            <section className="rounded-2xl border border-purple-100 bg-purple-50 p-5 shadow-sm space-y-3">
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-purple-500">
+            <section className="rounded-2xl border border-[#6571FF]/20 bg-[#6571FF]/5 p-5 shadow-sm space-y-3">
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-[#6571FF]">
                 Alternative Proposal
               </h2>
               <div className="grid grid-cols-2 gap-3">
@@ -399,7 +399,7 @@ export default function UrgentRequestDetail({
                 )}
               </div>
               {request.alternativeNotes && (
-                <p className="text-sm text-purple-800">
+                <p className="text-sm text-[#6571FF]/80">
                   {request.alternativeNotes}
                 </p>
               )}

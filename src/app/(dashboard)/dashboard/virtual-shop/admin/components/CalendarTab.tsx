@@ -185,7 +185,7 @@ export default function CalendarTab({
             </button>
           </div>
           {totalAppts > 0 && (
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 dark:bg-indigo-900/30 text-[#6571FF]">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#6571FF]/10 dark:bg-[#6571FF]/20 text-[#6571FF]">
               {totalAppts} appt{totalAppts !== 1 ? "s" : ""}
             </span>
           )}

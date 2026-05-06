@@ -63,7 +63,7 @@ const STATUS_STYLES: Record<
   },
   UNDER_REVIEW: {
     label: "Under Review",
-    className: "bg-blue-100 text-blue-700 border-blue-200",
+    className: "bg-[#6571FF]/10 text-[#6571FF] border-[#6571FF]/20",
   },
   APPROVED: {
     label: "Approved",
@@ -71,7 +71,7 @@ const STATUS_STYLES: Record<
   },
   ALTERNATIVE_PROPOSED: {
     label: "Alt. Proposed",
-    className: "bg-purple-100 text-purple-700 border-purple-200",
+    className: "bg-[#6571FF]/10 text-[#6571FF] border-[#6571FF]/20",
   },
   CLIENT_CONFIRMED: {
     label: "Confirmed",
