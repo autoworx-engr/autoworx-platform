@@ -106,7 +106,7 @@ export async function createEstimateTemplate({
             throw new Error("Default column not found");
           }
         }
-        // Step 6: Create the main invoice record
+        // Step 6: Create the main template record
         const newTemplate = await db.invoiceTemplate.create({
           data: {
             id: templateId,
