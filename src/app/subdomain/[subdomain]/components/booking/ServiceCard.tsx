@@ -75,7 +75,7 @@ export const ServiceCard = ({ service }: { service: Service }) => {
             {service.title}
           </h3>
           <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
-            {service.description}
+            {service.description.replace(/<[^>]*>/g, "")}
           </p>
 
           {/* Vehicle Type Selector */}
@@ -152,9 +152,9 @@ export const ServiceCard = ({ service }: { service: Service }) => {
       </div>
 
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-        <DialogContent className="max-w-lg overflow-hidden p-0 gap-0 [&>button]:hidden">
+        <DialogContent className="max-w-2xl overflow-hidden p-0 gap-0 [&>button]:hidden max-h-[90vh] flex flex-col">
           {/* Image header */}
-          <div className="relative aspect-[16/9] w-full overflow-hidden">
+          <div className="relative aspect-[16/6] w-full overflow-hidden flex-shrink-0">
             <img
               src={
                 service.images[0] ||
@@ -192,14 +192,18 @@ export const ServiceCard = ({ service }: { service: Service }) => {
             </div>
           </div>
 
-          {/* Content */}
-          <div className="p-5 space-y-4">
+          {/* Scrollable body — description only */}
+          <div className="thin-scrollbar overflow-y-auto overflow-x-hidden flex-1 min-h-0 w-full">
             {service.description && (
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {service.description}
-              </p>
+              <div
+                className="px-5 pt-5 text-sm text-muted-foreground leading-relaxed break-words w-full [&_h1]:text-lg [&_h1]:font-bold [&_h1]:text-foreground [&_h1]:mb-2 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:text-foreground [&_h2]:mb-1.5 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:text-foreground [&_h3]:mb-1 [&_strong]:font-semibold [&_em]:italic [&_u]:underline [&_ul]:list-disc [&_ul]:ml-4 [&_ol]:list-decimal [&_ol]:ml-4 [&_li]:mb-1 [&_p]:mb-2 [&_p:last-child]:mb-0"
+                dangerouslySetInnerHTML={{ __html: service.description }}
+              />
             )}
+          </div>
 
+          {/* Pinned footer — vehicle selector + action button */}
+          <div className="flex-shrink-0 px-5 py-4 space-y-3 border-t bg-background">
             {/* Vehicle type selector */}
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
@@ -238,8 +242,6 @@ export const ServiceCard = ({ service }: { service: Service }) => {
                 })}
               </div>
             </div>
-
-            {/* Action button */}
             <Button
               className="w-full h-11 gap-2 text-sm font-semibold"
               variant={inCart ? "secondary" : "default"}
