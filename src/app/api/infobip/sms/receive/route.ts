@@ -261,6 +261,8 @@ export async function POST(req: NextRequest) {
 
           const isCompanySalesAgent = company?.isSalesAgent === true;
           const isClientSalesAgent = client?.isSalesAgent === true;
+          console.log("infobip sms receive clientSMS", clientSMS);
+          console.log("infobipConfig", infobipConfig);
           if (
             isCompanySalesAgent &&
             isClientSalesAgent &&
