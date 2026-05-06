@@ -158,9 +158,9 @@ export const ServiceCard = ({ service }: { service: Service }) => {
       </div>
 
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-        <DialogContent className="max-w-lg overflow-hidden p-0 gap-0 [&>button]:hidden max-h-[90vh] flex flex-col">
+        <DialogContent className="max-w-2xl overflow-hidden p-0 gap-0 [&>button]:hidden max-h-[90vh] flex flex-col">
           {/* Image header */}
-          <div className="relative aspect-[16/9] w-full overflow-hidden flex-shrink-0">
+          <div className="relative aspect-[16/6] w-full overflow-hidden flex-shrink-0">
             <img
               src={
                 service.images[0] ||
@@ -199,7 +199,7 @@ export const ServiceCard = ({ service }: { service: Service }) => {
           </div>
 
           {/* Scrollable body — description only */}
-          <div className="overflow-y-auto overflow-x-hidden flex-1 min-h-0 w-full">
+          <div className="thin-scrollbar overflow-y-auto overflow-x-hidden flex-1 min-h-0 w-full">
             {service.description && (
               <div
                 className="px-5 pt-5 text-sm text-muted-foreground leading-relaxed break-words w-full [&_h1]:text-lg [&_h1]:font-bold [&_h1]:text-foreground [&_h1]:mb-2 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:text-foreground [&_h2]:mb-1.5 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:text-foreground [&_h3]:mb-1 [&_strong]:font-semibold [&_em]:italic [&_u]:underline [&_ul]:list-disc [&_ul]:ml-4 [&_ol]:list-decimal [&_ol]:ml-4 [&_li]:mb-1 [&_p]:mb-2 [&_p:last-child]:mb-0"
