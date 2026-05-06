@@ -107,6 +107,7 @@ const BookingContent = ({ initialShop }: { initialShop?: any }) => {
     const mapped: Service[] = shopServices.data.map((svc) => ({
       id: String(svc.id),
       title: svc.title,
+      shortDescription: svc.shortDescription || undefined,
       description: svc.description || "",
       price: toNumber(svc.price),
       estimatedMinutes: svc.duration,

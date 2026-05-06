@@ -12,6 +12,7 @@ const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 
 export type ServiceInfoState = {
   serviceTitle: string;
+  shortDescription: string;
   description: string;
   customDuration: string;
   imageName: string;
@@ -90,6 +91,7 @@ export default function ServiceInfo({
 }: ServiceInfoProps) {
   const {
     serviceTitle,
+    shortDescription,
     description,
     customDuration,
     imageName,
@@ -418,6 +420,35 @@ export default function ServiceInfo({
             </div>
           </div>
         </div>
+      </div>
+
+      {/* ── Short Description ─────────────────────────────────────── */}
+      <div className="space-y-1.5">
+        <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Short Description
+        </label>
+        <input
+          type="text"
+          value={shortDescription}
+          maxLength={500}
+          onChange={(event) =>
+            onChange((prev) => ({
+              ...prev,
+              shortDescription: event.target.value,
+            }))
+          }
+          placeholder="Brief one-line summary shown on service cards…"
+          className={cn(
+            "w-full rounded-lg border px-3.5 py-2.5 text-sm font-medium text-slate-700 outline-none transition-all duration-200",
+            "placeholder:text-slate-400",
+            "focus:border-[#6571FF]/50 focus:ring-2 focus:ring-[#6571FF]/15 focus:shadow-sm",
+            "border-slate-200 bg-slate-50/60 hover:border-slate-300",
+            slimInputClassName,
+          )}
+        />
+        <p className="text-[11px] text-slate-400">
+          {shortDescription.length}/500 — shown on service cards
+        </p>
       </div>
 
       {/* ── Description ───────────────────────────────────────────── */}

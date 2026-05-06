@@ -9,6 +9,7 @@ import { formatDuration } from "@/lib/formatDuration";
 export type Service = {
   id: number;
   name: string;
+  shortDescription?: string;
   category: string;
   price: number;
   duration: number;
@@ -88,6 +89,11 @@ export default function ServiceCard({
                 </span>
               )}
             </div>
+            {service.shortDescription && (
+              <p className="line-clamp-1 text-xs text-slate-400">
+                {service.shortDescription}
+              </p>
+            )}
             <div className="flex items-center gap-2 text-xs sm:text-sm">
               <span className="font-semibold text-slate-700">
                 ${service.price}

@@ -74,9 +74,12 @@ export const ServiceCard = ({ service }: { service: Service }) => {
           <h3 className="font-semibold text-sm leading-tight">
             {service.title}
           </h3>
-          <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
-            {service.description.replace(/<[^>]*>/g, "")}
-          </p>
+          {(service.shortDescription || service.description) && (
+            <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+              {service.shortDescription ||
+                service.description.replace(/<[^>]*>/g, "")}
+            </p>
+          )}
 
           {/* Vehicle Type Selector */}
           <div className="space-y-1.5">

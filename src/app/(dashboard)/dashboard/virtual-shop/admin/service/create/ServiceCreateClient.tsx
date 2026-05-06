@@ -28,6 +28,7 @@ type InitialServiceData = {
 
 const INITIAL_SERVICE_INFO: ServiceInfoState = {
   serviceTitle: "",
+  shortDescription: "",
   description: "",
   customDuration: "",
   imageName: "",
@@ -525,6 +526,7 @@ export default function ServiceCreateClient({
           shopId: Number(selectedShopId),
           companyId,
           title: serviceInfo.serviceTitle.trim(),
+          shortDescription: serviceInfo.shortDescription.trim() || undefined,
           description: serviceInfo.description.trim(),
           imageUrl,
           modifierCoupe: serviceInfo.vehicleTypeModifiers.coupe,
