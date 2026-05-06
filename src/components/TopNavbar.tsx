@@ -10,8 +10,7 @@ export default function TopNavbar() {
 
   return (
     <div className="hidden h-[6vh] items-center justify-end p-5 pr-10 sm:flex">
-      {/* {virtualShopPermission?.enabled && <ShopList />} */}
-      <ShopList />
+      {virtualShopPermission?.enabled && <ShopList />}
       <TopNavbarIcons />
     </div>
   );
