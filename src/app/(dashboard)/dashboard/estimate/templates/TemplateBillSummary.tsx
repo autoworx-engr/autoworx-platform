@@ -11,10 +11,14 @@ export function TemplateBillSummary({
   isEstimateTax = true,
   isEstimateServiceFee = true,
   isEdit = false,
+  storedTax,
+  storedServiceFee,
 }: {
   isEstimateTax?: boolean;
   isEstimateServiceFee?: boolean;
   isEdit?: boolean;
+  storedTax?: number;
+  storedServiceFee?: number;
 }) {
   const {
     items,
@@ -47,20 +51,35 @@ export function TemplateBillSummary({
   useEffect(() => {
     setIsSuppliesEnabled(isEstimateServiceFee);
     setIsTaxEnabled(isEstimateTax);
-    async function fetchTaxAndServiceFee() {
-      try {
-        const taxData = await getCompanyTaxCurrency();
-        setOriginalTax(taxData.tax);
-        setTax(taxData.tax);
 
-        setOriginalServiceFee(taxData.serviceFee);
-        setServiceFee(taxData.serviceFee);
-      } catch (error) {
-        console.error("Error fetching tax data:", error);
+    if (isEdit && storedTax !== undefined) {
+      // Editing an existing template: use the DB-stored snapshot values so that
+      // changes to global settings don't retroactively alter the template.
+      setOriginalTax(storedTax);
+      setOriginalServiceFee(storedServiceFee ?? 0);
+    } else if (!isEdit) {
+      async function fetchTaxAndServiceFee() {
+        try {
+          const taxData = await getCompanyTaxCurrency();
+          setOriginalTax(taxData.tax);
+          setTax(taxData.tax);
+          setOriginalServiceFee(taxData.serviceFee);
+          setServiceFee(taxData.serviceFee);
+        } catch (error) {
+          console.error("Error fetching tax data:", error);
+        }
       }
+      fetchTaxAndServiceFee();
     }
-    fetchTaxAndServiceFee();
-  }, [setTax, setServiceFee, isEstimateServiceFee, isEstimateTax]);
+  }, [
+    setTax,
+    setServiceFee,
+    isEstimateServiceFee,
+    isEstimateTax,
+    isEdit,
+    storedTax,
+    storedServiceFee,
+  ]);
 
   // Handle tax and service fee toggle
   useEffect(() => {
@@ -162,7 +181,7 @@ export function TemplateBillSummary({
       resetLists();
     } else if (res.type === "globalError") {
       errorToast(
-        res.errorSource?.length ? res.errorSource[0].message : res.message
+        res.errorSource?.length ? res.errorSource[0].message : res.message,
       );
       return;
     }

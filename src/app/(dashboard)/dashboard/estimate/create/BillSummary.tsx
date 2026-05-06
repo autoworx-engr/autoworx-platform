@@ -68,9 +68,10 @@ export function BillSummary({
     setIsSuppliesEnabled(isEstimateServiceFee);
     setIsTaxEnabled(isEstimateTax);
 
-    if (isEditPage) {
-      // On edit pages, use the invoice's stored values so global settings
-      // changes don't retroactively alter existing financial documents.
+    if (isEditPage || storedTax !== undefined) {
+      // Use stored values: either from the saved invoice (edit) or from the
+      // template snapshot (create-from-template). In both cases global setting
+      // changes must not retroactively alter the financial figures.
       setOriginalTax(storedTax ?? 0);
       setOriginalServiceFee(storedServiceFee ?? 0);
     } else {
