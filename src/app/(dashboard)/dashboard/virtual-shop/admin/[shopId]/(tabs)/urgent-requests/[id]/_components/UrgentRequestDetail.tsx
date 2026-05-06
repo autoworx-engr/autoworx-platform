@@ -16,6 +16,7 @@ import {
   CheckCircle,
   FileText,
   Loader2,
+  X,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -479,23 +480,52 @@ export default function UrgentRequestDetail({
                   <label className="mb-1 block text-xs font-medium text-slate-500">
                     Date
                   </label>
-                  <input
-                    type="date"
-                    value={proposedDate}
-                    onChange={(e) => setProposedDate(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 outline-none focus:border-[#6571FF] focus:ring-2 focus:ring-[#6571FF]/20"
-                  />
+                  <div className="relative">
+                    <input
+                      type="date"
+                      value={proposedDate}
+                      onChange={(e) => {
+                        setProposedDate(e.target.value);
+                        if (!e.target.value) setProposedTime("");
+                      }}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 pr-8 text-sm text-slate-700 outline-none focus:border-[#6571FF] focus:ring-2 focus:ring-[#6571FF]/20"
+                    />
+                    {proposedDate && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setProposedDate("");
+                          setProposedTime("");
+                        }}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      >
+                        <X size={13} />
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <label className="mb-1 block text-xs font-medium text-slate-500">
                     Time
                   </label>
-                  <input
-                    type="time"
-                    value={proposedTime}
-                    onChange={(e) => setProposedTime(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 outline-none focus:border-[#6571FF] focus:ring-2 focus:ring-[#6571FF]/20"
-                  />
+                  <div className="relative">
+                    <input
+                      type="time"
+                      value={proposedTime}
+                      onChange={(e) => setProposedTime(e.target.value)}
+                      disabled={!proposedDate}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 pr-8 text-sm text-slate-700 outline-none focus:border-[#6571FF] focus:ring-2 focus:ring-[#6571FF]/20 disabled:cursor-not-allowed disabled:opacity-50"
+                    />
+                    {proposedTime && (
+                      <button
+                        type="button"
+                        onClick={() => setProposedTime("")}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      >
+                        <X size={13} />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
 

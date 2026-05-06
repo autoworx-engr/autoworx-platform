@@ -8,9 +8,11 @@ import z from "zod";
 import { AppError } from "@/error-boundary/error";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { sendUrgentServiceRequestNotification } from "@/lib/notification/urgent-service-notify";
+import { sendEmergencyClientNotification } from "@/lib/notification/emergency-client-notify";
 import { getToken } from "next-auth/jwt";
 import { jwtVerifyToken } from "@/lib/jwtVerify";
 import { EmergencyRequestStatus, Prisma } from "@prisma/client";
+import { protocol, rootDomain } from "@/lib/subdomains";
 
 /**
  * @swagger
@@ -379,7 +381,13 @@ export async function POST(request: NextRequest) {
 
     const shop = await db.shop.findUnique({
       where: { id: data.shopId },
-      select: { id: true, companyId: true, isActive: true, slug: true },
+      select: {
+        id: true,
+        companyId: true,
+        isActive: true,
+        slug: true,
+        storeName: true,
+      },
     });
 
     if (!shop || !shop.isActive) {
@@ -491,6 +499,8 @@ export async function POST(request: NextRequest) {
       select: { id: true },
     });
 
+    const trackingUrl = `${protocol}://${shop.slug}.${rootDomain}/emergency-status/${emergencyRequest.id}`;
+
     sendUrgentServiceRequestNotification({
       companyId: shop.companyId,
       shopId: shop.id,
@@ -499,13 +509,23 @@ export async function POST(request: NextRequest) {
       description: data.description,
     });
 
+    sendEmergencyClientNotification({
+      companyId: shop.companyId,
+      clientId: client.id,
+      requestId: emergencyRequest.id,
+      shopName: shop.storeName,
+      trackingUrl,
+      contactEmail: data.contactEmail,
+      contactName: data.contactName,
+    });
+
     return NextResponse.json({
       success: true,
       requestId: emergencyRequest.id,
       estimatedReviewTime: DEFAULT_REVIEW_TIME,
       message:
         "Emergency request submitted. Our team will contact you shortly.",
-      trackingUrl: `/emergency-status/${emergencyRequest.id}`,
+      trackingUrl,
     });
   } catch (error: any) {
     const formattedError = errorHandler(error);

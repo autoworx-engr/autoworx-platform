@@ -50,4 +50,5 @@ export interface SuccessData {
   requestId: number;
   estimatedReviewTime: string;
   message: string;
+  trackingUrl?: string;
 }
