@@ -5,11 +5,54 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { AsyncLocalStorage } from "async_hooks";
-import { RequestContext } from "@/lib/logger";
+import type { RequestContext } from "@/lib/logger";
 import type { JWT } from "next-auth/jwt";
 
-export const asyncLocalStorage = new AsyncLocalStorage<RequestContext>();
+type RequestContextStore = {
+  run<T>(store: RequestContext, callback: () => T): T;
+  getStore(): RequestContext | undefined;
+};
+
+function createRequestContextStore(): RequestContextStore {
+  if (typeof process !== "undefined" && process.versions?.node) {
+    try {
+      const requireFn = Function("return require")() as (id: string) => {
+        AsyncLocalStorage: new <T>() => RequestContextStore;
+      };
+      const { AsyncLocalStorage } = requireFn("node:async_hooks");
+      return new AsyncLocalStorage<RequestContext>();
+    } catch {
+      // Fallback below for runtimes without node:async_hooks.
+    }
+  }
+
+  let currentStore: RequestContext | undefined;
+
+  return {
+    run<T>(store: RequestContext, callback: () => T): T {
+      const previousStore = currentStore;
+      currentStore = store;
+      try {
+        const result = callback();
+        if (result instanceof Promise) {
+          return result.finally(() => {
+            currentStore = previousStore;
+          }) as T;
+        }
+        currentStore = previousStore;
+        return result;
+      } catch (error) {
+        currentStore = previousStore;
+        throw error;
+      }
+    },
+    getStore(): RequestContext | undefined {
+      return currentStore;
+    },
+  };
+}
+
+export const asyncLocalStorage = createRequestContextStore();
 
 /**
  * Generate a short unique ID (UUID v4 style)

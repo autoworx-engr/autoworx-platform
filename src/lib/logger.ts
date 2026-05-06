@@ -4,8 +4,6 @@
  * Uses AsyncLocalStorage for requestId propagation
  */
 
-import { AsyncLocalStorage } from "async_hooks";
-
 export interface RequestContext {
   requestId: string;
   userId?: string;
@@ -26,7 +24,51 @@ interface LogEntry {
   [key: string]: unknown;
 }
 
-const asyncLocalStorage = new AsyncLocalStorage<RequestContext>();
+type RequestContextStore = {
+  run<T>(store: RequestContext, callback: () => T): T;
+  getStore(): RequestContext | undefined;
+};
+
+function createRequestContextStore(): RequestContextStore {
+  if (typeof process !== "undefined" && process.versions?.node) {
+    try {
+      const requireFn = Function("return require")() as (id: string) => {
+        AsyncLocalStorage: new <T>() => RequestContextStore;
+      };
+      const { AsyncLocalStorage } = requireFn("node:async_hooks");
+      return new AsyncLocalStorage<RequestContext>();
+    } catch {
+      // Fallback below for runtimes without node:async_hooks.
+    }
+  }
+
+  let currentStore: RequestContext | undefined;
+
+  return {
+    run<T>(store: RequestContext, callback: () => T): T {
+      const previousStore = currentStore;
+      currentStore = store;
+      try {
+        const result = callback();
+        if (result instanceof Promise) {
+          return result.finally(() => {
+            currentStore = previousStore;
+          }) as T;
+        }
+        currentStore = previousStore;
+        return result;
+      } catch (error) {
+        currentStore = previousStore;
+        throw error;
+      }
+    },
+    getStore(): RequestContext | undefined {
+      return currentStore;
+    },
+  };
+}
+
+const asyncLocalStorage = createRequestContextStore();
 
 const BETTER_STACK_URL = "https://in.logfire.io";
 
