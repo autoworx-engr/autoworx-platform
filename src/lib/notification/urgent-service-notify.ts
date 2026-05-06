@@ -42,7 +42,7 @@ export const sendUrgentServiceRequestNotification = async ({
       phone: true,
     });
 
-    const redirectUrl = `/dashboard/virtual-shop/urgent-requests/${requestId}`;
+    const redirectUrl = `/dashboard/virtual-shop/admin/${shopId}/urgent-requests/${requestId}`;
     const title = "Urgent Service Request";
     const preview =
       description && description.length > 100

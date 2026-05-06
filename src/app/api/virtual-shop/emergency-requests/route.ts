@@ -5,8 +5,167 @@ import {
   phoneLookupWhereClause,
 } from "@/utils/normalizePhone";
 import z from "zod";
+import { AppError } from "@/error-boundary/error";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { sendUrgentServiceRequestNotification } from "@/lib/notification/urgent-service-notify";
+import { getToken } from "next-auth/jwt";
+import { jwtVerifyToken } from "@/lib/jwtVerify";
+import { EmergencyRequestStatus, Prisma } from "@prisma/client";
+
+/**
+ * @swagger
+ * /api/virtual-shop/emergency-requests:
+ *   get:
+ *     summary: List emergency booking requests
+ *     description: Fetch a paginated list of emergency booking requests for a company or specific shop.
+ *     tags: [Virtual Shop - Emergency]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: shopId
+ *         schema:
+ *           type: integer
+ *         description: Filter by shop ID
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [PENDING, UNDER_REVIEW, APPROVED, ALTERNATIVE_PROPOSED, CLIENT_CONFIRMED, REJECTED, EXPIRED, CANCELLED]
+ *         description: Filter by request status
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved emergency requests.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/EmergencyBookingRequest'
+ *                 meta:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ *       401:
+ *         description: Unauthorized.
+ *       500:
+ *         description: Internal server error.
+ */
+export async function GET(req: NextRequest) {
+  try {
+    const authHeader = req.headers.get("authorization") ?? "";
+    const accessToken = authHeader.startsWith("Bearer ")
+      ? authHeader.split(" ")[1]
+      : authHeader;
+
+    let companyId: number | undefined;
+
+    if (accessToken) {
+      try {
+        const verifyToken = await jwtVerifyToken(accessToken);
+        companyId = verifyToken?.payload?.companyId as number | undefined;
+      } catch {
+        const sessionToken = await getToken({
+          req,
+          secret: process.env.NEXTAUTH_SECRET,
+        });
+        companyId = sessionToken?.companyId as number | undefined;
+      }
+    } else {
+      const sessionToken = await getToken({
+        req,
+        secret: process.env.NEXTAUTH_SECRET,
+      });
+      companyId = sessionToken?.companyId as number | undefined;
+    }
+
+    if (!companyId) throw new AppError(401, "Unauthorized");
+
+    const { searchParams } = new URL(req.url);
+    const shopIdParam = searchParams.get("shopId");
+    const statusParam = searchParams.get(
+      "status",
+    ) as EmergencyRequestStatus | null;
+    const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
+    const limit = Math.min(
+      100,
+      Math.max(1, parseInt(searchParams.get("limit") ?? "10", 10)),
+    );
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.EmergencyBookingRequestWhereInput = {
+      shop: { companyId },
+      ...(shopIdParam ? { shopId: parseInt(shopIdParam, 10) } : {}),
+      ...(statusParam ? { status: statusParam } : {}),
+    };
+
+    const [total, requests] = await Promise.all([
+      db.emergencyBookingRequest.count({ where }),
+      db.emergencyBookingRequest.findMany({
+        where,
+        include: {
+          client: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              mobile: true,
+            },
+          },
+          vehicle: {
+            select: { id: true, make: true, model: true, year: true },
+          },
+          shop: { select: { id: true, storeName: true } },
+          reviewer: { select: { id: true, firstName: true, lastName: true } },
+        },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+    ]);
+
+    return NextResponse.json({
+      success: true,
+      data: requests,
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+    });
+  } catch (error: any) {
+    const formattedError = errorHandler(error);
+    return NextResponse.json(
+      {
+        success: false,
+        message: formattedError.message,
+        errorDetails: formattedError,
+      },
+      { status: formattedError.statusCode },
+    );
+  }
+}
 
 const schema = z.object({
   shopId: z.number().int().positive(),
