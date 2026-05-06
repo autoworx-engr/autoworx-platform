@@ -34,12 +34,15 @@ const getInitialCounterFromDuration = (durationValue: string) => {
   const totalMinutes = Number.parseInt(durationValue, 10);
 
   if (!Number.isFinite(totalMinutes) || totalMinutes <= 0) {
-    return { hours: 0, minutes: 0 };
+    return { days: 0, hours: 0, minutes: 0 };
   }
 
+  const days = Math.floor(totalMinutes / (60 * 24));
+  const remainingAfterDays = totalMinutes % (60 * 24);
   return {
-    hours: Math.floor(totalMinutes / 60),
-    minutes: totalMinutes % 60,
+    days,
+    hours: Math.floor(remainingAfterDays / 60),
+    minutes: remainingAfterDays % 60,
   };
 };
 
@@ -51,11 +54,16 @@ const normalizeCounterValue = (nextValue: number) => {
   return Math.floor(nextValue);
 };
 
-const counterToDurationMinutes = (hours: number, minutes: number) => {
-  const safeHours = normalizeCounterValue(hours);
+const counterToDurationMinutes = (
+  days: number,
+  hours: number,
+  minutes: number,
+) => {
+  const safeDays = normalizeCounterValue(days);
+  const safeHours = Math.min(23, normalizeCounterValue(hours));
   const safeMinutes = Math.min(59, normalizeCounterValue(minutes));
 
-  return safeHours * 60 + safeMinutes;
+  return safeDays * 24 * 60 + safeHours * 60 + safeMinutes;
 };
 
 const toCounterInputValue = (value: number) => (value > 0 ? String(value) : "");
@@ -90,6 +98,9 @@ export default function ServiceInfo({
     () => getInitialCounterFromDuration(customDuration),
     [customDuration],
   );
+  const [durationDaysInput, setDurationDaysInput] = useState(
+    toCounterInputValue(initialCounter.days),
+  );
   const [durationHoursInput, setDurationHoursInput] = useState(
     toCounterInputValue(initialCounter.hours),
   );
@@ -105,14 +116,18 @@ export default function ServiceInfo({
         ? incomingDuration
         : 0;
 
+    const parsedDays = durationDaysInput.trim()
+      ? normalizeCounterValue(Number(durationDaysInput))
+      : 0;
     const parsedHours = durationHoursInput.trim()
-      ? normalizeCounterValue(Number(durationHoursInput))
+      ? Math.min(23, normalizeCounterValue(Number(durationHoursInput)))
       : 0;
     const parsedMinutes = durationMinutesInput.trim()
       ? Math.min(59, normalizeCounterValue(Number(durationMinutesInput)))
       : 0;
 
     const durationFromCounter = counterToDurationMinutes(
+      parsedDays,
       parsedHours,
       parsedMinutes,
     );
@@ -121,12 +136,15 @@ export default function ServiceInfo({
       return;
     }
 
+    setDurationDaysInput(toCounterInputValue(initialCounter.days));
     setDurationHoursInput(toCounterInputValue(initialCounter.hours));
     setDurationMinutesInput(toCounterInputValue(initialCounter.minutes));
   }, [
     customDuration,
+    durationDaysInput,
     durationHoursInput,
     durationMinutesInput,
+    initialCounter.days,
     initialCounter.hours,
     initialCounter.minutes,
   ]);
@@ -169,9 +187,17 @@ export default function ServiceInfo({
   };
 
   const handleDurationCounterChange = (
+    nextDaysInput: string,
     nextHoursInput: string,
     nextMinutesInput: string,
   ) => {
+    if (
+      nextDaysInput !== "" &&
+      (!/^\d+$/.test(nextDaysInput) || nextDaysInput.length > 3)
+    ) {
+      return;
+    }
+
     if (
       nextHoursInput !== "" &&
       (!/^\d+$/.test(nextHoursInput) || nextHoursInput.length > 2)
@@ -186,14 +212,26 @@ export default function ServiceInfo({
       return;
     }
 
+    const safeDays = nextDaysInput.trim()
+      ? normalizeCounterValue(Number(nextDaysInput))
+      : 0;
     const safeHours = nextHoursInput.trim()
-      ? normalizeCounterValue(Number(nextHoursInput))
+      ? Math.min(23, normalizeCounterValue(Number(nextHoursInput)))
       : 0;
     const safeMinutes = nextMinutesInput.trim()
       ? Math.min(59, normalizeCounterValue(Number(nextMinutesInput)))
       : 0;
-    const totalMinutes = counterToDurationMinutes(safeHours, safeMinutes);
+    const totalMinutes = counterToDurationMinutes(
+      safeDays,
+      safeHours,
+      safeMinutes,
+    );
 
+    setDurationDaysInput(
+      nextDaysInput.trim() && safeDays !== Number(nextDaysInput)
+        ? String(safeDays)
+        : nextDaysInput,
+    );
     setDurationHoursInput(
       nextHoursInput.trim() && safeHours !== Number(nextHoursInput)
         ? String(safeHours)
@@ -266,18 +304,53 @@ export default function ServiceInfo({
                 </button>
               </TooltipTrigger>
               <TooltipContent className="max-w-xs text-xs leading-relaxed">
-                Set hours and minutes. It will be automatically converted to
-                total minutes for saving.
+                Set days, hours, and minutes. Converted to total minutes for
+                saving.
               </TooltipContent>
             </Tooltip>
           </label>
 
           <div className="flex items-center gap-2">
+            {/* Days */}
+            <div className="relative flex-1">
+              <input
+                type="number"
+                min={0}
+                step={1}
+                inputMode="numeric"
+                value={durationDaysInput}
+                onKeyDown={(event) => {
+                  if (["e", "E", "+", "-", "."].includes(event.key)) {
+                    event.preventDefault();
+                  }
+                }}
+                onChange={(event) =>
+                  handleDurationCounterChange(
+                    event.target.value,
+                    durationHoursInput,
+                    durationMinutesInput,
+                  )
+                }
+                placeholder="00"
+                className={cn(
+                  "w-full rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-2.5 text-center text-sm font-bold text-slate-700 outline-none transition-all duration-200",
+                  "hover:border-slate-300 focus:border-[#6571FF]/50 focus:ring-2 focus:ring-[#6571FF]/15",
+                  slimInputClassName,
+                )}
+              />
+              <span className="pointer-events-none absolute bottom-0 left-0 right-0 text-center text-[10px] font-medium text-slate-400">
+                DD
+              </span>
+            </div>
+
+            <span className="text-xl font-bold text-[#6571FF]">:</span>
+
             {/* Hours */}
             <div className="relative flex-1">
               <input
                 type="number"
                 min={0}
+                max={23}
                 step={1}
                 inputMode="numeric"
                 value={durationHoursInput}
@@ -288,6 +361,7 @@ export default function ServiceInfo({
                 }}
                 onChange={(event) =>
                   handleDurationCounterChange(
+                    durationDaysInput,
                     event.target.value,
                     durationMinutesInput,
                   )
@@ -322,6 +396,7 @@ export default function ServiceInfo({
                 }}
                 onChange={(event) =>
                   handleDurationCounterChange(
+                    durationDaysInput,
                     durationHoursInput,
                     event.target.value,
                   )

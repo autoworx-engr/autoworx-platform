@@ -7,6 +7,7 @@ import { Clock, Plus, Check, Car, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Service, VehicleType } from "../../data/types";
 import { useBooking } from "../../context/BookingContext";
+import { formatDuration } from "@/lib/formatDuration";
 
 const vehicleTypes: VehicleType[] = ["Coupe", "Sedan", "SUV", "Truck"];
 
@@ -24,13 +25,6 @@ export const ServiceCard = ({ service }: { service: Service }) => {
       type.toLowerCase() as keyof typeof service.vehicleTypePricing
     ];
   const totalPrice = service.price + getExtra(activeType);
-
-  const formatDuration = (mins: number) => {
-    if (mins < 60) return `${mins} min`;
-    const h = Math.floor(mins / 60);
-    const m = mins % 60;
-    return m ? `${h}h ${m}m` : `${h}h`;
-  };
 
   const handleTypeSelect = (type: VehicleType) => {
     if (inCart) return; // can't change once added

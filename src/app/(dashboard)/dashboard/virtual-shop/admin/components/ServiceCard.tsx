@@ -4,6 +4,7 @@ import { Popconfirm, Tooltip } from "antd";
 import { Switch } from "@/components/Switch";
 import { useRouter } from "nextjs-toploader/app";
 import { useUpdateShopServiceStatus } from "@/hooks/virtual-shop/service/useShopService";
+import { formatDuration } from "@/lib/formatDuration";
 
 export type Service = {
   id: number;
@@ -92,7 +93,9 @@ export default function ServiceCard({
                 ${service.price}
               </span>
               <span className="text-slate-400">•</span>
-              <span className="text-slate-500">{service.duration} min</span>
+              <span className="text-slate-500">
+                {formatDuration(service.duration)}
+              </span>
             </div>
           </div>
         </div>
