@@ -5,6 +5,10 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/Tooltip";
 import { cn } from "@/lib/utils";
 import { Info, UploadCloud, X } from "lucide-react";
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+import "react-quill-new/dist/quill.snow.css";
+
+const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 
 export type ServiceInfoState = {
   serviceTitle: string;
@@ -346,23 +350,41 @@ export default function ServiceInfo({
         <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
           Description <span className="text-rose-500">*</span>
         </label>
-        <textarea
-          value={description}
-          onChange={(event) =>
-            onChange((prev) => ({ ...prev, description: event.target.value }))
-          }
-          placeholder="Describe the service in detail — what it includes, how long it takes, and what customers can expect…"
-          rows={4}
+        <div
           className={cn(
-            "w-full resize-none rounded-lg border px-3.5 py-2.5 text-sm font-medium text-slate-700 outline-none transition-all duration-200",
-            "placeholder:text-slate-400 leading-relaxed",
-            "focus:border-[#6571FF]/50 focus:ring-2 focus:ring-[#6571FF]/15 focus:shadow-sm",
-            errors?.description
-              ? "border-rose-400 bg-rose-50/40 focus:border-rose-400 focus:ring-rose-400/15"
-              : "border-slate-200 bg-slate-50/60 hover:border-slate-300",
-            slimInputClassName,
+            "rounded-lg border overflow-hidden",
+            errors?.description ? "border-rose-400" : "border-slate-200",
           )}
-        />
+        >
+          <ReactQuill
+            theme="snow"
+            value={description}
+            onChange={(value) =>
+              onChange((prev) => ({ ...prev, description: value }))
+            }
+            placeholder="Describe the service in detail — what it includes, how long it takes, and what customers can expect…"
+            modules={{
+              toolbar: [
+                [{ header: [1, 2, 3, false] }],
+                ["bold", "italic", "underline"],
+                [{ color: [] }, { background: [] }],
+                [{ list: "ordered" }, { list: "bullet" }],
+                ["clean"],
+              ],
+            }}
+            formats={[
+              "header",
+              "bold",
+              "italic",
+              "underline",
+              "color",
+              "background",
+              "list",
+              "bullet",
+            ]}
+            style={{ minHeight: "120px" }}
+          />
+        </div>
         {errors?.description && (
           <p className="flex items-center gap-1 text-xs text-rose-500">
             <span className="inline-block h-1 w-1 rounded-full bg-rose-500" />
