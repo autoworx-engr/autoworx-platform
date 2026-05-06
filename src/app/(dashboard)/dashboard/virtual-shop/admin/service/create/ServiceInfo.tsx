@@ -24,6 +24,27 @@ export type ServiceInfoState = {
   };
 };
 
+const QUILL_MODULES = {
+  toolbar: [
+    [{ header: [1, 2, 3, false] }],
+    ["bold", "italic", "underline"],
+    [{ color: [] }, { background: [] }],
+    [{ list: "ordered" }, { list: "bullet" }],
+    ["clean"],
+  ],
+};
+
+const QUILL_FORMATS = [
+  "header",
+  "bold",
+  "italic",
+  "underline",
+  "color",
+  "background",
+  "list",
+  "bullet",
+];
+
 const VEHICLE_TYPES: Array<{
   key: keyof ServiceInfoState["vehicleTypeModifiers"];
   label: string;
@@ -363,26 +384,9 @@ export default function ServiceInfo({
               onChange((prev) => ({ ...prev, description: value }))
             }
             placeholder="Describe the service in detail — what it includes, how long it takes, and what customers can expect…"
-            modules={{
-              toolbar: [
-                [{ header: [1, 2, 3, false] }],
-                ["bold", "italic", "underline"],
-                [{ color: [] }, { background: [] }],
-                [{ list: "ordered" }, { list: "bullet" }],
-                ["clean"],
-              ],
-            }}
-            formats={[
-              "header",
-              "bold",
-              "italic",
-              "underline",
-              "color",
-              "background",
-              "list",
-              "bullet",
-            ]}
-            style={{ minHeight: "120px" }}
+            modules={QUILL_MODULES}
+            formats={QUILL_FORMATS}
+            style={{ minHeight: "200px" }}
           />
         </div>
         {errors?.description && (
