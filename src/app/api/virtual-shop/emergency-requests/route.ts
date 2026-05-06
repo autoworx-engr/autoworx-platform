@@ -6,6 +6,7 @@ import {
 } from "@/utils/normalizePhone";
 import z from "zod";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { sendUrgentServiceRequestNotification } from "@/lib/notification/urgent-service-notify";
 
 const schema = z.object({
   shopId: z.number().int().positive(),
@@ -329,6 +330,14 @@ export async function POST(request: NextRequest) {
         expiresAt,
       },
       select: { id: true },
+    });
+
+    sendUrgentServiceRequestNotification({
+      companyId: shop.companyId,
+      shopId: shop.id,
+      requestId: emergencyRequest.id,
+      clientName: data.contactName,
+      description: data.description,
     });
 
     return NextResponse.json({
