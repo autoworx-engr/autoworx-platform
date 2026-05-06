@@ -239,6 +239,9 @@ async function processIncomingSMS(
       const isCompanySalesAgent = company?.isSalesAgent === true;
       const isClientSalesAgent = currentClient?.isSalesAgent === true;
 
+      console.log("twilio sms receive clientSMS", dbMessage);
+      console.log("credential", credential);
+
       if (isCompanySalesAgent && isClientSalesAgent && isSalesAgentEnabled) {
         if (dbMessage && dbMessage.to === credential?.phoneNumber) {
           try {
@@ -280,6 +283,8 @@ async function processIncomingSMS(
         companyId: +companyId,
         clientId: client.id,
         clientName: client.firstName + " " + client.lastName,
+        message: body.Body,
+        hasMedia: Number(body.NumMedia) > 0,
       });
 
       const channelName = `message-${client.id}`;

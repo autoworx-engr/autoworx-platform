@@ -9,6 +9,7 @@ import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-servi
 import { revalidatePath } from "next/cache";
 import { updateNewSMSChatTrack } from "./chat-track";
 import { getInfobipConfigById } from "./createInfobipConfig";
+import { sendSMSToAgent } from "@/service/ai-agent/api";
 
 type TInfobipConfig = {
   companyId?: number;
@@ -368,20 +369,31 @@ export async function sendInfobipMessage({
         console.error("Pipeline automation trigger error:", error);
       }
 
-      revalidatePath("/dashboard/communication/client/${clientId}");
-      // if (company?.isSalesAgent && client?.isSalesAgent) {
-      //   if (dbMessage && dbMessage.to === infobipConfig.phoneNumber) {
-      //     await sendSMSToAgent({
-      //       company_id: clientId,
-      //       message: dbMessage?.message,
-      //       send_from: dbMessage?.from,
-      //       send_to: dbMessage?.to,
-      //       client_id: infobipConfig?.companyId,
-      //       user_id: user?.id,
-      //     });
+      // const isSalesAgentEnabled = entitlements.awxSalesAgent;
+
+      // const isCompanySalesAgent = company?.isSalesAgent === true;
+      // const isClientSalesAgent = client?.isSalesAgent === true;
+
+      // if (isCompanySalesAgent && isClientSalesAgent && isSalesAgentEnabled) {
+      //   if (data && data?.from === infobipConfig.phoneNumber) {
+      //     try {
+      //       await sendSMSToAgent({
+      //         company_id: client.companyId,
+      //         message: data?.message,
+      //         send_from: data?.from,
+      //         send_to: data?.to,
+      //         client_id: client.id,
+      //       });
+      //     } catch (error) {
+      //       return Response.json(
+      //         { message: `Sales agent error: ${error}` },
+      //         { status: 200 },
+      //       );
+      //     }
       //   }
       // }
 
+      revalidatePath("/dashboard/communication/client/${clientId}");
       return {
         success: true,
         data,

@@ -94,6 +94,8 @@ export async function POST(req: NextRequest) {
           companyId: company.companyId,
           clientId: client.id,
           clientName: client.firstName + " " + client.lastName,
+          message: body.Body,
+          hasMedia: Number(body.NumMedia) > 0,
         });
 
         const channelName = `message-${client.id}`;
