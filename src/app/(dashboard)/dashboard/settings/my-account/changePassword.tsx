@@ -1,3 +1,4 @@
+"use client";
 import { changePassword } from "@/actions/settings/myAccount";
 import { SlimInput } from "@/components/SlimInput";
 import { errorToast, successToast } from "@/lib/toast";
