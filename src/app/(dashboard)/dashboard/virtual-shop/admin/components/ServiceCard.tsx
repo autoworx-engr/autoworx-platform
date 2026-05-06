@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { ImageIcon, Loader2, SquarePen, Trash2 } from "lucide-react";
+import { ImageIcon, SquarePen, Trash2 } from "lucide-react";
 import { Popconfirm, Tooltip } from "antd";
 import { Switch } from "@/components/Switch";
 import { useRouter } from "nextjs-toploader/app";
