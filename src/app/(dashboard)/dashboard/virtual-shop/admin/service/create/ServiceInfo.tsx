@@ -492,7 +492,7 @@ export default function ServiceInfo({
             placeholder="Describe the service in detail — what it includes, how long it takes, and what customers can expect…"
             modules={QUILL_MODULES}
             formats={QUILL_FORMATS}
-            style={{ minHeight: "200px" }}
+            className="[&_.ql-toolbar.ql-snow]:border-x-0 [&_.ql-toolbar.ql-snow]:border-t-0 [&_.ql-container.ql-snow]:border-0 [&_.ql-editor]:min-h-[200px]"
           />
         </div>
         {errors?.description && (
