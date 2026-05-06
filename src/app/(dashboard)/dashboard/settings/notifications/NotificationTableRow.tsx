@@ -4,7 +4,7 @@ import { getNotificationTitle } from "@/lib/notification-permission";
 import { NotificationSettingsV2 } from "@prisma/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import MySwitch from "./MySwitch";
-import { errorToast } from "@/lib/toast";
+import { errorToast, successToast } from "@/lib/toast";
 import { isSmsAvailable } from "@/actions/communication/client/createTwilioCredentials";
 
 type TProps = {
@@ -43,7 +43,15 @@ export default function NotificationTableRow({
             return oldSetting;
           });
         });
+        successToast("Notification setting updated", {
+          id: "notification-update",
+        });
       }
+    },
+    onError: () => {
+      errorToast("Failed to update notification setting", {
+        id: "notification-update",
+      });
     },
   });
 
