@@ -23,6 +23,7 @@ export interface ShopData {
   themeConfig?: ThemeConfig;
   companyId?: number;
   isActive?: boolean;
+  urgentBookingNotificationsEnabled?: boolean;
   termsConditions?: string | null;
   privacyPolicy?: string | null;
   company?: ShopCompanyPricing | null;

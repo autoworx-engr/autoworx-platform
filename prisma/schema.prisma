@@ -2951,7 +2951,8 @@ model Shop {
   logoUrl         String?             @map("logo_url")
   bannerUrl       String?             @map("banner_url")
   themeConfig     Json?               @map("theme_config") // Store { primaryColor: '#3b82f6', font: 'Inter' }
-  isActive        Boolean             @default(true) @map("is_active")
+  isActive                       Boolean  @default(true) @map("is_active")
+  urgentBookingNotificationsEnabled Boolean @default(true) @map("urgent_booking_notifications_enabled")
   termsConditions String?             @map("terms_conditions") @db.VarChar(1500)
   privacyPolicy   String?             @map("privacy_policy") @db.VarChar(1500)
   createdAt       DateTime            @default(now()) @map("created_at")
