@@ -43,8 +43,14 @@ const ResponsiveSalesPipelineCard = ({
 }) => {
   const [pending, startTransition] = useTransition();
   const id = lead?.id;
+  const rawName = lead.clientName
+    ? lead.clientName
+    : (lead.client?.firstName ?? "") + " " + (lead.client?.lastName ?? "");
   const clientName =
-    (lead.client?.firstName ?? "") + " " + (lead.client?.lastName ?? "");
+    rawName
+      .replace(/\b(undefined|null)\b/gi, "")
+      .replace(/\s+/g, " ")
+      .trim() || "N/A";
   const clientEmail = lead.client?.email;
   const vehicle = lead?.vehicleInfo;
   const services = lead?.services?.split(",");
