@@ -5,29 +5,6 @@ import {
 } from "@/lib/tokenGenerator";
 import jwt from "jsonwebtoken";
 
-/**
- * @swagger
- * /api/auth/refresh-token:
- *   post:
- *     summary: Refresh access token
- *     tags: [Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               refreshAccessToken:
- *                 type: string
- *     responses:
- *       200:
- *         description: New tokens generated
- *       401:
- *         description: Invalid token
- *       404:
- *         description: User not found
- */
 export async function POST(request: Request) {
   try {
     const body = await request.json();

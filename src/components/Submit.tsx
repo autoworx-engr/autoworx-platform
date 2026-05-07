@@ -2,7 +2,6 @@
 
 import { useFormErrorStore } from "@/stores/form-error";
 import { useEffect, useTransition } from "react";
-import { RotatingLines } from "react-loader-spinner";
 import { useFormStatus } from "react-dom";
 
 export default function Submit({
@@ -18,18 +17,15 @@ export default function Submit({
 }) {
   const { pending } = useFormStatus();
   const { clearError } = useFormErrorStore();
-
   const [transitionPending, startTransition] = useTransition();
 
-  // reset the error state when the component is mounted
   useEffect(() => {
     clearError();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reset once on mount
   }, []);
 
   const handler = async (data: FormData) => {
-    // reset the error state when the button is clicked
     clearError();
-
     if (formAction) await formAction(data);
   };
 
@@ -49,9 +45,12 @@ export default function Submit({
         outline: "none",
       }}
     >
-       {pending || transitionPending ? (
-        <div className="flex items-center justify-center h-6">
-          <RotatingLines strokeColor="#fff" strokeWidth="5" width="25" />
+      {pending || transitionPending ? (
+        <div className="flex h-6 items-center justify-center">
+          <span
+            className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"
+            aria-hidden
+          />
         </div>
       ) : (
         children

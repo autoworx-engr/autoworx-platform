@@ -1,6 +1,5 @@
 "use client";
 
-import CarLoading from "@/components/common/CarLoading";
 import FormError from "@/components/FormError";
 import Input from "@/components/Input";
 import Password from "@/components/Password";
@@ -76,7 +75,11 @@ export default function ResetPassword({
   };
 
   if (!token && !email) {
-    return <CarLoading />;
+    return (
+      <div className="flex min-h-screen items-center justify-center text-slate-600">
+        Preparing reset…
+      </div>
+    );
   }
 
   return (
@@ -86,7 +89,7 @@ export default function ResetPassword({
 
         <div className="mb-8 text-center flex flex-col items-center gap-3">
           <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 shadow-inner dark:bg-slate-800/70 dark:text-slate-100">
-            <span className="h-2 w-2 rounded-full bg-[#6571FF]" />
+            <span className="h-2 w-2 rounded-full bg-[#0d9488]" />
             {token ? "New password" : "Verify email"}
           </div>
           <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 bg-clip-text text-transparent dark:from-white dark:via-slate-200 dark:to-white">
@@ -117,13 +120,13 @@ export default function ResetPassword({
                   required
                   autoFocus
                   placeholder="000000"
-                  className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 text-slate-900 transition-colors focus:border-[#6571FF]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:focus:border-[#6571FF]"
+                  className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 text-slate-900 transition-colors focus:border-[#0d9488]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:focus:border-[#0d9488]"
                 />
               </div>
 
               <div className="rounded-xl border border-slate-200/70 bg-white/60 px-4 py-3 text-xs text-slate-600 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/60 dark:text-slate-300">
                 The code is valid for 15 minutes. Check your spam folder if you
-                don't see it.
+                do not see it.
               </div>
             </div>
 
@@ -142,7 +145,7 @@ export default function ResetPassword({
                 disabled={!resendAvailable}
                 className={`block mx-auto font-semibold transition-colors ${
                   resendAvailable
-                    ? "text-[#6571FF] hover:text-[#5059d4]"
+                    ? "text-[#0d9488] hover:text-[#0f766e]"
                     : "text-slate-400 cursor-not-allowed"
                 }`}
               >
@@ -153,7 +156,7 @@ export default function ResetPassword({
               <button
                 type="button"
                 onClick={() => router.push("/forgot-password")}
-                className="block mx-auto text-slate-600 hover:text-[#6571FF] transition-colors dark:text-slate-400 dark:hover:text-[#6571FF]"
+                className="block mx-auto text-slate-600 hover:text-[#0d9488] transition-colors dark:text-slate-400 dark:hover:text-[#0d9488]"
               >
                 Use a different email
               </button>
@@ -177,7 +180,7 @@ export default function ResetPassword({
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-[#6571FF]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:focus:border-[#6571FF]"
+                  className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-[#0d9488]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:focus:border-[#0d9488]"
                 />
                 <div className="w-full h-2 bg-slate-200 rounded mt-2">
                   <div

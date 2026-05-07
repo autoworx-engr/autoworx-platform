@@ -4,9 +4,9 @@ export default function manifest(): MetadataRoute.Manifest {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "";
   // console.log("Menifest function is being call")
   return {
-    name: "Autoworx",
-    short_name: "Autoworx",
-    description: "A Business Web App",
+    name: "CRM",
+    short_name: "CRM",
+    description: "Lightweight CRM",
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",

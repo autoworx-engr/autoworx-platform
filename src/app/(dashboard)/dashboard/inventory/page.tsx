@@ -1,195 +1,269 @@
-import { authOptions } from "@/authOptions";
-import { SyncLists } from "@/components/SyncLists";
-import Title from "@/components/Title";
-import { getCompanyId } from "@/lib/companyId";
+import {
+  adjustProductStock,
+  archiveProduct,
+  createProduct,
+} from "@/actions/crm/inventory";
+import { CrmPageHeader } from "@/components/crm/page-header";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { LOW_STOCK_THRESHOLD } from "@/lib/crm-constants";
+import { activeProductWhere } from "@/lib/crm-scope";
 import { db } from "@/lib/db";
-import getUser from "@/lib/getUser";
-import { InventoryProductType } from "@prisma/client";
-import { getServerSession } from "next-auth";
-import { cache } from "react";
-import AddNewProduct from "./AddNewProduct";
-import ClientInventoryList from "./ClientInventoryList";
-import Sidebar from "./Sidebar";
+import { formatMoney } from "@/lib/format";
+import { requireSession } from "@/lib/require-session";
+import { Metadata } from "next";
+import Link from "next/link";
 
-async function getCategories() {
-  const session = await getServerSession(authOptions);
-  const token = session?.accessToken;
-  try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_APP_URL}/api/inventoryWirehouse/category`,
-
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        cache: "no-store",
-      },
-    );
-
-    if (!res.ok) throw new Error("Failed to fetch categories");
-    return res.json();
-  } catch (error) {
-    console.error("Error fetching categories:", error);
-  }
-}
-
-type TGetInventoryItem = {
-  type: InventoryProductType;
-  page: number;
-  limit: number;
-  search?: string;
-  category?: string;
+export const metadata: Metadata = {
+  title: "Inventory",
 };
 
-const getInventoryItem = cache(
-  async ({ type, page, limit, search = "", category }: TGetInventoryItem) => {
-    try {
-      const companyId = await getCompanyId();
-      const searchTerms = search
-        .toLowerCase()
-        .split(/\s+/)
-        .filter((term) => term.length > 0);
-      const searchFilterOR = [
-        { name: { contains: search.trim() } },
-        { name: { contains: search?.trim().toUpperCase() } },
-        { name: { contains: search?.trim().toLowerCase() } },
-        {
-          name: {
-            contains: search
-              .trim()
-              ?.split(" ")
-              .map((t) => t.trim().charAt(0).toUpperCase() + t.slice(1))
-              .join(" "),
-          },
-        },
-        ...(searchTerms.length > 0
-          ? [
-              {
-                OR: searchTerms.flatMap((term) => [
-                  { name: { contains: term.trim() } },
-                ]),
-              },
-            ]
-          : []),
-      ];
-      const items = await db.inventoryProduct.findMany({
-        where: {
-          companyId,
-          type: type,
-          OR: search ? searchFilterOR : undefined,
-          category: { name: category },
-        },
-        include: {
-          category: true,
-          vendor: true,
-          User: type === "Supply" ? true : false,
-        },
-        skip: (page - 1) * limit,
-        take: limit,
-        orderBy: { name: "asc" },
-      });
-      const totalItems = await db.inventoryProduct.count({
-        where: {
-          companyId,
-          type: type,
-          OR: search ? searchFilterOR : undefined,
-          category: { name: category },
-        },
-      });
-      return { data: items, totalItems: totalItems };
-    } catch (error) {
-      console.log(error);
-      throw new Error(`Failed to fetch ${type.toLowerCase()}s`);
-    }
-  },
-);
-
-export default async function Page(props: {
-  searchParams: Promise<{
-    productId: string;
-    view: string;
-    page?: string;
-    limit?: string;
-    search?: string;
-    category?: string;
-  }>;
+export default async function InventoryPage({
+  searchParams,
+}: {
+  searchParams: { q?: string; error?: string };
 }) {
-  const searchParams = await props.searchParams;
+  const session = await requireSession();
+  const companyId = session.user.companyId;
+  const q = searchParams.q?.trim();
 
-  const {
-    productId,
-    view,
-    page = "1",
-    limit = "50",
-    search,
-    category,
-  } = searchParams;
-
-  const companyId = await getCompanyId();
-  const { data: supplies, totalItems: totalSupplies } = await getInventoryItem({
-    type: "Supply",
-    page: parseInt(page),
-    limit: parseInt(limit),
-    search,
-    category,
+  const products = await db.product.findMany({
+    where: {
+      companyId,
+      ...activeProductWhere,
+      ...(q
+        ? {
+            OR: [
+              { name: { contains: q, mode: "insensitive" as const } },
+              { sku: { contains: q, mode: "insensitive" as const } },
+            ],
+          }
+        : {}),
+    },
+    orderBy: [{ name: "asc" }],
+    take: 200,
   });
 
-  const { data: products, totalItems: totalProducts } = await getInventoryItem({
-    type: "Product",
-    page: parseInt(page),
-    limit: parseInt(limit),
-    search,
-    category,
-  });
-
-  const inventoryCategories = (await getCategories()) ?? [];
-  // console.log("inventoryCategories", inventoryCategories);
-  const categories = await db.category.findMany({ where: { companyId } });
-  const vendors = await db.vendor.findMany({ where: { companyId } });
-
-  const user = await getUser();
+  const lowStock = products.filter((p) => p.qtyOnHand <= LOW_STOCK_THRESHOLD);
 
   return (
-    <div className="h-full w-full">
-      <SyncLists categories={categories} vendors={vendors} />
+    <div>
+      <CrmPageHeader
+        title="Inventory"
+        description="SKU catalog with on-hand quantity. Paid invoices deduct stock when lines reference a product."
+      />
 
-      <header className="flex justify-between p-3 md:p-0">
-        <div className="flex items-center">
-          <Title className="text-[20px] md:text-2xl">Inventory</Title>
+      {searchParams.error === "stock" ? (
+        <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          Adjustment would make quantity negative — not applied.
         </div>
+      ) : null}
 
-        {(user?.employeeType === "Admin" ||
-          user?.employeeType === "Manager") && (
-          <div className="mt-2">
-            <AddNewProduct view={view} />
-          </div>
-        )}
-      </header>
-
-      <div className="mb-5 flex h-full w-full flex-col justify-between gap-3 md:mb-0 lg:flex-wrap">
-        <ClientInventoryList
-          searchParams={{
-            page,
-            limit,
-            search,
-            category,
-          }}
-          supplies={supplies}
-          products={products}
-          totalSupplies={totalSupplies}
-          totalProducts={totalProducts}
-          view={view}
-          productId={parseInt(productId || "0")}
-          user={user}
-          inventoryCategories={inventoryCategories?.data}
-        />
-
-        <Sidebar
-          hidden={view === "database"}
-          productId={parseInt(productId || "0")}
-        />
+      <div className="mb-6 grid gap-4 sm:grid-cols-3">
+        <Card className="border-border shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Active SKUs
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-semibold tabular-nums">{products.length}</p>
+          </CardContent>
+        </Card>
+        <Card className="border-amber-200/80 bg-amber-50/30 shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-amber-900">
+              Low stock (≤{LOW_STOCK_THRESHOLD})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-semibold tabular-nums text-amber-950">
+              {lowStock.length}
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="border-border shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Catalog value (list)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-semibold tabular-nums">
+              {formatMoney(
+                products.reduce(
+                  (s, p) => s + Number(p.unitPrice) * p.qtyOnHand,
+                  0,
+                ),
+              )}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">Unit price × on-hand</p>
+          </CardContent>
+        </Card>
       </div>
+
+      <Card className="mb-8 border-border shadow-sm">
+        <CardHeader>
+          <CardTitle>Add product</CardTitle>
+          <CardDescription>
+            Default list price is used when you pick this SKU on an invoice line.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form action={createProduct} className="grid max-w-2xl gap-3 sm:grid-cols-2">
+            <input
+              name="name"
+              required
+              placeholder="Name"
+              className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground h-9 sm:col-span-2"
+            />
+            <input
+              name="sku"
+              placeholder="SKU (optional)"
+              className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground h-9"
+            />
+            <input
+              name="unitPrice"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="List price"
+              className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground h-9"
+            />
+            <input
+              name="qtyOnHand"
+              type="number"
+              min="0"
+              placeholder="On-hand qty"
+              className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground h-9 sm:col-span-2"
+            />
+            <textarea
+              name="description"
+              placeholder="Notes (optional)"
+              rows={2}
+              className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground h-9 sm:col-span-2"
+            />
+            <div className="sm:col-span-2">
+              <Button type="submit">
+                Save product
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Card className="border-border shadow-sm">
+        <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <CardTitle>Stock sheet</CardTitle>
+          </div>
+          <form method="get" className="flex w-full max-w-sm gap-2">
+            <input
+              name="q"
+              defaultValue={q ?? ""}
+              placeholder="Search name or SKU"
+              className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground h-9"
+            />
+            <Button type="submit" variant="secondary" size="sm">
+              Search
+            </Button>
+          </form>
+        </CardHeader>
+        <CardContent className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>SKU</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead>On hand</TableHead>
+                <TableHead>Adjust</TableHead>
+                <TableHead className="text-end">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {products.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-muted-foreground">
+                    {q ? "No products match." : "Add your first SKU above."}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                products.map((p) => (
+                  <TableRow key={p.id}>
+                    <TableCell className="font-mono text-xs text-muted-foreground">
+                      {p.sku ?? "—"}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {p.name}
+                      {p.qtyOnHand <= LOW_STOCK_THRESHOLD ? (
+                        <span className="ml-2 text-xs font-normal text-amber-700">
+                          Low
+                        </span>
+                      ) : null}
+                    </TableCell>
+                    <TableCell className="tabular-nums">
+                      {formatMoney(Number(p.unitPrice))}
+                    </TableCell>
+                    <TableCell className="tabular-nums font-medium">
+                      {p.qtyOnHand}
+                    </TableCell>
+                    <TableCell>
+                      <form action={adjustProductStock} className="flex gap-1">
+                        <input type="hidden" name="id" value={p.id} />
+                        <input
+                          name="delta"
+                          type="number"
+                          className="w-16 rounded border border-border px-2 py-1 text-xs"
+                          placeholder="+/−"
+                        />
+                        <Button type="submit" variant="outline" size="sm" className="h-8 text-xs">
+                          Apply
+                        </Button>
+                      </form>
+                    </TableCell>
+                    <TableCell className="text-end">
+                      <form action={archiveProduct} className="inline">
+                        <input type="hidden" name="id" value={p.id} />
+                        <Button
+                          type="submit"
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          Archive
+                        </Button>
+                      </form>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <p className="mt-6 text-center text-sm text-muted-foreground">
+        Use{" "}
+        <Link href="/dashboard/invoices" className="text-teal-600 hover:underline">
+          Invoices
+        </Link>{" "}
+        to bill customers; marking paid pulls inventory for product-linked lines.
+      </p>
     </div>
   );
 }

@@ -3,18 +3,21 @@ import type { Config } from "tailwindcss";
 const config: Config = {
   darkMode: ["class"],
   content: [
-    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
     extend: {
-      backgroundImage: {
-        "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
-        "gradient-conic":
-          "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
-        "custom-gradient-lp":
-          "linear-gradient(90deg, #26AADF 0%, #03A7A2 100%)",
+      fontFamily: {
+        sans: ["var(--font-sans)", "system-ui", "sans-serif"],
+      },
+      boxShadow: {
+        card: "0 1px 2px rgba(15,23,42,0.04), 0 4px 24px rgba(15,23,42,0.04)",
+        "card-hover": "0 2px 4px rgba(15,23,42,0.06), 0 12px 40px rgba(15,23,42,0.08)",
+        "card-dark": "0 1px 2px rgba(0,0,0,0.2), 0 4px 24px rgba(0,0,0,0.3)",
+        glow: "0 0 20px rgba(45,212,191,0.35)",
+        "glow-lg": "0 0 40px rgba(45,212,191,0.3)",
+        "inner-glow": "inset 0 1px 0 rgba(255,255,255,0.06)",
       },
       colors: {
         border: "hsl(var(--border))",
@@ -57,7 +60,7 @@ const config: Config = {
           "4": "hsl(var(--chart-4))",
           "5": "hsl(var(--chart-5))",
         },
-        "landing-bg-color": "#F6FDFF",
+        sidebar: "hsl(var(--sidebar))",
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -65,39 +68,31 @@ const config: Config = {
         sm: "calc(var(--radius) - 4px)",
       },
       keyframes: {
-        "move-left": {
-          "0%": {
-            transform: "translateX(0)",
-          },
-          "100%": {
-            transform: "translateX(-100%)",
-          },
+        "fade-in-up": {
+          from: { opacity: "0", transform: "translateY(8px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
         },
-        "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+        "scale-in": {
+          from: { opacity: "0", transform: "scale(0.95)" },
+          to: { opacity: "1", transform: "scale(1)" },
         },
-        "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+        shimmer: {
+          "0%": { backgroundPosition: "-200% 0" },
+          "100%": { backgroundPosition: "200% 0" },
         },
       },
       animation: {
-        "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out",
-        "landingpage-left-animation": "move-left 20s linear infinite",
-        "cards-left-animation": "move-left 50s linear infinite",
+        "fade-in-up": "fade-in-up 0.35s ease both",
+        "scale-in": "scale-in 0.25s ease both",
+        shimmer: "shimmer 1.6s ease-in-out infinite",
+      },
+      backgroundImage: {
+        "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
+        "gradient-conic": "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [],
 };
+
 export default config;

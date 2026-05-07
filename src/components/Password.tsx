@@ -34,7 +34,7 @@ export default function Input({
         type={showPassword ? "text" : "password"}
         name={name}
         id={name}
-        className={`${isLoginPage ? "w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-[#6571FF]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:focus:border-[#6571FF]" : `${slimInputClassName + "pr-10"}`}`}
+        className={`${isLoginPage ? "w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-[#0d9488]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:focus:border-[#0d9488]" : `${slimInputClassName + "pr-10"}`}`}
         required={required}
         value={value || inputValue}
         onChange={(e) => {

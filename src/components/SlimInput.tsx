@@ -1,8 +1,6 @@
 import type { ComponentProps, ReactNode } from "react";
-import { sentenceCase } from "change-case";
-import { cn } from "@/lib/cn";
-import { Tooltip } from "antd";
-import { InfoCircleOutlined } from "@ant-design/icons";
+import { HelpCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export type SlimInputProps = {
   label?: ReactNode;
@@ -14,22 +12,22 @@ export type SlimInputProps = {
   tooltipText?: string;
 };
 
+function humanizeFieldName(name: string) {
+  return name
+    .replace(/([A-Z])/g, " $1")
+    .replace(/_/g, " ")
+    .replace(/^\w/, (c) => c.toUpperCase())
+    .trim();
+}
+
 export const slimInputClassName = cn(
   "w-full rounded-md border border-slate-300 px-3 py-1.5 text-base font-medium leading-6 outline-none transition-all duration-300",
-  "bg-white/80 backdrop-blur-sm dark:bg-slate-900/50", // Subtle glass texture
+  "bg-white/80 backdrop-blur-sm dark:bg-slate-900/50",
   "text-slate-600 dark:text-slate-300 placeholder:text-slate-400",
-  "focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/40", // Brand focus state
+  "focus:border-teal-500/60 focus:ring-2 focus:ring-teal-500/40",
   "disabled:opacity-50 disabled:cursor-not-allowed",
-  // Preserve styling on autofill using webkit-specific properties
   "autofill:[-webkit-text-fill-color:rgb(71,85,105)] dark:autofill:[-webkit-text-fill-color:rgb(203,213,225)]",
   "autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255,0.8)] dark:autofill:shadow-[inset_0_0_0px_1000px_rgb(15,23,42,0.5)]",
-  "autofill:transition-[background-color] autofill:duration-[5000s]",
-  // Preserve styling on autofill hover
-  "autofill:hover:[-webkit-text-fill-color:rgb(71,85,105)] dark:autofill:hover:[-webkit-text-fill-color:rgb(203,213,225)]",
-  "autofill:hover:shadow-[inset_0_0_0px_1000px_rgb(255,255,255,0.8)] dark:autofill:hover:shadow-[inset_0_0_0px_1000px_rgb(15,23,42,0.5)]",
-  // Preserve styling on autofill focus
-  "autofill:focus:[-webkit-text-fill-color:rgb(71,85,105)] dark:autofill:focus:[-webkit-text-fill-color:rgb(203,213,225)]",
-  "autofill:focus:shadow-[inset_0_0_0px_1000px_rgb(255,255,255,0.8)] dark:autofill:focus:shadow-[inset_0_0_0px_1000px_rgb(15,23,42,0.5)]",
 );
 
 export function SlimInput({
@@ -42,25 +40,23 @@ export function SlimInput({
   tooltipText,
   ...props
 }: SlimInputProps & ComponentProps<"input">) {
-  // Generate a unique ID if not provided, for accessibility
   const inputId = props.id ?? props.name;
-  const IconComponent = InfoCircleOutlined;
   return (
     <div className={cn("group flex flex-col gap-1.5", rootClassName)}>
       <label
         htmlFor={inputId}
         className={cn(
-          "flex items-center gap-1 text-base font-medium text-slate-600 dark:text-slate-200 transition-colors duration-300",
+          "flex items-center gap-1 text-base font-medium text-slate-600 transition-colors duration-300 dark:text-slate-200",
           labelClassName,
         )}
       >
-        {label ?? sentenceCase(props.name)}
-        {required && <span className="text-rose-500 font-bold">*</span>}
-        {tooltipText && (
-          <Tooltip title={tooltipText} placement="top">
-            <IconComponent className="text-gray-400 hover:text-gray-600 cursor-help text-xs" />
-          </Tooltip>
-        )}
+        {label ?? humanizeFieldName(props.name)}
+        {required && <span className="font-bold text-rose-500">*</span>}
+        {tooltipText ? (
+          <span title={tooltipText} className="inline-flex cursor-help text-slate-400">
+            <HelpCircle className="h-3.5 w-3.5" aria-hidden />
+          </span>
+        ) : null}
       </label>
 
       <div className="relative">
@@ -69,23 +65,20 @@ export function SlimInput({
           required={required}
           className={cn(
             slimInputClassName,
-            // Error state styling overrides
             error &&
-              "border-rose-400 focus:border-rose-500 focus:ring-rose-500/10 text-rose-600",
+              "border-rose-400 text-rose-600 focus:border-rose-500 focus:ring-rose-500/10",
             className,
           )}
           {...props}
         />
       </div>
 
-      {/* Error Message with subtle slide-in animation logic */}
-      {error && (
-        <div className="animate-in slide-in-from-top-1 fade-in duration-200 mt-1 flex items-center gap-1.5 px-1">
-          {/* Semantic error dot */}
+      {error ? (
+        <div className="mt-1 flex items-center gap-1.5 px-1">
           <div className="h-1.5 w-1.5 rounded-full bg-rose-500" />
           <span className="text-xs font-medium text-rose-500">{error}</span>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

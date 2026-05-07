@@ -2,7 +2,11 @@
   "compilerOptions": {
     "allowImportingTsExtensions": true,
     "ignoreDeprecations": "5.0",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -12,7 +16,7 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "react-jsx",
+    "jsx": "preserve",
     "incremental": true,
     "plugins": [
       {
@@ -21,22 +25,23 @@
     ],
     "baseUrl": "./",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": [
+        "./src/*"
+      ]
       // "@/components/*": ["components/*"]
     },
     "target": "ES2017"
   },
   "include": [
     "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    "jest.config.ts",
     "global.d.ts",
-    "src/app/(home)/components/first",
-    "src/app/(dashboard)/dashboard/pipeline/shop/shopPipelineLayout.tsc",
-    "test.js",
-    ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
+    "jest.config.ts",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    ".next/types/**/*.ts"
   ],
-  "exclude": ["node_modules", ".next"]
+  "exclude": [
+    "node_modules",
+    ".next"
+  ]
 }

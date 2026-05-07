@@ -11,10 +11,7 @@ const createUserValidation = z.object({
       invalid_type_error: "Password must be string",
     })
     .min(6),
-  company: z
-    .string()
-    .trim()
-    .min(1, { message: "company name cannot be empty" }),
+  company: z.string().trim().min(1, { message: "company name cannot be empty" }),
   accessCode: z.string().min(1, { message: "Access code cannot be empty" }),
 });
 

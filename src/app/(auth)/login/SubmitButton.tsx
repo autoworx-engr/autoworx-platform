@@ -4,11 +4,9 @@ import Submit from "@/components/Submit";
 import { useFormErrorStore } from "@/stores/form-error";
 import { getSession, signIn } from "next-auth/react";
 import { checkLoginWithTwoFactor } from "./actions/checkLoginWithTwoFactor";
-import { useLoginStore } from "@/stores/LoginStore";
 
 export default function SubmitButton() {
   const { showError } = useFormErrorStore();
-  const { setShowTwoFactor, setEmail, setPassword } = useLoginStore();
 
   const handler = async (formData: FormData) => {
     const email = formData.get("email") as string;
@@ -24,20 +22,18 @@ export default function SubmitButton() {
         return;
       }
 
-      if (res?.type === "success" && res?.twoFactor && !res?.nextLogin) {
-        setEmail(email);
-        setPassword(password);
-        setShowTwoFactor(true);
-        return;
-      } else if (res?.type === "success" && !res?.twoFactor && res?.nextLogin) {
+      if (res?.type === "success" && res?.nextLogin) {
         await signIn("credentials", {
           email,
           password,
           redirect: false,
         });
         const session = await getSession();
-        const isSuperAdmin = session?.user?.isSuperAdmin;
-        window.location.href = isSuperAdmin ? "/awx-dashboard" : "/dashboard";
+        if (!session) {
+          showError({ message: "Could not start session", field: "all" });
+          return;
+        }
+        window.location.href = "/dashboard";
       }
     } catch (err) {
       console.log("log in page error", err);
@@ -45,10 +41,10 @@ export default function SubmitButton() {
   };
   return (
     <Submit
-      className="mx-auto w-full mt-4 rounded-md bg-gradient-to-r from-[#6571FF] to-[#5a66ee] px-10 py-2 text-white border-0 outline-none focus:outline-none active:outline-none min-h-[42px] flex items-center justify-center"
+      className="mx-auto mt-4 flex min-h-12 w-full items-center justify-center rounded-xl border-0 bg-gradient-to-r from-teal-600 via-teal-500 to-emerald-600 px-10 py-2.5 text-sm font-semibold text-white shadow-lg shadow-teal-600/25 outline-none transition-all hover:shadow-xl hover:shadow-teal-600/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 active:scale-[0.99]"
       formAction={handler}
     >
-      Login
+      Sign in
     </Submit>
   );
 }

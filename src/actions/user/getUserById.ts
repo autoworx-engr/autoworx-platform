@@ -5,33 +5,27 @@ import { db } from "@/lib/db";
 export const getUserById = async (id: number) => {
   try {
     const user = await db.user.findUnique({
-      where: {
-        id,
-      },
+      where: { id },
     });
     if (user) {
       return { type: "success", data: user };
-    } else {
-      return { type: "fail", data: null };
     }
-  } catch (err: any) {
-    throw new Error(err);
+    return { type: "fail", data: null };
+  } catch (err: unknown) {
+    throw new Error(err instanceof Error ? err.message : "Unknown error");
   }
 };
 
 export const getUserByEmail = async (email: string) => {
   try {
     const user = await db.user.findUnique({
-      where: {
-        email,
-      },
+      where: { email },
     });
     if (user) {
       return { type: "success", data: user };
-    } else {
-      return { type: "fail", data: null };
     }
-  } catch (err: any) {
-    throw new Error(err);
+    return { type: "fail", data: null };
+  } catch (err: unknown) {
+    throw new Error(err instanceof Error ? err.message : "Unknown error");
   }
 };

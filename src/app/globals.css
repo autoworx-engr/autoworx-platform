@@ -1,539 +1,369 @@
-@import url("https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&display=swap");
-
-@import "simplebar-react/dist/simplebar.min.css";
-@import "react-date-range/dist/styles.css";
-@import "react-date-range/dist/theme/default.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Base resets ──────────────────────────────────────────── */
 html {
   scrollbar-gutter: stable;
+  scroll-behavior: smooth;
 }
 
-/* Hide Arrows From Input Number start here */
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
 
-/* Firefox */
 input[type="number"] {
   -moz-appearance: textfield;
 }
 
-/* Firefox */
-.thin-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: #b1bdf9 #fcfcfc; /* #a2a6ac #f1f1f1;  thumb and track */
-}
-
-/* Hide Arrows From Input Number end here */
-
-.thin-scrollbar::-webkit-scrollbar {
-  width: 4px;
-  height: 8px;
-}
-
-.thin-scrollbar::-webkit-scrollbar-thumb {
-  background-color: #b1bdf9; /* Scrollbar color */
-  border-radius: 4px;
-}
-
-.thin-scrollbar::-webkit-scrollbar-track {
-  background-color: #fcfcfc; /* Track color */
-}
-
-/* SimpleBar React CSS for notification scrollbar */
-
-.simplebar-scrollbar:before {
-  background-color: var(--palette-text-disabled);
-}
-.simplebar-scrollbar.simplebar-visible:before {
-  opacity: 0.48;
-}
-
+/* ─── Design tokens ────────────────────────────────────────── */
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
+    /* Canvas */
+    --background: 210 40% 97%;
+    --foreground: 222 47% 11%;
 
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-
+    /* Surfaces */
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
 
-    --primary: 210 100% 50%;
-    --primary-foreground: 0 0% 98%;
+    /* Muted */
+    --muted: 210 40% 93%;
+    --muted-foreground: 215 20% 45%;
 
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
+    /* Primary — teal */
+    --primary: 172 72% 36%;
+    --primary-foreground: 0 0% 100%;
 
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
+    /* Secondary */
+    --secondary: 210 40% 94%;
+    --secondary-foreground: 222 47% 14%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
+    /* Accent */
+    --accent: 172 55% 92%;
+    --accent-foreground: 172 72% 22%;
 
-    --ring: 0 0% 3.9%;
+    /* Destructive */
+    --destructive: 0 84% 50%;
+    --destructive-foreground: 0 0% 100%;
 
-    --radius: 0.5rem;
+    /* Borders & inputs */
+    --border: 214 32% 88%;
+    --input: 214 32% 88%;
+    --ring: 172 72% 36%;
 
-    --chart-1: 12 76% 61%;
+    /* Radius */
+    --radius: 0.875rem;
 
-    --chart-2: 173 58% 39%;
+    /* Sidebar (always dark) */
+    --sidebar: 224 71% 4%;
+    --sidebar-border: 224 40% 10%;
+    --sidebar-ring: 172 72% 36%;
 
-    --chart-3: 197 37% 24%;
+    /* Charts */
+    --chart-1: 172 72% 38%;
+    --chart-2: 200 80% 48%;
+    --chart-3: 262 52% 56%;
+    --chart-4: 35 95% 52%;
+    --chart-5: 340 82% 54%;
 
-    --chart-4: 43 74% 66%;
-
-    --chart-5: 27 87% 67%;
+    /* KPI card accent colors */
+    --kpi-blue:    213 94% 54%;
+    --kpi-violet:  263 70% 56%;
+    --kpi-teal:    172 72% 38%;
+    --kpi-amber:   38 92% 50%;
+    --kpi-emerald: 160 84% 39%;
+    --kpi-rose:    347 77% 50%;
   }
 
   .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
+    /* Canvas */
+    --background: 224 71% 4%;
+    --foreground: 213 31% 91%;
 
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
+    /* Surfaces */
+    --card: 222 47% 7%;
+    --card-foreground: 213 31% 91%;
+    --popover: 222 47% 7%;
+    --popover-foreground: 213 31% 91%;
 
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
+    /* Muted */
+    --muted: 223 47% 11%;
+    --muted-foreground: 215 20% 58%;
 
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
+    /* Primary */
+    --primary: 172 55% 48%;
+    --primary-foreground: 224 71% 4%;
 
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
+    /* Secondary */
+    --secondary: 222 47% 11%;
+    --secondary-foreground: 213 31% 91%;
 
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
+    /* Accent */
+    --accent: 223 47% 14%;
+    --accent-foreground: 172 55% 55%;
 
-    --primary: 210 100% 55%;
-    --primary-foreground: 0 0% 9%;
+    /* Destructive */
+    --destructive: 0 62% 44%;
+    --destructive-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
+    /* Borders & inputs */
+    --border: 223 47% 14%;
+    --input: 223 47% 14%;
+    --ring: 172 55% 48%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
+    /* Sidebar (darker in dark mode) */
+    --sidebar: 222 84% 3%;
+    --sidebar-border: 222 47% 9%;
 
-    --ring: 0 0% 83.1%;
-
-    --radius: 0.5rem;
-
-    --chart-1: 220 70% 50%;
-
-    --chart-2: 160 60% 45%;
-
-    --chart-3: 30 80% 55%;
-
-    --chart-4: 280 65% 60%;
-
-    --chart-5: 340 75% 55%;
+    /* Charts — brighter for dark canvas */
+    --chart-1: 172 55% 52%;
+    --chart-2: 200 72% 58%;
+    --chart-3: 262 60% 64%;
+    --chart-4: 35 90% 58%;
+    --chart-5: 340 80% 60%;
   }
 }
 
+/* ─── Base styles ──────────────────────────────────────────── */
 @layer base {
   * {
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
-    font-feature-settings:
-      "rlig" 1,
-      "calt" 1;
-    color: #66738c;
+    @apply min-h-screen bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1;
   }
 }
 
-:root {
-  padding: 0;
-  margin: 0;
-  box-sizing: border-box;
+/* ─── Dashboard ambient background ────────────────────────── */
+@layer utilities {
+  .bg-app-sheen {
+    background-color: hsl(var(--background));
+    background-image:
+      radial-gradient(ellipse 120% 80% at 100% -20%, hsla(172, 72%, 38%, 0.07), transparent 50%),
+      radial-gradient(ellipse 80% 60% at 0% 100%, hsla(213, 94%, 54%, 0.05), transparent 45%);
+  }
+
+  .dark .bg-app-sheen {
+    background-image:
+      radial-gradient(ellipse 120% 80% at 100% -20%, hsla(172, 55%, 48%, 0.12), transparent 50%),
+      radial-gradient(ellipse 80% 60% at 0% 100%, hsla(213, 94%, 54%, 0.06), transparent 45%);
+  }
+
+  /* ── KPI card glow accent borders ── */
+  .card-glow-teal {
+    box-shadow: 0 0 0 1px hsla(172, 72%, 36%, 0.25), 0 4px 24px hsla(172, 72%, 36%, 0.08);
+  }
+  .dark .card-glow-teal {
+    box-shadow: 0 0 0 1px hsla(172, 55%, 48%, 0.3), 0 0 32px hsla(172, 55%, 48%, 0.12);
+  }
+  .card-glow-blue {
+    box-shadow: 0 0 0 1px hsla(213, 94%, 54%, 0.2), 0 4px 24px hsla(213, 94%, 54%, 0.07);
+  }
+  .card-glow-amber {
+    box-shadow: 0 0 0 1px hsla(38, 92%, 50%, 0.25), 0 4px 24px hsla(38, 92%, 50%, 0.08);
+  }
+  .card-glow-emerald {
+    box-shadow: 0 0 0 1px hsla(160, 84%, 39%, 0.2), 0 4px 24px hsla(160, 84%, 39%, 0.07);
+  }
+
+  /* ── Number glow (dark mode numbers that pop) ── */
+  .num-glow-teal  { text-shadow: 0 0 24px hsla(172, 72%, 48%, 0.45); }
+  .num-glow-emerald { text-shadow: 0 0 24px hsla(160, 84%, 45%, 0.45); }
+  .num-glow-blue  { text-shadow: 0 0 24px hsla(213, 94%, 60%, 0.4); }
+  .num-glow-amber { text-shadow: 0 0 24px hsla(38, 92%, 55%, 0.4); }
+
+  /* ── Gradient text ── */
+  .text-gradient-teal {
+    background: linear-gradient(135deg, #2dd4bf 0%, #059669 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ── Glass card effect for dark mode ── */
+  .glass-card {
+    @apply bg-card border border-border;
+    backdrop-filter: blur(8px);
+  }
+  .dark .glass-card {
+    background: hsla(222, 47%, 7%, 0.85);
+    border-color: hsla(223, 47%, 18%, 0.6);
+    backdrop-filter: blur(12px);
+  }
 }
 
-/* body {
-  background-color: var(--background);
-} */
-body {
-  background-color: white;
+/* ─── Sidebar scrollbar ────────────────────────────────────── */
+.sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(63, 63, 70, 0.4) transparent;
+}
+.sidebar-scroll::-webkit-scrollbar { width: 3px; }
+.sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: rgba(63, 63, 70, 0.4);
+  border-radius: 99px;
+}
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(45, 212, 191, 0.4);
 }
 
-html {
-  scroll-behavior: smooth;
-  font-family: "Inter", sans-serif;
+/* ─── Fade-in / slide-up animations ───────────────────────── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+@keyframes pulse-ring {
+  0%   { transform: scale(1);    opacity: 0.8; }
+  100% { transform: scale(1.6);  opacity: 0; }
 }
 
-.no-visible-scrollbar {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  -webkit-overflow-scrolling: touch;
+.animate-fade-up  { animation: fadeInUp 0.35s ease both; }
+.animate-scale-in { animation: scaleIn  0.25s ease both; }
+
+.animate-fade-up-1  { animation: fadeInUp 0.35s 0.05s ease both; }
+.animate-fade-up-2  { animation: fadeInUp 0.35s 0.10s ease both; }
+.animate-fade-up-3  { animation: fadeInUp 0.35s 0.15s ease both; }
+.animate-fade-up-4  { animation: fadeInUp 0.35s 0.20s ease both; }
+
+/* Skeleton shimmer */
+.shimmer {
+  background: linear-gradient(90deg,
+    hsl(var(--muted)) 25%,
+    hsl(var(--secondary)) 50%,
+    hsl(var(--muted)) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s infinite;
 }
 
-/* for the newsletter modal */
-.no-visible-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-.app-shadow {
-  box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
-}
-
-.invoice-link {
-  position: relative;
-  z-index: 1;
-  /* TODO: fix shadow design */
-  box-shadow:
-    5px 0 10px rgba(0, 0, 0, 0.2),
-    -5px 0 10px rgba(0, 0, 0, 0.2);
-}
-
-.invoice-link::after {
-  content: "";
+/* Live dot */
+.live-dot::after {
+  content: '';
   position: absolute;
-  top: 0;
-  right: -2px;
-  bottom: 0;
-  width: 50px;
-  background-color: inherit;
-  transform: skew(40deg);
-  transform-origin: top right;
-  border-radius: 0.2rem;
-  z-index: -1;
+  inset: 0;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse-ring 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-.invoice-inner-shadow {
-  box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25) inset;
+/* ─── Global form control baseline ───────────────────────────────────────────
+   These rules live OUTSIDE any @layer so they win over Tailwind utilities.
+   This ensures design-system tokens (bg, border, text, radius) always apply
+   to every input, select, and textarea regardless of Tailwind classes.
+──────────────────────────────────────────────────────────────────────────── */
+
+/* Inputs & textareas */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="submit"]):not([type="button"]):not([type="reset"]),
+textarea {
+  background-color: hsl(var(--background)) !important;
+  border-color: hsl(var(--border)) !important;
+  color: hsl(var(--foreground)) !important;
+  border-radius: calc(var(--radius) - 2px) !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+input::placeholder,
+textarea::placeholder {
+  color: hsl(var(--muted-foreground) / 0.5) !important;
+}
+input:focus,
+textarea:focus {
+  outline: none !important;
+  border-color: hsl(var(--ring)) !important;
+  box-shadow: 0 0 0 3px hsl(var(--ring) / 0.15) !important;
 }
 
-.calender-time-shadow {
-  box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
-}
-
-.rmdp-day.rmdp-selected span:not(.highlight) {
-  background-color: #006d77 !important;
-}
-.rmdp-panel-body li {
-  background-color: #006d77 !important;
-}
-.rmdp-panel-body li .b-deselect {
-  @apply px-1;
-}
-
-@media (max-height: 850px) {
-  .invoice-display {
-    height: 70vh;
-  }
-}
-@media (max-height: 915px) {
-  .invoice-create {
-    padding-top: 0.5rem;
-  }
-
-  .invoice-create .services {
-    height: 10rem;
-  }
-
-  .invoice-create .services table tr,
-  .invoice-create .services table td {
-    font-size: 0.7rem;
-  }
-
-  .invoice-create .services table tr input,
-  .invoice-create .services table td input {
-    font-size: 0.7rem;
-  }
-
-  .invoice-create .service-form {
-    margin-top: 0.5rem;
-  }
-
-  .invoice-create .service-form select {
-    font-size: 0.7rem;
-    height: 1.5rem;
-  }
-
-  .invoice-create .service-form .checkbox input {
-    width: 0.7rem;
-    height: 0.7rem;
-  }
-
-  .invoice-create .service-form .checkbox label {
-    font-size: 0.7rem;
-  }
-
-  .invoice-create .service-form button {
-    font-size: 0.8rem;
-    margin-top: 0.5rem;
-  }
-
-  .invoice-create .payment h2 {
-    font-size: 0.7rem;
-  }
-
-  .invoice-create .payment button {
-    font-size: 0.6rem;
-    padding: 0.3rem 1rem;
-  }
-
-  .invoice-create .payment .payment-table {
-    margin-top: 0.2rem;
-    height: 5rem;
-  }
-
-  .invoice-create .payment .payment-table tr,
-  .invoice-create .payment .payment-table td {
-    font-size: 0.6rem;
-  }
-
-  .invoice-create .payment .payment-table th,
-  .invoice-create .payment .payment-table td {
-    padding: 0.2rem 0.4rem;
-  }
-
-  .invoice-create .additional {
-    height: 7rem;
-    font-size: 0.8rem;
-  }
-
-  .invoice-create .form {
-    margin-top: 0.4rem;
-  }
-
-  .invoice-create .form label {
-    font-size: 0.7rem;
-  }
-
-  .invoice-create .form input {
-    font-size: 0.7rem;
-  }
-
-  .invoice-create .form p {
-    font-size: 0.7rem;
-  }
-
-  .invoice-create .form .form-divide {
-    gap: 0.5rem;
-  }
-
-  .invoice-create .form .form-divide-input {
-    gap: 0.4rem;
-  }
-
-  .invoice-create .form-head h2 {
-    font-size: 0.8rem;
-  }
-
-  .invoice-create .form-head button {
-    font-size: 0.6rem;
-    padding: 0.3rem 0.8rem;
-  }
-
-  .invoice-create .invoice-to {
-    height: 58%;
-  }
-
-  .invoice-create .vehicle {
-    margin-top: 0.4rem;
-    height: 40%;
-  }
-}
-
-form {
-  pointer-events: auto !important;
-}
-body {
-  pointer-events: auto !important;
-}
-
-/* div[role="dialog"] {
-  pointer-events: auto !important;
-} */
-html body[data-scroll-locked] {
-  --removed-body-scroll-bar-size: 0 !important;
-  margin-right: 0 !important;
-}
-
-/* reporting pipeline chart css*/
-.chart-container {
-  @apply flex min-h-96 min-w-[550px] items-center justify-center rounded-lg border border-gray-300 bg-background px-2 py-5;
-}
-
-@media print {
-  @page {
-    size: auto;
-    margin: 5mm;
-  }
-  html,
-  body {
-    height: auto !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    overflow: visible !important;
-  }
-  * {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-}
-
-/* Custom scrollbar for elements with the class 'custom-scrollbar' */
-.custom-scrollbar {
-  overflow-y: auto; /* Enable vertical scrolling */
-  scroll-behavior: smooth; /* Smooth scrolling */
-}
-
-.custom-scrollbar::-webkit-scrollbar {
-  width: 12px; /* Width of the scrollbar */
-  border-radius: 10px; /* Rounded scrollbar container */
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: #fcfcfc; /* Light gray track background */
-  border-radius: 10px; /* Fully rounded track */
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: linear-gradient(
-    180deg,
-    #9cadff,
-    #9cadff /* #a9a9a9,
-    #808080 */
-  ); /* Gray gradient thumb */
-  border-radius: 12px; /* Fully rounded scrollbar */
-  transition: background-color 0.3s ease; /* Smooth transition on hover */
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(
-    180deg,
-    #9cadff,
-    #9cadff /*808080  #696969 */
-  ); /* Darker gray on hover */
-}
-
-/* Scrollbar for Firefox */
-.custom-scrollbar {
-  scrollbar-width: thin; /* Thin scrollbar */
-  scrollbar-color: #b1bdf9 #fcfcfc; /* Gray thumb and light gray track */
-}
-
-/* landing page css */
-.text-gradient {
-  @apply bg-gradient-to-r from-[#26AADF] to-[#01A79E] bg-clip-text text-transparent;
-}
-
-button {
-  @apply active:scale-95;
-  transition: transform 0.2s ease-in-out;
-}
-
-.carousel-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin: 20px auto;
-}
-
-.carousel {
-  display: flex;
-  position: relative;
-  width: 94rem;
-  height: 60rem;
-  overflow: hidden;
-  justify-content: center;
-  align-items: center;
-}
-
-.testimonial-card {
-  position: absolute;
-  width: 443px;
-  height: 593px;
-  background: none;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  /* transition: all cubic-bezier(1, 0, 0, 1) 0.8s; */
-}
-
-.testimonial-card h4 {
-  margin-top: 10px;
-  font-size: 14px;
-  color: #555;
-}
-
-.carousel-btn {
-  background: none;
-  border: none;
-  font-size: 24px;
+/* ── Select — strip native appearance, inject custom chevron ──────────────
+   Placed outside @layer so padding-right beats Tailwind's px-* utilities. */
+select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  background-color: hsl(var(--background)) !important;
+  border-color: hsl(var(--border)) !important;
+  color: hsl(var(--foreground)) !important;
+  border-radius: calc(var(--radius) - 2px) !important;
+  /* Custom chevron SVG (zinc-500) */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 0.65rem center !important;
+  background-size: 14px 14px !important;
+  padding-right: 2.25rem !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
   cursor: pointer;
-  color: #01a79e42;
-  transition: transform 0.2s ease-in-out;
+}
+select:focus {
+  outline: none !important;
+  border-color: hsl(var(--ring)) !important;
+  box-shadow: 0 0 0 3px hsl(var(--ring) / 0.15) !important;
+}
+/* Dark mode — lighter zinc chevron */
+.dark select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23a1a1aa' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+}
+/* Option elements in Chromium dark mode */
+.dark select option {
+  background-color: hsl(var(--card));
+  color: hsl(var(--foreground));
 }
 
-.carousel-btn:hover {
-  transform: scale(1.2);
+/* ─── Dark mode: override hard-coded slate/white surfaces ──── */
+/* These rules handle cases where Tailwind utility classes were hard-coded
+   with light-mode colours rather than semantic tokens. */
+
+/* Backgrounds */
+.dark .bg-white,
+[class~="dark"] .bg-white        { background-color: hsl(var(--card)) !important; }
+.dark .bg-slate-50,
+.dark [class*="bg-slate-50"]     { background-color: hsl(var(--muted)) !important; }
+.dark [class*="bg-white\/"]      { background-color: hsl(var(--card)) !important; }
+.dark [class*="bg-slate-50\/"]   { background-color: hsl(var(--muted)) !important; }
+
+/* Borders */
+.dark .border-slate-100,
+.dark .border-slate-200,
+.dark [class*="border-slate-100"],
+.dark [class*="border-slate-200"]  { border-color: hsl(var(--border)) !important; }
+
+/* Text */
+.dark .text-slate-900,
+.dark .text-slate-950 { color: hsl(var(--foreground)) !important; }
+.dark .text-slate-800 { color: hsl(var(--foreground) / 0.92) !important; }
+.dark .text-slate-700 { color: hsl(var(--foreground) / 0.80) !important; }
+.dark .text-slate-600 { color: hsl(var(--muted-foreground)) !important; }
+.dark .text-slate-500 { color: hsl(var(--muted-foreground) / 0.85) !important; }
+.dark .text-slate-400 { color: hsl(var(--muted-foreground) / 0.65) !important; }
+
+/* Teal-950 text (used for weighted value) */
+.dark .text-teal-950  { color: hsl(var(--primary)) !important; }
+
+/* ─── Table zebra-stripe friendly for dark mode ─────────────── */
+.dark tbody tr:hover {
+  background-color: hsl(var(--muted) / 0.4);
 }
 
-/* Positioning for the testimonials */
-.testimonial-card.left {
-  left: 0;
-  opacity: 0.5;
-  transform: scale(0.7);
+/* ─── Smooth theme transition ────────────────────────────────── */
+*,
+*::before,
+*::after {
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.1s ease;
 }
 
-.testimonial-card.right {
-  right: 0;
-  opacity: 0.5;
-  transform: scale(0.7);
-}
-
-.testimonial-card.visible-left {
-  opacity: 1;
-  transform: scale(1) translate3d(-230px, 4px, 10px) !important;
-  z-index: 1;
-}
-
-.testimonial-card.visible-right {
-  opacity: 1;
-  transform: scale(1) translate3d(230px, 4px, 10px) !important;
-  z-index: 1;
-}
-
-.hidden-testimonial {
-  display: none;
-}
-
-/* Force OneSignal bell to bottom-right */
-#onesignal-bell-container,
-#onesignal-bell-launcher,
-.onesignal-bell-launcher-button {
-  position: fixed !important;
-  right: 5px !important;
-  left: auto !important;
-  bottom: 5px !important;
-  margin: 0 !important;
-}
-
-/* Hide on small devices */
-@media (max-width: 576px) {
-  #onesignal-bell-container,
-  #onesignal-bell-launcher,
-  .onesignal-bell-launcher-button {
-    display: none !important;
-  }
+/* But NOT transitions on transforms/shadows to keep animations snappy */
+[class*="hover:-translate"],
+[class*="hover:scale"],
+[class*="animate-"] {
+  transition-property: transform, opacity, box-shadow;
 }

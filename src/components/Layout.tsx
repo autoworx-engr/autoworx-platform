@@ -1,366 +1,370 @@
 "use client";
 
-import { uploadNotificationSettings } from "@/actions/settings/updateNotification";
-import { useSetPermissions } from "@/hooks/useSetPermissions";
-import { usePermissionStore } from "@/stores/permissionStore";
-import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
-import { EmployeeType } from "@prisma/client";
-import { Spin } from "antd";
+import { cn } from "@/lib/utils";
+import {
+  Activity,
+  Bell,
+  Building2,
+  ChevronRight,
+  FileText,
+  Handshake,
+  LayoutDashboard,
+  ListTodo,
+  LogOut,
+  Kanban,
+  Menu,
+  MessageCircle,
+  MessageSquare,
+  Package,
+  Search,
+  Settings,
+  Sparkles,
+  TrendingUp,
+  UserCircle2,
+  Users,
+  Wrench,
+  X,
+  Zap,
+} from "lucide-react";
 import { Session } from "next-auth";
-import { redirect, usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { Store } from "lucide-react";
-import MobileNav from "./mobile-responsive/MobileNav";
-import PopupState from "./PopupState";
-import PrivateRoute from "./PrivateRoute";
-import SideNavbar from "./SideNavbar";
-import TopNavbar from "./TopNavbar";
-import InitOneSignalProvider from "./InitOneSignalProvider";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { useSetCompanyFeaturePermission } from "@/hooks/useSetCompanyFeaturePermission";
-import { superAdminNavList } from "@/app/(dashboard)/awx-dashboard/_utils/superAdminNavList";
-import UserBugReport from "./bug-report/UserBugReport";
-import { VoiceDeviceProvider } from "@/context/VoiceDeviceContext";
-import VoiceAutoSetup from "./VoiceAutoSetup";
-import CarLoading from "./common/CarLoading";
-import path from "path";
+import { useState } from "react";
+import { HeaderThemeToggle, ThemeToggle } from "./ThemeToggle";
 
-const navbarList = [
+type NavItem = { href: string; label: string; icon: React.ElementType; badge?: string | number };
+type NavGroup = { title: string; items: NavItem[] };
+
+const navGroups: NavGroup[] = [
   {
-    title: "Dashboard",
-    icon: "/icons/navbar/Dashboard.svg",
-    link: "/dashboard",
-    path: "/dashboard/dashboard",
-  },
-  {
-    title: "Communication Hub",
-    icon: "/icons/navbar/Community4.svg",
-    path: "/dashboard/communication",
-    subnav: [
-      {
-        title: "Client",
-        link: "/dashboard/communication/client",
-      },
-      {
-        title: "Internal",
-        link: "/dashboard/communication/internal",
-      },
-      {
-        title: "Collaboration",
-        link: "/dashboard/communication/collaboration",
-      },
+    title: "Main",
+    items: [
+      { href: "/dashboard",                 label: "Overview",          icon: LayoutDashboard },
+      { href: "/dashboard/pipeline",        label: "Sales Pipeline",    icon: Kanban },
+      { href: "/dashboard/service-pipeline",label: "Service Pipeline",  icon: Wrench },
     ],
   },
   {
-    title: "Pipelines",
-    icon: "/icons/navbar/Sales.svg",
-    path: "/dashboard/pipeline",
-
-    subnav: [
-      {
-        title: "Team Pipeline",
-        link: "/dashboard/pipeline/team/pipeline",
-      },
-      {
-        title: "Shop Pipeline",
-        link: "/dashboard/pipeline/shop/pipeline",
-      },
-      {
-        title: "Sales Pipeline",
-        link: "/dashboard/pipeline/sales/pipeline",
-      },
+    title: "Sales & CRM",
+    items: [
+      { href: "/dashboard/accounts",   label: "Clients",    icon: Building2 },
+      { href: "/dashboard/contacts",   label: "Contacts",   icon: Users },
+      { href: "/dashboard/deals",      label: "Deals",      icon: Handshake },
+      { href: "/dashboard/activities", label: "Activities", icon: ListTodo },
+      { href: "/dashboard/employees",  label: "Employees",  icon: UserCircle2 },
     ],
   },
   {
-    title: "Task and Activity Management",
-    icon: "/icons/navbar/Task.svg",
-    link: "/dashboard/task/day",
-    path: "/dashboard/task",
-  },
-  {
-    title: "Analytics and Reporting",
-    icon: "/icons/navbar/Analytics.svg",
-    link: "/dashboard/reporting/revenue",
-    path: "/dashboard/reporting",
-  },
-  {
-    title: "Invoices",
-    icon: "/icons/navbar/Invoices.svg",
-    link: "/dashboard/estimate",
-    path: "/dashboard/estimate",
-  },
-  {
-    title: "Payments",
-    icon: "/icons/navbar/Payments.svg",
-    link: "/dashboard/payments",
-    path: "/dashboard/payments",
-  },
-  {
-    title: "Inventory",
-    icon: "/icons/navbar/Inventory.svg",
-    path: "/dashboard/inventory",
-
-    subnav: [
-      {
-        title: "Inventory List",
-        link: "/dashboard/inventory",
-      },
-      {
-        title: "Vendor List",
-        link: "/dashboard/inventory/vendor",
-      },
-      {
-        title: "Camera",
-        link: "/dashboard/inventory/camera",
-      },
+    title: "Finance & Ops",
+    items: [
+      { href: "/dashboard/invoices",   label: "Invoices",   icon: FileText },
+      { href: "/dashboard/inventory",  label: "Inventory",  icon: Package },
     ],
   },
   {
-    title: "Directory",
-    icon: "/icons/navbar/Employee.png",
-    path: "/dashboard/employee",
-
-    subnav: [
-      {
-        title: "Employee",
-        link: "/dashboard/employee",
-      },
-      {
-        title: "Client",
-        link: "/dashboard/client",
-      },
-      {
-        title: "Fleet",
-        link: "/dashboard/fleet",
-      },
+    title: "Communication",
+    items: [
+      { href: "/dashboard/messages",    label: "Team Chat",   icon: MessageSquare },
+      { href: "/dashboard/client-chat", label: "Client Chat", icon: MessageCircle },
     ],
   },
-
   {
-    title: "Visualization",
-    icon: "/icons/navbar/visualization.svg",
-    link: "/dashboard/visualization",
-    path: "/dashboard/visualization",
+    title: "System",
+    items: [
+      { href: "/dashboard/settings", label: "Settings", icon: Settings },
+    ],
   },
-  // {
-  //   title: "Virtual Shop",
-  //   icon: <Store className="w-5 h-5" color="#fff" />,
-  //   link: "/dashboard/virtual-shop",
-  //   path: "/dashboard/virtual-shop",
-  // },
 ];
 
-const mobileNav = [
-  ...navbarList, // Existing navList
-  // {
-  //   title: "Visualization",
-  //   icon: "/icons/navbar/visualization.svg",
-  //   link: "/dashboard/visualization",
-  //   path: "/dashboard/visualization",
-  // },
-  {
-    title: "Settings", // Add settings here
-    icon: "/icons/navbar/Settings.svg", // Ensure this icon exists
-    link: "/dashboard/settings/my-account",
-    path: "/dashboard/settings",
-  },
-];
-/**
- * Layout component that wraps around page content.
- *
- * - Enforces authentication for `/dashboard/*` routes.
- * - Conditionally displays the `SideNavbar` for authenticated dashboard routes.
- * - Redirects unauthenticated users to the login page for protected routes.
- *
- * @param {Object} props - Component properties.
- * @param {React.ReactNode} props.children - Child components to be rendered within the layout.
- * @param {(Session & { user: { employeeType: string } }) | null} props.session - User session information.
- */
-
-const mobileSuperAdminNav = [
-  ...superAdminNavList, // Existing navList
-  {
-    title: "Settings", // Add settings here
-    icon: "/icons/navbar/Settings.svg", // Ensure this icon exists
-    link: "/awx-dashboard/settings/my-account",
-    path: "/awx-dashboard/settings",
-  },
-];
 export default function Layout({
   session,
   children,
-  canReceiveCalls = false,
 }: {
   session: Session | null;
   children: React.ReactNode;
-  canReceiveCalls?: boolean;
 }) {
-  const pathname = usePathname(); // Get the current route path
-  const isSuperAdminRoute = pathname?.startsWith("/awx-dashboard");
-  useSetPermissions(session); // Set user permissions based on session
-  useSetCompanyFeaturePermission(session); // Set user permissions based on session
-  const { permissions } = usePermissionStore();
-  const currentUser = useGetCurrentUser();
-  const [voicePhoneNumber, setVoicePhoneNumber] = useState<string | null>(null);
-  const [voiceProvider, setVoiceProvider] = useState<"TWILIO" | "INFOBIP">(
-    "TWILIO",
+  const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const publicPaths = ["/login", "/register", "/forgot-password", "/reset-password", "/auth"];
+  const isPublic = pathname && publicPaths.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+
+  if (isPublic) return <>{children}</>;
+  if (!session?.user) return <>{children}</>;
+
+  const linkActive = (href: string) => {
+    if (href === "/dashboard") return pathname === "/dashboard";
+    return pathname === href || Boolean(pathname?.startsWith(`${href}/`));
+  };
+
+  const userInitials = session.user?.name
+    ? session.user.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
+    : "?";
+
+  const pageLabel = pathname === "/dashboard"
+    ? "Today's snapshot"
+    : pathname?.replace("/dashboard/", "").split("/").map((s) => s.charAt(0).toUpperCase() + s.slice(1)).join(" › ") ?? "";
+
+  const NavContent = ({ onNavigate }: { onNavigate?: () => void }) => (
+    <nav className="flex flex-col gap-5 px-2.5">
+      {navGroups.map((group) => (
+        <div key={group.title}>
+          <p className="mb-1.5 px-2 text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-600 select-none">
+            {group.title}
+          </p>
+          <div className="flex flex-col gap-0.5">
+            {group.items.map(({ href, label, icon: Icon, badge }) => {
+              const active = linkActive(href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={onNavigate}
+                  className={cn(
+                    "group relative flex items-center gap-3 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-all duration-150",
+                    active
+                      ? "bg-teal-500/12 text-teal-300"
+                      : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200",
+                  )}
+                >
+                  {/* Left accent bar */}
+                  {active && (
+                    <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-gradient-to-b from-teal-400 to-emerald-500 shadow-[0_0_8px_rgba(45,212,191,0.6)]" />
+                  )}
+
+                  {/* Icon container */}
+                  <span
+                    className={cn(
+                      "flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-all duration-150",
+                      active
+                        ? "bg-gradient-to-br from-teal-500/25 to-emerald-500/15 text-teal-300 shadow-[0_0_12px_rgba(45,212,191,0.2)]"
+                        : "text-zinc-500 group-hover:text-zinc-300",
+                    )}
+                  >
+                    <Icon className="h-[14px] w-[14px]" strokeWidth={2} />
+                  </span>
+
+                  <span className="flex-1 truncate">{label}</span>
+
+                  {badge != null && (
+                    <span className="flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-teal-500/20 px-1.5 text-[10px] font-bold text-teal-300">
+                      {badge}
+                    </span>
+                  )}
+                  {active && (
+                    <ChevronRight className="h-3 w-3 shrink-0 text-teal-600/60" strokeWidth={2.5} />
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </nav>
   );
 
-  // console.log({ session });
-  useEffect(() => {
-    const uploadNotificationData = async () => {
-      try {
-        if (currentUser) {
-          const response = await uploadNotificationSettings(
-            Number(currentUser?.id),
-            currentUser?.employeeType as EmployeeType,
-            currentUser?.companyId,
-          );
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    uploadNotificationData();
-  }, [currentUser?.id, currentUser?.companyId]);
-
-  useEffect(() => {
-    if (session?.error === "RefreshAccessTokenError") {
-      signOut({
-        callbackUrl: "/login",
-      });
-    }
-  }, [session?.error]);
-
-  // Fetch voice provider phone number (Twilio or Infobip)
-  useEffect(() => {
-    const fetchVoiceConfig = async () => {
-      try {
-        // First, determine which provider the company uses
-        const companyResponse = await fetch("/api/company/sms-gateway");
-        if (companyResponse.ok) {
-          const companyData = await companyResponse.json();
-          const gateway = companyData.smsGateway || "TWILIO";
-          setVoiceProvider(gateway);
-
-          // Fetch phone number based on provider
-          const endpoint =
-            gateway === "TWILIO"
-              ? "/api/twilio/get-phone-number"
-              : "/api/infobip/get-phone-number";
-
-          const response = await fetch(endpoint);
-          if (response.ok) {
-            const data = await response.json();
-            setVoicePhoneNumber(data.phoneNumber);
-            console.log(`📱 ${gateway} phone number loaded:`, data.phoneNumber);
-          }
-        }
-      } catch (error) {
-        console.error("❌ Error fetching voice configuration:", error);
-      }
-    };
-
-    if (session && currentUser?.companyId && canReceiveCalls) {
-      fetchVoiceConfig();
-    }
-  }, [session, currentUser?.companyId, canReceiveCalls]);
-
-  // onesignal icon moveable
-  useEffect(() => {
-    let timeoutId = setTimeout(() => {
-      const bell = document.getElementById("onesignal-bell-launcher");
-      // console.log("bell", bell);
-      if (!bell) return;
-
-      bell.style.position = "fixed"; // allow free movement
-      bell.style.cursor = "grab";
-
-      let isDragging = false;
-      let offsetX = 0;
-      let offsetY = 0;
-
-      const handleMouseDown = (e: MouseEvent) => {
-        isDragging = true;
-        const rect = bell.getBoundingClientRect();
-        offsetX = e.clientX - rect.left;
-        offsetY = e.clientY - rect.top;
-        bell.style.cursor = "grabbing";
-      };
-
-      const handleMouseMove = (e: MouseEvent) => {
-        if (isDragging) {
-          bell.style.left = e.clientX - offsetX + "px";
-          bell.style.top = e.clientY - offsetY + "px";
-        }
-      };
-
-      const handleMouseUp = () => {
-        isDragging = false;
-        bell.style.cursor = "grab";
-      };
-
-      bell.addEventListener("mousedown", handleMouseDown);
-      document.addEventListener("mousemove", handleMouseMove);
-      document.addEventListener("mouseup", handleMouseUp);
-    }, 5000);
-    // cleanup
-    return () => {
-      clearTimeout(timeoutId);
-    };
-  }, []);
-
-  // If the user is not authenticated, redirect to the login page
-
-  // If the path does not start with "/dashboard", render children without layout
-  // If the path does not start with "/dashboard" or "/awx-dashboard", render children without layout
-  if (
-    !pathname?.startsWith("/dashboard") &&
-    !pathname?.startsWith("/awx-dashboard")
-  ) {
-    return <main>{children}</main>;
-  }
-
-  // If the user is not authenticated, redirect to the login page
-  if (!session) {
-    redirect("/login");
-  }
-
-  if (!permissions) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <CarLoading />
-      </div>
-    );
-  }
-
   return (
-    <VoiceDeviceProvider>
-      <div className="w-full overflow-y-hidden">
-        {canReceiveCalls && (
-          <VoiceAutoSetup
-            phoneNumber={voicePhoneNumber}
-            provider={voiceProvider}
-          />
-        )}
-        <SideNavbar
-          navList={isSuperAdminRoute ? superAdminNavList : navbarList}
-          permissions={permissions}
+    <div className="flex min-h-screen bg-app-sheen">
+
+      {/* ── Desktop sidebar ─────────────────────────── */}
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-[240px] flex-col bg-sidebar border-r border-sidebar-border lg:flex">
+        {/* ambient teal top-left glow */}
+        <div
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_150%_80%_at_0%_0%,rgba(45,212,191,0.09),transparent_55%)]"
+          aria-hidden
         />
-        <MobileNav
-          navList={isSuperAdminRoute ? mobileSuperAdminNav : mobileNav}
-          permissions={permissions}
-        />
-        <div className="sm:ml-[5%]">
-          <TopNavbar />
-          <PopupState />
-          <main className="relative mt-14 max-h-[calc(100vh-56px)] overflow-y-auto bg-[#F8F9FA] sm:mt-0 sm:p-2 sm:px-4 md:h-[93vh]">
-            <InitOneSignalProvider />
-            <PrivateRoute session={session}>{children}</PrivateRoute>
-            <UserBugReport />
-          </main>
+
+        {/* Brand header */}
+        <div className="relative flex h-[3.75rem] shrink-0 items-center gap-3 border-b border-sidebar-border px-4">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-teal-400 via-teal-500 to-emerald-600 shadow-[0_0_18px_rgba(45,212,191,0.4)]">
+            <Sparkles className="h-[18px] w-[18px] text-white" strokeWidth={1.8} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[15px] font-bold tracking-tight text-white">Luminar CRM</p>
+            <div className="mt-0.5 flex items-center gap-1.5">
+              <span className="relative h-1.5 w-1.5 rounded-full bg-teal-400 live-dot" />
+              <p className="text-[10px] font-medium text-zinc-500">Revenue workspace</p>
+            </div>
+          </div>
+          <ThemeToggle compact />
         </div>
+
+        {/* Search shortcut */}
+        <div className="relative px-3.5 pt-3 pb-1.5">
+          <button
+            type="button"
+            className="flex w-full items-center gap-2 rounded-lg border border-zinc-800/70 bg-zinc-900/50 px-3 py-2 text-[11.5px] text-zinc-500 transition-all hover:border-zinc-700/80 hover:bg-zinc-900/80 hover:text-zinc-400"
+          >
+            <Search className="h-3.5 w-3.5 shrink-0" />
+            <span className="flex-1 text-left">Quick search…</span>
+            <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[9px] font-medium text-zinc-600">⌘K</span>
+          </button>
+        </div>
+
+        {/* Nav */}
+        <div className="relative flex-1 overflow-y-auto py-2 sidebar-scroll">
+          <NavContent />
+        </div>
+
+        {/* Footer */}
+        <div className="relative border-t border-sidebar-border p-3">
+          {/* Quick stats */}
+          <div className="mb-3 grid grid-cols-2 gap-1.5">
+            <div className="flex items-center gap-1.5 rounded-lg bg-zinc-900/60 px-2.5 py-2 ring-1 ring-zinc-800/50">
+              <TrendingUp className="h-3 w-3 text-emerald-400" />
+              <div className="min-w-0">
+                <p className="text-[9px] text-zinc-600 leading-none">Revenue</p>
+                <p className="mt-0.5 text-[11px] font-semibold text-zinc-300 leading-none">Active</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 rounded-lg bg-zinc-900/60 px-2.5 py-2 ring-1 ring-zinc-800/50">
+              <Activity className="h-3 w-3 text-teal-400" />
+              <div className="min-w-0">
+                <p className="text-[9px] text-zinc-600 leading-none">Pipeline</p>
+                <p className="mt-0.5 text-[11px] font-semibold text-zinc-300 leading-none">On track</p>
+              </div>
+            </div>
+          </div>
+
+          {/* User card */}
+          <div className="flex items-center gap-2.5 rounded-lg bg-zinc-900/60 px-3 py-2.5 ring-1 ring-zinc-800/50">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-teal-500 to-emerald-700 text-[11px] font-bold text-white ring-2 ring-teal-900/60 shadow-[0_0_10px_rgba(45,212,191,0.2)]">
+              {userInitials}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[12.5px] font-semibold text-zinc-100 leading-tight">
+                {session.user?.name}
+              </p>
+              <p className="truncate text-[10px] text-zinc-500 leading-tight">
+                {session.user?.email}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void signOut({ callbackUrl: "/login" })}
+              title="Sign out"
+              className="shrink-0 rounded-md p-1.5 text-zinc-600 transition-all hover:bg-red-500/10 hover:text-red-400"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      {/* ── Mobile backdrop ──────────────────────────── */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm lg:hidden"
+          aria-hidden
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* ── Mobile drawer ────────────────────────────── */}
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 flex w-[min(100%,280px)] flex-col bg-sidebar border-r border-sidebar-border shadow-2xl transition-transform duration-200 ease-out lg:hidden",
+          mobileOpen ? "translate-x-0" : "-translate-x-full",
+        )}
+      >
+        <div className="flex h-14 shrink-0 items-center justify-between border-b border-sidebar-border px-4">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-teal-400 to-emerald-600 shadow-glow">
+              <Sparkles className="h-4 w-4 text-white" strokeWidth={1.8} />
+            </div>
+            <span className="text-[15px] font-bold text-white">Luminar CRM</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setMobileOpen(false)}
+            className="rounded-lg p-2 text-zinc-400 hover:bg-white/10 hover:text-white"
+            aria-label="Close menu"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto py-4 sidebar-scroll">
+          <NavContent onNavigate={() => setMobileOpen(false)} />
+        </div>
+        <div className="border-t border-sidebar-border p-4">
+          <div className="flex items-center gap-3 rounded-lg bg-zinc-900/60 px-3 py-2.5">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-teal-500 to-emerald-700 text-[11px] font-bold text-white">
+              {userInitials}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[13px] font-semibold text-zinc-100">{session.user?.name}</p>
+              <p className="truncate text-[10px] text-zinc-500">{session.user?.email}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void signOut({ callbackUrl: "/login" })}
+              className="shrink-0 rounded-md p-1.5 text-zinc-600 hover:text-red-400"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      {/* ── Main content ─────────────────────────────── */}
+      <div className="flex min-h-screen flex-1 flex-col lg:pl-[240px]">
+
+        {/* Top header */}
+        <header className="sticky top-0 z-30 flex h-[3.75rem] shrink-0 items-center gap-3 border-b border-border/60 bg-background/80 px-4 backdrop-blur-xl sm:px-6">
+          <button
+            type="button"
+            className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground lg:hidden"
+            onClick={() => setMobileOpen(true)}
+            aria-label="Open menu"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+
+          {/* Breadcrumb */}
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <div className="hidden h-5 w-px bg-border lg:block" />
+            <div className="hidden items-center gap-1.5 lg:flex">
+              <Zap className="h-3.5 w-3.5 text-primary" />
+              <p className="truncate text-[13px] font-medium text-muted-foreground">
+                {pageLabel}
+              </p>
+            </div>
+            <p className="truncate text-[14px] font-semibold text-foreground lg:hidden">
+            Luminar CRM
+            </p>
+          </div>
+
+          {/* Header actions */}
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              className="hidden items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-[12px] font-medium text-muted-foreground shadow-sm transition-colors hover:bg-muted hover:text-foreground sm:flex"
+            >
+              <Search className="h-3.5 w-3.5" />
+              Search
+              <span className="ml-1 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground/70">⌘K</span>
+            </button>
+            <HeaderThemeToggle />
+            <button
+              type="button"
+              className="relative rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+              aria-label="Notifications"
+            >
+              <Bell className="h-4 w-4" />
+              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-teal-500 ring-2 ring-background shadow-[0_0_6px_rgba(45,212,191,0.7)]" />
+            </button>
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-teal-500 to-emerald-700 text-[11px] font-bold text-white ring-2 ring-teal-100/20 shadow-[0_0_12px_rgba(45,212,191,0.25)]">
+              {userInitials}
+            </div>
+          </div>
+        </header>
+
+        {/* Page content */}
+        <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
+          {children}
+        </main>
       </div>
-    </VoiceDeviceProvider>
+    </div>
   );
 }

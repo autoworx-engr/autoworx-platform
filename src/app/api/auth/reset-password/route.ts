@@ -2,29 +2,6 @@ import { db } from "@/lib/db";
 import { hash } from "bcryptjs";
 import { NextResponse } from "next/server";
 
-/**
- * @swagger
- * /api/auth/reset-password:
- *   post:
- *     summary: Reset password with token
- *     tags: [Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               token:
- *                 type: string
- *               newPassword:
- *                 type: string
- *     responses:
- *       200:
- *         description: Password reset successful
- *       400:
- *         description: Invalid or expired token
- */
 export async function POST(req: Request) {
   const { token, newPassword } = await req.json();
 

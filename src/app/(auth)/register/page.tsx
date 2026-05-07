@@ -33,7 +33,7 @@ export default function Page() {
             />
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Create your account</h1>
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Start your journey with Autoworx.</p>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Create your workspace and start tracking deals.</p>
         </div>
 
         <FormError />
@@ -45,7 +45,7 @@ export default function Page() {
               type="text"
               name="firstName"
               autoFocus
-              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-[#6571FF]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
+              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-[#0d9488]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
             />
           </div>
 
@@ -54,7 +54,7 @@ export default function Page() {
             <Input
               type="text"
               name="lastName"
-              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-[#6571FF]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
+              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-[#0d9488]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
             />
           </div>
 
@@ -63,7 +63,7 @@ export default function Page() {
             <Input
               type="email"
               name="email"
-              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 text-slate-900 transition-colors focus:border-[#6571FF]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:text-white"
+              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 text-slate-900 transition-colors focus:border-[#0d9488]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:text-white"
             />
           </div>
 
@@ -71,7 +71,7 @@ export default function Page() {
             <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Password</label>
             <Password
               name="password"
-              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-[#6571FF]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
+              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-[#0d9488]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
             />
           </div>
 
@@ -80,7 +80,7 @@ export default function Page() {
             <Input
               type="text"
               name="company"
-              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-[#6571FF]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
+              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-[#0d9488]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
             />
           </div>
 
@@ -88,7 +88,7 @@ export default function Page() {
             <label htmlFor="access" className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Access Code</label>
             <Input
               name="access"
-              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-[#6571FF]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
+              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-[#0d9488]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
             />
           </div>
           <div className="md:col-span-2"></div>
@@ -98,7 +98,7 @@ export default function Page() {
 
         <p className="mt-8 text-center text-sm text-slate-600 dark:text-slate-400">
           Already registered?{" "}
-          <Link href="/login" className="font-semibold text-[#6571FF] transition-colors hover:text-[#5059d4] hover:underline">Login</Link>
+          <Link href="/login" className="font-semibold text-[#0d9488] transition-colors hover:text-[#0f766e] hover:underline">Login</Link>
         </p>
       </form>
     </div>

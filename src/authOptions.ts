@@ -2,12 +2,9 @@ import jwt from "jsonwebtoken";
 import { NextAuthOptions } from "next-auth";
 import { JWT } from "next-auth/jwt";
 import CredentialsProvider from "next-auth/providers/credentials";
-import GoogleProvider from "next-auth/providers/google";
 import { db } from "./lib/db";
 
 import nextAxios from "./helpers/next-axios";
-import { getUserByEmail } from "./actions/user/getUserById";
-import { getTwoFactorConfirmationByUserId } from "./app/(auth)/login/actions/getTwoFactorConfirmationByUserId";
 
 declare module "next-auth" {
   interface Session {
@@ -104,35 +101,17 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       authorize: async (credentials) => {
-        console.log("credentials", credentials);
         if (!credentials?.email || !credentials?.password) return null;
-        const { data: existingUser } = await getUserByEmail(credentials.email);
-        // 2FA CHECK
-        if (existingUser?.twoFactorEnabled) {
-          const twoFactorConfirmation = await getTwoFactorConfirmationByUserId(
-            existingUser.id,
-          );
-
-          if (!twoFactorConfirmation) {
-            return null; // REJECT: 2FA not completed
-          }
-
-          // CONSUME THE CONFIRMATION (One-time use)
-          await db.twoFactorConfirmation.delete({
-            where: { id: twoFactorConfirmation.id },
+        try {
+          const response = await nextAxios.post("/auth/login", {
+            email: credentials.email,
+            password: credentials.password,
           });
+          return response.data.data;
+        } catch {
+          return null;
         }
-        const response = await nextAxios.post("/auth/login", {
-          email: credentials.email,
-          password: credentials.password,
-        });
-        const loggedInUser = response.data.data;
-        return loggedInUser;
       },
-    }),
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID ?? "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
     }),
   ],
   callbacks: {
@@ -157,34 +136,33 @@ export const authOptions: NextAuthOptions = {
           accessTokenExpires,
           refreshToken: user.refreshToken,
         };
-      } else {
-        const dbUser = await db.user.findUnique({
-          where: { email: token.email as string },
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            role: true,
-            companyId: true,
-            employeeType: true,
-            isSuperAdmin: true,
-          },
-        });
+      }
 
-        if (dbUser) {
-          token.id = dbUser.id;
-          token.name = `${dbUser.firstName} ${dbUser.lastName}`;
-          token.role = dbUser.role;
-          token.companyId = dbUser.companyId;
-          token.employeeType = dbUser.employeeType;
-          token.isSuperAdmin = dbUser.isSuperAdmin;
-        }
+      const dbUser = await db.user.findUnique({
+        where: { email: token.email as string },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          role: true,
+          companyId: true,
+          employeeType: true,
+          isSuperAdmin: true,
+        },
+      });
+
+      if (dbUser) {
+        token.id = dbUser.id;
+        token.name = `${dbUser.firstName} ${dbUser.lastName ?? ""}`.trim();
+        token.role = dbUser.role;
+        token.companyId = dbUser.companyId;
+        token.employeeType = dbUser.employeeType;
+        token.isSuperAdmin = dbUser.isSuperAdmin;
       }
 
       if (Date.now() < (token?.accessTokenExpires as number)) {
         return token;
       }
-      // console.log("Access token expired, refreshing...");
       return refreshAccessToken(token);
     },
     async session({ session, token }) {

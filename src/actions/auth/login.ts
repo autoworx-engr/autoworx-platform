@@ -6,7 +6,7 @@ import {
   generateAccessToken,
   generateRefreshToken,
 } from "@/lib/tokenGenerator";
-import { HttpStatusCode } from "axios";
+import httpStatus from "http-status";
 import bcrypt from "bcryptjs";
 
 export default async function login(credentials: {
@@ -19,7 +19,7 @@ export default async function login(credentials: {
     });
 
     if (!user || !user.password) {
-      throw new AppError(HttpStatusCode.Unauthorized, "Invalid credentials");
+      throw new AppError(httpStatus.UNAUTHORIZED, "Invalid credentials");
     }
 
     const isPasswordMatched = await bcrypt.compare(
@@ -28,7 +28,7 @@ export default async function login(credentials: {
     );
 
     if (!isPasswordMatched) {
-      throw new AppError(HttpStatusCode.Unauthorized, "Invalid credentials");
+      throw new AppError(httpStatus.UNAUTHORIZED, "Invalid credentials");
     }
 
     const newAccessToken = generateAccessToken(user) as string;
@@ -36,7 +36,7 @@ export default async function login(credentials: {
 
     return {
       id: user.id.toString(),
-      name: `${user.firstName} ${user.lastName}`,
+      name: `${user.firstName} ${user.lastName ?? ""}`.trim(),
       email: user.email,
       role: user.role,
       companyId: user.companyId,
@@ -47,6 +47,6 @@ export default async function login(credentials: {
     };
   } catch (error) {
     console.error("Login error:", error);
-    throw new AppError(HttpStatusCode.Unauthorized, "Login failed");
+    throw new AppError(httpStatus.UNAUTHORIZED, "Login failed");
   }
 }
