@@ -14,6 +14,7 @@ export interface Personality {
   matchCustomerTone: boolean;
   useEmojis: boolean;
   openingMessage: string;
+  humanHandoffMessage: string;
   systemPrompt: string;
 }
 
