@@ -28,6 +28,7 @@ type InitialServiceData = {
 
 const INITIAL_SERVICE_INFO: ServiceInfoState = {
   serviceTitle: "",
+  shortDescription: "",
   description: "",
   customDuration: "",
   imageName: "",
@@ -238,6 +239,7 @@ export default function ServiceCreateClient({
   const isSubmittingRef = useRef(false);
   const [validationErrors, setValidationErrors] = useState<{
     serviceTitle?: string;
+    shortDescription?: string;
     description?: string;
     items?: string;
   }>({});
@@ -323,12 +325,17 @@ export default function ServiceCreateClient({
     try {
       const nextErrors: {
         serviceTitle?: string;
+        shortDescription?: string;
         description?: string;
         items?: string;
       } = {};
 
       if (!serviceInfo.serviceTitle.trim()) {
         nextErrors.serviceTitle = "Service title is required";
+      }
+
+      if (!serviceInfo.shortDescription.trim()) {
+        nextErrors.shortDescription = "Short description is required";
       }
 
       if (!serviceInfo.description.trim()) {
@@ -397,6 +404,7 @@ export default function ServiceCreateClient({
         setValidationErrors(nextErrors);
         const validationMessage =
           nextErrors.serviceTitle ||
+          nextErrors.shortDescription ||
           nextErrors.description ||
           nextErrors.items ||
           "Please complete required fields";
@@ -525,6 +533,7 @@ export default function ServiceCreateClient({
           shopId: Number(selectedShopId),
           companyId,
           title: serviceInfo.serviceTitle.trim(),
+          shortDescription: serviceInfo.shortDescription.trim(),
           description: serviceInfo.description.trim(),
           imageUrl,
           modifierCoupe: serviceInfo.vehicleTypeModifiers.coupe,
