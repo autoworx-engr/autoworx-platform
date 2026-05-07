@@ -358,6 +358,8 @@ export default async function Page(props: {
         <BillSummary
           isEstimateServiceFee={Number(invoice.serviceFee) > 0}
           isEstimateTax={Number(invoice.tax) > 0}
+          storedTax={Number(invoice.tax)}
+          storedServiceFee={Number(invoice.serviceFee)}
         />
       </div>
     </div>

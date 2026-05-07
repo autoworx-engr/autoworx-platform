@@ -297,6 +297,8 @@ export default async function Page(props: {
           isEdit={isEdit}
           isEstimateServiceFee={Number(invoice?.serviceFee) > 0}
           isEstimateTax={Number(invoice?.tax) > 0}
+          storedTax={isEdit ? Number(invoice?.tax) : undefined}
+          storedServiceFee={isEdit ? Number(invoice?.serviceFee) : undefined}
         />
       </div>
     </div>

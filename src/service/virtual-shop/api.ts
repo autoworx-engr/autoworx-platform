@@ -84,6 +84,7 @@ export interface UpdateShopServiceResponse {
 export interface ShopServiceApi {
   id: number;
   title: string;
+  shortDescription?: string | null;
   category: string[];
   price: number | string;
   duration: number;
