@@ -7,6 +7,7 @@ interface ClientFilterState {
   pageSize: number;
   setCurrentPage(currentPage: number): void;
   setPageSize(pageSize: number): void;
+  setClear(): void;
 }
 
 export const useClientFilterStore = create<ClientFilterState>((set) => ({
@@ -25,6 +26,12 @@ export const useClientFilterStore = create<ClientFilterState>((set) => ({
     set((state) => ({
       pageSize: pageSize ?? state.pageSize,
     })),
+  setClear: () =>
+    set((state) => ({
+      search: "",
+      currentPage: 1,
+      pageSize: 50,
+    })),
 }));
 
 type DemoClientFilterState = {
@@ -32,6 +39,7 @@ type DemoClientFilterState = {
   filter: string;
   setFilter(search: string): void;
   setSearchTerm(searchTerm: string): void;
+  setClear(): void;
 };
 
 export const useDemoClientFilterStore = create<DemoClientFilterState>(
@@ -45,6 +53,11 @@ export const useDemoClientFilterStore = create<DemoClientFilterState>(
     setFilter: (filter) =>
       set((state) => ({
         filter: filter ?? state.filter,
+      })),
+    setClear: () =>
+      set((state) => ({
+        searchTerm: "",
+        filter: "All",
       })),
   }),
 );
