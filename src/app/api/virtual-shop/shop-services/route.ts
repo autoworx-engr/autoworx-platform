@@ -505,6 +505,7 @@ type TCreateShopServiceRequest = {
   shopId: number;
   companyId: number;
   title: string;
+  shortDescription?: string;
   description?: string;
   items: {
     id?: number;
@@ -557,6 +558,7 @@ export async function POST(req: NextRequest) {
     const {
       shopId,
       title,
+      shortDescription,
       description,
       imageUrl,
       items,
@@ -638,6 +640,7 @@ export async function POST(req: NextRequest) {
         data: {
           shopId,
           title,
+          shortDescription,
           description,
           price: totalPrice,
           duration: finalDuration,

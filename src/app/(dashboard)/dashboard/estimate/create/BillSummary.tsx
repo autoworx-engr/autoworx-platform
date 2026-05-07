@@ -15,9 +15,13 @@ import { cn } from "@/lib/cn";
 export function BillSummary({
   isEstimateTax = true,
   isEstimateServiceFee = true,
+  storedTax,
+  storedServiceFee,
 }: {
   isEstimateTax?: boolean;
   isEstimateServiceFee?: boolean;
+  storedTax?: number;
+  storedServiceFee?: number;
 }) {
   const {
     items,
@@ -63,24 +67,36 @@ export function BillSummary({
   useEffect(() => {
     setIsSuppliesEnabled(isEstimateServiceFee);
     setIsTaxEnabled(isEstimateTax);
-    async function fetchTaxAndServiceFee() {
-      try {
-        const taxData = await getCompanyTaxCurrency();
-        setOriginalTax(taxData.tax);
-        setOriginalServiceFee(taxData.serviceFee);
 
-        // On edit pages, preserve the invoice's stored tax/serviceFee values
-        // instead of overwriting with current company defaults
-        if (!isEditPage) {
+    if (isEditPage || storedTax !== undefined) {
+      // Use stored values: either from the saved invoice (edit) or from the
+      // template snapshot (create-from-template). In both cases global setting
+      // changes must not retroactively alter the financial figures.
+      setOriginalTax(storedTax ?? 0);
+      setOriginalServiceFee(storedServiceFee ?? 0);
+    } else {
+      async function fetchTaxAndServiceFee() {
+        try {
+          const taxData = await getCompanyTaxCurrency();
+          setOriginalTax(taxData.tax);
+          setOriginalServiceFee(taxData.serviceFee);
           setTax(taxData.tax);
           setServiceFee(taxData.serviceFee);
+        } catch (error) {
+          console.error("Error fetching tax data:", error);
         }
-      } catch (error) {
-        console.error("Error fetching tax data:", error);
       }
+      fetchTaxAndServiceFee();
     }
-    fetchTaxAndServiceFee();
-  }, [setTax, setServiceFee, isEstimateServiceFee, isEstimateTax, isEditPage]);
+  }, [
+    setTax,
+    setServiceFee,
+    isEstimateServiceFee,
+    isEstimateTax,
+    isEditPage,
+    storedTax,
+    storedServiceFee,
+  ]);
 
   // Handle tax and service fee toggle
   useEffect(() => {

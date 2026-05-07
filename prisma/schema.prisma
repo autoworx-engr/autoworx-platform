@@ -2980,9 +2980,10 @@ model ShopService {
   shop   Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
   // Basic Info
-  title       String  @db.VarChar(255)
-  description String? @db.Text
-  price       Decimal @default(0) @db.Decimal(10, 2)
+  title            String  @db.VarChar(255)
+  shortDescription String? @map("short_description") @db.VarChar(500)
+  description      String? @db.Text
+  price            Decimal @default(0) @db.Decimal(10, 2)
   duration    Int     @default(30) @map("duration_minutes") // Maps to "Est. Time (min)"
 
   // Categorization & Media

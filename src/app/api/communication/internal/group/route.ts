@@ -242,7 +242,7 @@ export const GET = async (req: NextRequest) => {
     const pageNum = parseInt(searchParams.get("page") || "1");
     const limitNum = parseInt(searchParams.get("limit") || "20");
     const search = searchParams.get("search") || "";
-    const sortBy = searchParams.get("sortBy") || "createdAt";
+    const sortBy = searchParams.get("sortBy") || "updatedAt";
     const sortOrder = searchParams.get("sortOrder") || "desc";
 
     const where: any = {
