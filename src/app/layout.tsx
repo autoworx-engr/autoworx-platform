@@ -18,9 +18,13 @@ const plusJakarta = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: {
     template: "%s | Luminar CRM",
-    default: "Luminar  CRM",
+    default: "Luminar CRM",
   },
-  description: "Lightweight workspace CRM for accounts, contacts, deals, and activities.",
+  description: "Luminar CRM — lightweight revenue workspace for pipeline, clients, invoicing, and team management.",
+  icons: {
+    icon: "/icons/luminar-crm-logo.svg",
+    apple: "/icons/luminar-crm-logo.svg",
+  },
 };
 
 export const viewport: Viewport = {
@@ -41,7 +45,8 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={plusJakarta.variable}>
       <head>
-        <link rel="apple-touch-icon" sizes="180x180" href="/icons/pwa/autoworx-logo-180x180.png" />
+        <link rel="icon" type="image/svg+xml" href="/icons/luminar-crm-logo.svg" />
+        <link rel="apple-touch-icon" href="/icons/luminar-crm-logo.svg" />
       </head>
       <body className={`${plusJakarta.className} font-sans`} suppressHydrationWarning>
         <ThemeProvider

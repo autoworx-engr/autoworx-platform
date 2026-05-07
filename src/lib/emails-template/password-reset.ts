@@ -4,7 +4,7 @@ export function generatePasswordResetEmailHtml(
   companyName: string,
 ): string {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
-  const logoUrl = `${appUrl}/icons/autoworx-logo.png`;
+  const logoUrl = `${appUrl}/icons/luminar-crm-logo.svg`;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -21,8 +21,9 @@ export function generatePasswordResetEmailHtml(
 
           <!-- Header -->
           <tr>
-            <td style="background:linear-gradient(90deg,#26AADF 0%,#03A7A2 100%);padding:36px 40px;text-align:center;">
-              <img src="${logoUrl}" alt="${companyName}" height="40" style="display:inline-block;vertical-align:middle;" />
+            <td style="background:linear-gradient(135deg,#059669 0%,#14b8a6 60%,#2dd4bf 100%);padding:36px 40px;text-align:center;">
+              <img src="${logoUrl}" alt="Luminar CRM" height="48" width="48" style="display:inline-block;vertical-align:middle;border-radius:12px;" />
+              <p style="margin:10px 0 0;font-size:18px;font-weight:700;color:#fff;letter-spacing:0.5px;">Luminar CRM</p>
             </td>
           </tr>
 
@@ -38,7 +39,7 @@ export function generatePasswordResetEmailHtml(
               <!-- CTA Button -->
               <table cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
                 <tr>
-                  <td style="border-radius:8px;background:linear-gradient(90deg,#26AADF 0%,#03A7A2 100%);">
+                  <td style="border-radius:8px;background:linear-gradient(135deg,#059669 0%,#14b8a6 100%);">
                     <a href="${resetUrl}" target="_blank"
                       style="display:inline-block;padding:14px 32px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:8px;letter-spacing:0.2px;">
                       Reset Password

@@ -3,7 +3,7 @@ import Password from "@/components/Password";
 import SubmitButton from "./SubmitButton";
 import Link from "next/link";
 import FormError from "@/components/FormError";
-import Image from "next/image";
+import { LuminarLogo } from "@/components/crm/CrmLogoMark";
 import { Metadata } from "next";
 
 
@@ -21,16 +21,8 @@ export default function Page() {
 
         {/* Header Section */}
         <div className="mb-8 text-center flex flex-col items-center">
-          <div className="mb-6 relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-[#a855f7] to-[#00b8b0] opacity-10 rounded-full blur-2xl" />
-            <Image
-              src="/icons/autoworx-logo.svg"
-              alt="Autoworx Logo"
-              width={120}
-              height={120}
-              className="mx-auto relative z-10"
-              style={{ filter: "drop-shadow(0 0 20px rgba(101, 113, 255, 0.1))" }}
-            />
+          <div className="mb-4 relative flex justify-center">
+            <LuminarLogo width={72} height={72} className="relative z-10 shadow-[0_4px_20px_rgba(20,184,166,0.2)]" />
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Create your account</h1>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Create your workspace and start tracking deals.</p>

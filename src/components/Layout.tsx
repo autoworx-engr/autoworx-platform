@@ -18,7 +18,6 @@ import {
   Package,
   Search,
   Settings,
-  Sparkles,
   TrendingUp,
   UserCircle2,
   Users,
@@ -32,6 +31,7 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useState } from "react";
 import { HeaderThemeToggle, ThemeToggle } from "./ThemeToggle";
+import { LuminarLogo } from "./crm/CrmLogoMark";
 
 type NavItem = { href: string; label: string; icon: React.ElementType; badge?: string | number };
 type NavGroup = { title: string; items: NavItem[] };
@@ -176,15 +176,17 @@ export default function Layout({
         />
 
         {/* Brand header */}
-        <div className="relative flex h-[3.75rem] shrink-0 items-center gap-3 border-b border-sidebar-border px-4">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-teal-400 via-teal-500 to-emerald-600 shadow-[0_0_18px_rgba(45,212,191,0.4)]">
-            <Sparkles className="h-[18px] w-[18px] text-white" strokeWidth={1.8} />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-[15px] font-bold tracking-tight text-white">Luminar CRM</p>
-            <div className="mt-0.5 flex items-center gap-1.5">
-              <span className="relative h-1.5 w-1.5 rounded-full bg-teal-400 live-dot" />
-              <p className="text-[10px] font-medium text-zinc-500">Revenue workspace</p>
+        <div className="relative flex h-[3.75rem] shrink-0 items-center justify-between border-b border-sidebar-border px-4">
+          <div className="flex items-center gap-2 min-w-0">
+            <LuminarLogo width={36} height={36} className="shrink-0 shadow-[0_0_14px_rgba(45,212,191,0.25)]" />
+            <div className="min-w-0">
+              <p className="truncate text-[14px] font-bold tracking-tight text-white leading-tight">
+                Luminar <span className="text-teal-400 font-semibold">CRM</span>
+              </p>
+              <div className="flex items-center gap-1.5">
+                <span className="relative h-1.5 w-1.5 rounded-full bg-teal-400 live-dot" />
+                <p className="text-[10px] font-medium text-zinc-500">Revenue workspace</p>
+              </div>
             </div>
           </div>
           <ThemeToggle compact />
@@ -269,11 +271,11 @@ export default function Layout({
         )}
       >
         <div className="flex h-14 shrink-0 items-center justify-between border-b border-sidebar-border px-4">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-teal-400 to-emerald-600 shadow-glow">
-              <Sparkles className="h-4 w-4 text-white" strokeWidth={1.8} />
-            </div>
-            <span className="text-[15px] font-bold text-white">Luminar CRM</span>
+          <div className="flex items-center gap-2">
+            <LuminarLogo width={30} height={30} className="shadow-[0_0_12px_rgba(45,212,191,0.2)]" />
+            <p className="text-[14px] font-bold tracking-tight text-white">
+              Luminar <span className="text-teal-400 font-semibold">CRM</span>
+            </p>
           </div>
           <button
             type="button"
@@ -330,9 +332,12 @@ export default function Layout({
                 {pageLabel}
               </p>
             </div>
-            <p className="truncate text-[14px] font-semibold text-foreground lg:hidden">
-            Luminar CRM
-            </p>
+            <div className="flex items-center gap-2 lg:hidden">
+              <LuminarLogo width={24} height={24} />
+              <p className="text-[14px] font-bold text-foreground">
+                Luminar <span className="text-teal-500">CRM</span>
+              </p>
+            </div>
           </div>
 
           {/* Header actions */}

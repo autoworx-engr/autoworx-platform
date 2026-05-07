@@ -2,45 +2,20 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "";
-  // console.log("Menifest function is being call")
   return {
-    name: "CRM",
-    short_name: "CRM",
-    description: "Lightweight CRM",
-    start_url: "/",
+    name: "Luminar CRM",
+    short_name: "Luminar",
+    description: "Luminar CRM — revenue workspace for pipeline, clients, invoicing, and team management.",
+    start_url: "/dashboard",
     display: "standalone",
-    background_color: "#ffffff",
-    theme_color: "#0C1427",
+    background_color: "#0f1117",
+    theme_color: "#14b8a6",
     icons: [
       {
-        src: `${baseUrl}/icons/pwa/autoworx-logo-120x120.png`,
-        sizes: "120x120",
-        type: "image/png",
-      },
-      {
-        src: `${baseUrl}/icons/pwa/autoworx-logo-152x152.png`,
-        sizes: "152x152",
-        type: "image/png",
-      },
-      {
-        src: ` ${baseUrl}/icons/pwa/autoworx-logo-167x167.png`,
-        sizes: "167x167",
-        type: "image/png",
-      },
-      {
-        src: ` ${baseUrl}/icons/pwa/autoworx-logo-180x180.png`,
-        sizes: "180x180",
-        type: "image/png",
-      },
-      {
-        src: `${baseUrl}/icons/pwa/autoworx-logo.png`,
-        sizes: "192x192",
-        type: "image/png",
-      },
-      {
-        src: ` ${baseUrl}/icons/pwa/icon-512x512.png`,
-        sizes: "512x512",
-        type: "image/png",
+        src: `${baseUrl}/icons/luminar-crm-logo.svg`,
+        sizes: "any",
+        type: "image/svg+xml",
+        purpose: "maskable",
       },
       {
         src: `${baseUrl}/icons/pwa/icon-48x48.png`,
@@ -68,11 +43,6 @@ export default function manifest(): MetadataRoute.Manifest {
         type: "image/png",
       },
       {
-        src: `${baseUrl}/icons/pwa/icon-152x152.png`,
-        sizes: "152x152",
-        type: "image/png",
-      },
-      {
         src: `${baseUrl}/icons/pwa/icon-192x192.png`,
         sizes: "192x192",
         type: "image/png",
@@ -87,11 +57,11 @@ export default function manifest(): MetadataRoute.Manifest {
         sizes: "384x384",
         type: "image/png",
       },
-      // {
-      //   "src":env("NEXT_PUBLIC_SITE_URL") + "/icons/icon-512x512.png",
-      //   "sizes": "512x512",
-      //   "type": "image/png"
-      // }
+      {
+        src: `${baseUrl}/icons/pwa/icon-512x512.png`,
+        sizes: "512x512",
+        type: "image/png",
+      },
     ],
   };
 }

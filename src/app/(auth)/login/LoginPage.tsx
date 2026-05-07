@@ -1,7 +1,7 @@
 import FormError from "@/components/FormError";
 import Input from "@/components/Input";
 import Password from "@/components/Password";
-import { Sparkles } from "lucide-react";
+import { LuminarLogo } from "@/components/crm/CrmLogoMark";
 import Link from "next/link";
 import SubmitButton from "./SubmitButton";
 
@@ -10,8 +10,8 @@ export default function LoginPage() {
     <form className="relative z-10 w-full max-w-[420px] overflow-hidden rounded-3xl border border-white/30 dark:border-white/8 bg-white/90 dark:bg-zinc-900/85 p-9 shadow-[0_24px_80px_-12px_rgba(15,23,42,0.18)] dark:shadow-[0_24px_80px_-12px_rgba(0,0,0,0.5)] backdrop-blur-2xl">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-teal-400/60 to-transparent" />
       <div className="mb-10 text-center">
-        <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-400 via-teal-500 to-emerald-700 text-white shadow-lg shadow-teal-900/25 dark:shadow-teal-900/50">
-          <Sparkles className="h-7 w-7" strokeWidth={1.75} />
+        <div className="mx-auto mb-6 flex justify-center">
+          <LuminarLogo width={72} height={72} className="shadow-[0_4px_20px_rgba(20,184,166,0.2)]" />
         </div>
         <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Welcome back</h1>
         <p className="mt-2 text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
