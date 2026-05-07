@@ -15,20 +15,10 @@ function escapeTelegramHtml(text: string): string {
 }
 
 /**
- * Chat ID for alerts: development vs production from env.
- * Prefer TELEGRAM_CHAT_ID_DEVELOPMENT / TELEGRAM_CHAT_ID_PRODUCTION.
- * TELEGRAM_CHAT_ID is a legacy fallback when the stage-specific ID is unset.
+ * Chat ID for alerts from environment.
  */
 export function resolveTelegramChatId(): string | undefined {
-  const devId = process.env.TELEGRAM_CHAT_ID_DEVELOPMENT?.trim();
-  const prodId = process.env.TELEGRAM_CHAT_ID_PRODUCTION?.trim();
-  const legacyId = process.env.TELEGRAM_CHAT_ID?.trim();
-
-  if (process.env.NODE_ENV === "production") {
-    return prodId || legacyId;
-  }
-
-  return devId || legacyId;
+  return process.env.TELEGRAM_CHAT_ID?.trim();
 }
 
 interface TelegramSendMessageResponse {
@@ -87,11 +77,7 @@ export async function sendTelegramAlert(message: string): Promise<void> {
   const chatId = resolveTelegramChatId();
 
   if (!botToken || !chatId) {
-    const stage =
-      process.env.NODE_ENV === "production" ? "production" : "development";
-    console.warn(
-      `[Telegram] Missing TELEGRAM_BOT_TOKEN or chat ID for ${stage}. Set TELEGRAM_CHAT_ID_${stage === "production" ? "PRODUCTION" : "DEVELOPMENT"} (or TELEGRAM_CHAT_ID as fallback).`,
-    );
+    console.warn("[Telegram] Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID.");
     return;
   }
 
