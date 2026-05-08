@@ -29,6 +29,7 @@ type TGetLeadsWithCount = {
   source?: string;
   service?: string;
   status?: string;
+  companyId?: number;
   // YYYY-MM-DD strings so the action can parse them directly in the company
   // timezone — avoids off-by-one-day errors when browser tz ≠ company tz.
   dateRange?: [string | null, string | null];
@@ -452,12 +453,13 @@ export const getLeadsWithCountOptimized = async ({
   source,
   service,
   status,
+  companyId: companyIdParam,
   dateRange,
 }: TGetLeadsWithCount): Promise<{
   leads: LeadWithSalesUser[];
   totalCount: number;
 }> => {
-  const companyId = await getCompanyId();
+  const companyId = companyIdParam ?? (await getCompanyId());
   const companyTimezone = await getCompanyTimezone();
   const timezone = companyTimezone?.timezone;
 

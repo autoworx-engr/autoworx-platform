@@ -9,57 +9,54 @@ import { NextRequest, NextResponse } from "next/server";
  *     tags: [Sales Pipeline Leads]
  *     parameters:
  *       - in: query
- *         name: columnId
+ *         name: companyId
  *         schema:
  *           type: integer
- *         description: Filter leads by pipeline column ID
+ *         description: Company ID (mobile JWT auth — falls back to session for web)
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Page number (1-based). Mobile uses page; web may use skip.
  *       - in: query
  *         name: take
  *         schema:
  *           type: integer
- *         description: Number of leads to take
+ *         description: Number of leads per page
  *       - in: query
- *         name: skip
+ *         name: columnId
  *         schema:
  *           type: integer
- *         description: Number of leads to skip
  *       - in: query
  *         name: searchTerm
  *         schema:
  *           type: string
- *         description: Search term for leads
  *       - in: query
  *         name: assignedTo
  *         schema:
  *           type: string
- *         description: Filter leads by assignee userId
  *       - in: query
  *         name: source
  *         schema:
  *           type: string
- *         description: Filter leads by source
  *       - in: query
  *         name: service
  *         schema:
  *           type: string
- *         description: Filter leads by service
  *       - in: query
  *         name: status
  *         schema:
  *           type: string
- *         description: Filter leads by status
  *       - in: query
  *         name: startDate
  *         schema:
  *           type: string
  *           format: date
- *         description: Start date for date range filter
  *       - in: query
  *         name: endDate
  *         schema:
  *           type: string
  *           format: date
- *         description: End date for date range filter
  *     responses:
  *       200:
  *         description: Leads fetched successfully
@@ -70,14 +67,21 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
 
-    const columnIdStr = searchParams.get("columnId");
-    const columnId = columnIdStr ? parseInt(columnIdStr) : undefined;
+    const companyIdStr = searchParams.get("companyId");
+    const companyId = companyIdStr ? parseInt(companyIdStr, 10) : undefined;
+
+    const pageStr = searchParams.get("page");
+    const page = pageStr ? Math.max(1, parseInt(pageStr, 10)) : 1;
 
     const takeStr = searchParams.get("take");
-    const take = takeStr ? parseInt(takeStr) : undefined;
+    const take = takeStr ? parseInt(takeStr, 10) : 20;
 
+    // Support both page-based (mobile) and skip-based (web) pagination.
     const skipStr = searchParams.get("skip");
-    const skip = skipStr ? parseInt(skipStr) : undefined;
+    const skip = skipStr ? parseInt(skipStr, 10) : (page - 1) * take;
+
+    const columnIdStr = searchParams.get("columnId");
+    const columnId = columnIdStr ? parseInt(columnIdStr) : undefined;
 
     const searchTerm = searchParams.get("searchTerm") || undefined;
     const assignedTo = searchParams.get("assignedTo") || undefined;
@@ -90,15 +94,13 @@ export async function GET(request: NextRequest) {
     let dateRange: [string | null, string | null] | undefined = undefined;
 
     if (startDateStr && endDateStr) {
-      // Extract only the YYYY-MM-DD part so the action can parse it directly
-      // in the company timezone — prevents off-by-one-day errors when the
-      // browser timezone differs from the company timezone.
       const toDateOnly = (iso: string): string | null =>
         iso.match(/^(\d{4}-\d{2}-\d{2})/)?.[1] ?? null;
       dateRange = [toDateOnly(startDateStr), toDateOnly(endDateStr)];
     }
 
     const result = await getLeadsWithCountOptimized({
+      companyId,
       columnId,
       take,
       skip,
@@ -110,17 +112,41 @@ export async function GET(request: NextRequest) {
       dateRange,
     });
 
+    // Rename salesUser → assignedSalesUser for the mobile TLead contract.
+    const leads = result.leads.map((lead: any) => {
+      const { salesUser, ...rest } = lead;
+      return {
+        ...rest,
+        assignedSalesUser: salesUser
+          ? {
+              id: salesUser.id,
+              firstName: salesUser.firstName,
+              lastName: salesUser.lastName,
+              email: salesUser.email ?? "",
+              employeeType: salesUser.employeeType ?? null,
+            }
+          : null,
+      };
+    });
+
+    const total = result.totalCount;
+    const totalPages = take > 0 ? Math.ceil(total / take) : 1;
+
     return NextResponse.json({
       success: true,
-      data: result,
+      data: leads,
+      meta: {
+        total,
+        page,
+        take,
+        totalPages,
+        hasNextPage: page * take < total,
+      },
     });
   } catch (error: any) {
     console.error("Error in GET /api/pipeline/sales/leads:", error);
     return NextResponse.json(
-      {
-        success: false,
-        error: error.message || "Failed to fetch leads",
-      },
+      { success: false, error: error.message || "Failed to fetch leads" },
       { status: 500 },
     );
   }
