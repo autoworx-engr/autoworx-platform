@@ -1,38 +1,7 @@
 import { updateLeadColumn } from "@/actions/pipelines/getLeads";
+import { getCompanyIdFromBearer } from "@/lib/mobileAuth";
 import { NextRequest, NextResponse } from "next/server";
 
-/**
- * @swagger
- * /api/pipeline/sales/leads/{id}/column:
- *   put:
- *     summary: Update lead column
- *     tags: [Sales Pipeline Leads]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: Lead ID
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - columnId
- *             properties:
- *               columnId:
- *                 type: integer
- *     responses:
- *       200:
- *         description: Lead column updated successfully
- *       400:
- *         description: Missing columnId or invalid lead ID
- *       500:
- *         description: Failed to update lead column
- */
 export async function PUT(
   request: NextRequest,
   props: { params: Promise<{ id: string }> },
@@ -58,7 +27,12 @@ export async function PUT(
       );
     }
 
-    const updatedLead = await updateLeadColumn(leadId, parseInt(finalColumnId));
+    const companyId = (await getCompanyIdFromBearer(request)) ?? undefined;
+    const updatedLead = await updateLeadColumn(
+      leadId,
+      parseInt(finalColumnId),
+      companyId,
+    );
     return NextResponse.json({ success: true, data: updatedLead });
   } catch (error) {
     return NextResponse.json(

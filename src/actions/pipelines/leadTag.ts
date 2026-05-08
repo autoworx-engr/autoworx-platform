@@ -29,7 +29,7 @@ export const removeLeadTag = async (leadId: number, tagId: number) => {
     const result = await db.leadTags.deleteMany({
       where: {
         leadId: leadId,
-        id: tagId,
+        tagId: tagId,
       },
     });
 

@@ -1,27 +1,7 @@
 import { removeLeadFromPipeline } from "@/actions/pipelines/updateLeadSalesUser";
+import { getCompanyIdFromBearer } from "@/lib/mobileAuth";
 import { NextRequest, NextResponse } from "next/server";
 
-/**
- * @swagger
- * /api/pipeline/sales/leads/{id}/remove:
- *   put:
- *     summary: Remove lead from pipeline
- *     tags: [Sales Pipeline Leads]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: Lead ID
- *     responses:
- *       200:
- *         description: Lead removed from pipeline successfully
- *       400:
- *         description: Invalid lead ID
- *       500:
- *         description: Failed to remove lead from pipeline
- */
 export async function PUT(
   request: NextRequest,
   props: { params: Promise<{ id: string }> },
@@ -36,7 +16,8 @@ export async function PUT(
       );
     }
 
-    const updatedLead = await removeLeadFromPipeline(leadId);
+    const companyId = (await getCompanyIdFromBearer(request)) ?? undefined;
+    const updatedLead = await removeLeadFromPipeline(leadId, companyId);
     return NextResponse.json({ success: true, data: updatedLead });
   } catch (error) {
     return NextResponse.json(

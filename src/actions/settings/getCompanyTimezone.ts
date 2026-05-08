@@ -18,7 +18,7 @@ export async function getCompanyTimezone(currentCompanyId?: number) {
   const session = await getServerSession(authOptions);
   const companyId = currentCompanyId || session?.user.companyId;
 
-  if (!session || !companyId) {
+  if (!companyId) {
     return { timezone: moment.tz.guess() };
   }
 

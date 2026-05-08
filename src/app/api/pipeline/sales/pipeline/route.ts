@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     const companyIdParam = searchParams.get("companyId");
     const companyId = companyIdParam ? parseInt(companyIdParam, 10) : undefined;
 
-    const columns = await getSalePipelineColumns(
+    const rawColumns = await getSalePipelineColumns(
       type,
       searchTerm,
       initialLoad,
@@ -54,16 +54,44 @@ export async function GET(request: NextRequest) {
       companyId,
     );
 
+    // Remap salesUser → assignedSalesUser on each lead so the mobile
+    // TLead contract is satisfied (kanban and list-view share the same type).
+    const columns = rawColumns.map((col) => ({
+      ...col,
+      leads: col.leads.map((lead) => {
+        const { salesUser, ...rest } = lead as typeof lead & {
+          salesUser: {
+            id: number;
+            firstName: string;
+            lastName: string | null;
+            email: string | null;
+            employeeType: string | null;
+          } | null;
+        };
+        return {
+          ...rest,
+          assignedSalesUser: salesUser
+            ? {
+                id: salesUser.id,
+                firstName: salesUser.firstName,
+                lastName: salesUser.lastName,
+                email: salesUser.email ?? "",
+                employeeType: salesUser.employeeType ?? null,
+              }
+            : null,
+        };
+      }),
+    }));
+
     return NextResponse.json({
       success: true,
       data: columns,
     });
   } catch (error: any) {
-    console.error("Error in GET /api/pipeline/sales/pipeline:", error);
     return NextResponse.json(
       {
         success: false,
-        error: error.message || "Failed to fetch sales pipeline",
+        error: (error as Error).message || "Failed to fetch sales pipeline",
       },
       { status: 500 },
     );

@@ -93,6 +93,8 @@ export interface LeadWithSalesUser extends Lead {
     id: number;
     firstName: string;
     lastName: string | null;
+    email: string | null;
+    employeeType: string | null;
   } | null;
   tasks: Task[];
   latestAppointment?: {

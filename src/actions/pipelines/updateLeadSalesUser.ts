@@ -3,8 +3,13 @@ import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import { sendLeadAssignNotification } from "@/lib/notification/pipeline-notify";
 import { revalidatePath } from "next/cache";
-export async function updateLeadSalesUser(leadId: number, salesUserId: number) {
-  const companyId = await getCompanyId();
+
+export async function updateLeadSalesUser(
+  leadId: number,
+  salesUserId: number | null,
+  companyIdOverride?: number,
+) {
+  const companyId = companyIdOverride ?? (await getCompanyId());
   try {
     const updatedLead = await db.lead.update({
       where: {
@@ -13,22 +18,27 @@ export async function updateLeadSalesUser(leadId: number, salesUserId: number) {
       },
       data: {
         assignedSalesUserId: salesUserId,
-        assignedDate: new Date(),
+        assignedDate: salesUserId ? new Date() : null,
       },
     });
-    await sendLeadAssignNotification({
-      companyId,
-      leadClientName: updatedLead.clientName ?? "",
-      assignedEmployeeId: salesUserId,
-    });
+    if (salesUserId) {
+      await sendLeadAssignNotification({
+        companyId,
+        leadClientName: updatedLead.clientName ?? "",
+        assignedEmployeeId: salesUserId,
+      });
+    }
     return updatedLead;
   } catch (error) {
-    console.error("Error updating lead sales user:", error);
     throw error;
   }
 }
-export async function removeLeadFromPipeline(leadId: number) {
-  const companyId = await getCompanyId();
+
+export async function removeLeadFromPipeline(
+  leadId: number,
+  companyIdOverride?: number,
+) {
+  const companyId = companyIdOverride ?? (await getCompanyId());
   try {
     const updatedLead = await db.lead.update({
       where: {
@@ -43,7 +53,6 @@ export async function removeLeadFromPipeline(leadId: number) {
     revalidatePath("/dashboard/pipeline/sales/lead");
     return updatedLead;
   } catch (error) {
-    console.error("Error removing lead from pipeline:", error);
     throw error;
   }
 }

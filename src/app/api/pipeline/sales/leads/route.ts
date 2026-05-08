@@ -1,4 +1,6 @@
 import { getLeadsWithCountOptimized } from "@/actions/pipelines/getLeads";
+import { getCompanyIdFromBearer } from "@/lib/mobileAuth";
+import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -147,6 +149,99 @@ export async function GET(request: NextRequest) {
     console.error("Error in GET /api/pipeline/sales/leads:", error);
     return NextResponse.json(
       { success: false, error: error.message || "Failed to fetch leads" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const bearerCompanyId = await getCompanyIdFromBearer(request);
+    const body = await request.json();
+
+    const companyId: number = bearerCompanyId ?? body.companyId;
+    if (!companyId) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+
+    const {
+      clientName,
+      clientEmail,
+      clientPhone,
+      countryCode,
+      vehicleInfo,
+      services,
+      source,
+      comments,
+      columnId,
+    } = body;
+
+    if (!clientName || !vehicleInfo || !services || !source) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "clientName, vehicleInfo, services, and source are required",
+        },
+        { status: 400 },
+      );
+    }
+
+    const lead = await db.lead.create({
+      data: {
+        clientName,
+        clientEmail: clientEmail ?? null,
+        clientPhone: clientPhone ?? null,
+        countryCode: countryCode ?? "",
+        vehicleInfo,
+        services,
+        source,
+        comments: comments ?? null,
+        companyId,
+        columnId: columnId ?? null,
+        isLead: true,
+        isQualified: columnId != null,
+      },
+      include: {
+        salesUser: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            employeeType: true,
+          },
+        },
+        leadTags: { include: { tag: true } },
+        column: true,
+      },
+    });
+
+    const { salesUser, ...rest } = lead;
+    return NextResponse.json({
+      success: true,
+      message: "Lead created successfully",
+      data: {
+        ...rest,
+        assignedSalesUser: salesUser
+          ? {
+              id: salesUser.id,
+              firstName: salesUser.firstName,
+              lastName: salesUser.lastName,
+              email: salesUser.email ?? "",
+              employeeType: salesUser.employeeType ?? null,
+            }
+          : null,
+      },
+    });
+  } catch (error: any) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: (error as Error).message || "Failed to create lead",
+      },
       { status: 500 },
     );
   }

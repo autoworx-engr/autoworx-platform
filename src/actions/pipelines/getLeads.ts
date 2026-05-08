@@ -44,7 +44,7 @@ export const getLeads = async ({
   companyId: companyIdOverride,
 }: TGetLeads): Promise<LeadWithSalesUser[]> => {
   const companyId = companyIdOverride ?? (await getCompanyId());
-  const companyTimezone = await getCompanyTimezone();
+  const companyTimezone = await getCompanyTimezone(companyId);
   const timezone = companyTimezone?.timezone;
 
   try {
@@ -80,6 +80,8 @@ export const getLeads = async ({
             id: true,
             firstName: true,
             lastName: true,
+            email: true,
+            employeeType: true,
           },
         },
         tasks: true,
@@ -307,6 +309,8 @@ export const getLeadsWithCount = async ({
               id: true,
               firstName: true,
               lastName: true,
+              email: true,
+              employeeType: true,
             },
           },
           tasks: true,
@@ -460,7 +464,7 @@ export const getLeadsWithCountOptimized = async ({
   totalCount: number;
 }> => {
   const companyId = companyIdParam ?? (await getCompanyId());
-  const companyTimezone = await getCompanyTimezone();
+  const companyTimezone = await getCompanyTimezone(companyId);
   const timezone = companyTimezone?.timezone;
 
   try {
@@ -537,6 +541,8 @@ export const getLeadsWithCountOptimized = async ({
               id: true,
               firstName: true,
               lastName: true,
+              email: true,
+              employeeType: true,
             },
           },
           tasks: {
@@ -648,9 +654,13 @@ export const getLeadsWithCountOptimized = async ({
   }
 };
 
-export async function updateLeadColumn(leadId: number, newColumnId: number) {
+export async function updateLeadColumn(
+  leadId: number,
+  newColumnId: number,
+  companyIdOverride?: number,
+) {
   try {
-    const companyId = await getCompanyId();
+    const companyId = companyIdOverride ?? (await getCompanyId());
 
     const updatedLead = await db.lead.update({
       where: {
