@@ -163,7 +163,22 @@ export async function GET(req: NextRequest) {
       | "asc"
       | "desc";
 
-    const result = await getTags(type);
+    const companyIdParam = searchParams.get("companyId");
+    if (!companyIdParam) {
+      return NextResponse.json(
+        { success: false, message: "companyId is required" },
+        { status: 400 },
+      );
+    }
+    const companyId = parseInt(companyIdParam);
+    if (isNaN(companyId)) {
+      return NextResponse.json(
+        { success: false, message: "companyId must be a number" },
+        { status: 400 },
+      );
+    }
+
+    const result = await getTags(type, companyId);
     const tags = (result.data ?? []) as any[];
 
     const validSortBy = ["name", "createdAt"].includes(sortBy)
