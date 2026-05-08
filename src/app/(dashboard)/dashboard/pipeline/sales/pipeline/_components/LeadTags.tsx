@@ -115,7 +115,7 @@ export default function LeadTags({ leadTags, lead }: TLeadTagsProps) {
                 handleRemoveTag({
                   leadId: lead.id,
                   columnId: lead.columnId!,
-                  tagId: leadTag.id,
+                  tagId: leadTag.tag.id,
                 });
               }}
             >
