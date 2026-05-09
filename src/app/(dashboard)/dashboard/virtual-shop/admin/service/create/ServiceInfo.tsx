@@ -100,6 +100,7 @@ type ServiceInfoProps = {
   onImageSelect: (file: File | null) => void;
   errors?: {
     serviceTitle?: string;
+    shortDescription?: string;
     description?: string;
   };
 };
@@ -446,7 +447,7 @@ export default function ServiceInfo({
       {/* ── Short Description ─────────────────────────────────────── */}
       <div className="space-y-1.5">
         <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-          Short Description
+          Short Description <span className="text-rose-500">*</span>
         </label>
         <input
           type="text"
@@ -463,13 +464,22 @@ export default function ServiceInfo({
             "w-full rounded-lg border px-3.5 py-2.5 text-sm font-medium text-slate-700 outline-none transition-all duration-200",
             "placeholder:text-slate-400",
             "focus:border-[#6571FF]/50 focus:ring-2 focus:ring-[#6571FF]/15 focus:shadow-sm",
-            "border-slate-200 bg-slate-50/60 hover:border-slate-300",
+            errors?.shortDescription
+              ? "border-rose-400 bg-rose-50/40 focus:border-rose-400 focus:ring-rose-400/15"
+              : "border-slate-200 bg-slate-50/60 hover:border-slate-300",
             slimInputClassName,
           )}
         />
-        <p className="text-[11px] text-slate-400">
-          {shortDescription.length}/500 — shown on service cards
-        </p>
+        {errors?.shortDescription ? (
+          <p className="flex items-center gap-1 text-xs text-rose-500">
+            <span className="inline-block h-1 w-1 rounded-full bg-rose-500" />
+            {errors.shortDescription}
+          </p>
+        ) : (
+          <p className="text-[11px] text-slate-400">
+            {shortDescription.length}/500 — shown on service cards
+          </p>
+        )}
       </div>
 
       {/* ── Description ───────────────────────────────────────────── */}
@@ -492,7 +502,7 @@ export default function ServiceInfo({
             placeholder="Describe the service in detail — what it includes, how long it takes, and what customers can expect…"
             modules={QUILL_MODULES}
             formats={QUILL_FORMATS}
-            style={{ minHeight: "200px" }}
+            className="[&_.ql-toolbar.ql-snow]:border-x-0 [&_.ql-toolbar.ql-snow]:border-t-0 [&_.ql-container.ql-snow]:border-0 [&_.ql-editor]:min-h-[200px]"
           />
         </div>
         {errors?.description && (
