@@ -142,6 +142,7 @@ export async function POST(req: Request) {
       matchCustomerTone: body.matchCustomerTone,
       useEmojis: body.useEmojis,
       openingMessage: body.openingMessage,
+      humanHandoffMessage: body.humanHandoffMessage,
       systemPrompt: body.systemPrompt,
     };
     const existing = await db.aiPersonality.findFirst({ where: { companyId } });

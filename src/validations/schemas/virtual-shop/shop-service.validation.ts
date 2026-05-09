@@ -62,9 +62,12 @@ const baseShopServiceSchema = z.object({
     })
     .min(1, "Title is required"),
   shortDescription: z
-    .string({ invalid_type_error: "Short description must be a string" })
-    .max(500, "Short description must be 500 characters or less")
-    .optional(),
+    .string({
+      required_error: "Short description is required",
+      invalid_type_error: "Short description must be a string",
+    })
+    .min(1, "Short description is required")
+    .max(500, "Short description must be 500 characters or less"),
   description: z
     .string({ invalid_type_error: "Description must be a string" })
     .optional(),
