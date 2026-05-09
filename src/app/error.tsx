@@ -9,8 +9,30 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 
-export default function ServerError({ error }: { error: Error }) {
-  console.error("Server Error Log:", error);
+export default function ServerError({
+  error,
+  errorInfo,
+}: {
+  error: Error;
+  errorInfo?: { componentStack?: string };
+}) {
+  console.error("Server Error Log:", error, errorInfo);
+
+  // Report client-side error to server-side logger (non-blocking)
+  if (typeof window !== "undefined") {
+    fetch("/api/client-error", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: error?.message ?? "Unknown client error",
+        stack: error?.stack ?? errorInfo?.componentStack ?? "",
+        url: window.location.href,
+        userAgent: navigator.userAgent,
+        timestamp: new Date().toISOString(),
+      }),
+    }).catch(() => {}); // Don't block on logging
+  }
+
   const { setIsNewBugOpen } = stateStore();
   const { data: session } = useSession();
   const user = session?.user;
