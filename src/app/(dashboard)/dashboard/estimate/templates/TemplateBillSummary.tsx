@@ -45,6 +45,8 @@ export function TemplateBillSummary({
   const [isSuppliesEnabled, setIsSuppliesEnabled] = useState<boolean>(true);
   const [originalTax, setOriginalTax] = useState(0);
   const [originalServiceFee, setOriginalServiceFee] = useState(0);
+  // Material-only subtotal used as the tax base (labor is not taxed).
+  const [materialSubtotal, setMaterialSubtotal] = useState(0);
   const router = useRouter();
 
   // Fetch initial tax and service fee values
@@ -52,24 +54,33 @@ export function TemplateBillSummary({
     setIsSuppliesEnabled(isEstimateServiceFee);
     setIsTaxEnabled(isEstimateTax);
 
-    if (isEdit && storedTax !== undefined) {
-      // Editing an existing template: use the DB-stored snapshot values so that
-      // changes to global settings don't retroactively alter the template.
-      setOriginalTax(storedTax);
-      setOriginalServiceFee(storedServiceFee ?? 0);
-    } else if (!isEdit) {
-      async function fetchTaxAndServiceFee() {
+    const storedTaxRate = storedTax ?? 0;
+    const storedFeeRate = storedServiceFee ?? 0;
+
+    if (storedTaxRate > 0 && storedFeeRate > 0) {
+      // Both rates are stored — use the snapshot values directly.
+      setOriginalTax(storedTaxRate);
+      setOriginalServiceFee(storedFeeRate);
+    } else {
+      // One or both rates are 0/absent. Fetch global so the user can enable
+      // the toggle and get a meaningful rate. Stored non-zero rates still win.
+      async function initRates() {
         try {
           const taxData = await getCompanyTaxCurrency();
-          setOriginalTax(taxData.tax);
-          setTax(taxData.tax);
-          setOriginalServiceFee(taxData.serviceFee);
-          setServiceFee(taxData.serviceFee);
+          setOriginalTax(storedTaxRate > 0 ? storedTaxRate : taxData.tax);
+          setOriginalServiceFee(
+            storedFeeRate > 0 ? storedFeeRate : taxData.serviceFee,
+          );
+          // For a new template (not editing), also seed the store.
+          if (!isEdit) {
+            setTax(taxData.tax);
+            setServiceFee(taxData.serviceFee);
+          }
         } catch (error) {
           console.error("Error fetching tax data:", error);
         }
       }
-      fetchTaxAndServiceFee();
+      initRates();
     }
   }, [
     setTax,
@@ -94,9 +105,10 @@ export function TemplateBillSummary({
     setServiceFee,
   ]);
 
-  // Calculate subtotal and discount from items
+  // Calculate subtotal, material-only subtotal, and discount from items
   useEffect(() => {
     let newServicesTotal = 0;
+    let newMaterialsTotal = 0;
     let newDiscountTotal = 0;
 
     items.forEach((item) => {
@@ -104,7 +116,6 @@ export function TemplateBillSummary({
 
       if (!service) return;
 
-      // total material cost
       const materialCost = materials.reduce((acc, material) => {
         return (
           acc +
@@ -114,7 +125,6 @@ export function TemplateBillSummary({
         );
       }, 0);
 
-      // total material discount
       const materialDiscount = materials.reduce((acc, material) => {
         return (
           acc +
@@ -128,12 +138,14 @@ export function TemplateBillSummary({
         ? Number((Number(labor.charge) * Number(labor.hours)).toFixed(2))
         : 0;
 
+      newMaterialsTotal += materialCost;
       newServicesTotal += materialCost + laborCost;
       newDiscountTotal +=
         materialDiscount +
         (labor?.discount ? parseFloat(labor.discount.toString()) : 0);
     });
 
+    setMaterialSubtotal(newMaterialsTotal);
     setSubtotal(newServicesTotal);
     setDiscount(newDiscountTotal);
   }, [items, setSubtotal, setDiscount]);
@@ -141,20 +153,20 @@ export function TemplateBillSummary({
   // Calculate grand total
   useEffect(() => {
     let netAmount = subtotal - discount;
-
     let taxAdd = 0;
     let suppliesFeeAdd = 0;
-    let newGrandTotal = netAmount;
 
+    // Tax applies to material price only (labor is excluded from tax base).
     if (isTaxEnabled && tax > 0) {
-      taxAdd = Number((netAmount * (tax / 100)).toFixed(2));
+      taxAdd = Number((materialSubtotal * (tax / 100)).toFixed(2));
     }
 
+    // Service fee applies to the full net amount (materials + labor - discount).
     if (isSuppliesEnabled && serviceFee > 0) {
       suppliesFeeAdd = Number((netAmount * (serviceFee / 100)).toFixed(2));
     }
 
-    setGrandTotal(Number((newGrandTotal + taxAdd + suppliesFeeAdd).toFixed(2)));
+    setGrandTotal(Number((netAmount + taxAdd + suppliesFeeAdd).toFixed(2)));
   }, [
     subtotal,
     discount,
@@ -162,6 +174,7 @@ export function TemplateBillSummary({
     serviceFee,
     isTaxEnabled,
     isSuppliesEnabled,
+    materialSubtotal,
     setGrandTotal,
   ]);
 
@@ -236,7 +249,13 @@ export function TemplateBillSummary({
                   isToggleItem
                     ? `${toggleState ? originalValue : 0}%${
                         toggleState && originalValue > 0
-                          ? ` | ${(((subtotal - discount) * originalValue) / 100).toFixed(2)}`
+                          ? ` | ${(
+                              ((title === "tax"
+                                ? materialSubtotal
+                                : subtotal - discount) *
+                                originalValue) /
+                              100
+                            ).toFixed(2)}`
                           : ""
                       }`
                     : data

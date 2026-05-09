@@ -4,7 +4,7 @@ import ShopList from "./top-navbar/ShopList";
 
 export default function TopNavbar() {
   const { companyFeaturePermission } = useCompanyFeaturePermissionStore();
-  const virtualShopPermission = companyFeaturePermission.find(
+  const virtualShopPermission = companyFeaturePermission?.find(
     (p) => p.permission_name === "virtual-shop",
   );
 
