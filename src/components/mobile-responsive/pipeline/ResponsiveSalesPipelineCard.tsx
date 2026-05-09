@@ -43,22 +43,22 @@ const ResponsiveSalesPipelineCard = ({
 }) => {
   const [pending, startTransition] = useTransition();
   const id = lead?.id;
-  const rawName = lead.clientName
+  const rawName = lead?.clientName
     ? lead.clientName
-    : (lead.client?.firstName ?? "") + " " + (lead.client?.lastName ?? "");
+    : (lead?.client?.firstName ?? "") + " " + (lead?.client?.lastName ?? "");
   const clientName =
     rawName
       .replace(/\b(undefined|null)\b/gi, "")
       .replace(/\s+/g, " ")
       .trim() || "N/A";
-  const clientEmail = lead.client?.email;
+  const clientEmail = lead?.client?.email;
   const vehicle = lead?.vehicleInfo;
   const services = lead?.services?.split(",");
-  const status = lead.column?.title;
-  const timeCreated = moment(lead.createdAt).format("MM/DD/YYYY");
+  const status = lead?.column?.title;
+  const timeCreated = moment(lead?.createdAt).format("MM/DD/YYYY");
 
-  const bgColor = lead.column?.bgColor!;
-  const textColor = lead.column?.textColor!;
+  const bgColor = lead?.column?.bgColor!;
+  const textColor = lead?.column?.textColor!;
 
   const evenColor = "bg-background";
   const oddColor = "bg-[#EEF4FF]";
