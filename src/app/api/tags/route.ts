@@ -213,7 +213,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, textColor, bgColor, type } = body;
+    const { name, textColor, bgColor, type, companyId } = body;
 
     if (!name) {
       return NextResponse.json(
@@ -222,7 +222,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = await newTag({ name, textColor, bgColor, type });
+    const result = await newTag({ name, textColor, bgColor, type, companyId });
 
     if (result.type === "error") {
       return NextResponse.json(
