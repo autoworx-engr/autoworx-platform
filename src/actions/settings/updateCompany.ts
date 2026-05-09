@@ -16,10 +16,11 @@ export const updateCompany = async (
 ): Promise<ServerAction | TErrorHandler> => {
   try {
     const companyId = await getCompanyId();
-    await updateBusinessAccountValidationSchema.parseAsync(companyData);
+    const validatedData =
+      await updateBusinessAccountValidationSchema.parseAsync(companyData);
     const updatedCompany = await db.company.update({
       where: { id: companyId },
-      data: companyData,
+      data: validatedData,
     });
     revalidatePath("/dashboard/settings/business");
     return { type: "success", data: updatedCompany };

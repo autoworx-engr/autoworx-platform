@@ -24,7 +24,7 @@ export default function SecurityPage({
         {/* Contact Number Settings */}
         <div>
           <h2 className="mb-2 text-xl font-semibold">Security</h2>
-          <div className="space-y-3 rounded-sm border p-5">
+          <div className="space-y-3 rounded-lg border border-gray-200 p-5">
             {/* draft email */}
             <div className="grid grid-cols-1 items-start space-x-3">
               <label className="block">

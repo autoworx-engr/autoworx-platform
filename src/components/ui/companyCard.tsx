@@ -21,7 +21,7 @@ export function CompanyCard({ company, rightSlot }: any) {
           </p>
           <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
             {company.website && (
-              <span className="flex items-center gap-1 text-xs text-gray-4500">
+              <span className="flex items-center gap-1 text-xs text-gray-500">
                 <Globe size={12} className="text-[#6571FF]/60" />
                 {company.website}
               </span>

@@ -98,12 +98,18 @@ export function NetworkSettingsPanel({
       setLatLong(null, null);
       setLocationAllow(false);
     } else if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((pos) => {
-        const { latitude, longitude } = pos.coords;
-        setLocation({ latitude, longitude });
-        setLatLong(latitude, longitude);
-      });
-      setLocationAllow(true);
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
+          setLocation({ latitude, longitude });
+          setLatLong(latitude, longitude);
+          setLocationAllow(true);
+        },
+        () => {
+          errorToast("Location access denied or unavailable.");
+          setLocationAllow(false);
+        },
+      );
     }
   };
 

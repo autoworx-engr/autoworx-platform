@@ -38,9 +38,12 @@ export async function updateBookingForm(
 ) {
   try {
     const companyId = await getCompanyId();
-    const updatedBookingForm = await db.bookingForm.updateMany({
+    await db.bookingForm.updateMany({
       where: { id: bookingId, companyId },
       data: { ...data },
+    });
+    const updatedBookingForm = await db.bookingForm.findFirst({
+      where: { id: bookingId, companyId },
     });
     return updatedBookingForm;
   } catch (error) {

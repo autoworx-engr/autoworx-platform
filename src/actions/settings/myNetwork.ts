@@ -320,7 +320,8 @@ export async function findNearbyCompanies(
     // Compute bounding box (~100 mi at equator) to filter in DB before JS Haversine
     const maxRangeMi = range[1];
     const latDelta = maxRangeMi / 69.0;
-    const lonDelta = maxRangeMi / (69.0 * Math.cos((latitude * Math.PI) / 180));
+    const cosLat = Math.max(Math.cos((latitude * Math.PI) / 180), 1e-10);
+    const lonDelta = maxRangeMi / (69.0 * cosLat);
 
     // Step 2: Get nearby unconnected companies (bounding box pre-filter)
     const unconnectedCompanies = await db.company.findMany({
