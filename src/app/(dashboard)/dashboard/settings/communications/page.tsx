@@ -8,19 +8,30 @@ import { TermsAndPolicyEditor } from "@/components/TermsAndPolicyEditor";
 import { getCompanyId } from "@/lib/companyId";
 import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
 import SecurityPage from "../security/SecurityPage";
+import FacebookPagesSettings from "./FacebookPagesSettings";
 
-export default async function CommunicationPage() {
+type TProps = {
+  searchParams: Promise<{ meta_success?: string; meta_error?: string }>;
+};
+
+export default async function CommunicationPage({ searchParams }: TProps) {
   const companyId = await getCompanyId();
   const company = await getCompany();
   const entitlements = await getCompanyEntitlements(companyId);
+  const { meta_success, meta_error } = await searchParams;
 
   return (
     <div className="grid w-full grid-cols-1 md:grid-cols-2 items-start gap-6 xl:gap-8">
       {/* Security/Zapier Token  */}
-      <div>
+      <div className="space-y-4">
         <SecurityPage company={JSON.parse(JSON.stringify(company))} />
         <GoogleReviewSettings initialReviewLink={company?.googleReviewLink} />
         <BookingGenerate companyId={companyId.toString()} />
+        {/* Facebook Messenger integration */}
+        <FacebookPagesSettings
+          successParam={meta_success}
+          errorParam={meta_error}
+        />
       </div>
       {/* Sidebar */}
       <div className="space-y-4 lg:mt-8">
