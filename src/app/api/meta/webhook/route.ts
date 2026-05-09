@@ -3,19 +3,44 @@ import { db } from "@/lib/db";
 import { getPusherInstance } from "@/lib/pusher/server";
 import { NextRequest, NextResponse } from "next/server";
 
-const VERIFY_TOKEN = process.env.META_WEBHOOK_VERIFY_TOKEN!;
-
 // ── Webhook verification (GET) ────────────────────────────────────────────────
 export async function GET(req: NextRequest) {
+  // Read env at request time so hot-reload / missing vars surface immediately
+  const VERIFY_TOKEN = process.env.META_WEBHOOK_VERIFY_TOKEN;
+
   const { searchParams } = req.nextUrl;
   const mode = searchParams.get("hub.mode");
   const token = searchParams.get("hub.verify_token");
   const challenge = searchParams.get("hub.challenge");
 
-  if (mode === "subscribe" && token === VERIFY_TOKEN) {
-    return new NextResponse(challenge, { status: 200 });
+  console.log("[meta/webhook] verify attempt", {
+    mode,
+    token,
+    challenge,
+    VERIFY_TOKEN,
+  });
+
+  if (!VERIFY_TOKEN) {
+    console.error("[meta/webhook] META_WEBHOOK_VERIFY_TOKEN is not set in env");
+    return NextResponse.json(
+      { error: "Server misconfigured: verify token not set" },
+      { status: 500 },
+    );
   }
-  return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  if (mode === "subscribe" && token === VERIFY_TOKEN && challenge) {
+    return new NextResponse(challenge, {
+      status: 200,
+      headers: { "Content-Type": "text/plain" },
+    });
+  }
+
+  console.warn("[meta/webhook] token mismatch or bad mode", {
+    mode,
+    token,
+    expected: VERIFY_TOKEN,
+  });
+  return new NextResponse("Forbidden", { status: 403 });
 }
 
 // ── Incoming message events (POST) ───────────────────────────────────────────
