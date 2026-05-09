@@ -37,7 +37,6 @@ export function CollaborationsSection({
         {/* Active */}
         <div className="p-5 border-b border-gray-100">
           <div className="flex items-center gap-2 mb-3">
-            <CheckCircle size={17} className="text-[#6571FF]/80" />
             <h3 className="text-sm font-semibold text-gray-600">Active</h3>
             {active.length > 0 && (
               <span className="ml-auto text-xs font-medium px-2 py-1 rounded-full bg-[#6571FF]/10 text-[#6571FF]">
@@ -70,7 +69,6 @@ export function CollaborationsSection({
         {/* Pending */}
         <div className="p-5 border-b border-gray-100">
           <div className="flex items-center gap-2 mb-3">
-            <Clock size={17} className="text-amber-500" />
             <h3 className="text-sm font-semibold text-gray-600">Pending</h3>
             {pendingSent.length + pendingReceived.length > 0 && (
               <span className="ml-auto text-xs font-medium px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
@@ -86,9 +84,6 @@ export function CollaborationsSection({
             <div className="space-y-3">
               {pendingSent.length > 0 && (
                 <>
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                    Sent by you
-                  </p>
                   <div className="space-y-2">
                     {pendingSent.map((join) => (
                       <CompanyCard
@@ -146,7 +141,6 @@ export function CollaborationsSection({
         {/* Rejected */}
         <div className="p-5">
           <div className="flex items-center gap-2 mb-3">
-            <XCircle size={17} className="text-red-400" />
             <h3 className="text-sm font-semibold text-gray-600">Rejected</h3>
             {rejectSent.length + rejectReceived.length > 0 && (
               <span className="ml-auto text-xs font-medium px-2.5 py-0.5 rounded-full bg-red-100 text-red-600">
