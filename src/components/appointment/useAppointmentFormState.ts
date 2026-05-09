@@ -548,7 +548,11 @@ export function useAppointmentFormState({
       setStartTime(timeValue);
       setEndTime(addOneHour(timeValue));
     } else {
-      if (startTime && timeValue < startTime) {
+      // For multi-day appointments end time lives on a later day, so it may
+      // be numerically earlier than the start time. Only enforce ordering
+      // when start and end fall on the same calendar day.
+      const isMultiDay = !!(endDate && date && endDate > date);
+      if (!isMultiDay && startTime && timeValue < startTime) {
         errorToast("End time cannot be before start time!");
         return;
       }
