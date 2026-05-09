@@ -84,6 +84,9 @@ export function CollaborationsSection({
             <div className="space-y-3">
               {pendingSent.length > 0 && (
                 <>
+                  <p className="text-xs font-medium text-gray-500 tracking-wide">
+                    Sent by you
+                  </p>
                   <div className="space-y-2">
                     {pendingSent.map((join) => (
                       <CompanyCard
