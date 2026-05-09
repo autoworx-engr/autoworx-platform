@@ -110,6 +110,11 @@ export function useAppointmentFormState({
       ? moment.utc(appointment?.date).format("YYYY-MM-DD")
       : today,
   );
+  const [endDate, setEndDate] = useState<string | undefined>(
+    (appointment as any)?.endDate
+      ? moment.utc((appointment as any).endDate).format("YYYY-MM-DD")
+      : undefined,
+  );
   const [title, setTitle] = useState<string>("");
 
   // Clear the "title required" error as soon as the user picks a title
@@ -145,9 +150,27 @@ export function useAppointmentFormState({
   const [openReminder, setOpenReminder] = useState(false);
   const [formChanged, setFormChanged] = useState(false);
 
-  const [originalValues, setOriginalValues] = useState({
+  const [originalValues, setOriginalValues] = useState<{
+    title: string;
+    date: string | undefined;
+    endDate: string | undefined;
+    startTime: string;
+    endTime: string;
+    assignedUsers: User[];
+    client: typeof client;
+    vehicle: typeof vehicle;
+    serviceCategoryId: number | null;
+    draft: string | null;
+    notes: string;
+    confirmationTemplate: EmailTemplate | null;
+    reminderTemplate: EmailTemplate | null;
+    confirmationTemplateStatus: boolean;
+    reminderTemplateStatus: boolean;
+    times: { time: string; date: string }[];
+  }>({
     title,
     date,
+    endDate,
     startTime,
     endTime,
     assignedUsers: assignedUsers ? [...assignedUsers] : [],
@@ -166,6 +189,7 @@ export function useAppointmentFormState({
   const resetAll = useCallback(() => {
     setTitle("");
     setDate(today);
+    setEndDate(undefined);
     setStartTime("00:00");
     setEndTime("00:00");
     setClient(null);
@@ -259,9 +283,15 @@ export function useAppointmentFormState({
         appointment?.reminderEmailTemplateStatus ?? false,
       );
 
+      const editEndDate = (appointment as any)?.endDate
+        ? moment.utc((appointment as any).endDate).format("YYYY-MM-DD")
+        : undefined;
+      setEndDate(editEndDate);
+
       setOriginalValues({
         title: appointment?.title || "",
         date: moment.utc(appointment?.date ?? "").format("YYYY-MM-DD"),
+        endDate: editEndDate,
         startTime: appointment?.startTime ?? "",
         endTime: appointment?.endTime ?? "",
         assignedUsers: appointment?.assignUsers
@@ -288,6 +318,7 @@ export function useAppointmentFormState({
       setOriginalValues({
         title: "",
         date: today,
+        endDate: undefined,
         startTime: "",
         endTime: "",
         assignedUsers: [],
@@ -400,6 +431,7 @@ export function useAppointmentFormState({
     setFormChanged(
       title !== originalValues.title ||
         date !== originalValues.date ||
+        endDate !== originalValues.endDate ||
         startTime !== originalValues.startTime ||
         endTime !== originalValues.endTime ||
         JSON.stringify(assignedUsers) !==
@@ -419,6 +451,7 @@ export function useAppointmentFormState({
   }, [
     title,
     date,
+    endDate,
     startTime,
     endTime,
     assignedUsers,
@@ -548,6 +581,15 @@ export function useAppointmentFormState({
         return;
       }
 
+      if (endDate && date && endDate < date) {
+        setIsSubmitting(false);
+        showError({
+          field: "all",
+          message: "End date cannot be before start date!",
+        });
+        return;
+      }
+
       if (client && confirmationTemplateStatus && !confirmationTemplate) {
         setIsSubmitting(false);
         showError({
@@ -586,6 +628,7 @@ export function useAppointmentFormState({
           appointment: {
             title,
             date: date as string,
+            endDate: endDate ? endDate : null,
             startTime: startTime as string,
             endTime: endTime as string,
             assignedUsers: assignedUsers.map((user) => user.id),
@@ -618,6 +661,7 @@ export function useAppointmentFormState({
         res = await addAppointment({
           title,
           date,
+          endDate: endDate ? endDate : null,
           startTime,
           endTime,
           assignedUsers: assignedUsers.map((user) => user.id),
@@ -721,6 +765,8 @@ export function useAppointmentFormState({
     setTitle,
     date,
     setDate,
+    endDate,
+    setEndDate,
     startTime,
     setStartTime,
     endTime,

@@ -9,6 +9,7 @@ import React from "react";
 type TScheduleTabProps = {
   rows: string[];
   date?: string;
+  endDate?: string;
   startTime?: string;
   endTime?: string;
   settings?: CalendarSettings | null;
@@ -18,11 +19,13 @@ type TScheduleTabProps = {
 export default function ScheduleTab({
   rows,
   date,
+  endDate,
   startTime,
   endTime,
   settings,
   onDateUpDown,
 }: TScheduleTabProps) {
+  const isMultiDay = !!(endDate && date && endDate !== date);
 
   const formatTo12Hour = (time: string) => {
     if (!time) return "";
@@ -42,10 +45,14 @@ export default function ScheduleTab({
 
         <div className="text-center">
           <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400">
-            {moment(date).format("dddd")}
+            {isMultiDay
+              ? `${moment(date).format("ddd")} – ${moment(endDate).format("ddd")}`
+              : moment(date).format("dddd")}
           </h2>
           <p className="text-lg font-extrabold text-slate-500">
-            {moment(date).format("MMMM D, YYYY")}
+            {isMultiDay
+              ? `${moment(date).format("MMM D")} – ${moment(endDate).format("MMM D, YYYY")}`
+              : moment(date).format("MMMM D, YYYY")}
           </p>
         </div>
 
@@ -64,7 +71,8 @@ export default function ScheduleTab({
           const rowTime = formatTime(row);
           let isBusinessHours = false;
           if (settings) {
-            isBusinessHours = rowTime >= settings?.dayStart && rowTime <= settings?.dayEnd;
+            isBusinessHours =
+              rowTime >= settings?.dayStart && rowTime <= settings?.dayEnd;
           }
 
           return (
@@ -72,7 +80,7 @@ export default function ScheduleTab({
               key={i}
               className={cn(
                 "ml-20 flex h-16 items-start border-l border-t border-slate-100 transition-colors",
-                !isBusinessHours ? "bg-slate-50/50" : "bg-white"
+                !isBusinessHours ? "bg-slate-50/50" : "bg-white",
               )}
             >
               {/* Timestamp Labels */}
@@ -90,11 +98,13 @@ export default function ScheduleTab({
             style={{
               top: `${getHours(startTime) * 4}rem`,
               bottom: `${(24 - getHours(endTime)) * 4}rem`,
-              marginTop: '1px' // Adjustment for border-top alignment
+              marginTop: "1px", // Adjustment for border-top alignment
             }}
           >
             <div className="p-3">
-              <p className="text-sm font-semibold text-[#6571FF]">Selected Slot</p>
+              <p className="text-sm font-semibold text-[#6571FF]">
+                Selected Slot
+              </p>
               <p className="text-sm font-medium text-[#6571FF]/80">
                 {formatTo12Hour(startTime)} — {formatTo12Hour(endTime)}
               </p>
