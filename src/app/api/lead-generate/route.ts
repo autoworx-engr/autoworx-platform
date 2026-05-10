@@ -2,6 +2,8 @@ import { updateCommunicationAutomationTrigger } from "@/actions/automation/commu
 import { updatePipelineAutomationTrigger } from "@/actions/automation/pipeline/triggerPipelineAutomation";
 import { updateTagAutomationTrigger } from "@/actions/automation/tag/triggerTagAutomation";
 import { initialCreateClientChatTrack } from "@/actions/communication/client/chat-track";
+import { sendInfobipMessage } from "@/actions/communication/client/sendInfobipMessage";
+import { sendTwilioMessage } from "@/actions/communication/client/sendTwilioMessage";
 import { companyWithUser } from "@/actions/settings/getCompanyWithUser";
 import { db } from "@/lib/db";
 import { sendCRMDemoNotification } from "@/lib/notification/crm-demo-notifiy";
@@ -134,6 +136,7 @@ export async function POST(request: NextRequest) {
     const company = await db.company.findFirst({
       where: { zapierToken: token },
     });
+
     if (!company) return jsonResponse({ error: "Invalid token" }, 401);
 
     const body = await request.json();
@@ -230,6 +233,30 @@ export async function POST(request: NextRequest) {
         companyId: company.id,
         clientName: newLead.clientName,
       });
+
+    const personality = await db.aiPersonality.findFirst({
+      where: {
+        companyId: newLead.companyId,
+      },
+    });
+
+    if (personality?.openingMessage && client) {
+      if (company?.smsGateway === "TWILIO") {
+        await sendTwilioMessage({
+          companyId: newLead.companyId,
+          clientId: client?.id,
+          message: personality?.openingMessage,
+          attachments: [],
+        });
+      } else {
+        await sendInfobipMessage({
+          companyId: body.companyId,
+          clientId: body.clientId,
+          message: body.message,
+          attachments: [],
+        });
+      }
+    }
 
     return jsonResponse(
       {
