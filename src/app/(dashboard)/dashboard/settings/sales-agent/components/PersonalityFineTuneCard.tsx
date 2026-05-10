@@ -70,7 +70,11 @@ export default function PersonalityFineTuneCard() {
 
   const handleInputChange = useCallback(
     (
-      field: "assistantName" | "openingMessage" | "humanHandoffMessage" | "systemPrompt",
+      field:
+        | "assistantName"
+        | "openingMessage"
+        | "humanHandoffMessage"
+        | "systemPrompt",
       value: string,
     ) => {
       setPersonality((prev) => ({ ...prev, [field]: value }));
