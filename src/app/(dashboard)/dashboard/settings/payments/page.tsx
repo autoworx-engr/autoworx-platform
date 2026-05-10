@@ -1,7 +1,6 @@
 "use client";
 
 import { useServerGet } from "@/hooks/useServerGet";
-import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { getStripeAccount } from "./stripe";
 import {
@@ -44,22 +43,12 @@ function Toggle({
 }
 
 export default function PaymentsPage() {
-  const { data: session } = useSession();
-  // @ts-ignore
-  const companyId = session?.user?.companyId;
-
-  const { data: stripeData, loading: stripeLoading } = useServerGet(
-    getStripeAccount,
-    companyId,
-  );
+  const { data: stripeData, loading: stripeLoading } =
+    useServerGet(getStripeAccount);
   const { data: authorizeNetData, loading: authorizeNetLoading } = useServerGet(
     getAuthorizeNetStatus,
-    companyId,
   );
-  const { data: paymentGatewayInfo } = useServerGet(
-    getPaymentGatewayInfo,
-    companyId,
-  );
+  const { data: paymentGatewayInfo } = useServerGet(getPaymentGatewayInfo);
 
   const [selectedGateway, setSelectedGateway] = useState<string>(
     paymentGatewayInfo?.paymentGateway || "STRIPE",
@@ -79,30 +68,25 @@ export default function PaymentsPage() {
 
   const handleGatewayChange = async (value: string) => {
     setSelectedGateway(value);
-    if (companyId) {
-      const result = await updatePaymentGateway(
-        companyId,
-        value as "STRIPE" | "AUTHORIZE_NET" | "BOTH",
-      );
-      if (result.success) {
-        successToast("Payment gateway updated");
-      } else {
-        errorToast(result.message || "Failed to update payment gateway");
-      }
+    const result = await updatePaymentGateway(
+      value as "STRIPE" | "AUTHORIZE_NET" | "BOTH",
+    );
+    if (result.success) {
+      successToast("Payment gateway updated");
+    } else {
+      errorToast(result.message || "Failed to update payment gateway");
     }
   };
 
   const handleTipToggle = async () => {
     const newValue = !tipEnabled;
     setTipEnabled(newValue);
-    if (companyId) {
-      const result = await updateTipEnabled(companyId, newValue);
-      if (result.success) {
-        successToast(newValue ? "Tip option enabled" : "Tip option disabled");
-      } else {
-        setTipEnabled(!newValue);
-        errorToast(result.message || "Failed to update tip setting");
-      }
+    const result = await updateTipEnabled(newValue);
+    if (result.success) {
+      successToast(newValue ? "Tip option enabled" : "Tip option disabled");
+    } else {
+      setTipEnabled(!newValue);
+      errorToast(result.message || "Failed to update tip setting");
     }
   };
 
@@ -124,7 +108,6 @@ export default function PaymentsPage() {
 
       {/* Top row: Gateway + Options side by side */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
         {/* Gateway Selection */}
         <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
           <div className="border-b border-gray-100 px-4 py-3">
@@ -149,7 +132,9 @@ export default function PaymentsPage() {
                   }`}
                 >
                   <RadioGroupItem value={value} id={value} />
-                  <span className="text-sm font-medium text-gray-700">{label}</span>
+                  <span className="text-sm font-medium text-gray-700">
+                    {label}
+                  </span>
                 </label>
               ))}
             </RadioGroup>
@@ -179,7 +164,6 @@ export default function PaymentsPage() {
 
       {/* Bottom row: Stripe + Authorize.Net side by side */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
         {/* Stripe */}
         <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
           <div className="border-b border-gray-100 px-4 py-3 flex items-center justify-between">
@@ -195,12 +179,26 @@ export default function PaymentsPage() {
           </div>
           <div className="flex flex-col items-center px-4 py-5 gap-3">
             <div className="flex items-center gap-3">
-              <Image src="/icons/Logo2.png" alt="Autoworx" width={32} height={32} className="h-8 w-8" />
+              <Image
+                src="/icons/Logo2.png"
+                alt="Autoworx"
+                width={32}
+                height={32}
+                className="h-8 w-8"
+              />
               <span className="text-gray-300 text-lg">↔</span>
-              <Image src="/icons/stripe.png" alt="Stripe" width={32} height={32} className="h-8 w-8" />
+              <Image
+                src="/icons/stripe.png"
+                alt="Stripe"
+                width={32}
+                height={32}
+                className="h-8 w-8"
+              />
             </div>
             <div className="text-center">
-              <p className="text-sm font-semibold text-gray-700">Connect to Stripe</p>
+              <p className="text-sm font-semibold text-gray-700">
+                Connect to Stripe
+              </p>
               <p className="text-xs text-gray-400 mt-0.5 max-w-xs">
                 Handle payments and manage revenue seamlessly
               </p>
@@ -212,7 +210,11 @@ export default function PaymentsPage() {
               className="inline-flex items-center gap-1.5 rounded-lg bg-[#6571ff] px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#5561ef] hover:shadow-md"
             >
               <ExternalLink className="h-3.5 w-3.5" />
-              {stripeData?.success ? "Reconnect" : stripeLoading ? "Loading..." : "Connect with Stripe"}
+              {stripeData?.success
+                ? "Reconnect"
+                : stripeLoading
+                  ? "Loading..."
+                  : "Connect with Stripe"}
             </button>
             {stripeData?.success && <StripeStatus data={stripeData} />}
           </div>
@@ -221,8 +223,6 @@ export default function PaymentsPage() {
         {/* Authorize.Net */}
         {!authorizeNetLoading && (
           <AuthorizeNetConfig
-            // @ts-ignore
-            companyId={companyId || 0}
             isConfigured={authorizeNetData?.configured || false}
             hasApiLoginId={authorizeNetData?.hasApiLoginId || false}
             onUpdate={() => {}}

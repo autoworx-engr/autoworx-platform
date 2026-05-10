@@ -54,12 +54,17 @@ export function BillSummary({
   const [couponLoading, setCouponLoading] = useState(false);
   const [originalTax, setOriginalTax] = useState(0);
   const [originalServiceFee, setOriginalServiceFee] = useState(0);
+  // Material-only subtotal used as the tax base (labor is not taxed).
+  const [materialSubtotal, setMaterialSubtotal] = useState(0);
   const pathname = usePathname();
   const isEditPage = pathname?.includes("/estimate/edit");
   // On edit pages, skip recalculation until the user actually modifies items.
   // This preserves DB values (e.g. gift card discounts) on first load.
   const initialItemsRef = useRef<string | null>(null);
   const userModifiedItems = useRef(false);
+  // Set to true when user explicitly toggles tax/serviceFee so the guard
+  // allows grand total and due to recalculate even if items haven't changed.
+  const userToggledRef = useRef(false);
   // Invoice-level discount not derivable from items (e.g. gift card).
   const invoiceLevelDiscountRef = useRef<number>(0);
 
@@ -68,32 +73,39 @@ export function BillSummary({
     setIsSuppliesEnabled(isEstimateServiceFee);
     setIsTaxEnabled(isEstimateTax);
 
-    if (isEditPage || storedTax !== undefined) {
-      // Use stored values: either from the saved invoice (edit) or from the
-      // template snapshot (create-from-template). In both cases global setting
-      // changes must not retroactively alter the financial figures.
-      setOriginalTax(storedTax ?? 0);
-      setOriginalServiceFee(storedServiceFee ?? 0);
+    const storedTaxRate = storedTax ?? 0;
+    const storedFeeRate = storedServiceFee ?? 0;
+
+    if (storedTaxRate > 0 && storedFeeRate > 0) {
+      // Both rates are stored — use the snapshot values directly.
+      setOriginalTax(storedTaxRate);
+      setOriginalServiceFee(storedFeeRate);
     } else {
-      async function fetchTaxAndServiceFee() {
+      // One or both rates are 0/absent. Fetch global so the user can enable
+      // the toggle and get a meaningful rate. Stored non-zero rates still win.
+      async function initRates() {
         try {
           const taxData = await getCompanyTaxCurrency();
-          setOriginalTax(taxData.tax);
-          setOriginalServiceFee(taxData.serviceFee);
-          setTax(taxData.tax);
-          setServiceFee(taxData.serviceFee);
+          setOriginalTax(storedTaxRate > 0 ? storedTaxRate : taxData.tax);
+          setOriginalServiceFee(
+            storedFeeRate > 0 ? storedFeeRate : taxData.serviceFee,
+          );
+          // On a fresh create page (no stored values at all), also seed the store.
+          if (storedTax === undefined) {
+            setTax(taxData.tax);
+            setServiceFee(taxData.serviceFee);
+          }
         } catch (error) {
           console.error("Error fetching tax data:", error);
         }
       }
-      fetchTaxAndServiceFee();
+      initRates();
     }
   }, [
     setTax,
     setServiceFee,
     isEstimateServiceFee,
     isEstimateTax,
-    isEditPage,
     storedTax,
     storedServiceFee,
   ]);
@@ -111,13 +123,13 @@ export function BillSummary({
     setServiceFee,
   ]);
 
-  // Calculate subtotal and discount from items
+  // Calculate subtotal, material-only subtotal, and discount from items.
   // On edit pages, preserve the invoice's stored values (e.g. gift card discounts)
-  // until the user actually modifies items
+  // until the user actually modifies items.
   useEffect(() => {
-    // Helper: sum item-level discounts from materials and labor
     function calcItemTotals() {
       let servicesTotal = 0;
+      let materialsTotal = 0;
       let discountTotal = 0;
 
       items.forEach((item) => {
@@ -147,14 +159,20 @@ export function BillSummary({
           ? Number((Number(labor.charge) * Number(labor.hours)).toFixed(2))
           : 0;
 
+        materialsTotal += materialCost;
         servicesTotal += materialCost + laborCost;
         discountTotal +=
           materialDiscount +
           (labor?.discount ? parseFloat(labor.discount.toString()) : 0);
       });
 
-      return { servicesTotal, discountTotal };
+      return { servicesTotal, materialsTotal, discountTotal };
     }
+
+    const { servicesTotal, materialsTotal, discountTotal } = calcItemTotals();
+    // Always keep materialSubtotal in sync so the tax toggle can use it
+    // even on edit pages before the user modifies items.
+    setMaterialSubtotal(materialsTotal);
 
     if (isEditPage) {
       if (items.length === 0) {
@@ -165,9 +183,6 @@ export function BillSummary({
         // Calculate the invoice-level discount (e.g. gift card) that isn't
         // represented in item-level discounts so we can preserve it later.
         initialItemsRef.current = JSON.stringify(items);
-        const { discountTotal } = calcItemTotals();
-        // Read the DB discount from the store (set by SyncEstimate) to compute
-        // the invoice-level portion (gift card) not represented in item discounts
         const dbDiscount = useEstimateCreateStore.getState().discount;
         invoiceLevelDiscountRef.current = Math.max(
           0,
@@ -183,26 +198,26 @@ export function BillSummary({
       }
     }
 
-    const { servicesTotal, discountTotal } = calcItemTotals();
-
     setSubtotal(servicesTotal);
     setDiscount(discountTotal + invoiceLevelDiscountRef.current);
   }, [items, setSubtotal, setDiscount, isEditPage]);
 
   // Calculate grand total
   useEffect(() => {
-    if (isEditPage && !userModifiedItems.current) return;
+    // Allow recalculation when items change OR when user explicitly toggled tax/serviceFee.
+    if (isEditPage && !userModifiedItems.current && !userToggledRef.current)
+      return;
 
     let netAmount = subtotal - discount;
-
     let taxAdd = 0;
     let suppliesFeeAdd = 0;
 
-    // Tax and fee are calculated on the original subtotal (before discount)
+    // Tax applies to material price only (labor is excluded from tax base).
     if (isTaxEnabled && tax > 0) {
-      taxAdd = Number((subtotal * (tax / 100)).toFixed(2));
+      taxAdd = Number((materialSubtotal * (tax / 100)).toFixed(2));
     }
 
+    // Service fee applies to the full subtotal (materials + labor).
     if (isSuppliesEnabled && serviceFee > 0) {
       suppliesFeeAdd = Number((subtotal * (serviceFee / 100)).toFixed(2));
     }
@@ -220,13 +235,15 @@ export function BillSummary({
     vehicleExtraCost,
     isTaxEnabled,
     isSuppliesEnabled,
+    materialSubtotal,
     setGrandTotal,
     isEditPage,
   ]);
 
   // Calculate due amount
   useEffect(() => {
-    if (isEditPage && !userModifiedItems.current) return;
+    if (isEditPage && !userModifiedItems.current && !userToggledRef.current)
+      return;
 
     const newDue = grandTotal - (deposit + totalPayment);
     setDue(newDue);
@@ -299,7 +316,10 @@ export function BillSummary({
 
               {isToggleItem && (
                 <div
-                  onClick={() => toggleSetter((prev) => !prev)}
+                  onClick={() => {
+                    userToggledRef.current = true;
+                    toggleSetter((prev) => !prev);
+                  }}
                   className={cn(
                     "relative flex h-5 w-9 cursor-pointer items-center rounded-full px-1 transition-all duration-200",
                     toggleState ? "bg-[#6571FF]" : "bg-slate-200",
@@ -321,7 +341,11 @@ export function BillSummary({
                   isToggleItem
                     ? `${toggleState ? originalValue : 0}%${
                         toggleState && originalValue > 0
-                          ? ` | $${((subtotal * originalValue) / 100).toFixed(2)}`
+                          ? ` | $${(
+                              ((title === "tax" ? materialSubtotal : subtotal) *
+                                originalValue) /
+                              100
+                            ).toFixed(2)}`
                           : ""
                       }`
                     : data

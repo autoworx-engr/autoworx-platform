@@ -2833,8 +2833,9 @@ model AiPersonality {
   matchCustomerTone Boolean @default(true)
   useEmojis         Boolean @default(true)
 
-  openingMessage String? @db.Text
-  systemPrompt   String? @db.Text
+  openingMessage      String? @db.Text
+  systemPrompt        String? @db.Text
+  humanHandoffMessage String? @db.Text @map("human_handoff_message")
 
   @@map("ai_personalities")
 }
