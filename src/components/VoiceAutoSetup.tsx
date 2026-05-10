@@ -17,6 +17,7 @@ export default function VoiceAutoSetup({
     incomingCall,
     acceptIncomingCall,
     rejectIncomingCall,
+    endCall,
     isDeviceReady,
     currentConnection,
     callDuration,
@@ -37,6 +38,7 @@ export default function VoiceAutoSetup({
       incomingCall={incomingCall}
       onAccept={acceptIncomingCall}
       onReject={rejectIncomingCall}
+      onEndCall={endCall}
       isConnected={!!currentConnection}
       callDuration={callDuration}
     />
