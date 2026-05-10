@@ -38,6 +38,8 @@ type TSliderData = {
 export default async function WorkforceReportPage(props: TProps) {
   const searchParams = await props.searchParams;
   const session = await getServerSession(authOptions);
+  const companyId = session?.user?.companyId;
+  if (!companyId) throw new Error("Unauthorized");
   const page = searchParams.page ? parseInt(searchParams.page, 10) : 1;
   const take = searchParams.take ? parseInt(searchParams.take, 10) : 50;
 
@@ -67,7 +69,7 @@ export default async function WorkforceReportPage(props: TProps) {
   // Fetch all employees and their related data in a single query
   const allEmployees = await db.user.findMany({
     where: {
-      companyId: session?.user?.companyId,
+      companyId,
     },
     include: {
       Technician: true,

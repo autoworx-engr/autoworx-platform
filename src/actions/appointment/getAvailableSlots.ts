@@ -3,7 +3,14 @@
 
 import { db } from "@/lib/db";
 import moment from "moment-timezone";
-import { DayOfWeek } from "@prisma/client";
+type DayOfWeek =
+  | "SUNDAY"
+  | "MONDAY"
+  | "TUESDAY"
+  | "WEDNESDAY"
+  | "THURSDAY"
+  | "FRIDAY"
+  | "SATURDAY";
 
 const getDayOfWeekEnum = (dateStr: string, timezone: string): DayOfWeek => {
   const days: DayOfWeek[] = [
@@ -127,10 +134,10 @@ export async function getAvailableSlots(
       select: { startTime: true, endTime: true },
     });
 
-    // Check stacking
     const effectiveDuration =
       duration && duration > 0 ? duration : intervalMinutes;
-    const availableSlots = baseSlots.filter((slotTime) => {
+
+    const slots = baseSlots.map((slotTime) => {
       const slotMoment = moment.tz(
         `${selectedDateStr} ${slotTime}`,
         "YYYY-MM-DD HH:mm",
@@ -139,6 +146,11 @@ export async function getAvailableSlots(
       const slotEndMoment = slotMoment
         .clone()
         .add(effectiveDuration, "minutes");
+
+      // Disable slot if service duration would exceed closing time
+      if (slotEndMoment.isAfter(endSlotTime)) {
+        return { time: slotTime, available: false };
+      }
 
       const appointmentsInSlot = existingAppointments.filter((app) => {
         if (!app.startTime || !app.endTime) return false;
@@ -178,10 +190,12 @@ export async function getAvailableSlots(
         );
       });
 
-      return appointmentsInSlot.length + holdsInSlot.length < stackingLimit;
+      const available =
+        appointmentsInSlot.length + holdsInSlot.length < stackingLimit;
+      return { time: slotTime, available };
     });
 
-    return { success: true, date: requestMoment.toDate(), availableSlots };
+    return { success: true, date: requestMoment.toDate(), slots };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
@@ -209,13 +223,13 @@ export async function getNextAvailableAppointment(
 
     if (
       result.success &&
-      result.availableSlots &&
-      result.availableSlots.length > 0
+      result.slots &&
+      result.slots.some((s) => s.available)
     ) {
       return {
         success: true,
         date: moment.tz(checkDateStr, "YYYY-MM-DD", timezone).toDate(),
-        availableSlots: result.availableSlots,
+        slots: result.slots,
       };
     }
   }

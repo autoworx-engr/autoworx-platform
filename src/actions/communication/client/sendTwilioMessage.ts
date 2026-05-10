@@ -130,47 +130,50 @@ export async function sendTwilioMessage({
         mediaUrl: attachments.map((file) => file.url),
       });
 
-      const dbMessage = await db.clientSMS.create({
-        data: {
-          from: twilioCredentials.phoneNumber,
-          to,
-          message: message ?? "",
-          sentBy: "Company",
-          userId: user?.id,
-          isRead: true,
-          clientId,
-          companyId: twilioCredentials.companyId,
-          isSalesAgent,
-        },
+      const data = await db.$transaction(async (tx) => {
+        const created = await tx.clientSMS.create({
+          data: {
+            from: twilioCredentials!.phoneNumber,
+            to,
+            message: message ?? "",
+            sentBy: "Company",
+            userId: user?.id,
+            isRead: true,
+            clientId,
+            companyId: twilioCredentials!.companyId,
+            isSalesAgent,
+          },
+        });
+
+        if (attachments && attachments.length > 0) {
+          await tx.clientSmsAttachments.createMany({
+            data: attachments.map((file) => ({
+              name: file.name,
+              url: file.url,
+              isVoiceNote: file.isVoiceNote ?? false,
+              clientSMSId: created.id,
+            })),
+          });
+        }
+
+        if (client && client?.isSalesAgent) {
+          await tx.client.update({
+            where: { id: clientId },
+            data: { isSalesAgent: false },
+          });
+        }
+
+        return tx.clientSMS.findFirst({
+          where: { id: created.id },
+          include: { attachments: true },
+        });
       });
 
-      if (client && client?.isSalesAgent) {
-        await db.client.update({
-          where: {
-            id: clientId,
-          },
-          data: {
-            isSalesAgent: false,
-          },
-        });
-      }
-
-      const processedAttachments = [];
-      for (const file of attachments) {
-        let atc = await db.clientSmsAttachments.create({
-          data: {
-            name: file.name,
-            url: file.url,
-            isVoiceNote: file.isVoiceNote ?? false,
-            clientSMSId: dbMessage.id,
-          },
-        });
-        processedAttachments.push({
-          name: file.name,
-          url: file.url,
-          isVoiceNote: file.isVoiceNote ?? false,
-        });
-      }
+      const processedAttachments = (attachments ?? []).map((file) => ({
+        name: file.name,
+        url: file.url,
+        isVoiceNote: file.isVoiceNote ?? false,
+      }));
 
       await updateNewSMSChatTrack({
         clientId,
@@ -179,18 +182,9 @@ export async function sendTwilioMessage({
         attachments: processedAttachments,
       });
 
-      let data = await db.clientSMS.findFirst({
-        where: {
-          id: dbMessage.id,
-        },
-        include: {
-          attachments: true,
-        },
-      });
-
       try {
         if (client?.Lead?.id && client?.Lead?.columnId) {
-          if (data?.sentBy == "Company") {
+          if (data?.sentBy === "Company") {
             await updatePipelineAutomationTrigger({
               companyId: client.companyId,
               condition: "MESSAGE_SENT_CLIENT",
@@ -201,7 +195,46 @@ export async function sendTwilioMessage({
         }
       } catch (error) {}
 
-      revalidatePath("/dashboard/communication/client");
+      // const isSalesAgentEnabled = entitlements.awxSalesAgent;
+
+      // //sales agent
+      // const isCompanySalesAgent = company?.isSalesAgent === true;
+      // const isClientSalesAgent = client?.isSalesAgent === true;
+      // console.log("isCompanySalesAgent", isCompanySalesAgent);
+      // console.log("isClientSalesAgent", isClientSalesAgent);
+      // console.log("isSalesAgentEnabled", isSalesAgentEnabled);
+      // console.log("data", data);
+      // console.log("data", twilioCredentials?.phoneNumber);
+      // console.log(
+      //   "isMatch number 2",
+      //   twilioCredentials?.phoneNumber == data?.from,
+      // );
+      // console.log(
+      //   "isMatch number",
+      //   twilioCredentials?.phoneNumber === data?.from,
+      // );
+      // if (isCompanySalesAgent && isClientSalesAgent && isSalesAgentEnabled) {
+      //   if (data && data?.from === twilioCredentials?.phoneNumber) {
+      //     console.log("Send sms to agent");
+      //     try {
+      //       await sendSMSToAgent({
+      //         company_id: client.companyId,
+      //         message: data?.message,
+      //         send_from: data?.from,
+      //         send_to: data?.to,
+      //         client_id: client?.id,
+      //       });
+      //     } catch (error) {
+      //       console.log("error", error);
+      //       return Response.json(
+      //         { message: `Sales agent error: ${error}` },
+      //         { status: 200 },
+      //       );
+      //     }
+      //   }
+      // }
+
+      revalidatePath("/dashboard/communication/client/${clientId}");
 
       return {
         success: true,

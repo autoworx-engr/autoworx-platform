@@ -139,15 +139,17 @@ export default function AppointmentForm({
                   "
                   dropdownClassName="rounded-xl border-none shadow-2xl backdrop-blur-md bg-white/90"
                 >
-                  {timeOptions.map((time) => (
-                    <Option
-                      key={time.value}
-                      value={time.value}
-                      className="py-2 px-3 text-slate-600 transition-colors hover:bg-[#6571FF]/10 hover:text-[#6571FF]"
-                    >
-                      <p className="text-base text-gray-600">{time.label}</p>
-                    </Option>
-                  ))}
+                  {timeOptions
+                    .filter((time) => time.value <= "22:45")
+                    .map((time) => (
+                      <Option
+                        key={time.value}
+                        value={time.value}
+                        className="py-2 px-3 text-slate-600 transition-colors hover:bg-[#6571FF]/10 hover:text-[#6571FF]"
+                      >
+                        <p className="text-base text-gray-600">{time.label}</p>
+                      </Option>
+                    ))}
                 </Select>
               </div>
             </label>

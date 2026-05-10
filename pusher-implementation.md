@@ -119,31 +119,31 @@ Handles real-time messaging between **companies** that have established collabor
 
 Messages are broadcast to both the **sender's** and **receiver's** company channels so both parties see the update instantly.
 
-| Channel                      | Event     | Payload                                                                                                                        | Description                                                                                                  |
-| ---------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| `company-{fromCompanyId}`    | `message` | `{ fromCompanyId, toCompanyId, senderUserId, message, attachment, requestEstimate, senderUser, createdAt, isOwnMessage: true }` | Delivered to the **sender's** company. `isOwnMessage: true` is used for right-aligning bubbles in the UI.   |
-| `company-{toCompanyId}`      | `message` | Same shape as above but `isOwnMessage: false`                                                                                  | Delivered to the **receiver's** company. `isOwnMessage: false` is used for left-aligning bubbles in the UI. |
+| Channel                   | Event     | Payload                                                                                                                         | Description                                                                                                 |
+| ------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `company-{fromCompanyId}` | `message` | `{ fromCompanyId, toCompanyId, senderUserId, message, attachment, requestEstimate, senderUser, createdAt, isOwnMessage: true }` | Delivered to the **sender's** company. `isOwnMessage: true` is used for right-aligning bubbles in the UI.   |
+| `company-{toCompanyId}`   | `message` | Same shape as above but `isOwnMessage: false`                                                                                   | Delivered to the **receiver's** company. `isOwnMessage: false` is used for left-aligning bubbles in the UI. |
 
 #### F.2 — Chat Track (Sidebar / Last-Message Updates)
 
 After a message is sent, both companies' sidebar lists are updated with the latest message snippet.
 
-| Channel                          | Event       | Payload                                                                                   | Description                                                       |
-| -------------------------------- | ----------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| `company-track-{fromCompanyId}`  | `chat-track` | `CompanyChatTrack` object (`senderCompanyId`, `receiverCompanyId`, `lastMessage`, `isRead`) | Updates the collaboration list sidebar for the **sending** company.   |
-| `company-track-{toCompanyId}`    | `chat-track` | Same `CompanyChatTrack` object                                                             | Updates the collaboration list sidebar for the **receiving** company. |
+| Channel                         | Event        | Payload                                                                                     | Description                                                           |
+| ------------------------------- | ------------ | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `company-track-{fromCompanyId}` | `chat-track` | `CompanyChatTrack` object (`senderCompanyId`, `receiverCompanyId`, `lastMessage`, `isRead`) | Updates the collaboration list sidebar for the **sending** company.   |
+| `company-track-{toCompanyId}`   | `chat-track` | Same `CompanyChatTrack` object                                                              | Updates the collaboration list sidebar for the **receiving** company. |
 
 #### F.3 — Key Implementation Details
 
-| Concern                  | Detail                                                                                                                                                |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **DB Models**            | `CollaborationMessage` (messages), `CompanyChatTrack` (last-message tracking), both store `fromCompanyId` + `toCompanyId` instead of user IDs.       |
-| **Trigger Route**        | [`src/app/api/pusher/collaboration/route.ts`](src/app/api/pusher/collaboration/route.ts) — dedicated `POST` endpoint; validates company IDs and saves to `CollaborationMessage`. |
-| **Subscriber**           | [`src/app/(dashboard)/dashboard/communication/CompanyMessageBox.tsx`](src/app/(dashboard)/dashboard/communication/CompanyMessageBox.tsx) — subscribes to `company-{currentCompanyId}`, binds `message`, updates local state. |
-| **Message Fetch**        | On mount, `CompanyMessageBox` fetches history from `/api/communication/collaboration/messages/v2-messages?companyA=&companyB=&viewerCompanyId=`.       |
-| **Notification**         | On send, `sendCollaborationMessageNotification({ companyId: toCompanyId })` is called to push an in-app notification to the receiver company.          |
-| **Estimate Attachments** | An estimate/invoice can be attached via `InvoiceEstimateModal`, which sends `requestEstimateId` in the body; the receiver sees an inline "Requested an Estimate" card. |
-| **Attachment Upload**    | Files are uploaded to `/api/upload` first, then their URLs are passed as `attachmentFiles[]` in the collaboration push request.                        |
+| Concern                  | Detail                                                                                                                                                                                                                         |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **DB Models**            | `CollaborationMessage` (messages), `CompanyChatTrack` (last-message tracking), both store `fromCompanyId` + `toCompanyId` instead of user IDs.                                                                                 |
+| **Trigger Route**        | [`src/app/api/pusher/collaboration/route.ts`](src/app/api/pusher/collaboration/route.ts) — dedicated `POST` endpoint; validates company IDs and saves to `CollaborationMessage`.                                               |
+| **Subscriber**           | [`src/app/(dashboard)/dashboard/communication/CompanyMessageBox.tsx`](<src/app/(dashboard)/dashboard/communication/CompanyMessageBox.tsx>) — subscribes to `company-{currentCompanyId}`, binds `message`, updates local state. |
+| **Message Fetch**        | On mount, `CompanyMessageBox` fetches history from `/api/communication/collaboration/messages/v2-messages?companyA=&companyB=&viewerCompanyId=`.                                                                               |
+| **Notification**         | On send, `sendCollaborationMessageNotification({ companyId: toCompanyId })` is called to push an in-app notification to the receiver company.                                                                                  |
+| **Estimate Attachments** | An estimate/invoice can be attached via `InvoiceEstimateModal`, which sends `requestEstimateId` in the body; the receiver sees an inline "Requested an Estimate" card.                                                         |
+| **Attachment Upload**    | Files are uploaded to `/api/upload` first, then their URLs are passed as `attachmentFiles[]` in the collaboration push request.                                                                                                |
 
 #### F.4 — Flow Diagram
 

@@ -466,6 +466,7 @@ export async function PUT(
 
     const {
       title,
+      shortDescription,
       description,
       imageUrl,
       items,
@@ -670,6 +671,7 @@ export async function PUT(
           where: { id: serviceId },
           data: {
             title,
+            shortDescription,
             description,
             imageUrl,
             category: categories,

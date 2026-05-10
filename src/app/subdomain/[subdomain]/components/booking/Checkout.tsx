@@ -814,7 +814,7 @@ export const Checkout = () => {
         </div>
       )}
 
-      {!hasPendingBookingPayment && (
+      {!hasPendingBookingPayment && isDepositEnabled && (
         <div className="rounded-xl border bg-card p-4 space-y-3">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             Gift Card Redemption (Optional)
@@ -1085,7 +1085,10 @@ export const Checkout = () => {
             setStep("confirmation");
           }}
           gatewayInfo={{
-            paymentGateway: gatewayInfo?.paymentGateway || "BOTH",
+            paymentGateway: (gatewayInfo?.paymentGateway || "BOTH") as
+              | "STRIPE"
+              | "AUTHORIZE_NET"
+              | "BOTH",
             hasStripe: gatewayInfo?.hasStripe ?? true,
             hasAuthorizeNet: gatewayInfo?.hasAuthorizeNet ?? true,
             tipEnabled: gatewayInfo?.tipEnabled ?? false,

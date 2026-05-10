@@ -1,6 +1,3 @@
-/**
- * HTML email template for OTP
- */
 export function getOTPEmailTemplate(code: string, userName: string): string {
   return `
     <!DOCTYPE html>
@@ -14,27 +11,27 @@ export function getOTPEmailTemplate(code: string, userName: string): string {
         <div style="background: linear-gradient(to right, #4F46E5, #7C3AED); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
           <h1 style="color: white; margin: 0;">Two-Factor Authentication</h1>
         </div>
-        
+
         <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
           <p style="font-size: 16px;">Hello ${userName},</p>
-          
+
           <p style="font-size: 16px;">You've requested to sign in to your account. Please use the verification code below:</p>
-          
+
           <div style="background: white; border: 2px solid #4F46E5; border-radius: 8px; padding: 20px; margin: 30px 0; text-align: center;">
             <p style="margin: 0; font-size: 14px; color: #666; text-transform: uppercase; letter-spacing: 1px;">Verification Code</p>
             <p style="margin: 10px 0 0 0; font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #4F46E5;">${code}</p>
           </div>
-          
+
           <p style="font-size: 14px; color: #666;">
             ⏱️ This code will expire in <strong>10 minutes</strong>.
           </p>
-          
+
           <p style="font-size: 14px; color: #666;">
             🔒 For your security, never share this code with anyone.
           </p>
-          
+
           <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
-          
+
           <p style="font-size: 13px; color: #999;">
             If you didn't request this code, please ignore this email or contact support if you have concerns.
           </p>

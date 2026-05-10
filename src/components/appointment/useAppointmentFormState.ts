@@ -111,6 +111,13 @@ export function useAppointmentFormState({
       : today,
   );
   const [title, setTitle] = useState<string>("");
+
+  // Clear the "title required" error as soon as the user picks a title
+  useEffect(() => {
+    if (title && title.trim()) {
+      clearError();
+    }
+  }, [title]);
   const [notes, setNotes] = useState("");
   const [startTime, setStartTime] = useState("00:00");
   const [endTime, setEndTime] = useState("00:00");

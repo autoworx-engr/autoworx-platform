@@ -9,6 +9,7 @@ import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-servi
 import { revalidatePath } from "next/cache";
 import { updateNewSMSChatTrack } from "./chat-track";
 import { getInfobipConfigById } from "./createInfobipConfig";
+import { sendSMSToAgent } from "@/service/ai-agent/api";
 
 type TInfobipConfig = {
   companyId?: number;
@@ -108,7 +109,14 @@ export async function sendInfobipMessage({
       };
     }
 
-    let to = normalizeUSPhoneNumber(client.mobile!);
+    if (!client.mobile) {
+      return {
+        success: false,
+        error: "Client has no phone number",
+      };
+    }
+
+    let to = normalizeUSPhoneNumber(client.mobile);
 
     if (!to) {
       return {
@@ -294,62 +302,56 @@ export async function sendInfobipMessage({
 
       const infobipResult = await infobipResponse.json();
 
-      const dbMessage = await db.clientSMS.create({
-        data: {
-          from: infobipConfig.phoneNumber,
-          to,
-          message: message ?? "",
-          sentBy: "Company",
-          userId: user?.id,
-          isRead: true,
-          clientId,
-          companyId: infobipConfig.companyId,
-          isSalesAgent,
-        },
+      const data = await db.$transaction(async (tx) => {
+        const created = await tx.clientSMS.create({
+          data: {
+            from: infobipConfig!.phoneNumber,
+            to,
+            message: message ?? "",
+            sentBy: "Company",
+            userId: user?.id,
+            isRead: true,
+            clientId,
+            companyId: infobipConfig!.companyId,
+            isSalesAgent,
+          },
+        });
+
+        if (attachments && attachments.length > 0) {
+          await tx.clientSmsAttachments.createMany({
+            data: attachments.map((file) => ({
+              name: file.name,
+              url: file.url,
+              isVoiceNote: file.isVoiceNote ?? false,
+              clientSMSId: created.id,
+            })),
+          });
+        }
+
+        if (client && client?.isSalesAgent) {
+          await tx.client.update({
+            where: { id: clientId },
+            data: { isSalesAgent: false },
+          });
+        }
+
+        return tx.clientSMS.findFirst({
+          where: { id: created.id },
+          include: { attachments: true },
+        });
       });
 
-      if (client && client?.isSalesAgent) {
-        await db.client.update({
-          where: {
-            id: clientId,
-          },
-          data: {
-            isSalesAgent: false,
-          },
-        });
-      }
-
-      const processedAttachments = [];
-      for (const file of attachments) {
-        let attachment = await db.clientSmsAttachments.create({
-          data: {
-            name: file.name,
-            url: file.url,
-            isVoiceNote: file.isVoiceNote ?? false,
-            clientSMSId: dbMessage.id,
-          },
-        });
-        processedAttachments.push({
-          name: file.name,
-          url: file.url,
-          isVoiceNote: file.isVoiceNote ?? false,
-        });
-      }
+      const processedAttachments = (attachments ?? []).map((file) => ({
+        name: file.name,
+        url: file.url,
+        isVoiceNote: file.isVoiceNote ?? false,
+      }));
 
       await updateNewSMSChatTrack({
         clientId,
         smsLastMessage: message ?? "",
         lastMessageBy: "Company",
         attachments: processedAttachments,
-      });
-
-      let data = await db.clientSMS.findFirst({
-        where: {
-          id: dbMessage.id,
-        },
-        include: {
-          attachments: true,
-        },
       });
 
       try {
@@ -367,20 +369,31 @@ export async function sendInfobipMessage({
         console.error("Pipeline automation trigger error:", error);
       }
 
-      revalidatePath("/dashboard/communication/client");
-      // if (company?.isSalesAgent && client?.isSalesAgent) {
-      //   if (dbMessage && dbMessage.to === infobipConfig.phoneNumber) {
-      //     await sendSMSToAgent({
-      //       company_id: clientId,
-      //       message: dbMessage?.message,
-      //       send_from: dbMessage?.from,
-      //       send_to: dbMessage?.to,
-      //       client_id: infobipConfig?.companyId,
-      //       user_id: user?.id,
-      //     });
+      // const isSalesAgentEnabled = entitlements.awxSalesAgent;
+
+      // const isCompanySalesAgent = company?.isSalesAgent === true;
+      // const isClientSalesAgent = client?.isSalesAgent === true;
+
+      // if (isCompanySalesAgent && isClientSalesAgent && isSalesAgentEnabled) {
+      //   if (data && data?.from === infobipConfig.phoneNumber) {
+      //     try {
+      //       await sendSMSToAgent({
+      //         company_id: client.companyId,
+      //         message: data?.message,
+      //         send_from: data?.from,
+      //         send_to: data?.to,
+      //         client_id: client.id,
+      //       });
+      //     } catch (error) {
+      //       return Response.json(
+      //         { message: `Sales agent error: ${error}` },
+      //         { status: 200 },
+      //       );
+      //     }
       //   }
       // }
 
+      revalidatePath("/dashboard/communication/client/${clientId}");
       return {
         success: true,
         data,

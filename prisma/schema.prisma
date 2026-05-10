@@ -1691,6 +1691,11 @@ model Message {
   @@index([to], name: "fk_messages_to")
   @@index([from], name: "fk_messages_from")
   @@index([groupId], name: "fk_messages_group")
+  // Covering indexes for the paginated internal chat queries:
+  // direct-message thread lookups order by createdAt within a (from, to) pair,
+  // and group-message pages page through messages of one groupId by createdAt.
+  @@index([from, to, createdAt(sort: Desc)], name: "msg_from_to_created")
+  @@index([groupId, createdAt(sort: Desc)], name: "msg_group_created")
 }
 
 model CollaborationMessage {
@@ -2824,8 +2829,9 @@ model AiPersonality {
   matchCustomerTone Boolean @default(true)
   useEmojis         Boolean @default(true)
 
-  openingMessage String? @db.Text
-  systemPrompt   String? @db.Text
+  openingMessage      String? @db.Text
+  systemPrompt        String? @db.Text
+  humanHandoffMessage String? @db.Text @map("human_handoff_message")
 
   @@map("ai_personalities")
 }
@@ -2969,9 +2975,10 @@ model ShopService {
   shop   Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
   // Basic Info
-  title       String  @db.VarChar(255)
-  description String? @db.Text
-  price       Decimal @default(0) @db.Decimal(10, 2)
+  title            String  @db.VarChar(255)
+  shortDescription String? @map("short_description") @db.VarChar(500)
+  description      String? @db.Text
+  price            Decimal @default(0) @db.Decimal(10, 2)
   duration    Int     @default(30) @map("duration_minutes") // Maps to "Est. Time (min)"
 
   // Categorization & Media
@@ -3343,4 +3350,3 @@ model ShopSlotHold {
 
   @@index([shopId, date, expiresAt])
 }
-

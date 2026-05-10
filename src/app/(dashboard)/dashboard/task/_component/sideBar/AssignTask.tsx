@@ -1,58 +1,63 @@
 import Popup from "@/components/Popup";
 import { usePopupStore } from "@/stores/popup";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import FormError from "@/components/FormError";
 import { Task, User } from "@prisma/client";
 import Submit from "@/components/Submit";
 import { assignTask } from "@/actions/task/assignTask";
 import Avatar from "@/components/Avatar";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { taskQueryKey } from "../../_constant";
 import TaskSpinner from "../ui/TaskSpinner";
 import TaskError from "../ui/TaskError";
 import TaskNotFound from "../ui/TaskNotFound";
-import getAllTasks from "@/actions/task/getAllTasks";
-import { ListChecks, UserCog, X } from "lucide-react";
+import { ListChecks, Loader2, UserCog, X } from "lucide-react";
+import useInfinityTaskQuery from "../../_hook/task/query/useInfinityTask";
+import { useInView } from "framer-motion";
 
 export default function AssignTask() {
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const inView = useInView(sentinelRef, { amount: 0.5 });
+
   const {
-    data: tasks = [],
+    data,
     isLoading,
     isError,
-  } = useQuery({
-    queryKey: [taskQueryKey.allTasks],
-    queryFn: async () => {
-      const response = await getAllTasks({
-        select: {
-          id: true,
-          title: true,
-          priority: true,
-          date: true,
-          startTime: true,
-          endTime: true,
-        },
-      });
-      return response.data;
-    },
-  });
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfinityTaskQuery();
+
+  const tasks = data?.pages?.flatMap((page) => page.data) ?? [];
 
   const queryClient = useQueryClient();
-  const { data, close } = usePopupStore();
-  const user = data.user as User;
-  const assignedUserTasks = data.userTasks as Task[];
+  const { data: popupData, close } = usePopupStore();
+  const user = popupData.user as User;
+  const assignedUserTasks = popupData.userTasks as Task[];
 
   const [taskDataInput, setTaskDataInput] = useState<
     { taskId: number; assigned: boolean }[]
   >([]);
 
+  // Add only newly loaded tasks to the input state without resetting existing ones
   useEffect(() => {
-    setTaskDataInput(
-      tasks.map((task) => ({
-        taskId: task.id,
-        assigned: assignedUserTasks.some((userTask) => userTask.id === task.id),
-      }))
-    );
-  }, [tasks, assignedUserTasks]);
+    setTaskDataInput((prev) => {
+      const existingIds = new Set(prev.map((t) => t.taskId));
+      const newEntries = tasks
+        .filter((task) => !existingIds.has(task.id))
+        .map((task) => ({
+          taskId: task.id,
+          assigned: assignedUserTasks.some((ut) => ut.id === task.id),
+        }));
+      return newEntries.length ? [...prev, ...newEntries] : prev;
+    });
+  }, [tasks]);
+
+  useEffect(() => {
+    if (inView && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [inView, hasNextPage, isFetchingNextPage]);
 
   async function handleSubmit() {
     await assignTask({ userId: user.id, tasksToAssign: taskDataInput });
@@ -62,10 +67,10 @@ export default function AssignTask() {
       () => {
         return tasks.filter((task) =>
           taskDataInput.some(
-            (inputTask) => inputTask.taskId === task.id && inputTask.assigned
-          )
+            (inputTask) => inputTask.taskId === task.id && inputTask.assigned,
+          ),
         );
-      }
+      },
     );
 
     close();
@@ -78,10 +83,13 @@ export default function AssignTask() {
   } else if (!isLoading && !isError && tasks && tasks.length === 0) {
     content = <TaskNotFound message="No Tasks found" />;
   } else if (!isLoading && !isError && tasks && tasks.length > 0) {
-    content = taskDataInput.map((task, i) => {
+    const taskMap = new Map(tasks.map((t) => [t.id, t]));
+    content = taskDataInput.map((task) => {
+      const taskInfo = taskMap.get(task.taskId);
+      if (!taskInfo) return null;
       return (
         <label
-          key={i}
+          key={task.taskId}
           className="flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors duration-300 hover:bg-slate-50/50 dark:hover:bg-slate-700/50 ring-1 ring-transparent hover:ring-[#00b8b0] dark:hover:ring-[#0098da]"
         >
           <input
@@ -89,25 +97,19 @@ export default function AssignTask() {
             name="tasks"
             value={task.taskId}
             checked={task.assigned}
-           
             className="form-checkbox h-5 w-5 text-[#00b8b0] rounded-md transition-all duration-200 focus:ring-2 focus:ring-[#0098da] dark:bg-slate-600 dark:checked:bg-[#0098da]"
             onChange={(e) => {
               setTaskDataInput((prev) =>
-                prev.map((prevTask, index) => {
-                  if (index === i) {
-                    return {
-                      taskId: prevTask.taskId,
-                      assigned: e.target.checked,
-                    };
-                  }
-                  return prevTask;
-                })
+                prev.map((prevTask) =>
+                  prevTask.taskId === task.taskId
+                    ? { ...prevTask, assigned: e.target.checked }
+                    : prevTask,
+                ),
               );
             }}
           />
-          {/* Apply professional text color and typography hierarchy */}
           <p className="text-lg font-medium text-slate-700 dark:text-slate-200">
-            {tasks[i].title}
+            {taskInfo.title}
           </p>
         </label>
       );
@@ -115,29 +117,30 @@ export default function AssignTask() {
   }
 
   return (
-   <Popup>
+    <Popup>
       {/* Container with modern, soft shadow and rounded corners */}
       <div className="w-[40rem] p-6 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl shadow-slate-900/10 dark:shadow-slate-900/50 backdrop-blur-sm transition-colors duration-300">
         <div className="relative">
           {/* Main Title - Replaced Emoji with Lucide Icon */}
           <h2 className="flex items-center gap-2 text-xl font-extrabold text-slate-800 dark:text-slate-50 mb-4 border-b border-slate-200 dark:border-slate-700 pb-2">
-             <UserCog className="w-5 h-5 text-[#6571FF]" /> 
-             Assign Tasks to User
+            <UserCog className="w-5 h-5 text-[#6571FF]" />
+            Assign Tasks to User
           </h2>
 
           <FormError />
-          
+
           {/* User Profile Section - Highlighted and clean */}
           <div className="mt-3 flex items-center gap-3 p-3 rounded-xl bg-slate-50/50 dark:bg-slate-700/50 ring-1 ring-slate-200 dark:ring-slate-700">
             <Avatar photo={user.image} width={60} height={60} />
             <div className="flex flex-col">
-                {/* Use the specified text-slate-600 for names/digits, but adjust for dark mode readability */}
-                <p className="text-xl font-bold text-slate-700 dark:text-slate-100">
-                    {user.firstName} {user.lastName}
-                </p>
-                <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                    {user.email} {/* Assuming email is available on User type for context */}
-                </p>
+              {/* Use the specified text-slate-600 for names/digits, but adjust for dark mode readability */}
+              <p className="text-xl font-bold text-slate-700 dark:text-slate-100">
+                {user.firstName} {user.lastName}
+              </p>
+              <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                {user.email}{" "}
+                {/* Assuming email is available on User type for context */}
+              </p>
             </div>
           </div>
 
@@ -149,18 +152,27 @@ export default function AssignTask() {
 
           <form>
             {/* Task List Container - Max height with scroll and subtle glass effect for the scrollable area */}
-            <div className={`
+            <div
+              className={`
                 flex max-h-[15rem] flex-col gap-1 overflow-y-auto p-3 
                 bg-slate-100/30 dark:bg-slate-900/30 rounded-xl ring-1 ring-slate-200 dark:ring-slate-700
                 backdrop-blur-sm
                 transition-shadow duration-300
-            `}>
+            `}
+            >
               {content}
+              <div ref={sentinelRef} className="py-1 flex justify-center gap-2">
+                {isFetchingNextPage && (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-primary" />{" "}
+                    loading more...
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Action Buttons Section - Modern, spaced, and professional */}
             <div className="mt-8 flex justify-center gap-6">
-              
               <Submit
                 formAction={handleSubmit}
                 // Custom Gradient and Hover Effects for Primary Action
@@ -177,7 +189,6 @@ export default function AssignTask() {
                 Assign
               </Submit>
 
-            
               <button
                 type="button"
                 className="

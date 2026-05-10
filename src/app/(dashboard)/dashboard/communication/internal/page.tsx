@@ -3,8 +3,7 @@ import { db } from "@/lib/db";
 import { User } from "@prisma/client";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
-import Body, { TBodyProps } from "./Body";
-import { fetchUsersWithLatestMessages } from "@/actions/communication/internal/fetchUsersWithLatestMessages";
+import Body from "./Body";
 
 export const metadata: Metadata = {
   title: "Communication Hub - Internal",
@@ -20,35 +19,12 @@ export default async function InternalPage(props: {
     throw new Error("Session ID is required");
   }
 
-  // Fetch users with their latest messages using the new action
-  const result = await fetchUsersWithLatestMessages();
-
-  let usersWithLatestMessages: any[] = [];
-  let messages: any[] = [];
-
-  if (result.success && result.data) {
-    usersWithLatestMessages = result.data.users;
-    messages = result.data.messages;
-  } else {
-    // Fallback to old method if the new action fails
-    const users = await db.user.findMany({
-      where: {
-        NOT: {
-          id: parseInt(session?.user?.id),
-        },
-        companyId: session?.user?.companyId,
-      },
-    });
-
-    // Calculate unread message counts per user
-    usersWithLatestMessages = users.map((user) => {
-      return {
-        ...user,
-        unreadCount: 0,
-        latestMessage: null,
-      };
-    });
-  }
+  // The sidebar users list is now driven by `useInfiniteUsersList` on the
+  // client (via react-query), so we no longer eagerly fetch every user +
+  // every message on the server. Pass an empty initial set; the hook picks up
+  // page 1 on mount.
+  const usersWithLatestMessages: any[] = [];
+  const messages: any[] = [];
 
   // Fetch groups (this is still needed)
   const groups = await db.group.findMany({
@@ -56,6 +32,7 @@ export default async function InternalPage(props: {
     include: {
       users: true,
     },
+    orderBy: { updatedAt: "desc" },
   });
 
   // Fetch userChatTrack for compatibility

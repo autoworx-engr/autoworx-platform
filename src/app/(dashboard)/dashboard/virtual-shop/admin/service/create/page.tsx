@@ -10,6 +10,7 @@ type InitialServiceData = {
   id: number;
   serviceInfo: {
     serviceTitle: string;
+    shortDescription: string;
     description: string;
     customDuration: string;
     imageName: string;
@@ -98,6 +99,7 @@ export default async function Page({
       id: shopService.id,
       serviceInfo: {
         serviceTitle: shopService.title || "",
+        shortDescription: shopService.shortDescription || "",
         description: shopService.description || "",
         customDuration: String(shopService.duration ?? ""),
         imageName: "",

@@ -74,6 +74,8 @@ import { InspectionItems } from "./InspectionItems";
 import { InvoiceItems } from "./InvoiceItems";
 import { PayNow } from "./PayNow";
 import { AppointmentCreateOrEdit } from "../appointment/AppointmentCreateOrEdit";
+import { usePermissionStore } from "@/stores/permissionStore";
+import { canAccessEstimate } from "@/utils/permissions";
 
 const DownloadPDF = dynamic(() => import("./DownloadInvoice"), {
   ssr: false,
@@ -152,6 +154,9 @@ export default function InvoiceModalBody({
   const [openGroup, setOpenGroup] = useState<"export" | "share" | null>(null);
   const isExportOpen = openGroup === "export";
   const isShareOpen = openGroup === "share";
+
+  const { permissions } = usePermissionStore();
+  const canEdit = canAccessEstimate(permissions);
 
   // Detect if we're coming from an intercepted route
   const fromInterceptedRoute =
@@ -424,14 +429,34 @@ export default function InvoiceModalBody({
               <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
                 {/* Edit Link */}
                 {isShowEdit && (
-                  <Tooltip title="Edit">
-                    <Link
-                      className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-2 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
-                      href={`/dashboard/estimate/edit/${invoice.id}?clientId=${invoice.clientId}`}
+                  <Tooltip
+                    title={
+                      canEdit ? "Edit" : "You don't have permission to edit"
+                    }
+                  >
+                    <span
+                      className={
+                        !canEdit ? "cursor-not-allowed opacity-50" : undefined
+                      }
                     >
-                      <SquarePen className="h-4 w-4 md:h-5 md:w-5" />
-                      {/* <span className="hidden md:inline">Edit</span> */}
-                    </Link>
+                      <Link
+                        className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-2 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
+                        href={
+                          canEdit
+                            ? `/dashboard/estimate/edit/${invoice.id}?clientId=${invoice.clientId}`
+                            : "#"
+                        }
+                        onClick={(e) => {
+                          if (!canEdit) e.preventDefault();
+                        }}
+                        aria-disabled={!canEdit}
+                        tabIndex={!canEdit ? -1 : undefined}
+                        style={!canEdit ? { pointerEvents: "none" } : undefined}
+                      >
+                        <SquarePen className="h-4 w-4 md:h-5 md:w-5" />
+                        {/* <span className="hidden md:inline">Edit</span> */}
+                      </Link>
+                    </span>
                   </Tooltip>
                 )}
 
@@ -1328,7 +1353,8 @@ export default function InvoiceModalBody({
                     open={isStripeDialogOpen}
                     setOpen={setIsStripeDialogOpen}
                     gatewayInfo={{
-                      paymentGateway: gatewayInfo.paymentGateway || "STRIPE",
+                      paymentGateway: (gatewayInfo.paymentGateway ||
+                        "STRIPE") as "STRIPE" | "AUTHORIZE_NET" | "BOTH",
                       hasStripe: gatewayInfo.hasStripe,
                       hasAuthorizeNet: gatewayInfo.hasAuthorizeNet,
                       tipEnabled: gatewayInfo.tipEnabled ?? false,

@@ -1,8 +1,9 @@
 import React from "react";
 
-type Props = {};
-
-const layout = ({ children, modal }:{
+const layout = ({
+  children,
+  modal,
+}: {
   children: React.ReactNode;
   modal: React.ReactNode;
 }) => {

@@ -63,7 +63,7 @@ export default function AddTaskComponent({ lead }: TProps) {
           isUpdate: true,
         },
       });
-      successToast("Task updated successfully");
+      // successToast("Task updated successfully");
       setIsEditModalOpen(false);
       setEditTaskId(null);
     } catch (err) {

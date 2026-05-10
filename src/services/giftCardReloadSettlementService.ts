@@ -98,6 +98,7 @@ export async function settleGiftCardReloadPayment(
         id: true,
         status: true,
         currentBalance: true,
+        purchaserName: true,
       },
     });
 
@@ -136,6 +137,7 @@ export async function settleGiftCardReloadPayment(
               ...paymentNotes,
               reloadApplied: true,
               reloadedGiftCardId: giftCard.id,
+              purchaserName: giftCard.purchaserName || undefined,
             }),
           },
         });
@@ -181,6 +183,7 @@ export async function settleGiftCardReloadPayment(
           ...paymentNotes,
           reloadApplied: true,
           reloadedGiftCardId: giftCard.id,
+          purchaserName: giftCard.purchaserName || undefined,
         }),
       },
     });

@@ -66,7 +66,6 @@ export function SlimInput({
       <div className="relative">
         <input
           id={inputId}
-          type="text"
           required={required}
           className={cn(
             slimInputClassName,

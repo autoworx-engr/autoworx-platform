@@ -76,7 +76,7 @@ export default function GoogleReviewSettings({
   return (
     <div className="mt-4">
       <h2 className="my-2 text-xl font-semibold">Google Review</h2>
-      <div className="space-y-3 rounded-sm border p-5">
+      <div className="space-y-3 rounded-lg border border-gray-200 p-5">
         <SlimInput
           error={error}
           value={reviewLink}

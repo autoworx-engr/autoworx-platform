@@ -83,6 +83,7 @@ export async function GET(
           select: {
             tax: true,
             serviceFee: true,
+            phone: true,
           },
         },
       },
