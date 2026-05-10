@@ -1,7 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { customAlphabet } from "nanoid";
+import { createDraftEstimate } from "@/actions/estimate/invoice/createDraft";
 import {
   AlertTriangle,
   Car,
@@ -17,6 +20,7 @@ import {
   FileText,
   Loader2,
   X,
+  Receipt,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -107,8 +111,10 @@ export default function UrgentRequestDetail({
   accessToken,
   shopId,
 }: Props) {
+  const router = useRouter();
   const [request, setRequest] = useState(initialRequest);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [pendingEstimate, startTransition] = useTransition();
   const [adminNotes, setAdminNotes] = useState(request.adminNotes ?? "");
   const [rejectionReason, setRejectionReason] = useState(
     request.rejectionReason ?? "",
@@ -162,6 +168,42 @@ export default function UrgentRequestDetail({
     } finally {
       setIsUpdating(false);
     }
+  };
+
+  const handleQuickEstimate = () => {
+    const clientId = request?.client?.id;
+    if (!clientId) {
+      errorToast("Client not found for this request. Cannot create estimate.");
+      return;
+    }
+
+    startTransition(async () => {
+      try {
+        const draftId = customAlphabet("1234567890", 10)();
+        const res = await createDraftEstimate({
+          id: draftId,
+          clientId,
+          vehicleId: request?.vehicle?.id,
+          requestedServices: Array.isArray(request.requestedServices)
+            ? request.requestedServices.map((s) => ({
+                shopServiceId: s.shopServiceId,
+                vehicleType: s.vehicleType,
+              }))
+            : [],
+        });
+
+        if (res.type === "success") {
+          successToast("Draft estimate created successfully");
+          router.push(
+            `/dashboard/estimate/edit/${res.data.id}?clientId=${request?.client?.id}`,
+          );
+        } else {
+          errorToast("Failed to create estimate");
+        }
+      } catch (err) {
+        errorToast("Error creating estimate");
+      }
+    });
   };
 
   const handleSaveNotes = async () => {
@@ -305,9 +347,30 @@ export default function UrgentRequestDetail({
           {/* Services */}
           {requestedServices.length > 0 && (
             <section className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm space-y-3">
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400">
-                Requested Services ({requestedServices.length})
-              </h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400">
+                  Requested Services ({requestedServices.length})
+                </h2>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 gap-1.5 text-xs font-semibold text-[#6571FF] border-[#6571FF]/20 hover:bg-[#6571FF]/5"
+                  onClick={handleQuickEstimate}
+                  disabled={pendingEstimate || !request.client?.id}
+                  title={
+                    !request.client?.id
+                      ? "Client profile is required to create an estimate"
+                      : undefined
+                  }
+                >
+                  {pendingEstimate ? (
+                    <Loader2 size={13} className="animate-spin" />
+                  ) : (
+                    <Receipt size={13} />
+                  )}
+                  Quick Estimate
+                </Button>
+              </div>
               <div className="space-y-2">
                 {requestedServices.map((svc: any, i: number) => (
                   <div
@@ -315,7 +378,7 @@ export default function UrgentRequestDetail({
                     className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700"
                   >
                     <CheckCircle size={14} className="text-[#6571FF]" />
-                    <span>Service #{svc.shpServiceId ?? i + 1}</span>
+                    <span>Service #{svc.shopServiceId ?? i + 1}</span>
                     {svc.vehicleType && (
                       <Badge className="bg-slate-100 text-slate-500 border-slate-200 text-[10px]">
                         {svc.vehicleType}

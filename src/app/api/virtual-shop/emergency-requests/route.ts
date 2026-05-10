@@ -193,7 +193,7 @@ const schema = z.object({
   requestedServices: z
     .array(
       z.object({
-        shpServiceId: z.number().int().positive().optional(),
+        shopServiceId: z.number().int().positive().optional(),
         vehicleType: z
           .enum(["Coupe", "Sedan", "SUV", "Truck"])
           .optional()
@@ -315,7 +315,7 @@ const DEFAULT_REVIEW_TIME = "Within 30 minutes";
  *                 items:
  *                   type: object
  *                   properties:
- *                     shpServiceId:
+ *                     shopServiceId:
  *                       type: integer
  *                       example: 7
  *                     vehicleType:

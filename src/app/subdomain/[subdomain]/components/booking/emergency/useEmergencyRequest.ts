@@ -102,7 +102,7 @@ export function useEmergencyRequest(
             }
           : undefined,
       requestedServices: cartServices.map((s) => ({
-        shpServiceId: s.serviceId,
+        shopServiceId: s.serviceId,
         vehicleType: s.vehicleType ?? undefined,
       })),
     };
