@@ -78,11 +78,10 @@ export const updateEmailTemplate = async (
     let updatedTemplate;
     if (id) {
       updatedTemplate = await db.companyEmailTemplate.update({
-        where: { id },
+        where: { id, companyId: user.companyId },
         data: {
           subject: validatedData.subject,
           message: validatedData.message,
-          companyId: user.companyId,
         },
       });
     } else {

@@ -45,7 +45,7 @@ const BookingGenerate = ({ companyId }: { companyId?: string }) => {
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl mt-10">
+    <div className="mx-auto w-full max-w-6xl mt-4">
       <h2 className="mb-4 text-xl font-semibold text-gray-500 sm:text-2xl">
         Booking form
       </h2>
