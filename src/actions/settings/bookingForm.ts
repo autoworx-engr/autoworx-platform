@@ -12,19 +12,20 @@ export async function getBooking(companyId: number) {
     });
     return bookings;
   } catch (error) {
-    console.log("Error fetching booking form settings", error);
+    console.error("Error fetching booking form settings", error);
     throw error;
   }
 }
 
 export async function getBookingFormById(bookingFormId: number) {
   try {
-    const booking = await db.bookingForm.findUnique({
-      where: { id: bookingFormId },
+    const companyId = await getCompanyId();
+    const booking = await db.bookingForm.findFirst({
+      where: { id: bookingFormId, companyId },
     });
     return booking;
   } catch (error) {
-    console.log("Error fetching booking form settings", error);
+    console.error("Error fetching booking form settings", error);
     throw error;
   }
 }
@@ -36,13 +37,17 @@ export async function updateBookingForm(
   >,
 ) {
   try {
-    const updatedBookingForm = await db.bookingForm.update({
-      where: { id: bookingId },
+    const companyId = await getCompanyId();
+    await db.bookingForm.updateMany({
+      where: { id: bookingId, companyId },
       data: { ...data },
+    });
+    const updatedBookingForm = await db.bookingForm.findFirst({
+      where: { id: bookingId, companyId },
     });
     return updatedBookingForm;
   } catch (error) {
-    console.log("Error updating booking form settings", error);
+    console.error("Error updating booking form settings", error);
     throw error;
   }
 }
@@ -78,7 +83,7 @@ export async function initialCreateBookingForm(
     });
     return updatedBookingForm;
   } catch (error) {
-    console.log("Error creating booking form", error);
+    console.error("Error creating booking form", error);
     throw error;
   }
 }

@@ -200,9 +200,10 @@ export async function saveAuthorizeNetCredentials(
   }
 }
 
-export async function getAuthorizeNetStatus(companyId: number) {
+export async function getAuthorizeNetStatus() {
   try {
-    if (!companyId) throw new Error("Company ID not found");
+    const user = await getUser();
+    const companyId = user.companyId;
 
     const company = await db.company.findUnique({
       where: { id: companyId },
@@ -242,9 +243,10 @@ export async function getAuthorizeNetStatus(companyId: number) {
   }
 }
 
-export async function updateTipEnabled(companyId: number, enabled: boolean) {
+export async function updateTipEnabled(enabled: boolean) {
   try {
-    if (!companyId) throw new Error("Company ID not found");
+    const user = await getUser();
+    const companyId = user.companyId;
 
     await db.company.update({
       where: { id: companyId },
@@ -262,11 +264,11 @@ export async function updateTipEnabled(companyId: number, enabled: boolean) {
 }
 
 export async function updatePaymentGateway(
-  companyId: number,
   gateway: "STRIPE" | "AUTHORIZE_NET" | "BOTH",
 ) {
   try {
-    if (!companyId) throw new Error("Company ID not found");
+    const user = await getUser();
+    const companyId = user.companyId;
 
     await db.company.update({
       where: { id: companyId },
@@ -283,9 +285,10 @@ export async function updatePaymentGateway(
   }
 }
 
-export async function removeAuthorizeNetCredentials(companyId: number) {
+export async function removeAuthorizeNetCredentials() {
   try {
-    if (!companyId) throw new Error("Company ID not found");
+    const user = await getUser();
+    const companyId = user.companyId;
 
     await db.company.update({
       where: { id: companyId },

@@ -32,6 +32,7 @@ export default async function InternalPage(props: {
     include: {
       users: true,
     },
+    orderBy: { updatedAt: "desc" },
   });
 
   // Fetch userChatTrack for compatibility

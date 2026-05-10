@@ -63,6 +63,7 @@ export default function ServicesTab({
       (servicesResponse?.data ?? []).map((item) => ({
         id: item.id,
         name: item.title,
+        shortDescription: item.shortDescription || undefined,
         category: item.category?.[0],
         price: Number(item.price ?? 0),
         duration: Number(item.duration ?? 0),

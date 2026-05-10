@@ -1,13 +1,15 @@
 import Image from "next/image";
-import { ImageIcon, Loader2, SquarePen, Trash2 } from "lucide-react";
+import { ImageIcon, SquarePen, Trash2 } from "lucide-react";
 import { Popconfirm, Tooltip } from "antd";
 import { Switch } from "@/components/Switch";
 import { useRouter } from "nextjs-toploader/app";
 import { useUpdateShopServiceStatus } from "@/hooks/virtual-shop/service/useShopService";
+import { formatDuration } from "@/lib/formatDuration";
 
 export type Service = {
   id: number;
   name: string;
+  shortDescription?: string;
   category: string;
   price: number;
   duration: number;
@@ -87,12 +89,19 @@ export default function ServiceCard({
                 </span>
               )}
             </div>
+            {service.shortDescription && (
+              <p className="line-clamp-1 text-xs text-slate-400">
+                {service.shortDescription}
+              </p>
+            )}
             <div className="flex items-center gap-2 text-xs sm:text-sm">
               <span className="font-semibold text-slate-700">
                 ${service.price}
               </span>
               <span className="text-slate-400">•</span>
-              <span className="text-slate-500">{service.duration} min</span>
+              <span className="text-slate-500">
+                {formatDuration(service.duration)}
+              </span>
             </div>
           </div>
         </div>

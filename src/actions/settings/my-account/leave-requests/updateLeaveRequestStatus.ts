@@ -20,6 +20,7 @@ export const updateLeaveRequestStatus = async (
     const updatedLeaveRequest = await db.leaveRequest.update({
       where: {
         id: leaveRequestId,
+        companyId: user.companyId,
       },
       data: {
         status,

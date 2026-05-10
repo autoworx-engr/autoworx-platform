@@ -5,6 +5,7 @@ import { CircleCheckBig, CircleAlert } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 import {
   saveAuthorizeNetCredentials,
   removeAuthorizeNetCredentials,
@@ -12,7 +13,6 @@ import {
 import { successToast, errorToast } from "@/lib/toast";
 
 interface AuthorizeNetConfigProps {
-  companyId: number;
   isConfigured: boolean;
   hasApiLoginId: boolean;
   hasSignatureKey: boolean;
@@ -23,7 +23,6 @@ interface AuthorizeNetConfigProps {
 }
 
 export default function AuthorizeNetConfig({
-  companyId,
   isConfigured,
   hasApiLoginId,
   hasSignatureKey,
@@ -77,7 +76,7 @@ export default function AuthorizeNetConfig({
 
     setIsLoading(true);
     try {
-      const result = await removeAuthorizeNetCredentials(companyId);
+      const result = await removeAuthorizeNetCredentials();
 
       if (result.success) {
         successToast("Credentials removed successfully");
@@ -102,11 +101,19 @@ export default function AuthorizeNetConfig({
       </div>
       <div className="flex flex-col items-center px-6 py-8">
         <div className="mb-5 flex items-center gap-3">
-          <img src="/icons/Logo2.png" alt="Autoworx" className="h-10 w-10" />
+          <Image
+            src="/icons/Logo2.png"
+            alt="Autoworx"
+            width={40}
+            height={40}
+            className="h-10 w-10"
+          />
           <span className="mx-4 text-2xl">↔️</span>
-          <img
+          <Image
             src="/icons/authorizenet.png"
             alt="Authorize.Net"
+            width={112}
+            height={40}
             className="w-28"
           />
         </div>

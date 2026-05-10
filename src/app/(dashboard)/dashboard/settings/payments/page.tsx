@@ -1,7 +1,6 @@
 "use client";
 
 import { useServerGet } from "@/hooks/useServerGet";
-import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { getStripeAccount } from "./stripe";
 import {
@@ -20,22 +19,12 @@ import { successToast, errorToast } from "@/lib/toast";
 import { getPaymentGatewayInfo } from "./getPaymentGatewayInfo";
 
 export default function PaymentsPage() {
-  const { data: session } = useSession();
-  // @ts-ignore
-  const companyId = session?.user?.companyId;
-
-  const { data: stripeData, loading: stripeLoading } = useServerGet(
-    getStripeAccount,
-    companyId,
-  );
+  const { data: stripeData, loading: stripeLoading } =
+    useServerGet(getStripeAccount);
   const { data: authorizeNetData, loading: authorizeNetLoading } = useServerGet(
     getAuthorizeNetStatus,
-    companyId,
   );
-  const { data: paymentGatewayInfo } = useServerGet(
-    getPaymentGatewayInfo,
-    companyId,
-  );
+  const { data: paymentGatewayInfo } = useServerGet(getPaymentGatewayInfo);
 
   const [selectedGateway, setSelectedGateway] = useState<string>(
     paymentGatewayInfo?.paymentGateway || "STRIPE",
@@ -55,30 +44,25 @@ export default function PaymentsPage() {
 
   const handleGatewayChange = async (value: string) => {
     setSelectedGateway(value);
-    if (companyId) {
-      const result = await updatePaymentGateway(
-        companyId,
-        value as "STRIPE" | "AUTHORIZE_NET",
-      );
-      if (result.success) {
-        successToast("Payment gateway updated");
-      } else {
-        errorToast(result.message || "Failed to update payment gateway");
-      }
+    const result = await updatePaymentGateway(
+      value as "STRIPE" | "AUTHORIZE_NET" | "BOTH",
+    );
+    if (result.success) {
+      successToast("Payment gateway updated");
+    } else {
+      errorToast(result.message || "Failed to update payment gateway");
     }
   };
 
   const handleTipToggle = async () => {
     const newValue = !tipEnabled;
     setTipEnabled(newValue);
-    if (companyId) {
-      const result = await updateTipEnabled(companyId, newValue);
-      if (result.success) {
-        successToast(newValue ? "Tip option enabled" : "Tip option disabled");
-      } else {
-        setTipEnabled(!newValue);
-        errorToast(result.message || "Failed to update tip setting");
-      }
+    const result = await updateTipEnabled(newValue);
+    if (result.success) {
+      successToast(newValue ? "Tip option enabled" : "Tip option disabled");
+    } else {
+      setTipEnabled(!newValue);
+      errorToast(result.message || "Failed to update tip setting");
     }
   };
 
@@ -225,8 +209,6 @@ export default function PaymentsPage() {
         {/* Authorize.Net */}
         {!authorizeNetLoading && (
           <AuthorizeNetConfig
-            // @ts-ignore
-            companyId={companyId || 0}
             isConfigured={authorizeNetData?.configured || false}
             hasApiLoginId={authorizeNetData?.hasApiLoginId || false}
             hasSignatureKey={authorizeNetData?.hasSignatureKey || false}
