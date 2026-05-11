@@ -23,6 +23,7 @@ import { deleteRemindersInNest } from "./deleteAppointment";
 import { sendInfobipMessage } from "../communication/client/sendInfobipMessage";
 import { sendTwilioMessage } from "../communication/client/sendTwilioMessage";
 import { revalidatePath } from "next/cache";
+import { createDraftEstimate } from "@/actions/estimate/invoice/createDraft";
 
 export interface AppointmentToUpdate {
   title: string;
@@ -56,34 +57,17 @@ export async function editAppointment({
       throw new Error("Company ID is required to create an email template.");
     }
 
-    if (appointment.draftEstimate) {
-      // Check if the draftEstimate is same as the previous one
+    if (appointment.draftEstimate && appointment.clientId) {
       const existingAppointment = await db.appointment.findUnique({
-        where: {
-          id,
-        },
+        where: { id },
       });
 
       if (existingAppointment?.draftEstimate !== appointment.draftEstimate) {
-        // Create draft estimate (if doesn't exist)
-        const draftEstimate = await db.invoice.findFirst({
-          where: {
-            id: appointment.draftEstimate,
-          },
+        await createDraftEstimate({
+          id: appointment.draftEstimate,
+          clientId: appointment.clientId,
+          vehicleId: appointment.vehicleId,
         });
-
-        if (!draftEstimate) {
-          await db.invoice.create({
-            data: {
-              id: appointment.draftEstimate,
-              type: "Estimate",
-              clientId: appointment.clientId,
-              vehicleId: appointment.vehicleId,
-              userId: Number(session.user.id),
-              companyId,
-            },
-          });
-        }
       }
     }
 

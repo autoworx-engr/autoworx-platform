@@ -48,11 +48,14 @@ Index of every file created or modified during the copilot build.
 
 ## Modified files
 
-| Path                                     | Phase | Change                                     |
-| ---------------------------------------- | ----- | ------------------------------------------ |
-| `prisma/schema.prisma`                   | 0a    | Added User.hasCopilot + 3 models + 2 enums |
-| `src/app/api/lead-generate/route.ts`     | 0a    | Extracted DB logic to helper               |
-| `src/actions/lead/createLeadFromForm.ts` | 0a    | Direct createLead call                     |
+| Path                                                                                | Phase | Change                                                               |
+| ----------------------------------------------------------------------------------- | ----- | -------------------------------------------------------------------- |
+| `prisma/schema.prisma`                                                              | 0a    | Added User.hasCopilot + 3 models + 2 enums                           |
+| `src/app/api/lead-generate/route.ts`                                                | 0a    | Extracted DB logic to helper                                         |
+| `src/actions/lead/createLeadFromForm.ts`                                            | 0a    | Direct createLead call                                               |
+| `src/actions/appointment/addAppointment.ts`                                         | 0.5   | Replaced inline draft-estimate logic with `createDraftEstimate` call |
+| `src/actions/appointment/editAppointment.ts`                                        | 0.5   | Replaced inline draft-estimate logic; fixes invisible-estimate bug   |
+| `src/app/(dashboard)/dashboard/pipeline/sales/pipeline/_components/LeadActions.tsx` | 0.5   | Removed stale `createDraftEstimate` import                           |
 
 ---
 

@@ -5,6 +5,42 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Phase 0.5 — Draft estimate path consolidation
+
+**Date:** 2026-05-11
+**Branch:** taiseer/ai-copilot
+
+### Files modified
+
+| File                                                                                | Change                                                                                                                                                                               |
+| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `src/actions/appointment/addAppointment.ts`                                         | Inline draft-estimate creation (lines 106–141) replaced with call to `createDraftEstimate` action                                                                                    |
+| `src/actions/appointment/editAppointment.ts`                                        | Inline draft-estimate creation (lines 59–88) replaced with call to `createDraftEstimate` action. Fixes pre-existing bug where edit-appointment created estimates without `columnId`. |
+| `src/app/(dashboard)/dashboard/pipeline/sales/pipeline/_components/LeadActions.tsx` | Removed stale `createDraftEstimate` import (no longer used by active handler)                                                                                                        |
+
+### Latent bug fixed
+
+`editAppointment.ts` was creating draft estimates without a `columnId`, meaning the estimates would not appear in any shop pipeline column — invisible in the UI. Users who edited an appointment to add a draft estimate would create an "orphan" estimate. Consolidating to `createDraftEstimate` fixes this by reusing its proper column lookup logic (`title: "Pending", type: "shop"`).
+
+Additionally, `addAppointment.ts` was querying the Pending column without the `type: "shop"` filter, risking matching a non-shop column. This is also corrected by delegation to `createDraftEstimate`.
+
+### Flagged for team review (NOT changed in this commit)
+
+1. **Path 1 vs Path 2 automation asymmetry:** `createLeadDraftEstimate` (used by pipeline) does NOT trigger `updateInvoiceAutomationTrigger`; `createDraftEstimate` (used by client panel and now by appointments) DOES. One is likely incorrect — team should confirm which behavior is canonical.
+2. **Non-transactional appointment-then-invoice creation:** `addAppointment` creates the appointment record first, commits, then creates the invoice. If invoice creation fails, the appointment has a dangling `draftEstimate` reference pointing to a non-existent invoice. Out of scope for this PR; flagged for a future cleanup.
+
+### Verification
+
+- ✓ `yarn tsc --noEmit` — 0 errors
+- ✓ `yarn build` — clean (139s)
+- ✓ Create appointment without estimate — appointment created, no phantom invoice
+- ✓ Create appointment with estimate — invoice created with `columnId`, appears in Pending column
+- ✓ Edit appointment to add estimate — invoice created with `columnId`, appears in Pending (bug fix verified)
+- ✓ Pipeline lead-to-estimate — still works (Path 1 unchanged)
+- ✓ Client panel create estimate — still works (Path 2 unchanged)
+
+---
+
 ## Phase 0b — Core helper libraries
 
 **Date:** 2026-05-11

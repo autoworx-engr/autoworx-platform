@@ -15,6 +15,7 @@ import { sendAppointmentConfirmation } from "./appointmentNotifications";
 import { scheduleRemindersInNest } from "./appointmentReminderScheduler";
 import { syncAppointmentToGoogleCalendar } from "./appointmentCalendarSync";
 import { revalidatePath } from "next/cache";
+import { createDraftEstimate } from "@/actions/estimate/invoice/createDraft";
 
 export interface AppointmentToAdd {
   title: string;
@@ -102,42 +103,12 @@ export async function addAppointment(
       });
     }
 
-    // TODO: use `createDraftEstimate` action
-    if (appointment.draftEstimate) {
-      const draftEstimate = await db.invoice.findFirst({
-        where: { id: appointment.draftEstimate },
+    if (appointment.draftEstimate && appointment.clientId) {
+      await createDraftEstimate({
+        id: appointment.draftEstimate,
+        clientId: appointment.clientId,
+        vehicleId: appointment.vehicleId,
       });
-
-      const pendingColumn = await db.column.findFirst({
-        where: { title: "Pending", companyId },
-      });
-
-      if (!pendingColumn) {
-        throw new Error(
-          "Pending column not found for draft estimate at new appointment",
-        );
-      }
-
-      if (!draftEstimate) {
-        await db.invoice.create({
-          data: {
-            id: appointment.draftEstimate,
-            type: "Estimate",
-            clientId: appointment.clientId,
-            vehicleId: appointment.vehicleId,
-            userId: Number(userId),
-            companyId,
-            columnId: pendingColumn.id,
-          },
-        });
-
-        if (client?.Lead?.id) {
-          await db.lead.update({
-            where: { id: client.Lead.id },
-            data: { isEstimateCreated: true },
-          });
-        }
-      }
     }
 
     const [vehicle, company, confirmationEmailTemplate] = await Promise.all([
