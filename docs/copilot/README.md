@@ -18,6 +18,10 @@ Start here:
 3. [TOOL_REGISTRY.md](./TOOL_REGISTRY.md) — every copilot tool spec
 4. [PRISMA_SCHEMA.md](./PRISMA_SCHEMA.md) — DB models (migration applied)
 
+## For the dev team
+
+- [BUILD_STATUS_FOR_DEV_TEAM.md](./BUILD_STATUS_FOR_DEV_TEAM.md) — current build status, decisions needed, deferred work
+
 ## Historical
 
 - [RECON_REPORT.md](./RECON_REPORT.md) — initial codebase recon (reference only)
@@ -27,5 +31,3 @@ Start here:
 **Phases 0a, 0.5, 1, 1.1, 1.2, 2 complete** on branch `taiseer/ai-copilot`. Paused for team architecture review before Phase 3.
 
 Phase 3 (write tools) is blocked on an architecture decision — see REVIEWER_GUIDE.md § "Architecture decision needed before Phase 3".
-
-<!-- BUILD_STATUS_FOR_DEV_TEAM.md — team-facing status doc, to be added -->
