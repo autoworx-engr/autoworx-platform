@@ -53,10 +53,16 @@ export default function CallForwardingSettings({
       errorToast("Please enter a phone number");
       return;
     }
+    if (!/^\+\d{8,15}$/.test(trimmed)) {
+      errorToast(
+        "Use E.164 format (e.g. +14155551234) — 8–15 digits with a leading +.",
+      );
+      return;
+    }
 
     try {
       setIsLoading(true);
-      const result = await updateCallForwardingNumber(forwardingNumber);
+      const result = await updateCallForwardingNumber(trimmed);
 
       if (result.type === "success") {
         successToast("Call forwarding number saved successfully");

@@ -179,19 +179,21 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const clientId = parseInt(clientIdParam);
-    const page = pageParam ? parseInt(pageParam) : 1;
-    const skip = (page - 1) * 20;
-    const take = takeParam ? parseInt(takeParam) : 20;
+    const clientId = parseInt(clientIdParam, 10);
+    const parsedPage = pageParam ? parseInt(pageParam, 10) : 1;
+    const parsedTake = takeParam ? parseInt(takeParam, 10) : 20;
 
-    if (isNaN(clientId) || isNaN(page) || isNaN(take)) {
+    if (isNaN(clientId) || isNaN(parsedPage) || isNaN(parsedTake)) {
       return NextResponse.json(
         { success: false, message: "Invalid parameters" },
         { status: 400 },
       );
     }
 
-    // Verify the client belongs to the caller's company before exposing history
+    const page = Math.max(1, parsedPage);
+    const take = Math.min(Math.max(1, parsedTake), 100);
+    const skip = (page - 1) * take;
+
     const client = await db.client.findFirst({
       where: { id: clientId, companyId },
       select: { id: true },
@@ -203,16 +205,30 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    let calls = await db.clientCall.findMany({
-      where: {
-        clientId: clientId,
-        companyId,
+    const calls = await db.clientCall.findMany({
+      where: { clientId, companyId },
+      select: {
+        id: true,
+        callSid: true,
+        from: true,
+        to: true,
+        status: true,
+        direction: true,
+        duration: true,
+        recordingUrl: true,
+        recordingSid: true,
+        callStartTime: true,
+        callEndTime: true,
+        sentBy: true,
+        userId: true,
+        companyId: true,
+        clientId: true,
+        createdAt: true,
+        updatedAt: true,
       },
-      skip: skip,
-      take: take,
-      orderBy: {
-        createdAt: "desc",
-      },
+      skip,
+      take,
+      orderBy: { createdAt: "desc" },
     });
 
     const enrichedCalls = calls.map((call) => {
@@ -236,12 +252,10 @@ export async function GET(req: NextRequest) {
       message: "Call history retrieved successfully",
       data: enrichedCalls,
     });
-  } catch (error: any) {
+  } catch (error) {
+    console.error("[get-call-history] error:", error);
     return NextResponse.json(
-      {
-        success: false,
-        message: error.message || "Failed to retrieve call history",
-      },
+      { success: false, message: "Failed to retrieve call history" },
       { status: 500 },
     );
   }
