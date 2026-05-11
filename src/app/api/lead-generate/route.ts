@@ -242,22 +242,38 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    console.log("[lead-generate] opening message check", {
+      companyId: newLead.companyId,
+      clientId: client?.id,
+      clientMobile: client?.mobile,
+      smsGateway: company?.smsGateway,
+      personalityFound: !!personality,
+      openingMessage: personality?.openingMessage ?? null,
+    });
+
     if (personality?.openingMessage && client) {
       if (company?.smsGateway === "TWILIO") {
+        console.log("[lead-generate] sending opening message via Twilio");
         await sendTwilioMessage({
           companyId: newLead.companyId,
-          clientId: client?.id,
-          message: personality?.openingMessage,
+          clientId: client.id,
+          message: personality.openingMessage,
           attachments: [],
         });
       } else {
+        console.log("[lead-generate] sending opening message via Infobip");
         await sendInfobipMessage({
-          companyId: body.companyId,
-          clientId: body.clientId,
-          message: body.message,
+          companyId: newLead.companyId,
+          clientId: client.id,
+          message: personality.openingMessage,
           attachments: [],
         });
       }
+      console.log("[lead-generate] opening message sent successfully");
+    } else {
+      console.log(
+        "[lead-generate] skipping opening message — personality or openingMessage missing",
+      );
     }
 
     return jsonResponse(
