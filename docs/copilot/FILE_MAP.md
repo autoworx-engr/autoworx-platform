@@ -8,15 +8,20 @@ Index of every file created or modified during the copilot build.
 
 ### src/lib/
 
-| Path                                | Purpose                         |
-| ----------------------------------- | ------------------------------- |
-| `src/lib/leads/createLeadRecord.ts` | Pure DB logic for lead creation |
+| Path                                       | Purpose                                                     |
+| ------------------------------------------ | ----------------------------------------------------------- |
+| `src/lib/leads/createLeadRecord.ts`        | Pure DB logic for lead creation (Phase 0a)                  |
+| `src/lib/anthropic.ts`                     | Anthropic SDK singleton + pinned model constants (Phase 0b) |
+| `src/lib/copilot/audit.ts`                 | PII-redacting audit log writer (Phase 0b)                   |
+| `src/lib/copilot/normalizeActionResult.ts` | Server action response normalizer (Phase 0b)                |
+| `src/lib/copilot/canUserDo.ts`             | Permission check for all copilot actions (Phase 0b)         |
 
 ### src/actions/
 
-| Path                             | Purpose                                   |
-| -------------------------------- | ----------------------------------------- |
-| `src/actions/lead/createLead.ts` | Session-auth wrapper for createLeadRecord |
+| Path                                           | Purpose                                          |
+| ---------------------------------------------- | ------------------------------------------------ |
+| `src/actions/lead/createLead.ts`               | Session-auth wrapper for createLeadRecord (0a)   |
+| `src/actions/estimate/invoice/sendEstimate.ts` | Unified email/SMS send with audit log (Phase 0b) |
 
 ### prisma/
 
@@ -51,9 +56,9 @@ Index of every file created or modified during the copilot build.
 
 ---
 
-## Module dependency graph (Phase 0a)
+## Module dependency graph
 
-Lead creation paths:
+### Phase 0a — Lead creation paths
 
 In-platform (thunderbolt form):
 
@@ -65,4 +70,17 @@ External webhook:
 
 ```
 /api/lead-generate route → createLeadRecord.ts → DB
+```
+
+### Phase 0b — Helper dependency graph
+
+```
+sendEstimate.ts → sendInvoiceEmail.ts / sendInvoiceSms.ts
+              → normalizeActionResult.ts
+              → audit.ts → db
+              → getEssentials() → getServerSession
+
+canUserDo.ts → getPermissions.ts → db
+
+anthropic.ts  (leaf — no local dependencies, reads ANTHROPIC_API_KEY at runtime)
 ```

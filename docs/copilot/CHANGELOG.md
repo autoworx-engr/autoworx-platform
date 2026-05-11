@@ -5,6 +5,47 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Phase 0b — Core helper libraries
+
+**Date:** 2026-05-11
+**Branch:** taiseer/ai-copilot
+
+### Files created
+
+| File                                           | Purpose                                                             |
+| ---------------------------------------------- | ------------------------------------------------------------------- |
+| `src/lib/anthropic.ts`                         | Lazy-initialized Anthropic SDK singleton; pinned model ID constants |
+| `src/lib/copilot/audit.ts`                     | PII-redacting audit log writer; never throws                        |
+| `src/lib/copilot/normalizeActionResult.ts`     | Normalizes all server action response shapes to a single union      |
+| `src/lib/copilot/canUserDo.ts`                 | Maps 20 copilot action strings to AWX permission field checks       |
+| `src/actions/estimate/invoice/sendEstimate.ts` | Unified estimate/invoice send: email or SMS, with audit log         |
+
+### Packages added
+
+| Package             | Version | Purpose              |
+| ------------------- | ------- | -------------------- |
+| `@anthropic-ai/sdk` | ^0.95.1 | Anthropic API client |
+
+### Key design decisions
+
+- `canUserDo` uses `compPerm()` helper to safely access `companyPermissions` fields
+  across all 5 role variants — `PermissionForTechnician` is missing several fields
+  that other role types have (TypeScript union narrowing issue)
+- `normalizeError` return type is `Extract<NormalizedResult, { ok: false }>` to allow
+  direct `.error` access without an `if (!ok)` guard at call sites
+- `sendEstimate` `invoiceId` uses `z.string()` not `z.number()` — Invoice.id is a
+  String cuid, not an integer
+- `AuditActor` enum values are lowercase (`copilot`, not `COPILOT`)
+- Client phone field is `mobile` not `phone` in the Prisma model
+
+### Tests performed
+
+- ✓ `yarn tsc --noEmit` — 0 errors
+- ✓ `yarn build` — passes (99s)
+- ✓ Smoke test: `normalizeActionResult`, `normalizeError`, `redactPii` all pass
+
+---
+
 ## Phase 0a — Schema additions + lead creation refactor
 
 **Date:** 2026-05-11

@@ -27,7 +27,11 @@ For coordinating the merge into development and production deployment.
 
 `add_copilot_and_audit_log` — additive only, all defaults safe
 
-[Future phases will add entries here]
+### Phase 0b
+
+No migrations. Pure TypeScript additions and one new server action.
+
+`@anthropic-ai/sdk` added to `package.json` — run `yarn install` on deploy.
 
 ---
 
