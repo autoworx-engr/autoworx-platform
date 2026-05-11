@@ -1,7 +1,10 @@
 "use client";
 import { makeLinksClickable } from "@/components/MakeLinkClickable";
 import { cn } from "@/lib/cn";
+import { File } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
+import VoiceNotePlayer from "../sms/VoiceNotePlayer";
 
 type TAttachment = {
   id: number;
@@ -20,13 +23,93 @@ type TMessage = {
   user?: { firstName: string; lastName: string | null } | null;
 };
 
+function MessengerAttachments({
+  attachments,
+  isOutgoing,
+}: {
+  attachments: TAttachment[];
+  isOutgoing: boolean;
+}) {
+  const allImageUrls = attachments
+    .filter((a) => a.attachmentType === "image" && a.url)
+    .map((a) => a.url);
+
+  return (
+    <div
+      className={cn(
+        "flex w-full flex-col gap-1",
+        isOutgoing ? "items-end" : "items-start",
+      )}
+    >
+      {attachments.map((att, index) => {
+        if (att.attachmentType === "image") {
+          const currentIndex = allImageUrls.indexOf(att.url);
+          const urlsParam = encodeURIComponent(JSON.stringify(allImageUrls));
+          return (
+            <Link
+              key={att.id ?? index}
+              href={`/dashboard/communication/photo?urls=${urlsParam}&index=${currentIndex}`}
+              className="mx-1 mt-1 cursor-pointer rounded-md border border-gray-200 px-2 py-1"
+            >
+              <Image src={att.url} alt="attachment" width={70} height={100} />
+            </Link>
+          );
+        }
+
+        if (att.attachmentType === "audio") {
+          return (
+            <div key={att.id ?? index} className="mt-1">
+              <VoiceNotePlayer src={att.url} isOutgoing={isOutgoing} />
+            </div>
+          );
+        }
+
+        if (att.attachmentType === "video") {
+          return (
+            <a
+              key={att.id ?? index}
+              href={att.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mx-1 mt-1 flex cursor-pointer items-center gap-2 rounded-md border border-gray-200 px-2 py-1"
+            >
+              <File className="h-5 w-5 flex-shrink-0" />
+              <span className="text-sm">{att.name ?? "video"}</span>
+            </a>
+          );
+        }
+
+        // Generic file download
+        const displayName = att.name
+          ? att.name.length > 10
+            ? att.name.slice(0, 10) + "…"
+            : att.name
+          : att.attachmentType;
+        return (
+          <button
+            key={att.id ?? index}
+            className="mx-1 mt-1 flex cursor-pointer items-center gap-2 rounded-md border border-gray-200 px-2 py-1"
+            onClick={() =>
+              window.open(att.url, "_blank", "noopener,noreferrer")
+            }
+          >
+            <File className="h-5 w-5 flex-shrink-0" />
+            <p className="text-sm">{displayName}</p>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function MessengerMessage({ message }: { message: TMessage }) {
   const isIncoming = message.sentBy !== "Company";
+  const isOutgoing = !isIncoming;
   const text = (message.message ?? "").trim();
   const hasAttachments = message.attachments?.length > 0;
 
   const senderName =
-    !isIncoming && message.user
+    isOutgoing && message.user
       ? `${message.user.firstName} ${message.user.lastName ?? ""}`.trim()
       : null;
 
@@ -59,7 +142,7 @@ export default function MessengerMessage({ message }: { message: TMessage }) {
       )}
 
       <div
-        className={cn("max-w-[85%] sm:max-w-[70%]", !isIncoming && "ml-auto")}
+        className={cn("max-w-[85%] sm:max-w-[70%]", isOutgoing && "ml-auto")}
       >
         {(!!text || hasAttachments) && (
           <div
@@ -77,22 +160,10 @@ export default function MessengerMessage({ message }: { message: TMessage }) {
             )}
 
             {hasAttachments && (
-              <div className="mt-1 flex flex-col gap-1">
-                {message.attachments.map((att) => (
-                  <a
-                    key={att.id}
-                    href={att.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={cn(
-                      "truncate text-xs underline underline-offset-2",
-                      isIncoming ? "text-blue-700" : "text-blue-200",
-                    )}
-                  >
-                    {att.name ?? att.attachmentType}
-                  </a>
-                ))}
-              </div>
+              <MessengerAttachments
+                attachments={message.attachments}
+                isOutgoing={isOutgoing}
+              />
             )}
           </div>
         )}
@@ -100,7 +171,7 @@ export default function MessengerMessage({ message }: { message: TMessage }) {
         <div
           className={cn(
             "mt-1 flex flex-col gap-0 text-zinc-500",
-            !isIncoming && "items-end",
+            isOutgoing && "items-end",
           )}
         >
           {senderName && (
@@ -109,7 +180,7 @@ export default function MessengerMessage({ message }: { message: TMessage }) {
           <div
             className={cn(
               "mt-1 text-[10px] leading-4 text-zinc-500",
-              !isIncoming && "text-right",
+              isOutgoing && "text-right",
             )}
           >
             {message.isSending ? (

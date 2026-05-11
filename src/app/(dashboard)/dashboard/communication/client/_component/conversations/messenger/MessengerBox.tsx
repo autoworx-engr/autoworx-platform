@@ -104,6 +104,7 @@ export default function MessengerBox({ clientId }: { clientId: number }) {
   useEffect(() => {
     if (isReady) maybeLoadOlder();
   }, [isReady]);
+
   useEffect(() => {
     setIsReady(false);
     setLastSeenId(null);
