@@ -261,6 +261,7 @@ async function logCallAndNotify({
       employeeType: { in: ["Admin", "Manager", "Sales"] },
     },
     select: { id: true },
+    take: 1000,
   });
 
   await Promise.allSettled(

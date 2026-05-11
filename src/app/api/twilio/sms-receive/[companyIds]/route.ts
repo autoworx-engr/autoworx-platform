@@ -132,8 +132,17 @@ async function processIncomingSMS(
   const normalizedFrom = normalizePhoneForStorage(body.From);
   const phoneLookup = phoneLookupWhereClause(body.From);
 
+  // Batch entitlement lookups upfront to avoid N+1 inside the loop
+  const entitlementsByCompany = new Map(
+    await Promise.all(
+      companyIds.map(
+        async (id) => [id, await getCompanyEntitlements(id)] as const,
+      ),
+    ),
+  );
+
   for (const companyId of companyIds) {
-    const entitlements = await getCompanyEntitlements(companyId);
+    const entitlements = entitlementsByCompany.get(companyId)!;
     if (!entitlements.canUseSms) {
       continue;
     }
@@ -232,7 +241,6 @@ async function processIncomingSMS(
 
       const permissions = await allCompanyFeaturePermissions(companyId);
 
-      const entitlements = await getCompanyEntitlements(client.companyId);
       const isSalesAgentEnabled = entitlements.awxSalesAgent;
 
       //sales agent
