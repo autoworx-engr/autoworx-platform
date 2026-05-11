@@ -1,6 +1,8 @@
 # AutoWorx AI Copilot — Architecture Design
 
-> Status: Design only | Branch: development | Date: 2026-05-10
+> Status: Phases 0a–2 shipped | Branch: taiseer/ai-copilot | Design date: 2026-05-10 | Last updated: 2026-05-11
+>
+> **Note:** This is the design document. Where shipped code differs from the design, deviations are noted inline. File paths and component names reflect the actual implementation.
 
 > **Deployment target: Railway (non-serverless Node).** The Next.js app runs as a persistent process in a single container. SSE streams can be arbitrarily long-lived. Long-running in-process work (summarization, tool dispatch) is fine. In-memory state (rate limit map, etc.) is safe for a single replica. Revisit if multi-replica scaling is ever needed.
 
@@ -15,12 +17,12 @@ Browser (Client)
   └── <CopilotIcon /> (Bot icon, shows only if user.hasCopilot)
         │ click
         ▼
-  <CopilotSheet /> (shadcn Sheet, slide-over from right)
-  src/components/copilot/CopilotSheet.tsx
-  ├── <CopilotHeader />         — session title, close button
-  ├── <CopilotMessageList />    — renders CopilotMessage[] with OptimisticMessageCard
-  │     uses bug-report message components as base
-  └── <CopilotInput />          — textarea + send button
+  <CopilotPanel /> (shadcn Sheet, slide-over from right)
+  src/components/copilot/CopilotPanel.tsx
+  ├── <CopilotChatHeader />     — session title, new chat, history toggle, close
+  ├── <CopilotMessageList />    — renders CopilotMessageUI[] + CopilotToolPills during streaming
+  │     └── <CopilotMessageCard />  — individual message bubbles
+  └── <CopilotChatInput />      — textarea + send button (Cmd/Ctrl+Enter)
           │ onSubmit
           ▼
         fetch('/api/copilot/chat', { method: 'POST', body: {sessionId, message} })
@@ -47,23 +49,20 @@ Server (Next.js App Router)
   │
   ├── 10. On tool_use block:
   │          └── Tool Dispatcher
-  │               src/lib/copilot/tool-dispatcher.ts
+  │               src/lib/copilot/tools/dispatcher.ts
   │               │
   │               ├── canUserDo(userId, toolAction)
-  │               │     src/lib/copilot/permissions.ts
-  │               │     calls getPermissions() + getCompanyEntitlements()
-  │               │
-  │               ├── Model routing: Haiku for read-only, Sonnet for writes
+  │               │     src/lib/copilot/canUserDo.ts
+  │               │     calls getPermissions() (DB lookup per call)
   │               │
   │               └── Tool Handler (one per tool)
-  │                    src/lib/copilot/tools/*.ts
+  │                    src/lib/copilot/tools/handlers/*.ts
   │                    │
   │                    ├── Zod validation of tool input
   │                    ├── companyId enforcement (from session, NEVER from AI input)
-  │                    ├── Call existing server action
-  │                    ├── normalizeActionResult() if old {success,message} shape
+  │                    ├── Direct db.* query (Phase 2 read-only tools)
   │                    ├── Write AuditLog entry
-  │                    │     src/lib/audit.ts
+  │                    │     src/lib/copilot/audit.ts
   │                    └── Return tool_result to Anthropic
   │
   ├── 11. After stream completes: persist assistant message(s) → CopilotMessage
@@ -74,10 +73,9 @@ Server (Next.js App Router)
 Database (Postgres via Prisma)
 ─────────────────────────────────────────────────────────────────────
   CopilotSession     — one row per conversation
-  CopilotMessage     — flat rows per turn (user/assistant/tool_call/tool_result)
-  AuditLog           — one row per tool execution
-  User.hasCopilot    — seat gate
-  Company.copilotSeatsAssigned — cached seat count
+  CopilotMessage     — flat rows per turn (user/assistant/tool_call roles)
+  AuditLog           — one row per tool execution + one per chat.message
+  User.hasCopilot    — seat gate (only field added; billing fields deferred to Phase 5)
 
 External Services
 ─────────────────────────────────────────────────────────────────────
@@ -94,7 +92,7 @@ External Services
 _Example: "What's my revenue last month?"_
 
 ```
-1.  User submits message in CopilotSheet
+1.  User submits message in CopilotPanel
 2.  POST /api/copilot/chat → route handler
 3.  getServerSession() → session.user (userId, companyId, role, hasCopilot)
 4.  Check user.hasCopilot === true → continue
@@ -511,7 +509,7 @@ Summaries are generated **synchronously on session close** and, as a fallback, *
 **Primary path — explicit close:**
 
 ```
-User closes CopilotSheet (Sheet `onOpenChange` fires false)
+User closes CopilotPanel (Sheet `onOpenChange` fires false)
   → Client fires POST /api/copilot/sessions/[id]/close
   → Route handler loads last N CopilotMessages for the session
   → Calls claude-haiku-4-5-20251001 with prompt:
@@ -540,7 +538,7 @@ Summaries are generated with Haiku (cheap, fast, good for summarization). Cost: 
 
 ### Loading into New Session Context
 
-On each new conversation turn, load the last **10** completed CopilotSessions for this user that have a non-null `summary`, ordered by `lastMessageAt DESC`:
+On each new conversation turn, load the last **5** completed CopilotSessions for this user that have a non-null `summary`, ordered by `lastMessageAt DESC` (design specified 10; shipped with 5):
 
 ```ts
 const pastSummaries = await db.copilotSession.findMany({

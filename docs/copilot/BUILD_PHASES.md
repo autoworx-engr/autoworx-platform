@@ -1,7 +1,8 @@
 # AutoWorx AI Copilot — Build Phases
 
-> Status: Design only | Date: 2026-05-10
-> Phases are sequential. Do not start a phase until the previous phase's success criteria are met and merged to `development`.
+> Design date: 2026-05-10 | Last updated: 2026-05-11
+> **Current status: Phases 0a, 0.5, 1, 1.1, 1.2, 2 complete and committed on branch `taiseer/ai-copilot`. Phase 3 blocked on architecture decision (see REVIEWER_GUIDE.md).**
+> Phases are sequential. Do not start a phase until the previous phase's success criteria are met.
 
 ---
 

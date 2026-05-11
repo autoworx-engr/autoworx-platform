@@ -1,7 +1,6 @@
 # AutoWorx AI Copilot — Prisma Schema Design
 
-> Status: Design only — NOT applied | Date: 2026-05-10
-> Run migrations only after Phase 0 review is complete.
+> Status: Applied — migration shipped in Phase 0a (commit cd1b7408) | Branch: taiseer/ai-copilot | Design date: 2026-05-10
 
 ---
 

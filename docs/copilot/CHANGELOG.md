@@ -291,5 +291,5 @@ Additionally, `addAppointment.ts` was querying the Pending column without the `t
 ### Coordination flags for dev team
 
 - `ai_personalities.human_handoff_message` column exists in Prisma but not in local dev DB — verify production has it
-- `react-easy-crop` is imported but not in package.json (pre-existing, not ours)
+- `react-easy-crop` is in `package.json` (line 128) and `ImageCropModal.tsx` imports it — this is a pre-existing dep, not related to our changes (earlier note incorrectly said it was missing)
 - dev company "THC Local" zapierToken was exposed during testing — rotate when convenient

@@ -1,7 +1,15 @@
 # AutoWorx AI Copilot — Tool Registry (v1)
 
-> Status: Design only | Date: 2026-05-10
-> This document defines every tool available to the copilot in v1. Tools are implemented in `src/lib/copilot/tools/`.
+> Design date: 2026-05-10 | Last updated: 2026-05-11
+> **Read-only tools (Phase 2): all 8 shipped.** Write tools and external-effect tools: design only, not yet implemented.
+> Shipped tools live in `src/lib/copilot/tools/handlers/`. Registry: `src/lib/copilot/tools/registry.ts`. Dispatcher: `src/lib/copilot/tools/dispatcher.ts`.
+>
+> **Implementation notes (deviations from this spec):**
+>
+> - `Priority` enum: Prisma schema has `Low | Medium | High` (no `Urgent`). Handler returns actual enum values.
+> - `Task.completed` field: does not exist in schema. `get_tasks_for_user` uses `date < now` as a proxy.
+> - `get_revenue_summary` input: `category` filter from spec not implemented (direct Invoice query, no category join).
+> - Tool file structure: `src/lib/copilot/tools/handlers/` (flat), not the `read/write/external/` subdirectory structure shown in the file tree below.
 
 ---
 

@@ -73,18 +73,18 @@ Index of every file created or modified during the copilot build.
 
 ### docs/copilot/
 
-| Path                | Purpose                              |
-| ------------------- | ------------------------------------ |
-| `ARCHITECTURE.md`   | System design                        |
-| `PRISMA_SCHEMA.md`  | Prisma model designs                 |
-| `TOOL_REGISTRY.md`  | Specification for every copilot tool |
-| `BUILD_PHASES.md`   | Phased build plan                    |
-| `RECON_REPORT.md`   | Initial codebase recon               |
-| `CHANGELOG.md`      | Chronological build log              |
-| `FILE_MAP.md`       | This file                            |
-| `REVIEWER_GUIDE.md` | For dev team's PR review             |
-| `MERGE_NOTES.md`    | Deployment notes                     |
-| `README.md`         | Entry point                          |
+| Path                | Purpose                                                                           |
+| ------------------- | --------------------------------------------------------------------------------- |
+| `README.md`         | Entry point — reading order for reviewers                                         |
+| `ARCHITECTURE.md`   | System design (phases 0–2 reflected; design-only sections for 3+)                 |
+| `BUILD_PHASES.md`   | Phased build plan — phases 0a–2 complete, 3+ design only                          |
+| `TOOL_REGISTRY.md`  | Spec for every copilot tool — read-only tools shipped, write/external design only |
+| `PRISMA_SCHEMA.md`  | DB model design — migration applied in Phase 0a                                   |
+| `RECON_REPORT.md`   | Initial codebase recon (historical, read once)                                    |
+| `CHANGELOG.md`      | Chronological build log — one entry per phase                                     |
+| `FILE_MAP.md`       | This file — index of every file touched                                           |
+| `REVIEWER_GUIDE.md` | PR reviewer guide — TL;DR, risk, how to test                                      |
+| `MERGE_NOTES.md`    | Deployment and migration checklist                                                |
 
 ---
 
@@ -106,6 +106,9 @@ Index of every file created or modified during the copilot build.
 | `src/app/api/copilot/chat/route.ts`                                                 | 1.1   | `startTime` capture + `latencyMs` on audit log                          |
 | `src/app/api/copilot/chat/route.ts`                                                 | 1.2   | Capture `cache_read_input_tokens` → `cachedTokens`; log cacheWrite      |
 | `docs/copilot/REVIEWER_GUIDE.md`                                                    | 1.2   | Added cost optimization section                                         |
+| `package.json`                                                                      | 0b    | Added `@anthropic-ai/sdk ^0.95.1`                                       |
+| `yarn.lock`                                                                         | 0b    | Lockfile updated for new SDK dep                                        |
+| `.env.example`                                                                      | 0b    | Added `ANTHROPIC_API_KEY=` placeholder (commit cd095b27)                |
 | `src/app/api/copilot/chat/route.ts`                                                 | 2     | Multi-turn tool-use loop; SSE tool events; employeeType for ToolContext |
 | `src/lib/copilot/systemPrompt.ts`                                                   | 2     | TOOL_GUIDE section + prompt injection warning                           |
 | `src/stores/copilotStore.ts`                                                        | 2     | activeToolCalls + addToolCall/resolveToolCall                           |
@@ -141,4 +144,33 @@ sendEstimate.ts → sendInvoiceEmail.ts / sendInvoiceSms.ts
 canUserDo.ts → getPermissions.ts → db
 
 anthropic.ts  (leaf — no local dependencies, reads ANTHROPIC_API_KEY at runtime)
+```
+
+### Phase 1–2 — Chat route + tool dispatch
+
+```
+/api/copilot/chat  (POST)
+  → getServerSession() → hasCopilot check
+  → checkRateLimit()
+  → db.copilotSession (find or create)
+  → generateSessionSummary() [lazy fallback]     → anthropic.ts (Haiku)
+  → db.copilotSession.findMany (prior summaries)
+  → buildSystemPrompt()                          → systemPrompt.ts
+  → tools/index.ts (imports all handlers)        → tools/registry.ts
+  │                                              → tools/handlers/*.ts → db
+  → anthropic.messages.stream()                  → anthropic.ts (Sonnet)
+  │
+  ├── [stop_reason: text] → stream text_delta SSE events → client
+  │
+  └── [stop_reason: tool_use] →
+        tools/dispatcher.ts
+          → canUserDo()    → canUserDo.ts → getPermissions.ts → db
+          → Zod validate
+          → handler.execute() → db
+          → writeAuditLog()   → audit.ts → db
+        → tool_result → back to Anthropic (next loop iteration)
+
+/api/copilot/sessions/[id]/close  (POST)
+  → generateSessionSummary()                    → anthropic.ts (Haiku)
+  → db.copilotSession.update (summary)
 ```

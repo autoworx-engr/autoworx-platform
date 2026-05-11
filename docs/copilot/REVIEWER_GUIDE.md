@@ -35,11 +35,16 @@ Phases 0a–2: Adds an AI Copilot to AutoWorx — a sliding panel in the dashboa
 
 ### Files modified that touch existing functionality
 
-| File                                     | Risk                                                          | Mitigation                                               |
-| ---------------------------------------- | ------------------------------------------------------------- | -------------------------------------------------------- |
-| `src/app/api/lead-generate/route.ts`     | HIGH — used by every customer's external website contact form | Behavioral equivalence verified via curl regression test |
-| `src/actions/lead/createLeadFromForm.ts` | MEDIUM — thunderbolt form in header                           | Manually tested via UI                                   |
-| `prisma/schema.prisma`                   | LOW — additive only                                           | Non-destructive migration                                |
+| File                                                                                | Risk                                                                            | Mitigation                                                                                                                                     |
+| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/app/api/lead-generate/route.ts`                                                | **HIGH** — called by every customer's external website contact form via webhook | Behavioral equivalence verified via curl regression test; 283→136 lines but identical output                                                   |
+| `src/actions/lead/createLeadFromForm.ts`                                            | **MEDIUM** — powers the thunderbolt "Add Lead" form in the header               | Manually tested via UI; now calls `createLead` directly instead of HTTP self-proxy                                                             |
+| `src/actions/appointment/addAppointment.ts`                                         | **MEDIUM** — used by calendar and client panel appointment creation             | Inline draft-estimate logic replaced with `createDraftEstimate` call; behavior preserved + one pre-existing bug fixed                          |
+| `src/actions/appointment/editAppointment.ts`                                        | **MEDIUM** — used when editing existing appointments                            | Same refactor; fixes pre-existing bug where edited estimates had no `columnId` (were pipeline-invisible)                                       |
+| `src/app/(dashboard)/dashboard/pipeline/sales/pipeline/_components/LeadActions.tsx` | **LOW** — pipeline card button component                                        | Only change: removed stale `createDraftEstimate` import (no longer used by this component)                                                     |
+| `src/components/TopNavbarIcons.tsx`                                                 | **LOW** — adds one component between existing icons                             | Adds `<CopilotIcon />` between BugReport and NotificationsPopover. `CopilotIcon` is gated on `hasCopilot`, invisible to users without the flag |
+| `src/authOptions.ts`                                                                | **LOW** — JWT token refresh path only                                           | Adds `hasCopilot` to DB select + token + session. No behavior change for existing auth; only adds a field                                      |
+| `prisma/schema.prisma`                                                              | **LOW** — additive only                                                         | Non-destructive migration; new tables + one boolean column (default false) on User                                                             |
 
 ### Files added (isolated, low review burden)
 
@@ -76,41 +81,149 @@ See CHANGELOG.md for full details.
 
 ## Pre-existing issues flagged (separate team decisions needed)
 
-These were discovered during Phase 0.5 consolidation and deliberately NOT changed. The
-team should decide the correct behavior before they're touched.
+These were noticed during the build and deliberately NOT changed. Each requires a team decision.
 
-### 1. Automation trigger asymmetry between pipeline and client-panel draft estimate creation
+### 1. Automation trigger asymmetry — draft estimate creation
 
-`createLeadDraftEstimate` (Path 1 — pipeline card button) does **NOT** call
-`updateInvoiceAutomationTrigger` after creating a draft estimate. `createDraftEstimate`
-(Path 2 — client panel, appointments) **DOES** call it.
+`createLeadDraftEstimate` (pipeline card button) does **NOT** call `updateInvoiceAutomationTrigger`. `createDraftEstimate` (client panel, appointments) **DOES**.
 
-If automation rules are set up to fire on estimate creation, they will trigger for
-client-panel and appointment flows but NOT for pipeline card clicks. One path is likely
-wrong. Team to confirm which behavior is canonical and align the other.
+Automation rules on estimate creation will fire for client-panel flows but NOT pipeline card clicks. One path is wrong. Team should confirm canonical behavior and align the other.
 
 ### 2. Non-transactional appointment + invoice creation in `addAppointment.ts`
 
-`addAppointment` creates the `Appointment` record, commits to the DB, then calls
-`createDraftEstimate` as a separate operation. If `createDraftEstimate` fails (e.g.,
-Pending column not found), the appointment is persisted with a `draftEstimate` field
-pointing to an invoice that was never created. This is a dangling reference.
+Appointment is committed to DB first, then `createDraftEstimate` runs as a separate operation. If the estimate creation fails (e.g., Pending column not found), the appointment record has a non-null `draftEstimate` pointing to an invoice that was never created. Fix requires wrapping in a transaction or adding a reconciliation read. Out of scope for this PR.
 
-The fix would require either: (a) wrapping both operations in a transaction, or (b)
-adding a reconciliation check when reading appointments. This is a larger refactor and
-intentionally out of scope for this PR.
+### 3. `ai_personalities.human_handoff_message` column drift
+
+Field exists in `prisma/schema.prisma` but was absent from local dev DB during testing. Production DB may or may not have it. Should be verified before merging.
+
+### 4. `Task.completed` field doesn't exist
+
+The `get_tasks_for_user` copilot tool uses `date < now` as a proxy for task completion. If the team wants accurate completion tracking via the copilot, a `completed: Boolean` field needs to be added to the `Task` model (schema change + migration).
+
+### 5. `Priority` enum missing `Urgent`
+
+The TOOL_REGISTRY.md spec called for tasks to have `Low | Medium | High | Urgent` priority. The Prisma schema only has `Low | Medium | High`. The copilot tool returns actual enum values. Team should decide whether to add `Urgent` to the schema.
 
 ---
 
 ## How to test locally
 
-[Filled in at end]
+### Prerequisites
+
+- Node 20+, `yarn`
+- PostgreSQL running locally (matching the dev database)
+- An Anthropic API key — ask Taiseer for the AWX shared dev key, or create a personal key at console.anthropic.com
+
+### Setup
+
+```bash
+git checkout taiseer/ai-copilot
+yarn install
+cp .env.example .env.local   # then add real values
+```
+
+Add to `.env.local`:
+
+```
+ANTHROPIC_API_KEY=sk-ant-...
+```
+
+Run the copilot migration (if not already applied):
+
+```bash
+yarn prisma migrate deploy
+```
+
+Enable copilot access for your test user (Prisma Studio or psql):
+
+```sql
+UPDATE "User" SET "hasCopilot" = true WHERE email = 'your-test@email.com';
+```
+
+### Starting the app
+
+```bash
+yarn dev
+```
+
+**Important:** Do a full logout → login after enabling `hasCopilot`. The JWT refresh path populates the flag; an existing session won't see the new value until the token rotates.
+
+### What to verify
+
+1. **Bot icon appears** in top navbar (between Bug Report and Notifications icons)
+2. **Panel opens** on click — shows empty state "Ask me anything about AutoWorx"
+3. **Basic chat** — ask "What can you help me with?" — should get a streaming response
+4. **Streaming** — tokens appear character-by-character (not all at once)
+5. **Read tool** — ask "What's my revenue for this month?" — should see a blue "Looking up Revenue summary" pill while the tool runs, then a revenue answer
+6. **Client lookup** — ask "Do you have a client named Smith?" — should call `get_client_by_name` and return matches
+7. **Multi-tool chain** — ask "Show me vehicles for client [ID]" — should chain `get_client_by_name` → `get_vehicle_by_client`
+8. **Session persistence** — close panel, reopen, click History icon — prior session should appear
+9. **Session memory** — start a new session, send a message — prior session summary should influence the system context (check server console for `[copilot] tokens`)
+10. **Rate limit** — send 60 messages rapidly — should see soft warning at 60, hard 429 at 120
+11. **AuditLog** — Prisma Studio → AuditLog — entries should appear with valid `latencyMs` and `copilotSessionId`
+12. **Cache hits** — server console: `cached:N` should be > 0 after the first message in a session
+
+### Server console signals
+
+```
+[copilot] iter:1 in:X out:Y cached:Z cacheWrite:W   ← token usage per tool loop iteration
+[copilot] stream error: ...                           ← only appears on actual errors
+```
+
+---
+
+## Architecture decision needed before Phase 3
+
+**This is the single biggest open question. Phase 3 (write tools) is blocked on the team's answer.**
+
+### Background
+
+Phase 2 tools query the DB directly (read-only, safe). Phase 3 write tools (create_lead, create_appointment, create_task, create_draft_estimate) need to call existing server actions. Two problems:
+
+1. **Server actions are "use server" and use `getServerSession()`** — they're designed for browser-to-server calls, not internal server-to-server calls. The copilot route (already server-side) can call them but gets a null session, because `getServerSession()` needs the HTTP request context.
+
+2. **Server action signatures weren't designed for copilot use** — they often take `FormData` or have implicit session assumptions that don't work when called from a route handler.
+
+### The three paths forward
+
+**Option A — Pass `forceCompanyId` / `forceUserId` through action signatures**
+
+- Already started in `addAppointment.ts` (PR includes `forceCompanyId`, `forceUserId` params)
+- Requires updating each action signature to accept override params when called from copilot context
+- Medium refactor, contained to each action file
+
+**Option B — Extract pure DB functions (the `createLeadRecord` pattern)**
+
+- What we did in Phase 0a: extract `createLeadRecord.ts` as a pure async function, then `createLead.ts` wraps it with session auth
+- Copilot calls the pure function directly, bypassing the server action
+- Cleanest separation, most work, but pays dividends long-term
+
+**Option C — Thin internal API routes for each write operation**
+
+- Create `POST /api/copilot/internal/create-lead` etc. that the chat route calls directly
+- Avoids touching server actions at all
+- Most explicit about the copilot's write surface
+
+The team's choice here determines how Phase 3 is structured. **Decision needed before Phase 3 starts.**
 
 ---
 
 ## Open questions deferred to team
 
-[Filled in at end]
+1. **Phase 3 write architecture** (see "Architecture decision" section above — blocks Phase 3)
+
+2. **Automation trigger asymmetry** — `createLeadDraftEstimate` does NOT trigger `updateInvoiceAutomationTrigger`; `createDraftEstimate` does. Which is canonical? (See pre-existing issues section)
+
+3. **Non-transactional appointment + invoice** — if `createDraftEstimate` fails after the appointment is created, you get a dangling reference. Accept this or wrap in a transaction?
+
+4. **`Task.completed` field** — the Task model has no boolean `completed` field; the copilot `get_tasks_for_user` tool uses `date < now` as a proxy. Should we add the field to the schema (and a migration), or live with the heuristic?
+
+5. **Priority enum missing `Urgent`** — TOOL_REGISTRY.md spec called for `Urgent` in task priority. The Prisma enum only has `Low | Medium | High`. Add it, or change the tool spec?
+
+6. **`hasCopilot` seat management** — currently set manually via DB. Phase 5 will add billing/seat licensing. In the interim, who owns flipping the flag and what's the process?
+
+7. **`ai_personalities.human_handoff_message` column** — exists in `schema.prisma` but reportedly absent from some dev DBs. Confirm it exists in production before merging.
 
 ---
 
@@ -123,6 +236,6 @@ intentionally out of scope for this PR.
 
 Future optimizations not yet active:
 
-- Haiku 4.5 routing for simple read-only tool calls (Phase 2)
+- Haiku 4.5 routing for simple read-only tool calls (Phase 3 candidate — currently all tool-use turns use Sonnet)
 - Conversation context trimming for sessions > 20 messages (Phase 6)
 - Per-seat usage caps and billing integration (Phase 5)
