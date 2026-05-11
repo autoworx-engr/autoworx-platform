@@ -6,6 +6,25 @@ Index of every file created or modified during the copilot build.
 
 ## New files
 
+### Phase 2
+
+| Path                                                            | Purpose                                              |
+| --------------------------------------------------------------- | ---------------------------------------------------- |
+| `src/lib/copilot/tools/registry.ts`                             | ToolDefinition type, registry Map, toolsForAnthropic |
+| `src/lib/copilot/tools/dispatcher.ts`                           | executeTool — permission → Zod → execute → audit     |
+| `src/lib/copilot/tools/index.ts`                                | Barrel that registers all handlers as side effects   |
+| `src/lib/copilot/tools/handlers/getRevenueSummary.ts`           | Revenue + cost aggregation                           |
+| `src/lib/copilot/tools/handlers/getPaymentsSummary.ts`          | Payment totals by method                             |
+| `src/lib/copilot/tools/handlers/getClientByName.ts`             | Fuzzy client search                                  |
+| `src/lib/copilot/tools/handlers/getVehicleByClient.ts`          | Vehicles for a client                                |
+| `src/lib/copilot/tools/handlers/getInventoryItemByName.ts`      | Inventory fuzzy search                               |
+| `src/lib/copilot/tools/handlers/getEstimateByNumber.ts`         | Estimate by ID                                       |
+| `src/lib/copilot/tools/handlers/getAppointmentsForDateRange.ts` | Appointments date range                              |
+| `src/lib/copilot/tools/handlers/getTasksForUser.ts`             | Tasks for user (non-admin enforced)                  |
+| `src/components/copilot/CopilotToolPills.tsx`                   | Animated tool-call status pills                      |
+
+---
+
 ### Phase 1
 
 | Path                                                  | Purpose                                           |
@@ -71,22 +90,27 @@ Index of every file created or modified during the copilot build.
 
 ## Modified files
 
-| Path                                                                                | Phase | Change                                                               |
-| ----------------------------------------------------------------------------------- | ----- | -------------------------------------------------------------------- |
-| `prisma/schema.prisma`                                                              | 0a    | Added User.hasCopilot + 3 models + 2 enums                           |
-| `src/app/api/lead-generate/route.ts`                                                | 0a    | Extracted DB logic to helper                                         |
-| `src/actions/lead/createLeadFromForm.ts`                                            | 0a    | Direct createLead call                                               |
-| `src/actions/appointment/addAppointment.ts`                                         | 0.5   | Replaced inline draft-estimate logic with `createDraftEstimate` call |
-| `src/actions/appointment/editAppointment.ts`                                        | 0.5   | Replaced inline draft-estimate logic; fixes invisible-estimate bug   |
-| `src/app/(dashboard)/dashboard/pipeline/sales/pipeline/_components/LeadActions.tsx` | 0.5   | Removed stale `createDraftEstimate` import                           |
-| `src/authOptions.ts`                                                                | 1     | Added `hasCopilot` to JWT refresh DB select, token, and session      |
-| `src/components/TopNavbarIcons.tsx`                                                 | 1     | Added `<CopilotIcon />` between BugReport and NotificationsPopover   |
-| `src/components/copilot/CopilotPanel.tsx`                                           | 1.1   | `flushSync` per `appendToken` call to unblock React 18 batching      |
-| `src/app/api/copilot/sessions/[id]/route.ts`                                        | 1.1   | Async params (`await props.params`) for Next.js 16                   |
-| `src/app/api/copilot/sessions/[id]/close/route.ts`                                  | 1.1   | Async params; removed `messageCount > 0` guard                       |
-| `src/app/api/copilot/chat/route.ts`                                                 | 1.1   | `startTime` capture + `latencyMs` on audit log                       |
-| `src/app/api/copilot/chat/route.ts`                                                 | 1.2   | Capture `cache_read_input_tokens` → `cachedTokens`; log cacheWrite   |
-| `docs/copilot/REVIEWER_GUIDE.md`                                                    | 1.2   | Added cost optimization section                                      |
+| Path                                                                                | Phase | Change                                                                  |
+| ----------------------------------------------------------------------------------- | ----- | ----------------------------------------------------------------------- |
+| `prisma/schema.prisma`                                                              | 0a    | Added User.hasCopilot + 3 models + 2 enums                              |
+| `src/app/api/lead-generate/route.ts`                                                | 0a    | Extracted DB logic to helper                                            |
+| `src/actions/lead/createLeadFromForm.ts`                                            | 0a    | Direct createLead call                                                  |
+| `src/actions/appointment/addAppointment.ts`                                         | 0.5   | Replaced inline draft-estimate logic with `createDraftEstimate` call    |
+| `src/actions/appointment/editAppointment.ts`                                        | 0.5   | Replaced inline draft-estimate logic; fixes invisible-estimate bug      |
+| `src/app/(dashboard)/dashboard/pipeline/sales/pipeline/_components/LeadActions.tsx` | 0.5   | Removed stale `createDraftEstimate` import                              |
+| `src/authOptions.ts`                                                                | 1     | Added `hasCopilot` to JWT refresh DB select, token, and session         |
+| `src/components/TopNavbarIcons.tsx`                                                 | 1     | Added `<CopilotIcon />` between BugReport and NotificationsPopover      |
+| `src/components/copilot/CopilotPanel.tsx`                                           | 1.1   | `flushSync` per `appendToken` call to unblock React 18 batching         |
+| `src/app/api/copilot/sessions/[id]/route.ts`                                        | 1.1   | Async params (`await props.params`) for Next.js 16                      |
+| `src/app/api/copilot/sessions/[id]/close/route.ts`                                  | 1.1   | Async params; removed `messageCount > 0` guard                          |
+| `src/app/api/copilot/chat/route.ts`                                                 | 1.1   | `startTime` capture + `latencyMs` on audit log                          |
+| `src/app/api/copilot/chat/route.ts`                                                 | 1.2   | Capture `cache_read_input_tokens` → `cachedTokens`; log cacheWrite      |
+| `docs/copilot/REVIEWER_GUIDE.md`                                                    | 1.2   | Added cost optimization section                                         |
+| `src/app/api/copilot/chat/route.ts`                                                 | 2     | Multi-turn tool-use loop; SSE tool events; employeeType for ToolContext |
+| `src/lib/copilot/systemPrompt.ts`                                                   | 2     | TOOL_GUIDE section + prompt injection warning                           |
+| `src/stores/copilotStore.ts`                                                        | 2     | activeToolCalls + addToolCall/resolveToolCall                           |
+| `src/components/copilot/CopilotPanel.tsx`                                           | 2     | Handle tool SSE events; pass activeToolCalls to MessageList             |
+| `src/components/copilot/CopilotMessageList.tsx`                                     | 2     | Render CopilotToolPills during streaming tool calls                     |
 
 ---
 

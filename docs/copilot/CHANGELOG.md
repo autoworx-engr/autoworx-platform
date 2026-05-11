@@ -5,6 +5,58 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Phase 2 — Read-only tools + dispatcher
+
+**Date:** 2026-05-11
+**Branch:** taiseer/ai-copilot
+
+### What was built
+
+8 read-only tools that allow the copilot to query live AutoWorx data: revenue summary, payments summary, client search, vehicle lookup, inventory search, estimate lookup, appointments, and tasks. A central tool registry, a permission-checking dispatcher, and SSE events for tool call visibility in the UI.
+
+### Files created
+
+| File                                                            | Purpose                                                                 |
+| --------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `src/lib/copilot/tools/registry.ts`                             | ToolDefinition type, registerTool, getTool, allTools, toolsForAnthropic |
+| `src/lib/copilot/tools/dispatcher.ts`                           | executeTool — permission → Zod validate → execute → audit               |
+| `src/lib/copilot/tools/index.ts`                                | Barrel: imports all handlers (side-effect registration) + re-exports    |
+| `src/lib/copilot/tools/handlers/getRevenueSummary.ts`           | Invoice grandTotal + Material cost aggregation                          |
+| `src/lib/copilot/tools/handlers/getPaymentsSummary.ts`          | Payment.amount grouped by type                                          |
+| `src/lib/copilot/tools/handlers/getClientByName.ts`             | ILIKE search on firstName/lastName/email, top 5                         |
+| `src/lib/copilot/tools/handlers/getVehicleByClient.ts`          | Vehicle.findMany scoped to clientId + companyId                         |
+| `src/lib/copilot/tools/handlers/getInventoryItemByName.ts`      | InventoryProduct ILIKE search, optional type filter                     |
+| `src/lib/copilot/tools/handlers/getEstimateByNumber.ts`         | Invoice.findFirst by id+companyId, returns links                        |
+| `src/lib/copilot/tools/handlers/getAppointmentsForDateRange.ts` | Appointment.findMany with date range + optional userId                  |
+| `src/lib/copilot/tools/handlers/getTasksForUser.ts`             | Task.findMany; non-admin forced to own userId                           |
+| `src/components/copilot/CopilotToolPills.tsx`                   | Animated pill indicators for active tool calls                          |
+
+### Files modified
+
+| File                                            | Change                                                                                                                                               |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/app/api/copilot/chat/route.ts`             | Multi-turn tool-use loop (max 5); SSE tool_call_start/tool_result events; persist tool_call CopilotMessage rows; select employeeType for ToolContext |
+| `src/lib/copilot/systemPrompt.ts`               | Added TOOL_GUIDE section + prompt injection warning in SECURITY                                                                                      |
+| `src/stores/copilotStore.ts`                    | Added activeToolCalls state + addToolCall/resolveToolCall actions                                                                                    |
+| `src/components/copilot/CopilotPanel.tsx`       | Handle tool_call_start/tool_result SSE events; pass activeToolCalls to MessageList                                                                   |
+| `src/components/copilot/CopilotMessageList.tsx` | Accept and render CopilotToolPills when tool calls are active                                                                                        |
+
+### Key design decisions
+
+- **Side-effect registration pattern**: each handler file calls `registerTool()` at module load time; `tools/index.ts` imports them all so one `import` from the route wires everything up.
+- **No new server actions**: all handlers query `db.*` directly within the copilot tool boundary (companyId always from session context).
+- **ToolResultBlockParam.is_error**: set correctly on Anthropic's tool_result so the model knows when a tool failed and can tell the user gracefully.
+- **Non-admin task enforcement**: `getTasksForUser` ignores AI-provided `assignedUserId` for non-Admin users — always uses session `userId`. Prevents data leakage.
+- **Priority enum note**: Prisma's Priority enum has Low/Medium/High (no Urgent). TOOL_REGISTRY.md spec listed Urgent; not added to avoid schema change. Handler returns the actual enum values.
+- **Task "completed" heuristic**: Task model has no boolean completed field. Handler uses `date < now` as a proxy. This is approximate; flagged for team awareness.
+
+### Verification
+
+- ✓ `yarn tsc --noEmit` — 0 errors
+- ✓ `yarn build` — clean (110s)
+
+---
+
 ## Phase 1.2 — Cost tuning
 
 **Date:** 2026-05-11

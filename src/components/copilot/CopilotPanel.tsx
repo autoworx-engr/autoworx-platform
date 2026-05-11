@@ -24,11 +24,14 @@ export default function CopilotPanel() {
     sessionId,
     messages,
     isStreaming,
+    activeToolCalls,
     setOpen,
     setSessionId,
     addMessage,
     appendToken,
     setStreaming,
+    addToolCall,
+    resolveToolCall,
     reset,
   } = useCopilotStore();
 
@@ -110,6 +113,12 @@ export default function CopilotPanel() {
             const event = JSON.parse(line.slice(6));
             if (event.type === "text_delta") {
               flushSync(() => appendToken(event.text));
+            } else if (event.type === "tool_call_start") {
+              flushSync(() => addToolCall(event.toolName));
+            } else if (event.type === "tool_result") {
+              flushSync(() =>
+                resolveToolCall(event.toolName, event.isError ?? false),
+              );
             } else if (event.type === "done") {
               if (event.sessionId && !sessionId) {
                 setSessionId(event.sessionId);
@@ -148,7 +157,11 @@ export default function CopilotPanel() {
           </div>
         ) : (
           <>
-            <CopilotMessageList messages={messages} isStreaming={isStreaming} />
+            <CopilotMessageList
+              messages={messages}
+              isStreaming={isStreaming}
+              activeToolCalls={activeToolCalls}
+            />
             <CopilotChatInput
               value={inputValue}
               onChange={setInputValue}

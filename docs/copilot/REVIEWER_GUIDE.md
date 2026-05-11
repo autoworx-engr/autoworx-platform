@@ -6,13 +6,17 @@ For the AutoWorx dev team. Read top-to-bottom before reviewing the PR.
 
 ## TL;DR
 
-[Filled in at end of build]
+Phases 0a–2: Adds an AI Copilot to AutoWorx — a sliding panel in the dashboard header (gated on `User.hasCopilot`) that streams chat responses via SSE, persists conversation history, generates cross-session memory summaries, and can look up live shop data (revenue, payments, clients, vehicles, inventory, estimates, appointments, tasks) using 8 read-only tools backed by the Anthropic API.
 
 ---
 
 ## What this feature does
 
-[Filled in at end of build]
+- **Chat panel**: Bot icon in top navbar opens a `<Sheet>` slide-over. Users can send messages, see streaming responses token-by-token, and switch between past sessions.
+- **Session memory**: Each session is summarized on close (Haiku 4.5, 200 tokens). Last 5 summaries are injected into the system prompt of the next session.
+- **8 read-only tools (Phase 2)**: The AI can call tools to fetch live data — revenue summaries, payment breakdowns, client/vehicle lookup, inventory search, estimate details, appointments, and tasks. Tool calls are permission-checked, Zod-validated, audited, and shown as animated pills in the UI while in progress.
+- **Security**: `companyId` always from session. AI-provided IDs are ignored. Tool results treated as data, not instructions (anti-prompt-injection rule in system prompt).
+- **Cost controls**: Prompt caching (90% discount on cached tokens), `max_tokens: 1024`, Haiku for summarization.
 
 ---
 
@@ -39,7 +43,17 @@ For the AutoWorx dev team. Read top-to-bottom before reviewing the PR.
 
 ### Files added (isolated, low review burden)
 
-[Filled in as we go]
+**Phase 2 — tools (all new, no existing code touched):**
+
+| File                                               | Notes                                                        |
+| -------------------------------------------------- | ------------------------------------------------------------ |
+| `src/lib/copilot/tools/registry.ts`                | Pure in-memory Map. No side effects.                         |
+| `src/lib/copilot/tools/dispatcher.ts`              | Calls canUserDo + writeAuditLog — both never-throw wrappers. |
+| `src/lib/copilot/tools/index.ts`                   | Barrel import only.                                          |
+| `src/lib/copilot/tools/handlers/get*.ts` (8 files) | Read-only DB queries scoped to companyId.                    |
+| `src/components/copilot/CopilotToolPills.tsx`      | Presentational only — pure React, no data fetching.          |
+
+**Phases 0b–1 — copilot infrastructure (all new):** See FILE_MAP.md for the full list.
 
 ---
 

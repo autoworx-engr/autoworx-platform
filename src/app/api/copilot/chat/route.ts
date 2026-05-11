@@ -7,7 +7,14 @@ import { checkRateLimit } from "@/lib/copilot/rateLimit";
 import { buildSystemPrompt } from "@/lib/copilot/systemPrompt";
 import { generateSessionSummary } from "@/lib/copilot/generateSessionSummary";
 import { writeAuditLog } from "@/lib/copilot/audit";
-import type { MessageParam } from "@anthropic-ai/sdk/resources/messages";
+import { toolsForAnthropic, executeTool } from "@/lib/copilot/tools/index";
+import type { ToolContext } from "@/lib/copilot/tools/registry";
+import type {
+  MessageParam,
+  ToolResultBlockParam,
+} from "@anthropic-ai/sdk/resources/messages";
+
+const MAX_TOOL_ITERATIONS = 5;
 
 function json401() {
   return Response.json({ error: "Unauthorized" }, { status: 401 });
@@ -20,14 +27,12 @@ function json403() {
 export async function POST(req: NextRequest) {
   const startTime = Date.now();
 
-  // Auth
   const session = await getServerSession(authOptions);
   if (!session?.user) return json401();
 
   const userId = Number(session.user.id);
   const companyId = session.user.companyId as number;
 
-  // Copilot gate
   const dbUser = await db.user.findUnique({
     where: { id: userId },
     select: {
@@ -35,12 +40,12 @@ export async function POST(req: NextRequest) {
       firstName: true,
       lastName: true,
       role: true,
+      employeeType: true,
       company: { select: { name: true, industry: true, timezone: true } },
     },
   });
   if (!dbUser?.hasCopilot) return json403();
 
-  // Rate limit
   const rateResult = checkRateLimit(userId);
   if (!rateResult.ok) {
     return Response.json(
@@ -54,7 +59,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Parse body
   const body = await req.json().catch(() => null);
   const message: string = body?.message?.trim() ?? "";
   const sessionId: string | undefined = body?.sessionId;
@@ -63,7 +67,6 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "message is required" }, { status: 400 });
   }
 
-  // Load or create session
   let copilotSession = sessionId
     ? await db.copilotSession.findFirst({
         where: { id: sessionId, userId, companyId },
@@ -72,17 +75,12 @@ export async function POST(req: NextRequest) {
 
   if (!copilotSession) {
     copilotSession = await db.copilotSession.create({
-      data: {
-        userId,
-        companyId,
-        title: message.slice(0, 80),
-      },
+      data: { userId, companyId, title: message.slice(0, 80) },
     });
   }
 
   const activeSessionId = copilotSession.id;
 
-  // Lazy summarization fallback: session >30min old and summary is null
   const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000);
   if (!copilotSession.summary && copilotSession.lastMessageAt < thirtyMinAgo) {
     const summary = await generateSessionSummary(activeSessionId);
@@ -94,7 +92,6 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Prior summaries for memory (last 5 different sessions)
   const priorSessions = await db.copilotSession.findMany({
     where: { userId, id: { not: activeSessionId }, summary: { not: null } },
     orderBy: { lastMessageAt: "desc" },
@@ -105,7 +102,6 @@ export async function POST(req: NextRequest) {
     .map((s) => s.summary)
     .filter((s): s is string => !!s);
 
-  // Conversation history
   const history = await db.copilotMessage.findMany({
     where: { sessionId: activeSessionId },
     orderBy: { createdAt: "asc" },
@@ -113,12 +109,10 @@ export async function POST(req: NextRequest) {
     take: 40,
   });
 
-  // Persist user message
   await db.copilotMessage.create({
     data: { sessionId: activeSessionId, role: "user", content: message },
   });
 
-  // Build Anthropic messages with prompt caching
   const systemPrompt = buildSystemPrompt({
     user: {
       firstName: dbUser.firstName,
@@ -133,15 +127,30 @@ export async function POST(req: NextRequest) {
     priorSummaries,
   });
 
-  const anthropicMessages: MessageParam[] = [
-    ...history.map((m) => ({
-      role: m.role === "user" ? ("user" as const) : ("assistant" as const),
-      content: m.content,
-    })),
+  const systemBlock = [
+    {
+      type: "text" as const,
+      text: systemPrompt,
+      cache_control: { type: "ephemeral" as const },
+    },
+  ];
+
+  const baseMessages: MessageParam[] = [
+    ...history
+      .filter((m) => m.role === "user" || m.role === "assistant")
+      .map((m) => ({
+        role: m.role === "user" ? ("user" as const) : ("assistant" as const),
+        content: m.content,
+      })),
     { role: "user" as const, content: message },
   ];
 
-  // SSE stream
+  const toolCtx: ToolContext = {
+    userId,
+    companyId,
+    userRole: dbUser.employeeType,
+  };
+
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
@@ -153,47 +162,125 @@ export async function POST(req: NextRequest) {
       let inputTokens = 0;
       let outputTokens = 0;
       let cachedTokens = 0;
+      let toolCallCount = 0;
 
       try {
         const anthropic = getAnthropic();
-        const anthropicStream = anthropic.messages.stream({
-          model: COPILOT_MODELS.default,
-          max_tokens: 1024,
-          system: [
-            {
-              type: "text",
-              text: systemPrompt,
-              cache_control: { type: "ephemeral" },
-            },
-          ],
-          messages: anthropicMessages,
-        });
+        const mutableMessages = baseMessages.slice();
 
-        for await (const event of anthropicStream) {
-          if (
-            event.type === "content_block_delta" &&
-            event.delta.type === "text_delta"
-          ) {
-            const text = event.delta.text;
-            fullText += text;
-            send({ type: "text_delta", text });
+        for (let iter = 0; iter < MAX_TOOL_ITERATIONS; iter++) {
+          const anthropicStream = anthropic.messages.stream({
+            model: COPILOT_MODELS.default,
+            max_tokens: 1024,
+            system: systemBlock,
+            tools: toolsForAnthropic(),
+            messages: mutableMessages,
+          });
+
+          let currentToolId: string | null = null;
+          let currentToolName: string | null = null;
+          let currentToolInputJson = "";
+          const pendingToolCalls: Array<{
+            id: string;
+            name: string;
+            input: object;
+          }> = [];
+
+          for await (const event of anthropicStream) {
+            if (event.type === "content_block_start") {
+              if (event.content_block.type === "tool_use") {
+                currentToolId = event.content_block.id;
+                currentToolName = event.content_block.name;
+                currentToolInputJson = "";
+                send({
+                  type: "tool_call_start",
+                  toolName: currentToolName,
+                });
+              }
+            } else if (event.type === "content_block_delta") {
+              if (event.delta.type === "text_delta") {
+                const text = event.delta.text;
+                fullText += text;
+                send({ type: "text_delta", text });
+              } else if (event.delta.type === "input_json_delta") {
+                currentToolInputJson += event.delta.partial_json;
+              }
+            } else if (event.type === "content_block_stop" && currentToolId) {
+              let parsedInput: object = {};
+              try {
+                parsedInput = JSON.parse(currentToolInputJson || "{}");
+              } catch {}
+              pendingToolCalls.push({
+                id: currentToolId,
+                name: currentToolName!,
+                input: parsedInput,
+              });
+              currentToolId = null;
+              currentToolName = null;
+            }
           }
+
+          const finalMsg = await anthropicStream.finalMessage();
+          inputTokens += finalMsg.usage.input_tokens;
+          outputTokens += finalMsg.usage.output_tokens;
+          cachedTokens += finalMsg.usage.cache_read_input_tokens ?? 0;
+          const cacheCreation = finalMsg.usage.cache_creation_input_tokens ?? 0;
+
+          if (process.env.NODE_ENV !== "production") {
+            console.log(
+              `[copilot] iter:${iter + 1} in:${finalMsg.usage.input_tokens} out:${finalMsg.usage.output_tokens} cached:${finalMsg.usage.cache_read_input_tokens ?? 0} cacheWrite:${cacheCreation}`,
+            );
+          }
+
+          if (
+            finalMsg.stop_reason !== "tool_use" ||
+            pendingToolCalls.length === 0
+          ) {
+            break;
+          }
+
+          mutableMessages.push({
+            role: "assistant",
+            content: finalMsg.content as MessageParam["content"],
+          });
+
+          const toolResults: ToolResultBlockParam[] = [];
+          for (const tc of pendingToolCalls) {
+            toolCallCount++;
+            await db.copilotMessage.create({
+              data: {
+                sessionId: activeSessionId,
+                role: "tool_call",
+                content: JSON.stringify({ name: tc.name, input: tc.input }),
+                toolName: tc.name,
+                toolCallId: tc.id,
+              },
+            });
+
+            const result = await executeTool(
+              tc.name,
+              tc.input,
+              toolCtx,
+              tc.id,
+              activeSessionId,
+            );
+            send({
+              type: "tool_result",
+              toolName: tc.name,
+              isError: result.isError,
+            });
+
+            toolResults.push({
+              type: "tool_result",
+              tool_use_id: tc.id,
+              content: result.content,
+              is_error: result.isError,
+            });
+          }
+
+          mutableMessages.push({ role: "user", content: toolResults });
         }
 
-        const finalMessage = await anthropicStream.finalMessage();
-        const usage = finalMessage.usage;
-        inputTokens = usage.input_tokens;
-        outputTokens = usage.output_tokens;
-        cachedTokens = usage.cache_read_input_tokens ?? 0;
-        const cacheCreationTokens = usage.cache_creation_input_tokens ?? 0;
-
-        if (process.env.NODE_ENV !== "production") {
-          console.log(
-            `[copilot] tokens — in:${inputTokens} out:${outputTokens} cached:${cachedTokens} cacheWrite:${cacheCreationTokens}`,
-          );
-        }
-
-        // Persist assistant message
         await db.copilotMessage.create({
           data: {
             sessionId: activeSessionId,
@@ -206,17 +293,15 @@ export async function POST(req: NextRequest) {
           },
         });
 
-        // Update session
         await db.copilotSession.update({
           where: { id: activeSessionId },
           data: {
             lastMessageAt: new Date(),
-            messageCount: { increment: 2 },
+            messageCount: { increment: 2 + toolCallCount },
             tokenCount: { increment: inputTokens + outputTokens },
           },
         });
 
-        // Audit log
         await writeAuditLog({
           actor: "copilot",
           action: "chat.message",
@@ -225,7 +310,7 @@ export async function POST(req: NextRequest) {
           copilotSessionId: activeSessionId,
           success: true,
           latencyMs: Date.now() - startTime,
-          output: { inputTokens, outputTokens },
+          output: { inputTokens, outputTokens, toolCallCount },
         });
 
         if (rateResult.warning) {

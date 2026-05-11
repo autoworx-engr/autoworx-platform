@@ -1,23 +1,30 @@
 "use client";
 import { useEffect, useRef } from "react";
-import { CopilotMessageUI } from "@/stores/copilotStore";
+import { CopilotMessageUI, ActiveToolCall } from "@/stores/copilotStore";
 import CopilotMessageCard from "./CopilotMessageCard";
 import CopilotThinkingIndicator from "./CopilotThinkingIndicator";
+import CopilotToolPills from "./CopilotToolPills";
 
 type Props = {
   messages: CopilotMessageUI[];
   isStreaming: boolean;
+  activeToolCalls?: ActiveToolCall[];
 };
 
-export default function CopilotMessageList({ messages, isStreaming }: Props) {
+export default function CopilotMessageList({
+  messages,
+  isStreaming,
+  activeToolCalls = [],
+}: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isStreaming]);
+  }, [messages, isStreaming, activeToolCalls]);
 
   const showThinking =
     isStreaming &&
+    activeToolCalls.length === 0 &&
     (messages.length === 0 || messages[messages.length - 1]?.role === "user");
 
   if (messages.length === 0 && !isStreaming) {
@@ -36,6 +43,9 @@ export default function CopilotMessageList({ messages, isStreaming }: Props) {
       {messages.map((msg) => (
         <CopilotMessageCard key={msg.id} message={msg} />
       ))}
+      {isStreaming && activeToolCalls.length > 0 && (
+        <CopilotToolPills toolCalls={activeToolCalls} />
+      )}
       {showThinking && <CopilotThinkingIndicator />}
       <div ref={bottomRef} />
     </div>
