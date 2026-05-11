@@ -337,7 +337,7 @@ export default function BusinessForm({ company }: TProps) {
         teamSize: businessSettings.teamSize,
       };
 
-      const response = await updateCompany(company?.id, companyData);
+      const response = await updateCompany(companyData);
       if (response.type === "success") {
         queryClient.invalidateQueries({ queryKey: [queryKeys.company] });
         successToast("Profile updated successfully");

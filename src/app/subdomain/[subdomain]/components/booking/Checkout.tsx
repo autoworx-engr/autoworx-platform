@@ -1085,7 +1085,10 @@ export const Checkout = () => {
             setStep("confirmation");
           }}
           gatewayInfo={{
-            paymentGateway: gatewayInfo?.paymentGateway || "BOTH",
+            paymentGateway: (gatewayInfo?.paymentGateway || "BOTH") as
+              | "STRIPE"
+              | "AUTHORIZE_NET"
+              | "BOTH",
             hasStripe: gatewayInfo?.hasStripe ?? true,
             hasAuthorizeNet: gatewayInfo?.hasAuthorizeNet ?? true,
             tipEnabled: gatewayInfo?.tipEnabled ?? false,

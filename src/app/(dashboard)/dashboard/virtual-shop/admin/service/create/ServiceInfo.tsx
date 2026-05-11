@@ -28,7 +28,7 @@ export type ServiceInfoState = {
 const QUILL_MODULES = {
   toolbar: [
     [{ header: [1, 2, 3, false] }],
-    ["bold", "italic", "underline"],
+    ["bold", "italic", "underline", "link"],
     [{ color: [] }, { background: [] }],
     [{ list: "ordered" }, { list: "bullet" }],
     ["clean"],
@@ -40,6 +40,7 @@ const QUILL_FORMATS = [
   "bold",
   "italic",
   "underline",
+  "link",
   "color",
   "background",
   "list",
