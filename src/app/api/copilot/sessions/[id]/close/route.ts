@@ -6,7 +6,7 @@ import { generateSessionSummary } from "@/lib/copilot/generateSessionSummary";
 
 export async function POST(
   _req: NextRequest,
-  { params }: { params: { id: string } },
+  props: { params: Promise<{ id: string }> },
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
@@ -14,18 +14,18 @@ export async function POST(
   }
 
   const userId = Number(session.user.id);
-  const { id } = params;
+  const { id } = await props.params;
 
   const copilotSession = await db.copilotSession.findFirst({
     where: { id, userId },
-    select: { id: true, summary: true, messageCount: true },
+    select: { id: true, summary: true },
   });
 
   if (!copilotSession) {
     return Response.json({ error: "Session not found" }, { status: 404 });
   }
 
-  if (!copilotSession.summary && copilotSession.messageCount > 0) {
+  if (!copilotSession.summary) {
     const summary = await generateSessionSummary(id);
     if (summary) {
       await db.copilotSession.update({

@@ -1,5 +1,6 @@
 "use client";
 import { useState, useCallback } from "react";
+import { flushSync } from "react-dom";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useCopilotStore } from "@/stores/copilotStore";
 import CopilotChatHeader from "./CopilotChatHeader";
@@ -108,7 +109,7 @@ export default function CopilotPanel() {
           try {
             const event = JSON.parse(line.slice(6));
             if (event.type === "text_delta") {
-              appendToken(event.text);
+              flushSync(() => appendToken(event.text));
             } else if (event.type === "done") {
               if (event.sessionId && !sessionId) {
                 setSessionId(event.sessionId);

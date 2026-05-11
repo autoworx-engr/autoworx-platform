@@ -5,6 +5,39 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Phase 1.1 — Bug fixes from smoke testing
+
+**Date:** 2026-05-11
+**Branch:** taiseer/ai-copilot
+
+### Bugs fixed
+
+1. **Token streaming was buffering full response.** Root cause: React 18 automatic batching merges all `appendToken()` calls inside the `while` SSE-read loop into a single re-render, so the full assistant response appeared at once rather than token-by-token. Fix: wrapped each `appendToken` call with `flushSync(() => appendToken(event.text))` in `CopilotPanel.tsx`. Tokens now stream character-by-character as expected.
+
+2. **Session summarization never fired on Sheet close.** Root cause: In Next.js 16, dynamic route `params` are Promises and must be awaited. Both `sessions/[id]/route.ts` and `sessions/[id]/close/route.ts` accessed `params` synchronously (`{ params }: { params: { id: string } }`), so `id` was a Promise object, not a string. Every `db.findFirst` silently failed to match any session (returning null), the close endpoint returned 404 on every call, and `generateSessionSummary` never ran. Fix: updated both routes to use `props: { params: Promise<{ id: string }> }` and `await props.params`. Also removed the `messageCount > 0` guard in the close endpoint (replaced by the existing `messages.length === 0` check inside `generateSessionSummary`). Sessions now receive 2-3 sentence summaries on panel close.
+
+3. **AuditLog latencyMs was null.** Root cause: `startTime` was never captured at the top of the `POST /api/copilot/chat` handler, and `writeAuditLog` was called without a `latencyMs` argument. Fix: added `const startTime = Date.now()` at handler entry and `latencyMs: Date.now() - startTime` to the `writeAuditLog` call inside the stream's `start` callback. AuditLog rows now record end-to-end latency for every chat message.
+
+### Files modified
+
+| File                                               | Change                                                                                 |
+| -------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `src/components/copilot/CopilotPanel.tsx`          | Import `flushSync`; wrap `appendToken` call with `flushSync`                           |
+| `src/app/api/copilot/sessions/[id]/route.ts`       | Async params (`await props.params`); remove sync destructuring                         |
+| `src/app/api/copilot/sessions/[id]/close/route.ts` | Async params; remove `messageCount > 0` guard                                          |
+| `src/app/api/copilot/chat/route.ts`                | Add `const startTime = Date.now()` at handler entry; add `latencyMs` to audit log call |
+
+### Verification
+
+- ✓ `yarn tsc --noEmit` — 0 errors
+- ✓ `yarn build` — clean (130s)
+- ✓ Streaming test — tokens appear progressively
+- ✓ Summary test — summary populated after Sheet close
+- ✓ Memory test — new chat references prior session
+- ✓ Latency test — AuditLog rows show valid latencyMs
+
+---
+
 ## Phase 1 — Chat UI, SSE Streaming, Session Persistence, Cross-Conversation Memory
 
 **Date:** 2026-05-11

@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } },
+  props: { params: Promise<{ id: string }> },
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
@@ -13,7 +13,7 @@ export async function GET(
   }
 
   const userId = Number(session.user.id);
-  const { id } = params;
+  const { id } = await props.params;
 
   const copilotSession = await db.copilotSession.findFirst({
     where: { id, userId },

@@ -18,6 +18,8 @@ function json403() {
 }
 
 export async function POST(req: NextRequest) {
+  const startTime = Date.now();
+
   // Auth
   const session = await getServerSession(authOptions);
   if (!session?.user) return json401();
@@ -211,6 +213,7 @@ export async function POST(req: NextRequest) {
           userId,
           copilotSessionId: activeSessionId,
           success: true,
+          latencyMs: Date.now() - startTime,
           output: { inputTokens, outputTokens },
         });
 

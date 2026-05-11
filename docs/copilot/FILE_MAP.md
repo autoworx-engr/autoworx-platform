@@ -81,6 +81,10 @@ Index of every file created or modified during the copilot build.
 | `src/app/(dashboard)/dashboard/pipeline/sales/pipeline/_components/LeadActions.tsx` | 0.5   | Removed stale `createDraftEstimate` import                           |
 | `src/authOptions.ts`                                                                | 1     | Added `hasCopilot` to JWT refresh DB select, token, and session      |
 | `src/components/TopNavbarIcons.tsx`                                                 | 1     | Added `<CopilotIcon />` between BugReport and NotificationsPopover   |
+| `src/components/copilot/CopilotPanel.tsx`                                           | 1.1   | `flushSync` per `appendToken` call to unblock React 18 batching      |
+| `src/app/api/copilot/sessions/[id]/route.ts`                                        | 1.1   | Async params (`await props.params`) for Next.js 16                   |
+| `src/app/api/copilot/sessions/[id]/close/route.ts`                                  | 1.1   | Async params; removed `messageCount > 0` guard                       |
+| `src/app/api/copilot/chat/route.ts`                                                 | 1.1   | `startTime` capture + `latencyMs` on audit log                       |
 
 ---
 
