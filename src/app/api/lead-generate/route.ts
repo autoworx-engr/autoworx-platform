@@ -1,13 +1,5 @@
-import { updateCommunicationAutomationTrigger } from "@/actions/automation/communication/triggerCommunicationAutomation";
-import { updatePipelineAutomationTrigger } from "@/actions/automation/pipeline/triggerPipelineAutomation";
-import { updateTagAutomationTrigger } from "@/actions/automation/tag/triggerTagAutomation";
-import { initialCreateClientChatTrack } from "@/actions/communication/client/chat-track";
-import { sendInfobipMessage } from "@/actions/communication/client/sendInfobipMessage";
-import { sendTwilioMessage } from "@/actions/communication/client/sendTwilioMessage";
-import { companyWithUser } from "@/actions/settings/getCompanyWithUser";
+import { createLeadRecord } from "@/lib/leads/createLeadRecord";
 import { db } from "@/lib/db";
-import { sendCRMDemoNotification } from "@/lib/notification/crm-demo-notifiy";
-import { sendNewLeadNotification } from "@/lib/notification/pipeline-notify";
 import { NextRequest } from "next/server";
 
 const CORS_HEADERS = {
@@ -20,78 +12,6 @@ function jsonResponse(data: unknown, status: number) {
   const res = Response.json(data, { status });
   Object.entries(CORS_HEADERS).forEach(([k, v]) => res.headers.set(k, v));
   return res;
-}
-
-function parseClientName(name: string) {
-  const parts = name.trim().split(" ");
-  return { firstName: parts.shift() ?? "", lastName: parts.join(" ") };
-}
-
-function parseVehicleInfo(vehicleInfo: string) {
-  const parts = vehicleInfo.split(/\s+/);
-  return {
-    year: parseInt(parts[0]) || undefined,
-    make: parts[1] || parts[0] || "",
-    model: parts.slice(2).join(" ") || "",
-  };
-}
-
-async function upsertClient(
-  companyId: number,
-  leadId: number,
-  data: {
-    firstName: string;
-    lastName: string;
-    email?: string;
-    mobile?: string;
-  },
-) {
-  const existing = data.mobile
-    ? await db.client.findFirst({ where: { mobile: data.mobile, companyId } })
-    : null;
-
-  if (!existing) {
-    return db.client.create({
-      data: { ...data, companyId, leadId, isSalesAgent: true },
-    });
-  }
-
-  return db.client.update({
-    where: { id: existing.id, companyId },
-    data: { ...data, companyId, leadId },
-  });
-}
-
-async function triggerAutomation(
-  companyId: number,
-  leadId: number,
-  columnId: number,
-  generatedToken: string,
-) {
-  try {
-    await updatePipelineAutomationTrigger({
-      companyId,
-      condition: "TIME_DELAY",
-      leadId,
-      columnId,
-    });
-  } catch {}
-
-  await updateCommunicationAutomationTrigger({
-    companyId,
-    leadId,
-    columnId,
-    generatedToken,
-  });
-
-  updateTagAutomationTrigger({
-    columnId,
-    companyId,
-    pipelineType: "SALES",
-    leadId,
-    conditionType: "post_tag",
-    generatedToken,
-  });
 }
 
 /**
@@ -171,19 +91,13 @@ export async function POST(request: NextRequest) {
       return jsonResponse({ error: "Invalid input" }, 400);
     }
 
-    const column = await db.column.findFirst({
-      where: { title: "New Leads", companyId: company.id, type: "sales" },
-    });
-    if (!column)
-      return jsonResponse({ error: "New Leads column not found" }, 404);
-
     const multipleServices =
       rawMultiServices?.length > 0
         ? { connect: rawMultiServices.map((s: any) => ({ id: Number(s.id) })) }
         : undefined;
 
-    const newLead = await db.lead.create({
-      data: {
+    const result = await createLeadRecord(
+      {
         clientName,
         clientEmail,
         clientPhone,
@@ -192,75 +106,15 @@ export async function POST(request: NextRequest) {
         source,
         serviceId,
         countryCode,
-        companyId: company.id,
-        columnId: column.id,
         multipleServices,
       },
-    });
-
-    const { firstName, lastName } = parseClientName(clientName);
-    const client = await upsertClient(company.id, newLead.id, {
-      firstName,
-      lastName,
-      email: clientEmail,
-      mobile: clientPhone,
-    });
-
-    const { year, make, model } = parseVehicleInfo(vehicleInfo);
-    const vehicle = await db.vehicle.create({
-      data: { year, make, model, companyId: company.id, clientId: client.id },
-    });
-
-    await db.lead.update({
-      where: { companyId: company.id, id: newLead.id },
-      data: { clientId: client.id, vehicleId: vehicle.id },
-    });
-
-    if (!isCRM) await initialCreateClientChatTrack(client.id);
-
-    const automationToken = isCRM
-      ? token
-      : await companyWithUser({ companyId: newLead.companyId });
-
-    await triggerAutomation(company.id, newLead.id, column.id, automationToken);
-
-    await sendNewLeadNotification({
-      companyId: company.id,
-      leadClientName: newLead.clientName,
-    });
-    if (isCRM)
-      await sendCRMDemoNotification({
-        companyId: company.id,
-        clientName: newLead.clientName,
-      });
-
-    const personality = await db.aiPersonality.findFirst({
-      where: {
-        companyId: newLead.companyId,
-      },
-    });
-
-    if (personality?.openingMessage && client) {
-      if (company?.smsGateway === "TWILIO") {
-        await sendTwilioMessage({
-          companyId: newLead.companyId,
-          clientId: client?.id,
-          message: personality?.openingMessage,
-          attachments: [],
-        });
-      } else {
-        await sendInfobipMessage({
-          companyId: body.companyId,
-          clientId: body.clientId,
-          message: body.message,
-          attachments: [],
-        });
-      }
-    }
+      company.id,
+      { isCRM, doTriggerAutomation: true, sendOpeningSms: true },
+    );
 
     return jsonResponse(
       {
-        id: newLead.id,
+        id: result.leadId,
         name: clientName,
         email: clientEmail,
         phone: clientPhone,

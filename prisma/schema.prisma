@@ -2265,6 +2265,9 @@ model User {
   twoFactorConfirmation          TwoFactorConfirmation?
   collaborationMessages          CollaborationMessage[]
   reviews                        Reviews[]
+  hasCopilot                     Boolean                         @default(false)
+  copilotSessions                CopilotSession[]
+  auditLogs                      AuditLog[]
 
   @@index([companyId], name: "fk_users_company")
 }
@@ -3349,4 +3352,95 @@ model ShopSlotHold {
   createdAt    DateTime @default(now()) @map("created_at")
 
   @@index([shopId, date, expiresAt])
+}
+
+// ──────────────────────────────────────────────
+// AI Copilot Models
+// ──────────────────────────────────────────────
+
+enum CopilotMessageRole {
+  user
+  assistant
+  tool_call
+  tool_result
+  system_summary
+}
+
+enum AuditActor {
+  user
+  copilot
+  system
+  api
+}
+
+model CopilotSession {
+  id                   String           @id @default(cuid())
+  userId               Int
+  companyId            Int
+  title                String?
+  startedAt            DateTime         @default(now())
+  lastMessageAt        DateTime         @default(now())
+  summary              String?          @db.Text
+  messageCount         Int              @default(0)
+  tokenCount           Int              @default(0)
+  cachedTokenCount     Int              @default(0)
+  pendingConfirmations Json?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+
+  user                 User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages             CopilotMessage[]
+  auditLogs            AuditLog[]
+
+  @@index([userId, lastMessageAt(sort: Desc)])
+  @@index([companyId, lastMessageAt(sort: Desc)])
+  @@index([userId, summary])
+}
+
+model CopilotMessage {
+  id           Int                @id @default(autoincrement())
+  sessionId    String
+  role         CopilotMessageRole
+  content      String             @db.Text
+  toolName     String?
+  toolCallId   String?
+  model        String?
+  inputTokens  Int                @default(0)
+  outputTokens Int                @default(0)
+  cachedTokens Int                @default(0)
+  createdAt    DateTime           @default(now())
+
+  session      CopilotSession     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, createdAt])
+  @@index([toolCallId])
+}
+
+model AuditLog {
+  id               Int             @id @default(autoincrement())
+  userId           Int
+  companyId        Int
+  actor            AuditActor
+  action           String
+  resourceType     String?
+  resourceId       String?
+  inputJson        String?         @db.Text
+  outputJson       String?         @db.Text
+  success          Boolean
+  errorMessage     String?
+  latencyMs        Int?
+  ipAddress        String?
+  userAgent        String?
+  copilotSessionId String?
+  createdAt        DateTime        @default(now())
+
+  user             User            @relation(fields: [userId], references: [id])
+  copilotSession   CopilotSession? @relation(fields: [copilotSessionId], references: [id], onDelete: SetNull)
+
+  @@index([companyId, createdAt(sort: Desc)])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([action])
+  @@index([resourceType, resourceId])
+  @@index([copilotSessionId])
+  @@index([success, createdAt(sort: Desc)])
 }
