@@ -197,3 +197,23 @@ export const useLookupClientByPhone = () => {
       lookupClientByPhone(payload),
   });
 };
+
+export const useInfiniteShopServices = (
+  shopId?: number,
+  limit = 10,
+  enabled = true,
+) => {
+  return useInfiniteQuery({
+    queryKey: ["virtual-shop-services-infinite", shopId, limit],
+    queryFn: ({ pageParam }) =>
+      getShopServices({
+        shopId: Number(shopId),
+        page: pageParam as number,
+        limit,
+      }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage: ShopServicesResponse) =>
+      lastPage.meta.hasNextPage ? lastPage.meta.page + 1 : undefined,
+    enabled: enabled && !!shopId,
+  });
+};
