@@ -228,11 +228,13 @@ export async function POST(request: NextRequest) {
       companyId: company.id,
       leadClientName: newLead.clientName,
     });
-    if (isCRM)
+
+    if (isCRM) {
       await sendCRMDemoNotification({
         companyId: company.id,
         clientName: newLead.clientName,
       });
+    }
 
     const personality = await db.aiPersonality.findFirst({
       where: {
