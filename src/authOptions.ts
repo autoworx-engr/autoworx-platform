@@ -20,6 +20,7 @@ declare module "next-auth" {
       companyId: number;
       employeeType: string;
       isSuperAdmin: boolean;
+      hasCopilot: boolean;
     };
     accessToken: string;
     error?: "RefreshAccessTokenError";
@@ -168,6 +169,7 @@ export const authOptions: NextAuthOptions = {
             companyId: true,
             employeeType: true,
             isSuperAdmin: true,
+            hasCopilot: true,
           },
         });
 
@@ -178,6 +180,7 @@ export const authOptions: NextAuthOptions = {
           token.companyId = dbUser.companyId;
           token.employeeType = dbUser.employeeType;
           token.isSuperAdmin = dbUser.isSuperAdmin;
+          token.hasCopilot = dbUser.hasCopilot;
         }
       }
 
@@ -196,6 +199,7 @@ export const authOptions: NextAuthOptions = {
         session.user.companyId = token.companyId as number;
         session.user.employeeType = token.employeeType as string;
         session.user.isSuperAdmin = token.isSuperAdmin as boolean;
+        session.user.hasCopilot = (token.hasCopilot as boolean) ?? false;
         session.accessToken = token.accessToken as string;
         session.error = token.error as "RefreshAccessTokenError";
       }

@@ -6,6 +6,29 @@ Index of every file created or modified during the copilot build.
 
 ## New files
 
+### Phase 1
+
+| Path                                                  | Purpose                                           |
+| ----------------------------------------------------- | ------------------------------------------------- |
+| `src/lib/copilot/rateLimit.ts`                        | In-memory fixed-window rate limiter               |
+| `src/lib/copilot/systemPrompt.ts`                     | System prompt builder with memory injection       |
+| `src/lib/copilot/generateSessionSummary.ts`           | Haiku-based session summarizer                    |
+| `src/app/api/copilot/chat/route.ts`                   | SSE streaming chat endpoint                       |
+| `src/app/api/copilot/sessions/route.ts`               | Sessions list (GET last 20)                       |
+| `src/app/api/copilot/sessions/[id]/route.ts`          | Session detail + messages                         |
+| `src/app/api/copilot/sessions/[id]/close/route.ts`    | Close + summarize session                         |
+| `src/stores/copilotStore.ts`                          | Zustand: isOpen, sessionId, messages, isStreaming |
+| `src/components/copilot/CopilotIcon.tsx`              | Header icon, hasCopilot gate                      |
+| `src/components/copilot/CopilotPanel.tsx`             | Sheet + SSE consumer orchestrator                 |
+| `src/components/copilot/CopilotChatHeader.tsx`        | Panel header                                      |
+| `src/components/copilot/CopilotMessageList.tsx`       | Scrollable message list                           |
+| `src/components/copilot/CopilotMessageCard.tsx`       | Single message bubble                             |
+| `src/components/copilot/CopilotChatInput.tsx`         | Textarea + send                                   |
+| `src/components/copilot/CopilotConversationList.tsx`  | History list                                      |
+| `src/components/copilot/CopilotThinkingIndicator.tsx` | Streaming dots indicator                          |
+
+---
+
 ### src/lib/
 
 | Path                                       | Purpose                                                     |
@@ -56,6 +79,8 @@ Index of every file created or modified during the copilot build.
 | `src/actions/appointment/addAppointment.ts`                                         | 0.5   | Replaced inline draft-estimate logic with `createDraftEstimate` call |
 | `src/actions/appointment/editAppointment.ts`                                        | 0.5   | Replaced inline draft-estimate logic; fixes invisible-estimate bug   |
 | `src/app/(dashboard)/dashboard/pipeline/sales/pipeline/_components/LeadActions.tsx` | 0.5   | Removed stale `createDraftEstimate` import                           |
+| `src/authOptions.ts`                                                                | 1     | Added `hasCopilot` to JWT refresh DB select, token, and session      |
+| `src/components/TopNavbarIcons.tsx`                                                 | 1     | Added `<CopilotIcon />` between BugReport and NotificationsPopover   |
 
 ---
 

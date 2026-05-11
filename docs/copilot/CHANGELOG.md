@@ -5,6 +5,55 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Phase 1 — Chat UI, SSE Streaming, Session Persistence, Cross-Conversation Memory
+
+**Date:** 2026-05-11
+**Branch:** taiseer/ai-copilot
+
+### Files created
+
+| File                                                  | Purpose                                                                                 |
+| ----------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `src/lib/copilot/rateLimit.ts`                        | In-memory fixed-window rate limiter (60/hr soft warn, 120/hr hard 429)                  |
+| `src/lib/copilot/systemPrompt.ts`                     | `buildSystemPrompt()` — identity, tone, scope, security, user context, memory injection |
+| `src/lib/copilot/generateSessionSummary.ts`           | `generateSessionSummary(sessionId)` — Haiku 4.5, 200 tokens, never throws               |
+| `src/app/api/copilot/chat/route.ts`                   | POST SSE streaming chat endpoint                                                        |
+| `src/app/api/copilot/sessions/route.ts`               | GET last 20 sessions list                                                               |
+| `src/app/api/copilot/sessions/[id]/route.ts`          | GET single session + messages                                                           |
+| `src/app/api/copilot/sessions/[id]/close/route.ts`    | POST — triggers session summary generation                                              |
+| `src/stores/copilotStore.ts`                          | Zustand store: isOpen, sessionId, messages, isStreaming                                 |
+| `src/components/copilot/CopilotIcon.tsx`              | Header icon, gated on `hasCopilot`, Bot icon                                            |
+| `src/components/copilot/CopilotPanel.tsx`             | Sheet slide-over orchestrator + SSE streaming consumer                                  |
+| `src/components/copilot/CopilotChatHeader.tsx`        | Title, new chat, history toggle, close                                                  |
+| `src/components/copilot/CopilotMessageList.tsx`       | Scrollable message list, auto-scroll                                                    |
+| `src/components/copilot/CopilotMessageCard.tsx`       | User (right, #006D77) / assistant (left, white) bubbles                                 |
+| `src/components/copilot/CopilotChatInput.tsx`         | Textarea, send button, Cmd/Ctrl+Enter to send                                           |
+| `src/components/copilot/CopilotConversationList.tsx`  | Past sessions dropdown, fetches /api/copilot/sessions                                   |
+| `src/components/copilot/CopilotThinkingIndicator.tsx` | Three-dot bounce animation while streaming                                              |
+
+### Files modified
+
+| File                                | Change                                                             |
+| ----------------------------------- | ------------------------------------------------------------------ |
+| `src/authOptions.ts`                | Added `hasCopilot` to JWT refresh DB select, token, and session    |
+| `src/components/TopNavbarIcons.tsx` | Added `<CopilotIcon />` between BugReport and NotificationsPopover |
+
+### Key design decisions
+
+- `hasCopilot` added to the NextAuth JWT refresh path (not login path) — populates on every token rotation. Session type declaration extended in `authOptions.ts`.
+- Rate limiter is in-memory Map — safe for Railway single-replica. Redis upgrade needed for multi-replica.
+- SSE event types: `text_delta`, `done` (carries `sessionId` + optional `warning`), `error`.
+- Cross-conversation memory: prior session summaries (last 5, summary IS NOT NULL) injected into system prompt. Summary generated synchronously on panel close (POST /close). Lazy fallback: if session >30min old and summary is null when next message arrives, summary is generated before streaming.
+- Prompt caching: system prompt has `cache_control: { type: "ephemeral" }` — saves tokens on repeated turns within a session.
+- `CopilotPanel` renders both `<Sheet>` and the streaming consumer — `CopilotIcon` triggers `setOpen(true)` via Zustand (controlled), not `SheetTrigger`.
+
+### Tests performed
+
+- ✓ `yarn tsc --noEmit` — 0 errors
+- ✓ `yarn build` — clean (94s)
+
+---
+
 ## Phase 0.5 — Draft estimate path consolidation
 
 **Date:** 2026-05-11

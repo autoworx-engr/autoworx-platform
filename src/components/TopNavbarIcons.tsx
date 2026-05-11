@@ -6,6 +6,7 @@ import BugReport from "./bug-report/BugReport";
 import LogoutBtn from "./LogoutBtn";
 // import { NotificationsPopover } from './NotificationProvider';
 import QuickLink from "./QuickLink";
+import CopilotIcon from "./copilot/CopilotIcon";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { RotateCw, SquarePlay } from "lucide-react";
@@ -13,7 +14,7 @@ import { RotateCw, SquarePlay } from "lucide-react";
 const NotificationsPopover = dynamic(
   () =>
     import("./NotificationProvider").then((mod) => mod.NotificationsPopover),
-  { ssr: false }
+  { ssr: false },
 );
 
 export default function TopNavbarIcons() {
@@ -35,6 +36,7 @@ export default function TopNavbarIcons() {
         currentUser?.employeeType == "Sales") &&
         isDashboard && <QuickLink />}
       {!isDashboard && <BugReport />}
+      <CopilotIcon />
 
       {/* <button className="bg-background text-[1.7rem] font-bold text-[#6571FF]">
         <MdOutlineNotifications />
