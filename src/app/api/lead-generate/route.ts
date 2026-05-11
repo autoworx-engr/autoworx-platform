@@ -259,6 +259,7 @@ export async function POST(request: NextRequest) {
           clientId: client.id,
           message: personality.openingMessage,
           attachments: [],
+          systemCall: true,
         });
       } else {
         console.log("[lead-generate] sending opening message via Infobip");
@@ -267,6 +268,7 @@ export async function POST(request: NextRequest) {
           clientId: client.id,
           message: personality.openingMessage,
           attachments: [],
+          systemCall: true,
         });
       }
       console.log("[lead-generate] opening message sent successfully");
