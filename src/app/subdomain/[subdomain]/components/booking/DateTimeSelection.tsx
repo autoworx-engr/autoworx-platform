@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
+  AlertTriangle,
   ArrowLeft,
   ArrowRight,
   CalendarDays,
@@ -20,7 +21,15 @@ import dayjs from "dayjs";
 import { Spinner } from "../ui/Spinner";
 import toast from "react-hot-toast";
 
-export const DateTimeSelection = () => {
+interface DateTimeSelectionProps {
+  onAvailabilityChange?: (hasAvailableSlots: boolean) => void;
+  onEmergencyRequest?: () => void;
+}
+
+export const DateTimeSelection = ({
+  onAvailabilityChange,
+  onEmergencyRequest,
+}: DateTimeSelectionProps) => {
   const {
     setStep,
     selectedDate,
@@ -104,6 +113,14 @@ export const DateTimeSelection = () => {
     return groups;
   }, [timeSlots]);
 
+  useEffect(() => {
+    if (!onAvailabilityChange) return;
+    if (!showSlots || !selectedDate || isSlotsLoading) return;
+    const hasAvailable =
+      timeSlots.length > 0 && timeSlots.some((s) => s.available);
+    onAvailabilityChange(hasAvailable);
+  }, [timeSlots, showSlots, selectedDate, isSlotsLoading]);
+
   if (isSlotsLoading && showSlots && selectedDate) {
     return (
       <div className="min-h-[300px] flex items-center justify-center">
@@ -145,25 +162,38 @@ export const DateTimeSelection = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => {
-            setStep("services");
-            setShowSlots(false);
-          }}
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">
-            Pick a Date & Time
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Select when you'd like your appointment
-          </p>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              setStep("services");
+              setShowSlots(false);
+            }}
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">
+              Pick a Date & Time
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Select when you'd like your appointment
+            </p>
+          </div>
         </div>
+        {onEmergencyRequest && (
+          <Button
+            type="button"
+            size="sm"
+            onClick={onEmergencyRequest}
+            className="rounded-xl gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-sm shrink-0"
+          >
+            <AlertTriangle className="w-4 h-4" />
+            <span className="hidden sm:inline">Urgent Request</span>
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

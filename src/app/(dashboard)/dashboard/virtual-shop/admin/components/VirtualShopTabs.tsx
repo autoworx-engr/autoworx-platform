@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef } from "react";
 import {
+  AlertTriangle,
   Calendar,
   CalendarDays,
   DollarSign,
@@ -28,6 +29,7 @@ const TABS = [
   { segment: "gift-card-purchases", label: "GC Purchases", icon: ShoppingBag },
   { segment: "calendar", label: "Calendar", icon: Calendar },
   { segment: "estimates", label: "Estimates", icon: FileText },
+  { segment: "urgent-requests", label: "Urgent Requests", icon: AlertTriangle },
 ] as const;
 
 export default function VirtualShopTabs({
