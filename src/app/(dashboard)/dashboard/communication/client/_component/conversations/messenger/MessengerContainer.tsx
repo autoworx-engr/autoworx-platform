@@ -48,6 +48,22 @@ export default function MessengerContainer({ clientId }: TProps) {
     };
   }, [user?.companyId, clientId, queryClient]);
 
+  // Fallback: invalidate query when companyId not yet loaded (mirrors SmsContainer)
+  useEffect(() => {
+    if (!clientId) return;
+    const channel = pusher.subscribe(`message-${clientId}`);
+    const handler = () => {
+      queryClient.invalidateQueries({
+        queryKey: messengerQueryKey.allByClientId(clientId),
+      });
+    };
+    channel.bind("client", handler);
+    return () => {
+      channel.unbind("client", handler);
+      pusher.unsubscribe(`message-${clientId}`);
+    };
+  }, [clientId, queryClient]);
+
   // Mark messages as read when tab is opened
   const markRead = useCallback(async () => {
     try {

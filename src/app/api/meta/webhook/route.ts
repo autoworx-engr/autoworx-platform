@@ -100,17 +100,19 @@ async function handleMessagingEvent(pageId: string, event: any) {
   if (clientProfile) {
     clientId = clientProfile.clientId;
   } else {
-    // Auto-create a client placeholder from the Messenger profile
     const metaProfile = await fetchMetaProfile(
       psid,
       facebookPage.pageAccessToken,
     );
+    const { firstName, lastName } = parseMetaName(metaProfile?.name);
+
     const newClient = await db.client.create({
       data: {
-        firstName: metaProfile?.first_name ?? "Messenger",
-        lastName: metaProfile?.last_name ?? "User",
+        firstName,
+        lastName,
         companyId,
         photo: metaProfile?.profile_pic ?? "/images/default.png",
+        // Note: Meta does NOT expose email/mobile/address via Messenger API
       },
     });
     await db.facebookClientProfile.create({
@@ -161,7 +163,9 @@ async function handleMessagingEvent(pageId: string, event: any) {
 
   const pusher = getPusherInstance();
   await Promise.all([
+    // Real-time message injection into open chat tab
     pusher.trigger(`messenger-${companyId}-${clientId}`, "messenger", saved),
+    // Sidebar client-list notification
     track &&
       pusher.trigger(`client-notify-${companyId}`, "client-notify", track),
     track &&
@@ -170,17 +174,41 @@ async function handleMessagingEvent(pageId: string, event: any) {
         "client-notify",
         track,
       ),
+    // Fallback channel — invalidates query when companyId not yet loaded on client
+    pusher.trigger(`message-${clientId}`, "client", {
+      count: track?.messengerUnReadCount ?? 0,
+    }),
   ]);
 }
 
 async function fetchMetaProfile(psid: string, pageAccessToken: string) {
   try {
+    // Meta only exposes `name` and `profile_pic` for PSID lookups.
     const res = await fetch(
-      `https://graph.facebook.com/v19.0/${psid}?fields=first_name,last_name,profile_pic&access_token=${pageAccessToken}`,
+      `https://graph.facebook.com/v19.0/${psid}?fields=name,profile_pic&access_token=${pageAccessToken}`,
     );
     if (!res.ok) return null;
-    return res.json();
+    return res.json() as Promise<{
+      name?: string;
+      profile_pic?: string;
+    } | null>;
   } catch {
     return null;
   }
+}
+
+function parseMetaName(fullName?: string): {
+  firstName: string;
+  lastName: string | null;
+} {
+  const trimmed = (fullName ?? "").trim();
+  if (!trimmed) return { firstName: "Messenger", lastName: "User" };
+
+  const parts = trimmed.split(/\s+/);
+  const firstName = parts[0];
+  // Everything after the first word becomes lastName — handles middle names correctly.
+  // e.g. "MD Abu Bokor" → firstName:"MD", lastName:"Abu Bokor"
+  const lastName = parts.length > 1 ? parts.slice(1).join(" ") : null;
+
+  return { firstName, lastName };
 }

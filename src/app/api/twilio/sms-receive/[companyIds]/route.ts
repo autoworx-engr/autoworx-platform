@@ -239,9 +239,6 @@ async function processIncomingSMS(
       const isCompanySalesAgent = company?.isSalesAgent === true;
       const isClientSalesAgent = currentClient?.isSalesAgent === true;
 
-      console.log("twilio sms receive clientSMS", dbMessage);
-      console.log("credential", credential);
-
       if (isCompanySalesAgent && isClientSalesAgent && isSalesAgentEnabled) {
         if (dbMessage && dbMessage.to === credential?.phoneNumber) {
           try {
