@@ -99,7 +99,7 @@ _Example: "What's my revenue last month?"_
 5.  Rate limit check: < 60 messages/hr? → continue
 6.  Persist user message to CopilotMessage { role: "user", content: "..." }
 7.  Load conversation history (last N messages from CopilotSession)
-8.  Load past session summaries (last 10 CopilotSession.summary fields)
+8.  Load past session summaries (last 5 CopilotSession.summary fields)
 9.  Build system prompt with cached static prefix
 10. Call Anthropic (claude-haiku-4-5-20251001 — pure read query)
 11. Anthropic returns tool_use: { name: "get_revenue_summary", input: { startDate, endDate } }
@@ -288,7 +288,7 @@ export async function POST(req: Request) {
         system: buildSystemPrompt(sessionContext),
         messages: conversationHistory,
         tools: COPILOT_TOOLS,
-        max_tokens: 2048,
+        max_tokens: 1024, // reduced from 2048 in Phase 1.2 — see CHANGELOG.md
       });
 
       for await (const chunk of anthropicStream) {
@@ -340,6 +340,8 @@ export async function POST(req: Request) {
   });
 }
 ```
+
+> **Note:** `max_tokens` was reduced from 2048 to 1024 in Phase 1.2. See CHANGELOG.md for rationale. The snippet above reflects the shipped value.
 
 ### Client-side SSE consumption
 
@@ -400,7 +402,7 @@ Anthropic may return `stop_reason: "tool_use"` multiple times in one conversatio
 └─────────────────────────────────────────────────────────────────┘
 ┌─────────────────────────────────────────────────────────────────┐
 │ CACHE BREAKPOINT 2 (per-user, changes infrequently)            │
-│   • Past session summaries (last 10, 2-3 sentences each)       │
+│   • Past session summaries (last 5, 2-3 sentences each)        │
 │   • User profile (name, role, permissions summary)             │
 │   Estimated size: ~1,500 tokens                                │
 │   Cache hit rate: ~70% (changes when new session ends)         │
@@ -538,13 +540,15 @@ Summaries are generated with Haiku (cheap, fast, good for summarization). Cost: 
 
 ### Loading into New Session Context
 
-On each new conversation turn, load the last **5** completed CopilotSessions for this user that have a non-null `summary`, ordered by `lastMessageAt DESC` (design specified 10; shipped with 5):
+On each new conversation turn, load the last **5** completed CopilotSessions for this user that have a non-null `summary`, ordered by `lastMessageAt DESC`:
+
+> Originally specced at 10; reduced to 5 during implementation to keep prompts compact. Can be increased post-Phase 6 if cross-session recall feels insufficient in usage.
 
 ```ts
 const pastSummaries = await db.copilotSession.findMany({
   where: { userId, summary: { not: null }, id: { not: currentSessionId } },
   orderBy: { lastMessageAt: "desc" },
-  take: 10,
+  take: 5,
   select: { summary: true, lastMessageAt: true },
 });
 ```
@@ -558,7 +562,7 @@ Inject into system prompt (breakpoint 2, cached per-user):
 ...
 ```
 
-**Max summaries in context: 10.** Each summary is ~50 tokens → 500 tokens total for past memory. Cap prevents context bloat.
+**Max summaries in context: 5.** Each summary is ~50 tokens → ~250 tokens total for past memory. Cap prevents context bloat.
 
 ---
 

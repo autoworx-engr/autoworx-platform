@@ -178,7 +178,7 @@ After Phase 0 is fully merged. Can merge independently.
    - Rate limiting: count recent messages from `CopilotMessage` table.
    - Session management: create `CopilotSession` if no `sessionId` in body; load existing if provided.
    - History loading: fetch last 40 `CopilotMessage` rows for the session.
-   - Cross-session summaries: fetch last 10 `CopilotSession.summary` rows for this user.
+   - Cross-session summaries: fetch last 5 `CopilotSession.summary` rows for this user (specced at 10; reduced during implementation).
    - System prompt: build with `buildSystemPrompt(user, summaries)`.
    - Anthropic call: streaming, **no tools yet** (tools array empty in Phase 1).
    - SSE streaming to client.
