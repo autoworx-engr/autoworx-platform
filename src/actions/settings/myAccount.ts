@@ -88,6 +88,9 @@ export async function changePassword(
     if (!user) {
       throw new Error("User not found");
     }
+    if (currentPassword === newPassword) {
+      throw new Error("New password cannot be same as current password");
+    }
 
     let comparePassword = await bcrypt.compare(currentPassword, user.password);
 

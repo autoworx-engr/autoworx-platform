@@ -4,19 +4,28 @@ import { authOptions } from "@/authOptions";
 import { db } from "@/lib/db";
 import { sendEstimateCreateNotification } from "@/lib/notification/invoice-notify";
 import { updateInvoiceAutomationTrigger } from "@/service/invoice-automation-trigger/api";
-import { Invoice } from "@prisma/client";
+import { Invoice, ModifierType } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
+
+type TRequestedService = {
+  shopServiceId: string;
+  vehicleType: ModifierType;
+};
+
+type TCreateDaftEstimate = {
+  id: string;
+  clientId: number;
+  vehicleId?: number;
+  requestedServices?: TRequestedService[];
+};
 
 export async function createDraftEstimate({
   id,
   clientId,
   vehicleId,
-}: {
-  id: string;
-  clientId: number;
-  vehicleId?: number;
-}) {
+  requestedServices,
+}: TCreateDaftEstimate) {
   const session = await getServerSession(authOptions);
   const companyId = session?.user.companyId;
 
@@ -47,6 +56,115 @@ export async function createDraftEstimate({
       throw new Error("Column not found");
     }
 
+    let itemsToCreateData: any[] = [];
+
+    if (requestedServices && requestedServices.length > 0) {
+      const shopServiceIds = requestedServices
+        .map((s: any) => Number(s.shopServiceId))
+        .filter(Boolean);
+
+      if (shopServiceIds.length > 0) {
+        const selectedServices = await db.shopService.findMany({
+          where: {
+            id: { in: shopServiceIds },
+          },
+          include: {
+            invoiceItems: {
+              include: {
+                service: true,
+                materials: {
+                  include: { tags: { include: { tag: true } } },
+                },
+                labor: {
+                  include: { tags: { include: { tag: true } } },
+                },
+                tags: {
+                  include: { tag: true },
+                },
+              },
+            },
+          },
+        });
+
+        for (const srv of selectedServices) {
+          if (srv.invoiceItems && srv.invoiceItems.length > 0) {
+            for (const item of srv.invoiceItems) {
+              itemsToCreateData.push({
+                shopService: { connect: { id: srv.id } },
+                service: item.serviceId
+                  ? { connect: { id: item.serviceId } }
+                  : undefined,
+                serviceDesc: item.service?.description,
+                materials:
+                  item.materials && item.materials.length > 0
+                    ? {
+                        create: item.materials.map((m) => ({
+                          name: m.name,
+                          companyId: companyId,
+                          category: m.categoryId
+                            ? { connect: { id: m.categoryId } }
+                            : undefined,
+                          notes: m.notes,
+                          quantity: m.quantity,
+                          cost: m.cost,
+                          sell: m.sell,
+                          discount: m.discount,
+                          tags:
+                            m.tags && m.tags.length > 0
+                              ? {
+                                  create: m.tags.map((mt) => ({
+                                    tagId: mt.tagId,
+                                  })),
+                                }
+                              : undefined,
+                        })),
+                      }
+                    : undefined,
+                labor: item.labor
+                  ? {
+                      create: {
+                        name: item.labor.name,
+                        companyId: companyId,
+                        category: item.labor.categoryId
+                          ? { connect: { id: item.labor.categoryId } }
+                          : undefined,
+                        notes: item.labor.notes,
+                        hours: item.labor.hours,
+                        charge: item.labor.charge,
+                        discount: item.labor.discount,
+                        tags:
+                          item.labor.tags && item.labor.tags.length > 0
+                            ? {
+                                create: item.labor.tags.map((lt) => ({
+                                  tagId: lt.tagId,
+                                })),
+                              }
+                            : undefined,
+                      },
+                    }
+                  : undefined,
+                tags:
+                  item.tags && item.tags.length > 0
+                    ? {
+                        create: item.tags.map((t) => ({
+                          tagId: t.tagId,
+                        })),
+                      }
+                    : undefined,
+              });
+            }
+          } else {
+            itemsToCreateData.push({
+              shopService: { connect: { id: srv.id } },
+            });
+          }
+        }
+      }
+    }
+
+    const itemsToCreate =
+      itemsToCreateData.length > 0 ? { create: itemsToCreateData } : undefined;
+
     if (vehicleId) {
       estimate = await db.invoice.create({
         data: {
@@ -57,6 +175,7 @@ export async function createDraftEstimate({
           userId: session.user.id as any,
           companyId,
           columnId: columnId.id,
+          invoiceItems: itemsToCreate,
         },
       });
     } else {
@@ -68,6 +187,7 @@ export async function createDraftEstimate({
           userId: session.user.id as any,
           companyId,
           columnId: columnId.id,
+          invoiceItems: itemsToCreate,
         },
       });
     }
