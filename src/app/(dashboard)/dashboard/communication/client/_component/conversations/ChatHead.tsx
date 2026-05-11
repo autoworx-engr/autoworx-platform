@@ -57,6 +57,11 @@ export default function ChatHead({
       permission.permission_name === companyPermissionModule.CALLING_ACCESS,
   );
 
+  const isMessengerAccess = companyFeaturePermission.find(
+    (permission) =>
+      permission.permission_name === companyPermissionModule?.MESSENGER,
+  );
+
   const handleTabChange = (tab: string) => {
     // if (tab === "PHONE" && !isCallingAccess?.enabled) {
     //   setShowPremiumModal(true);
@@ -184,51 +189,49 @@ export default function ChatHead({
       </button>
 
       {/* MESSENGER */}
-      <button
-        onClick={() => handleTabChange("MESSENGER")}
-        role="tab"
-        aria-selected={selected === "MESSENGER"}
-        aria-controls="panel-messenger"
-        title="Messenger"
-        className={cn(
-          "relative rounded-full p-3 transition-all",
-          "hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/70",
-          selected === "MESSENGER" ? "bg-white/30" : "bg-transparent",
-        )}
-      >
-        {clientConversationTrack &&
-          !clientConversationTrack?.messengerIsRead && (
-            <span className="absolute -top-1 -right-1 z-10">
-              <span className="absolute -inset-0.5 animate-ping rounded-full bg-rose-400/70" />
-              <span className="relative flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold leading-none text-white ring-2 ring-white/80">
-                {clientConversationTrack.messengerUnReadCount ?? 1}
-              </span>
-            </span>
+      {isMessengerAccess?.enabled && (
+        <button
+          onClick={() => handleTabChange("MESSENGER")}
+          role="tab"
+          aria-selected={selected === "MESSENGER"}
+          aria-controls="panel-messenger"
+          title="Messenger"
+          className={cn(
+            "relative rounded-full p-3 transition-all",
+            "hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/70",
+            selected === "MESSENGER" ? "bg-white/30" : "bg-transparent",
           )}
-        <MessengerIcon className="w-5 h-5 text-white" />
-      </button>
+        >
+          {clientConversationTrack &&
+            !clientConversationTrack?.messengerIsRead && (
+              <span className="absolute -top-1 -right-1 z-10">
+                <span className="absolute -inset-0.5 animate-ping rounded-full bg-rose-400/70" />
+                <span className="relative flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold leading-none text-white ring-2 ring-white/80">
+                  {clientConversationTrack.messengerUnReadCount ?? 1}
+                </span>
+              </span>
+            )}
+          <MessengerIcon className="w-5 h-5 text-white" />
+        </button>
+      )}
 
       {/* PHONE */}
-      <button
-        onClick={() => handleTabChange("PHONE")}
-        role="tab"
-        aria-selected={selected === "PHONE"}
-        aria-controls="panel-phone"
-        title="Phone"
-        className={cn(
-          "relative rounded-full p-3 transition-all",
-          "hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/70",
-          selected === "PHONE" ? "bg-white/30" : "bg-transparent",
-        )}
-      >
-        <Phone className="w-5 h-5 fill-current text-white" />
-      </button>
-
-      {/* <PremiumModal
-        open={showPremiumModal}
-        onClose={() => setShowPremiumModal(false)}
-        featureName="calling feature"
-      /> */}
+      {isCallingAccess?.enabled && (
+        <button
+          onClick={() => handleTabChange("PHONE")}
+          role="tab"
+          aria-selected={selected === "PHONE"}
+          aria-controls="panel-phone"
+          title="Phone"
+          className={cn(
+            "relative rounded-full p-3 transition-all",
+            "hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/70",
+            selected === "PHONE" ? "bg-white/30" : "bg-transparent",
+          )}
+        >
+          <Phone className="w-5 h-5 fill-current text-white" />
+        </button>
+      )}
     </div>
   );
 }
