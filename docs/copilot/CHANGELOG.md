@@ -5,6 +5,40 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Phase 1.2 — Cost tuning
+
+**Date:** 2026-05-11
+**Branch:** taiseer/ai-copilot
+
+### Changes
+
+1. **Prompt caching already active (Option B confirmed).** The system prompt was already passed as a content block array with `cache_control: { type: "ephemeral" }` since Phase 1. The system prompt is fully deterministic per user/session context (no timestamps, no per-call randomness) — cache hits fire correctly within the 5-minute TTL window. No format change needed.
+
+2. **Cache token capture wired up.** `finalMessage.usage.cache_read_input_tokens` is now read and persisted as `cachedTokens` on every `CopilotMessage` assistant row. `cache_creation_input_tokens` is logged to console in non-production environments for debugging. The `cachedTokens` field existed in the Prisma schema since Phase 0a but was never populated.
+
+3. **max_tokens already 1024.** Already set correctly in Phase 1 — no change needed. The spec referenced 4096 but the implementation already used 1024.
+
+### Cost impact
+
+- System prompt ≈ 500–700 tokens. At `$3/M` uncached vs `$0.30/M` cached (90% off), that's ~`$0.0002` saved per turn after the first. For a heavy user (20 exchanges/day), caching saves ~`$0.004/day`.
+- `max_tokens: 1024` caps worst-case output at `1024 × $15/M = $0.015` per response vs `4096 × $15/M = $0.06`.
+- Verified: message 1 `cachedTokens = 0` (cache write), message 2 `cachedTokens > 0` (cache hit). Actual numbers visible in Prisma Studio → CopilotMessage → cachedTokens column, and in server console: `[copilot] tokens — in:X out:Y cached:Z cacheWrite:W`.
+
+### Files modified
+
+| File                                | Change                                                                                                                          |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `src/app/api/copilot/chat/route.ts` | Extract `cache_read_input_tokens` → `cachedTokens`; log `cache_creation_input_tokens`; persist `cachedTokens` on CopilotMessage |
+
+### Verification
+
+- ✓ `yarn tsc --noEmit` — 0 errors
+- ✓ `yarn build` — clean (68s)
+- ✓ Cache test — message 1 cachedTokens = 0 (write), message 2 cachedTokens > 0 (read)
+- ✓ max_tokens = 1024 confirmed in chat route
+
+---
+
 ## Phase 1.1 — Bug fixes from smoke testing
 
 **Date:** 2026-05-11

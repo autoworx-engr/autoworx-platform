@@ -85,6 +85,8 @@ Index of every file created or modified during the copilot build.
 | `src/app/api/copilot/sessions/[id]/route.ts`                                        | 1.1   | Async params (`await props.params`) for Next.js 16                   |
 | `src/app/api/copilot/sessions/[id]/close/route.ts`                                  | 1.1   | Async params; removed `messageCount > 0` guard                       |
 | `src/app/api/copilot/chat/route.ts`                                                 | 1.1   | `startTime` capture + `latencyMs` on audit log                       |
+| `src/app/api/copilot/chat/route.ts`                                                 | 1.2   | Capture `cache_read_input_tokens` → `cachedTokens`; log cacheWrite   |
+| `docs/copilot/REVIEWER_GUIDE.md`                                                    | 1.2   | Added cost optimization section                                      |
 
 ---
 

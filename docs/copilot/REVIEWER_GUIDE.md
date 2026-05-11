@@ -97,3 +97,18 @@ intentionally out of scope for this PR.
 ## Open questions deferred to team
 
 [Filled in at end]
+
+---
+
+## Cost optimization (active in current build)
+
+- **Prompt caching on system prompt block** — `cache_control: { type: "ephemeral" }` applied to the system prompt content block. Anthropic charges 90% less for cached input tokens. The cache window is 5 minutes; the system prompt is stable across turns, so multi-turn conversations benefit fully. First message in a session writes the cache; all subsequent messages read it.
+- **max_tokens capped at 1024** for chat responses — limits worst-case output cost. Normal conversational replies are well under this cap. Users asking for very long outputs get a clean truncation.
+- **Haiku 4.5 for session summarization** — `claude-haiku-4-5-20251001` is used in `generateSessionSummary.ts` (200 max tokens). Approximately 1/3 the cost of Sonnet for these short, structured tasks.
+- **Cache token visibility** — `cachedTokens` is persisted on every `CopilotMessage` assistant row. Query Prisma Studio → CopilotMessage → `cachedTokens` to confirm cache is hitting. Dev console also logs: `[copilot] tokens — in:X out:Y cached:Z cacheWrite:W`.
+
+Future optimizations not yet active:
+
+- Haiku 4.5 routing for simple read-only tool calls (Phase 2)
+- Conversation context trimming for sessions > 20 messages (Phase 6)
+- Per-seat usage caps and billing integration (Phase 5)

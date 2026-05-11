@@ -152,6 +152,7 @@ export async function POST(req: NextRequest) {
       let fullText = "";
       let inputTokens = 0;
       let outputTokens = 0;
+      let cachedTokens = 0;
 
       try {
         const anthropic = getAnthropic();
@@ -180,8 +181,17 @@ export async function POST(req: NextRequest) {
         }
 
         const finalMessage = await anthropicStream.finalMessage();
-        inputTokens = finalMessage.usage.input_tokens;
-        outputTokens = finalMessage.usage.output_tokens;
+        const usage = finalMessage.usage;
+        inputTokens = usage.input_tokens;
+        outputTokens = usage.output_tokens;
+        cachedTokens = usage.cache_read_input_tokens ?? 0;
+        const cacheCreationTokens = usage.cache_creation_input_tokens ?? 0;
+
+        if (process.env.NODE_ENV !== "production") {
+          console.log(
+            `[copilot] tokens — in:${inputTokens} out:${outputTokens} cached:${cachedTokens} cacheWrite:${cacheCreationTokens}`,
+          );
+        }
 
         // Persist assistant message
         await db.copilotMessage.create({
@@ -192,6 +202,7 @@ export async function POST(req: NextRequest) {
             model: COPILOT_MODELS.default,
             inputTokens,
             outputTokens,
+            cachedTokens,
           },
         });
 
