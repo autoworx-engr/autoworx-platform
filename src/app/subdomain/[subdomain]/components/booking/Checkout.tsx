@@ -14,7 +14,7 @@ import { Loader2 } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ExistingVehicle } from "./CheckoutVehicleSection";
 import { useBooking } from "../../context/BookingContext";
-import { BookingTotals, CustomerInfo } from "../../data/types";
+import { BookingTotals, CartItem, CustomerInfo } from "../../data/types";
 import { CheckoutHeader } from "./checkout/CheckoutHeader";
 import { BookingSummaryCard } from "./checkout/BookingSummaryCard";
 import { GiftCardSection } from "./checkout/GiftCardSection";
@@ -177,7 +177,7 @@ export const Checkout = () => {
         customerInfo?: CustomerInfo;
         bookingTotals?: BookingTotals;
         depositRequired?: number;
-        cart?: Array<{ service: any; vehicleType: any; quantity?: number }>;
+        cart?: CartItem[];
       };
       if (snapshot.bookingId) setCreatedBookingId(snapshot.bookingId);
       if (snapshot.selectedDate)
