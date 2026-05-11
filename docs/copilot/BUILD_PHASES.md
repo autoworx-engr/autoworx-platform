@@ -561,7 +561,7 @@ Requires Phase 3 merged and stable. High-risk phase — requires QA on the confi
 5. **NestJS coordination** (manual, not automated):
    - After `assignSeat`, the `PlatformSubscriptionItem { name: "AI Copilot", quantity: N }` row is updated.
    - The NestJS billing service picks this up on its next billing cycle.
-   - Taiseer must confirm with NestJS team: timing, format, and edge cases (see `docs/copilot-prisma-schema.md` — NestJS Coordination Required section).
+   - Taiseer must confirm with NestJS team: timing, format, and edge cases (see `docs/copilot/PRISMA_SCHEMA.md` — NestJS Coordination Required section).
 
 ### Files Created
 

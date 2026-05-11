@@ -491,8 +491,8 @@ function selectModel(
 
 **Exact Sonnet conditions (ANY of these):**
 
-- Tool is a write tool (create*\*, update*_, send\__)
-- Tool is an external-effect tool (preview*send*_, send\__\_to_client)
+- Tool is a write tool (create*\*, update*\_, send\_\_)
+- Tool is an external-effect tool (preview*send*\_, send\_\_\_to_client)
 - No specific tool identified yet — initial reasoning/clarification turn
 - Multi-step task that may require a write after reads
 
