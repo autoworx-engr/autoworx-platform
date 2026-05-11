@@ -14,25 +14,6 @@ import EditProduct from "./EditProduct";
 
 type Density = "compact" | "cozy" | "comfy";
 
-const SWATCH_COLORS = [
-  "#FF6B6B",
-  "#4ECDC4",
-  "#45B7D1",
-  "#96CEB4",
-  "#FFEAA7",
-  "#DDA0DD",
-  "#98D8C8",
-  "#F7DC6F",
-  "#BB8FCE",
-  "#85C1E9",
-];
-function getSwatchColor(name: string) {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++)
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  return SWATCH_COLORS[Math.abs(hash) % SWATCH_COLORS.length];
-}
-
 function StockBar({ qty, alert }: { qty: number; alert: number }) {
   const maxRef = Math.max(qty, (alert || 1) * 10, 50);
   const pct = qty === 0 ? 0 : Math.min((qty / maxRef) * 100, 100);
@@ -283,13 +264,7 @@ export default function ProductTable({
                     </td>
                     <td className={cn("px-3", rowPy)}>
                       <div className="flex items-center gap-2">
-                        <div
-                          className="h-6 w-6 flex-shrink-0 rounded"
-                          style={{
-                            backgroundColor: getSwatchColor(product.name),
-                          }}
-                        />
-                        <span className="max-w-[130px] truncate font-medium text-slate-600 dark:text-slate-200">
+                        <span className="max-w-[150px] truncate font-medium text-slate-600 dark:text-slate-200">
                           {product.name}
                         </span>
                       </div>

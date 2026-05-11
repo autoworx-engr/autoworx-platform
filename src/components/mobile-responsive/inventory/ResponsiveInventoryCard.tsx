@@ -16,25 +16,6 @@ interface InventoryResponsiveCardProps {
   search: URLSearchParams;
 }
 
-const SWATCH_COLORS = [
-  "#FF6B6B",
-  "#4ECDC4",
-  "#45B7D1",
-  "#96CEB4",
-  "#FFEAA7",
-  "#DDA0DD",
-  "#98D8C8",
-  "#F7DC6F",
-  "#BB8FCE",
-  "#85C1E9",
-];
-function getSwatchColor(name: string) {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++)
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  return SWATCH_COLORS[Math.abs(hash) % SWATCH_COLORS.length];
-}
-
 const InventoryResponsiveCard: React.FC<InventoryResponsiveCardProps> = ({
   product,
   user,
@@ -65,12 +46,8 @@ const InventoryResponsiveCard: React.FC<InventoryResponsiveCardProps> = ({
       onClick={goToDetails}
       className="group cursor-pointer rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:shadow-md hover:border-slate-300 dark:border-slate-800 dark:bg-slate-950"
     >
-      {/* Top row: swatch + SKU/name + status */}
+      {/* Top row: SKU/name + status */}
       <div className="flex items-start gap-3">
-        <div
-          className="h-12 w-12 flex-shrink-0 rounded-lg"
-          style={{ backgroundColor: getSwatchColor(product.name) }}
-        />
         <div className="min-w-0 flex-1 gap-1">
           {/* <p className="font-mono text-[11px] font-medium text-slate-400">{sku}</p> */}
           <h3 className="truncate text-base font-bold text-slate-500 dark:text-slate-100">

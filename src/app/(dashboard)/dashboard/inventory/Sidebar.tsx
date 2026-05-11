@@ -120,10 +120,6 @@ export default async function Sidebar({
 
           {/* Product card */}
           <div className="flex flex-shrink-0 items-center gap-3 border-b border-slate-100 px-4 py-3 dark:border-slate-800">
-            <div
-              className="h-14 w-14 flex-shrink-0 rounded-lg"
-              style={{ backgroundColor: getSwatchColor(product.name) }}
-            />
             <div className="min-w-0">
               <h3 className="truncate font-semibold text-slate-600 dark:text-slate-100">
                 {product.name}
