@@ -11,22 +11,6 @@ import { formatDuration } from "@/lib/formatDuration";
 
 const vehicleTypes: VehicleType[] = ["Coupe", "Sedan", "SUV", "Truck"];
 
-function sanitizeDescriptionLinks(html: string): string {
-  return html.replace(/<a\s([^>]*)>/gi, (_match, attrs) => {
-    let newAttrs = attrs;
-    newAttrs = newAttrs.replace(
-      /href="(?!https?:\/\/|mailto:|#)([^"]*)"/i,
-      'href="https://$1"',
-    );
-    if (!newAttrs.includes("target=")) newAttrs += ' target="_blank"';
-    if (!newAttrs.includes("rel=")) newAttrs += ' rel="noopener noreferrer"';
-    // Inline styles override Tailwind Preflight's `color: inherit` reset on <a>
-    if (!newAttrs.includes("style="))
-      newAttrs += ' style="color:#3b82f6;text-decoration:underline;"';
-    return `<a ${newAttrs}>`;
-  });
-}
-
 export const ServiceCard = ({ service }: { service: Service }) => {
   const { cart, addToCart, removeFromCart } = useBooking();
   const inCart = cart.some((i) => i.service.id === service.id);
@@ -215,9 +199,7 @@ export const ServiceCard = ({ service }: { service: Service }) => {
             {service.description && (
               <div
                 className="px-5 pt-5 text-sm text-muted-foreground leading-relaxed break-words w-full [&_h1]:text-lg [&_h1]:font-bold [&_h1]:text-foreground [&_h1]:mb-2 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:text-foreground [&_h2]:mb-1.5 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:text-foreground [&_h3]:mb-1 [&_strong]:font-semibold [&_em]:italic [&_u]:underline [&_ul]:list-disc [&_ul]:ml-4 [&_ol]:list-decimal [&_ol]:ml-4 [&_li]:mb-1 [&_p]:mb-2 [&_p:last-child]:mb-0 [&_a]:text-blue-500 [&_a]:underline [&_a]:cursor-pointer"
-                dangerouslySetInnerHTML={{
-                  __html: sanitizeDescriptionLinks(service.description),
-                }}
+                dangerouslySetInnerHTML={{ __html: service.description }}
               />
             )}
           </div>
