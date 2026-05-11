@@ -45,22 +45,27 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let companies = await db.twilioCredentials.findMany({
+    // Twilio sends E.164 numbers (with leading "+"). The credentials column may
+    // be stored with or without the "+", so match both variants exactly rather
+    // than using `endsWith`, which collides when one number is a suffix of another.
+    const toWithPlus = body.To.startsWith("+") ? body.To : `+${body.To}`;
+    const toWithoutPlus = body.To.replace("+", "");
+
+    const company = await db.twilioCredentials.findFirst({
       where: {
-        phoneNumber: {
-          endsWith: body.To.replace("+", ""),
-        },
+        phoneNumber: { in: [toWithPlus, toWithoutPlus] },
       },
     });
 
-    for (let i = 0; i < companies.length; i++) {
-      let company = companies[i];
+    if (company) {
+      const fromWithPlus = body.From.startsWith("+")
+        ? body.From
+        : `+${body.From}`;
+      const fromWithoutPlus = body.From.replace("+", "");
 
       let client = await db.client.findFirst({
         where: {
-          mobile: {
-            endsWith: body.From.replace("+", ""),
-          },
+          mobile: { in: [fromWithPlus, fromWithoutPlus] },
           companyId: company.companyId,
         },
       });

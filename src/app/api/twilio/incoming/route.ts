@@ -122,6 +122,16 @@ export async function POST(request: Request) {
       });
     }
 
+    if (!client) {
+      // Defensive: db.client.create should throw on failure, so this branch
+      // should be unreachable. Surface a clear error if Prisma ever returns
+      // a nullish row instead of letting downstream .id calls blow up.
+      return NextResponse.json(
+        { error: "Failed to resolve caller record" },
+        { status: 500 },
+      );
+    }
+
     const callId = callSid || uuidv4();
 
     // Fire-and-forget: DB logging + push notifications don't affect TwiML response
