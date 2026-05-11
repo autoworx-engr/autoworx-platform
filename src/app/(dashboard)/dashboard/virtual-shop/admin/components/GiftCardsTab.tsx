@@ -1207,7 +1207,7 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
 
           {/* ── Expiration Policy ── */}
           <Section icon={ShieldCheck} title="Expiration Policy" subtitle="">
-            <div className="flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-600">
+            <div className="flex items-center gap-2 rounded-lg border border-[#6571FF]/20 bg-[#6571FF]/5 px-4 py-3 text-sm text-[#6571FF]">
               <ShieldCheck size={16} className="shrink-0" />
               Gift cards never expire (non-editable policy)
             </div>
