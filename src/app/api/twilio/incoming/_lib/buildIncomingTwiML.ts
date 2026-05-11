@@ -29,7 +29,6 @@ export function buildIncomingTwiML(input: IncomingTwiMLInput): string {
   } = input;
 
   const voiceResponse = new twiml.VoiceResponse();
-  console.log("🚀 ~ POST ~ voiceResponse:", voiceResponse);
 
   const recordingOptions: Partial<DialAttributes> = callRecordingEnabled
     ? {
@@ -49,7 +48,6 @@ export function buildIncomingTwiML(input: IncomingTwiMLInput): string {
   }
 
   if (callForwardingNumber) {
-    console.log(`📞 [Incoming] Forwarding call to: ${callForwardingNumber}`);
     voiceResponse.dial(
       {
         timeout: 30,
@@ -69,9 +67,6 @@ export function buildIncomingTwiML(input: IncomingTwiMLInput): string {
 
     // Twilio Client identity cannot contain '+' or other special chars — normalize.
     const clientIdentity = twilioPhoneNumber.replace(/[^a-zA-Z0-9_\-.~]/g, "");
-    console.log(
-      `📞 [Incoming] Dialing client identity: "${clientIdentity}" (raw: "${twilioPhoneNumber}")`,
-    );
 
     const callerName =
       caller.firstName && caller.lastName

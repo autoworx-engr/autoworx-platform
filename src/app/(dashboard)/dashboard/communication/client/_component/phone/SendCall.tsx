@@ -5,7 +5,7 @@ import { useVoiceDevice } from "@/context/VoiceDeviceContext";
 import { Client } from "@prisma/client";
 import { Call } from "@twilio/voice-sdk";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import CallStatus from "./CallStatus";
 
 type TProps = {
@@ -38,6 +38,7 @@ export default function SendCall({
   const [localCallStatus, setLocalCallStatus] = useState("");
   const [localCallDuration, setLocalCallDuration] = useState(0);
   const [timer, setTimer] = useState<NodeJS.Timeout | null>(null);
+  const micStreamRef = useRef<MediaStream | null>(null);
 
   // Determine which connection is active (global incoming or local outgoing)
   const currentConnection = globalConnection || localConnection;
@@ -46,10 +47,18 @@ export default function SendCall({
     ? globalCallDuration
     : localCallDuration;
 
-  // Cleanup timer on unmount
+  const stopMicStream = () => {
+    if (micStreamRef.current) {
+      micStreamRef.current.getTracks().forEach((t) => t.stop());
+      micStreamRef.current = null;
+    }
+  };
+
+  // Cleanup timer + mic stream on unmount
   useEffect(() => {
     return () => {
       if (timer) clearInterval(timer);
+      stopMicStream();
     };
   }, [timer]);
 
@@ -65,15 +74,16 @@ export default function SendCall({
       // Update first contact time
       await updateFirstContactTimeClient(client?.id);
 
-      // Use unified makeCall function that handles both providers
       if (activeProvider === "TWILIO") {
-        // Twilio-specific call logic (existing)
-        await navigator.mediaDevices.getUserMedia({ audio: true });
-        const options = { params: { To: client?.mobile } };
-        const connection = await device.connect(options);
+        micStreamRef.current = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+        });
+        const connection = await device.connect({
+          params: { To: client.mobile },
+        });
 
         if (connection) {
-          connection.on("accept", async () => {
+          connection.on("accept", () => {
             setLocalCallStatus("Call connected");
             setLocalCallDuration(0);
             const interval = setInterval(() => {
@@ -86,56 +96,52 @@ export default function SendCall({
             setLocalCallStatus("Call ended");
             setLocalConnection(null);
             if (timer) clearInterval(timer);
-
-            // setTimeout(() => {
-            //   router.refresh();
-            // }, 3000);
-            // Twilio processes recordings async, poll until available
-            [3000, 6000, 10000, 15000, 20000].forEach((delay) => {
-              setTimeout(() => router.refresh(), delay);
-            });
+            stopMicStream();
+            // Twilio processes recordings async, give the webhook ~6s then
+            // refresh once. The 5-stage polling that lived here previously
+            // hit the server five times per call for no extra gain.
+            setTimeout(() => router.refresh(), 6000);
           });
 
           connection.on("cancel", () => {
             setLocalCallStatus("Call canceled");
             setLocalConnection(null);
             if (timer) clearInterval(timer);
+            stopMicStream();
           });
 
-          connection.on("error", (error: any) => {
+          connection.on("error", (error: unknown) => {
             console.error("Connection Error:", error);
             setLocalCallStatus("Call error occurred");
+            stopMicStream();
           });
 
           setLocalConnection(connection);
+        } else {
+          stopMicStream();
         }
       } else if (activeProvider === "INFOBIP") {
-        // Use the global makeCall for Infobip
         await globalMakeCall(client.mobile, client.id);
         setLocalCallStatus("Calling...");
       }
     } catch (error) {
       console.error("Error making call:", error);
       setLocalCallStatus("Failed to make call");
+      stopMicStream();
     }
   };
 
   const endCall = () => {
     if (globalConnection) {
-      // End global incoming call
       globalEndCall();
-      setTimeout(() => {
-        router.refresh();
-      }, 3000);
+      setTimeout(() => router.refresh(), 3000);
     } else if (localConnection) {
-      // End local outgoing call
       localConnection.disconnect();
       setLocalCallStatus("Call ended");
       setLocalConnection(null);
       if (timer) clearInterval(timer);
-      setTimeout(() => {
-        router.refresh();
-      }, 3000);
+      stopMicStream();
+      setTimeout(() => router.refresh(), 3000);
     }
   };
 

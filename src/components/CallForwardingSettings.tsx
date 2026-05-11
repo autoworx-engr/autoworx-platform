@@ -48,7 +48,8 @@ export default function CallForwardingSettings({
   };
 
   const handleSave = async () => {
-    if (!forwardingNumber.trim()) {
+    const trimmed = forwardingNumber.trim();
+    if (!trimmed) {
       errorToast("Please enter a phone number");
       return;
     }
