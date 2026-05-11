@@ -1,9 +1,13 @@
 import { db } from "@/lib/db";
 import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
 import {
-  normalizePhoneForStorage,
-  phoneLookupWhereClause,
-} from "@/utils/normalizePhone";
+  findTwilioCredentialsByNumber,
+  resolveOrCreateClientByPhone,
+} from "@/lib/twilio/callHelpers";
+import {
+  formDataToParams,
+  verifyTwilioSignature,
+} from "@/lib/twilio/verifyTwilioSignature";
 import { NextResponse } from "next/server";
 import { twiml } from "twilio";
 import { v4 as uuidv4 } from "uuid";
@@ -16,30 +20,15 @@ type DialAttributes = Parameters<twiml.VoiceResponse["dial"]>[0];
  *   post:
  *     summary: Twilio outgoing call receive endpoint
  *     tags: [Twilio]
- *     requestBody:
- *       required: true
- *       content:
- *         application/x-www-form-urlencoded:
- *           schema:
- *             type: object
- *             properties:
- *               To:
- *                 type: string
- *               From:
- *                 type: string
- *     responses:
- *       200:
- *         description: Call received
- *       400:
- *         description: Missing parameters
  */
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
-    const to = formData.get("To") as string;
-    const fromRaw = formData.get("From");
-    const from =
-      typeof fromRaw === "string" ? (fromRaw.split(":")[1] ?? "") : "";
+    const params = formDataToParams(formData);
+
+    const to = params.To;
+    const fromRaw = params.From;
+    const from = fromRaw ? (fromRaw.split(":")[1] ?? "") : "";
 
     if (!to || !from) {
       return NextResponse.json(
@@ -48,7 +37,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Prevent self-calling
     if (to === from) {
       return NextResponse.json(
         { error: "Cannot call the same Twilio number." },
@@ -56,19 +44,21 @@ export async function POST(request: Request) {
       );
     }
 
-    let twilioCredentials = await db.twilioCredentials.findFirst({
-      where: {
-        phoneNumber: {
-          contains: from.replace("+", ""),
-        },
-      },
-    });
-
+    const twilioCredentials = await findTwilioCredentialsByNumber(from);
     if (!twilioCredentials) {
       return NextResponse.json(
         { error: "Twilio credentials not found" },
         { status: 400 },
       );
+    }
+
+    const verification = await verifyTwilioSignature(
+      request,
+      params,
+      twilioCredentials.authToken,
+    );
+    if (!verification.ok) {
+      return new Response("Forbidden", { status: 403 });
     }
 
     const entitlements = await getCompanyEntitlements(
@@ -83,40 +73,20 @@ export async function POST(request: Request) {
       });
     }
 
-    const phoneLookup = phoneLookupWhereClause(to);
-    let client = phoneLookup
-      ? await db.client.findFirst({
-          where: {
-            companyId: twilioCredentials.companyId,
-            OR: phoneLookup,
-          },
-        })
-      : null;
+    const client = await resolveOrCreateClientByPhone({
+      companyId: twilioCredentials.companyId,
+      phone: to,
+    });
 
-    // clientCall.clientId is non-nullable in the schema, so create a placeholder
-    // client when the dialed number doesn't match any existing record.
-    if (!client) {
-      client = await db.client.create({
-        data: {
-          firstName: "Unknown",
-          lastName: "Contact",
-          mobile: normalizePhoneForStorage(to),
-          companyId: twilioCredentials.companyId,
-          isSalesAgent: true,
-        },
-      });
-    }
-
-    let callId = uuidv4();
-    // Prepare database insert for ClientCall
+    const callId = uuidv4();
     await db.clientCall.create({
       data: {
-        callSid: callId, // temporary; real SID will be updated on callback
+        callSid: callId,
         from,
         to,
         status: "initiated",
         direction: "outbound",
-        sentBy: "Company", // or derive from context/session
+        sentBy: "Company",
         companyId: twilioCredentials.companyId,
         clientId: client.id,
       },
@@ -138,9 +108,6 @@ export async function POST(request: Request) {
       // message plays to the callee; call is only bridged after whisper finishes.
       answerOnBridge: true,
     });
-    // Whisper URL notifies the called party (client) that the call is being recorded
-    // before bridging them to the agent. companyId lets the whisper endpoint look up
-    // the company name and check if whisper is enabled.
     dial.number(
       {
         url: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/whisper?companyId=${twilioCredentials.companyId}`,
@@ -152,7 +119,7 @@ export async function POST(request: Request) {
       headers: { "Content-Type": "text/xml" },
     });
   } catch (error) {
-    console.error("Error handling the Twilio request:", error);
+    console.error("[twilio/receive] error:", error);
     return new Response("An error occurred while processing the request.", {
       status: 500,
     });
