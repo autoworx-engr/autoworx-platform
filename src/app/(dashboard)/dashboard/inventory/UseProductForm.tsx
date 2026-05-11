@@ -94,7 +94,7 @@ export default function UseProductForm({
       <DialogTrigger asChild>
         <button
           className="
-          w-28 rounded-lg px-4 py-2 text-sm font-semibold text-white
+          w-full rounded-lg px-4 py-2 text-sm font-semibold text-white
           bg-gradient-to-r from-[#FF6262] to-[#ff4f4f]
           shadow-[0_4px_14px_0_rgba(255,98,98,0.39)]
           hover:shadow-[0_6px_20px_rgba(255,98,98,0.23)]
@@ -149,7 +149,7 @@ export default function UseProductForm({
                 <label className="font-medium text-slate-600">Invoice</label>
                 <Selector
                   label={(
-                    invoice: { id: string; clientName: string } | null
+                    invoice: { id: string; clientName: string } | null,
                   ) =>
                     invoice
                       ? `${invoice.id} - ${invoice.clientName}`
@@ -184,7 +184,7 @@ export default function UseProductForm({
                 "bg-white/80 backdrop-blur-sm dark:bg-slate-900/50",
                 "text-slate-600 dark:text-slate-300 placeholder:text-slate-400",
                 "focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/40",
-                "disabled:opacity-50 disabled:cursor-not-allowed"
+                "disabled:opacity-50 disabled:cursor-not-allowed",
               )}
             />
           </div>

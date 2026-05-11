@@ -59,11 +59,12 @@ export default function InventoryList({
   return (
     <Tabs
       value={view}
-      className={`col-start-1 mt-3 flex min-h-0 w-full flex-col overflow-y-auto overflow-x-hidden text-xs lg:h-[83vh] lg:overflow-clip 2xl:text-base ${isFullWidth ? "md:w-full" : "lg:w-1/2"} `}
+      className={`col-start-1 mt-3 min-h-0 w-full flex-col overflow-y-auto text-xs lg:h-[83vh] lg:overflow-clip 2xl:text-base ${isFullWidth ? "w-full" : "lg:min-w-0 lg:flex-1"} ${productId ? "hidden lg:flex" : "flex"}`}
     >
       <TabsList>
         <TabsTrigger
           value="database"
+          className="md:px-4 lg:px-6 2xl:px-12"
           onClick={() => router.push("/dashboard/inventory?view=database")}
         >
           Database
@@ -72,6 +73,7 @@ export default function InventoryList({
         {(user.employeeType === "Admin" || user.employeeType === "Manager") && (
           <TabsTrigger
             value="supplies"
+            className="md:px-4 lg:px-6 2xl:px-12"
             onClick={() => router.push("/dashboard/inventory?view=supplies")}
           >
             Supplies
@@ -80,6 +82,7 @@ export default function InventoryList({
         {user.employeeType !== "Technician" && (
           <TabsTrigger
             value="products"
+            className="md:px-4 lg:px-6 2xl:px-12"
             onClick={() => router.push("/dashboard/inventory?view=products")}
           >
             Products
@@ -90,7 +93,7 @@ export default function InventoryList({
       {view === "products" && (
         <TabsContent
           value="products"
-          className={`mx-2 my-0 py-0 flex min-h-0 flex-col overflow-y-auto md:visible md:static md:opacity-100 ${productId ? "invisible absolute opacity-0" : "visible static opacity-100"}`}
+          className={`mx-2 my-0 py-0 flex min-h-0 flex-col overflow-y-auto lg:visible lg:static lg:opacity-100 ${productId ? "invisible absolute opacity-0" : "visible static opacity-100"}`}
         >
           <div className="relative flex h-full w-full flex-col">
             <div className="sticky top-0 z-50 bg-white pb-2 pt-2">
@@ -115,7 +118,7 @@ export default function InventoryList({
       {view === "supplies" && (
         <TabsContent
           value="supplies"
-          className={`mx-2 my-0 py-0 flex min-h-0 flex-col overflow-y-auto md:visible md:static md:opacity-100 ${productId ? "invisible absolute opacity-0" : "visible static opacity-100"}`}
+          className={`mx-2 my-0 py-0 flex min-h-0 flex-col overflow-y-auto lg:visible lg:static lg:opacity-100 ${productId ? "invisible absolute opacity-0" : "visible static opacity-100"}`}
         >
           <div className="relative flex h-full w-full flex-col">
             <div className="sticky top-0 z-50 bg-white pb-2 pt-2">
@@ -140,15 +143,12 @@ export default function InventoryList({
       {view === "database" && (
         <TabsContent
           value="database"
-          className={`mx-2 flex min-h-0 flex-col p-0 md:visible md:static md:opacity-100`}
+          className={`mx-2 flex min-h-0 flex-col p-0 lg:visible lg:static lg:opacity-100`}
         >
           <div className="relative flex h-full w-full flex-col">
-            {/* Fixed filter header */}
             <div className="sticky top-0 z-50 bg-white pb-2 pt-2">
               <DatabaseFilterHeader categories={categories} />
             </div>
-
-            {/* Scrollable content area */}
             <div className="h-full overflow-y-auto thin-scrollbar">
               <DatabaseTable
                 totalItems={totalDatabaseItems}

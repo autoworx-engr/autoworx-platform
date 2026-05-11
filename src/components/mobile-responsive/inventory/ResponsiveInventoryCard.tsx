@@ -1,10 +1,10 @@
 import { deleteInventory } from "@/actions/inventory/delete";
 import EditProduct from "@/app/(dashboard)/dashboard/inventory/EditProduct";
-import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/cn";
 import { ProductCardProps } from "@/types/inventory";
-import { Popconfirm, Tooltip } from "antd";
-import { CircleAlert, X } from "lucide-react";
+import { formatCurrency } from "@/utils/formatCurrency";
+import { Popconfirm } from "antd";
+import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface InventoryResponsiveCardProps {
@@ -15,92 +15,145 @@ interface InventoryResponsiveCardProps {
   search: URLSearchParams;
 }
 
+const SWATCH_COLORS = [
+  "#FF6B6B",
+  "#4ECDC4",
+  "#45B7D1",
+  "#96CEB4",
+  "#FFEAA7",
+  "#DDA0DD",
+  "#98D8C8",
+  "#F7DC6F",
+  "#BB8FCE",
+  "#85C1E9",
+];
+function getSwatchColor(name: string) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++)
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return SWATCH_COLORS[Math.abs(hash) % SWATCH_COLORS.length];
+}
+
 const InventoryResponsiveCard: React.FC<InventoryResponsiveCardProps> = ({
   product,
-  index,
   user,
   viewTab,
   search,
 }) => {
-  const evenColor = "bg-background";
-  const oddColor = "bg-[#EEF4FF]";
   const router = useRouter();
+  const qty = Number(product?.quantity ?? 0);
+  const alert = Number(product?.lowInventoryAlert ?? 0);
+  const price = parseFloat(product?.price?.toString() || "0");
+  const isOut = qty === 0;
+  const isLow = !isOut && qty <= alert;
+  const isAdmin =
+    user?.employeeType === "Admin" || user?.employeeType === "Manager";
+  const sku = product?.lot || `#${product?.id}`;
+
+  const maxRef = Math.max(qty, (alert || 1) * 10, 50);
+  const pct = qty === 0 ? 0 : Math.min((qty / maxRef) * 100, 100);
+  const barColor = isOut ? "#EF4444" : isLow ? "#F59E0B" : "#6571FF";
+
+  const goToDetails = () =>
+    router.push(
+      `/dashboard/inventory?view=${search?.get("view")}&productId=${product.id}`,
+    );
 
   return (
-    <div>
-      <Card
-        className={cn(
-          "mt min-h-[110px] rounded-[5px] border border-[#BFC4FF] px-4 py-2 shadow-sm",
-          (index + 1) % 2 === 0 ? evenColor : oddColor
-        )}
-      >
-        <div className="flex flex-col gap-2 text-[#66738C] lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex-1 space-y-1">
-            <div className="flex items-center gap-2">
-              {product.quantity === 0 ? (
-                <Tooltip title="Product is out of stock" placement="top">
-                  <CircleAlert className="size-4 text-xl text-red-600" />
-                </Tooltip>
-              ) : Number(product.quantity) <=
-                Number(product.lowInventoryAlert) ? (
-                <Tooltip title="Product has low inventory" placement="top">
-                  <CircleAlert className="size-4 text-xl text-yellow-600" />
-                </Tooltip>
-              ) : null}
-              <h3
-                onClick={() =>
-                  router.push(
-                    `/dashboard/inventory?view=${search?.get("view")}&productId=${product.id}`
-                  )
-                }
-                className="cursor-pointer truncate text-xl font-bold"
-                style={{ maxWidth: "90%" }} // Prevents overflow
-              >
-                {product.name}
-              </h3>
-            </div>
-            <p className="truncate text-sm font-bold text-[#6571FF]">
-              {product.category?.name ?? "Unknown Category"}
-            </p>
-          </div>
-          <div className="mt-1 h-[70px] rounded-[2px] border border-[#BFC4FF] px-2 py-1 text-right font-semibold sm:mt-0">
-            <p className="text-3xl">
-              {product?.quantity}
-              <span className="text-[10px]"> /{product?.unit}</span>
-            </p>
-            <p className="text-[10px]">Remaining</p>
-          </div>
-
-          <div>
-            {(user?.employeeType === "Admin" ||
-              user?.employeeType === "Manager") && (
-                <div className="mt-4 flex gap-2">
-                  <button className="text-[18px] text-blue-600">
-                    <EditProduct productData={product as any} />
-                  </button>
-                  <Popconfirm
-                    title={`Are you sure you want to delete this ${viewTab === "products" ? "product" : "supply"
-                      }?`}
-                    onConfirm={async () => {
-                      await deleteInventory(product.id);
-                      router.push(
-                        `/dashboard/inventory?view=${search?.get("view")}`
-                      );
-                    }}
-                    okText="Yes"
-                    cancelText="No"
-                  >
-                    <X
-                      size={20}
-                      strokeWidth={3}
-                      className="text-xl text-red-400"
-                    />
-                  </Popconfirm>
-                </div>
+    <div
+      onClick={goToDetails}
+      className="group cursor-pointer rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:shadow-md hover:border-slate-300 dark:border-slate-800 dark:bg-slate-950"
+    >
+      {/* Top row: swatch + SKU/name + status */}
+      <div className="flex items-start gap-3">
+        <div
+          className="h-12 w-12 flex-shrink-0 rounded-lg"
+          style={{ backgroundColor: getSwatchColor(product.name) }}
+        />
+        <div className="min-w-0 flex-1 gap-1">
+          {/* <p className="font-mono text-[11px] font-medium text-slate-400">{sku}</p> */}
+          <h3 className="truncate text-base font-bold text-slate-500 dark:text-slate-100">
+            {product.name}
+          </h3>
+          <span
+            className={cn(
+              "inline-flex flex-shrink-0 items-center gap-1 rounded-full mt-0.5 px-2.5 pt-0 pb-0.5 text-[11px] font-semibold",
+              isOut
+                ? "bg-red-50 text-red-600"
+                : isLow
+                  ? "bg-amber-50 text-amber-600"
+                  : "bg-[#6571FF]/10 text-[#6571FF]",
+            )}
+          >
+            <span
+              className={cn(
+                "h-1.5 w-1.5 rounded-full",
+                isOut ? "bg-red-500" : isLow ? "bg-amber-500" : "bg-[#6571FF]",
               )}
-          </div>
+            />
+            {isOut ? "Out" : isLow ? "Low" : "In stock"}
+          </span>
         </div>
-      </Card>
+      </div>
+
+      {/* Middle row: category + unit price */}
+      <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 dark:border-slate-800">
+        <span className="truncate text-sm text-slate-500">
+          {product.category?.name ?? "Uncategorized"}
+        </span>
+        <span className="flex-shrink-0 text-sm font-bold text-slate-500 dark:text-slate-100">
+          {formatCurrency(price)}
+          <span className="ml-1 text-xs font-medium text-slate-400">
+            / {product.unit || "unit"}
+          </span>
+        </span>
+      </div>
+
+      {/* Bottom row: stock bar + reorder */}
+      <div className="mt-3 flex items-center justify-between gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+            Stock
+          </span>
+          <div className="h-1.5 flex-1 rounded-full bg-slate-100 dark:bg-slate-800">
+            <div
+              className="h-full rounded-full transition-all opacity-60"
+              style={{ width: `${pct}%`, backgroundColor: barColor }}
+            />
+          </div>
+          <span className="text-sm font-semibold text-slate-500 dark:text-slate-200">
+            {qty}
+          </span>
+        </div>
+        {alert > 0 && (
+          <span className="flex-shrink-0 text-[11px] text-slate-400">
+            reorder at {alert} {product.unit || ""}
+          </span>
+        )}
+      </div>
+
+      {/* Admin actions */}
+      {isAdmin && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="mt-3 flex items-center justify-end gap-1 border-t border-slate-100 pt-2 dark:border-slate-800"
+        >
+          <EditProduct productData={product as any} />
+          <Popconfirm
+            title={`Delete this ${viewTab === "products" ? "product" : "supply"}?`}
+            onConfirm={async () => {
+              await deleteInventory(product.id);
+              router.push(`/dashboard/inventory?view=${search?.get("view")}`);
+            }}
+            okText="Yes"
+            cancelText="No"
+          >
+            <button className="rounded p-1 mb-0.5 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors dark:hover:bg-red-950/40">
+              <Trash2 size={18} className="text-red-400" />
+            </button>
+          </Popconfirm>
+        </div>
+      )}
     </div>
   );
 };

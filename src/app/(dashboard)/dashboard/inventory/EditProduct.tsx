@@ -50,7 +50,7 @@ export default function EditProduct({ productData }: TProps) {
   const { vendors } = useListsStore(); // useful
   const [vendor, setVendor] = useState<Vendor | null>(productData.vendor);
   const [category, setCategory] = useState<Category | null>(
-    productData.category
+    productData.category,
   );
 
   const { showError, clearError } = useFormErrorStore();
@@ -72,7 +72,7 @@ export default function EditProduct({ productData }: TProps) {
   useEffect(() => setCategoryOpen(false), [vendorOpen]);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const name = e.target.name as string;
     const value = e.target.value as string;
@@ -210,7 +210,7 @@ export default function EditProduct({ productData }: TProps) {
       errorToast(
         formattedError.errorSource && formattedError.errorSource.length > 0
           ? formattedError.errorSource[0].message
-          : formattedError.message
+          : formattedError.message,
       );
     }
   }
@@ -229,7 +229,9 @@ export default function EditProduct({ productData }: TProps) {
       >
         <div>
           <DialogTrigger asChild>
-            <SquarePen className="w-5 h-5" />
+            <button className="rounded p-1 hover:bg-[#6571FF]/5 transition-colors">
+              <SquarePen className="w-5 h-5 text-[#6571FF]/85" />
+            </button>
           </DialogTrigger>
         </div>
         {/* <div className="block md:hidden">
@@ -348,8 +350,8 @@ export default function EditProduct({ productData }: TProps) {
                           ?.toLowerCase()
                           ?.includes(search.toLowerCase()) ||
                         (vendor?.name?.toLowerCase() || "").includes(
-                          search.toLowerCase()
-                        )
+                          search.toLowerCase(),
+                        ),
                     )
                   }
                   displayList={(vendor: Vendor) => (
@@ -373,7 +375,7 @@ export default function EditProduct({ productData }: TProps) {
                   "bg-white/80 backdrop-blur-sm dark:bg-slate-900/50", // Subtle glass texture
                   "text-slate-600 dark:text-slate-300 placeholder:text-slate-400",
                   "focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/40", // Brand focus state
-                  "disabled:opacity-50 disabled:cursor-not-allowed"
+                  "disabled:opacity-50 disabled:cursor-not-allowed",
                 )}
                 value={product.description as string}
               />

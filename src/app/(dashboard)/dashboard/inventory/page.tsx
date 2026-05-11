@@ -167,7 +167,7 @@ export default async function Page(props: {
         )}
       </header>
 
-      <div className="mb-5 flex h-full w-full flex-col justify-between gap-3 md:mb-0 lg:flex-wrap">
+      <div className="mb-5 flex h-full w-full flex-col gap-3 lg:mb-0 lg:flex-row lg:items-start">
         <ClientInventoryList
           searchParams={{
             page,

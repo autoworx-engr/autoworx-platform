@@ -1,23 +1,47 @@
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/Tooltip";
-import { cn } from "@/lib/cn";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import getUser from "@/lib/getUser";
 import { formatCurrency } from "@/utils/formatCurrency";
-import { CircleAlert } from "lucide-react";
+import { QrCode } from "lucide-react";
 import Image from "next/image";
 import QRCode from "qrcode";
 import EditProduct from "./EditProduct";
-import QRcode from "./QRcode";
 import ReplenishProductForm from "./ReplenishProductForm";
 import SalesPurchaseHistory from "./SalesPurchaseHistory";
+import SidebarCloseButton from "./SidebarCloseButton";
 import UseProductForm from "./UseProductForm";
-import ProductTooltipContainer from "./ProductTooltipContainer";
+
+const SWATCH_COLORS = [
+  "#FF6B6B",
+  "#4ECDC4",
+  "#45B7D1",
+  "#96CEB4",
+  "#FFEAA7",
+  "#DDA0DD",
+  "#98D8C8",
+  "#F7DC6F",
+  "#BB8FCE",
+  "#85C1E9",
+];
+function getSwatchColor(name: string) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++)
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return SWATCH_COLORS[Math.abs(hash) % SWATCH_COLORS.length];
+}
+
+function StatCell({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col gap-0.5 p-4">
+      <span className="text-sm font-semibold uppercase tracking-widest text-slate-500">
+        {label}
+      </span>
+      <span className="text-base font-bold text-slate-500 dark:text-slate-100">
+        {value}
+      </span>
+    </div>
+  );
+}
 
 export default async function Sidebar({
   productId,
@@ -30,15 +54,11 @@ export default async function Sidebar({
   const user = await getUser();
 
   const product = productId
-    ? await db.inventoryProduct.findUnique({ where: { id: productId } })
+    ? await db.inventoryProduct.findUnique({
+        where: { id: productId },
+        include: { category: true },
+      })
     : null;
-  // Find the last history for this product
-  // const lastHistory = productId
-  //   ? await db.inventoryProductHistory.findFirst({
-  //       where: { productId },
-  //       orderBy: { date: "desc" },
-  //     })
-  //   : null;
 
   const imgUrl = product
     ? await QRCode.toDataURL(
@@ -50,303 +70,151 @@ export default async function Sidebar({
     where: { companyId, type: "Invoice" },
     select: {
       id: true,
-      client: {
-        select: {
-          firstName: true,
-          lastName: true,
-        },
-      },
+      client: { select: { firstName: true, lastName: true } },
     },
   });
-
-  const isWarningForQuantity =
-    product &&
-    Number(product.quantity || 0) <= Number(product.lowInventoryAlert || 1);
-
-  const invoiceIds = invoices.map((invoice) => invoice.id);
-  const invoiceWithClient = invoices.map((invoice) => ({
-    id: invoice.id,
-    clientName: `${invoice.client?.firstName} ${invoice.client?.lastName}`,
+  const invoiceIds = invoices.map((i) => i.id);
+  const invoiceWithClient = invoices.map((i) => ({
+    id: i.id,
+    clientName: `${i.client?.firstName} ${i.client?.lastName}`,
   }));
+
+  const qty = Number(product?.quantity || 0);
+  const price = parseFloat(product?.price?.toString() || "0");
+  const alert = Number(product?.lowInventoryAlert || 0);
+  const isOutOfStock = qty === 0;
+  const isLow = !isOutOfStock && qty <= alert;
+
+  const isAdmin =
+    user.employeeType === "Admin" || user.employeeType === "Manager";
+
   return (
     <div
-      className={`mt-3 ${
+      className={`mt-0 md:mt-12 ${
         hidden ? "hidden" : !!productId ? "flex" : "hidden lg:flex"
-      }  h-fit lg:h-full w-full mx-auto flex-col md:mt-12 lg:w-1/2`}
+      } h-fit lg:h-[79.5vh] w-full lg:w-[460px] lg:flex-none flex-col`}
     >
-      <div className="flex flex-col gap-6 lg:flex-row">
-        {/* LEFT COLUMN: Financial Metrics */}
-        <div className="flex flex-col sm:flex-row lg:flex-col gap-4 lg:w-1/3 xl:w-1/4">
-          {/* Total Value Card */}
-          <div className="group relative flex-1 flex items-center justify-center overflow-hidden rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-900/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-md dark:bg-slate-950 dark:ring-slate-800">
-            <div className="absolute inset-0 bg-gradient-to-br from-[#6571FF]/10 to-[#6571FF]/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+      {product ? (
+        <div className="flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-950">
+          {/* Header */}
+          <div className="flex flex-shrink-0 items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-[#6571FF]" />
+              <span className="text-sm font-semibold text-slate-600 dark:text-slate-200">
+                Product details
+              </span>
+            </div>
+            <div className="flex items-center gap-1">
+              <EditProduct productData={product as any} />
+              <SidebarCloseButton />
+            </div>
+          </div>
 
-            <div className="relative z-10 flex flex-col my-auto items-center justify-center space-y-2 text-center">
-              <h3 className="text-sm font-medium uppercase tracking-wider text-slate-500">
-                Total Value
+          {/* Product card */}
+          <div className="flex flex-shrink-0 items-center gap-3 border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+            <div
+              className="h-14 w-14 flex-shrink-0 rounded-lg"
+              style={{ backgroundColor: getSwatchColor(product.name) }}
+            />
+            <div className="min-w-0">
+              <h3 className="truncate font-semibold text-slate-600 dark:text-slate-100">
+                {product.name}
               </h3>
-              <div className="text-3xl font-bold tracking-tight md:text-4xl">
-                {product && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="cursor-default bg-gradient-to-br from-slate-900 to-slate-700 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
-                          {(() => {
-                            const totalPrice =
-                              parseFloat(product.price?.toString() || "0") *
-                              parseFloat(product.quantity?.toString() || "0");
-                            const totalStr = totalPrice.toLocaleString();
-                            return totalStr.length > 8
-                              ? totalStr.slice(0, 8) + ".."
-                              : totalStr;
-                          })()}
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent className="bg-slate-900 text-white border-none shadow-xl">
-                        <p>
-                          {formatCurrency(
-                            parseFloat(product.price?.toString() || "0") *
-                              parseFloat(product.quantity?.toString() || "0"),
-                          )}
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+              <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                {isOutOfStock ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-semibold text-red-500">
+                    <span className="h-1.5 w-1.5 rounded-full bg-red-400" />
+                    Out of stock
+                  </span>
+                ) : isLow ? (
+                  <span className="inline-flex min-w-20 justify-center items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[12px] font-semibold text-amber-500 dark:bg-amber-950/40">
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                    Low stock
+                  </span>
+                ) : (
+                  <span className="inline-flex min-w-20 justify-center items-center gap-1 rounded-full bg-[#6571FF]/5 px-2 py-0.5 text-[12px] font-semibold text-[#6571FF]/80 dark:bg-[#6571FF]/40">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#6571FF]/80" />
+                    In stock
+                  </span>
+                )}
+                {product.category?.name && (
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                    {product.category.name}
+                  </span>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Unit Price Card */}
-          <div className="group relative flex-1 flex items-center justify-center overflow-hidden rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-900/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-md dark:bg-slate-950 dark:ring-slate-800">
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-100 to-white opacity-0 transition-opacity duration-300 group-hover:opacity-100 dark:from-slate-900 dark:to-slate-900" />
+          {/* Stats 2×2 grid */}
+          <div className="grid flex-shrink-0 grid-cols-2 divide-x divide-y divide-slate-100 border-b border-slate-100 dark:divide-slate-800 dark:border-slate-800">
+            <StatCell
+              label="On Hand"
+              value={`${qty} ${product.unit || "pcs"}`}
+            />
+            <StatCell label="Unit Price" value={formatCurrency(price)} />
+            <StatCell
+              label="Reorder At"
+              value={alert ? `${alert} ${product.unit || "pcs"}` : "—"}
+            />
+            <StatCell label="Stock Value" value={formatCurrency(price * qty)} />
+          </div>
 
-            <div className="relative z-10 flex flex-col items-center justify-center space-y-2 text-center">
-              <h3 className="text-sm font-medium uppercase tracking-wider text-slate-500">
-                Unit Price
-              </h3>
-              <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-bold text-slate-700 dark:text-slate-200">
-                  {product && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="cursor-default">
-                            {(() => {
-                              const price = parseFloat(
-                                product.price?.toString() || "0",
-                              );
-                              const priceStr = price.toLocaleString();
-                              return priceStr.length > 6
-                                ? priceStr.slice(0, 6) + ".."
-                                : priceStr;
-                            })()}
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent className="bg-slate-900 text-white border-none">
-                          <p>
-                            {formatCurrency(
-                              parseFloat(product.price?.toString() || "0"),
-                            )}
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
-                </span>
-                <span className="text-sm font-medium text-slate-400">
-                  /{product?.unit || "unit"}
-                </span>
-              </div>
+          {/* QR + Quick Adjust */}
+          <div className="flex flex-shrink-0 items-start gap-4 border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+            <div className="rounded-xl bg-white p-1.5 shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-700">
+              {imgUrl ? (
+                <div className="relative h-24 w-24 overflow-hidden rounded-lg">
+                  <Image
+                    src={imgUrl}
+                    alt="QR Code"
+                    fill
+                    className="object-contain"
+                  />
+                </div>
+              ) : (
+                <div className="flex h-24 w-24 items-center justify-center rounded-lg bg-slate-100 text-slate-400 dark:bg-slate-800">
+                  <QrCode size={32} />
+                </div>
+              )}
+            </div>
+            <div className="flex flex-1 flex-col gap-2">
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+                Quick Adjust
+              </span>
+              {isAdmin && (
+                <>
+                  <div className="grid grid-cols-2 gap-2">
+                    <UseProductForm
+                      productId={productId}
+                      invoiceIds={invoiceWithClient}
+                      cost={price}
+                      productType={product.type}
+                    />
+                    <ReplenishProductForm
+                      lastUnit={product.unit}
+                      productId={productId}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           </div>
+
+          {/* History (fills remaining space) */}
+          <SalesPurchaseHistory
+            user={user}
+            productId={productId}
+            invoiceIds={invoiceIds}
+          />
         </div>
-
-        {/* RIGHT COLUMN: Inventory Details & Actions */}
-        <div className="flex-1 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-900/5 dark:bg-slate-950 dark:ring-slate-800">
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-12">
-            {/* Details Section */}
-            <div className="col-span-1 md:col-span-7 lg:col-span-8 flex flex-col justify-center space-y-6">
-              <div className="space-y-4 border p-2 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-800 dark:text-slate-100">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#00b8b0]"></span>
-                    Inventory Details
-                  </h3>
-                  {/* Mobile Edit Trigger - kept from original */}
-                  {product && (
-                    <div className="md:hidden">
-                      <EditProduct productData={product as any} />
-                    </div>
-                  )}
-                </div>
-
-                <div className="grid gap-y-4 text-sm">
-                  {/* Name */}
-                  <div className="grid grid-cols-3 gap-1 sm:gap-4 px-2">
-                    <span className="font-medium text-slate-500">Name</span>
-                    <div className="col-span-2 font-medium text-slate-700 dark:text-slate-300">
-                      {product && (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span className="cursor-default">
-                                {product.name?.length > 30
-                                  ? product.name.slice(0, 30) + "..."
-                                  : product.name}
-                              </span>
-                            </TooltipTrigger>
-                            {product.name?.length > 30 && (
-                              <TooltipContent>
-                                <p>{product.name}</p>
-                              </TooltipContent>
-                            )}
-                          </Tooltip>
-                        </TooltipProvider>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Type */}
-                  <div className="grid grid-cols-3 gap-1 sm:gap-4 border-y p-2">
-                    <span className="font-medium text-slate-500">Type</span>
-                    <div className="col-span-2">
-                      <span className="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-800 dark:bg-slate-800 dark:text-slate-200">
-                        {product && (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span className="cursor-default">
-                                  {product.type?.length > 20
-                                    ? product.type.slice(0, 20) + "..."
-                                    : product.type}
-                                </span>
-                              </TooltipTrigger>
-                              {product.type?.length > 20 && (
-                                <TooltipContent>
-                                  <p>{product.type}</p>
-                                </TooltipContent>
-                              )}
-                            </Tooltip>
-                          </TooltipProvider>
-                        )}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Description */}
-                  <div className="grid grid-cols-1 gap-1 sm:grid-cols-3 sm:gap-4 px-2">
-                    <span className="font-medium text-slate-500">
-                      Description
-                    </span>
-                    <div className="col-span-2 text-slate-600 dark:text-slate-400">
-                      {product && (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span className="cursor-default leading-relaxed">
-                                {product.description &&
-                                product.description.length > 80
-                                  ? product.description.slice(0, 80) + "..."
-                                  : product.description ||
-                                    "No description available."}
-                              </span>
-                            </TooltipTrigger>
-                            {product.description &&
-                              product.description.length > 80 && (
-                                <TooltipContent className="max-w-xs p-3">
-                                  <p>{product.description}</p>
-                                </TooltipContent>
-                              )}
-                          </Tooltip>
-                        </TooltipProvider>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Admin Actions */}
-              {product &&
-                (user.employeeType === "Admin" ||
-                  user.employeeType === "Manager") && (
-                  <div className="flex w-full flex-col gap-2">
-                    <div className="flex w-full items-center justify-center gap-2 rounded-lg dark:bg-slate-900">
-                      <div className="grid w-full grid-cols-2 gap-2">
-                        {/* Wrapping these forms/buttons to ensure they stretch evenly */}
-                        <div className="w-full [&>button]:w-full">
-                          <UseProductForm
-                            productId={productId}
-                            invoiceIds={invoiceWithClient}
-                            cost={parseFloat(product.price?.toString() || "0")}
-                            productType={product.type}
-                          />
-                        </div>
-                        <div className="w-full [&>button]:w-full">
-                          <ReplenishProductForm
-                            lastUnit={product.unit}
-                            productId={productId}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-            </div>
-
-            {/* Right Side: QR & Quantity & Actions */}
-            {product && (
-              <div className="col-span-1 md:col-span-5 lg:col-span-4 flex flex-col items-center justify-between gap-6 border-t border-slate-100 pt-6 md:border-l md:border-t-0 md:pl-6 md:pt-0 dark:border-slate-800">
-                {/* Quantity Display */}
-                <div className="relative w-full rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-4 text-center dark:border-slate-800 dark:bg-slate-900/50">
-                  {isWarningForQuantity && (
-                    <div className="absolute right-2 top-2 animate-pulse">
-                      <CircleAlert size={18} className="text-amber-500" />
-                    </div>
-                  )}
-
-                  <div className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-                    Stock Level
-                  </div>
-
-                  <div className="mt-1 flex items-center justify-center gap-1">
-                    <ProductTooltipContainer product={product} />
-                    <span className="text-sm font-medium text-slate-400 mt-3">
-                      / {product?.unit}
-                    </span>
-                  </div>
-                </div>
-
-                {/* QR Code */}
-                {product && (
-                  <div className="flex flex-col items-center justify-center gap-2">
-                    <div className="group relative rounded-xl bg-white p-2 shadow-sm ring-1 ring-slate-200 transition-all hover:ring-slate-300 dark:bg-slate-900 dark:ring-slate-800">
-                      {imgUrl ? (
-                        <div className="relative h-32 w-32 overflow-hidden rounded-lg">
-                          <Image
-                            src={imgUrl}
-                            alt="QR Code"
-                            fill
-                            className="object-contain"
-                          />
-                        </div>
-                      ) : (
-                        <QRcode imgUrl={imgUrl!} />
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+      ) : (
+        <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-950">
+          <p className="text-sm text-slate-400">
+            Select a product to view details
+          </p>
         </div>
-      </div>
-
-      <SalesPurchaseHistory
-        user={user}
-        productId={productId}
-        invoiceIds={invoiceIds}
-      />
+      )}
     </div>
   );
 }
