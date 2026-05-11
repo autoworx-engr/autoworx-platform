@@ -29,14 +29,24 @@ export async function logCallAndNotify({
     },
   });
 
+  const USER_NOTIFY_CAP = 1000;
   const companyUsers = await db.user.findMany({
     where: {
       companyId,
       employeeType: { in: ["Admin", "Manager", "Sales"] },
     },
     select: { id: true },
-    take: 1000,
+    // Re-fetch one extra row so we can detect — and log — when the
+    // company has more notify-eligible users than the cap covers.
+    take: USER_NOTIFY_CAP + 1,
   });
+
+  if (companyUsers.length > USER_NOTIFY_CAP) {
+    console.warn(
+      `[Incoming] Company ${companyId} has more than ${USER_NOTIFY_CAP} notify-eligible users; some users will not receive the incoming-call push.`,
+    );
+    companyUsers.length = USER_NOTIFY_CAP;
+  }
 
   await Promise.allSettled(
     companyUsers.map((user) =>
