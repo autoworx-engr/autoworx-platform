@@ -3,6 +3,7 @@ import EditProduct from "@/app/(dashboard)/dashboard/inventory/EditProduct";
 import { cn } from "@/lib/cn";
 import { ProductCardProps } from "@/types/inventory";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { Category, InventoryProduct, Vendor } from "@prisma/client";
 import { Popconfirm } from "antd";
 import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -138,7 +139,14 @@ const InventoryResponsiveCard: React.FC<InventoryResponsiveCardProps> = ({
           onClick={(e) => e.stopPropagation()}
           className="mt-3 flex items-center justify-end gap-1 border-t border-slate-100 pt-2 dark:border-slate-800"
         >
-          <EditProduct productData={product as any} />
+          <EditProduct
+            productData={
+              product as unknown as InventoryProduct & {
+                category: Category;
+                vendor: Vendor;
+              }
+            }
+          />
           <Popconfirm
             title={`Delete this ${viewTab === "products" ? "product" : "supply"}?`}
             onConfirm={async () => {

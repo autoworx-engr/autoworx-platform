@@ -2,6 +2,7 @@ import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import getUser from "@/lib/getUser";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { Category, InventoryProduct, Vendor } from "@prisma/client";
 import { QrCode } from "lucide-react";
 import Image from "next/image";
 import QRCode from "qrcode";
@@ -56,7 +57,7 @@ export default async function Sidebar({
   const product = productId
     ? await db.inventoryProduct.findUnique({
         where: { id: productId },
-        include: { category: true },
+        include: { category: true, vendor: true },
       })
     : null;
 
@@ -105,7 +106,14 @@ export default async function Sidebar({
               </span>
             </div>
             <div className="flex items-center gap-1">
-              <EditProduct productData={product as any} />
+              <EditProduct
+                productData={
+                  product as InventoryProduct & {
+                    category: Category;
+                    vendor: Vendor;
+                  }
+                }
+              />
               <SidebarCloseButton />
             </div>
           </div>

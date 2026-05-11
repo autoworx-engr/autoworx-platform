@@ -321,7 +321,7 @@ export default function ProductTable({
                       onClick={(e) => e.stopPropagation()}
                     >
                       <div className="flex items-center gap-1">
-                        <EditProduct productData={product as any} />
+                        <EditProduct productData={product} />
                         <Popconfirm
                           title={`Delete this ${viewTab === "products" ? "product" : "supply"}?`}
                           onConfirm={async () => {
