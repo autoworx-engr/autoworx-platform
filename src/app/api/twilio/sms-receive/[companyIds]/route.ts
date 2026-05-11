@@ -188,44 +188,49 @@ async function processIncomingSMS(
     }
 
     if (client) {
-      const dbMessage = await db.clientSMS.create({
-        data: {
-          from: body.From,
-          to: body.To,
-          message: body.Body,
-          sentBy: "Client",
-          clientId: client.id,
-          companyId: client.companyId,
-        },
-      });
-      let attachments = [];
-      for (const file of images) {
-        // Extract file extension from URL
-        const fileExtension = file.split(".").pop()?.split("?")[0] || "jpg";
-        const audioExts = [
-          "ogg",
-          "mp3",
-          "m4a",
-          "wav",
-          "webm",
-          "aac",
-          "amr",
-          "3gp",
-          "opus",
-          "oga",
-          "flac",
-        ];
-        const isVoice = audioExts.includes(fileExtension.toLowerCase());
-        let atc = await db.clientSmsAttachments.create({
+      const audioExts = [
+        "ogg",
+        "mp3",
+        "m4a",
+        "wav",
+        "webm",
+        "aac",
+        "amr",
+        "3gp",
+        "opus",
+        "oga",
+        "flac",
+      ];
+
+      const { dbMessage, attachments } = await db.$transaction(async (tx) => {
+        const dbMessage = await tx.clientSMS.create({
           data: {
-            url: file,
-            name: `${dbMessage.id}_${Date.now()}.${fileExtension}`,
-            isVoiceNote: isVoice,
-            clientSMSId: dbMessage.id,
+            from: body.From,
+            to: body.To,
+            message: body.Body,
+            sentBy: "Client",
+            clientId: client!.id,
+            companyId: client!.companyId,
           },
         });
-        attachments.push(atc);
-      }
+
+        const attachments = [];
+        for (const file of images) {
+          const fileExtension = file.split(".").pop()?.split("?")[0] || "jpg";
+          const isVoice = audioExts.includes(fileExtension.toLowerCase());
+          const atc = await tx.clientSmsAttachments.create({
+            data: {
+              url: file,
+              name: `${dbMessage.id}_${Date.now()}.${fileExtension}`,
+              isVoiceNote: isVoice,
+              clientSMSId: dbMessage.id,
+            },
+          });
+          attachments.push(atc);
+        }
+
+        return { dbMessage, attachments };
+      });
 
       // update client sms conversation track
       const clientConversationTrack = await updateNewSMSChatTrack({

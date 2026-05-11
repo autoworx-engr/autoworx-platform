@@ -1,6 +1,9 @@
 import { db } from "@/lib/db";
 import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
-import { phoneLookupWhereClause } from "@/utils/normalizePhone";
+import {
+  normalizePhoneForStorage,
+  phoneLookupWhereClause,
+} from "@/utils/normalizePhone";
 import { NextResponse } from "next/server";
 import { twiml } from "twilio";
 import { v4 as uuidv4 } from "uuid";
@@ -34,8 +37,9 @@ export async function POST(request: Request) {
   try {
     const formData = await request.formData();
     const to = formData.get("To") as string;
-    //@ts-ignore
-    const from = (formData.get("From") ?? "")?.split(":")[1] as string; // Ensure correct retrieval
+    const fromRaw = formData.get("From");
+    const from =
+      typeof fromRaw === "string" ? (fromRaw.split(":")[1] ?? "") : "";
 
     if (!to || !from) {
       return NextResponse.json(
@@ -80,14 +84,28 @@ export async function POST(request: Request) {
     }
 
     const phoneLookup = phoneLookupWhereClause(to);
-    const client = phoneLookup
+    let client = phoneLookup
       ? await db.client.findFirst({
           where: {
-            companyId: twilioCredentials?.companyId,
+            companyId: twilioCredentials.companyId,
             OR: phoneLookup,
           },
         })
       : null;
+
+    // clientCall.clientId is non-nullable in the schema, so create a placeholder
+    // client when the dialed number doesn't match any existing record.
+    if (!client) {
+      client = await db.client.create({
+        data: {
+          firstName: "Unknown",
+          lastName: "Contact",
+          mobile: normalizePhoneForStorage(to),
+          companyId: twilioCredentials.companyId,
+          isSalesAgent: true,
+        },
+      });
+    }
 
     let callId = uuidv4();
     // Prepare database insert for ClientCall
@@ -100,7 +118,7 @@ export async function POST(request: Request) {
         direction: "outbound",
         sentBy: "Company", // or derive from context/session
         companyId: twilioCredentials.companyId,
-        clientId: client?.id!,
+        clientId: client.id,
       },
     });
 

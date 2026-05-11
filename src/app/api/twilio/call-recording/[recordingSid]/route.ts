@@ -50,12 +50,19 @@ export async function GET(
     where: { companyId },
   });
 
-  const accountSid = twilioCredentials?.accountSid!;
-  const recordingUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Recordings/${recordingSid}.mp3`;
+  if (
+    !twilioCredentials?.accountSid ||
+    !twilioCredentials.apiKeySid ||
+    !twilioCredentials.apiKeySecret
+  ) {
+    return new Response("Twilio credentials not configured", { status: 404 });
+  }
+
+  const recordingUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioCredentials.accountSid}/Recordings/${recordingSid}.mp3`;
 
   const response = await fetch(recordingUrl, {
     headers: {
-      Authorization: `Basic ${Buffer.from(`${twilioCredentials?.apiKeySid}:${twilioCredentials?.apiKeySecret}`).toString("base64")}`,
+      Authorization: `Basic ${Buffer.from(`${twilioCredentials.apiKeySid}:${twilioCredentials.apiKeySecret}`).toString("base64")}`,
     },
   });
 

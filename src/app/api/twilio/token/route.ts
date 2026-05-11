@@ -40,15 +40,19 @@ export async function POST(request: NextRequest) {
   } = await request.json();
   const companyId = Number(rawCompanyId);
 
-  // if (rawIdentity == null || companyId == null) {
-  //   return NextResponse.json(
-  //     { error: "Missing required fields: identity, companyId, platform" },
-  //     { status: 400 },
-  //   );
-  // }
+  if (
+    typeof rawIdentity !== "string" ||
+    rawIdentity.length === 0 ||
+    !Number.isFinite(companyId)
+  ) {
+    return NextResponse.json(
+      { error: "Missing required fields: identity, companyId" },
+      { status: 400 },
+    );
+  }
 
   // Twilio Client identity cannot contain '+' or other special chars — normalize.
-  const identity = (rawIdentity as string).replace(/[^a-zA-Z0-9_\-.~]/g, "");
+  const identity = rawIdentity.replace(/[^a-zA-Z0-9_\-.~]/g, "");
 
   const entitlements = await getCompanyEntitlements(companyId);
   if (!entitlements.canUseVoice) {

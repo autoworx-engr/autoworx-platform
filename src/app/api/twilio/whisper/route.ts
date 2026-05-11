@@ -24,9 +24,10 @@ export async function POST(request: Request) {
   const voiceResponse = new twiml.VoiceResponse();
 
   // Look up the company to get its name and whether whisper is enabled
-  if (companyIdParam) {
+  const companyId = companyIdParam ? parseInt(companyIdParam, 10) : NaN;
+  if (Number.isFinite(companyId)) {
     const company = await db.company.findUnique({
-      where: { id: parseInt(companyIdParam) },
+      where: { id: companyId },
       select: { name: true, callWhisperEnabled: true },
     });
 

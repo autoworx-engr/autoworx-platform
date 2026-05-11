@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 
 /**
  * @swagger
@@ -157,6 +158,15 @@ import { db } from "@/lib/db";
 
 export async function GET(req: NextRequest) {
   try {
+    const principal = await getAuthPrincipal(req);
+    if (!principal) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized access" },
+        { status: 401 },
+      );
+    }
+    const { companyId } = principal;
+
     const { searchParams } = new URL(req.url);
     const clientIdParam = searchParams.get("clientId");
     const pageParam = searchParams.get("page");
@@ -181,9 +191,22 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    // Verify the client belongs to the caller's company before exposing history
+    const client = await db.client.findFirst({
+      where: { id: clientId, companyId },
+      select: { id: true },
+    });
+    if (!client) {
+      return NextResponse.json(
+        { success: false, message: "Client not found" },
+        { status: 404 },
+      );
+    }
+
     let calls = await db.clientCall.findMany({
       where: {
         clientId: clientId,
+        companyId,
       },
       skip: skip,
       take: take,

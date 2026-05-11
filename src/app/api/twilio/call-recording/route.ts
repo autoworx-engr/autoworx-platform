@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 /**
@@ -47,18 +48,29 @@ export async function POST(request: Request) {
     }
 
     // Update ClientCall record with status and optional recording
-    await db.clientCall.update({
-      where: { callSid: callId },
-      data: {
-        status: callStatus,
-        duration: duration ? parseInt(duration) : undefined,
-        recordingUrl: recordingUrl || undefined,
-      },
-    });
+    try {
+      await db.clientCall.update({
+        where: { callSid: callId },
+        data: {
+          status: callStatus,
+          duration: duration ? parseInt(duration) : undefined,
+          recordingUrl: recordingUrl || undefined,
+        },
+      });
+    } catch (err) {
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === "P2025"
+      ) {
+        // Return 404 so Twilio stops retrying for a callSid we never tracked.
+        return new Response("Call not found", { status: 404 });
+      }
+      throw err;
+    }
 
     return new Response("OK", { status: 200 });
   } catch (error) {
-    console.error("❌ Error in Twilio webhook:", error);
+    console.error("Error in Twilio call-recording webhook:", error);
     return new Response("Internal Server Error", { status: 500 });
   }
 }

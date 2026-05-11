@@ -38,19 +38,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { callSid, action, companyId, deviceId } = body;
 
-    console.log("📥 [call-state] Received request:", {
-      callSid,
-      action,
-      companyId,
-      deviceId,
-    });
-
     if (!callSid || !action || !companyId) {
-      console.error("❌ [call-state] Missing required parameters:", {
-        callSid,
-        action,
-        companyId,
-      });
       return NextResponse.json(
         { error: "Missing required parameters" },
         { status: 400 },
@@ -58,7 +46,6 @@ export async function POST(request: Request) {
     }
 
     if (action !== "accepted" && action !== "rejected" && action !== "ended") {
-      console.error("❌ [call-state] Invalid action:", action);
       return NextResponse.json(
         { error: "Invalid action. Must be 'accepted', 'rejected', or 'ended'" },
         { status: 400 },
@@ -75,10 +62,6 @@ export async function POST(request: Request) {
       status = "completed";
     }
 
-    console.log(
-      `📊 [DB] Attempting to update callSid: ${callSid} to status: ${status}`,
-    );
-
     // Try to update call status in database (use updateMany to avoid error if not found)
     let updateResult;
     let updatedCall: any = null;
@@ -92,9 +75,6 @@ export async function POST(request: Request) {
           status,
         },
       });
-      console.log(
-        `✅ [DB] Updated ${updateResult.count} call record(s) for callSid: ${callSid}`,
-      );
 
       // If call was rejected (not answered), fetch the call details to create conversation track
       if (action === "rejected" && updateResult.count > 0) {
@@ -105,12 +85,7 @@ export async function POST(request: Request) {
           });
 
           if (updatedCall?.clientId) {
-            console.log(
-              `📝 [DB] Creating "missed call" SMS record for client: ${updatedCall.clientId}`,
-            );
-
-            // Create SMS record for missed call
-            const dbMessage = await db.clientSMS.create({
+            await db.clientSMS.create({
               data: {
                 from: updatedCall.from,
                 to: updatedCall.to,
@@ -120,11 +95,7 @@ export async function POST(request: Request) {
                 companyId: companyId,
               },
             });
-            console.log(
-              `✅ [DB] SMS record created for missed call, id: ${dbMessage.id}`,
-            );
 
-            // Create conversation track
             await updateNewSMSChatTrack({
               clientId: updatedCall.clientId,
               smsLastMessage:
@@ -132,83 +103,24 @@ export async function POST(request: Request) {
               lastMessageBy: "Client",
               attachments: [],
             });
-            console.log(`✅ [DB] Conversation track created for missed call`);
           }
         } catch (trackError) {
           console.error(
-            "❌ [DB] Failed to create conversation track:",
+            "[call-state] Failed to create conversation track:",
             trackError,
-          );
-          // Continue anyway - this is not critical
-        }
-      }
-
-      // If no records were updated, check what's actually in the database
-      if (updateResult.count === 0) {
-        console.warn(
-          `⚠️ [DB] No records found for callSid: ${callSid}, checking database...`,
-        );
-        const existingCall = await db.clientCall.findFirst({
-          where: { callSid },
-          select: {
-            id: true,
-            callSid: true,
-            status: true,
-            companyId: true,
-            createdAt: true,
-          },
-        });
-
-        if (existingCall) {
-          console.log(`📋 [DB] Found call in database:`, existingCall);
-          console.log(
-            `⚠️ [DB] Company mismatch? Expected: ${companyId}, Found: ${existingCall.companyId}`,
-          );
-        } else {
-          console.warn(
-            `❌ [DB] No call record exists with callSid: ${callSid}`,
-          );
-          // Check for recent calls in this company
-          const recentCalls = await db.clientCall.findMany({
-            where: {
-              companyId: Number(companyId),
-              createdAt: {
-                gte: new Date(Date.now() - 5 * 60 * 1000), // Last 5 minutes
-              },
-            },
-            select: {
-              callSid: true,
-              status: true,
-              from: true,
-              createdAt: true,
-            },
-            orderBy: { createdAt: "desc" },
-            take: 5,
-          });
-          console.log(
-            `📋 [DB] Recent calls for company ${companyId}:`,
-            recentCalls,
           );
         }
       }
     } catch (dbError) {
-      console.error("❌ [DB] Database update error:", dbError);
-      // Continue with Pusher broadcast even if DB update fails
+      console.error("[call-state] Database update error:", dbError);
       updateResult = { count: 0 };
     }
-
-    // Broadcast to all devices in the company via Pusher
-    // This happens regardless of whether the DB record was found
-    // because we still want to dismiss the popup on other devices
-    console.log("📡 [Pusher] Preparing to broadcast...");
 
     let pusher;
     try {
       pusher = getPusherInstance();
-      console.log("✅ [Pusher] Instance obtained");
     } catch (pusherError) {
-      console.error("❌ [Pusher] Failed to get Pusher instance:", pusherError);
-      // Return success anyway since DB update succeeded
+      console.error("[call-state] Failed to get Pusher instance:", pusherError);
       return NextResponse.json({
         success: true,
         recordsUpdated: updateResult.count,
