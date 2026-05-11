@@ -44,6 +44,7 @@ export async function sendTwilioMessage({
   isSalesAgent = false,
   userId,
   systemCall = false,
+  shouldSalesAgentStop = true,
 }: {
   companyId?: number;
   message: string;
@@ -53,6 +54,8 @@ export async function sendTwilioMessage({
   isSalesAgent?: boolean;
   /** Pass true when calling from a webhook/system context with no user session. */
   systemCall?: boolean;
+  /** When true (default), disables isSalesAgent on the client after sending. */
+  shouldSalesAgentStop?: boolean;
 }) {
   try {
     const resolvedCompanyId = companyId ?? (await getCompanyId());
@@ -156,7 +159,7 @@ export async function sendTwilioMessage({
           });
         }
 
-        if (client && client?.isSalesAgent) {
+        if (shouldSalesAgentStop && client && client?.isSalesAgent) {
           await tx.client.update({
             where: { id: clientId },
             data: { isSalesAgent: false },
