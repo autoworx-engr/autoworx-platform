@@ -529,9 +529,14 @@ export function useAppointmentFormState({
   }, [draftOpen]);
 
   const handleDate = (operator: "+" | "-") => {
-    const d = new Date();
-    d.setDate(d.getDate() + (operator === "+" ? 1 : -1));
-    setDate(d.toISOString().split("T")[0]);
+    const delta = operator === "+" ? 1 : -1;
+    const base = date ? moment(date, "YYYY-MM-DD") : moment();
+    setDate(base.clone().add(delta, "day").format("YYYY-MM-DD"));
+    if (endDate) {
+      setEndDate(
+        moment(endDate, "YYYY-MM-DD").add(delta, "day").format("YYYY-MM-DD"),
+      );
+    }
   };
 
   const handleTimeChange = (
