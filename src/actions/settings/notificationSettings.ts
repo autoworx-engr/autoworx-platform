@@ -1,28 +1,18 @@
 "use server";
 import { db } from "@/lib/db";
+import getUser from "@/lib/getUser";
 import { NotificationSection } from "@prisma/client";
 
-type TProps = {
-  section: NotificationSection;
-  userId: number;
-  companyId: number;
-};
-
-export const getNotificationSettingsByCategory = async ({
-  section,
-  userId,
-  companyId,
-}: TProps) => {
-  try {
-    const notificationSettings = await db.notificationSettingsV2.findMany({
-      where: {
-        userId,
-        companyId,
-        section,
-      },
-    });
-    return notificationSettings;
-  } catch (err) {
-    throw err;
-  }
+export const getNotificationSettingsByCategory = async (
+  section: NotificationSection,
+) => {
+  const user = await getUser();
+  const notificationSettings = await db.notificationSettingsV2.findMany({
+    where: {
+      userId: user.id,
+      companyId: user.companyId,
+      section,
+    },
+  });
+  return notificationSettings;
 };

@@ -624,6 +624,37 @@ export default function InvoiceModalBody({
             </div>
           )}
 
+          {/* Download and Copy Link buttons for public invoice */}
+          {isPublic && client && (
+            <div className="mt-6 flex w-full justify-center gap-2 print:hidden">
+              <button className="flex items-center justify-center whitespace-nowrap rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95">
+                <DownloadPDF
+                  id={invoice.id}
+                  invoice={invoice}
+                  client={client}
+                  vehicle={vehicle}
+                  companyDetails={company}
+                  authorizedName={authorizedName}
+                  signImageUrl={signImage ?? undefined}
+                  isStripe={
+                    (gatewayInfo?.success &&
+                      (gatewayInfo?.hasStripe ||
+                        gatewayInfo?.hasAuthorizeNet) &&
+                      parseFloat(Number(invoice?.due ?? 0).toFixed(2)) > 0) ??
+                    false
+                  }
+                />
+              </button>
+              <button
+                className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95"
+                onClick={handleCopyLink}
+              >
+                <Copy className="h-4 w-4" />
+                <span>Copy Link</span>
+              </button>
+            </div>
+          )}
+
           {/* Company Info */}
           <div className="flex w-full flex-row items-start justify-between gap-6 border-b border-slate-100 pb-8 dark:border-slate-800">
             {/* Logo Container with Soft Shadow & Ring */}
@@ -1353,7 +1384,8 @@ export default function InvoiceModalBody({
                     open={isStripeDialogOpen}
                     setOpen={setIsStripeDialogOpen}
                     gatewayInfo={{
-                      paymentGateway: gatewayInfo.paymentGateway || "STRIPE",
+                      paymentGateway: (gatewayInfo.paymentGateway ||
+                        "STRIPE") as "STRIPE" | "AUTHORIZE_NET" | "BOTH",
                       hasStripe: gatewayInfo.hasStripe,
                       hasAuthorizeNet: gatewayInfo.hasAuthorizeNet,
                       tipEnabled: gatewayInfo.tipEnabled ?? false,

@@ -5,6 +5,7 @@ import { AppError } from "./error";
 import { TErrorHandler } from "@/types/globalError";
 import { handlePrismaError } from "./handlePrismaError";
 import { AxiosError } from "axios";
+import { queueProductionTelegramAlert } from "./sendProductionTelegramAlert";
 
 export type TErrorSource = {
   path: string | number;
@@ -28,10 +29,8 @@ export const notFoundError = () => {
   };
 };
 
-// global error handler
-export const errorHandler = (error: any): TErrorHandler => {
-  // NOTE: This is important to log the error
-
+/** Builds the API/client error payload without side effects (no Telegram). */
+export function normalizeGlobalError(error: any): TErrorHandler {
   let message: string = error?.message;
   let statusCode: number =
     error?.statusCode || httpStatus.INTERNAL_SERVER_ERROR;
@@ -105,7 +104,13 @@ export const errorHandler = (error: any): TErrorHandler => {
   //   }
 
   // send error response to client
-  console.log("Global Error Handler:");
+  console.log("Global Error Handler:", {
+    message,
+    statusCode,
+    path: error?.path || "",
+    stack: error?.stack,
+  });
+
   return {
     success: false,
     type: "globalError",
@@ -114,4 +119,15 @@ export const errorHandler = (error: any): TErrorHandler => {
     errorSource,
     stack: process.env.NODE_ENV === "development" ? error?.stack : null,
   };
+}
+
+// global error handler
+export const errorHandler = (error: any): TErrorHandler => {
+  const result = normalizeGlobalError(error);
+  queueProductionTelegramAlert({
+    errorMessage: result.message,
+    statusCode: result.statusCode ?? httpStatus.INTERNAL_SERVER_ERROR,
+    stack: error?.stack ?? null,
+  });
+  return result;
 };

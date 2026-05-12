@@ -1,3 +1,4 @@
+"use client";
 import { changePassword } from "@/actions/settings/myAccount";
 import { SlimInput } from "@/components/SlimInput";
 import { errorToast, successToast } from "@/lib/toast";
@@ -53,7 +54,7 @@ export const ChangePassword = () => {
           />
           <span
             onClick={() => setToggleCurrentPassword(!toggleCurrentPassword)}
-            className="absolute right-2 bottom-2
+            className="absolute right-2 bottom-2.5
 "
           >
             {toggleCurrentPassword ? (
@@ -73,7 +74,7 @@ export const ChangePassword = () => {
           />
           <span
             onClick={() => setToggleNewPassword(!toggleNewPassword)}
-            className="absolute right-2 bottom-2
+            className="absolute right-2 bottom-2.5
 "
           >
             {toggleNewPassword ? (
@@ -93,7 +94,7 @@ export const ChangePassword = () => {
           />
           <span
             onClick={() => setToggleConfirmPassword(!toggleConfirmPassword)}
-            className="absolute right-2 bottom-2"
+            className="absolute right-2 bottom-2.5"
           >
             {toggleConfirmPassword ? (
               <EyeOff className=" h-4 w-4 " />

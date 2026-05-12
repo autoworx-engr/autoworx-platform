@@ -548,6 +548,7 @@ model Client {
   fleet                  Fleet?
   isSalesAgent           Boolean                  @default(true)
   shopBookings           ShopBooking[]
+  emergencyBookingRequests EmergencyBookingRequest[]
 
   @@index([companyId], name: "fk_customers_company")
   @@map("Client")
@@ -1863,6 +1864,7 @@ enum NotificationType {
   COLLABORATION_MESSAGE_ALERT
   COLLABORATION_INVITATION
   CLIENT_ABUSE_ALERT
+  URGENT_SERVICE_REQUEST
 }
 
 enum NotificationSection {
@@ -2266,6 +2268,7 @@ model User {
   twoFactorConfirmation          TwoFactorConfirmation?
   collaborationMessages          CollaborationMessage[]
   reviews                        Reviews[]
+  reviewedEmergencyRequests      EmergencyBookingRequest[] @relation("EmergencyReviewer")
 
   @@index([companyId], name: "fk_users_company")
 }
@@ -2578,6 +2581,7 @@ model Vehicle {
   invoices        Invoice[]
   requestEstimate RequestEstimate? @relation("Vehicle")
   shopBookings    ShopBooking[]
+  emergencyBookingRequests EmergencyBookingRequest[]
 
   @@index([companyId], name: "fk_vehicles_company")
 }
@@ -2950,7 +2954,8 @@ model Shop {
   logoUrl         String?             @map("logo_url")
   bannerUrl       String?             @map("banner_url")
   themeConfig     Json?               @map("theme_config") // Store { primaryColor: '#3b82f6', font: 'Inter' }
-  isActive        Boolean             @default(true) @map("is_active")
+  isActive                       Boolean  @default(true) @map("is_active")
+  urgentBookingNotificationsEnabled Boolean @default(true) @map("urgent_booking_notifications_enabled")
   termsConditions String?             @map("terms_conditions") @db.VarChar(1500)
   privacyPolicy   String?             @map("privacy_policy") @db.VarChar(1500)
   createdAt       DateTime            @default(now()) @map("created_at")
@@ -2959,6 +2964,7 @@ model Shop {
   shopServices    ShopService[]
   bookingSettings ShopBookingSetting?
   shopBookings    ShopBooking[]
+  emergencyBookingRequests EmergencyBookingRequest[]
 
   // Gift Card Relations (shop-level isolation)
   giftCardSetting   GiftCardSetting?
@@ -3350,4 +3356,79 @@ model ShopSlotHold {
   createdAt    DateTime @default(now()) @map("created_at")
 
   @@index([shopId, date, expiresAt])
+}
+
+
+// Emergency Booking Request Model
+model EmergencyBookingRequest {
+  id       Int  @id @default(autoincrement())
+  shopId   Int  @map("shop_id")
+  clientId Int? @map("client_id")
+
+  // Contact Information (in case client is guest)
+  contactName  String  @map("contact_name") @db.VarChar(255)
+  contactEmail String  @map("contact_email") @db.VarChar(255)
+  contactPhone String  @map("contact_phone") @db.VarChar(50)
+  
+  // Emergency Details
+  description     String            @db.Text
+  
+  // Requested Time (user preference)
+  requestedDate String? @map("requested_date") // User's preferred date
+  requestedTime String? @map("requested_time") // User's preferred time
+  flexibleTiming Boolean @default(true) @map("flexible_timing") // Can they be flexible?
+  
+  // Vehicle Info
+  vehicleId    Int?    @map("vehicle_id")
+  vehicleMake  String? @map("vehicle_make") @db.VarChar(100)
+  vehicleModel String? @map("vehicle_model") @db.VarChar(100)
+  vehicleYear  Int?    @map("vehicle_year")
+  
+  // Services Requested (stored as JSON for flexibility)
+  requestedServices Json @map("requested_services") // Array of service IDs or descriptions
+  
+  // Status & Resolution
+  status           EmergencyRequestStatus @default(PENDING)
+  priority         Int                    @default(5) // 1-10, higher = more urgent
+  
+  // Admin Response
+  reviewedBy       Int?      @map("reviewed_by")
+  reviewedAt       DateTime? @map("reviewed_at")
+  adminNotes       String?   @map("admin_notes") @db.Text
+  rejectionReason  String?   @map("rejection_reason") @db.Text
+  
+  // Proposed Alternative (if original time not available)
+  proposedDate     String?   @map("proposed_date")
+  proposedTime     String?   @map("proposed_time")
+  alternativeNotes String?   @map("alternative_notes") @db.Text
+  
+  
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  expiresAt DateTime @map("expires_at") // Auto-expire if not reviewed within X hours
+  
+  // Relations
+  shop        Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  client      Client?       @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  vehicle     Vehicle?      @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+  reviewer    User?         @relation("EmergencyReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
+  
+  @@index([shopId, status])
+  @@index([shopId, createdAt])
+  @@index([priority])
+  @@index([expiresAt])
+  @@map("emergency_booking_requests")
+}
+
+
+enum EmergencyRequestStatus {
+  PENDING              // Waiting for admin review
+  UNDER_REVIEW         // Admin is actively reviewing
+  APPROVED             // Admin approved, booking created
+  ALTERNATIVE_PROPOSED // Admin proposed different time
+  CLIENT_CONFIRMED     // Client confirmed alternative time
+  REJECTED             // Cannot accommodate
+  EXPIRED              // Not reviewed within time window
+  CANCELLED            // Client cancelled the request
 }

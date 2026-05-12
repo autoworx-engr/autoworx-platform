@@ -34,7 +34,7 @@ export const teamManagementUser = async (): Promise<
 
     return returnedUsers;
   } catch (error: any) {
-    console.log("Error selecting data from user", error);
+    console.error("Error selecting data from user", error);
     throw error;
   }
 };
@@ -247,6 +247,15 @@ export const savePermissions = async (
 ): Promise<boolean> => {
   try {
     const companyId = await getCompanyId();
+
+    const targetUser = await prisma.user.findFirst({
+      where: { id: userId, companyId },
+      select: { id: true },
+    });
+
+    if (!targetUser) {
+      throw new Error("User not found in your company");
+    }
 
     await prisma.permission.upsert({
       where: {

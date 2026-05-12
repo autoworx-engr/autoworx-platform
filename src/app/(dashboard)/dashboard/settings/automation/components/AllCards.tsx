@@ -262,7 +262,7 @@ export default function AllCards({
               {type == "marketing" ? "Campaigns" : "Rules"}
             </p>
 
-            {items?.length < 1 ? (
+            {!items?.length ? (
               <div className="flex h-[450px] flex-col items-center justify-center text-center text-gray-500">
                 <Inbox className="mb-3 text-4xl text-indigo-400" />
                 <p className="text-lg font-medium capitalize">
