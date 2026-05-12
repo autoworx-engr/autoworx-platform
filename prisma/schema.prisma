@@ -547,6 +547,7 @@ model Client {
   fleet                  Fleet?
   isSalesAgent           Boolean                  @default(true)
   shopBookings           ShopBooking[]
+  emergencyBookingRequests EmergencyBookingRequest[]
 
   @@index([companyId], name: "fk_customers_company")
   @@map("Client")
@@ -1862,6 +1863,7 @@ enum NotificationType {
   COLLABORATION_MESSAGE_ALERT
   COLLABORATION_INVITATION
   CLIENT_ABUSE_ALERT
+  URGENT_SERVICE_REQUEST
 }
 
 enum NotificationSection {
@@ -2268,6 +2270,7 @@ model User {
   hasCopilot                     Boolean                         @default(false)
   copilotSessions                CopilotSession[]
   auditLogs                      AuditLog[]
+  reviewedEmergencyRequests      EmergencyBookingRequest[] @relation("EmergencyReviewer")
 
   @@index([companyId], name: "fk_users_company")
 }
@@ -2580,6 +2583,7 @@ model Vehicle {
   invoices        Invoice[]
   requestEstimate RequestEstimate? @relation("Vehicle")
   shopBookings    ShopBooking[]
+  emergencyBookingRequests EmergencyBookingRequest[]
 
   @@index([companyId], name: "fk_vehicles_company")
 }
@@ -2952,7 +2956,8 @@ model Shop {
   logoUrl         String?             @map("logo_url")
   bannerUrl       String?             @map("banner_url")
   themeConfig     Json?               @map("theme_config") // Store { primaryColor: '#3b82f6', font: 'Inter' }
-  isActive        Boolean             @default(true) @map("is_active")
+  isActive                       Boolean  @default(true) @map("is_active")
+  urgentBookingNotificationsEnabled Boolean @default(true) @map("urgent_booking_notifications_enabled")
   termsConditions String?             @map("terms_conditions") @db.VarChar(1500)
   privacyPolicy   String?             @map("privacy_policy") @db.VarChar(1500)
   createdAt       DateTime            @default(now()) @map("created_at")
@@ -2961,6 +2966,7 @@ model Shop {
   shopServices    ShopService[]
   bookingSettings ShopBookingSetting?
   shopBookings    ShopBooking[]
+  emergencyBookingRequests EmergencyBookingRequest[]
 
   // Gift Card Relations (shop-level isolation)
   giftCardSetting   GiftCardSetting?

@@ -10,6 +10,7 @@ import {
   Layers,
   Check,
   CheckCircle,
+  Store,
 } from "lucide-react";
 import { fToNow } from "src/utils/formatDate";
 import { cn } from "@/lib/utils";
@@ -297,12 +298,14 @@ function renderContent(notification: Notification) {
     payment: "/icons/navbar/Payments.svg",
   };
 
+  const iconMap: Record<string, React.ReactNode> = {
+    virtualShop: <Store size={22} />,
+  };
+
   return {
-    avatarUrl: typeMap[notiType] ? (
-      getIcon(typeMap[notiType])
-    ) : (
-      <Bell size={18} />
-    ),
+    avatarUrl:
+      iconMap[notiType] ??
+      (typeMap[notiType] ? getIcon(typeMap[notiType]) : <Bell size={18} />),
     title,
   };
 }
