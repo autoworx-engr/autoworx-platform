@@ -53,9 +53,13 @@ const initial: DragState = {
 export function useTransposedWeekDrag({ weekDays, onCommit }: Options) {
   const [state, setState] = useState<DragState>(initial);
   const stateRef = useRef(state);
+  const dayCountRef = useRef(weekDays.length);
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
+  useEffect(() => {
+    dayCountRef.current = weekDays.length;
+  }, [weekDays.length]);
 
   const findDayIndex = useCallback(
     (eventDate: Date) => {
@@ -122,7 +126,7 @@ export function useTransposedWeekDrag({ weekDays, onCommit }: Options) {
         const dayDelta = Math.round(dy / DAY_ROW_HEIGHT_PX);
         const newDayIndex = Math.max(
           0,
-          Math.min(6, s.originDayIndex + dayDelta),
+          Math.min(dayCountRef.current - 1, s.originDayIndex + dayDelta),
         );
         setState((prev) => ({
           ...prev,

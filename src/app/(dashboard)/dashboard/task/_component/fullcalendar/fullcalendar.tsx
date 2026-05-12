@@ -222,6 +222,7 @@ export default function Calendar({ type }: { type: CalendarType }) {
           <TransposedWeekView
             events={displayEvents}
             firstDay={firstDay}
+            weekendDayNames={weekendDays}
             businessStart={settings?.dayStart ?? undefined}
             businessEnd={settings?.dayEnd ?? undefined}
             session={session}

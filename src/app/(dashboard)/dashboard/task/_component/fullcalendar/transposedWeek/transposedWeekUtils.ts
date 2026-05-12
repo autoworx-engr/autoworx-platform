@@ -6,10 +6,27 @@ export const TOTAL_MINUTES = 24 * 60;
 export const SLOTS_PER_HOUR = MINUTES_PER_HOUR / SLOT_MINUTES;
 export const TOTAL_SLOTS = TOTAL_MINUTES / SLOT_MINUTES;
 
-export const SLOT_WIDTH_PX = 16;
+export const SLOT_WIDTH_PX = 28;
 export const HOUR_WIDTH_PX = SLOT_WIDTH_PX * SLOTS_PER_HOUR;
-export const DAY_ROW_HEIGHT_PX = 96;
+export const DAY_ROW_HEIGHT_PX = 126;
 export const DAY_LABEL_WIDTH_PX = 96;
+
+const DAY_NAME_TO_DOW: Record<string, number> = {
+  sunday: 0,
+  monday: 1,
+  tuesday: 2,
+  wednesday: 3,
+  thursday: 4,
+  friday: 5,
+  saturday: 6,
+};
+
+export const weekendNamesToDow = (names: string[]): Set<number> =>
+  new Set(
+    names
+      .map((n) => DAY_NAME_TO_DOW[n.toLowerCase()])
+      .filter((n) => n !== undefined),
+  );
 
 export const parseTimeToMinutes = (t: string | null | undefined) => {
   if (!t) return 0;

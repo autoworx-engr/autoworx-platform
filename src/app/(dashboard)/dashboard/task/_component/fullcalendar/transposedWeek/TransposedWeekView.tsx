@@ -19,12 +19,14 @@ import {
   getWeekDays,
   minutesToPixels,
   parseTimeToMinutes,
+  weekendNamesToDow,
 } from "./transposedWeekUtils";
 import styles from "./transposedWeek.module.css";
 
 interface Props {
   events: EventInput[];
   firstDay: number;
+  weekendDayNames?: string[];
   businessStart?: string;
   businessEnd?: string;
   session: any;
@@ -42,6 +44,7 @@ interface Props {
 export function TransposedWeekView({
   events,
   firstDay,
+  weekendDayNames,
   businessStart,
   businessEnd,
   session,
@@ -57,11 +60,14 @@ export function TransposedWeekView({
     () => (storeDate ? moment(storeDate) : moment()),
     [storeDate],
   );
-  const weekDays = useMemo(
-    () => getWeekDays(anchor, firstDay),
-    [anchor, firstDay],
-  );
+  const weekDays = useMemo(() => {
+    const all = getWeekDays(anchor, firstDay);
+    if (!weekendDayNames?.length) return all;
+    const skip = weekendNamesToDow(weekendDayNames);
+    return all.filter((d) => !skip.has(d.day()));
+  }, [anchor, firstDay, weekendDayNames]);
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const hasInitialScrolledRef = useRef(false);
   const positioned = useTransposedLayout(events, weekDays);
 
   const commitChange = async ({
@@ -116,16 +122,19 @@ export function TransposedWeekView({
       0,
       minutesToPixels(parseTimeToMinutes(scrollToTime)) - HOUR_WIDTH_PX,
     );
+    hasInitialScrolledRef.current = true;
     onScrollHandled?.();
   }, [scrollToTime, onScrollHandled]);
 
   useEffect(() => {
-    if (scrollToTime || !scrollerRef.current || !businessStart) return;
+    if (hasInitialScrolledRef.current || !scrollerRef.current || !businessStart)
+      return;
+    hasInitialScrolledRef.current = true;
     scrollerRef.current.scrollLeft = Math.max(
       0,
       minutesToPixels(parseTimeToMinutes(businessStart)) - HOUR_WIDTH_PX,
     );
-  }, [businessStart, scrollToTime]);
+  }, [businessStart]);
 
   const handleEventClickInternal = (event: PositionedEvent) => {
     onEventClick({
