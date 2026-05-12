@@ -62,11 +62,22 @@ Phases 0a–2: Adds an AI Copilot to AutoWorx — a sliding panel in the dashboa
 
 ---
 
+## Bugs introduced by Phase 0a refactor and fixed in Phase 2.1 (coordination catch)
+
+Caught by coordination with @AbuBokorprog who did a parallel refactor of /api/lead-generate on origin/development.
+
+1. **Missing systemCall: true** on Twilio/Infobip calls inside createLeadRecord. AI opening SMS would have silently failed to send for webhook-generated leads.
+2. **CRM zapierToken branch dropped** for automation triggers. External website leads (CRM mode) would have lost automation triggers.
+
+These slipped past Phase 0a smoke testing due to local dev environment limitations (no CRM-enabled company in dev DB; ai_personalities schema drift masked the systemCall issue with a different failure). Caught before merge by parallel-refactor coordination.
+
+The Phase 0a "latent bug fixes" section below previously credited us with these fixes — that credit was incorrect; we actually re-introduced them. Phase 2.1 restores correct behavior.
+
+---
+
 ## Latent bugs fixed (pre-existing, incidental to refactor)
 
-1. Infobip CRM-mode parameter bug
-2. CRM-mode automation token sent as wrong format (silent 401s)
-3. **`editAppointment.ts` missing `columnId` on draft estimate creation (Phase 0.5):**
+1. **`editAppointment.ts` missing `columnId` on draft estimate creation (Phase 0.5):**
    When a user edited an appointment to add or change a draft estimate, the server action
    created the `Invoice` row without a `columnId`. Since every shop pipeline column view
    filters by `columnId`, these estimates were invisible in the UI — users could not find

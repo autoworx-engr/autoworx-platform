@@ -109,7 +109,12 @@ export async function POST(request: NextRequest) {
         multipleServices,
       },
       company.id,
-      { isCRM, doTriggerAutomation: true, sendOpeningSms: true },
+      {
+        isCRM,
+        doTriggerAutomation: true,
+        sendOpeningSms: true,
+        zapierToken: token,
+      },
     );
 
     return jsonResponse(

@@ -31,6 +31,7 @@ export type CreateLeadOptions = {
   isCRM?: boolean;
   doTriggerAutomation?: boolean;
   sendOpeningSms?: boolean;
+  zapierToken?: string;
 };
 
 function parseClientName(name: string) {
@@ -114,6 +115,7 @@ export async function createLeadRecord(
     isCRM = false,
     doTriggerAutomation = true,
     sendOpeningSms = true,
+    zapierToken,
   } = options;
 
   const column = await db.column.findFirst({
@@ -158,7 +160,8 @@ export async function createLeadRecord(
   if (!isCRM) await initialCreateClientChatTrack(client.id);
 
   if (doTriggerAutomation) {
-    const automationToken = await companyWithUser({ companyId });
+    const automationToken =
+      isCRM && zapierToken ? zapierToken : await companyWithUser({ companyId });
     await runAutomations(companyId, newLead.id, column.id, automationToken);
   }
 
@@ -190,6 +193,7 @@ export async function createLeadRecord(
           clientId: client.id,
           message: personality.openingMessage,
           attachments: [],
+          systemCall: true,
         });
       } else {
         await sendInfobipMessage({
@@ -197,6 +201,7 @@ export async function createLeadRecord(
           clientId: client.id,
           message: personality.openingMessage,
           attachments: [],
+          systemCall: true,
         });
       }
     }

@@ -41,6 +41,10 @@ For coordinating the merge into development and production deployment.
 
 No new migrations. All changes are pure TypeScript.
 
+### Phase 2.1
+
+No DB migrations. Bug fix to createLeadRecord behavior only.
+
 ---
 
 ## Packages added

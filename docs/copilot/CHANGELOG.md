@@ -5,6 +5,42 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Phase 2.1 — Bug fixes from team coordination
+
+**Date:** 2026-05-12
+**Branch:** taiseer/ai-copilot
+**Commit:** [see git log — committed after docs]
+
+### Bugs fixed
+
+1. **Missing systemCall: true on Twilio/Infobip send calls** inside createLeadRecord. AbuBokorprog (parallel refactor of the same route on origin/development) confirmed this flag is required when no session user is present (webhook flow), otherwise the SMS helper throws an auth error. Our Phase 0a refactor silently broke AI opening SMS delivery from webhook-created leads.
+2. **Dropped isCRM zapierToken branch** for automation triggers. AbuBokorprog confirmed CRM mode IS in production use by external websites. Our Phase 0a refactor uniformly used companyWithUser, silently breaking automation triggers for CRM-mode leads.
+
+### Files modified
+
+| File                                 | Change                                                                                                                          |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| `src/lib/leads/createLeadRecord.ts`  | Added systemCall: true to Twilio/Infobip calls; added zapierToken option to CreateLeadOptions; conditional token logic restored |
+| `src/app/api/lead-generate/route.ts` | Passes zapierToken through to createLeadRecord                                                                                  |
+
+### Discovery context
+
+These bugs slipped past Phase 0a smoke testing because:
+
+- The local dev DB had a separate schema drift (ai_personalities.human_handoff_message) causing the SMS path to fail for a different reason, masking the missing systemCall bug
+- CRM mode is not enabled on any company in the dev DB, so the automation-token branch was never exercised
+
+Caught by coordination with @AbuBokorprog who did a parallel refactor of /api/lead-generate on origin/development and tested both paths.
+
+### Verification
+
+- ✓ yarn tsc --noEmit — 0 errors
+- ✓ yarn build — clean (63s)
+- Manual: in-platform thunderbolt lead creation still works (non-CRM path, uses companyWithUser via the default branch)
+- Note: full CRM-path verification requires a company with isCRMEnabled=true in the DB; not testable locally
+
+---
+
 ## Phase 2 — Read-only tools + dispatcher
 
 **Date:** 2026-05-11

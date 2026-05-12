@@ -286,6 +286,17 @@ The $39/seat price is viable for the 80th percentile of users. A power user at 3
 
 ## Pre-existing issues found
 
+### Bugs introduced and fixed during the build (caught pre-merge)
+
+Caught by coordination with @AbuBokorprog during pre-PR review:
+
+- Missing `systemCall: true` on opening SMS calls — fixed Phase 2.1
+- CRM mode `zapierToken` branch dropped — restored Phase 2.1
+
+Discovery context: both bugs were masked locally by the ai_personalities schema drift and the absence of a CRM-enabled company in the dev DB.
+
+---
+
 ### Fixed incidentally during this build
 
 | Bug                                                                                                          | Where fixed                                  | Commit     |
