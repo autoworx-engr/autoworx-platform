@@ -91,7 +91,7 @@ export function TransposedWeekEvent({
       onClick={handleClick}
       data-event-id={event.id}
     >
-      <div className="flex flex-col gap-0.5 px-2 py-1 text-xs leading-tight h-full overflow-hidden">
+      <div className={`${styles.stickyInner} text-xs leading-tight`}>
         <span
           className="text-[8px] font-bold uppercase tracking-wide truncate"
           style={{ color: colors.accentColor }}

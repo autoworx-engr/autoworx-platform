@@ -180,10 +180,23 @@
   bottom: 6px;
   cursor: grab;
   border-radius: 8px;
-  overflow: hidden;
   user-select: none;
   transition: box-shadow 120ms ease;
   z-index: 2;
+}
+
+.stickyInner {
+  position: sticky;
+  left: var(--label-w);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 2px 8px;
+  height: 100%;
+  width: max-content;
+  max-width: 100%;
+  overflow: hidden;
+  pointer-events: none;
 }
 
 .eventCard:hover {
