@@ -142,7 +142,8 @@ export function TransposedWeekDayRow({
         )}
         {events.map((event) => {
           const isActive =
-            dragState.phase === "active" && dragState.event?.id === event.id;
+            dragState.phase === "active" &&
+            dragState.event?.sliceKey === event.sliceKey;
           const isMoveActive = isActive && dragState.mode === "move";
           const isResizeActive = isActive && dragState.mode === "resize";
           const shouldRenderHere =
@@ -150,7 +151,7 @@ export function TransposedWeekDayRow({
           if (!shouldRenderHere) return null;
           return (
             <TransposedWeekEvent
-              key={event.id}
+              key={event.sliceKey}
               event={event}
               session={session}
               isDragging={isMoveActive}

@@ -13,16 +13,24 @@ interface LayoutResult {
   holidayByDay: Record<number, PositionedEvent>;
 }
 
+type RawSlice = Omit<PositionedEvent, "lane" | "totalLanes">;
+
 export function useTransposedLayout(
   events: EventInput[],
   weekDays: moment.Moment[],
 ): LayoutResult {
   return useMemo(() => {
-    const rawByDay: Record<
-      number,
-      Omit<PositionedEvent, "lane" | "totalLanes">[]
-    > = {};
+    const rawByDay: Record<number, RawSlice[]> = {};
     const holidayByDay: Record<number, PositionedEvent> = {};
+
+    const pushSlice = (dayIdx: number, slice: RawSlice, isHoliday: boolean) => {
+      if (isHoliday) {
+        holidayByDay[dayIdx] = { ...slice, lane: 0, totalLanes: 1 };
+        return;
+      }
+      if (!rawByDay[dayIdx]) rawByDay[dayIdx] = [];
+      rawByDay[dayIdx].push(slice);
+    };
 
     events.forEach((ev) => {
       const start =
@@ -32,24 +40,32 @@ export function useTransposedLayout(
           ? ev.end
           : new Date(ev.end as string)
         : null;
-      const dayIdx = weekDays.findIndex(
-        (wd) => wd.format("YYYY-MM-DD") === moment(start).format("YYYY-MM-DD"),
-      );
-      if (dayIdx === -1) return;
 
       const type = (ev.extendedProps as any)?.type;
       const serviceType = (ev.extendedProps as any)?.serviceType;
       if (type === "weekend") return;
 
-      const startMin = ev.allDay ? 0 : dateToMinutes(start);
-      const endMin = ev.allDay
+      const startDateStr = moment(start).format("YYYY-MM-DD");
+      const endDateStr = endRaw
+        ? moment(endRaw).format("YYYY-MM-DD")
+        : startDateStr;
+      const isMultiDay = endDateStr > startDateStr;
+      const isHoliday = type === "holiday" || serviceType === "Holiday";
+
+      const dayStartMin = ev.allDay ? 0 : dateToMinutes(start);
+      const dayEndMin = ev.allDay
         ? TOTAL_MINUTES
         : endRaw
-          ? dateToMinutes(endRaw) || startMin + 60
-          : startMin + 60;
+          ? dateToMinutes(endRaw) || dayStartMin + 60
+          : dayStartMin + 60;
 
-      const base = {
+      const buildSlice = (
+        dateKey: string,
+        startMin: number,
+        endMin: number,
+      ): RawSlice => ({
         id: String(ev.id),
+        sliceKey: isMultiDay ? `${ev.id}__${dateKey}` : String(ev.id),
         title: String(ev.title ?? ""),
         start,
         end: endRaw ?? new Date(start.getTime() + 60 * 60 * 1000),
@@ -58,14 +74,38 @@ export function useTransposedLayout(
         endMin,
         left: minutesToPixels(startMin),
         width: minutesToPixels(Math.max(15, endMin - startMin)),
-      };
+        isMultiDay,
+      });
 
-      if (type === "holiday" || serviceType === "Holiday") {
-        holidayByDay[dayIdx] = { ...base, lane: 0, totalLanes: 1 };
+      if (!isMultiDay) {
+        const dayIdx = weekDays.findIndex(
+          (wd) => wd.format("YYYY-MM-DD") === startDateStr,
+        );
+        if (dayIdx === -1) return;
+        pushSlice(
+          dayIdx,
+          buildSlice(startDateStr, dayStartMin, dayEndMin),
+          isHoliday,
+        );
         return;
       }
-      if (!rawByDay[dayIdx]) rawByDay[dayIdx] = [];
-      rawByDay[dayIdx].push(base);
+
+      const cursor = moment.utc(startDateStr).startOf("day");
+      const last = moment.utc(endDateStr).startOf("day");
+      while (cursor.isSameOrBefore(last, "day")) {
+        const dateKey = cursor.format("YYYY-MM-DD");
+        const dayIdx = weekDays.findIndex(
+          (wd) => wd.format("YYYY-MM-DD") === dateKey,
+        );
+        if (dayIdx !== -1) {
+          pushSlice(
+            dayIdx,
+            buildSlice(dateKey, dayStartMin, dayEndMin),
+            isHoliday,
+          );
+        }
+        cursor.add(1, "day");
+      }
     });
 
     const byDay: Record<number, PositionedEvent[]> = {};

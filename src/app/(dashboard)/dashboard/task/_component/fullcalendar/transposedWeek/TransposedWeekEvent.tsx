@@ -5,6 +5,7 @@ import styles from "./transposedWeek.module.css";
 
 export interface PositionedEvent {
   id: string;
+  sliceKey: string;
   title: string;
   start: Date;
   end: Date;
@@ -15,6 +16,7 @@ export interface PositionedEvent {
   width: number;
   lane: number;
   totalLanes: number;
+  isMultiDay: boolean;
 }
 
 interface Props {
@@ -74,13 +76,18 @@ export function TransposedWeekEvent({
     ? `${originalData.client.firstName} ${originalData.client.lastName}`
     : event.title;
 
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (event.isMultiDay) return;
+    onMouseDownMove(e, event);
+  };
+
   return (
     <div
       className={`${styles.eventCard} ${
         isDragging || isResizing ? styles.eventCardDragging : ""
       }`}
-      style={style}
-      onMouseDown={(e) => onMouseDownMove(e, event)}
+      style={{ ...style, cursor: event.isMultiDay ? "pointer" : "grab" }}
+      onMouseDown={handleMouseDown}
       onClick={handleClick}
       data-event-id={event.id}
     >
@@ -101,13 +108,15 @@ export function TransposedWeekEvent({
           </span>
         )}
       </div>
-      <div
-        className={styles.resizeHandle}
-        onMouseDown={(e) => {
-          e.stopPropagation();
-          onMouseDownResize(e, event);
-        }}
-      />
+      {!event.isMultiDay && (
+        <div
+          className={styles.resizeHandle}
+          onMouseDown={(e) => {
+            e.stopPropagation();
+            onMouseDownResize(e, event);
+          }}
+        />
+      )}
     </div>
   );
 }
