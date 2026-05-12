@@ -165,13 +165,46 @@ export function TransposedWeekView({
   const today = moment();
   const todayDayIndex = weekDays.findIndex((d) => d.isSame(today, "day"));
 
+  const displayByDay = useMemo(() => {
+    if (
+      dragState.phase !== "active" ||
+      dragState.mode !== "move" ||
+      !dragState.event
+    )
+      return positioned.byDay;
+    const draggedId = dragState.event.id;
+    const fromIdx = weekDays.findIndex(
+      (wd) =>
+        wd.format("YYYY-MM-DD") ===
+        moment(dragState.event!.start).format("YYYY-MM-DD"),
+    );
+    const toIdx = dragState.liveDayIndex;
+    if (fromIdx === -1 || fromIdx === toIdx) return positioned.byDay;
+    const result: Record<number, PositionedEvent[]> = { ...positioned.byDay };
+    result[fromIdx] = (positioned.byDay[fromIdx] ?? []).filter(
+      (e) => e.id !== draggedId,
+    );
+    result[toIdx] = [
+      ...(positioned.byDay[toIdx] ?? []),
+      { ...dragState.event, lane: 0, totalLanes: 1 },
+    ];
+    return result;
+  }, [
+    positioned.byDay,
+    dragState.phase,
+    dragState.mode,
+    dragState.event,
+    dragState.liveDayIndex,
+    weekDays,
+  ]);
+
   const rowHeights = useMemo(
     () =>
       weekDays.map((_, idx) => {
-        const lanes = positioned.byDay[idx]?.[0]?.totalLanes ?? 1;
+        const lanes = displayByDay[idx]?.[0]?.totalLanes ?? 1;
         return rowHeightForLanes(lanes);
       }),
-    [weekDays, positioned.byDay],
+    [weekDays, displayByDay],
   );
 
   const nowLineTop = useMemo(() => {
@@ -199,7 +232,7 @@ export function TransposedWeekView({
               key={day.format("YYYY-MM-DD")}
               day={day}
               dayIndex={idx}
-              events={positioned.byDay[idx] ?? []}
+              events={displayByDay[idx] ?? []}
               holidayEvent={positioned.holidayByDay[idx]}
               isToday={idx === todayDayIndex}
               isWeekend={day.day() === 0 || day.day() === 6}
