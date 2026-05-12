@@ -4,16 +4,19 @@ import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import { ShopLead } from "@/types/invoiceLead";
 import { Technician } from "@prisma/client";
+import { getCompanyTimezone } from "../settings/getCompanyTimezone";
+import {
+  buildUpcomingAppointmentFilter,
+  upcomingAppointmentOrderBy,
+} from "./_upcomingAppointmentFilter";
 
-function makeInclude() {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+function makeInclude(timezone?: string | null) {
   return {
     client: {
       include: {
         appointments: {
-          where: { date: { gte: today } },
-          orderBy: { date: "asc" as const },
+          where: buildUpcomingAppointmentFilter(timezone),
+          orderBy: upcomingAppointmentOrderBy,
           take: 1,
           select: { id: true, date: true, startTime: true, endTime: true },
         },
@@ -115,6 +118,8 @@ export async function getWorkOrdersByColumn(
   search?: string,
 ) {
   const companyId = await getCompanyId();
+  const companyTimezone = await getCompanyTimezone();
+  const timezone = companyTimezone?.timezone;
 
   const baseWhere = {
     companyId,
@@ -144,7 +149,7 @@ export async function getWorkOrdersByColumn(
   const [invoices, total] = await Promise.all([
     db.invoice.findMany({
       where,
-      include: makeInclude(),
+      include: makeInclude(timezone),
       orderBy: [{ deliveredAt: "desc" }, { createdAt: "desc" }],
       skip,
       take,
@@ -167,6 +172,8 @@ export async function getWorkOrdersByTechnician(
   search?: string,
 ) {
   const companyId = await getCompanyId();
+  const companyTimezone = await getCompanyTimezone();
+  const timezone = companyTimezone?.timezone;
 
   const techFilter = {
     invoiceItems: {
@@ -201,7 +208,7 @@ export async function getWorkOrdersByTechnician(
   const [invoices, total] = await Promise.all([
     db.invoice.findMany({
       where,
-      include: makeInclude(),
+      include: makeInclude(timezone),
       orderBy: { createdAt: "desc" },
       skip,
       take,
