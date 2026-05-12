@@ -1029,7 +1029,7 @@ const PDFInvoiceItems = ({
             </View>
           )}
           <View style={styles.lineItem}>
-            <Text style={styles.lineItemText}>Labour Cost</Text>
+            <Text style={styles.lineItemText}>Labor Cost</Text>
             <Text style={styles.lineItemText}>{formatCurrency(laborCost)}</Text>
           </View>
           {totalDiscount > 0 && (

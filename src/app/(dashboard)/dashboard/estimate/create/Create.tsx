@@ -138,7 +138,7 @@ export default function Create() {
                       <div className="flex justify-between text-sm text-slate-500 font-medium">
                         <p className="flex items-center gap-1.5">
                           <span className="h-1 w-1 rounded-full bg-slate-300" />
-                          Labour Cost
+                          Labor Cost
                         </p>
                         <p className="text-slate-700 text-base font-medium">
                           {formatCurrency(laborCost)}

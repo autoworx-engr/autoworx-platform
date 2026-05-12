@@ -98,7 +98,7 @@ export function InvoiceItems({ items, isPrinting = false }: InvoiceItemsProps) {
               </div>
               <div className="mt-2">
                 <div className="flex justify-between text-[#6571FF]">
-                  <p>Labour Cost</p>
+                  <p>Labor Cost</p>
                   <p>{formatCurrency(laborCost)}</p>
                 </div>
                 {item.labor?.notes && (
