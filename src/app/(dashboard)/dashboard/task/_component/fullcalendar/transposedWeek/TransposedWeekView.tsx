@@ -19,6 +19,7 @@ import {
   getWeekDays,
   minutesToPixels,
   parseTimeToMinutes,
+  rowHeightForLanes,
   weekendNamesToDow,
 } from "./transposedWeekUtils";
 import styles from "./transposedWeek.module.css";
@@ -164,6 +165,22 @@ export function TransposedWeekView({
   const today = moment();
   const todayDayIndex = weekDays.findIndex((d) => d.isSame(today, "day"));
 
+  const rowHeights = useMemo(
+    () =>
+      weekDays.map((_, idx) => {
+        const lanes = positioned.byDay[idx]?.[0]?.totalLanes ?? 1;
+        return rowHeightForLanes(lanes);
+      }),
+    [weekDays, positioned.byDay],
+  );
+
+  const nowLineTop = useMemo(() => {
+    if (todayDayIndex === -1) return 0;
+    let acc = 40;
+    for (let i = 0; i < todayDayIndex; i++) acc += rowHeights[i] ?? 0;
+    return acc;
+  }, [todayDayIndex, rowHeights]);
+
   const gridStyle = {
     "--label-w": `${DAY_LABEL_WIDTH_PX}px`,
     "--row-h": `${DAY_ROW_HEIGHT_PX}px`,
@@ -189,6 +206,7 @@ export function TransposedWeekView({
               businessStart={businessStart}
               businessEnd={businessEnd}
               session={session}
+              rowHeight={rowHeights[idx] ?? DAY_ROW_HEIGHT_PX}
               dragState={{
                 mode: dragState.mode,
                 event: dragState.event,
@@ -208,8 +226,8 @@ export function TransposedWeekView({
               className={styles.nowLine}
               style={{
                 left: `${DAY_LABEL_WIDTH_PX + minutesToPixels(dateToMinutes(new Date()))}px`,
-                top: `${40 + todayDayIndex * DAY_ROW_HEIGHT_PX}px`,
-                height: `${DAY_ROW_HEIGHT_PX}px`,
+                top: `${nowLineTop}px`,
+                height: `${rowHeights[todayDayIndex] ?? DAY_ROW_HEIGHT_PX}px`,
               }}
             />
           )}

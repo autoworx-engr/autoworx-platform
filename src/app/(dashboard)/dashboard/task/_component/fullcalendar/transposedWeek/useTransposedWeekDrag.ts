@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import moment from "moment";
 import { PositionedEvent } from "./TransposedWeekEvent";
 import {
-  DAY_ROW_HEIGHT_PX,
   SLOT_MINUTES,
   minutesToPixels,
   pixelsToMinutes,
@@ -118,15 +117,18 @@ export function useTransposedWeekDrag({ weekDays, onCommit }: Options) {
       const s = stateRef.current;
       if (!s.mode || !s.event) return;
       const dx = e.clientX - s.startX;
-      const dy = e.clientY - s.startY;
 
       if (s.mode === "move") {
         const snappedDx = minutesToPixels(pixelsToMinutes(dx));
         const newLeft = Math.max(0, s.originLeft + snappedDx);
-        const dayDelta = Math.round(dy / DAY_ROW_HEIGHT_PX);
+        const elAtCursor = document.elementFromPoint(e.clientX, e.clientY);
+        const laneEl = elAtCursor?.closest<HTMLElement>("[data-day-index]");
+        const hoveredIdx = laneEl
+          ? Number(laneEl.dataset.dayIndex)
+          : s.originDayIndex;
         const newDayIndex = Math.max(
           0,
-          Math.min(dayCountRef.current - 1, s.originDayIndex + dayDelta),
+          Math.min(dayCountRef.current - 1, hoveredIdx),
         );
         setState((prev) => ({
           ...prev,

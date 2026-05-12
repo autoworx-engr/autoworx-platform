@@ -17,6 +17,7 @@ interface Props {
   businessStart?: string;
   businessEnd?: string;
   session: any;
+  rowHeight: number;
   dragState: {
     mode: "move" | "resize" | null;
     event: PositionedEvent | null;
@@ -41,6 +42,7 @@ export function TransposedWeekDayRow({
   businessStart,
   businessEnd,
   session,
+  rowHeight,
   dragState,
   dayIndex,
   onDayClick,
@@ -49,6 +51,7 @@ export function TransposedWeekDayRow({
   onEventResizeMouseDown,
   onNativeDrop,
 }: Props) {
+  const cellHeightStyle = { height: `${rowHeight}px` } as CSSProperties;
   const labelClass = [
     styles.dayLabel,
     isToday ? styles.dayLabelToday : "",
@@ -88,12 +91,17 @@ export function TransposedWeekDayRow({
 
   return (
     <>
-      <div className={labelClass} onClick={() => onDayClick(day)}>
+      <div
+        className={labelClass}
+        style={cellHeightStyle}
+        onClick={() => onDayClick(day)}
+      >
         <span className={styles.dayName}>{day.format("ddd")}</span>
         <span className={styles.dayNum}>{day.format("D")}</span>
       </div>
       <div
         className={laneClass}
+        style={cellHeightStyle}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
         data-day-index={dayIndex}

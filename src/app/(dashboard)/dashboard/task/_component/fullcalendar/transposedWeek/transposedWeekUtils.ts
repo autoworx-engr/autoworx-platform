@@ -9,7 +9,11 @@ export const TOTAL_SLOTS = TOTAL_MINUTES / SLOT_MINUTES;
 export const SLOT_WIDTH_PX = 28;
 export const HOUR_WIDTH_PX = SLOT_WIDTH_PX * SLOTS_PER_HOUR;
 export const DAY_ROW_HEIGHT_PX = 126;
+export const LANE_HEIGHT_PX = 56;
 export const DAY_LABEL_WIDTH_PX = 96;
+
+export const rowHeightForLanes = (lanes: number): number =>
+  Math.max(DAY_ROW_HEIGHT_PX, lanes * LANE_HEIGHT_PX);
 
 const DAY_NAME_TO_DOW: Record<string, number> = {
   sunday: 0,

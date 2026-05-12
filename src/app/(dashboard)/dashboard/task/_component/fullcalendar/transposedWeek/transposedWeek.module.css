@@ -196,6 +196,7 @@
   opacity: 0.85;
   z-index: 50;
   box-shadow: 0 6px 18px rgba(15, 23, 42, 0.25);
+  pointer-events: none;
 }
 
 .resizeHandle {
