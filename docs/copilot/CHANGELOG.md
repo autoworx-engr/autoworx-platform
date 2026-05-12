@@ -9,7 +9,7 @@ Most recent at the top. Each phase appends a section.
 
 **Date:** 2026-05-12
 **Branch:** taiseer/ai-copilot
-**Commit:** [see git log — committed after docs]
+**Commit:** 78500b9a
 
 ### Bugs fixed
 
