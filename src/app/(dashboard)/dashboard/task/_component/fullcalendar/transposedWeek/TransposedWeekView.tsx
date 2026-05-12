@@ -208,6 +208,7 @@ export function TransposedWeekView({
               session={session}
               rowHeight={rowHeights[idx] ?? DAY_ROW_HEIGHT_PX}
               dragState={{
+                phase: dragState.phase,
                 mode: dragState.mode,
                 event: dragState.event,
                 liveLeft: dragState.liveLeft,

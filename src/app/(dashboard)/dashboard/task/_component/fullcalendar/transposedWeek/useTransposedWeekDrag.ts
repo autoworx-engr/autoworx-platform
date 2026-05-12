@@ -9,10 +9,12 @@ import {
   pixelsToMinutes,
 } from "./transposedWeekUtils";
 
-type Mode = "move" | "resize" | null;
+type Mode = "move" | "resize";
+type Phase = "idle" | "pending" | "active";
 
 interface DragState {
-  mode: Mode;
+  phase: Phase;
+  mode: Mode | null;
   event: PositionedEvent | null;
   startX: number;
   startY: number;
@@ -36,7 +38,10 @@ interface Options {
   onCommit: (args: CommitArgs) => Promise<boolean>;
 }
 
+const DRAG_THRESHOLD_PX = 5;
+
 const initial: DragState = {
+  phase: "idle",
   mode: null,
   event: null,
   startX: 0,
@@ -68,13 +73,13 @@ export function useTransposedWeekDrag({ weekDays, onCommit }: Options) {
     [weekDays],
   );
 
-  const startMove = useCallback(
-    (e: React.MouseEvent, event: PositionedEvent) => {
+  const beginPending = useCallback(
+    (mode: Mode, e: React.MouseEvent, event: PositionedEvent) => {
       if (event.extendedProps?.serviceType === "Holiday") return;
-      e.preventDefault();
       const dayIndex = findDayIndex(event.start);
       setState({
-        mode: "move",
+        phase: "pending",
+        mode,
         event,
         startX: e.clientX,
         startY: e.clientY,
@@ -87,39 +92,38 @@ export function useTransposedWeekDrag({ weekDays, onCommit }: Options) {
       });
     },
     [findDayIndex],
+  );
+
+  const startMove = useCallback(
+    (e: React.MouseEvent, event: PositionedEvent) =>
+      beginPending("move", e, event),
+    [beginPending],
   );
 
   const startResize = useCallback(
-    (e: React.MouseEvent, event: PositionedEvent) => {
-      if (event.extendedProps?.serviceType === "Holiday") return;
-      e.preventDefault();
-      const dayIndex = findDayIndex(event.start);
-      setState({
-        mode: "resize",
-        event,
-        startX: e.clientX,
-        startY: e.clientY,
-        originLeft: event.left,
-        originWidth: event.width,
-        originDayIndex: dayIndex,
-        liveLeft: event.left,
-        liveWidth: event.width,
-        liveDayIndex: dayIndex,
-      });
-    },
-    [findDayIndex],
+    (e: React.MouseEvent, event: PositionedEvent) =>
+      beginPending("resize", e, event),
+    [beginPending],
   );
 
   useEffect(() => {
-    if (!state.mode) return;
+    if (state.phase === "idle") return;
 
     const onMouseMove = (e: MouseEvent) => {
       const s = stateRef.current;
-      if (!s.mode || !s.event) return;
+      if (s.phase === "idle" || !s.event || !s.mode) return;
       const dx = e.clientX - s.startX;
+      const dy = e.clientY - s.startY;
 
+      if (
+        s.phase === "pending" &&
+        Math.abs(dx) < DRAG_THRESHOLD_PX &&
+        Math.abs(dy) < DRAG_THRESHOLD_PX
+      )
+        return;
+
+      const snappedDx = minutesToPixels(pixelsToMinutes(dx));
       if (s.mode === "move") {
-        const snappedDx = minutesToPixels(pixelsToMinutes(dx));
         const newLeft = Math.max(0, s.originLeft + snappedDx);
         const elAtCursor = document.elementFromPoint(e.clientX, e.clientY);
         const laneEl = elAtCursor?.closest<HTMLElement>("[data-day-index]");
@@ -132,20 +136,24 @@ export function useTransposedWeekDrag({ weekDays, onCommit }: Options) {
         );
         setState((prev) => ({
           ...prev,
+          phase: "active",
           liveLeft: newLeft,
           liveDayIndex: newDayIndex,
         }));
       } else {
-        const snappedDx = minutesToPixels(pixelsToMinutes(dx));
         const minWidth = minutesToPixels(SLOT_MINUTES);
         const newWidth = Math.max(minWidth, s.originWidth + snappedDx);
-        setState((prev) => ({ ...prev, liveWidth: newWidth }));
+        setState((prev) => ({
+          ...prev,
+          phase: "active",
+          liveWidth: newWidth,
+        }));
       }
     };
 
     const onMouseUp = async () => {
       const s = stateRef.current;
-      if (!s.mode || !s.event) {
+      if (s.phase !== "active" || !s.event || !s.mode) {
         setState(initial);
         return;
       }
@@ -168,15 +176,12 @@ export function useTransposedWeekDrag({ weekDays, onCommit }: Options) {
         return;
       }
 
-      const success = await onCommit({
+      await onCommit({
         event: s.event,
         newDayIndex,
         newStartMin,
         newEndMin,
       });
-      if (!success) {
-        // Revert visual — state reset to initial discards the live offsets
-      }
       setState(initial);
     };
 
@@ -186,7 +191,7 @@ export function useTransposedWeekDrag({ weekDays, onCommit }: Options) {
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("mouseup", onMouseUp);
     };
-  }, [state.mode, onCommit]);
+  }, [state.phase, onCommit]);
 
   return { state, startMove, startResize };
 }

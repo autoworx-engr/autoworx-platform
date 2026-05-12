@@ -57,18 +57,15 @@ export function TransposedWeekEvent({
   const style: CSSProperties = {
     left: `${left}px`,
     width: `${Math.max(width, 24)}px`,
-    top: `calc(${topPct}% + 4px)`,
+    top: `calc(${topPct}% + 1px)`,
     bottom: "auto",
-    height: `calc(${lanePct}% - 8px)`,
+    height: `calc(${lanePct}% - 2px)`,
     background: `linear-gradient(to bottom, ${colors.gradient.join(", ")})`,
     border: `1px solid ${colors.borderColor}`,
     color: "#1f2937",
   };
 
-  const hasMoved = isDragging || isResizing;
-
   const handleClick = (e: React.MouseEvent) => {
-    if (hasMoved) return;
     e.stopPropagation();
     onClick(event);
   };

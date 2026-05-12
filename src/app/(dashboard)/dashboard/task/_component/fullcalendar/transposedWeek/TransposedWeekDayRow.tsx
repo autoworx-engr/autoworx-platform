@@ -19,6 +19,7 @@ interface Props {
   session: any;
   rowHeight: number;
   dragState: {
+    phase: "idle" | "pending" | "active";
     mode: "move" | "resize" | null;
     event: PositionedEvent | null;
     liveLeft: number;
@@ -140,7 +141,8 @@ export function TransposedWeekDayRow({
           </div>
         )}
         {events.map((event) => {
-          const isActive = dragState.event?.id === event.id && !!dragState.mode;
+          const isActive =
+            dragState.phase === "active" && dragState.event?.id === event.id;
           const isMoveActive = isActive && dragState.mode === "move";
           const isResizeActive = isActive && dragState.mode === "resize";
           const shouldRenderHere =
