@@ -1,0 +1,211 @@
+"use client";
+
+import { EventInput } from "@fullcalendar/core";
+import moment from "moment";
+import { CSSProperties, useEffect, useMemo, useRef } from "react";
+import { useCalendarStore } from "@/stores/calendarStore";
+import { TransposedWeekHeader } from "./TransposedWeekHeader";
+import { TransposedWeekDayRow } from "./TransposedWeekDayRow";
+import { PositionedEvent } from "./TransposedWeekEvent";
+import { useTransposedWeekDrag } from "./useTransposedWeekDrag";
+import { useTransposedLayout } from "./useTransposedLayout";
+import {
+  DAY_LABEL_WIDTH_PX,
+  DAY_ROW_HEIGHT_PX,
+  HOUR_WIDTH_PX,
+  SLOT_WIDTH_PX,
+  TOTAL_MINUTES,
+  dateToMinutes,
+  getWeekDays,
+  minutesToPixels,
+  parseTimeToMinutes,
+} from "./transposedWeekUtils";
+import styles from "./transposedWeek.module.css";
+
+interface Props {
+  events: EventInput[];
+  firstDay: number;
+  businessStart?: string;
+  businessEnd?: string;
+  session: any;
+  onEventClick: (info: { event: any; jsEvent: any }) => void;
+  onEventCommit: (info: {
+    event: any;
+    revert: () => void;
+  }) => Promise<void> | void;
+  onNativeDrop: (taskId: number, dateStr: string, time: string) => void;
+  onDayClick: (date: Date) => void;
+  scrollToTime?: string | null;
+  onScrollHandled?: () => void;
+}
+
+export function TransposedWeekView({
+  events,
+  firstDay,
+  businessStart,
+  businessEnd,
+  session,
+  onEventClick,
+  onEventCommit,
+  onNativeDrop,
+  onDayClick,
+  scrollToTime,
+  onScrollHandled,
+}: Props) {
+  const { date: storeDate } = useCalendarStore();
+  const anchor = useMemo(
+    () => (storeDate ? moment(storeDate) : moment()),
+    [storeDate],
+  );
+  const weekDays = useMemo(
+    () => getWeekDays(anchor, firstDay),
+    [anchor, firstDay],
+  );
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const positioned = useTransposedLayout(events, weekDays);
+
+  const commitChange = async ({
+    event,
+    newDayIndex,
+    newStartMin,
+    newEndMin,
+  }: {
+    event: PositionedEvent;
+    newDayIndex: number;
+    newStartMin: number;
+    newEndMin: number;
+  }) => {
+    const targetDay = weekDays[newDayIndex];
+    if (!targetDay) return false;
+    const startDate = targetDay
+      .clone()
+      .startOf("day")
+      .add(newStartMin, "minutes")
+      .toDate();
+    const endDate = targetDay
+      .clone()
+      .startOf("day")
+      .add(newEndMin, "minutes")
+      .toDate();
+
+    let reverted = false;
+    await onEventCommit({
+      event: {
+        id: event.id,
+        extendedProps: event.extendedProps,
+        start: startDate,
+        end: endDate,
+        allDay: false,
+      },
+      revert: () => {
+        reverted = true;
+      },
+    });
+    return !reverted;
+  };
+
+  const {
+    state: dragState,
+    startMove,
+    startResize,
+  } = useTransposedWeekDrag({ weekDays, onCommit: commitChange });
+
+  useEffect(() => {
+    if (!scrollToTime || !scrollerRef.current) return;
+    scrollerRef.current.scrollLeft = Math.max(
+      0,
+      minutesToPixels(parseTimeToMinutes(scrollToTime)) - HOUR_WIDTH_PX,
+    );
+    onScrollHandled?.();
+  }, [scrollToTime, onScrollHandled]);
+
+  useEffect(() => {
+    if (scrollToTime || !scrollerRef.current || !businessStart) return;
+    scrollerRef.current.scrollLeft = Math.max(
+      0,
+      minutesToPixels(parseTimeToMinutes(businessStart)) - HOUR_WIDTH_PX,
+    );
+  }, [businessStart, scrollToTime]);
+
+  const handleEventClickInternal = (event: PositionedEvent) => {
+    onEventClick({
+      event: {
+        id: event.id,
+        extendedProps: event.extendedProps,
+        start: event.start,
+        end: event.end,
+        title: event.title,
+      },
+      jsEvent: { preventDefault: () => undefined },
+    });
+  };
+
+  const handleNativeDropInternal = (
+    e: React.DragEvent,
+    day: moment.Moment,
+    time: string,
+  ) => {
+    const transferData = e.dataTransfer.getData("text/plain");
+    if (!transferData?.startsWith("task|")) return;
+    const taskId = Number(transferData.replace("task|", ""));
+    if (!taskId) return;
+    onNativeDrop(taskId, day.format("YYYY-MM-DD"), time);
+  };
+
+  const today = moment();
+  const todayDayIndex = weekDays.findIndex((d) => d.isSame(today, "day"));
+
+  const gridStyle = {
+    "--label-w": `${DAY_LABEL_WIDTH_PX}px`,
+    "--row-h": `${DAY_ROW_HEIGHT_PX}px`,
+    "--slot-w": `${SLOT_WIDTH_PX}px`,
+    "--hour-w": `${HOUR_WIDTH_PX}px`,
+    "--grid-w": `${minutesToPixels(TOTAL_MINUTES)}px`,
+  } as CSSProperties;
+
+  return (
+    <div className={styles.viewWrapper}>
+      <div ref={scrollerRef} className={styles.scroller}>
+        <div className={styles.grid} style={gridStyle}>
+          <TransposedWeekHeader />
+          {weekDays.map((day, idx) => (
+            <TransposedWeekDayRow
+              key={day.format("YYYY-MM-DD")}
+              day={day}
+              dayIndex={idx}
+              events={positioned.byDay[idx] ?? []}
+              holidayEvent={positioned.holidayByDay[idx]}
+              isToday={idx === todayDayIndex}
+              isWeekend={day.day() === 0 || day.day() === 6}
+              businessStart={businessStart}
+              businessEnd={businessEnd}
+              session={session}
+              dragState={{
+                mode: dragState.mode,
+                event: dragState.event,
+                liveLeft: dragState.liveLeft,
+                liveWidth: dragState.liveWidth,
+                liveDayIndex: dragState.liveDayIndex,
+              }}
+              onDayClick={(d) => onDayClick(d.toDate())}
+              onEventClick={handleEventClickInternal}
+              onEventMouseDown={startMove}
+              onEventResizeMouseDown={startResize}
+              onNativeDrop={handleNativeDropInternal}
+            />
+          ))}
+          {todayDayIndex !== -1 && (
+            <div
+              className={styles.nowLine}
+              style={{
+                left: `${DAY_LABEL_WIDTH_PX + minutesToPixels(dateToMinutes(new Date()))}px`,
+                top: `${40 + todayDayIndex * DAY_ROW_HEIGHT_PX}px`,
+                height: `${DAY_ROW_HEIGHT_PX}px`,
+              }}
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

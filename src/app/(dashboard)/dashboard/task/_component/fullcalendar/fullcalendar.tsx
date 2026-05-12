@@ -1,12 +1,8 @@
 "use client";
 
 import { CalendarType } from "@/types/calendar";
-import { EventClickArg, EventContentArg } from "@fullcalendar/core";
-import dayGridPlugin from "@fullcalendar/daygrid";
-import interactionPlugin from "@fullcalendar/interaction";
-import listPlugin from "@fullcalendar/list";
+import { EventClickArg } from "@fullcalendar/core";
 import FullCalendar from "@fullcalendar/react";
-import timeGridPlugin from "@fullcalendar/timegrid";
 import moment from "moment";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
@@ -16,8 +12,9 @@ import styles from "./fullcalendar.module.css";
 import { CalendarHeader } from "./CalendarHeader";
 import { CalendarEditModals } from "./CalendarEditModals";
 import { CalendarLoadingOverlay } from "./CalendarLoadingOverlay";
-import { EventContent } from "./EventContent";
 import { EventDetailsSheet } from "./EventDetailsSheet";
+import { StandardCalendar } from "./StandardCalendar";
+import { TransposedWeekView } from "./transposedWeek/TransposedWeekView";
 import { getCalendarType } from "../../_utils/calendarView";
 import { useCalendarData } from "../../_hook/calendar/useCalendarData";
 import { useCalendarEventDateTimeUpdate } from "../../_hook/calendar/useCalendarEventDateTimeUpdate";
@@ -25,6 +22,7 @@ import { useCalendarNativeDrop } from "../../_hook/calendar/useCalendarNativeDro
 import { useCalendarFilters } from "../../_hook/calendar/useCalendarFilters";
 import { useCalendarSettings } from "../../_hook/calendar/useCalendarSettings";
 import { useCalendarStoreSync } from "../../_hook/calendar/useCalendarStoreSync";
+import { useScheduleTaskAt } from "../../_hook/calendar/useScheduleTaskAt";
 
 export default function Calendar({ type }: { type: CalendarType }) {
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
@@ -66,7 +64,6 @@ export default function Calendar({ type }: { type: CalendarType }) {
   const calendarRef = useRef<FullCalendar>(null);
   const { startTime: scrollToTime, setStartTime } = useCalendarStore();
 
-  // Auto-scroll to task startTime after navigation
   useEffect(() => {
     if (!scrollToTime) return;
     const timer = setTimeout(() => {
@@ -94,6 +91,7 @@ export default function Calendar({ type }: { type: CalendarType }) {
     useCalendarStoreSync(calendarRef);
   const handleEventDateTimeUpdate = useCalendarEventDateTimeUpdate();
   const handleNativeDrop = useCalendarNativeDrop(storeDate);
+  const scheduleTaskAt = useScheduleTaskAt();
 
   const weekendDays = useMemo(
     () => [settings?.weekend1, settings?.weekend2].filter(Boolean) as string[],
@@ -180,6 +178,8 @@ export default function Calendar({ type }: { type: CalendarType }) {
     }
   };
 
+  const isWeekView = view === "timeGridWeek";
+
   return (
     <div
       className={`flex-1 min-w-0 h-full calendar-wrapper flex flex-col bg-white rounded-lg shadow-sm border ${styles.calendarScope}`}
@@ -199,52 +199,42 @@ export default function Calendar({ type }: { type: CalendarType }) {
       />
 
       <div className={`flex-1 relative ${styles.calendarBody}`}>
-        <div
-          className="w-full h-full overflow-x-auto"
-          onDragOver={(e) => e.preventDefault()}
+        <StandardCalendar
+          calendarRef={calendarRef}
+          view={view}
+          initialDate={storeDate ?? undefined}
+          firstDay={firstDay}
+          businessHours={businessHours}
+          nonBusinessSlotClassNames={nonBusinessSlotClassNames}
+          scrollTime={settings?.dayStart}
+          events={displayEvents}
+          session={session}
+          containerStyle={isWeekView ? { display: "none" } : undefined}
           onDrop={handleNativeDrop}
-        >
-          <FullCalendar
-            ref={calendarRef}
-            plugins={[
-              dayGridPlugin,
-              timeGridPlugin,
-              listPlugin,
-              interactionPlugin,
-            ]}
-            initialView={view}
-            initialDate={storeDate ?? undefined}
-            headerToolbar={false}
-            firstDay={firstDay}
-            navLinks={true}
-            navLinkDayClick={handleNavLinkDayClick}
-            editable={true}
-            dayMaxEvents={2}
-            allDaySlot={false}
-            expandRows={true}
-            slotMinTime="00:00:00"
-            slotMaxTime="24:00:00"
-            scrollTime={settings?.dayStart}
-            slotDuration="00:15:00"
-            slotLabelFormat={{
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: true,
-            }}
-            businessHours={businessHours}
-            slotLaneClassNames={nonBusinessSlotClassNames}
+          onNavLinkDayClick={handleNavLinkDayClick}
+          onEventClick={handleEventClick}
+          onEventDateTimeUpdate={handleEventDateTimeUpdate}
+          onDatesSet={handleDatesSet}
+          onLoading={setIsCalendarLoading}
+        />
+
+        {isWeekView && (
+          <TransposedWeekView
             events={displayEvents}
-            eventContent={(eventInfo: EventContentArg) => (
-              <EventContent eventInfo={eventInfo} session={session} />
-            )}
-            eventClick={handleEventClick}
-            eventDrop={handleEventDateTimeUpdate}
-            eventResize={handleEventDateTimeUpdate}
-            datesSet={handleDatesSet}
-            loading={setIsCalendarLoading}
-            height="100%"
+            firstDay={firstDay}
+            businessStart={settings?.dayStart ?? undefined}
+            businessEnd={settings?.dayEnd ?? undefined}
+            session={session}
+            scrollToTime={scrollToTime}
+            onScrollHandled={() => setStartTime(null)}
+            onEventClick={(info) => handleEventClick(info as EventClickArg)}
+            onEventCommit={handleEventDateTimeUpdate}
+            onNativeDrop={(taskId, dateStr, time) =>
+              scheduleTaskAt(taskId, dateStr, time)
+            }
+            onDayClick={handleNavLinkDayClick}
           />
-        </div>
+        )}
 
         <CalendarLoadingOverlay loading={loading} />
       </div>
