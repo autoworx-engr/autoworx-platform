@@ -112,9 +112,9 @@ Already partially started: `addAppointment.ts` in this PR accepts `forceCompanyI
 
 ### Questions for the team
 
-1. Which path?
-2. If Path 1: wrap every write operation, or only the operations the mobile app will use first?
-3. Are there auth or cookie-forwarding concerns specific to internal HTTP calls on Railway?
+1. **Which path?** → **Path 1** — Thin API wrappers (REST routes). Chatbot communicates everything via REST API so we have logs.
+2. **If Path 1: wrap every write operation, or only the operations the mobile app will use first?** → **Wrap all write operations** — not just the mobile-first subset.
+3. **Are there auth or cookie-forwarding concerns specific to internal HTTP calls on Railway?** → **Use shared internal secret** (`X-Internal-Token` header) for server-to-server auth. No cookie forwarding — copilot route already has validated `companyId`/`userId` from session, passes them in the request body. Internal API routes verify the secret header instead of session cookies.
 
 ---
 
