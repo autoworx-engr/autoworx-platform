@@ -7,7 +7,7 @@ import { sendClientMessageNotification } from "@/lib/notification/communication-
 import sendClientMailOrSMSNotify from "@/lib/pusher/client-conversation-notify";
 import receiveTwiloMessage from "@/lib/pusher/receiveTwiloMessage";
 import { getPusherInstance } from "@/lib/pusher/server";
-import { sendSMSToAgent } from "@/service/ai-agent/api";
+import { debounceSmsAgent } from "@/lib/pgmq/debounceSmsAgent";
 import { allCompanyFeaturePermissions } from "@/service/feature-permissions/api";
 import {
   normalizePhoneForStorage,
@@ -244,20 +244,14 @@ async function processIncomingSMS(
 
       if (isCompanySalesAgent && isClientSalesAgent && isSalesAgentEnabled) {
         if (dbMessage && dbMessage.to === credential?.phoneNumber) {
-          try {
-            await sendSMSToAgent({
-              company_id: client.companyId,
-              message: dbMessage?.message,
-              send_from: dbMessage?.from,
-              send_to: dbMessage?.to,
-              client_id: client?.id,
-            });
-          } catch (error) {
-            return Response.json(
-              { message: `Sales agent error: ${error}` },
-              { status: 200 },
-            );
-          }
+          debounceSmsAgent({
+            clientId: client.id,
+            companyId: client.companyId,
+            sendFrom: dbMessage.from,
+            sendTo: dbMessage.to,
+          }).catch((err) =>
+            console.error("[Twilio] debounceSmsAgent enqueue error:", err),
+          );
         }
       }
 
