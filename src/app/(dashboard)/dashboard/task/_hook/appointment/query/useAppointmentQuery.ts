@@ -39,13 +39,25 @@ export default function useAppointmentQuery(
     queryFn: async () => {
       const response = await getAppointments({
         where: {
-          date: {
-            gte: `${startDate}T00:00:00.000Z`,
-            lte: `${endDate}T23:59:59.999Z`,
-          },
-          OR: [
-            { AND: [{ startTime: { not: null } }, { endTime: { not: null } }] },
-            { AND: [{ startTime: null }, { endTime: null }] },
+          AND: [
+            { date: { lte: `${endDate}T23:59:59.999Z` } },
+            {
+              OR: [
+                { endDate: null, date: { gte: `${startDate}T00:00:00.000Z` } },
+                { endDate: { gte: `${startDate}T00:00:00.000Z` } },
+              ],
+            },
+            {
+              OR: [
+                {
+                  AND: [
+                    { startTime: { not: null } },
+                    { endTime: { not: null } },
+                  ],
+                },
+                { AND: [{ startTime: null }, { endTime: null }] },
+              ],
+            },
           ],
         },
         include: {

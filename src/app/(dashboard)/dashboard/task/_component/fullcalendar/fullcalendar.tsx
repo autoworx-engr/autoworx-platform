@@ -182,7 +182,7 @@ export default function Calendar({ type }: { type: CalendarType }) {
 
   return (
     <div
-      className={`flex-1 min-w-0 h-full calendar-wrapper flex flex-col bg-white rounded-lg shadow-sm border ${styles.calendarScope}`}
+      className={`flex-1 min-w-0 h-full calendar-wrapper flex flex-col bg-white rounded-lg shadow-sm border  ${styles.calendarScope}`}
     >
       <CalendarHeader
         calendarRef={calendarRef}
