@@ -52,12 +52,12 @@ export function useTransposedLayout(
       const isMultiDay = endDateStr > startDateStr;
       const isHoliday = type === "holiday" || serviceType === "Holiday";
 
-      const dayStartMin = ev.allDay ? 0 : dateToMinutes(start);
-      const dayEndMin = ev.allDay
+      const startTimeMin = ev.allDay ? 0 : dateToMinutes(start);
+      const endTimeMin = ev.allDay
         ? TOTAL_MINUTES
         : endRaw
-          ? dateToMinutes(endRaw) || dayStartMin + 60
-          : dayStartMin + 60;
+          ? dateToMinutes(endRaw)
+          : startTimeMin + 60;
 
       const buildSlice = (
         dateKey: string,
@@ -82,9 +82,10 @@ export function useTransposedLayout(
           (wd) => wd.format("YYYY-MM-DD") === startDateStr,
         );
         if (dayIdx === -1) return;
+        const singleEnd = Math.max(startTimeMin + 15, endTimeMin);
         pushSlice(
           dayIdx,
-          buildSlice(startDateStr, dayStartMin, dayEndMin),
+          buildSlice(startDateStr, startTimeMin, singleEnd),
           isHoliday,
         );
         return;
@@ -98,9 +99,13 @@ export function useTransposedLayout(
           (wd) => wd.format("YYYY-MM-DD") === dateKey,
         );
         if (dayIdx !== -1) {
+          const isFirst = dateKey === startDateStr;
+          const isLast = dateKey === endDateStr;
+          const sliceStart = isFirst ? startTimeMin : 0;
+          const sliceEnd = isLast ? endTimeMin : TOTAL_MINUTES;
           pushSlice(
             dayIdx,
-            buildSlice(dateKey, dayStartMin, dayEndMin),
+            buildSlice(dateKey, sliceStart, sliceEnd),
             isHoliday,
           );
         }
