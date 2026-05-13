@@ -55,7 +55,7 @@ export async function addAppointment(
       return { type: "error", message: "User not found", field: "user" };
     }
     if (!companyId) {
-      companyId = session?.user?.companyId;
+      companyId = (session as any)?.user?.companyId;
       if (!companyId) {
         throw new Error("Company ID is required to create an appointment.");
       }

@@ -154,7 +154,7 @@ export async function createInvoice({
     let companyId = forceCompanyId;
 
     if (!companyId) {
-      companyId = session?.user.companyId;
+      companyId = (session as any)?.user?.companyId;
       if (!companyId) {
         throw new Error("Company ID is required to create an email template.");
       }
@@ -251,7 +251,7 @@ export async function createInvoice({
           customerNotes,
           customerComments,
           companyId,
-          userId: session?.user.id as any,
+          userId: (session as any)?.user?.id as any,
           columnId: finalColumnId,
           isWorkOrder,
           workOrderCreatedAt: isWorkOrder ? new Date() : null,
