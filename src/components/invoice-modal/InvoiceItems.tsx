@@ -64,7 +64,7 @@ export function InvoiceItems({ items, isPrinting = false }: InvoiceItemsProps) {
             }
             className="flex w-full cursor-pointer justify-between text-[#6571FF]"
           >
-            <p>{item.labor?.name ?? "Labour"}</p>
+            <p>{item.labor?.name ?? "Labor"}</p>
             <button
               type="button"
               onClick={() =>

@@ -81,7 +81,7 @@ export default function Create() {
             >
               <p className="font-semibold tracking-tight">
                 {isLaborOnly
-                  ? (item.labor?.name ?? "Labour")
+                  ? (item.labor?.name ?? "Labor")
                   : item.service!.name}
               </p>
               <div className="flex items-center gap-3">
@@ -112,7 +112,7 @@ export default function Create() {
                 <div className="space-y-2.5">
                   {isLaborOnly ? (
                     <>
-                      {/* Materials Section (labour-only: no service) */}
+                      {/* Materials Section (labor-only: no service) */}
                       {item.materials.map((material, index) => {
                         if (!material) return null;
                         return (

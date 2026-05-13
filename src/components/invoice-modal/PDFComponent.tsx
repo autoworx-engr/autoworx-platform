@@ -1001,7 +1001,7 @@ const PDFInvoiceItems = ({
       return (
         <View key={item.id} style={styles.itemCard}>
           <View style={styles.itemHeader}>
-            <Text style={styles.itemName}>{item.labor?.name ?? "Labour"}</Text>
+            <Text style={styles.itemName}>{item.labor?.name ?? "Labor"}</Text>
             <Text style={styles.itemPrice}>{formatCurrency(serviceTotal)}</Text>
           </View>
           {item.labor?.notes && (
