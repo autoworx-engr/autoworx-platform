@@ -260,6 +260,7 @@ export async function POST(request: NextRequest) {
           message: personality.openingMessage,
           attachments: [],
           systemCall: true,
+          shouldSalesAgentStop: false,
         });
       } else {
         console.log("[lead-generate] sending opening message via Infobip");
@@ -269,6 +270,7 @@ export async function POST(request: NextRequest) {
           message: personality.openingMessage,
           attachments: [],
           systemCall: true,
+          shouldSalesAgentStop: false,
         });
       }
       console.log("[lead-generate] opening message sent successfully");
