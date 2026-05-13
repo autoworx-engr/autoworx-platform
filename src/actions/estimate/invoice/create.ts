@@ -144,7 +144,12 @@ export async function createInvoice({
       isShopBooking,
     });
 
-    const session = await getServerSession(authOptions);
+    let session: Awaited<ReturnType<typeof getServerSession>> = null;
+    try {
+      session = await getServerSession(authOptions);
+    } catch {
+      // outside request scope (e.g., pg-boss worker) — force params handle auth
+    }
     // Step 2: Get authenticated session and company ID
     let companyId = forceCompanyId;
 
