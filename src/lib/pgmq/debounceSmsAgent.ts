@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { pgmq } from "./client";
 
-const DEBOUNCE_SECONDS = 60;
+const DEBOUNCE_SECONDS = 90;
 
 export interface DebounceParams {
   clientId: number;
