@@ -40,13 +40,13 @@ export async function addAppointment(
 ): Promise<ServerAction | TErrorHandler> {
   try {
     await createAppointmentValidationSchema.parseAsync(appointment);
-    let session: Awaited<ReturnType<typeof getServerSession>> = null;
+    let session: Awaited<ReturnType<typeof getServerSession>> | null = null;
     try {
       session = await getServerSession(authOptions);
     } catch {
       // outside request scope (e.g., pg-boss worker) — force params handle auth
     }
-    const sessionUserId = session?.user.id;
+    const sessionUserId = (session as any)?.user?.id as string | undefined;
 
     let companyId = appointment.forceCompanyId;
     let userId = appointment.forceUserId ?? sessionUserId;

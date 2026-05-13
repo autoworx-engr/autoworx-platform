@@ -144,7 +144,7 @@ export async function createInvoice({
       isShopBooking,
     });
 
-    let session: Awaited<ReturnType<typeof getServerSession>> = null;
+    let session: Awaited<ReturnType<typeof getServerSession>> | null = null;
     try {
       session = await getServerSession(authOptions);
     } catch {
