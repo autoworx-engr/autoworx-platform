@@ -53,19 +53,11 @@ export function TransposedWeekDayRow({
   onNativeDrop,
 }: Props) {
   const cellHeightStyle = { height: `${rowHeight}px` } as CSSProperties;
-  const labelClass = [
-    styles.dayLabel,
-    isToday ? styles.dayLabelToday : "",
-    isWeekend ? styles.dayLabelWeekend : "",
-  ]
+  const labelClass = [styles.dayLabel, isToday ? styles.dayLabelToday : ""]
     .filter(Boolean)
     .join(" ");
 
-  const laneClass = [
-    styles.dayLane,
-    holidayEvent ? styles.holidayLane : "",
-    isWeekend ? styles.weekendLane : "",
-  ]
+  const laneClass = [styles.dayLane, holidayEvent ? styles.holidayLane : ""]
     .filter(Boolean)
     .join(" ");
 
