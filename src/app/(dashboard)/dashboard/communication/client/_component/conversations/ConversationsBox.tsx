@@ -2,6 +2,7 @@ import Image from "next/image";
 import ChatHead from "../conversations/ChatHead";
 import MailGunEmail from "../conversations/mailgun/MailgunEmail";
 import SMS from "./sms/SMS";
+import Messenger from "./messenger/Messenger";
 import { getClientById } from "../../_actions/getClientById";
 import Phone from "../phone/Phone";
 import NoClientFound from "../NoClientFound";
@@ -35,6 +36,9 @@ export default async function ConversationsBox({
     case "SMS":
       MessageBox = <SMS clientId={clientId} />;
       break;
+    case "MESSENGER":
+      MessageBox = <Messenger clientId={clientId} />;
+      break;
     case "EMAIL":
       MessageBox = <MailGunEmail clientId={clientId} />;
     default:
@@ -53,7 +57,7 @@ export default async function ConversationsBox({
         "app-shadow relative rounded-lg bg-background",
         "h-[calc(100dvh-56px)] lg:h-[90vh]",
         "ring-1 ring-zinc-200/60 dark:ring-white/10",
-        showChatClass
+        showChatClass,
       )}
     >
       {/* Column layout */}
@@ -65,7 +69,7 @@ export default async function ConversationsBox({
             // modern teal gradient + subtle blur over scroll
             "bg-gradient-to-r from-[#006D77] to-[#008c99]",
             "ring-1 ring-teal-500/60 text-white",
-            "md:rounded-t-md backdrop-blur supports-[backdrop-filter]:bg-[#006D77]/90"
+            "md:rounded-t-md backdrop-blur supports-[backdrop-filter]:bg-[#006D77]/90",
           )}
         >
           {/* Left: identity */}

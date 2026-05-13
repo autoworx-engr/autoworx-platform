@@ -55,7 +55,11 @@ export const getClients = cache(async (props?: TGetClientsProps) => {
           where: {
             ...queryObj.where,
             conversationsTrack: {
-              OR: [{ emailIsRead: false }, { smsIsRead: false }],
+              OR: [
+                { emailIsRead: false },
+                { smsIsRead: false },
+                { messengerIsRead: false },
+              ],
             },
           },
           orderBy: {
