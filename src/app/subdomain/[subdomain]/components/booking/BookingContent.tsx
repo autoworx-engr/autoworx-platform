@@ -20,6 +20,7 @@ import {
 import { Service } from "../../data/types";
 import { useShopBranding } from "../../hooks/useShopBranding";
 import { Spinner } from "../ui/Spinner";
+import { CheckoutV1 } from "./CheckoutV1";
 
 const SERVICES_PER_PAGE = 10;
 

@@ -40,10 +40,14 @@ export async function addAppointment(
 ): Promise<ServerAction | TErrorHandler> {
   try {
     await createAppointmentValidationSchema.parseAsync(appointment);
-    const session = await getServerSession(authOptions);
+    let companyId = appointment.forceCompanyId;
+
+    const session =
+      !appointment.forceUserId || !appointment.forceCompanyId
+        ? await getServerSession(authOptions)
+        : null;
     const sessionUserId = session?.user.id;
 
-    let companyId = appointment.forceCompanyId;
     let userId = appointment.forceUserId ?? sessionUserId;
 
     if (!userId) {
