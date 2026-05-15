@@ -216,18 +216,13 @@ Tool input schema: `clientName`, `clientEmail?`, `clientPhone?`, `vehicleInfo`, 
 ### Existing routes (already built by AbuBokorprog)
 
 - **POST** `/api/appointment/company/[companyId]/` — calls `addAppointment` with
-  `forceCompanyId` + `forceUserId`. ✓ No auth check in existing route, but copilot
+  `forceCompanyId` + `forceUserId`. ✅ No auth check in existing route, but copilot
   passes Bearer token regardless.
 
-- **PATCH** `/api/appointment/company/[companyId]/[id]/` — calls... unknown action. Must
-  verify during Phase 3c implementation (see open items).
-
-### Server action gap
-
-`editAppointment` (`src/actions/appointment/editAppointment.ts`) does NOT currently accept
-`forceCompanyId` or `forceUserId`. The existing PATCH route at `[id]` must be inspected to
-confirm what it calls — if it's `editAppointment`, the action needs the force params added
-before the copilot update_appointment tool can work.
+- **PATCH** `/api/appointment/company/[companyId]/[id]/` — **does NOT call
+  `editAppointment`**. Verified: it uses `db.appointment.update()` directly after
+  confirming `{ id, companyId }` ownership. Multi-tenant isolation is correct. No server
+  action refactor needed. ✅ Ready as-is.
 
 ### New copilot tools
 
@@ -257,19 +252,19 @@ Tool input: `appointmentId`, plus any fields to update.
 - **PATCH** `/api/task/[id]/route.ts` — updates task. Same — no force params, reads
   from session or body.
 
-### Server action gaps
+### Audit results
 
-`createTask` and `editTask` both use `session.user.companyId` and `session.user.id`
-hardcoded from `getServerSession`. Neither accepts `forceCompanyId`/`forceUserId`.
+**Verified:** `/api/task/route.ts` POST reads `userId` and `companyId` directly from the
+request body — no `getServerSession` call anywhere in the handler. No server action is
+called; `db.task.create()` is called directly. ✅ **Pass-through OK.**
 
-**Options (choose before implementation):**
+**Verified:** `/api/task/[id]/route.ts` PATCH uses `db.$transaction` directly — does NOT
+call `editTask` server action. ✅ **Ready as-is.**
 
-1. Add `forceCompanyId`/`forceUserId` to both actions (matches the pattern, most correct)
-2. Use the existing `/api/task/` POST route as-is (sends companyId in body, no server action
-   bypass needed — this route already accepts companyId from body, not session)
-
-Recommendation: option 2 for Phase 3 (avoids modifying createTask/editTask), option 1 for
-Phase 6 hardening.
+**Security note:** Neither task route has JWT Bearer auth. Any caller can submit any
+`companyId` in the body. This is a pre-existing security gap flagged for a future pass
+(see REVIEWER_GUIDE.md). For Phase 3, the copilot sends its session-derived `companyId`
+in the body — correct behavior, but the route provides no verification layer.
 
 ### New copilot tools
 
@@ -295,11 +290,12 @@ Tool input: `taskId`, plus any fields to update.
 already has JWT Bearer auth matching the pattern exactly. Creating a draft estimate via the
 copilot can call this route directly.
 
-### Server action gap
+### Audit result
 
-`createDraftEstimate` (`src/actions/estimate/invoice/createDraft.ts`) uses
-`getServerSession()` — but the existing `/api/estimate/[companyId]/` POST route likely
-already handles this by calling it differently. Must verify during implementation.
+**Verified:** `/api/estimate/[companyId]/route.ts` POST does NOT call `createDraftEstimate`.
+It performs the full draft invoice creation via `db.$transaction` directly, with `companyId`
+sourced from the verified JWT payload (via `jwtVerifyToken`). No server action refactor
+needed. ✅ **Ready as-is.**
 
 ### New copilot tool
 
@@ -318,19 +314,24 @@ Tool input: `clientId`, `vehicleId?`, `requestedServices?[]`.
 `/api/inventory/` does not exist. `src/actions/inventory/` exists with:
 `create.ts`, `edit.ts`, `delete.ts`, `query.ts`, `replenish.ts`, `useProduct.ts` etc.
 
-Must verify if `create.ts` and `edit.ts` accept `forceCompanyId`/`forceUserId` before
-building routes (likely they do not — they probably use `getServerSession`).
+**Verified:** `src/actions/inventory/create.ts` (`createProduct`) uses `getUser()` and
+`getCompanyId()` — session-based helpers. `src/actions/inventory/edit.ts` (`editProduct`)
+uses `getCompanyId()`. Neither accepts force params. 🔧 **Do not call these from routes.**
+
+**Decision:** New inventory routes will call `db.inventoryProduct` directly (same pattern
+as all other routes — appointment PATCH, task POST, estimate POST all do DB directly).
+This avoids any server action refactor and matches the established codebase pattern.
 
 ### New API routes
 
 **`src/app/api/inventory/company/[companyId]/route.ts`** — GET (list), POST (create item)
 
-Calls `src/actions/inventory/create.ts` with force params (add if needed) OR queries
-`db.inventoryProduct` directly (simpler if action uses session).
+Calls `db.inventoryProduct.create()` and `db.inventoryProduct.findMany()` directly.
+Auth: JWT Bearer with companyId cross-check.
 
 **`src/app/api/inventory/company/[companyId]/[id]/route.ts`** — PATCH (update item)
 
-Calls `src/actions/inventory/edit.ts` with force params (add if needed).
+Calls `db.inventoryProduct.update()` directly with `{ id, companyId }` ownership check.
 
 ### New copilot tools
 
@@ -372,37 +373,55 @@ Test every write tool end-to-end via copilot chat:
 
 ---
 
-## Open items requiring verification before implementation
+## Server action audit results
 
-1. **Schema fix first.** `EmergencyBookingRequest` missing from merged schema.prisma —
-   `prisma generate` fails. Must resolve before any tsc check works. See BLOCKER above.
+| Action                | File                                      | Session-dependent?                                | Classification                                                           |
+| --------------------- | ----------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------ |
+| `addAppointment`      | `actions/appointment/addAppointment.ts`   | Optional (accepts `forceCompanyId`/`forceUserId`) | ✅ Ready as-is                                                           |
+| `editAppointment`     | `actions/appointment/editAppointment.ts`  | Yes — `session.user.companyId`                    | ✅ Not called — PATCH route does DB directly                             |
+| `createDraftEstimate` | `actions/estimate/invoice/createDraft.ts` | Yes — `session.user.companyId`                    | ✅ Not called — estimate POST does DB directly                           |
+| `createTask`          | `actions/task/createTask.ts`              | Yes — `session.user.companyId`, `session.user.id` | ✅ Not called — task POST reads companyId/userId from body               |
+| `editTask`            | `actions/task/editTask.ts`                | No session usage found                            | ✅ Not called — task PATCH does DB directly                              |
+| `createProduct`       | `actions/inventory/create.ts`             | Yes — `getUser()`, `getCompanyId()`               | 🔧 Do not call — inventory routes will use DB directly                   |
+| `editProduct`         | `actions/inventory/edit.ts`               | Yes — `getCompanyId()`                            | 🔧 Do not call — inventory routes will use DB directly                   |
+| `createLead`          | `actions/lead/createLead.ts`              | Yes — `getEssentials()` for session               | ✅ Not used — Phase 3b calls `createLeadRecord` (pure function) directly |
 
-2. **Appointment PATCH route inspection.** What server action does
-   `/api/appointment/company/[companyId]/[id]/route.ts` call? If `editAppointment`,
-   force params need to be added. If it calls `db` directly, no action changes needed.
+**Key insight:** Every existing API route (appointment, task, estimate) does DB operations
+directly in the route handler — NOT through server actions (with the one exception of
+appointment POST calling `addAppointment` which already supports force params). The
+server action refactor concern from the original plan does not apply. New inventory routes
+follow this same DB-direct pattern.
 
-3. **Inventory action signatures.** Do `src/actions/inventory/create.ts` and `edit.ts`
-   use `getServerSession`? If yes, they need force params added or Phase 3f routes must
-   query `db` directly.
+---
 
-4. **Task route companyId handling.** The existing `/api/task/route.ts` POST takes
-   `companyId` from the request body. No JWT verification currently. Confirm this works
-   for the copilot's use case (copilot sends session companyId in body).
+## Open items (remaining, post-audit)
 
-5. **`internalApiClient` base URL.** When the copilot route calls its own internal
-   routes, it needs the full URL (`http://localhost:3000/api/...` in dev,
-   `https://...railway.app/api/...` in prod). Must read from `process.env.NEXTAUTH_URL`
-   or similar. Verify what env var holds the base URL.
+1. **Schema fix** — ✅ **RESOLVED.** `EmergencyBookingRequest` model + `EmergencyRequestStatus`
+   enum added from `origin/development`. `prisma generate`, `yarn tsc --noEmit`, and
+   `yarn build` all pass.
 
-6. **Existing appointment route auth.** AbuBokorprog's `/api/appointment/company/[companyId]/`
-   POST has no JWT auth. Leave as-is for Phase 3 (copilot will send Bearer anyway), add
-   auth in Phase 6 hardening. Confirm this is acceptable.
+2. **Appointment PATCH inner action** — ✅ **RESOLVED.** Calls `db.appointment.update()`
+   directly with `{ id, companyId }` ownership check. No `editAppointment` refactor needed.
 
-7. **`update_appointment` and `update_task` tool reversibility.** Per TOOL_REGISTRY.md,
-   these are write operations. Confirm whether they should be "confirm before execute" in
-   Phase 3 or deferred to Phase 4 (Phase 4 is explicitly for external-effect tools like
-   send_estimate). Internal mutations (create/update) can proceed without confirmation in
-   Phase 3 per original design.
+3. **Inventory action signatures** — ✅ **RESOLVED.** Both use session helpers. Decision:
+   new inventory routes query `db.inventoryProduct` directly — no action refactor.
+
+4. **Task route companyId handling** — ✅ **RESOLVED.** Task POST reads `companyId` +
+   `userId` from request body — no session, no server action. Copilot sends session-derived
+   values in body. Pass-through works.
+
+5. **`internalApiClient` base URL** — ⏳ **Open.** Need to verify what env var holds the
+   base URL in Railway. Likely `process.env.NEXTAUTH_URL`. Confirm during Phase 3a
+   implementation.
+
+6. **Task route JWT auth gap** — ⏳ **Open (not in scope).** `/api/task/route.ts` POST
+   and `/api/task/[id]/` PATCH accept `companyId` from request body with no verification.
+   Flagged in REVIEWER_GUIDE.md for a future security pass. Not blocking Phase 3.
+
+7. **`update_appointment` and `update_task` reversibility** — ⏳ **Open.** Decide whether
+   these need "confirm before execute" in Phase 3 or proceed without confirmation (Phase 4
+   is for external-effect tools like send_estimate). Recommendation: internal mutations
+   (create/update DB only) proceed without confirmation in Phase 3.
 
 ---
 

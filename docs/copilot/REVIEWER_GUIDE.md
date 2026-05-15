@@ -116,6 +116,12 @@ The `get_tasks_for_user` copilot tool uses `date < now` as a proxy for task comp
 
 The TOOL_REGISTRY.md spec called for tasks to have `Low | Medium | High | Urgent` priority. The Prisma schema only has `Low | Medium | High`. The copilot tool returns actual enum values. Team should decide whether to add `Urgent` to the schema.
 
+### 6. `Task` API routes have no JWT Bearer auth (future security pass needed)
+
+`src/app/api/task/route.ts` (POST) and `src/app/api/task/[id]/route.ts` (PATCH) read `companyId` directly from the request body without any token verification. Any caller that can reach these endpoints can pass an arbitrary `companyId` and write tasks for another company. This was pre-existing before this PR and is **not introduced by the copilot feature**.
+
+Phase 3 write tools will call these routes from server-side copilot code only (never client-exposed), which limits the immediate blast radius. However, a team security pass should add JWT Bearer verification and cross-check the body `companyId` against the token claim — the same pattern used by `src/app/api/estimate/[companyId]/route.ts`. **Do not fix as part of this PR; flag for a dedicated security pass.**
+
 ---
 
 ## How to test locally
@@ -235,6 +241,8 @@ The team's choice here determines how Phase 3 is structured. **Decision needed b
 6. **`hasCopilot` seat management** — currently set manually via DB. Phase 5 will add billing/seat licensing. In the interim, who owns flipping the flag and what's the process?
 
 7. **`ai_personalities.human_handoff_message` column** — exists in `schema.prisma` but reportedly absent from some dev DBs. Confirm it exists in production before merging.
+
+8. **Task API route auth gap** — `/api/task/route.ts` POST and `/api/task/[id]/route.ts` PATCH have no JWT Bearer auth; `companyId` accepted from body unverified (see Pre-existing issues §6). Needs a dedicated security pass — not in scope for this PR.
 
 ---
 

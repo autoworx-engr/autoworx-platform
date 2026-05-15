@@ -3450,3 +3450,74 @@ model AuditLog {
   @@index([copilotSessionId])
   @@index([success, createdAt(sort: Desc)])
 }
+
+model EmergencyBookingRequest {
+  id       Int  @id @default(autoincrement())
+  shopId   Int  @map("shop_id")
+  clientId Int? @map("client_id")
+
+  // Contact Information (in case client is guest)
+  contactName  String @map("contact_name") @db.VarChar(255)
+  contactEmail String @map("contact_email") @db.VarChar(255)
+  contactPhone String @map("contact_phone") @db.VarChar(50)
+
+  // Emergency Details
+  description String @db.Text
+
+  // Requested Time (user preference)
+  requestedDate  String? @map("requested_date") // User's preferred date
+  requestedTime  String? @map("requested_time") // User's preferred time
+  flexibleTiming Boolean @default(true) @map("flexible_timing") // Can they be flexible?
+
+  // Vehicle Info
+  vehicleId    Int?    @map("vehicle_id")
+  vehicleMake  String? @map("vehicle_make") @db.VarChar(100)
+  vehicleModel String? @map("vehicle_model") @db.VarChar(100)
+  vehicleYear  Int?    @map("vehicle_year")
+
+  // Services Requested (stored as JSON for flexibility)
+  requestedServices Json @map("requested_services") // Array of service IDs or descriptions
+
+  // Status & Resolution
+  status   EmergencyRequestStatus @default(PENDING)
+  priority Int                    @default(5) // 1-10, higher = more urgent
+
+  // Admin Response
+  reviewedBy      Int?      @map("reviewed_by")
+  reviewedAt      DateTime? @map("reviewed_at")
+  adminNotes      String?   @map("admin_notes") @db.Text
+  rejectionReason String?   @map("rejection_reason") @db.Text
+
+  // Proposed Alternative (if original time not available)
+  proposedDate     String? @map("proposed_date")
+  proposedTime     String? @map("proposed_time")
+  alternativeNotes String? @map("alternative_notes") @db.Text
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  expiresAt DateTime @map("expires_at") // Auto-expire if not reviewed within X hours
+
+  // Relations
+  shop     Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  client   Client?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  vehicle  Vehicle? @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+  reviewer User?    @relation("EmergencyReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
+
+  @@index([shopId, status])
+  @@index([shopId, createdAt])
+  @@index([priority])
+  @@index([expiresAt])
+  @@map("emergency_booking_requests")
+}
+
+enum EmergencyRequestStatus {
+  PENDING // Waiting for admin review
+  UNDER_REVIEW // Admin is actively reviewing
+  APPROVED // Admin approved, booking created
+  ALTERNATIVE_PROPOSED // Admin proposed different time
+  CLIENT_CONFIRMED // Client confirmed alternative time
+  REJECTED // Cannot accommodate
+  EXPIRED // Not reviewed within time window
+  CANCELLED // Client cancelled the request
+}
