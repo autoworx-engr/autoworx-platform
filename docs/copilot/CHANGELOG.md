@@ -5,6 +5,58 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Phase 3a — Foundation: JWT helper + internal API client + reference route
+
+**Date:** 2026-05-15
+**Branch:** taiseer/ai-copilot
+**Commit:** [see git log]
+
+### Files created
+
+| File                                            | Purpose                                                                                                                                                                                |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/lib/mobileAuth.ts`                         | Ported from secure-estimate-routes branch. Exposes `getCompanyIdFromBearer(request): Promise<number \| null>`. Used by all new Phase 3 routes for unified Bearer JWT auth.             |
+| `src/lib/copilot/internalApiClient.ts`          | Server-side helper for copilot to call its own internal API routes. Mints a 1-hour JWT via `generateAccessToken`, sends Bearer-authed fetch, returns structured result (never throws). |
+| `src/app/api/lead/company/[companyId]/route.ts` | First Phase 3 write route. POST creates a lead. Auth: Bearer JWT + URL companyId cross-check. Template for all other Phase 3 routes.                                                   |
+
+### Files modified
+
+None.
+
+### Architecture decisions in this phase
+
+- Bearer JWT for all internal API routes (overrides Tanvir's original X-Internal-Token spec; cleared with Tanvir 2026-05-14)
+- Copilot mints JWT for the acting user via `generateAccessToken(user)` — loads real DB User so JWT payload is accurate
+- URL companyId is cross-checked against JWT companyId — 403 on mismatch (multi-tenant isolation)
+- `getCompanyIdFromBearer` returns `null` on failure (never throws) — simpler route handlers
+- Route response envelope: `{ success: boolean, message: string, data?: any, field?: string }` matching AbuBokorprog's convention
+- `sendOpeningSms` is caller-configurable (defaults to `true`); dev testing passes `false` to bypass the `ai_personalities.human_handoff_message` column drift (pre-existing issue)
+
+### Key finding: proxy.ts middleware behavior
+
+All `/api/*` routes not in `PUBLIC_API_ROUTES` go through `proxy.ts` middleware which verifies the Bearer JWT before the request reaches the route handler. On invalid token, middleware returns HTTP 200 with `{status: 401, message: "Invalid or expired access token."}` in the body — this is a pre-existing convention. Valid tokens pass through; route-level `getCompanyIdFromBearer` provides the second layer (companyId cross-check).
+
+### Verification
+
+- ✓ yarn tsc --noEmit clean
+- ✓ yarn build clean
+- ✓ Test 5a (happy path): POST with valid JWT + correct companyId → HTTP 201, `{leadId, clientId, vehicleId}`, DB rows created, audit log written
+- ✓ Test 5b (bad JWT): proxy.ts intercepts invalid token → middleware rejects (HTTP 200 with embedded status 401)
+- ✓ Test 5c (wrong company in URL): valid JWT, URL companyId 9999 ≠ JWT companyId 1 → HTTP 403 Forbidden (multi-tenant isolation enforced)
+- ✓ Test 5d (invalid body): missing required fields → HTTP 400 with field name in response
+- ✓ Test 5e (internalApiClient end-to-end): script mints JWT, calls route via fetch → `{ok: true, status: 201, data: {leadId: 9, ...}}`
+
+### Audit log row from test 5a
+
+action: `lead.create`, actor: `api`, success: `true`, latencyMs: populated, PII redacted (clientPhone, clientEmail → `[REDACTED]`)
+
+### Notes
+
+- `src/lib/mobileAuth.ts` will conflict trivially with the same file on `taiseer/secure-estimate-routes` when both PRs merge — files are identical, resolves with theirs or ours.
+- `/api/task/*` routes still lack JWT auth (pre-existing). Flagged in REVIEWER_GUIDE for separate security pass.
+
+---
+
 ## Phase 2.1 — Bug fixes from team coordination
 
 **Date:** 2026-05-12

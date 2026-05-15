@@ -6,6 +6,16 @@ Index of every file created or modified during the copilot build.
 
 ## New files
 
+### Phase 3a
+
+| Path                                            | Purpose                                                                                                                                                              |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/lib/mobileAuth.ts`                         | `getCompanyIdFromBearer(req)` — extracts companyId from Bearer JWT, returns null on failure. Used by all Phase 3 routes. Ported from taiseer/secure-estimate-routes. |
+| `src/lib/copilot/internalApiClient.ts`          | `callInternalApi({method, path, userId, body})` — server-side HTTP client for copilot → API route calls. Mints JWT, attaches Bearer, returns structured result.      |
+| `src/app/api/lead/company/[companyId]/route.ts` | POST: create a lead. Template route for Phase 3. Auth: Bearer JWT + companyId cross-check. Calls `createLeadRecord`. Audit logs.                                     |
+
+---
+
 ### Phase 2
 
 | Path                                                            | Purpose                                              |

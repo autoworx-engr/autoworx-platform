@@ -190,9 +190,39 @@ yarn dev
 
 ---
 
+## Phase 3 — Write tools via API wrappers
+
+### What changed
+
+The team decided (Tanvir, AbuBokorprog) that all copilot write operations go through API routes for stable contracts and mobile reuse. Phase 3a builds the foundation: a unified Bearer JWT auth helper and an internal API client so the copilot can mint JWTs and call its own routes server-to-server.
+
+### What to review
+
+1. **`src/lib/mobileAuth.ts`** — ported from secure-estimate-routes branch. Same content. Once both branches merge to development, this becomes one file across both.
+
+2. **`src/lib/copilot/internalApiClient.ts`** — the copilot's HTTP client to its own API. Verify:
+   - JWT minting loads a real DB `User` record (not synthesized) — payload matches what routes expect
+   - Token expires in 1 hour via `generateAccessToken`
+   - Internal call uses absolute URL (`NEXTAUTH_URL` env var, falls back to `localhost:3000`)
+   - Error handling returns structured `{ ok, error, status }` result — never throws
+
+3. **`src/app/api/lead/company/[companyId]/route.ts`** — the template route for Phase 3. All subsequent Phase 3 routes mirror this shape. Verify:
+   - Bearer JWT auth via `getCompanyIdFromBearer` (returns null → 401)
+   - URL `companyId` cross-checked against JWT claim → 403 on mismatch (multi-tenant isolation)
+   - Zod schema validates body → 400 with `field` name on failure
+   - Business logic calls `createLeadRecord` (pure function, no session needed)
+   - Audit log fires on both success AND failure paths
+   - Response envelope: `{ success, message, data?, field? }`
+
+### Middleware interaction
+
+`proxy.ts` middleware runs before all `/api/*` routes (except `PUBLIC_API_ROUTES`). It verifies the Bearer JWT — invalid tokens are rejected at the middleware level (HTTP 200 with embedded `{status: 401}` in body — pre-existing convention). Valid tokens pass through to the route, where `getCompanyIdFromBearer` extracts the companyId claim and the route performs the URL vs JWT companyId cross-check.
+
+---
+
 ## Architecture decision needed before Phase 3
 
-**This is the single biggest open question. Phase 3 (write tools) is blocked on the team's answer.**
+**RESOLVED — team chose Path 1 (thin API wrappers) with JWT Bearer auth. See PHASE_3_PLAN.md for full decision record.**
 
 ### Background
 

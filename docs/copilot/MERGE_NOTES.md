@@ -45,6 +45,10 @@ No new migrations. All changes are pure TypeScript.
 
 No DB migrations. Bug fix to createLeadRecord behavior only.
 
+### Phase 3a
+
+No DB migrations. New API route + lib files only. No schema changes.
+
 ---
 
 ## Packages added
