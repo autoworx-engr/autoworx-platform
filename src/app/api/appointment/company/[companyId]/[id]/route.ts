@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getCompanyIdFromBearer } from "@/lib/mobileAuth";
+import { updateAppointment } from "@/actions/appointment/updateAppointment";
 import { deleteAppointment } from "@/actions/appointment/deleteAppointment";
-import { scheduleRemindersInNest } from "@/actions/appointment/appointmentReminderScheduler";
-import { deleteRemindersInNest } from "@/actions/appointment/deleteAppointment";
+import { writeAuditLog } from "@/lib/copilot/audit";
 
 /**
  * @swagger
@@ -25,54 +26,27 @@ import { deleteRemindersInNest } from "@/actions/appointment/deleteAppointment";
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - title
- *               - assignedUsers
  *             properties:
+ *               userId: { type: integer, example: 3 }
  *               title: { type: string, example: Brake Inspection }
- *               date: { type: string, format: date-time, nullable: true, example: "2026-03-15T09:00:00.000Z" }
+ *               date: { type: string, format: date-time, nullable: true }
  *               startTime: { type: string, nullable: true, example: "09:00" }
  *               endTime: { type: string, nullable: true, example: "10:00" }
  *               assignedUsers:
  *                 type: array
  *                 items: { type: integer }
  *                 example: [2, 5]
- *               clientId: { type: integer, nullable: true, example: 15 }
- *               vehicleId: { type: integer, nullable: true, example: 8 }
- *               serviceCategoryId: { type: integer, nullable: true, example: 3 }
- *               draftEstimate: { type: string, nullable: true, example: "EST-2002" }
- *               notes: { type: string, nullable: true, example: Customer prefers morning }
- *               confirmationEmailTemplateId: { type: integer, nullable: true, example: 5 }
- *               confirmationEmailTemplateStatus: { type: boolean, nullable: true, example: true }
- *               reminderEmailTemplateId: { type: integer, nullable: true, example: 6 }
- *               reminderEmailTemplateStatus: { type: boolean, nullable: true, example: true }
- *               times:
- *                 type: array
- *                 nullable: true
- *                 items:
- *                   type: object
- *                   properties:
- *                     date: { type: string, example: "2026-03-14" }
- *                     time: { type: string, example: "08:30" }
- *               timezone: { type: string, nullable: true, example: "America/New_York" }
+ *               clientId: { type: integer, nullable: true }
+ *               vehicleId: { type: integer, nullable: true }
+ *               serviceCategoryId: { type: integer, nullable: true }
+ *               notes: { type: string, nullable: true }
+ *               timezone: { type: string, nullable: true }
  *     responses:
- *       200:
- *         description: Appointment updated successfully
- *         content:
- *           application/json:
- *             example:
- *               success: true
- *               message: Appointment updated successfully
- *               data: {}
- *       400:
- *         description: Validation error or appointment not found for company
- *         content:
- *           application/json:
- *             example:
- *               success: false
- *               message: Appointment not found for this company
- *       500:
- *         description: Internal server error
+ *       200: { description: Appointment updated successfully }
+ *       400: { description: Validation error or not found }
+ *       401: { description: Unauthorized }
+ *       403: { description: Forbidden }
+ *       500: { description: Internal server error }
  *
  *   delete:
  *     summary: Delete an appointment belonging to a company
@@ -87,22 +61,9 @@ import { deleteRemindersInNest } from "@/actions/appointment/deleteAppointment";
  *         required: true
  *         schema: { type: integer, example: 42 }
  *     responses:
- *       200:
- *         description: Appointment deleted successfully
- *         content:
- *           application/json:
- *             example:
- *               success: true
- *               message: Appointment deleted successfully
- *       400:
- *         description: Appointment not found for this company
- *         content:
- *           application/json:
- *             example:
- *               success: false
- *               message: Appointment not found for this company
- *       500:
- *         description: Internal server error
+ *       200: { description: Appointment deleted successfully }
+ *       400: { description: Not found }
+ *       500: { description: Internal server error }
  */
 
 async function resolveParams(props: {
@@ -116,101 +77,108 @@ export async function PATCH(
   req: NextRequest,
   props: { params: Promise<{ companyId: string; id: string }> },
 ) {
+  const startTime = Date.now();
+  const { companyId, id } = await resolveParams(props);
+
+  if (!companyId || isNaN(companyId) || !id || isNaN(id)) {
+    return NextResponse.json(
+      { success: false, message: "Invalid companyId or id" },
+      { status: 400 },
+    );
+  }
+
+  const jwtCompanyId = await getCompanyIdFromBearer(req);
+  if (jwtCompanyId === null) {
+    return NextResponse.json(
+      { success: false, message: "Unauthorized" },
+      { status: 401 },
+    );
+  }
+  if (jwtCompanyId !== companyId) {
+    return NextResponse.json(
+      { success: false, message: "Forbidden" },
+      { status: 403 },
+    );
+  }
+
+  let body: Record<string, unknown>;
   try {
-    const { companyId, id } = await resolveParams(props);
+    body = await req.json();
+  } catch {
+    return NextResponse.json(
+      { success: false, message: "Invalid JSON body" },
+      { status: 400 },
+    );
+  }
 
-    if (!companyId || isNaN(companyId) || !id || isNaN(id)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid companyId or id" },
-        { status: 400 },
-      );
-    }
+  const userId = typeof body.userId === "number" ? body.userId : undefined;
 
-    const existing = await db.appointment.findFirst({
-      where: { id, companyId },
-    });
-    if (!existing) {
-      return NextResponse.json(
-        { success: false, message: "Appointment not found for this company" },
-        { status: 400 },
-      );
-    }
-
-    const body = await req.json();
-
-    if (!body.title) {
-      return NextResponse.json(
-        { success: false, message: "title is required" },
-        { status: 400 },
-      );
-    }
-
-    if (!Array.isArray(body.assignedUsers)) {
-      return NextResponse.json(
-        { success: false, message: "assignedUsers must be an array" },
-        { status: 400 },
-      );
-    }
-
-    const updatedAppointment = await db.appointment.update({
-      where: { id },
-      data: {
-        title: body.title,
-        date: body.date ? new Date(body.date) : undefined,
-        startTime: body.startTime ?? undefined,
-        endTime: body.endTime ?? undefined,
-        clientId: body.clientId ?? undefined,
-        vehicleId: body.vehicleId ?? undefined,
-        serviceCategoryId: body.serviceCategoryId ?? undefined,
-        draftEstimate: body.draftEstimate ?? undefined,
-        notes: body.notes ?? undefined,
-        confirmationEmailTemplateId:
-          body.confirmationEmailTemplateId ?? undefined,
-        confirmationEmailTemplateStatus:
-          body.confirmationEmailTemplateStatus ?? undefined,
-        reminderEmailTemplateId: body.reminderEmailTemplateId ?? undefined,
-        reminderEmailTemplateStatus:
-          body.reminderEmailTemplateStatus ?? undefined,
-        times: body.times ?? undefined,
-        timezone: body.timezone ?? undefined,
-      },
+  try {
+    const updateInput = {
+      ...body,
+      appointmentId: id,
+    } as Parameters<typeof updateAppointment>[0];
+    const result = await updateAppointment(updateInput, {
+      forceCompanyId: companyId,
+      forceUserId: userId,
     });
 
-    await db.appointmentUser.deleteMany({ where: { appointmentId: id } });
-    if (body.assignedUsers.length > 0) {
-      await db.appointmentUser.createMany({
-        data: body.assignedUsers.map((uid: number) => ({
-          appointmentId: id,
-          userId: uid,
-          eventId: "",
-        })),
+    if (result.type === "error") {
+      await writeAuditLog({
+        actor: "api",
+        action: "appointment.update",
+        userId: userId ?? 0,
+        companyId,
+        resourceType: "Appointment",
+        resourceId: String(id),
+        input: body,
+        success: false,
+        errorMessage: result.message,
+        latencyMs: Date.now() - startTime,
       });
+      return NextResponse.json(
+        {
+          success: false,
+          message: result.message ?? "Failed to update appointment",
+        },
+        { status: 400 },
+      );
     }
 
-    try {
-      await deleteRemindersInNest(String(id));
-      if (updatedAppointment.date && updatedAppointment.startTime) {
-        const company = await db.company.findFirst({
-          where: { id: companyId },
-          select: { timezone: true },
-        });
-        await scheduleRemindersInNest({
-          id: String(id),
-          date: updatedAppointment.date,
-          time: updatedAppointment.startTime,
-          timezone: company?.timezone || body.timezone || "Etc/UTC",
-        });
-      }
-    } catch (_) {}
+    await writeAuditLog({
+      actor: "api",
+      action: "appointment.update",
+      userId: userId ?? 0,
+      companyId,
+      resourceType: "Appointment",
+      resourceId: String(id),
+      input: body,
+      success: true,
+      latencyMs: Date.now() - startTime,
+    });
 
     return NextResponse.json({
       success: true,
       message: "Appointment updated successfully",
-      data: updatedAppointment,
+      data: { appointmentId: id },
     });
-  } catch (error: any) {
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Internal server error";
+    await writeAuditLog({
+      actor: "api",
+      action: "appointment.update",
+      userId: userId ?? 0,
+      companyId,
+      resourceType: "Appointment",
+      resourceId: String(id),
+      input: body,
+      success: false,
+      errorMessage,
+      latencyMs: Date.now() - startTime,
+    });
     return NextResponse.json(
-      { success: false, message: error?.message || "Internal server error" },
+      { success: false, message: errorMessage },
       { status: 500 },
     );
   }
@@ -232,6 +200,7 @@ export async function DELETE(
 
     const existing = await db.appointment.findFirst({
       where: { id, companyId },
+      select: { id: true },
     });
     if (!existing) {
       return NextResponse.json(
@@ -252,9 +221,13 @@ export async function DELETE(
       success: true,
       message: "Appointment deleted successfully",
     });
-  } catch (error: any) {
+  } catch (error) {
     return NextResponse.json(
-      { success: false, message: error?.message || "Internal server error" },
+      {
+        success: false,
+        message:
+          error instanceof Error ? error.message : "Internal server error",
+      },
       { status: 500 },
     );
   }

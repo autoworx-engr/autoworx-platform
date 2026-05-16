@@ -8,6 +8,12 @@ import "./handlers/getInventoryItemByName";
 import "./handlers/getEstimateByNumber";
 import "./handlers/getAppointmentsForDateRange";
 import "./handlers/getTasksForUser";
+import "./handlers/createLeadTool";
+import "./handlers/updateLeadTool";
+import "./handlers/createAppointmentTool";
+import "./handlers/updateAppointmentTool";
+import "./handlers/createTaskTool";
+import "./handlers/updateTaskTool";
 
 export { toolsForAnthropic, allTools, getTool } from "./registry";
 export type { ToolContext, ToolResult, ToolDefinition } from "./registry";

@@ -2,6 +2,7 @@ import getPermissions, { type PermissionsResult } from "@/lib/getPermissions";
 
 export type CopilotAction =
   | "lead.create"
+  | "lead.update"
   | "lead.read"
   | "appointment.create"
   | "appointment.update"
@@ -57,6 +58,12 @@ const PERMISSION_MAP: Record<
       p.role === "Admin" ||
       !!(p.userPermissions?.salesPipeline ?? cp(p, "salesPipeline")),
     reason: "You don't have permission to create leads (salesPipeline).",
+  },
+  "lead.update": {
+    check: (p) =>
+      p.role === "Admin" ||
+      !!(p.userPermissions?.salesPipeline ?? cp(p, "salesPipeline")),
+    reason: "You don't have permission to update leads (salesPipeline).",
   },
   "lead.read": {
     check: (p) =>

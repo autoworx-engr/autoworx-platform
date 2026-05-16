@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { addAppointment } from "@/actions/appointment/addAppointment";
+import { getCompanyIdFromBearer } from "@/lib/mobileAuth";
 
 /**
  * @swagger
@@ -243,6 +244,20 @@ export async function POST(
       return NextResponse.json(
         { success: false, message: "Invalid companyId" },
         { status: 400 },
+      );
+    }
+
+    const jwtCompanyId = await getCompanyIdFromBearer(req);
+    if (jwtCompanyId === null) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+    if (jwtCompanyId !== companyId) {
+      return NextResponse.json(
+        { success: false, message: "Forbidden" },
+        { status: 403 },
       );
     }
 

@@ -49,6 +49,10 @@ No DB migrations. Bug fix to createLeadRecord behavior only.
 
 No DB migrations. New API route + lib files only. No schema changes.
 
+### Phase 3b
+
+No DB migrations. New server actions, API routes, and copilot tool handlers only. No schema changes.
+
 ---
 
 ## Packages added
@@ -98,7 +102,8 @@ The key is already stubbed in `.env.example`. Railway environment must have it s
 
 ## Deferred work
 
-- Phase 3: Write tools (create_lead, create_appointment, create_task, create_draft_estimate) — blocked on architecture decision
+- Phase 3b write tools: shipped (create/update lead, appointment, task — 6 copilot tools total)
+- Phase 3 remaining: create_draft_estimate copilot tool
 - Phase 5: Billing/seat licensing
 - Phase 6: Hardening, audit log viewer UI, cost dashboard
 - Mobile integration

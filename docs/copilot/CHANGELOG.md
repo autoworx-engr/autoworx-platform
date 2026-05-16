@@ -5,6 +5,48 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Phase 3b — Write tools: leads, appointments, tasks + 6 copilot tools
+
+**Date:** 2026-05-15
+**Branch:** taiseer/task-calendar
+**Commit:** [see git log]
+
+### Files created
+
+| File                                                      | Purpose                                                                                                                              |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `src/actions/appointment/updateAppointment.ts`            | Server action for partial appointment updates. Force params pattern; handles assignedUsers diff + best-effort reminder rescheduling. |
+| `src/actions/task/updateTask.ts`                          | Server action for partial task updates. Force params pattern; handles assignedUsers diff via TaskUser delete+create.                 |
+| `src/app/api/lead/company/[companyId]/[id]/route.ts`      | PUT route to update a lead. Bearer JWT auth + companyId cross-check + audit log.                                                     |
+| `src/app/api/task/company/[companyId]/[id]/route.ts`      | PUT route to update a task. Bearer JWT auth + companyId cross-check + audit log.                                                     |
+| `src/lib/copilot/tools/handlers/createLeadTool.ts`        | Copilot tool: create_lead — calls POST /api/lead/company/{companyId}                                                                 |
+| `src/lib/copilot/tools/handlers/updateLeadTool.ts`        | Copilot tool: update_lead — calls PUT /api/lead/company/{companyId}/{id}                                                             |
+| `src/lib/copilot/tools/handlers/createAppointmentTool.ts` | Copilot tool: create_appointment — calls POST /api/appointment/company/{companyId}                                                   |
+| `src/lib/copilot/tools/handlers/updateAppointmentTool.ts` | Copilot tool: update_appointment — calls PATCH /api/appointment/company/{companyId}/{id}                                             |
+| `src/lib/copilot/tools/handlers/createTaskTool.ts`        | Copilot tool: create_task — calls POST /api/task/company/{companyId}                                                                 |
+| `src/lib/copilot/tools/handlers/updateTaskTool.ts`        | Copilot tool: update_task — calls PUT /api/task/company/{companyId}/{id}                                                             |
+
+### Files modified
+
+| File                                                        | Change                                                                                                             |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `src/app/api/lead/company/[companyId]/route.ts`             | Added `multipleServices` field to POST schema                                                                      |
+| `src/app/api/appointment/company/[companyId]/[id]/route.ts` | Refactored PATCH to call `updateAppointment` action + Bearer JWT auth + audit log; DELETE restores ownership check |
+| `src/app/api/appointment/company/[companyId]/route.ts`      | Added Bearer JWT auth gate to POST handler                                                                         |
+| `src/app/api/task/company/[companyId]/route.ts`             | Added POST handler (DB-direct, JWT auth, audit log)                                                                |
+| `src/lib/copilot/canUserDo.ts`                              | Added `lead.update` to CopilotAction union + PERMISSION_MAP                                                        |
+| `src/lib/copilot/tools/index.ts`                            | Added 6 new tool handler imports                                                                                   |
+| `src/lib/copilot/systemPrompt.ts`                           | Added write tool guidance section to TOOL_GUIDE                                                                    |
+
+### Architecture decisions in this phase
+
+- All write tools go through internal API routes via `callInternalApi` (Path 1 pattern established in 3a)
+- Task POST route is DB-direct (no `createTask` action) — consistent with appointment/estimate pattern; skips Google Calendar + notifications by design for copilot use
+- `updateAppointment`/`updateTask` use `as any` cast for Prisma data object: Prisma's union type for nullable FK fields rejects `null` in the spread pattern; Zod has already validated the shape
+- write tool guidance added to system prompt to control confirmation behavior
+
+---
+
 ## Phase 3a — Foundation: JWT helper + internal API client + reference route
 
 **Date:** 2026-05-15

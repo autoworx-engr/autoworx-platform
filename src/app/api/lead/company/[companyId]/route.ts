@@ -70,6 +70,11 @@ const CreateLeadBodySchema = z.object({
   serviceId: z.number().int().nullable().optional(),
   countryCode: z.string().optional(),
   sendOpeningSms: z.boolean().optional(),
+  multipleServices: z
+    .object({
+      connect: z.array(z.object({ id: z.number().int().positive() })),
+    })
+    .optional(),
 });
 
 export async function POST(
