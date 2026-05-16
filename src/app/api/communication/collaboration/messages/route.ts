@@ -112,10 +112,7 @@ export async function GET(request: NextRequest) {
       }
 
       messages = await db.message.findMany({
-        where: {
-          AND: [{ AND: [{ from: fromId }, { to: toId }] }],
-          section: "collaboration",
-        },
+        where: { from: fromId, to: toId, section: "collaboration" },
         include: {
           attachment: true,
           requestEstimate: true,
@@ -127,10 +124,7 @@ export async function GET(request: NextRequest) {
         take: limitNum,
       });
       totalRecords = await db.message.count({
-        where: {
-          AND: [{ AND: [{ from: fromId }, { to: toId }] }],
-          section: "collaboration",
-        },
+        where: { from: fromId, to: toId, section: "collaboration" },
       });
     }
 
