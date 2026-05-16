@@ -5,6 +5,62 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Phase 3b.3 — Lead update removed, tag management added, client search fixed
+
+**Date:** 2026-05-16
+**Branch:** taiseer/ai-copilot
+**Commit:** [see git log]
+
+### Product decisions (owner: Taiseer)
+
+- Copilot does NOT update lead details. Lead field edits are deliberate operations done in the main app UI. The copilot declines with a message directing the user to the lead's page.
+- Lead tag management IS allowed (add/remove/create tags). Tags are operational organization, not lead-content edits.
+- Tag creation by copilot requires user confirmation (existing restate-and-confirm pattern) and a duplicate-name guard.
+- When a client has multiple leads, AI asks which lead by vehicle before acting.
+
+### Removed
+
+- `update_lead` tool — deleted entirely. Copilot now declines lead-field edit requests with a friendly redirect to the main app.
+
+### Added (4 new tools)
+
+| File                   | Tool              | Type                                                                           |
+| ---------------------- | ----------------- | ------------------------------------------------------------------------------ |
+| `getLeadTagsTool.ts`   | `get_lead_tags`   | read — list all company tags                                                   |
+| `addLeadTagTool.ts`    | `add_lead_tag`    | reversible-write — add existing tag to lead                                    |
+| `removeLeadTagTool.ts` | `remove_lead_tag` | reversible-write — remove tag from lead                                        |
+| `createTagTool.ts`     | `create_tag`      | reversible-write — create new tag (duplicate detection, confirmation required) |
+
+All write tools: ownership verified via `companyId` before any mutation. `LeadTags` queries scope indirectly (leadId + tagId both verified against companyId first).
+
+### Fixed
+
+- **`get_client_by_name` full-name search bug** — previous `OR-of-contains` couldn't match "Jane Phase3bTest" because no single column held the full string. New logic: split searchTerm on whitespace, require each part to match at least one column (AND of ORs). Single-word searches unaffected.
+- **`get_client_by_name` now returns leads inline** — each client result includes its associated Lead (id, vehicleInfo, services, source, createdAt). AI no longer needs a separate tool call to get a leadId from a client.
+
+### System prompt changes
+
+- Lead-update decline message and boundary added
+- Tag workflow guidance (fuzzy match → close-match confirm → create-new with confirm)
+- Multi-lead disambiguation rule: when ambiguous, ask by vehicle
+- Updated "Finding data before acting" section: `get_client_by_name` now covers lead IDs, added `get_lead_tags`
+- Updated write workflow tool list: removed `update_lead`, added tag tools
+- "BAD: calling create_lead just to obtain a leadId — NEVER create to get an ID" rule added
+
+### Test data cleanup
+
+- Deleted 3 duplicate Jane Phase3bTest leads (IDs 19, 20, 21) from prior failed/repeated smoke tests
+- Deleted Jane Phase3bTest Client (ID 9) and 3 Vehicle rows (IDs 9, 10, 11)
+- Cross-company isolation test data (Lead 18 in Company 3) preserved
+
+### Verification
+
+- ✓ yarn tsc --noEmit clean
+- ✓ yarn build clean
+- ✓ Multi-tenant lint: all new DB queries scope by companyId (directly or via verified parent record)
+
+---
+
 ## Phase 3b.2 — UX hardening: restate-and-confirm before reversible writes
 
 **Date:** 2026-05-15

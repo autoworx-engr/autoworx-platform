@@ -24,6 +24,8 @@ For coordinating the merge into development and production deployment.
 
 ## Migrations included
 
+### Phase 3b.3: No DB migrations.
+
 ### Phase 0a
 
 **File:** `prisma/migrations/20260510000000_add_copilot_and_audit_log.sql`

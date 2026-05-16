@@ -14,14 +14,22 @@ type Input = z.infer<typeof inputSchema>;
 
 async function execute(input: unknown, ctx: ToolContext): Promise<ToolResult> {
   const { searchTerm } = input as Input;
+
+  const parts = searchTerm.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) {
+    return { ok: false, error: "Search term cannot be empty." };
+  }
+
   const clients = await db.client.findMany({
     where: {
       companyId: ctx.companyId,
-      OR: [
-        { firstName: { contains: searchTerm, mode: "insensitive" } },
-        { lastName: { contains: searchTerm, mode: "insensitive" } },
-        { email: { contains: searchTerm, mode: "insensitive" } },
-      ],
+      AND: parts.map((part) => ({
+        OR: [
+          { firstName: { contains: part, mode: "insensitive" as const } },
+          { lastName: { contains: part, mode: "insensitive" as const } },
+          { email: { contains: part, mode: "insensitive" as const } },
+        ],
+      })),
     },
     select: {
       id: true,
@@ -29,7 +37,16 @@ async function execute(input: unknown, ctx: ToolContext): Promise<ToolResult> {
       lastName: true,
       email: true,
       mobile: true,
-      Vehicle: { select: { id: true }, take: 1 },
+      Lead: {
+        select: {
+          id: true,
+          clientName: true,
+          vehicleInfo: true,
+          services: true,
+          source: true,
+          createdAt: true,
+        },
+      },
     },
     take: 5,
     orderBy: { createdAt: "desc" },
@@ -50,7 +67,16 @@ async function execute(input: unknown, ctx: ToolContext): Promise<ToolResult> {
       lastName: c.lastName ?? null,
       email: c.email ?? null,
       phone: c.mobile ?? null,
-      hasVehicles: c.Vehicle.length > 0,
+      lead: c.Lead
+        ? {
+            id: c.Lead.id,
+            clientName: c.Lead.clientName,
+            vehicleInfo: c.Lead.vehicleInfo,
+            services: c.Lead.services,
+            source: c.Lead.source,
+            createdAt: c.Lead.createdAt,
+          }
+        : null,
     })),
   };
 }
@@ -58,7 +84,7 @@ async function execute(input: unknown, ctx: ToolContext): Promise<ToolResult> {
 registerTool({
   name: "get_client_by_name",
   description:
-    "Search for clients by name (fuzzy). Use when the user mentions a client name and you need their ID for another operation. Returns top 5 matches.",
+    "Search for clients by name (fuzzy, handles full names like 'Jane Smith'). Use when the user mentions a client name and you need their ID or lead ID for another operation. Returns top 5 matches, each with their associated lead (if any).",
   permission: "client.read",
   inputSchema,
   anthropicInputSchema: {
@@ -66,7 +92,8 @@ registerTool({
     properties: {
       searchTerm: {
         type: "string",
-        description: "Client name or email to search (min 2 characters)",
+        description:
+          "Client name or email to search (min 2 characters). Can be a full name like 'Jane Smith' — parts are matched individually.",
       },
     },
     required: ["searchTerm"],

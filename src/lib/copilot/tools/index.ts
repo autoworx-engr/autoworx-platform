@@ -9,11 +9,14 @@ import "./handlers/getEstimateByNumber";
 import "./handlers/getAppointmentsForDateRange";
 import "./handlers/getTasksForUser";
 import "./handlers/createLeadTool";
-import "./handlers/updateLeadTool";
 import "./handlers/createAppointmentTool";
 import "./handlers/updateAppointmentTool";
 import "./handlers/createTaskTool";
 import "./handlers/updateTaskTool";
+import "./handlers/getLeadTagsTool";
+import "./handlers/addLeadTagTool";
+import "./handlers/removeLeadTagTool";
+import "./handlers/createTagTool";
 
 export { toolsForAnthropic, allTools, getTool } from "./registry";
 export type { ToolContext, ToolResult, ToolDefinition } from "./registry";

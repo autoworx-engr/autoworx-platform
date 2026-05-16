@@ -190,6 +190,43 @@ yarn dev
 
 ---
 
+## Phase 3b.3 — Lead update removed; tag management added; client search fixed
+
+### Product decision
+
+Owner (Taiseer) decided the copilot does NOT update leads. Lead data integrity (pipeline column, creation date, source attribution) is preserved by keeping edits a deliberate UI action. When the user asks to edit lead fields, the copilot responds with a fixed redirect message and does nothing else.
+
+Tag management on leads IS allowed because tagging is operational organization, not content editing.
+
+### What was removed
+
+- `update_lead` tool — file deleted, barrel import removed. The `/api/lead/company/[companyId]/[id]` PUT route remains (mobile/future use) but is no longer called by the copilot.
+
+### What was added
+
+| Tool              | Permission    | Notes                                                                    |
+| ----------------- | ------------- | ------------------------------------------------------------------------ |
+| `get_lead_tags`   | `lead.read`   | Lists all company tags; no mutation                                      |
+| `add_lead_tag`    | `lead.update` | Verifies lead + tag ownership before join; idempotent                    |
+| `remove_lead_tag` | `lead.update` | Verifies ownership; idempotent                                           |
+| `create_tag`      | `lead.update` | Case-insensitive duplicate guard; defaults to SALES type; default colors |
+
+All write tools follow the existing restate-and-confirm pattern.
+
+### What was fixed
+
+- **`get_client_by_name` full-name search** — split-and-AND replaces single-column `contains`. "Jane Phase3bTest" now matches firstName="Jane" AND lastName="Phase3bTest".
+- **`get_client_by_name` leads inline** — each returned client now includes its originating Lead (id, vehicleInfo, services). AI can obtain a leadId in one call without a separate lookup tool.
+
+### What to review
+
+1. **New tool files** — all in `src/lib/copilot/tools/handlers/`. Each follows the established pattern: Zod schema, `execute(input, ctx)`, `registerTool(...)`. No new routes or server actions.
+2. **Multi-tenant isolation** — `addLeadTagTool` and `removeLeadTagTool` verify both `leadId` and `tagId` against `companyId` before any write. The `leadTags` join-table create/delete is unscoped by design (IDs already verified upstream).
+3. **`createTagTool` color defaults** — Tag model requires `textColor` and `bgColor` (both non-nullable strings). Defaults: `#374151` / `#F3F4F6`. User can override via input.
+4. **System prompt** — decline message for lead edits, tag fuzzy-match workflow, multi-lead disambiguation by vehicle, updated tool lists.
+
+---
+
 ## Phase 3 — Write tools via API wrappers
 
 ### What changed
