@@ -237,7 +237,7 @@ export default function EditClientModalBody({
             </div>
             <label
               htmlFor="profilePicture"
-              className="absolute bottom-0 right-0 p-1 bg-[#6571FF] rounded-full shadow-sm cursor-pointer hover:bg-gray-100 transition-colors"
+              className="absolute bottom-0 right-0 p-1 bg-[#6571FF] rounded-full shadow-sm cursor-pointer  transition-colors"
             >
               <SquarePen className="w-3 h-3 text-white" />
             </label>

@@ -969,7 +969,7 @@ const PDFInvoiceItems = ({
   })[];
 }) => {
   return items.map((item) => {
-    if (!item.service) return null;
+    if (!item.service && !item.labor) return null;
 
     const materialCost = item.materials.reduce((acc, material) => {
       return (
@@ -995,11 +995,59 @@ const PDFInvoiceItems = ({
       }, 0) +
       (item.labor?.discount ? parseFloat(item.labor?.discount.toString()) : 0);
     const serviceTotal = materialCost + laborCost - totalDiscount;
+    const isLaborOnly = !item.service;
+
+    if (isLaborOnly) {
+      return (
+        <View key={item.id} style={styles.itemCard}>
+          <View style={styles.itemHeader}>
+            <Text style={styles.itemName}>{item.labor?.name ?? "Labor"}</Text>
+            <Text style={styles.itemPrice}>{formatCurrency(serviceTotal)}</Text>
+          </View>
+          {item.labor?.notes && (
+            <Text style={styles.itemDesc}>{item.labor.notes}</Text>
+          )}
+          {item.materials.filter(Boolean).length > 0 && (
+            <View style={{ marginBottom: 6 }}>
+              {item.materials.map((material, index) => {
+                if (!material) return null;
+                const lineTotal = material.sell
+                  ? parseFloat(material.sell.toString()) *
+                    Number(material.quantity ?? 0)
+                  : 0;
+                return (
+                  <View key={index} style={styles.lineItem}>
+                    <Text style={styles.lineItemText}>
+                      Material - {material.name}
+                    </Text>
+                    <Text style={styles.lineItemText}>
+                      {formatCurrency(lineTotal)}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+          )}
+          <View style={styles.lineItem}>
+            <Text style={styles.lineItemText}>Labor Cost</Text>
+            <Text style={styles.lineItemText}>{formatCurrency(laborCost)}</Text>
+          </View>
+          {totalDiscount > 0 && (
+            <View style={[styles.lineItem, { marginTop: 4 }]}>
+              <Text style={styles.lineItemText}>Discount</Text>
+              <Text style={styles.lineItemText}>
+                -{formatCurrency(totalDiscount)}
+              </Text>
+            </View>
+          )}
+        </View>
+      );
+    }
 
     return (
       <View key={item.id} style={styles.itemCard}>
         <View style={styles.itemHeader}>
-          <Text style={styles.itemName}>Service - {item.service.name}</Text>
+          <Text style={styles.itemName}>Service - {item.service!.name}</Text>
           <Text style={styles.itemPrice}>{formatCurrency(serviceTotal)}</Text>
         </View>
 

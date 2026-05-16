@@ -6,7 +6,7 @@ import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import { Client, Vehicle } from "@prisma/client";
 import ClientEstimates from "./ClientEstimates";
-import SaveAttachment from "./SaveAttachment";
+import SharedFilesSection from "./SharedFilesSection";
 import TaskActions from "./TaskActions";
 import {
   AppointmentListClient,
@@ -92,7 +92,9 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
   const conversations = conversationsData.data;
 
   const allEmailAttachments =
-    conversations?.flatMap((e) => e.attachments) ?? [];
+    conversations?.flatMap((e) =>
+      e.attachments.map((a) => ({ ...a, createdAt: e.createdAt })),
+    ) ?? [];
 
   const allSmsAttachments = smsData?.flatMap((s) => s.attachments) ?? [];
 
@@ -103,78 +105,10 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
         <ClientNotes clientId={client.id} clientNotes={client?.notes || ""} />
       </section>
 
-      {/* Shared files */}
-      <section className="rounded-2xl border border-zinc-200/70 bg-white p-4 shadow-sm transition-colors dark:border-white/10 dark:bg-zinc-900/60">
-        <header className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-semibold tracking-tight text-zinc-800 dark:text-zinc-100">
-            Shared Files
-          </h3>
-          <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-600 dark:bg-white/10 dark:text-zinc-300">
-            {(conversations?.flatMap((e) => e.attachments).length || 0) +
-              (smsData?.flatMap((s) => s.attachments).length || 0)}
-          </span>
-        </header>
-
-        {/* Email attachments */}
-        <div className="mt-1">
-          <div className="flex items-center gap-2">
-            <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-              Email
-            </p>
-            <span className="rounded-full bg-zinc-100 px-1.5 py-0.5 text-[10px] text-zinc-600 dark:bg-white/10 dark:text-zinc-300">
-              {conversations?.flatMap((e) => e.attachments).length || 0}
-            </span>
-          </div>
-
-          <div className="mt-3 flex flex-wrap gap-3">
-            {conversations && conversations.length > 0 ? (
-              conversations.map((email) =>
-                email.attachments.map((attachment) => (
-                  <SaveAttachment
-                    key={attachment.id}
-                    attachment={attachment}
-                    allAttachments={allEmailAttachments}
-                  />
-                )),
-              )
-            ) : (
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                No files shared via email yet.
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* SMS attachments */}
-        <div className="mt-5">
-          <div className="flex items-center gap-2">
-            <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-              SMS
-            </p>
-            <span className="rounded-full bg-zinc-100 px-1.5 py-0.5 text-[10px] text-zinc-600 dark:bg-white/10 dark:text-zinc-300">
-              {smsData?.flatMap((s) => s.attachments).length || 0}
-            </span>
-          </div>
-
-          <div className="mt-3 flex flex-wrap gap-3">
-            {smsData && smsData.length > 0 ? (
-              smsData.map((sms) =>
-                sms.attachments.map((attachment) => (
-                  <SaveAttachment
-                    key={attachment.id}
-                    attachment={attachment}
-                    allAttachments={allSmsAttachments}
-                  />
-                )),
-              )
-            ) : (
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                No files shared via SMS yet.
-              </p>
-            )}
-          </div>
-        </div>
-      </section>
+      <SharedFilesSection
+        emailAttachments={allEmailAttachments}
+        smsAttachments={allSmsAttachments}
+      />
 
       {/* Estimates & Invoices */}
       <section className="rounded-2xl border border-zinc-200/70 bg-white p-4 shadow-sm transition-colors dark:border-white/10 dark:bg-zinc-900/60">

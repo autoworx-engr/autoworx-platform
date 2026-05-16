@@ -27,6 +27,7 @@ import { revalidatePath } from "next/cache";
 export interface AppointmentToUpdate {
   title: string;
   date?: string;
+  endDate?: string | null;
   startTime?: string;
   endTime?: string;
   assignedUsers: number[];
@@ -95,6 +96,16 @@ export async function editAppointment({
       data: {
         title: appointment.title,
         date: appointment.date ? new Date(appointment.date) : undefined,
+        // `endDate === undefined` -> field omitted, leave column unchanged.
+        // `endDate === null` -> caller is explicitly clearing it (single-day).
+        // String -> parse to Date.
+        ...(appointment.endDate === undefined
+          ? {}
+          : {
+              endDate: appointment.endDate
+                ? new Date(appointment.endDate)
+                : null,
+            }),
         startTime: appointment.startTime,
         endTime: appointment.endTime,
         clientId: appointment.clientId,
