@@ -89,7 +89,7 @@ export const GET = async (request: NextRequest) => {
 
     const verifyToken = await jwtVerifyToken(accessToken);
 
-    const userCompanyId = verifyToken?.payload?.companyId;
+    const userCompanyId = verifyToken?.payload?.companyId as number | undefined;
 
     if (!userCompanyId) {
       throw new AppError(
