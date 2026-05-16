@@ -146,8 +146,8 @@ export default function ServiceCreate() {
           onCategoryChange={setCategory}
           labelPosition="none"
           categoryData={category}
-          categoryOpen={data.service?.canned ? false : categoryOpen}
-          setCategoryOpen={data.service?.canned ? undefined : setCategoryOpen}
+          categoryOpen={categoryOpen}
+          setCategoryOpen={setCategoryOpen}
           className="max-w-full"
         />
       </div>
