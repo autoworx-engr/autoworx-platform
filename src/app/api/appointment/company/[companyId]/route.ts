@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { addAppointment } from "@/actions/appointment/addAppointment";
 import { getCompanyIdFromBearer } from "@/lib/mobileAuth";
+import { writeAuditLog } from "@/lib/copilot/audit";
 
 /**
  * @swagger
@@ -236,6 +237,7 @@ export async function POST(
   req: NextRequest,
   props: { params: Promise<{ companyId: string }> },
 ) {
+  const startTime = Date.now();
   try {
     const { companyId: companyIdStr } = await props.params;
     const companyId = Number(companyIdStr);
@@ -285,6 +287,16 @@ export async function POST(
     });
 
     if (result?.type === "error") {
+      await writeAuditLog({
+        actor: "api",
+        action: "appointment.create",
+        userId: typeof body.userId === "number" ? body.userId : 0,
+        companyId,
+        resourceType: "Appointment",
+        success: false,
+        errorMessage: result.message ?? "Failed to create appointment",
+        latencyMs: Date.now() - startTime,
+      });
       return NextResponse.json(
         {
           success: false,
@@ -295,12 +307,33 @@ export async function POST(
       );
     }
 
+    await writeAuditLog({
+      actor: "api",
+      action: "appointment.create",
+      userId: typeof body.userId === "number" ? body.userId : 0,
+      companyId,
+      resourceType: "Appointment",
+      resourceId: String((result as any)?.data?.id ?? ""),
+      output: (result as any)?.data,
+      success: true,
+      latencyMs: Date.now() - startTime,
+    });
+
     return NextResponse.json({
       success: true,
       message: "Appointment created successfully",
       data: (result as any)?.data ?? null,
     });
   } catch (error: any) {
+    await writeAuditLog({
+      actor: "api",
+      action: "appointment.create",
+      userId: 0,
+      companyId: 0,
+      success: false,
+      errorMessage: error?.message ?? "Unknown error",
+      latencyMs: Date.now() - startTime,
+    });
     return NextResponse.json(
       { success: false, message: error?.message || "Internal server error" },
       { status: 500 },

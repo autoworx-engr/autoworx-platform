@@ -5,6 +5,26 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Phase 3b.1 — Defensive hardening
+
+**Date:** 2026-05-15
+**Branch:** taiseer/ai-copilot
+**Commit:** [see git log]
+
+### Fixes
+
+1. **`updateAppointment.ts`**: added `companyId` to the `db.appointment.update` WHERE clause for consistency with `updateLead` and `updateTask`. The `findFirst` ownership check above already prevents cross-tenant updates in practice, but query-level scoping is defense in depth and matches the established pattern.
+
+2. **POST `/api/appointment/company/[companyId]/route.ts`**: added `writeAuditLog` calls on success, validation error, and exception paths. All other Phase 3b write routes audited from the start; this brought the appointment POST route to parity.
+
+### Verification
+
+- ✓ yarn tsc --noEmit clean
+- ✓ yarn build clean
+- ✓ Grep across all three update actions confirms `companyId` in every update WHERE
+
+---
+
 ## Phase 3b — Write tools: leads, appointments, tasks + 6 copilot tools
 
 **Date:** 2026-05-15

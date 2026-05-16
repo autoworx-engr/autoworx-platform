@@ -58,7 +58,7 @@ export async function updateAppointment(
     const { appointmentId, assignedUsers, date, ...rest } = parsed;
 
     const updated = await db.appointment.update({
-      where: { id: appointmentId },
+      where: { id: appointmentId, companyId },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       data: {
         ...rest,
