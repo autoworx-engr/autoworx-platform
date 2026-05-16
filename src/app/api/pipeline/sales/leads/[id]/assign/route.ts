@@ -43,12 +43,16 @@ export async function PUT(
       },
     });
 
+    // Fire-and-forget: getUser() inside the notification helper calls
+    // getServerSession() which throws NEXT_REDIRECT for mobile Bearer requests.
+    // The assignment is already committed — don't let a notification failure
+    // roll back a successful DB write.
     if (salesUserId) {
-      await sendLeadAssignNotification({
+      sendLeadAssignNotification({
         companyId,
         leadClientName: updatedLead.clientName ?? "",
         assignedEmployeeId: salesUserId,
-      });
+      }).catch(() => {});
     }
 
     return NextResponse.json({ success: true, data: updatedLead });
