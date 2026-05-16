@@ -52,6 +52,7 @@ export default function CompanyMessageBox({
   const toggleRef = useRef<HTMLImageElement>(null);
   const pathname = usePathname();
   const [messages, setMessages] = useState<TMessage[]>([]);
+  const [messagesLoading, setMessagesLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [pending, startTransition] = useTransition();
   const messageBoxRef = useRef<HTMLDivElement>(null);
