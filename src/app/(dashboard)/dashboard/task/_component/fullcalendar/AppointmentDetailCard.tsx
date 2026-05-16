@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  CalendarDays,
   Clock3,
   User,
   Mail,
@@ -12,6 +13,7 @@ import {
 } from "lucide-react";
 
 interface AppointmentDetailCardProps {
+  dateLabel?: string;
   timeRange: string;
   clientName: string;
   clientEmail: string;
@@ -25,6 +27,7 @@ interface AppointmentDetailCardProps {
 }
 
 export function AppointmentDetailCard({
+  dateLabel,
   timeRange,
   clientName,
   clientEmail,
@@ -37,6 +40,15 @@ export function AppointmentDetailCard({
   aptIconStyle,
 }: AppointmentDetailCardProps) {
   const details = [
+    ...(dateLabel
+      ? [
+          {
+            icon: <CalendarDays className="size-4" />,
+            label: "Date",
+            value: dateLabel,
+          },
+        ]
+      : []),
     { icon: <Clock3 className="size-4" />, label: "Time", value: timeRange },
     { icon: <User className="size-4" />, label: "Client", value: clientName },
     { icon: <Mail className="size-4" />, label: "Email", value: clientEmail },

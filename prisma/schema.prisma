@@ -13,6 +13,7 @@ model Appointment {
   userId                          Int                             @map("user_id")
   title                           String                          @db.VarChar(100)
   date                            DateTime?
+  endDate                         DateTime?                       @map("end_date")
   startTime                       String?                         @map("start_time")
   endTime                         String?                         @map("end_time")
   companyId                       Int                             @map("company_id")

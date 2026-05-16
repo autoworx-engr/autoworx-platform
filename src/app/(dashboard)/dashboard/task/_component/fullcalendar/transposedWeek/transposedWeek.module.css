@@ -1,0 +1,243 @@
+.viewWrapper {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.scroller {
+  flex: 1;
+  overflow: auto;
+  position: relative;
+}
+
+.grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--label-w) var(--grid-w);
+  width: max-content;
+  min-width: 100%;
+}
+
+.headerRow {
+  display: contents;
+}
+
+.headerCorner {
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 30;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  border-right: 1px solid #e2e8f0;
+  height: 40px;
+}
+
+.headerTimes {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  height: 40px;
+  display: flex;
+  width: var(--grid-w);
+}
+
+.hourCell {
+  flex: 0 0 var(--hour-w);
+  width: var(--hour-w);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 6px;
+  font-size: 11px;
+  color: #64748b;
+  border-right: 1px solid #e2e8f0;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.dayLabel {
+  position: sticky;
+  left: 0;
+  z-index: 15;
+  background: #ffffff;
+  border-right: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  height: var(--row-h);
+  cursor: pointer;
+  user-select: none;
+}
+
+.dayLabel:hover {
+  background: #f1f5f9;
+}
+
+.dayLabelToday {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.dayLabelToday:hover {
+  background: #dbeafe;
+}
+
+.dayLabelWeekend {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.dayName {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #475569;
+}
+
+.dayLabelToday .dayName {
+  color: #1d4ed8;
+}
+
+.dayLabelWeekend .dayName {
+  color: #b91c1c;
+}
+
+.dayNum {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.1;
+}
+
+.dayLabelToday .dayNum {
+  color: #1d4ed8;
+}
+
+.dayLane {
+  position: relative;
+  height: var(--row-h);
+  width: var(--grid-w);
+  border-bottom: 1px solid #e2e8f0;
+  background-image:
+    linear-gradient(to right, #f1f5f9 1px, transparent 1px),
+    linear-gradient(to right, #e2e8f0 1px, transparent 1px);
+  background-size:
+    var(--slot-w) 100%,
+    var(--hour-w) 100%;
+}
+
+.nonBusiness {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: rgba(241, 245, 249, 0.6);
+  pointer-events: none;
+}
+
+.holidayLane {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(254, 226, 226, 0.5),
+    rgba(254, 226, 226, 0.5) 6px,
+    rgba(254, 202, 202, 0.5) 6px,
+    rgba(254, 202, 202, 0.5) 12px
+  );
+}
+
+.weekendLane {
+  background-color: rgba(254, 242, 242, 0.45);
+}
+
+.holidayBadge {
+  position: absolute;
+  top: 6px;
+  left: 8px;
+  z-index: 5;
+  pointer-events: auto;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #b91c1c;
+  background: rgba(255, 255, 255, 0.85);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid #fca5a5;
+}
+
+.eventCard {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  cursor: grab;
+  border-radius: 8px;
+  user-select: none;
+  transition: box-shadow 120ms ease;
+  z-index: 2;
+}
+
+.stickyInner {
+  position: sticky;
+  left: var(--label-w);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 2px 8px;
+  height: 100%;
+  width: max-content;
+  max-width: 100%;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.eventCard:hover {
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.15);
+  z-index: 3;
+}
+
+.eventCardDragging {
+  cursor: grabbing;
+  opacity: 0.85;
+  z-index: 50;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.25);
+  pointer-events: none;
+}
+
+.resizeHandle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: ew-resize;
+  background: transparent;
+  z-index: 4;
+}
+
+.resizeHandle:hover {
+  background: rgba(15, 23, 42, 0.12);
+}
+
+.nowLine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #ef4444;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.dropTarget {
+  outline: 2px dashed #6571ff;
+  outline-offset: -2px;
+}

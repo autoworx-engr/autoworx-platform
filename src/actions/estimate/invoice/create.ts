@@ -144,16 +144,12 @@ export async function createInvoice({
       isShopBooking,
     });
 
-    let session: Awaited<ReturnType<typeof getServerSession>> | null = null;
-    try {
-      session = await getServerSession(authOptions);
-    } catch {
-      // outside request scope (e.g., pg-boss worker) — force params handle auth
-    }
     // Step 2: Get authenticated session and company ID
     let companyId = forceCompanyId;
+    let session: Awaited<ReturnType<typeof getServerSession>> | null = null;
 
     if (!companyId) {
+      session = await getServerSession(authOptions);
       companyId = (session as any)?.user?.companyId;
       if (!companyId) {
         throw new Error("Company ID is required to create an email template.");

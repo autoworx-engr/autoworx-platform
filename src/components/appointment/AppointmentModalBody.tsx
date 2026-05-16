@@ -49,7 +49,9 @@ export default function AppointmentModalBody(props: AppointmentModalBodyProps) {
     handleSubmit,
     containerRef,
     rows,
+    title,
     date,
+    endDate,
     startTime,
     endTime,
     times,
@@ -149,7 +151,9 @@ export default function AppointmentModalBody(props: AppointmentModalBodyProps) {
             >
               <ScheduleTab
                 rows={rows}
+                title={title}
                 date={date}
+                endDate={endDate}
                 startTime={startTime || ""}
                 endTime={endTime}
                 settings={settings}
