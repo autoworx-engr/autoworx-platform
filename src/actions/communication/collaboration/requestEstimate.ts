@@ -23,16 +23,6 @@ export const requestEstimate = async (
   requestEstimateData: TEstimateData,
 ) => {
   try {
-    // const isAlreadyExistsEstimate = await db.client.findFirst({
-    //   where: {
-    //     companyId: requestEstimateData.receiverCompanyId,
-    //   },
-    // });
-
-    // if (!!isAlreadyExistsEstimate) {
-    //   throw new Error("Estimate for this client already exists");
-    // }
-
     const { requestEstimateFromDB } = await db.$transaction(async (prisma) => {
       const origin = (await headers()).get("origin");
 
