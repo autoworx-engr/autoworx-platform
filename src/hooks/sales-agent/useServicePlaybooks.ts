@@ -106,7 +106,7 @@ export function useClonePlaybooks() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          sourceCompanyId: 4,
+          sourceCompanyId: Number(process.env.SOURCE_COMPANY_ID) ?? 4,
           targetCompanyId: companyId,
         }),
       });
