@@ -5,6 +5,43 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Phase 3b.2 — UX hardening: restate-and-confirm before reversible writes
+
+**Date:** 2026-05-15
+**Branch:** taiseer/task-calendar
+**Commit:** [see git log]
+
+### Problem
+
+Smoke test 4a revealed that the copilot was calling `create_lead` directly when the user's intent seemed clear, without restating what it was about to do or waiting for explicit confirmation. For non-technical shop managers, this means a misheard name or wrong phone number hits the database with no chance to catch it.
+
+### Fix
+
+Replaced the weak 4-line "Write tool guidance" section in `src/lib/copilot/systemPrompt.ts` with a strict 9-step "Workflow for write operations" block enforced for all 6 reversible-write tools: `create_lead`, `update_lead`, `create_appointment`, `update_appointment`, `create_task`, `update_task`.
+
+The new workflow:
+
+1. Gather all required information — ask ONE question at a time if anything is missing
+2. For updates, look up the record ID first if not already known
+3. **Restate** what is about to happen as a structured summary (`I'm about to create a lead: — Name: ... — Phone: ...`)
+4. **Wait** for explicit confirmation ("yes" / "no" / "change [field]") — do NOT call the tool until confirmed
+   5–6. Handle "no" and "change" responses with re-confirm before proceeding
+5. Only AFTER confirmation, call the tool
+6. After success, briefly confirm with the key identifying detail only (no re-summary)
+7. On failure, explain in plain language — never retry silently
+
+### Files changed
+
+- `src/lib/copilot/systemPrompt.ts` — replaced 4-line write guidance with 9-step enforced workflow
+
+### Verification
+
+- ✓ yarn tsc --noEmit clean
+- ✓ yarn build clean
+- Manual smoke test 4a re-run required: send "Add a new lead — Jane Smith, 555-9999" and verify copilot asks for confirmation before calling `create_lead`
+
+---
+
 ## Phase 3b.1 — Defensive hardening
 
 **Date:** 2026-05-15

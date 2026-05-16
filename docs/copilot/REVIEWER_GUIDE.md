@@ -220,6 +220,54 @@ The team decided (Tanvir, AbuBokorprog) that all copilot write operations go thr
 
 ---
 
+## Phase 3b — Write tools: leads, appointments, tasks
+
+### What changed
+
+Six reversible-write copilot tools backed by authenticated API routes:
+
+| Tool                 | Route                                             |
+| -------------------- | ------------------------------------------------- |
+| `create_lead`        | POST `/api/lead/company/{companyId}`              |
+| `update_lead`        | PUT `/api/lead/company/{companyId}/{leadId}`      |
+| `create_appointment` | POST `/api/appointment/company/{companyId}`       |
+| `update_appointment` | PATCH `/api/appointment/company/{companyId}/{id}` |
+| `create_task`        | POST `/api/task/company/{companyId}`              |
+| `update_task`        | PUT `/api/task/company/{companyId}/{id}`          |
+
+All routes follow the Phase 3a template: Bearer JWT → companyId cross-check → Zod validate → server action (or DB-direct for task create) → audit log on all paths.
+
+### What to review
+
+1. **Multi-tenant isolation** — every `db.*` query in the new server actions (`updateAppointment.ts`, `updateTask.ts`, `updateLead.ts`) scopes by `companyId` in BOTH the ownership `findFirst` AND the `update` WHERE clause. Cross-company writes are rejected at two layers.
+
+2. **`updateAppointment.ts` `as any` cast** — required because spreading `rest` (which includes nullable FK fields like `clientId: number | null | undefined`) trips Prisma's union type checker. Zod validates the shape upstream; the cast is safe.
+
+3. **Task create is DB-direct** — `createTask` server action is coupled to Google Calendar + notifications; rather than adding force params, Phase 3b uses a DB-direct insert in the task POST route (same pattern as estimate POST).
+
+4. **`assignedUsers` defaults** — `createAppointmentTool` and `createTaskTool` default `assignedUsers` to `[ctx.userId]` when empty, matching the web UI behavior.
+
+---
+
+## Phase 3b.2 — UX hardening: restate-and-confirm
+
+### What changed
+
+`src/lib/copilot/systemPrompt.ts` — the 4-line "Write tool guidance" section was replaced with a 9-step enforced "Workflow for write operations" that applies to all 6 reversible-write tools.
+
+### What to review
+
+1. **No code changes** — this is a prompt-only change. No routes, actions, or tool handlers were modified.
+
+2. **The new workflow gate** — before any write tool fires, the model must:
+   - Restate intent as a structured summary with labelled fields
+   - End with `Confirm? (yes / no / change [field])`
+   - Wait for explicit confirmation before calling the tool
+
+3. **Smoke test re-run needed** — test 4a (create lead, verify confirmation fires) should be re-run against this build. The prior run revealed the copilot skipping confirmation; this build enforces it.
+
+---
+
 ## Architecture decision needed before Phase 3
 
 **RESOLVED — team chose Path 1 (thin API wrappers) with JWT Bearer auth. See PHASE_3_PLAN.md for full decision record.**
