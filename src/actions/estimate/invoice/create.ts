@@ -144,11 +144,12 @@ export async function createInvoice({
       isShopBooking,
     });
 
-    const session = await getServerSession(authOptions);
     // Step 2: Get authenticated session and company ID
     let companyId = forceCompanyId;
+    let session = null;
 
     if (!companyId) {
+      session = await getServerSession(authOptions);
       companyId = session?.user.companyId;
       if (!companyId) {
         throw new Error("Company ID is required to create an email template.");

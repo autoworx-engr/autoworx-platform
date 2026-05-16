@@ -27,4 +27,5 @@ export const companyPermissionModule = {
   COMMUNICATION: "communication",
   WORKFORCE_MANAGEMENT: "workforceManagement",
   SERVICE_ESTIMATOR: "serviceEstimator",
+  MESSENGER: "messenger",
 } as const;

@@ -35,6 +35,7 @@ export async function sendInfobipMessage({
   isSalesAgent = false,
   userId,
   systemCall = false,
+  shouldSalesAgentStop = true,
 }: {
   companyId?: number;
   message: string;
@@ -44,6 +45,8 @@ export async function sendInfobipMessage({
   userId?: number;
   /** Pass true when calling from a webhook/system context with no user session. */
   systemCall?: boolean;
+  /** When true (default), disables isSalesAgent on the client after sending. */
+  shouldSalesAgentStop?: boolean;
 }) {
   try {
     const resolvedCompanyId = companyId ?? (await getCompanyId());
@@ -328,7 +331,12 @@ export async function sendInfobipMessage({
           });
         }
 
-        if (client && client?.isSalesAgent) {
+        if (
+          shouldSalesAgentStop &&
+          client &&
+          client?.isSalesAgent &&
+          !systemCall
+        ) {
           await tx.client.update({
             where: { id: clientId },
             data: { isSalesAgent: false },
@@ -368,30 +376,6 @@ export async function sendInfobipMessage({
       } catch (error) {
         console.error("Pipeline automation trigger error:", error);
       }
-
-      // const isSalesAgentEnabled = entitlements.awxSalesAgent;
-
-      // const isCompanySalesAgent = company?.isSalesAgent === true;
-      // const isClientSalesAgent = client?.isSalesAgent === true;
-
-      // if (isCompanySalesAgent && isClientSalesAgent && isSalesAgentEnabled) {
-      //   if (data && data?.from === infobipConfig.phoneNumber) {
-      //     try {
-      //       await sendSMSToAgent({
-      //         company_id: client.companyId,
-      //         message: data?.message,
-      //         send_from: data?.from,
-      //         send_to: data?.to,
-      //         client_id: client.id,
-      //       });
-      //     } catch (error) {
-      //       return Response.json(
-      //         { message: `Sales agent error: ${error}` },
-      //         { status: 200 },
-      //       );
-      //     }
-      //   }
-      // }
 
       revalidatePath("/dashboard/communication/client/${clientId}");
       return {

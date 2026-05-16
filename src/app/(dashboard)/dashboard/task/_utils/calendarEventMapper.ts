@@ -68,9 +68,36 @@ export const buildCalendarEvents = ({
   appointments.forEach((appointment: any) => {
     const dateStr = getDateString(appointment?.date);
     if (!dateStr) return;
+    const endDateStr = appointment?.endDate
+      ? getDateString(appointment.endDate)
+      : "";
+    // Multi-day when endDate exists and is strictly after the start date.
+    const isMultiDay = !!endDateStr && endDateStr > dateStr;
     const categoryColor = isHexColor(appointment?.serviceCategory?.color)
       ? appointment.serviceCategory.color
       : undefined;
+
+    // FullCalendar all-day events use an EXCLUSIVE end (the day after the
+    // last visible day); timed events use the inclusive end timestamp.
+    const hasTimes = !!appointment.startTime && !!appointment.endTime;
+    let start: string;
+    let end: string | undefined;
+    let allDay: boolean | undefined;
+
+    if (isMultiDay && hasTimes) {
+      start = `${dateStr}T${appointment.startTime}`;
+      end = `${endDateStr}T${appointment.endTime}`;
+    } else if (isMultiDay) {
+      start = dateStr;
+      end = moment.utc(endDateStr).add(1, "day").format("YYYY-MM-DD");
+      allDay = true;
+    } else if (hasTimes) {
+      start = `${dateStr}T${appointment.startTime}`;
+      end = `${dateStr}T${appointment.endTime}`;
+    } else {
+      start = dateStr;
+      end = undefined;
+    }
 
     mappedEvents.push({
       id: `apt-${appointment.id}`,
@@ -79,12 +106,9 @@ export const buildCalendarEvents = ({
         (appointment.client
           ? `${appointment.client.firstName} ${appointment.client.lastName}`
           : "Appointment"),
-      start: appointment.startTime
-        ? `${dateStr}T${appointment.startTime}`
-        : dateStr,
-      end: appointment.endTime
-        ? `${dateStr}T${appointment.endTime}`
-        : undefined,
+      start,
+      end,
+      ...(allDay !== undefined ? { allDay } : {}),
       backgroundColor: categoryColor
         ? lightenHex(categoryColor, 0.25)
         : undefined,
