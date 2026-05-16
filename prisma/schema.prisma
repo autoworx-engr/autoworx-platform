@@ -13,6 +13,7 @@ model Appointment {
   userId                          Int                             @map("user_id")
   title                           String                          @db.VarChar(100)
   date                            DateTime?
+  endDate                         DateTime?                       @map("end_date")
   startTime                       String?                         @map("start_time")
   endTime                         String?                         @map("end_time")
   companyId                       Int                             @map("company_id")
@@ -3531,4 +3532,17 @@ enum EmergencyRequestStatus {
   REJECTED // Cannot accommodate
   EXPIRED // Not reviewed within time window
   CANCELLED // Client cancelled the request
+}
+
+// One row per client per debounce window.
+// Inserted once when the first SMS of a window arrives (ON CONFLICT DO NOTHING).
+// Deleted atomically by the worker when it claims the job for processing.
+model SmsAgentDebounce {
+  clientId    Int      @id @map("client_id")
+  companyId   Int      @map("company_id")
+  sendFrom    String   @map("send_from")
+  sendTo      String   @map("send_to")
+  windowStart DateTime @map("window_start")
+
+  @@map("sms_agent_debounce")
 }

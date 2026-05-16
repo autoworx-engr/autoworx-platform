@@ -51,9 +51,16 @@ async function updateGoogleCalendarEvent(
     )
     .utc();
 
+  // Multi-day appointments: end time belongs to endDate; otherwise end time
+  // shares the start date.
+  const endDateString =
+    "endDate" in task && task.endDate
+      ? task.endDate.split("T")[0]
+      : task.date.split("T")[0];
+
   const endMoment = moment
     .tz(
-      `${task.date.split("T")[0]} ${task.endTime}`,
+      `${endDateString} ${task.endTime}`,
       userTimeZone, // Parse as local time
     )
     .utc();

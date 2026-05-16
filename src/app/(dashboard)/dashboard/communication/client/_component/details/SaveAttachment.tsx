@@ -6,24 +6,27 @@ import {
   ChevronRight,
   Download,
   File,
+  Mic,
   X,
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
-import { isImage } from "../../_utils";
+import { isAudio, isImage } from "../../_utils";
 
 type Attachment = MailgunEmailAttachment | ClientSmsAttachments;
 
 type TProps = {
   attachment: Attachment;
   allAttachments?: Attachment[];
+  variant?: "chip" | "thumbnail";
 };
 
 export default function SaveAttachment({
   attachment,
   allAttachments = [],
+  variant = "chip",
 }: TProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -43,7 +46,7 @@ export default function SaveAttachment({
 
   const goPrev = useCallback(() => {
     setCurrentIndex(
-      (i) => (i - 1 + effectiveList.length) % effectiveList.length
+      (i) => (i - 1 + effectiveList.length) % effectiveList.length,
     );
     setZoom(1);
   }, [effectiveList.length]);
@@ -83,18 +86,46 @@ export default function SaveAttachment({
 
   return (
     <>
-      {/* Attachment Button */}
-      <button
-        onClick={openModal}
-        className="flex cursor-pointer items-center gap-x-2 rounded-md border border-emerald-600 px-2 py-1 text-sm transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
-      >
-        <File className="h-5 w-5 shrink-0" />
-        <span>
-          {attachment.name?.length > 15
-            ? attachment.name.slice(0, 15) + "..."
-            : attachment.name}
-        </span>
-      </button>
+      {variant === "thumbnail" ? (
+        <button
+          onClick={openModal}
+          className="relative aspect-square w-full overflow-hidden rounded-md bg-zinc-100 dark:bg-zinc-800 cursor-pointer hover:opacity-90 transition-opacity"
+        >
+          {isImage(attachment.name) ? (
+            <Image
+              src={attachment.url}
+              alt={attachment.name ?? ""}
+              fill
+              unoptimized
+              className="object-cover"
+            />
+          ) : (
+            <div className="flex h-full flex-col items-center justify-center gap-1">
+              <File className="h-6 w-6 text-zinc-500 dark:text-zinc-400" />
+              <span className="text-[9px] uppercase font-medium text-zinc-400 dark:text-zinc-500">
+                {attachment.name?.split(".").pop() ?? "file"}
+              </span>
+            </div>
+          )}
+        </button>
+      ) : (
+        /* Attachment Button */
+        <button
+          onClick={openModal}
+          className="flex cursor-pointer items-center gap-x-2 rounded-md border border-emerald-600 px-2 py-1 text-sm transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+        >
+          {isAudio(attachment.name) ? (
+            <Mic className="h-5 w-5 shrink-0" />
+          ) : (
+            <File className="h-5 w-5 shrink-0" />
+          )}
+          <span>
+            {attachment.name?.length > 15
+              ? attachment.name.slice(0, 15) + "..."
+              : attachment.name}
+          </span>
+        </button>
+      )}
 
       {isOpen && (
         <div
@@ -147,21 +178,27 @@ export default function SaveAttachment({
           )}
 
           {/* Content */}
-          <div className="flex  flex-col items-center justify-center gap-3 overflow-hidden">
+          <div className="flex flex-col items-center justify-center gap-3">
             {isCurrentImage ? (
-              <div className="relative max-h-[50vh] max-w-[75vw] overflow-hidden rounded-lg">
+              <div
+                className="flex items-center justify-center overflow-auto"
+                style={{
+                  maxHeight: "90vh",
+                  maxWidth: "90vw",
+                }}
+              >
                 <Image
                   src={currentAttachment.url}
                   alt={currentAttachment.name ?? "attachment"}
-                  width={500}
-                  height={300}
-                  sizes="100vw"
+                  width={1400}
+                  height={1000}
                   unoptimized
+                  className="max-h-[90vh] max-w-[90vw] rounded-lg object-contain"
                   style={{
                     transform: `scale(${zoom})`,
+                    transformOrigin: "center",
                     transition: "transform 0.2s ease",
                   }}
-                  // className="object-contain"
                 />
               </div>
             ) : (
