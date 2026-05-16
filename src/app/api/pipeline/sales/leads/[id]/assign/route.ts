@@ -24,6 +24,14 @@ export async function PUT(
 
     const verifyToken = await jwtVerifyToken(accessToken);
     const companyId = verifyToken?.payload?.companyId as number | undefined;
+    console.log(
+      "[ASSIGN ROUTE] leadId:",
+      leadId,
+      "companyId from token:",
+      companyId,
+      "tokenPayload:",
+      JSON.stringify(verifyToken?.payload),
+    );
     if (!companyId) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },
@@ -34,6 +42,12 @@ export async function PUT(
     const body = await request.json();
     const salesUserId: number | null =
       body.salesUserId !== undefined ? body.salesUserId : null;
+    console.log(
+      "[ASSIGN ROUTE] body:",
+      JSON.stringify(body),
+      "salesUserId:",
+      salesUserId,
+    );
 
     const updatedLead = await db.lead.update({
       where: { id: leadId, companyId },
