@@ -192,7 +192,7 @@ export async function sendInfobipEmail({
       },
     });
 
-    updateNewEmailChatTrack({
+    await updateNewEmailChatTrack({
       clientId,
       emailLastMessage: text || "",
       lastEmailBy: "Company",

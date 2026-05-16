@@ -1,8 +1,9 @@
 "use client";
 
-import { Clock3, Zap, Users, Edit } from "lucide-react";
+import { CalendarDays, Clock3, Zap, Users, Edit } from "lucide-react";
 
 interface TaskDetailCardProps {
+  dateLabel?: string;
   timeRange: string;
   priority: string;
   taskUsers?: any[];
@@ -12,6 +13,7 @@ interface TaskDetailCardProps {
 }
 
 export function TaskDetailCard({
+  dateLabel,
   timeRange,
   priority,
   taskUsers,
@@ -21,6 +23,20 @@ export function TaskDetailCard({
 }: TaskDetailCardProps) {
   return (
     <>
+      {dateLabel && (
+        <div className="flex items-start gap-3">
+          <div className={`p-2 rounded-lg shrink-0 ${taskIconClass}`}>
+            <CalendarDays className="size-4" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-0.5">
+              Date
+            </p>
+            <p className="text-sm font-medium text-gray-900">{dateLabel}</p>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-start gap-3">
         <div className={`p-2 rounded-lg shrink-0 ${taskIconClass}`}>
           <Clock3 className="size-4" />

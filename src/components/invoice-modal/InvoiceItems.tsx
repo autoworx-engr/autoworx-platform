@@ -24,7 +24,7 @@ export function InvoiceItems({ items, isPrinting = false }: InvoiceItemsProps) {
   const [openService, setOpenService] = useState<number | null>(null);
 
   return items.map((item) => {
-    if (!item.service) return null;
+    if (!item.service && !item.labor) return null;
 
     const materialCost = item.materials.reduce((acc, material) => {
       return (
@@ -50,6 +50,75 @@ export function InvoiceItems({ items, isPrinting = false }: InvoiceItemsProps) {
       }, 0) +
       (item.labor?.discount ? parseFloat(item.labor?.discount.toString()) : 0);
     const serviceTotal = materialCost + laborCost - totalDiscount;
+    const isLaborOnly = !item.service;
+
+    if (isLaborOnly) {
+      return (
+        <div
+          key={item.id}
+          className="rounded-md border border-[#6571FF] px-5 py-1"
+        >
+          <div
+            onClick={() =>
+              setOpenService(openService === item.id ? null : item.id)
+            }
+            className="flex w-full cursor-pointer justify-between text-[#6571FF]"
+          >
+            <p>{item.labor?.name ?? "Labor"}</p>
+            <button
+              type="button"
+              onClick={() =>
+                setOpenService(openService === item.id ? null : item.id)
+              }
+              className="flex items-center gap-1"
+            >
+              <p>{formatCurrency(serviceTotal)}</p>
+              {openService === item.id ? <ChevronUp /> : <ChevronDown />}
+            </button>
+          </div>
+          {(openService === item.id || isPrinting) && (
+            <>
+              <div className="mt-2 text-[#6571FF]">
+                {item.materials.map((material, index) => {
+                  if (!material) return null;
+                  return (
+                    <div key={index} className="flex justify-between">
+                      <p>{material.name}</p>
+                      <p>
+                        {formatCurrency(
+                          material.sell
+                            ? parseFloat(material.sell.toString()) *
+                                Number(material.quantity ?? 0)
+                            : 0,
+                        )}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-2">
+                <div className="flex justify-between text-[#6571FF]">
+                  <p>Labor Cost</p>
+                  <p>{formatCurrency(laborCost)}</p>
+                </div>
+                {item.labor?.notes && (
+                  <p className="text-sm text-slate-500">{item.labor.notes}</p>
+                )}
+              </div>
+              {totalDiscount > 0 && (
+                <div>
+                  <div className="flex justify-between text-[#6571FF]">
+                    <p>Discount</p>
+                    <p>{formatCurrency(totalDiscount)}</p>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      );
+    }
+
     return (
       <div
         key={item.id}
@@ -61,7 +130,7 @@ export function InvoiceItems({ items, isPrinting = false }: InvoiceItemsProps) {
           }
           className="flex w-full cursor-pointer justify-between text-[#6571FF]"
         >
-          <p>{item.service.name}</p>
+          <p>{item.service!.name}</p>
           <button
             type="button"
             onClick={() =>
@@ -76,7 +145,7 @@ export function InvoiceItems({ items, isPrinting = false }: InvoiceItemsProps) {
         {(openService === item.id || isPrinting) && (
           <>
             <p className="whitespace-pre-wrap">
-              {item.serviceDesc || item.service.description}
+              {item.serviceDesc || item.service!.description}
             </p>
             <div className="mt-2 text-[#6571FF]">
               <div>
@@ -91,7 +160,7 @@ export function InvoiceItems({ items, isPrinting = false }: InvoiceItemsProps) {
                           material.sell
                             ? parseFloat(material.sell.toString()) *
                                 Number(material.quantity ?? 0)
-                            : 0
+                            : 0,
                         )}
                       </p>
                     </div>
@@ -108,7 +177,7 @@ export function InvoiceItems({ items, isPrinting = false }: InvoiceItemsProps) {
                     item.labor?.charge
                       ? parseFloat(item.labor?.charge.toString()) *
                           Number(item.labor?.hours)
-                      : 0
+                      : 0,
                   )}
                 </p>
               </div>

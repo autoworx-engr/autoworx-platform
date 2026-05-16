@@ -1081,7 +1081,7 @@ export async function POST(req: Request) {
             });
             await tx.lead.create({
               data: {
-                clientName: `${firstName} ${lastName}`,
+                clientName: `${firstName ?? ""} ${lastName ?? ""}`.trim(),
                 clientEmail: email,
                 clientPhone: phone,
                 companyId: shop.companyId,

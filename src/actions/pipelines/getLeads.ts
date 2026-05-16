@@ -10,6 +10,10 @@ import { updateCommunicationAutomationTrigger } from "../automation/communicatio
 import { updatePipelineAutomationTrigger } from "../automation/pipeline/triggerPipelineAutomation";
 import { updateTagAutomationTrigger } from "../automation/tag/triggerTagAutomation";
 import { getCompanyTimezone } from "../settings/getCompanyTimezone";
+import {
+  buildUpcomingAppointmentFilter,
+  upcomingAppointmentOrderBy,
+} from "./_upcomingAppointmentFilter";
 
 type TGetLeads = {
   columnId?: number;
@@ -60,10 +64,7 @@ export const getLeads = async ({
       }),
     };
 
-    const todayStart = moment
-      .tz(timezone ?? "UTC")
-      .startOf("day")
-      .toDate();
+    const upcomingApptFilter = buildUpcomingAppointmentFilter(timezone);
     // console.log({ orderBy });
 
     const leadsData = await db.lead.findMany({
@@ -91,12 +92,8 @@ export const getLeads = async ({
         Client: {
           include: {
             appointments: {
-              where: {
-                date: { gte: todayStart },
-              },
-              orderBy: {
-                date: "asc",
-              },
+              where: upcomingApptFilter,
+              orderBy: upcomingAppointmentOrderBy,
               take: 1,
               select: {
                 id: true,
@@ -145,12 +142,8 @@ export const getLeads = async ({
             },
             include: {
               appointments: {
-                where: {
-                  date: { gte: todayStart },
-                },
-                orderBy: {
-                  date: "asc",
-                },
+                where: upcomingApptFilter,
+                orderBy: upcomingAppointmentOrderBy,
                 take: 1,
                 select: {
                   id: true,
@@ -286,10 +279,7 @@ export const getLeadsWithCount = async ({
         }),
     };
 
-    const todayStart = moment
-      .tz(timezone ?? "UTC")
-      .startOf("day")
-      .toDate();
+    const upcomingApptFilter = buildUpcomingAppointmentFilter(timezone);
 
     const [totalCount, leadsData] = await Promise.all([
       db.lead.count({ where: query }),
@@ -318,12 +308,8 @@ export const getLeadsWithCount = async ({
           Client: {
             include: {
               appointments: {
-                where: {
-                  date: { gte: todayStart },
-                },
-                orderBy: {
-                  date: "asc",
-                },
+                where: upcomingApptFilter,
+                orderBy: upcomingAppointmentOrderBy,
                 take: 1,
                 select: {
                   id: true,
@@ -372,12 +358,8 @@ export const getLeadsWithCount = async ({
             },
             include: {
               appointments: {
-                where: {
-                  date: { gte: todayStart },
-                },
-                orderBy: {
-                  date: "asc",
-                },
+                where: upcomingApptFilter,
+                orderBy: upcomingAppointmentOrderBy,
                 take: 1,
                 select: {
                   id: true,
@@ -514,10 +496,7 @@ export const getLeadsWithCountOptimized = async ({
         }),
     };
 
-    const todayStart = moment
-      .tz(timezone ?? "UTC")
-      .startOf("day")
-      .toDate();
+    const upcomingApptFilter = buildUpcomingAppointmentFilter(timezone);
 
     // Run count and data queries in parallel
     const [totalCount, leadsData] = await Promise.all([
@@ -549,12 +528,8 @@ export const getLeadsWithCountOptimized = async ({
           Client: {
             include: {
               appointments: {
-                where: {
-                  date: { gte: todayStart },
-                },
-                orderBy: {
-                  date: "asc",
-                },
+                where: upcomingApptFilter,
+                orderBy: upcomingAppointmentOrderBy,
                 take: 1,
                 select: {
                   id: true,
