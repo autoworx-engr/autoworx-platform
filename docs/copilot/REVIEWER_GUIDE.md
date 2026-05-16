@@ -190,6 +190,20 @@ yarn dev
 
 ---
 
+## Phase 3b.4 — Tool execution discipline
+
+During smoke testing, the copilot was observed saying "task created" and "tag added to lead" without actually calling the corresponding write tools. Audit log + DB inspection confirmed the writes never happened — pure overclaim.
+
+**Test 4e**: zero `task.create` audit entries, zero Task rows. The model composed a success reply without a tool call.
+
+**Test 4j**: `create_tag` was called and wrote to DB; `add_lead_tag` was never called. No LeadTags row. The model treated tag creation as completing a tag-application request.
+
+Fix: three system prompt rules enforcing that (1) success language requires actual tool invocation in the same turn, (2) multi-step chains must complete all steps before claiming done, and (3) final messages must reflect actual tool returns. Explicit step-by-step chains provided for tag application and other multi-tool flows.
+
+Limitation noted: prompt-based fixes for AI overclaiming are mitigation, not elimination. Flagged for Phase 5+ structural enforcement review if it persists in production.
+
+---
+
 ## Phase 3b.3 — Lead update removed; tag management added; client search fixed
 
 ### Product decision

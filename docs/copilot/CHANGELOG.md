@@ -5,6 +5,50 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Phase 3b.4 — Tool execution discipline
+
+**Date:** 2026-05-16
+**Branch:** taiseer/ai-copilot
+**Commit:** [see git log]
+
+### Bug fixed
+
+During Phase 3b smoke testing, the copilot sometimes reported write operations as completed without actually calling the corresponding tool:
+
+1. **Test 4e**: said "task created" but never called `create_task` — zero Task rows existed in DB, zero `task.create` audit entries
+2. **Test 4j**: said "tag added to lead" but only called `create_tag`, never `add_lead_tag` — tag definition was created but no LeadTags row linked it to Jane's lead
+
+### Root cause
+
+The model was treating the user's request as fulfilled before invoking all required tools. This is a known failure mode for tool-using LLM agents: the model composes a success response based on its intent rather than on what it actually executed.
+
+### Fix
+
+Added three explicit rules to the system prompt under a new "Tool execution discipline" section, inserted after the "Workflow for write operations" section:
+
+1. **Never claim a write succeeded without calling a write tool.** Past-tense success language ("Done", "Created", "Scheduled", etc.) requires the corresponding tool to have been called and returned success in the same turn.
+
+2. **Multi-step requests require ALL tool calls in the chain.** Explicit step-by-step chains for tag application (create_tag alone does NOT apply the tag — add_lead_tag must follow), appointment moves, and task updates.
+
+3. **Final message must match tool returns.** Never fabricate success. Always reflect actual tool results.
+
+### Cleanup
+
+- Removed orphaned "test 10" tag from Tag table (Company 1, Tag ID 3 — created during broken 4j test, never attached to a lead, zero LeadTags references)
+- Company 1 tag table restored to 2 pre-existing tags (Test tag, Test2)
+
+### Verification
+
+- ✓ yarn tsc --noEmit clean
+- ✓ yarn build clean
+- (Pending: re-run 4e and 4j after dev server restart)
+
+### Limitations
+
+Prompt-based mitigation reduces but cannot eliminate AI overclaiming entirely. If real-world usage shows the issue recurring, consider structural enforcement (post-turn audit verification, tool-chain coupling) in a future iteration. Flagged for Phase 5+ review.
+
+---
+
 ## Phase 3b.3 — Lead update removed, tag management added, client search fixed
 
 **Date:** 2026-05-16
