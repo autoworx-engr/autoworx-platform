@@ -34,7 +34,11 @@ export default function ReviewForm({
       <AlreadyReviewed
         message={userReview.message}
         rate={userReview.rate}
-        date={userReview.createdAt}
+        date={
+          userReview.createdAt instanceof Date
+            ? userReview.createdAt.toISOString()
+            : userReview.createdAt
+        }
         currentUserId={currentUserId}
         sendUserId={userReview.sendUserId}
       />

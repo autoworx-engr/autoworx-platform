@@ -189,7 +189,7 @@ export default function CompanyProfileCard({
         <div>
           <h4 className="font-semibold mb-2">Specializations</h4>
           <div className="flex flex-wrap gap-2">
-            {details?.industry?.split(",")?.map((spec, i) => (
+            {details?.industry?.split(",")?.map((spec: string, i: number) => (
               <span
                 key={i}
                 className="rounded-full bg-teal-100 text-teal-700 px-3 py-1 text-xs font-medium"
