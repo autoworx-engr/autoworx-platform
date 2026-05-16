@@ -212,10 +212,14 @@ export async function GET(req: Request) {
     });
 
     if (readMessages) {
-      await pusher.trigger(`company-track-${companyA}`, "chat-read", {
-        senderCompanyId: companyB,
-        receiverCompanyId: companyA,
-      });
+      try {
+        await pusher.trigger(`company-track-${companyA}`, "chat-read", {
+          senderCompanyId: companyB,
+          receiverCompanyId: companyA,
+        });
+      } catch (pusherErr) {
+        console.error("Pusher trigger failed (non-fatal):", pusherErr);
+      }
     }
 
     /* ---------------- ADD UI FLAGS ---------------- */
