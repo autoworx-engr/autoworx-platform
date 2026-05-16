@@ -7,7 +7,7 @@ import sendClientMailOrSMSNotify from "@/lib/pusher/client-conversation-notify";
 import receiveTwiloMessage from "@/lib/pusher/receiveTwiloMessage";
 import { getPusherInstance } from "@/lib/pusher/server";
 import { NextRequest, NextResponse } from "next/server";
-import { sendSMSToAgent } from "@/service/ai-agent/api";
+import { debounceSmsAgent } from "@/lib/pgmq/debounceSmsAgent";
 import { revalidatePath } from "next/cache";
 import { allCompanyFeaturePermissions } from "@/service/feature-permissions/api";
 import {
@@ -261,26 +261,22 @@ export async function POST(req: NextRequest) {
 
           const isCompanySalesAgent = company?.isSalesAgent === true;
           const isClientSalesAgent = client?.isSalesAgent === true;
+          console.log("infobip sms receive clientSMS", clientSMS);
+          console.log("infobipConfig", infobipConfig);
           if (
             isCompanySalesAgent &&
             isClientSalesAgent &&
             isSalesAgentEnabled
           ) {
             if (clientSMS && clientSMS?.to === infobipConfig.phoneNumber) {
-              try {
-                await sendSMSToAgent({
-                  company_id: client.companyId,
-                  message: clientSMS?.message,
-                  send_from: clientSMS?.from,
-                  send_to: clientSMS?.to,
-                  client_id: client.id,
-                });
-              } catch (error) {
-                return Response.json(
-                  { message: `Sales agent error: ${error}` },
-                  { status: 200 },
-                );
-              }
+              debounceSmsAgent({
+                clientId: client.id,
+                companyId: client.companyId,
+                sendFrom: clientSMS.from,
+                sendTo: clientSMS.to,
+              }).catch((err) =>
+                console.error("[Infobip] debounceSmsAgent enqueue error:", err),
+              );
             }
           }
 
@@ -306,6 +302,7 @@ export async function POST(req: NextRequest) {
             companyId: infobipConfig.companyId,
             clientId: client.id,
             clientName: client.firstName + " " + client.lastName,
+            message: cleanedMessageText,
           });
 
           // Trigger Pusher notification
@@ -368,7 +365,7 @@ export async function POST(req: NextRequest) {
         }
       }
     }
-    revalidatePath("/dashboard/communication/client");
+    revalidatePath("/dashboard/communication/client/${clientId}");
     return NextResponse.json(
       {
         message: "Webhook processed successfully",

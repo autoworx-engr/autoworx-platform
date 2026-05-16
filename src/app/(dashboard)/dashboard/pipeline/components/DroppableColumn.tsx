@@ -240,7 +240,12 @@ const DroppableColumn = ({
             className="flex items-center justify-center py-3"
           >
             {isLoadingMore ? (
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-400 border-t-transparent" />
+              <div className="text-center">
+                <div className="mx-auto h-6 w-6 animate-spin rounded-full border-4 border-dashed border-yellow-500"></div>
+                <h2 className="mt-4 text-zinc-900 dark:text-white">
+                  Loading...
+                </h2>
+              </div>
             ) : (
               <span className="text-xs text-gray-400">
                 {item.leads.length} of {item.totalCount} loaded

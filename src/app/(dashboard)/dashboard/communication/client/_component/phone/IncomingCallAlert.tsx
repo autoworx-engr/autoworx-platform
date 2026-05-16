@@ -6,6 +6,7 @@ type TProps = {
   incomingCall: Call | null;
   onAccept: () => void;
   onReject: () => void;
+  onEndCall?: () => void; // Optional end call handler for connected calls
   isConnected: boolean;
   callDuration: number;
 };
@@ -14,6 +15,7 @@ export default function IncomingCallAlert({
   incomingCall,
   onAccept,
   onReject,
+  onEndCall,
   isConnected,
   callDuration,
 }: TProps) {
@@ -40,7 +42,7 @@ export default function IncomingCallAlert({
         setIsLoadingName(true);
         try {
           const response = await fetch(
-            `/api/client/by-phone?phone=${encodeURIComponent(from)}`
+            `/api/client/by-phone?phone=${encodeURIComponent(from)}`,
           );
           if (response.ok) {
             const data = await response.json();
@@ -204,7 +206,7 @@ export default function IncomingCallAlert({
               </>
             ) : (
               <button
-                onClick={onReject}
+                onClick={onEndCall ? onEndCall : onReject}
                 className="group w-full relative overflow-hidden rounded-xl bg-gradient-to-br from-red-500 to-rose-600 px-6 py-4 text-lg font-semibold text-white shadow-lg shadow-red-500/30 transition-all duration-300 hover:shadow-xl hover:shadow-red-500/40 hover:-translate-y-0.5 active:scale-95"
               >
                 <div className="relative flex items-center justify-center gap-2">

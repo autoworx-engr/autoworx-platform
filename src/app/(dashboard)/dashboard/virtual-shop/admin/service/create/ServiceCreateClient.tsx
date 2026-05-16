@@ -28,6 +28,7 @@ type InitialServiceData = {
 
 const INITIAL_SERVICE_INFO: ServiceInfoState = {
   serviceTitle: "",
+  shortDescription: "",
   description: "",
   customDuration: "",
   imageName: "",
@@ -238,6 +239,7 @@ export default function ServiceCreateClient({
   const isSubmittingRef = useRef(false);
   const [validationErrors, setValidationErrors] = useState<{
     serviceTitle?: string;
+    shortDescription?: string;
     description?: string;
     items?: string;
   }>({});
@@ -323,12 +325,17 @@ export default function ServiceCreateClient({
     try {
       const nextErrors: {
         serviceTitle?: string;
+        shortDescription?: string;
         description?: string;
         items?: string;
       } = {};
 
       if (!serviceInfo.serviceTitle.trim()) {
         nextErrors.serviceTitle = "Service title is required";
+      }
+
+      if (!serviceInfo.shortDescription.trim()) {
+        nextErrors.shortDescription = "Short description is required";
       }
 
       if (!serviceInfo.description.trim()) {
@@ -397,6 +404,7 @@ export default function ServiceCreateClient({
         setValidationErrors(nextErrors);
         const validationMessage =
           nextErrors.serviceTitle ||
+          nextErrors.shortDescription ||
           nextErrors.description ||
           nextErrors.items ||
           "Please complete required fields";
@@ -525,6 +533,7 @@ export default function ServiceCreateClient({
           shopId: Number(selectedShopId),
           companyId,
           title: serviceInfo.serviceTitle.trim(),
+          shortDescription: serviceInfo.shortDescription.trim(),
           description: serviceInfo.description.trim(),
           imageUrl,
           modifierCoupe: serviceInfo.vehicleTypeModifiers.coupe,
@@ -572,13 +581,16 @@ export default function ServiceCreateClient({
           defaultValue="service-info"
           className="col-start-1 flex min-h-[40vh] flex-col overflow-clip lg:min-h-[72vh]"
         >
-          <TabsList className="-ml-4 grid grid-cols-4 rounded-bl-none md:inline-flex">
-            <TabsTriggerCreate value="create" className="order-2 md:order-3">
+          <TabsList className="w-[90%] grid grid-cols-2 rounded-bl-none md:-ml-4 md:inline-flex md:w-auto">
+            <TabsTriggerCreate
+              value="create"
+              className="order-2 w-full md:order-3 md:w-auto"
+            >
               Create
             </TabsTriggerCreate>
             <TabsTriggerCreate
               value="service-info"
-              className="order-1 md:order-4"
+              className="order-1 w-full md:order-4 md:w-auto"
             >
               Service Info
             </TabsTriggerCreate>
@@ -605,7 +617,7 @@ export default function ServiceCreateClient({
         </Tabs>
       </div>
 
-      <div className="flex-grow w-full xl:max-w-[32%]  app-shadow grid grid-rows-[1fr,auto,auto] divide-y rounded-md bg-slate-50 xl:max-h-[calc(100vh-16rem)] overflow-y-auto thin-scrollbar">
+      <div className="flex-grow w-full xl:max-w-[32%] xl:self-stretch app-shadow grid grid-rows-[1fr,auto,auto] divide-y rounded-md bg-slate-50 overflow-y-auto thin-scrollbar">
         <div>
           <Create />
         </div>

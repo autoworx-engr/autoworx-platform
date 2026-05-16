@@ -120,6 +120,10 @@ export function useTaskForm({
       setStartTime(value);
       setEndTime(addOneHour(value));
     } else if (type === "end") {
+      if (startTime && value <= startTime) {
+        errorToast("End time cannot be before or equal to start time!");
+        return;
+      }
       setEndTime(value);
     }
   };
@@ -183,6 +187,7 @@ export function useTaskForm({
         id: taskId,
         task: commonTaskData,
       });
+
       if (res.type === "success") {
         queryClient.invalidateQueries({
           queryKey: taskQueryKey.taskById(taskId.toString()),
@@ -250,6 +255,7 @@ export function useTaskForm({
         });
         setUpdateVariable();
         onTaskDeleted && onTaskDeleted(id);
+        successToast("Task deleted successfully.");
         onClose && onClose();
       } else {
         errorToast("Failed to delete task");

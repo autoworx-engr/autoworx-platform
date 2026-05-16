@@ -153,18 +153,20 @@ export function TaskFormFields({
                   <Option value="" className="text-slate-400 italic">
                     Start Time
                   </Option>
-                  {timeOptions.map((time) => (
-                    <Option
-                      key={time.value}
-                      value={time.value}
-                      className="py-2 px-3 text-slate-600 transition-colors hover:bg-[#6571FF]/10 hover:text-[#6571FF]"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="h-1.5 w-1.5 rounded-full bg-slate-300 group-hover:bg-[#6571FF]" />
-                        {time.label}
-                      </div>
-                    </Option>
-                  ))}
+                  {timeOptions
+                    .filter((time) => time.value <= "22:45")
+                    .map((time) => (
+                      <Option
+                        key={time.value}
+                        value={time.value}
+                        className="py-2 px-3 text-slate-600 transition-colors hover:bg-[#6571FF]/10 hover:text-[#6571FF]"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="h-1.5 w-1.5 rounded-full bg-slate-300 group-hover:bg-[#6571FF]" />
+                          {time.label}
+                        </div>
+                      </Option>
+                    ))}
                 </Select>
               </label>
 

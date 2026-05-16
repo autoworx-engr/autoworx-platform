@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useBooking } from "../../context/BookingContext";
 import { ProgressBar } from "./ProgressBar";
 import { ServiceMenu } from "./ServiceMenu";
@@ -10,6 +10,7 @@ import { Checkout } from "./Checkout";
 import { Confirmation } from "./Confirmation";
 import { CartDrawer } from "./CartDrawer";
 import { BookingHeader } from "./BookingHeader";
+import { EmergencyRequestModal } from "./EmergencyRequestModal";
 import { useShopInfo } from "@/hooks/virtual-shop/useShopInfo";
 import ShopNotFound from "../giftcards/ShopNotFound";
 import {
@@ -19,6 +20,7 @@ import {
 import { Service } from "../../data/types";
 import { useShopBranding } from "../../hooks/useShopBranding";
 import { Spinner } from "../ui/Spinner";
+import { CheckoutV1 } from "./CheckoutV1";
 
 const SERVICES_PER_PAGE = 10;
 
@@ -28,6 +30,8 @@ const toNumber = (value: unknown) => {
 };
 
 const BookingContent = ({ initialShop }: { initialShop?: any }) => {
+  const [isEmergencyModalOpen, setIsEmergencyModalOpen] = useState(false);
+  const [hasNoSlots, setHasNoSlots] = useState(false);
   const {
     step,
     setStep,
@@ -91,7 +95,11 @@ const BookingContent = ({ initialShop }: { initialShop?: any }) => {
       setHasNextPage(hasNextPage);
       setHasPrevPage(hasPrevPage);
     }
-  }, [shopServices?.meta]);
+  }, [setHasNextPage, setHasPrevPage, setTotalPages, shopServices?.meta]);
+
+  useEffect(() => {
+    if (step !== "datetime") setHasNoSlots(false);
+  }, [step]);
 
   // Map and sync services to context
   useEffect(() => {
@@ -107,6 +115,7 @@ const BookingContent = ({ initialShop }: { initialShop?: any }) => {
     const mapped: Service[] = shopServices.data.map((svc) => ({
       id: String(svc.id),
       title: svc.title,
+      shortDescription: svc.shortDescription || undefined,
       description: svc.description || "",
       price: toNumber(svc.price),
       estimatedMinutes: svc.duration,
@@ -153,13 +162,24 @@ const BookingContent = ({ initialShop }: { initialShop?: any }) => {
       {/* Content */}
       <main className="container max-w-5xl mx-auto px-4 py-8 relative">
         {step === "services" && <ServiceMenu isLoading={isServicesLoading} />}
-        {step === "datetime" && <DateTimeSelection />}
+        {step === "datetime" && (
+          <DateTimeSelection
+            onAvailabilityChange={(hasSlots) => setHasNoSlots(!hasSlots)}
+            onEmergencyRequest={() => setIsEmergencyModalOpen(true)}
+          />
+        )}
         {step === "checkout" && <Checkout />}
         {step === "confirmation" && <Confirmation />}
       </main>
 
       {/* Cart FAB */}
       {step === "services" && <CartDrawer />}
+
+      {/* Emergency Request Modal */}
+      <EmergencyRequestModal
+        isOpen={isEmergencyModalOpen}
+        onClose={() => setIsEmergencyModalOpen(false)}
+      />
     </div>
   );
 };

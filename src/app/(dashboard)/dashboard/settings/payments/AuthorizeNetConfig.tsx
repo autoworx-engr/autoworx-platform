@@ -5,6 +5,7 @@ import { CircleCheckBig, CircleAlert } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 import {
   saveAuthorizeNetCredentials,
   removeAuthorizeNetCredentials,
@@ -12,14 +13,12 @@ import {
 import { successToast, errorToast } from "@/lib/toast";
 
 interface AuthorizeNetConfigProps {
-  companyId: number;
   isConfigured: boolean;
   hasApiLoginId: boolean;
   onUpdate: () => void;
 }
 
 export default function AuthorizeNetConfig({
-  companyId,
   isConfigured,
   hasApiLoginId,
   onUpdate,
@@ -39,7 +38,7 @@ export default function AuthorizeNetConfig({
     try {
       const result = await saveAuthorizeNetCredentials(
         apiLoginId,
-        transactionKey
+        transactionKey,
       );
 
       if (result.success) {
@@ -52,7 +51,6 @@ export default function AuthorizeNetConfig({
         errorToast(result.message || "Failed to save credentials");
       }
     } catch (error) {
-      console.log("🚀 ~ handleSave ~ error:", error);
       errorToast("An error occurred while saving credentials");
     } finally {
       setIsLoading(false);
@@ -68,7 +66,7 @@ export default function AuthorizeNetConfig({
 
     setIsLoading(true);
     try {
-      const result = await removeAuthorizeNetCredentials(companyId);
+      const result = await removeAuthorizeNetCredentials();
 
       if (result.success) {
         successToast("Credentials removed successfully");
@@ -93,9 +91,21 @@ export default function AuthorizeNetConfig({
       </div>
       <div className="flex flex-col items-center px-6 py-8">
         <div className="mb-5 flex items-center gap-3">
-          <img src="/icons/Logo2.png" alt="Autoworx" className="h-10 w-10" />
+          <Image
+            src="/icons/Logo2.png"
+            alt="Autoworx"
+            width={40}
+            height={40}
+            className="h-10 w-10"
+          />
           <span className="mx-4 text-2xl">↔️</span>
-          <img src="/icons/authorizenet.png" alt="Authorize.Net" className="w-28" />
+          <Image
+            src="/icons/authorizenet.png"
+            alt="Authorize.Net"
+            width={112}
+            height={40}
+            className="w-28"
+          />
         </div>
         <p className="mb-1 text-lg font-semibold text-gray-700 text-center">
           Connect Autoworx to Authorize.Net
@@ -130,7 +140,10 @@ export default function AuthorizeNetConfig({
         ) : (
           <div className="w-full max-w-md space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="apiLoginId" className="text-sm font-medium text-gray-700">
+              <Label
+                htmlFor="apiLoginId"
+                className="text-sm font-medium text-gray-700"
+              >
                 API Login ID
               </Label>
               <Input
@@ -145,7 +158,10 @@ export default function AuthorizeNetConfig({
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="transactionKey" className="text-sm font-medium text-gray-700">
+              <Label
+                htmlFor="transactionKey"
+                className="text-sm font-medium text-gray-700"
+              >
                 Transaction Key
               </Label>
               <Input
@@ -175,8 +191,9 @@ export default function AuthorizeNetConfig({
                   <span className="font-semibold">Transaction Key</span>
                 </li>
                 <li>
-                  Generate a <span className="font-semibold">Signature Key</span>{" "}
-                  for webhooks
+                  Generate a{" "}
+                  <span className="font-semibold">Signature Key</span> for
+                  webhooks
                 </li>
               </ol>
             </div>

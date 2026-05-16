@@ -124,6 +124,7 @@ export async function createTask(
       console.log("🚀 ~ error:", error);
     }
 
+    revalidatePath("/dashboard/communication/client/${clientId}");
     return {
       type: "success",
       data: newTask,

@@ -14,10 +14,12 @@ import { getServerSession } from "next-auth";
 import { sendAppointmentConfirmation } from "./appointmentNotifications";
 import { scheduleRemindersInNest } from "./appointmentReminderScheduler";
 import { syncAppointmentToGoogleCalendar } from "./appointmentCalendarSync";
+import { revalidatePath } from "next/cache";
 
 export interface AppointmentToAdd {
   title: string;
   date?: string;
+  endDate?: string | null;
   startTime?: string;
   endTime?: string;
   assignedUsers: number[];
@@ -39,10 +41,14 @@ export async function addAppointment(
 ): Promise<ServerAction | TErrorHandler> {
   try {
     await createAppointmentValidationSchema.parseAsync(appointment);
-    const session = await getServerSession(authOptions);
+    let companyId = appointment.forceCompanyId;
+
+    const session =
+      !appointment.forceUserId || !appointment.forceCompanyId
+        ? await getServerSession(authOptions)
+        : null;
     const sessionUserId = session?.user.id;
 
-    let companyId = appointment.forceCompanyId;
     let userId = appointment.forceUserId ?? sessionUserId;
 
     if (!userId) {
@@ -72,6 +78,9 @@ export async function addAppointment(
       data: {
         title: appointment.title,
         date: appointment.date ? new Date(appointment.date) : undefined,
+        endDate: appointment.endDate
+          ? new Date(appointment.endDate)
+          : undefined,
         startTime: appointment.startTime,
         endTime: appointment.endTime,
         clientId: appointment.clientId,
@@ -93,7 +102,7 @@ export async function addAppointment(
 
     if (appointment.assignedUsers.length > 0) {
       await db.appointmentUser.createMany({
-        data: appointment.assignedUsers.map((uid) => ({
+        data: appointment.assignedUsers.map((uid: number) => ({
           appointmentId: newAppointment.id,
           userId: uid,
           eventId: "",
@@ -139,24 +148,22 @@ export async function addAppointment(
       }
     }
 
-    const vehicle = await db.vehicle.findFirst({
-      where: { id: appointment.vehicleId },
-    });
-
-    const company = await db.company.findFirst({
-      where: { id: client?.companyId },
-      select: {
-        timezone: true,
-        name: true,
-        address: true,
-        phone: true,
-        smsGateway: true,
-      },
-    });
-
-    const confirmationEmailTemplate = await db.emailTemplate.findFirst({
-      where: { id: appointment.confirmationEmailTemplateId },
-    });
+    const [vehicle, company, confirmationEmailTemplate] = await Promise.all([
+      db.vehicle.findFirst({ where: { id: appointment.vehicleId } }),
+      db.company.findFirst({
+        where: { id: client?.companyId },
+        select: {
+          timezone: true,
+          name: true,
+          address: true,
+          phone: true,
+          smsGateway: true,
+        },
+      }),
+      db.emailTemplate.findFirst({
+        where: { id: appointment.confirmationEmailTemplateId },
+      }),
+    ]);
 
     await sendAppointmentConfirmation({
       client,
@@ -173,7 +180,7 @@ export async function addAppointment(
       if (newAppointment.date && newAppointment.startTime) {
         let i = 0;
         for (const time of appointment.times) {
-          scheduleRemindersInNest({
+          await scheduleRemindersInNest({
             id: newAppointment.id.toString(),
             date: new Date(`${time.date}T00:00:00.000Z`),
             time: time.time,
@@ -186,16 +193,16 @@ export async function addAppointment(
     }
 
     try {
-      newAppointment.date &&
-        newAppointment.startTime &&
-        scheduleRemindersInNest({
+      if (newAppointment.date && newAppointment.startTime) {
+        await scheduleRemindersInNest({
           id: newAppointment.id.toString(),
           date: newAppointment.date,
           time: newAppointment.startTime,
           timezone: company?.timezone || newAppointment.timezone || "Etc/UTC",
         });
+      }
     } catch (error) {
-      console.log("🚀 ~ error:", error);
+      console.error("scheduleRemindersInNest error:", error);
     }
 
     await syncAppointmentToGoogleCalendar(newAppointment.id, appointment);
@@ -212,6 +219,8 @@ export async function addAppointment(
     } catch (error) {
       console.log("🚀 ~ addAppointment ~ error:", error);
     }
+
+    revalidatePath("/dashboard/communication/client/${clientId}");
 
     return { type: "success", data: newAppointment };
   } catch (error) {

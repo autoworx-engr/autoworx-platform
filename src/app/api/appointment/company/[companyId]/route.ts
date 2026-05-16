@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import type { Prisma } from "@prisma/client";
+import { addAppointment } from "@/actions/appointment/addAppointment";
 
 const INCLUDE = {
   appointmentUsers: {
@@ -56,7 +57,7 @@ export async function GET(
   try {
     const { companyId: companyIdStr } = await context.params;
     const companyId = Number(companyIdStr);
-    if (!companyId) {
+    if (!companyId || isNaN(companyId)) {
       return NextResponse.json(
         { success: false, message: "Invalid companyId" },
         { status: 400 },
@@ -112,6 +113,68 @@ export async function GET(
   } catch {
     return NextResponse.json(
       { success: false, message: "Server error" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function POST(
+  req: NextRequest,
+  props: { params: Promise<{ companyId: string }> },
+) {
+  try {
+    const { companyId: companyIdStr } = await props.params;
+    const companyId = Number(companyIdStr);
+
+    if (!companyId || isNaN(companyId)) {
+      return NextResponse.json(
+        { success: false, message: "Invalid companyId" },
+        { status: 400 },
+      );
+    }
+
+    const body = await req.json();
+
+    if (!body.title) {
+      return NextResponse.json(
+        { success: false, message: "Title is required" },
+        { status: 400 },
+      );
+    }
+
+    if (!Array.isArray(body.assignedUsers) || body.assignedUsers.length === 0) {
+      return NextResponse.json(
+        { success: false, message: "assignedUsers must be a non-empty array" },
+        { status: 400 },
+      );
+    }
+
+    const result = await addAppointment({
+      ...body,
+      forceCompanyId: companyId,
+      forceUserId: body.userId,
+      draftEstimate: body.draftEstimate ?? null,
+    });
+
+    if (result?.type === "error") {
+      return NextResponse.json(
+        {
+          success: false,
+          message: result.message || "Failed to create appointment",
+          field: (result as any).field ?? null,
+        },
+        { status: 400 },
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Appointment created successfully",
+      data: (result as any)?.data ?? null,
+    });
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, message: error?.message || "Internal server error" },
       { status: 500 },
     );
   }

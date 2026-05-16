@@ -539,6 +539,7 @@ export async function getConvertedLeadsPerMonth(
         },
       },
     });
+
     return {
       current: currentConvertedLeads,
       previous: previousConvertedLeads,

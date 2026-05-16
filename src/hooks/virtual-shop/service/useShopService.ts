@@ -178,9 +178,16 @@ export const useGetAppointmentSlots = (
 };
 
 export const useCreateVirtualShopServiceBooking = () => {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: (payload: CreateVirtualShopServiceBookingPayload) =>
       createVirtualShopServiceBooking(payload),
+    onSuccess: (_response, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["appointment-slots", variables?.shopId],
+      });
+    },
   });
 };
 
@@ -188,5 +195,25 @@ export const useLookupClientByPhone = () => {
   return useMutation({
     mutationFn: (payload: { phone: string; shopId: number }) =>
       lookupClientByPhone(payload),
+  });
+};
+
+export const useInfiniteShopServices = (
+  shopId?: number,
+  limit = 10,
+  enabled = true,
+) => {
+  return useInfiniteQuery({
+    queryKey: ["virtual-shop-services-infinite", shopId, limit],
+    queryFn: ({ pageParam }) =>
+      getShopServices({
+        shopId: Number(shopId),
+        page: pageParam as number,
+        limit,
+      }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage: ShopServicesResponse) =>
+      lastPage.meta.hasNextPage ? lastPage.meta.page + 1 : undefined,
+    enabled: enabled && !!shopId,
   });
 };

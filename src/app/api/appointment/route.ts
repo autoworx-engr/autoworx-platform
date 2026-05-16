@@ -28,7 +28,13 @@ import { addAppointment } from "@/actions/appointment/addAppointment";
  *                 format: date-time
  *                 nullable: true
  *                 example: 2026-02-20T10:00:00.000Z
- *                 description: Appointment date (ISO format)
+ *                 description: Appointment start date (ISO format)
+ *               endDate:
+ *                 type: string
+ *                 format: date-time
+ *                 nullable: true
+ *                 example: 2026-02-22T10:00:00.000Z
+ *                 description: Appointment end date for multi-day appointments (ISO format). Optional - omit or set null for single-day appointments.
  *               startTime:
  *                 type: string
  *                 nullable: true
@@ -146,6 +152,7 @@ export async function POST(req: NextRequest) {
     const {
       title,
       date,
+      endDate,
       startTime,
       endTime,
       assignedUsers,
@@ -182,6 +189,7 @@ export async function POST(req: NextRequest) {
     const result = await addAppointment({
       title,
       date,
+      endDate: endDate ?? null,
       startTime,
       endTime,
       assignedUsers,

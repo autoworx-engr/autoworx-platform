@@ -37,13 +37,21 @@ export async function GET(request: NextRequest) {
     const searchTerm = searchParams.get("searchTerm") || undefined;
     const initialLoadParam = searchParams.get("initialLoad");
     const initialLoad = initialLoadParam ? initialLoadParam === "true" : true;
-    const orderBy = (searchParams.get("orderBy") as "asc" | "desc") || "desc";
+    // Mobile sends a sort field ("createdAt", "updatedAt", "columnChangedAt").
+    // Platform getLeads expects a direction ("asc" | "desc") for the sort.
+    // Treat any non-direction value as "use default desc".
+    const orderByParam = searchParams.get("orderBy");
+    const orderBy: "asc" | "desc" =
+      orderByParam === "asc" || orderByParam === "desc" ? orderByParam : "desc";
+    const companyIdParam = searchParams.get("companyId");
+    const companyId = companyIdParam ? parseInt(companyIdParam, 10) : undefined;
 
     const columns = await getSalePipelineColumns(
       type,
       searchTerm,
       initialLoad,
       orderBy,
+      companyId,
     );
 
     return NextResponse.json({

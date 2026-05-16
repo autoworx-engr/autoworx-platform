@@ -99,6 +99,9 @@ export async function POST(req: NextRequest) {
       bannerUrl,
       themeConfig,
       companyId,
+      termsConditions,
+      privacyPolicy,
+      urgentBookingNotificationsEnabled,
     } = body;
 
     const slug = storeName
@@ -126,6 +129,10 @@ export async function POST(req: NextRequest) {
           logoUrl,
           bannerUrl,
           themeConfig: themeConfig ?? null,
+          termsConditions: termsConditions ?? null,
+          privacyPolicy: privacyPolicy ?? null,
+          urgentBookingNotificationsEnabled:
+            urgentBookingNotificationsEnabled ?? true,
         },
       });
 

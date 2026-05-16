@@ -28,19 +28,6 @@ type TMessage = {
   createdAt: Date;
 };
 
-const formatAttachmentSize = (fileSize: unknown) => {
-  const sizeInBytes =
-    typeof fileSize === "string" ? parseFloat(fileSize) : Number(fileSize);
-
-  if (!Number.isFinite(sizeInBytes) || sizeInBytes <= 0) {
-    return "Unknown size";
-  }
-
-  if (sizeInBytes < 1024) return `${sizeInBytes} B`;
-  if (sizeInBytes < 1024 * 1024) return `${(sizeInBytes / 1024).toFixed(1)} KB`;
-  return `${(sizeInBytes / (1024 * 1024)).toFixed(2)} MB`;
-};
-
 export default function CompanyMessageBox({
   company,
   currentUser,
@@ -79,7 +66,7 @@ export default function CompanyMessageBox({
     "/communication/collaboration",
   );
 
-  // 🔹 Load messages
+  // Load messages
   useEffect(() => {
     if (!companyId || !currentCompanyId) return;
 
@@ -102,7 +89,7 @@ export default function CompanyMessageBox({
     fetchMessages();
   }, [companyId, currentCompanyId]);
 
-  // 🔹 Auto scroll
+  // Auto scroll
   useEffect(() => {
     if (messageBoxRef.current) {
       messageBoxRef.current.scrollTop = messageBoxRef.current.scrollHeight;
@@ -131,17 +118,17 @@ export default function CompanyMessageBox({
       const toId = Number(data.toCompanyId);
       const currentId = Number(currentCompanyId);
       const chatId = Number(companyId);
-      console.log({
-        fromId,
-        toId,
-        currentId,
-        chatId,
-      });
       if (
         (fromId === currentId && toId === chatId) ||
         (fromId === chatId && toId === currentId)
       ) {
-        setMessages((prev) => [...prev, data]);
+        const normalizedMessage = {
+          ...data,
+          attachments: data.attachments ?? data.attachmentFiles ?? [],
+          isOwnMessage: fromId === currentId,
+        };
+
+        setMessages((prev) => [...prev, normalizedMessage]);
       }
     });
 
@@ -374,7 +361,7 @@ export default function CompanyMessageBox({
                       <InvoiceModal
                         invoiceId={msg?.requestEstimate?.invoiceId}
                         buttonChild={
-                          <button className="w-96 rounded-md bg-[#006D77] p-1">
+                          <button className="w-full max-w-sm rounded-md bg-[#006D77] p-1">
                             <div className="flex items-center justify-center gap-x-2 rounded-md border border-white p-5">
                               <Image
                                 src="/icons/navbar/Invoices.svg"
@@ -394,7 +381,7 @@ export default function CompanyMessageBox({
                       <Link
                         href={`/dashboard/estimate/edit/${msg?.requestEstimate.invoiceId}`}
                         className={cn(
-                          "w-96 rounded-md bg-[#006D77] p-1",
+                          "w-full max-w-sm rounded-md bg-[#006D77] p-1",
                           !msg?.isOwnMessage && "bg-[#D9D9D9]",
                         )}
                       >

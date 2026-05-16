@@ -1,13 +1,13 @@
 "use client";
 
-import { DropdownSelection } from "@/components/DropDownSelection";
-import { useEmployeeFilterStore } from "@/stores/employeeFilter";
 import DateRange from "@/components/DateRange";
+import { DropdownSelection } from "@/components/DropDownSelection";
 import AddNewEmployee from "@/components/Lists/NewEmployee";
-import { useEffect, useState } from "react";
-import { Search, X } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useEmployeeFilterStore } from "@/stores/employeeFilter";
 import { useQueryClient } from "@tanstack/react-query";
+import { Search } from "lucide-react";
+import { useEffect, useState } from "react";
 import { EMPLOYEE_LIST_KEY } from "../_hook/useEmployeeQuery";
 
 // filter component for /employee page

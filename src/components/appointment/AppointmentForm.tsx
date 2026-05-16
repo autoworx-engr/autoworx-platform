@@ -39,6 +39,8 @@ export default function AppointmentForm({
   setTitle,
   date,
   setDate,
+  endDate,
+  setEndDate,
   startTime,
   endTime,
   handleTimeChange,
@@ -90,7 +92,7 @@ export default function AppointmentForm({
   const { Option } = Select;
 
   return (
-    <div className="h-full sm:h-full overflow-y-auto thin-scrollbar">
+    <div className="h-full sm:h-full overflow-y-auto thin-scrollbar max-h-[80vh]">
       <div className="space-y-4 p-6">
         <FormError />
 
@@ -99,21 +101,43 @@ export default function AppointmentForm({
           onChange={(value) => setTitle(value)}
         />
 
-        <div className="flex flex-wrap items-end gap-2 2xl:flex-nowrap">
-          <SlimInput
-            name="date"
-            label="Date"
-            rootClassName="grow"
-            type="date"
-            value={date ?? ""}
-            required
-            onChange={(event) => {
-              const newDate = moment(event.currentTarget.value).format(
-                "YYYY-MM-DD",
-              );
-              setDate(newDate);
-            }}
-          />
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="flex items-end gap-2">
+            <SlimInput
+              name="date"
+              label="Start Date"
+              rootClassName="grow"
+              type="date"
+              value={date ?? ""}
+              required
+              onChange={(event) => {
+                const newDate = moment(event.currentTarget.value).format(
+                  "YYYY-MM-DD",
+                );
+                setDate(newDate);
+                if (endDate && newDate && endDate < newDate) {
+                  setEndDate(undefined);
+                }
+              }}
+            />
+
+            <SlimInput
+              name="endDate"
+              label="End Date (optional)"
+              rootClassName="grow"
+              type="date"
+              value={endDate ?? ""}
+              min={date ?? undefined}
+              onChange={(event) => {
+                const value = event.currentTarget.value;
+                if (!value) {
+                  setEndDate(undefined);
+                  return;
+                }
+                setEndDate(moment(value).format("YYYY-MM-DD"));
+              }}
+            />
+          </div>
 
           <div className="flex items-end gap-2">
             <label className="flex flex-col items-start">
@@ -139,15 +163,17 @@ export default function AppointmentForm({
                   "
                   dropdownClassName="rounded-xl border-none shadow-2xl backdrop-blur-md bg-white/90"
                 >
-                  {timeOptions.map((time) => (
-                    <Option
-                      key={time.value}
-                      value={time.value}
-                      className="py-2 px-3 text-slate-600 transition-colors hover:bg-[#6571FF]/10 hover:text-[#6571FF]"
-                    >
-                      <p className="text-base text-gray-600">{time.label}</p>
-                    </Option>
-                  ))}
+                  {timeOptions
+                    .filter((time) => time.value <= "22:45")
+                    .map((time) => (
+                      <Option
+                        key={time.value}
+                        value={time.value}
+                        className="py-2 px-3 text-slate-600 transition-colors hover:bg-[#6571FF]/10 hover:text-[#6571FF]"
+                      >
+                        <p className="text-base text-gray-600">{time.label}</p>
+                      </Option>
+                    ))}
                 </Select>
               </div>
             </label>
@@ -471,6 +497,7 @@ export default function AppointmentForm({
             <ScheduleTab
               rows={rows}
               date={date}
+              endDate={endDate}
               startTime={startTime || ""}
               endTime={endTime}
               settings={settings}

@@ -10,6 +10,7 @@ export interface ThemeConfig {
 export interface ShopCompanyPricing {
   tax?: number | string | null;
   serviceFee?: number | string | null;
+  phone?: string | null;
 }
 
 export interface ShopData {
@@ -22,6 +23,9 @@ export interface ShopData {
   themeConfig?: ThemeConfig;
   companyId?: number;
   isActive?: boolean;
+  urgentBookingNotificationsEnabled?: boolean;
+  termsConditions?: string | null;
+  privacyPolicy?: string | null;
   company?: ShopCompanyPricing | null;
   bookingSettings?: ShopBookingSettingsData | null;
 }
@@ -81,6 +85,7 @@ export interface UpdateShopServiceResponse {
 export interface ShopServiceApi {
   id: number;
   title: string;
+  shortDescription?: string | null;
   category: string[];
   price: number | string;
   duration: number;
@@ -193,6 +198,7 @@ export interface CreateVirtualShopServiceBookingResponse {
 interface AppointmentSlotsApiResponse {
   success: boolean;
   date?: string;
+  slots?: AppointmentSlot[];
   availableSlots?: string[];
   data?: AppointmentSlot[];
 }
@@ -697,14 +703,16 @@ export const getAppointmentSlots = async function (
     );
 
     const payload = response.data;
-    const normalizedData: AppointmentSlot[] = Array.isArray(payload.data)
-      ? payload.data
-      : Array.isArray(payload.availableSlots)
-        ? payload.availableSlots.map((time) => ({
-            time,
-            available: true,
-          }))
-        : [];
+    const normalizedData: AppointmentSlot[] = Array.isArray(payload.slots)
+      ? payload.slots
+      : Array.isArray(payload.data)
+        ? payload.data
+        : Array.isArray(payload.availableSlots)
+          ? payload.availableSlots.map((time) => ({
+              time,
+              available: true,
+            }))
+          : [];
 
     return {
       success: payload.success,
@@ -749,6 +757,12 @@ export const lookupClientByPhone = async function ({
         lastName: string;
         email: string;
         mobile: string;
+        Vehicle: {
+          id: number;
+          year: number | null;
+          make: string | null;
+          model: string | null;
+        }[];
       } | null;
     }>("/api/virtual-shop/client-lookup/by-phone", {
       params: { phone, shopId },
@@ -1153,6 +1167,157 @@ export const deleteGiftCardPromo = async function (
     });
 
     return true;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+
+// --- Urgent (Emergency) Service Requests ---
+
+export type EmergencyRequestStatus =
+  | "PENDING"
+  | "UNDER_REVIEW"
+  | "APPROVED"
+  | "ALTERNATIVE_PROPOSED"
+  | "CLIENT_CONFIRMED"
+  | "REJECTED"
+  | "EXPIRED"
+  | "CANCELLED";
+
+export interface UrgentRequestClient {
+  id: number;
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
+  mobile: string | null;
+}
+
+export interface UrgentRequestVehicle {
+  id: number;
+  make: string;
+  model: string;
+  year: number;
+}
+
+export interface UrgentRequestShop {
+  id: number;
+  storeName: string;
+  slug?: string;
+}
+
+export interface UrgentRequestReviewer {
+  id: number;
+  firstName: string | null;
+  lastName: string | null;
+}
+
+export interface UrgentRequest {
+  id: number;
+  shopId: number;
+  clientId: number | null;
+  vehicleId: number | null;
+  contactName: string;
+  contactEmail: string;
+  contactPhone: string;
+  description: string;
+  requestedServices: any;
+  requestedDate: string | null;
+  requestedTime: string | null;
+  flexibleTiming: boolean;
+  vehicleMake: string | null;
+  vehicleModel: string | null;
+  vehicleYear: number | null;
+  status: EmergencyRequestStatus;
+  priority: number;
+  reviewedAt: string | null;
+  reviewedBy: number | null;
+  adminNotes: string | null;
+  rejectionReason: string | null;
+  proposedDate: string | null;
+  proposedTime: string | null;
+  alternativeNotes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  expiresAt: string;
+  client: UrgentRequestClient | null;
+  vehicle: UrgentRequestVehicle | null;
+  shop: UrgentRequestShop;
+  reviewer: UrgentRequestReviewer | null;
+}
+
+export interface UrgentRequestsListResponse {
+  success: boolean;
+  data: UrgentRequest[];
+  meta: { total: number; page: number; limit: number; totalPages: number };
+}
+
+export interface UrgentRequestDetailResponse {
+  success: boolean;
+  data: UrgentRequest;
+}
+
+export type UpdateUrgentRequestPayload = {
+  status?: EmergencyRequestStatus;
+  adminNotes?: string;
+  rejectionReason?: string;
+  proposedDate?: string | null;
+  proposedTime?: string | null;
+  alternativeNotes?: string | null;
+};
+
+export const getUrgentRequests = async (
+  params: {
+    shopId?: number;
+    status?: EmergencyRequestStatus;
+    page?: number;
+    limit?: number;
+  },
+  accessToken: string,
+): Promise<UrgentRequestsListResponse> => {
+  try {
+    const response = await axios.get<UrgentRequestsListResponse>(
+      "/api/virtual-shop/emergency-requests",
+      {
+        params,
+        headers: { Authorization: `Bearer ${accessToken}` },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+
+export const getUrgentRequestById = async (
+  id: number,
+  accessToken: string,
+): Promise<UrgentRequest> => {
+  try {
+    const response = await axios.get<UrgentRequestDetailResponse>(
+      `/api/virtual-shop/emergency-requests/${id}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } },
+    );
+    return response.data.data;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+
+export const updateUrgentRequest = async (
+  id: number,
+  payload: UpdateUrgentRequestPayload,
+  accessToken: string,
+): Promise<UrgentRequest> => {
+  try {
+    const response = await axios.patch<UrgentRequestDetailResponse>(
+      `/api/virtual-shop/emergency-requests/${id}`,
+      payload,
+      { headers: { Authorization: `Bearer ${accessToken}` } },
+    );
+    return response.data.data;
   } catch (error) {
     const err = errorHandler(error);
     throw err;

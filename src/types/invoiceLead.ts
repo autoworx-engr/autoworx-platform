@@ -95,6 +95,12 @@ export interface LeadWithSalesUser extends Lead {
     lastName: string | null;
   } | null;
   tasks: Task[];
+  latestAppointment?: {
+    id: number;
+    date: Date | null;
+    startTime: string | null;
+    endTime: string | null;
+  } | null;
   client?:
     | (Client & {
         vehicle?: Vehicle | null;

@@ -19,8 +19,8 @@ import { CirclePause, CirclePlay, SquarePen, Trash2 } from "lucide-react";
 import { useUpdateTagAutomationRule } from "@/hooks/tag-automation/useUpdateTagAutomationRule";
 import { useDeleteTagAutomationRule } from "@/hooks/tag-automation/useDeleteTagAutomationRule";
 import CarLoading from "@/components/common/CarLoading";
-import { useDeleteReportingAutomationRule } from "@/hooks/reporting-automation/useDeleteInventoryAutomationRule";
-import { useUpdateReportingAutomationRule } from "@/hooks/reporting-automation/useUpdateInventoryAutomationRule";
+import { useDeleteReportingAutomationRule } from "@/hooks/reporting-automation/useDeleteReportingAutomationRule";
+import { useUpdateReportingAutomationRule } from "@/hooks/reporting-automation/useUpdateReportingAutomationRule";
 
 interface Item {
   id: string;
@@ -80,9 +80,8 @@ const AutomationCard: FC<AutomationCardProps> = ({
     useDeleteInventoryAutomationRule();
   const { mutate: deleteTagRule, isPending: isTagDeleting } =
     useDeleteTagAutomationRule();
- const { mutate: deleteReportingRule, isPending: isReportingDeleting } =
+  const { mutate: deleteReportingRule, isPending: isReportingDeleting } =
     useDeleteReportingAutomationRule();
-
 
   const { mutate: updateInvoiceRule, isPending: isInvoiceUpdating } =
     useUpdateInvoiceAutomationRule();
@@ -91,7 +90,7 @@ const AutomationCard: FC<AutomationCardProps> = ({
   const { mutate: updateTagRule, isPending: isTagUpdating } =
     useUpdateTagAutomationRule();
 
-    const { mutate: updateReportingAutomation, isPending: isReportingUpdating } =
+  const { mutate: updateReportingAutomation, isPending: isReportingUpdating } =
     useUpdateReportingAutomationRule();
   const handleSetIsEdit = (id: any) => {
     setId(id);
@@ -115,8 +114,8 @@ const AutomationCard: FC<AutomationCardProps> = ({
       updateInventory({ id, data: data });
     } else if (type === "tag") {
       updateTagRule({ id, companyId, data });
-    } else if (type === "reporting"){
-      updateReportingAutomation({id, data:data})
+    } else if (type === "reporting") {
+      updateReportingAutomation({ id, data: data });
     } else if (type == "marketing") {
       const now = Date.now();
 
@@ -129,7 +128,7 @@ const AutomationCard: FC<AutomationCardProps> = ({
         ruleDate.getDate(),
         startTime.getHours(),
         startTime.getMinutes(),
-        startTime.getSeconds()
+        startTime.getSeconds(),
       ).getTime();
 
       const delay = Math.max(0, scheduledDateTime - now);
@@ -145,7 +144,7 @@ const AutomationCard: FC<AutomationCardProps> = ({
           setIsCreate(false);
           setIsEdit(true);
           errorToast(
-            "Please update the campaign start date and then resume the rule!"
+            "Please update the campaign start date and then resume the rule!",
           );
           return;
         }
@@ -177,8 +176,8 @@ const AutomationCard: FC<AutomationCardProps> = ({
       deleteInventoryRule(id);
     } else if (type === "tag") {
       deleteTagRule(id);
-    } else if (type === "reporting"){
-      deleteReportingRule(id)
+    } else if (type === "reporting") {
+      deleteReportingRule(id);
     }
 
     setIsCreate(false);
@@ -212,14 +211,14 @@ const AutomationCard: FC<AutomationCardProps> = ({
         )}
 
         <div className="flex items-center gap-3 text-lg">
-          {isPipelineUpdating ||
-          isCommunicationUpdating ||
-          isMarketingUpdating ||
-          isServiceUpdating ||
-          isTagUpdating ||
-          isInventoryUpdating ||
-          isInvoiceUpdating || 
-          isReportingUpdating ? (
+          {(type === "pipeline" && isPipelineUpdating) ||
+          (type === "communication" && isCommunicationUpdating) ||
+          (type === "marketing" && isMarketingUpdating) ||
+          (type === "service-maintenance" && isServiceUpdating) ||
+          (type === "tag" && isTagUpdating) ||
+          (type === "inventory" && isInventoryUpdating) ||
+          (type === "invoice" && isInvoiceUpdating) ||
+          (type === "reporting" && isReportingUpdating) ? (
             <button>
               <Spin />
             </button>
@@ -243,14 +242,14 @@ const AutomationCard: FC<AutomationCardProps> = ({
             <SquarePen size={20} />
           </button>
 
-          {isPipelineDeleting ||
-          isCommunicationDeleting ||
-          isMarketingDeleting ||
-          isServiceDeleting ||
-          isTagDeleting ||
-          isInventoryDeleting ||
-          isInvoiceDeleting || 
-          isReportingDeleting ? (
+          {(type === "pipeline" && isPipelineDeleting) ||
+          (type === "communication" && isCommunicationDeleting) ||
+          (type === "marketing" && isMarketingDeleting) ||
+          (type === "service-maintenance" && isServiceDeleting) ||
+          (type === "tag" && isTagDeleting) ||
+          (type === "inventory" && isInventoryDeleting) ||
+          (type === "invoice" && isInvoiceDeleting) ||
+          (type === "reporting" && isReportingDeleting) ? (
             <button>
               <Spin />
             </button>

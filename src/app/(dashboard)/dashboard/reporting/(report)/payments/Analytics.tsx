@@ -4,7 +4,7 @@ import moment from "moment";
 import { getServerSession } from "next-auth";
 import PaymentBarChartContainer from "./chart/PaymentBarChartContainer";
 
-const paymentMethods = ["CARD", "CHEQUE", "CASH", "OTHER", "DEPOSIT","REFUND"];
+const paymentMethods = ["CARD", "CHEQUE", "CASH", "OTHER", "DEPOSIT", "REFUND"];
 
 type AnalyticsProps = {
   startDate?: string;
@@ -16,6 +16,8 @@ export default async function Analytics({
   endDate,
 }: AnalyticsProps) {
   const session = await getServerSession(authOptions);
+  const companyId = session?.user?.companyId;
+  if (!companyId) return null;
 
   // Use provided dates or default to all time
   let invoiceDateFilter = {};
@@ -24,11 +26,11 @@ export default async function Analytics({
   if (startDate && endDate) {
     const formattedStartDate = moment(
       decodeURIComponent(startDate),
-      "MM-DD-YYYY"
+      "MM-DD-YYYY",
     ).format("YYYY-MM-DD");
     const formattedEndDate = moment(
       decodeURIComponent(endDate),
-      "MM-DD-YYYY"
+      "MM-DD-YYYY",
     ).format("YYYY-MM-DD");
 
     invoiceDateFilter = {
@@ -46,7 +48,7 @@ export default async function Analytics({
   }
   const invoices = await db.invoice.findMany({
     where: {
-      companyId: session?.user?.companyId,
+      companyId,
       ...invoiceDateFilter,
     },
     select: {
@@ -55,7 +57,7 @@ export default async function Analytics({
   });
   const payments = await db.payment.findMany({
     where: {
-      companyId: session?.user?.companyId,
+      companyId,
       ...paymentDateFilter,
     },
     select: {
@@ -67,12 +69,13 @@ export default async function Analytics({
 
   const totalInvoicesGrandTotal = invoices.reduce(
     (acc, invoice) => acc + Number(invoice.grandTotal),
-    0
+    0,
   );
 
   const totalPayments = payments.reduce(
-    (acc, payment) => acc + Number(payment.amount) - Number(payment.refundedAmount || 0),
-    0
+    (acc, payment) =>
+      acc + Number(payment.amount) - Number(payment.refundedAmount || 0),
+    0,
   );
 
   const paymentDue = totalInvoicesGrandTotal - totalPayments;
@@ -92,7 +95,7 @@ export default async function Analytics({
       {
         method: method,
         payment: 0,
-      }
+      },
     );
   });
 
