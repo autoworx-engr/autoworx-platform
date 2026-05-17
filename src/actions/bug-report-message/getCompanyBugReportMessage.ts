@@ -1,22 +1,30 @@
 "use server";
-import { getCompanyId } from "@/lib/companyId";
+import { authOptions } from "@/authOptions";
 import { db } from "@/lib/db";
+import { getServerSession } from "next-auth";
 
 export default async function getCompanyBugReportMessage({
   bugReportId,
 }: {
   bugReportId: number;
 }) {
-  const companyId = await getCompanyId();
+  const session = await getServerSession(authOptions);
+  const user = session?.user;
 
-  const isExistBugReport = await db.bugReport.findFirst({
-    where: {
-      companyId: companyId,
-      id: bugReportId,
-    },
+  if (!user) {
+    throw new Error("Unauthorized");
+  }
+
+  const isExistBugReport = await db.bugReport.findUnique({
+    where: { id: bugReportId },
+    select: { companyId: true },
   });
 
   if (!isExistBugReport) {
+    throw new Error(`Bug report not found!`);
+  }
+
+  if (!user.isSuperAdmin && +user.companyId !== isExistBugReport.companyId) {
     throw new Error(`Bug report not found based on your company!`);
   }
 

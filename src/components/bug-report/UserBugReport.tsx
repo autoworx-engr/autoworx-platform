@@ -62,11 +62,9 @@ const UserBugReport = () => {
 
   const filteredContacts = data
     ? data?.filter((contact: any) =>
-        contact.BugReportMessage?.[
-          contact.BugReportMessage?.length - 1
-        ]?.subject
+        contact.BugReportMessage?.[0]?.subject
           ?.toLowerCase()
-          ?.includes(searchQuery.toLowerCase())
+          ?.includes(searchQuery.toLowerCase()),
       )
     : [];
 
@@ -141,8 +139,9 @@ const UserBugReport = () => {
         });
 
         if (!uploadRes.ok) {
-          console.error("File upload failed");
-          setMessage(currentMessage); // restore input on failure
+          toast.error("File upload failed");
+          setMessage(currentMessage);
+          setLoading(false);
           return;
         }
 
@@ -162,7 +161,6 @@ const UserBugReport = () => {
 
       await createBugReportMessageByCompany({
         bugReportId: selectedContact?.id,
-        companyId: selectedContact?.company?.id,
         content: currentMessage,
         attachments:
           uploadedAttachmentData.length > 0
@@ -183,14 +181,14 @@ const UserBugReport = () => {
   const handleNewBugReport = async () => {
     if (!subject) {
       toast.error(
-        "Oops! Select the module for your issue so we can help faster."
+        "Oops! Select the module for your issue so we can help faster.",
       );
       return;
     }
 
     if (!message.trim()) {
       toast.error(
-        "Don’t forget to describe the issue so we can assist you faster!"
+        "Don’t forget to describe the issue so we can assist you faster!",
       );
       return;
     }
@@ -214,7 +212,9 @@ const UserBugReport = () => {
         });
 
         if (!uploadRes.ok) {
-          console.error("File upload failed");
+          toast.error("File upload failed");
+          setMessage(currentMessage);
+          setLoading(false);
           return;
         }
 
@@ -279,8 +279,8 @@ const UserBugReport = () => {
         (file) =>
           !selectedFiles.some(
             (existing) =>
-              existing.name === file.name && existing.size === file.size
-          )
+              existing.name === file.name && existing.size === file.size,
+          ),
       );
 
       setSelectedFiles((prevFiles) => [...prevFiles, ...newFiles]);
