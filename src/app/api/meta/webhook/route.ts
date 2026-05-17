@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { getPusherInstance } from "@/lib/pusher/server";
 import { NextRequest, NextResponse } from "next/server";
 
-// ── Webhook verification (GET) ────────────────────────────────────────────────
+//  Webhook verification (GET)
 export async function GET(req: NextRequest) {
   // Read env at request time so hot-reload / missing vars surface immediately
   const VERIFY_TOKEN = process.env.META_WEBHOOK_VERIFY_TOKEN;
@@ -12,13 +12,6 @@ export async function GET(req: NextRequest) {
   const mode = searchParams.get("hub.mode");
   const token = searchParams.get("hub.verify_token");
   const challenge = searchParams.get("hub.challenge");
-
-  console.log("[meta/webhook] verify attempt", {
-    mode,
-    token,
-    challenge,
-    VERIFY_TOKEN,
-  });
 
   if (!VERIFY_TOKEN) {
     console.error("[meta/webhook] META_WEBHOOK_VERIFY_TOKEN is not set in env");
@@ -35,11 +28,6 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  console.warn("[meta/webhook] token mismatch or bad mode", {
-    mode,
-    token,
-    expected: VERIFY_TOKEN,
-  });
   return new NextResponse("Forbidden", { status: 403 });
 }
 
@@ -73,7 +61,7 @@ async function handleMessagingEvent(pageId: string, event: any) {
   const psid: string = event.sender?.id;
 
   if (!psid || !event.message) return;
-  if (event.message.is_echo) return; // skip echoes of our own sends
+  if (event.message.is_echo) return;
 
   // Look up the FacebookPage by pageId
   const facebookPage = await db.facebookPage.findFirst({
@@ -112,7 +100,6 @@ async function handleMessagingEvent(pageId: string, event: any) {
         lastName,
         companyId,
         photo: metaProfile?.profile_pic ?? "/images/default.png",
-        // Note: Meta does NOT expose email/mobile/address via Messenger API
       },
     });
     await db.facebookClientProfile.create({
@@ -165,7 +152,6 @@ async function handleMessagingEvent(pageId: string, event: any) {
   await Promise.all([
     // Real-time message injection into open chat tab
     pusher.trigger(`messenger-${companyId}-${clientId}`, "messenger", saved),
-    // Sidebar client-list notification
     track &&
       pusher.trigger(`client-notify-${companyId}`, "client-notify", track),
     track &&
@@ -174,7 +160,6 @@ async function handleMessagingEvent(pageId: string, event: any) {
         "client-notify",
         track,
       ),
-    // Fallback channel — invalidates query when companyId not yet loaded on client
     pusher.trigger(`message-${clientId}`, "client", {
       count: track?.messengerUnReadCount ?? 0,
     }),
@@ -183,7 +168,6 @@ async function handleMessagingEvent(pageId: string, event: any) {
 
 async function fetchMetaProfile(psid: string, pageAccessToken: string) {
   try {
-    // Meta only exposes `name` and `profile_pic` for PSID lookups.
     const res = await fetch(
       `https://graph.facebook.com/v19.0/${psid}?fields=name,profile_pic&access_token=${pageAccessToken}`,
     );
@@ -206,8 +190,6 @@ function parseMetaName(fullName?: string): {
 
   const parts = trimmed.split(/\s+/);
   const firstName = parts[0];
-  // Everything after the first word becomes lastName — handles middle names correctly.
-  // e.g. "MD Abu Bokor" → firstName:"MD", lastName:"Abu Bokor"
   const lastName = parts.length > 1 ? parts.slice(1).join(" ") : null;
 
   return { firstName, lastName };
