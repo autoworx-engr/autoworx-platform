@@ -1,38 +1,8 @@
-import { updateLeadSalesUser } from "@/actions/pipelines/updateLeadSalesUser";
+import { db } from "@/lib/db";
+import { jwtVerifyToken } from "@/lib/jwtVerify";
+import { sendLeadAssignNotification } from "@/lib/notification/pipeline-notify";
 import { NextRequest, NextResponse } from "next/server";
 
-/**
- * @swagger
- * /api/pipeline/sales/leads/{id}/assign:
- *   put:
- *     summary: Update lead sales user assignment
- *     tags: [Sales Pipeline Leads]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: Lead ID
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - salesUserId
- *             properties:
- *               salesUserId:
- *                 type: integer
- *     responses:
- *       200:
- *         description: Lead sales user updated successfully
- *       400:
- *         description: Missing salesUserId or invalid lead ID
- *       500:
- *         description: Failed to update lead sales user
- */
 export async function PUT(
   request: NextRequest,
   props: { params: Promise<{ id: string }> },
@@ -47,18 +17,58 @@ export async function PUT(
       );
     }
 
-    const { salesUserId } = await request.json();
-    if (!salesUserId) {
+    const authHeader = request.headers.get("authorization") ?? "";
+    const accessToken = authHeader.startsWith("Bearer ")
+      ? authHeader.split(" ")[1]
+      : authHeader;
+
+    const verifyToken = await jwtVerifyToken(accessToken);
+    const companyId = verifyToken?.payload?.companyId as number | undefined;
+    console.log(
+      "[ASSIGN ROUTE] leadId:",
+      leadId,
+      "companyId from token:",
+      companyId,
+      "tokenPayload:",
+      JSON.stringify(verifyToken?.payload),
+    );
+    if (!companyId) {
       return NextResponse.json(
-        { success: false, error: "salesUserId is required" },
-        { status: 400 },
+        { success: false, error: "Unauthorized" },
+        { status: 401 },
       );
     }
 
-    const updatedLead = await updateLeadSalesUser(
-      leadId,
-      parseInt(salesUserId),
+    const body = await request.json();
+    const salesUserId: number | null =
+      body.salesUserId !== undefined ? body.salesUserId : null;
+    console.log(
+      "[ASSIGN ROUTE] body:",
+      JSON.stringify(body),
+      "salesUserId:",
+      salesUserId,
     );
+
+    const updatedLead = await db.lead.update({
+      where: { id: leadId, companyId },
+      data: {
+        assignedSalesUserId: salesUserId,
+        assignedDate: salesUserId ? new Date() : null,
+      },
+    });
+
+    // Fire-and-forget: getUser() inside the notification helper calls
+    // getServerSession() which throws NEXT_REDIRECT for mobile Bearer requests.
+    // The assignment is already committed — don't let a notification failure
+    // roll back a successful DB write.
+    if (salesUserId) {
+      sendLeadAssignNotification({
+        companyId,
+        leadClientName: updatedLead.clientName ?? "",
+        assignedEmployeeId: salesUserId,
+      }).catch(() => {});
+    }
+
     return NextResponse.json({ success: true, data: updatedLead });
   } catch (error) {
     return NextResponse.json(
