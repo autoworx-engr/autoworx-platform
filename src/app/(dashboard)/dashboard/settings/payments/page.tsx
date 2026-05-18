@@ -72,6 +72,7 @@ export default function PaymentsPage() {
   }, [paymentGatewayInfo]);
 
   const handleGatewayChange = async (value: string) => {
+    const previousGateway = selectedGateway;
     setSelectedGateway(value);
     const result = await updatePaymentGateway(
       value as "STRIPE" | "AUTHORIZE_NET" | "BOTH",
@@ -79,6 +80,7 @@ export default function PaymentsPage() {
     if (result.success) {
       successToast("Payment gateway updated", { id: "payment-gateway-update" });
     } else {
+      setSelectedGateway(previousGateway);
       errorToast(result.message || "Failed to update payment gateway", {
         id: "payment-gateway-update",
       });
