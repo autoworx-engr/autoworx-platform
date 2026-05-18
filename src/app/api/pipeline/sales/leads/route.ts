@@ -1,4 +1,6 @@
 import { getLeadsWithCountOptimized } from "@/actions/pipelines/getLeads";
+import { db } from "@/lib/db";
+import { getCompanyIdFromBearer } from "@/lib/mobileAuth";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -121,6 +123,82 @@ export async function GET(request: NextRequest) {
         success: false,
         error: error.message || "Failed to fetch leads",
       },
+      { status: 500 },
+    );
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const companyId = await getCompanyIdFromBearer(request);
+    if (!companyId) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+
+    const body = await request.json();
+    const {
+      clientName,
+      clientEmail,
+      clientPhone,
+      countryCode,
+      vehicleInfo,
+      services,
+      source,
+      comments,
+      columnId: bodyColumnId,
+    } = body as {
+      clientName: string;
+      clientEmail?: string;
+      clientPhone?: string;
+      countryCode?: string;
+      vehicleInfo: string;
+      services: string;
+      source: string;
+      comments?: string;
+      columnId?: number;
+    };
+
+    if (!clientName || !vehicleInfo || !services || !source) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "clientName, vehicleInfo, services, and source are required",
+        },
+        { status: 400 },
+      );
+    }
+
+    let columnId: number | undefined = bodyColumnId;
+    if (!columnId) {
+      const defaultColumn = await db.column.findFirst({
+        where: { companyId, type: "sales", title: "New Leads" },
+        select: { id: true },
+      });
+      columnId = defaultColumn?.id;
+    }
+
+    const lead = await db.lead.create({
+      data: {
+        clientName,
+        clientEmail: clientEmail ?? null,
+        clientPhone: clientPhone ?? null,
+        countryCode: countryCode ?? "US",
+        vehicleInfo,
+        services,
+        source,
+        comments: comments ?? null,
+        companyId,
+        columnId: columnId ?? null,
+      },
+    });
+
+    return NextResponse.json({ success: true, data: lead }, { status: 201 });
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, error: (error as Error).message },
       { status: 500 },
     );
   }
