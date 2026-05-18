@@ -28,7 +28,7 @@ async function execute(input: unknown, ctx: ToolContext): Promise<ToolResult> {
       type: true,
       grandTotal: true,
       createdAt: true,
-      vehicle: { select: { year: true, make: true, model: true } },
+      vehicle: { select: { id: true, year: true, make: true, model: true } },
       column: { select: { title: true } },
     },
   });
@@ -41,6 +41,8 @@ async function execute(input: unknown, ctx: ToolContext): Promise<ToolResult> {
     };
   }
 
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+
   const items = records.map((r) => {
     const v = r.vehicle;
     const vehicleInfo = v
@@ -51,7 +53,10 @@ async function execute(input: unknown, ctx: ToolContext): Promise<ToolResult> {
       type: r.type,
       status: r.column?.title ?? null,
       grandTotal: Number(r.grandTotal ?? 0),
+      vehicleId: v?.id ?? null,
       vehicleInfo,
+      publicLink: `${appUrl}/public-invoice/${r.id}`,
+      editLink: `/dashboard/estimate/edit/${r.id}`,
       createdAt: r.createdAt.toISOString(),
     };
   });
@@ -62,7 +67,7 @@ async function execute(input: unknown, ctx: ToolContext): Promise<ToolResult> {
 registerTool({
   name: "get_estimates_for_client",
   description:
-    "List estimates and/or invoices for a specific client. Use to let the user pick an estimate by ID before attaching it to an appointment or referencing it in conversation. Returns up to 20 most recent records with ID, type, status, grandTotal, and vehicle.",
+    "List estimates and/or invoices for a specific client (up to 20 most recent). Use when the user asks about a client's estimates in general. Each result includes id, type, status, grandTotal, vehicleId, vehicle description, publicLink (client-facing digital link), editLink, and createdAt. Resolve the client with get_client_by_name first, then call this with their clientId.",
   permission: "estimate.read",
   inputSchema,
   anthropicInputSchema: {

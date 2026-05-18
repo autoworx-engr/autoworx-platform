@@ -24,6 +24,8 @@ For coordinating the merge into development and production deployment.
 
 ## Migrations included
 
+### Phase 3c.1: No DB migrations.
+
 ### Phase 3b.10: No DB migrations.
 
 ### Phase 3b.9: No DB migrations.

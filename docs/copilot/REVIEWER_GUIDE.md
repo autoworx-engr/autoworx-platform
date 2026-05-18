@@ -190,6 +190,19 @@ yarn dev
 
 ---
 
+## Phase 3c.1 — Estimate read tools completed
+
+Two tools read estimates and invoices:
+
+- **`get_estimates_for_client`** — lists up to 20 most recent estimates/invoices for a given client (by `clientId`). Returns `id`, `type`, `status`, `grandTotal`, `vehicleId`, `vehicleInfo`, `publicLink`, `editLink`, and `createdAt`. Requires `get_client_by_name` first to resolve the `clientId`.
+- **`get_estimate_by_number`** — fetches one specific estimate by its `id`. Returns full line-item detail.
+
+Both are gated on the `estimate.read` permission (`estimatesInvoices` AWX field). `companyId` is always from session — the AI cannot read estimates for another company.
+
+Every estimate and invoice result includes a `publicLink` (client-facing digital link: `${APP_URL}/public-invoice/${id}`) and an `editLink` (internal route: `/dashboard/estimate/edit/${id}`). The system prompt instructs the copilot to include `publicLink` whenever presenting estimates to users. No DB changes in this phase.
+
+---
+
 ## Phase 3b.4 — Tool execution discipline
 
 During smoke testing, the copilot was observed saying "task created" and "tag added to lead" without actually calling the corresponding write tools. Audit log + DB inspection confirmed the writes never happened — pure overclaim.

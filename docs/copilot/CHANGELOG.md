@@ -5,6 +5,21 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Phase 3c.1 — Complete estimate read tools (links + vehicleId + prompt guidance)
+
+**Date:** 2026-05-18
+**Branch:** taiseer/ai-copilot
+
+`get_estimates_for_client` was committed during 3b but had three gaps: no `publicLink`/`editLink`, no `vehicleId` per record, and no system prompt guidance distinguishing it from `get_estimate_by_number`. All three closed:
+
+- Vehicle select extended to include `id` → each item now returns `vehicleId`
+- `publicLink` and `editLink` added per item (same pattern as `getEstimateByNumber.ts`)
+- System prompt: "Finding data before acting" updated to two bullets (list vs single lookup); new "### Reading estimates and invoices" section added explaining when to use each tool and that every estimate must include its `publicLink` in responses; new GOOD chain example added to the Chaining tools section
+
+No DB changes. No new API routes.
+
+---
+
 ## Phase 3b complete (3b.1–3b.10) — branch synced with development
 
 **Date:** 2026-05-18
