@@ -261,6 +261,8 @@ Audit log viewer UI (admin-only, filterable table), cost tracking dashboard (per
 ### Deferred feature requirements
 
 - Attach estimate/invoice to appointment — deferred to Phase 3c (needs the estimate-lookup tool built in that phase). Spec in PHASE_3_PLAN.md.
+- Work order creation — deferred to post-Phase-3c. The copilot's draft estimate tool will only create `type: "Estimate"` records; `isWorkOrder: true` creation requires additional UX context (vehicle in shop, technician assignment, inventory checks). Spec in PHASE_3_PLAN.md.
+- Estimate→invoice conversion via copilot — not supported; `convertInvoice` reads `getServerSession()` which fails for Bearer calls. Out of scope for Phase 3c; needs a refactor if ever wanted.
 
 ### Cost projections per conversation
 

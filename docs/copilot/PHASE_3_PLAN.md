@@ -318,15 +318,25 @@ Tool input: `taskId`, plus any fields to update.
 
 ### Existing route
 
-**POST** `/api/estimate/[companyId]/route.ts` — from `taiseer/secure-estimate-routes`,
-already has JWT Bearer auth matching the pattern exactly. Creating a draft estimate via the
-copilot can call this route directly.
+**POST** `/api/estimate/[companyId]/route.ts` — JWT Bearer authenticated via
+`getCompanyIdFromBearer` with a URL/JWT companyId cross-check at the handler level.
+Auth came from PR #836 (`taiseer/secure-estimate-routes`) and is present on this branch
+via the `origin/development` merge (commit `8fc90e0e`, 2026-05-18).
+Creating a draft estimate via the copilot can call this route directly — it is
+copilot-compatible.
+
+**Estimate route auth — RESOLVED.** The estimate/invoice routes
+(`/api/estimate/[companyId]/*` and invoice equivalents) are JWT-Bearer authenticated via
+`getCompanyIdFromBearer`, with a `companyId` cross-check at the handler level. Came from
+PR #836 (`taiseer/secure-estimate-routes`), incorporated when `origin/development` was
+merged in (merge commit `8fc90e0e`, 2026-05-18). Phase 3c.2's estimate-creation tool can
+call `POST /api/estimate/[companyId]/` — the route is copilot-compatible.
 
 ### Audit result
 
 **Verified:** `/api/estimate/[companyId]/route.ts` POST does NOT call `createDraftEstimate`.
 It performs the full draft invoice creation via `db.$transaction` directly, with `companyId`
-sourced from the verified JWT payload (via `jwtVerifyToken`). No server action refactor
+sourced from `getCompanyIdFromBearer` (URL/JWT cross-checked). No server action refactor
 needed. ✅ **Ready as-is.**
 
 ### New copilot tool
@@ -491,25 +501,26 @@ follow this same DB-direct pattern.
 
 ## Routes audit summary — exists vs needs to be created
 
-| Route                                        | Exists? | Methods          | Notes                                      |
-| -------------------------------------------- | ------- | ---------------- | ------------------------------------------ |
-| `/api/appointment/company/[companyId]/`      | ✓       | GET POST         | No JWT auth (leave for Phase 6)            |
-| `/api/appointment/company/[companyId]/[id]/` | ✓       | PATCH DELETE     | Verify action called                       |
-| `/api/task/`                                 | ✓       | GET POST         | No JWT auth; takes companyId from body     |
-| `/api/task/[id]/`                            | ✓       | GET PATCH DELETE | No JWT auth                                |
-| `/api/task/company/[companyId]/`             | ✓       | GET              | List only, no write needed                 |
-| `/api/estimate/[companyId]/`                 | ✓       | GET POST         | JWT Bearer auth ✓ (secure-estimate-routes) |
-| `/api/lead/company/[companyId]/`             | ✗       | —                | **Must create**                            |
-| `/api/inventory/company/[companyId]/`        | ✗       | —                | **Must create**                            |
-| `/api/inventory/company/[companyId]/[id]/`   | ✗       | —                | **Must create**                            |
-| `/api/invoice/company/[companyId]/`          | ✓       | GET              | Read-only, no write needed for Phase 3     |
+| Route                                        | Exists? | Methods          | Notes                                                     |
+| -------------------------------------------- | ------- | ---------------- | --------------------------------------------------------- |
+| `/api/appointment/company/[companyId]/`      | ✓       | GET POST         | No JWT auth (leave for Phase 6)                           |
+| `/api/appointment/company/[companyId]/[id]/` | ✓       | PATCH DELETE     | Verify action called                                      |
+| `/api/task/`                                 | ✓       | GET POST         | No JWT auth; takes companyId from body                    |
+| `/api/task/[id]/`                            | ✓       | GET PATCH DELETE | No JWT auth                                               |
+| `/api/task/company/[companyId]/`             | ✓       | GET              | List only, no write needed                                |
+| `/api/estimate/[companyId]/`                 | ✓       | GET POST         | JWT Bearer auth ✓ (PR #836, on branch via 8fc90e0e merge) |
+| `/api/lead/company/[companyId]/`             | ✗       | —                | **Must create**                                           |
+| `/api/inventory/company/[companyId]/`        | ✗       | —                | **Must create**                                           |
+| `/api/inventory/company/[companyId]/[id]/`   | ✗       | —                | **Must create**                                           |
+| `/api/invoice/company/[companyId]/`          | ✓       | GET              | Read-only, no write needed for Phase 3                    |
 
 ---
 
 ## Conflict risks
 
-- `/api/estimate/[companyId]/` — EXISTS from `taiseer/secure-estimate-routes`; POST
-  already implemented. Copilot can use this directly. Do not duplicate.
+- `/api/estimate/[companyId]/` — EXISTS with JWT Bearer auth (PR #836, merged to this
+  branch via `8fc90e0e`); POST already implemented. Copilot can use this directly. Do not
+  duplicate.
 - `/api/appointment/company/[companyId]/` — EXISTS from AbuBokorprog; avoid adding a
   competing route. Copilot calls the existing one.
 - `/api/task/` — EXISTS from mobile API work; check if copilot-specific task route is
@@ -534,3 +545,19 @@ follow this same DB-direct pattern.
 | 3g         | System prompt updates                                            | 0.5         |
 | 3h         | End-to-end smoke testing                                         | 1.0         |
 | **Total**  |                                                                  | **~6 days** |
+
+---
+
+## Known limitations / out of scope
+
+### Known limitation — estimate conversion route not copilot-compatible
+
+`PATCH /api/estimate/[companyId]/[id]/convert/` calls `convertInvoice`, which calls
+`getServerSession()` internally. In a server-to-server Bearer call (how the copilot
+invokes routes) `getServerSession()` returns null, so the convert route will not work
+for the copilot without refactoring.
+
+Phase 3c does NOT include estimate-to-invoice conversion — conversion remains a
+UI/approval-flow action. If a future phase wants the copilot to convert estimates,
+`convertInvoice` must first be refactored to accept an explicit `companyId`/`userId`
+instead of reading the session.
