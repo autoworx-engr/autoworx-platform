@@ -32,10 +32,10 @@ export async function addCustomer(
 ): Promise<ServerAction | TErrorHandler> {
   try {
     await createClientValidationSchema.parseAsync(data);
-    const session = await getServerSession(authOptions);
     let companyId = data.forceCompanyId;
 
     if (!companyId) {
+      const session = await getServerSession(authOptions);
       companyId = session?.user?.companyId;
       if (!companyId) {
         throw new Error("Company ID is required to create a client.");

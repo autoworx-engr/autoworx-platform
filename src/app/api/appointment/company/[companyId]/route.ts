@@ -1,188 +1,64 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import type { Prisma } from "@prisma/client";
 import { addAppointment } from "@/actions/appointment/addAppointment";
 import { getCompanyIdFromBearer } from "@/lib/mobileAuth";
 import { writeAuditLog } from "@/lib/copilot/audit";
 
-/**
- * @swagger
- * /api/appointment/company/{companyId}:
- *   get:
- *     summary: List all appointments for a company
- *     tags: [Appointment]
- *     parameters:
- *       - in: path
- *         name: companyId
- *         required: true
- *         schema:
- *           type: integer
- *           example: 10
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           example: 1
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           example: 10
- *     responses:
- *       200:
- *         description: Paginated appointment list
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 pagination:
- *                   type: object
- *                   properties:
- *                     total: { type: integer, example: 50 }
- *                     page: { type: integer, example: 1 }
- *                     limit: { type: integer, example: 10 }
- *                     totalPages: { type: integer, example: 5 }
- *                 data:
- *                   type: array
- *                   items:
- *                     type: object
- *       400:
- *         description: Invalid companyId
- *         content:
- *           application/json:
- *             example:
- *               success: false
- *               message: Invalid companyId
- *       500:
- *         description: Internal server error
- *
- *   post:
- *     summary: Create a new appointment for a company
- *     tags: [Appointment]
- *     parameters:
- *       - in: path
- *         name: companyId
- *         required: true
- *         schema:
- *           type: integer
- *           example: 10
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - title
- *               - assignedUsers
- *               - userId
- *             properties:
- *               title:
- *                 type: string
- *                 example: Vehicle Inspection
- *               userId:
- *                 type: integer
- *                 example: 3
- *                 description: ID of the user creating the appointment
- *               date:
- *                 type: string
- *                 format: date-time
- *                 nullable: true
- *                 example: "2026-03-20T10:00:00.000Z"
- *               startTime:
- *                 type: string
- *                 nullable: true
- *                 example: "10:00"
- *               endTime:
- *                 type: string
- *                 nullable: true
- *                 example: "11:00"
- *               assignedUsers:
- *                 type: array
- *                 items:
- *                   type: integer
- *                 example: [2, 3]
- *               clientId:
- *                 type: integer
- *                 nullable: true
- *                 example: 15
- *               vehicleId:
- *                 type: integer
- *                 nullable: true
- *                 example: 8
- *               serviceCategoryId:
- *                 type: integer
- *                 nullable: true
- *                 example: 3
- *               draftEstimate:
- *                 type: string
- *                 nullable: true
- *                 example: "EST-1001"
- *               notes:
- *                 type: string
- *                 nullable: true
- *                 example: Customer requested morning slot
- *               confirmationEmailTemplateId:
- *                 type: integer
- *                 nullable: true
- *                 example: 5
- *               confirmationEmailTemplateStatus:
- *                 type: boolean
- *                 nullable: true
- *                 example: true
- *               reminderEmailTemplateId:
- *                 type: integer
- *                 nullable: true
- *                 example: 6
- *               reminderEmailTemplateStatus:
- *                 type: boolean
- *                 nullable: true
- *                 example: false
- *               times:
- *                 type: array
- *                 nullable: true
- *                 items:
- *                   type: object
- *                   properties:
- *                     date: { type: string, example: "2026-03-19" }
- *                     time: { type: string, example: "09:00" }
- *               timezone:
- *                 type: string
- *                 nullable: true
- *                 example: "America/New_York"
- *     responses:
- *       200:
- *         description: Appointment created successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success: { type: boolean, example: true }
- *                 message: { type: string, example: Appointment created successfully }
- *                 data: { type: object }
- *       400:
- *         description: Validation error
- *         content:
- *           application/json:
- *             example:
- *               success: false
- *               message: Title is required
- *       500:
- *         description: Internal server error
- */
+const INCLUDE = {
+  appointmentUsers: {
+    include: {
+      user: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          employeeType: true,
+        },
+      },
+    },
+  },
+  client: {
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      mobile: true,
+      countryCode: true,
+      photo: true,
+    },
+  },
+  vehicle: {
+    select: { id: true, year: true, make: true, model: true },
+  },
+  serviceCategory: {
+    select: { id: true, name: true, color: true },
+  },
+} satisfies Prisma.AppointmentInclude;
+
+function serialize(appt: Record<string, unknown>) {
+  return {
+    ...appt,
+    date: appt.date instanceof Date ? appt.date.toISOString() : appt.date,
+    createdAt:
+      appt.createdAt instanceof Date
+        ? appt.createdAt.toISOString()
+        : appt.createdAt,
+    updatedAt:
+      appt.updatedAt instanceof Date
+        ? appt.updatedAt.toISOString()
+        : appt.updatedAt,
+  };
+}
 
 export async function GET(
   req: NextRequest,
-  props: { params: Promise<{ companyId: string }> },
+  context: { params: Promise<{ companyId: string }> },
 ) {
   try {
-    const { companyId: companyIdStr } = await props.params;
+    const { companyId: companyIdStr } = await context.params;
     const companyId = Number(companyIdStr);
-
     if (!companyId || isNaN(companyId)) {
       return NextResponse.json(
         { success: false, message: "Invalid companyId" },
@@ -190,44 +66,55 @@ export async function GET(
       );
     }
 
-    const { searchParams } = new URL(req.url);
-    const page = Math.max(1, Number(searchParams.get("page") || 1));
-    const limit = Math.max(1, Number(searchParams.get("limit") || 10));
-    const skip = (page - 1) * limit;
+    const { searchParams } = req.nextUrl;
+    const page = Math.max(1, Number(searchParams.get("page") ?? 1));
+    const limit = Math.min(
+      200,
+      Math.max(1, Number(searchParams.get("limit") ?? 50)),
+    );
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
+    const userId = searchParams.get("userId")
+      ? Number(searchParams.get("userId"))
+      : undefined;
 
-    const where = { companyId };
+    const where: Prisma.AppointmentWhereInput = { companyId };
 
-    const [appointments, total] = await Promise.all([
+    if (startDate && endDate) {
+      where.date = {
+        gte: new Date(`${startDate}T00:00:00.000Z`),
+        lte: new Date(`${endDate}T23:59:59.999Z`),
+      };
+    }
+
+    if (userId) {
+      where.appointmentUsers = { some: { userId } };
+    }
+
+    const [total, appointments] = await Promise.all([
+      db.appointment.count({ where }),
       db.appointment.findMany({
         where,
-        include: {
-          appointmentUsers: {
-            include: {
-              user: { select: { id: true, firstName: true, lastName: true } },
-            },
-          },
-          client: {
-            select: { id: true, firstName: true, lastName: true, email: true },
-          },
-          vehicle: {
-            select: { id: true, year: true, make: true, model: true },
-          },
-        },
-        skip,
+        include: INCLUDE,
+        orderBy: [{ date: "asc" }, { startTime: "asc" }],
+        skip: (page - 1) * limit,
         take: limit,
-        orderBy: { createdAt: "desc" },
       }),
-      db.appointment.count({ where }),
     ]);
 
     return NextResponse.json({
       success: true,
-      pagination: { total, page, limit, totalPages: Math.ceil(total / limit) },
-      data: appointments,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+      data: appointments.map(serialize),
     });
-  } catch (error: any) {
+  } catch {
     return NextResponse.json(
-      { success: false, message: error?.message || "Internal server error" },
+      { success: false, message: "Server error" },
       { status: 500 },
     );
   }

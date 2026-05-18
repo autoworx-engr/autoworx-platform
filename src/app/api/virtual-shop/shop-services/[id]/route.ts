@@ -276,6 +276,12 @@ export async function GET(
  *                 type: number
  *                 description: Explicit duration in minutes.
  *                 example: 120
+ *               category:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: One or more categories to associate with the shop service. Can also be a single string.
+ *                 example: ["Detailing"]
  *               items:
  *                 type: array
  *                 description: Nested array for rebuilding invoice configurations. At least one item is required, and each item must have materials or labor.
@@ -313,6 +319,7 @@ export async function GET(
  *             modifierSUV: "100"
  *             modifierTruck: "150"
  *             isActive: true
+ *             category: ["Detailing"]
  *             customDuration: 120
  *             items:
  *               - service:
@@ -476,6 +483,7 @@ export async function PUT(
       modifierTruck,
       isActive,
       customDuration,
+      category: providedCategory,
     } = validatedData;
 
     if (!companyId) {
@@ -524,7 +532,18 @@ export async function PUT(
       where: { id: { in: Array.from(categoryIdsToFetch) } },
       select: { name: true },
     });
-    const categories = fetchedCategories.map((c) => c.name);
+
+    const categorySet = new Set(fetchedCategories.map((c) => c.name));
+
+    if (providedCategory) {
+      if (Array.isArray(providedCategory)) {
+        providedCategory.forEach((c) => categorySet.add(c));
+      } else {
+        categorySet.add(providedCategory);
+      }
+    }
+
+    const categories = Array.from(categorySet);
 
     // 3. DATABASE TRANSACTION
     const updatedShopService = await db.$transaction(

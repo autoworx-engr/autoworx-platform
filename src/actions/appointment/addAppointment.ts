@@ -20,6 +20,7 @@ import { createDraftEstimate } from "@/actions/estimate/invoice/createDraft";
 export interface AppointmentToAdd {
   title: string;
   date?: string;
+  endDate?: string | null;
   startTime?: string;
   endTime?: string;
   assignedUsers: number[];
@@ -41,10 +42,14 @@ export async function addAppointment(
 ): Promise<ServerAction | TErrorHandler> {
   try {
     await createAppointmentValidationSchema.parseAsync(appointment);
-    const session = await getServerSession(authOptions);
+    let companyId = appointment.forceCompanyId;
+
+    const session =
+      !appointment.forceUserId || !appointment.forceCompanyId
+        ? await getServerSession(authOptions)
+        : null;
     const sessionUserId = session?.user.id;
 
-    let companyId = appointment.forceCompanyId;
     let userId = appointment.forceUserId ?? sessionUserId;
 
     if (!userId) {
@@ -74,6 +79,9 @@ export async function addAppointment(
       data: {
         title: appointment.title,
         date: appointment.date ? new Date(appointment.date) : undefined,
+        endDate: appointment.endDate
+          ? new Date(appointment.endDate)
+          : undefined,
         startTime: appointment.startTime,
         endTime: appointment.endTime,
         clientId: appointment.clientId,

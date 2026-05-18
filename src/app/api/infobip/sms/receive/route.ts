@@ -7,7 +7,7 @@ import sendClientMailOrSMSNotify from "@/lib/pusher/client-conversation-notify";
 import receiveTwiloMessage from "@/lib/pusher/receiveTwiloMessage";
 import { getPusherInstance } from "@/lib/pusher/server";
 import { NextRequest, NextResponse } from "next/server";
-import { sendSMSToAgent } from "@/service/ai-agent/api";
+import { debounceSmsAgent } from "@/lib/pgmq/debounceSmsAgent";
 import { revalidatePath } from "next/cache";
 import { allCompanyFeaturePermissions } from "@/service/feature-permissions/api";
 import {
@@ -269,20 +269,14 @@ export async function POST(req: NextRequest) {
             isSalesAgentEnabled
           ) {
             if (clientSMS && clientSMS?.to === infobipConfig.phoneNumber) {
-              try {
-                await sendSMSToAgent({
-                  company_id: client.companyId,
-                  message: clientSMS?.message,
-                  send_from: clientSMS?.from,
-                  send_to: clientSMS?.to,
-                  client_id: client.id,
-                });
-              } catch (error) {
-                return Response.json(
-                  { message: `Sales agent error: ${error}` },
-                  { status: 200 },
-                );
-              }
+              debounceSmsAgent({
+                clientId: client.id,
+                companyId: client.companyId,
+                sendFrom: clientSMS.from,
+                sendTo: clientSMS.to,
+              }).catch((err) =>
+                console.error("[Infobip] debounceSmsAgent enqueue error:", err),
+              );
             }
           }
 
