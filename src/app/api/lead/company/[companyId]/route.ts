@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { db } from "@/lib/db";
 import { getCompanyIdFromBearer } from "@/lib/mobileAuth";
 import {
   createLeadRecord,
@@ -128,6 +129,37 @@ export async function POST(
     ...rest,
     clientEmail: clientEmail || undefined,
   };
+
+  const recentDuplicate = await db.lead.findFirst({
+    where: {
+      companyId,
+      clientName: leadInput.clientName,
+      vehicleInfo: leadInput.vehicleInfo,
+      createdAt: { gte: new Date(Date.now() - 2 * 60 * 1000) },
+    },
+    select: { id: true, createdAt: true },
+  });
+
+  if (recentDuplicate) {
+    await writeAuditLog({
+      actor: "api",
+      action: "lead.create",
+      userId,
+      companyId,
+      success: false,
+      errorMessage: `Duplicate lead suppressed — an identical lead (id ${recentDuplicate.id}) was created less than 2 minutes ago`,
+      latencyMs: Date.now() - startTime,
+    });
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: `A lead for "${leadInput.clientName}" with vehicle "${leadInput.vehicleInfo}" was just created moments ago (lead #${recentDuplicate.id}). Not creating a duplicate. If you need to work with that lead, look it up instead.`,
+        duplicateOf: recentDuplicate.id,
+      },
+      { status: 409 },
+    );
+  }
 
   try {
     const result = await createLeadRecord(leadInput, companyId, {

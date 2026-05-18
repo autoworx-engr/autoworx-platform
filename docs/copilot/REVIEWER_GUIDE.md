@@ -375,6 +375,16 @@ The team's choice here determines how Phase 3 is structured. **Decision needed b
 
 ---
 
+### Phase 3b.5 — Duplicate lead fix
+
+The copilot was observed creating duplicate leads (up to 3) when scheduling an appointment for a freshly-created client. Root cause was AI reasoning — it called create_lead to "obtain" client info instead of get_client_by_name. The appointment code itself was clean.
+
+Fixed in three layers: tool description rewrites (create_appointment + create_lead), a hardened system prompt rule with a worked anti-pattern example, and a code-level idempotency guard on the lead creation route (rejects near-identical leads within 2 minutes, HTTP 409).
+
+The idempotency guard is a deliberate safety net — prompt fixes reduce but don't guarantee correct AI behavior, so the route enforces it structurally.
+
+---
+
 ## Cost optimization (active in current build)
 
 - **Prompt caching on system prompt block** — `cache_control: { type: "ephemeral" }` applied to the system prompt content block. Anthropic charges 90% less for cached input tokens. The cache window is 5 minutes; the system prompt is stable across turns, so multi-turn conversations benefit fully. First message in a session writes the cache; all subsequent messages read it.

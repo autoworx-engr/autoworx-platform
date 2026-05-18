@@ -5,6 +5,42 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Phase 3b.5 — Fix duplicate lead creation
+
+**Date:** 2026-05-18
+**Branch:** taiseer/ai-copilot
+**Commit:** [see git log]
+
+### Bug
+
+The copilot created duplicate leads when asked to schedule an appointment for a client it had just created. Confirmed via AuditLog: 3 identical lead.create calls for "Scher Chow" (Leads 29/30/31), byte-identical payloads. The appointment code path contains zero lead-creation logic — verified. Root cause was AI tool-selection reasoning: the model called create_lead to "obtain" client info for the appointment instead of calling get_client_by_name. The model even narrated this: "Creating the lead now, and I'll look up Scher's client info right after."
+
+### Fix (three layers)
+
+1. **create_appointment tool description** — now explicitly instructs the AI to obtain clientId via get_client_by_name and never to call create_lead for an appointment.
+2. **create_lead tool description** — now explicitly states it is only for brand-new leads, never a lookup, never called repeatedly.
+3. **System prompt** — replaced the soft "never create to obtain an ID" rule with a hard rule plus a worked example of the exact Scher Chow anti-pattern.
+4. **Idempotency guard (code-level safety net)** — POST /api/lead/company/[companyId] now rejects a near-identical lead (same name + vehicle, same company) created within the last 2 minutes, returning HTTP 409 with an explanatory message. Protects against AI retry loops even if the prompt fix is imperfect.
+
+### Files modified
+
+- `src/lib/copilot/tools/handlers/createAppointmentTool.ts` (description)
+- `src/lib/copilot/tools/handlers/createLeadTool.ts` (description)
+- `src/lib/copilot/systemPrompt.ts` (hardened rule + worked example)
+- `src/app/api/lead/company/[companyId]/route.ts` (idempotency guard)
+
+### Cleanup
+
+- Removed duplicate test leads: IDs 8, 23, 27, 30, 31
+
+### Verification
+
+- `yarn tsc` clean
+- `yarn build` clean
+- (Pending re-test: create lead → schedule appointment → confirm only ONE lead exists)
+
+---
+
 ## Phase 3b.4 — Tool execution discipline
 
 **Date:** 2026-05-16

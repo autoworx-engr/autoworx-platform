@@ -41,7 +41,7 @@ async function execute(input: unknown, ctx: ToolContext): Promise<ToolResult> {
 registerTool({
   name: "create_appointment",
   description:
-    "Schedule a new appointment. Use when the user wants to book a service appointment for a client.",
+    "Schedule a new appointment for an EXISTING client. Before calling this, you MUST obtain the client's clientId by calling get_client_by_name — do NOT call create_lead to get client information. Creating a lead and scheduling an appointment are completely separate operations; an appointment does not require a new lead. If get_client_by_name returns no match, ask the user to clarify the client's name — do not create anything.",
   permission: "appointment.create",
   inputSchema,
   anthropicInputSchema: {

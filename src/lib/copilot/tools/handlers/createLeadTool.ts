@@ -36,7 +36,7 @@ async function execute(input: unknown, ctx: ToolContext): Promise<ToolResult> {
 registerTool({
   name: "create_lead",
   description:
-    "Create a new lead for a prospective client. Use when the user wants to add a new potential customer to the sales pipeline.",
+    "Create a brand-new lead in the sales pipeline. ONLY call this when the user explicitly asks to add, create, or register a NEW lead or prospect. NEVER call this to look up an existing client, to obtain a clientId, or as a step toward scheduling an appointment or any other operation. If you need information about a client who already exists, use get_client_by_name instead. Calling create_lead more than once for the same person creates duplicate records — never call it repeatedly.",
   permission: "lead.create",
   inputSchema,
   anthropicInputSchema: {
