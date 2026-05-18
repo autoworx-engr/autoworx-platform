@@ -128,7 +128,6 @@ registerTool({
         description: "Max results to return (1–50, default 20)",
       },
     },
-    required: [],
   },
   execute,
 });

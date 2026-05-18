@@ -57,7 +57,6 @@ registerTool({
   anthropicInputSchema: {
     type: "object" as const,
     properties: {},
-    required: [],
   },
   execute,
 });
