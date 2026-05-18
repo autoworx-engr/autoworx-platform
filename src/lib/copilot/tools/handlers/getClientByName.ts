@@ -12,6 +12,12 @@ const inputSchema = z.object({
 
 type Input = z.infer<typeof inputSchema>;
 
+function phoneLast4(mobile: string | null | undefined): string | null {
+  if (!mobile) return null;
+  const digits = mobile.replace(/\D/g, "");
+  return digits.length >= 4 ? digits.slice(-4) : null;
+}
+
 async function execute(input: unknown, ctx: ToolContext): Promise<ToolResult> {
   const { searchTerm } = input as Input;
 
@@ -37,6 +43,10 @@ async function execute(input: unknown, ctx: ToolContext): Promise<ToolResult> {
       lastName: true,
       email: true,
       mobile: true,
+      Vehicle: {
+        select: { year: true, make: true, model: true },
+        take: 5,
+      },
       Lead: {
         select: {
           id: true,
@@ -48,43 +58,58 @@ async function execute(input: unknown, ctx: ToolContext): Promise<ToolResult> {
         },
       },
     },
-    take: 5,
+    take: 10,
     orderBy: { createdAt: "desc" },
   });
 
   if (clients.length === 0) {
     return {
-      ok: false,
-      error: `No client found matching '${searchTerm}' in your company.`,
+      ok: true,
+      data: {
+        matchCount: 0,
+        clients: [],
+      },
     };
   }
 
   return {
     ok: true,
-    data: clients.map((c) => ({
-      id: c.id,
-      firstName: c.firstName,
-      lastName: c.lastName ?? null,
-      email: c.email ?? null,
-      phone: c.mobile ?? null,
-      lead: c.Lead
-        ? {
-            id: c.Lead.id,
-            clientName: c.Lead.clientName,
-            vehicleInfo: c.Lead.vehicleInfo,
-            services: c.Lead.services,
-            source: c.Lead.source,
-            createdAt: c.Lead.createdAt,
-          }
-        : null,
-    })),
+    data: {
+      matchCount: clients.length,
+      clients: clients.map((c) => {
+        const name = [c.firstName, c.lastName].filter(Boolean).join(" ");
+        const vehicles = c.Vehicle.map((v) =>
+          [v.year, v.make, v.model].filter(Boolean).join(" "),
+        ).filter(Boolean);
+
+        return {
+          id: c.id,
+          name,
+          firstName: c.firstName,
+          lastName: c.lastName ?? null,
+          email: c.email ?? null,
+          phoneLast4: phoneLast4(c.mobile),
+          vehicles,
+          lead: c.Lead
+            ? {
+                id: c.Lead.id,
+                clientName: c.Lead.clientName,
+                vehicleInfo: c.Lead.vehicleInfo,
+                services: c.Lead.services,
+                source: c.Lead.source,
+                createdAt: c.Lead.createdAt,
+              }
+            : null,
+        };
+      }),
+    },
   };
 }
 
 registerTool({
   name: "get_client_by_name",
   description:
-    "Search for clients by name (fuzzy, handles full names like 'Jane Smith'). Use when the user mentions a client name and you need their ID or lead ID for another operation. Returns top 5 matches, each with their associated lead (if any).",
+    "Search for clients by name (fuzzy, handles full names like 'Jane Smith'). Returns all matches (up to 10) with disambiguating detail: matchCount, each client's id, name, phoneLast4, email, vehicles, and associated lead. Check matchCount — if 1, use it; if >1, ask the user which; if 0, offer to create a new client.",
   permission: "client.read",
   inputSchema,
   anthropicInputSchema: {

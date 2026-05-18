@@ -431,3 +431,15 @@ No DB migrations. No changes to `addCustomer` or `addVehicle`.
 ### Phase 3b.9 — Client phone country-code normalization
 
 Copilot-created clients were storing bare 10-digit phone numbers while UI-created clients store `+1XXXXXXXXXX`. The `create_client` route now prepends `+1` for US numbers (only when there's no existing `"+"` prefix and the country is US or unspecified), so copilot- and UI-created clients are consistent. The logic lives in `ensureCountryCode.ts` (sibling to the route) to keep the route file within the line-count limit. Historical rows are not backfilled.
+
+---
+
+### Phase 3b.10 — Client disambiguation by phone/vehicle
+
+Previously, `get_client_by_name` returned multiple matches but gave the model no guidance on how to handle ambiguity, and returned the full mobile number for each match. In shops with multiple clients sharing a name, the copilot would silently pick the first result and proceed — risking writes (appointments, tags, tasks) against the wrong client.
+
+**Tool change:** `get_client_by_name` now returns a top-level `matchCount` and, for each match, includes `phoneLast4` (last 4 digits of mobile only — full numbers are never surfaced), `vehicles` (array of readable strings from the client's actual Vehicle records, not just the lead's vehicleInfo), and a composite `name` field. Zero-match now returns `{ matchCount: 0, clients: [] }` (success) rather than `ok: false`, so the model can offer to create a new client rather than treating it as an error.
+
+**Prompt change:** A new "Identifying the right client when names collide" section enforces the disambiguation flow: 1 match → proceed; >1 → list candidates by phone last-4 + vehicle and ask which; 0 → offer to create. The model must never perform write operations until a specific client is confirmed.
+
+No DB migrations. Additive change to tool return shape (no existing callers parse it in TypeScript).

@@ -5,6 +5,12 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Phase 3b.10 — Client disambiguation
+
+The copilot looked up clients by name only, so it couldn't distinguish multiple people with the same name. `get_client_by_name` now returns all matches (up to 10) with disambiguating detail: `matchCount`, phone last-4 digits, vehicles, and email per match. The system prompt guides the copilot to: use the single match when `matchCount` is 1; list the candidates by phone last-4 and vehicle and ask the user which when `matchCount > 1` (never guess, never act on an ambiguous name); and offer to create a new client when `matchCount` is 0. The user can disambiguate by picking from the list or by giving a phone/email — full phone numbers are never surfaced, only the last 4 digits. No DB changes.
+
+---
+
 ## Fix — copilot current-date awareness
 
 **Date:** 2026-05-18
