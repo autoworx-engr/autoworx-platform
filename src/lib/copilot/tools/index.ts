@@ -14,6 +14,7 @@ import "./handlers/updateAppointmentTool";
 import "./handlers/createTaskTool";
 import "./handlers/updateTaskTool";
 import "./handlers/getLeadTagsTool";
+import "./handlers/getConfirmationTemplatesTool";
 import "./handlers/addLeadTagTool";
 import "./handlers/removeLeadTagTool";
 import "./handlers/createTagTool";

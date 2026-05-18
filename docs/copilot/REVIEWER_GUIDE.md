@@ -375,6 +375,12 @@ The team's choice here determines how Phase 3 is structured. **Decision needed b
 
 ---
 
+### Phase 3b.7 — Appointment confirmation messages
+
+The copilot can now send appointment confirmation messages. After gathering appointment details it asks the user whether to send a confirmation and, if yes, which template (via the new `get_confirmation_templates` read tool). The confirmation fields were already supported by `addAppointment` and the appointment route — only the copilot tool, a new read tool, and the system prompt changed. Reminders were already working and are untouched.
+
+---
+
 ### Phase 3b.6 — Lead creation refinements
 
 create_lead now requires at least one contact method (phone or email), enforced by a Zod refinement in the API route — applies to mobile callers too, not just the copilot. The system prompt also now instructs the copilot to gather all required fields in one message instead of one at a time.

@@ -15,6 +15,13 @@ const inputSchema = z.object({
   vehicleId: z.number().int().positive().nullable().optional(),
   notes: z.string().nullable().optional(),
   assignedUsers: z.array(z.number().int().positive()).default([]),
+  confirmationEmailTemplateId: z
+    .number()
+    .int()
+    .positive()
+    .nullable()
+    .optional(),
+  confirmationEmailTemplateStatus: z.boolean().optional(),
 });
 
 type Input = z.infer<typeof inputSchema>;
@@ -80,6 +87,16 @@ registerTool({
         type: "array",
         items: { type: "number" },
         description: "User IDs to assign (defaults to current user)",
+      },
+      confirmationEmailTemplateId: {
+        type: "number",
+        description:
+          "ID of the confirmation template to send (from get_confirmation_templates). Only set this if the user wants a confirmation sent.",
+      },
+      confirmationEmailTemplateStatus: {
+        type: "boolean",
+        description:
+          "Set to true ONLY if the user confirmed they want a confirmation message sent AND a confirmationEmailTemplateId is provided. Omit or false otherwise.",
       },
     },
     required: ["title"],

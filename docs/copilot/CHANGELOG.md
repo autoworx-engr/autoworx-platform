@@ -5,6 +5,38 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Phase 3b.7 — Appointment confirmation message support
+
+**Date:** 2026-05-18
+**Branch:** taiseer/ai-copilot
+**Commit:** [see git log]
+
+### What's new
+
+The copilot can now offer to send a client confirmation message when creating an appointment, and let the user choose which template.
+
+### Added
+
+- `get_confirmation_templates` read tool — lists the company's `EmailTemplate` rows of type `Confirmation` (id + name/subject), scoped by `companyId`. Returns an empty-list message if none exist.
+
+### Modified
+
+- `create_appointment` tool — now accepts optional `confirmationEmailTemplateId` (number) and `confirmationEmailTemplateStatus` (boolean), spread into the body passed to `addAppointment` (which already supported them).
+- System prompt — after gathering appointment details, the copilot asks whether to send a confirmation; if yes, calls `get_confirmation_templates`, lists templates by name, asks the user to pick one; never sets `confirmationEmailTemplateStatus: true` without a template id; handles the no-templates-exist case gracefully. Reminders not mentioned (already automatic).
+
+### Not changed
+
+- No route, schema, or server action changes — `addAppointment` and the appointment route already accepted these fields.
+- Reminder behavior untouched — copilot-created appointments already get 24h/2h reminders via the NestJS scheduler.
+
+### Verification
+
+- `yarn tsc` clean
+- `yarn build` clean
+- (Pending re-test: create appointment, opt into confirmation, pick template)
+
+---
+
 ## Phase 3b.6 — Lead creation: batch field gathering + required contact info
 
 **Date:** 2026-05-18
