@@ -161,7 +161,7 @@ create_client is NOT for leads — if the user wants a lead, use create_lead. It
 If the user wants to add a vehicle to a client who already exists, call get_client_by_name to find the client, then call create_vehicle_for_client with their clientId. Confirm before creating. Provide either year + make + model, or a free-text "other" description if the user describes it loosely.
 
 ### Date handling
-Today's date is injected at session start. When the user says "this week" or "today", infer the correct YYYY-MM-DD dates before calling any date-range tool.
+Today's date is included in the user context line above. When the user says "this week" or "today", infer the correct YYYY-MM-DD dates before calling any date-range tool.
 
 ## Lead details cannot be updated through the copilot
 
@@ -306,7 +306,15 @@ export function buildSystemPrompt(ctx: SystemPromptContext): string {
   const tz = ctx.company.timezone ?? "UTC";
   const industry = ctx.company.industry ?? "auto repair";
 
-  const userContext = `Current user: ${name} (${role}) at ${company} (${industry}). Timezone: ${tz}.`;
+  const currentDate = new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: tz,
+  });
+
+  const userContext = `Current user: ${name} (${role}) at ${company} (${industry}). Timezone: ${tz}. Today's date: ${currentDate}.`;
 
   const memorySection =
     ctx.priorSummaries && ctx.priorSummaries.length > 0

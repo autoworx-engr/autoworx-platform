@@ -5,6 +5,26 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Fix — copilot current-date awareness
+
+**Date:** 2026-05-18
+**Branch:** taiseer/ai-copilot
+**Commit:** (see git log)
+
+### Bug
+
+The copilot referred to 2025 when the current year is 2026. When asked about dates or scheduling, the model guessed the year from its training data rather than knowing the actual current date.
+
+### Root cause (Type B)
+
+The system prompt included no current-date context at all. `buildSystemPrompt()` in `systemPrompt.ts` assembled the prompt from static sections (identity, scope, tool guide) plus a dynamic user-context line (user name, role, company, timezone) — but never included today's date. The inline comment "Today's date is injected at session start" was aspirational documentation of planned behavior that was never implemented.
+
+### Fix
+
+In `buildSystemPrompt()`, compute the current date dynamically at call time using `new Date().toLocaleDateString("en-US", { weekday, year, month, day, timeZone: tz })` and append it to the `userContext` line. Because `buildSystemPrompt` is called inside the chat request handler (not at module load time), the date is always the actual current date when the session starts. The company's timezone is respected so the date shown matches what the user sees locally.
+
+---
+
 ## Phase 3b.9 — Client phone country-code normalization
 
 **Date:** 2026-05-17
