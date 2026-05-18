@@ -8,6 +8,8 @@ import { NextRequest, NextResponse } from "next/server";
  *   put:
  *     summary: Update lead column
  *     tags: [Sales Pipeline Leads]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id

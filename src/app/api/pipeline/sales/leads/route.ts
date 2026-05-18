@@ -128,6 +128,49 @@ export async function GET(request: NextRequest) {
   }
 }
 
+/**
+ * @swagger
+ * /api/pipeline/sales/leads:
+ *   post:
+ *     summary: Create a new sales lead
+ *     tags: [Sales Pipeline Leads]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               clientName:
+ *                 type: string
+ *               clientEmail:
+ *                 type: string
+ *               clientPhone:
+ *                 type: string
+ *               countryCode:
+ *                 type: string
+ *               vehicleInfo:
+ *                 type: string
+ *               services:
+ *                 type: string
+ *               source:
+ *                 type: string
+ *               comments:
+ *                 type: string
+ *               columnId:
+ *                 type: integer
+ *     responses:
+ *       201:
+ *         description: Lead created successfully
+ *       400:
+ *         description: Missing required fields
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Failed to create lead
+ */
 export async function POST(request: NextRequest) {
   try {
     const companyId = await getCompanyIdFromBearer(request);
