@@ -6,6 +6,7 @@ import "./handlers/getClientByName";
 import "./handlers/getVehicleByClient";
 import "./handlers/getInventoryItemByName";
 import "./handlers/getEstimateByNumber";
+import "./handlers/getEstimatesForClient";
 import "./handlers/getAppointmentsForDateRange";
 import "./handlers/getTasksForUser";
 import "./handlers/createLeadTool";
