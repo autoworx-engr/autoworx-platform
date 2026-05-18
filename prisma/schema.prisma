@@ -2285,7 +2285,7 @@ model User {
   auditLogs                      AuditLog[]
   reviewedEmergencyRequests      EmergencyBookingRequest[] @relation("EmergencyReviewer")
   messengerMessages              MessengerMessage[]
-  reviewedEmergencyRequests      EmergencyBookingRequest[]       @relation("EmergencyReviewer")
+
 
   @@index([companyId], name: "fk_users_company")
 }
@@ -3465,6 +3465,7 @@ model AuditLog {
   @@index([resourceType, resourceId])
   @@index([copilotSessionId])
   @@index([success, createdAt(sort: Desc)])
+}
 // ─────────────────────────────────────────────────────────────
 // Meta / Facebook Messenger Integration
 // ─────────────────────────────────────────────────────────────
