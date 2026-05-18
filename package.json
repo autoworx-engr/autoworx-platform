@@ -131,6 +131,7 @@
     "react-hot-toast": "^2.4.1",
     "react-infinite-scroll-component": "^6.1.0",
     "react-loader-spinner": "^6.1.6",
+    "react-markdown": "^10.1.0",
     "react-multi-date-picker": "^4.5.2",
     "react-onesignal": "^3.2.2",
     "react-quill": "^2.0.0",

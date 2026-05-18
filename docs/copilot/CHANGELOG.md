@@ -5,6 +5,15 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Fix — copilot hyperlink rendering
+
+**Date:** 2026-05-18
+**Branch:** taiseer/ai-copilot
+
+Copilot estimate links displayed as plain text. Fixed in two parts: (1) CopilotMessageCard now renders assistant messages through react-markdown, so links (and other markdown — bold, lists) render properly; user messages stay plain text. Links open in a new tab with rel="noopener noreferrer". (2) The system prompt now instructs the model to format links as markdown link syntax rather than bare URLs.
+
+---
+
 ## Phase 3c.1 — Complete estimate read tools (links + vehicleId + prompt guidance)
 
 **Date:** 2026-05-18
