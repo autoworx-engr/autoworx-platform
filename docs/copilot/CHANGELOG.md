@@ -5,6 +5,35 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Phase 3b complete (3b.1–3b.10) — branch synced with development
+
+**Date:** 2026-05-18
+**Branch:** taiseer/ai-copilot
+
+Phase 3b is fully complete. The branch was synced with `origin/development` (merge commit `8fc90e0e`), incorporating 84 commits from the team including PR #836 (estimate route JWT Bearer auth) and the Meta/Messenger feature. The sync introduced two conflict-resolution artifacts that were fixed locally (AuditLog model brace, orphaned opening-message block in lead-generate).
+
+Sub-phases shipped in 3b:
+
+- **3b.1** — Lead creation route + `create_lead` tool
+- **3b.2** — Appointment creation route + `create_appointment` tool
+- **3b.3** — Lead update removed; tag management tools (`get_lead_tags`, `add_lead_tag`, `remove_lead_tag`, `create_tag`)
+- **3b.4** — Tool execution discipline (system prompt rules against overclaiming)
+- **3b.5** — Appointment update tool (`update_appointment`)
+- **3b.6** — Task tools (`create_task`, `update_task`)
+- **3b.7** — Appointment confirmation template support
+- **3b.8** — Client + vehicle creation tools (`create_client`, `create_vehicle_for_client`)
+- **3b.9** — Client phone country-code normalization
+- **3b.10** — Client disambiguation by phone last-4 + vehicle
+
+Fixes shipped alongside 3b:
+
+- Dynamic current date in system prompt (was missing entirely — model guessed 2025)
+- `get_estimates_for_client` read tool (Phase 3c.1, built during 3b)
+
+Infra: `internalApiClient.ts` (JWT mint + internal fetch wrapper), 8 new API routes under `src/app/api/*/company/[companyId]/`. Local DB sync: 5 unapplied migrations applied; 1 new migration file created (messenger columns).
+
+---
+
 ## Phase 3b.10 — Client disambiguation
 
 The copilot looked up clients by name only, so it couldn't distinguish multiple people with the same name. `get_client_by_name` now returns all matches (up to 10) with disambiguating detail: `matchCount`, phone last-4 digits, vehicles, and email per match. The system prompt guides the copilot to: use the single match when `matchCount` is 1; list the candidates by phone last-4 and vehicle and ask the user which when `matchCount > 1` (never guess, never act on an ambiguous name); and offer to create a new client when `matchCount` is 0. The user can disambiguate by picking from the list or by giving a phone/email — full phone numbers are never surfaced, only the last 4 digits. No DB changes.
