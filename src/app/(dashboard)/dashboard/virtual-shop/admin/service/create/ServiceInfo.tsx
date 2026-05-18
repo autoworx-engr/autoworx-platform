@@ -7,6 +7,7 @@ import { Info, UploadCloud, X } from "lucide-react";
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import "react-quill-new/dist/quill.snow.css";
+import CategoryInput from "./CategoryInput";
 
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 
@@ -17,6 +18,7 @@ export type ServiceInfoState = {
   customDuration: string;
   imageName: string;
   imageUrl: string;
+  category: string[];
   vehicleTypeModifiers: {
     coupe: string;
     sedan: string;
@@ -119,6 +121,7 @@ export default function ServiceInfo({
     customDuration,
     imageName,
     imageUrl,
+    category,
     vehicleTypeModifiers,
   } = value;
 
@@ -482,6 +485,12 @@ export default function ServiceInfo({
           </p>
         )}
       </div>
+
+      {/* ── Category ──────────────────────────────────────────────── */}
+      <CategoryInput
+        value={category}
+        onChange={(next) => onChange((prev) => ({ ...prev, category: next }))}
+      />
 
       {/* ── Description ───────────────────────────────────────────── */}
       <div className="space-y-1.5">

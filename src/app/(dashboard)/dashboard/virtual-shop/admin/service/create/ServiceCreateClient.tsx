@@ -33,6 +33,7 @@ const INITIAL_SERVICE_INFO: ServiceInfoState = {
   customDuration: "",
   imageName: "",
   imageUrl: "",
+  category: [],
   vehicleTypeModifiers: {
     coupe: "0",
     sedan: "0",
@@ -545,6 +546,7 @@ export default function ServiceCreateClient({
               ? undefined
               : Number(serviceInfo.customDuration),
           isActive: true,
+          category: serviceInfo.category,
           items: payloadItems,
         };
 
