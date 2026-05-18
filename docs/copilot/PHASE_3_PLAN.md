@@ -239,6 +239,38 @@ Calls `PATCH /api/appointment/company/[companyId]/[id]/` via `internalApiClient`
 
 Tool input: `appointmentId`, plus any fields to update.
 
+### Phase 3c work item: Attach estimate/invoice to appointment
+
+When the copilot creates an appointment, the user should be able to attach an
+existing estimate or invoice to it (the web app supports this; the attached
+amount feeds the calendar's "Est. Revenue" total).
+
+Why deferred from Phase 3b: attaching requires an estimate-lookup tool to let
+the user pick among a client's estimates/invoices (shown by ID + vehicle).
+Phase 3c builds estimate-lookup tools regardless, so attachment rides on that.
+
+Scope when built:
+
+- Reuse the Phase 3c estimate-lookup tool to list a client's estimates/invoices
+  (by id + vehicle name).
+- Add an optional estimate/invoice id field to the create_appointment tool
+  (additive — same pattern as the Phase 3b.7 confirmation fields). The
+  appointment route spreads ...body, and addAppointment already accepts a
+  draftEstimate param — verify whether that is the same attachment mechanism
+  or a different one during Phase 3c recon.
+- System prompt: after appointment details, offer to attach an estimate/invoice;
+  if yes, look up the client's estimates and let the user pick by id + vehicle.
+- This is a financial-adjacent operation (affects calendar Est. Revenue) — the
+  attachment must appear in the restate-and-confirm summary so the user sees
+  exactly which estimate is being linked before confirming.
+
+Acceptance criteria:
+
+- Copilot can attach an existing estimate/invoice to a new appointment.
+- The correct estimate/invoice id is stored on the appointment.
+- Wrong-company estimates cannot be attached (multi-tenant check).
+- The attachment is shown in the confirmation summary before the write.
+
 ---
 
 ## Phase 3d — Task write tools

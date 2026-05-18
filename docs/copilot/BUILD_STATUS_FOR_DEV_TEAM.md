@@ -258,6 +258,10 @@ Audit log viewer UI (admin-only, filterable table), cost tracking dashboard (per
 - Conversation context trimming for sessions > 20 messages — Phase 6.
 - Per-seat usage caps with overage pricing — Phase 5.
 
+### Deferred feature requirements
+
+- Attach estimate/invoice to appointment — deferred to Phase 3c (needs the estimate-lookup tool built in that phase). Spec in PHASE_3_PLAN.md.
+
 ### Cost projections per conversation
 
 From ARCHITECTURE.md cost model (10-message conversation, 3 tool calls):
