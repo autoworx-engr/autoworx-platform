@@ -3,6 +3,7 @@ import { z } from "zod";
 import { addCustomer } from "@/actions/client/add";
 import { getCompanyIdFromBearer } from "@/lib/mobileAuth";
 import { writeAuditLog } from "@/lib/copilot/audit";
+import { ensureCountryCode } from "./ensureCountryCode";
 
 /**
  * @swagger
@@ -124,10 +125,15 @@ export async function POST(
   }
 
   const { userId, ...clientFields } = parsed.data;
+  const mobile = ensureCountryCode(
+    clientFields.mobile,
+    clientFields.countryCode,
+  );
 
   try {
     const result = await addCustomer({
       ...clientFields,
+      mobile,
       forceCompanyId: companyId,
     });
 

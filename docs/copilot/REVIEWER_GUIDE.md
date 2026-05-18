@@ -425,3 +425,9 @@ Two new API routes (client create, vehicle create) wrapping existing server acti
 **Permissions:** `client.create` and `vehicle.create` both gate on `salesPipeline`, the same permission as `lead.create`. All users who can create leads can create clients and vehicles.
 
 No DB migrations. No changes to `addCustomer` or `addVehicle`.
+
+---
+
+### Phase 3b.9 — Client phone country-code normalization
+
+Copilot-created clients were storing bare 10-digit phone numbers while UI-created clients store `+1XXXXXXXXXX`. The `create_client` route now prepends `+1` for US numbers (only when there's no existing `"+"` prefix and the country is US or unspecified), so copilot- and UI-created clients are consistent. The logic lives in `ensureCountryCode.ts` (sibling to the route) to keep the route file within the line-count limit. Historical rows are not backfilled.

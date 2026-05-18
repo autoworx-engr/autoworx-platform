@@ -5,6 +5,34 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Phase 3b.9 — Client phone country-code normalization
+
+**Date:** 2026-05-17
+**Branch:** taiseer/ai-copilot
+**Commit:** (see git log)
+
+### Bug
+
+Copilot-created clients stored bare 10-digit phone numbers (e.g., `"5552225553"`), while UI-created clients store them with the country code (e.g., `"+15552225553"`). The `mobile` column is used for phone search/matching, so inconsistent formats are a data-quality problem.
+
+### Fix
+
+1. `POST /api/client/company/[companyId]` now normalizes the `mobile` number before calling `addCustomer`: a US (or country-unspecified) number without a `"+"` prefix gets `"+1"` prepended. Numbers already starting with `"+"` are left untouched; non-US numbers without a `"+"` are stored as-given rather than mangled. This matches how the web UI's phone widget stores numbers.
+2. `create_client` tool description updated to instruct the AI to include a country code when known.
+
+### Not changed
+
+- `normalizePhoneForStorage` is unchanged — it already preserves `"+"` prefixes, so the new route helper (`ensureCountryCode`) composes cleanly with it.
+- Historical copilot-created client rows with bare numbers are **not** backfilled — out of scope. New clients get the correct format going forward.
+
+### Verification
+
+- `yarn tsc` clean
+- `yarn build` clean
+- (Pending: create a client via copilot, confirm the stored mobile has `+1`)
+
+---
+
 ## Phase 3b.8 — Client and vehicle creation
 
 **Date:** 2026-05-17

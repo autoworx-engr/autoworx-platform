@@ -58,7 +58,7 @@ registerTool({
       mobile: {
         type: "string",
         description:
-          "Phone number. At least one of mobile or email is required.",
+          "Phone number including country code when known (e.g., '+15551234567' for a US number). A bare US 10-digit number is also accepted and will be stored with the +1 prefix. At least one of mobile or email is required.",
       },
       email: {
         type: "string",
