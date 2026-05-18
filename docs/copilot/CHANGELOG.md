@@ -5,6 +5,31 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Phase 3b.6 — Lead creation: batch field gathering + required contact info
+
+**Date:** 2026-05-18
+**Branch:** taiseer/ai-copilot
+**Commit:** [see git log]
+
+### Changes
+
+1. **Required contact method.** create_lead now requires at least one of phone or email. Enforced via a Zod refinement on `CreateLeadBodySchema` in the API route — applies to BOTH the copilot and the mobile app. A lead with neither is rejected with HTTP 400 and the message: "At least one contact method is required — provide a phone number or an email address."
+
+2. **Batched field gathering.** The system prompt now instructs the copilot to ask for all required lead fields (name, vehicle, services, source, contact info) in a single message rather than one at a time. One-question-at-a-time is reserved for genuine ambiguity.
+
+### Files modified
+
+- `src/app/api/lead/company/[companyId]/route.ts` (Zod refinement: phone OR email required)
+- `src/lib/copilot/systemPrompt.ts` (batched gathering section + reconciled one-at-a-time rule)
+
+### Verification
+
+- `yarn tsc` clean
+- `yarn build` clean
+- (Pending re-test: create lead — copilot asks all fields at once; lead with no contact info rejected)
+
+---
+
 ## Phase 3b.5 — Fix duplicate lead creation
 
 **Date:** 2026-05-18

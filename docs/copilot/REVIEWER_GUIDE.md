@@ -375,6 +375,12 @@ The team's choice here determines how Phase 3 is structured. **Decision needed b
 
 ---
 
+### Phase 3b.6 — Lead creation refinements
+
+create_lead now requires at least one contact method (phone or email), enforced by a Zod refinement in the API route — applies to mobile callers too, not just the copilot. The system prompt also now instructs the copilot to gather all required fields in one message instead of one at a time.
+
+---
+
 ### Phase 3b.5 — Duplicate lead fix
 
 The copilot was observed creating duplicate leads (up to 3) when scheduling an appointment for a freshly-created client. Root cause was AI reasoning — it called create_lead to "obtain" client info instead of get_client_by_name. The appointment code itself was clean.

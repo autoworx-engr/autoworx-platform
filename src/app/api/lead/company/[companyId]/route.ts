@@ -60,23 +60,40 @@ import { writeAuditLog } from "@/lib/copilot/audit";
  *         description: Internal server error
  */
 
-const CreateLeadBodySchema = z.object({
-  userId: z.number().int().positive(),
-  clientName: z.string().min(1, "clientName is required"),
-  clientEmail: z.string().email("Invalid email").optional().or(z.literal("")),
-  clientPhone: z.string().optional(),
-  vehicleInfo: z.string().min(1, "vehicleInfo is required"),
-  services: z.string().min(1, "services is required"),
-  source: z.string().min(1, "source is required"),
-  serviceId: z.number().int().nullable().optional(),
-  countryCode: z.string().optional(),
-  sendOpeningSms: z.boolean().optional(),
-  multipleServices: z
-    .object({
-      connect: z.array(z.object({ id: z.number().int().positive() })),
-    })
-    .optional(),
-});
+const CreateLeadBodySchema = z
+  .object({
+    userId: z.number().int().positive(),
+    clientName: z.string().min(1, "clientName is required"),
+    clientEmail: z.string().email("Invalid email").optional().or(z.literal("")),
+    clientPhone: z.string().optional(),
+    vehicleInfo: z.string().min(1, "vehicleInfo is required"),
+    services: z.string().min(1, "services is required"),
+    source: z.string().min(1, "source is required"),
+    serviceId: z.number().int().nullable().optional(),
+    countryCode: z.string().optional(),
+    sendOpeningSms: z.boolean().optional(),
+    multipleServices: z
+      .object({
+        connect: z.array(z.object({ id: z.number().int().positive() })),
+      })
+      .optional(),
+  })
+  .refine(
+    (data) => {
+      const hasPhone =
+        typeof data.clientPhone === "string" &&
+        data.clientPhone.trim().length > 0;
+      const hasEmail =
+        typeof data.clientEmail === "string" &&
+        data.clientEmail.trim().length > 0;
+      return hasPhone || hasEmail;
+    },
+    {
+      message:
+        "At least one contact method is required — provide a phone number or an email address.",
+      path: ["clientPhone"],
+    },
+  );
 
 export async function POST(
   req: NextRequest,
