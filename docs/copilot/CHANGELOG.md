@@ -5,6 +5,40 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Phase 3b.8 — Client and vehicle creation
+
+**Date:** 2026-05-17
+**Branch:** taiseer/ai-copilot
+**Commit:** (see git log)
+
+### What's new
+
+The copilot can now create standalone clients and add vehicles to clients.
+
+### Added
+
+- `POST /api/client/company/[companyId]` — wraps the existing `addCustomer` action; Bearer JWT auth, requires at least one contact method (phone or email). Returns 409 if email or mobile already exists.
+- `POST /api/vehicle/client/[clientId]` — wraps the existing `addVehicle` action; verifies the client belongs to the caller's company (404 otherwise). Idempotent — returns existing vehicle if same year+make+model already registered.
+- `create_client` tool (permission: `client.create`) — creates a standard client. Requires a `get_client_by_name` duplicate check first; after creation, prompts to add a vehicle.
+- `create_vehicle_for_client` tool (permission: `vehicle.create`) — adds a vehicle to an existing client; serves both the new-client flow and adding vehicles to existing clients.
+- `CopilotAction` enum: added `client.create` and `vehicle.create` (both gated on `salesPipeline` permission, same as `lead.create`).
+
+### Fleet — deliberately out of scope
+
+Fleet clients require a companion `Fleet` record (`fleetName` + `contactName`) created atomically with the client. The copilot does **not** create fleet clients and never sets `isFleet` — doing so without the companion record would corrupt data. `create_client` has no `isFleet` field. Fleet requests are redirected to the main app's Fleet page.
+
+### Not changed
+
+- `addCustomer` and `addVehicle` server actions reused as-is (both already support `forceCompanyId`).
+
+### Verification
+
+- `yarn tsc` clean
+- `yarn build` clean
+- (Pending: smoke test client + vehicle creation in the copilot UI)
+
+---
+
 ## Phase 3b.7 — Appointment confirmation message support
 
 **Date:** 2026-05-18

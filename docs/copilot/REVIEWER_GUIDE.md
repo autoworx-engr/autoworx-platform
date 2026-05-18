@@ -409,3 +409,19 @@ Future optimizations not yet active:
 - Haiku 4.5 routing for simple read-only tool calls (Phase 3 candidate — currently all tool-use turns use Sonnet)
 - Conversation context trimming for sessions > 20 messages (Phase 6)
 - Per-seat usage caps and billing integration (Phase 5)
+
+---
+
+### Phase 3b.8 — Client + vehicle creation
+
+Two new API routes (client create, vehicle create) wrapping existing server actions (`addCustomer`, `addVehicle`) per the Path 1 pattern established in Phase 3. Two new copilot tools (`create_client`, `create_vehicle_for_client`).
+
+**Fleet is deliberately excluded:** a fleet client needs a companion `Fleet` record created atomically (`fleetName` + `contactName`). The existing `PATCH /api/client/client-details/[id]` can toggle `isFleet` WITHOUT creating that record — a data-integrity trap. `create_client` has no `isFleet` field at all; fleet requests are redirected to the main app's Fleet page with an explanatory message.
+
+**Multi-tenant safety on the vehicle route:** keyed by `clientId` in the URL (not `companyId`). The handler first verifies the client belongs to the JWT's company (`db.client.findFirst({ where: { id, companyId } })`). A client from another company returns 404 — same as if the record didn't exist.
+
+**Idempotency:** `addVehicle` already deduplicates on (clientId + year + make + model + companyId) and returns the existing record rather than an error. This means the copilot can safely retry without creating duplicates.
+
+**Permissions:** `client.create` and `vehicle.create` both gate on `salesPipeline`, the same permission as `lead.create`. All users who can create leads can create clients and vehicles.
+
+No DB migrations. No changes to `addCustomer` or `addVehicle`.

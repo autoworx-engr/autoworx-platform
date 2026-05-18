@@ -18,6 +18,8 @@ import "./handlers/getConfirmationTemplatesTool";
 import "./handlers/addLeadTagTool";
 import "./handlers/removeLeadTagTool";
 import "./handlers/createTagTool";
+import "./handlers/createClientTool";
+import "./handlers/createVehicleForClientTool";
 
 export { toolsForAnthropic, allTools, getTool } from "./registry";
 export type { ToolContext, ToolResult, ToolDefinition } from "./registry";

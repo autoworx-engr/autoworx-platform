@@ -21,7 +21,9 @@ export type CopilotAction =
   | "report.revenue.read"
   | "report.payments.read"
   | "client.read"
-  | "vehicle.read";
+  | "client.create"
+  | "vehicle.read"
+  | "vehicle.create";
 
 export type PermissionContext = {
   userId: number;
@@ -176,10 +178,22 @@ const PERMISSION_MAP: Record<
     check: () => true,
     reason: "",
   },
+  "client.create": {
+    check: (p) =>
+      p.role === "Admin" ||
+      !!(p.userPermissions?.salesPipeline ?? cp(p, "salesPipeline")),
+    reason: "You don't have permission to create clients (salesPipeline).",
+  },
   "vehicle.read": {
     // All authenticated roles can read vehicle data within their company
     check: () => true,
     reason: "",
+  },
+  "vehicle.create": {
+    check: (p) =>
+      p.role === "Admin" ||
+      !!(p.userPermissions?.salesPipeline ?? cp(p, "salesPipeline")),
+    reason: "You don't have permission to add vehicles (salesPipeline).",
   },
 };
 
