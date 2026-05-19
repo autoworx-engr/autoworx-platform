@@ -190,6 +190,31 @@ yarn dev
 
 ---
 
+## Phase 3c.2 — create_estimate (services + labor)
+
+New `create_estimate` write tool. Creates a draft estimate (type="Estimate") for a client with one or more services and labor line items.
+
+**Total computation lives in `execute()`, not in the route.** Pre-build recon confirmed `POST /api/estimate/[companyId]/` stores caller-supplied totals verbatim — it computes only `profit`. The tool's `execute()` therefore owns all money math:
+
+- `subtotal = Σ (laborHours × laborRate)` across all services
+- `taxAdd = 0` — tax applies to materials only; no materials in this phase
+- `serviceFeeRate` and `taxRate` fetched from `Company` using `ctx.companyId` — never from AI input
+- `suppliesFeeAdd = subtotal × (serviceFeeRate / 100)`
+- `grandTotal = subtotal + suppliesFeeAdd`
+- `Invoice.tax` and `Invoice.serviceFee` are stored as **percentage rates** (not dollar amounts), matching the app's own BillSummary behavior
+
+**serviceDesc free-text**: The route creates Labor records inline from the item payload. No pre-existing Service row is required — the AI passes the user's plain-language service name as `serviceDesc`, which the route stores on `InvoiceItem.serviceDesc`.
+
+**columnId omitted**: The route auto-resolves the "Pending" column when `columnId` is absent.
+
+**Permission**: `estimate.create` (already in `CopilotAction` enum and `PERMISSION_MAP`, gated on `estimatesInvoices`).
+
+**System prompt additions**: duplicate soft guard (check `get_estimates_for_client` before creating), estimates-only guard (copilot cannot create invoices — redirects to estimate workflow), and updated write-discipline rules.
+
+Services + labor only. Materials → 3c.3. Supply/tax toggles → 3c.4. No DB migrations.
+
+---
+
 ## Phase 3c.1 — Estimate read tools completed
 
 Two tools read estimates and invoices:

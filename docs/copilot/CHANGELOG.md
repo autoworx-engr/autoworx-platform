@@ -5,6 +5,28 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Phase 3c.2 — create_estimate (services + labor)
+
+**Date:** 2026-05-18
+**Branch:** taiseer/ai-copilot
+
+New `create_estimate` copilot tool. Creates a draft estimate for a client with one or more services and labor line items. Services + labor only — materials in 3c.3, supply/tax toggles in 3c.4.
+
+Key design decisions:
+
+- **Totals computed server-side in `execute()`**: The POST /api/estimate/[companyId]/ route stores caller-supplied totals (confirmed in pre-build recon). The tool's execute() computes subtotal = Σ(laborHours × laborRate), fetches Company.tax and Company.serviceFee rates from the DB (never from AI input), computes suppliesFeeAdd = subtotal × (serviceFeeRate/100), grandTotal = subtotal + suppliesFeeAdd. AI supplies NO dollar amounts.
+- **taxAdd = 0** for Phase 3c.2: tax applies to materials only; no materials in this phase.
+- **tax/serviceFee stored as RATES**: Invoice.tax and Invoice.serviceFee are percentage rates (e.g. 8.5 = 8.5%), not dollar amounts — matching the app's own BillSummary behavior.
+- **serviceDesc free-text**: Route accepts serviceDesc string and creates Labor inline — no pre-existing Service record required. AI passes the user's plain-language service name directly.
+- **columnId omitted**: Route auto-resolves the "Pending" column for estimates.
+- **Duplicate soft guard** in system prompt: before creating, check get_estimates_for_client and ask if an estimate already exists for the same client+vehicle.
+- **Estimates only**: System prompt explicitly blocks invoice creation requests and redirects to estimate workflow.
+- Permission: `estimate.create` (already in CopilotAction enum, gated on estimatesInvoices).
+
+No DB migrations. No new API routes.
+
+---
+
 ## Fix — copilot hyperlink rendering
 
 **Date:** 2026-05-18
