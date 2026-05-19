@@ -31,6 +31,10 @@ export async function debounceSmsAgent({
   sendFrom,
   sendTo,
 }: DebounceParams): Promise<void> {
+  console.log(
+    `[Debounce] Incoming SMS — clientId=${clientId} companyId=${companyId} from=${sendFrom} to=${sendTo}`,
+  );
+
   const inserted = await db.$executeRaw`
     INSERT INTO sms_agent_debounce (client_id, company_id, send_from, send_to, window_start)
     VALUES (${clientId}, ${companyId}, ${sendFrom}, ${sendTo}, NOW())
@@ -38,9 +42,19 @@ export async function debounceSmsAgent({
   `;
 
   if (inserted === 1) {
-    await pgmq.sendWithDelay({ clientId, companyId }, DEBOUNCE_SECONDS);
     console.log(
-      `[Debounce] Window opened for client ${clientId} — job queued in ${DEBOUNCE_SECONDS}s`,
+      `[Debounce] New window — clientId=${clientId} enqueuing PGMQ job in ${DEBOUNCE_SECONDS}s`,
+    );
+    const msgId = await pgmq.sendWithDelay(
+      { clientId, companyId },
+      DEBOUNCE_SECONDS,
+    );
+    console.log(
+      `[Debounce] ✓ Window open — clientId=${clientId} pgmq_msg_id=${msgId}`,
+    );
+  } else {
+    console.log(
+      `[Debounce] Window already open for clientId=${clientId} — skipping enqueue (worker will requeue if needed)`,
     );
   }
 }
