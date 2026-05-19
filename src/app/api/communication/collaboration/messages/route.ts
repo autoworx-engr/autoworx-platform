@@ -1,7 +1,7 @@
 import { AppError } from "@/error-boundary/error";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
-import { Message } from "@prisma/client";
+import { Message, Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -100,32 +100,36 @@ export async function GET(request: NextRequest) {
         throw new AppError(400, "Cannot send message to oneself");
       }
 
-      const findToFromUser = await db.user.findFirst({
-        where: {
-          OR: [{ id: toId }, { id: fromId }],
-          companyId: findExistingCompany?.id,
-        },
+      const participants = await db.user.findMany({
+        where: { id: { in: [toId, fromId] } },
+        select: { id: true, companyId: true },
       });
 
-      if (!findToFromUser) {
+      if (
+        participants.length !== 2 ||
+        !participants.some((u) => u.companyId === findExistingCompany.id)
+      ) {
         throw new AppError(404, "User not found");
       }
 
-      messages = await db.message.findMany({
-        where: { from: fromId, to: toId, section: "collaboration" },
-        include: {
-          attachment: true,
-          requestEstimate: true,
-        },
-        orderBy: {
-          [sortBy ?? "createdAt"]: sortOrder ?? "desc",
-        },
-        skip: (pageNum - 1) * limitNum,
-        take: limitNum,
-      });
-      totalRecords = await db.message.count({
-        where: { from: fromId, to: toId, section: "collaboration" },
-      });
+      const conversationWhere: Prisma.MessageWhereInput = {
+        section: "collaboration",
+        OR: [
+          { from: fromId, to: toId },
+          { from: toId, to: fromId },
+        ],
+      };
+
+      [messages, totalRecords] = await Promise.all([
+        db.message.findMany({
+          where: conversationWhere,
+          include: { attachment: true, requestEstimate: true },
+          orderBy: { [sortBy ?? "createdAt"]: sortOrder ?? "desc" },
+          skip: (pageNum - 1) * limitNum,
+          take: limitNum,
+        }),
+        db.message.count({ where: conversationWhere }),
+      ]);
     }
 
     const hasNextPage = pageNum * limitNum < totalRecords;

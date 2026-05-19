@@ -155,16 +155,14 @@ export async function GET(req: Request) {
       throw new Error("Missing required company IDs");
     }
 
+    const take = Math.min(parseInt(searchParams.get("take") || "100"), 200);
+
     const messages = await db.collaborationMessage.findMany({
       where: {
         section: "collaboration",
         OR: [
-          {
-            AND: [{ fromCompanyId: companyA }, { toCompanyId: companyB }],
-          },
-          {
-            AND: [{ fromCompanyId: companyB }, { toCompanyId: companyA }],
-          },
+          { fromCompanyId: companyA, toCompanyId: companyB },
+          { fromCompanyId: companyB, toCompanyId: companyA },
         ],
       },
       include: {
@@ -178,47 +176,33 @@ export async function GET(req: Request) {
           },
         },
         requestEstimate: {
-          include: {
-            invoice: true,
-          },
+          include: { invoice: true },
         },
       },
-      orderBy: {
-        createdAt: "asc",
-      },
+      orderBy: { createdAt: "desc" },
+      take,
     });
+    messages.reverse();
 
+    // Only mark messages INBOUND to the viewer as read (not the viewer's own outbound messages)
+    const otherCompanyId = viewerCompanyId === companyA ? companyB : companyA;
     const readMessages = await db.companyChatTrack.updateMany({
       where: {
-        OR: [
-          {
-            AND: [
-              { senderCompanyId: companyA },
-              { receiverCompanyId: companyB },
-            ],
-          },
-          {
-            AND: [
-              { senderCompanyId: companyB },
-              { receiverCompanyId: companyA },
-            ],
-          },
-        ],
+        senderCompanyId: otherCompanyId,
+        receiverCompanyId: viewerCompanyId,
         isRead: false,
       },
-      data: {
-        isRead: true,
-      },
+      data: { isRead: true },
     });
 
-    if (readMessages) {
+    if (readMessages.count > 0) {
       try {
-        await pusher.trigger(`company-track-${companyA}`, "chat-read", {
-          senderCompanyId: companyB,
-          receiverCompanyId: companyA,
+        await pusher.trigger(`company-track-${otherCompanyId}`, "chat-read", {
+          senderCompanyId: otherCompanyId,
+          receiverCompanyId: viewerCompanyId,
         });
-      } catch (pusherErr) {
-        console.error("Pusher trigger failed (non-fatal):", pusherErr);
+      } catch {
+        // Pusher trigger failure is non-fatal
       }
     }
 
