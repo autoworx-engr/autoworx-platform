@@ -85,23 +85,19 @@ export const requestEstimate = async (
         data: vehicleInfo,
       });
 
-      let finalColumnId: number;
-      const defaultColumn = await db.column.findFirst({
+      const defaultColumn = await prisma.column.findFirst({
         where: {
           title: "Pending",
           type: "shop",
           companyId: requestEstimateData.receiverCompanyId,
         },
-        select: {
-          id: true,
-        },
+        select: { id: true },
       });
 
-      if (defaultColumn) {
-        finalColumnId = defaultColumn.id;
-      } else {
+      if (!defaultColumn) {
         throw new Error("Default column not found");
       }
+      const finalColumnId = defaultColumn.id;
 
       const estimateInfo = {
         id: customAlphabet("1234567890", 10)(),
