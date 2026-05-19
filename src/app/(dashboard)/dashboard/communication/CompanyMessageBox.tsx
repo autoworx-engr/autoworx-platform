@@ -366,15 +366,13 @@ export default function CompanyMessageBox({
       {/* 🔹 Messages */}
       <div ref={messageBoxRef} className="flex-1 overflow-y-auto p-4 space-y-3">
         {/* Top loader for older messages */}
-        {!messagesLoading && (
+        {!messagesLoading && messages.length > 0 && (
           <div className="flex justify-center py-2 text-[11px] text-gray-400">
             {isFetchingNextPage
               ? "Loading older messages..."
               : hasNextPage
                 ? "Scroll up to load older messages"
-                : messages.length > 0
-                  ? "• No older messages •"
-                  : null}
+                : "• No older messages •"}
           </div>
         )}
         {messagesLoading ? (
@@ -394,6 +392,18 @@ export default function CompanyMessageBox({
                 </div>
               </div>
             ))}
+          </div>
+        ) : messages.length === 0 ? (
+          <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#006D77]/10">
+              <SendHorizontal className="text-[#006D77]" size={24} />
+            </div>
+            <p className="text-base font-semibold text-gray-700">
+              Start a conversation
+            </p>
+            <p className="text-sm text-gray-500">
+              Send a message to {company.name} to begin collaborating.
+            </p>
           </div>
         ) : null}
         {!messagesLoading &&

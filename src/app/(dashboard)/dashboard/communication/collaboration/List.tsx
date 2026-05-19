@@ -129,11 +129,6 @@ export default function List({
             Loading more…
           </div>
         )}
-        {!hasNextPage && loadedCompanies.length > 0 && (
-          <div className="py-2 text-center text-[11px] text-gray-300">
-            • End of list •
-          </div>
-        )}
       </div>
     </div>
   );

@@ -253,11 +253,6 @@ export default function SearchCollaborationModal({}: TProps) {
                       Loading more…
                     </div>
                   )}
-                  {!hasNextPage && admins.length > 0 && (
-                    <div className="w-full py-2 text-center text-[11px] text-slate-300">
-                      • End of list •
-                    </div>
-                  )}
                 </div>
               </div>
             </>
