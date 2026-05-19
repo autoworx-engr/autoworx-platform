@@ -3,10 +3,7 @@ import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { db } from "@/lib/db";
 import { sendClientMessageNotification } from "@/lib/notification/communication-notify";
 import { getPusherInstance } from "@/lib/pusher/server";
-import {
-  formDataToParams,
-  verifyTwilioSignature,
-} from "@/lib/twilio/verifyTwilioSignature";
+import { verifyTwilioSignature } from "@/lib/twilio/verifyTwilioSignature";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
