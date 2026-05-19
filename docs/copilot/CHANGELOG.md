@@ -5,6 +5,29 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Fix — create_estimate ID validation
+
+**Date:** 2026-05-18
+**Branch:** taiseer/ai-copilot
+
+`create_estimate` failed with an FK violation (`Invoice_customer_id_fkey`) when the model passed a hallucinated `clientId` that did not exist in the DB (the AI passed `57`; the real client ID was `1`, max ID was `23`). The FK constraint correctly rejected the write, but the failure surface was opaque and unrecoverable.
+
+Fix: `execute()` now validates, before any write, that:
+
+1. `clientId` exists for `ctx.companyId` — scoped to the current company, multi-tenant safe.
+2. `vehicleId` (if provided) exists, belongs to `clientId`, and belongs to `ctx.companyId`.
+
+Both checks return a clear, model-readable error directing the AI to re-call the lookup tool and use the fresh id — making the failure recoverable without human intervention.
+
+System prompt reinforced in two places:
+
+- **General rule** (§ Finding data before acting): Any ID passed to a write tool must come from a lookup tool's result in the current conversation — never from memory, never fabricated.
+- **Estimate-specific rule** (§ Creating an estimate): `clientId` and `vehicleId` must come from the actual return value of `get_client_by_name` / `get_vehicle_by_client` in the same conversation.
+
+No DB migrations. No new API routes.
+
+---
+
 ## Phase 3c.2 — create_estimate (services + labor)
 
 **Date:** 2026-05-18

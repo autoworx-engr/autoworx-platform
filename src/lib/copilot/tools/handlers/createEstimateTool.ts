@@ -31,6 +31,31 @@ function round2(n: number): number {
 async function execute(input: unknown, ctx: ToolContext): Promise<ToolResult> {
   const { clientId, vehicleId, services } = input as Input;
 
+  // 0. Validate IDs exist before any write — catches AI-hallucinated IDs.
+  const client = await db.client.findFirst({
+    where: { id: clientId, companyId: ctx.companyId },
+    select: { id: true },
+  });
+  if (!client) {
+    return {
+      ok: false,
+      error: `Client ID ${clientId} was not found for this company. Call get_client_by_name again and use the exact id it returns — do not guess or recall an ID from memory.`,
+    };
+  }
+
+  if (vehicleId != null) {
+    const vehicle = await db.vehicle.findFirst({
+      where: { id: vehicleId, clientId, companyId: ctx.companyId },
+      select: { id: true },
+    });
+    if (!vehicle) {
+      return {
+        ok: false,
+        error: `Vehicle ID ${vehicleId} was not found for client ${clientId}. Call get_vehicle_by_client to get the correct vehicle id, or omit the vehicle.`,
+      };
+    }
+  }
+
   // 1. Look up company tax/serviceFee rates — never from AI input
   const company = await db.company.findUnique({
     where: { id: ctx.companyId },

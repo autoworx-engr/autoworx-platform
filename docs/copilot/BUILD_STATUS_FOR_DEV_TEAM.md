@@ -324,6 +324,8 @@ Discovery context: both bugs were masked locally by the ai_personalities schema 
 
 5. **`Priority` enum missing `Urgent`:** The TOOL_REGISTRY.md spec called for `Low | Medium | High | Urgent`. The Prisma schema only has `Low | Medium | High`. The copilot returns actual enum values. Team should decide: add `Urgent` to the schema (migration required) or update the spec.
 
+6. **AI ID hallucination hardening:** `create_estimate` now validates `clientId` and `vehicleId` existence before any write after an observed case where the model passed a non-existent `clientId` (57; real client was id 1). The same defensive validation pattern should be applied to other write tools (`create_appointment`, `create_task`, etc.) as a follow-up hardening pass.
+
 ---
 
 ## Coordination items for the team
