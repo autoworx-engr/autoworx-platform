@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { addAppointment } from "@/actions/appointment/addAppointment";
+import { getCompanyIdFromBearer } from "@/lib/mobileAuth";
 
 /**
  * @swagger
@@ -147,8 +148,8 @@ import { addAppointment } from "@/actions/appointment/addAppointment";
 
 export async function POST(req: NextRequest) {
   try {
+    const jwtCompanyId = await getCompanyIdFromBearer(req);
     const body = await req.json();
-
     const {
       title,
       date,
@@ -167,7 +168,18 @@ export async function POST(req: NextRequest) {
       reminderEmailTemplateStatus,
       times,
       timezone,
+      forceUserId,
     } = body;
+
+    let forceCompanyId: number | undefined = body.forceCompanyId;
+    if (jwtCompanyId !== null) {
+      if (forceCompanyId !== undefined && forceCompanyId !== jwtCompanyId)
+        return NextResponse.json(
+          { success: false, message: "Forbidden: company mismatch" },
+          { status: 403 },
+        );
+      forceCompanyId = jwtCompanyId;
+    }
 
     // Basic validation (extra safety before Zod)
     if (!title) {
@@ -177,13 +189,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (
-      !assignedUsers ||
-      !Array.isArray(assignedUsers) ||
-      assignedUsers.length === 0
-    ) {
+    if (!assignedUsers || !Array.isArray(assignedUsers)) {
       return NextResponse.json(
-        { success: false, message: "assignedUsers must be a non-empty array" },
+        { success: false, message: "assignedUsers must be an array" },
         { status: 400 },
       );
     }
@@ -206,15 +214,17 @@ export async function POST(req: NextRequest) {
       reminderEmailTemplateStatus,
       times,
       timezone,
+      forceCompanyId,
+      forceUserId,
     });
 
-    // Handle server action error format
-    if (result?.type === "error") {
+    // Handle server action error format (both "error" and "globalError" types)
+    if (result?.type === "error" || result?.type === "globalError") {
       return NextResponse.json(
         {
           success: false,
           message: result.message || "Failed to create appointment",
-          field: result.field || null,
+          field: (result as any).field || null,
         },
         { status: 400 },
       );
@@ -228,14 +238,13 @@ export async function POST(req: NextRequest) {
       },
       { status: 200 },
     );
-  } catch (error: any) {
-    console.error("Create Appointment API Error:", error);
-
+  } catch (error) {
     return NextResponse.json(
       {
         success: false,
         message:
-          error?.message || "Internal server error while creating appointment",
+          (error as Error).message ||
+          "Internal server error while creating appointment",
       },
       { status: 500 },
     );

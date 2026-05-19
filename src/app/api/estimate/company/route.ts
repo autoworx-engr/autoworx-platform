@@ -1,3 +1,4 @@
+import { getCompanyIdFromBearer } from "@/lib/mobileAuth";
 import { NextRequest, NextResponse } from "next/server";
 import { fetchAndTransformData } from "@/lib/fetchAndTransformData";
 import { InvoiceType } from "@prisma/client";
@@ -61,15 +62,19 @@ import { InvoiceType } from "@prisma/client";
 
 export async function GET(req: NextRequest) {
   try {
+    const jwtCompanyId = await getCompanyIdFromBearer(req);
+    if (jwtCompanyId === null) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { searchParams } = new URL(req.url);
-
     const type = searchParams.get("type") as InvoiceType;
-    const companyId = Number(searchParams.get("companyId"));
     const timezone = searchParams.get("timezone") || "UTC";
+    const companyId = jwtCompanyId;
 
-    if (!type || !companyId) {
+    if (!type) {
       return NextResponse.json(
-        { error: "Missing required params: type, companyId" },
+        { error: "Missing required params: type" },
         { status: 400 },
       );
     }
