@@ -79,15 +79,13 @@ export default function ServiceCreate() {
       return;
     }
 
-    if (!data.service.canned) {
-      // Update the service
-      await updateService({
-        id: data?.service.id,
-        name,
-        categoryId: category?.id,
-        description,
-      });
-    }
+    // Update the service
+    await updateService({
+      id: data?.service.id,
+      name,
+      categoryId: category?.id,
+      description,
+    });
 
     // Change the service in the items
     // @ts-ignore
@@ -100,6 +98,7 @@ export default function ServiceCreate() {
               ...item.service,
               name,
               categoryId: category?.id,
+              category: category,
               description,
             },
             serviceDesc: description,
@@ -146,8 +145,8 @@ export default function ServiceCreate() {
           onCategoryChange={setCategory}
           labelPosition="none"
           categoryData={category}
-          categoryOpen={data.service?.canned ? false : categoryOpen}
-          setCategoryOpen={data.service?.canned ? undefined : setCategoryOpen}
+          categoryOpen={categoryOpen}
+          setCategoryOpen={setCategoryOpen}
           className="max-w-full"
         />
       </div>
