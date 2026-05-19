@@ -203,7 +203,7 @@ export async function sendTwilioMessage({
         }
       } catch (error) {}
 
-      revalidatePath("/dashboard/communication/client/${clientId}");
+      revalidatePath(`/dashboard/communication/client/${clientId}`);
 
       return {
         success: true,
