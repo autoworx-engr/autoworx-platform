@@ -153,10 +153,19 @@ export default function ClientItem({
     }
   };
 
+  const conversationsTrack = client?.conversationsTrack as
+    | (NonNullable<typeof client>["conversationsTrack"] & {
+        messengerUnReadCount?: number;
+        messengerLastMessage?: string | null;
+        messengerIsRead?: boolean;
+        messengerLastBy?: string | null;
+      })
+    | undefined;
+
   const unreadTotal =
-    (client?.conversationsTrack?.emailIsUnReadCount || 0) +
-    (client?.conversationsTrack?.smsUnReadCount || 0) +
-    (client?.conversationsTrack?.messengerUnReadCount || 0);
+    (conversationsTrack?.emailIsUnReadCount || 0) +
+    (conversationsTrack?.smsUnReadCount || 0) +
+    (conversationsTrack?.messengerUnReadCount || 0);
 
   const isShowConversationIndicator =
     !!client?.conversationsTrack && unreadTotal > 0;
@@ -280,21 +289,21 @@ export default function ClientItem({
         )}
 
         {/* Messenger preview */}
-        {client?.conversationsTrack?.messengerLastMessage && (
+        {conversationsTrack?.messengerLastMessage && (
           <p
             className={cn(
               "mt-1.5 line-clamp-1 text-xs",
               selected ? "text-white/95" : "text-zinc-600 dark:text-zinc-300",
-              client?.conversationsTrack?.messengerIsRead
+              conversationsTrack?.messengerIsRead
                 ? "font-normal"
                 : "font-semibold",
             )}
-            title={client?.conversationsTrack?.messengerLastMessage}
+            title={conversationsTrack?.messengerLastMessage}
           >
-            {client?.conversationsTrack?.messengerLastBy === "Company"
+            {conversationsTrack?.messengerLastBy === "Company"
               ? "You (Messenger)"
               : "Client (Messenger)"}{" "}
-            — {client?.conversationsTrack?.messengerLastMessage}
+            — {conversationsTrack?.messengerLastMessage}
           </p>
         )}
       </div>
