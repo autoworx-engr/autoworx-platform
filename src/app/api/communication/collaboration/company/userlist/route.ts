@@ -8,8 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
  * @swagger
  * /api/communication/collaboration/company/userlist:
  *   get:
- *     summary: Retrieve collaborating companies and their users
- *     description: Fetches a paginated list of companies that have an active collaboration status with the authenticated user's company.
+ *     summary: Retrieve collaborating companies (paginated)
  *     tags:
  *       - Collaboration
  *     security:
@@ -17,35 +16,27 @@ import { NextRequest, NextResponse } from "next/server";
  *     parameters:
  *       - in: query
  *         name: search
- *         schema:
- *           type: string
+ *         schema: { type: string }
  *       - in: query
  *         name: page
- *         schema:
- *           type: integer
- *           minimum: 1
- *           default: 1
+ *         schema: { type: integer, minimum: 1, default: 1 }
  *       - in: query
  *         name: limit
- *         schema:
- *           type: integer
- *           minimum: 1
- *           maximum: 100
- *           default: 20
+ *         schema: { type: integer, minimum: 1, maximum: 50, default: 10 }
  *     responses:
- *       200:
- *         description: Successfully retrieved the list of collaborating companies.
- *       401:
- *         description: Unauthorized.
- *       500:
- *         description: Internal Server Error.
+ *       200: { description: Success }
+ *       401: { description: Unauthorized }
+ *       500: { description: Internal Server Error }
  */
-
 export const GET = async (request: NextRequest) => {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const pageNum = parseInt(searchParams.get("page") || "1");
-    const limitNum = parseInt(searchParams.get("limit") || "20");
+    const pageNum = Math.max(parseInt(searchParams.get("page") || "1"), 1);
+    const limitNum = Math.min(
+      Math.max(parseInt(searchParams.get("limit") || "20"), 1),
+      50,
+    );
+    const search = (searchParams.get("search") || "").trim().toLowerCase();
     const authHeader = request.headers.get("authorization") ?? "";
 
     const accessToken = authHeader.startsWith("Bearer")
@@ -53,7 +44,7 @@ export const GET = async (request: NextRequest) => {
       : authHeader;
 
     const verifyToken = await jwtVerifyToken(accessToken);
-    const userCompanyId = verifyToken?.payload?.companyId;
+    const userCompanyId = verifyToken?.payload?.companyId as number | undefined;
 
     if (!userCompanyId) {
       throw new AppError(
@@ -62,22 +53,29 @@ export const GET = async (request: NextRequest) => {
       );
     }
 
-    const finalCompanies = await getFilteredConnectedCompanies(
-      userCompanyId as number,
-    );
-    const total = finalCompanies.length;
+    // `getFilteredConnectedCompanies` filters by permission post-fetch, so
+    // pagination has to happen in memory after that filter is applied.
+    const all = await getFilteredConnectedCompanies(userCompanyId);
+
+    const filtered = search
+      ? all.filter((c) => c.name.toLowerCase().includes(search))
+      : all;
+
+    const total = filtered.length;
+    const skip = (pageNum - 1) * limitNum;
+    const paged = filtered.slice(skip, skip + limitNum);
 
     return NextResponse.json(
       {
         success: true,
-        data: finalCompanies,
+        data: paged,
         message: "Collaboration companies fetched successfully",
         meta: {
           totalRecords: total,
           page: pageNum,
           limit: limitNum,
           totalPages: Math.ceil(total / limitNum),
-          hasNextPage: pageNum * limitNum < total,
+          hasNextPage: skip + paged.length < total,
           hasPrevPage: pageNum > 1,
         },
       },
