@@ -166,7 +166,6 @@ export const requestEstimate = async (
       });
 
       if (!res.ok) {
-        console.error("Failed to upload photos");
         throw new Error("Failed to upload photos");
       }
 
@@ -190,16 +189,14 @@ export const requestEstimate = async (
     });
 
     return { status: 200, data: { requestEstimateFromDB } };
-  } catch (err: any) {
+  } catch (err) {
     if (
       err instanceof Prisma.PrismaClientUnknownRequestError ||
       err instanceof Prisma.PrismaClientKnownRequestError
     ) {
       throw new Error("something went wrong from db");
     }
-    console.error(err);
-    throw new Error(`Error: ${err.message}`);
-  } finally {
-    await db.$disconnect();
+    const message = err instanceof Error ? err.message : "Unknown error";
+    throw new Error(`Error: ${message}`);
   }
 };
