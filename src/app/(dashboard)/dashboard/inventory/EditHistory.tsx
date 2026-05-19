@@ -11,12 +11,10 @@ import {
   DialogTrigger,
 } from "@/components/Dialog";
 import FormError from "@/components/FormError";
-import NewVendor from "@/components/Lists/NewVendor";
-import Selector from "@/components/Selector";
+import VendorSelector from "@/components/inventory/VendorSelector";
 import { SlimInput } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
 import { useFormErrorStore } from "@/stores/form-error";
-import { useListsStore } from "@/stores/lists";
 import { Vendor } from "@prisma/client";
 import { SquarePen } from "lucide-react";
 import { useState } from "react";
@@ -42,10 +40,8 @@ export default function EditHistory({
   lot: string;
   notes: string;
 }) {
-  const { vendors } = useListsStore();
   const [open, setOpen] = useState(false);
   const [vendor, setVendor] = useState<Vendor | null>(previousVendor);
-  const [vendorOpen, setVendorOpen] = useState(false);
 
   const { showError, clearError } = useFormErrorStore();
 
@@ -105,49 +101,11 @@ export default function EditHistory({
             className="col-span-1"
             defaultValue={date.toISOString().split("T")[0]}
           />
-          {/* TODO: make reusable component */}
-          <div>
-            <label>Vendor</label>
-
-            <Selector
-              label={(vendor: Vendor | null) =>
-                vendor
-                  ? vendor?.companyName || vendor.name || `Vendor ${vendor.id}`
-                  : "Vendor"
-              }
-              newButton={
-                <NewVendor
-                  afterSubmit={(ven) => {
-                    setVendor(ven);
-                    setVendorOpen(false);
-                  }}
-                  button={
-                    <button type="button" className="text-xs text-[#6571FF]">
-                      + New Vendor
-                    </button>
-                  }
-                />
-              }
-              displayList={(vendor: Vendor) => (
-                <p>{vendor?.companyName || vendor.name}</p>
-              )}
-              items={vendors}
-              onSearch={(search: string) =>
-                vendors.filter(
-                  (vendor) =>
-                    vendor?.companyName
-                      ?.toLowerCase()
-                      ?.includes(search.toLowerCase()) ||
-                    (vendor?.name?.toLowerCase() || "").includes(
-                      search.toLowerCase()
-                    )
-                )
-              }
-              openState={[vendorOpen, setVendorOpen]}
-              selectedItem={vendor}
-              setSelectedItem={setVendor}
-            />
-          </div>
+          <VendorSelector
+            label="Vendor"
+            selectedVendor={vendor}
+            onVendorChange={setVendor}
+          />
 
           <div className="flex gap-3">
             <SlimInput

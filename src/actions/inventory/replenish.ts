@@ -39,6 +39,7 @@ export async function replenish({
     const product = await db.inventoryProduct.findUnique({
       where: { id: productId },
     });
+    if (!product) throw new Error("Product not found");
 
     const vendor = vendorId
       ? await db.vendor.findUnique({
@@ -60,7 +61,7 @@ export async function replenish({
     });
 
     // update product quantity
-    const newQuantity = Number(product!.quantity!) + Number(quantity);
+    const newQuantity = Number(product.quantity) + Number(quantity);
 
     const updatedProduct = await db.inventoryProduct.update({
       where: { id: productId },

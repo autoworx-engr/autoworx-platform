@@ -17,6 +17,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { successToast, errorToast } from "@/lib/toast";
 import { getPaymentGatewayInfo } from "./getPaymentGatewayInfo";
+import PaymentsSkeleton from "./PaymentsSkeleton";
 
 export default function PaymentsPage() {
   const { data: stripeData, loading: stripeLoading } =
@@ -24,7 +25,11 @@ export default function PaymentsPage() {
   const { data: authorizeNetData, loading: authorizeNetLoading } = useServerGet(
     getAuthorizeNetStatus,
   );
-  const { data: paymentGatewayInfo } = useServerGet(getPaymentGatewayInfo);
+  const { data: paymentGatewayInfo, loading: paymentGatewayLoading } =
+    useServerGet(getPaymentGatewayInfo);
+
+  const isLoading =
+    stripeLoading || authorizeNetLoading || paymentGatewayLoading;
 
   const [selectedGateway, setSelectedGateway] = useState<string>(
     paymentGatewayInfo?.paymentGateway || "STRIPE",
@@ -43,14 +48,18 @@ export default function PaymentsPage() {
   }, [paymentGatewayInfo]);
 
   const handleGatewayChange = async (value: string) => {
+    const previousGateway = selectedGateway;
     setSelectedGateway(value);
     const result = await updatePaymentGateway(
       value as "STRIPE" | "AUTHORIZE_NET" | "BOTH",
     );
     if (result.success) {
-      successToast("Payment gateway updated");
+      successToast("Payment gateway updated", { id: "payment-gateway-update" });
     } else {
-      errorToast(result.message || "Failed to update payment gateway");
+      setSelectedGateway(previousGateway);
+      errorToast(result.message || "Failed to update payment gateway", {
+        id: "payment-gateway-update",
+      });
     }
   };
 
@@ -70,6 +79,10 @@ export default function PaymentsPage() {
     { value: "STRIPE", label: "Stripe" },
     { value: "AUTHORIZE_NET", label: "Authorize.Net" },
   ];
+
+  if (isLoading) {
+    return <PaymentsSkeleton />;
+  }
 
   return (
     <div className="mx-auto w-full max-w-5xl px-5 py-5 space-y-4">

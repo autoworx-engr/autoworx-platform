@@ -16,7 +16,8 @@
       "Bash(yarn tsc:*)",
       "Bash(grep -n 'db\\\\.$transaction\\\\|TransactionClient\\\\|type.*Tx\\\\|Prisma\\\\.TransactionClient' src/services/giftCardPurchaseSettlementService.ts src/services/giftCardPurchaseService.ts)",
       "Bash(sed -n '85,110p' src/lib/notification/invoice-notify.ts)",
-      "Bash(sed -n '140,160p' src/lib/notification/invoice-notify.ts)"
+      "Bash(sed -n '140,160p' src/lib/notification/invoice-notify.ts)",
+      "Bash(npx eslint *)"
     ]
   }
 }
