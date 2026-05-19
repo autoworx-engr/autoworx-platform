@@ -5,6 +5,19 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Fix — estimate route generates numeric IDs for non-UI callers
+
+**Date:** 2026-05-19
+**Branch:** taiseer/ai-copilot
+
+POST `/api/estimate/[companyId]/` omitted the Invoice `id` from the `invoice.create` call, so Prisma's `@default(cuid())` fallback fired. The estimate-create UI avoids this by generating a 10-digit numeric ID client-side (`Header.tsx`, `nanoid customAlphabet("1234567890", 10)`) and passing it explicitly — so UI-created estimates had numeric IDs, but server-to-server callers (the copilot, and future mobile) got cuid IDs.
+
+The route now generates a 10-digit numeric ID with the same `customAlphabet("1234567890", 10)` the UI uses, so all callers produce IDs consistent with the existing platform format.
+
+**Scope:** shared platform route (`src/app/api/estimate/[companyId]/route.ts`). No DB migrations. No change to copilot tool.
+
+---
+
 ## Fix — create_estimate ID validation
 
 **Date:** 2026-05-18

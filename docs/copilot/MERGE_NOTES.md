@@ -24,6 +24,8 @@ For coordinating the merge into development and production deployment.
 
 ## Migrations included
 
+### Fix — estimate route numeric ID generation: No DB migrations. **NEEDS DEV TEAM AWARENESS** — edits shared platform route `src/app/api/estimate/[companyId]/route.ts`. Adds `customAlphabet("1234567890", 10)` ID generation before `invoice.create`, mirroring the estimate-create UI. All existing mobile/UI behavior is unchanged.
+
 ### Fix — create_estimate ID validation: No DB migrations.
 
 ### Phase 3c.2: No DB migrations.

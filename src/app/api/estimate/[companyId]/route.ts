@@ -2,6 +2,7 @@ import { getCompanyIdFromBearer } from "@/lib/mobileAuth";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { InvoiceType } from "@prisma/client";
+import { customAlphabet } from "nanoid";
 
 /**
  * @swagger
@@ -485,9 +486,12 @@ export async function POST(
       return acc + materialCost + laborCost;
     }, 0);
 
+    const invoiceId = customAlphabet("1234567890", 10)();
+
     const invoice = await db.$transaction(async (tx) => {
       const newInvoice = await tx.invoice.create({
         data: {
+          id: invoiceId,
           type: type as InvoiceType,
           clientId: clientId ? Number(clientId) : undefined,
           vehicleId: vehicleId ? Number(vehicleId) : undefined,
