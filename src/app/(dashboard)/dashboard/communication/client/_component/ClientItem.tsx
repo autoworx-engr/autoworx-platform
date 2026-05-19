@@ -153,11 +153,13 @@ export default function ClientItem({
     }
   };
 
+  const unreadTotal =
+    (client?.conversationsTrack?.emailIsUnReadCount || 0) +
+    (client?.conversationsTrack?.smsUnReadCount || 0) +
+    (client?.conversationsTrack?.messengerUnReadCount || 0);
+
   const isShowConversationIndicator =
-    client?.conversationsTrack &&
-    (!client?.conversationsTrack?.smsIsRead ||
-      !client?.conversationsTrack?.emailIsRead ||
-      !client?.conversationsTrack?.messengerIsRead);
+    !!client?.conversationsTrack && unreadTotal > 0;
   return (
     <div
       ref={buttonRef}
@@ -303,9 +305,7 @@ export default function ClientItem({
           <div className="relative">
             <span className="absolute -inset-1.5 animate-ping rounded-full bg-rose-400/60"></span>
             <span className="relative flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold leading-none text-white ring-2 ring-white/90 dark:ring-zinc-900">
-              {(client?.conversationsTrack?.emailIsUnReadCount || 0) +
-                (client?.conversationsTrack?.smsUnReadCount || 0) +
-                (client?.conversationsTrack?.messengerUnReadCount || 0)}
+              {unreadTotal > 9 ? "9+" : unreadTotal}
             </span>
           </div>
         </div>
