@@ -13,7 +13,7 @@ export async function processIncomingSMS(
   const credential = await db.twilioCredentials.findFirst({
     where: {
       companyId: { in: companyIds },
-      phoneNumber: { contains: body.To.replace("+", "") },
+      phoneNumber: { in: [body.To.startsWith("+") ? body.To : `+${body.To}`, body.To.replace(/^\+/, "")] },
     },
   });
 
