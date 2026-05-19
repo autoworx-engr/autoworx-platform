@@ -15,9 +15,18 @@ import { useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import CompanyProfileCard from "./collaboration/CompanyProfileCard";
 import InvoiceEstimateModal from "./collaboration/InvoiceEstimateModal";
+import { useInfinityCollaborationMessages } from "./collaboration/hooks/useInfinityCollaborationMessages";
 
 type TMessage = {
   id?: number;
@@ -51,11 +60,15 @@ export default function CompanyMessageBox({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLImageElement>(null);
   const pathname = usePathname();
-  const [messages, setMessages] = useState<TMessage[]>([]);
-  const [messagesLoading, setMessagesLoading] = useState(false);
+  const [liveMessages, setLiveMessages] = useState<any[]>([]);
   const [message, setMessage] = useState("");
   const [pending, startTransition] = useTransition();
   const messageBoxRef = useRef<HTMLDivElement>(null);
+  const bottomAnchorRef = useRef<HTMLDivElement>(null);
+  const prevScrollHeightRef = useRef(0);
+  const isLoadingOlderRef = useRef(false);
+  const [isReady, setIsReady] = useState(false);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const [multiAttachmentFile, setMultiAttachmentFile] = useState<File[] | null>(
     null,
   );
@@ -67,38 +80,105 @@ export default function CompanyMessageBox({
     "/communication/collaboration",
   );
 
-  // Load messages
+  // Infinite query — 20 messages per page
+  const {
+    data: pagesData,
+    isLoading: messagesLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfinityCollaborationMessages(
+    currentCompanyId,
+    companyId ? Number(companyId) : undefined,
+  );
+
+  // Each page is newest-first; flatten then reverse so display is oldest -> newest.
+  const fetchedMessages = useMemo(() => {
+    const flat = pagesData?.pages?.flatMap((p) => p.data) ?? [];
+    return [...flat].reverse();
+  }, [pagesData]);
+
+  // Pusher-pushed messages are appended only after initial load and reset on chat switch.
+  const messages = useMemo(
+    () => [...fetchedMessages, ...liveMessages],
+    [fetchedMessages, liveMessages],
+  );
+
+  // Reset ready/live state when conversation changes
   useEffect(() => {
-    if (!companyId || !currentCompanyId) return;
-
-    async function fetchMessages() {
-      setMessagesLoading(true);
-      try {
-        const res = await fetch(
-          `/api/communication/collaboration/messages/v2-messages?companyA=${currentCompanyId}&companyB=${companyId}&viewerCompanyId=${currentCompanyId}`,
-        );
-
-        const data = await res.json();
-
-        if (data.success) {
-          setMessages(data.messages);
-        }
-      } catch (error) {
-        // console.error("Failed to fetch messages", error);
-      } finally {
-        setMessagesLoading(false);
-      }
-    }
-
-    fetchMessages();
+    setIsReady(false);
+    setLiveMessages([]);
+    setShouldAutoScroll(true);
   }, [companyId, currentCompanyId]);
 
-  // Auto scroll
-  useEffect(() => {
-    if (messageBoxRef.current) {
-      messageBoxRef.current.scrollTop = messageBoxRef.current.scrollHeight;
+  // Restore scroll position when older messages are prepended
+  useLayoutEffect(() => {
+    if (prevScrollHeightRef.current <= 0) return;
+    const el = messageBoxRef.current;
+    if (!el) {
+      prevScrollHeightRef.current = 0;
+      return;
     }
-  }, [messages]);
+    const scrollDiff = el.scrollHeight - prevScrollHeightRef.current;
+    if (scrollDiff > 0) {
+      el.scrollTop = el.scrollTop + scrollDiff;
+    }
+    prevScrollHeightRef.current = 0;
+  }, [pagesData?.pages?.length]);
+
+  // Initial scroll to bottom
+  useEffect(() => {
+    if (messages.length > 0 && !isReady) {
+      requestAnimationFrame(() => {
+        bottomAnchorRef.current?.scrollIntoView({ block: "end" });
+        setTimeout(() => setIsReady(true), 200);
+      });
+    }
+  }, [messages.length, isReady]);
+
+  // Auto-scroll when a new live message arrives (only if user is near bottom)
+  useEffect(() => {
+    if (!isReady || liveMessages.length === 0) return;
+    if (shouldAutoScroll) {
+      requestAnimationFrame(() => {
+        bottomAnchorRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "end",
+        });
+      });
+    }
+  }, [liveMessages.length, shouldAutoScroll, isReady]);
+
+  const maybeLoadOlderMessages = useCallback(() => {
+    const el = messageBoxRef.current;
+    if (!el) return;
+    if (
+      !isReady ||
+      el.scrollTop > 80 ||
+      !hasNextPage ||
+      isFetchingNextPage ||
+      isLoadingOlderRef.current
+    ) {
+      return;
+    }
+    isLoadingOlderRef.current = true;
+    prevScrollHeightRef.current = el.scrollHeight;
+    void fetchNextPage().finally(() => {
+      isLoadingOlderRef.current = false;
+    });
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage, isReady]);
+
+  useEffect(() => {
+    const el = messageBoxRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      maybeLoadOlderMessages();
+      const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 24;
+      setShouldAutoScroll(atBottom);
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [maybeLoadOlderMessages]);
 
   useEffect(() => {
     if (!currentCompanyId) return;
@@ -132,7 +212,7 @@ export default function CompanyMessageBox({
           isOwnMessage: fromId === currentId,
         };
 
-        setMessages((prev) => [...prev, normalizedMessage]);
+        setLiveMessages((prev) => [...prev, normalizedMessage]);
       }
     });
 
@@ -285,6 +365,18 @@ export default function CompanyMessageBox({
 
       {/* 🔹 Messages */}
       <div ref={messageBoxRef} className="flex-1 overflow-y-auto p-4 space-y-3">
+        {/* Top loader for older messages */}
+        {!messagesLoading && (
+          <div className="flex justify-center py-2 text-[11px] text-gray-400">
+            {isFetchingNextPage
+              ? "Loading older messages..."
+              : hasNextPage
+                ? "Scroll up to load older messages"
+                : messages.length > 0
+                  ? "• No older messages •"
+                  : null}
+          </div>
+        )}
         {messagesLoading ? (
           <div className="flex flex-col gap-4 p-2">
             {[...Array(5)].map((_, i) => (
@@ -467,6 +559,7 @@ export default function CompanyMessageBox({
               </div>
             );
           })}
+        <div ref={bottomAnchorRef} className="h-2 w-full" />
       </div>
 
       {/* 🔹 Input */}
@@ -581,7 +674,7 @@ export default function CompanyMessageBox({
             {isEstimateAttachmentShow && currentCompanyId && (
               <InvoiceEstimateModal
                 setShowAttachment={setShowAttachment}
-                setMessages={setMessages}
+                setMessages={setLiveMessages}
                 receiverCompany={company!}
                 currentCompanyId={currentCompanyId}
               />

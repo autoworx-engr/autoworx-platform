@@ -155,54 +155,63 @@ export async function GET(req: Request) {
       throw new Error("Missing required company IDs");
     }
 
-    const take = Math.min(parseInt(searchParams.get("take") || "100"), 200);
+    const take = Math.min(parseInt(searchParams.get("take") || "20"), 100);
+    const skip = Math.max(parseInt(searchParams.get("skip") || "0"), 0);
 
-    const messages = await db.collaborationMessage.findMany({
-      where: {
-        section: "collaboration",
-        OR: [
-          { fromCompanyId: companyA, toCompanyId: companyB },
-          { fromCompanyId: companyB, toCompanyId: companyA },
-        ],
-      },
-      include: {
-        attachment: true,
-        senderUser: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            image: true,
+    const where = {
+      section: "collaboration",
+      OR: [
+        { fromCompanyId: companyA, toCompanyId: companyB },
+        { fromCompanyId: companyB, toCompanyId: companyA },
+      ],
+    };
+
+    const [messages, total] = await Promise.all([
+      db.collaborationMessage.findMany({
+        where,
+        include: {
+          attachment: true,
+          senderUser: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              image: true,
+            },
+          },
+          requestEstimate: {
+            include: { invoice: true },
           },
         },
-        requestEstimate: {
-          include: { invoice: true },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-      take,
-    });
-    messages.reverse();
+        orderBy: { createdAt: "desc" },
+        skip,
+        take,
+      }),
+      db.collaborationMessage.count({ where }),
+    ]);
 
-    // Only mark messages INBOUND to the viewer as read (not the viewer's own outbound messages)
+    // Only mark INBOUND messages as read on the first page load (skip === 0).
+    // Older-page loads must not retrigger the read receipt.
     const otherCompanyId = viewerCompanyId === companyA ? companyB : companyA;
-    const readMessages = await db.companyChatTrack.updateMany({
-      where: {
-        senderCompanyId: otherCompanyId,
-        receiverCompanyId: viewerCompanyId,
-        isRead: false,
-      },
-      data: { isRead: true },
-    });
-
-    if (readMessages.count > 0) {
-      try {
-        await pusher.trigger(`company-track-${otherCompanyId}`, "chat-read", {
+    if (skip === 0) {
+      const readMessages = await db.companyChatTrack.updateMany({
+        where: {
           senderCompanyId: otherCompanyId,
           receiverCompanyId: viewerCompanyId,
-        });
-      } catch {
-        // Pusher trigger failure is non-fatal
+          isRead: false,
+        },
+        data: { isRead: true },
+      });
+
+      if (readMessages.count > 0) {
+        try {
+          await pusher.trigger(`company-track-${otherCompanyId}`, "chat-read", {
+            senderCompanyId: otherCompanyId,
+            receiverCompanyId: viewerCompanyId,
+          });
+        } catch {
+          // Pusher trigger failure is non-fatal
+        }
       }
     }
 
@@ -219,11 +228,21 @@ export async function GET(req: Request) {
       toCompanyId: msg.toCompanyId,
       isOwnMessage: msg.fromCompanyId === viewerCompanyId,
     }));
-    revalidatePath("/dashboard/communication/collaboration");
+
+    if (skip === 0) {
+      revalidatePath("/dashboard/communication/collaboration");
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
         messages: formattedMessages,
+        meta: {
+          total,
+          skip,
+          take,
+          hasMore: skip + messages.length < total,
+        },
       }),
       { status: 200 },
     );
