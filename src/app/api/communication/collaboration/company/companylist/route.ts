@@ -1,7 +1,10 @@
-import { getUserPermissions } from "@/actions/settings/teamManagement";
 import { AppError } from "@/error-boundary/error";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
+import {
+  batchUserPermissions,
+  hasCollaborationPermission,
+} from "@/lib/collaboration/batchUserPermissions";
 import { getFilteredConnectedCompanies } from "@/lib/collaboration/getFilteredConnectedCompanies";
 import { jwtVerifyToken } from "@/lib/jwtVerify";
 import { Prisma } from "@prisma/client";
@@ -12,7 +15,6 @@ import { NextRequest, NextResponse } from "next/server";
  * /api/communication/collaboration/company/companylist:
  *   get:
  *     summary: Retrieve a list of collaboration companies
- *     description: Fetches a paginated list of companies that are marked as collaborators, excluding the current user's company.
  *     tags:
  *       - Collaboration
  *     parameters:
@@ -38,7 +40,6 @@ import { NextRequest, NextResponse } from "next/server";
  *       500:
  *         description: Internal server error.
  */
-
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -93,116 +94,92 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const finalCompanies = await getFilteredConnectedCompanies(userCompanyId);
-
-    const companyWithAdmin = await db.company.findMany({
-      where: {
-        NOT: { id: userCompanyId },
-        isCollaborators: true,
-        ...companySearchCondition,
-      },
-      select: {
-        id: true,
-        name: true,
-        users: {
-          where: { employeeType: "Admin", ...userSearchCondition },
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            companyId: true,
-            email: true,
-            role: true,
-            image: true,
-            employeeType: true,
+    const [finalCompanies, companyWithAdmin, totalRecords] = await Promise.all([
+      getFilteredConnectedCompanies(userCompanyId),
+      db.company.findMany({
+        where: {
+          NOT: { id: userCompanyId },
+          isCollaborators: true,
+          ...companySearchCondition,
+        },
+        select: {
+          id: true,
+          name: true,
+          users: {
+            where: { employeeType: "Admin", ...userSearchCondition },
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              companyId: true,
+              email: true,
+              role: true,
+              image: true,
+              employeeType: true,
+            },
+          },
+          companyJoinsAsOne: {
+            where: {
+              OR: [
+                { companyOneId: userCompanyId },
+                { companyTwoId: userCompanyId },
+              ],
+            },
+            select: { status: true, companyOneId: true, companyTwoId: true },
+          },
+          companyJoinsAsTwo: {
+            where: {
+              OR: [
+                { companyOneId: userCompanyId },
+                { companyTwoId: userCompanyId },
+              ],
+            },
+            select: { status: true, companyOneId: true, companyTwoId: true },
           },
         },
-        companyJoinsAsOne: {
-          where: {
-            OR: [
-              { companyOneId: userCompanyId },
-              { companyTwoId: userCompanyId },
-            ],
-          },
-          select: {
-            status: true,
-            companyOneId: true,
-            companyTwoId: true,
-          },
+        skip,
+        take: limitNum,
+      }),
+      db.company.count({
+        where: {
+          NOT: { id: userCompanyId },
+          isCollaborators: true,
+          ...companySearchCondition,
         },
-        companyJoinsAsTwo: {
-          where: {
-            OR: [
-              { companyOneId: userCompanyId },
-              { companyTwoId: userCompanyId },
-            ],
-          },
-          select: {
-            status: true,
-            companyOneId: true,
-            companyTwoId: true,
-          },
-        },
-      },
-      skip,
-      take: limitNum,
-    });
+      }),
+    ]);
 
-    const filteredCompanyWithAdmin = (
-      await Promise.all(
-        companyWithAdmin.map(async (company) => {
-          const filteredAdmins = await Promise.all(
-            company.users.map(async (user) => {
-              const joinAsOne = company.companyJoinsAsOne.find(
-                (j) =>
-                  (j.companyOneId === company.id &&
-                    j.companyTwoId === userCompanyId) ||
-                  (j.companyOneId === userCompanyId &&
-                    j.companyTwoId === company.id),
-              );
-              const joinAsTwo = company.companyJoinsAsTwo.find(
-                (j) =>
-                  (j.companyOneId === company.id &&
-                    j.companyTwoId === userCompanyId) ||
-                  (j.companyOneId === userCompanyId &&
-                    j.companyTwoId === company.id),
-              );
-              const joinStatus = joinAsOne?.status ?? joinAsTwo?.status ?? null;
+    const allAdmins = companyWithAdmin.flatMap((c) => c.users);
+    const permissionsByUserId = await batchUserPermissions(allAdmins);
+    const connectedIds = new Set(finalCompanies.map((c) => c.id));
 
-              try {
-                const permissions = await getUserPermissions(
-                  user.id,
-                  user.employeeType,
-                );
-                const hasCollaboration =
-                  permissions?.communicationHubCollaboration === true;
+    const filteredCompanyWithAdmin = companyWithAdmin.flatMap((company) => {
+      const matchingJoin =
+        company.companyJoinsAsOne.find(
+          (j) =>
+            (j.companyOneId === company.id &&
+              j.companyTwoId === userCompanyId) ||
+            (j.companyOneId === userCompanyId && j.companyTwoId === company.id),
+        ) ??
+        company.companyJoinsAsTwo.find(
+          (j) =>
+            (j.companyOneId === company.id &&
+              j.companyTwoId === userCompanyId) ||
+            (j.companyOneId === userCompanyId && j.companyTwoId === company.id),
+        );
 
-                return hasCollaboration
-                  ? {
-                      ...user,
-                      companyName: company.name,
-                      isConnected: finalCompanies.some(
-                        (c) => c.id === user.companyId,
-                      ),
-                      companyStatus: joinStatus?.toLocaleLowerCase(),
-                    }
-                  : null;
-              } catch {
-                return null;
-              }
-            }),
-          );
-          return filteredAdmins.filter((u) => u !== null);
-        }),
-      )
-    ).flat();
+      const joinStatus = matchingJoin?.status ?? null;
 
-    const totalRecords = await db.company.count({
-      where: {
-        NOT: { id: userCompanyId },
-        isCollaborators: true,
-        ...companySearchCondition,
-      },
+      return company.users
+        .filter((u) =>
+          hasCollaborationPermission(permissionsByUserId.get(u.id)),
+        )
+        .map((user) => ({
+          ...user,
+          companyName: company.name,
+          isConnected: connectedIds.has(user.companyId),
+          companyStatus: joinStatus?.toLocaleLowerCase(),
+        }));
     });
 
     return NextResponse.json(

@@ -1,10 +1,12 @@
 import { getCompany } from "@/actions/settings/getCompany";
-import { getUserPermissions } from "@/actions/settings/teamManagement";
 import { authOptions } from "@/authOptions";
 import Title from "@/components/Title";
 import { db } from "@/lib/db";
+import {
+  batchUserPermissions,
+  hasCollaborationPermission,
+} from "@/lib/collaboration/batchUserPermissions";
 import { getFilteredConnectedCompanies } from "@/lib/collaboration/getFilteredConnectedCompanies";
-import { Prisma } from "@prisma/client";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import Collaboration from "./Collaboration";
@@ -22,7 +24,7 @@ export default async function CollaborationPage() {
     throw new Error("Company ID is required to create an email template.");
   }
 
-  const [finalCompanies, companyWithAdmin] = await Promise.all([
+  const [finalCompanies, companyWithAdmin, messages] = await Promise.all([
     getFilteredConnectedCompanies(userCompanyId),
     db.company.findMany({
       where: { NOT: { id: userCompanyId }, isCollaborators: true },
@@ -62,64 +64,44 @@ export default async function CollaborationPage() {
         },
       },
     }),
+    db.collaborationMessage.findMany({
+      where: {
+        OR: [{ fromCompanyId: userCompanyId }, { toCompanyId: userCompanyId }],
+      },
+      include: { attachment: true },
+      take: 100,
+      orderBy: { createdAt: "desc" },
+    }),
   ]);
 
-  const filteredCompanyWithAdmin = (
-    await Promise.all(
-      companyWithAdmin.map(async (company) => {
-        const filteredAdmins = await Promise.all(
-          company.users.map(async (user) => {
-            const joinAsOne = company.companyJoinsAsOne.find(
-              (j) =>
-                (j.companyOneId === company.id &&
-                  j.companyTwoId === userCompanyId) ||
-                (j.companyOneId === userCompanyId &&
-                  j.companyTwoId === company.id),
-            );
-            const joinAsTwo = company.companyJoinsAsTwo.find(
-              (j) =>
-                (j.companyOneId === company.id &&
-                  j.companyTwoId === userCompanyId) ||
-                (j.companyOneId === userCompanyId &&
-                  j.companyTwoId === company.id),
-            );
-            const joinStatus = joinAsOne?.status ?? joinAsTwo?.status ?? null;
+  const permissionsByUserId = await batchUserPermissions(
+    companyWithAdmin.flatMap((c) => c.users),
+  );
+  const connectedIds = new Set(finalCompanies.map((c) => c.id));
 
-            try {
-              const permissions = await getUserPermissions(
-                user.id,
-                user.employeeType,
-              );
-              const hasCollaboration =
-                permissions?.communicationHubCollaboration === true;
+  const filteredCompanyWithAdmin = companyWithAdmin.flatMap((company) => {
+    const matchingJoin =
+      company.companyJoinsAsOne.find(
+        (j) =>
+          (j.companyOneId === company.id && j.companyTwoId === userCompanyId) ||
+          (j.companyOneId === userCompanyId && j.companyTwoId === company.id),
+      ) ??
+      company.companyJoinsAsTwo.find(
+        (j) =>
+          (j.companyOneId === company.id && j.companyTwoId === userCompanyId) ||
+          (j.companyOneId === userCompanyId && j.companyTwoId === company.id),
+      );
 
-              return hasCollaboration
-                ? {
-                    ...user,
-                    companyName: company.name,
-                    isConnected: finalCompanies.some(
-                      (c) => c.id === user.companyId,
-                    ),
-                    companyStatus: joinStatus?.toLocaleLowerCase(),
-                  }
-                : null;
-            } catch {
-              return null;
-            }
-          }),
-        );
-        return filteredAdmins.filter((u) => u !== null);
-      }),
-    )
-  ).flat();
+    const joinStatus = matchingJoin?.status ?? null;
 
-  const messages = await db.collaborationMessage.findMany({
-    where: {
-      OR: [{ fromCompanyId: userCompanyId }, { toCompanyId: userCompanyId }],
-    },
-    include: { attachment: true },
-    take: 100,
-    orderBy: { createdAt: "desc" },
+    return company.users
+      .filter((u) => hasCollaborationPermission(permissionsByUserId.get(u.id)))
+      .map((user) => ({
+        ...user,
+        companyName: company.name,
+        isConnected: connectedIds.has(user.companyId),
+        companyStatus: joinStatus?.toLocaleLowerCase(),
+      }));
   });
 
   return (
