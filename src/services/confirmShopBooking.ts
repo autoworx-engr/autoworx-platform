@@ -45,7 +45,11 @@ export async function confirmShopBooking(
   const bookingId = Number(shopBookingId);
   const incomingCash = roundMoney(Math.max(0, Number(cashPaid)));
 
-  return await db.$transaction(async (tx: Tx) => {
+  let pendingConfirmation:
+    | Parameters<typeof sendBookingConfirmation>[0]
+    | null = null;
+
+  const result = await db.$transaction(async (tx: Tx) => {
     // 1. Load the booking with all relations
     const booking = await tx.shopBooking.findUnique({
       where: { id: bookingId },
@@ -413,8 +417,8 @@ export async function confirmShopBooking(
       } as any,
     });
 
-    // 10. Send confirmation
-    await sendBookingConfirmation({
+    // 10. Capture confirmation data — sent after transaction commits
+    pendingConfirmation = {
       client: {
         id: booking.client!.id,
         firstName: booking.client!.firstName,
@@ -438,7 +442,7 @@ export async function confirmShopBooking(
         : null,
       services: booking.services?.map((s) => ({ title: s.title })) || null,
       isDeposit: true,
-    });
+    };
 
     return {
       invoiceId: estimate.id,
@@ -449,4 +453,13 @@ export async function confirmShopBooking(
       remainingGiftCardBalance,
     };
   });
+
+  // Send after transaction commits — failure here must NOT cause a retry
+  if (pendingConfirmation) {
+    sendBookingConfirmation(pendingConfirmation).catch((e) =>
+      console.error("[confirmShopBooking] sendBookingConfirmation failed:", e),
+    );
+  }
+
+  return result;
 }
