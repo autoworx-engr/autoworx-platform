@@ -31,8 +31,8 @@ export default function JumpToLatestButton({
       title={label}
       className={cn(
         "absolute bottom-4 right-4 z-10 inline-flex items-center gap-1.5",
-        "rounded-full bg-[#006D77] py-2 pl-2 pr-3",
-        "text-xs font-semibold text-white",
+        "rounded-full bg-white py-2 pl-2 pr-3",
+        "text-xs font-semibold text-[#006D77]",
         "shadow-lg shadow-[#006D77]/30 ring-1 ring-white/10",
         "transition-all duration-200 ease-out",
         "hover:scale-105 hover:bg-[#005a63] active:scale-95",
