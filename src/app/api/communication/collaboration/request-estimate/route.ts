@@ -303,7 +303,5 @@ export async function POST(request: NextRequest) {
       { success: false, error: errors?.message || "Internal Server Error" },
       { status: errors?.statusCode || 500 },
     );
-  } finally {
-    await db.$disconnect();
   }
 }
