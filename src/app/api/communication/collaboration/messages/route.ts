@@ -1,6 +1,7 @@
 import { AppError } from "@/error-boundary/error";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
+import { getAuthPrincipal } from "@/lib/authPrincipal";
 import { Message, Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -57,6 +58,12 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
+    const principal = await getAuthPrincipal(request);
+    if (!principal) {
+      throw new AppError(401, "Unauthorized");
+    }
+    const callerUserId = principal.userId;
+
     const searchParams = request.nextUrl.searchParams;
 
     // 2. Extract specific values using .get()
@@ -98,6 +105,11 @@ export async function GET(request: NextRequest) {
     if (toId && fromId) {
       if (toId === fromId) {
         throw new AppError(400, "Cannot send message to oneself");
+      }
+
+      // Caller must be a participant in this conversation
+      if (callerUserId !== toId && callerUserId !== fromId) {
+        throw new AppError(403, "You can only read your own conversations.");
       }
 
       const participants = await db.user.findMany({

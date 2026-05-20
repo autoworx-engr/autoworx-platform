@@ -1,5 +1,7 @@
+import { AppError } from "@/error-boundary/error";
 import { db } from "@/lib/db";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { getCompanyIdFromBearer } from "@/lib/authPrincipal";
 import { revalidatePath } from "next/cache";
 import { getPusherInstance } from "@/lib/pusher/server";
 
@@ -145,6 +147,11 @@ const pusher = getPusherInstance();
 
 export async function GET(req: Request) {
   try {
+    const callerCompanyId = await getCompanyIdFromBearer(req);
+    if (!callerCompanyId) {
+      throw new AppError(401, "Unauthorized");
+    }
+
     const { searchParams } = new URL(req.url);
 
     const companyA = parseInt(searchParams.get("companyA") || "");
@@ -152,7 +159,15 @@ export async function GET(req: Request) {
     const viewerCompanyId = parseInt(searchParams.get("viewerCompanyId") || "");
 
     if (!companyA || !companyB || !viewerCompanyId) {
-      throw new Error("Missing required company IDs");
+      throw new AppError(400, "Missing required company IDs");
+    }
+
+    // Viewer must be the authenticated caller's company AND a participant
+    if (viewerCompanyId !== callerCompanyId) {
+      throw new AppError(403, "viewerCompanyId does not match your session");
+    }
+    if (companyA !== callerCompanyId && companyB !== callerCompanyId) {
+      throw new AppError(403, "You are not a participant in this conversation");
     }
 
     const take = Math.min(parseInt(searchParams.get("take") || "20"), 100);
