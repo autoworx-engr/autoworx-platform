@@ -105,7 +105,10 @@ export default function List({
 
       <div className="flex flex-col gap-2">
         {isLoading && loadedCompanies.length === 0 ? (
-          <div className="py-6 text-center text-sm text-gray-400">Loading…</div>
+          <>
+            <div className="py-6 bg-gray-200 animate-pulse rounded-xl"></div>
+            <div className="py-6 bg-gray-200 animate-pulse rounded-xl"></div>
+          </>
         ) : loadedCompanies.length === 0 ? (
           <div className="py-6 text-center text-sm text-gray-400">
             {debouncedSearch

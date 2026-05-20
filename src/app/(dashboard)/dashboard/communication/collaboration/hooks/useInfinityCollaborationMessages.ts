@@ -1,6 +1,5 @@
 "use client";
 
-import axiosInstance from "@/helpers/axios";
 import { useInfiniteQuery } from "@tanstack/react-query";
 
 const PAGE_SIZE = 20;
@@ -34,19 +33,10 @@ async function fetchCollaborationMessages({
   otherCompanyId,
 }: FetchArgs) {
   const skip = (pageParam - 1) * PAGE_SIZE;
-  const res = await axiosInstance.get(
-    `/api/communication/collaboration/messages/v2-messages`,
-    {
-      params: {
-        companyA: viewerCompanyId,
-        companyB: otherCompanyId,
-        viewerCompanyId,
-        skip,
-        take: PAGE_SIZE,
-      },
-    },
+  const res = await fetch(
+    `/api/communication/collaboration/messages/v2-messages?companyA=${viewerCompanyId}&companyB=${otherCompanyId}&viewerCompanyId=${viewerCompanyId}&skip=${skip}&take=${PAGE_SIZE}`,
   );
-  const data = res.data;
+  const data = await res.json();
   if (!data.success) throw new Error(data.message || "Failed to load messages");
 
   return {
