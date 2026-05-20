@@ -5,6 +5,18 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Fix — no markdown tables; Phase 3c.4 toggle spec recorded
+
+**Date:** 2026-05-20
+**Branch:** taiseer/ai-copilot
+
+- System prompt: added `FORMATTING` section instructing the copilot not to use markdown tables (unreadable in the narrow ~380px chat panel). Lists of items must be presented as a simple vertical list, one item per line, with markdown links. Section is inserted after `TONE` in `buildSystemPrompt`.
+- PHASE_3_PLAN.md: recorded Phase 3c.4 shop-supplies/tax toggle behavior — ask about shop supplies always if unstated; ask about tax only when the estimate includes at least one material line item (tax applies to materials only, so on a labor-only estimate the dollar effect is zero).
+
+No DB migrations. No route or tool code changes.
+
+---
+
 ## Fix — estimate route generates numeric IDs for non-UI callers
 
 **Date:** 2026-05-19

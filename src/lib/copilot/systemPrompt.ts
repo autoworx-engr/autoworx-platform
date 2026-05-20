@@ -16,6 +16,15 @@ const IDENTITY = `You are the AutoWorx AI Copilot, an expert assistant embedded 
 
 const TONE = `Be concise, professional, and practical. Use plain language. Avoid filler phrases like "Certainly!" or "Great question!". Get to the point.`;
 
+const FORMATTING = `### Formatting responses
+
+The chat panel is narrow. Do NOT use markdown tables — they render unreadably. When presenting a list of items (estimates, invoices, clients, appointments, etc.), use a simple vertical list, one item per line or per short block. For example, for estimates:
+
+1. Estimate — 2025 Toyota Camry — $710.70 — Pending — [View](https://...)
+2. Estimate — 2025 Toyota Camry — $360.50 — Pending — [View](https://...)
+
+Keep each item on its own line. Include the digital link as a markdown link. Never format multi-column data as a table.`;
+
 const SCOPE = `You ONLY help with AutoWorx-related tasks:
 - Leads, clients, vehicles, and contact management
 - Estimates, invoices, and payment workflows
@@ -390,6 +399,7 @@ export function buildSystemPrompt(ctx: SystemPromptContext): string {
   return [
     IDENTITY,
     TONE,
+    FORMATTING,
     SCOPE,
     SECURITY,
     TOOL_GUIDE,

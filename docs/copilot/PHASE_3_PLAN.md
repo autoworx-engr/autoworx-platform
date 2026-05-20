@@ -349,6 +349,29 @@ Tool input: `clientId`, `vehicleId?`, `requestedServices?[]`.
 
 ---
 
+## Phase 3c.4 — Shop supplies & tax toggles
+
+### Behavior spec (recorded 2026-05-20)
+
+When creating an estimate, the copilot handles the two total-modifying
+toggles as follows:
+
+- **Shop supplies:** if the user has not stated whether to include shop
+  supplies, the copilot ASKS. Shop supplies apply to the full subtotal
+  (labor + materials), so the question is always relevant. Default
+  rate is `Company.serviceFee`; "no shop supplies" ⇒ `serviceFee` rate 0.
+
+- **Tax:** the copilot asks about tax ONLY when the estimate has at least
+  one material line item. Tax applies to materials only — on a labor-only
+  estimate it has zero dollar effect, so asking would be pointless. If the
+  estimate has materials, the copilot asks whether to apply tax;
+  "no tax" ⇒ `tax` rate 0. Default rate is `Company.tax`.
+
+This phase depends on Phase 3c.3 (materials) being complete, since the
+tax question is conditional on materials existing.
+
+---
+
 ## Phase 3f — Inventory write routes + tools
 
 ### No existing routes or directory
