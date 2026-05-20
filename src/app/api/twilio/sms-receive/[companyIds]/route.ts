@@ -239,8 +239,23 @@ async function processIncomingSMS(
       const isCompanySalesAgent = company?.isSalesAgent === true;
       const isClientSalesAgent = currentClient?.isSalesAgent === true;
 
+      console.log("[Twilio] Sales-agent gate check", {
+        companyId,
+        clientId: client.id,
+        isCompanySalesAgent,
+        isClientSalesAgent,
+        isSalesAgentEnabled,
+        dbMessageTo: dbMessage?.to,
+        credentialPhone: credential?.phoneNumber,
+        phoneMatch: dbMessage?.to === credential?.phoneNumber,
+      });
+
       if (isCompanySalesAgent && isClientSalesAgent && isSalesAgentEnabled) {
         if (dbMessage && dbMessage.to === credential?.phoneNumber) {
+          console.log(
+            "[Twilio] All gates passed — calling debounceSmsAgent for clientId",
+            client.id,
+          );
           debounceSmsAgent({
             clientId: client.id,
             companyId: client.companyId,
@@ -249,7 +264,18 @@ async function processIncomingSMS(
           }).catch((err) =>
             console.error("[Twilio] debounceSmsAgent enqueue error:", err),
           );
+        } else {
+          console.log("[Twilio] Phone mismatch — skipping debounce", {
+            dbMessageTo: dbMessage?.to,
+            credentialPhone: credential?.phoneNumber,
+          });
         }
+      } else {
+        console.log("[Twilio] Sales-agent gate FAILED — skipping debounce", {
+          isCompanySalesAgent,
+          isClientSalesAgent,
+          isSalesAgentEnabled,
+        });
       }
 
       // pusher trigger to send message to company admin real time

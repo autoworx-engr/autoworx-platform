@@ -18,8 +18,9 @@
     "prisma:merge": "cat prisma/schema/*.prisma > prisma/schema.prisma",
     "db:sync-sequences": "ts-node prisma/syncSequences.ts",
     "prepare": "husky",
-    "worker": "tsx -r dotenv/config src/workers/start.ts",
-    "worker:dev": "tsx watch -r dotenv/config src/workers/start.ts"
+    "worker": "tsx src/workers/start.ts",
+    "worker:dev": "tsx watch -r dotenv/config src/workers/start.ts",
+    "worker:build": "prisma generate"
   },
   "dependencies": {
     "@atlaskit/pragmatic-drag-and-drop": "^1.7.7",

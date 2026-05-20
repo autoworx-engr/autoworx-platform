@@ -261,14 +261,28 @@ export async function POST(req: NextRequest) {
 
           const isCompanySalesAgent = company?.isSalesAgent === true;
           const isClientSalesAgent = client?.isSalesAgent === true;
-          console.log("infobip sms receive clientSMS", clientSMS);
-          console.log("infobipConfig", infobipConfig);
+
+          console.log("[Infobip] Sales-agent gate check", {
+            companyId: infobipConfig.companyId,
+            clientId: client.id,
+            isCompanySalesAgent,
+            isClientSalesAgent,
+            isSalesAgentEnabled,
+            clientSMSTo: clientSMS?.to,
+            infobipPhone: infobipConfig.phoneNumber,
+            phoneMatch: clientSMS?.to === infobipConfig.phoneNumber,
+          });
+
           if (
             isCompanySalesAgent &&
             isClientSalesAgent &&
             isSalesAgentEnabled
           ) {
             if (clientSMS && clientSMS?.to === infobipConfig.phoneNumber) {
+              console.log(
+                "[Infobip] All gates passed — calling debounceSmsAgent for clientId",
+                client.id,
+              );
               debounceSmsAgent({
                 clientId: client.id,
                 companyId: client.companyId,
@@ -277,7 +291,21 @@ export async function POST(req: NextRequest) {
               }).catch((err) =>
                 console.error("[Infobip] debounceSmsAgent enqueue error:", err),
               );
+            } else {
+              console.log("[Infobip] Phone mismatch — skipping debounce", {
+                clientSMSTo: clientSMS?.to,
+                infobipPhone: infobipConfig.phoneNumber,
+              });
             }
+          } else {
+            console.log(
+              "[Infobip] Sales-agent gate FAILED — skipping debounce",
+              {
+                isCompanySalesAgent,
+                isClientSalesAgent,
+                isSalesAgentEnabled,
+              },
+            );
           }
 
           // Count unread messages
