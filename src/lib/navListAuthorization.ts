@@ -144,10 +144,7 @@ export function filterNavList(
         if (item.title === "Pipelines") {
           return {
             ...item,
-            subnav:
-              item.subnav?.filter(
-                (subnavItem) => subnavItem.title === "Shop Pipeline",
-              ) || null,
+            link: "/dashboard/pipeline/shop/pipeline",
           };
         }
         if (item.title === "Analytics and Reporting") {
@@ -159,13 +156,7 @@ export function filterNavList(
       }
       if (permissions?.role === "Sales") {
         if (item.title === "Pipelines") {
-          return {
-            ...item,
-            subnav:
-              item.subnav?.filter(
-                (subnavItem) => subnavItem.title === "Sales Pipeline",
-              ) || null,
-          };
+          return item;
         }
         if (item.title === "Inventory") {
           return {
