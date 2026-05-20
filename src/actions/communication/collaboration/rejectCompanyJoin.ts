@@ -22,6 +22,10 @@ export async function rejectCompanyJoin(
     where: { id: joinId },
   });
 
+  if (!join || (join.companyOneId !== currentCompanyId && join.companyTwoId !== currentCompanyId)) {
+    throw new Error("Unauthorized");
+  }
+
   if (!join) {
     throw new Error("Connection request not found");
   }
