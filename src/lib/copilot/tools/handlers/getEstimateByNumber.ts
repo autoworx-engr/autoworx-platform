@@ -17,14 +17,26 @@ async function execute(input: unknown, ctx: ToolContext): Promise<ToolResult> {
 
   const invoice = await db.invoice.findFirst({
     where: { id: invoiceId, companyId: ctx.companyId },
-    select: {
-      id: true,
-      type: true,
-      grandTotal: true,
-      createdAt: true,
+    include: {
       client: { select: { firstName: true, lastName: true } },
       vehicle: { select: { year: true, make: true, model: true } },
       column: { select: { title: true } },
+      invoiceItems: {
+        include: {
+          labor: {
+            select: { name: true, hours: true, charge: true, discount: true },
+          },
+          materials: {
+            select: {
+              name: true,
+              quantity: true,
+              sell: true,
+              cost: true,
+              discount: true,
+            },
+          },
+        },
+      },
     },
   });
 
@@ -44,18 +56,40 @@ async function execute(input: unknown, ctx: ToolContext): Promise<ToolResult> {
     ? [v.year, v.make, v.model].filter(Boolean).join(" ") || null
     : null;
 
+  const items = invoice.invoiceItems.map((item) => ({
+    serviceDesc: item.serviceDesc ?? null,
+    labor: item.labor
+      ? {
+          name: item.labor.name,
+          hours: Number(item.labor.hours),
+          charge: Number(item.labor.charge),
+          discount: Number(item.labor.discount ?? 0),
+        }
+      : null,
+    materials: item.materials.map((mat) => ({
+      name: mat.name,
+      quantity: Number(mat.quantity ?? 0),
+      sell: Number(mat.sell ?? 0),
+      cost: Number(mat.cost ?? 0),
+      discount: Number(mat.discount ?? 0),
+    })),
+  }));
+
   return {
     ok: true,
     data: {
       id: invoice.id,
       type: invoice.type,
       status: invoice.column?.title ?? null,
+      subtotal: Number(invoice.subtotal ?? 0),
+      discount: Number(invoice.discount ?? 0),
       grandTotal: Number(invoice.grandTotal ?? 0),
       clientName,
       vehicleInfo,
       createdAt: invoice.createdAt.toISOString(),
       publicLink: `${appUrl}/public-invoice/${invoice.id}`,
       editLink: `/dashboard/estimate/edit/${invoice.id}`,
+      items,
     },
   };
 }
@@ -63,7 +97,7 @@ async function execute(input: unknown, ctx: ToolContext): Promise<ToolResult> {
 registerTool({
   name: "get_estimate_by_number",
   description:
-    "Fetch a specific estimate or invoice by its ID. Use when the user references a specific estimate by number or ID.",
+    "Fetch a specific estimate or invoice by its ID, including all line items (services, labor, and materials). Use when the user references a specific estimate by ID or asks what's on an estimate.",
   permission: "estimate.read",
   inputSchema,
   anthropicInputSchema: {
@@ -71,7 +105,7 @@ registerTool({
     properties: {
       invoiceId: {
         type: "string",
-        description: "The estimate or invoice ID (e.g. a cuid string)",
+        description: "The estimate or invoice ID.",
       },
     },
     required: ["invoiceId"],

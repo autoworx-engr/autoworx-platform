@@ -22,6 +22,7 @@ import "./handlers/createTagTool";
 import "./handlers/createClientTool";
 import "./handlers/createVehicleForClientTool";
 import "./handlers/createEstimateTool";
+import "./handlers/addMaterialsToEstimateTool";
 
 export { toolsForAnthropic, allTools, getTool } from "./registry";
 export type { ToolContext, ToolResult, ToolDefinition } from "./registry";

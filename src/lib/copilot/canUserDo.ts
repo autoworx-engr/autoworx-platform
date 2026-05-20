@@ -11,6 +11,7 @@ export type CopilotAction =
   | "task.update"
   | "task.read"
   | "estimate.create"
+  | "estimate.add_materials"
   | "estimate.read"
   | "estimate.send"
   | "invoice.send"
@@ -115,6 +116,13 @@ const PERMISSION_MAP: Record<
       !!(p.userPermissions?.estimatesInvoices ?? cp(p, "estimatesInvoices")),
     reason:
       "You don't have permission to create estimates (estimatesInvoices).",
+  },
+  "estimate.add_materials": {
+    check: (p) =>
+      p.role === "Admin" ||
+      !!(p.userPermissions?.estimatesInvoices ?? cp(p, "estimatesInvoices")),
+    reason:
+      "You don't have permission to modify estimates (estimatesInvoices).",
   },
   "estimate.read": {
     check: (p) =>

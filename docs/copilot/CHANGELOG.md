@@ -5,6 +5,30 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Phase 3c.3 — Materials on estimates + add-to-existing + line-item reads
+
+**Date:** 2026-05-20
+**Branch:** taiseer/ai-copilot
+
+Three connected additions:
+
+**1. Materials nested under services in `create_estimate`**
+The existing `create_estimate` tool now accepts an optional `materials` array on each service. Materials are free-text (name, quantity, sellPrice) — `productId` is optional and only needed if resolving from inventory via `get_inventory_item_by_name`. Tax math is now live: `taxAdd = materialSubtotal × (taxRate / 100)` where `materialSubtotal = Σ(sell × qty)` across all services. `material.discount` is a dollar amount that flows into the invoice-level `discount` field (not subtracted from the per-material tax base). All money math stays in `execute()` — the route stores caller totals as before.
+
+Shared math helper extracted to `src/lib/copilot/estimateMath.ts` (`round2`, `MaterialInput`).
+
+**2. New `add_materials_to_estimate` tool**
+Adds materials to an existing draft estimate. Uses direct DB write (PATCH route only updates header fields, not items): creates a new `InvoiceItem` (serviceDesc "Materials") + `Material` rows in a single transaction, then updates Invoice totals (`subtotal`, `discount`, `tax`, `serviceFee`, `grandTotal`, `due`) recomputed from all existing items plus the new ones. Only works on `type = "Estimate"` — refuses Invoices with a clear error. New action `estimate.add_materials` added to `CopilotAction` enum and `PERMISSION_MAP` (gated on `estimatesInvoices`, same as `estimate.create`).
+
+Key multi-tenant note: `InvoiceItem` has no `companyId` field (scoped via `invoiceId → Invoice.companyId`); `Material` rows include explicit `companyId: ctx.companyId`.
+
+**3. `get_estimate_by_number` now returns line items**
+Extended `include` to return `invoiceItems` with nested `labor` and `materials`. The copilot can now answer "what's on this estimate?" directly from the tool result instead of deflecting to the link. System prompt updated to reflect this.
+
+No DB migrations. No new API routes.
+
+---
+
 ## Fix — no markdown tables; Phase 3c.4 toggle spec recorded
 
 **Date:** 2026-05-20

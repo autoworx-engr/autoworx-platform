@@ -190,6 +190,18 @@ yarn dev
 
 ---
 
+## Phase 3c.3 — Materials on estimates + add-to-existing + line-item reads
+
+**`create_estimate`** extended with optional `materials[]` per service (name, quantity, sellPrice, optional costPrice/discount/productId). Tax math now live: `taxAdd = Σ(sell × qty) × (taxRate/100)`. `material.discount` is a dollar amount flowing into invoice-level discount (not subtracted from tax base). Shared `estimateMath.ts` helper extracted for `round2` and `MaterialInput`.
+
+**`add_materials_to_estimate`** — new tool. Direct DB write path (PATCH route doesn't support items). Transaction: new `InvoiceItem` + `Material` rows + `Invoice` totals update. Refuses if `type !== "Estimate"`. New `estimate.add_materials` action in `CopilotAction` + `PERMISSION_MAP`. Multi-tenant: `InvoiceItem` scoped via `invoiceId → Invoice.companyId`; `Material` has explicit `companyId: ctx.companyId`.
+
+**`get_estimate_by_number`** — now returns `invoiceItems` with nested `labor` and `materials`. Copilot can answer "what's on this estimate?" directly.
+
+No DB migrations.
+
+---
+
 ## Phase 3c.2 — create_estimate (services + labor)
 
 New `create_estimate` write tool. Creates a draft estimate (type="Estimate") for a client with one or more services and labor line items.
