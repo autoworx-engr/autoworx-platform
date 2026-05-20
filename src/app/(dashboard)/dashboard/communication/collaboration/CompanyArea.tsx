@@ -20,7 +20,6 @@ export default function CompanyArea({
 }) {
   const { data: session } = useSession();
   const currentCompanyId = session?.user?.companyId;
-  console.log({ previousMessages });
 
   return (
     <div
