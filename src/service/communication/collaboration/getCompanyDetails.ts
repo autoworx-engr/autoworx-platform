@@ -1,3 +1,5 @@
+import axiosInstance from "@/helpers/axios";
+
 export const getCompanyDetails = async ({
   companyId,
   userId,
@@ -7,19 +9,15 @@ export const getCompanyDetails = async ({
   userId: number;
   currentCompanyId?: number;
 }) => {
-  const params = new URLSearchParams({
-    companyId: String(companyId),
-    userId: String(userId),
-    currentCompanyId: String(currentCompanyId ?? ""),
-  });
-
-  const res = await fetch(
-    `/api/communication/collaboration/profile?${params.toString()}`,
+  const res = await axiosInstance.get(
+    `/api/communication/collaboration/profile`,
+    {
+      params: {
+        companyId,
+        userId,
+        currentCompanyId: currentCompanyId ?? "",
+      },
+    },
   );
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch company details");
-  }
-
-  return res.json();
+  return res.data;
 };

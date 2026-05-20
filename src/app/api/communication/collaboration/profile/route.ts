@@ -1,5 +1,8 @@
+import { AppError } from "@/error-boundary/error";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
 import { getFilteredConnectedCompanies } from "@/lib/collaboration/getFilteredConnectedCompanies";
+import { getCompanyIdFromBearer } from "@/lib/authPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -93,6 +96,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   try {
+    const callerCompanyId = await getCompanyIdFromBearer(req);
+    if (!callerCompanyId) {
+      throw new AppError(401, "Unauthorized");
+    }
+
     const { searchParams } = new URL(req.url);
     const companyId = Number(searchParams.get("companyId"));
 
@@ -158,10 +166,10 @@ export async function GET(req: NextRequest) {
       totalJobsDone: completedJobs,
     });
   } catch (error) {
-    console.error("[profile/route]", error);
+    const errors = errorHandler(error);
     return NextResponse.json(
-      { message: "Something went wrong" },
-      { status: 500 },
+      { message: errors?.message || "Something went wrong" },
+      { status: errors?.statusCode || 500 },
     );
   }
 }

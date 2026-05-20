@@ -1,6 +1,7 @@
 import { AppError } from "@/error-boundary/error";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
+import { getAuthPrincipal } from "@/lib/authPrincipal";
 import { InvoiceType, Prisma } from "@prisma/client";
 import { customAlphabet } from "nanoid";
 import { NextRequest, NextResponse } from "next/server";
@@ -68,6 +69,12 @@ import { NextRequest, NextResponse } from "next/server";
  */
 export async function POST(request: NextRequest) {
   try {
+    const principal = await getAuthPrincipal(request);
+    if (!principal) {
+      throw new AppError(401, "Unauthorized");
+    }
+    const { companyId: callerCompanyId, userId: callerUserId } = principal;
+
     const formData = await request.formData();
 
     // ── Parse & validate required fields ──────────────────────────────────────
@@ -117,6 +124,14 @@ export async function POST(request: NextRequest) {
       throw new AppError(
         400,
         "year, receiverId, receiverCompanyId, senderId and senderCompanyId must be valid integers",
+      );
+    }
+
+    // Caller must own the senderCompanyId they're acting on behalf of
+    if (senderCompanyId !== callerCompanyId || senderId !== callerUserId) {
+      throw new AppError(
+        403,
+        "You can only request estimates from your own company.",
       );
     }
 

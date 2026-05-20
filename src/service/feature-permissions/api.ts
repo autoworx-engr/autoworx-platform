@@ -19,10 +19,18 @@ export const allCompanyFeaturePermissions = async (companyId: number) => {
 
     return response.data;
   } catch (error) {
-    console.error(
-      `Failed to fetch feature permissions for company ${companyId}:`,
-      error,
-    );
+    const isAxios = (error as { isAxiosError?: boolean })?.isAxiosError;
+    const code = (error as { code?: string })?.code;
+    if (isAxios && code === "ECONNREFUSED") {
+      console.warn(
+        `[feature-permissions] admin service unreachable (companyId=${companyId})`,
+      );
+    } else {
+      console.error(
+        `Failed to fetch feature permissions for company ${companyId}:`,
+        error,
+      );
+    }
     return null;
   }
 };
