@@ -35,16 +35,16 @@ export default function JumpToLatestButton({
         "text-xs font-semibold text-[#006D77]",
         "shadow-lg shadow-[#006D77]/30 ring-1 ring-white/10",
         "transition-all duration-200 ease-out",
-        "hover:scale-105 hover:bg-[#005a63] active:scale-95",
+        "hover:scale-105 hover:bg-[#abced1] active:scale-95",
         "animate-in fade-in slide-in-from-bottom-2",
         className,
       )}
     >
-      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/15">
+      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gray-100">
         <ChevronDown className="h-3.5 w-3.5" strokeWidth={2.5} />
       </span>
       {showCount ? (
-        <span className="tabular-nums">
+        <span className="tabular-nums ">
           {unreadCount! > 99 ? "99+" : unreadCount} new
         </span>
       ) : (
