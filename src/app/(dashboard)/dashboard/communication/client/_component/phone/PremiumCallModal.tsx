@@ -1,17 +1,17 @@
-import React from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogActions,
-  Button,
-  Typography,
   Box,
-  IconButton,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
   Fade,
+  IconButton,
+  Typography,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import { X as Close, Star, Zap, Crown, ArrowRight } from "lucide-react";
+import { X as Close, Crown } from "lucide-react";
+import React from "react";
 
 interface PremiumModalProps {
   open: boolean;
@@ -27,9 +27,9 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  const handleUpgrade = () => {
-    onClose();
-  };
+  // const handleUpgrade = () => {
+  //   onClose();
+  // };
 
   return (
     <Dialog

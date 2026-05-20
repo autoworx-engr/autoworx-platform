@@ -22,13 +22,13 @@ export default function MissedCallTextBackSettings({
   }, [initialEnabled]);
 
   const handleToggle = async () => {
+    if (!isAllowed) {
+      errorToast("Your plan does not include missed call text back.");
+      return;
+    }
+
     try {
       setIsLoading(true);
-      if (!isAllowed) {
-        errorToast("Your plan does not include missed call text back.");
-        return;
-      }
-
       const result = await updateMissedCallTextBackEnabled(!isEnabled);
 
       if (result.type === "success") {

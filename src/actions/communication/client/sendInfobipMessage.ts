@@ -377,7 +377,7 @@ export async function sendInfobipMessage({
         console.error("Pipeline automation trigger error:", error);
       }
 
-      revalidatePath("/dashboard/communication/client/${clientId}");
+      revalidatePath(`/dashboard/communication/client/${clientId}`);
       return {
         success: true,
         data,
