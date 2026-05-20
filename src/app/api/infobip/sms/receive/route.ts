@@ -288,6 +288,7 @@ export async function POST(req: NextRequest) {
                 companyId: client.companyId,
                 sendFrom: clientSMS.from,
                 sendTo: clientSMS.to,
+                windowStart: clientSMS.createdAt.toISOString(),
               }).catch((err) =>
                 console.error("[Infobip] debounceSmsAgent enqueue error:", err),
               );

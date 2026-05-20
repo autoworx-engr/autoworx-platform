@@ -157,6 +157,7 @@ export async function persistCompanyMessage({
       companyId: client.companyId,
       sendFrom: dbMessage.from,
       sendTo: dbMessage.to,
+      windowStart: dbMessage.createdAt.toISOString(),
     }).catch((err) =>
       console.error("[sms-receive] debounceSmsAgent enqueue error:", err),
     );

@@ -53,26 +53,49 @@ async function processJob(job: Job<SmsAgentJobData>): Promise<void> {
     console.log(
       `[Worker] ↺ Requeued clientId=${clientId} — new jobId=${newJobId} fires in ${requeueSecs}s`,
     );
-    return; // complete current job normally; new delayed job takes over
+    return;
   }
 
-  // ── 2b. Silence confirmed — time to process ──────────────────────────
+  // ── 2b. Silence confirmed — atomically claim all unprocessed messages ─
+  // Multiple parallel jobs may fire for the same client when singletonKey
+  // transitions from "created" → "active". The transaction below ensures
+  // exactly one job wins: it fetches rows where agentProcessedAt IS NULL
+  // and immediately stamps them. Any other job racing here sees 0 rows.
   console.log(
-    `[Worker] Silence confirmed for clientId=${clientId} — fetching messages since ${windowStart}`,
+    `[Worker] Silence confirmed for clientId=${clientId} — claiming messages since ${windowStart}`,
   );
 
-  const rows = await db.clientSMS.findMany({
-    where: {
-      clientId,
-      sentBy: "Client",
-      createdAt: { gte: new Date(windowStart) },
-    },
-    orderBy: { createdAt: "asc" },
-    select: { message: true },
+  const rows = await db.$transaction(async (tx) => {
+    const messages = await tx.clientSMS.findMany({
+      where: {
+        clientId,
+        sentBy: "Client",
+        agentProcessedAt: null,
+        createdAt: { gte: new Date(windowStart) },
+      },
+      orderBy: { createdAt: "asc" },
+      select: { id: true, message: true },
+    });
+
+    if (messages.length === 0) return [];
+
+    await tx.clientSMS.updateMany({
+      where: { id: { in: messages.map((m) => m.id) } },
+      data: { agentProcessedAt: new Date() },
+    });
+
+    return messages;
   });
 
+  if (rows.length === 0) {
+    console.log(
+      `[Worker] No unprocessed messages for clientId=${clientId} — another job already handled this window (jobId=${job.id})`,
+    );
+    return;
+  }
+
   console.log(
-    `[Worker] Fetched ${rows.length} message(s) for clientId=${clientId}`,
+    `[Worker] Claimed ${rows.length} message(s) for clientId=${clientId}`,
   );
   rows.forEach((r, i) =>
     console.log(`[Worker]   [${i + 1}] "${r.message?.trim()}"`),
@@ -82,13 +105,6 @@ async function processJob(job: Job<SmsAgentJobData>): Promise<void> {
     .map((r) => r.message?.trim())
     .filter(Boolean)
     .join("\n");
-
-  if (!combined) {
-    console.warn(
-      `[Worker] ⚠ Combined message empty for clientId=${clientId} — discarding job ${job.id}`,
-    );
-    return;
-  }
 
   // ── 3. Send combined message to AI agent ────────────────────────────
   console.log(
