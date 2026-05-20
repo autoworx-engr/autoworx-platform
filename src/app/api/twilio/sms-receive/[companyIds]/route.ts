@@ -1,5 +1,23 @@
-import { NextRequest } from "next/server";
+// import { updateCommunicationAutomationTrigger } from "@/actions/automation/communication/triggerCommunicationAutomation";
+import { updatePipelineAutomationTriggerWithToken } from "@/actions/automation/pipeline/triggerPipelineAutomation";
+import { updateNewSMSChatTrack } from "@/actions/communication/client/chat-track";
+import { db } from "@/lib/db";
+import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
+import { sendClientMessageNotification } from "@/lib/notification/communication-notify";
+import sendClientMailOrSMSNotify from "@/lib/pusher/client-conversation-notify";
+import receiveTwiloMessage from "@/lib/pusher/receiveTwiloMessage";
+import { getPusherInstance } from "@/lib/pusher/server";
+import { debounceSmsAgent } from "@/lib/pgboss/debounceSmsAgent";
+import { allCompanyFeaturePermissions } from "@/service/feature-permissions/api";
+import {
+  normalizePhoneForStorage,
+  phoneLookupWhereClause,
+} from "@/utils/normalizePhone";
+import { revalidatePath } from "next/cache";
+import { NextRequest, NextResponse } from "next/server";
 import { processIncomingSMS } from "./_lib/processIncomingSMS";
+
+const pusher = getPusherInstance();
 
 /**
  * @swagger
@@ -67,4 +85,48 @@ export async function POST(
       { status: 500 },
     );
   }
+}
+
+// 🔹 Function to Fetch Twilio Media and Convert to File
+async function fetchTwilioMedia(
+  url: string,
+  apiKeySid: string,
+  apiKeySecret: string,
+) {
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Basic ${btoa(`${apiKeySid}:${apiKeySecret}`)}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch Twilio media: ${response.statusText}`);
+  }
+
+  const blob = await response.blob();
+  const ext = mimeToExtension(blob.type);
+  const filename = `twilio-mms-${Date.now()}.${ext}`;
+  return new File([blob], filename, { type: blob.type });
+}
+
+function mimeToExtension(mime: string): string {
+  const map: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/gif": "gif",
+    "image/webp": "webp",
+    "audio/ogg": "ogg",
+    "audio/mpeg": "mp3",
+    "audio/mp4": "m4a",
+    "audio/wav": "wav",
+    "audio/webm": "webm",
+    "audio/amr": "amr",
+    "audio/aac": "aac",
+    "audio/3gpp": "3gp",
+    "video/mp4": "mp4",
+    "video/quicktime": "mov",
+    "video/3gpp": "3gp",
+    "application/pdf": "pdf",
+  };
+  return map[mime.split(";")[0].trim()] || "bin";
 }

@@ -3555,15 +3555,3 @@ enum EmergencyRequestStatus {
   CANCELLED // Client cancelled the request
 }
 
-// One row per client per debounce window.
-// Inserted once when the first SMS of a window arrives (ON CONFLICT DO NOTHING).
-// Deleted atomically by the worker when it claims the job for processing.
-model SmsAgentDebounce {
-  clientId    Int      @id @map("client_id")
-  companyId   Int      @map("company_id")
-  sendFrom    String   @map("send_from")
-  sendTo      String   @map("send_to")
-  windowStart DateTime @map("window_start")
-
-  @@map("sms_agent_debounce")
-}
