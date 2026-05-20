@@ -573,9 +573,9 @@ export default function CompanyMessageBox({
                       )}
                     >
                       {format(new Date(msg?.createdAt), "p")} ·
-                      {msg?.senderUser?.firstName +
-                        " " +
-                        msg?.senderUser?.lastName}
+                      {msg?.senderUser
+                        ? `${msg.senderUser.firstName} ${msg.senderUser.lastName}`
+                        : "Unknown User"}
                     </p>
                   </div>
                 </div>
