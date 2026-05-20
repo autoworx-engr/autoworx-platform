@@ -5,7 +5,7 @@ import { sendClientMessageNotification } from "@/lib/notification/communication-
 import sendClientMailOrSMSNotify from "@/lib/pusher/client-conversation-notify";
 import receiveTwiloMessage from "@/lib/pusher/receiveTwiloMessage";
 import { getPusherInstance } from "@/lib/pusher/server";
-import { sendSMSToAgent } from "@/service/ai-agent/api";
+import { debounceSmsAgent } from "@/lib/pgboss/debounceSmsAgent";
 import {
   normalizePhoneForStorage,
   phoneLookupWhereClause,
@@ -152,17 +152,14 @@ export async function persistCompanyMessage({
     entitlements.awxSalesAgent &&
     dbMessage.to === credential?.phoneNumber
   ) {
-    try {
-      await sendSMSToAgent({
-        company_id: client.companyId,
-        message: dbMessage.message,
-        send_from: dbMessage.from,
-        send_to: dbMessage.to,
-        client_id: client.id,
-      });
-    } catch (err) {
-      console.error("[sms-receive] sales agent dispatch failed:", err);
-    }
+    debounceSmsAgent({
+      clientId: client.id,
+      companyId: client.companyId,
+      sendFrom: dbMessage.from,
+      sendTo: dbMessage.to,
+    }).catch((err) =>
+      console.error("[sms-receive] debounceSmsAgent enqueue error:", err),
+    );
   }
 
   receiveTwiloMessage({ ...dbMessage, attachments });
