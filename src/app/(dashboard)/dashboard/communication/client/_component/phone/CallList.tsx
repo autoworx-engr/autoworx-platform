@@ -2,11 +2,16 @@
 
 import { useEffect, useRef } from "react";
 
-export const CallList = ({
-  data,
-}: {
-  data: any[];
-}) => {
+export type CallListItem = {
+  id: number;
+  direction: string | null;
+  from: string;
+  to: string;
+  createdAt: string | Date;
+  playableUrl: string | null;
+};
+
+export const CallList = ({ data }: { data: CallListItem[] }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

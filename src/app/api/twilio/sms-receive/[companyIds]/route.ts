@@ -57,20 +57,19 @@ export async function POST(
   try {
     const { params } = context;
     const companyIdsParam = (await params)?.companyIds;
-
     const companyIds = companyIdsParam.split(",").map((id) => parseInt(id, 10));
 
-    let body;
-
     const contentType = req.headers.get("content-type");
-    if (contentType === "application/x-www-form-urlencoded") {
-      const formData = await req.text();
-      body = Object.fromEntries(new URLSearchParams(formData).entries());
-    } else {
+    if (contentType !== "application/x-www-form-urlencoded") {
       throw new Error(
         "Unsupported content type: Twilio webhook expects form-encoded data",
       );
     }
+
+    const formData = await req.text();
+    const body = Object.fromEntries(
+      new URLSearchParams(formData).entries(),
+    ) as Record<string, string>;
 
     // Respond to Twilio immediately to avoid 15s timeout, then process async
     processIncomingSMS(body, companyIds).catch((err) =>

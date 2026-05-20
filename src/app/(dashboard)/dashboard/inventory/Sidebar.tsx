@@ -11,6 +11,7 @@ import getUser from "@/lib/getUser";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { CircleAlert } from "lucide-react";
 import Image from "next/image";
+import { unstable_cache } from "next/cache";
 import QRCode from "qrcode";
 import EditProduct from "./EditProduct";
 import QRcode from "./QRcode";
@@ -41,9 +42,14 @@ export default async function Sidebar({
   //   : null;
 
   const imgUrl = product
-    ? await QRCode.toDataURL(
-        `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/inventory/use/${product.id}`,
-      )
+    ? await unstable_cache(
+        () =>
+          QRCode.toDataURL(
+            `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/inventory/use/${product.id}`,
+          ),
+        [`inventory-qr-${product.id}`],
+        { revalidate: 86400 },
+      )()
     : null;
 
   const invoices = await db.invoice.findMany({
