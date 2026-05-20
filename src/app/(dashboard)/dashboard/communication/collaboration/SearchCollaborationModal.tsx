@@ -222,7 +222,7 @@ export default function SearchCollaborationModal({}: TProps) {
                                 Connected
                               </span>
                             ) : user?.companyStatus ? (
-                              <span className="block w-full rounded-lg bg-slate-100 px-3 py-1.5 text-center text-xs font-semibold text-slate-500 capitalize sm:inline sm:w-auto sm:text-left">
+                              <span className="block w-full rounded-lg bg-amber-200 px-3 py-1.5 text-center text-xs font-semibold text-slate-500 capitalize sm:inline sm:w-auto sm:text-left">
                                 {user?.companyStatus}
                               </span>
                             ) : (
