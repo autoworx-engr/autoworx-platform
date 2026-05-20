@@ -144,10 +144,6 @@ export default function UserMessageBox({
     };
   }, [user, session?.user?.id, isVisible]);
 
-  console.log({
-    messages,
-  });
-
   return (
     <div ref={messageBoxRef}>
       <MessageBox
