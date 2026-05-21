@@ -1,9 +1,17 @@
 /**
- * Node-only: process-level error hooks. Loaded only from instrumentation.ts when
- * NEXT_RUNTIME is nodejs so Edge bundles never reference process.on.
+ * Node-only: process-level error hooks + background workers.
+ * Loaded only from instrumentation.ts when NEXT_RUNTIME is nodejs
+ * so Edge bundles never reference process.on.
  */
 
 import { queueProductionTelegramAlert } from "./error-boundary/sendProductionTelegramAlert";
+import { startWorker } from "./workers/smsAgentWorker";
+
+// Start the pg-boss SMS agent worker inside the Next.js process.
+// pg-boss polls PostgreSQL internally — no separate Railway service needed.
+startWorker().catch((err) =>
+  console.error("[Instrumentation] SMS agent worker failed to start:", err),
+);
 
 function notify(
   reason: unknown,
