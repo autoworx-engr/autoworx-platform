@@ -10,25 +10,23 @@ export const searchUsers = async (
   notNeededUser?: { id: number }[] | null,
 ) => {
   const session = await getServerSession(authOptions);
-  let withoutNeedUser = [{ id: parseInt(session?.user?.id!) }];
+  if (!session?.user?.id || !session.user.companyId) {
+    return { success: false, data: [] as never[] };
+  }
+
+  let withoutNeedUser = [{ id: parseInt(session.user.id) }];
   if (notNeededUser && notNeededUser.length) {
     withoutNeedUser = [...withoutNeedUser, ...notNeededUser];
   }
-  try {
-    const filteredUsers = await db.user.findMany({
-      where: {
-        companyId: session?.user?.companyId,
-        NOT: withoutNeedUser,
-        ...buildUserSearchWhere(searchTerm),
-      },
-      take: 50,
-    });
 
-    return {
-      success: true,
-      data: filteredUsers,
-    };
-  } catch (err: any) {
-    throw new Error(err);
-  }
+  const filteredUsers = await db.user.findMany({
+    where: {
+      companyId: session.user.companyId,
+      NOT: withoutNeedUser,
+      ...buildUserSearchWhere(searchTerm),
+    },
+    take: 50,
+  });
+
+  return { success: true, data: filteredUsers };
 };
