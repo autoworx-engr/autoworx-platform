@@ -35,10 +35,11 @@ export const GET = async (
 
     const { groupId } = await props.params;
 
+    // Legacy groups can have companyId = null; membership check enforces tenant isolation.
     const findGroup = await db.group.findFirst({
       where: {
         id: parseInt(groupId, 10),
-        companyId: principal.companyId,
+        OR: [{ companyId: principal.companyId }, { companyId: null }],
         users: { some: { id: principal.userId } },
       },
       include: { users: true },

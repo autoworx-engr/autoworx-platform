@@ -70,11 +70,12 @@ export async function GET(request: NextRequest) {
       throw new AppError(400, "Group ID is required");
     }
 
-    // Verify group exists, belongs to caller's company, and caller is a member.
+    // Verify caller is a member. Legacy groups can have companyId = null;
+    // membership filter enforces tenant isolation.
     const findGroup = await db.group.findFirst({
       where: {
         id: groupIdNum,
-        companyId: principal.companyId,
+        OR: [{ companyId: principal.companyId }, { companyId: null }],
         users: { some: { id: principal.userId } },
       },
       select: { id: true },

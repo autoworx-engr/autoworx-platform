@@ -21,12 +21,6 @@ export const addUserInGroup = async ({ groupId, users }: TAddGroupInUser) => {
 
   const currentUserId = parseInt(session.user.id);
   const companyId = session.user.companyId;
-  console.log("Adding users to group", {
-    groupId,
-    users,
-    currentUserId,
-    companyId,
-  });
 
   // Legacy groups can have companyId = null. Membership check still enforces
   // tenant isolation since users belong to exactly one company.
@@ -38,7 +32,7 @@ export const addUserInGroup = async ({ groupId, users }: TAddGroupInUser) => {
     },
     select: { id: true },
   });
-  console.log("Existing group found:", existingGroup);
+
   if (!existingGroup) {
     return { status: 404, message: "Group not found" };
   }

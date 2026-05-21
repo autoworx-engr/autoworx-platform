@@ -244,8 +244,10 @@ export const GET = async (req: NextRequest) => {
     const sortBy = searchParams.get("sortBy") || "updatedAt";
     const sortOrder = searchParams.get("sortOrder") || "desc";
 
+    // Legacy groups can have companyId = null. Membership filter enforces
+    // tenant isolation since users belong to exactly one company.
     const where: Prisma.GroupWhereInput = {
-      companyId: principal.companyId,
+      OR: [{ companyId: principal.companyId }, { companyId: null }],
       users: { some: { id: principal.userId } },
     };
 
@@ -375,10 +377,11 @@ export const PUT = async (req: NextRequest) => {
     if (!groupId) {
       throw new AppError(400, "Group ID is required");
     }
+    // Legacy groups can have companyId = null; membership check enforces tenant isolation.
     const findGroup = await db.group.findFirst({
       where: {
         id: groupId,
-        companyId: principal.companyId,
+        OR: [{ companyId: principal.companyId }, { companyId: null }],
         users: { some: { id: principal.userId } },
       },
       select: { id: true },
