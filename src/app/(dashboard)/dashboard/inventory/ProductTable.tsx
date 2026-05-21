@@ -83,11 +83,11 @@ export default function ProductTable({
         ) : (
           products.map((product, index) => {
             return (
-              <div key={index}>
+              <div key={product.id}>
                 <InventoryResponsiveCard
                   user={user}
-                  viewTab={viewTab!}
-                  search={search!}
+                  viewTab={viewTab ?? null}
+                  search={search ?? new URLSearchParams()}
                   product={
                     {
                       ...product,
@@ -140,7 +140,15 @@ export default function ProductTable({
           <tbody>
             {products.length === 0 ? (
               <tr>
-                <td colSpan={6} className="text-center p-20">
+                <td
+                  colSpan={
+                    user?.employeeType === "Admin" ||
+                    user?.employeeType === "Manager"
+                      ? 6
+                      : 5
+                  }
+                  className="text-center p-20"
+                >
                   <span className="flex items-center justify-center gap-2">
                     <Search size={20} /> No{" "}
                     {viewTab === "products" ? "products" : "supplies"} found{" "}
@@ -248,9 +256,7 @@ export default function ProductTable({
                         placement="top"
                       >
                         <span className="cursor-default">
-                          {String(product.quantity).length > 10
-                            ? String(product.quantity).slice(0, 10) + "..."
-                            : Number(product.quantity)}
+                          {Number(product.quantity)}
                         </span>
                       </Tooltip>
                     </td>
