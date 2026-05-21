@@ -6,6 +6,10 @@ import { getPusherInstance } from "@/lib/pusher/server";
 import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { deleteGroupIfEmpty } from "@/actions/communication/internal/_utils/deleteGroupIfEmpty";
+import {
+  findDuplicateGroupName,
+  normalizeGroupName,
+} from "@/actions/communication/internal/_utils/groupName";
 
 const pusher = getPusherInstance();
 
@@ -100,6 +104,16 @@ export const POST = async (req: NextRequest) => {
     const { name, users } = await req.json();
     const companyId = principal.companyId;
 
+    const normalizedName = normalizeGroupName(name ?? "");
+    if (!normalizedName) {
+      throw new AppError(400, "Group name is required");
+    }
+
+    const duplicate = await findDuplicateGroupName(companyId, normalizedName);
+    if (duplicate) {
+      throw new AppError(409, "Group name already exists.");
+    }
+
     const findUser = await findUsers(users, companyId);
     if (findUser && findUser?.length !== users?.length) {
       throw new AppError(400, "One or more users not found");
@@ -107,7 +121,7 @@ export const POST = async (req: NextRequest) => {
 
     const groupData = await db.group.create({
       data: {
-        name: name,
+        name: normalizedName,
         companyId,
         users: {
           connect: users,
@@ -395,22 +409,19 @@ export const PUT = async (req: NextRequest) => {
     // Duplicate-name check (skipped when name unchanged). Scoped to the
     // caller's company — legacy null-companyId groups aren't part of the
     // tenant namespace.
+    let normalizedNewName: string | undefined;
     if (typeof name === "string") {
-      const normalizedName = name.trim();
-      if (!normalizedName) {
+      normalizedNewName = normalizeGroupName(name);
+      if (!normalizedNewName) {
         throw new AppError(400, "Group name is required");
       }
-      if (
-        normalizedName.toLowerCase() !== findGroup.name.trim().toLowerCase()
-      ) {
-        const duplicate = await db.group.findFirst({
-          where: {
-            companyId: principal.companyId,
-            name: { equals: normalizedName, mode: "insensitive" },
-            NOT: { id: groupId },
-          },
-          select: { id: true },
-        });
+      const currentNormalized = normalizeGroupName(findGroup.name);
+      if (normalizedNewName.toLowerCase() !== currentNormalized.toLowerCase()) {
+        const duplicate = await findDuplicateGroupName(
+          principal.companyId,
+          normalizedNewName,
+          groupId,
+        );
         if (duplicate) {
           throw new AppError(409, "Group name already exists.");
         }
@@ -440,7 +451,7 @@ export const PUT = async (req: NextRequest) => {
       const updated = await tx.group.update({
         where: { id: groupId },
         data: {
-          name: typeof name === "string" ? name.trim() : undefined,
+          name: normalizedNewName,
           users: {
             connect: connectUsers.length > 0 ? connectUsers : undefined,
             disconnect:

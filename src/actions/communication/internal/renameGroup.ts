@@ -4,6 +4,7 @@ import { authOptions } from "@/authOptions";
 import { db } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
+import { findDuplicateGroupName, normalizeGroupName } from "./_utils/groupName";
 
 export const renameGroup = async (name: string, groupId: number) => {
   const session = await getServerSession(authOptions);
@@ -11,7 +12,7 @@ export const renameGroup = async (name: string, groupId: number) => {
     return { status: 401, success: false, message: "Unauthorized" };
   }
 
-  const normalizedName = name.trim();
+  const normalizedName = normalizeGroupName(name);
   if (!normalizedName) {
     return { status: 400, success: false, message: "Group name is required." };
   }
@@ -32,16 +33,13 @@ export const renameGroup = async (name: string, groupId: number) => {
     return { status: 404, success: false, message: "Group not found" };
   }
 
-  // Duplicate-name check: only against groups the caller's company owns. Legacy
-  // null-companyId groups aren't part of any tenant's namespace.
-  const duplicateName = await db.group.findFirst({
-    where: {
-      companyId,
-      name: { equals: normalizedName, mode: "insensitive" },
-      NOT: { id: groupId },
-    },
-    select: { id: true },
-  });
+  // Duplicate-name check: only against groups the caller's company owns.
+  // Legacy null-companyId groups aren't part of any tenant's namespace.
+  const duplicateName = await findDuplicateGroupName(
+    companyId,
+    normalizedName,
+    groupId,
+  );
   if (duplicateName) {
     return {
       status: 409,

@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { getPusherInstance } from "@/lib/pusher/server";
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
+import { findDuplicateGroupName, normalizeGroupName } from "./_utils/groupName";
 
 type TCreateGroup = {
   name: string;
@@ -20,18 +21,12 @@ export const createGroup = async ({ name, users }: TCreateGroup) => {
   }
 
   const companyId = session.user.companyId;
-  const normalizedName = name.trim();
+  const normalizedName = normalizeGroupName(name);
   if (!normalizedName) {
     return { status: 400, message: "Group name is required." };
   }
 
-  const existingGroup = await db.group.findFirst({
-    where: {
-      companyId,
-      name: { equals: normalizedName, mode: "insensitive" },
-    },
-    select: { id: true },
-  });
+  const existingGroup = await findDuplicateGroupName(companyId, normalizedName);
   if (existingGroup) {
     return { status: 409, message: "Group name already exists." };
   }
