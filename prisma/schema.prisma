@@ -2540,9 +2540,10 @@ model ClientSMS {
   client       Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
   user         User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   company      Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  isSalesAgent Boolean? @default(false)
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+  isSalesAgent     Boolean?  @default(false)
+  agentProcessedAt DateTime? @map("agent_processed_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at")
 }
 
 model ClientCall {

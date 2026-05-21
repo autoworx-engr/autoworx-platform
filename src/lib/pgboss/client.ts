@@ -20,7 +20,10 @@ export async function getBoss(): Promise<PgBoss> {
   _boss.on("error", (err) => console.error("[PgBoss] Unexpected error:", err));
 
   await _boss.start();
-  console.log("[PgBoss] Started and connected to PostgreSQL");
+
+  // pg-boss v12 requires explicit queue creation before send/work
+  await _boss.createQueue(SMS_AGENT_QUEUE);
+  console.log("[PgBoss] Started — queue ready:", SMS_AGENT_QUEUE);
 
   return _boss;
 }
