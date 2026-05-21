@@ -132,7 +132,7 @@ export default function EstimateAndInvoicePage() {
         <section className="group relative rounded-xl border border-slate-200/60 bg-white p-8 shadow-sm transition-all duration-300 hover:shadow-xl hover:shadow-slate-200/50">
           <div className="mb-8 flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-[#6571FF] ring-4 ring-indigo-50/50">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-500 shadow-sm">
                 <DollarSign size={24} />
               </div>
               <div>
@@ -253,7 +253,7 @@ export default function EstimateAndInvoicePage() {
         {/* TERMS & POLICY CARD */}
         <section className="rounded-xl border border-slate-200/60 bg-white p-8 shadow-sm transition-all duration-300">
           <div className="mb-8 flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-[#6571FF] ring-4 ring-indigo-50/50">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-500 shadow-sm">
               <FileText size={24} />
             </div>
             <div>

@@ -40,7 +40,7 @@ export default function ProductTable({
   const pathname = usePathname();
   const viewTab = search?.get("view");
   const [currentPage, setCurrentPage] = useState(
-    Number(searchParams.page) || 1
+    Number(searchParams.page) || 1,
   );
   const [pageSize, setPageSize] = useState(Number(searchParams.limit) || 50);
   const [showPagination, setShowPagination] = useState(false);
@@ -70,30 +70,36 @@ export default function ProductTable({
     <>
       {/* card list  */}
       <div className="mt-4 space-y-2 lg:hidden ">
-        {
-          products.length === 0 ? (
-            <div className="flex items-center justify-center gap-2">
-              <Search size={20} /> No {viewTab === "products" ? "products" : "supplies"} found {search?.get("search") && <span>for <mark>{search?.get("search")}</mark></span>}
-            </div>
-          ) :
-            products.map((product, index) => {
-              return (
-                <div key={index}>
-                  <InventoryResponsiveCard
-                    user={user}
-                    viewTab={viewTab!}
-                    search={search!}
-                    product={
-                      {
-                        ...product,
-                        price: product.price?.toString(),
-                      } as ProductCardProps
-                    }
-                    index={index}
-                  />
-                </div>
-              );
-            })}
+        {products.length === 0 ? (
+          <div className="flex items-center justify-center gap-2">
+            <Search size={20} /> No{" "}
+            {viewTab === "products" ? "products" : "supplies"} found{" "}
+            {search?.get("search") && (
+              <span>
+                for <mark>{search?.get("search")}</mark>
+              </span>
+            )}
+          </div>
+        ) : (
+          products.map((product, index) => {
+            return (
+              <div key={index}>
+                <InventoryResponsiveCard
+                  user={user}
+                  viewTab={viewTab!}
+                  search={search!}
+                  product={
+                    {
+                      ...product,
+                      price: product.price?.toString(),
+                    } as ProductCardProps
+                  }
+                  index={index}
+                />
+              </div>
+            );
+          })
+        )}
 
         {/* Mobile Pagination */}
         {showPagination && (
@@ -126,141 +132,150 @@ export default function ProductTable({
               <th className="px-4 text-left 2xl:px-10">Unit</th>
               {(user?.employeeType === "Admin" ||
                 user?.employeeType === "Manager") && (
-                  <th className="px-4 text-left 2xl:px-10">Action</th>
-                )}
+                <th className="px-4 text-left 2xl:px-10">Action</th>
+              )}
             </tr>
           </thead>
 
-          <tbody className="max-h-[40vh] overflow-y-auto">
+          <tbody>
             {products.length === 0 ? (
               <tr>
                 <td colSpan={6} className="text-center p-20">
-                  <span className="flex items-center justify-center gap-2"><Search size={20} /> No {viewTab === "products" ? "products" : "supplies"} found {search?.get("search") && <span>for <mark>{search?.get("search")}</mark></span>}</span>
+                  <span className="flex items-center justify-center gap-2">
+                    <Search size={20} /> No{" "}
+                    {viewTab === "products" ? "products" : "supplies"} found{" "}
+                    {search?.get("search") && (
+                      <span>
+                        for <mark>{search?.get("search")}</mark>
+                      </span>
+                    )}
+                  </span>
                 </td>
               </tr>
-            ) : products.map((product, index) => {
-              const params = new URLSearchParams(search);
-              params.set("productId", product.id.toString());
-              return (
-                <tr
-                  key={product.id}
-                  className={cn(
-                    "h-full cursor-pointer rounded-md py-3",
-                    index % 2 === 0 ? evenColor : oddColor,
-                    currentProductId === product.id &&
-                    "border-2 border-[#6571FF]"
-                  )}
-                  onClick={() =>
-                    router.push(`${pathname}?${params.toString()}`)
-                  }
-                >
-                  <td className="h-12 px-4 text-left">
-                    <p>{(currentPage - 1) * pageSize + index + 1}</p>
-                  </td>
-                  <td className="max-w-36 px-4 text-left">
-                    <div className="flex items-center gap-2 ">
-                      {Number(product.quantity) === 0 ? (
+            ) : (
+              products.map((product, index) => {
+                const params = new URLSearchParams(search);
+                params.set("productId", product.id.toString());
+                return (
+                  <tr
+                    key={product.id}
+                    className={cn(
+                      "h-full cursor-pointer rounded-md py-3",
+                      index % 2 === 0 ? evenColor : oddColor,
+                      currentProductId === product.id &&
+                        "border-2 border-[#6571FF]",
+                    )}
+                    onClick={() =>
+                      router.push(`${pathname}?${params.toString()}`)
+                    }
+                  >
+                    <td className="h-12 px-4 text-left">
+                      <p>{(currentPage - 1) * pageSize + index + 1}</p>
+                    </td>
+                    <td className="max-w-36 px-4 text-left">
+                      <div className="flex items-center gap-2 ">
+                        {Number(product.quantity) === 0 ? (
+                          <Tooltip
+                            title="Product is out of stock"
+                            placement="top"
+                          >
+                            <span className="text-red-600 cursor-default">
+                              {product.name.length > 20
+                                ? product.name.slice(0, 20) + "..."
+                                : product.name}
+                            </span>
+                            {product.name.length > 20 && (
+                              <span className="sr-only">{product.name}</span>
+                            )}
+                          </Tooltip>
+                        ) : Number(product.quantity) <=
+                          Number(product.lowInventoryAlert) ? (
+                          <Tooltip
+                            title="Product has low inventory"
+                            placement="top"
+                          >
+                            <span className="text-amber-600 cursor-default">
+                              {product.name.length > 20
+                                ? product.name.slice(0, 20) + "..."
+                                : product.name}
+                            </span>
+                            {product.name.length > 20 && (
+                              <span className="sr-only">{product.name}</span>
+                            )}
+                          </Tooltip>
+                        ) : (
+                          <Tooltip
+                            title={product.name.length > 20 ? product.name : ""}
+                            placement="top"
+                          >
+                            <span className="cursor-default">
+                              {product.name.length > 20
+                                ? product.name.slice(0, 20) + "..."
+                                : product.name}
+                            </span>
+                          </Tooltip>
+                        )}
+                      </div>
+                    </td>
+                    <td className="max-w-36 px-4 text-left truncate">
+                      {product.category?.name ? (
                         <Tooltip
-                          title="Product is out of stock"
-                          placement="top"
-                        >
-                          <span className="text-red-600 cursor-default">
-                            {product.name.length > 20
-                              ? product.name.slice(0, 20) + "..."
-                              : product.name}
-                          </span>
-                          {product.name.length > 20 && (
-                            <span className="sr-only">{product.name}</span>
-                          )}
-                        </Tooltip>
-                      ) : Number(product.quantity) <=
-                        Number(product.lowInventoryAlert) ? (
-                        <Tooltip
-                          title="Product has low inventory"
-                          placement="top"
-                        >
-                          <span className="text-amber-600 cursor-default">
-                            {product.name.length > 20
-                              ? product.name.slice(0, 20) + "..."
-                              : product.name}
-                          </span>
-                          {product.name.length > 20 && (
-                            <span className="sr-only">{product.name}</span>
-                          )}
-                        </Tooltip>
-                      ) : (
-                        <Tooltip
-                          title={product.name.length > 20 ? product.name : ""}
+                          title={
+                            product.category.name.length > 20
+                              ? product.category.name
+                              : undefined
+                          }
                           placement="top"
                         >
                           <span className="cursor-default">
-                            {product.name.length > 20
-                              ? product.name.slice(0, 20) + "..."
-                              : product.name}
+                            {product.category.name.length > 20
+                              ? product.category.name.slice(0, 20) + "..."
+                              : product.category.name}
                           </span>
                         </Tooltip>
+                      ) : (
+                        "-"
                       )}
-                    </div>
-                  </td>
-                  <td className="max-w-36 px-4 text-left truncate">
-                    {product.category?.name ? (
+                    </td>
+
+                    <td className="px-4 text-left 2xl:px-10 truncate">
                       <Tooltip
                         title={
-                          product.category.name.length > 20
-                            ? product.category.name
+                          String(product.quantity).length > 10
+                            ? String(product.quantity)
                             : undefined
                         }
                         placement="top"
                       >
                         <span className="cursor-default">
-                          {product.category.name.length > 20
-                            ? product.category.name.slice(0, 20) + "..."
-                            : product.category.name}
+                          {String(product.quantity).length > 10
+                            ? String(product.quantity).slice(0, 10) + "..."
+                            : Number(product.quantity)}
                         </span>
                       </Tooltip>
-                    ) : (
-                      "-"
-                    )}
-                  </td>
+                    </td>
 
-                  <td className="px-4 text-left 2xl:px-10 truncate">
-                    <Tooltip
-                      title={
-                        String(product.quantity).length > 10
-                          ? String(product.quantity)
-                          : undefined
-                      }
-                      placement="top"
-                    >
-                      <span className="cursor-default">
-                        {String(product.quantity).length > 10
-                          ? String(product.quantity).slice(0, 10) + "..."
-                          : Number(product.quantity)}
-                      </span>
-                    </Tooltip>
-                  </td>
+                    <td className="px-4 text-left 2xl:px-10 truncate">
+                      {product.unit ? (
+                        <Tooltip
+                          title={
+                            product.unit.length > 5 ? product.unit : undefined
+                          }
+                          placement="top"
+                        >
+                          <span className="cursor-default">
+                            {product.unit.length > 5
+                              ? product.unit.slice(0, 5) + "..."
+                              : product.unit}
+                          </span>
+                        </Tooltip>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
 
-                  <td className="px-4 text-left 2xl:px-10 truncate">
-                    {product.unit ? (
-                      <Tooltip
-                        title={
-                          product.unit.length > 5 ? product.unit : undefined
-                        }
-                        placement="top"
-                      >
-                        <span className="cursor-default">
-                          {product.unit.length > 5
-                            ? product.unit.slice(0, 5) + "..."
-                            : product.unit}
-                        </span>
-                      </Tooltip>
-                    ) : (
-                      "-"
-                    )}
-                  </td>
-
-                  {(user?.employeeType === "Admin" ||
-                    user?.employeeType === "Manager") && (
+                    {(user?.employeeType === "Admin" ||
+                      user?.employeeType === "Manager") && (
                       <td>
                         <div className="flex h-12 items-center justify-start gap-3 px-4 2xl:px-10">
                           <button className="text-2xl text-blue-600">
@@ -271,7 +286,7 @@ export default function ProductTable({
                             onConfirm={async () => {
                               await deleteInventory(product.id);
                               router.push(
-                                `/dashboard/inventory?view=${search?.get("view")}`
+                                `/dashboard/inventory?view=${search?.get("view")}`,
                               );
                             }}
                             okText="Yes"
@@ -286,9 +301,10 @@ export default function ProductTable({
                         </div>
                       </td>
                     )}
-                </tr>
-              );
-            })}
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </table>
       </div>
