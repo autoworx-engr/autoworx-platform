@@ -1,4 +1,4 @@
-import { getCompanyIdFromBearer } from "@/lib/mobileAuth";
+import { getCompanyIdFromBearer } from "@/lib/authPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { InvoiceType } from "@prisma/client";
