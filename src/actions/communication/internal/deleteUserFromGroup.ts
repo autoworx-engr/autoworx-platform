@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { getPusherInstance } from "@/lib/pusher/server";
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
+import { deleteGroupIfEmpty } from "./_utils/deleteGroupIfEmpty";
 
 const pusher = getPusherInstance();
 
@@ -28,13 +29,24 @@ export const deleteUserFromGroup = async (userId: number, groupId: number) => {
     return { status: 404, message: "Group not found" };
   }
 
-  await db.group.update({
-    where: { id: groupId },
-    data: { users: { disconnect: { id: userId } } },
+  const groupDeleted = await db.$transaction(async (tx) => {
+    await tx.group.update({
+      where: { id: groupId },
+      data: { users: { disconnect: { id: userId } } },
+    });
+    return deleteGroupIfEmpty(groupId, tx);
   });
 
+  // Same `delete-group` event for both cases — the sidebar handler calls
+  // `getGroupById`, which returns null when the group is gone (or when the
+  // viewer is no longer a member), so both branches converge on the right UI.
   pusher.trigger("delete-group", "delete", { userId, groupId });
 
   revalidatePath("/dashboard/communication/internal");
-  return { status: 200, message: "User deleted from group" };
+  return {
+    status: 200,
+    message: groupDeleted
+      ? "Group deleted (last member left)"
+      : "User deleted from group",
+  };
 };

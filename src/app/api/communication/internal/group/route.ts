@@ -5,6 +5,7 @@ import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { getPusherInstance } from "@/lib/pusher/server";
 import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
+import { deleteGroupIfEmpty } from "@/actions/communication/internal/_utils/deleteGroupIfEmpty";
 
 const pusher = getPusherInstance();
 
@@ -410,40 +411,49 @@ export const PUT = async (req: NextRequest) => {
       }
     }
 
-    const updatedGroup = await db.group.update({
-      where: { id: groupId },
-      data: {
-        name: name,
-        users: {
-          connect: connectUsers.length > 0 ? connectUsers : undefined,
-          disconnect: disconnectUsers.length > 0 ? disconnectUsers : undefined,
+    const { updatedGroup, groupDeleted } = await db.$transaction(async (tx) => {
+      const updated = await tx.group.update({
+        where: { id: groupId },
+        data: {
+          name: name,
+          users: {
+            connect: connectUsers.length > 0 ? connectUsers : undefined,
+            disconnect:
+              disconnectUsers.length > 0 ? disconnectUsers : undefined,
+          },
         },
-      },
-      include: {
-        users: true,
-      },
+        include: { users: true },
+      });
+      const deleted =
+        disconnectUsers.length > 0
+          ? await deleteGroupIfEmpty(groupId, tx)
+          : false;
+      return { updatedGroup: updated, groupDeleted: deleted };
     });
 
-    if (updatedGroup) {
-      if (connectUsers.length > 0) {
-        pusher.trigger("add-member-in-group", "add-member", {
-          groupId: updatedGroup.id,
-          userIds: connectUsers,
-        });
-      }
-      if (disconnectUsers.length > 0) {
-        pusher.trigger("remove-member-from-group", "remove-member", {
-          groupId: updatedGroup.id,
-          userIds: disconnectUsers,
-        });
-      }
+    if (connectUsers.length > 0) {
+      pusher.trigger("add-member-in-group", "add-member", {
+        groupId: updatedGroup.id,
+        userIds: connectUsers,
+      });
+    }
+    if (disconnectUsers.length > 0) {
+      // Same channel both ways — when groupDeleted is true, the sidebar's
+      // `getGroupById` call will return null and the group is removed from
+      // every viewer's list.
+      pusher.trigger("delete-group", "delete", {
+        groupId: updatedGroup.id,
+        userIds: disconnectUsers,
+      });
     }
 
     return NextResponse.json(
       {
         success: true,
-        data: updatedGroup,
-        message: "Group updated successfully",
+        data: groupDeleted ? null : updatedGroup,
+        message: groupDeleted
+          ? "Group deleted (last member left)"
+          : "Group updated successfully",
       },
       { status: 200 },
     );
