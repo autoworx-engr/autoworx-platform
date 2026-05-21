@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { addAppointment } from "@/actions/appointment/addAppointment";
-import { getCompanyIdFromBearer } from "@/lib/mobileAuth";
+import { getCompanyIdFromBearer } from "@/lib/authPrincipal";
 
 /**
  * @swagger

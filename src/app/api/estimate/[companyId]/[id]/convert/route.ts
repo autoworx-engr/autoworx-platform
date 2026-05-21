@@ -1,5 +1,5 @@
 import { convertInvoice } from "@/actions/estimate/invoice/convert";
-import { getCompanyIdFromBearer } from "@/lib/mobileAuth";
+import { getCompanyIdFromBearer } from "@/lib/authPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
