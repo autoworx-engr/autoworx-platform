@@ -385,11 +385,36 @@ export const PUT = async (req: NextRequest) => {
         OR: [{ companyId: principal.companyId }, { companyId: null }],
         users: { some: { id: principal.userId } },
       },
-      select: { id: true },
+      select: { id: true, name: true },
     });
 
     if (!findGroup) {
       throw new AppError(404, "Group not found");
+    }
+
+    // Duplicate-name check (skipped when name unchanged). Scoped to the
+    // caller's company — legacy null-companyId groups aren't part of the
+    // tenant namespace.
+    if (typeof name === "string") {
+      const normalizedName = name.trim();
+      if (!normalizedName) {
+        throw new AppError(400, "Group name is required");
+      }
+      if (
+        normalizedName.toLowerCase() !== findGroup.name.trim().toLowerCase()
+      ) {
+        const duplicate = await db.group.findFirst({
+          where: {
+            companyId: principal.companyId,
+            name: { equals: normalizedName, mode: "insensitive" },
+            NOT: { id: groupId },
+          },
+          select: { id: true },
+        });
+        if (duplicate) {
+          throw new AppError(409, "Group name already exists.");
+        }
+      }
     }
 
     const connectUsers =
@@ -415,7 +440,7 @@ export const PUT = async (req: NextRequest) => {
       const updated = await tx.group.update({
         where: { id: groupId },
         data: {
-          name: name,
+          name: typeof name === "string" ? name.trim() : undefined,
           users: {
             connect: connectUsers.length > 0 ? connectUsers : undefined,
             disconnect:
