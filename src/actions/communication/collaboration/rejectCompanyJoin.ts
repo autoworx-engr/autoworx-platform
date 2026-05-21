@@ -22,7 +22,11 @@ export async function rejectCompanyJoin(
     where: { id: joinId },
   });
 
-  if (!join || (join.companyOneId !== currentCompanyId && join.companyTwoId !== currentCompanyId)) {
+  if (
+    !join ||
+    (join.companyOneId !== currentCompanyId &&
+      join.companyTwoId !== currentCompanyId)
+  ) {
     throw new Error("Unauthorized");
   }
 
