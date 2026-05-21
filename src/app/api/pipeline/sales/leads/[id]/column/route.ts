@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { getCompanyIdFromBearer } from "@/lib/mobileAuth";
+import { getCompanyIdFromBearer } from "@/lib/authPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 
 /**

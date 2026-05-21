@@ -35,7 +35,7 @@ export default function CompanyListItem({
         alt={company.name}
         width={40}
         height={40}
-        className="rounded-full"
+        className="rounded-full size-10"
       />
 
       <div className="flex items-center justify-between w-full">
