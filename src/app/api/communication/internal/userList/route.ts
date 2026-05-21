@@ -127,31 +127,26 @@ export const GET = async (request: NextRequest) => {
       },
     });
 
-    // Batch fetch all chatTracks for these users in a single query
+    // Batch fetch only this viewer's chatTracks with these users
     const userIds = allUsers.map((u) => u.id);
     const chatTracks = await db.chatTrack.findMany({
       where: {
-        OR: [{ senderId: { in: userIds } }, { receiverId: { in: userIds } }],
         section: "internal",
+        OR: [
+          { senderId: userIdNum, receiverId: { in: userIds } },
+          { receiverId: userIdNum, senderId: { in: userIds } },
+        ],
       },
+      orderBy: { updatedAt: "desc" },
     });
 
-    // Map latest chatTrack per user
-    const userIdSet = new Set(userIds);
+    // Map latest chatTrack per other-party user (first hit wins, list is desc)
     const latestChatTrackMap = new Map<number, (typeof chatTracks)[0]>();
-
     for (const track of chatTracks) {
-      if (track.senderId && userIdSet.has(track.senderId)) {
-        const existing = latestChatTrackMap.get(track.senderId);
-        if (!existing || track.updatedAt > existing.updatedAt) {
-          latestChatTrackMap.set(track.senderId, track);
-        }
-      }
-      if (track.receiverId && userIdSet.has(track.receiverId)) {
-        const existing = latestChatTrackMap.get(track.receiverId);
-        if (!existing || track.updatedAt > existing.updatedAt) {
-          latestChatTrackMap.set(track.receiverId, track);
-        }
+      const otherId =
+        track.senderId === userIdNum ? track.receiverId : track.senderId;
+      if (otherId && !latestChatTrackMap.has(otherId)) {
+        latestChatTrackMap.set(otherId, track);
       }
     }
 
