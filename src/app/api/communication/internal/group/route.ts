@@ -1,26 +1,31 @@
 import { AppError } from "@/error-boundary/error";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { getPusherInstance } from "@/lib/pusher/server";
+import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
 const pusher = getPusherInstance();
 
-const findUsers = async (users: { id: number; action?: string }[]) => {
+const findUsers = async (
+  users: { id: number; action?: string }[],
+  companyId: number,
+) => {
   const ids = users.map((u) => {
     if (!u.id) throw new Error("User ID is required");
     return u.id;
   });
 
   const found = await db.user.findMany({
-    where: { id: { in: ids } },
+    where: { id: { in: ids }, companyId },
     select: { id: true },
   });
 
   if (found.length !== ids.length) {
     const foundSet = new Set(found.map((u) => u.id));
     const missing = ids.find((id) => !foundSet.has(id));
-    throw new Error(`User with ID ${missing} not found`);
+    throw new Error(`User with ID ${missing} not found in company`);
   }
 
   return found;
@@ -88,22 +93,21 @@ const findUsers = async (users: { id: number; action?: string }[]) => {
  */
 export const POST = async (req: NextRequest) => {
   try {
-    const { name, users, companyId } = await req.json();
+    const principal = await getAuthPrincipal(req);
+    if (!principal) throw new AppError(401, "Unauthorized");
 
-    if (!companyId) {
-      throw new AppError(400, "Company ID is required");
-    }
+    const { name, users } = await req.json();
+    const companyId = principal.companyId;
 
-    const findUser = await findUsers(users);
-
+    const findUser = await findUsers(users, companyId);
     if (findUser && findUser?.length !== users?.length) {
       throw new AppError(400, "One or more users not found");
     }
-    // Your logic for handling the POST request goes here.
+
     const groupData = await db.group.create({
       data: {
         name: name,
-        companyId: companyId,
+        companyId,
         users: {
           connect: users,
         },
@@ -229,16 +233,10 @@ export const POST = async (req: NextRequest) => {
  */
 export const GET = async (req: NextRequest) => {
   try {
+    const principal = await getAuthPrincipal(req);
+    if (!principal) throw new AppError(401, "Unauthorized");
+
     const searchParams = req.nextUrl.searchParams;
-    const userId = searchParams.get("userId") ?? "";
-
-    const findUser = await db.user.findUnique({
-      where: { id: parseInt(userId) },
-    });
-
-    if (!findUser) {
-      throw new AppError(404, "User not found");
-    }
 
     const pageNum = parseInt(searchParams.get("page") || "1");
     const limitNum = parseInt(searchParams.get("limit") || "20");
@@ -246,8 +244,9 @@ export const GET = async (req: NextRequest) => {
     const sortBy = searchParams.get("sortBy") || "updatedAt";
     const sortOrder = searchParams.get("sortOrder") || "desc";
 
-    const where: any = {
-      users: { some: { id: parseInt(userId) } },
+    const where: Prisma.GroupWhereInput = {
+      companyId: principal.companyId,
+      users: { some: { id: principal.userId } },
     };
 
     if (search) {
@@ -368,13 +367,21 @@ export const GET = async (req: NextRequest) => {
  */
 export const PUT = async (req: NextRequest) => {
   try {
+    const principal = await getAuthPrincipal(req);
+    if (!principal) throw new AppError(401, "Unauthorized");
+
     const { groupId, name, users } = await req.json();
 
     if (!groupId) {
       throw new AppError(400, "Group ID is required");
     }
-    const findGroup = await db.group.findUnique({
-      where: { id: groupId },
+    const findGroup = await db.group.findFirst({
+      where: {
+        id: groupId,
+        companyId: principal.companyId,
+        users: { some: { id: principal.userId } },
+      },
+      select: { id: true },
     });
 
     if (!findGroup) {
@@ -383,15 +390,18 @@ export const PUT = async (req: NextRequest) => {
 
     const connectUsers =
       users
-        ?.filter((u: any) => u.action === "add" || !u.action)
-        .map((u: any) => ({ id: u.id })) || [];
+        ?.filter(
+          (u: { id: number; action?: string }) =>
+            u.action === "add" || !u.action,
+        )
+        .map((u: { id: number }) => ({ id: u.id })) || [];
     const disconnectUsers =
       users
-        ?.filter((u: any) => u.action === "remove")
-        .map((u: any) => ({ id: u.id })) || [];
+        ?.filter((u: { id: number; action?: string }) => u.action === "remove")
+        .map((u: { id: number }) => ({ id: u.id })) || [];
 
     if (connectUsers.length > 0) {
-      const findUser = await findUsers(connectUsers);
+      const findUser = await findUsers(connectUsers, principal.companyId);
       if (findUser && findUser?.length !== connectUsers?.length) {
         throw new AppError(400, "One or more users to add not found");
       }

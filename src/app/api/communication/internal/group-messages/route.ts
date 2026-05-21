@@ -1,6 +1,7 @@
 import { AppError } from "@/error-boundary/error";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -51,10 +52,12 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
+    const principal = await getAuthPrincipal(request);
+    if (!principal) throw new AppError(401, "Unauthorized");
+
     const searchParams = request.nextUrl.searchParams;
 
     const groupId = searchParams.get("groupId");
-    const companyId = searchParams.get("companyId");
     const sortBy = searchParams.get("sortBy");
     const sortOrder = searchParams.get("sortOrder");
 
@@ -62,29 +65,19 @@ export async function GET(request: NextRequest) {
     const limitNum = parseInt(searchParams.get("limit") || "20");
 
     const groupIdNum = groupId ? parseInt(groupId) : null;
-    const companyIdNum = companyId ? parseInt(companyId) : null;
-
-    // Validation
-    if (!companyIdNum) {
-      throw new AppError(400, "Company ID is required");
-    }
 
     if (!groupIdNum) {
       throw new AppError(400, "Group ID is required");
     }
 
-    // Verify company exists
-    const findExistingCompany = await db.company.findUnique({
-      where: { id: companyIdNum },
-    });
-
-    if (!findExistingCompany) {
-      throw new AppError(404, "Company not found");
-    }
-
-    // Verify group exists and belongs to the company
-    const findGroup = await db.group.findUnique({
-      where: { id: groupIdNum },
+    // Verify group exists, belongs to caller's company, and caller is a member.
+    const findGroup = await db.group.findFirst({
+      where: {
+        id: groupIdNum,
+        companyId: principal.companyId,
+        users: { some: { id: principal.userId } },
+      },
+      select: { id: true },
     });
 
     if (!findGroup) {

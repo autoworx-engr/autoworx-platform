@@ -1,6 +1,8 @@
+import { AppError } from "@/error-boundary/error";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
-import { NextResponse } from "next/server";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
+import { NextRequest, NextResponse } from "next/server";
 
 /**
  * @swagger
@@ -18,30 +20,39 @@ import { NextResponse } from "next/server";
  *     responses:
  *       200:
  *         description: Group details retrieved successfully
+ *       401:
+ *         description: Unauthorized
  *       404:
  *         description: Group not found
  */
-
 export const GET = async (
-  req: Request,
+  req: NextRequest,
   props: { params: Promise<{ groupId: string }> },
 ) => {
-  const params = await props.params;
   try {
-    const groupId = params?.groupId;
+    const principal = await getAuthPrincipal(req);
+    if (!principal) throw new AppError(401, "Unauthorized");
 
-    const findGroup = await db.group.findUnique({
-      where: { id: parseInt(groupId, 10) },
-      include: {
-        users: true,
+    const { groupId } = await props.params;
+
+    const findGroup = await db.group.findFirst({
+      where: {
+        id: parseInt(groupId, 10),
+        companyId: principal.companyId,
+        users: { some: { id: principal.userId } },
       },
+      include: { users: true },
     });
+
+    if (!findGroup) {
+      throw new AppError(404, "Group not found");
+    }
 
     return NextResponse.json(
       {
         success: true,
         data: findGroup,
-        message: "Group updated successfully",
+        message: "Group fetched successfully",
       },
       { status: 200 },
     );
@@ -49,12 +60,6 @@ export const GET = async (
     const errors = errorHandler(error);
     const message = errors?.message || "Internal Server Error";
     const status = errors?.statusCode || 500;
-    return NextResponse.json(
-      {
-        success: false,
-        error: message,
-      },
-      { status },
-    );
+    return NextResponse.json({ success: false, error: message }, { status });
   }
 };

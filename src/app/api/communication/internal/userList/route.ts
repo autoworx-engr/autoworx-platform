@@ -1,7 +1,8 @@
 import { AppError } from "@/error-boundary/error";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
-import { jwtVerifyToken } from "@/lib/jwtVerify";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
+import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -50,53 +51,28 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const GET = async (request: NextRequest) => {
   try {
+    const principal = await getAuthPrincipal(request);
+    if (!principal) throw new AppError(401, "Unauthorized");
+
     const searchParams = request.nextUrl.searchParams;
-    const authHeader = request.headers.get("authorization") ?? "";
-    const accessToken = authHeader.startsWith("Bearer")
-      ? authHeader.split(" ")[1]
-      : authHeader;
-
-    const verifyToken = await jwtVerifyToken(accessToken);
-    const userId = verifyToken?.payload?.id ?? "";
-
-    if (!userId) {
-      throw new AppError(401, "Unauthorized");
-    }
-
-    const companyId = searchParams.get("companyId");
     const search = searchParams.get("search") || "";
     const pageNum = Math.max(1, parseInt(searchParams.get("page") || "1"));
     const limitNum = Math.max(1, parseInt(searchParams.get("limit") || "20"));
 
-    const companyIdNum = companyId ? parseInt(companyId) : null;
-
-    if (!companyIdNum) {
-      throw new AppError(400, "Company ID is required");
-    }
-
-    const findCompany = await db.company.findUnique({
-      where: { id: companyIdNum },
-    });
-
-    if (!findCompany) {
-      throw new AppError(404, "Company not found");
-    }
-
-    const userIdNum = parseInt(userId as string, 10);
-    const where: any = {
+    const userIdNum = principal.userId;
+    const where: Prisma.UserWhereInput = {
       NOT: { id: userIdNum },
-      companyId: companyIdNum,
+      companyId: principal.companyId,
     };
 
     if (search) {
       const searchWords = search.trim().split(/\s+/);
-      const conditions: any[] = [
+      const conditions: Prisma.UserWhereInput[] = [
         { firstName: { contains: search, mode: "insensitive" } },
         { lastName: { contains: search, mode: "insensitive" } },
         { email: { contains: search, mode: "insensitive" } },
       ];
 
-      // Handle full name search (e.g. "Mahmud Hassan Lehri" split across firstName + lastName)
       if (searchWords.length > 1) {
         for (let i = 1; i < searchWords.length; i++) {
           const firstPart = searchWords.slice(0, i).join(" ");

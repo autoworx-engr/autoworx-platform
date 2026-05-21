@@ -1,6 +1,7 @@
 import { AppError } from "@/error-boundary/error";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { getPusherInstance } from "@/lib/pusher/server";
 import { NextRequest, NextResponse } from "next/server";
 const pusher = getPusherInstance();
@@ -41,12 +42,25 @@ const pusher = getPusherInstance();
  */
 export const PUT = async (request: NextRequest) => {
   try {
+    const principal = await getAuthPrincipal(request);
+    if (!principal) throw new AppError(401, "Unauthorized");
+
     const body = await request.json();
     const { chatTrackId, isRead, lastMessage } = body;
 
     if (!chatTrackId) {
       throw new AppError(400, "ChatTrack ID is required");
     }
+
+    // Caller must be a party to this chatTrack.
+    const existing = await db.chatTrack.findFirst({
+      where: {
+        id: chatTrackId,
+        OR: [{ senderId: principal.userId }, { receiverId: principal.userId }],
+      },
+      select: { id: true },
+    });
+    if (!existing) throw new AppError(404, "Chat track not found");
 
     const updatedChatInfo = await db.chatTrack.update({
       where: {
@@ -145,11 +159,22 @@ export const PUT = async (request: NextRequest) => {
  */
 export const POST = async (request: NextRequest) => {
   try {
+    const principal = await getAuthPrincipal(request);
+    if (!principal) throw new AppError(401, "Unauthorized");
+
     const body = await request.json();
     const { senderId, receiverId, lastMessage, isRead } = body;
 
     if (!senderId || !receiverId) {
       throw new AppError(400, "Sender ID and Receiver ID are required");
+    }
+
+    // Caller must be one of the two parties on the track.
+    if (
+      Number(senderId) !== principal.userId &&
+      Number(receiverId) !== principal.userId
+    ) {
+      throw new AppError(403, "Forbidden");
     }
 
     // find the initial chat track exist in db
