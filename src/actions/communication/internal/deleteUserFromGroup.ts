@@ -15,10 +15,11 @@ export const deleteUserFromGroup = async (userId: number, groupId: number) => {
   }
 
   const currentUserId = parseInt(session.user.id);
+  // Legacy groups can have companyId = null; membership check enforces tenant isolation.
   const existingGroup = await db.group.findFirst({
     where: {
       id: groupId,
-      companyId: session.user.companyId,
+      OR: [{ companyId: session.user.companyId }, { companyId: null }],
       users: { some: { id: currentUserId } },
     },
     select: { id: true },

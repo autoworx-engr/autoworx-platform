@@ -19,10 +19,11 @@ export const renameGroup = async (name: string, groupId: number) => {
   const currentUserId = parseInt(session.user.id);
   const companyId = session.user.companyId;
 
+  // Legacy groups can have companyId = null; membership check enforces tenant isolation.
   const existingGroup = await db.group.findFirst({
     where: {
       id: groupId,
-      companyId,
+      OR: [{ companyId }, { companyId: null }],
       users: { some: { id: currentUserId } },
     },
     select: { id: true },
@@ -31,6 +32,8 @@ export const renameGroup = async (name: string, groupId: number) => {
     return { status: 404, success: false, message: "Group not found" };
   }
 
+  // Duplicate-name check: only against groups the caller's company owns. Legacy
+  // null-companyId groups aren't part of any tenant's namespace.
   const duplicateName = await db.group.findFirst({
     where: {
       companyId,
