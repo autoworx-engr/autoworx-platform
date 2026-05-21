@@ -11,41 +11,35 @@ export const fetchUsersWithUnreadCounts = async () => {
       throw new Error("Session ID is required");
     }
 
-    const users = await db.user.findMany({
-      where: {
-        NOT: {
-          id: parseInt(session?.user?.id),
+    const currentUserId = parseInt(session.user.id);
+
+    const [users, userChatTrack, unreadSenders] = await Promise.all([
+      db.user.findMany({
+        where: {
+          NOT: { id: currentUserId },
+          companyId: session.user.companyId,
         },
-        companyId: session?.user?.companyId,
-      },
-    });
+      }),
+      db.chatTrack.findMany({
+        where: {
+          OR: [{ senderId: currentUserId }, { receiverId: currentUserId }],
+        },
+        include: { message: true },
+      }),
+      db.chatTrack.findMany({
+        where: { receiverId: currentUserId, isRead: false },
+        select: { senderId: true },
+      }),
+    ]);
 
-    const userChatTrack = await db.chatTrack.findMany({
-      where: {
-        OR: [
-          { senderId: parseInt(session?.user?.id!) },
-          { receiverId: parseInt(session?.user?.id!) },
-        ],
-      },
-      include: {
-        message: true,
-      },
-    });
+    const unreadSenderIds = new Set(
+      unreadSenders.map((c) => c.senderId).filter((id): id is number => !!id),
+    );
 
-    // Calculate simple unread indicator per user (0 or 1)
-    const usersWithUnreadCounts = users.map((user) => {
-      const hasUnreadMessage = userChatTrack.some(
-        (chat) =>
-          chat.receiverId === parseInt(session?.user?.id!) &&
-          chat.senderId === user.id &&
-          !chat.isRead,
-      );
-
-      return {
-        ...user,
-        unreadCount: hasUnreadMessage ? 1 : 0,
-      };
-    });
+    const usersWithUnreadCounts = users.map((user) => ({
+      ...user,
+      unreadCount: unreadSenderIds.has(user.id) ? 1 : 0,
+    }));
 
     return {
       success: true,
