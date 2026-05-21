@@ -2,7 +2,7 @@ import { AppError } from "@/error-boundary/error";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
 import { getFilteredConnectedCompanies } from "@/lib/collaboration/getFilteredConnectedCompanies";
-import { getCompanyIdFromBearer } from "@/lib/authPrincipal";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -96,7 +96,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   try {
-    const callerCompanyId = await getCompanyIdFromBearer(req);
+    const callerCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
     if (!callerCompanyId) {
       throw new AppError(401, "Unauthorized");
     }

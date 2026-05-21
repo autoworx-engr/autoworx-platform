@@ -1,7 +1,7 @@
 import { AppError } from "@/error-boundary/error";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
-import { getAuthPrincipal } from "@/lib/authPrincipal";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { InvoiceType, Prisma } from "@prisma/client";
 import { customAlphabet } from "nanoid";
 import { NextRequest, NextResponse } from "next/server";
