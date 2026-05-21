@@ -1,51 +1,71 @@
 "use client";
-import { cn } from "@/lib/cn";
+
+import {
+  Column,
+  DataTable,
+  MobileCard,
+  StatTile,
+  StatusBadge,
+} from "@/components/data-table";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { Payment, Prisma } from "@prisma/client";
-import { Pagination } from "antd"; // Importing the Pagination component from Ant Design
-import { ArrowDown, Search } from "lucide-react";
+import { ArrowDown } from "lucide-react";
 import moment from "moment-timezone";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { useMediaQuery } from "react-responsive";
-import PaymentMobileCard from "./PaymentMobileCard";
+
+type PaymentRow = Payment & {
+  refundedAmount?: number | null;
+  invoice: {
+    Refund: any;
+    client: { firstName: string; lastName: string | null } | null;
+    vehicle: {
+      model: string | null;
+      year: number | null;
+      make: string | null;
+      other: string | null;
+      id: number;
+      type: string | null;
+    } | null;
+    due: Prisma.Decimal | null;
+  } | null;
+  other: { paymentMethod: { name: string } | null } | null;
+  deposit: { depositMethod: string | null; depositNotes: string | null } | null;
+  cash: { receivedCash: string | null } | null;
+};
 
 type TProps = {
-  paymentInfo: (Payment & {
-    invoice: {
-      Refund: any;
-      client: {
-        firstName: string;
-        lastName: string | null;
-      } | null;
-      vehicle: {
-        model: string | null;
-        year: number | null;
-        make: string | null;
-        other: string | null;
-        id: number;
-        type: string | null;
-      } | null;
-      due: Prisma.Decimal | null;
-    } | null;
-    other: {
-      paymentMethod: {
-        name: string;
-      } | null;
-    } | null;
-    deposit: {
-      depositMethod: string | null;
-      depositNotes: string | null;
-    } | null;
-    cash: {
-      receivedCash: string | null;
-    } | null;
-  })[];
+  paymentInfo: PaymentRow[];
   total: number;
   timezone: string;
   page?: number;
   take?: number;
 };
+
+function paymentMethodLabel(row: PaymentRow): string | null {
+  if (row.type === "OTHER") return row.other?.paymentMethod?.name ?? null;
+  if (row.type === "DEPOSIT")
+    return `${row.type} (${row.deposit?.depositMethod || "N/A"})`;
+  return row.type;
+}
+
+function vehicleLabel(row: PaymentRow): string {
+  const v = row.invoice?.vehicle;
+  if (!v) return "";
+  return [v.year || "", v.make, v.model, v.other].filter(Boolean).join(" ");
+}
+
+function clientName(row: PaymentRow): string {
+  return `${row.invoice?.client?.firstName ?? ""} ${row.invoice?.client?.lastName ?? ""}`.trim();
+}
+
+function RefundLine({ amount }: { amount: number }) {
+  return (
+    <div className="flex items-center gap-1 text-xs text-red-500">
+      <ArrowDown size={14} strokeWidth={2} />
+      <span>{formatCurrency(amount)}</span>
+    </div>
+  );
+}
 
 export default function PaymentDisplay({
   paymentInfo,
@@ -54,210 +74,158 @@ export default function PaymentDisplay({
   page,
   take,
 }: TProps) {
-  const isDesktop = useMediaQuery({ query: "(min-width: 640px)" });
-  const [currentPage, setCurrentPage] = useState(page || 1);
-  const [pageSize, setPageSize] = useState(take || 50);
-  const [showPagination, setShowPagination] = useState(false);
-
-  const pathname = usePathname();
   const router = useRouter();
+  const pathname = usePathname();
   const params = useSearchParams();
 
-  useEffect(() => {
-    setCurrentPage(page || 1);
-    setPageSize(take || 50);
-  }, [page, take]);
-
-  useEffect(() => {
-    if (total > 0) {
-      setShowPagination(true);
-    } else {
-      setShowPagination(false);
-    }
-  }, [total]);
-
-  const handlePageChange = (page: number, pageSize?: number) => {
-    const searchParams = new URLSearchParams(params.toString());
-    searchParams.set("page", page.toString());
-    if (pageSize) {
-      setPageSize(pageSize);
-      searchParams.set("take", pageSize.toString());
-    } else {
-      searchParams.delete("take");
-    }
-    setCurrentPage(page);
-    const newPath = `${pathname}?${searchParams.toString()}`;
-    router.push(newPath);
+  const handlePageChange = (newPage: number, newSize?: number) => {
+    const sp = new URLSearchParams(params.toString());
+    sp.set("page", String(newPage));
+    if (newSize) sp.set("take", String(newSize));
+    else sp.delete("take");
+    router.push(`${pathname}?${sp.toString()}`);
   };
 
-  // paymentInfo is already server-paginated
-  const paymentsToRender = paymentInfo;
-  if (isDesktop) {
-    return (
-      <div className="hidden md:block">
-        {paymentsToRender.length === 0 ? (
-          <div className="flex min-h-[200px] w-full flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-100 bg-slate-50/30 p-12 text-center">
-            {/* Ghost Icon Illustration */}
-            <div className="relative mb-6 flex h-16 w-16 items-center justify-center rounded-3xl bg-white shadow-sm ring-1 ring-slate-200/50">
-              <Search size={24} className="text-slate-300" strokeWidth={1.5} />
-              {/* Decorative ripple effect */}
-              <div className="absolute inset-0 animate-ping rounded-3xl bg-slate-100 opacity-20" />
-            </div>
-
-            {/* Text Content */}
-            <h3 className="mb-2 text-lg font-bold text-slate-500">
-              No Results Found
-            </h3>
-            <p className="max-w-[280px] text-sm font-medium leading-relaxed text-slate-400">
-              We couldn't find what you're looking for. Try adjusting your
-              filters or search terms.
-            </p>
+  const columns: Column<PaymentRow>[] = [
+    {
+      key: "date",
+      header: "Date",
+      cell: (row) => (
+        <span className="text-slate-700">
+          {row.date ? moment.tz(row.date, timezone).format("MM/DD/YYYY") : ""}
+        </span>
+      ),
+    },
+    {
+      key: "invoice",
+      header: "Invoice #",
+      cell: (row) => <span className="text-slate-700">{row.invoiceId}</span>,
+    },
+    {
+      key: "client",
+      header: "Client Name",
+      cell: (row) => (
+        <span className="text-slate-700 font-medium">{clientName(row)}</span>
+      ),
+    },
+    {
+      key: "vehicle",
+      header: "Vehicle Info",
+      cell: (row) => (
+        <span className="text-slate-700">{vehicleLabel(row)}</span>
+      ),
+    },
+    {
+      key: "method",
+      header: "Payment Method",
+      cell: (row) => (
+        <span className="text-slate-700">{paymentMethodLabel(row)}</span>
+      ),
+    },
+    {
+      key: "amount",
+      header: "Total Amount",
+      cell: (row) => {
+        const refunded = Number(row.refundedAmount) || 0;
+        return (
+          <div>
+            <span className="font-medium text-slate-700">
+              {formatCurrency(Number(row.amount))}
+            </span>
+            {refunded > 0 && <RefundLine amount={refunded} />}
           </div>
-        ) : (
-          <div className="w-full overflow-x-auto">
-            <table className="w-full min-w-[980px] border-collapse shadow-md">
-              <thead className="sticky top-0  bg-background">
-                <tr className="h-10 border-b">
-                  <th className="border-b px-4 py-2 text-left">Date</th>
-                  <th className="border-b px-4 py-2 text-left">Invoice # </th>
-                  <th className="border-b px-4 py-2 text-left">Client Name</th>
-                  <th className="border-b px-4 py-2 text-left">Vehicle Info</th>
-                  <th className="border-b px-4 py-2 text-left">
-                    Payment Method
-                  </th>
-                  <th className="border-b px-4 py-2 text-left">Total Amount</th>
-                  <th className="border-b px-4 py-2 text-left">
-                    Cash Received
-                  </th>
-                  <th className="border-b px-4 py-2 text-center">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {paymentsToRender?.map((payment, index) => {
-                  const paymentStatus =
-                    Number(payment.invoice?.due) <= 0 ? "paid" : "due";
-
-                  const refundedAmount = Number(payment.refundedAmount) || 0;
-
-                  const hasRefund = refundedAmount > 0;
-
-                  return (
-                    <tr
-                      key={payment.id}
-                      className={cn(
-                        "cursor-pointer rounded-md py-3",
-                        index % 2 === 0 ? "bg-background" : "bg-blue-100",
-                      )}
-                    >
-                      <td className="border-b px-4 py-2 text-left">
-                        {payment?.date
-                          ? moment
-                              .tz(payment.date, timezone)
-                              .format("MM/DD/YYYY")
-                          : ""}
-                      </td>
-
-                      <td className="border-b px-4 py-2 text-left">
-                        {payment.invoiceId}
-                      </td>
-                      <td className="border-b px-4 py-2 text-left">
-                        {payment.invoice?.client?.firstName}{" "}
-                        {payment.invoice?.client?.lastName}
-                      </td>
-                      <td className="border-b px-4 py-2 text-left">
-                        {payment.invoice?.vehicle?.year || ""}{" "}
-                        {payment.invoice?.vehicle?.make}{" "}
-                        {payment.invoice?.vehicle?.model}{" "}
-                        {payment.invoice?.vehicle?.other
-                          ? payment.invoice?.vehicle?.other
-                          : ""}
-                      </td>
-                      <td className="border-b px-4 py-2 text-left">
-                        {payment.type === "OTHER"
-                          ? payment?.other?.paymentMethod?.name
-                          : payment.type === "DEPOSIT"
-                            ? `${payment.type} (${payment?.deposit?.depositMethod || "N/A"})`
-                            : payment.type}
-                      </td>
-                      <td className="border-b px-4 py-2 text-left">
-                        {formatCurrency(Number(payment.amount))}
-                        {hasRefund && (
-                          <div className="flex items-center gap-1 text-red-500 text-xs font-normal">
-                            <ArrowDown size={14} strokeWidth={2} />
-                            <span>{formatCurrency(refundedAmount)}</span>
-                          </div>
-                        )}
-                      </td>
-                      <td className="border-b px-4 py-2 text-left">
-                        {payment.cash?.receivedCash
-                          ? payment.cash.receivedCash
-                          : "N/A"}
-                      </td>
-                      <td className="text-center">
-                        <span
-                          className={cn(
-                            `border-b px-2 py-1 text-left capitalize`,
-                            paymentStatus === "due" &&
-                              "bg-[#de5967] text-white rounded-md",
-                            paymentStatus === "paid" &&
-                              "bg-[#3c8f89] text-white rounded-md",
-                          )}
-                        >
-                          {paymentStatus}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-        {showPagination && (
-          <div className="mt-4 flex justify-end">
-            <Pagination
-              className="custom-pagination"
-              current={currentPage}
-              pageSize={pageSize}
-              total={total}
-              onChange={handlePageChange}
-              showSizeChanger
-              onShowSizeChange={handlePageChange}
-            />
-          </div>
-        )}
-      </div>
-    );
-  }
+        );
+      },
+    },
+    {
+      key: "cash",
+      header: "Cash Received",
+      cell: (row) => (
+        <span className="text-slate-700">
+          {row.cash?.receivedCash ? row.cash.receivedCash : "N/A"}
+        </span>
+      ),
+    },
+    {
+      key: "status",
+      header: "Status",
+      align: "center",
+      cell: (row) => {
+        const paid = Number(row.invoice?.due) <= 0;
+        return (
+          <StatusBadge
+            tone={paid ? "success" : "danger"}
+            label={paid ? "Paid" : "Due"}
+          />
+        );
+      },
+    },
+  ];
 
   return (
-    <div>
-      <div className="space-y-4 md:hidden">
-        {paymentsToRender.map((payment, index) => (
-          <PaymentMobileCard
-            key={payment.id}
-            payment={payment}
-            index={index}
-            timezone={timezone}
-          />
-        ))}
-      </div>
+    <DataTable
+      columns={columns}
+      data={paymentInfo}
+      rowKey={(r) => r.id}
+      pagination={{
+        currentPage: page || 1,
+        pageSize: take || 50,
+        totalItems: total,
+        onChange: handlePageChange,
+        itemLabel: "payments",
+      }}
+      renderMobileCard={(row) => {
+        const paid = Number(row.invoice?.due) <= 0;
+        const refunded = Number(row.refundedAmount) || 0;
+        return (
+          <MobileCard>
+            {/* Header */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h3 className="truncate text-base font-bold text-slate-600">
+                  {clientName(row) || "—"}
+                </h3>
+                <p className="mt-0.5 truncate text-sm text-slate-500 font-medium">
+                  {vehicleLabel(row)}
+                </p>
+              </div>
+              <StatusBadge
+                tone={paid ? "success" : "danger"}
+                label={paid ? "Paid" : "Due"}
+              />
+            </div>
 
-      {/* Mobile Pagination */}
-      {showPagination && (
-        <div className="mt-4 flex justify-center pb-4 md:hidden">
-          <Pagination
-            className="custom-pagination"
-            current={currentPage}
-            pageSize={pageSize}
-            total={total}
-            onChange={handlePageChange}
-            showSizeChanger
-            onShowSizeChange={handlePageChange}
-            simple
-          />
-        </div>
-      )}
-    </div>
+            {/* Stats tiles */}
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <StatTile
+                label="Amount"
+                emphasized
+                value={
+                  <span className="flex flex-col">
+                    <span>{formatCurrency(Number(row.amount))}</span>
+                    {refunded > 0 && <RefundLine amount={refunded} />}
+                  </span>
+                }
+              />
+              <StatTile label="Method" value={paymentMethodLabel(row) ?? "—"} />
+              <StatTile
+                label="Date"
+                value={
+                  row.date
+                    ? moment.tz(row.date, timezone).format("MM/DD/YYYY")
+                    : "—"
+                }
+              />
+              <StatTile label="Invoice #" value={`#${row.invoiceId}`} />
+              <StatTile
+                fullWidth
+                label="Cash Received"
+                value={row.cash?.receivedCash ?? "N/A"}
+              />
+            </div>
+          </MobileCard>
+        );
+      }}
+    />
   );
 }

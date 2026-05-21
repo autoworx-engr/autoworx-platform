@@ -1,34 +1,31 @@
 "use client";
+
+import {
+  Column,
+  DataTable,
+  MobileCard,
+  StatTile,
+} from "@/components/data-table";
+import { formatCurrency } from "@/utils/formatCurrency";
+import { FormatUtcToTimezone } from "@/utils/FormatUtcToTimezone";
 import {
   InventoryProduct,
   InventoryProductHistory,
   Prisma,
 } from "@prisma/client";
-import { Pagination } from "antd";
-import { Search } from "lucide-react";
+import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { useMediaQuery } from "react-responsive";
-import InventoryMobileCard from "./InventoryMobileCard";
-import InventoryTableRow from "./InventoryTableRow";
 
 type TProps = {
   inventoryProducts: Prisma.InventoryProductGetPayload<{
-    include: {
-      InventoryProductHistory: {
-        where: {
-          type: "Sale";
-        };
-      };
-    };
+    include: { InventoryProductHistory: { where: { type: "Sale" } } };
   }>[];
-
   timezone: string;
   page?: number;
   take?: number;
 };
 
-type TInventoryPurchaseHistory = (InventoryProductHistory & {
+type PurchaseRow = InventoryProductHistory & {
   calculation: {
     averageCost: number;
     averageSales: number;
@@ -37,8 +34,70 @@ type TInventoryPurchaseHistory = (InventoryProductHistory & {
     stockQuantity: number;
   };
   productInfo: InventoryProduct;
-  date: Date | null;
-})[];
+  displayIndex: number;
+};
+
+function buildRows(
+  products: TProps["inventoryProducts"],
+): Omit<PurchaseRow, "displayIndex">[] {
+  return products
+    .flatMap((product) => {
+      const sales = product.InventoryProductHistory.filter(
+        (h) => h.type === "Sale",
+      );
+      const purchases = product.InventoryProductHistory.filter(
+        (h) => h.type === "Purchase",
+      );
+      const { totalSalesPrice, quantitySold } = sales.reduce(
+        (acc, cur) => {
+          acc.totalSalesPrice += Number(cur.price) * Number(cur.quantity);
+          acc.quantitySold += Number(cur.quantity);
+          return acc;
+        },
+        { totalSalesPrice: 0, quantitySold: 0 },
+      );
+      const averageSales = Math.round(totalSalesPrice / (quantitySold || 1));
+      const totalPurchaseQty = purchases.reduce(
+        (a, h) => a + Number(h.quantity),
+        0,
+      );
+      const totalPurchasePrice = purchases.reduce(
+        (a, h) => a + Number(h.price) * Number(h.quantity),
+        0,
+      );
+      const averageCost =
+        totalPurchaseQty > 0 ? totalPurchasePrice / totalPurchaseQty : 0;
+      const ReturnAndInvestment =
+        averageSales > averageCost
+          ? (((averageSales - averageCost) / averageCost) * 100).toFixed(2)
+          : "0.00";
+      const { InventoryProductHistory: _ignore, ...productInfo } = product;
+      return purchases.map((p) => ({
+        ...p,
+        calculation: {
+          averageCost,
+          averageSales,
+          ReturnAndInvestment,
+          quantitySold: Number(quantitySold),
+          stockQuantity: Number(product.quantity ?? 0),
+        },
+        productInfo: productInfo as InventoryProduct,
+      }));
+    })
+    .sort((a, b) => {
+      const da = a.date ? new Date(a.date).getTime() : 0;
+      const db = b.date ? new Date(b.date).getTime() : 0;
+      return db - da;
+    });
+}
+
+function productLink(row: PurchaseRow): string {
+  if (row.productInfo.type === "Product")
+    return `/dashboard/inventory?view=products&productId=${row.productInfo.id}`;
+  if (row.productInfo.type === "Supply")
+    return `/dashboard/inventory?view=supplies&productId=${row.productInfo.id}`;
+  return "#";
+}
 
 export default function InventoryDisplay({
   inventoryProducts,
@@ -46,239 +105,180 @@ export default function InventoryDisplay({
   page,
   take,
 }: TProps) {
-  const isDesktop = useMediaQuery({ query: "(min-width: 640px)" });
-  const [currentPage, setCurrentPage] = useState(page || 1);
-  const [pageSize, setPageSize] = useState(take || 50); // Default page size set to 50
-  const [showPagination, setShowPagination] = useState(false);
-  const [filteredProducts, setFilteredProducts] = useState(inventoryProducts);
-
-  const pathname = usePathname();
   const router = useRouter();
+  const pathname = usePathname();
   const params = useSearchParams();
+  const currentPage = page || 1;
+  const pageSize = take || 50;
   const search = params.get("search");
 
-  // Sync state with URL params when they change
-  useEffect(() => {
-    setCurrentPage(page || 1);
-    setPageSize(take || 50);
-  }, [page, take]);
+  const allRows = buildRows(inventoryProducts);
+  const startIdx = (currentPage - 1) * pageSize;
+  const visible: PurchaseRow[] = (
+    search ? allRows : allRows.slice(startIdx, startIdx + pageSize)
+  ).map((r, i) => ({ ...r, displayIndex: search ? i + 1 : startIdx + i + 1 }));
 
-  useEffect(() => {
-    if (inventoryProducts.length > 0) {
-      setShowPagination(true);
-    } else {
-      setShowPagination(false);
-    }
-  }, [inventoryProducts]);
-
-  const inventoryHistory = inventoryProducts.reduce((acc, product) => {
-    const salesHistory = product.InventoryProductHistory.filter((history) => {
-      return history.type === "Sale";
-    });
-    const purchaseHistory = product.InventoryProductHistory.filter(
-      (history) => {
-        return history.type === "Purchase";
-      },
-    );
-    const stockQuantity = product.quantity ?? 0;
-    const { totalSalesPrice, quantitySold } = salesHistory.reduce(
-      (acc, cur) => {
-        acc.totalSalesPrice =
-          acc.totalSalesPrice + Number(cur.price) * Number(cur.quantity);
-        acc.quantitySold += Number(cur.quantity);
-        return acc;
-      },
-      {
-        totalSalesPrice: 0,
-        quantitySold: 0,
-      },
-    );
-
-    const averageSales = Math.round(
-      totalSalesPrice / (quantitySold || 1),
-    ) as number;
-
-    const totalPurchaseQuantity = purchaseHistory.reduce(
-      (acc, history) => acc + Number(history.quantity),
-      0,
-    );
-
-    const totalPurchasePrice = purchaseHistory.reduce(
-      (acc, history) => acc + Number(history.price) * Number(history.quantity),
-      0,
-    );
-
-    const averageCost =
-      totalPurchaseQuantity > 0
-        ? totalPurchasePrice / totalPurchaseQuantity
-        : 0;
-
-    const ReturnAndInvestment =
-      averageSales > averageCost
-        ? (((averageSales - averageCost) / averageCost) * 100).toFixed(2)
-        : "0.00";
-    const { InventoryProductHistory, ...productInfo } = product;
-    acc.push(
-      ...purchaseHistory.map((purchase) => ({
-        ...purchase,
-        calculation: {
-          averageCost,
-          averageSales,
-          ReturnAndInvestment,
-          quantitySold: Number(quantitySold),
-          stockQuantity: Number(stockQuantity),
-        },
-        productInfo: productInfo,
-      })),
-    );
-    return acc;
-  }, [] as TInventoryPurchaseHistory);
-
-  // Sort the final inventory history by date in descending order
-  const sortedInventoryHistory = inventoryHistory.sort((a, b) => {
-    const dateA = a.date ? new Date(a.date).getTime() : 0;
-    const dateB = b.date ? new Date(b.date).getTime() : 0;
-    return dateB - dateA;
-  });
-
-  const handlePageChange = (page: number, pageSize?: number) => {
-    const searchParams = new URLSearchParams(params.toString());
-    searchParams.set("page", page.toString());
-    if (pageSize) {
-      setPageSize(pageSize);
-      searchParams.set("take", pageSize.toString());
-    } else {
-      searchParams.delete("take");
-    }
-    setCurrentPage(page);
-    const newPath = `${pathname}?${searchParams.toString()}`;
-    router.push(newPath);
+  const handlePageChange = (newPage: number, newSize?: number) => {
+    const sp = new URLSearchParams(params.toString());
+    sp.set("page", String(newPage));
+    if (newSize) sp.set("take", String(newSize));
+    else sp.delete("take");
+    router.push(`${pathname}?${sp.toString()}`);
   };
 
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = currentPage * pageSize;
-
-  const inventoryToRender = search
-    ? sortedInventoryHistory
-    : sortedInventoryHistory.slice(startIndex, endIndex);
-  if (isDesktop) {
-    return (
-      <div className="thin-scrollbar hidden scroll-smooth md:block">
-        {" "}
-        <div className="">
-          {inventoryToRender.length === 0 ? (
-            <div className="flex min-h-[200px] w-full flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-100 bg-slate-50/30 p-12 text-center">
-              {/* Ghost Icon Illustration */}
-              <div className="relative mb-6 flex h-16 w-16 items-center justify-center rounded-3xl bg-white shadow-sm ring-1 ring-slate-200/50">
-                <Search
-                  size={24}
-                  className="text-slate-300"
-                  strokeWidth={1.5}
-                />
-                {/* Decorative ripple effect */}
-                <div className="absolute inset-0 animate-ping rounded-3xl bg-slate-100 opacity-20" />
-              </div>
-
-              {/* Text Content */}
-              <h3 className="mb-2 text-lg font-bold text-slate-500">
-                No Results Found
-              </h3>
-              <p className="max-w-[280px] text-sm font-medium leading-relaxed text-slate-400">
-                We couldn't find what you're looking for. Try adjusting your
-                filters or search terms.
-              </p>
-            </div>
-          ) : (
-            <div className="w-full overflow-x-auto">
-              <table className="w-full min-w-[980px] border-collapse shadow-md">
-                <thead className="sticky top-0 bg-background">
-                  <tr className="h-10 border-b">
-                    <th className="border-b px-4 py-2 text-left">Product #</th>
-                    <th className="border-b px-4 py-2 text-left">Name </th>
-                    <th className="border-b px-4 py-2 text-left">
-                      Average Cost
-                    </th>
-                    <th className="border-b px-4 py-2 text-left">
-                      Average Sell
-                    </th>
-                    <th className="border-b px-4 py-2 text-left">Stock Qty.</th>
-                    <th className="border-b px-4 py-2 text-left">Qty. Sold</th>
-                    <th className="border-b px-4 py-2 text-left">Type</th>
-                    <th className="border-b px-4 py-2 text-left">
-                      ROI Average
-                    </th>
-                    <th className="border-b px-4 py-2 text-left">
-                      Purchase Date
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {inventoryToRender?.map((history, index) => (
-                    <InventoryTableRow
-                      key={history.id}
-                      history={history}
-                      // index={
-                      //   currentPage > 1 ? index + 10 * (currentPage - 1) : index
-                      // }
-                      index={
-                        currentPage > 1
-                          ? index + pageSize * (currentPage - 1)
-                          : index
-                      }
-                      timezone={timezone}
-                    />
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-          {showPagination && (
-            <div className="mt-4 flex justify-end">
-              <Pagination
-                className="custom-pagination"
-                current={currentPage}
-                pageSize={pageSize}
-                total={sortedInventoryHistory.length}
-                onChange={handlePageChange}
-                showSizeChanger
-                onShowSizeChange={handlePageChange}
-              />
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
+  const columns: Column<PurchaseRow>[] = [
+    {
+      key: "num",
+      header: "Product #",
+      width: "w-20",
+      cell: (row) => (
+        <Link
+          className="text-[#6571FF] hover:underline"
+          href={productLink(row)}
+        >
+          {row.displayIndex}
+        </Link>
+      ),
+    },
+    {
+      key: "name",
+      header: "Name",
+      cell: (row) => (
+        <span className="font-medium text-slate-700">
+          {row.productInfo.name}
+        </span>
+      ),
+    },
+    {
+      key: "avgCost",
+      header: "Average Cost",
+      cell: (row) => (
+        <span className="text-slate-700">
+          {formatCurrency(row.calculation.averageCost)}
+        </span>
+      ),
+    },
+    {
+      key: "avgSell",
+      header: "Average Sell",
+      cell: (row) => (
+        <span className="text-slate-700">
+          {row.productInfo.type === "Supply"
+            ? "—"
+            : formatCurrency(row.calculation.averageSales)}
+        </span>
+      ),
+    },
+    {
+      key: "stockQty",
+      header: "Stock Qty.",
+      cell: (row) => (
+        <span className="text-slate-700">
+          {Number(row.productInfo.quantity) ?? 0}
+        </span>
+      ),
+    },
+    {
+      key: "qtySold",
+      header: "Qty. Sold",
+      cell: (row) => (
+        <span className="text-slate-700">
+          {row.calculation.quantitySold ?? 0}
+        </span>
+      ),
+    },
+    {
+      key: "type",
+      header: "Type",
+      cell: (row) => (
+        <span className="text-slate-700">{row.productInfo.type}</span>
+      ),
+    },
+    {
+      key: "roi",
+      header: "ROI Average",
+      cell: (row) => (
+        <span className="text-slate-700">
+          {row.productInfo.type === "Supply"
+            ? "—"
+            : `${row.calculation.ReturnAndInvestment}%`}
+        </span>
+      ),
+    },
+    {
+      key: "date",
+      header: "Purchase Date",
+      cell: (row) => (
+        <span className="text-slate-700">
+          {row.date ? FormatUtcToTimezone(row.date, timezone, "MM/DD/YY") : ""}
+        </span>
+      ),
+    },
+  ];
 
   return (
-    <div>
-      <div className="space-y-4 md:hidden">
-        {inventoryToRender.map((history, index) => (
-          <InventoryMobileCard
-            key={history.id}
-            history={history}
-            index={
-              currentPage > 1 ? index + pageSize * (currentPage - 1) : index
-            }
-            // timezone={timezone}
-          />
-        ))}
-      </div>
+    <DataTable
+      columns={columns}
+      data={visible}
+      rowKey={(r) => r.id}
+      pagination={{
+        currentPage,
+        pageSize,
+        totalItems: allRows.length,
+        onChange: handlePageChange,
+        itemLabel: "purchases",
+      }}
+      renderMobileCard={(row) => {
+        const isSupply = row.productInfo.type === "Supply";
+        return (
+          <MobileCard>
+            {/* Header */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <Link
+                  href={productLink(row)}
+                  className="block text-base font-bold text-slate-8600 hover:text-[#6571FF]"
+                >
+                  {row.productInfo.name}
+                </Link>
+                <p className="mt-0.5 font-mono text-[12px] text-slate-400">
+                  #{row.displayIndex}
+                </p>
+              </div>
+              <span className="flex-shrink-0 rounded-full bg-[#6571FF]/10 px-2.5 py-0.5 text-[12px] font-semibold text-[#6571FF]/85">
+                {row.productInfo.type}
+              </span>
+            </div>
 
-      {/* Mobile Pagination */}
-      {showPagination && (
-        <div className="mt-4 flex justify-center pb-4">
-          <Pagination
-            className="custom-pagination"
-            current={currentPage}
-            pageSize={pageSize}
-            total={sortedInventoryHistory.length}
-            onChange={handlePageChange}
-            showSizeChanger
-            onShowSizeChange={handlePageChange}
-          />
-        </div>
-      )}
-    </div>
+            {/* Stats tiles */}
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <StatTile
+                label="Avg Cost"
+                value={formatCurrency(row.calculation.averageCost)}
+              />
+              <StatTile
+                label="Avg Sales"
+                value={
+                  isSupply ? "—" : formatCurrency(row.calculation.averageSales)
+                }
+              />
+              <StatTile
+                label="Stock"
+                value={Number(row.productInfo.quantity) ?? 0}
+              />
+              <StatTile label="Qty Sold" value={row.calculation.quantitySold} />
+              <StatTile
+                fullWidth
+                emphasized={!isSupply}
+                label="ROI"
+                value={
+                  isSupply ? "—" : `${row.calculation.ReturnAndInvestment}%`
+                }
+              />
+            </div>
+          </MobileCard>
+        );
+      }}
+    />
   );
 }

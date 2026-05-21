@@ -1,34 +1,86 @@
 "use client";
+
+import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
+import {
+  Column,
+  DataTable,
+  MobileCard,
+  StatTile,
+} from "@/components/data-table";
+import { formatCurrency } from "@/utils/formatCurrency";
 import { Refund } from "@prisma/client";
-import { Pagination } from "antd";
-import { Search } from "lucide-react";
+import { Tooltip } from "antd";
+import { ArrowDown } from "lucide-react";
+import moment from "moment-timezone";
+import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { useMediaQuery } from "react-responsive";
 import { TInvoice } from "./page";
-import RevenueMobileCard from "./RevenueMobileCard";
-import RevenueTableRow from "./RevenueTableRow";
+
+type RevenueRow = TInvoice & {
+  refund: Refund;
+  costPrice: number;
+  profitPrice: number;
+  inventoryLossAmount: number;
+  materialLossAmount: number;
+  laborLossAmount: number;
+  totalLossAmount: number;
+  materialLossDetails: {
+    name: string;
+    loss: number;
+    isFromInventory: boolean;
+  }[];
+};
 
 type TProps = {
-  filteredInvoice: (TInvoice & {
-    refund: Refund;
-    costPrice: number;
-    profitPrice: number;
-    inventoryLossAmount: number;
-    materialLossAmount: number;
-    laborLossAmount: number;
-    totalLossAmount: number;
-    materialLossDetails: {
-      name: string;
-      loss: number;
-      isFromInventory: boolean;
-    }[];
-  })[];
+  filteredInvoice: RevenueRow[];
   total: number;
   timezone: string | Date;
   page?: number;
   take?: number;
 };
+
+function buildLossDetails(row: RevenueRow): string[] {
+  const out: string[] = [];
+  if (row.inventoryLossAmount > 0) {
+    const names = row.InventoryProductHistory?.map(
+      (h) => h.product?.name,
+    ).filter(Boolean);
+    out.push(`Inventory Loss: ${names?.join(", ")}`);
+  }
+  if (row.materialLossAmount > 0 && row.materialLossDetails?.length > 0) {
+    const names = row.materialLossDetails.map(
+      (d) => `${d.name} ($${d.loss.toFixed(2)})`,
+    );
+    out.push(`Material Loss: ${names.join(", ")}`);
+  }
+  if (row.laborLossAmount > 0) {
+    out.push(
+      `Labor Loss: Technician cost exceeds charges ($${row.laborLossAmount.toFixed(2)})`,
+    );
+  }
+  return out;
+}
+
+function LossDot({ details }: { details: string[] }) {
+  return (
+    <Tooltip title={details.join(" | ") || "Loss detected"}>
+      <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-400" />
+    </Tooltip>
+  );
+}
+
+function RefundLine({ amount }: { amount: number }) {
+  return (
+    <div className="flex items-center gap-1 text-xs text-red-400">
+      <ArrowDown size={14} strokeWidth={2} />
+      <span>{formatCurrency(amount)}</span>
+    </div>
+  );
+}
+
+function refundedAmount(row: RevenueRow): number {
+  return row?.Refund?.reduce((a, r) => a + Number(r.amount || 0), 0) || 0;
+}
 
 export default function RevenueDisplay({
   filteredInvoice,
@@ -37,179 +89,181 @@ export default function RevenueDisplay({
   page,
   take,
 }: TProps) {
-  const isDesktop = useMediaQuery({ query: "(min-width: 640px)" });
-  const [currentPage, setCurrentPage] = useState(page || 1);
-  const [pageSize, setPageSize] = useState(take || 50);
-  const [showPagination, setShowPagination] = useState(false);
-
-  const pathname = usePathname();
   const router = useRouter();
+  const pathname = usePathname();
   const params = useSearchParams();
+  const tz = timezone as string;
 
-  useEffect(() => {
-    setCurrentPage(page || 1);
-    setPageSize(take || 50);
-  }, [page, take]);
-
-  useEffect(() => {
-    if (total > 0) {
-      setShowPagination(true);
-    } else {
-      setShowPagination(false);
-    }
-  }, [total]);
-
-  const handlePageChange = (page: number, pageSize?: number) => {
-    const searchParams = new URLSearchParams(params.toString());
-    searchParams.set("page", page.toString());
-    if (pageSize) {
-      setPageSize(pageSize);
-      searchParams.set("take", pageSize.toString());
-    } else {
-      searchParams.delete("take");
-    }
-    setCurrentPage(page);
-    const newPath = `${pathname}?${searchParams.toString()}`;
-    router.push(newPath);
+  const handlePageChange = (newPage: number, newSize?: number) => {
+    const sp = new URLSearchParams(params.toString());
+    sp.set("page", String(newPage));
+    if (newSize) sp.set("take", String(newSize));
+    else sp.delete("take");
+    router.push(`${pathname}?${sp.toString()}`);
   };
-  // filteredInvoice is already server-paginated
-  const invoicesToRender = filteredInvoice;
 
-  if (isDesktop) {
-    return (
-      <div className="w-full -mt-5 pt-5">
-        {invoicesToRender.length === 0 ? (
-          <div className="flex min-h-[200px] w-full flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-100 bg-slate-50/30 p-12 text-center">
-            {/* Ghost Icon Illustration */}
-            <div className="relative mb-6 flex h-16 w-16 items-center justify-center rounded-3xl bg-white shadow-sm ring-1 ring-slate-200/50">
-              <Search size={24} className="text-slate-300" strokeWidth={1.5} />
-              {/* Decorative ripple effect */}
-              <div className="absolute inset-0 animate-ping rounded-3xl bg-slate-100 opacity-20" />
-            </div>
-
-            {/* Text Content */}
-            <h3 className="mb-2 text-lg font-bold text-slate-500">
-              No Results Found
-            </h3>
-            <p className="max-w-[280px] text-sm font-medium leading-relaxed text-slate-400">
-              We couldn't find what you're looking for. Try adjusting your
-              filters or search terms.
-            </p>
+  const columns: Column<RevenueRow>[] = [
+    {
+      key: "customer",
+      header: "Customer",
+      cell: (row) => (
+        <Link
+          className="text-[#6571FF] hover:underline"
+          href={`/dashboard/client/${row.client?.id}`}
+        >
+          {row.client?.firstName} {row.client?.lastName}
+        </Link>
+      ),
+    },
+    {
+      key: "vehicle",
+      header: "Vehicle Info",
+      cell: (row) => (
+        <span className="text-slate-600">
+          {row.vehicle?.year !== 0 ? row.vehicle?.year : ""} {row.vehicle?.make}{" "}
+          {row.vehicle?.model} {row.vehicle?.submodel} {row.vehicle?.other}
+        </span>
+      ),
+    },
+    {
+      key: "invoice",
+      header: "Invoice #",
+      cell: (row) => (
+        <InvoiceModal
+          invoiceId={row.id}
+          buttonChild={<button>{row.id}</button>}
+          buttonChildClassName="text-[#6571FF] hover:underline"
+        />
+      ),
+    },
+    {
+      key: "delivered",
+      header: "Date Delivered",
+      cell: (row) => (
+        <span className="text-slate-600">
+          {row?.deliveredAt
+            ? moment.tz(row.deliveredAt, tz).format("MM/DD/YYYY")
+            : ""}
+        </span>
+      ),
+    },
+    {
+      key: "price",
+      header: "Price",
+      cell: (row) => (
+        <span className="font-medium text-slate-600">
+          {formatCurrency(Number(row.grandTotal?.toString() || 0))}
+        </span>
+      ),
+    },
+    {
+      key: "cost",
+      header: "Cost",
+      cell: (row) => {
+        const details = buildLossDetails(row);
+        return (
+          <div className="flex items-center gap-2 text-slate-700">
+            <span>{formatCurrency(Number(row.costPrice))}</span>
+            {row.totalLossAmount > 0 && <LossDot details={details} />}
           </div>
-        ) : (
-          <div className="w-full overflow-x-auto">
-            <table className="w-full min-w-[980px] border-collapse shadow-md">
-              <thead className="sticky top-0 bg-white shadow-sm">
-                <tr className="h-10 border-b">
-                  <th className="border-b px-4 py-2 text-left">Customer</th>
-                  <th className="border-b px-4 py-2 text-left">
-                    Vehicle Info{" "}
-                  </th>
-                  <th className="border-b px-4 py-2 text-left">Invoice #</th>
-                  <th className="border-b px-4 py-2 text-left">
-                    Date Delivered
-                  </th>
-                  <th className="border-b px-4 py-2 text-left">Price</th>
-                  <th className="border-b px-4 py-2 text-left">Cost</th>
-                  <th className="border-b px-4 py-2 text-left">Profit</th>
-                </tr>
-              </thead>
-              <tbody>
-                {invoicesToRender?.map((invoice, index) => {
-                  // Generate loss details for tooltip
-                  const lossDetails = [];
-
-                  // Inventory losses (lost products)
-                  if (invoice.inventoryLossAmount > 0) {
-                    const inventoryMaterialNames =
-                      invoice.InventoryProductHistory?.map(
-                        (item) => item.product?.name,
-                      ).filter(Boolean);
-                    lossDetails.push(
-                      `Inventory Loss: ${inventoryMaterialNames?.join(", ")}`,
-                    );
-                  }
-
-                  // Material losses (show actual material names with losses)
-                  if (
-                    invoice.materialLossAmount > 0 &&
-                    invoice.materialLossDetails?.length > 0
-                  ) {
-                    const materialNames = invoice.materialLossDetails.map(
-                      (detail) => `${detail.name} ($${detail.loss.toFixed(2)})`,
-                    );
-                    lossDetails.push(
-                      `Material Loss: ${materialNames.join(", ")}`,
-                    );
-                  }
-
-                  // Labor losses
-                  if (invoice.laborLossAmount > 0) {
-                    lossDetails.push(
-                      `Labor Loss: Technician cost exceeds charges ($${invoice.laborLossAmount.toFixed(2)})`,
-                    );
-                  }
-
-                  return (
-                    <RevenueTableRow
-                      key={invoice.id}
-                      invoice={invoice}
-                      timezone={timezone as string}
-                      index={index}
-                      totalLossAmount={invoice.totalLossAmount}
-                      lossDetails={lossDetails}
-                    />
-                  );
-                })}
-              </tbody>
-            </table>
+        );
+      },
+    },
+    {
+      key: "profit",
+      header: "Profit",
+      cell: (row) => {
+        const refunded = refundedAmount(row);
+        return (
+          <div>
+            <span className="font-semibold text-slate-700">
+              {formatCurrency(Number(Number(row.profitPrice).toFixed(2)))}
+            </span>
+            {refunded > 0 && <RefundLine amount={refunded} />}
           </div>
-        )}
-        {showPagination && (
-          <div className="mt-4 flex justify-end">
-            <Pagination
-              className="custom-pagination"
-              current={currentPage}
-              pageSize={pageSize}
-              total={total}
-              onChange={handlePageChange}
-              showSizeChanger
-              onShowSizeChange={handlePageChange}
-            />
-          </div>
-        )}
-      </div>
-    );
-  }
+        );
+      },
+    },
+  ];
 
   return (
-    <div>
-      <div className="space-y-4">
-        {invoicesToRender.map((invoice, index) => (
-          <RevenueMobileCard
-            key={invoice.id}
-            invoice={invoice}
-            index={index}
-            timezone={timezone as string}
-          />
-        ))}
-      </div>
+    <DataTable
+      columns={columns}
+      data={filteredInvoice}
+      rowKey={(r) => r.id}
+      pagination={{
+        currentPage: page || 1,
+        pageSize: take || 50,
+        totalItems: total,
+        onChange: handlePageChange,
+        itemLabel: "invoices",
+      }}
+      renderMobileCard={(row) => {
+        const refunded = refundedAmount(row);
+        const details = buildLossDetails(row);
+        return (
+          <MobileCard>
+            {/* Header: client + date */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <Link
+                  href={`/dashboard/client/${row.client?.id}`}
+                  className="block text-base font-bold text-slate-500 hover:text-[#6571FF]"
+                >
+                  {row.client?.firstName} {row.client?.lastName}
+                </Link>
+                <p className="mt-0.5 truncate text-sm text-slate-500 font-medium">
+                  {row.vehicle?.year !== 0 ? row.vehicle?.year : ""}{" "}
+                  {row.vehicle?.make} {row.vehicle?.model}{" "}
+                  {row.vehicle?.submodel}
+                </p>
+              </div>
+              <div className="flex flex-shrink-0 flex-col items-end gap-1">
+                <InvoiceModal
+                  invoiceId={row.id}
+                  buttonChild={
+                    <button className="rounded-full bg-[#6571FF]/10 px-2.5 py-0.5 text-[12px] font-semibold text-[#6571FF]/85">
+                      #{row.id}
+                    </button>
+                  }
+                />
+                <span className="text-[12px] font-medium text-slate-400">
+                  {row.deliveredAt
+                    ? moment.tz(row.deliveredAt, tz).format("MMM D, YYYY")
+                    : ""}
+                </span>
+              </div>
+            </div>
 
-      {/* Mobile Pagination */}
-      {showPagination && (
-        <div className="mt-4 flex justify-center pb-4">
-          <Pagination
-            className="custom-pagination"
-            current={currentPage}
-            pageSize={pageSize}
-            total={total}
-            onChange={handlePageChange}
-            showSizeChanger
-            onShowSizeChange={handlePageChange}
-            simple
-          />
-        </div>
-      )}
-    </div>
+            {/* Stats tiles */}
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              <StatTile
+                label="Price"
+                value={formatCurrency(Number(row.grandTotal?.toString() || 0))}
+              />
+              <StatTile
+                label="Cost"
+                value={
+                  <span className="flex items-center gap-1.5">
+                    {formatCurrency(Number(row.costPrice))}
+                    {row.totalLossAmount > 0 && <LossDot details={details} />}
+                  </span>
+                }
+              />
+              <StatTile
+                label="Profit"
+                // emphasized
+                value={
+                  <span className="flex flex-col">
+                    <span>{formatCurrency(Number(row.profitPrice))}</span>
+                    {refunded > 0 && <RefundLine amount={refunded} />}
+                  </span>
+                }
+              />
+            </div>
+          </MobileCard>
+        );
+      }}
+    />
   );
 }

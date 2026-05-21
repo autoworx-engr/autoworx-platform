@@ -1,25 +1,33 @@
 "use client";
-import { cn } from "@/lib/cn";
+
+import {
+  Column,
+  DataTable,
+  MobileCard,
+  StatTile,
+} from "@/components/data-table";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { Prisma, User } from "@prisma/client";
-import { Pagination } from "antd";
-import { Search } from "lucide-react";
 import moment from "moment-timezone";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { useMediaQuery } from "react-responsive";
-import WorkforceMobileCard from "./WorkforceMobileCard";
+
+type Tech = {
+  id: number;
+  status: string | null;
+  amount: Prisma.Decimal | null;
+  dateClosed: Date | null;
+};
+
+type EmployeeRow = User & {
+  Technician: Tech[];
+  jobsCompleted: number;
+  totalPayout: number;
+  latestCompletion: string;
+};
 
 type TProps = {
-  employees: (User & {
-    Technician: {
-      id: number;
-      status: string | null;
-      amount: Prisma.Decimal | null;
-      dateClosed: Date | null;
-    }[];
-  })[];
+  employees: (User & { Technician: Tech[] })[];
   hasDateRange: boolean;
   formattedStartDate: any;
   formattedEndDate: any;
@@ -27,238 +35,176 @@ type TProps = {
   take?: number;
 };
 
+function isDateInRange(
+  date: Date | null,
+  hasRange: boolean,
+  start: any,
+  end: any,
+): boolean {
+  if (!hasRange) return true;
+  if (!date) return false;
+  const m = moment(date).utc();
+  return m.isSameOrAfter(start) && m.isSameOrBefore(end);
+}
+
+function deriveStats(
+  techs: Tech[],
+  hasRange: boolean,
+  start: any,
+  end: any,
+): { jobsCompleted: number; totalPayout: number; latestCompletion: string } {
+  let jobsCompleted = 0;
+  let totalPayout = 0;
+  let latest: moment.Moment | null = null;
+  for (const t of techs) {
+    if (t.status !== "Complete") continue;
+    if (!isDateInRange(t.dateClosed, hasRange, start, end)) continue;
+    jobsCompleted += 1;
+    totalPayout += Number(t.amount || 0);
+    if (t.dateClosed) {
+      const m = moment(t.dateClosed);
+      if (!latest || m.isAfter(latest)) latest = m;
+    }
+  }
+  return {
+    jobsCompleted,
+    totalPayout,
+    latestCompletion: latest ? latest.format("MM/DD/YYYY") : "N/A",
+  };
+}
+
 export default function WorkforceDisplay({
   employees,
-  formattedEndDate,
-  formattedStartDate,
   hasDateRange,
+  formattedStartDate,
+  formattedEndDate,
   page,
   take,
 }: TProps) {
-  const isDesktop = useMediaQuery({ query: "(min-width: 640px)" });
-
-  const [currentPage, setCurrentPage] = useState(page ?? 1);
-  const [pageSize, setPageSize] = useState(take ?? 50); // Default page size set to 50
-  const [showPagination, setShowPagination] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
   const params = useSearchParams();
   const search = params.get("search");
-  const pathname = usePathname();
+  const currentPage = page ?? 1;
+  const pageSize = take ?? 50;
 
-  useEffect(() => {
-    setCurrentPage(page ?? 1);
-  }, [page]);
+  const enriched: EmployeeRow[] = employees.map((emp) => ({
+    ...emp,
+    ...deriveStats(
+      emp.Technician,
+      hasDateRange,
+      formattedStartDate,
+      formattedEndDate,
+    ),
+  }));
 
-  useEffect(() => {
-    setPageSize(take ?? 50);
-  }, [take]);
+  const startIdx = (currentPage - 1) * pageSize;
+  const visible = search
+    ? enriched
+    : enriched.slice(startIdx, startIdx + pageSize);
 
-  useEffect(() => {
-    if (employees.length > 0) {
-      setShowPagination(true);
-    } else {
-      setShowPagination(false);
-    }
-  }, [employees]);
-
-  const handlePageChange = (page: number, pageSize?: number) => {
-    const searchParams = new URLSearchParams(params.toString());
-    setCurrentPage(page);
-    searchParams.set("page", page.toString());
-    if (pageSize) {
-      setPageSize(pageSize);
-      searchParams.set("take", pageSize.toString());
-    } else {
-      searchParams.delete("take");
-    }
-
-    const newPath = `${pathname}?${searchParams.toString()}`;
-    router.push(newPath);
+  const handlePageChange = (newPage: number, newSize?: number) => {
+    const sp = new URLSearchParams(params.toString());
+    sp.set("page", String(newPage));
+    if (newSize) sp.set("take", String(newSize));
+    else sp.delete("take");
+    router.push(`${pathname}?${sp.toString()}`);
   };
 
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = currentPage * pageSize;
-
-  const paginatedEmployees = search
-    ? employees
-    : employees.slice(startIndex, endIndex);
-
-  if (isDesktop) {
-    return (
-      <div className="hidden md:block">
-        {paginatedEmployees.length === 0 ? (
-          <div className="flex min-h-[200px] w-full flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-100 bg-slate-50/30 p-12 text-center">
-            {/* Ghost Icon Illustration */}
-            <div className="relative mb-6 flex h-16 w-16 items-center justify-center rounded-3xl bg-white shadow-sm ring-1 ring-slate-200/50">
-              <Search size={24} className="text-slate-300" strokeWidth={1.5} />
-              {/* Decorative ripple effect */}
-              <div className="absolute inset-0 animate-ping rounded-3xl bg-slate-100 opacity-20" />
-            </div>
-
-            {/* Text Content */}
-            <h3 className="mb-2 text-lg font-bold text-slate-500">
-              No Results Found
-            </h3>
-            <p className="max-w-[280px] text-sm font-medium leading-relaxed text-slate-400">
-              We couldn't find what you're looking for. Try adjusting your
-              filters or search terms.
-            </p>
-          </div>
-        ) : (
-          <div className="w-full overflow-x-auto">
-            <table className="w-full min-w-[980px] border-collapse shadow-md">
-              <thead className="bg-background sticky top-0 ">
-                <tr className="h-10 border-b">
-                  <th className="border-b px-4 py-2 text-left">Employee</th>
-                  <th className="border-b px-4 py-2 text-left">
-                    Employee Type{" "}
-                  </th>
-                  <th className="border-b px-4 py-2 text-left">Total Payout</th>
-                  <th className="border-b px-4 py-2 text-left">Attendance</th>
-                  <th className="border-b px-4 py-2 text-left">
-                    # Jobs Completed
-                  </th>
-                  <th className="border-b px-4 py-2 text-left">
-                    Completion Date
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedEmployees.map((employee, index) => {
-                  const jobsCompleted: number = employee.Technician?.reduce(
-                    (acc, cur) => {
-                      const techDate = cur.dateClosed
-                        ? moment(cur.dateClosed).utc()
-                        : null;
-                      // console.log('techDate', techDate);
-                      const isDateValid =
-                        !hasDateRange ||
-                        (techDate &&
-                          techDate.isSameOrAfter(formattedStartDate) &&
-                          techDate.isSameOrBefore(formattedEndDate));
-
-                      if (cur.status === "Complete" && isDateValid) {
-                        return acc + 1;
-                      }
-
-                      return acc;
-                    },
-                    0,
-                  );
-
-                  const totalPayout = employee.Technician.reduce(
-                    (sum, tech) => {
-                      const techDate = tech.dateClosed
-                        ? moment(tech.dateClosed)
-                        : null;
-
-                      const isDateValid =
-                        !hasDateRange ||
-                        (techDate &&
-                          techDate.isSameOrAfter(formattedStartDate) &&
-                          techDate.isSameOrBefore(formattedEndDate));
-
-                      if (tech.status === "Complete" && isDateValid) {
-                        return sum + Number(tech?.amount || 0);
-                      }
-
-                      return sum;
-                    },
-                    0,
-                  );
-
-                  // Get the latest completion date
-                  const latestCompletionDate = employee.Technician.filter(
-                    (tech) => tech.status === "Complete" && tech.dateClosed,
-                  )
-                    .map((tech) => moment(tech.dateClosed))
-                    .sort((a, b) => b.diff(a))[0];
-
-                  return (
-                    <tr
-                      key={employee.id}
-                      className={cn(
-                        "cursor-pointer rounded-md py-3",
-                        index % 2 === 0 ? "bg-background" : "bg-blue-100",
-                      )}
-                    >
-                      <Link
-                        href={`/dashboard/employee/${employee.id}?view=details`}
-                      >
-                        <td className="border-b px-4 py-2 text-left hover:text-blue-500">
-                          {" "}
-                          {employee.firstName} {employee.lastName}
-                        </td>
-                      </Link>
-                      <td className="border-b px-4 py-2 text-left">
-                        {employee.employeeType}
-                      </td>
-                      <td className="border-b px-4 py-2 text-left">
-                        {formatCurrency(totalPayout)}
-                      </td>
-                      <td className="border-b px-4 py-2 text-left"></td>
-                      <td className={cn("border-b px-4 py-2 text-left")}>
-                        {jobsCompleted}
-                      </td>
-                      <td className={cn("border-b px-4 py-2 text-left")}>
-                        {latestCompletionDate
-                          ? moment(latestCompletionDate).format("MM/DD/YYYY")
-                          : "N/A"}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-        {showPagination && (
-          <div className="mt-4 flex justify-end">
-            <Pagination
-              className="custom-pagination"
-              current={currentPage}
-              pageSize={pageSize}
-              total={employees.length}
-              onChange={handlePageChange}
-              showSizeChanger
-              onShowSizeChange={handlePageChange}
-            />
-          </div>
-        )}
-      </div>
-    );
-  }
+  const columns: Column<EmployeeRow>[] = [
+    {
+      key: "name",
+      header: "Employee",
+      cell: (row) => (
+        <Link
+          className="text-[#6571FF] hover:underline"
+          href={`/dashboard/employee/${row.id}?view=details`}
+        >
+          {row.firstName} {row.lastName}
+        </Link>
+      ),
+    },
+    {
+      key: "type",
+      header: "Employee Type",
+      cell: (row) => <span className="text-slate-700">{row.employeeType}</span>,
+    },
+    {
+      key: "payout",
+      header: "Total Payout",
+      cell: (row) => (
+        <span className="font-medium text-slate-700">
+          {formatCurrency(row.totalPayout)}
+        </span>
+      ),
+    },
+    {
+      key: "attendance",
+      header: "Attendance",
+      cell: () => <span className="text-slate-400">—</span>,
+    },
+    {
+      key: "jobs",
+      header: "# Jobs Completed",
+      cell: (row) => (
+        <span className="text-slate-700">{row.jobsCompleted}</span>
+      ),
+    },
+    {
+      key: "completion",
+      header: "Completion Date",
+      cell: (row) => (
+        <span className="text-slate-700">{row.latestCompletion}</span>
+      ),
+    },
+  ];
 
   return (
-    <div>
-      <div className="space-y-4 md:hidden">
-        {paginatedEmployees.map((employee, index) => (
-          <WorkforceMobileCard
-            key={employee.id}
-            employee={employee}
-            index={index}
-            formattedEndDate={formattedEndDate}
-            formattedStartDate={formattedStartDate}
-            hasDateRange={hasDateRange}
-          />
-        ))}
-      </div>
+    <DataTable
+      columns={columns}
+      data={visible}
+      rowKey={(r) => r.id}
+      pagination={{
+        currentPage,
+        pageSize,
+        totalItems: enriched.length,
+        onChange: handlePageChange,
+        itemLabel: "employees",
+      }}
+      renderMobileCard={(row) => (
+        <MobileCard
+          onClick={() =>
+            router.push(`/dashboard/employee/${row.id}?view=details`)
+          }
+        >
+          {/* Header */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h3 className="truncate text-base font-bold text-slate-600">
+                {row.firstName} {row.lastName}
+              </h3>
+              <p className="mt-0.5 text-sm text-slate-500 font-medium">
+                Last active {row.latestCompletion}
+              </p>
+            </div>
+            <span className="flex-shrink-0 rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+              {row.employeeType}
+            </span>
+          </div>
 
-      {/* Mobile Pagination */}
-      {showPagination && (
-        <div className="mt-4 flex justify-center pb-4 md:hidden">
-          <Pagination
-            className="custom-pagination"
-            current={currentPage}
-            pageSize={pageSize}
-            total={employees.length}
-            onChange={handlePageChange}
-            showSizeChanger
-            onShowSizeChange={handlePageChange}
-            simple
-          />
-        </div>
+          {/* Stats tiles */}
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <StatTile
+              label="Total Payout"
+              emphasized
+              value={formatCurrency(row.totalPayout)}
+            />
+            <StatTile label="Jobs Completed" value={row.jobsCompleted} />
+            <StatTile label="Attendance" value="—" />
+            <StatTile label="Completion" value={row.latestCompletion} />
+          </div>
+        </MobileCard>
       )}
-    </div>
+    />
   );
 }
