@@ -6,23 +6,24 @@ import { NextRequest, NextResponse } from "next/server";
 
 const pusher = getPusherInstance();
 
-const findUsers = (users: { id: number; action?: string }[]) => {
-  return Promise.all(
-    users.map(async (user: { id: number; action?: string }) => {
-      if (!user.id) {
-        throw new Error("User ID is required");
-      }
-      const findUser = await db.user.findUnique({
-        where: {
-          id: user.id,
-        },
-      });
-      if (!findUser) {
-        throw new Error(`User with ID ${user.id} not found`);
-      }
-      return findUser;
-    }),
-  );
+const findUsers = async (users: { id: number; action?: string }[]) => {
+  const ids = users.map((u) => {
+    if (!u.id) throw new Error("User ID is required");
+    return u.id;
+  });
+
+  const found = await db.user.findMany({
+    where: { id: { in: ids } },
+    select: { id: true },
+  });
+
+  if (found.length !== ids.length) {
+    const foundSet = new Set(found.map((u) => u.id));
+    const missing = ids.find((id) => !foundSet.has(id));
+    throw new Error(`User with ID ${missing} not found`);
+  }
+
+  return found;
 };
 
 /**

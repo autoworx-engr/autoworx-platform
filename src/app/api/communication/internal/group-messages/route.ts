@@ -120,12 +120,13 @@ export async function GET(request: NextRequest) {
     const hasPrevPage = pageNum > 1;
     const totalPages = Math.ceil(totalRecords / limitNum);
 
-    const transformMessage = await Promise.all(
-      messages.map(async (message) => {
-        const { to, from, requestEstimate, requestEstimateId, ...rest } =
-          message;
-        const findUser = await db.user.findUnique({
-          where: { id: from },
+    const senderIds = Array.from(
+      new Set(messages.map((m) => m.from).filter((id): id is number => !!id)),
+    );
+
+    const senders = senderIds.length
+      ? await db.user.findMany({
+          where: { id: { in: senderIds } },
           select: {
             id: true,
             firstName: true,
@@ -134,10 +135,15 @@ export async function GET(request: NextRequest) {
             phone: true,
             image: true,
           },
-        });
-        return { ...rest, sender: findUser };
-      }),
-    );
+        })
+      : [];
+
+    const senderMap = new Map(senders.map((u) => [u.id, u]));
+
+    const transformMessage = messages.map((message) => {
+      const { to, from, requestEstimate, requestEstimateId, ...rest } = message;
+      return { ...rest, sender: from ? (senderMap.get(from) ?? null) : null };
+    });
 
     return NextResponse.json(
       {
