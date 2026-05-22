@@ -20,6 +20,8 @@ const materialSchema = z.object({
 const inputSchema = z.object({
   clientId: z.number().int().positive(),
   vehicleId: z.number().int().positive().nullable().optional(),
+  applyShopSupplies: z.boolean().optional(),
+  applyTax: z.boolean().optional(),
   services: z
     .array(
       z.object({
@@ -36,7 +38,8 @@ const inputSchema = z.object({
 type Input = z.infer<typeof inputSchema>;
 
 async function execute(input: unknown, ctx: ToolContext): Promise<ToolResult> {
-  const { clientId, vehicleId, services } = input as Input;
+  const { clientId, vehicleId, services, applyShopSupplies, applyTax } =
+    input as Input;
 
   // 0. Validate IDs exist before any write — catches AI-hallucinated IDs.
   const client = await db.client.findFirst({
@@ -85,6 +88,8 @@ async function execute(input: unknown, ctx: ToolContext): Promise<ToolResult> {
   });
   const taxRate = Number(company?.tax ?? 0);
   const serviceFeeRate = Number(company?.serviceFee ?? 0);
+  const taxRateToUse = applyTax === false ? 0 : taxRate;
+  const serviceFeeRateToUse = applyShopSupplies === false ? 0 : serviceFeeRate;
 
   // 2. Compute totals server-side.
   //    taxAdd applies to materials only (labor is not taxed).
@@ -111,8 +116,8 @@ async function execute(input: unknown, ctx: ToolContext): Promise<ToolResult> {
 
   const subtotal = round2(laborSubtotal + materialSubtotal);
   const discount = round2(materialDiscount);
-  const taxAdd = round2(materialSubtotal * (taxRate / 100));
-  const suppliesFeeAdd = round2(subtotal * (serviceFeeRate / 100));
+  const taxAdd = round2(materialSubtotal * (taxRateToUse / 100));
+  const suppliesFeeAdd = round2(subtotal * (serviceFeeRateToUse / 100));
   const grandTotal = round2(subtotal - discount + taxAdd + suppliesFeeAdd);
   const due = grandTotal;
 
@@ -146,8 +151,8 @@ async function execute(input: unknown, ctx: ToolContext): Promise<ToolResult> {
       vehicleId: vehicleId ?? undefined,
       subtotal,
       discount,
-      tax: taxRate,
-      serviceFee: serviceFeeRate,
+      tax: taxRateToUse,
+      serviceFee: serviceFeeRateToUse,
       vehicleExtraCost: 0,
       grandTotal,
       deposit: 0,
@@ -204,6 +209,16 @@ registerTool({
         type: "number",
         description:
           "Optional vehicle ID. Use get_vehicle_by_client if you need to look it up.",
+      },
+      applyShopSupplies: {
+        type: "boolean",
+        description:
+          "Pass false to exclude shop supplies from this estimate. Omit or pass true to apply the company shop-supplies rate.",
+      },
+      applyTax: {
+        type: "boolean",
+        description:
+          "Pass false to exclude tax from this estimate. Omit or pass true to apply the company tax rate on materials.",
       },
       services: {
         type: "array",

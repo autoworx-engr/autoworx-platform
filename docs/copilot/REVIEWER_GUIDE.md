@@ -190,6 +190,20 @@ yarn dev
 
 ---
 
+## Phase 3c.4 — Shop-supplies and tax toggles on create_estimate
+
+Completes the original `create_estimate` spec. Both shop supplies (serviceFee) and tax can be toggled off per estimate without changing company defaults.
+
+Two optional booleans added to the tool input: `applyShopSupplies` and `applyTax`. Semantics: omitted or `true` applies the company rate; `false` stores the effective rate as 0 for that estimate only. The stored `Invoice.tax` / `Invoice.serviceFee` are therefore 0 (not the company rate) when toggled off, exactly matching the UI's toggle behavior.
+
+The system prompt guides the copilot to present toggles at restate — not during gather — with dollar amounts computed from the company rates injected into the user-context line (`Company tax rate: X%. Company shop-supplies rate: Y%.`). Tax line is omitted entirely for labor-only estimates. Pre-stated preferences are honored without re-asking.
+
+Math layer unchanged. `taxRateToUse` and `serviceFeeRateToUse` variables replace the flat rate lookups in `execute()`.
+
+No DB migrations.
+
+---
+
 ## Phase 3c.3 — Materials on estimates + add-to-existing + line-item reads
 
 **`create_estimate`** extended with optional `materials[]` per service (name, quantity, sellPrice, optional costPrice/discount/productId). Tax math now live: `taxAdd = Σ(sell × qty) × (taxRate/100)`. `material.discount` is a dollar amount flowing into invoice-level discount (not subtracted from tax base). Shared `estimateMath.ts` helper extracted for `round2` and `MaterialInput`.

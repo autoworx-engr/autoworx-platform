@@ -8,6 +8,8 @@ export type SystemPromptContext = {
     name: string;
     industry?: string | null;
     timezone?: string | null;
+    tax?: number | null;
+    serviceFee?: number | null;
   };
   priorSummaries?: string[];
 };
@@ -226,12 +228,29 @@ If the user references a specific inventory item by name (e.g. "the ceramic coat
 Steps:
 1. Resolve the client with get_client_by_name (disambiguate if multiple matches).
 2. Before creating, call get_estimates_for_client to check whether an open estimate already exists for this client and the same vehicle. If one does, tell the user: "An estimate already exists for this client and vehicle — would you like to create a new one anyway, or work with the existing one?" Do not block — just confirm intent.
-3. Restate the full estimate details — client, vehicle, each service with hours, rate, and any materials grouped under it — and confirm before creating (standard write confirmation).
+3. Restate the full estimate details — client, vehicle, each service with hours, rate, and any materials grouped under it — then include a totals breakdown (see below) before asking for confirmation (standard write confirmation).
 4. After creation, give the user the estimate's [View Estimate](publicLink) link and the grandTotal.
 
 You do NOT quote a total yourself before calling create_estimate — the system computes it. You may share the grandTotal after create_estimate returns it.
 
-Tax applies to materials only (not labor). If the estimate has any materials, tax will be applied automatically at the company's configured rate. Shop supplies are also applied automatically at the company's rate on the full subtotal. Per-estimate tax/supplies toggles are not yet available through me — coming soon.
+### Shop supplies and tax — toggleable per estimate
+
+When you restate the estimate before confirmation, include a totals breakdown:
+- Subtotal (labor + materials)
+- Material discounts (if any)
+- Shop supplies — the dollar amount it adds (subtotal × shop-supplies rate%), OR "off" if the user pre-stated no shop supplies
+- Tax — the dollar amount it adds (material subtotal × tax rate%), OR "off" if the user pre-stated no tax; omit entirely if the estimate has no materials (tax applies to materials only, not labor)
+- Grand total
+
+The company tax rate and shop-supplies rate are in your user context. Use them to compute dollar previews.
+
+If the user has NOT mentioned shop supplies, ask at restate: "Shop supplies (X%) would add $Y. Include it?" If they already said no, show "off" — do not ask again.
+
+If the user has NOT mentioned tax AND the estimate has at least one material, ask at restate: "Tax (X%) on $Y of materials would add $Z. Include it?" If they already said no, show "off" — do not ask again. For labor-only estimates, omit the tax line entirely.
+
+If the user opts out of a toggle after the initial restate, update the totals and re-confirm. No re-gather needed — just revise the numbers.
+
+When calling create_estimate: pass applyShopSupplies: false only if the user opted out; omit or pass true to apply the company rate. Same for applyTax: false.
 
 You CANNOT create invoices. If the user asks to create an invoice, explain: "I can't create invoices directly — the workflow is to create an estimate, send it to the client, and once they approve it, it converts to an invoice. Want me to create an estimate instead?" Then offer to proceed.
 
@@ -404,7 +423,10 @@ export function buildSystemPrompt(ctx: SystemPromptContext): string {
     timeZone: tz,
   });
 
-  const userContext = `Current user: ${name} (${role}) at ${company} (${industry}). Timezone: ${tz}. Today's date: ${currentDate}.`;
+  const companyTaxRate = Number(ctx.company.tax ?? 0);
+  const companyServiceFeeRate = Number(ctx.company.serviceFee ?? 0);
+
+  const userContext = `Current user: ${name} (${role}) at ${company} (${industry}). Timezone: ${tz}. Today's date: ${currentDate}. Company tax rate: ${companyTaxRate}%. Company shop-supplies rate: ${companyServiceFeeRate}%.`;
 
   const memorySection =
     ctx.priorSummaries && ctx.priorSummaries.length > 0

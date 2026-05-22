@@ -5,6 +5,21 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Phase 3c.4 — Shop-supplies and tax toggles on create_estimate
+
+**Date:** 2026-05-21
+
+Completes the original create_estimate spec. Both shop supplies and tax can now be toggled per estimate.
+
+- Optional booleans `applyShopSupplies` and `applyTax` added to the `create_estimate` tool input schema. Omitted or `true` applies the company rate; explicit `false` stores the rate as 0 for that estimate (no dollar effect), matching UI toggle behavior.
+- System prompt: copilot does NOT ask about toggles during the gather phase. At restate, it shows the totals breakdown with shop-supplies and tax dollar amounts, and asks the user to confirm or adjust. Tax line only appears when the estimate has at least one material. Pre-stated preferences honored silently — shown as "off" in restate, not re-asked.
+- Company tax and shop-supplies rates injected into the user-context line so the model can show accurate dollar previews without an extra tool call.
+- Math layer unchanged — rate-0 already worked (verified in 3c.3 Test 4). Toggles just route the effective rate (company rate or 0) into the existing computation.
+
+No DB migrations.
+
+---
+
 ## Fix — add_materials_to_estimate confirmation loop
 
 **Date:** 2026-05-21

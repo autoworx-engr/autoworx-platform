@@ -41,7 +41,15 @@ export async function POST(req: NextRequest) {
       lastName: true,
       role: true,
       employeeType: true,
-      company: { select: { name: true, industry: true, timezone: true } },
+      company: {
+        select: {
+          name: true,
+          industry: true,
+          timezone: true,
+          tax: true,
+          serviceFee: true,
+        },
+      },
     },
   });
   if (!dbUser?.hasCopilot) return json403();
@@ -123,6 +131,8 @@ export async function POST(req: NextRequest) {
       name: dbUser.company?.name ?? "Your Shop",
       industry: dbUser.company?.industry,
       timezone: dbUser.company?.timezone,
+      tax: Number(dbUser.company?.tax ?? 0),
+      serviceFee: Number(dbUser.company?.serviceFee ?? 0),
     },
     priorSummaries,
   });
