@@ -5,6 +5,14 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Fix — add_materials_to_estimate confirmation loop
+
+**Date:** 2026-05-21
+
+The copilot got stuck in a loop with add_materials_to_estimate — restating and asking for confirmation indefinitely without ever calling the tool. Root cause: the per-tool section had its own "restate and confirm" step on top of the global write workflow's confirm step (two parallel rules), AND nothing stopped the model from re-running get_estimates_for_client on every "yes" turn. Fixed by (1) adding add_materials_to_estimate to the global write workflow's explicit tool list, (2) stripping per-tool confirmation language so only the global workflow governs confirms, and (3) adding a general rule to the global workflow: after the user confirms, call the tool immediately — do not re-run lookup tools.
+
+---
+
 ## Phase 3c.3 — Materials on estimates + add-to-existing + line-item reads
 
 **Date:** 2026-05-20
