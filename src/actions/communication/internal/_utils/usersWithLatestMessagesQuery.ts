@@ -18,7 +18,16 @@ export type UserWithLatest = User & {
 /**
  * Returns user ids in the order they should appear in the sidebar: most
  * recently active conversation first, never-chatted users at the bottom,
- * ties broken by id ASC. Two Prisma calls, JS sort, then slice for pagination.
+ * ties broken by id ASC.
+ *
+ * Two-step strategy that avoids loading every company user up-front:
+ *   1. `groupBy` direct messages to get the set of counterparts the viewer
+ *      has ever chatted with + each pair's max `createdAt`. This set is
+ *      bounded by the viewer's actual conversation partners (typically far
+ *      smaller than the whole company).
+ *   2. Sort that set by timestamp DESC; carve out the chatted slice of the
+ *      requested page; for any remaining "never-chatted" rows, fetch them
+ *      paginated at the DB level via `findMany` excluding the chatted ids.
  */
 export async function fetchUserIdsByLatestMessage(
   currentUserId: number,
@@ -26,22 +35,15 @@ export async function fetchUserIdsByLatestMessage(
   skip: number,
   take: number,
 ): Promise<{ id: number }[]> {
-  const [users, pairMaxes] = await Promise.all([
-    db.user.findMany({
-      where: { companyId, NOT: { id: currentUserId } },
-      select: { id: true },
-    }),
-    db.message.groupBy({
-      by: ["from", "to"],
-      where: {
-        groupId: null,
-        OR: [{ from: currentUserId }, { to: currentUserId }],
-      },
-      _max: { createdAt: true },
-    }),
-  ]);
+  const pairMaxes = await db.message.groupBy({
+    by: ["from", "to"],
+    where: {
+      groupId: null,
+      OR: [{ from: currentUserId }, { to: currentUserId }],
+    },
+    _max: { createdAt: true },
+  });
 
-  // Collapse (from, to) pair maxes into counterpart → latest timestamp.
   const latestByCounterpart = new Map<number, Date>();
   for (const p of pairMaxes) {
     const ts = p._max.createdAt;
@@ -52,14 +54,50 @@ export async function fetchUserIdsByLatestMessage(
     if (!prev || ts > prev) latestByCounterpart.set(counterpart, ts);
   }
 
-  const sorted = [...users].sort((a, b) => {
-    const aTs = latestByCounterpart.get(a.id)?.getTime() ?? -Infinity;
-    const bTs = latestByCounterpart.get(b.id)?.getTime() ?? -Infinity;
-    if (aTs !== bTs) return bTs - aTs; // newest first; never-chatted (-Infinity) sinks
-    return a.id - b.id;
-  });
+  // Only keep counterparts that are actually still in this company (filters
+  // out cross-tenant rows from legacy data).
+  const chattedIds = [...latestByCounterpart.keys()];
+  const chattedInCompany =
+    chattedIds.length > 0
+      ? await db.user.findMany({
+          where: { id: { in: chattedIds }, companyId },
+          select: { id: true },
+        })
+      : [];
+  const chattedInCompanySet = new Set(chattedInCompany.map((u) => u.id));
 
-  return sorted.slice(skip, skip + take);
+  const chattedIdsInOrder = chattedIds
+    .filter((id) => chattedInCompanySet.has(id))
+    .sort((a, b) => {
+      const aTs = latestByCounterpart.get(a)!.getTime();
+      const bTs = latestByCounterpart.get(b)!.getTime();
+      if (aTs !== bTs) return bTs - aTs;
+      return a - b;
+    });
+
+  // Carve the page from (chatted | never-chatted) ordered concat.
+  const chattedTotal = chattedIdsInOrder.length;
+  const chattedSliceStart = Math.min(skip, chattedTotal);
+  const chattedSliceEnd = Math.min(skip + take, chattedTotal);
+  const pageIds = chattedIdsInOrder.slice(chattedSliceStart, chattedSliceEnd);
+
+  const remaining = take - pageIds.length;
+  if (remaining > 0) {
+    const neverChattedSkip = Math.max(0, skip - chattedTotal);
+    const neverChattedUsers = await db.user.findMany({
+      where: {
+        companyId,
+        NOT: { id: { in: [currentUserId, ...chattedIdsInOrder] } },
+      },
+      orderBy: { id: "asc" },
+      skip: neverChattedSkip,
+      take: remaining,
+      select: { id: true },
+    });
+    pageIds.push(...neverChattedUsers.map((u) => u.id));
+  }
+
+  return pageIds.map((id) => ({ id }));
 }
 
 export function countCompanyUsers(
