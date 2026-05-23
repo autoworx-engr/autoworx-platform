@@ -1,4 +1,5 @@
 import { pusher } from "@/lib/pusher/client";
+import { useChatTrackStore } from "@/stores/chatTrackStore";
 import type { ChatTrack, Group, Message, User } from "@prisma/client";
 import { useEffect } from "react";
 
@@ -66,10 +67,23 @@ export function useChatTrackPusher({
       }
 
       if (incoming.to === sessionUserId) {
+        // Centralised store bumps: previously each UserSelectButton row did
+        // these in its own per-row pusher subscription. Doing it here once
+        // avoids the N-row teardown bug and duplicate increments.
+        const store = useChatTrackStore.getState();
+        store.setLastMessage(data);
+        store.setUnreadMessageCount({
+          ...store.unreadMessageCount,
+          internalCount: store.unreadMessageCount.internalCount + 1,
+        });
         setUserState((prev) =>
           prev.map((u) =>
             u.id === incoming.from
-              ? { ...u, unreadCount: 1, latestMessage: incoming }
+              ? {
+                  ...u,
+                  unreadCount: (u.unreadCount ?? 0) + 1,
+                  latestMessage: incoming,
+                }
               : u,
           ),
         );
