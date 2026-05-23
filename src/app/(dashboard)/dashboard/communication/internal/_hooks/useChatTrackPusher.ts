@@ -1,7 +1,7 @@
 import { pusher } from "@/lib/pusher/client";
 import { useChatTrackStore } from "@/stores/chatTrackStore";
 import type { ChatTrack, Group, Message, User } from "@prisma/client";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 type TUser = User & { unreadCount: number; latestMessage?: Message | null };
 type TGroup = Group & { users: User[] };
@@ -35,6 +35,18 @@ export function useChatTrackPusher({
   setChatTrackState,
   sortLists,
 }: Args) {
+  // Refs keep the Pusher handlers reading the *latest* userState / sortLists
+  // even though the effect only re-subscribes when sessionUserId changes.
+  // Without this, handlers capture stale values from first render.
+  const userStateRef = useRef(userState);
+  const sortListsRef = useRef(sortLists);
+  useEffect(() => {
+    userStateRef.current = userState;
+  }, [userState]);
+  useEffect(() => {
+    sortListsRef.current = sortLists;
+  }, [sortLists]);
+
   useEffect(() => {
     if (!sessionUserId) return;
     const channel = pusher.subscribe(`track-${sessionUserId}`);
@@ -61,7 +73,10 @@ export function useChatTrackPusher({
 
       if (incoming.groupId) {
         setSideBarGroupLists((prevGroups) => {
-          const { sortedGroups } = sortLists(userState, prevGroups);
+          const { sortedGroups } = sortListsRef.current(
+            userStateRef.current,
+            prevGroups,
+          );
           return sortedGroups;
         });
       }
