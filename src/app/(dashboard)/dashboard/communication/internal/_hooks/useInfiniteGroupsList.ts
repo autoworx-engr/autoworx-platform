@@ -4,7 +4,7 @@ import { fetchGroupsList } from "@/actions/communication/internal/fetchGroupsLis
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { internalKeys } from "../_utils/queryKey";
 
-const DEFAULT_TAKE = 10;
+const DEFAULT_TAKE = 15;
 
 /**
  * Sidebar groups list, paginated. Mirrors `useInfiniteUsersList` so the

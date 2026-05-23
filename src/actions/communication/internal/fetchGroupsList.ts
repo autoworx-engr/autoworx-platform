@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
 
-const DEFAULT_TAKE = 30;
+const DEFAULT_TAKE = 15;
 
 type Params = {
   /** 1-based page number, mirrors `fetchUsersWithLatestMessages`. */
