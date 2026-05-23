@@ -7,6 +7,7 @@ import { ProductCardProps } from "@/types/inventory";
 import { Category, InventoryProduct, User, Vendor } from "@prisma/client";
 import { Pagination, Popconfirm, Tooltip } from "antd"; // Importing the Pagination component from Ant Design
 import { Search, X } from "lucide-react";
+import toast from "react-hot-toast";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import EditProduct from "./EditProduct";
@@ -64,6 +65,26 @@ export default function ProductTable({
       params.set("limit", pageSize.toString());
     }
     router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const itemLabel = viewTab === "products" ? "product" : "supply";
+
+  const handleDelete = async (productId: number) => {
+    const toastId = `delete-inventory-${productId}`;
+    const res = await deleteInventory(productId);
+    if (res?.type === "success") {
+      toast.success(
+        `${itemLabel[0].toUpperCase() + itemLabel.slice(1)} deleted`,
+        {
+          id: toastId,
+        },
+      );
+    } else {
+      toast.error(`Failed to delete ${itemLabel}`, {
+        id: toastId,
+      });
+    }
+    router.push(`/dashboard/inventory?view=${search?.get("view")}`);
   };
 
   return (
@@ -288,13 +309,8 @@ export default function ProductTable({
                             <EditProduct productData={product} />
                           </button>
                           <Popconfirm
-                            title={`Are you sure you want to delete this ${viewTab === "products" ? "product" : "supply"}?`}
-                            onConfirm={async () => {
-                              await deleteInventory(product.id);
-                              router.push(
-                                `/dashboard/inventory?view=${search?.get("view")}`,
-                              );
-                            }}
+                            title={`Are you sure you want to delete this ${itemLabel}?`}
+                            onConfirm={() => handleDelete(product.id)}
                             okText="Yes"
                             cancelText="No"
                           >
