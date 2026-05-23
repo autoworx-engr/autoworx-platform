@@ -83,6 +83,12 @@ const AWXBugReport = () => {
   }, [setIsDropdownOpen]);
 
   useEffect(() => {
+    if (!isDropdownOpen) {
+      setSearchQuery("");
+    }
+  }, [isDropdownOpen]);
+
+  useEffect(() => {
     if (!selectedContact) return;
     const readMessage = async () => {
       await ReadMessage({
