@@ -18,8 +18,19 @@ export default function SubmitButton() {
     const lastName = formData.get("lastName") as string;
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
+    const confirmPassword = formData.get("confirmPassword") as string;
     const company = formData.get("company") as string;
     const accessCode = formData.get("access") as string;
+
+    if (password !== confirmPassword) {
+      showError({
+        success: false,
+        statusCode: 400,
+        errorSource: [],
+        message: "Passwords do not match",
+      });
+      return;
+    }
 
     try {
       const userInfo = await createUserValidation.parseAsync({
