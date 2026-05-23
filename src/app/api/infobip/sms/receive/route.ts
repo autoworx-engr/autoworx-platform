@@ -319,20 +319,20 @@ export async function POST(req: NextRequest) {
           });
 
           // Update chat track
-          updateNewSMSChatTrack({
+          await updateNewSMSChatTrack({
             clientId: client.id,
             smsLastMessage: cleanedMessageText,
             lastMessageBy: "Client",
             attachments: processedAttachments,
-          });
+          }).catch(console.error);
 
           // Send notifications
-          sendClientMessageNotification({
+          await sendClientMessageNotification({
             companyId: infobipConfig.companyId,
             clientId: client.id,
             clientName: client.firstName + " " + client.lastName,
             message: cleanedMessageText,
-          });
+          }).catch(console.error);
 
           // Trigger Pusher notification
           const channelName = `message-${client.id}`;
@@ -350,15 +350,13 @@ export async function POST(req: NextRequest) {
           }
 
           // Send client mail or SMS notification
-          try {
-            sendClientMailOrSMSNotify(client.id);
-          } catch (pusherError) {
+          sendClientMailOrSMSNotify(client.id).catch((pusherError) =>
             console.error(
               "Pusher sendClientMailOrSMSNotify error:",
               pusherError,
-            );
-            // Continue processing even if pusher fails
-          }
+            ),
+          );
+          // Continue processing even if pusher fails
 
           // Trigger pipeline automation if applicable
           try {
@@ -380,7 +378,9 @@ export async function POST(req: NextRequest) {
                 condition: "MESSAGE_RECEIVED_CLIENT",
                 leadId: clientWithLead.Lead.id,
                 columnId: clientWithLead.Lead.columnId,
-              });
+              }).catch((automationError) =>
+                console.error("Pipeline automation error:", automationError),
+              );
             }
           } catch (automationError) {
             console.error("Pipeline automation error:", automationError);

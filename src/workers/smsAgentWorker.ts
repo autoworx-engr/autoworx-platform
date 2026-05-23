@@ -78,7 +78,11 @@ async function processJob(job: Job<SmsAgentJobData>): Promise<void> {
 
 async function handler(jobs: Job<SmsAgentJobData>[]): Promise<void> {
   for (const job of jobs) {
-    await processJob(job);
+    try {
+      await processJob(job);
+    } catch (err) {
+      console.error(`[Worker] Job failed:`, err);
+    }
   }
 }
 

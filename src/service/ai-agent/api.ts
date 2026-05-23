@@ -20,7 +20,7 @@ export const sendSMSToAgent = async function (payload: TSendSMSToAIAgent) {
 
     return response.data;
   } catch (error) {
-    const err = errorHandler(error);
-    throw err;
+    errorHandler(error);
+    throw error;
   }
 };
