@@ -62,7 +62,7 @@ const UserBugReport = () => {
 
   const filteredContacts = data
     ? data?.filter((contact: any) =>
-        contact.BugReportMessage?.[0]?.subject
+        contact.BugReportMessage?.[contact.BugReportMessage.length - 1]?.subject
           ?.toLowerCase()
           ?.includes(searchQuery.toLowerCase()),
       )

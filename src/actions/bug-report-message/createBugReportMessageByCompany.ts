@@ -35,7 +35,7 @@ export async function createBugReportMessageByCompany(
     }
 
     const existingReport = await db.bugReport.findUnique({
-      where: { id: data.bugReportId, companyId: +user.companyId },
+      where: { id: +data.bugReportId, companyId: +user.companyId },
     });
 
     if (!existingReport) {

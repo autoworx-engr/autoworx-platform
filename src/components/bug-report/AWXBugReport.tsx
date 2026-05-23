@@ -16,6 +16,7 @@ import { BugReportDropdownCard } from "./BugReportDropdownCard";
 import { MessageBubbleSkeleton } from "./MessageBubbleSkeleton";
 import { TBugReportMessage } from "@/types/BugReportMessage";
 import OptimisticMessageCard from "./OptimisticMessageCard";
+import toast from "react-hot-toast";
 
 interface Contact {
   id: string;
@@ -45,7 +46,7 @@ const AWXBugReport = () => {
 
   const filteredContacts =
     data?.filter((contact: any) =>
-      contact.BugReportMessage?.[0]?.subject
+      contact.BugReportMessage?.[contact.BugReportMessage.length - 1]?.subject
         ?.toLowerCase()
         ?.includes(searchQuery.toLowerCase()),
     ) ?? [];
@@ -171,6 +172,7 @@ const AWXBugReport = () => {
         });
 
         if (!uploadRes.ok) {
+          toast.error("File upload failed");
           setMessage(currentMessage);
           setLoading(false);
           return;

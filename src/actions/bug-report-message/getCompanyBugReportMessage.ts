@@ -16,7 +16,7 @@ export default async function getCompanyBugReportMessage({
   }
 
   const isExistBugReport = await db.bugReport.findUnique({
-    where: { id: bugReportId },
+    where: { id: +bugReportId },
     select: { companyId: true },
   });
 
@@ -31,7 +31,7 @@ export default async function getCompanyBugReportMessage({
   try {
     const bugReportsMessage = await db.bugReportMessage.findMany({
       where: {
-        bugReportId: bugReportId,
+        bugReportId: +bugReportId,
       },
       include: {
         bugReport: {

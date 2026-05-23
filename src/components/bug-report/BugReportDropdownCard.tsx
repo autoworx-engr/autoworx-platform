@@ -71,8 +71,10 @@ export const BugReportDropdownCard = ({
         <CardContent className="pt-0">
           <div className="space-y-2">
             {bugReports?.map((contact: any) => {
-              const latestMsg = contact.BugReportMessage?.[0];
-              const subject = latestMsg?.subject?.slice(0, 100) || "No subject";
+              const subjectMsg =
+                contact.BugReportMessage?.[contact.BugReportMessage.length - 1];
+              const subject =
+                subjectMsg?.subject?.slice(0, 100) || "No subject";
 
               return (
                 <div
