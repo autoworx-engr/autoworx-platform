@@ -19,7 +19,10 @@ export const addUserInGroup = async ({ groupId, users }: TAddGroupInUser) => {
     return { status: 401, message: "Unauthorized" };
   }
 
-  const currentUserId = parseInt(session.user.id);
+  const currentUserId = parseInt(session.user.id, 10);
+  if (!Number.isFinite(currentUserId)) {
+    return { status: 401, message: "Unauthorized" };
+  }
   const companyId = session.user.companyId;
 
   // Legacy groups can have companyId = null. Membership check still enforces

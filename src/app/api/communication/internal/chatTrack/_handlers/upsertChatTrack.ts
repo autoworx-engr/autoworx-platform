@@ -16,12 +16,31 @@ export async function upsertChatTrackHandler(request: NextRequest) {
       throw new AppError(400, "Sender ID and Receiver ID are required");
     }
 
+    const senderIdNum = Number(senderId);
+    const receiverIdNum = Number(receiverId);
+    if (!Number.isFinite(senderIdNum) || !Number.isFinite(receiverIdNum)) {
+      throw new AppError(400, "Sender ID and Receiver ID must be numeric");
+    }
+
     // Caller must be one of the two parties on the track.
     if (
-      Number(senderId) !== principal.userId &&
-      Number(receiverId) !== principal.userId
+      senderIdNum !== principal.userId &&
+      receiverIdNum !== principal.userId
     ) {
       throw new AppError(403, "Forbidden");
+    }
+
+    // The OTHER participant must belong to the caller's company — otherwise an
+    // authenticated user could create/retrieve a chat track involving someone
+    // from a different tenant just by guessing the id.
+    const otherId =
+      senderIdNum === principal.userId ? receiverIdNum : senderIdNum;
+    const otherUser = await db.user.findFirst({
+      where: { id: otherId, companyId: principal.companyId },
+      select: { id: true },
+    });
+    if (!otherUser) {
+      throw new AppError(404, "User not found in this company");
     }
 
     // Scope by section so an existing collaboration row isn't returned to an
@@ -30,8 +49,8 @@ export async function upsertChatTrackHandler(request: NextRequest) {
       where: {
         section: "internal",
         OR: [
-          { senderId, receiverId },
-          { senderId: receiverId, receiverId: senderId },
+          { senderId: senderIdNum, receiverId: receiverIdNum },
+          { senderId: receiverIdNum, receiverId: senderIdNum },
         ],
       },
     });
@@ -39,8 +58,8 @@ export async function upsertChatTrackHandler(request: NextRequest) {
     if (!chatTrack) {
       const newChatTrack = await db.chatTrack.create({
         data: {
-          senderId,
-          receiverId,
+          senderId: senderIdNum,
+          receiverId: receiverIdNum,
           lastMessage: lastMessage ?? "",
           isRead: isRead ?? false,
           section: "internal",
