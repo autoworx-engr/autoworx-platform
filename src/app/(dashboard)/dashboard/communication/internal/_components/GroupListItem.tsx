@@ -5,7 +5,7 @@ import { Users } from "lucide-react";
 
 type TGroup = Group & { users: User[] };
 
-const MAX_VISIBLE_AVATARS = 3;
+const MAX_VISIBLE_AVATARS = 1;
 
 export function GroupListItem({
   group,
