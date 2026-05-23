@@ -19,19 +19,31 @@ export async function updateChatTrackHandler(request: NextRequest) {
       throw new AppError(400, "ChatTrack ID is required");
     }
 
-    // Caller must be a party to this chatTrack.
+    // Caller must be a party to this chatTrack AND it must belong to the
+    // internal section — otherwise this endpoint could be used to mutate a
+    // collaboration track simply because the caller is on it.
     const existing = await db.chatTrack.findFirst({
       where: {
         id: chatTrackId,
+        section: "internal",
         OR: [{ senderId: principal.userId }, { receiverId: principal.userId }],
       },
       select: { id: true },
     });
     if (!existing) throw new AppError(404, "Chat track not found");
 
-    const updatedChatInfo = await db.chatTrack.update({
-      where: { id: chatTrackId },
+    // updateMany (scoped by id + section) so a race-condition section flip
+    // can't slip past the read-then-write gap above. Then fetch the row to
+    // return the updated payload.
+    const updateResult = await db.chatTrack.updateMany({
+      where: { id: chatTrackId, section: "internal" },
       data: { isRead, lastMessage },
+    });
+    if (updateResult.count === 0) {
+      throw new AppError(404, "Chat track not found");
+    }
+    const updatedChatInfo = await db.chatTrack.findUniqueOrThrow({
+      where: { id: chatTrackId },
       include: { message: true },
     });
 

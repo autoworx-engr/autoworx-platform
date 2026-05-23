@@ -38,10 +38,12 @@ export function useGroupContactList(
   const addToContactList = (
     user: User,
   ): { ok: true } | { ok: false; reason: "duplicate" } => {
-    const name = `${user.firstName} ${user.lastName}`;
-    if (contactList.some((u) => u.name === name)) {
+    // Dedup by id so two employees who happen to share the same first + last
+    // name can both be added; only re-adding the *same account* is blocked.
+    if (contactList.some((u) => u.id === user.id)) {
       return { ok: false, reason: "duplicate" };
     }
+    const name = `${user.firstName} ${user.lastName}`;
     setGroupUsers((prev) => prev.filter((u) => u.id !== user.id));
     setContactList((prev) => [...prev, { id: user.id, name }]);
     return { ok: true };
