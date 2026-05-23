@@ -7,7 +7,6 @@ import {
   useRef,
 } from "react";
 import MessageBox from "../MessageBox";
-import { getUserInGroup } from "@/actions/communication/internal/query";
 import { useSession } from "next-auth/react";
 import { pusher } from "@/lib/pusher/client";
 import { Attachment, Group, User } from "@prisma/client";
@@ -89,51 +88,43 @@ export default function GroupMessageBox({
     [prependToCache, group.id, sessionUserId],
   );
 
-  // Pusher real-time append (only for messages from other users — own
-  // messages already arrive via the optimistic cache mutation in setMessages).
+  // Pusher real-time append. Own messages already arrive via the optimistic
+  // cache mutation in setMessages, so we filter those out.
+  //
+  // Membership: this box only mounts when the viewer is in the group; if they
+  // get removed, `useGroupLifecyclePusher` handles the `delete-group` event
+  // and removes the group from `setGroupsList`, closing this box. We used to
+  // re-check membership per incoming Pusher message via `getUserInGroup`
+  // (a round-trip DB query per tick) — dropped in favor of the lifecycle
+  // event path.
   useEffect(() => {
-    const channel = pusher
-      .subscribe(`group-${group.id}`)
-      .bind(
-        "message",
-        async ({
-          groupId,
-          from,
-          message,
-          attachment,
-        }: {
-          groupId: number;
-          from: number;
-          message: string;
-          attachment: Attachment | null;
-        }) => {
-          const isUserExistInGroup = await getUserInGroup(
-            sessionUserId,
-            groupId,
-          );
-          if (!isUserExistInGroup) {
-            setGroupsList((groupList) =>
-              groupList.filter((g) => g.id !== groupId),
-            );
-            return;
-          }
-          if (from === sessionUserId) return;
-
-          prependToCache({
-            id: Date.now(),
-            groupId,
-            from,
-            message,
-            createdAt: new Date(),
-            attachment: attachment ? [attachment] : [],
-          });
-        },
-      );
-
-    return () => {
-      channel.unbind("message");
+    const channel = pusher.subscribe(`group-${group.id}`);
+    const handler = ({
+      groupId,
+      from,
+      message,
+      attachment,
+    }: {
+      groupId: number;
+      from: number;
+      message: string;
+      attachment: Attachment | null;
+    }) => {
+      if (from === sessionUserId) return;
+      prependToCache({
+        id: Date.now(),
+        groupId,
+        from,
+        message,
+        createdAt: new Date(),
+        attachment: attachment ? [attachment] : [],
+      });
     };
-  }, [prependToCache, group.id, sessionUserId, setGroupsList]);
+    channel.bind("message", handler);
+    return () => {
+      channel.unbind("message", handler);
+    };
+  }, [prependToCache, group.id, sessionUserId]);
 
   // Reverse-pagination wiring.
   const containerRef = useRef<HTMLDivElement | null>(null);

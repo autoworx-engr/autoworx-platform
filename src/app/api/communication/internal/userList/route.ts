@@ -60,81 +60,66 @@ export const GET = async (request: NextRequest) => {
     const limitNum = Math.max(1, parseInt(searchParams.get("limit") || "20"));
 
     const userIdNum = principal.userId;
-    const where: Prisma.UserWhereInput = {
-      NOT: { id: userIdNum },
-      companyId: principal.companyId,
-    };
+    const skip = (pageNum - 1) * limitNum;
 
-    if (search) {
-      const searchWords = search.trim().split(/\s+/);
-      const conditions: Prisma.UserWhereInput[] = [
-        { firstName: { contains: search, mode: "insensitive" } },
-        { lastName: { contains: search, mode: "insensitive" } },
-        { email: { contains: search, mode: "insensitive" } },
-      ];
-
-      if (searchWords.length > 1) {
-        for (let i = 1; i < searchWords.length; i++) {
-          const firstPart = searchWords.slice(0, i).join(" ");
-          const lastPart = searchWords.slice(i).join(" ");
-          conditions.push({
-            AND: [
-              { firstName: { contains: firstPart, mode: "insensitive" } },
-              { lastName: { contains: lastPart, mode: "insensitive" } },
-            ],
-          });
-        }
-      }
-
-      where.OR = conditions;
-    }
+    // Single search predicate reused by both the ordering SELECT and the
+    // COUNT(*) — earlier versions had two diverging filters which made
+    // `meta.totalRecords` and the returned rows disagree under search.
+    const searchTerm = search.trim();
+    const searchWords = searchTerm ? searchTerm.split(/\s+/) : [];
+    const searchSql = searchTerm
+      ? Prisma.sql`AND (
+          u.first_name ILIKE ${"%" + searchTerm + "%"}
+          OR u.last_name ILIKE ${"%" + searchTerm + "%"}
+          OR u.email ILIKE ${"%" + searchTerm + "%"}
+          ${
+            searchWords.length > 1
+              ? Prisma.sql`OR ${Prisma.join(
+                  Array.from({ length: searchWords.length - 1 }, (_, i) => {
+                    const firstPart = searchWords.slice(0, i + 1).join(" ");
+                    const lastPart = searchWords.slice(i + 1).join(" ");
+                    return Prisma.sql`(u.first_name ILIKE ${"%" + firstPart + "%"} AND u.last_name ILIKE ${"%" + lastPart + "%"})`;
+                  }),
+                  " OR ",
+                )}`
+              : Prisma.empty
+          }
+        )`
+      : Prisma.empty;
 
     // Pagination + ordering live entirely in SQL. We sort by the viewer's
     // latest internal chatTrack with each user (newest activity first, then
     // never-chatted users fall to the bottom via NULLS LAST).
-    //
-    // Two queries:
-    //   1. Raw: get the ordered, paginated set of user ids for this page.
-    //   2. Hydrate: batch-fetch the user rows + their latest chatTrack with
-    //      the viewer, then re-attach in the original order.
-    const skip = (pageNum - 1) * limitNum;
-
-    // Build the search predicate as a Prisma where for re-use by `count` and
-    // the row hydration. The raw query inlines its own search SQL below to
-    // keep the join + order on one statement.
-    const orderedRows = await db.$queryRaw<
-      { id: number; track_updated_at: Date | null }[]
-    >`
-      SELECT u.id, t.track_updated_at
-      FROM "User" u
-      LEFT JOIN LATERAL (
-        SELECT ct.updated_at AS track_updated_at
-        FROM "ChatTrack" ct
-        WHERE ct.section::text = 'internal'
-          AND (
-            (ct.sender_id = ${userIdNum} AND ct.receiver_id = u.id)
-            OR (ct.receiver_id = ${userIdNum} AND ct.sender_id = u.id)
-          )
-        ORDER BY ct.updated_at DESC
-        LIMIT 1
-      ) t ON true
-      WHERE u.company_id = ${principal.companyId}
-        AND u.id <> ${userIdNum}
-        ${
-          search
-            ? Prisma.sql`AND (
-                u.first_name ILIKE ${"%" + search + "%"}
-                OR u.last_name ILIKE ${"%" + search + "%"}
-                OR u.email ILIKE ${"%" + search + "%"}
-              )`
-            : Prisma.empty
-        }
-      ORDER BY t.track_updated_at DESC NULLS LAST, u.id ASC
-      OFFSET ${skip} LIMIT ${limitNum}
-    `;
-
-    const totalRow = await db.user.count({ where });
-    const totalRecords = totalRow;
+    const [orderedRows, totalRow] = await Promise.all([
+      db.$queryRaw<{ id: number; track_updated_at: Date | null }[]>`
+        SELECT u.id, t.track_updated_at
+        FROM "User" u
+        LEFT JOIN LATERAL (
+          SELECT ct.updated_at AS track_updated_at
+          FROM "ChatTrack" ct
+          WHERE ct.section::text = 'internal'
+            AND (
+              (ct.sender_id = ${userIdNum} AND ct.receiver_id = u.id)
+              OR (ct.receiver_id = ${userIdNum} AND ct.sender_id = u.id)
+            )
+          ORDER BY ct.updated_at DESC
+          LIMIT 1
+        ) t ON true
+        WHERE u.company_id = ${principal.companyId}
+          AND u.id <> ${userIdNum}
+          ${searchSql}
+        ORDER BY t.track_updated_at DESC NULLS LAST, u.id ASC
+        OFFSET ${skip} LIMIT ${limitNum}
+      `,
+      db.$queryRaw<{ count: bigint }[]>`
+        SELECT COUNT(*)::bigint AS count
+        FROM "User" u
+        WHERE u.company_id = ${principal.companyId}
+          AND u.id <> ${userIdNum}
+          ${searchSql}
+      `,
+    ]);
+    const totalRecords = Number(totalRow[0]?.count ?? 0);
 
     const idsInOrder = orderedRows.map((r) => r.id);
     let paginatedUsers: Array<

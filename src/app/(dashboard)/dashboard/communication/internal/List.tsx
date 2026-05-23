@@ -159,11 +159,11 @@ export default function List({
   return (
     <div
       className={cn(
-        "app-shadow flex h-[calc(100vh-7rem)] w-full flex-col rounded-lg bg-background p-3 sm:w-[25%]",
+        "app-shadow flex h-[calc(100vh-7rem)] w-full flex-col rounded-lg bg-background p-3 sm:w-80",
         className,
       )}
     >
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between w-full">
         <h2 className="font-bold text-[#795252] sm:text-[14px] sm:font-normal">
           {tab === "users" ? "User List" : "Group List"}
         </h2>

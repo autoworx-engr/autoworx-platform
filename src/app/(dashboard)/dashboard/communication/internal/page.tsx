@@ -19,39 +19,15 @@ export default async function InternalPage(props: {
     throw new Error("Session ID is required");
   }
 
-  // Both sidebar lists (users + groups) are now driven by paginated
-  // react-query hooks on the client (`useInfiniteUsersList` /
-  // `useInfiniteGroupsList`), so we no longer eagerly fetch on the server.
+  // Both sidebar lists (users + groups) and per-pair chatTrack rows are now
+  // driven by paginated react-query hooks on the client
+  // (`useInfiniteUsersList` / `useInfiniteGroupsList` + the `userList` API
+  // route hydrates `chatTrack`). Server-side eager fetches removed.
   const usersWithLatestMessages: any[] = [];
   const messages: any[] = [];
   const groups: any[] = [];
+  const userChatTrack: any[] = [];
 
-  // Fetch userChatTrack for compatibility
-  const userChatTrack = await db.chatTrack.findMany({
-    where: {
-      OR: [
-        { senderId: parseInt(session?.user?.id!) },
-        { receiverId: parseInt(session?.user?.id!) },
-      ],
-    },
-    include: {
-      message: true,
-    },
-  });
-
-  // const usersWithUnreadCounts = users.map((user) => {
-  //   const unreadCount = userChatTrack.filter(
-  //     (chat) =>
-  //       chat.receiverId === parseInt(session?.user?.id!) &&
-  //       chat.senderId === user.id &&
-  //       !chat.isRead
-  //   ).length;
-
-  //   return {
-  //     ...user,
-  //     unreadCount,
-  //   };
-  // });
   const selectedUser = selectedUserId
     ? await db.user.findUnique({
         where: {

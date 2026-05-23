@@ -18,32 +18,6 @@ export const getGroupById = async (groupId: number, userId: number) => {
 };
 
 /**
- * Legacy: returns the full nested group with all messages. Kept for any
- * caller that still relies on the old shape. New code (and the internal
- * group chat box) should use {@link getGroupMessagesPaginated}.
- */
-export const getGroupMessagesById = async (groupId: number) => {
-  const groupMessage = await db.group.findUnique({
-    where: {
-      id: groupId,
-    },
-    select: {
-      id: true,
-      messages: {
-        select: {
-          groupId: true,
-          from: true,
-          message: true,
-          createdAt: true,
-          attachment: true,
-        },
-      },
-    },
-  });
-  return groupMessage;
-};
-
-/**
  * Legacy: returns every message where the given user is sender or recipient.
  * Callers (currently collaboration) filter the result client-side. New code
  * should call {@link getUserMessagesByPair} which scopes both ends in SQL and
