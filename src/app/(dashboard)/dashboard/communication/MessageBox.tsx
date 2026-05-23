@@ -402,10 +402,15 @@ export default function MessageBox({
                       <CircleCheckBig
                         className="ml-3 size-6 cursor-pointer"
                         onClick={async () => {
-                          const trimmedName = groupName.trim();
-                          const currentName = group?.name?.trim() || "";
+                          const normalize = (s: string) =>
+                            s.trim().replace(/\s+/g, " ");
+                          const trimmedName = normalize(groupName);
+                          const currentName = normalize(group?.name ?? "");
                           if (!trimmedName) return;
-                          if (trimmedName === currentName) {
+                          if (
+                            trimmedName.toLowerCase() ===
+                            currentName.toLowerCase()
+                          ) {
                             toast.error("Group name must be different.");
                             return;
                           }
@@ -413,28 +418,33 @@ export default function MessageBox({
                             existingGroups?.some(
                               (existingGroup) =>
                                 existingGroup.id !== group?.id &&
-                                existingGroup.name?.trim().toLowerCase() ===
-                                  trimmedName.toLowerCase(),
+                                normalize(
+                                  existingGroup.name ?? "",
+                                ).toLowerCase() === trimmedName.toLowerCase(),
                             ) ?? false;
                           if (hasDuplicateName) {
                             toast.error("Group name already exists.");
                             return;
                           }
-                          setIsGroupNameEdited(false);
-                          if (groupName !== group?.name) {
-                            setGroupName(trimmedName);
-                            if (group?.id) {
-                              const response = await renameGroup(
-                                trimmedName,
-                                group.id,
+                          if (groupName !== group?.name && group?.id) {
+                            const response = await renameGroup(
+                              trimmedName,
+                              group.id,
+                            );
+                            if (response?.status === 200) {
+                              setIsGroupNameEdited(false);
+                              setGroupName(trimmedName);
+                              successToast(
+                                response?.message ||
+                                  "Group renamed successfully.",
                               );
-                              if (response?.status === 200) {
-                                successToast(
-                                  response?.message ||
-                                    "Group renamed successfully.",
-                                );
-                              }
+                            } else {
+                              toast.error(
+                                response?.message || "Failed to rename group.",
+                              );
                             }
+                          } else {
+                            setIsGroupNameEdited(false);
                           }
                         }}
                       />
