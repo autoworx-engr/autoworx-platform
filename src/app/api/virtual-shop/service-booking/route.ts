@@ -1079,6 +1079,15 @@ export async function POST(req: Request) {
                 type: "sales",
               },
             });
+
+            const servicesForLead = await tx.shopService.findMany({
+              where: { id: { in: shopServiceIds } },
+              select: { title: true },
+            });
+            const serviceTitles = servicesForLead
+              .map((s) => s.title)
+              .join(", ");
+
             await tx.lead.create({
               data: {
                 clientName: `${firstName ?? ""} ${lastName ?? ""}`.trim(),
@@ -1087,7 +1096,7 @@ export async function POST(req: Request) {
                 companyId: shop.companyId,
                 source: "Virtual Shop",
                 vehicleInfo: `${year} ${make} ${model}`,
-                services: shopServiceIds.map((id) => id).join(", "),
+                services: serviceTitles,
                 clientId: client.id,
                 columnId: column?.id,
               },
