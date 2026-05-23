@@ -45,16 +45,13 @@ export async function fetchUserIdsByLatestMessage(
   `;
 }
 
-export async function countCompanyUsers(
+export function countCompanyUsers(
   currentUserId: number,
   companyId: number,
 ): Promise<number> {
-  const totalRow = await db.$queryRaw<{ count: bigint }[]>`
-    SELECT COUNT(*)::bigint AS count
-    FROM "User"
-    WHERE company_id = ${companyId} AND id <> ${currentUserId}
-  `;
-  return Number(totalRow[0]?.count ?? 0);
+  return db.user.count({
+    where: { companyId, NOT: { id: currentUserId } },
+  });
 }
 
 /**
@@ -106,28 +103,38 @@ export async function hydrateLatestMessages(
     });
   }
 
-  // Real unread count: number of inbound messages from each counterpart
-  // whose pair-level chatTrack is currently unread. When the viewer marks
-  // the conversation read (chatTrack.isRead → true), every counterpart's
-  // count collapses to 0; an incoming Pusher message increments it client-side.
-  const unreadRows = await db.$queryRaw<
-    { counterpart_id: number; unread_count: bigint }[]
-  >`
-    SELECT m."from" AS counterpart_id, COUNT(*)::bigint AS unread_count
-    FROM "Message" m
-    INNER JOIN "ChatTrack" ct
-      ON ct.sender_id = m."from"
-      AND ct.receiver_id = m."to"
-      AND ct.section = 'internal'
-      AND ct.is_read = false
-    WHERE m."to" = ${currentUserId}
-      AND m."from" IN (${Prisma.join(otherIds)})
-      AND m.group_id IS NULL
-    GROUP BY m."from"
-  `;
+  // Real unread count per counterpart. Two cheap Prisma calls:
+  //   1. Which counterparts currently have an unread chatTrack with me?
+  //   2. For those counterparts only, group + count inbound messages.
+  // When the viewer reads (chatTrack.isRead → true), the counterpart drops
+  // out of step 1 and the map returns 0 by default.
+  const unreadChatTracks = await db.chatTrack.findMany({
+    where: {
+      receiverId: currentUserId,
+      senderId: { in: otherIds },
+      section: "internal",
+      isRead: false,
+    },
+    select: { senderId: true },
+  });
+  const unreadSenderIds = unreadChatTracks
+    .map((c) => c.senderId)
+    .filter((id): id is number => id !== null);
+
   const unreadByCounterpart = new Map<number, number>();
-  for (const r of unreadRows) {
-    unreadByCounterpart.set(r.counterpart_id, Number(r.unread_count));
+  if (unreadSenderIds.length > 0) {
+    const counts = await db.message.groupBy({
+      by: ["from"],
+      where: {
+        to: currentUserId,
+        from: { in: unreadSenderIds },
+        groupId: null,
+      },
+      _count: { _all: true },
+    });
+    for (const c of counts) {
+      unreadByCounterpart.set(c.from, c._count._all);
+    }
   }
 
   return users.map((u) => ({
