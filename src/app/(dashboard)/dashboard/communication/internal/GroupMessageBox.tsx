@@ -11,9 +11,9 @@ import { getUserInGroup } from "@/actions/communication/internal/query";
 import { useSession } from "next-auth/react";
 import { pusher } from "@/lib/pusher/client";
 import { Attachment, Group, User } from "@prisma/client";
-import { useQueryClient } from "@tanstack/react-query";
 import { useInfiniteGroupMessages } from "./_hooks/useInfiniteGroupMessages";
 import { useReverseScrollPagination } from "./_hooks/useReverseScrollPagination";
+import { usePrependToInfiniteCache } from "./_hooks/useMessageCacheMutation";
 import { internalKeys } from "./_utils/queryKey";
 import { Spinner } from "@/components/ui/spinner";
 
@@ -33,8 +33,10 @@ export default function GroupMessageBox({
   existingGroups,
 }: TProps) {
   const { data: session } = useSession();
-  const queryClient = useQueryClient();
   const sessionUserId = session?.user?.id ? parseInt(session.user.id) : NaN;
+  const prependToCache = usePrependToInfiniteCache(
+    internalKeys.groupMessages(group.id),
+  );
 
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } =
     useInfiniteGroupMessages({
@@ -71,37 +73,20 @@ export default function GroupMessageBox({
       const last = next[next.length - 1];
       if (!last) return;
 
-      queryClient.setQueryData(
-        internalKeys.groupMessages(group.id),
-        (old: any) => {
-          if (!old?.pages?.length) return old;
-          const [firstPage, ...rest] = old.pages;
-          if (last.id && firstPage.data.some((m: any) => m.id === last.id)) {
-            return old;
-          }
-          const newRow = {
-            id: last.id ?? Date.now(),
-            groupId: group.id,
-            from: last.userId ?? sessionUserId,
-            message: last.message,
-            createdAt: last.createdAt ?? new Date(),
-            attachment: Array.isArray(last.attachment)
-              ? last.attachment
-              : last.attachment
-                ? [last.attachment]
-                : [],
-          };
-          return {
-            ...old,
-            pages: [
-              { ...firstPage, data: [newRow, ...firstPage.data] },
-              ...rest,
-            ],
-          };
-        },
-      );
+      prependToCache({
+        id: last.id ?? Date.now(),
+        groupId: group.id,
+        from: last.userId ?? sessionUserId,
+        message: last.message,
+        createdAt: last.createdAt ?? new Date(),
+        attachment: Array.isArray(last.attachment)
+          ? last.attachment
+          : last.attachment
+            ? [last.attachment]
+            : [],
+      });
     },
-    [queryClient, group.id, sessionUserId],
+    [prependToCache, group.id, sessionUserId],
   );
 
   // Pusher real-time append (only for messages from other users — own
@@ -134,35 +119,21 @@ export default function GroupMessageBox({
           }
           if (from === sessionUserId) return;
 
-          queryClient.setQueryData(
-            internalKeys.groupMessages(group.id),
-            (old: any) => {
-              if (!old?.pages?.length) return old;
-              const [firstPage, ...rest] = old.pages;
-              const newRow = {
-                id: Date.now(),
-                groupId,
-                from,
-                message,
-                createdAt: new Date(),
-                attachment: attachment ? [attachment] : [],
-              };
-              return {
-                ...old,
-                pages: [
-                  { ...firstPage, data: [newRow, ...firstPage.data] },
-                  ...rest,
-                ],
-              };
-            },
-          );
+          prependToCache({
+            id: Date.now(),
+            groupId,
+            from,
+            message,
+            createdAt: new Date(),
+            attachment: attachment ? [attachment] : [],
+          });
         },
       );
 
     return () => {
       channel.unbind("message");
     };
-  }, [queryClient, group.id, sessionUserId, setGroupsList]);
+  }, [prependToCache, group.id, sessionUserId, setGroupsList]);
 
   // Reverse-pagination wiring.
   const containerRef = useRef<HTMLDivElement | null>(null);

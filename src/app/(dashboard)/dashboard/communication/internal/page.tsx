@@ -19,21 +19,12 @@ export default async function InternalPage(props: {
     throw new Error("Session ID is required");
   }
 
-  // The sidebar users list is now driven by `useInfiniteUsersList` on the
-  // client (via react-query), so we no longer eagerly fetch every user +
-  // every message on the server. Pass an empty initial set; the hook picks up
-  // page 1 on mount.
+  // Both sidebar lists (users + groups) are now driven by paginated
+  // react-query hooks on the client (`useInfiniteUsersList` /
+  // `useInfiniteGroupsList`), so we no longer eagerly fetch on the server.
   const usersWithLatestMessages: any[] = [];
   const messages: any[] = [];
-
-  // Fetch groups (this is still needed)
-  const groups = await db.group.findMany({
-    where: { users: { some: { id: parseInt(session?.user?.id!) } } },
-    include: {
-      users: true,
-    },
-    orderBy: { updatedAt: "desc" },
-  });
+  const groups: any[] = [];
 
   // Fetch userChatTrack for compatibility
   const userChatTrack = await db.chatTrack.findMany({

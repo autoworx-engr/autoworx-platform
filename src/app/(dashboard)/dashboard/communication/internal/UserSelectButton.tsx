@@ -6,28 +6,22 @@ import { pusher } from "@/lib/pusher/client";
 import { useChatTrackStore } from "@/stores/chatTrackStore";
 import { ChatTrack, Message, User } from "@prisma/client";
 import { useSession } from "next-auth/react";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useMessageDeduper } from "./_hooks/useMessageDeduper";
+
+type TUser = User & { unreadCount: number; latestMessage?: Message | null };
+type TTraceMessage = ChatTrack & { message?: Message | null };
+type TPusherChatTrack = ChatTrack & { message: Message | null };
 
 type TProps = {
-  user: User & { unreadCount: number; latestMessage?: Message | null };
+  user: TUser;
   isSelectedUser: boolean;
-  traceLastMessage?: (ChatTrack & { message?: Message | null }) | null;
-  setUsersList: React.Dispatch<
-    React.SetStateAction<
-      (User & { unreadCount: number; latestMessage?: Message | null })[]
-    >
-  >;
+  traceLastMessage?: TTraceMessage | null;
+  setUsersList: React.Dispatch<React.SetStateAction<TUser[]>>;
   groupListLength: number;
-  updateUserState?: (
-    userId: number,
-    updates: Partial<
-      User & { unreadCount: number; latestMessage?: Message | null }
-    >
-  ) => void;
-  addChatItem?: (item: any, type: "user" | "group") => void;
+  updateUserState?: (userId: number, updates: Partial<TUser>) => void;
+  addChatItem?: (item: TUser, type: "user" | "group") => void;
 };
-
-type TPusherMessage = ChatTrack & { message: Message | null };
 
 export default function UserSelectButton({
   user,
@@ -39,117 +33,70 @@ export default function UserSelectButton({
   addChatItem,
 }: TProps) {
   const { data: session } = useSession();
-  const { setLastMessage, setUnreadMessageCount, unreadMessageCount } =
-    useChatTrackStore();
+  const { setLastMessage, setUnreadMessageCount } = useChatTrackStore();
   const [lastMessageHistory, setLastMessageHistory] =
     useState(traceLastMessage);
+  const { shouldProcess } = useMessageDeduper(100);
 
-  // Update lastMessageHistory when traceLastMessage prop changes (on initial load or refresh)
   useEffect(() => {
     if (traceLastMessage) {
       setLastMessageHistory(traceLastMessage);
     }
   }, [traceLastMessage]);
 
-  // initial check to db is chat tracker are exist or not and if hasn't then create or get new chat tracker
+  // Ensure a ChatTrack row exists for this pair.
   useEffect(() => {
-    const createChatTrack = async () => {
-      try {
-        if (!traceLastMessage) {
-          await createUserChatTrack({
-            senderId: parseInt(session?.user?.id!),
-            receiverId: user.id,
-          });
-        }
-      } catch (err) {
-        console.log(err);
-      }
-    };
-    createChatTrack();
+    if (traceLastMessage) return;
+    createUserChatTrack({
+      senderId: parseInt(session?.user?.id!),
+      receiverId: user.id,
+    }).catch(() => {
+      /* non-blocking; row will be lazily created on first send */
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Calculate participants dynamically based on the latest message
-  const participants = useMemo(() => {
-    // Check ChatTrack message first, then fallback to user's latestMessage
+  const participants = useMemo<"sender" | "receiver">(() => {
     const messageToCheck = lastMessageHistory?.message || user.latestMessage;
-    if (!messageToCheck) return "receiver"; // Default to receiver if no message
-
+    if (!messageToCheck) return "receiver";
     return messageToCheck.from === parseInt(session?.user?.id!)
       ? "sender"
       : "receiver";
   }, [lastMessageHistory?.message, user.latestMessage, session?.user?.id]);
 
   useEffect(() => {
-    // Subscribe to both channels but add deduplication logic
     const currentUserChannel = pusher.subscribe(`track-${session?.user?.id}`);
     const otherUserChannel = pusher.subscribe(`track-${user?.id}`);
 
-    // Track processed messages to avoid duplicates
-    const processedMessages = new Set<string>();
-
-    const handleChatTrack = (data: TPusherMessage) => {
-      // Create a unique key for this message to prevent duplicate processing
+    const handleChatTrack = (data: TPusherChatTrack) => {
       const messageKey = `${data.message?.id || data.id}-${data.message?.from}-${data.message?.to}-${data.message?.createdAt}`;
+      if (!shouldProcess(messageKey)) return;
 
-      // If we've already processed this message, skip it
-      if (processedMessages.has(messageKey)) {
-        return;
-      }
-
-      // Check if this message is part of the conversation between current user and this specific user
-      const isMessageForThisConversation =
+      const isForThisConversation =
         (data.message?.to === parseInt(session?.user?.id!) &&
           data.message?.from === user.id) ||
         (data.message?.from === parseInt(session?.user?.id!) &&
           data.message?.to === user.id);
 
-      if (isMessageForThisConversation && !data.message?.groupId) {
-        // Mark this message as processed
-        processedMessages.add(messageKey);
+      if (!isForThisConversation || data.message?.groupId) return;
 
-        // Clean up old message keys to prevent memory leaks (keep only last 100)
-        if (processedMessages.size > 100) {
-          const keys = Array.from(processedMessages);
-          keys.slice(0, 50).forEach((key) => processedMessages.delete(key));
-        }
+      const updatedChatTrack = {
+        ...data,
+        lastMessage: data.message?.message || data.lastMessage,
+      };
+      setLastMessageHistory(updatedChatTrack);
+      setLastMessage(updatedChatTrack);
 
-        // Ensure the ChatTrack object has the latest message text
-        const updatedChatTrack = {
-          ...data,
-          lastMessage: data.message?.message || data.lastMessage,
-        };
-
-        // Always update the local message history for this specific conversation
-        setLastMessageHistory(updatedChatTrack);
-
-        // Update the global store for other components that might need it
-        setLastMessage(updatedChatTrack);
-
-        // Only increment unread count if current user is receiving the message
-        if (data.message?.to === parseInt(session?.user?.id!)) {
-          // Get the current unread count to avoid stale closure
-          const currentUnreadCount =
-            useChatTrackStore.getState().unreadMessageCount;
-          setUnreadMessageCount({
-            ...currentUnreadCount,
-            internalCount: currentUnreadCount.internalCount + 1,
-          });
-
-          // Set the user's unread count to 1 (simple indicator)
-          setUsersList((prevUsersList) => {
-            return prevUsersList.map((u) => {
-              if (u.id === user.id) {
-                return { ...u, unreadCount: 1 };
-              }
-              return u;
-            });
-          });
-
-          // Also update the main user state in the List component
-          if (updateUserState) {
-            updateUserState(user.id, { unreadCount: 1 });
-          }
-        }
+      if (data.message?.to === parseInt(session?.user?.id!)) {
+        const currentUnread = useChatTrackStore.getState().unreadMessageCount;
+        setUnreadMessageCount({
+          ...currentUnread,
+          internalCount: currentUnread.internalCount + 1,
+        });
+        setUsersList((prev) =>
+          prev.map((u) => (u.id === user.id ? { ...u, unreadCount: 1 } : u)),
+        );
+        updateUserState?.(user.id, { unreadCount: 1 });
       }
     };
 
@@ -158,18 +105,16 @@ export default function UserSelectButton({
       userId: number;
       section: string;
     }) => {
-      // If this user's messages were marked as read, update the state
       if (
         data.senderId === user.id &&
         data.userId === parseInt(session?.user?.id!)
       ) {
         setLastMessageHistory((prev) =>
-          prev ? { ...prev, isRead: true } : prev
+          prev ? { ...prev, isRead: true } : prev,
         );
       }
     };
 
-    // Listen for events on both channels
     currentUserChannel.bind("chat-track", handleChatTrack);
     otherUserChannel.bind("chat-track", handleChatTrack);
     currentUserChannel.bind("chat-track-read", handleChatTrackRead);
@@ -183,141 +128,88 @@ export default function UserSelectButton({
       pusher.unsubscribe(`track-${session?.user?.id}`);
       pusher.unsubscribe(`track-${user?.id}`);
     };
-  }, [user.id, session?.user?.id, setLastMessage, setUnreadMessageCount]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user.id, session?.user?.id]);
 
-  // handle selected user
   const handleSelectedUser = async (
-    user: User & { unreadCount: number; latestMessage?: Message | null },
-    participants: "sender" | "receiver",
-    lastMessageInfo?: (ChatTrack & { message?: Message | null }) | null
+    selected: TUser,
+    role: "sender" | "receiver",
+    lastMessageInfo?: TTraceMessage | null,
   ) => {
-    try {
-      const updatedLastMessage =
-        lastMessageInfo &&
-        participants === "receiver" &&
-        (await updateChatTrack(lastMessageInfo.id));
+    const updatedLastMessage =
+      lastMessageInfo &&
+      role === "receiver" &&
+      (await updateChatTrack(lastMessageInfo.id));
 
-      if (updatedLastMessage && updatedLastMessage?.type === "success") {
-        setLastMessageHistory(updatedLastMessage?.data);
-      }
+    if (updatedLastMessage && updatedLastMessage?.type === "success") {
+      setLastMessageHistory(updatedLastMessage?.data);
+    }
 
-      // Update the user's unread count immediately in the UI
-      if (addChatItem) {
-        // Use the new coordinated approach
-        const updatedUser = { ...user, unreadCount: 0 };
-        addChatItem(updatedUser, "user");
-
-        // Also update the main user state
-        if (updateUserState) {
-          updateUserState(user.id, { unreadCount: 0 });
+    if (addChatItem) {
+      const updatedUser = { ...selected, unreadCount: 0 };
+      addChatItem(updatedUser, "user");
+      updateUserState?.(selected.id, { unreadCount: 0 });
+    } else {
+      setUsersList((list) => {
+        const idx = list.findIndex((u) => u.id === selected.id);
+        if (idx !== -1) {
+          const next = [...list];
+          next[idx] = { ...next[idx], unreadCount: 0 };
+          updateUserState?.(selected.id, { unreadCount: 0 });
+          return next;
         }
-      } else {
-        // Fallback to old approach
-        setUsersList((usersList) => {
-          const existingUserIndex = usersList.findIndex(
-            (u) => u.id === user.id
-          );
 
-          if (existingUserIndex !== -1) {
-            const updatedUsersList = [...usersList];
-            updatedUsersList[existingUserIndex] = {
-              ...updatedUsersList[existingUserIndex],
-              unreadCount: 0,
-            };
+        const updatedUser = { ...selected, unreadCount: 0 };
+        updateUserState?.(selected.id, { unreadCount: 0 });
 
-            if (updateUserState) {
-              updateUserState(user.id, { unreadCount: 0 });
-            }
+        const total = list.length + groupListLength;
+        if (total >= 4 && list.length >= 1) {
+          const next = [...list];
+          next[next.length - 1] = updatedUser;
+          return next;
+        }
+        return [...list, updatedUser];
+      });
+    }
 
-            return updatedUsersList;
-          } else {
-            const updatedUser = { ...user, unreadCount: 0 };
-
-            if (updateUserState) {
-              updateUserState(user.id, { unreadCount: 0 });
-            }
-
-            const totalChatBoxes = usersList.length + groupListLength;
-
-            if (totalChatBoxes >= 4) {
-              const newUsersList = [...usersList];
-              if (newUsersList.length >= 1) {
-                newUsersList[newUsersList.length - 1] = updatedUser;
-                return newUsersList;
-              } else {
-                return [updatedUser];
-              }
-            } else {
-              return [...usersList, updatedUser];
-            }
-          }
-        });
-      }
-
-      // Only decrement unread count if there was actually an unread message
-      if (
-        lastMessageInfo &&
-        !lastMessageInfo.isRead &&
-        participants === "receiver"
-      ) {
-        const currentUnreadCount =
-          useChatTrackStore.getState().unreadMessageCount;
-        setUnreadMessageCount({
-          ...currentUnreadCount,
-          internalCount: Math.max(0, currentUnreadCount.internalCount - 1),
-        });
-      }
-    } catch (err) {
-      console.log(err);
+    if (lastMessageInfo && !lastMessageInfo.isRead && role === "receiver") {
+      const currentUnread = useChatTrackStore.getState().unreadMessageCount;
+      setUnreadMessageCount({
+        ...currentUnread,
+        internalCount: Math.max(0, currentUnread.internalCount - 1),
+      });
     }
   };
+
+  const hasMessageHistory =
+    lastMessageHistory?.messageId && lastMessageHistory?.lastMessage;
+  const isUnreadReceiver =
+    hasMessageHistory &&
+    !lastMessageHistory?.isRead &&
+    participants === "receiver";
+
   return (
     <button
       className={cn(
         `group relative flex items-center w-full gap-2 rounded-2xl p-3 sm:p-4`,
-        // base card feel
         "border border-transparent shadow-sm transition-all duration-200",
-        // hover/active polish
         "hover:shadow-md active:scale-[0.99]",
         isSelectedUser
-          ? [
-              "bg-gradient-to-r from-teal-700 to-teal-600",
-              "ring-1 ring-teal-500/60",
-            ].join(" ")
-          : [
-              "bg-white dark:bg-zinc-900/60",
-              "border-zinc-200/70 dark:border-white/10",
-              "hover:border-zinc-300/80 dark:hover:border-white/20",
-            ].join(" ")
+          ? "bg-gradient-to-r from-teal-700 to-teal-600 ring-1 ring-teal-500/60"
+          : "bg-white dark:bg-zinc-900/60 border-zinc-200/70 dark:border-white/10 hover:border-zinc-300/80 dark:hover:border-white/20",
       )}
       onClick={() => handleSelectedUser(user, participants, lastMessageHistory)}
     >
-      {/* Unread message indicator - improved design similar to client communication */}
-      {(() => {
-        // Only show unread indicator if:
-        // 1. There's an actual message history (conversation exists)
-        // 2. The message is unread
-        // 3. Current user is the receiver of the message
-        const hasMessageHistory =
-          lastMessageHistory?.messageId && lastMessageHistory?.lastMessage;
-        const isUnreadReceiver =
-          hasMessageHistory &&
-          !lastMessageHistory?.isRead &&
-          participants === "receiver";
-
-        const shouldShowUnread = isUnreadReceiver;
-
-        return shouldShowUnread ? (
-          <div className="absolute right-[11px] top-[11px] z-10">
-            <div className="flex h-5 w-5 items-center justify-center">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
-              <span className="relative inline-flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                1
-              </span>
-            </div>
+      {isUnreadReceiver && (
+        <div className="absolute right-[11px] top-[11px] z-10">
+          <div className="flex h-5 w-5 items-center justify-center">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
+            <span className="relative inline-flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+              1
+            </span>
           </div>
-        ) : null;
-      })()}
+        </div>
+      )}
       <Avatar
         className="flex-shrink-0"
         photo={user.image}
@@ -328,12 +220,11 @@ export default function UserSelectButton({
         <p
           className={cn(
             "text-[14px] font-bold text-[#797979]",
-            // Make unread messages more prominent
             isSelectedUser
               ? "text-[#F2F2F2] font-bold"
               : lastMessageHistory?.isRead || participants === "sender"
                 ? "text-black font-bold"
-                : "text-black font-extrabold" // Extra bold for unread messages
+                : "text-black font-extrabold",
           )}
         >
           {user.firstName} {user.lastName}
@@ -342,7 +233,6 @@ export default function UserSelectButton({
           <p
             className={cn(
               "mt-2 line-clamp-1 text-xs",
-              // Make unread messages more prominent
               lastMessageHistory?.isRead ||
                 isSelectedUser ||
                 participants === "sender"
@@ -350,16 +240,14 @@ export default function UserSelectButton({
                 : "font-semibold",
               isSelectedUser
                 ? "text-white/95"
-                : "text-zinc-600 dark:text-zinc-300"
+                : "text-zinc-600 dark:text-zinc-300",
             )}
           >
             {(() => {
               const displayText =
                 participants === "sender" ? "You" : user.firstName;
-              // Prefer chatTrack lastMessage, fallback to user.latestMessage
               const messageText =
                 lastMessageHistory?.lastMessage || user.latestMessage?.message;
-
               return messageText ? `${displayText}: ${messageText}` : "";
             })()}
           </p>
