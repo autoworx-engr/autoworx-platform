@@ -27,7 +27,7 @@ export default function Body({
   selectedUser,
   messages = [],
 }: TBodyProps) {
-  const [chatList, setChatList] = useState<ChatListItem[]>(
+  const [chatList, setChatList] = useState<ChatListItem[]>(() =>
     selectedUser
       ? [
           {
@@ -161,7 +161,9 @@ export default function Body({
   return (
     <>
       <List
-        className={cn(totalLengthOfUsersAndGroups === 0 ? "block" : "hidden")}
+        className={cn(
+          totalLengthOfUsersAndGroups === 0 ? "block" : "hidden lg:block",
+        )}
         groups={groups}
         users={users}
         groupsList={groupsList}
@@ -173,7 +175,9 @@ export default function Body({
         messages={messages}
       />
       <UsersArea
-        className={cn(totalLengthOfUsersAndGroups === 0 ? "hidden" : "block")}
+        className={cn(
+          totalLengthOfUsersAndGroups === 0 ? "hidden lg:hidden" : "block",
+        )}
         usersList={usersList}
         setUsersList={setUsersList}
         currentUser={currentUser}

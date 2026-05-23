@@ -3,7 +3,8 @@ import { SlimInput } from "@/components/SlimInput";
 import { User } from "@prisma/client";
 import { ChevronDown, ChevronUp, CircleX, Search } from "lucide-react";
 import React, { useEffect, useRef } from "react";
-import type { TContactListUser } from "../_hooks/useGroupContactList";
+import InfiniteScroll from "react-infinite-scroll-component";
+import type { TContactListUser } from "../_hooks/useGroupContactInfiniteList";
 
 type Props = {
   contactList: TContactListUser[];
@@ -14,14 +15,13 @@ type Props = {
   onAdd: (user: User) => void;
   onRemove: (user: TContactListUser) => void;
   onOpenList: () => void;
+  hasNextPage?: boolean;
+  fetchNextPage?: () => void;
+  isFetchingNextPage?: boolean;
+  isLoading?: boolean;
   required?: boolean;
 };
 
-/**
- * Pill list of selected users + searchable dropdown of available users.
- * Behaviour identical to the previous inline blocks inside CreateGroupModal
- * and AddUsersInGroupModal — extracted so both modals share one implementation.
- */
 export function ContactPicker({
   contactList,
   groupUsers,
@@ -31,6 +31,10 @@ export function ContactPicker({
   onAdd,
   onRemove,
   onOpenList,
+  hasNextPage,
+  fetchNextPage,
+  isFetchingNextPage,
+  isLoading,
   required,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -68,7 +72,7 @@ export function ContactPicker({
               Select Contacts{" "}
               {required && <span className="text-red-500">*</span>}
             </div>
-            <div className="w-full space-y-4 rounded-xl border border-slate-300/50 bg-white/50 p-4 backdrop-blur-sm max-h-[50vh] overflow-y-auto ring-1 ring-slate-900/5 dark:border-slate-700/50 dark:bg-slate-800/50 dark:ring-white/10 sm:max-h-[60vh]">
+            <div className="w-full space-y-4 rounded-xl border border-slate-300/50 bg-white/50 p-4 backdrop-blur-sm max-h-[50vh] overflow-hidden ring-1 ring-slate-900/5 dark:border-slate-700/50 dark:bg-slate-800/50 dark:ring-white/10 sm:max-h-[60vh]">
               <div className="relative">
                 <input
                   ref={inputRef}
@@ -83,31 +87,57 @@ export function ContactPicker({
                 />
                 <Search className="absolute left-2 top-1/2 size-5 -translate-y-1/2 text-slate-600 dark:text-slate-400" />
               </div>
-              <div className="max-h-60 flex flex-col items-start space-y-2 overflow-y-auto thin-scrollbar p-1">
-                {groupUsers.length > 0 ? (
-                  groupUsers.map((user) => (
-                    <div
-                      key={user.id}
-                      className="flex w-full cursor-pointer items-center space-x-3 rounded-lg p-2 transition-all duration-300 ease-in-out hover:bg-slate-200/50 dark:hover:bg-slate-700/50"
-                      onClick={() => onAdd(user)}
-                    >
-                      <Avatar photo={user.image} width={60} height={60} />
-                      <div className="flex flex-col overflow-hidden flex-1 min-w-0">
-                        <p className="truncate max-w-[280px] text-xs md:text-base font-semibold text-slate-800 dark:text-white">
-                          {user.firstName} {user.lastName}
-                        </p>
-                        <div className="flex flex-col text-[8px] md:text-xs text-slate-600 dark:text-slate-400">
-                          {user.phone && <p>{user.phone}</p>}
-                          <p className="truncate">{user.email}</p>
+              <div
+                id="contact-picker-scroll"
+                className="max-h-60 flex flex-col items-start space-y-2 overflow-y-auto thin-scrollbar p-1"
+              >
+                <InfiniteScroll
+                  dataLength={groupUsers.length}
+                  next={fetchNextPage ?? (() => {})}
+                  hasMore={hasNextPage ?? false}
+                  loader={
+                    isFetchingNextPage ? (
+                      <div className="py-2 text-center text-xs text-zinc-500">
+                        Loading more…
+                      </div>
+                    ) : null
+                  }
+                  scrollableTarget="contact-picker-scroll"
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "0.5rem",
+                  }}
+                >
+                  {isLoading && groupUsers.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-8">
+                      <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-[#6571FF]" />
+                    </div>
+                  ) : groupUsers.length > 0 ? (
+                    groupUsers.map((user) => (
+                      <div
+                        key={user.id}
+                        className="flex w-full cursor-pointer items-center space-x-3 rounded-lg p-2 transition-all duration-300 ease-in-out hover:bg-slate-200/50 dark:hover:bg-slate-700/50"
+                        onClick={() => onAdd(user)}
+                      >
+                        <Avatar photo={user.image} width={60} height={60} />
+                        <div className="flex flex-col overflow-hidden flex-1 min-w-0">
+                          <p className="truncate max-w-[280px] text-xs md:text-base font-semibold text-slate-800 dark:text-white">
+                            {user.firstName} {user.lastName}
+                          </p>
+                          <div className="flex flex-col text-[8px] md:text-xs text-slate-600 dark:text-slate-400">
+                            {user.phone && <p>{user.phone}</p>}
+                            <p className="truncate">{user.email}</p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="w-full text-center text-amber-500">
-                    No user found
-                  </p>
-                )}
+                    ))
+                  ) : (
+                    <p className="w-full py-4 text-center text-amber-500">
+                      No user found
+                    </p>
+                  )}
+                </InfiniteScroll>
               </div>
             </div>
           </>

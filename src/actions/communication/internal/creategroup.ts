@@ -5,7 +5,8 @@ import { db } from "@/lib/db";
 import { getPusherInstance } from "@/lib/pusher/server";
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
-import { findDuplicateGroupName, normalizeGroupName } from "./_utils/groupName";
+import { findDuplicateGroupName } from "./_utils/groupName";
+import { normalizeGroupName } from "@/lib/utils/groupName";
 
 type TCreateGroup = {
   name: string;

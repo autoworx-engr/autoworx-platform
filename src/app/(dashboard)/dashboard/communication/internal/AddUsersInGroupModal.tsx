@@ -11,7 +11,7 @@ import { Group, User } from "@prisma/client";
 import { CirclePlus } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { ContactPicker } from "./_components/ContactPicker";
-import { useGroupContactList } from "./_hooks/useGroupContactList";
+import { useGroupContactInfiniteList } from "./_hooks/useGroupContactInfiniteList";
 
 type TGroup = Group & { users: User[] };
 
@@ -35,12 +35,15 @@ export default function AddUsersInGroupModal({
   const {
     groupUsers,
     contactList,
-    fetchUsers,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: isLoadingUsers,
     handleSearch,
     addToContactList,
     removeFromContactList,
     reset,
-  } = useGroupContactList([], existingIds);
+  } = useGroupContactInfiniteList([], existingIds);
 
   useEffect(() => {
     if (!open) {
@@ -109,8 +112,11 @@ export default function AddUsersInGroupModal({
           onRemove={removeFromContactList}
           onOpenList={() => {
             setOpenUserList((p) => !p);
-            fetchUsers();
           }}
+          hasNextPage={hasNextPage}
+          fetchNextPage={fetchNextPage}
+          isFetchingNextPage={isFetchingNextPage}
+          isLoading={isLoadingUsers}
           required
         />
         <DialogFooter className="gap-x-3">

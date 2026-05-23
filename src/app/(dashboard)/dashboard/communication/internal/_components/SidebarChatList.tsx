@@ -45,10 +45,6 @@ export function SidebarChatList({
       className="thin-scrollbar h-[calc(80vh-7rem)] mt-2 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto"
     >
       <InfiniteScroll
-        // Including `tab` in the key forces a fresh scroll context when the
-        // user switches tabs — otherwise dataLength would change without the
-        // scroll position resetting, and the next-page trigger could fire
-        // prematurely against the wrong dataset.
         key={tab}
         dataLength={visible.length}
         next={fetchNextPage}

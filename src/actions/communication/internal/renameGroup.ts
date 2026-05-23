@@ -4,7 +4,8 @@ import { authOptions } from "@/authOptions";
 import { db } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
-import { findDuplicateGroupName, normalizeGroupName } from "./_utils/groupName";
+import { findDuplicateGroupName } from "./_utils/groupName";
+import { normalizeGroupName } from "@/lib/utils/groupName";
 
 export const renameGroup = async (name: string, groupId: number) => {
   const session = await getServerSession(authOptions);

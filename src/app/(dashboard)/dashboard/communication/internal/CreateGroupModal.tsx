@@ -12,7 +12,7 @@ import { Users } from "lucide-react";
 import { useSession } from "next-auth/react";
 import React, { useEffect, useState } from "react";
 import { ContactPicker } from "./_components/ContactPicker";
-import { useGroupContactList } from "./_hooks/useGroupContactList";
+import { useGroupContactInfiniteList } from "./_hooks/useGroupContactInfiniteList";
 
 type TGroup = Group & { users: User[] };
 
@@ -39,12 +39,15 @@ export default function CreateGroupModal({
   const {
     groupUsers,
     contactList,
-    fetchUsers,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
     handleSearch,
     addToContactList,
     removeFromContactList,
     reset,
-  } = useGroupContactList(users);
+  } = useGroupContactInfiniteList(users);
 
   useEffect(() => {
     if (!open) {
@@ -171,8 +174,11 @@ export default function CreateGroupModal({
           onRemove={removeFromContactList}
           onOpenList={() => {
             setOpenUserList((p) => !p);
-            fetchUsers();
           }}
+          hasNextPage={hasNextPage}
+          fetchNextPage={fetchNextPage}
+          isFetchingNextPage={isFetchingNextPage}
+          isLoading={isLoading}
           required
         />
 

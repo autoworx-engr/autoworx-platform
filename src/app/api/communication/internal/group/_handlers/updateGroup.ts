@@ -1,7 +1,4 @@
-import {
-  findDuplicateGroupName,
-  normalizeGroupName,
-} from "@/actions/communication/internal/_utils/groupName";
+import { findDuplicateGroupName } from "@/actions/communication/internal/_utils/groupName";
 import { deleteGroupIfEmpty } from "@/actions/communication/internal/_utils/deleteGroupIfEmpty";
 import { AppError } from "@/error-boundary/error";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
@@ -10,6 +7,7 @@ import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { getPusherInstance } from "@/lib/pusher/server";
 import { NextRequest, NextResponse } from "next/server";
 import { findUsers } from "./findUsers";
+import { normalizeGroupName } from "@/lib/utils/groupName";
 
 const pusher = getPusherInstance();
 
