@@ -68,7 +68,7 @@ export async function getAvailableSlots(
       return {
         success: true,
         date: requestMoment.toDate(),
-        availableSlots: [],
+        slots: [],
       };
     }
 
@@ -114,12 +114,20 @@ export async function getAvailableSlots(
     const existingAppointments = await db.appointment.findMany({
       where: {
         companyId: shop?.companyId,
-        date: {
-          gte: startOfSelectedDay,
-          lt: startOfNextDay,
-        },
+        AND: [
+          { date: { lt: startOfNextDay } },
+          {
+            OR: [
+              { endDate: { gte: startOfSelectedDay } },
+              {
+                endDate: null,
+                date: { gte: startOfSelectedDay },
+              },
+            ],
+          },
+        ],
       },
-      select: { startTime: true, endTime: true },
+      select: { date: true, endDate: true, startTime: true, endTime: true },
     });
 
     const activeHolds = await db.shopSlotHold.findMany({
@@ -153,14 +161,20 @@ export async function getAvailableSlots(
       }
 
       const appointmentsInSlot = existingAppointments.filter((app) => {
-        if (!app.startTime || !app.endTime) return false;
+        if (!app.startTime || !app.endTime || !app.date) return false;
+        const startDateStr = moment.tz(app.date, timezone).format("YYYY-MM-DD");
+        const endAnchorDate = app.endDate ?? app.date;
+        const endDateStr = moment
+          .tz(endAnchorDate, timezone)
+          .format("YYYY-MM-DD");
+
         const appStartMoment = moment.tz(
-          `${selectedDateStr} ${app.startTime}`,
+          `${startDateStr} ${app.startTime}`,
           "YYYY-MM-DD HH:mm",
           timezone,
         );
         const appEndMoment = moment.tz(
-          `${selectedDateStr} ${app.endTime}`,
+          `${endDateStr} ${app.endTime}`,
           "YYYY-MM-DD HH:mm",
           timezone,
         );
