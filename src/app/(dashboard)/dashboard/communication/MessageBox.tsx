@@ -2,6 +2,7 @@ import { deleteUserFromGroup } from "@/actions/communication/internal/deleteUser
 import { getUserInGroup } from "@/actions/communication/internal/query";
 import { renameGroup } from "@/actions/communication/internal/renameGroup";
 import { updateChatTrack } from "@/actions/communication/internal/updateChatTrack";
+import { normalizeGroupName } from "@/actions/communication/internal/_utils/groupName";
 import Avatar from "@/components/Avatar";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { cn } from "@/lib/cn";
@@ -402,10 +403,10 @@ export default function MessageBox({
                       <CircleCheckBig
                         className="ml-3 size-6 cursor-pointer"
                         onClick={async () => {
-                          const normalize = (s: string) =>
-                            s.trim().replace(/\s+/g, " ");
-                          const trimmedName = normalize(groupName);
-                          const currentName = normalize(group?.name ?? "");
+                          const trimmedName = normalizeGroupName(groupName);
+                          const currentName = normalizeGroupName(
+                            group?.name ?? "",
+                          );
                           if (!trimmedName) return;
                           if (
                             trimmedName.toLowerCase() ===
@@ -418,7 +419,7 @@ export default function MessageBox({
                             existingGroups?.some(
                               (existingGroup) =>
                                 existingGroup.id !== group?.id &&
-                                normalize(
+                                normalizeGroupName(
                                   existingGroup.name ?? "",
                                 ).toLowerCase() === trimmedName.toLowerCase(),
                             ) ?? false;
