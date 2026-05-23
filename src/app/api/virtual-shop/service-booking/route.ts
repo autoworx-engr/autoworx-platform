@@ -1241,12 +1241,28 @@ export async function POST(req: Request) {
           .utc(`${appointmentDate} ${appointmentStartTime}`, "YYYY-MM-DD HH:mm")
           .add(totalDuration > 0 ? totalDuration : intervalMinutes, "minutes");
 
+        const startOfSelectedDay = new Date(`${appointmentDate}T00:00:00.000Z`);
+        const startOfNextDay = new Date(
+          startOfSelectedDay.getTime() + 24 * 60 * 60 * 1000,
+        );
+
         const existingAppointments = await tx.appointment.findMany({
           where: {
             companyId,
-            date: new Date(appointmentDate),
+            AND: [
+              { date: { lt: startOfNextDay } },
+              {
+                OR: [
+                  { endDate: { gte: startOfSelectedDay } },
+                  {
+                    endDate: null,
+                    date: { gte: startOfSelectedDay },
+                  },
+                ],
+              },
+            ],
           },
-          select: { startTime: true, endTime: true },
+          select: { date: true, endDate: true, startTime: true, endTime: true },
         });
 
         const activeHolds = await tx.shopSlotHold.findMany({
@@ -1264,13 +1280,17 @@ export async function POST(req: Request) {
         );
 
         const appointmentsInSlot = existingAppointments.filter((app) => {
-          if (!app.startTime || !app.endTime) return false;
+          if (!app.startTime || !app.endTime || !app.date) return false;
+          const startDateStr = moment.utc(app.date).format("YYYY-MM-DD");
+          const endAnchorDate = app.endDate ?? app.date;
+          const endDateStr = moment.utc(endAnchorDate).format("YYYY-MM-DD");
+
           const appStartMoment = moment.utc(
-            `${appointmentDate} ${app.startTime}`,
+            `${startDateStr} ${app.startTime}`,
             "YYYY-MM-DD HH:mm",
           );
           const appEndMoment = moment.utc(
-            `${appointmentDate} ${app.endTime}`,
+            `${endDateStr} ${app.endTime}`,
             "YYYY-MM-DD HH:mm",
           );
           return (
