@@ -89,61 +89,114 @@ export const GET = async (request: NextRequest) => {
       where.OR = conditions;
     }
 
-    // Fetch all users matching filter (optimize if dataset is very large)
-    const allUsers = await db.user.findMany({
-      where,
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        phone: true,
-        image: true,
-        employeeType: true,
-      },
-    });
+    // Pagination + ordering live entirely in SQL. We sort by the viewer's
+    // latest internal chatTrack with each user (newest activity first, then
+    // never-chatted users fall to the bottom via NULLS LAST).
+    //
+    // Two queries:
+    //   1. Raw: get the ordered, paginated set of user ids for this page.
+    //   2. Hydrate: batch-fetch the user rows + their latest chatTrack with
+    //      the viewer, then re-attach in the original order.
+    const skip = (pageNum - 1) * limitNum;
 
-    // Batch fetch only this viewer's chatTracks with these users
-    const userIds = allUsers.map((u) => u.id);
-    const chatTracks = await db.chatTrack.findMany({
-      where: {
-        section: "internal",
-        OR: [
-          { senderId: userIdNum, receiverId: { in: userIds } },
-          { receiverId: userIdNum, senderId: { in: userIds } },
-        ],
-      },
-      orderBy: { updatedAt: "desc" },
-    });
+    // Build the search predicate as a Prisma where for re-use by `count` and
+    // the row hydration. The raw query inlines its own search SQL below to
+    // keep the join + order on one statement.
+    const orderedRows = await db.$queryRaw<
+      { id: number; track_updated_at: Date | null }[]
+    >`
+      SELECT u.id, t.track_updated_at
+      FROM "User" u
+      LEFT JOIN LATERAL (
+        SELECT ct.updated_at AS track_updated_at
+        FROM "ChatTrack" ct
+        WHERE ct.section::text = 'internal'
+          AND (
+            (ct.sender_id = ${userIdNum} AND ct.receiver_id = u.id)
+            OR (ct.receiver_id = ${userIdNum} AND ct.sender_id = u.id)
+          )
+        ORDER BY ct.updated_at DESC
+        LIMIT 1
+      ) t ON true
+      WHERE u.company_id = ${principal.companyId}
+        AND u.id <> ${userIdNum}
+        ${
+          search
+            ? Prisma.sql`AND (
+                u.first_name ILIKE ${"%" + search + "%"}
+                OR u.last_name ILIKE ${"%" + search + "%"}
+                OR u.email ILIKE ${"%" + search + "%"}
+              )`
+            : Prisma.empty
+        }
+      ORDER BY t.track_updated_at DESC NULLS LAST, u.id ASC
+      OFFSET ${skip} LIMIT ${limitNum}
+    `;
 
-    // Map latest chatTrack per other-party user (first hit wins, list is desc)
-    const latestChatTrackMap = new Map<number, (typeof chatTracks)[0]>();
-    for (const track of chatTracks) {
-      const otherId =
-        track.senderId === userIdNum ? track.receiverId : track.senderId;
-      if (otherId && !latestChatTrackMap.has(otherId)) {
-        latestChatTrackMap.set(otherId, track);
+    const totalRow = await db.user.count({ where });
+    const totalRecords = totalRow;
+
+    const idsInOrder = orderedRows.map((r) => r.id);
+    let paginatedUsers: Array<
+      Prisma.UserGetPayload<{
+        select: {
+          id: true;
+          firstName: true;
+          lastName: true;
+          email: true;
+          phone: true;
+          image: true;
+          employeeType: true;
+        };
+      }> & { chatTrack: Prisma.ChatTrackGetPayload<{}> | null }
+    > = [];
+
+    if (idsInOrder.length > 0) {
+      const [usersRows, tracks] = await Promise.all([
+        db.user.findMany({
+          where: { id: { in: idsInOrder } },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            phone: true,
+            image: true,
+            employeeType: true,
+          },
+        }),
+        db.chatTrack.findMany({
+          where: {
+            section: "internal",
+            OR: [
+              { senderId: userIdNum, receiverId: { in: idsInOrder } },
+              { receiverId: userIdNum, senderId: { in: idsInOrder } },
+            ],
+          },
+          orderBy: { updatedAt: "desc" },
+        }),
+      ]);
+
+      const userById = new Map(usersRows.map((u) => [u.id, u]));
+      const latestChatTrackMap = new Map<number, (typeof tracks)[0]>();
+      for (const track of tracks) {
+        const otherId =
+          track.senderId === userIdNum ? track.receiverId : track.senderId;
+        if (otherId && !latestChatTrackMap.has(otherId)) {
+          latestChatTrackMap.set(otherId, track);
+        }
       }
+
+      paginatedUsers = idsInOrder
+        .map((id) => {
+          const user = userById.get(id);
+          if (!user) return null;
+          return { ...user, chatTrack: latestChatTrackMap.get(id) ?? null };
+        })
+        .filter(
+          (u): u is NonNullable<(typeof paginatedUsers)[number]> => u !== null,
+        );
     }
-
-    // Combine and sort by latest chatTrack date
-    const usersWithChatTrack = allUsers
-      .map((user) => ({
-        ...user,
-        chatTrack: latestChatTrackMap.get(user.id) ?? null,
-      }))
-      .sort((a, b) => {
-        const aDate = a.chatTrack?.updatedAt ?? new Date(0);
-        const bDate = b.chatTrack?.updatedAt ?? new Date(0);
-        return bDate.getTime() - aDate.getTime(); // Latest first
-      });
-
-    // Apply pagination after sorting
-    const totalRecords = usersWithChatTrack.length;
-    const paginatedUsers = usersWithChatTrack.slice(
-      (pageNum - 1) * limitNum,
-      pageNum * limitNum,
-    );
 
     const hasNextPage = pageNum * limitNum < totalRecords;
     const hasPrevPage = pageNum > 1;
