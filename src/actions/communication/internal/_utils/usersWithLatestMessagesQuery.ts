@@ -106,33 +106,33 @@ export async function hydrateLatestMessages(
     });
   }
 
-  const chatTracks = await db.chatTrack.findMany({
-    where: {
-      OR: [
-        {
-          senderId: { in: otherIds },
-          receiverId: currentUserId,
-          isRead: false,
-        },
-        {
-          senderId: currentUserId,
-          receiverId: { in: otherIds },
-          isRead: false,
-        },
-      ],
-    },
-    select: { senderId: true, receiverId: true, isRead: true },
-  });
-  const unreadFromUser = new Set<number>();
-  for (const t of chatTracks) {
-    if (t.receiverId === currentUserId && t.senderId != null && !t.isRead) {
-      unreadFromUser.add(t.senderId);
-    }
+  // Real unread count: number of inbound messages from each counterpart
+  // whose pair-level chatTrack is currently unread. When the viewer marks
+  // the conversation read (chatTrack.isRead → true), every counterpart's
+  // count collapses to 0; an incoming Pusher message increments it client-side.
+  const unreadRows = await db.$queryRaw<
+    { counterpart_id: number; unread_count: bigint }[]
+  >`
+    SELECT m."from" AS counterpart_id, COUNT(*)::bigint AS unread_count
+    FROM "Message" m
+    INNER JOIN "ChatTrack" ct
+      ON ct.sender_id = m."from"
+      AND ct.receiver_id = m."to"
+      AND ct.section = 'internal'
+      AND ct.is_read = false
+    WHERE m."to" = ${currentUserId}
+      AND m."from" IN (${Prisma.join(otherIds)})
+      AND m.group_id IS NULL
+    GROUP BY m."from"
+  `;
+  const unreadByCounterpart = new Map<number, number>();
+  for (const r of unreadRows) {
+    unreadByCounterpart.set(r.counterpart_id, Number(r.unread_count));
   }
 
   return users.map((u) => ({
     ...u,
     latestMessage: latestByCounterpart.get(u.id) ?? null,
-    unreadCount: unreadFromUser.has(u.id) ? 1 : 0,
+    unreadCount: unreadByCounterpart.get(u.id) ?? 0,
   }));
 }
