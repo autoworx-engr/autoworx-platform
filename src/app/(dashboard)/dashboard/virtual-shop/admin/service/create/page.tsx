@@ -15,6 +15,7 @@ type InitialServiceData = {
     customDuration: string;
     imageName: string;
     imageUrl: string;
+    category: string[];
     vehicleTypeModifiers: {
       coupe: string;
       sedan: string;
@@ -104,6 +105,9 @@ export default async function Page({
         customDuration: String(shopService.duration ?? ""),
         imageName: "",
         imageUrl: shopService.imageUrl || "",
+        category: Array.isArray(shopService.category)
+          ? shopService.category
+          : [],
         vehicleTypeModifiers: {
           coupe: String(shopService.modifierCoupe ?? 0),
           sedan: String(shopService.modifierSedan ?? 0),

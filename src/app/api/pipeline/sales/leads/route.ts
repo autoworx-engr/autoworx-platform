@@ -1,4 +1,6 @@
 import { getLeadsWithCountOptimized } from "@/actions/pipelines/getLeads";
+import { db } from "@/lib/db";
+import { getCompanyIdFromBearer } from "@/lib/authPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -121,6 +123,125 @@ export async function GET(request: NextRequest) {
         success: false,
         error: error.message || "Failed to fetch leads",
       },
+      { status: 500 },
+    );
+  }
+}
+
+/**
+ * @swagger
+ * /api/pipeline/sales/leads:
+ *   post:
+ *     summary: Create a new sales lead
+ *     tags: [Sales Pipeline Leads]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               clientName:
+ *                 type: string
+ *               clientEmail:
+ *                 type: string
+ *               clientPhone:
+ *                 type: string
+ *               countryCode:
+ *                 type: string
+ *               vehicleInfo:
+ *                 type: string
+ *               services:
+ *                 type: string
+ *               source:
+ *                 type: string
+ *               comments:
+ *                 type: string
+ *               columnId:
+ *                 type: integer
+ *     responses:
+ *       201:
+ *         description: Lead created successfully
+ *       400:
+ *         description: Missing required fields
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Failed to create lead
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const companyId = await getCompanyIdFromBearer(request);
+    if (!companyId) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+
+    const body = await request.json();
+    const {
+      clientName,
+      clientEmail,
+      clientPhone,
+      countryCode,
+      vehicleInfo,
+      services,
+      source,
+      comments,
+      columnId: bodyColumnId,
+    } = body as {
+      clientName: string;
+      clientEmail?: string;
+      clientPhone?: string;
+      countryCode?: string;
+      vehicleInfo: string;
+      services: string;
+      source: string;
+      comments?: string;
+      columnId?: number;
+    };
+
+    if (!clientName || !vehicleInfo || !services || !source) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "clientName, vehicleInfo, services, and source are required",
+        },
+        { status: 400 },
+      );
+    }
+
+    let columnId: number | undefined = bodyColumnId;
+    if (!columnId) {
+      const defaultColumn = await db.column.findFirst({
+        where: { companyId, type: "sales", title: "New Leads" },
+        select: { id: true },
+      });
+      columnId = defaultColumn?.id;
+    }
+
+    const lead = await db.lead.create({
+      data: {
+        clientName,
+        clientEmail: clientEmail ?? null,
+        clientPhone: clientPhone ?? null,
+        countryCode: countryCode ?? "US",
+        vehicleInfo,
+        services,
+        source,
+        comments: comments ?? null,
+        companyId,
+        columnId: columnId ?? null,
+      },
+    });
+
+    return NextResponse.json({ success: true, data: lead }, { status: 201 });
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, error: (error as Error).message },
       { status: 500 },
     );
   }

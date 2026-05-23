@@ -57,7 +57,7 @@ export const searchCompanyQuery = async (searchTerm: string) => {
       data: companies,
       companyId,
     };
-  } catch (err: any) {
-    throw new Error(err);
+  } catch (err) {
+    throw err;
   }
 };

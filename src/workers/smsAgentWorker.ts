@@ -1,140 +1,95 @@
 import { db } from "../lib/db";
-import { pgmq, PgmqMessage } from "../lib/pgmq/client";
+import { getBoss, SMS_AGENT_QUEUE } from "../lib/pgboss/client";
+import {
+  DEBOUNCE_SECONDS,
+  SmsAgentJobData,
+} from "../lib/pgboss/debounceSmsAgent";
 import { sendSMSToAgent } from "../service/ai-agent/api";
+import type { Job } from "pg-boss";
 
-const DEBOUNCE_MS = 60_000;
-const POLL_INTERVAL_MS = 5_000;
-// If the worker crashes mid-process the message reappears after this many seconds.
-const VT_SECONDS = 90;
+async function processJob(job: Job<SmsAgentJobData>): Promise<void> {
+  const { clientId, companyId, sendFrom, sendTo, windowStart } = job.data;
 
-interface SmsAgentPayload {
-  clientId: number;
-  companyId: number;
-}
+  console.log(
+    `[Worker] Job received — jobId=${job.id} clientId=${clientId} windowStart=${windowStart}`,
+  );
 
-interface DebounceRow {
-  send_from: string;
-  send_to: string;
-  window_start: Date;
-}
+  // Collect every unprocessed message sent within the 90-second window that
+  // started with the first message. Upper bound prevents pulling in messages
+  // from a later conversation if this job fires slightly late.
+  const windowEnd = new Date(
+    new Date(windowStart).getTime() + DEBOUNCE_SECONDS * 1000,
+  );
 
-async function processMessage(
-  msg: PgmqMessage<SmsAgentPayload>,
-): Promise<void> {
-  const { clientId, companyId } = msg.message;
+  const rows = await db.$transaction(async (tx) => {
+    const messages = await tx.clientSMS.findMany({
+      where: {
+        clientId,
+        sentBy: "Client",
+        agentProcessedAt: null,
+        createdAt: { gte: new Date(windowStart), lte: windowEnd },
+      },
+      orderBy: { createdAt: "asc" },
+      select: { id: true, message: true },
+    });
 
-  // ── 1. How long since the client last sent a message? ──────────────
-  const latest = await db.clientSMS.findFirst({
-    where: { clientId, sentBy: "Client" },
-    orderBy: { createdAt: "desc" },
-    select: { createdAt: true },
+    if (messages.length === 0) return [];
+
+    await tx.clientSMS.updateMany({
+      where: { id: { in: messages.map((m) => m.id) } },
+      data: { agentProcessedAt: new Date() },
+    });
+
+    return messages;
   });
 
-  if (!latest) {
-    // Orphaned job — no messages in DB, discard everything
-    await pgmq.delete(msg.msg_id);
-    await db.$executeRaw`DELETE FROM sms_agent_debounce WHERE client_id = ${clientId}`;
-    return;
-  }
-
-  const msSinceLast = Date.now() - latest.createdAt.getTime();
-
-  if (msSinceLast < DEBOUNCE_MS) {
-    // Client is still typing — requeue for the remaining delay
-    const requeueSecs = Math.ceil((DEBOUNCE_MS - msSinceLast) / 1000);
-    await pgmq.delete(msg.msg_id);
-    await pgmq.sendWithDelay({ clientId, companyId }, requeueSecs);
+  if (rows.length === 0) {
     console.log(
-      `[Worker] Client ${clientId} still active — requeued for ${requeueSecs}s`,
+      `[Worker] No unprocessed messages for clientId=${clientId} — skipping job ${job.id}`,
     );
     return;
   }
-
-  // ── 2. 1 min of silence — claim the window atomically ──────────────
-  // DELETE … RETURNING is atomic: only ONE worker instance gets rows back.
-  const claimed = await db.$queryRaw<DebounceRow[]>`
-    DELETE FROM sms_agent_debounce
-    WHERE  client_id = ${clientId}
-    RETURNING send_from, send_to, window_start
-  `;
-
-  if (claimed.length === 0) {
-    // Another worker instance already claimed this job
-    await pgmq.delete(msg.msg_id);
-    return;
-  }
-
-  const { send_from, send_to, window_start } = claimed[0];
-
-  // ── 3. Fetch every client message since the window opened ───────────
-  const rows = await db.clientSMS.findMany({
-    where: {
-      clientId,
-      sentBy: "Client",
-      createdAt: { gte: window_start },
-    },
-    orderBy: { createdAt: "asc" },
-    select: { message: true },
-  });
 
   const combined = rows
     .map((r) => r.message?.trim())
     .filter(Boolean)
     .join("\n");
 
-  if (!combined) {
-    await pgmq.delete(msg.msg_id);
-    return;
-  }
+  console.log(
+    `[Worker] Sending ${rows.length} message(s) to agent for clientId=${clientId}:\n"""\n${combined}\n"""`,
+  );
 
-  // ── 4. Send the combined message to the AI agent ────────────────────
+  rows.forEach((r, i) =>
+    console.log(`[Worker]   [${i + 1}] "${r.message?.trim()}"`),
+  );
+
   await sendSMSToAgent({
     company_id: companyId,
     message: combined,
-    send_from,
-    send_to,
+    send_from: sendFrom,
+    send_to: sendTo,
     client_id: clientId,
   });
 
-  await pgmq.delete(msg.msg_id);
-
   console.log(
-    `[Worker] Client ${clientId}: sent ${rows.length} combined message(s) to agent`,
+    `[Worker] ✓ Done — clientId=${clientId} jobId=${job.id} sent ${rows.length} message(s) to agent`,
   );
 }
 
-async function poll(): Promise<void> {
-  const messages = await pgmq.read<SmsAgentPayload>(VT_SECONDS, 5);
-  if (messages.length === 0) return;
-
-  await Promise.allSettled(
-    messages.map((msg) =>
-      processMessage(msg).catch((err) =>
-        console.error(`[Worker] Error on msg ${msg.msg_id}:`, err),
-      ),
-    ),
-  );
-}
-
-async function run(): Promise<void> {
-  console.log("[SMS Agent Worker] Started — polling every 5s");
-  while (true) {
-    try {
-      await poll();
-    } catch (err) {
-      console.error("[Worker] Poll error:", err);
-    }
-    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+async function handler(jobs: Job<SmsAgentJobData>[]): Promise<void> {
+  for (const job of jobs) {
+    await processJob(job);
   }
 }
 
-process.on("SIGTERM", () => {
-  console.log("[Worker] Shutting down");
-  process.exit(0);
-});
-process.on("SIGINT", () => {
-  console.log("[Worker] Shutting down");
-  process.exit(0);
-});
+export async function startWorker(): Promise<void> {
+  const boss = await getBoss();
 
-run();
+  await boss.work<SmsAgentJobData>(
+    SMS_AGENT_QUEUE,
+    { localConcurrency: 5 },
+    handler,
+  );
+
+  console.log(`[Worker] Listening on queue "${SMS_AGENT_QUEUE}"`);
+}
