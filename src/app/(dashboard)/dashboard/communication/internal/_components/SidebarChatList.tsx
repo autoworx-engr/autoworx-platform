@@ -3,6 +3,7 @@ import InfiniteScroll from "react-infinite-scroll-component";
 import UserSelectButton from "../UserSelectButton";
 import type { CombinedItem } from "../_hooks/useSortedChatList";
 import { GroupListItem } from "./GroupListItem";
+import { SidebarListSkeleton } from "./SidebarListSkeleton";
 
 type TUser = User & { unreadCount: number; latestMessage?: Message | null };
 type TGroup = Group & { users: User[] };
@@ -19,6 +20,7 @@ type Props = {
   addChatItem?: (item: TUser | TGroup, type: "user" | "group") => void;
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
+  isLoading: boolean;
   fetchNextPage: () => void;
 };
 
@@ -34,6 +36,7 @@ export function SidebarChatList({
   addChatItem,
   hasNextPage,
   isFetchingNextPage,
+  isLoading,
   fetchNextPage,
 }: Props) {
   return (
@@ -60,7 +63,8 @@ export function SidebarChatList({
         scrollableTarget="internalSidebarScroll"
         style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
       >
-        {visible.length === 0 && (
+        {isLoading && visible.length === 0 && <SidebarListSkeleton />}
+        {!isLoading && visible.length === 0 && (
           <p className="py-4 text-center text-xs text-zinc-500">
             {tab === "users" ? "No users found" : "No groups found"}
           </p>

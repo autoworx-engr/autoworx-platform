@@ -102,68 +102,70 @@ export default function UserSelectButton({
   const unreadLabel = unreadCount > 9 ? "9+" : String(unreadCount);
   const showBadge = isUnreadReceiver && unreadCount > 0;
 
+  const messageText =
+    lastMessageHistory?.lastMessage || user.latestMessage?.message;
+  const previewPrefix = participants === "sender" ? "You" : user.firstName;
+  const isUnreadPreview =
+    !lastMessageHistory?.isRead &&
+    !isSelectedUser &&
+    participants === "receiver";
+
   return (
     <button
-      className={cn(
-        `group relative flex items-center w-full gap-2 rounded-lg p-3 sm:p-4`,
-        "border border-transparent shadow-sm transition-all duration-200",
-        "hover:shadow-md active:scale-[0.99]",
-        isSelectedUser
-          ? "bg-gradient-to-r from-teal-700 to-teal-600 ring-1 ring-teal-500/60"
-          : "bg-white dark:bg-zinc-900/60 border-zinc-200/70 dark:border-white/10 hover:border-zinc-300/80 dark:hover:border-white/20",
-      )}
       onClick={() => handleSelectedUser(user, participants, lastMessageHistory)}
+      className={cn(
+        "group relative flex w-full items-center gap-3 rounded-2xl p-3 text-left",
+        "border shadow-sm transition-all duration-200 hover:shadow-md active:scale-[0.99]",
+        isSelectedUser
+          ? "border-transparent bg-gradient-to-r from-teal-700 to-teal-600 ring-1 ring-teal-500/60"
+          : "border-zinc-200/70 bg-white hover:border-zinc-300/80 dark:border-white/10 dark:bg-zinc-900/60 dark:hover:border-white/20",
+      )}
     >
       {showBadge && (
-        <div className="absolute right-[11px] top-[11px] z-10">
-          <div className="flex h-5 min-w-5 items-center justify-center">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
-            <span className="relative inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+        <div className="absolute right-3 top-3 z-10">
+          <div className="relative flex h-5 min-w-5 items-center justify-center">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+            <span className="relative inline-flex min-w-4 items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white">
               {unreadLabel}
             </span>
           </div>
         </div>
       )}
-      <Avatar
-        className="flex-shrink-0"
-        photo={user.image}
-        width={60}
-        height={60}
-      />
-      <div className="flex w-full flex-col justify-start hover:text-white text-start">
+
+      <div
+        className={cn(
+          "shrink-0 rounded-full ring-2",
+          isSelectedUser ? "ring-teal-600" : "ring-white dark:ring-zinc-900",
+        )}
+      >
+        <Avatar photo={user.image} width={40} height={40} />
+      </div>
+
+      <div className="flex min-w-0 flex-1 flex-col">
         <p
           className={cn(
-            "text-[14px] font-bold text-[#797979]",
+            "truncate text-sm",
             isSelectedUser
-              ? "text-[#F2F2F2] font-bold"
-              : lastMessageHistory?.isRead || participants === "sender"
-                ? "text-black font-bold"
-                : "text-black font-extrabold",
+              ? "font-semibold text-white"
+              : isUnreadPreview
+                ? "font-extrabold text-zinc-900 dark:text-zinc-50"
+                : "font-semibold text-zinc-800 dark:text-zinc-100",
           )}
         >
           {user.firstName} {user.lastName}
         </p>
-        {(lastMessageHistory?.lastMessage || user.latestMessage) && (
+        {messageText && (
           <p
             className={cn(
-              "mt-2 line-clamp-1 text-xs",
-              lastMessageHistory?.isRead ||
-                isSelectedUser ||
-                participants === "sender"
-                ? "font-normal"
-                : "font-semibold",
+              "mt-0.5 line-clamp-1 text-xs",
               isSelectedUser
-                ? "text-white/95"
-                : "text-zinc-600 dark:text-zinc-300",
+                ? "text-white/80"
+                : isUnreadPreview
+                  ? "font-semibold text-zinc-700 dark:text-zinc-200"
+                  : "text-zinc-500 dark:text-zinc-400",
             )}
           >
-            {(() => {
-              const displayText =
-                participants === "sender" ? "You" : user.firstName;
-              const messageText =
-                lastMessageHistory?.lastMessage || user.latestMessage?.message;
-              return messageText ? `${displayText}: ${messageText}` : "";
-            })()}
+            {previewPrefix}: {messageText}
           </p>
         )}
       </div>

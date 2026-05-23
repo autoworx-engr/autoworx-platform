@@ -71,6 +71,7 @@ export default function List({
     fetchNextPage: fetchNextUsersPage,
     hasNextPage: hasNextUsersPage,
     isFetchingNextPage: isFetchingNextUsersPage,
+    isLoading: isLoadingUsers,
   } = useInfiniteUsersList({
     companyId,
     search: usersTabActive ? searchTerm : "",
@@ -81,6 +82,7 @@ export default function List({
     fetchNextPage: fetchNextGroupsPage,
     hasNextPage: hasNextGroupsPage,
     isFetchingNextPage: isFetchingNextGroupsPage,
+    isLoading: isLoadingGroups,
   } = useInfiniteGroupsList({
     companyId,
     search: groupsTabActive ? searchTerm : "",
@@ -155,6 +157,7 @@ export default function List({
   const activeIsFetchingNextPage = usersTabActive
     ? isFetchingNextUsersPage
     : isFetchingNextGroupsPage;
+  const activeIsLoading = usersTabActive ? isLoadingUsers : isLoadingGroups;
 
   return (
     <div
@@ -218,6 +221,7 @@ export default function List({
         addChatItem={addChatItem}
         hasNextPage={!!activeHasNextPage}
         isFetchingNextPage={activeIsFetchingNextPage}
+        isLoading={activeIsLoading}
         fetchNextPage={() => {
           void activeFetchNextPage();
         }}
