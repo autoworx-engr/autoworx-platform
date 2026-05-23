@@ -16,16 +16,28 @@ export async function ReadMessage({
   const session = await getServerSession(authOptions);
   const user = session?.user;
 
-  if (!user?.companyId || !user) {
-    throw new Error("Invalid session. Company or user not found.");
+  if (!user) {
+    throw new Error("Invalid session. User not found.");
   }
 
   try {
+    const report = await db.bugReport.findUnique({
+      where: { id: +bugReportId },
+      select: { companyId: true },
+    });
+
+    if (!report) {
+      throw new Error("Bug report not found.");
+    }
+
+    if (!user.isSuperAdmin && +user.companyId !== report.companyId) {
+      throw new Error("Forbidden.");
+    }
+
     await db.bugReportMessage.updateMany({
       where: {
         bugReportId: +bugReportId,
         senderType: senderType,
-        userId: +user?.id,
         isRead: false,
       },
       data: {

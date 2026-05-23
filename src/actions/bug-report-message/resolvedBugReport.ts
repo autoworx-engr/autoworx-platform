@@ -3,19 +3,9 @@
 import { db } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/authOptions";
-import { revalidatePath } from "next/cache";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { ServerAction } from "@/types/action";
 import { TErrorHandler } from "@/types/globalError";
-
-export type AttachmentInput = {
-  fileName: string;
-  fileType: string;
-  fileUrl: string;
-  fileSize: string;
-  messageId?: number;
-  bugReportMessageId?: number;
-};
 
 type SuperAdminBugMessagePayload = {
   bugReportId: number;
@@ -26,6 +16,11 @@ export async function resolvedBugReport(
   data: SuperAdminBugMessagePayload,
 ): Promise<ServerAction | TErrorHandler> {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.isSuperAdmin) {
+      throw new Error("Only super admins are allowed to perform this action.");
+    }
+
     const existingReport = await db.bugReport.findUnique({
       where: { id: data.bugReportId, isResolved: false },
     });

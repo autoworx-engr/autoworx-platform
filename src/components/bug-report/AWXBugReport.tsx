@@ -16,6 +16,7 @@ import { BugReportDropdownCard } from "./BugReportDropdownCard";
 import { MessageBubbleSkeleton } from "./MessageBubbleSkeleton";
 import { TBugReportMessage } from "@/types/BugReportMessage";
 import OptimisticMessageCard from "./OptimisticMessageCard";
+import toast from "react-hot-toast";
 
 interface Contact {
   id: string;
@@ -45,9 +46,9 @@ const AWXBugReport = () => {
 
   const filteredContacts =
     data?.filter((contact: any) =>
-      contact.BugReportMessage?.[contact.BugReportMessage?.length - 1]?.subject
+      contact.BugReportMessage?.[contact.BugReportMessage.length - 1]?.subject
         ?.toLowerCase()
-        ?.includes(searchQuery.toLowerCase())
+        ?.includes(searchQuery.toLowerCase()),
     ) ?? [];
 
   const {
@@ -56,10 +57,6 @@ const AWXBugReport = () => {
     isFetching: messageFetching,
     isLoading: messageLoading,
   } = useGetAllBugReportsMessages(selectedContact?.id);
-
-  useEffect(() => {
-    setReportMessage("");
-  }, [ReportMessages, refetch]);
 
   useEffect(() => {
     setReportMessage("");
@@ -87,6 +84,12 @@ const AWXBugReport = () => {
   }, [setIsDropdownOpen]);
 
   useEffect(() => {
+    if (!isDropdownOpen) {
+      setSearchQuery("");
+    }
+  }, [isDropdownOpen]);
+
+  useEffect(() => {
     if (!selectedContact) return;
     const readMessage = async () => {
       await ReadMessage({
@@ -96,7 +99,7 @@ const AWXBugReport = () => {
     };
 
     readMessage();
-  }, [selectedContact, setSelectedContact, ReadMessage]);
+  }, [selectedContact]);
 
   const handleContactSelect = (contact: Contact) => {
     setSelectedContact(contact);
@@ -115,7 +118,6 @@ const AWXBugReport = () => {
         companyId: selectedContact?.company?.id,
         content:
           "Your reported issue has been resolved, thanks for your patience. If you face any further problems, please don’t hesitate to create a new bug report.",
-        senderType: "super_admin",
       });
       setSelectedContact(null);
       setIsDropdownOpen(false);
@@ -141,8 +143,8 @@ const AWXBugReport = () => {
         (file) =>
           !selectedFiles.some(
             (existing) =>
-              existing.name === file.name && existing.size === file.size
-          )
+              existing.name === file.name && existing.size === file.size,
+          ),
       );
 
       setSelectedFiles((prevFiles) => [...prevFiles, ...newFiles]);
@@ -170,7 +172,9 @@ const AWXBugReport = () => {
         });
 
         if (!uploadRes.ok) {
-          console.error("File upload failed");
+          toast.error("File upload failed");
+          setMessage(currentMessage);
+          setLoading(false);
           return;
         }
 
@@ -191,7 +195,6 @@ const AWXBugReport = () => {
         bugReportId: selectedContact?.id,
         companyId: selectedContact?.company?.id,
         content: currentMessage,
-        senderType: "super_admin",
         attachments:
           uploadedAttachmentData.length > 0
             ? uploadedAttachmentData
