@@ -2,6 +2,12 @@ import { Suspense } from "react";
 import Container from "./Container";
 import { Spin } from "antd";
 import CarLoading from "@/components/common/CarLoading";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Settings - Business",
+  description: "Manage your business",
+};
 
 const BusinessPage = async () => {
   return (

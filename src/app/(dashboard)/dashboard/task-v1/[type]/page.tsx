@@ -3,6 +3,7 @@ import TaskAndActivityClient from "./TaskAndActivityClientDynamic";
 
 export const metadata: Metadata = {
   title: "Task and Activity Management",
+  description: "Task and Activity Management",
 };
 
 export default async function Page(props: {

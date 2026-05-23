@@ -7,6 +7,7 @@ import Body from "./Body";
 
 export const metadata: Metadata = {
   title: "Communication Hub - Internal",
+  description: "Manage client and supplier collaboration",
 };
 
 export default async function InternalPage(props: {

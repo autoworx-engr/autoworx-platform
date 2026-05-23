@@ -9,6 +9,7 @@ import Collaboration from "./Collaboration";
 
 export const metadata: Metadata = {
   title: "Communication Hub - Collaboration",
+  description: "Manage client and supplier collaboration",
 };
 
 export default async function CollaborationPage() {

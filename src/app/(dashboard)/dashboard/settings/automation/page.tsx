@@ -1,12 +1,15 @@
-
-import {
-  isSmsAvailable
-} from "@/actions/communication/client/createTwilioCredentials";
+import { isSmsAvailable } from "@/actions/communication/client/createTwilioCredentials";
 import { getCompany } from "@/actions/settings/getCompany";
 import { getCompanyUser } from "@/actions/user/getCompanyUser";
 import { getCompanyId } from "@/lib/companyId";
 import getUser from "@/lib/getUser";
 import AutomationMain from "./components/AutomationMain";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Settings - Automation",
+  description: "Configure automation settings",
+};
 
 export default async function AutomationPage() {
   const companyId = await getCompanyId();

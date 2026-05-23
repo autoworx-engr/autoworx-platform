@@ -10,6 +10,12 @@ import { cache } from "react";
 import AddNewProduct from "./AddNewProduct";
 import ClientInventoryList from "./ClientInventoryList";
 import Sidebar from "./Sidebar";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Inventory",
+  description: "Manage your inventory, products, and supplies",
+};
 
 async function getCategories() {
   const session = await getServerSession(authOptions);

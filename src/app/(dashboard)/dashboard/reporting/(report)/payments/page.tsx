@@ -12,6 +12,12 @@ import FilterHeader from "./FilterHeader";
 import PaymentDisplay from "./PaymentDisplay";
 import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 import { PaymentType, Prisma } from "@prisma/client";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Analytics & Reporting - Payments",
+  description: "Analytics & Reporting - Payments",
+};
 
 type TProps = {
   searchParams: Promise<{

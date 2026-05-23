@@ -3,6 +3,12 @@ import { authOptions } from "@/authOptions";
 import { db } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import ShopNotFound from "@/app/subdomain/[subdomain]/components/giftcards/ShopNotFound";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Virtual Shop Admin",
+  description: "Virtual shop admin",
+};
 
 const DEFAULT_TAB = "services";
 

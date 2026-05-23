@@ -8,6 +8,12 @@ import { getServerSession } from "next-auth";
 import Header from "../Header";
 import NavigationTabs from "../NavigationTabs";
 import TemplateTable from "./TemplateTable";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Invoices - Templates",
+  description: "Invoices - Templates",
+};
 
 async function TemplatesPage(
   props: Readonly<{

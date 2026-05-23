@@ -9,6 +9,12 @@ import Calculation from "../../components/Calculation";
 import FilterHeader from "./FilterHeader";
 import WorkforceDisplay from "./WorkforceDisplay";
 import { getEmployeePayout } from "@/actions/dashboard/data/getAdminInfo";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Analytics & Reporting - Teams",
+  description: "Analytics & Reporting - Teams",
+};
 
 // Props type
 type TProps = {

@@ -4,6 +4,12 @@ import { db } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import Header from "./components/Header";
 import FleetList from "./components/FleetList";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Directory - Fleet",
+  description: "Manage your fleets",
+};
 
 type TProps = {
   searchParams: Promise<{

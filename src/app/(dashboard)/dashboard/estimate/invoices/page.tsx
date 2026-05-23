@@ -9,6 +9,12 @@ import { getServerSession } from "next-auth";
 import Header from "../Header";
 import NavigationTabs from "../NavigationTabs";
 import Table from "../Table";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Invoices",
+  description: "Invoices",
+};
 
 export default async function InvoicesPage(
   props: Readonly<{
