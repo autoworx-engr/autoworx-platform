@@ -2,7 +2,7 @@ import { getGroupById } from "@/actions/communication/internal/query";
 import { pusher } from "@/lib/pusher/client";
 import type { Group, Message, User } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 type TUser = User & { unreadCount: number; latestMessage?: Message | null };
 type TGroup = Group & { users: User[] };
@@ -34,6 +34,18 @@ export function useGroupLifecyclePusher({
   setGroupsList,
   sortLists,
 }: Args) {
+  // Refs so the Pusher handlers always read the latest userState and the
+  // current `sortLists` closure, instead of the values captured at first
+  // subscribe. Without this, handlers would sort with stale user data.
+  const userStateRef = useRef(userState);
+  const sortListsRef = useRef(sortLists);
+  useEffect(() => {
+    userStateRef.current = userState;
+  }, [userState]);
+  useEffect(() => {
+    sortListsRef.current = sortLists;
+  }, [sortLists]);
+
   const queryClient = useQueryClient();
   // The infinite-query groups feed is keyed `["internal","groups",companyId,search]`.
   // We don't have companyId/search here, so invalidate the whole namespace via
@@ -57,7 +69,10 @@ export function useGroupLifecyclePusher({
         setSideBarGroupLists((prev) => {
           const exists = prev.find((g) => g.id === groupId);
           const updated = exists ? prev : [...prev, groupFromDb];
-          const { sortedGroups } = sortLists(userState, updated);
+          const { sortedGroups } = sortListsRef.current(
+            userStateRef.current,
+            updated,
+          );
           return sortedGroups;
         });
         invalidateGroups();
@@ -85,7 +100,10 @@ export function useGroupLifecyclePusher({
             const updated = exists
               ? prev.map((g) => (g.id === groupId ? groupFromDb : g))
               : prev;
-            const { sortedGroups } = sortLists(userState, updated);
+            const { sortedGroups } = sortListsRef.current(
+              userStateRef.current,
+              updated,
+            );
             return sortedGroups;
           });
           setGroupsList((prev) =>
@@ -119,7 +137,10 @@ export function useGroupLifecyclePusher({
           const updated = exists
             ? prev.map((g) => (g.id === groupId ? groupFromDb : g))
             : [...prev, groupFromDb];
-          const { sortedGroups } = sortLists(userState, updated);
+          const { sortedGroups } = sortListsRef.current(
+            userStateRef.current,
+            updated,
+          );
           return sortedGroups;
         });
         setGroupsList((prev) =>
