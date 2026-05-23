@@ -2519,9 +2519,10 @@ model ClientSMS {
   client       Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
   user         User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   company      Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  isSalesAgent Boolean? @default(false)
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+  isSalesAgent     Boolean?  @default(false)
+  agentProcessedAt DateTime? @map("agent_processed_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at")
 }
 
 model ClientCall {
@@ -3534,15 +3535,3 @@ enum EmergencyRequestStatus {
   CANCELLED // Client cancelled the request
 }
 
-// One row per client per debounce window.
-// Inserted once when the first SMS of a window arrives (ON CONFLICT DO NOTHING).
-// Deleted atomically by the worker when it claims the job for processing.
-model SmsAgentDebounce {
-  clientId    Int      @id @map("client_id")
-  companyId   Int      @map("company_id")
-  sendFrom    String   @map("send_from")
-  sendTo      String   @map("send_to")
-  windowStart DateTime @map("window_start")
-
-  @@map("sms_agent_debounce")
-}

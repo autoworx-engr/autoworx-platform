@@ -11,7 +11,7 @@ export const useInventoryFilterStore = create<InventoryFilterState>((set) => ({
   category: "All Categories",
   setFilter: ({ search, category }) =>
     set((state) => ({
-      search,
-      category,
+      search: search !== undefined ? search : state.search,
+      category: category !== undefined ? category : state.category,
     })),
 }));

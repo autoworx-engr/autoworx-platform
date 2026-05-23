@@ -544,7 +544,12 @@ export async function createInvoice({
     });
 
     // Step 12: Revalidate the estimate page
-    revalidatePath("/estimate");
+
+    try {
+      revalidatePath("/estimate");
+    } catch {
+      // no-op: cache revalidation is best-effort outside request context
+    }
 
     // Return success response
     return {

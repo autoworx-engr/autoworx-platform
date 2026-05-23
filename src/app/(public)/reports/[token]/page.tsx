@@ -113,12 +113,8 @@ export default function ReportPage(props: ReportPageProps) {
     if (!decodedParams?.startDate || !decodedParams?.endDate) return "";
 
     try {
-      const parseUTCDate = (dateStr: string) => {
-        const d = new Date(dateStr);
-        return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
-      };
-      const start = parseUTCDate(decodedParams.startDate);
-      const end = parseUTCDate(decodedParams.endDate);
+      const start = parseISO(decodedParams.startDate);
+      const end = parseISO(decodedParams.endDate);
 
       switch (frequency) {
         case "daily":

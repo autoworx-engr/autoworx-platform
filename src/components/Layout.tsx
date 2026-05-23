@@ -54,22 +54,8 @@ const navbarList = [
   {
     title: "Pipelines",
     icon: "/icons/navbar/Sales.svg",
+    link: "/dashboard/pipeline/sales/pipeline",
     path: "/dashboard/pipeline",
-
-    subnav: [
-      {
-        title: "Team Pipeline",
-        link: "/dashboard/pipeline/team/pipeline",
-      },
-      {
-        title: "Shop Pipeline",
-        link: "/dashboard/pipeline/shop/pipeline",
-      },
-      {
-        title: "Sales Pipeline",
-        link: "/dashboard/pipeline/sales/pipeline",
-      },
-    ],
   },
   {
     title: "Task and Activity Management",

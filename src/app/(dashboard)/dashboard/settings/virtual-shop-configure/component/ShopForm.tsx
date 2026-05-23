@@ -279,7 +279,7 @@ export default function ShopForm({
         onClose={() => setCropModal((prev) => ({ ...prev, open: false }))}
         onComplete={handleCropComplete}
       />
-      <div className="mx-auto w-full max-w-6xl space-y-4 px-0 py-4 sm:space-y-6 sm:px-6 sm:py-6">
+      <div className="mx-auto w-full space-y-4 px-0 py-4">
         <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
           <div className="absolute -right-14 -top-14 h-40 w-40 rounded-full bg-[#6571FF]/10 blur-2xl" />
           <div className="absolute -bottom-16 right-12 h-36 w-36 rounded-full bg-[#6571FF]/10 blur-2xl" />
