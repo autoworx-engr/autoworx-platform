@@ -1,17 +1,13 @@
-import { createUserChatTrack } from "@/actions/communication/internal/createUserChatTrack";
 import { updateChatTrack } from "@/actions/communication/internal/updateChatTrack";
 import Avatar from "@/components/Avatar";
 import { cn } from "@/lib/cn";
-import { pusher } from "@/lib/pusher/client";
 import { useChatTrackStore } from "@/stores/chatTrackStore";
 import { ChatTrack, Message, User } from "@prisma/client";
 import { useSession } from "next-auth/react";
-import { useEffect, useMemo, useState } from "react";
-import { useMessageDeduper } from "./_hooks/useMessageDeduper";
+import { useMemo } from "react";
 
 type TUser = User & { unreadCount: number; latestMessage?: Message | null };
 type TTraceMessage = ChatTrack & { message?: Message | null };
-type TPusherChatTrack = ChatTrack & { message: Message | null };
 
 type TProps = {
   user: TUser;
@@ -33,28 +29,11 @@ export default function UserSelectButton({
   addChatItem,
 }: TProps) {
   const { data: session } = useSession();
-  const { setLastMessage, setUnreadMessageCount } = useChatTrackStore();
-  const [lastMessageHistory, setLastMessageHistory] =
-    useState(traceLastMessage);
-  const { shouldProcess } = useMessageDeduper(100);
-
-  useEffect(() => {
-    if (traceLastMessage) {
-      setLastMessageHistory(traceLastMessage);
-    }
-  }, [traceLastMessage]);
-
-  // Ensure a ChatTrack row exists for this pair.
-  useEffect(() => {
-    if (traceLastMessage) return;
-    createUserChatTrack({
-      senderId: parseInt(session?.user?.id!),
-      receiverId: user.id,
-    }).catch(() => {
-      /* non-blocking; row will be lazily created on first send */
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const { setUnreadMessageCount } = useChatTrackStore();
+  // No local state, no per-row pusher subscription. The parent's `useChatTrackPusher`
+  // owns the single `track-${sessionUserId}` channel and updates `chatTrackState`
+  // + `userState` for the whole sidebar; this component just reads from props.
+  const lastMessageHistory = traceLastMessage;
 
   const participants = useMemo<"sender" | "receiver">(() => {
     const messageToCheck = lastMessageHistory?.message || user.latestMessage;
@@ -64,85 +43,17 @@ export default function UserSelectButton({
       : "receiver";
   }, [lastMessageHistory?.message, user.latestMessage, session?.user?.id]);
 
-  useEffect(() => {
-    const currentUserChannel = pusher.subscribe(`track-${session?.user?.id}`);
-    const otherUserChannel = pusher.subscribe(`track-${user?.id}`);
-
-    const handleChatTrack = (data: TPusherChatTrack) => {
-      const messageKey = `${data.message?.id || data.id}-${data.message?.from}-${data.message?.to}-${data.message?.createdAt}`;
-      if (!shouldProcess(messageKey)) return;
-
-      const isForThisConversation =
-        (data.message?.to === parseInt(session?.user?.id!) &&
-          data.message?.from === user.id) ||
-        (data.message?.from === parseInt(session?.user?.id!) &&
-          data.message?.to === user.id);
-
-      if (!isForThisConversation || data.message?.groupId) return;
-
-      const updatedChatTrack = {
-        ...data,
-        lastMessage: data.message?.message || data.lastMessage,
-      };
-      setLastMessageHistory(updatedChatTrack);
-      setLastMessage(updatedChatTrack);
-
-      if (data.message?.to === parseInt(session?.user?.id!)) {
-        const currentUnread = useChatTrackStore.getState().unreadMessageCount;
-        setUnreadMessageCount({
-          ...currentUnread,
-          internalCount: currentUnread.internalCount + 1,
-        });
-        setUsersList((prev) =>
-          prev.map((u) => (u.id === user.id ? { ...u, unreadCount: 1 } : u)),
-        );
-        updateUserState?.(user.id, { unreadCount: 1 });
-      }
-    };
-
-    const handleChatTrackRead = (data: {
-      senderId: number;
-      userId: number;
-      section: string;
-    }) => {
-      if (
-        data.senderId === user.id &&
-        data.userId === parseInt(session?.user?.id!)
-      ) {
-        setLastMessageHistory((prev) =>
-          prev ? { ...prev, isRead: true } : prev,
-        );
-      }
-    };
-
-    currentUserChannel.bind("chat-track", handleChatTrack);
-    otherUserChannel.bind("chat-track", handleChatTrack);
-    currentUserChannel.bind("chat-track-read", handleChatTrackRead);
-    otherUserChannel.bind("chat-track-read", handleChatTrackRead);
-
-    return () => {
-      currentUserChannel.unbind("chat-track", handleChatTrack);
-      currentUserChannel.unbind("chat-track-read", handleChatTrackRead);
-      otherUserChannel.unbind("chat-track", handleChatTrack);
-      otherUserChannel.unbind("chat-track-read", handleChatTrackRead);
-      pusher.unsubscribe(`track-${session?.user?.id}`);
-      pusher.unsubscribe(`track-${user?.id}`);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user.id, session?.user?.id]);
-
   const handleSelectedUser = async (
     selected: TUser,
     role: "sender" | "receiver",
     lastMessageInfo?: TTraceMessage | null,
   ) => {
-    const updatedLastMessage =
-      lastMessageInfo &&
-      role === "receiver" &&
-      (await updateChatTrack(lastMessageInfo.id));
-
-    if (updatedLastMessage && updatedLastMessage?.type === "success") {
-      setLastMessageHistory(updatedLastMessage?.data);
+    if (lastMessageInfo && role === "receiver") {
+      // Fire-and-forget. The action emits a `chat-track-read` Pusher event
+      // that `useChatTrackPusher` handles centrally — chatTrackState gets
+      // updated with `isRead: true` for the whole sidebar, no need for a
+      // local optimistic copy here.
+      await updateChatTrack(lastMessageInfo.id);
     }
 
     if (addChatItem) {
@@ -187,6 +98,9 @@ export default function UserSelectButton({
     hasMessageHistory &&
     !lastMessageHistory?.isRead &&
     participants === "receiver";
+  const unreadCount = user.unreadCount ?? 0;
+  const unreadLabel = unreadCount > 9 ? "9+" : String(unreadCount);
+  const showBadge = isUnreadReceiver && unreadCount > 0;
 
   return (
     <button
@@ -200,12 +114,12 @@ export default function UserSelectButton({
       )}
       onClick={() => handleSelectedUser(user, participants, lastMessageHistory)}
     >
-      {isUnreadReceiver && (
+      {showBadge && (
         <div className="absolute right-[11px] top-[11px] z-10">
-          <div className="flex h-5 w-5 items-center justify-center">
+          <div className="flex h-5 min-w-5 items-center justify-center">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
-            <span className="relative inline-flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-              1
+            <span className="relative inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+              {unreadLabel}
             </span>
           </div>
         </div>
