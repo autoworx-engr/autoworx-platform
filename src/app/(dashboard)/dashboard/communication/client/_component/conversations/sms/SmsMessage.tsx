@@ -2,6 +2,7 @@
 import { makeLinksClickable } from "@/components/MakeLinkClickable";
 import { cn } from "@/lib/cn";
 import { ClientSMS, ClientSmsAttachments } from "@prisma/client";
+import { Check, CheckCheck, MessageSquare } from "lucide-react";
 import Image from "next/image";
 import SMSAttachment from "./SMSAttachment";
 
@@ -47,14 +48,13 @@ export default function SmsMessage({
         isIncoming ? "justify-start" : "justify-end",
       )}
     >
-      {/* Avatar (incoming only) */}
       {isIncoming && (
         <Image
-          src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQNL_ZnOTpXSvhf1UaK7beHey2BX42U6solRA&s"
+          src="/images/default.png"
           alt="Client avatar"
           width={30}
           height={30}
-          className="mt-1 rounded-full ring-1 ring-white/50"
+          className="mt-1 size-8 shrink-0 rounded-full object-cover ring-1 ring-zinc-200 dark:ring-white/10"
         />
       )}
 
@@ -65,11 +65,11 @@ export default function SmsMessage({
         {(!!text || hasAttachments) && (
           <div
             className={cn(
-              "group relative rounded-2xl px-3 py-2 text-[14px] shadow-sm ring-1 transition",
+              "group relative px-3.5 py-2 text-[14px] shadow-sm transition",
               "select-text hover:shadow-md",
               isIncoming
-                ? "bg-zinc-200 text-zinc-900 ring-zinc-300 dark:bg-zinc-800 dark:text-zinc-100 dark:ring-white/10"
-                : "bg-gradient-to-br from-[#0a8a95] to-[#006D77] text-white ring-white/20",
+                ? "rounded-2xl rounded-tl-md bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
+                : "rounded-2xl rounded-tr-md bg-[#006D77] text-white",
             )}
           >
             {/* Text */}
@@ -81,7 +81,10 @@ export default function SmsMessage({
 
             {/* Attachments */}
             {hasAttachments && (
-              <SMSAttachment message={message} handleDownload={handleDownload} />
+              <SMSAttachment
+                message={message}
+                handleDownload={handleDownload}
+              />
             )}
           </div>
         )}
@@ -98,12 +101,19 @@ export default function SmsMessage({
           )}
           <div
             className={cn(
-              "mt-1  text-[10px] leading-4 text-zinc-500",
-              !isIncoming && "text-right",
+              "mt-1 inline-flex items-center gap-1 text-[10px] leading-4 text-zinc-500",
+              !isIncoming && "justify-end",
             )}
             title={new Date(message.createdAt).toLocaleString()}
           >
-            {formatTime(message.createdAt)}
+            <MessageSquare className="h-3 w-3" />
+            <span>{formatTime(message.createdAt)}</span>
+            {!isIncoming &&
+              (message.isRead ? (
+                <CheckCheck className="h-3 w-3 text-[#006D77]" />
+              ) : (
+                <Check className="h-3 w-3" />
+              ))}
           </div>
         </div>
       </div>

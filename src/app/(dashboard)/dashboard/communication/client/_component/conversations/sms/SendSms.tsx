@@ -338,7 +338,7 @@ export default function SendSms({
         )}
 
         {/* input area */}
-        <div className="flex w-full items-center gap-2 rounded-md bg-white ring-1 ring-zinc-200 focus-within:ring-emerald-500 dark:bg-zinc-900 dark:ring-white/10">
+        <div className="flex w-full items-center gap-2 rounded-md bg-white ring-1 ring-zinc-200 focus-within:ring-2 focus-within:ring-[#006D77] dark:bg-zinc-900 dark:ring-white/10">
           <textarea
             placeholder={
               canUseSms ? "Send message…" : "SMS not available on this plan"
@@ -377,7 +377,7 @@ export default function SendSms({
               isPending || !canUseSms || (!messageInput && files.length === 0)
             }
             type="submit"
-            className="mr-1 inline-flex h-9 w-9 items-center justify-center rounded-md text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:text-zinc-400 disabled:hover:bg-transparent dark:text-emerald-400 dark:hover:bg-emerald-400/10"
+            className="mr-1 inline-flex h-9 w-9 items-center justify-center rounded-md bg-[#006D77] text-white transition hover:bg-[#005a63] disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-400"
             aria-label="Send message"
           >
             <SendHorizontal className="w-5 h-5" />

@@ -2,7 +2,6 @@
 import { cn } from "@/lib/cn";
 import type React from "react";
 import type { Client, ClientConversationTrack } from "@prisma/client";
-import Image from "next/image";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,9 +20,9 @@ import { starUnstarClient } from "@/actions/communication/client/starUnstarClien
 import { useDemoClientFilterStore } from "@/stores/clientFilter";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import StarOrUnStarAction from "./StarOrUnStarAction";
+import Image from "next/image";
+import { MoreHorizontal, Star } from "lucide-react";
 import { useClientCommunicationStore } from "@/stores/client-store";
-import { ChevronDown } from "lucide-react";
 
 type TClient = Client & {
   conversationsTrack?: ClientConversationTrack | null;
@@ -42,6 +41,24 @@ type ClientItemProps = {
   >;
 };
 
+function hasRealPhoto(photo?: string | null) {
+  return !!photo && !photo.includes("/images/default.png");
+}
+
+function relativeTime(d?: Date | string | null) {
+  if (!d) return "";
+  const date = new Date(d);
+  const now = Date.now();
+  const diff = (now - date.getTime()) / 1000;
+  if (diff < 60) return "now";
+  if (diff < 3600) return `${Math.floor(diff / 60)}m`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
+  if (diff < 86400 * 2) return "Yesterday";
+  if (diff < 86400 * 7)
+    return date.toLocaleDateString("en-US", { weekday: "short" });
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
 export default function ClientItem({
   client: clientFromDB,
   selected,
@@ -49,7 +66,6 @@ export default function ClientItem({
 }: ClientItemProps) {
   const [client, setClient] = useState<TClient | null>(clientFromDB);
   const router = useRouter();
-
   const buttonRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
 
@@ -60,282 +76,164 @@ export default function ClientItem({
     (state) => state.setClientConversationTrack,
   );
 
-  const markClientMessagesAsUnseen = async (clientId: number) => {
+  const markRead = async (id: number) => {
     try {
-      const updatedTrack = await unreadClientSmsAndEmail(clientId);
-
-      setClientConversationTrack(updatedTrack);
+      setClientConversationTrack(await readClientSmsAndEmail(id));
     } catch (err: any) {
-      const formattedError = errorHandler(err);
-      errorToast(formattedError.message);
+      errorToast(errorHandler(err).message);
     }
   };
-
-  const markClientMessagesAsSeen = async (clientId: number) => {
+  const markUnread = async (id: number) => {
     try {
-      const updatedTrack = await readClientSmsAndEmail(clientId);
-      setClientConversationTrack(updatedTrack);
+      setClientConversationTrack(await unreadClientSmsAndEmail(id));
     } catch (err: any) {
-      const formattedError = errorHandler(err);
-      errorToast(formattedError.message);
+      errorToast(errorHandler(err).message);
     }
   };
 
   useEffect(() => {
-    if (clientFromDB) {
-      setClient(clientFromDB);
-    }
+    if (clientFromDB) setClient(clientFromDB);
   }, [clientFromDB]);
 
   useEffect(() => {
     if (conversationTrack?.clientId === client?.id) {
-      setClient((prev) => {
-        return prev
-          ? {
-              ...prev,
-              conversationsTrack: conversationTrack,
-            }
-          : prev;
-      });
+      setClient((prev) =>
+        prev ? { ...prev, conversationsTrack: conversationTrack } : prev,
+      );
     }
   }, [conversationTrack]);
 
   const filter = useDemoClientFilterStore((state) => state.filter);
 
-  const handleRedirect = async () => {
-    // await updateLastMailReadId({ clientId: client.id });
-    if (searchParams) {
-      const params = new URLSearchParams(searchParams);
-      let pathname = `/dashboard/communication/client/${client?.id}`;
-
-      document.querySelector("#client-message-lists")?.classList.add("hidden");
-
-      if (params.has("open")) {
-        params.delete("open");
-      }
-      params.set("chat", "true");
-      pathname = params.toString()
-        ? `${pathname}?${params.toString()}`
-        : pathname;
-
-      useClientCommunicationStore.setState({
-        clientConversationTrack: client?.conversationsTrack,
-      });
-
-      router.replace(pathname, {
-        scroll: false,
-      });
-    }
+  const handleRedirect = () => {
+    if (!searchParams) return;
+    const params = new URLSearchParams(searchParams);
+    let pathname = `/dashboard/communication/client/${client?.id}`;
+    document.querySelector("#client-message-lists")?.classList.add("hidden");
+    if (params.has("open")) params.delete("open");
+    params.set("chat", "true");
+    pathname = params.toString()
+      ? `${pathname}?${params.toString()}`
+      : pathname;
+    useClientCommunicationStore.setState({
+      clientConversationTrack: client?.conversationsTrack,
+    });
+    router.replace(pathname, { scroll: false });
   };
 
-  const handleStarUnStarClient = async (
+  const handleStar = async (
     event: React.MouseEvent<HTMLButtonElement>,
     isStarred: boolean,
     clientId: number,
   ) => {
     try {
       event.stopPropagation();
-      await starUnstarClient({
-        clientId,
-        state: isStarred ? false : true,
-      });
-      setClient((prev) => {
-        return prev ? { ...prev, isStarred: isStarred ? false : true } : prev;
-      });
-      setClients((prev) => {
-        if (filter === "Starred") {
-          return prev.filter((client) => client.id !== clientId);
-        }
-        return prev;
-      });
+      await starUnstarClient({ clientId, state: !isStarred });
+      setClient((prev) => (prev ? { ...prev, isStarred: !isStarred } : prev));
+      setClients((prev) =>
+        filter === "Starred" ? prev.filter((c) => c.id !== clientId) : prev,
+      );
     } catch (err) {
       console.log(err);
     }
   };
 
-  const isShowConversationIndicator =
-    client?.conversationsTrack &&
-    (!client?.conversationsTrack?.smsIsRead ||
-      !client?.conversationsTrack?.emailIsRead ||
-      !client?.conversationsTrack?.messengerIsRead);
+  const track = client?.conversationsTrack;
+  const hasUnread =
+    !!track &&
+    (!track.smsIsRead || !track.emailIsRead || !track.messengerIsRead);
+  const unreadCount =
+    (track?.emailIsUnReadCount || 0) +
+    (track?.smsUnReadCount || 0) +
+    (track?.messengerUnReadCount || 0);
+
+  const lastMessage =
+    track?.smsLastMessage ||
+    track?.emailLastMessage ||
+    track?.messengerLastMessage ||
+    "";
+  const lastBy =
+    track?.lastMessageBy || track?.lastEmailBy || track?.messengerLastBy;
+  const preview = lastMessage
+    ? `${lastBy === "Company" ? "You: " : ""}${lastMessage}`
+    : "";
+
   return (
     <div
       ref={buttonRef}
       onClick={handleRedirect}
       className={cn(
-        // layout
-        "group relative mb-2 flex w-full cursor-pointer items-center gap-3 overflow-hidden rounded-2xl p-3 sm:p-4",
-        // base card feel
-        "border border-transparent shadow-sm transition-all duration-200",
-        // hover/active polish
-        "hover:shadow-md active:scale-[0.99]",
-        // selected vs default states
+        "group relative flex w-full cursor-pointer items-start gap-3 px-3 py-2.5",
+        "border-b border-l-2 border-b-zinc-100 transition-colors dark:border-b-white/10",
         selected
-          ? [
-              "bg-gradient-to-r from-teal-700 to-teal-600",
-              "ring-1 ring-teal-500/60",
-            ].join(" ")
-          : [
-              "bg-white dark:bg-zinc-900/60",
-              "border-zinc-200/70 dark:border-white/10",
-              "hover:border-zinc-300/80 dark:hover:border-white/20",
-            ].join(" "),
+          ? "bg-[#006D77]/5 border-l-[#006D77]"
+          : "border-l-transparent hover:bg-zinc-50 dark:hover:bg-white/5",
       )}
     >
       <Image
         src={
-          !client?.photo
-            ? "/images/default.png"
-            : client.photo.includes("/images/default.png")
-              ? "/images/default.png"
-              : client.photo
+          hasRealPhoto(client?.photo) ? client!.photo : "/images/default.png"
         }
-        alt={(client?.firstName || "") + " " + (client?.lastName || "")}
-        width={56}
-        height={56}
-        className={cn(
-          "size-12 shrink-0 rounded-full object-cover",
-          selected
-            ? "ring-2 ring-white/80"
-            : "ring-1 ring-zinc-200 dark:ring-white/10",
-        )}
+        alt={`${client?.firstName ?? ""} ${client?.lastName ?? ""}`.trim()}
+        width={40}
+        height={40}
+        className="size-10 shrink-0 rounded-full object-cover ring-1 ring-zinc-200 dark:ring-white/10"
       />
 
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <p
             className={cn(
-              "truncate text-sm font-semibold tracking-tight",
-              selected ? "text-white" : "text-zinc-800 dark:text-zinc-100",
+              "truncate text-sm",
+              hasUnread || selected
+                ? "font-semibold text-zinc-900 dark:text-zinc-50"
+                : "font-medium text-zinc-700 dark:text-zinc-200",
             )}
-            title={`${client?.firstName || ""} ${client?.lastName || ""}`}
           >
             {client?.firstName} {client?.lastName}
           </p>
-
+          {hasUnread && (
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#006D77]" />
+          )}
           {!!client?.isStarred && (
-            <span
-              className={cn(
-                "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium",
-                selected
-                  ? "bg-white/15 text-white"
-                  : "bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300",
-              )}
-            >
-              ★ Favorite
-            </span>
+            <Star className="h-3 w-3 shrink-0 fill-amber-400 text-amber-400" />
           )}
         </div>
-
-        {client?.customerCompany && (
+        {preview && (
           <p
             className={cn(
-              "mt-1 truncate text-xs",
-              selected ? "text-teal-50/90" : "text-zinc-500 dark:text-zinc-400",
+              "mt-0.5 line-clamp-1 text-xs",
+              hasUnread
+                ? "text-zinc-700 dark:text-zinc-200"
+                : "text-zinc-500 dark:text-zinc-400",
             )}
-            title={client?.customerCompany}
+            title={preview}
           >
-            {client?.customerCompany}
-          </p>
-        )}
-
-        {/* Email preview */}
-        {client?.conversationsTrack?.emailLastMessage && (
-          <p
-            className={cn(
-              "mt-2 line-clamp-1 text-xs",
-              selected ? "text-white/95" : "text-zinc-600 dark:text-zinc-300",
-              client?.conversationsTrack?.emailIsRead
-                ? "font-normal"
-                : "font-semibold",
-            )}
-            title={client?.conversationsTrack?.emailLastMessage}
-          >
-            {client?.conversationsTrack?.lastEmailBy === "Company"
-              ? "You (Email)"
-              : "Client (Email)"}{" "}
-            — {client?.conversationsTrack?.emailLastMessage}
-          </p>
-        )}
-
-        {/* SMS preview */}
-        {client?.conversationsTrack?.smsLastMessage && (
-          <p
-            className={cn(
-              "mt-1.5 line-clamp-1 text-xs",
-              selected ? "text-white/95" : "text-zinc-600 dark:text-zinc-300",
-              client?.conversationsTrack?.smsIsRead
-                ? "font-normal"
-                : "font-semibold",
-            )}
-            title={client?.conversationsTrack?.smsLastMessage}
-          >
-            {client?.conversationsTrack?.lastMessageBy === "Company"
-              ? "You (SMS)"
-              : "Client (SMS)"}{" "}
-            — {client?.conversationsTrack?.smsLastMessage}
-          </p>
-        )}
-
-        {/* Messenger preview */}
-        {client?.conversationsTrack?.messengerLastMessage && (
-          <p
-            className={cn(
-              "mt-1.5 line-clamp-1 text-xs",
-              selected ? "text-white/95" : "text-zinc-600 dark:text-zinc-300",
-              client?.conversationsTrack?.messengerIsRead
-                ? "font-normal"
-                : "font-semibold",
-            )}
-            title={client?.conversationsTrack?.messengerLastMessage}
-          >
-            {client?.conversationsTrack?.messengerLastBy === "Company"
-              ? "You (Messenger)"
-              : "Client (Messenger)"}{" "}
-            — {client?.conversationsTrack?.messengerLastMessage}
+            {preview}
           </p>
         )}
       </div>
 
-      {/* notification indicator */}
-      {isShowConversationIndicator && (
-        <div className="absolute right-3 top-3 z-10">
-          <div className="relative">
-            <span className="absolute -inset-1.5 animate-ping rounded-full bg-rose-400/60"></span>
-            <span className="relative flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold leading-none text-white ring-2 ring-white/90 dark:ring-zinc-900">
-              {(client?.conversationsTrack?.emailIsUnReadCount || 0) +
-                (client?.conversationsTrack?.smsUnReadCount || 0) +
-                (client?.conversationsTrack?.messengerUnReadCount || 0)}
-            </span>
-          </div>
-        </div>
-      )}
-
-      <div className="relative ml-auto flex items-center gap-1.5">
-        <StarOrUnStarAction
-          isStarred={!!client?.isStarred}
-          clientId={client?.id}
-          onStarChange={handleStarUnStarClient}
-        />
-
-        <div className="relative">
+      <div className="flex shrink-0 flex-col items-end gap-1.5">
+        <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
+          {relativeTime(track?.sendAt ?? track?.updatedAt)}
+        </span>
+        {unreadCount > 0 ? (
+          <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#006D77] px-1.5 text-[10px] font-semibold text-white">
+            {unreadCount}
+          </span>
+        ) : (
           <DropdownMenu>
             <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
               <Button
                 variant="ghost"
                 size="icon"
-                className={cn(
-                  "h-8 w-8 rounded-xl transition-colors",
-                  selected
-                    ? "text-white hover:bg-white/15"
-                    : "text-zinc-500 hover:bg-zinc-100 dark:hover:bg-white/10",
-                )}
+                className="h-5 w-5 text-zinc-300 opacity-0 transition-opacity hover:text-zinc-600 group-hover:opacity-100"
                 aria-label="More actions"
               >
-                <ChevronDown className="h-4 w-4" />
+                <MoreHorizontal className="h-3.5 w-3.5" />
               </Button>
             </DropdownMenuTrigger>
-
             <DropdownMenuContent
               align="end"
               className="w-44 rounded-xl"
@@ -344,30 +242,27 @@ export default function ClientItem({
               <DropdownMenuItem
                 onClick={async (e) => {
                   e.stopPropagation();
-                  await markClientMessagesAsSeen(client?.id as number);
+                  await markRead(client?.id as number);
                 }}
               >
                 Mark as Read
               </DropdownMenuItem>
-
               <DropdownMenuItem
                 onClick={async (e) => {
                   e.stopPropagation();
-                  !isShowConversationIndicator &&
-                    (await markClientMessagesAsUnseen(client?.id as number));
+                  !hasUnread && (await markUnread(client?.id as number));
                 }}
               >
                 Mark as Unread
               </DropdownMenuItem>
-
               <DropdownMenuItem
-                onClick={(e) => {
-                  handleStarUnStarClient(
+                onClick={(e) =>
+                  handleStar(
                     e as any,
                     !!client?.isStarred,
                     client?.id as number,
-                  );
-                }}
+                  )
+                }
               >
                 {client?.isStarred
                   ? "Remove from Favorites"
@@ -375,13 +270,8 @@ export default function ClientItem({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </div>
+        )}
       </div>
-
-      {/* subtle selection shine */}
-      {selected && (
-        <span className="pointer-events-none absolute inset-y-0 right-[-40%] h-[200%] w-[80%] rotate-12 bg-white/10 blur-2xl" />
-      )}
     </div>
   );
 }

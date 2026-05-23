@@ -13,13 +13,7 @@ export default async function DetailsBox({ clientId, showDetails }: Props) {
   const clientPromise = getClientById(clientId);
   const vehiclesPromise = db.vehicle.findMany({
     where: { clientId },
-    select: {
-      id: true,
-      year: true,
-      make: true,
-      model: true,
-      other: true,
-    },
+    include: { color: true },
   });
   const [client, vehicles] = await Promise.all([
     clientPromise,
@@ -31,12 +25,9 @@ export default async function DetailsBox({ clientId, showDetails }: Props) {
   const showDetailsClass = showDetails === "true" ? "block" : "hidden";
   return (
     <div
-      className={`app-shadow mt-3 rounded-lg bg-background pb-4 lg:mt-0 lg:h-[90vh] xl:block ${showDetailsClass}`}
+      className={`app-shadow mt-3 flex flex-col rounded-lg bg-background lg:mt-0 lg:h-[90vh] xl:flex ${showDetailsClass}`}
     >
-      {/* Client Heading */}
       <ClientHeading vehicles={vehicles} client={client} />
-
-      {/* Client Description */}
       <ClientDescription vehicles={vehicles} client={client} />
     </div>
   );

@@ -53,7 +53,7 @@ export default function AppointmentListClient({
     <section className="rounded-2xl border border-zinc-200/70 bg-white p-4 shadow-sm transition-colors dark:border-white/10 dark:bg-zinc-900/60">
       <header className="mb-3 flex items-center justify-between">
         <h3 className="text-sm font-semibold tracking-tight text-zinc-800 dark:text-zinc-100">
-          Appointments
+          APPOINTMENTS
         </h3>
         <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-600 dark:bg-white/10 dark:text-zinc-300">
           {Number(current?.length) + Number(upcoming?.length) || 0}

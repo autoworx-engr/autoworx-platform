@@ -1,162 +1,129 @@
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/Tooltip";
 import { cn } from "@/lib/cn";
 import { db } from "@/lib/db";
 import { Client, User, Vehicle } from "@prisma/client";
 import Image from "next/image";
+import { X } from "lucide-react";
 import BackBtn from "../conversations/BackBtn";
 import EditClientModalTrigger from "./EditClientModalTrigger";
-import ClientSalesAgentToggle from "./ClientSalesAgentToggle";
 import ClientPermissionWrapper from "./ClientPermissionWrapper";
-import { VehicleDetails, CreateAppointment } from "./ClientHeadingDynamics";
+import { CreateAppointment, NewEstimateButton } from "./ClientHeadingDynamics";
 
 type TProps = { client?: Client | null; vehicles?: Partial<Vehicle>[] };
 
 export default async function ClientHeading({ client, vehicles = [] }: TProps) {
   if (!client) return null;
 
-  const leadPromise: Promise<{
-    isLead: boolean;
-    services: string;
-    salesUser: User | null;
-  } | null> = client.leadId
+  const tagPromise = client.tagId
+    ? db.tag.findUnique({ where: { id: client.tagId } })
+    : Promise.resolve(null);
+
+  const leadPromise: Promise<{ salesUser: User | null } | null> = client.leadId
     ? db.lead.findUnique({
         where: { id: client.leadId },
-        select: { isLead: true, services: true, salesUser: true },
+        select: { salesUser: true },
       })
     : Promise.resolve(null);
 
-  const invoicesPromise = db.invoice.findMany({
-    where: { clientId: client.id },
-    include: {
-      invoiceItems: { include: { service: true } },
-      vehicle: true,
-    },
-  });
+  const [tag, lead] = await Promise.all([tagPromise, leadPromise]);
 
-  const [lead, invoices] = await Promise.all([leadPromise, invoicesPromise]);
+  const fullName =
+    `${client.firstName ?? ""} ${client.lastName ?? ""}`.trim() || "Client";
 
   return (
-    <div
-      className={cn(
-        "h-[40%] rounded-t-2xl text-white text-xs 2xl:text-base",
-        // richer depth: gradient + subtle ring
-        "bg-gradient-to-r from-[#006D77] to-[#0a8a95] ring-1 ring-white/10 pb-4",
-      )}
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between px-2 pt-4 xl:pt-2">
-        {/* Left side */}
+    <section className="border-b border-zinc-200/70 bg-white px-4 pt-3 pb-4 dark:border-white/10 dark:bg-zinc-900/60">
+      <header className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="block xl:hidden">
             <BackBtn />
           </div>
-
-          <h2 className="px-1 text-sm font-semibold tracking-tight xl:p-3 xl:text-base">
-            Client Data
+          <h2 className="text-sm font-semibold tracking-tight text-zinc-800 dark:text-zinc-100">
+            Client details
           </h2>
-
-          {/* Edit modal trigger */}
-          <EditClientModalTrigger client={client} />
         </div>
 
-        {/* Right side */}
-        <ClientPermissionWrapper
-          companyId={client?.companyId}
-          clientId={client.id}
-          initialValue={client.isSalesAgent ?? false}
-        />
-      </div>
-
-      {/* Body */}
-      <div className="grid h-[calc(100%-3rem)] grid-cols-1 gap-3 overflow-hidden px-2 md:grid-cols-2">
-        {/* Left: identity & actions */}
-        <div className="h-full rounded-xl">
-          <div className="mt-3 flex items-center gap-4 px-3 sm:px-5">
-            <Image
-              src={
-                !client.photo
-                  ? "/images/default.png"
-                  : client.photo.includes("/images/default.png")
-                    ? "/images/default.png"
-                    : client.photo
-              }
-              alt={
-                `${client.firstName ?? ""} ${client.lastName ?? ""}`.trim() ||
-                "Client"
-              }
-              width={96}
-              height={96}
-              className={cn(
-                "h-20 w-20 rounded-full object-cover",
-                "ring-2 ring-white/70 shadow-sm",
-                "2xl:h-[110px] 2xl:w-[110px]",
-              )}
-            />
-
-            <div className="mt-1 flex min-w-0 flex-col">
-              <h3 className="truncate text-base font-semibold">
-                <div className="min-w-0 truncate">
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <span className="">
-                        {client.firstName} {client.lastName}
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent className="bg-gradient-to-r from-[#006D77] to-[#0a8a95] text-white">
-                      <p>
-                        {client.firstName} {client.lastName}
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-              </h3>
-
-              {client.email && (
-                <p className="mt-1 truncate text-[11px] opacity-90 2xl:text-sm">
-                  <span className="opacity-80">Email:</span>{" "}
-                  <span className="font-medium">{client.email}</span>
-                </p>
-              )}
-
-              {client.mobile && (
-                <p className="mt-1 truncate text-[11px] opacity-90 2xl:text-sm">
-                  <span className="opacity-80">Phone:</span>{" "}
-                  <span className="font-medium">{client.mobile}</span>
-                </p>
-              )}
-
-              <div className="mt-3">
-                <CreateAppointment clientId={client.id} />
-              </div>
-
-              {lead?.salesUser && (
-                <p className="mt-3 text-[11px] opacity-90 2xl:text-sm">
-                  <span className="opacity-80">Assigned Sales:</span>{" "}
-                  <span className="font-medium">
-                    {lead.salesUser.firstName} {lead.salesUser.lastName}
-                  </span>
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Right: vehicles & invoices */}
-        <div
-          className={cn(
-            "custom-scrollbar max-h-[220px] w-full flex-1 overflow-y-auto rounded-xl",
-            // readable frosted card on teal
-            "bg-white/10 p-3 backdrop-blur-md shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2)]",
-          )}
-        >
-          <VehicleDetails
-            isLeadClient={!!lead?.isLead}
-            vehicles={vehicles}
-            invoices={invoices}
-            singleService={lead?.services ?? ""}
+        <div className="flex items-center gap-3 text-zinc-600 dark:text-zinc-300">
+          <ClientPermissionWrapper
+            companyId={client.companyId}
+            clientId={client.id}
+            initialValue={client.isSalesAgent ?? false}
+          />
+          <BackBtn
+            asIcon
+            label="Close"
+            icon={<X className="h-4 w-4 text-zinc-500" />}
           />
         </div>
+      </header>
+
+      <div className="flex items-start gap-3">
+        <Image
+          src={
+            !client.photo || client.photo.includes("/images/default.png")
+              ? "/images/default.png"
+              : client.photo
+          }
+          alt={fullName}
+          width={56}
+          height={56}
+          className={cn(
+            "h-14 w-14 shrink-0 rounded-full object-cover",
+            "ring-2 ring-zinc-100 dark:ring-white/10",
+          )}
+        />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5">
+            <h3 className="truncate text-base font-semibold text-zinc-900 dark:text-zinc-50">
+              {fullName}
+            </h3>
+            <EditClientModalTrigger client={client} />
+          </div>
+
+          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+            {tag?.name && (
+              <span
+                className="rounded-full px-2 py-0.5 text-[11px] font-medium"
+                style={{
+                  backgroundColor: `${tag.bgColor ?? "#E0F2F1"}`,
+                  color: tag.textColor ?? "#006D77",
+                }}
+              >
+                • {tag.name}
+              </span>
+            )}
+            {vehicles?.length ? (
+              <span className="rounded-full bg-[#006D77]/10 px-2 py-0.5 text-[11px] font-medium text-[#006D77] dark:bg-[#006D77]/20 dark:text-[#4dd2dc]">
+                •{" "}
+                {vehicles.length === 1
+                  ? "Vehicle"
+                  : `${vehicles.length} Vehicles`}
+              </span>
+            ) : null}
+          </div>
+
+          {client.email && (
+            <p className="mt-2 truncate text-xs text-zinc-600 dark:text-zinc-300">
+              {client.email}
+            </p>
+          )}
+          {client.mobile && (
+            <p className="mt-0.5 truncate text-xs text-zinc-600 dark:text-zinc-300">
+              {client.countryCode === "US" ? "+1 " : ""}
+              {client.mobile}
+            </p>
+          )}
+
+          {lead?.salesUser && (
+            <p className="mt-1.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+              Assigned: {lead.salesUser.firstName} {lead.salesUser.lastName}
+            </p>
+          )}
+        </div>
       </div>
-    </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <CreateAppointment clientId={client.id} />
+        <NewEstimateButton clientId={client.id} />
+      </div>
+    </section>
   );
 }

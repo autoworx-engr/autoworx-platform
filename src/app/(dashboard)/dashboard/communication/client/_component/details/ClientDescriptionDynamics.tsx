@@ -9,3 +9,11 @@ export const AppointmentListClient = dynamic(
 export const ClientNotes = dynamic(() => import("./ClientNotes"), {
   ssr: false,
 });
+
+export const VehicleDetails = dynamic(() => import("./VehicleDetails"), {
+  ssr: false,
+});
+
+export const TaskListSection = dynamic(() => import("./TaskListSection"), {
+  ssr: false,
+});

@@ -5,6 +5,7 @@ import { cn } from "@/lib/cn";
 import { MailgunEmail, MailgunEmailAttachment } from "@prisma/client";
 import { format } from "date-fns";
 import Image from "next/image";
+import { AtSign } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import MailAttachment from "./MailAttachment";
 
@@ -145,11 +146,11 @@ export default function MailGunConversation({
                   >
                     {showAvatar ? (
                       <Image
-                        src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQNL_ZnOTpXSvhf1UaK7beHey2BX42U6solRA&s"
+                        src="/images/default.png"
                         alt="Client avatar"
                         width={28}
                         height={28}
-                        className="mt-1 rounded-full ring-1 ring-white/50"
+                        className="mt-1 size-7 shrink-0 rounded-full object-cover ring-1 ring-zinc-200 dark:ring-white/10"
                       />
                     ) : (
                       <span className="w-[28px]" aria-hidden />
@@ -165,11 +166,11 @@ export default function MailGunConversation({
                         message?.attachments?.length) && (
                         <div
                           className={cn(
-                            "group relative rounded-2xl px-3 py-2 text-[14px] shadow-sm ring-1 transition",
+                            "group relative px-3.5 py-2 text-[14px] shadow-sm transition",
                             "select-text hover:shadow-md",
                             isIncoming
-                              ? "bg-zinc-200 text-zinc-900 ring-zinc-300 dark:bg-zinc-800 dark:text-zinc-100 dark:ring-white/10"
-                              : "bg-gradient-to-br from-[#0a8a95] to-[#006D77] text-white ring-white/20",
+                              ? "rounded-2xl rounded-tl-md bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
+                              : "rounded-2xl rounded-tr-md bg-[#006D77] text-white",
                           )}
                         >
                           {/* Text */}
@@ -204,12 +205,13 @@ export default function MailGunConversation({
 
                         <div
                           className={cn(
-                            "text-[10px] leading-4",
-                            !isIncoming && "text-right",
+                            "inline-flex items-center gap-1 text-[10px] leading-4",
+                            !isIncoming && "justify-end",
                           )}
                           title={new Date(message.createdAt).toLocaleString()}
                         >
-                          {messageTime}
+                          <AtSign className="h-3 w-3" />
+                          <span>{messageTime}</span>
                         </div>
                       </div>
                     </div>

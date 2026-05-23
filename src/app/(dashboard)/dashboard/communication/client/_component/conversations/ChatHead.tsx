@@ -125,7 +125,9 @@ export default function ChatHead({
         className={cn(
           "relative rounded-full p-3 transition-all",
           "hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/70",
-          selected === "EMAIL" ? "bg-white/30" : "bg-transparent",
+          selected === "EMAIL"
+            ? "bg-white/25 text-white"
+            : "bg-transparent text-white",
         )}
       >
         {/* unread badge */}
@@ -137,7 +139,7 @@ export default function ChatHead({
             </span>
           </span>
         )}
-        <AtSign className="w-5 h-5 text-white" />
+        <AtSign className="w-5 h-5" />
       </button>
 
       {/* SMS */}
@@ -150,7 +152,9 @@ export default function ChatHead({
         className={cn(
           "relative rounded-full transition-all",
           "hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/70",
-          selected === "SMS" ? "bg-white/30" : "bg-transparent",
+          selected === "SMS"
+            ? "bg-white/25 text-white"
+            : "bg-transparent text-white",
         )}
       >
         {clientConversationTrack && !clientConversationTrack?.smsIsRead && (
@@ -162,15 +166,14 @@ export default function ChatHead({
           </span>
         )}
         <svg
-          fill="#ffffff"
-          height="35px"
-          width="35px"
+          fill="currentColor"
+          height="32px"
+          width="32px"
           version="1.1"
           id="Icon"
           xmlns="http://www.w3.org/2000/svg"
           viewBox="-5.28 -5.28 34.56 34.56"
-          enable-background="new 0 0 24 24"
-          stroke="#ffffff"
+          stroke="currentColor"
           strokeWidth="0.36"
         >
           <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
@@ -199,7 +202,9 @@ export default function ChatHead({
           className={cn(
             "relative rounded-full p-3 transition-all",
             "hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/70",
-            selected === "MESSENGER" ? "bg-white/30" : "bg-transparent",
+            selected === "MESSENGER"
+              ? "bg-white/25 text-white"
+              : "bg-transparent text-white",
           )}
         >
           {clientConversationTrack &&
@@ -211,7 +216,7 @@ export default function ChatHead({
                 </span>
               </span>
             )}
-          <MessengerIcon className="w-5 h-5 text-white" />
+          <MessengerIcon className="w-5 h-5" />
         </button>
       )}
 
@@ -226,10 +231,12 @@ export default function ChatHead({
           className={cn(
             "relative rounded-full p-3 transition-all",
             "hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/70",
-            selected === "PHONE" ? "bg-white/30" : "bg-transparent",
+            selected === "PHONE"
+              ? "bg-white/25 text-white"
+              : "bg-transparent text-white",
           )}
         >
-          <Phone className="w-5 h-5 fill-current text-white" />
+          <Phone className="w-5 h-5 fill-current" />
         </button>
       )}
     </div>

@@ -44,7 +44,7 @@ export default function ClientSalesAgentToggle({
       <span
         className={`text-[11px] 2xl:text-sm ${isRestricted ? "opacity-60" : "opacity-80"}`}
       >
-        Sales Agent Access
+        Agent access
       </span>
       <Switch
         checked={enabled}

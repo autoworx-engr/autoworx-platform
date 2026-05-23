@@ -214,7 +214,7 @@ export default function SharedFilesSection({
     <section className="rounded-2xl border border-zinc-200/70 bg-white p-4 shadow-sm transition-colors dark:border-white/10 dark:bg-zinc-900/60">
       <header className="mb-3 flex items-center justify-between">
         <h3 className="text-sm font-semibold tracking-tight text-zinc-800 dark:text-zinc-100">
-          Shared Files
+          SHARED FILES
         </h3>
         <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-600 dark:bg-white/10 dark:text-zinc-300">
           {totalCount}
@@ -228,7 +228,7 @@ export default function SharedFilesSection({
             onClick={() => setActiveTab(tab.id)}
             className={`-mb-px flex items-center gap-1.5 border-b-2 px-3 py-1.5 text-xs font-medium transition-colors ${
               activeTab === tab.id
-                ? "border-emerald-600 text-emerald-600 dark:border-emerald-500 dark:text-emerald-500"
+                ? "border-[#006D77] text-[#006D77] dark:border-[#4dd2dc] dark:text-[#4dd2dc]"
                 : "border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
             }`}
           >
@@ -236,7 +236,7 @@ export default function SharedFilesSection({
             <span
               className={`rounded-full px-1.5 py-0.5 text-[9px] ${
                 activeTab === tab.id
-                  ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-500"
+                  ? "bg-[#006D77]/10 text-[#006D77] dark:bg-[#006D77]/20 dark:text-[#4dd2dc]"
                   : "bg-zinc-100 text-zinc-500 dark:bg-white/10 dark:text-zinc-400"
               }`}
             >

@@ -17,10 +17,10 @@ export default function EditClientModalTrigger({ client }: TProps) {
   const trigger = (
     <button
       type="button"
-      className="ml-1 inline-flex items-center justify-center rounded-full p-1 hover:bg-white/10"
+      className="inline-flex items-center justify-center rounded-full p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-white/10 dark:hover:text-zinc-200"
       aria-label="Edit client"
     >
-      <Edit className="size-5 text-white/90" />
+      <Edit className="size-4" />
     </button>
   );
 
