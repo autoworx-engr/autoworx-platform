@@ -105,7 +105,7 @@ export default function UserSelectButton({
   return (
     <button
       className={cn(
-        `group relative flex items-center w-full gap-2 rounded-2xl p-3 sm:p-4`,
+        `group relative flex items-center w-full gap-2 rounded-lg p-3 sm:p-4`,
         "border border-transparent shadow-sm transition-all duration-200",
         "hover:shadow-md active:scale-[0.99]",
         isSelectedUser

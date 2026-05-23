@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { Prisma, User } from "@prisma/client";
+import { User } from "@prisma/client";
 
 export type LatestMessageSummary = {
   id: number;
@@ -16,33 +16,50 @@ export type UserWithLatest = User & {
 };
 
 /**
- * Returns user ids ordered by latest direct-message activity (NULLS LAST),
- * paginated. LEFT JOIN against the per-counterpart latest-message subquery so
- * users without any conversations still appear (sorted to the end).
+ * Returns user ids in the order they should appear in the sidebar: most
+ * recently active conversation first, never-chatted users at the bottom,
+ * ties broken by id ASC. Two Prisma calls, JS sort, then slice for pagination.
  */
 export async function fetchUserIdsByLatestMessage(
   currentUserId: number,
   companyId: number,
   skip: number,
   take: number,
-) {
-  return db.$queryRaw<{ id: number; latest_at: Date | null }[]>`
-    SELECT u.id, l.latest_at
-    FROM "User" u
-    LEFT JOIN (
-      SELECT
-        CASE WHEN m."from" = ${currentUserId} THEN m."to" ELSE m."from" END AS counterpart_id,
-        MAX(m.created_at) AS latest_at
-      FROM "Message" m
-      WHERE (m."from" = ${currentUserId} OR m."to" = ${currentUserId})
-        AND m.group_id IS NULL
-        AND CASE WHEN m."from" = ${currentUserId} THEN m."to" ELSE m."from" END IS NOT NULL
-      GROUP BY counterpart_id
-    ) l ON l.counterpart_id = u.id
-    WHERE u.company_id = ${companyId} AND u.id <> ${currentUserId}
-    ORDER BY l.latest_at DESC NULLS LAST, u.id ASC
-    OFFSET ${skip} LIMIT ${take}
-  `;
+): Promise<{ id: number }[]> {
+  const [users, pairMaxes] = await Promise.all([
+    db.user.findMany({
+      where: { companyId, NOT: { id: currentUserId } },
+      select: { id: true },
+    }),
+    db.message.groupBy({
+      by: ["from", "to"],
+      where: {
+        groupId: null,
+        OR: [{ from: currentUserId }, { to: currentUserId }],
+      },
+      _max: { createdAt: true },
+    }),
+  ]);
+
+  // Collapse (from, to) pair maxes into counterpart → latest timestamp.
+  const latestByCounterpart = new Map<number, Date>();
+  for (const p of pairMaxes) {
+    const ts = p._max.createdAt;
+    if (!ts) continue;
+    const counterpart = p.from === currentUserId ? p.to : p.from;
+    if (counterpart == null || counterpart === currentUserId) continue;
+    const prev = latestByCounterpart.get(counterpart);
+    if (!prev || ts > prev) latestByCounterpart.set(counterpart, ts);
+  }
+
+  const sorted = [...users].sort((a, b) => {
+    const aTs = latestByCounterpart.get(a.id)?.getTime() ?? -Infinity;
+    const bTs = latestByCounterpart.get(b.id)?.getTime() ?? -Infinity;
+    if (aTs !== bTs) return bTs - aTs; // newest first; never-chatted (-Infinity) sinks
+    return a.id - b.id;
+  });
+
+  return sorted.slice(skip, skip + take);
 }
 
 export function countCompanyUsers(
@@ -56,8 +73,9 @@ export function countCompanyUsers(
 
 /**
  * For the given page of users, fetch the single latest direct message between
- * each user and the current user, plus the unread flag from `ChatTrack`. Two
- * batched queries instead of N — never invoked inside a loop.
+ * each user and the current user, plus the unread count per counterpart.
+ * All Prisma fluent calls — `distinct` + `orderBy` does the DISTINCT-ON job
+ * in two batched queries (inbound + outbound), merged in JS.
  */
 export async function hydrateLatestMessages(
   currentUserId: number,
@@ -66,41 +84,41 @@ export async function hydrateLatestMessages(
   if (users.length === 0) return [];
   const otherIds = users.map((u) => u.id);
 
-  const latestRows = await db.$queryRaw<
-    {
-      id: number;
-      message: string;
-      from: number;
-      to: number | null;
-      created_at: Date;
-      updated_at: Date;
-      counterpart_id: number;
-    }[]
-  >`
-    SELECT DISTINCT ON (counterpart_id)
-      m.id, m.message, m."from", m."to",
-      m.created_at, m.updated_at,
-      CASE WHEN m."from" = ${currentUserId} THEN m."to" ELSE m."from" END AS counterpart_id
-    FROM "Message" m
-    WHERE m.group_id IS NULL
-      AND (
-        (m."from" = ${currentUserId} AND m."to" IN (${Prisma.join(otherIds)}))
-        OR (m."to" = ${currentUserId} AND m."from" IN (${Prisma.join(otherIds)}))
-      )
-    ORDER BY counterpart_id, m.created_at DESC
-  `;
+  // Latest inbound from each counterpart, and latest outbound to each
+  // counterpart. Merge by counterpart, keep whichever is newer.
+  const messageFields = {
+    id: true,
+    message: true,
+    from: true,
+    to: true,
+    createdAt: true,
+    updatedAt: true,
+  } as const;
+  const [inbound, outbound] = await Promise.all([
+    db.message.findMany({
+      where: { groupId: null, from: { in: otherIds }, to: currentUserId },
+      distinct: ["from"],
+      orderBy: [{ from: "asc" }, { createdAt: "desc" }],
+      select: messageFields,
+    }),
+    db.message.findMany({
+      where: { groupId: null, from: currentUserId, to: { in: otherIds } },
+      distinct: ["to"],
+      orderBy: [{ to: "asc" }, { createdAt: "desc" }],
+      select: messageFields,
+    }),
+  ]);
 
   const latestByCounterpart = new Map<number, LatestMessageSummary>();
-  for (const r of latestRows) {
-    if (r.counterpart_id == null) continue;
-    latestByCounterpart.set(r.counterpart_id, {
-      id: r.id,
-      message: r.message,
-      from: r.from,
-      to: r.to,
-      createdAt: r.created_at,
-      updatedAt: r.updated_at,
-    });
+  for (const m of inbound) {
+    latestByCounterpart.set(m.from, m);
+  }
+  for (const m of outbound) {
+    if (m.to == null) continue;
+    const prev = latestByCounterpart.get(m.to);
+    if (!prev || m.createdAt > prev.createdAt) {
+      latestByCounterpart.set(m.to, m);
+    }
   }
 
   // Real unread count per counterpart. Two cheap Prisma calls:

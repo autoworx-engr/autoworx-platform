@@ -24,7 +24,7 @@ export function GroupListItem({
     <button
       onClick={onClick}
       className={cn(
-        "group relative flex w-full items-center gap-3 rounded-2xl p-3 text-left",
+        "group relative flex w-full items-center gap-3 rounded-lg p-3 text-left",
         "border shadow-sm transition-all duration-200 hover:shadow-md active:scale-[0.99]",
         isSelectedGroup
           ? "border-transparent bg-gradient-to-r from-teal-700 to-teal-600 ring-1 ring-teal-500/60"

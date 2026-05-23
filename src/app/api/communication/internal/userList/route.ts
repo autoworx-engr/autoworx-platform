@@ -62,126 +62,85 @@ export const GET = async (request: NextRequest) => {
     const userIdNum = principal.userId;
     const skip = (pageNum - 1) * limitNum;
 
-    // Single search predicate reused by both the ordering SELECT and the
-    // COUNT(*) — earlier versions had two diverging filters which made
-    // `meta.totalRecords` and the returned rows disagree under search.
+    // Search predicate as a Prisma `where` fragment — same one drives the
+    // `findMany` and the `count`, so `meta.totalRecords` and `data` can never
+    // disagree under search.
     const searchTerm = search.trim();
     const searchWords = searchTerm ? searchTerm.split(/\s+/) : [];
-    const searchSql = searchTerm
-      ? Prisma.sql`AND (
-          u.first_name ILIKE ${"%" + searchTerm + "%"}
-          OR u.last_name ILIKE ${"%" + searchTerm + "%"}
-          OR u.email ILIKE ${"%" + searchTerm + "%"}
-          ${
-            searchWords.length > 1
-              ? Prisma.sql`OR ${Prisma.join(
-                  Array.from({ length: searchWords.length - 1 }, (_, i) => {
-                    const firstPart = searchWords.slice(0, i + 1).join(" ");
-                    const lastPart = searchWords.slice(i + 1).join(" ");
-                    return Prisma.sql`(u.first_name ILIKE ${"%" + firstPart + "%"} AND u.last_name ILIKE ${"%" + lastPart + "%"})`;
-                  }),
-                  " OR ",
-                )}`
-              : Prisma.empty
-          }
-        )`
-      : Prisma.empty;
-
-    // Pagination + ordering live entirely in SQL. We sort by the viewer's
-    // latest internal chatTrack with each user (newest activity first, then
-    // never-chatted users fall to the bottom via NULLS LAST).
-    const [orderedRows, totalRow] = await Promise.all([
-      db.$queryRaw<{ id: number; track_updated_at: Date | null }[]>`
-        SELECT u.id, t.track_updated_at
-        FROM "User" u
-        LEFT JOIN LATERAL (
-          SELECT ct.updated_at AS track_updated_at
-          FROM "ChatTrack" ct
-          WHERE ct.section::text = 'internal'
-            AND (
-              (ct.sender_id = ${userIdNum} AND ct.receiver_id = u.id)
-              OR (ct.receiver_id = ${userIdNum} AND ct.sender_id = u.id)
-            )
-          ORDER BY ct.updated_at DESC
-          LIMIT 1
-        ) t ON true
-        WHERE u.company_id = ${principal.companyId}
-          AND u.id <> ${userIdNum}
-          ${searchSql}
-        ORDER BY t.track_updated_at DESC NULLS LAST, u.id ASC
-        OFFSET ${skip} LIMIT ${limitNum}
-      `,
-      db.$queryRaw<{ count: bigint }[]>`
-        SELECT COUNT(*)::bigint AS count
-        FROM "User" u
-        WHERE u.company_id = ${principal.companyId}
-          AND u.id <> ${userIdNum}
-          ${searchSql}
-      `,
-    ]);
-    const totalRecords = Number(totalRow[0]?.count ?? 0);
-
-    const idsInOrder = orderedRows.map((r) => r.id);
-    let paginatedUsers: Array<
-      Prisma.UserGetPayload<{
-        select: {
-          id: true;
-          firstName: true;
-          lastName: true;
-          email: true;
-          phone: true;
-          image: true;
-          employeeType: true;
-        };
-      }> & { chatTrack: Prisma.ChatTrackGetPayload<{}> | null }
-    > = [];
-
-    if (idsInOrder.length > 0) {
-      const [usersRows, tracks] = await Promise.all([
-        db.user.findMany({
-          where: { id: { in: idsInOrder } },
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-            phone: true,
-            image: true,
-            employeeType: true,
-          },
-        }),
-        db.chatTrack.findMany({
-          where: {
-            section: "internal",
-            OR: [
-              { senderId: userIdNum, receiverId: { in: idsInOrder } },
-              { receiverId: userIdNum, senderId: { in: idsInOrder } },
-            ],
-          },
-          orderBy: { updatedAt: "desc" },
-        }),
-      ]);
-
-      const userById = new Map(usersRows.map((u) => [u.id, u]));
-      const latestChatTrackMap = new Map<number, (typeof tracks)[0]>();
-      for (const track of tracks) {
-        const otherId =
-          track.senderId === userIdNum ? track.receiverId : track.senderId;
-        if (otherId && !latestChatTrackMap.has(otherId)) {
-          latestChatTrackMap.set(otherId, track);
-        }
+    const buildSearchWhere = (): Prisma.UserWhereInput => {
+      if (!searchTerm) return {};
+      const conditions: Prisma.UserWhereInput[] = [
+        { firstName: { contains: searchTerm, mode: "insensitive" } },
+        { lastName: { contains: searchTerm, mode: "insensitive" } },
+        { email: { contains: searchTerm, mode: "insensitive" } },
+      ];
+      for (let i = 1; i < searchWords.length; i++) {
+        const firstPart = searchWords.slice(0, i).join(" ");
+        const lastPart = searchWords.slice(i).join(" ");
+        conditions.push({
+          AND: [
+            { firstName: { contains: firstPart, mode: "insensitive" } },
+            { lastName: { contains: lastPart, mode: "insensitive" } },
+          ],
+        });
       }
+      return { OR: conditions };
+    };
 
-      paginatedUsers = idsInOrder
-        .map((id) => {
-          const user = userById.get(id);
-          if (!user) return null;
-          return { ...user, chatTrack: latestChatTrackMap.get(id) ?? null };
-        })
-        .filter(
-          (u): u is NonNullable<(typeof paginatedUsers)[number]> => u !== null,
-        );
+    const where: Prisma.UserWhereInput = {
+      companyId: principal.companyId,
+      NOT: { id: userIdNum },
+      ...buildSearchWhere(),
+    };
+
+    // Three batched Prisma calls. Sort + paginate happens in JS because
+    // Prisma's `orderBy` can't aggregate over a related row's `updatedAt`.
+    const [usersMatching, tracks, totalRecords] = await Promise.all([
+      db.user.findMany({
+        where,
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          phone: true,
+          image: true,
+          employeeType: true,
+        },
+      }),
+      db.chatTrack.findMany({
+        where: {
+          section: "internal",
+          OR: [{ senderId: userIdNum }, { receiverId: userIdNum }],
+        },
+        orderBy: { updatedAt: "desc" },
+      }),
+      db.user.count({ where }),
+    ]);
+
+    // counterpart -> latest chatTrack (tracks already ordered desc, so the
+    // first one wins).
+    const latestChatTrackMap = new Map<number, (typeof tracks)[0]>();
+    for (const track of tracks) {
+      const otherId =
+        track.senderId === userIdNum ? track.receiverId : track.senderId;
+      if (otherId && !latestChatTrackMap.has(otherId)) {
+        latestChatTrackMap.set(otherId, track);
+      }
     }
+
+    const sortedUsers = [...usersMatching].sort((a, b) => {
+      const aTs =
+        latestChatTrackMap.get(a.id)?.updatedAt.getTime() ?? -Infinity;
+      const bTs =
+        latestChatTrackMap.get(b.id)?.updatedAt.getTime() ?? -Infinity;
+      if (aTs !== bTs) return bTs - aTs;
+      return a.id - b.id;
+    });
+
+    const paginatedUsers = sortedUsers
+      .slice(skip, skip + limitNum)
+      .map((u) => ({ ...u, chatTrack: latestChatTrackMap.get(u.id) ?? null }));
 
     const hasNextPage = pageNum * limitNum < totalRecords;
     const hasPrevPage = pageNum > 1;
