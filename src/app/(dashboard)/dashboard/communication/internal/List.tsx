@@ -1,13 +1,12 @@
-import Avatar from "@/components/Avatar";
 import { cn } from "@/lib/cn";
 import { useChatTrackStore } from "@/stores/chatTrackStore";
 import { ChatTrack, Group, Message, User } from "@prisma/client";
-import { Search } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useEffect, useMemo, useState } from "react";
-import InfiniteScroll from "react-infinite-scroll-component";
 import CreateGroupModal from "./CreateGroupModal";
-import UserSelectButton from "./UserSelectButton";
+import { SidebarChatList } from "./_components/SidebarChatList";
+import { SidebarSearch } from "./_components/SidebarSearch";
+import { TabButton } from "./_components/TabButton";
 import { useInfiniteGroupsList } from "./_hooks/useInfiniteGroupsList";
 import { useInfiniteUsersList } from "./_hooks/useInfiniteUsersList";
 import { useInternalSidebarPusher } from "./_hooks/useInternalSidebarPusher";
@@ -32,7 +31,6 @@ type TListProps = {
 export default function List({
   users,
   setUsersList,
-  groups,
   setGroupsList,
   groupsList,
   usersList,
@@ -161,7 +159,7 @@ export default function List({
   return (
     <div
       className={cn(
-        "app-shadow max-h-[92vh] w-full rounded-lg bg-background p-3 sm:block sm:w-[25%]",
+        "app-shadow flex h-[calc(100vh-7rem)] w-full flex-col rounded-lg bg-background p-3 sm:w-[25%]",
         className,
       )}
     >
@@ -198,195 +196,32 @@ export default function List({
         </TabButton>
       </div>
 
-      <div className="relative mt-3">
-        <Search
-          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400"
-          size={18}
-        />
-        <input
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          type="text"
-          placeholder={
-            tab === "users"
-              ? "Search by name, email or phone"
-              : "Search groups by name"
-          }
-          className={cn(
-            "w-full rounded-md border bg-white pl-9 pr-9 py-2 text-sm text-zinc-700 placeholder-zinc-400 outline-none",
-            "border-zinc-300 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20",
-            "dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200",
-          )}
-        />
-      </div>
+      <SidebarSearch
+        value={searchTerm}
+        onChange={setSearchTerm}
+        placeholder={
+          tab === "users"
+            ? "Search by name, email or phone"
+            : "Search groups by name"
+        }
+      />
 
-      <div
-        id="internalSidebarScroll"
-        className="thin-scrollbar mt-2 flex h-[88%] flex-col gap-2 overflow-y-auto max-[2127px]:h-[87%]"
-      >
-        <InfiniteScroll
-          // dataLength + key drive the InfiniteScroll behavior. Including
-          // `tab` in the key forces a fresh scroll context when the user
-          // switches tabs — otherwise dataLength would change without the
-          // scroll position resetting, and the next-page trigger could fire
-          // prematurely against the wrong dataset.
-          key={tab}
-          dataLength={visible.length}
-          next={() => {
-            void activeFetchNextPage();
-          }}
-          hasMore={!!activeHasNextPage}
-          loader={
-            activeIsFetchingNextPage ? (
-              <div className="py-2 text-center text-xs text-zinc-500">
-                Loading more…
-              </div>
-            ) : null
-          }
-          scrollableTarget="internalSidebarScroll"
-          style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
-        >
-          {visible.length === 0 && (
-            <p className="py-4 text-center text-xs text-zinc-500">
-              {tab === "users" ? "No users found" : "No groups found"}
-            </p>
-          )}
-          {visible.map((item) => {
-            if (item.type === "group") {
-              return (
-                <GroupListItem
-                  key={`group-${item.data.id}`}
-                  group={item.data}
-                  isSelectedGroup={
-                    !!groupsList.find((g) => g.id === item.data.id)
-                  }
-                  onClick={() => {
-                    if (addChatItem) {
-                      addChatItem(item.data, "group");
-                    } else {
-                      setGroupsList((groupList) => {
-                        if (groupList.find((g) => g?.id === item.data.id)) {
-                          return groupList;
-                        }
-                        const total = groupList.length + usersList.length;
-                        if (total >= 4 && groupList.length >= 1) {
-                          const next = [...groupList];
-                          next[next.length - 1] = item.data;
-                          return next;
-                        }
-                        return [...groupList, item.data];
-                      });
-                    }
-                  }}
-                />
-              );
-            }
-
-            const user = item.data;
-            const userChatTracks = chatTrackState.filter(
-              (c) => c.receiverId === user.id || c.senderId === user.id,
-            );
-            const traceLastMessage =
-              userChatTracks.length > 0
-                ? userChatTracks.reduce((latest, current) =>
-                    new Date(current.updatedAt) > new Date(latest.updatedAt)
-                      ? current
-                      : latest,
-                  )
-                : undefined;
-
-            return (
-              <UserSelectButton
-                key={`user-${user.id}`}
-                groupListLength={groupsList?.length}
-                isSelectedUser={!!usersList.find((u) => u.id === user.id)}
-                traceLastMessage={traceLastMessage}
-                user={user}
-                setUsersList={setUsersList}
-                updateUserState={updateUserState}
-                addChatItem={addChatItem}
-              />
-            );
-          })}
-        </InfiniteScroll>
-      </div>
+      <SidebarChatList
+        tab={tab}
+        visible={visible}
+        groupsList={groupsList}
+        usersList={usersList}
+        chatTrackState={chatTrackState}
+        setUsersList={setUsersList}
+        setGroupsList={setGroupsList}
+        updateUserState={updateUserState}
+        addChatItem={addChatItem}
+        hasNextPage={!!activeHasNextPage}
+        isFetchingNextPage={activeIsFetchingNextPage}
+        fetchNextPage={() => {
+          void activeFetchNextPage();
+        }}
+      />
     </div>
-  );
-}
-
-function TabButton({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "rounded-md py-1.5 text-sm font-medium transition-colors",
-        active
-          ? "bg-white text-teal-700 shadow-sm dark:bg-zinc-900 dark:text-teal-300"
-          : "text-zinc-600 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200",
-      )}
-    >
-      {children}
-    </button>
-  );
-}
-
-function GroupListItem({
-  group,
-  isSelectedGroup,
-  onClick,
-}: {
-  group: TGroup;
-  isSelectedGroup: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      className={cn(
-        `group relative flex items-center w-full gap-2 rounded-2xl p-3 sm:p-4`,
-        "border border-transparent shadow-sm transition-all duration-200",
-        "hover:shadow-md active:scale-[0.99]",
-        isSelectedGroup
-          ? "bg-gradient-to-r from-teal-700 to-teal-600 ring-1 ring-teal-500/60"
-          : "bg-white dark:bg-zinc-900/60 border-zinc-200/70 dark:border-white/10 hover:border-zinc-300/80 dark:hover:border-white/20",
-      )}
-      onClick={onClick}
-    >
-      <div
-        className={cn(
-          "grid items-center",
-          group.users.length === 1 ? "grid-cols-1" : "grid-cols-2",
-        )}
-      >
-        {group.users.length > 0 &&
-          group.users
-            .slice(0, 4)
-            .map((user) => (
-              <Avatar
-                photo={user?.image}
-                width={40}
-                height={40}
-                key={user?.id}
-              />
-            ))}
-      </div>
-      <div className="flex flex-col">
-        <p
-          className={cn(
-            "text-[14px] font-bold text-[#797979]",
-            isSelectedGroup && "text-white hover:text-[#797979]",
-          )}
-        >
-          {group?.name}
-        </p>
-      </div>
-    </button>
   );
 }

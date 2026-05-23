@@ -62,7 +62,7 @@ export default async function InternalPage(props: {
     : null;
 
   return (
-    <div className="flex max-h-[95%] gap-5 sm:mt-5">
+    <div className="flex gap-5 sm:mt-5">
       <Body
         users={usersWithLatestMessages}
         currentUser={session.user}
