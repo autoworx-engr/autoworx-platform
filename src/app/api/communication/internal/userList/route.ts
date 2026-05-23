@@ -93,21 +93,22 @@ export const GET = async (request: NextRequest) => {
       ...buildSearchWhere(),
     };
 
-    // Three batched Prisma calls. Sort + paginate happens in JS because
-    // Prisma's `orderBy` can't aggregate over a related row's `updatedAt`.
-    const [usersMatching, tracks, totalRecords] = await Promise.all([
-      db.user.findMany({
-        where,
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          email: true,
-          phone: true,
-          image: true,
-          employeeType: true,
-        },
-      }),
+    // Strategy: only load the *bounded* "users I've chatted with" set
+    // upfront — that set is capped by the viewer's actual conversation
+    // partners, not the whole company. Never-chatted users (the tail) are
+    // paginated at the DB level via findMany skip/take, so we never
+    // materialize all company users in memory.
+    const userSelect = {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      phone: true,
+      image: true,
+      employeeType: true,
+    } as const;
+
+    const [tracks, totalRecords] = await Promise.all([
       db.chatTrack.findMany({
         where: {
           section: "internal",
@@ -118,8 +119,7 @@ export const GET = async (request: NextRequest) => {
       db.user.count({ where }),
     ]);
 
-    // counterpart -> latest chatTrack (tracks already ordered desc, so the
-    // first one wins).
+    // counterpart -> latest chatTrack (tracks already desc, first one wins).
     const latestChatTrackMap = new Map<number, (typeof tracks)[0]>();
     for (const track of tracks) {
       const otherId =
@@ -128,19 +128,53 @@ export const GET = async (request: NextRequest) => {
         latestChatTrackMap.set(otherId, track);
       }
     }
+    const chattedCounterpartIds = [...latestChatTrackMap.keys()];
 
-    const sortedUsers = [...usersMatching].sort((a, b) => {
-      const aTs =
-        latestChatTrackMap.get(a.id)?.updatedAt.getTime() ?? -Infinity;
-      const bTs =
-        latestChatTrackMap.get(b.id)?.updatedAt.getTime() ?? -Infinity;
-      if (aTs !== bTs) return bTs - aTs;
-      return a.id - b.id;
-    });
+    // Fetch only the chatted counterparts that ALSO match the current `where`
+    // (search filter, company scope, NOT self). Keeps them in the
+    // updatedAt-desc order established above.
+    const chattedUsersRaw =
+      chattedCounterpartIds.length > 0
+        ? await db.user.findMany({
+            where: { ...where, id: { in: chattedCounterpartIds } },
+            select: userSelect,
+          })
+        : [];
+    const chattedUserById = new Map(chattedUsersRaw.map((u) => [u.id, u]));
+    const chattedSorted = chattedCounterpartIds
+      .map((id) => chattedUserById.get(id))
+      .filter((u): u is NonNullable<typeof u> => Boolean(u));
 
-    const paginatedUsers = sortedUsers
-      .slice(skip, skip + limitNum)
-      .map((u) => ({ ...u, chatTrack: latestChatTrackMap.get(u.id) ?? null }));
+    // Carve the page out of (chatted ++ never-chatted).
+    const chattedTotal = chattedSorted.length;
+    const chattedSliceStart = Math.min(skip, chattedTotal);
+    const chattedSliceEnd = Math.min(skip + limitNum, chattedTotal);
+    const pageUsers = chattedSorted.slice(chattedSliceStart, chattedSliceEnd);
+
+    const remaining = limitNum - pageUsers.length;
+    if (remaining > 0) {
+      const neverChattedSkip = Math.max(0, skip - chattedTotal);
+      const neverChattedUsers = await db.user.findMany({
+        where: {
+          ...where,
+          ...(chattedCounterpartIds.length > 0
+            ? {
+                NOT: [{ id: userIdNum }, { id: { in: chattedCounterpartIds } }],
+              }
+            : {}),
+        },
+        orderBy: { id: "asc" },
+        skip: neverChattedSkip,
+        take: remaining,
+        select: userSelect,
+      });
+      pageUsers.push(...neverChattedUsers);
+    }
+
+    const paginatedUsers = pageUsers.map((u) => ({
+      ...u,
+      chatTrack: latestChatTrackMap.get(u.id) ?? null,
+    }));
 
     const hasNextPage = pageNum * limitNum < totalRecords;
     const hasPrevPage = pageNum > 1;
