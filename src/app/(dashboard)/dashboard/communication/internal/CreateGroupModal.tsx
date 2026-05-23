@@ -42,7 +42,7 @@ export default function CreateGroupModal({
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    isLoading,
+    isLoading: isLoadingUsers,
     handleSearch,
     addToContactList,
     removeFromContactList,
@@ -178,7 +178,7 @@ export default function CreateGroupModal({
           hasNextPage={hasNextPage}
           fetchNextPage={fetchNextPage}
           isFetchingNextPage={isFetchingNextPage}
-          isLoading={isLoading}
+          isLoading={isLoadingUsers}
           required
         />
 
