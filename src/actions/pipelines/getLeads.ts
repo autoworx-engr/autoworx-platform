@@ -38,6 +38,27 @@ type TGetLeadsWithCount = {
   dateRange?: [string | null, string | null];
 };
 
+function makeLeadSearchCondition(searchTerm?: string) {
+  if (!searchTerm?.trim()) return null;
+  const words = searchTerm.trim().split(/\s+/);
+  const makeWordCondition = (word: string) => {
+    const ci = { contains: word, mode: "insensitive" as const };
+    return {
+      OR: [
+        { clientName: ci },
+        { vehicleInfo: ci },
+        { services: ci },
+        { source: ci },
+        { Client: { some: { firstName: ci } } },
+        { Client: { some: { lastName: ci } } },
+      ],
+    };
+  };
+  return words.length === 1
+    ? makeWordCondition(words[0])
+    : { AND: words.map(makeWordCondition) };
+}
+
 export const getLeads = async ({
   columnId,
   orderBy,
@@ -51,17 +72,11 @@ export const getLeads = async ({
   const timezone = companyTimezone?.timezone;
 
   try {
+    const searchCond = makeLeadSearchCondition(searchTerm);
     const query: Prisma.LeadWhereInput = {
       companyId,
       ...(columnId && { columnId }),
-      ...(searchTerm && {
-        OR: [
-          { clientName: { contains: searchTerm, mode: "insensitive" } },
-          { vehicleInfo: { contains: searchTerm, mode: "insensitive" } },
-          { services: { contains: searchTerm, mode: "insensitive" } },
-          { source: { contains: searchTerm, mode: "insensitive" } },
-        ],
-      }),
+      ...(searchCond ?? {}),
     };
 
     const upcomingApptFilter = buildUpcomingAppointmentFilter(timezone);
@@ -227,17 +242,11 @@ export const getLeadsWithCount = async ({
   const companyTimezone = await getCompanyTimezone();
   const timezone = companyTimezone?.timezone;
   try {
+    const searchCond = makeLeadSearchCondition(searchTerm);
     const query: Prisma.LeadWhereInput = {
       companyId,
       ...(columnId && { columnId }),
-      ...(searchTerm && {
-        OR: [
-          { clientName: { contains: searchTerm, mode: "insensitive" } },
-          { vehicleInfo: { contains: searchTerm, mode: "insensitive" } },
-          { services: { contains: searchTerm, mode: "insensitive" } },
-          { source: { contains: searchTerm, mode: "insensitive" } },
-        ],
-      }),
+      ...(searchCond ?? {}),
       ...(assignedTo && { assignedSalesUserId: parseInt(assignedTo) }),
       ...(source && { source }),
       ...(service && { services: service }),
@@ -444,17 +453,11 @@ export const getLeadsWithCountOptimized = async ({
   const timezone = companyTimezone?.timezone;
 
   try {
+    const searchCond = makeLeadSearchCondition(searchTerm);
     const query: Prisma.LeadWhereInput = {
       companyId,
       ...(columnId && { columnId }),
-      ...(searchTerm && {
-        OR: [
-          { clientName: { contains: searchTerm, mode: "insensitive" } },
-          { vehicleInfo: { contains: searchTerm, mode: "insensitive" } },
-          { services: { contains: searchTerm, mode: "insensitive" } },
-          { source: { contains: searchTerm, mode: "insensitive" } },
-        ],
-      }),
+      ...(searchCond ?? {}),
       ...(assignedTo && { assignedSalesUserId: parseInt(assignedTo) }),
       ...(source && { source }),
       ...(service && { services: service }),
@@ -712,18 +715,12 @@ export async function getLeadsCountByColumnId(
   searchTerm?: string,
 ) {
   try {
+    const searchCond = makeLeadSearchCondition(searchTerm);
     const totalLeadCount = await db.lead.count({
       where: {
         columnId: columnId,
         companyId: companyId,
-        ...(searchTerm && {
-          OR: [
-            { clientName: { contains: searchTerm, mode: "insensitive" } },
-            { vehicleInfo: { contains: searchTerm, mode: "insensitive" } },
-            { services: { contains: searchTerm, mode: "insensitive" } },
-            { source: { contains: searchTerm, mode: "insensitive" } },
-          ],
-        }),
+        ...(searchCond ?? {}),
       },
     });
     return totalLeadCount;
