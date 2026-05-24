@@ -311,8 +311,11 @@ export async function createInvoice({
           const itemMaterials = items[item].materials;
 
           if (itemMaterials) {
-            // @ts-ignore
-            materials = [...materials, ...itemMaterials];
+            // filter out any null/undefined materials to ensure proper typing
+            materials = [
+              ...materials,
+              ...(itemMaterials.filter(Boolean) as Material[]),
+            ];
           }
         }
 
