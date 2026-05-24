@@ -90,27 +90,31 @@ function toShopLead(invoice: any): ShopLead {
 
 function makeSearchCondition(search?: string) {
   if (!search?.trim()) return null;
-  const term = search.trim();
-  const ci = { contains: term, mode: "insensitive" as const };
 
-  // Use explicit `is:` wrappers on optional relations so Prisma generates
-  // correct SQL when these filters appear inside an OR clause.
-  const conditions: any[] = [
-    { client: { is: { firstName: ci } } },
-    { client: { is: { lastName: ci } } },
-    { vehicle: { is: { make: ci } } },
-    { vehicle: { is: { model: ci } } },
-    { vehicle: { is: { submodel: ci } } },
-    { vehicle: { is: { other: ci } } },
-  ];
+  const words = search.trim().split(/\s+/);
 
-  // year is Int? — needs equals, not contains
-  const yearInt = parseInt(term, 10);
-  if (!isNaN(yearInt) && String(yearInt) === term) {
-    conditions.push({ vehicle: { is: { year: { equals: yearInt } } } });
-  }
+  const makeWordCondition = (word: string) => {
+    const ci = { contains: word, mode: "insensitive" as const };
+    // Use explicit `is:` wrappers on optional relations so Prisma generates
+    // correct SQL when these filters appear inside an OR clause.
+    const conditions: any[] = [
+      { client: { is: { firstName: ci } } },
+      { client: { is: { lastName: ci } } },
+      { vehicle: { is: { make: ci } } },
+      { vehicle: { is: { model: ci } } },
+      { vehicle: { is: { submodel: ci } } },
+      { vehicle: { is: { other: ci } } },
+    ];
+    // year is Int? — needs equals, not contains
+    const yearInt = parseInt(word, 10);
+    if (!isNaN(yearInt) && String(yearInt) === word) {
+      conditions.push({ vehicle: { is: { year: { equals: yearInt } } } });
+    }
+    return { OR: conditions };
+  };
 
-  return { OR: conditions };
+  if (words.length === 1) return makeWordCondition(words[0]);
+  return { AND: words.map(makeWordCondition) };
 }
 
 export async function getWorkOrdersByColumn(
