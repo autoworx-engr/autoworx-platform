@@ -37,7 +37,7 @@ const DashboardResourcePage = () => {
             resource.title.toLowerCase().includes(filter.search.toLowerCase()),
           )
           .map((resource, index) => (
-            <ResourceCard resource={resource} index={index} />
+            <ResourceCard key={index} resource={resource} index={index} />
           ))}
       </div>
     </div>
