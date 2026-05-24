@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import NewFleet from "./NewFleet";
 import { Search } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -12,15 +12,19 @@ type TProps = {
 
 export default function Header({ initialSearch = "" }: TProps) {
   const [searchTerm, setSearchTerm] = React.useState(initialSearch);
+  const isTypingRef = useRef(false);
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
 
   useEffect(() => {
-    setSearchTerm(initialSearch);
+    if (!isTypingRef.current) {
+      setSearchTerm(initialSearch);
+    }
   }, [initialSearch]);
 
   const handleSearchChange = useDebounce((value: string) => {
+    isTypingRef.current = false;
     const searchParams = new URLSearchParams(params.toString());
 
     if (value.trim()) {
@@ -65,6 +69,7 @@ export default function Header({ initialSearch = "" }: TProps) {
             value={searchTerm}
             onChange={(event) => {
               const value = event.target.value;
+              isTypingRef.current = true;
               handleSearchChange(value);
               setSearchTerm(value);
             }}

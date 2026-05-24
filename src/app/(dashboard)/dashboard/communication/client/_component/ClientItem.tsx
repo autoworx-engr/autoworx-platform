@@ -75,6 +75,9 @@ export default function ClientItem({
     try {
       const updatedTrack = await readClientSmsAndEmail(clientId);
       setClientConversationTrack(updatedTrack);
+      if (filter === "Unread") {
+        setClients((prev) => prev.filter((c) => c.id !== clientId));
+      }
     } catch (err: any) {
       const formattedError = errorHandler(err);
       errorToast(formattedError.message);

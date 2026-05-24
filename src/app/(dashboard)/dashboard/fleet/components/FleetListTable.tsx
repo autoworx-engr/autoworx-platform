@@ -4,7 +4,7 @@ import NewFleet from "@/app/(dashboard)/dashboard/fleet/components/NewFleet";
 import { cn } from "@/lib/cn";
 import { padId } from "@/lib/padId";
 import { Pagination } from "antd";
-import { SquarePen } from "lucide-react";
+import { SearchX, SquarePen } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import DeleteFleet from "./DeleteFleet";
@@ -65,6 +65,20 @@ const FleetListTable = ({
             </thead>
 
             <tbody>
+              {rows.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="py-16 text-center">
+                    <div className="flex flex-col items-center gap-2 text-slate-400 dark:text-slate-500">
+                      <SearchX className="w-10 h-10" />
+                      <p className="text-sm font-medium">
+                        {params.get("search")
+                          ? `No fleet found for "${params.get("search")}"`
+                          : "No fleet found"}
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              )}
               {rows.map((client: any, index: number) => (
                 <tr
                   key={index}
