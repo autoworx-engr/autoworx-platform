@@ -220,7 +220,11 @@ export async function addAppointment(
       console.log("🚀 ~ addAppointment ~ error:", error);
     }
 
-    revalidatePath("/dashboard/communication/client/${clientId}");
+    try {
+      revalidatePath("/dashboard/communication/client/${clientId}");
+    } catch {
+      // no-op: best-effort when called from worker context
+    }
 
     return { type: "success", data: newAppointment };
   } catch (error) {
