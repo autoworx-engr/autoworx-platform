@@ -1,12 +1,4 @@
-import React from "react";
-import {
-  MessageSquare,
-  Send,
-  Paperclip,
-  Users,
-  ArrowRight,
-  MessageCircleMore,
-} from "lucide-react";
+import { ArrowRight, MessageCircleMore } from "lucide-react";
 
 export default function EmptyMessageBox() {
   return (

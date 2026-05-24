@@ -1,6 +1,7 @@
 "use server";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
+import { getPaddedIdSearchCondition } from "@/lib/padId";
 import { Prisma } from "@prisma/client";
 
 type TGetClientsParams = {
@@ -23,7 +24,8 @@ export default async function getClients({
     if (search) {
       const trimmed = search.trim();
       const [first, last] = trimmed.split(" ");
-      const numericId = /^\d+$/.test(trimmed) ? Number(trimmed) : null;
+      const idCondition = getPaddedIdSearchCondition(trimmed);
+
       whereConditions.OR = [
         {
           firstName: {
@@ -69,7 +71,7 @@ export default async function getClients({
             mode: "insensitive",
           },
         },
-        ...(numericId !== null ? [{ id: numericId }] : []),
+        ...(idCondition ? [idCondition] : []),
       ];
     }
 

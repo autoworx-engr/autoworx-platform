@@ -1,10 +1,14 @@
 "use server";
+import { authOptions } from "@/authOptions";
 import { db } from "@/lib/db";
-import { Prisma } from "@prisma/client";
+import { getServerSession } from "next-auth";
 
-export default async function getAllBugReport(
-  params: Prisma.BugReportFindManyArgs = {},
-) {
+export default async function getAllBugReport(params: { take?: number } = {}) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.isSuperAdmin) {
+    throw new Error("Unauthorized");
+  }
+
   try {
     const allReports = await db.bugReport.findMany({
       include: {
@@ -24,7 +28,6 @@ export default async function getAllBugReport(
 
     return allReports;
   } catch (error) {
-    console.error(`Error fetching tasks`, error);
-    throw new Error(`Failed to get tasks`);
+    throw new Error(`Failed to get bug reports`);
   }
 }
