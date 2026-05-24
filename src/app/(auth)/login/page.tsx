@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import LoginContainer from "./LoginContainer";
 
 export const metadata: Metadata = {
-  title: "Login | Dashboard",
+  title: "Login",
 };
 
 export default function Page() {
