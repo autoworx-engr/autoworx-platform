@@ -6,11 +6,12 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useGetPipelineColumns } from "@/hooks/pipeline/usePipelineColumns";
 import ManagePipelines from "./ManagePipelines";
+import PipelineTypeSelector from "./PipelineTypeSelector";
 import { cn } from "@/lib/utils";
 import { ChevronRight } from "lucide-react";
 
 interface PipelineHeaderProps {
-  title: string;
+  title?: string;
   toggleButtons: { label: string; href: string }[];
   type: string;
 }
@@ -72,7 +73,10 @@ export default function PipelineHeader({
   return (
     <header className="flex items-center justify-between p-4">
       <div className="flex w-full items-center justify-between lg:justify-start">
-        <h1 className="mr-4 text-[26px] font-bold text-[#66738C]">{title}</h1>
+        <PipelineTypeSelector
+          currentType={type as "sales" | "shop" | "team"}
+          employeeType={currentUser?.employeeType}
+        />
 
         {type !== "team" && (
           <nav className="lg:hidden">

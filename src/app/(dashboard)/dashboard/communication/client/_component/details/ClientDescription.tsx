@@ -29,6 +29,12 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
       id: true,
       type: true,
     },
+    take: 5,
+    orderBy: { createdAt: "desc" },
+  });
+
+  const estimatesCountPromise = db.invoice.count({
+    where: { clientId: client?.id },
   });
 
   const tasksPromise = db.task.findMany({
@@ -70,6 +76,7 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
   const [
     conversationsData,
     estimates,
+    estimatesCount,
     tasksData,
     companyUsers,
     smsData,
@@ -77,6 +84,7 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
   ] = await Promise.all([
     conversationsPromise,
     estimatesPromise,
+    estimatesCountPromise,
     tasksPromise,
     companyUsersPromise,
     smsPromise,
@@ -121,6 +129,7 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
           clientId={client.id}
           estimates={estimates}
           vehicles={vehicles}
+          totalCount={estimatesCount}
         />
       </section>
 

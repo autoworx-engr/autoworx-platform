@@ -209,12 +209,8 @@ function Table({
               <td className="text-center">{Number(history.quantity)}</td>
               <td className="text-center">
                 {formatCurrency(
-                  parseFloat(
-                    (
-                      parseFloat(history.price?.toString() ?? "0") *
-                      Number(history.quantity)
-                    ).toFixed(2),
-                  ),
+                  parseFloat(history.price?.toString() ?? "0") *
+                    parseFloat(history.quantity?.toString() ?? "0"),
                 )}
               </td>
               <td className="text-center">

@@ -773,7 +773,7 @@ const Leads = ({ salesColumn }: TProps) => {
 
       {/* Pagination */}
       {showPagination && (
-        <div className="py-4 sm:mx-3 px-3 flex justify-end sticky bottom-0 bg-background z-10">
+        <div className="py-4 sm:mx-3 px-3 flex justify-end bg-background">
           <Pagination
             className="custom-pagination"
             current={currentPage}
