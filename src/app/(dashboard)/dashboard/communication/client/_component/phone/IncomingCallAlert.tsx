@@ -126,12 +126,18 @@ export default function IncomingCallAlert({
             </h2>
 
             {/* Caller name with subtle background */}
-            {callerName && (
-              <div className="mb-2 inline-block px-4 py-1.5 rounded-full bg-gradient-to-r from-slate-50 to-slate-100 ring-1 ring-slate-900/5">
-                <p className="text-lg font-semibold text-slate-800">
-                  {callerName}
-                </p>
+            {isLoadingName ? (
+              <div className="mb-2 inline-block px-4 py-1.5 rounded-full bg-slate-100 ring-1 ring-slate-900/5">
+                <span className="inline-block h-4 w-24 animate-pulse rounded bg-slate-200" />
               </div>
+            ) : (
+              callerName && (
+                <div className="mb-2 inline-block px-4 py-1.5 rounded-full bg-gradient-to-r from-slate-50 to-slate-100 ring-1 ring-slate-900/5">
+                  <p className="text-lg font-semibold text-slate-800">
+                    {callerName}
+                  </p>
+                </div>
+              )
             )}
 
             {/* Phone number */}

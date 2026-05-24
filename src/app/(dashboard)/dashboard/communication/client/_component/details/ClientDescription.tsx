@@ -26,9 +26,9 @@ export default async function ClientDescription({
 
   const leadPromise = client.leadId
     ? db.lead.findUnique({
-        where: { id: client.leadId },
-        select: { isLead: true, services: true },
-      })
+      where: { id: client.leadId },
+      select: { isLead: true, services: true },
+    })
     : Promise.resolve(null);
 
   const conversationsPromise = fetchMailsMailgun(client.id);
@@ -40,7 +40,12 @@ export default async function ClientDescription({
       vehicle: true,
       status: true,
     },
+    take: 5,
     orderBy: { createdAt: "desc" },
+  });
+
+  const estimatesCountPromise = db.invoice.count({
+    where: { clientId: client?.id },
   });
 
   const smsPromise = getSms(client.id);

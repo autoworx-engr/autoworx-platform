@@ -8,12 +8,14 @@ type Props = {
   companyId: number;
   clientId: number;
   initialValue: boolean;
+  companyIsSalesAgent?: boolean;
 };
 
 export default function ClientPermissionWrapper({
   companyId,
   clientId,
   initialValue,
+  companyIsSalesAgent = true,
 }: Props) {
   const { data: entitlementsRes, loading } = useServerGet(
     getEntitlements,
@@ -22,7 +24,7 @@ export default function ClientPermissionWrapper({
 
   if (loading) return null;
 
-  const enabled =
+  const planEnabled =
     entitlementsRes?.success === true &&
     Boolean(entitlementsRes.data?.awxSalesAgent);
 
@@ -30,7 +32,7 @@ export default function ClientPermissionWrapper({
     <ClientSalesAgentToggle
       clientId={clientId}
       initialValue={initialValue}
-      isRestricted={!enabled}
+      isRestricted={!planEnabled || !companyIsSalesAgent}
     />
   );
 }

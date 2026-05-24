@@ -19,9 +19,9 @@ export default async function ClientHeading({ client, vehicles = [] }: TProps) {
 
   const leadPromise: Promise<{ salesUser: User | null } | null> = client.leadId
     ? db.lead.findUnique({
-        where: { id: client.leadId },
-        select: { salesUser: true },
-      })
+      where: { id: client.leadId },
+      select: { salesUser: true },
+    })
     : Promise.resolve(null);
 
   const [tag, lead] = await Promise.all([tagPromise, leadPromise]);

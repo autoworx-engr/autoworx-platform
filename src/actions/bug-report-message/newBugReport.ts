@@ -30,18 +30,13 @@ export async function createNewBugReportMessage(
     }
 
     const company = await db.company.findUnique({
-      where: {
-        id: +companyId,
-      },
+      where: { id: +companyId },
+      select: { name: true },
     });
 
-    // Find all bug reports of this company
-    const existingReports = await db.bugReport.findMany({
-      where: { companyId },
-      include: {
-        BugReportMessage: true,
-      },
-    });
+    if (!company) {
+      throw new Error("Company not found.");
+    }
 
     await db.$transaction(async (ts) => {
       const newReport = await ts.bugReport.create({
@@ -55,7 +50,7 @@ export async function createNewBugReportMessage(
       const bugMessage = await ts.bugReportMessage.create({
         data: {
           bugReportId: +newReport.id,
-          subject: `[#BUG-${newReport.id}] ${company?.name} - ${data.subject}`,
+          subject: `[#BUG-${newReport.id}] ${company.name} - ${data.subject}`,
           content: data.content,
           senderType: data.senderType,
           userId: +userId,

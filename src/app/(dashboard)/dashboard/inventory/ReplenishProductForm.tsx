@@ -51,8 +51,6 @@ export default function ReplenishProductForm({
     const lot = formData.get("lot") as string;
     const notes = formData.get("notes") as string;
 
-    console.log("Inside handler function==>", vendor);
-
     const perUnitPrice = parseFloat(price) / Number(quantity);
     const roundedPerUnitPrice = parseFloat(perUnitPrice.toFixed(2));
 

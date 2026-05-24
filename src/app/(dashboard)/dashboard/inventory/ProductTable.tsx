@@ -6,8 +6,9 @@ import { cn } from "@/lib/cn";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { ProductCardProps } from "@/types/inventory";
 import { Category, InventoryProduct, User, Vendor } from "@prisma/client";
-import { Popconfirm } from "antd";
-import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { Pagination, Popconfirm, Tooltip } from "antd"; // Importing the Pagination component from Ant Design
+import { Search, X } from "lucide-react";
+import toast from "react-hot-toast";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import EditProduct from "./EditProduct";
@@ -174,6 +175,26 @@ export default function ProductTable({
     router.push(`${pathname}?${params.toString()}`);
   };
 
+  const itemLabel = viewTab === "products" ? "product" : "supply";
+
+  const handleDelete = async (productId: number) => {
+    const toastId = `delete-inventory-${productId}`;
+    const res = await deleteInventory(productId);
+    if (res?.type === "success") {
+      toast.success(
+        `${itemLabel[0].toUpperCase() + itemLabel.slice(1)} deleted`,
+        {
+          id: toastId,
+        },
+      );
+    } else {
+      toast.error(`Failed to delete ${itemLabel}`, {
+        id: toastId,
+      });
+    }
+    router.push(`/dashboard/inventory?view=${search?.get("view")}`);
+  };
+
   return (
     <>
       {/* Mobile card list */}
@@ -216,102 +237,175 @@ export default function ProductTable({
               <th className="px-3 py-2 text-left">Status</th>
               {(user?.employeeType === "Admin" ||
                 user?.employeeType === "Manager") && (
-                <th className="w-16 px-3 py-2">Actions</th>
-              )}
+                  <th className="w-16 px-3 py-2">Actions</th>
+                )}
             </tr>
           </thead>
           <tbody>
             {products.length === 0 ? (
               <tr>
                 <td
-                  colSpan={9}
-                  className="p-16 text-center text-sm text-slate-400"
+                  colSpan={
+                    user?.employeeType === "Admin" ||
+                      user?.employeeType === "Manager"
+                      ? 6
+                      : 5
+                  }
+                  className="text-center p-20"
                 >
-                  No {viewTab === "products" ? "products" : "supplies"} found
+                  <span className="flex items-center justify-center gap-2">
+                    <Search size={20} /> No{" "}
+                    {viewTab === "products" ? "products" : "supplies"} found{" "}
+                    {search?.get("search") && (
+                      <span>
+                        for <mark>{search?.get("search")}</mark>
+                      </span>
+                    )}
+                  </span>
                 </td>
               </tr>
             ) : (
-              products.map((product, idx) => {
+              products.map((product, index) => {
                 const params = new URLSearchParams(search);
                 params.set("productId", product.id.toString());
-                const qty = Number(product.quantity);
-                const alert = Number(product.lowInventoryAlert) || 0;
-                const isSelected = currentProductId === product.id;
                 return (
                   <tr
                     key={product.id}
+                    className={cn(
+                      "h-full cursor-pointer rounded-md py-3",
+                      index % 2 === 0 ? evenColor : oddColor,
+                      currentProductId === product.id &&
+                      "border-2 border-[#6571FF]",
+                    )}
                     onClick={() =>
                       router.push(`${pathname}?${params.toString()}`)
                     }
-                    className={cn(
-                      "group cursor-pointer rounded-md transition-colors dark:border-slate-800/50",
-                      isSelected
-                        ? "bg-[#6571FF]/5 ring-1 ring-inset ring-[#6571FF]/20"
-                        : "hover:bg-slate-50/80 dark:hover:bg-slate-900/40",
-                    )}
                   >
-                    <td className={cn("px-3", rowPy)}>
-                      <span
-                        className={cn(
-                          "text-sm font-medium",
-                          isSelected
-                            ? "text-[#6571FF]"
-                            : "text-slate-500 hover:text-[#6571FF]",
+                    <td className="h-12 px-4 text-left">
+                      <p>{(currentPage - 1) * pageSize + index + 1}</p>
+                    </td>
+                    <td className="max-w-36 px-4 text-left">
+                      <div className="flex items-center gap-2 ">
+                        {Number(product.quantity) === 0 ? (
+                          <Tooltip
+                            title="Product is out of stock"
+                            placement="top"
+                          >
+                            <span className="text-red-600 cursor-default">
+                              {product.name.length > 20
+                                ? product.name.slice(0, 20) + "..."
+                                : product.name}
+                            </span>
+                            {product.name.length > 20 && (
+                              <span className="sr-only">{product.name}</span>
+                            )}
+                          </Tooltip>
+                        ) : Number(product.quantity) <=
+                          Number(product.lowInventoryAlert) ? (
+                          <Tooltip
+                            title="Product has low inventory"
+                            placement="top"
+                          >
+                            <span className="text-amber-600 cursor-default">
+                              {product.name.length > 20
+                                ? product.name.slice(0, 20) + "..."
+                                : product.name}
+                            </span>
+                            {product.name.length > 20 && (
+                              <span className="sr-only">{product.name}</span>
+                            )}
+                          </Tooltip>
+                        ) : (
+                          <Tooltip
+                            title={product.name.length > 20 ? product.name : ""}
+                            placement="top"
+                          >
+                            <span className="cursor-default">
+                              {product.name.length > 20
+                                ? product.name.slice(0, 20) + "..."
+                                : product.name}
+                            </span>
+                          </Tooltip>
                         )}
-                      >
-                        {`#${idx + 1 + (currentPage - 1) * pageSize}`}
-                      </span>
-                    </td>
-                    <td className={cn("px-3", rowPy)}>
-                      <div className="flex items-center gap-2">
-                        <span className="max-w-[150px] truncate font-medium text-slate-600 dark:text-slate-200">
-                          {product.name}
-                        </span>
                       </div>
                     </td>
-                    <td className={cn("px-3 text-sm text-slate-500", rowPy)}>
-                      {product.category?.name || "—"}
-                    </td>
-                    <td className={cn("px-3", rowPy)}>
-                      <StockBar qty={qty} alert={alert} />
-                    </td>
-                    <td className={cn("px-3 text-sm text-slate-500", rowPy)}>
-                      {product.unit || "—"}
-                    </td>
-                    <td
-                      className={cn(
-                        "px-3 text-sm font-medium text-slate-500 dark:text-slate-200",
-                        rowPy,
-                      )}
-                    >
-                      {formatCurrency(
-                        parseFloat(product.price?.toString() || "0"),
-                      )}
-                    </td>
-                    <td className={cn("px-3", rowPy)}>
-                      <StatusBadge qty={qty} alert={alert} />
-                    </td>
-                    <td
-                      className={cn("px-3", rowPy)}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="flex items-center gap-1">
-                        <EditProduct productData={product} />
-                        <Popconfirm
-                          title={`Delete this ${viewTab === "products" ? "product" : "supply"}?`}
-                          onConfirm={async () => {
-                            await deleteInventory(product.id);
-                            router.push(`/dashboard/inventory?view=${viewTab}`);
-                          }}
-                          okText="Yes"
-                          cancelText="No"
+                    <td className="max-w-36 px-4 text-left truncate">
+                      {product.category?.name ? (
+                        <Tooltip
+                          title={
+                            product.category.name.length > 20
+                              ? product.category.name
+                              : undefined
+                          }
+                          placement="top"
                         >
-                          <button className="rounded p-1 mb-1 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors dark:hover:bg-red-950/40">
-                            <Trash2 size={18} className="text-red-400" />
-                          </button>
-                        </Popconfirm>
-                      </div>
+                          <span className="cursor-default">
+                            {product.category.name.length > 20
+                              ? product.category.name.slice(0, 20) + "..."
+                              : product.category.name}
+                          </span>
+                        </Tooltip>
+                      ) : (
+                        "-"
+                      )}
                     </td>
+
+                    <td className="px-4 text-left 2xl:px-10 truncate">
+                      <Tooltip
+                        title={
+                          String(product.quantity).length > 10
+                            ? String(product.quantity)
+                            : undefined
+                        }
+                        placement="top"
+                      >
+                        <span className="cursor-default">
+                          {Number(product.quantity)}
+                        </span>
+                      </Tooltip>
+                    </td>
+
+                    <td className="px-4 text-left 2xl:px-10 truncate">
+                      {product.unit ? (
+                        <Tooltip
+                          title={
+                            product.unit.length > 5 ? product.unit : undefined
+                          }
+                          placement="top"
+                        >
+                          <span className="cursor-default">
+                            {product.unit.length > 5
+                              ? product.unit.slice(0, 5) + "..."
+                              : product.unit}
+                          </span>
+                        </Tooltip>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
+
+                    {(user?.employeeType === "Admin" ||
+                      user?.employeeType === "Manager") && (
+                        <td>
+                          <div className="flex h-12 items-center justify-start gap-3 px-4 2xl:px-10">
+                            <button className="text-2xl text-blue-600">
+                              <EditProduct productData={product} />
+                            </button>
+                            <Popconfirm
+                              title={`Are you sure you want to delete this ${itemLabel}?`}
+                              onConfirm={() => handleDelete(product.id)}
+                              okText="Yes"
+                              cancelText="No"
+                            >
+                              <X
+                                size={20}
+                                strokeWidth={3}
+                                className="text-red-400"
+                              />
+                            </Popconfirm>
+                          </div>
+                        </td>
+                      )}
                   </tr>
                 );
               })

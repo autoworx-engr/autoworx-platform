@@ -158,6 +158,11 @@ const baseShopServiceSchema = z.object({
       },
     )
     .optional(),
+  category: z
+    .union([z.string(), z.array(z.string())], {
+      invalid_type_error: "Category must be a string or an array of strings",
+    })
+    .optional(),
 });
 
 export const createShopServiceSchema = baseShopServiceSchema;

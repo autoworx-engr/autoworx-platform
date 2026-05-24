@@ -1,9 +1,15 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/Tabs";
-import { User } from "@prisma/client";
+import { Category, InventoryProduct, User, Vendor } from "@prisma/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
+
+type InventoryProductWithRelations = InventoryProduct & {
+  category: Category | null;
+  vendor: Vendor | null;
+  User?: User | null;
+};
 import ProductTable from "./ProductTable";
 import SearchFilter from "./SearchFilter";
 
@@ -24,8 +30,8 @@ export default function InventoryList({
   totalSupplies,
   isLoading,
 }: {
-  products: any;
-  supplies: any;
+  products: InventoryProductWithRelations[];
+  supplies: InventoryProductWithRelations[];
   productId: number;
   user: User;
   isFullWidth?: boolean;

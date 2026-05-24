@@ -20,6 +20,7 @@ type TProps = {
   estimates?: EstimateItem[] | null;
   vehicleIds?: number[];
   clientId: number;
+  totalCount?: number;
 };
 
 const STATUS_MAP: Record<string, { bg: string; text: string }> = {
@@ -54,6 +55,7 @@ export default function ClientEstimates({
   estimates = [],
   vehicleIds = [],
   clientId,
+  totalCount = 0,
 }: TProps) {
   const [open, setOpen] = useState(true);
 
