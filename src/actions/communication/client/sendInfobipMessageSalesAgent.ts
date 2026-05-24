@@ -4,6 +4,7 @@ import { updatePipelineAutomationTrigger } from "@/actions/automation/pipeline/t
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import { normalizeUSPhoneNumber } from "@/lib/normalizeUSPhoneNumber";
+import receiveTwiloMessage from "@/lib/pusher/receiveTwiloMessage";
 import { revalidatePath } from "next/cache";
 import { updateNewSMSChatTrack } from "./chat-track";
 import { getInfobipConfigById } from "./createInfobipConfig";
@@ -302,22 +303,26 @@ export async function sendInfobipMessageSalesAgent({
         },
       });
 
-      try {
-        if (client?.Lead?.id && client?.Lead?.columnId) {
-          if (data?.sentBy === "Company") {
-            await updatePipelineAutomationTrigger({
-              companyId: client.companyId,
-              condition: "MESSAGE_SENT_CLIENT",
-              leadId: client?.Lead.id,
-              columnId: client?.Lead?.columnId,
-            });
-          }
-        }
-      } catch (error) {
-        console.error("Pipeline automation trigger error:", error);
+      if (data) {
+        await receiveTwiloMessage(data);
       }
 
-      revalidatePath("/dashboard/communication/client/${clientId}");
+      // try {
+      //   if (client?.Lead?.id && client?.Lead?.columnId) {
+      //     if (data?.sentBy === "Company") {
+      //       await updatePipelineAutomationTrigger({
+      //         companyId: client.companyId,
+      //         condition: "MESSAGE_SENT_CLIENT",
+      //         leadId: client?.Lead.id,
+      //         columnId: client?.Lead?.columnId,
+      //       });
+      //     }
+      //   }
+      // } catch (error) {
+      //   console.error("Pipeline automation trigger error:", error);
+      // }
+
+      revalidatePath(`/dashboard/communication/client/${clientId}`);
 
       return {
         success: true,
