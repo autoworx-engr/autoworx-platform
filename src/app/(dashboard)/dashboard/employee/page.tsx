@@ -9,7 +9,7 @@ import TotalPayouts from "./TotalPayouts";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Directory -Employee",
+  title: "Directory - Employee",
   description: "Manage your employees",
 };
 

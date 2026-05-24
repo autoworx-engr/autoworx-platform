@@ -16,7 +16,7 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Analytics & Reporting - Payments",
-  description: "Analytics & Reporting - Payments",
+  description: "Analyze payment trends and manage overdue invoices",
 };
 
 type TProps = {

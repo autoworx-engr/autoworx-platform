@@ -3,7 +3,7 @@ import PrivacyPolicy from "./PrivacyPolicy";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy - Autoworx",
+  title: "Privacy Policy",
 };
 
 export default function Page() {

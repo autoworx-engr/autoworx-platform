@@ -10,7 +10,7 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Invoices - Canned",
-  description: "Invoices - Canned",
+  description: "Manage your canned estimates",
 };
 
 type TProps = {

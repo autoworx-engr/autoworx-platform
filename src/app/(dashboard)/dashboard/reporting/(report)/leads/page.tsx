@@ -3,7 +3,7 @@ import PipelinePage from "./PipelinePage";
 
 export const metadata: Metadata = {
   title: "Analytics & Reporting - Leads",
-  description: "Analytics & Reporting - Leads",
+  description: "Analyze lead generation and conversion performance",
 };
 
 export default function Page(props: {

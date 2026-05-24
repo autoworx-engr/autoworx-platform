@@ -18,7 +18,7 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Analytics & Reporting - Inventory",
-  description: "Analytics & Reporting - Inventory",
+  description: "Analyze inventory performance and profitability",
 };
 
 type TProps = {

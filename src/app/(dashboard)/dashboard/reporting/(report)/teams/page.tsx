@@ -13,7 +13,7 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Analytics & Reporting - Teams",
-  description: "Analytics & Reporting - Teams",
+  description: "Manage employee performance and payouts",
 };
 
 // Props type

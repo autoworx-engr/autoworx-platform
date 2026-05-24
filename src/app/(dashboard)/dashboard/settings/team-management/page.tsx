@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import TaskManagementPage from "../../resources/task_management/page";
+import TeamManagementPage from "./TeamManagementPage";
 
 export const metadata: Metadata = {
   title: "Settings - Team Management",
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return <TaskManagementPage />;
+  return <TeamManagementPage />;
 }

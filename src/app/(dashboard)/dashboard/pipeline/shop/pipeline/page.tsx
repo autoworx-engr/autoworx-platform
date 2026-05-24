@@ -8,6 +8,7 @@ import dynamic from "next/dynamic";
 
 export const metadata: Metadata = {
   title: "Pipelines - Shop Pipeline",
+  description: "Manage your shop pipeline",
 };
 
 const PIPELINE_PAGE_SIZE = 10;

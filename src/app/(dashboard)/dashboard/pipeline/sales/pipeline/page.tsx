@@ -7,6 +7,7 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Pipelines - Sales Pipeline",
+  description: "Manage your sales pipeline",
 };
 
 type TProps = {

@@ -7,6 +7,11 @@ import Problem from "@/components/solution-ui/Problem";
 import Solution from "@/components/solution-ui/Solution";
 import Testimonial from "@/components/solution-ui/Testimonial";
 import React from "react";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Solution",
+};
 
 export default function SolutionPage() {
   return (

@@ -1,4 +1,9 @@
 import BookingForm from "./BookingForm";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Booking URL",
+};
 
 export default async function Page() {
   return (
