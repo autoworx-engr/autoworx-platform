@@ -105,7 +105,11 @@ async function attachUnreadCounts(
       select: { groupId: true, lastSeenAt: true },
     });
     seenAtByGroup = new Map(readStates.map((r) => [r.groupId, r.lastSeenAt]));
-  } catch {
+  } catch (err) {
+    console.warn(
+      "[fetchGroupsList] GroupReadState unavailable — apply migration `prisma/migrations/20260525120000_add_group_read_states.sql` to enable group unread counts.",
+      err instanceof Error ? err.message : err,
+    );
     return groups.map((g) => ({ ...g, unreadCount: 0 }));
   }
 

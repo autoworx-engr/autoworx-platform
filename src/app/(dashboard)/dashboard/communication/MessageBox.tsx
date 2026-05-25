@@ -526,18 +526,37 @@ export default function MessageBox({
       >
         {topSlot}
         {messages.map((message: TMessage, index: number) => {
-          let lastDate = "";
+          const prev = index > 0 ? messages[index - 1] : null;
+          const currentTs = new Date(
+            message?.createdAt ?? new Date(),
+          ).getTime();
+          const prevTs = prev
+            ? new Date(prev.createdAt ?? new Date()).getTime()
+            : 0;
           const messageDate = format(
             new Date(message?.createdAt ?? new Date()),
             "PPP",
-          ); // 'Jan 1, 2024'
-          const messageTime = format(
-            new Date(message?.createdAt ?? new Date()),
-            "h:mm a",
-          ); // '12:30 PM'
+          );
+          const prevDate = prev
+            ? format(new Date(prev.createdAt ?? new Date()), "PPP")
+            : null;
 
-          const showDateSeparator = messageDate !== lastDate;
-          lastDate = messageDate;
+          // Day chip only when the calendar day changes (WhatsApp / Messenger
+          // style). Previously this was reset to "" on every iteration so
+          // every message got a separator.
+          const showDateSeparator = !prev || messageDate !== prevDate;
+
+          // Group with previous when: same sender, same userId (for group
+          // chats), same calendar day, and within 5 minutes — collapses
+          // avatar + name + extra spacing on stacked replies.
+          const FIVE_MIN = 5 * 60 * 1000;
+          const groupedWithPrev =
+            !!prev &&
+            !showDateSeparator &&
+            prev.sender === message.sender &&
+            (prev.userId ?? null) === (message.userId ?? null) &&
+            currentTs - prevTs < FIVE_MIN;
+
           return (
             <Fragment
               key={
@@ -556,6 +575,7 @@ export default function MessageBox({
                 key={index}
                 fromGroup={fromGroup}
                 message={message}
+                groupedWithPrev={groupedWithPrev}
                 onDownload={handleDownload}
                 setIsImageLoaded={setIsImageLoaded}
               />
