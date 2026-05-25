@@ -3,6 +3,7 @@
 import ResponsiveEmployeeCard from "@/components/mobile-responsive/employee/ResponsiveEmployeeCard";
 import { Client, Fleet, Source, Tag } from "@prisma/client";
 import { Pagination } from "antd";
+import { SearchX } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import FleetListTable from "./FleetListTable";
 // import * as PusherPushNotifications from "@pusher/push-notifications-web";
@@ -41,14 +42,25 @@ export default function FleetList({
   return (
     <div>
       <div className="h-[60%] overflow-y-auto lg:hidden">
-        {clients.map((employee, index) => (
-          <ResponsiveEmployeeCard
-            key={index}
-            data={employee}
-            isFleet={true}
-            index={index}
-          />
-        ))}
+        {clients.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 py-16 text-slate-400 dark:text-slate-500">
+            <SearchX className="w-10 h-10" />
+            <p className="text-sm font-medium">
+              {params.get("search")
+                ? `No fleet found for "${params.get("search")}"`
+                : "No fleet found"}
+            </p>
+          </div>
+        ) : (
+          clients.map((employee, index) => (
+            <ResponsiveEmployeeCard
+              key={index}
+              data={employee}
+              isFleet={true}
+              index={index}
+            />
+          ))
+        )}
       </div>
 
       {total > 0 && (
