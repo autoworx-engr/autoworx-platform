@@ -156,7 +156,7 @@ export default function Message({
               {showNameInBubble && (
                 <p
                   className={cn(
-                    "mb-0.5 max-w-[260px] truncate text-xs font-semibold text-green-700",
+                    "mb-0.5 max-w-[260px] truncate text-xs font-semibold text-[#0a8a95]",
                   )}
                 >
                   {senderName}

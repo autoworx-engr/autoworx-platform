@@ -76,7 +76,7 @@ export default function GroupMessageBox({
         | "CLIENT",
       attachment: m.attachment,
       createdAt: m.createdAt,
-      senderInfo: (m as { sender?: unknown }).sender ?? null,
+      senderInfo: (m as { sender?: GroupMessageSender | null }).sender ?? null,
     }));
   }, [data, sessionUserId]);
 
