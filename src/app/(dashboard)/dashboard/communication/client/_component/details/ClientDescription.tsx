@@ -26,9 +26,9 @@ export default async function ClientDescription({
 
   const leadPromise = client.leadId
     ? db.lead.findUnique({
-      where: { id: client.leadId },
-      select: { isLead: true, services: true },
-    })
+        where: { id: client.leadId },
+        select: { isLead: true, services: true },
+      })
     : Promise.resolve(null);
 
   const conversationsPromise = fetchMailsMailgun(client.id);
@@ -62,15 +62,23 @@ export default async function ClientDescription({
     where: { companyId, clientId: client.id },
   });
 
-  const [lead, conversationsData, invoices, smsData, tasksData, appointments] =
-    await Promise.all([
-      leadPromise,
-      conversationsPromise,
-      invoicesPromise,
-      smsPromise,
-      tasksPromise,
-      appointmentsPromise,
-    ]);
+  const [
+    lead,
+    conversationsData,
+    invoices,
+    estimatesCount,
+    smsData,
+    tasksData,
+    appointments,
+  ] = await Promise.all([
+    leadPromise,
+    conversationsPromise,
+    invoicesPromise,
+    estimatesCountPromise,
+    smsPromise,
+    tasksPromise,
+    appointmentsPromise,
+  ]);
 
   const tasks = tasksData.map((t) => ({
     ...t,
@@ -121,6 +129,7 @@ export default async function ClientDescription({
         clientId={client.id}
         estimates={estimates}
         vehicleIds={vehicleIds}
+        totalCount={estimatesCount}
       />
 
       <TaskListSection clientId={client.id} tasks={tasks} />

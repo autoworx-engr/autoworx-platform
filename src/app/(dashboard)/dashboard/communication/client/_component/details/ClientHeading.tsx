@@ -19,12 +19,21 @@ export default async function ClientHeading({ client, vehicles = [] }: TProps) {
 
   const leadPromise: Promise<{ salesUser: User | null } | null> = client.leadId
     ? db.lead.findUnique({
-      where: { id: client.leadId },
-      select: { salesUser: true },
-    })
+        where: { id: client.leadId },
+        select: { salesUser: true },
+      })
     : Promise.resolve(null);
 
-  const [tag, lead] = await Promise.all([tagPromise, leadPromise]);
+  const companyPromise = db.company.findUnique({
+    where: { id: client.companyId },
+    select: { isSalesAgent: true },
+  });
+
+  const [tag, lead, company] = await Promise.all([
+    tagPromise,
+    leadPromise,
+    companyPromise,
+  ]);
 
   const fullName =
     `${client.firstName ?? ""} ${client.lastName ?? ""}`.trim() || "Client";
@@ -46,6 +55,7 @@ export default async function ClientHeading({ client, vehicles = [] }: TProps) {
             companyId={client.companyId}
             clientId={client.id}
             initialValue={client.isSalesAgent ?? false}
+            companyIsSalesAgent={company?.isSalesAgent ?? true}
           />
           <BackBtn
             asIcon

@@ -1,7 +1,8 @@
 "use client";
 
+import { fetchClientEstimates } from "@/actions/estimate/invoice/fetchClientEstimates";
 import { cn } from "@/lib/cn";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import NewEstimateButton from "./NewEstimateButton";
@@ -52,14 +53,29 @@ function formatDate(d: Date) {
 }
 
 export default function ClientEstimates({
-  estimates = [],
+  estimates: initialEstimates = [],
   vehicleIds = [],
   clientId,
   totalCount = 0,
 }: TProps) {
   const [open, setOpen] = useState(true);
+  const [estimates, setEstimates] = useState<EstimateItem[]>(
+    initialEstimates ?? [],
+  );
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const items = estimates ?? [];
+  const hasMore = totalCount > items.length;
+
+  const handleLoadMore = async () => {
+    setLoadingMore(true);
+    try {
+      const rest = await fetchClientEstimates(clientId, items.length || 5);
+      setEstimates((prev) => [...(prev ?? []), ...((rest as any) ?? [])]);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   const approvedTotal = useMemo(
     () =>
@@ -147,6 +163,22 @@ export default function ClientEstimates({
                 );
               })}
             </ul>
+          )}
+
+          {hasMore && (
+            <button
+              type="button"
+              onClick={handleLoadMore}
+              disabled={loadingMore}
+              className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-[11px] font-medium text-zinc-600 transition-colors hover:bg-zinc-50 disabled:opacity-60 dark:text-zinc-300 dark:hover:bg-white/5"
+            >
+              {loadingMore ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <ChevronDown className="h-3 w-3" />
+              )}
+              {loadingMore ? "Loading…" : `+${totalCount - items.length} more`}
+            </button>
           )}
 
           <div className="mt-3">
