@@ -75,21 +75,22 @@ export default function ClientItem({
   const setClientConversationTrack = useClientCommunicationStore(
     (state) => state.setClientConversationTrack,
   );
+  const filter = useDemoClientFilterStore((state) => state.filter);
 
   const markRead = async (id: number) => {
     try {
-      setClientConversationTrack(await readClientSmsAndEmail(id));
+      const updatedTrack = await readClientSmsAndEmail(id);
+      setClientConversationTrack(updatedTrack);
+      if (filter === "Unread") {
+        setClients((prev) => prev.filter((c) => c.id !== id));
+      }
     } catch (err: any) {
       errorToast(errorHandler(err).message);
     }
   };
   const markUnread = async (id: number) => {
     try {
-      const updatedTrack = await readClientSmsAndEmail(clientId);
-      setClientConversationTrack(updatedTrack);
-      if (filter === "Unread") {
-        setClients((prev) => prev.filter((c) => c.id !== clientId));
-      }
+      setClientConversationTrack(await unreadClientSmsAndEmail(id));
     } catch (err: any) {
       errorToast(errorHandler(err).message);
     }
@@ -106,8 +107,6 @@ export default function ClientItem({
       );
     }
   }, [conversationTrack]);
-
-  const filter = useDemoClientFilterStore((state) => state.filter);
 
   const handleRedirect = () => {
     if (!searchParams) return;

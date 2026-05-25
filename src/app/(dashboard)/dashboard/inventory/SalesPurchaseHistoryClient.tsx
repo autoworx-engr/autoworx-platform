@@ -142,7 +142,7 @@ export default function SalesPurchaseHistoryClient({
                     <p className="text-sm font-bold text-slate-600 dark:text-slate-100">
                       {formatCurrency(total)}
                     </p>
-                    <p className="text-[12px] text-slate-500">
+                    <p className="whitespace-nowrap text-[12px] text-slate-500">
                       {Number(history.quantity)} × {formatCurrency(price)}
                     </p>
                   </div>
