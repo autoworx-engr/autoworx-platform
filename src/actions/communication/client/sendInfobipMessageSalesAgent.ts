@@ -307,21 +307,6 @@ export async function sendInfobipMessageSalesAgent({
         await receiveTwiloMessage(data);
       }
 
-      // try {
-      //   if (client?.Lead?.id && client?.Lead?.columnId) {
-      //     if (data?.sentBy === "Company") {
-      //       await updatePipelineAutomationTrigger({
-      //         companyId: client.companyId,
-      //         condition: "MESSAGE_SENT_CLIENT",
-      //         leadId: client?.Lead.id,
-      //         columnId: client?.Lead?.columnId,
-      //       });
-      //     }
-      //   }
-      // } catch (error) {
-      //   console.error("Pipeline automation trigger error:", error);
-      // }
-
       revalidatePath(`/dashboard/communication/client/${clientId}`);
 
       return {
@@ -335,7 +320,6 @@ export async function sendInfobipMessageSalesAgent({
       };
     }
   } catch (error: any) {
-    console.error("Infobip send message error:", error);
     return {
       success: false,
       error: error.message,

@@ -120,19 +120,6 @@ export async function sendTwilioMessageSalesAgent({
         await receiveTwiloMessage(data);
       }
 
-      // try {
-      //   if (client?.Lead?.id && client?.Lead?.columnId) {
-      //     if (data?.sentBy == "Company") {
-      //       await updatePipelineAutomationTrigger({
-      //         companyId: client.companyId,
-      //         condition: "MESSAGE_SENT_CLIENT",
-      //         leadId: client?.Lead.id,
-      //         columnId: client?.Lead?.columnId,
-      //       });
-      //     }
-      //   }
-      // } catch (error) {}
-
       revalidatePath(`/dashboard/communication/client/${clientId}`);
 
       return {
@@ -143,7 +130,6 @@ export async function sendTwilioMessageSalesAgent({
       throw new Error("Missing required parameters");
     }
   } catch (error) {
-    console.log("Error sending message", error);
     return {
       success: false,
       error,
