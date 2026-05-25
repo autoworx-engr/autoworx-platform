@@ -30,12 +30,19 @@ export async function markGroupAsRead(groupId: number) {
     return { success: false, message: "Group not found" };
   }
 
-  const now = new Date();
-  await db.groupReadState.upsert({
-    where: { userId_groupId: { userId, groupId } },
-    create: { userId, groupId, lastSeenAt: now },
-    update: { lastSeenAt: now },
-  });
+  // If the table doesn't exist yet (migration pending), silently no-op so the
+  // chat UI keeps working. Unread badges just won't light up until the
+  // migration runs.
+  try {
+    const now = new Date();
+    await db.groupReadState.upsert({
+      where: { userId_groupId: { userId, groupId } },
+      create: { userId, groupId, lastSeenAt: now },
+      update: { lastSeenAt: now },
+    });
+  } catch {
+    return { success: false, message: "Read tracking unavailable" };
+  }
 
   return { success: true };
 }

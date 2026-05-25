@@ -85,6 +85,11 @@ export async function fetchGroupsList({
  * For the given page of groups, count inbound messages (from != viewer)
  * created after the viewer's `lastSeenAt` per group. Two batched Prisma
  * calls — never invoked inside a loop.
+ *
+ * Resilient: if the `GroupReadState` table doesn't exist yet (migration not
+ * applied) the function returns `unreadCount: 0` for every group so the
+ * sidebar still renders. The badge simply won't light up until the
+ * migration runs.
  */
 async function attachUnreadCounts(
   currentUserId: number,
@@ -93,13 +98,16 @@ async function attachUnreadCounts(
   if (groups.length === 0) return [];
   const groupIds = groups.map((g) => g.id);
 
-  const readStates = await db.groupReadState.findMany({
-    where: { userId: currentUserId, groupId: { in: groupIds } },
-    select: { groupId: true, lastSeenAt: true },
-  });
-  const seenAtByGroup = new Map(
-    readStates.map((r) => [r.groupId, r.lastSeenAt]),
-  );
+  let seenAtByGroup: Map<number, Date>;
+  try {
+    const readStates = await db.groupReadState.findMany({
+      where: { userId: currentUserId, groupId: { in: groupIds } },
+      select: { groupId: true, lastSeenAt: true },
+    });
+    seenAtByGroup = new Map(readStates.map((r) => [r.groupId, r.lastSeenAt]));
+  } catch {
+    return groups.map((g) => ({ ...g, unreadCount: 0 }));
+  }
 
   // groupBy `from` is NOT what we want here — we want one count per groupId.
   // Single Prisma groupBy by `groupId` with a `createdAt > seenAt` filter
