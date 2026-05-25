@@ -15,7 +15,7 @@ type SearchOptions = {
 
 export const searchUsers = async (
   searchTerm: string,
-  notNeededUser?: { id: number }[] | null,
+  excludeIds?: number[] | null,
   { pageParam = 1, take = DEFAULT_TAKE }: SearchOptions = {},
 ) => {
   const session = await getServerSession(authOptions);
@@ -28,15 +28,16 @@ export const searchUsers = async (
     };
   }
 
-  let withoutNeedUser = [{ id: parseInt(session.user.id) }];
-  if (notNeededUser && notNeededUser.length) {
-    withoutNeedUser = [...withoutNeedUser, ...notNeededUser];
+  const currentUserId = parseInt(session.user.id, 10);
+  const excludedIdSet = new Set<number>([currentUserId]);
+  if (excludeIds && excludeIds.length) {
+    for (const id of excludeIds) excludedIdSet.add(id);
   }
 
   const skip = Math.max(0, (pageParam - 1) * take);
   const where = {
     companyId: session.user.companyId,
-    NOT: withoutNeedUser,
+    id: { notIn: [...excludedIdSet] },
     ...buildUserSearchWhere(searchTerm),
   };
 

@@ -21,10 +21,7 @@ export function useGroupContactList(
   const [contactList, setContactList] = useState<TContactListUser[]>([]);
 
   const fetchUsers = async (searchTerm = "") => {
-    const exclude = [
-      ...contactList.map((u) => ({ id: u.id })),
-      ...excludeIds.map((id) => ({ id })),
-    ];
+    const exclude = [...contactList.map((u) => u.id), ...excludeIds];
     const result = await searchUsers(searchTerm, exclude);
     setGroupUsers(result.success ? (result.data as User[]) : initialUsers);
   };
