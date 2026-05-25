@@ -181,6 +181,7 @@ export default function GroupMessageBox({
       setGroupsList={setGroupsList}
       existingGroups={existingGroups}
       isLoadingOlder={isFetchingNextPage}
+      isLoadingInitial={isLoading}
       onScrollContainerRef={setContainer}
       topSlot={
         isFetchingNextPage ? (

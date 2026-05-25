@@ -28,6 +28,7 @@ import CompanyProfileCard from "./collaboration/CompanyProfileCard";
 import InvoiceEstimateModal from "./collaboration/InvoiceEstimateModal";
 import { useInfinityCollaborationMessages } from "./collaboration/hooks/useInfinityCollaborationMessages";
 import JumpToLatestButton from "@/components/JumpToLatestButton";
+import MessageListSkeleton from "./MessageListSkeleton";
 
 type TMessage = {
   id?: number;
@@ -384,23 +385,7 @@ export default function CompanyMessageBox({
             </div>
           )}
           {messagesLoading ? (
-            <div className="flex flex-col gap-4 p-2">
-              {[...Array(5)].map((_, i) => (
-                <div
-                  key={i}
-                  className={`flex items-end gap-2 ${i % 2 === 0 ? "flex-row" : "flex-row-reverse"}`}
-                >
-                  <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse shrink-0" />
-                  <div className="flex flex-col gap-1">
-                    <div
-                      className="h-10 rounded-2xl bg-gray-200 animate-pulse"
-                      style={{ width: `${120 + ((i * 37) % 100)}px` }}
-                    />
-                    <div className="h-3 w-16 rounded bg-gray-100 animate-pulse" />
-                  </div>
-                </div>
-              ))}
-            </div>
+            <MessageListSkeleton />
           ) : messages.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
               <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#006D77]/10">

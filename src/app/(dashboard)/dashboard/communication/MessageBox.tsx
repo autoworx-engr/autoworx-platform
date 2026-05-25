@@ -37,6 +37,7 @@ import { formatDate } from "./client/_component/conversations/mailgun/MailgunCon
 import AddUsersInGroupModal from "./internal/AddUsersInGroupModal";
 import { Message as TMessage } from "./internal/UsersArea";
 import Message from "./Message";
+import MessageListSkeleton from "./MessageListSkeleton";
 
 type TSection = "collaboration" | "internal";
 
@@ -52,6 +53,7 @@ export default function MessageBox({
   existingGroups,
   section,
   isLoadingOlder = false,
+  isLoadingInitial = false,
   onScrollContainerRef,
   topSlot,
 }: {
@@ -67,22 +69,9 @@ export default function MessageBox({
   group?: Group & { users: User[] };
   existingGroups?: Array<Group & { users: User[] }>;
   section: TSection;
-  /**
-   * When true, suppress the auto-scroll-to-bottom effect. Set this from a
-   * parent that is paginating older messages (`isFetchingNextPage`) so
-   * prepending older rows doesn't yank the view back to the bottom.
-   */
   isLoadingOlder?: boolean;
-  /**
-   * Callback ref invoked with the inner scroll container DOM node so a
-   * parent (e.g. UserMessageBox) can wire up a scroll listener for
-   * reverse pagination. Optional — collaboration callers ignore it.
-   */
+  isLoadingInitial?: boolean;
   onScrollContainerRef?: (el: HTMLDivElement | null) => void;
-  /**
-   * Optional content rendered above the message list — used as a
-   * "loading older messages…" indicator while a new page is being fetched.
-   */
   topSlot?: React.ReactNode;
 }) {
   const { data: session } = useSession();
@@ -525,6 +514,7 @@ export default function MessageBox({
         ref={messageBoxRef}
       >
         {topSlot}
+        {isLoadingInitial && messages.length === 0 && <MessageListSkeleton />}
         {messages.map((message: TMessage, index: number) => {
           const prev = index > 0 ? messages[index - 1] : null;
           const currentTs = new Date(

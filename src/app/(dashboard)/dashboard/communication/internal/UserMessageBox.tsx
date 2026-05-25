@@ -30,15 +30,21 @@ export default function UserMessageBox({
 }: TProps) {
   const { data: session } = useSession();
   const sessionUserId = session?.user?.id ? parseInt(session.user.id) : NaN;
+  // Hoist `user?.id` so all closures that depend only on this id can list it
+  // directly — keeps React Compiler's inferred dep set aligned with the
+  // manual `useCallback` dep array (it was inferring the broader `user`).
+  // NaN fallback keeps the type as `number` while the `Number.isFinite`
+  // guards on the consuming hooks make this row inert until a real id lands.
+  const otherUserId: number = user?.id ?? NaN;
   const prependToCache = usePrependToInfiniteCache(
-    internalKeys.userMessages(sessionUserId, user?.id),
+    internalKeys.userMessages(sessionUserId, otherUserId),
   );
 
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } =
     useInfiniteUserMessages({
       currentUserId: sessionUserId,
-      otherUserId: user?.id,
-      enabled: Number.isFinite(sessionUserId) && Number.isFinite(user?.id),
+      otherUserId,
+      enabled: Number.isFinite(sessionUserId) && Number.isFinite(otherUserId),
     });
 
   // Pages come back newest-first; flatten then reverse so the rendered list is
@@ -78,7 +84,7 @@ export default function UserMessageBox({
         id: last.id ?? Date.now(),
         message: last.message,
         from: sessionUserId,
-        to: user.id,
+        to: otherUserId,
         createdAt: last.createdAt ?? new Date(),
         updatedAt: last.createdAt ?? new Date(),
         attachment: Array.isArray(last.attachment)
@@ -89,13 +95,13 @@ export default function UserMessageBox({
         requestEstimate: last.requestEstimate ?? null,
       });
     },
-    [prependToCache, sessionUserId, user?.id],
+    [prependToCache, sessionUserId, otherUserId],
   );
 
   // Pusher real-time append. Mutates the same cache instead of local state.
   useEffect(() => {
     const channel = pusher
-      .subscribe(`user-${user?.id}`)
+      .subscribe(`user-${otherUserId}`)
       .bind(
         "message",
         ({
@@ -135,7 +141,7 @@ export default function UserMessageBox({
     return () => {
       channel.unbind("message");
     };
-  }, [prependToCache, sessionUserId, user?.id]);
+  }, [prependToCache, sessionUserId, otherUserId]);
 
   // Reverse-pagination scroll glue.
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -167,6 +173,7 @@ export default function UserMessageBox({
       setMessages={setMessages}
       totalMessageBox={totalMessageBoxLength}
       isLoadingOlder={isFetchingNextPage}
+      isLoadingInitial={isLoading}
       onScrollContainerRef={setContainer}
       topSlot={
         isFetchingNextPage ? (
