@@ -135,6 +135,12 @@ export function useChatTrackPusher({
 
     const handleMessageRead = (data: { senderId: number; userId: number }) => {
       if (data.userId !== sessionUserId) return;
+      // Capture the prior per-user count so we can shrink the side-nav
+      // global counter by exactly that amount — handles cross-tab reads
+      // (user clears the conversation on another tab/device).
+      const priorUnread =
+        userStateRef.current.find((u) => u.id === data.senderId)?.unreadCount ??
+        0;
       setUserState((prev) =>
         prev.map((u) =>
           u.id === data.senderId ? { ...u, unreadCount: 0 } : u,
@@ -147,6 +153,16 @@ export function useChatTrackPusher({
             : t,
         ),
       );
+      if (priorUnread > 0) {
+        const store = useChatTrackStore.getState();
+        store.setUnreadMessageCount({
+          ...store.unreadMessageCount,
+          internalCount: Math.max(
+            0,
+            store.unreadMessageCount.internalCount - priorUnread,
+          ),
+        });
+      }
     };
 
     channel.bind("chat-track", handleNewMessage);

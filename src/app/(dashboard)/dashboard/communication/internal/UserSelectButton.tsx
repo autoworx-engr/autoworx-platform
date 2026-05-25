@@ -1,4 +1,4 @@
-import { updateChatTrack } from "@/actions/communication/internal/updateChatTrack";
+import { markUserAsRead } from "@/actions/communication/internal/markUserAsRead";
 import Avatar from "@/components/Avatar";
 import { cn } from "@/lib/cn";
 import { useChatTrackStore } from "@/stores/chatTrackStore";
@@ -46,14 +46,17 @@ export default function UserSelectButton({
   const handleSelectedUser = async (
     selected: TUser,
     role: "sender" | "receiver",
-    lastMessageInfo?: TTraceMessage | null,
+    _lastMessageInfo?: TTraceMessage | null,
   ) => {
-    if (lastMessageInfo && role === "receiver") {
-      // Fire-and-forget. The action emits a `chat-track-read` Pusher event
-      // that `useChatTrackPusher` handles centrally — chatTrackState gets
-      // updated with `isRead: true` for the whole sidebar, no need for a
-      // local optimistic copy here.
-      await updateChatTrack(lastMessageInfo.id);
+    // Snapshot the prior unread count BEFORE we mutate state so we know
+    // exactly how much to subtract from the global side-nav counter.
+    const priorUnread = selected.unreadCount ?? 0;
+
+    // Server-side: flip the (me, other) internal chatTrack to isRead=true.
+    // Pair-based lookup — no need for a pre-hydrated chatTrackId. The action
+    // emits `chat-track-read` Pusher events so all open tabs sync.
+    if (priorUnread > 0) {
+      void markUserAsRead(selected.id);
     }
 
     if (addChatItem) {
@@ -83,11 +86,15 @@ export default function UserSelectButton({
       });
     }
 
-    if (lastMessageInfo && !lastMessageInfo.isRead && role === "receiver") {
+    // Drop the side-nav internal counter by exactly what this conversation
+    // was contributing. `useChatTrackPusher.handleMessageRead` will also fire
+    // when the read receipt round-trips through Pusher, but that handler
+    // doesn't decrement the global counter, so this is the canonical place.
+    if (priorUnread > 0) {
       const currentUnread = useChatTrackStore.getState().unreadMessageCount;
       setUnreadMessageCount({
         ...currentUnread,
-        internalCount: Math.max(0, currentUnread.internalCount - 1),
+        internalCount: Math.max(0, currentUnread.internalCount - priorUnread),
       });
     }
   };
