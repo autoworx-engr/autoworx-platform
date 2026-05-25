@@ -17,7 +17,13 @@ function notify(
   reason: unknown,
   label: "unhandledRejection" | "uncaughtException",
 ): void {
-  const msg = reason instanceof Error ? reason.message : String(reason);
+  const msg =
+    reason instanceof Error
+      ? reason.message
+      : typeof reason === "object" && reason !== null
+        ? JSON.stringify(reason, null, 2)
+        : String(reason);
+
   queueProductionTelegramAlert({
     errorMessage: `[${label}] ${msg}`,
     statusCode: 500,
