@@ -30,11 +30,6 @@ export default function UserMessageBox({
 }: TProps) {
   const { data: session } = useSession();
   const sessionUserId = session?.user?.id ? parseInt(session.user.id) : NaN;
-  // Hoist `user?.id` so all closures that depend only on this id can list it
-  // directly — keeps React Compiler's inferred dep set aligned with the
-  // manual `useCallback` dep array (it was inferring the broader `user`).
-  // NaN fallback keeps the type as `number` while the `Number.isFinite`
-  // guards on the consuming hooks make this row inert until a real id lands.
   const otherUserId: number = user?.id ?? NaN;
   const prependToCache = usePrependToInfiniteCache(
     internalKeys.userMessages(sessionUserId, otherUserId),
