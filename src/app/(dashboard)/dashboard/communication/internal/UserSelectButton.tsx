@@ -92,29 +92,24 @@ export default function UserSelectButton({
     }
   };
 
-  const hasMessageHistory =
-    lastMessageHistory?.messageId && lastMessageHistory?.lastMessage;
-  const isUnreadReceiver =
-    hasMessageHistory &&
-    !lastMessageHistory?.isRead &&
-    participants === "receiver";
+  // Badge + unread typography are driven by the server-side `user.unreadCount`
+  // (real per-counterpart count) — chatTrack is no longer plumbed per-row, so
+  // we don't gate on `lastMessageHistory.isRead`. `unreadCount > 0` already
+  // implies inbound unread messages from this user.
   const unreadCount = user.unreadCount ?? 0;
   const unreadLabel = unreadCount > 9 ? "9+" : String(unreadCount);
-  const showBadge = isUnreadReceiver && unreadCount > 0;
+  const showBadge = unreadCount > 0;
 
   const messageText =
     lastMessageHistory?.lastMessage || user.latestMessage?.message;
   const previewPrefix = participants === "sender" ? "You" : user.firstName;
-  const isUnreadPreview =
-    !lastMessageHistory?.isRead &&
-    !isSelectedUser &&
-    participants === "receiver";
+  const isUnreadPreview = unreadCount > 0 && !isSelectedUser;
 
   return (
     <button
       onClick={() => handleSelectedUser(user, participants, lastMessageHistory)}
       className={cn(
-        "group relative flex w-full items-center gap-3 rounded-2xl p-3 text-left",
+        "group relative flex w-full items-center gap-3 rounded-lg p-3 text-left",
         "border shadow-sm transition-all duration-200 hover:shadow-md active:scale-[0.99]",
         isSelectedUser
           ? "border-transparent bg-gradient-to-r from-teal-700 to-teal-600 ring-1 ring-teal-500/60"

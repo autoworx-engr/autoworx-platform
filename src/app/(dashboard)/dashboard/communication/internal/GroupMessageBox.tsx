@@ -10,11 +10,13 @@ import MessageBox from "../MessageBox";
 import { useSession } from "next-auth/react";
 import { pusher } from "@/lib/pusher/client";
 import { Attachment, Group, User } from "@prisma/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { useInfiniteGroupMessages } from "./_hooks/useInfiniteGroupMessages";
 import { useReverseScrollPagination } from "./_hooks/useReverseScrollPagination";
 import { usePrependToInfiniteCache } from "./_hooks/useMessageCacheMutation";
 import { internalKeys } from "./_utils/queryKey";
 import { Spinner } from "@/components/ui/spinner";
+import { markGroupAsRead } from "@/actions/communication/internal/markGroupAsRead";
 
 type TProps = {
   setGroupsList: React.Dispatch<
@@ -33,9 +35,27 @@ export default function GroupMessageBox({
 }: TProps) {
   const { data: session } = useSession();
   const sessionUserId = session?.user?.id ? parseInt(session.user.id) : NaN;
+  const queryClient = useQueryClient();
   const prependToCache = usePrependToInfiniteCache(
     internalKeys.groupMessages(group.id),
   );
+
+  // Mark the group as read whenever this box is mounted (the viewer opened
+  // the chat) and whenever a new message arrives while they're looking at
+  // it. Server upserts `GroupReadState.lastSeenAt = now`; the sidebar
+  // groups query is then invalidated so the unread badge updates.
+  const invalidateGroupsList = useCallback(() => {
+    queryClient.invalidateQueries({
+      predicate: (q) =>
+        Array.isArray(q.queryKey) &&
+        q.queryKey[0] === "internal" &&
+        q.queryKey[1] === "groups",
+    });
+  }, [queryClient]);
+  useEffect(() => {
+    if (!Number.isFinite(sessionUserId)) return;
+    void markGroupAsRead(group.id).then(invalidateGroupsList);
+  }, [group.id, sessionUserId, invalidateGroupsList]);
 
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } =
     useInfiniteGroupMessages({
@@ -119,12 +139,15 @@ export default function GroupMessageBox({
         createdAt: new Date(),
         attachment: attachment ? [attachment] : [],
       });
+      // Box is open while the message arrives → keep lastSeenAt fresh so it
+      // never appears as unread on the sidebar.
+      void markGroupAsRead(group.id).then(invalidateGroupsList);
     };
     channel.bind("message", handler);
     return () => {
       channel.unbind("message", handler);
     };
-  }, [prependToCache, group.id, sessionUserId]);
+  }, [prependToCache, group.id, sessionUserId, invalidateGroupsList]);
 
   // Reverse-pagination wiring.
   const containerRef = useRef<HTMLDivElement | null>(null);

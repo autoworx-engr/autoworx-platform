@@ -1,6 +1,7 @@
 import { pusher } from "@/lib/pusher/client";
 import { useChatTrackStore } from "@/stores/chatTrackStore";
 import type { ChatTrack, Group, Message, User } from "@prisma/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 
 type TUser = User & { unreadCount: number; latestMessage?: Message | null };
@@ -47,6 +48,8 @@ export function useChatTrackPusher({
     sortListsRef.current = sortLists;
   }, [sortLists]);
 
+  const queryClient = useQueryClient();
+
   useEffect(() => {
     if (!sessionUserId) return;
     const channel = pusher.subscribe(`track-${sessionUserId}`);
@@ -72,12 +75,21 @@ export function useChatTrackPusher({
       });
 
       if (incoming.groupId) {
+        // Re-sort so the active group floats up; also invalidate the groups
+        // infinite query so each row's `unreadCount` (per-viewer) refreshes
+        // from the server. Pages currently rendered will refetch in place.
         setSideBarGroupLists((prevGroups) => {
           const { sortedGroups } = sortListsRef.current(
             userStateRef.current,
             prevGroups,
           );
           return sortedGroups;
+        });
+        queryClient.invalidateQueries({
+          predicate: (q) =>
+            Array.isArray(q.queryKey) &&
+            q.queryKey[0] === "internal" &&
+            q.queryKey[1] === "groups",
         });
       }
 
