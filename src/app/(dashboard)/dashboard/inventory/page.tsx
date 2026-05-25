@@ -77,7 +77,7 @@ const getInventoryItem = cache(
         companyId,
         type: type,
         OR: search ? searchFilterOR : undefined,
-        category: { name: category },
+        ...(category ? { category: { name: category } } : {}),
       };
       const [items, totalItems] = await Promise.all([
         db.inventoryProduct.findMany({
@@ -87,8 +87,7 @@ const getInventoryItem = cache(
             vendor: true,
             User: type === "Supply" ? true : false,
           },
-          skip: (page - 1) * limit,
-          take: limit,
+          ...(search ? {} : { skip: (page - 1) * limit, take: limit }),
           orderBy: { name: "asc" },
         }),
         db.inventoryProduct.count({ where: whereClause }),

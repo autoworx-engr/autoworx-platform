@@ -13,6 +13,7 @@ import React, { useEffect, useRef, useState } from "react";
 import AttachmentInput from "../AttachmentInput";
 import SmartReplyBar from "../sms/SmartReply";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 // Helper function to format attachment message
 const formatAttachmentMessage = (files: File[]) => {
@@ -62,6 +63,7 @@ export default function SendMail({
   const [messageInput, setMessageInput] = useState("");
 
   const [files, setFiles] = useState<File[]>([]);
+  const router = useRouter();
 
   const fileRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -146,6 +148,7 @@ export default function SendMail({
         (client) => client.id !== clientId,
       );
       currentClient && setClientList([currentClient, ...filterCurrentClient]);
+      router.refresh();
     } catch (e) {
       errorToast("Failed to send message");
     }

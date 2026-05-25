@@ -451,6 +451,7 @@ export default function AddNewProduct({
             <SlimInput
               name="productName"
               required
+              placeholder="Brake Pad Set"
               value={isDatabase ? databaseName : productName}
               onChange={(e) => {
                 const value = e.target.value;
@@ -531,6 +532,7 @@ export default function AddNewProduct({
             <textarea
               name="description"
               required={false}
+              placeholder="High-performance ceramic brake pads for front axle..."
               minLength={20}
               maxLength={250}
               className={cn(
@@ -548,6 +550,7 @@ export default function AddNewProduct({
               name="quantity"
               type="number"
               required
+              placeholder="e.g. 100"
               value={quantity}
               onChange={handleQuantityChange}
             />
@@ -555,20 +558,32 @@ export default function AddNewProduct({
               name="price"
               type="number"
               required
+              placeholder="e.g. 49.99"
               value={price}
               onChange={handlePriceChange}
             />
             <SlimInput
               name="unit"
               required
+              placeholder="pcs, kg, ft"
               value={isDatabase ? databaseUnit : unit}
               onChange={handleUnitChange}
             />
-            <SlimInput name="lot" label="Lot#" required={false} />
+            <SlimInput
+              name="lot"
+              label="Lot#"
+              required={false}
+              placeholder="LOT-2024-001"
+            />
           </ProductFormFields>
 
           <div>
-            <SlimInput name="receipt" label="Receipt#" required={false} />
+            <SlimInput
+              name="receipt"
+              label="Receipt#"
+              required={false}
+              placeholder="REC-00123"
+            />
           </div>
 
           <div className="mt-5 rounded-md bg-[#6571FF5E] p-2 md:mt-0">
@@ -578,6 +593,7 @@ export default function AddNewProduct({
               name="lowInventory"
               label={""}
               type="number"
+              placeholder="e.g. 10"
               required={false}
             />
           </div>

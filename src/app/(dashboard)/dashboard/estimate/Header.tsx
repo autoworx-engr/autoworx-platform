@@ -67,7 +67,7 @@ export default function Header({
             placeholder={
               isTemplate
                 ? "Search by Template ID"
-                : "Search ID, name, vehicle, email..."
+                : "Search ID, client, vehicle, email..."
             }
             className="h-11 w-full rounded-xl border-none bg-slate-50 pl-11 pr-4 text-sm font-medium text-slate-700 ring-1 ring-slate-200 transition-all duration-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-[#6571FF]/30 outline-none md:max-w-[450px]"
             defaultValue={searchTerm || ""}

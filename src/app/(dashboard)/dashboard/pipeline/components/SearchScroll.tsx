@@ -122,14 +122,11 @@ export default function SearchScroll({
         const nameMatch = (lead.name || lead.clientName || "")
           .toLowerCase()
           .includes(searchTerm.toLowerCase());
-        // Search by vehicle information (year, make, model)
+        // Search by vehicle info — lead.vehicle is the combined "year make model" string
         const vehicleMatch =
           lead.vehicle &&
           lead.vehicle.toLowerCase().includes(searchTerm.toLowerCase());
-        const vehicleYearMatch =
-          lead.year &&
-          lead.year.toLowerCase().includes(searchTerm.toLowerCase());
-        if (nameMatch || vehicleMatch || vehicleYearMatch) {
+        if (nameMatch || vehicleMatch) {
           results.push({ columnIndex, leadIndex });
         }
       });

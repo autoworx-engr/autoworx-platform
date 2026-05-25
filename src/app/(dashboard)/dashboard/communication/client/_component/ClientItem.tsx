@@ -85,7 +85,11 @@ export default function ClientItem({
   };
   const markUnread = async (id: number) => {
     try {
-      setClientConversationTrack(await unreadClientSmsAndEmail(id));
+      const updatedTrack = await readClientSmsAndEmail(clientId);
+      setClientConversationTrack(updatedTrack);
+      if (filter === "Unread") {
+        setClients((prev) => prev.filter((c) => c.id !== clientId));
+      }
     } catch (err: any) {
       errorToast(errorHandler(err).message);
     }
