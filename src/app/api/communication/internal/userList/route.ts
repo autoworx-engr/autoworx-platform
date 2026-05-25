@@ -93,11 +93,17 @@ export const GET = async (request: NextRequest) => {
       ...buildSearchWhere(),
     };
 
-    // Strategy: only load the *bounded* "users I've chatted with" set
-    // upfront — that set is capped by the viewer's actual conversation
-    // partners, not the whole company. Never-chatted users (the tail) are
-    // paginated at the DB level via findMany skip/take, so we never
-    // materialize all company users in memory.
+    // Strategy: both chatted and never-chatted halves are paginated at the
+    // DB level. Per-page work scales with `limitNum`, not with the company's
+    // user/chat counts. Frontend sends `page`; this handler computes that
+    // page only.
+    //
+    //   1. Chatted half → `chatTrack.findMany` skip/take ordered by
+    //      updatedAt desc. One chatTrack = one counterpart.
+    //   2. Never-chatted half (only when the page actually crosses into it)
+    //      → `user.findMany` skip/take with `NOT IN chattedIds`. The full
+    //      chatted-id set is loaded once and only on pages that need
+    //      never-chatted rows.
     const userSelect = {
       id: true,
       firstName: true,
@@ -108,59 +114,77 @@ export const GET = async (request: NextRequest) => {
       employeeType: true,
     } as const;
 
-    const [tracks, totalRecords] = await Promise.all([
-      db.chatTrack.findMany({
-        where: {
-          section: "internal",
-          OR: [{ senderId: userIdNum }, { receiverId: userIdNum }],
-        },
-        orderBy: { updatedAt: "desc" },
-      }),
+    const trackWhere = {
+      section: "internal" as const,
+      OR: [{ senderId: userIdNum }, { receiverId: userIdNum }],
+    };
+
+    const [chattedTotal, totalRecords] = await Promise.all([
+      db.chatTrack.count({ where: trackWhere }),
       db.user.count({ where }),
     ]);
 
-    // counterpart -> latest chatTrack (tracks already desc, first one wins).
-    const latestChatTrackMap = new Map<number, (typeof tracks)[0]>();
-    for (const track of tracks) {
-      const otherId =
-        track.senderId === userIdNum ? track.receiverId : track.senderId;
-      if (otherId && !latestChatTrackMap.has(otherId)) {
-        latestChatTrackMap.set(otherId, track);
+    type ChattedUser = Prisma.UserGetPayload<{ select: typeof userSelect }>;
+    type ChatTrackRow = Prisma.ChatTrackGetPayload<{}>;
+
+    const pageUsers: ChattedUser[] = [];
+    const chatTrackByCounterpart = new Map<number, ChatTrackRow>();
+
+    // ---- Chatted half: DB-paginated chatTrack page ----
+    if (skip < chattedTotal && limitNum > 0) {
+      const chattedTake = Math.min(limitNum, chattedTotal - skip);
+      const tracks = await db.chatTrack.findMany({
+        where: trackWhere,
+        orderBy: { updatedAt: "desc" },
+        skip,
+        take: chattedTake,
+      });
+
+      const orderedCounterpartIds = tracks
+        .map((t) => (t.senderId === userIdNum ? t.receiverId : t.senderId))
+        .filter((id): id is number => id != null && id !== userIdNum);
+
+      for (const t of tracks) {
+        const otherId = t.senderId === userIdNum ? t.receiverId : t.senderId;
+        if (otherId != null) chatTrackByCounterpart.set(otherId, t);
+      }
+
+      if (orderedCounterpartIds.length > 0) {
+        // Validate counterparts against the search/company `where` so search
+        // filtering applies to chatted rows too.
+        const chattedMatching = await db.user.findMany({
+          where: { ...where, id: { in: orderedCounterpartIds } },
+          select: userSelect,
+        });
+        const byId = new Map(chattedMatching.map((u) => [u.id, u]));
+        for (const id of orderedCounterpartIds) {
+          const u = byId.get(id);
+          if (u) pageUsers.push(u);
+        }
       }
     }
-    const chattedCounterpartIds = [...latestChatTrackMap.keys()];
 
-    // Fetch only the chatted counterparts that ALSO match the current `where`
-    // (search filter, company scope, NOT self). Keeps them in the
-    // updatedAt-desc order established above.
-    const chattedUsersRaw =
-      chattedCounterpartIds.length > 0
-        ? await db.user.findMany({
-            where: { ...where, id: { in: chattedCounterpartIds } },
-            select: userSelect,
-          })
-        : [];
-    const chattedUserById = new Map(chattedUsersRaw.map((u) => [u.id, u]));
-    const chattedSorted = chattedCounterpartIds
-      .map((id) => chattedUserById.get(id))
-      .filter((u): u is NonNullable<typeof u> => Boolean(u));
-
-    // Carve the page out of (chatted ++ never-chatted).
-    const chattedTotal = chattedSorted.length;
-    const chattedSliceStart = Math.min(skip, chattedTotal);
-    const chattedSliceEnd = Math.min(skip + limitNum, chattedTotal);
-    const pageUsers = chattedSorted.slice(chattedSliceStart, chattedSliceEnd);
-
+    // ---- Never-chatted half: DB-paginated user.findMany ----
     const remaining = limitNum - pageUsers.length;
     if (remaining > 0) {
+      // Full chatted-id set is only needed here, for the NOT IN exclusion.
+      // Pages that stay entirely inside chatted territory never run this.
+      const allTracks = await db.chatTrack.findMany({
+        where: trackWhere,
+        select: { senderId: true, receiverId: true },
+      });
+      const chattedIdSet = new Set<number>();
+      for (const t of allTracks) {
+        const otherId = t.senderId === userIdNum ? t.receiverId : t.senderId;
+        if (otherId != null && otherId !== userIdNum) chattedIdSet.add(otherId);
+      }
+
       const neverChattedSkip = Math.max(0, skip - chattedTotal);
       const neverChattedUsers = await db.user.findMany({
         where: {
           ...where,
-          ...(chattedCounterpartIds.length > 0
-            ? {
-                NOT: [{ id: userIdNum }, { id: { in: chattedCounterpartIds } }],
-              }
+          ...(chattedIdSet.size > 0
+            ? { NOT: [{ id: userIdNum }, { id: { in: [...chattedIdSet] } }] }
             : {}),
         },
         orderBy: { id: "asc" },
@@ -173,7 +197,7 @@ export const GET = async (request: NextRequest) => {
 
     const paginatedUsers = pageUsers.map((u) => ({
       ...u,
-      chatTrack: latestChatTrackMap.get(u.id) ?? null,
+      chatTrack: chatTrackByCounterpart.get(u.id) ?? null,
     }));
 
     const hasNextPage = pageNum * limitNum < totalRecords;

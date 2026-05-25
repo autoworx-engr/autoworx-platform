@@ -20,14 +20,16 @@ export type UserWithLatest = User & {
  * recently active conversation first, never-chatted users at the bottom,
  * ties broken by id ASC.
  *
- * Two-step strategy that avoids loading every company user up-front:
- *   1. `groupBy` direct messages to get the set of counterparts the viewer
- *      has ever chatted with + each pair's max `createdAt`. This set is
- *      bounded by the viewer's actual conversation partners (typically far
- *      smaller than the whole company).
- *   2. Sort that set by timestamp DESC; carve out the chatted slice of the
- *      requested page; for any remaining "never-chatted" rows, fetch them
- *      paginated at the DB level via `findMany` excluding the chatted ids.
+ * Both halves are paginated at the DB level — the frontend's infinite
+ * scroll just sends `pageParam`; the per-page work here scales with the
+ * page size, not with the company / conversation count:
+ *
+ *   1. Chatted portion → `db.chatTrack.findMany` ordered by `updatedAt desc`
+ *      with `skip`/`take`. One chatTrack row = one counterpart.
+ *   2. Never-chatted portion (only when the page actually crosses into it)
+ *      → `db.user.findMany` with `skip`/`take` and `NOT IN chattedIds`. The
+ *      full chatted-id set is loaded once *only* for the NOT exclusion, and
+ *      only on pages that need never-chatted rows.
  */
 export async function fetchUserIdsByLatestMessage(
   currentUserId: number,
@@ -35,59 +37,67 @@ export async function fetchUserIdsByLatestMessage(
   skip: number,
   take: number,
 ): Promise<{ id: number }[]> {
-  const pairMaxes = await db.message.groupBy({
-    by: ["from", "to"],
-    where: {
-      groupId: null,
-      OR: [{ from: currentUserId }, { to: currentUserId }],
-    },
-    _max: { createdAt: true },
-  });
+  const trackWhere = {
+    section: "internal" as const,
+    OR: [{ senderId: currentUserId }, { receiverId: currentUserId }],
+  };
 
-  const latestByCounterpart = new Map<number, Date>();
-  for (const p of pairMaxes) {
-    const ts = p._max.createdAt;
-    if (!ts) continue;
-    const counterpart = p.from === currentUserId ? p.to : p.from;
-    if (counterpart == null || counterpart === currentUserId) continue;
-    const prev = latestByCounterpart.get(counterpart);
-    if (!prev || ts > prev) latestByCounterpart.set(counterpart, ts);
-  }
+  const chattedTotal = await db.chatTrack.count({ where: trackWhere });
+  const pageIds: number[] = [];
 
-  // Only keep counterparts that are actually still in this company (filters
-  // out cross-tenant rows from legacy data).
-  const chattedIds = [...latestByCounterpart.keys()];
-  const chattedInCompany =
-    chattedIds.length > 0
-      ? await db.user.findMany({
-          where: { id: { in: chattedIds }, companyId },
-          select: { id: true },
-        })
-      : [];
-  const chattedInCompanySet = new Set(chattedInCompany.map((u) => u.id));
-
-  const chattedIdsInOrder = chattedIds
-    .filter((id) => chattedInCompanySet.has(id))
-    .sort((a, b) => {
-      const aTs = latestByCounterpart.get(a)!.getTime();
-      const bTs = latestByCounterpart.get(b)!.getTime();
-      if (aTs !== bTs) return bTs - aTs;
-      return a - b;
+  // ---- Chatted portion (DB-paginated chatTrack) ----
+  if (skip < chattedTotal && take > 0) {
+    const chattedTake = Math.min(take, chattedTotal - skip);
+    const tracks = await db.chatTrack.findMany({
+      where: trackWhere,
+      orderBy: { updatedAt: "desc" },
+      skip,
+      take: chattedTake,
+      select: { senderId: true, receiverId: true },
     });
 
-  // Carve the page from (chatted | never-chatted) ordered concat.
-  const chattedTotal = chattedIdsInOrder.length;
-  const chattedSliceStart = Math.min(skip, chattedTotal);
-  const chattedSliceEnd = Math.min(skip + take, chattedTotal);
-  const pageIds = chattedIdsInOrder.slice(chattedSliceStart, chattedSliceEnd);
+    const orderedCounterpartIds = tracks
+      .map((t) => (t.senderId === currentUserId ? t.receiverId : t.senderId))
+      .filter((id): id is number => id != null && id !== currentUserId);
 
+    // Validate counterparts still belong to the caller's company (filters
+    // legacy cross-tenant chatTracks). The findMany only returns matching
+    // ids; we re-attach to preserve original chatTrack order.
+    if (orderedCounterpartIds.length > 0) {
+      const valid = await db.user.findMany({
+        where: { id: { in: orderedCounterpartIds }, companyId },
+        select: { id: true },
+      });
+      const validSet = new Set(valid.map((u) => u.id));
+      for (const id of orderedCounterpartIds) {
+        if (validSet.has(id)) pageIds.push(id);
+      }
+    }
+  }
+
+  // ---- Never-chatted portion (DB-paginated user.findMany) ----
   const remaining = take - pageIds.length;
   if (remaining > 0) {
+    // Full chatted-id set is only needed here, for the NOT IN exclusion.
+    // Pages that stay entirely in chatted territory never run this query.
+    const allTracks = await db.chatTrack.findMany({
+      where: trackWhere,
+      select: { senderId: true, receiverId: true },
+    });
+    const chattedIdSet = new Set<number>();
+    for (const t of allTracks) {
+      const other = t.senderId === currentUserId ? t.receiverId : t.senderId;
+      if (other != null && other !== currentUserId) chattedIdSet.add(other);
+    }
+
     const neverChattedSkip = Math.max(0, skip - chattedTotal);
     const neverChattedUsers = await db.user.findMany({
       where: {
         companyId,
-        NOT: { id: { in: [currentUserId, ...chattedIdsInOrder] } },
+        NOT:
+          chattedIdSet.size > 0
+            ? [{ id: currentUserId }, { id: { in: [...chattedIdSet] } }]
+            : { id: currentUserId },
       },
       orderBy: { id: "asc" },
       skip: neverChattedSkip,
