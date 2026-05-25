@@ -3,6 +3,7 @@ import LoginContainer from "./LoginContainer";
 
 export const metadata: Metadata = {
   title: "Login",
+  description: "Sign in to your account.",
 };
 
 export default function Page() {

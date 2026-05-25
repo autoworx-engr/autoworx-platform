@@ -3,6 +3,7 @@ import SalesReportPage from "./SalesReportPage";
 
 export const metadata: Metadata = {
   title: "Sales Reporting",
+  description: "View and analyze your sales reports and performance.",
 };
 
 export default function Page(props: {

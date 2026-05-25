@@ -7,6 +7,7 @@ import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import { ArrowLeft } from "lucide-react";
 import { notFound } from "next/navigation";
+import { Metadata } from "next";
 
 type PropsType = {
   params: Promise<{
@@ -15,6 +16,11 @@ type PropsType = {
   searchParams: Promise<{
     search?: string;
   }>;
+};
+
+export const metadata: Metadata = {
+  title: "Fleet Details",
+  description: "View fleet details and invoices.",
 };
 
 const page = async (props: PropsType) => {

@@ -4,9 +4,15 @@ import { UrgentRequest } from "@/service/virtual-shop/api";
 import UrgentRequestDetail from "./_components/UrgentRequestDetail";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
+import { Metadata } from "next";
 
 type PageProps = {
   params: Promise<{ shopId: string; id: string }>;
+};
+
+export const metadata: Metadata = {
+  title: "Virtual Shop - Urgent Request Detail",
+  description: "View details of an urgent request for your virtual shop.",
 };
 
 export default async function ShopUrgentRequestDetailPage({

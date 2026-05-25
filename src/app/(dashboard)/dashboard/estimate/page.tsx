@@ -13,7 +13,7 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Invoices - Estimates",
-  description: "Invoices - Estimates",
+  description: "View and manage all your estimates.",
 };
 
 export default async function EstimatesPage(

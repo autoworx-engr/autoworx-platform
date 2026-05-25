@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import PipelinePage from "./PipelinePage";
 
 export const metadata: Metadata = {
-  title: "Analytics & Reporting - Leads",
+  title: "Analytics - Leads",
   description: "Analyze lead generation and conversion performance",
 };
 

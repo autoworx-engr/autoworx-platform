@@ -17,7 +17,7 @@ import InventoryDisplay from "./InventoryDisplay";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Analytics & Reporting - Inventory",
+  title: "Analytics - Inventory",
   description: "Analyze inventory performance and profitability",
 };
 

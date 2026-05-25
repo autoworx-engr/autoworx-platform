@@ -12,7 +12,7 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Invoices - Templates",
-  description: "Invoices - Templates",
+  description: "Manage and customize your invoice templates.",
 };
 
 async function TemplatesPage(

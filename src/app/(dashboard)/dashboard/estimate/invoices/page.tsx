@@ -13,7 +13,7 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Invoices",
-  description: "Invoices",
+  description: "View and manage all your invoices.",
 };
 
 export default async function InvoicesPage(

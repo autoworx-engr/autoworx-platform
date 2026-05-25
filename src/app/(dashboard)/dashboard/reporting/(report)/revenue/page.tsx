@@ -15,7 +15,7 @@ import RevenueDisplay from "./RevenueDisplay";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Analytics & Reporting - Revenue",
+  title: "Analytics - Revenue",
   description: "Analyze your shop's revenue and profitability",
 };
 

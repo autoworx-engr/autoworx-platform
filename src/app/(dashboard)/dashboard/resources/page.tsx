@@ -4,6 +4,7 @@ import DashboardResourcePage from "./DashboardResourcePage";
 
 export const metadata: Metadata = {
   title: "Resource",
+  description: "View and manage your resources.",
 };
 
 export default function Page() {

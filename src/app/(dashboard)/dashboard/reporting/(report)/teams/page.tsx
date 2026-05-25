@@ -12,7 +12,7 @@ import { getEmployeePayout } from "@/actions/dashboard/data/getAdminInfo";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Analytics & Reporting - Teams",
+  title: "Analytics - Teams",
   description: "Manage employee performance and payouts",
 };
 

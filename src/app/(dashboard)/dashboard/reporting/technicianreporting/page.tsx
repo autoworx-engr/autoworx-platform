@@ -13,6 +13,7 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Technician Reporting",
+  description: "View and analyze technician performance and reports.",
 };
 
 export default async function TechnicianReportingPage() {

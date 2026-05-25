@@ -15,7 +15,7 @@ import { PaymentType, Prisma } from "@prisma/client";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Analytics & Reporting - Payments",
+  title: "Analytics - Payments",
   description: "Analyze payment trends and manage overdue invoices",
 };
 
