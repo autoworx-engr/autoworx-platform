@@ -447,7 +447,8 @@ export async function POST(req: NextRequest) {
         sendPaymentReceivedNotification({
           companyId: paymentData.companyId,
           amount: totalPaid,
-          clientName: `${firstInvoice?.client?.firstName} ${firstInvoice?.client?.lastName}`,
+          clientName:
+            `${firstInvoice?.client?.firstName} ${firstInvoice?.client?.lastName ?? ""}`.trim(),
           invoiceId: paymentData.statementId,
           isDeposit: false,
         });
@@ -669,7 +670,8 @@ export async function POST(req: NextRequest) {
         sendPaymentReceivedNotification({
           companyId: paymentData.companyId,
           amount: paymentData.amount,
-          clientName: `${stripeInvoice?.client?.firstName} ${stripeInvoice?.client?.lastName}`,
+          clientName:
+            `${stripeInvoice?.client?.firstName} ${stripeInvoice?.client?.lastName ?? ""}`.trim(),
           invoiceId: paymentData.invoiceId,
           isDeposit,
         });

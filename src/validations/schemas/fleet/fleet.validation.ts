@@ -127,11 +127,11 @@ export const updateFleetValidationSchema = z
       })
       .trim()
       .min(1, "Fleet name is required")
-      .max(50, "Fleet name cannot exceed 50 characters")
-      .regex(
-        /^[A-Za-z\s-']+$/,
-        "Fleet name can only contain letters, spaces, hyphens, and apostrophes",
-      ),
+      .max(50, "Fleet name cannot exceed 50 characters"),
+    // .regex(
+    //   /^[A-Za-z\s-']+$/,
+    //   "Fleet name can only contain letters, spaces, hyphens, and apostrophes",
+    // ),
 
     contactName: z
       .string({

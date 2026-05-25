@@ -5,6 +5,7 @@ import { addAppointment } from "@/actions/appointment/addAppointment";
 import { customAlphabet } from "nanoid";
 import moment from "moment-timezone";
 import { sendBookingConfirmation } from "@/actions/communication/client/sendBookingConfirmation";
+import { revalidatePath } from "next/cache";
 
 const roundMoney = (value: number) => Number(value.toFixed(2));
 
@@ -45,7 +46,7 @@ export async function confirmShopBooking(
   const bookingId = Number(shopBookingId);
   const incomingCash = roundMoney(Math.max(0, Number(cashPaid)));
 
-  return await db.$transaction(async (tx: Tx) => {
+  const result = await db.$transaction(async (tx: Tx) => {
     // 1. Load the booking with all relations
     const booking = await tx.shopBooking.findUnique({
       where: { id: bookingId },
@@ -449,4 +450,14 @@ export async function confirmShopBooking(
       remainingGiftCardBalance,
     };
   });
+
+  // Revalidate after the transaction so it runs in the outer request context,
+  // not inside the Prisma transaction boundary where Next.js async storage is lost.
+  try {
+    revalidatePath("/estimate");
+  } catch {
+    // no-op: best-effort when called from webhook context
+  }
+
+  return result;
 }

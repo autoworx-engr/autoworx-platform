@@ -16,7 +16,7 @@ import { Spin } from "antd";
 import CarLoading from "@/components/common/CarLoading";
 
 const WorkOrders = () => {
-  const { data: invoices } = useServerGet(getWorkOrders);
+  const { data: invoices, setData: setInvoices } = useServerGet(getWorkOrders);
   const { search } = useEstimateFilterStore();
   const { dateRange, status, service, resetStatus } = usePipelineFilterStore();
   const [currentUser, setCurrentUser] = useState<SessionUserType>();
@@ -186,9 +186,9 @@ const WorkOrders = () => {
                       .map((item) => item.service?.name)
                       .join(", ");
                     // TODO: this hasn't been tested properly. Need to test it.
-                    const timeCreated = moment(invoice.workOrderCreatedAt).format(
-                      "MM/DD/YYYY",
-                    );
+                    const timeCreated = moment(
+                      invoice.workOrderCreatedAt,
+                    ).format("MM/DD/YYYY");
                     const dueDate = invoice.dueDate
                       ? moment(invoice.dueDate).format("MM/DD/YYYY")
                       : null;
@@ -207,9 +207,14 @@ const WorkOrders = () => {
                             buttonChild={
                               <button className="text-[#6571FF]">{id}</button>
                             }
+                            onWorkOrderCreated={async () =>
+                              setInvoices(await getWorkOrders())
+                            }
                           />
                         </td>
-                        <td className="border-b px-4 py-2 text-left">{client}</td>
+                        <td className="border-b px-4 py-2 text-left">
+                          {client}
+                        </td>
                         <td className="border-b px-4 py-2 text-left">
                           {vehicle}
                         </td>

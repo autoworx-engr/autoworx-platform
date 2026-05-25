@@ -251,7 +251,7 @@ export async function newPayment({
         sendPaymentReceivedNotification({
           companyId,
           clientName:
-            invoice?.client?.firstName + " " + invoice?.client?.lastName,
+            `${invoice?.client?.firstName} ${invoice?.client?.lastName ?? ""}`.trim(),
           amount: amount,
           invoiceId: invoice.id,
         });
