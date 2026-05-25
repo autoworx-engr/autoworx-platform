@@ -24,17 +24,22 @@ export default function Message({
   onDownload,
   setIsImageLoaded,
 }: TProps) {
-  const [senderInfo, setSenderInfo] = useState<User | null>(null);
+  const [senderInfo, setSenderInfo] = useState<Partial<User> | null>(
+    (message.senderInfo as Partial<User> | null | undefined) ?? null,
+  );
   useEffect(() => {
-    // Only need to resolve the sender's name/avatar when this row will
-    // actually render them (first of a same-sender run in a group chat).
+    if (message.senderInfo) {
+      setSenderInfo(message.senderInfo as Partial<User>);
+      return;
+    }
+
     if (!message.userId || groupedWithPrev || !fromGroup) return;
     getUserById(message?.userId).then((res) => {
       if (res.type === "success") {
         setSenderInfo(res.data);
       }
     });
-  }, [message.userId, groupedWithPrev, fromGroup]);
+  }, [message.userId, message.senderInfo, groupedWithPrev, fromGroup]);
 
   const allImageUrls = message.attachment
     ?.filter((att) => att.fileType.includes("image"))
@@ -44,8 +49,6 @@ export default function Message({
   const senderName = senderInfo
     ? `${senderInfo.firstName ?? ""} ${senderInfo.lastName ?? ""}`.trim()
     : "";
-  // Deterministic color per sender so the same person is always the same hue
-  // (WhatsApp / Slack pattern). Works on both light + dark bubble backgrounds.
 
   const showNameInBubble =
     showAvatarColumn && !groupedWithPrev && Boolean(senderName);

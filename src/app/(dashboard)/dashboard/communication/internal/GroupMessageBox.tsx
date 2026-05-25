@@ -17,6 +17,7 @@ import { usePrependToInfiniteCache } from "./_hooks/useMessageCacheMutation";
 import { internalKeys } from "./_utils/queryKey";
 import { Spinner } from "@/components/ui/spinner";
 import { markGroupAsRead } from "@/actions/communication/internal/markGroupAsRead";
+import type { GroupMessageSender } from "@/actions/communication/internal/query";
 
 type TProps = {
   setGroupsList: React.Dispatch<
@@ -75,6 +76,7 @@ export default function GroupMessageBox({
         | "CLIENT",
       attachment: m.attachment,
       createdAt: m.createdAt,
+      senderInfo: (m as { sender?: unknown }).sender ?? null,
     }));
   }, [data, sessionUserId]);
 
@@ -108,15 +110,6 @@ export default function GroupMessageBox({
     [prependToCache, group.id, sessionUserId],
   );
 
-  // Pusher real-time append. Own messages already arrive via the optimistic
-  // cache mutation in setMessages, so we filter those out.
-  //
-  // Membership: this box only mounts when the viewer is in the group; if they
-  // get removed, `useGroupLifecyclePusher` handles the `delete-group` event
-  // and removes the group from `setGroupsList`, closing this box. We used to
-  // re-check membership per incoming Pusher message via `getUserInGroup`
-  // (a round-trip DB query per tick) — dropped in favor of the lifecycle
-  // event path.
   useEffect(() => {
     const channel = pusher.subscribe(`group-${group.id}`);
     const handler = ({
@@ -162,10 +155,7 @@ export default function GroupMessageBox({
     isFetchingNextPage,
     isReady,
   });
-  // useLayoutEffect so the scroll correction runs synchronously before paint —
-  // no visible position jump when older messages are prepended. Because
-  // adjustAfterPagesChange now has a stable identity (ref-based, not state),
-  // this effect fires ONLY when pages.length actually changes.
+
   useLayoutEffect(() => {
     adjustAfterPagesChange(data?.pages?.length ?? 0);
   }, [data?.pages?.length, adjustAfterPagesChange]);

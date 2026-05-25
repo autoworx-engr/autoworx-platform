@@ -38,6 +38,12 @@ export interface Message {
   attachment?: Attachment[] | null;
   requestEstimate?: RequestEstimate | null;
   createdAt: Date;
+  senderInfo?: {
+    id: number;
+    firstName: string | null;
+    lastName: string | null;
+    image: string | null;
+  } | null;
 }
 
 export default function UsersArea({
