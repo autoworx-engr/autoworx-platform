@@ -84,6 +84,7 @@ export async function PUT(
     const updatedLead = await db.lead.update({
       where: { id: leadId },
       data: { columnId: parseInt(finalColumnId), columnChangedAt: new Date() },
+      include: { column: true },
     });
 
     return NextResponse.json({ success: true, data: updatedLead });

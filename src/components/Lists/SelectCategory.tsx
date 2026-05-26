@@ -114,7 +114,7 @@ export default function SelectCategory({
           category
             ? category.name || `Category ${category.id}`
             : required
-              ? "Select Category*"
+              ? "Select Category"
               : "Category"
         }
         newButton={
@@ -170,7 +170,7 @@ export default function SelectCategory({
             <p className="text-sm font-medium text-slate-700 group-hover:text-[#6571FF] transition-colors">
               {category.name}
             </p>
-            
+
             <div onClick={(e) => e.stopPropagation()}>
               <Popconfirm
                 title="Delete Category"
