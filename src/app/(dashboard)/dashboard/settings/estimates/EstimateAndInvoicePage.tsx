@@ -28,6 +28,8 @@ export default function EstimateAndInvoicePage() {
   const [tax, setTax] = useState<string>("0");
   const [serviceFee, setServiceFee] = useState<string>("0");
   const [disabled, setDisabled] = useState(false);
+  const [isSavingFinancials, setIsSavingFinancials] = useState(false);
+  const [isSavingDocuments, setIsSavingDocuments] = useState(false);
 
   const currentTermsLength = termPolicy?.terms?.length ?? 0;
   const currentPolicyLength = termPolicy?.policy?.length ?? 0;
@@ -40,33 +42,38 @@ export default function EstimateAndInvoicePage() {
 
   useEffect(() => {
     async function getCurrencies() {
-      const response = await fetch(
-        "https://restcountries.com/v3.1/all?fields=currencies",
-      );
-      const data = await response.json();
-      const currenciesMap: Record<string, any> = {};
+      try {
+        const response = await fetch(
+          "https://restcountries.com/v3.1/all?fields=currencies",
+        );
+        if (!response.ok) throw new Error("Failed to fetch currencies");
+        const data = await response.json();
 
-      data?.forEach((item: any) => {
-        if (item.currencies) {
-          Object.entries(item.currencies).forEach(
-            ([code, curr]: [string, any]) => {
-              currenciesMap[code] = {
-                name: curr.name,
-                symbol: curr.symbol || "",
-              };
-            },
-          );
-        }
-      });
+        const currenciesMap: Record<string, any> = {};
 
-      const currencyOptions = Object.entries(currenciesMap).map(
-        ([code, curr]) => ({
-          value: code,
-          label: `${curr.symbol ? curr.symbol + " " : ""}${code}`,
-        }),
-      );
+        data?.forEach((item: any) => {
+          if (item.currencies) {
+            Object.entries(item.currencies).forEach(
+              ([code, curr]: [string, any]) => {
+                currenciesMap[code] = {
+                  name: curr.name,
+                  symbol: curr.symbol || "",
+                };
+              },
+            );
+          }
+        });
+        const currencyOptions = Object.entries(currenciesMap).map(
+          ([code, curr]) => ({
+            value: code,
+            label: `${curr.symbol ? curr.symbol + " " : ""}${code}`,
+          }),
+        );
 
-      setCurrencies(currencyOptions);
+        setCurrencies(currencyOptions);
+      } catch {
+        errorToast("Failed to load currencies");
+      }
     }
 
     const fetchTermsPolicy = async () => {
@@ -96,31 +103,36 @@ export default function EstimateAndInvoicePage() {
   }, []);
 
   const handleUpdateTermsPolicy = async () => {
+    setIsSavingDocuments(true);
     try {
       const res = await updateTermsPolicy({
         terms: termPolicy.terms?.trim() || "",
         policy: termPolicy.policy?.trim() || "",
       });
       if (res?.success) successToast("Terms & Policy updated successfully");
-    } catch (_error) {
+    } catch {
       errorToast("Failed to update terms and policy");
+    } finally {
+      setIsSavingDocuments(false);
     }
   };
 
   const handleUpdateCurrency = async () => {
+    setIsSavingFinancials(true);
     try {
       const validTax = tax && !isNaN(Number(tax)) ? tax : "0";
       const validServiceFee =
         serviceFee && !isNaN(Number(serviceFee)) ? serviceFee : "0";
-
       await updateTaxCurrency({
         currency,
         tax: validTax,
         serviceFee: validServiceFee,
       });
       successToast("Financial settings updated successfully");
-    } catch (_error) {
+    } catch {
       errorToast("Failed to update financial settings");
+    } finally {
+      setIsSavingFinancials(false);
     }
   };
 
@@ -238,10 +250,13 @@ export default function EstimateAndInvoicePage() {
 
                 <div className="flex justify-end pt-4">
                   <button
+                    disabled={isSavingFinancials}
                     onClick={handleUpdateCurrency}
-                    className="group relative overflow-hidden rounded-xl bg-[#6571FF] px-6 py-2 font-medium text-white transition-all"
+                    className="group relative overflow-hidden rounded-xl bg-[#6571FF] px-6 py-2 font-medium text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <span className="relative z-10">Save Financials</span>
+                    <span className="relative z-10">
+                      {isSavingFinancials ? "Saving..." : "Save Financials"}
+                    </span>
                     <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                   </button>
                 </div>
@@ -337,16 +352,18 @@ export default function EstimateAndInvoicePage() {
 
           <div className="flex justify-end mt-8">
             <button
-              disabled={disabled || isLoading}
+              disabled={disabled || isLoading || isSavingDocuments}
               onClick={handleUpdateTermsPolicy}
               className={cn(
-                "group relative overflow-hidden rounded-xl  px-6 py-2 font-medium text-white transition-all",
-                disabled || isLoading
+                "group relative overflow-hidden rounded-xl px-6 py-2 font-medium text-white transition-all",
+                disabled || isLoading || isSavingDocuments
                   ? "bg-slate-200 cursor-not-allowed opacity-50"
                   : "bg-[#6571FF]",
               )}
             >
-              <span className="relative z-10">Update Documents</span>
+              <span className="relative z-10">
+                {isSavingDocuments ? "Saving..." : "Update Documents"}
+              </span>
               <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
             </button>
           </div>

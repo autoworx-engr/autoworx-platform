@@ -11,6 +11,7 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Solution",
+  description: "Discover how Autoworx solves your shop management challenges.",
 };
 
 export default function SolutionPage() {

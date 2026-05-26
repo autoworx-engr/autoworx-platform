@@ -3,6 +3,7 @@ import { getEmployees } from "@/actions/employee/get";
 import { sendNotification } from "@/actions/notification/sendNotification";
 import { User } from "@prisma/client";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 export default function Page() {
   const [employees, setEmployees] = useState<User[] | null>(null);
@@ -12,11 +13,19 @@ export default function Page() {
   }, []);
 
   const handleSubmit = async (data: FormData) => {
-    const title = data.get("title") as string;
-    const description = data.get("description") as string;
+    const title = (data.get("title") as string).trim();
+    const description = (data.get("description") as string).trim();
     const userId = Number(data.get("userId"));
 
-    await sendNotification({ userId, title, description });
+    if (!title || !description) return;
+    if (!userId || isNaN(userId) || userId <= 0) return;
+
+    try {
+      await sendNotification({ userId, title, description });
+      toast.success("Notification sent successfully.");
+    } catch (error) {
+      toast.error("Failed to send notification. Please try again.");
+    }
   };
 
   return (
@@ -41,13 +50,18 @@ export default function Page() {
         <select
           name="userId"
           required
+          disabled={!employees}
           className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          {employees?.map((user) => (
-            <option key={user.id} value={user.id}>
-              {user.firstName} {user.lastName}
-            </option>
-          ))}
+          {!employees ? (
+            <option>Loading...</option>
+          ) : (
+            employees.map((user) => (
+              <option key={user.id} value={user.id}>
+                {user.firstName} {user.lastName}
+              </option>
+            ))
+          )}
         </select>
         <button
           type="submit"

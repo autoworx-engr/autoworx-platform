@@ -3,6 +3,7 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Booking URL",
+  description: "Book an appointment quickly and easily online.",
 };
 
 export default async function Page() {

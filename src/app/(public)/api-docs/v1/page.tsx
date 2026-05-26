@@ -7,6 +7,7 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "API Documentation",
+  description: "Explore and test the Autoworx API endpoints and integrations.",
 };
 
 export default async function ApiDocs() {

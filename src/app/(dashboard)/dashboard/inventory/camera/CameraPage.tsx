@@ -11,8 +11,20 @@ export default function Page() {
   const handleDecode = (detectedCodes: { rawValue?: string }[]) => {
     const text = detectedCodes[0]?.rawValue;
     if (!text) return;
-    setResult(text);
-    router.push(text);
+
+    try {
+      const url = new URL(text);
+
+      if (url.origin !== window.location.origin) {
+        console.error("Blocked redirect to external URL:", text);
+        return;
+      }
+
+      setResult(text);
+      router.push(url.pathname + url.search);
+    } catch {
+      console.error("Invalid QR code URL:", text);
+    }
   };
 
   return (
@@ -20,7 +32,7 @@ export default function Page() {
       <h1 className="text-2xl font-bold">Scan QR Code</h1>
 
       {result ? (
-        <h2>Redirecting to {result}</h2>
+        <h2>Redirecting to {new URL(result).pathname}</h2>
       ) : (
         <div className="h-[300px] w-[300px] lg:h-[400px] lg:w-[400px]">
           <Scanner

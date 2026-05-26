@@ -17,6 +17,18 @@ type TProps = {
   }>;
 };
 
+const safeDecode = (value?: string): string | undefined => {
+  if (!value) return undefined;
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return undefined;
+  }
+};
+
+const isValidDate = (date: string) =>
+  moment(date, "MM-DD-YYYY", true).isValid();
+
 export default function Page(props: TProps) {
   const searchParams = use(props.searchParams);
   const timezone = useCompanyTimezone();
@@ -32,16 +44,22 @@ export default function Page(props: TProps) {
   let startDate: string | undefined;
   let endDate: string | undefined;
 
-  if (searchParams.startDate && searchParams.endDate) {
-    const formattedStartDate = moment(
-      decodeURIComponent(searchParams.startDate),
-      "MM-DD-YYYY",
-    ).format("YYYY-MM-DD");
+  const decodedStartDate = safeDecode(searchParams.startDate);
+  const decodedEndDate = safeDecode(searchParams.endDate);
 
-    const formattedEndDate = moment(
-      decodeURIComponent(searchParams.endDate),
-      "MM-DD-YYYY",
-    ).format("YYYY-MM-DD");
+  if (
+    decodedStartDate &&
+    decodedEndDate &&
+    isValidDate(decodedStartDate) &&
+    isValidDate(decodedEndDate)
+  ) {
+    const formattedStartDate = moment(decodedStartDate, "MM-DD-YYYY").format(
+      "YYYY-MM-DD",
+    );
+
+    const formattedEndDate = moment(decodedEndDate, "MM-DD-YYYY").format(
+      "YYYY-MM-DD",
+    );
 
     startDate = `${formattedStartDate}T00:00:00.000Z`;
     endDate = `${formattedEndDate}T23:59:59.999Z`;
@@ -95,8 +113,8 @@ export default function Page(props: TProps) {
       <h1 className="mx-2 my-4 text-2xl font-bold md:mx-0">Sales Reporting</h1>
       <div className="flex flex-col gap-4 md:flex-1 md:flex-row md:items-center md:space-x-4 mb-4 px-2">
         <FilterDateRange
-          startDate={decodeURIComponent(searchParams?.startDate as string)}
-          endDate={decodeURIComponent(searchParams?.endDate as string)}
+          startDate={decodedStartDate}
+          endDate={decodedEndDate}
           activeModal={activeModal}
           closeModal={closeModal}
           modalName="dateRange"
