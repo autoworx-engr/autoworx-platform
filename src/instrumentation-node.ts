@@ -45,6 +45,8 @@ const { getBoss } = await import("@/lib/pgboss");
 const { db } = await import("@/lib/db");
 const { processStripePayment } =
   await import("@/workers/stripe-payment.worker");
+const { sendPaymentFailedNotification } =
+  await import("@/lib/notification/payment-notify");
 const { processAuthorizeNetPayment } =
   await import("@/workers/authorize-net-payment.worker");
 const { registerReconciliationWorker } =
@@ -75,10 +77,23 @@ await boss.work(QUEUE_STRIPE, async (jobs: { data: { eventId: string } }[]) => {
     try {
       await processStripePayment(job.data.eventId);
     } catch (err: any) {
+      const errMsg = err?.message ?? "Unknown error";
+      const existing = await db.webhookEvent.findUnique({
+        where: { eventId: job.data.eventId },
+        select: { lastError: true, companyId: true, gateway: true },
+      });
       await db.webhookEvent.update({
         where: { eventId: job.data.eventId },
-        data: { lastError: err?.message ?? "Unknown error" },
+        data: { lastError: errMsg },
       });
+      if (!existing?.lastError && existing?.companyId) {
+        sendPaymentFailedNotification({
+          companyId: existing.companyId,
+          gateway: existing.gateway ?? "Stripe",
+          eventId: job.data.eventId,
+          error: errMsg,
+        }).catch((e) => console.error("[payment-failed-notify]", e));
+      }
       throw err;
     }
   }
@@ -91,10 +106,23 @@ await boss.work(
       try {
         await processAuthorizeNetPayment(job.data.eventId);
       } catch (err: any) {
+        const errMsg = err?.message ?? "Unknown error";
+        const existing = await db.webhookEvent.findUnique({
+          where: { eventId: job.data.eventId },
+          select: { lastError: true, companyId: true, gateway: true },
+        });
         await db.webhookEvent.update({
           where: { eventId: job.data.eventId },
-          data: { lastError: err?.message ?? "Unknown error" },
+          data: { lastError: errMsg },
         });
+        if (!existing?.lastError && existing?.companyId) {
+          sendPaymentFailedNotification({
+            companyId: existing.companyId,
+            gateway: existing.gateway ?? "Authorize.Net",
+            eventId: job.data.eventId,
+            error: errMsg,
+          }).catch((e) => console.error("[payment-failed-notify]", e));
+        }
         throw err;
       }
     }
