@@ -125,10 +125,12 @@ export async function POST(req: NextRequest) {
   // Fetch per-company signature key and validate
   const companyId = await extractCompanyId(body.payload);
   if (!companyId) {
-    return NextResponse.json(
-      { error: "Cannot identify company" },
-      { status: 400 },
+    console.error(
+      "[authorize-net/webhook] Cannot identify company for transactionId:",
+      transactionId,
+      JSON.stringify(body.payload),
     );
+    return NextResponse.json({ message: "Acknowledged" }, { status: 200 });
   }
 
   const company = await db.company.findUnique({
@@ -155,22 +157,31 @@ export async function POST(req: NextRequest) {
   }
 
   // Persist raw event before enqueuing — never lose the payload
-  await db.webhookEvent.upsert({
-    where: { eventId: transactionId },
-    create: {
-      eventId: transactionId,
-      gateway: "AUTHORIZE_NET",
-      companyId,
-      payload: body,
-      status: "PENDING",
-    },
-    update: {
-      attempts: { increment: 1 },
-    },
-  });
+  try {
+    await db.webhookEvent.upsert({
+      where: { eventId: transactionId },
+      create: {
+        eventId: transactionId,
+        gateway: "AUTHORIZE_NET",
+        companyId,
+        payload: body,
+        status: "PENDING",
+      },
+      update: {
+        attempts: { increment: 1 },
+      },
+    });
 
-  const boss = getBoss();
-  await boss.send(QUEUE_AUTHORIZE_NET, { eventId: transactionId });
+    const boss = getBoss();
+    await boss.send(QUEUE_AUTHORIZE_NET, { eventId: transactionId });
+  } catch (err) {
+    console.error(
+      "[authorize-net/webhook] Failed to persist/enqueue transactionId:",
+      transactionId,
+      err,
+    );
+  }
 
+  // Always return 200 — non-200 causes Authorize.net to retry and eventually deactivate the webhook
   return NextResponse.json({ message: "Webhook queued" }, { status: 200 });
 }

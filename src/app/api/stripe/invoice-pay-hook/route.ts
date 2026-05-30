@@ -57,22 +57,31 @@ export async function POST(req: NextRequest) {
   } catch {}
 
   // Persist raw event before enqueuing — never lose the payload
-  await db.webhookEvent.upsert({
-    where: { eventId: event.id },
-    create: {
-      eventId: event.id,
-      gateway: "STRIPE",
-      companyId,
-      payload: JSON.parse(rawBody),
-      status: "PENDING",
-    },
-    update: {
-      attempts: { increment: 1 },
-    },
-  });
+  try {
+    await db.webhookEvent.upsert({
+      where: { eventId: event.id },
+      create: {
+        eventId: event.id,
+        gateway: "STRIPE",
+        companyId,
+        payload: JSON.parse(rawBody),
+        status: "PENDING",
+      },
+      update: {
+        attempts: { increment: 1 },
+      },
+    });
 
-  const boss = getBoss();
-  await boss.send(QUEUE_STRIPE, { eventId: event.id });
+    const boss = getBoss();
+    await boss.send(QUEUE_STRIPE, { eventId: event.id });
+  } catch (err) {
+    console.error(
+      "[stripe/webhook] Failed to persist/enqueue eventId:",
+      event.id,
+      err,
+    );
+  }
 
+  // Always return 200 — non-200 causes Stripe to retry and eventually disable the webhook endpoint
   return NextResponse.json({ message: "Webhook queued" }, { status: 200 });
 }
