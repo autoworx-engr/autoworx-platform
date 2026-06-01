@@ -5,6 +5,14 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Fix — create_estimate post-confirm regression
+
+**Date:** 2026-06-01
+
+The copilot re-asked "What materials would you like to add?" after the user had already answered "no" and confirmed the restate — even though the restate showed "Materials: None". Three compounding gaps: (1) the global write workflow's step 5 only prohibited re-running lookup tools, not re-asking the user; (2) the materials gather instruction was a standing imperative with no closure ("answer is final") clause; (3) the toggle section described "Tax: N/A" on labor-only estimates instead of omitting the tax line entirely. Fixed all three in the system prompt — no tool code changed.
+
+---
+
 ## Phase 3c.4 — Shop-supplies and tax toggles on create_estimate
 
 **Date:** 2026-05-21
