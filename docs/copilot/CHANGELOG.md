@@ -5,6 +5,14 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Fix — create_client returned IDs lost between turns
+
+**Date:** 2026-06-01
+
+create_client passed through the raw API body, so the new clientId sat at data.data.clientId — two levels deep and inconsistent with every other write tool. When the conversation chained into create_vehicle_for_client, the model lost track of the id, re-called create_client (which failed on duplicate phone), then re-called get_client_by_name to find a client it had just created. Fixed by (1) refactoring create_client's return to a flat, consistent shape (data.clientId at the top level, with a wasCreated flag), and (2) adding a general "created IDs are authoritative" rule to the system prompt covering every create→follow-up chain.
+
+---
+
 ## Fix — create_estimate post-confirm regression
 
 **Date:** 2026-06-01

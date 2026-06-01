@@ -35,7 +35,27 @@ async function execute(input: unknown, ctx: ToolContext): Promise<ToolResult> {
     return { ok: false, error: result.error };
   }
 
-  return { ok: true, data: result.data };
+  const payload = result.data as {
+    data: {
+      clientId: number;
+      firstName: string;
+      lastName: string | null;
+      mobile: string | null;
+      email: string | null;
+    };
+  };
+  const { clientId, firstName, lastName } = payload.data;
+
+  return {
+    ok: true,
+    data: {
+      clientId,
+      firstName,
+      lastName: lastName ?? undefined,
+      wasCreated: true,
+      message: `Client created (id ${clientId}). Use this clientId for any immediate follow-up actions like create_vehicle_for_client — do not re-resolve.`,
+    },
+  };
 }
 
 registerTool({
