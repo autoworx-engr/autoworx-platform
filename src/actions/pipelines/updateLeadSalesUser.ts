@@ -4,12 +4,10 @@ import { db } from "@/lib/db";
 import { sendLeadAssignNotification } from "@/lib/notification/pipeline-notify";
 import { revalidatePath } from "next/cache";
 export async function updateLeadSalesUser(leadId: number, salesUserId: number) {
-  const companyId = await getCompanyId();
   try {
     const updatedLead = await db.lead.update({
       where: {
         id: leadId,
-        companyId,
       },
       data: {
         assignedSalesUserId: salesUserId,
@@ -17,7 +15,7 @@ export async function updateLeadSalesUser(leadId: number, salesUserId: number) {
       },
     });
     await sendLeadAssignNotification({
-      companyId,
+      companyId: updatedLead.companyId,
       leadClientName: updatedLead.clientName ?? "",
       assignedEmployeeId: salesUserId,
     });
@@ -28,12 +26,10 @@ export async function updateLeadSalesUser(leadId: number, salesUserId: number) {
   }
 }
 export async function removeLeadFromPipeline(leadId: number) {
-  const companyId = await getCompanyId();
   try {
     const updatedLead = await db.lead.update({
       where: {
         id: leadId,
-        companyId,
       },
       data: {
         columnId: null,

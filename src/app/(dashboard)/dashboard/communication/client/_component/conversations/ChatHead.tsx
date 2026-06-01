@@ -45,6 +45,10 @@ export default function ChatHead({
 }: TProps) {
   const [selected, setSelected] = useState<string>(selectedConversation);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
+
+  useEffect(() => {
+    setSelected(selectedConversation);
+  }, [selectedConversation]);
   // const [client, setClient] = useState<TClient | undefined>(initialClient);
   const user = useGetCurrentUser();
   const pathname = usePathname();
