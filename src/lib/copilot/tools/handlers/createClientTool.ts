@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { db } from "@/lib/db";
+import { phoneLookupWhereClause } from "@/utils/normalizePhone";
 import { callInternalApi } from "@/lib/copilot/internalApiClient";
 import {
   registerTool,
@@ -32,6 +34,32 @@ async function execute(input: unknown, ctx: ToolContext): Promise<ToolResult> {
   });
 
   if (!result.ok) {
+    const isDuplicate =
+      result.status === 409 || /already exists/i.test(result.error ?? "");
+
+    if (isDuplicate && data.mobile) {
+      const phoneWhere = phoneLookupWhereClause(data.mobile);
+      const existing = phoneWhere
+        ? await db.client.findFirst({
+            where: { companyId: ctx.companyId, OR: phoneWhere },
+            select: { id: true, firstName: true, lastName: true },
+          })
+        : null;
+
+      if (existing) {
+        return {
+          ok: true,
+          data: {
+            clientId: existing.id,
+            firstName: existing.firstName,
+            lastName: existing.lastName ?? undefined,
+            wasCreated: false,
+            message: `Client already exists (id ${existing.id}). Use this clientId for follow-up actions — do not call create_client again.`,
+          },
+        };
+      }
+    }
+
     return { ok: false, error: result.error };
   }
 
@@ -61,7 +89,7 @@ async function execute(input: unknown, ctx: ToolContext): Promise<ToolResult> {
 registerTool({
   name: "create_client",
   description:
-    "Create a brand-new client (customer) record. ONLY use this for genuinely new people who are not already in the system. Before calling this, you MUST call get_client_by_name to check the person does not already exist — if they do, do not create a duplicate. Do NOT use this to create a lead (use create_lead) and do NOT use it for fleet clients (fleet setup must be done in the main AutoWorx app).",
+    "Create a brand-new client (customer) record. Returns the new clientId on success. IMPORTANT: If you have already called create_client in this conversation and it succeeded, do NOT call it again for the same person — use the clientId from the previous result directly. Re-calling with the same phone number will fail. Before calling the first time, ALWAYS call get_client_by_name to confirm the person is not already in the system. Do NOT use this to create a lead (use create_lead) and do NOT use it for fleet clients (fleet setup must be done in the main AutoWorx app).",
   permission: "client.create",
   inputSchema,
   anthropicInputSchema: {

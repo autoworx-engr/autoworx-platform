@@ -5,6 +5,14 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Fix — create_client duplicate-phone recovery (defense in depth)
+
+**Date:** 2026-06-01
+
+The model re-calls create_client after a successful create despite prompt rules (the "created IDs are authoritative" rule reduces but doesn't eliminate re-calls). Previously, the 409 duplicate-phone rejection was returned as an error, causing the model to call get_client_by_name to recover — confusing the user with "client already exists" for a client the copilot just created. Now create_client's execute() handles the 409 as a soft success: it looks up the existing client by phone (scoped by companyId) and returns { clientId, wasCreated: false } — so even when the model re-calls, it gets a clean result and proceeds without additional tool calls or confusing messages. Also updated tool description with a "do not re-call" warning at the tool-selection decision point.
+
+---
+
 ## Fix — create_client returned IDs lost between turns
 
 **Date:** 2026-06-01
