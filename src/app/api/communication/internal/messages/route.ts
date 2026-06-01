@@ -129,6 +129,8 @@ export async function GET(request: NextRequest) {
       where.OR = [{ from: toId }, { to: toId }];
     }
 
+    const sortField = sortBy === "updatedAt" ? "updatedAt" : "createdAt";
+
     const messages = await db.message.findMany({
       where,
       include: {
@@ -136,7 +138,7 @@ export async function GET(request: NextRequest) {
         requestEstimate: true,
       },
       orderBy: {
-        [sortBy ?? "createdAt"]: sortOrder === "asc" ? "asc" : "desc",
+        [sortField]: sortOrder === "asc" ? "asc" : "desc",
       },
       skip: (pageNum - 1) * limitNum,
       take: limitNum,
