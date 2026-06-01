@@ -162,7 +162,7 @@ export default function List({
   return (
     <div
       className={cn(
-        "app-shadow flex h-[calc(100vh-7rem)] w-full flex-col rounded-lg bg-background p-3 sm:w-80",
+        "app-shadow flex h-[calc(100vh-7rem)] w-full flex-col rounded-lg bg-background p-3 sm:w-80 sm:shrink-0",
         className,
       )}
     >
