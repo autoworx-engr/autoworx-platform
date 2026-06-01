@@ -29,10 +29,13 @@ export default function TaskListBox() {
   };
 
   const handleTaskDeleted = (taskId: number) => {
-    // Immediately update the UI by invalidating queries
-    queryClient.invalidateQueries({
-      queryKey: queryKeys.dashboardTask,
-    });
+    // Remove the task from the cache in-place instead of refetching, so the
+    // list doesn't rebuild and scroll back to the top.
+    queryClient.setQueryData(
+      queryKeys.dashboardTask,
+      (old: { id: number }[] | undefined) =>
+        old ? old.filter((t) => t.id !== taskId) : old,
+    );
   };
 
   let content = null;
