@@ -208,7 +208,7 @@ registerTool({
       vehicleId: {
         type: "number",
         description:
-          "Optional vehicle ID. Use get_vehicle_by_client if you need to look it up.",
+          "Optional vehicle ID. Use the vehicle id returned by get_client_by_name — do NOT call get_vehicle_by_client, which risks drifting to a stale clientId.",
       },
       applyShopSupplies: {
         type: "boolean",

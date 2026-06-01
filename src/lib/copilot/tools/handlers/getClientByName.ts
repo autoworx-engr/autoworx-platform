@@ -44,7 +44,7 @@ async function execute(input: unknown, ctx: ToolContext): Promise<ToolResult> {
       email: true,
       mobile: true,
       Vehicle: {
-        select: { year: true, make: true, model: true },
+        select: { id: true, year: true, make: true, model: true },
         take: 5,
       },
       Lead: {
@@ -78,9 +78,10 @@ async function execute(input: unknown, ctx: ToolContext): Promise<ToolResult> {
       matchCount: clients.length,
       clients: clients.map((c) => {
         const name = [c.firstName, c.lastName].filter(Boolean).join(" ");
-        const vehicles = c.Vehicle.map((v) =>
-          [v.year, v.make, v.model].filter(Boolean).join(" "),
-        ).filter(Boolean);
+        const vehicles = c.Vehicle.map((v) => ({
+          id: v.id,
+          description: [v.year, v.make, v.model].filter(Boolean).join(" "),
+        }));
 
         return {
           id: c.id,
@@ -109,7 +110,7 @@ async function execute(input: unknown, ctx: ToolContext): Promise<ToolResult> {
 registerTool({
   name: "get_client_by_name",
   description:
-    "Search for clients by name (fuzzy, handles full names like 'Jane Smith'). Returns all matches (up to 10) with disambiguating detail: matchCount, each client's id, name, phoneLast4, email, vehicles, and associated lead. Check matchCount — if 1, use it; if >1, ask the user which; if 0, offer to create a new client.",
+    "Search for clients by name (fuzzy, handles full names like 'Jane Smith'). Returns all matches (up to 10) with disambiguating detail: matchCount, each client's id, name, phoneLast4, email, vehicles, and associated lead. Each vehicle includes its id and description (year make model) — use the vehicle id directly when creating estimates. Do NOT call get_vehicle_by_client separately after this tool; doing so risks clientId drift and cross-client data contamination. Check matchCount — if 1, use it; if >1, ask the user which; if 0, offer to create a new client.",
   permission: "client.read",
   inputSchema,
   anthropicInputSchema: {

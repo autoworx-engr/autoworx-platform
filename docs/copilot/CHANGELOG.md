@@ -5,6 +5,24 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Fix — vehicle hallucination from cross-client ID drift
+
+**Date:** 2026-06-01
+
+The copilot told the user that Marcus Rivera's vehicle was a "2026 Tesla Model 3" when it was actually a 2017 BMW M3. Root cause: `get_client_by_name` returned vehicle names but not IDs, forcing a second `get_vehicle_by_client` call to obtain the vehicle ID for `create_estimate`. During that second call the model drifted to `clientId: 1` (from stale session context) instead of `clientId: 27` (Marcus Rivera). The tool correctly returned client 1's vehicles — which happened to include a 2026 Tesla Model 3 — and the model presented them as Marcus's. When the user corrected the model it apologized and doubled down on the wrong data.
+
+**Fix:**
+
+- `getClientByName.ts`: Vehicle select extended to include `id`. Return shape changed from `vehicles: string[]` (names only) to `vehicles: { id: number, description: string }[]` (e.g. `[{ id: 35, description: "2017 BMW M3" }]`). Tool description updated to tell the model to use vehicle IDs from this result directly — do not call `get_vehicle_by_client` separately.
+- `createEstimateTool.ts`: anthropicInputSchema vehicleId description updated to reference `get_client_by_name` as the source of vehicle IDs and explicitly forbid `get_vehicle_by_client`.
+- `systemPrompt.ts`: Three sections updated — "Finding data before acting", "Chaining tools correctly", and the create_estimate section — to make clear that vehicle IDs come from `get_client_by_name` and that `get_vehicle_by_client` must not be called after it.
+
+**Defense in depth:** `create_estimate`'s existing vehicleId-belongs-to-client validation (from commit e782ca62) would have caught a drifted vehicle ID at the write stage and returned a clear error — but the prompt now prevents the drift from ever producing bad data.
+
+**Files changed:** `getClientByName.ts`, `createEstimateTool.ts`, `systemPrompt.ts`
+
+---
+
 ## Fix — create_client duplicate-phone recovery (defense in depth)
 
 **Date:** 2026-06-01
