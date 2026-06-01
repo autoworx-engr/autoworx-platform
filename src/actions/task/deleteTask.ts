@@ -28,7 +28,6 @@ export async function deleteTask(id: number): Promise<ServerAction> {
       // console.log("🚀 ~ deleteTask ~ error:", error);
     }
 
-    revalidatePath("/task");
     revalidatePath("/communication/client");
 
     return {
