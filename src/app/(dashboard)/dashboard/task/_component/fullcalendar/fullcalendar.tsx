@@ -122,6 +122,13 @@ export default function Calendar({ type }: { type: CalendarType }) {
           e.extendedProps?.type !== "weekend",
       );
     }
+    if (view === "timeGridWeek") {
+      return events.filter(
+        (e) =>
+          e.extendedProps?.type !== "holiday" &&
+          e.extendedProps?.serviceType !== "Holiday",
+      );
+    }
     return events;
   }, [events, view]);
 
