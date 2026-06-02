@@ -5,6 +5,35 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Phase 3c.5 — Inventory-aware materials
+
+**Date:** 2026-06-01
+
+Materials in estimates now search the shop's inventory when the user names an item.
+
+**`getInventoryItemByName.ts` upgraded:**
+
+- Search changed from single `contains` substring to word-by-word AND query — all keywords must appear in the product name, in any order. Mirrors the `getClientByName` pattern. "gloss black" now finds "3M High Gloss Black Vinyl"; "ceramic kit" finds "Ceramic Coating Kit".
+- `price` renamed to `costPrice` in the return shape — unambiguously the shop's acquisition cost, not the customer sell price.
+- `description` added to Prisma select and return for disambiguation between similarly-named items.
+- Tool description updated to explain word-by-word search, clarify costPrice semantics, and note that sell price must always be gathered from the user.
+
+**System prompt updated with full inventory-aware materials flow:**
+
+- When the user names a material without a sell price, or references inventory explicitly, search `get_inventory_item_by_name` before asking for sell price.
+- Present candidates with name, stock quantity, cost, and unit. Always confirm the match even when only one result.
+- After match confirmed: use productId, use costPrice as material's costPrice, ask for sell price (dollar amount or % markup). If markup given, compute sellPrice = costPrice × (1 + markup/100) rounded to 2 decimals.
+- Soft stock warning when quantity requested exceeds stock on hand — warn, never block.
+- Free-text fallback when no inventory match.
+- Free-text pass-through when user provides name + price + quantity directly (no inventory search triggered).
+- Same flow applied to `add_materials_to_estimate` section.
+
+No DB migrations. No new tools. No new routes.
+
+**Files changed:** `getInventoryItemByName.ts`, `systemPrompt.ts`
+
+---
+
 ## System prompt consolidation
 
 **Date:** 2026-06-01

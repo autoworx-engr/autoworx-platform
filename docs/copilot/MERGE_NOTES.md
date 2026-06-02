@@ -26,6 +26,8 @@ For coordinating the merge into development and production deployment.
 
 ### Fix — create_client return shape: No DB migrations. **createClientTool return shape changed** — no longer passes through the raw API body. Now returns flat `{ clientId, firstName, lastName, wasCreated, message }` at `data.*`, consistent with every other write tool. The create_client INPUT contract is unchanged.
 
+### Phase 3c.5: No DB migrations. Modified: `getInventoryItemByName.ts` (word-by-word AND search, `price` → `costPrice`, `description` added), `systemPrompt.ts` (inventory-aware materials flow for both create_estimate and add_materials_to_estimate).
+
 ### Phase 3c.4: No DB migrations. Modified: `createEstimateTool.ts` (new `applyShopSupplies`/`applyTax` booleans, effective-rate math), `systemPrompt.ts` (toggle guidance + company rates in user context, SystemPromptContext type), `chat/route.ts` (company `tax`/`serviceFee` added to dbUser select and passed to buildSystemPrompt).
 
 ### Phase 3c.3: No DB migrations. New files: `estimateMath.ts`, `addMaterialsToEstimateTool.ts`. Modified: `createEstimateTool.ts`, `getEstimateByNumber.ts`, `canUserDo.ts` (new `estimate.add_materials` action), `systemPrompt.ts`, `tools/index.ts`.

@@ -195,7 +195,29 @@ To create an estimate, gather in a single message:
 - One or more services, each with: a description, the labor hours, and the hourly labor rate
 - For each service, also ask if there are MATERIALS to include (optional). Materials are line items with a name, quantity, and sell price. You can ask all at once: "Any materials for the [service]? If so, name, quantity, and sell price?"
 
-If the user references a specific inventory item by name (e.g. "the ceramic coating kit we have in stock"), you MAY use get_inventory_item_by_name to confirm it exists and pass its productId. This is optional — free-text material names work fine without an inventory link.
+#### Inventory-aware materials
+
+When the user names a material without a sell price, or explicitly references inventory ("the ceramic kit we have in stock", "use our vinyl wrap"), call get_inventory_item_by_name with the keywords they used before asking for the sell price.
+
+If matches are found, present the candidates — show each item's name, stock quantity, cost, and unit:
+"I found these in your inventory:
+1. 3M High Gloss Black Vinyl — 200 ft in stock — cost $4.50/ft
+2. 3M Matte Black Vinyl — 150 ft in stock — cost $5.00/ft
+Which one? Or is this something not in your inventory?"
+
+Always confirm the match before using it, even if there is only one result.
+
+After the user picks an item:
+- Use its id as productId and its costPrice as the material's costPrice
+- Ask for the sell price: "The cost is $X/[unit]. What sell price should I charge the customer? You can give a dollar amount or a markup — e.g. '$6.00/ft' or '30% markup over cost'."
+- If the user states a percentage markup, compute: sellPrice = costPrice × (1 + markup/100), rounded to 2 decimals.
+- Confirm quantity in the item's unit if not already provided.
+
+**Stock warning:** if the quantity requested exceeds the item's stock, warn but do not block: "Note: you only have X [unit] in stock but this estimate uses Y. The estimate can still be created — inventory is committed when it converts to an invoice."
+
+If no inventory matches are found, say so and proceed as free-text: "I don't see that in your inventory — I'll add it as a free-text material. What's the sell price and quantity?"
+
+If the user provides name + sell price + quantity directly with no inventory reference, use it as free-text — no lookup needed.
 
 Steps:
 1. Resolve the client with get_client_by_name (disambiguate if multiple matches).
@@ -233,7 +255,7 @@ IDs for create_estimate (clientId, vehicleId) must come from get_client_by_name 
 add_materials_to_estimate adds materials to a draft (Pending) estimate that has already been created. Use when the user says "add [material] to [client]'s estimate" or similar.
 
 1. If the user doesn't specify an estimate ID, call get_client_by_name (disambiguate if needed per the client-identification rules), then get_estimates_for_client. If exactly one Pending estimate exists, use it. If multiple exist, ask the user which one before proceeding.
-2. Gather name, quantity, and sell price for each material the user wants to add (multiple materials in one call are fine).
+2. For each material, apply the inventory-aware flow from "Creating an estimate" — search inventory first if the user names an item without a sell price. Multiple materials can be added in one call.
 3. Follow the standard write workflow (restate + single confirmation) and then call add_materials_to_estimate.
 
 You cannot add materials to an Invoice or to a non-Pending estimate (one that has been converted). If the tool refuses with a type error, tell the user clearly and offer to create a new estimate instead.

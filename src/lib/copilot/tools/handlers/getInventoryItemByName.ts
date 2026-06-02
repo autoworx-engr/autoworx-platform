@@ -16,15 +16,20 @@ type Input = z.infer<typeof inputSchema>;
 async function execute(input: unknown, ctx: ToolContext): Promise<ToolResult> {
   const { searchTerm, type } = input as Input;
 
+  const parts = searchTerm.trim().split(/\s+/).filter(Boolean);
+
   const items = await db.inventoryProduct.findMany({
     where: {
       companyId: ctx.companyId,
-      name: { contains: searchTerm, mode: "insensitive" },
+      AND: parts.map((word) => ({
+        name: { contains: word, mode: "insensitive" as const },
+      })),
       ...(type ? { type } : {}),
     },
     select: {
       id: true,
       name: true,
+      description: true,
       type: true,
       quantity: true,
       price: true,
@@ -47,9 +52,10 @@ async function execute(input: unknown, ctx: ToolContext): Promise<ToolResult> {
     data: items.map((item) => ({
       id: item.id,
       name: item.name,
+      description: item.description ?? null,
       type: item.type,
       quantity: Number(item.quantity ?? 0),
-      price: Number(item.price ?? 0),
+      costPrice: Number(item.price ?? 0),
       unit: item.unit ?? "pc",
       lowInventoryAlert: item.lowInventoryAlert ?? null,
     })),
@@ -59,7 +65,7 @@ async function execute(input: unknown, ctx: ToolContext): Promise<ToolResult> {
 registerTool({
   name: "get_inventory_item_by_name",
   description:
-    "Search inventory items by name. Use when the user asks about stock, inventory, parts, or supplies.",
+    "Search inventory items by keywords — all words must appear in the product name, in any order. Returns each item's id, name, current stock quantity, unit, and costPrice (the shop's acquisition cost — NOT the customer sell price). The sell price must always be gathered from the user separately. Use when the user names a material that might be in stock, or when they ask about inventory levels.",
   permission: "inventory.read",
   inputSchema,
   anthropicInputSchema: {
@@ -67,7 +73,8 @@ registerTool({
     properties: {
       searchTerm: {
         type: "string",
-        description: "Item name to search (partial match)",
+        description:
+          "One or more keywords to search by. All words must appear in the product name (any order). Example: 'gloss black' finds '3M High Gloss Black Vinyl'.",
       },
       type: {
         type: "string",

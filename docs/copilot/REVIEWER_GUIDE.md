@@ -190,6 +190,21 @@ yarn dev
 
 ---
 
+## Phase 3c.5 — Inventory-aware materials
+
+When a user names a material for an estimate or add-materials flow, the copilot now searches the shop's inventory before asking for a sell price.
+
+**`getInventoryItemByName.ts`** — two changes:
+
+- Search upgraded from single `contains` to word-by-word AND query. Each keyword must appear independently (any order) in the product name. Pattern mirrors `getClientByName`. "3M vinyl" now finds "3M High Gloss Black Vinyl"; "ceramic kit" finds "Ceramic Coating Kit".
+- `price` renamed to `costPrice` in the return shape. This is an important semantic clarification: `InventoryProduct.price` is the shop's acquisition cost (confirmed by three sources: materials/route.ts, estimate/create/page.tsx, virtual-shop page). It is NOT the customer sell price. The `Material` model has separate `cost` and `sell` fields; `InventoryProduct.price` maps to `cost`.
+
+System prompt adds a full inventory-aware flow: search → present candidates with stock/cost/unit → confirm match → ask sell price (dollar or % markup) → soft stock warning if qty > stock. Free-text fallback when no match. Free-text pass-through when user provides price directly.
+
+No new tools, no new routes, no DB migrations.
+
+---
+
 ## Phase 3c.4 — Shop-supplies and tax toggles on create_estimate
 
 Completes the original `create_estimate` spec. Both shop supplies (serviceFee) and tax can be toggled off per estimate without changing company defaults.
