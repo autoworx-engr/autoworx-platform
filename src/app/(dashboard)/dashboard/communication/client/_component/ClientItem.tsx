@@ -105,7 +105,7 @@ export default function ClientItem({
 
   const filter = useDemoClientFilterStore((state) => state.filter);
 
-  const handleRedirect = async () => {
+  const handleRedirect = async (channel?: string) => {
     // await updateLastMailReadId({ clientId: client.id });
     if (searchParams) {
       const params = new URLSearchParams(searchParams);
@@ -113,9 +113,11 @@ export default function ClientItem({
 
       document.querySelector("#client-message-lists")?.classList.add("hidden");
 
-      if (params.has("open")) {
-        params.delete("open");
+      params.delete("open");
+      if (channel && channel !== "SMS") {
+        params.set("open", channel);
       }
+
       params.set("chat", "true");
       pathname = params.toString()
         ? `${pathname}?${params.toString()}`
@@ -175,7 +177,7 @@ export default function ClientItem({
   return (
     <div
       ref={buttonRef}
-      onClick={handleRedirect}
+      onClick={() => handleRedirect()}
       className={cn(
         // layout
         "group relative mb-2 flex w-full cursor-pointer items-center gap-3 overflow-hidden rounded-2xl p-3 sm:p-4",
@@ -256,8 +258,12 @@ export default function ClientItem({
         {/* Email preview */}
         {client?.conversationsTrack?.emailLastMessage && (
           <p
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRedirect("EMAIL");
+            }}
             className={cn(
-              "mt-2 line-clamp-1 text-xs",
+              "mt-2 line-clamp-1 text-xs cursor-pointer",
               selected ? "text-white/95" : "text-zinc-600 dark:text-zinc-300",
               client?.conversationsTrack?.emailIsRead
                 ? "font-normal"
@@ -275,8 +281,12 @@ export default function ClientItem({
         {/* SMS preview */}
         {client?.conversationsTrack?.smsLastMessage && (
           <p
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRedirect("SMS");
+            }}
             className={cn(
-              "mt-1.5 line-clamp-1 text-xs",
+              "mt-1.5 line-clamp-1 text-xs cursor-pointer",
               selected ? "text-white/95" : "text-zinc-600 dark:text-zinc-300",
               client?.conversationsTrack?.smsIsRead
                 ? "font-normal"
@@ -294,8 +304,12 @@ export default function ClientItem({
         {/* Messenger preview */}
         {conversationsTrack?.messengerLastMessage && (
           <p
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRedirect("MESSENGER");
+            }}
             className={cn(
-              "mt-1.5 line-clamp-1 text-xs",
+              "mt-1.5 line-clamp-1 text-xs cursor-pointer",
               selected ? "text-white/95" : "text-zinc-600 dark:text-zinc-300",
               conversationsTrack?.messengerIsRead
                 ? "font-normal"

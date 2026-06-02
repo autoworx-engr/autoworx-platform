@@ -169,16 +169,15 @@ export default function Header({
           setOpen={setStatusOpenDropdown}
           isAllServicesCompleted={isAllServicesCompleted}
         />
-        {(!isTemplate && isEstimateCreate) ||
-          (isEstimateEdit && (
-            <SelectTemplate
-              openDropdown={templateOpenDropdown}
-              setOpenDropdown={setTemplateOpenDropdown}
-              setValue={setTemplate}
-              value={template || selectedTemplate}
-              name="templateId"
-            />
-          ))}
+        {!isTemplate && (isEstimateCreate || isEstimateEdit) && (
+          <SelectTemplate
+            openDropdown={templateOpenDropdown}
+            setOpenDropdown={setTemplateOpenDropdown}
+            setValue={setTemplate}
+            value={template || selectedTemplate}
+            name="templateId"
+          />
+        )}
       </div>
     </div>
   );
