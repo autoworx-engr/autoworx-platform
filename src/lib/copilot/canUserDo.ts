@@ -19,6 +19,7 @@ export type CopilotAction =
   | "inventory.create"
   | "inventory.update"
   | "inventory.read"
+  | "vendor.create"
   | "report.revenue.read"
   | "report.payments.read"
   | "client.read"
@@ -166,6 +167,12 @@ const PERMISSION_MAP: Record<
       p.role === "Admin" ||
       !!(p.userPermissions?.inventoryAll ?? cp(p, "inventoryAll")),
     reason: "You don't have permission to view inventory.",
+  },
+  "vendor.create": {
+    check: (p) =>
+      p.role === "Admin" ||
+      !!(p.userPermissions?.inventoryAll ?? cp(p, "inventoryAll")),
+    reason: "You don't have permission to create vendors (inventoryAll).",
   },
   "report.revenue.read": {
     // Uses !== false pattern — reporting defaults to allowed unless explicitly disabled

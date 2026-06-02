@@ -5,6 +5,21 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Phase 3c.6 fixes — vendor tools + weighted average cost
+
+**Date:** 2026-06-02
+
+Three improvements shipped on top of Phase 3c.6:
+
+- **Vendor lookup:** new `get_vendor_by_name` tool (word-by-word AND search across both `companyName` and `name` fields, permission: `inventory.read`). Returns `{ matchCount, vendors: [{ id, companyName, name, email, phone }] }`.
+- **Vendor create:** new Bearer-safe `POST /api/vendor/[companyId]/` route + `create_vendor` copilot tool (permission: `vendor.create`, gated on `inventoryAll`). Case-insensitive name uniqueness check per company (409 on duplicate). `vendor.create` added to `CopilotAction` enum and `PERMISSION_MAP`.
+- **Weighted average cost on replenish:** replenish route now computes `newCost = (existingQty × existingPrice + addedQty × newPrice) / totalQty` rounded to 2 decimals, instead of overwriting. Empty stock (qty = 0) uses the new price directly.
+- **System prompt:** "Managing inventory" section expanded with vendor lookup/create guidance and WAC explanation.
+
+No DB schema changes.
+
+---
+
 ## Phase 3c.6 — Inventory create + replenish
 
 **Date:** 2026-06-02

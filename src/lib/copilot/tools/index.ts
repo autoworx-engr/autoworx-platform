@@ -25,6 +25,8 @@ import "./handlers/createEstimateTool";
 import "./handlers/addMaterialsToEstimateTool";
 import "./handlers/createInventoryProductTool";
 import "./handlers/replenishInventoryTool";
+import "./handlers/getVendorByName";
+import "./handlers/createVendorTool";
 
 export { toolsForAnthropic, allTools, getTool } from "./registry";
 export type { ToolContext, ToolResult, ToolDefinition } from "./registry";

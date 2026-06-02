@@ -64,7 +64,18 @@ export async function POST(
       );
     }
 
-    const newQuantity = Number(product.quantity ?? 0) + quantity;
+    const existingQty = Number(product.quantity ?? 0);
+    const existingPrice = Number(product.price ?? 0);
+    const newQuantity = existingQty + quantity;
+
+    // Weighted average cost — blends old and new acquisition costs proportionally
+    const newCostPrice =
+      existingQty === 0
+        ? price
+        : Math.round(
+            ((existingQty * existingPrice + quantity * price) / newQuantity) *
+              100,
+          ) / 100;
 
     const updatedProduct = await db.$transaction(async (tx) => {
       await tx.inventoryProductHistory.create({
@@ -84,7 +95,7 @@ export async function POST(
         where: { id: productId },
         data: {
           quantity: newQuantity,
-          price,
+          price: newCostPrice,
           unit: unit ?? product.unit,
           lot: lot ?? product.lot,
         },
