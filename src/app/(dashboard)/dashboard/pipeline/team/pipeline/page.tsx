@@ -3,8 +3,14 @@ import { getEmployeeColumnByCompany } from "@/actions/pipelines/pipelinesColumn"
 import { authOptions } from "@/authOptions";
 import { ShopPipelineData } from "@/types/invoiceLead";
 import { EmployeeType } from "@prisma/client";
+import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import dynamic from "next/dynamic";
+
+export const metadata: Metadata = {
+  title: "Pipelines - Team Pipeline",
+  description: "Manage your team pipeline",
+};
 
 const PIPELINE_PAGE_SIZE = 10;
 

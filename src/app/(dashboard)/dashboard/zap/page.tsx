@@ -1,8 +1,13 @@
 import Title from "@/components/Title";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
+import { Metadata } from "next";
 
-export default async function ZapPage() {
+export const metadata: Metadata = {
+  title: "Zapier Data",
+};
+
+export default async function Page() {
   const companyId = await getCompanyId();
   // get all the leads
   const leads = await db.lead.findMany({

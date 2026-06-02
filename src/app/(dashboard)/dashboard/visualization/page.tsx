@@ -2,6 +2,12 @@ import Link from "next/link";
 import { getCompanyId } from "@/lib/companyId";
 import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
 import UpgradePlanBanner from "@/components/UpgradePlanBanner";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Visualization",
+  description: "Visualize car wraps",
+};
 
 export default async function VisualizationPage() {
   const companyId = await getCompanyId();

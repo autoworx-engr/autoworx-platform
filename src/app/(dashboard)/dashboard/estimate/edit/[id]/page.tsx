@@ -22,6 +22,12 @@ import { CreateTab } from "../../create/tabs/CreateTab";
 import EstimateInspectionsTab from "../../create/tabs/EstimateInspectionsTab";
 import PaymentTab from "../../create/tabs/PaymentTab";
 import DynamicTemplateLoader from "../../DynamicTemplateLoader";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Edit Estimate",
+  description: "Edit and manage your estimate details.",
+};
 
 export default async function Page(props: {
   params: Promise<{ id: string }>;

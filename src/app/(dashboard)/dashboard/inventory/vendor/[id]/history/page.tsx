@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import moment from "moment-timezone";
 import Link from "next/link";
+import { Metadata } from "next";
 
 // --- STYLES DEFINITION ---
 const evenColor = "bg-white dark:bg-slate-800";
@@ -93,6 +94,11 @@ const DetailRow = ({
       {valueElement}
     </div>
   );
+};
+
+export const metadata: Metadata = {
+  title: "Inventory - Vendor Purchase History",
+  description: "View purchase history and details for a vendor.",
 };
 
 export default async function Page(props: { params: Promise<{ id: string }> }) {

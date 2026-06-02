@@ -1,6 +1,12 @@
 import Link from "next/link";
 import ShopForm from "../../component/ShopForm";
 import { getCompanyId } from "@/lib/companyId";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Settings - Update Shop",
+  description: "Update and configure your virtual shop settings.",
+};
 
 export default async function UpdateShopPage({ params }: { params: any }) {
   const { id } = await params;

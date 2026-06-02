@@ -14,6 +14,12 @@ import AnalyticsVisibility from "./AnalyticsVisibility";
 import CalculationContainer from "./CalculationContainer";
 import FilterHeader from "./FilterHeader";
 import InventoryDisplay from "./InventoryDisplay";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Analytics - Inventory",
+  description: "Analyze inventory performance and profitability",
+};
 
 type TProps = {
   searchParams: Promise<{

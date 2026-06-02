@@ -11,6 +11,12 @@ import { allCompanyFeaturePermissions } from "@/service/feature-permissions/api"
 import { companyPermissionModule } from "@/constants/company-permission";
 import SecurityPage from "../security/SecurityPage";
 import FacebookPagesSettings from "./FacebookPagesSettings";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Settings - Communications",
+  description: "Configure communications settings",
+};
 
 type TProps = {
   searchParams: Promise<{ meta_success?: string; meta_error?: string }>;
