@@ -3,6 +3,7 @@ import { convertInvoice } from "@/actions/estimate/invoice/convert";
 import { sendPaymentReceivedNotification } from "@/lib/notification/payment-notify";
 import { settleGiftCardReloadPayment } from "@/services/giftCardReloadSettlementService";
 import { confirmShopBooking } from "@/services/confirmShopBooking";
+import { markWebhookPoison } from "@/workers/recordWebhookFailure";
 
 const parsePaymentNotes = (notes: string | null) => {
   if (!notes) return {} as Record<string, any>;
@@ -86,10 +87,19 @@ export async function processAuthorizeNetPayment(eventId: string) {
   if (webhookEvent.status === "PROCESSED") return;
 
   const body = webhookEvent.payload as Record<string, any>;
-  const payload = body.payload;
+  const payload = body?.payload;
 
+  // Poison guard: a structurally broken payload fails identically every retry.
+  if (!payload?.id) {
+    await markWebhookPoison(eventId, "missing payload.id");
+    return;
+  }
   const transactionId = payload.id as string;
   const authAmount = parseFloat(payload.authAmount);
+  if (Number.isNaN(authAmount)) {
+    await markWebhookPoison(eventId, "non-numeric authAmount");
+    return;
+  }
   const invoiceNumber = payload.invoiceNumber as string | undefined;
 
   // Secondary idempotency guard

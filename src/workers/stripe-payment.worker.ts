@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { sendPaymentReceivedNotification } from "@/lib/notification/payment-notify";
 import { settleGiftCardReloadPayment } from "@/services/giftCardReloadSettlementService";
 import { confirmShopBooking } from "@/services/confirmShopBooking";
+import { markWebhookPoison } from "@/workers/recordWebhookFailure";
 
 const parsePaymentNotes = (notes: string | null) => {
   if (!notes) return {} as Record<string, any>;
@@ -22,8 +23,23 @@ export async function processStripePayment(eventId: string) {
   if (webhookEvent.status === "PROCESSED") return;
 
   const event = webhookEvent.payload as Record<string, any>;
-  const paymentIntent = event.data?.object;
-  const paymentData = JSON.parse(paymentIntent.metadata.paymentData);
+  const paymentIntent = event?.data?.object;
+
+  // Poison guard: a structurally broken payload fails identically every retry.
+  if (!paymentIntent?.metadata?.paymentData) {
+    await markWebhookPoison(
+      eventId,
+      "missing data.object.metadata.paymentData",
+    );
+    return;
+  }
+  let paymentData: Record<string, any>;
+  try {
+    paymentData = JSON.parse(paymentIntent.metadata.paymentData);
+  } catch {
+    await markWebhookPoison(eventId, "invalid paymentData JSON");
+    return;
+  }
 
   // Secondary idempotency guard
   const alreadyProcessed = await db.stripePayment.findFirst({

@@ -45,8 +45,7 @@ const { getBoss } = await import("@/lib/pgboss");
 const { db } = await import("@/lib/db");
 const { processStripePayment } =
   await import("@/workers/stripe-payment.worker");
-const { sendPaymentFailedNotification } =
-  await import("@/lib/notification/payment-notify");
+const { recordWebhookFailure } = await import("@/workers/recordWebhookFailure");
 const { processAuthorizeNetPayment } =
   await import("@/workers/authorize-net-payment.worker");
 const { registerReconciliationWorker } =
@@ -76,25 +75,9 @@ await boss.work(QUEUE_STRIPE, async (jobs: { data: { eventId: string } }[]) => {
   for (const job of jobs) {
     try {
       await processStripePayment(job.data.eventId);
-    } catch (err: any) {
-      const errMsg = err?.message ?? "Unknown error";
-      const existing = await db.webhookEvent.findUnique({
-        where: { eventId: job.data.eventId },
-        select: { lastError: true, companyId: true, gateway: true },
-      });
-      await db.webhookEvent.update({
-        where: { eventId: job.data.eventId },
-        data: { lastError: errMsg },
-      });
-      if (!existing?.lastError && existing?.companyId) {
-        sendPaymentFailedNotification({
-          companyId: existing.companyId,
-          gateway: existing.gateway ?? "Stripe",
-          eventId: job.data.eventId,
-          error: errMsg,
-        }).catch((e) => console.error("[payment-failed-notify]", e));
-      }
-      throw err;
+    } catch (err) {
+      await recordWebhookFailure(job.data.eventId, err, "Stripe");
+      throw err; // pg-boss sees the throw and retries
     }
   }
 });
@@ -105,25 +88,9 @@ await boss.work(
     for (const job of jobs) {
       try {
         await processAuthorizeNetPayment(job.data.eventId);
-      } catch (err: any) {
-        const errMsg = err?.message ?? "Unknown error";
-        const existing = await db.webhookEvent.findUnique({
-          where: { eventId: job.data.eventId },
-          select: { lastError: true, companyId: true, gateway: true },
-        });
-        await db.webhookEvent.update({
-          where: { eventId: job.data.eventId },
-          data: { lastError: errMsg },
-        });
-        if (!existing?.lastError && existing?.companyId) {
-          sendPaymentFailedNotification({
-            companyId: existing.companyId,
-            gateway: existing.gateway ?? "Authorize.Net",
-            eventId: job.data.eventId,
-            error: errMsg,
-          }).catch((e) => console.error("[payment-failed-notify]", e));
-        }
-        throw err;
+      } catch (err) {
+        await recordWebhookFailure(job.data.eventId, err, "Authorize.Net");
+        throw err; // pg-boss sees the throw and retries
       }
     }
   },
