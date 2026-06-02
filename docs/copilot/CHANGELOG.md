@@ -5,6 +5,28 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## System prompt consolidation
+
+**Date:** 2026-06-01
+
+Audit found 468 lines with 7 redundancies, 2 contradictions, and one critical missing concept. Consolidated:
+
+- Added "new request = fresh context" — when the user pivots to a new action, drop stale IDs and pending intents from prior workflows. This closes the cross-client ID drift vector at the prompt level.
+- Removed duplicate write-workflow steps (4 and 8 were identical).
+- Consolidated "never guess IDs" and vehicle-ID-sourcing to one canonical location each (was 3 copies each).
+- Fixed batch-gather contradiction: global "one at a time" now has explicit exception for tools with defined initial gathers (create_lead, create_client, create_estimate).
+- Elevated "once answered, final" closure from estimate-specific to general principle in write workflow step 1.
+- Removed duplicate create_lead sections (30-line CRITICAL block + 5-line Scheduling block → 10-line merged section).
+- Removed duplicate "no lead updates" from "What you cannot do" (already fully covered in its own section).
+- Condensed Rule 2 in tool execution discipline (removed duplicate tag chain — already in tag workflow section).
+- Updated `getVehicleByClient.ts` tool description to match prompt (was contradictory — said "use after get_client_by_name").
+
+Net result: **468 → 425 lines, 32,717 → 30,062 bytes** (-43 lines, -2,655 bytes). Shorter prompt, each rule stated once, critical gap closed.
+
+**Files changed:** `systemPrompt.ts`, `getVehicleByClient.ts`
+
+---
+
 ## Fix — vehicle hallucination from cross-client ID drift
 
 **Date:** 2026-06-01

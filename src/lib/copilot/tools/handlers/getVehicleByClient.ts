@@ -58,7 +58,7 @@ async function execute(input: unknown, ctx: ToolContext): Promise<ToolResult> {
 registerTool({
   name: "get_vehicle_by_client",
   description:
-    "List all vehicles associated with a client. Use after get_client_by_name when the user's request requires a vehicle ID.",
+    "List all vehicles for a client by their client ID, including VIN, license plate, and full vehicle details. Note: get_client_by_name already returns vehicle IDs alongside descriptions — prefer using those directly when creating estimates, to avoid clientId drift across turns. Use this tool only when you need vehicle details beyond what get_client_by_name provides (e.g. VIN, license plate, or 'other' description).",
   permission: "client.read",
   inputSchema,
   anthropicInputSchema: {
