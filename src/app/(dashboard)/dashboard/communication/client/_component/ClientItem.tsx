@@ -24,6 +24,8 @@ import { useEffect, useRef, useState } from "react";
 import StarOrUnStarAction from "./StarOrUnStarAction";
 import { useClientCommunicationStore } from "@/stores/client-store";
 import { ChevronDown } from "lucide-react";
+import { useCompanyFeaturePermissionStore } from "@/stores/companyFeaturePermissionStore";
+import { companyPermissionModule } from "@/constants/company-permission";
 
 type TClient = Client & {
   conversationsTrack?: ClientConversationTrack | null;
@@ -49,6 +51,12 @@ export default function ClientItem({
 }: ClientItemProps) {
   const [client, setClient] = useState<TClient | null>(clientFromDB);
   const router = useRouter();
+  const { companyFeaturePermission } = useCompanyFeaturePermissionStore();
+
+  const isMessengerAccess = companyFeaturePermission.find(
+    (permission) =>
+      permission.permission_name === companyPermissionModule?.MESSENGER,
+  );
 
   const buttonRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
@@ -101,12 +109,15 @@ export default function ClientItem({
           : prev;
       });
     }
-  }, [conversationTrack]);
+  }, [conversationTrack, client?.id]);
 
   const filter = useDemoClientFilterStore((state) => state.filter);
 
   const handleRedirect = async (channel?: string) => {
     // await updateLastMailReadId({ clientId: client.id });
+    if (!isMessengerAccess?.enabled && channel == "MESSENGER") {
+      channel = "SMS";
+    }
     if (searchParams) {
       const params = new URLSearchParams(searchParams);
       let pathname = `/dashboard/communication/client/${client?.id}`;
