@@ -2,6 +2,7 @@ import { deleteUserFromGroup } from "@/actions/communication/internal/deleteUser
 import { getUserInGroup } from "@/actions/communication/internal/query";
 import { renameGroup } from "@/actions/communication/internal/renameGroup";
 import { updateChatTrack } from "@/actions/communication/internal/updateChatTrack";
+import { normalizeGroupName } from "@/lib/utils/groupName";
 import Avatar from "@/components/Avatar";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { cn } from "@/lib/cn";
@@ -36,6 +37,7 @@ import { formatDate } from "./client/_component/conversations/mailgun/MailgunCon
 import AddUsersInGroupModal from "./internal/AddUsersInGroupModal";
 import { Message as TMessage } from "./internal/UsersArea";
 import Message from "./Message";
+import MessageListSkeleton from "./MessageListSkeleton";
 
 type TSection = "collaboration" | "internal";
 
@@ -51,6 +53,7 @@ export default function MessageBox({
   existingGroups,
   section,
   isLoadingOlder = false,
+  isLoadingInitial = false,
   onScrollContainerRef,
   topSlot,
 }: {
@@ -66,22 +69,9 @@ export default function MessageBox({
   group?: Group & { users: User[] };
   existingGroups?: Array<Group & { users: User[] }>;
   section: TSection;
-  /**
-   * When true, suppress the auto-scroll-to-bottom effect. Set this from a
-   * parent that is paginating older messages (`isFetchingNextPage`) so
-   * prepending older rows doesn't yank the view back to the bottom.
-   */
   isLoadingOlder?: boolean;
-  /**
-   * Callback ref invoked with the inner scroll container DOM node so a
-   * parent (e.g. UserMessageBox) can wire up a scroll listener for
-   * reverse pagination. Optional — collaboration callers ignore it.
-   */
+  isLoadingInitial?: boolean;
   onScrollContainerRef?: (el: HTMLDivElement | null) => void;
-  /**
-   * Optional content rendered above the message list — used as a
-   * "loading older messages…" indicator while a new page is being fetched.
-   */
   topSlot?: React.ReactNode;
 }) {
   const { data: session } = useSession();
@@ -402,10 +392,15 @@ export default function MessageBox({
                       <CircleCheckBig
                         className="ml-3 size-6 cursor-pointer"
                         onClick={async () => {
-                          const trimmedName = groupName.trim();
-                          const currentName = group?.name?.trim() || "";
+                          const trimmedName = normalizeGroupName(groupName);
+                          const currentName = normalizeGroupName(
+                            group?.name ?? "",
+                          );
                           if (!trimmedName) return;
-                          if (trimmedName === currentName) {
+                          if (
+                            trimmedName.toLowerCase() ===
+                            currentName.toLowerCase()
+                          ) {
                             toast.error("Group name must be different.");
                             return;
                           }
@@ -413,28 +408,33 @@ export default function MessageBox({
                             existingGroups?.some(
                               (existingGroup) =>
                                 existingGroup.id !== group?.id &&
-                                existingGroup.name?.trim().toLowerCase() ===
-                                  trimmedName.toLowerCase(),
+                                normalizeGroupName(
+                                  existingGroup.name ?? "",
+                                ).toLowerCase() === trimmedName.toLowerCase(),
                             ) ?? false;
                           if (hasDuplicateName) {
                             toast.error("Group name already exists.");
                             return;
                           }
-                          setIsGroupNameEdited(false);
-                          if (groupName !== group?.name) {
-                            setGroupName(trimmedName);
-                            if (group?.id) {
-                              const response = await renameGroup(
-                                trimmedName,
-                                group.id,
+                          if (groupName !== group?.name && group?.id) {
+                            const response = await renameGroup(
+                              trimmedName,
+                              group.id,
+                            );
+                            if (response?.status === 200) {
+                              setIsGroupNameEdited(false);
+                              setGroupName(trimmedName);
+                              successToast(
+                                response?.message ||
+                                  "Group renamed successfully.",
                               );
-                              if (response?.status === 200) {
-                                successToast(
-                                  response?.message ||
-                                    "Group renamed successfully.",
-                                );
-                              }
+                            } else {
+                              toast.error(
+                                response?.message || "Failed to rename group.",
+                              );
                             }
+                          } else {
+                            setIsGroupNameEdited(false);
                           }
                         }}
                       />
@@ -514,19 +514,39 @@ export default function MessageBox({
         ref={messageBoxRef}
       >
         {topSlot}
+        {isLoadingInitial && messages.length === 0 && <MessageListSkeleton />}
         {messages.map((message: TMessage, index: number) => {
-          let lastDate = "";
+          const prev = index > 0 ? messages[index - 1] : null;
+          const currentTs = new Date(
+            message?.createdAt ?? new Date(),
+          ).getTime();
+          const prevTs = prev
+            ? new Date(prev.createdAt ?? new Date()).getTime()
+            : 0;
           const messageDate = format(
             new Date(message?.createdAt ?? new Date()),
             "PPP",
-          ); // 'Jan 1, 2024'
-          const messageTime = format(
-            new Date(message?.createdAt ?? new Date()),
-            "h:mm a",
-          ); // '12:30 PM'
+          );
+          const prevDate = prev
+            ? format(new Date(prev.createdAt ?? new Date()), "PPP")
+            : null;
 
-          const showDateSeparator = messageDate !== lastDate;
-          lastDate = messageDate;
+          // Day chip only when the calendar day changes (WhatsApp / Messenger
+          // style). Previously this was reset to "" on every iteration so
+          // every message got a separator.
+          const showDateSeparator = !prev || messageDate !== prevDate;
+
+          // Group with previous when: same sender, same userId (for group
+          // chats), same calendar day, and within 5 minutes — collapses
+          // avatar + name + extra spacing on stacked replies.
+          const FIVE_MIN = 5 * 60 * 1000;
+          const groupedWithPrev =
+            !!prev &&
+            !showDateSeparator &&
+            prev.sender === message.sender &&
+            (prev.userId ?? null) === (message.userId ?? null) &&
+            currentTs - prevTs < FIVE_MIN;
+
           return (
             <Fragment
               key={
@@ -545,6 +565,7 @@ export default function MessageBox({
                 key={index}
                 fromGroup={fromGroup}
                 message={message}
+                groupedWithPrev={groupedWithPrev}
                 onDownload={handleDownload}
                 setIsImageLoaded={setIsImageLoaded}
               />
