@@ -190,6 +190,28 @@ yarn dev
 
 ---
 
+## Phase 3c.6 — Inventory create + replenish
+
+Two new Bearer-safe API routes and two new copilot tools for adding and restocking inventory items.
+
+**New API routes** (`src/app/api/inventory/[companyId]/`):
+
+- `products/route.ts` (POST) — creates a new `InventoryProduct`. Body validation via Zod. Name uniqueness checked against `companyId` (returns 409 if duplicate). `lowInventoryAlert < quantity` enforced (returns 400 if violated). Writes `InventoryProduct` + `InventoryProductHistory` in a `$transaction`, mirroring the existing `createProduct()` server action. Returns `{ productId, name, type, quantity, price, unit }` with HTTP 201.
+- `replenish/route.ts` (POST) — adds stock to an existing product. Verifies `productId` belongs to the JWT's `companyId` (404 if not). Increments quantity (`newQuantity = current + added`); does NOT replace. Writes `InventoryProductHistory` entry (type `"Purchase"`) and updates `price`, `unit`, `lot`. Returns `{ productId, newQuantity, price }`.
+
+Both routes use the same Bearer JWT auth + URL companyId cross-check as the estimate route. All DB operations scoped to `companyId`.
+
+**New copilot tools** (`src/lib/copilot/tools/handlers/`):
+
+- `createInventoryProductTool.ts` — permission: `inventory.create`. Handles 409 with actionable error pointing to `get_inventory_item_by_name`. Returns flat `{ productId, name, type, quantity, costPrice, unit, message }`.
+- `replenishInventoryTool.ts` — permission: `inventory.update`. Defaults `date` to today if omitted. Handles 404 with actionable error. Returns `{ productId, newQuantity, costPrice, message }`.
+
+Both registered in `tools/index.ts`. System prompt adds a "Managing inventory" section with create-vs-replenish decision logic.
+
+No DB schema changes. No new migrations.
+
+---
+
 ## Phase 3c.5 — Inventory-aware materials
 
 When a user names a material for an estimate or add-materials flow, the copilot now searches the shop's inventory before asking for a sell price.

@@ -23,6 +23,8 @@ import "./handlers/createClientTool";
 import "./handlers/createVehicleForClientTool";
 import "./handlers/createEstimateTool";
 import "./handlers/addMaterialsToEstimateTool";
+import "./handlers/createInventoryProductTool";
+import "./handlers/replenishInventoryTool";
 
 export { toolsForAnthropic, allTools, getTool } from "./registry";
 export type { ToolContext, ToolResult, ToolDefinition } from "./registry";

@@ -260,6 +260,15 @@ add_materials_to_estimate adds materials to a draft (Pending) estimate that has 
 
 You cannot add materials to an Invoice or to a non-Pending estimate (one that has been converted). If the tool refuses with a type error, tell the user clearly and offer to create a new estimate instead.
 
+### Managing inventory
+
+Two tools manage inventory:
+
+- **create_inventory_product** — adds a new item to the shop's catalog. Gather: name, type (Product or Supply), quantity, cost price, and unit (ft, pc, oz, etc.). Before calling this, search with get_inventory_item_by_name to confirm the item doesn't already exist. The name must be unique for the company.
+- **replenish_inventory** — adds stock to an existing item. First look up the item with get_inventory_item_by_name to get its productId, then call replenish_inventory with the quantity being added and the current cost price per unit.
+
+When the user says "add [item] to inventory" or "we got a shipment of [item]", search first: if the item already exists use replenish_inventory; if it's brand-new use create_inventory_product.
+
 ### Date handling
 Today's date is included in the user context line above. When the user says "this week" or "today", infer the correct YYYY-MM-DD dates before calling any date-range tool.
 

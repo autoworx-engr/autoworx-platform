@@ -5,6 +5,26 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Phase 3c.6 — Inventory create + replenish
+
+**Date:** 2026-06-02
+
+Two new Bearer-safe API routes and two new copilot tools for inventory management.
+
+**New API routes:**
+
+- `POST /api/inventory/[companyId]/products` — creates a new `InventoryProduct` + `InventoryProductHistory` entry in a `$transaction`. Name uniqueness enforced per company (409 on duplicate). Validates `lowInventoryAlert < quantity` (400 if violated).
+- `POST /api/inventory/[companyId]/replenish` — adds stock to an existing product and writes a history entry. Increments quantity (does not replace). Returns `newQuantity` and updated `price`.
+
+**New copilot tools:**
+
+- `create_inventory_product` (permission: `inventory.create`) — gathers name, type, quantity, cost price, unit. Handles 409 duplicate with actionable error.
+- `replenish_inventory` (permission: `inventory.update`) — looks up product first, adds stock. Defaults date to today if omitted.
+
+Both routes use Bearer JWT auth + companyId cross-check, matching the estimate route pattern. Both replicate the existing server action's `$transaction` (product change + history entry written atomically). No DB schema changes.
+
+---
+
 ## Phase 3c.5 — Inventory-aware materials
 
 **Date:** 2026-06-01
