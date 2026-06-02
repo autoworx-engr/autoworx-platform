@@ -498,7 +498,7 @@ export async function createInvoice({
               invoiceId: newInvoice.id,
               clientId,
               companyId,
-              userId: parseInt(session?.user.id || "0") || null,
+              userId: parseInt((session as any)?.user?.id || "0") || null,
               createdBy: "user",
             };
           }),
