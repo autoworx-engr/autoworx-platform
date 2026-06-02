@@ -2,7 +2,8 @@ import { Metadata } from "next";
 import LoginContainer from "./LoginContainer";
 
 export const metadata: Metadata = {
-  title: "Login | Dashboard",
+  title: "Login",
+  description: "Sign in to your account.",
 };
 
 export default function Page() {

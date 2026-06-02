@@ -6,6 +6,12 @@ import { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import CannedTable from "../CannedTable";
 import NavigationTabs from "../NavigationTabs";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Invoices - Canned",
+  description: "Manage your canned estimates",
+};
 
 type TProps = {
   searchParams: Promise<{

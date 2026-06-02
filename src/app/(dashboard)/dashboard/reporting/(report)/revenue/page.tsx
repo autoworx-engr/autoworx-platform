@@ -12,6 +12,12 @@ import Analytics from "./Analytics";
 import AnalyticsVisibility from "./AnalyticsVisibility";
 import FilterHeader from "./FilterHeader";
 import RevenueDisplay from "./RevenueDisplay";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Analytics - Revenue",
+  description: "Analyze your shop's revenue and profitability",
+};
 
 type TProps = {
   searchParams: Promise<{

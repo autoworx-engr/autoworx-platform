@@ -1779,15 +1779,35 @@ model Attachment {
 }
 
 model Group {
-  id        Int       @id @default(autoincrement())
-  name      String
-  type      String    @default("Group")
-  companyId Int?      @map("company_id")
-  company   Company?  @relation(fields: [companyId], references: [id])
-  users     User[]    @relation("UserGroups")
-  messages  Message[]
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
+  id         Int              @id @default(autoincrement())
+  name       String
+  type       String           @default("Group")
+  companyId  Int?             @map("company_id")
+  company    Company?         @relation(fields: [companyId], references: [id])
+  users      User[]           @relation("UserGroups")
+  messages   Message[]
+  readStates GroupReadState[]
+  createdAt  DateTime         @default(now()) @map("created_at")
+  updatedAt  DateTime         @default(now()) @updatedAt @map("updated_at")
+}
+
+/// Per-user, per-group "last seen" pointer. When the viewer opens a group
+/// the row is upserted with `lastSeenAt = now()`; group unread count =
+/// messages in the group with createdAt > lastSeenAt AND from != viewer.
+model GroupReadState {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @map("user_id")
+  groupId    Int      @map("group_id")
+  lastSeenAt DateTime @default(now()) @map("last_seen_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at")
+  user       User     @relation(fields: [userId], references: [id])
+  group      Group    @relation(fields: [groupId], references: [id])
+
+  @@unique([userId, groupId])
+  @@index([userId])
+  @@index([groupId])
+  @@map("group_read_states")
 }
 
 model BugReport {
@@ -2271,6 +2291,7 @@ model User {
   company                        Company                         @relation(fields: [companyId], references: [id], onDelete: Cascade)
   twoFactorToken                 TwoFactorToken?
   groups                         Group[]                         @relation("UserGroups")
+  groupReadStates                GroupReadState[]
   tasks                          Task[]
   taskUsers                      TaskUser[]
   appointments                   Appointment[]
@@ -2537,9 +2558,9 @@ model ClientSMS {
   clientId    Int                    @map("client_id")
   attachments ClientSmsAttachments[]
 
-  client       Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  user         User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  company      Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  client           Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  user             User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company          Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   isSalesAgent     Boolean?  @default(false)
   agentProcessedAt DateTime? @map("agent_processed_at")
   createdAt        DateTime  @default(now()) @map("created_at")
@@ -3555,4 +3576,3 @@ enum EmergencyRequestStatus {
   EXPIRED // Not reviewed within time window
   CANCELLED // Client cancelled the request
 }
-

@@ -7,30 +7,29 @@ import { getServerSession } from "next-auth";
 const fetchUnreadInternalMessageCount = async () => {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) {
-      throw new Error("Session ID is required");
+    if (!session?.user?.id) {
+      return {
+        success: false,
+        message: "Unauthorized",
+      };
     }
-    const message =
-      (await db.message.findMany({
-        where: {
-          to: parseInt(session?.user?.id!),
-          chatTrack: {
-            isRead: false,
-          },
-        },
-      })) || [];
 
-    const unreadCount = {
-      collaborationCount: message.filter(
-        (message) => message.section === "collaboration",
-      ).length,
-      internalCount: message.filter((message) => message.section === "internal")
-        .length,
-    };
+    const userId = parseInt(session.user.id);
+    const baseWhere = {
+      to: userId,
+      chatTrack: { isRead: false },
+    } as const;
+
+    // Two COUNTs instead of `findMany().filter().length` — was loading every
+    // unread row across both sections just to count them.
+    const [internalCount, collaborationCount] = await Promise.all([
+      db.message.count({ where: { ...baseWhere, section: "internal" } }),
+      db.message.count({ where: { ...baseWhere, section: "collaboration" } }),
+    ]);
 
     return {
       success: true,
-      data: unreadCount,
+      data: { internalCount, collaborationCount },
       message: "Unread message count fetched successfully",
     };
   } catch (error) {

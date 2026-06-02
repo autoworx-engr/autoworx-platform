@@ -2,6 +2,12 @@ import React from "react";
 import ShopForm from "../../component/ShopForm";
 import { getCompanyId } from "@/lib/companyId";
 import Link from "next/link";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Settings - Create Shop",
+  description: "Set up and configure your virtual shop.",
+};
 
 export default async function CreateShopPage() {
   const companyId = await getCompanyId();

@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { getCompanyIdFromBearer } from "@/lib/authPrincipal";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -45,7 +45,7 @@ export async function PUT(
   props: { params: Promise<{ id: string }> },
 ) {
   try {
-    const companyId = await getCompanyIdFromBearer(request);
+    const companyId = (await getAuthPrincipal(request))?.companyId ?? null;
     if (!companyId) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },

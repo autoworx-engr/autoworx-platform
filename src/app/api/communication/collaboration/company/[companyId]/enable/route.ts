@@ -1,7 +1,7 @@
 import { AppError } from "@/error-boundary/error";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
-import { getCompanyIdFromBearer } from "@/lib/authPrincipal";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -45,7 +45,7 @@ export async function PATCH(
       throw new AppError(400, "Invalid company ID");
     }
 
-    const callerCompanyId = await getCompanyIdFromBearer(req);
+    const callerCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
     if (!callerCompanyId) {
       throw new AppError(401, "Unauthorized");
     }

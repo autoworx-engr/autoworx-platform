@@ -1,124 +1,13 @@
-"use client";
-import { useServerGet } from "@/hooks/useServerGet";
-import PayoutCard from "../../employee/components/PayoutCard";
-import PerformanceTable from "./PerformanceTable";
-import { getSalesReportData } from "./getSalesReport";
-import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
-import CarLoading from "../../../../../components/common/CarLoading";
-import FilterDateRange from "../components/filter/FilterByDateRange";
-import { useState, use } from "react";
-import { TFilterModalState } from "../../estimate/CannedLabor";
-import moment from "moment";
+import { Metadata } from "next";
+import SalesReportPage from "./SalesReportPage";
 
-type TProps = {
-  searchParams: Promise<{
-    startDate?: string;
-    endDate?: string;
-  }>;
+export const metadata: Metadata = {
+  title: "Sales Reporting",
+  description: "View and analyze your sales reports and performance.",
 };
 
-export default function Page(props: TProps) {
-  const searchParams = use(props.searchParams);
-  const timezone = useCompanyTimezone();
-  const [activeModal, setActiveModal] = useState({
-    dateRange: false,
-    filterRange: false,
-    category: false,
-    service: false,
-    types: false,
-    filterRevenue: false,
-  });
-
-  let startDate: string | undefined;
-  let endDate: string | undefined;
-
-  if (searchParams.startDate && searchParams.endDate) {
-    const formattedStartDate = moment(
-      decodeURIComponent(searchParams.startDate),
-      "MM-DD-YYYY",
-    ).format("YYYY-MM-DD");
-
-    const formattedEndDate = moment(
-      decodeURIComponent(searchParams.endDate),
-      "MM-DD-YYYY",
-    ).format("YYYY-MM-DD");
-
-    startDate = `${formattedStartDate}T00:00:00.000Z`;
-    endDate = `${formattedEndDate}T23:59:59.999Z`;
-  }
-
-  const { data } = useServerGet(
-    getSalesReportData,
-    timezone,
-    startDate,
-    endDate,
-  );
-
-  if (!data) {
-    return (
-      <div className="flex items-center justify-center">
-        <CarLoading />
-      </div>
-    );
-  }
-  const {
-    previousCommission,
-    currentCommission,
-    allCommission,
-    growthRatePrevious,
-    growthRateCurrent,
-    employeeId,
-  } = data || {};
-
-  const closeModal = (nameOfModal: string) => {
-    setActiveModal({ ...activeModal, [nameOfModal]: false });
-  };
-
-  const toggleModal = (nameOfModal: string) => {
-    const obj = Object.keys(activeModal).reduce((acc, key) => {
-      if (key === nameOfModal) {
-        return {
-          ...acc,
-          [nameOfModal]: !activeModal[nameOfModal as keyof TFilterModalState],
-        };
-      }
-      return {
-        ...acc,
-        [key]: false,
-      };
-    }, activeModal);
-    setActiveModal(obj);
-  };
-
-  return (
-    <>
-      <h1 className="mx-2 my-4 text-2xl font-bold md:mx-0">Sales Reporting</h1>
-      <div className="flex flex-col gap-4 md:flex-1 md:flex-row md:items-center md:space-x-4 mb-4 px-2">
-        <FilterDateRange
-          startDate={decodeURIComponent(searchParams?.startDate as string)}
-          endDate={decodeURIComponent(searchParams?.endDate as string)}
-          activeModal={activeModal}
-          closeModal={closeModal}
-          modalName="dateRange"
-          toggleModal={toggleModal}
-        />
-      </div>
-      <div className="mx-2 flex flex-col gap-4 lg:flex-row">
-        <PayoutCard
-          title="Previous Month Payout"
-          amount={previousCommission}
-          percentage={growthRatePrevious?.rate}
-          increased={growthRatePrevious?.isPositive}
-        />
-        <PayoutCard
-          title="Current Month Payout"
-          amount={currentCommission}
-          percentage={growthRateCurrent?.rate}
-          increased={growthRateCurrent?.isPositive}
-        />
-        <PayoutCard title="YTD Payout" amount={allCommission} />
-      </div>
-      <PerformanceTable employeeId={employeeId} />
-    </>
-  );
+export default function Page(props: {
+  searchParams: Promise<{ startDate?: string; endDate?: string }>;
+}) {
+  return <SalesReportPage {...props} />;
 }
