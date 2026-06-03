@@ -121,7 +121,7 @@ export default function EditSalePurchaseList({
   };
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setFormState((prev) => ({ ...prev, [name]: value }));
@@ -169,9 +169,11 @@ export default function EditSalePurchaseList({
     }
 
     // Calculate per-unit price from total price
+    // Use high precision (10dp) to avoid rounding errors when total is later
+    // recalculated as price * quantity (e.g. 5000/150 * 150 ≠ 5000 at 2dp)
     let perUnitPrice = parseFloat(price) / newQuantityValue;
     if (!perUnitPrice || !isFinite(perUnitPrice)) perUnitPrice = 0;
-    const roundedPerUnitPrice = parseFloat(perUnitPrice.toFixed(2));
+    const roundedPerUnitPrice = parseFloat(perUnitPrice.toFixed(10));
     const res = await UpdatePurchase({
       historyId: history?.id ?? 0,
       productId,
@@ -279,7 +281,7 @@ export default function EditSalePurchaseList({
                       vendor.companyName
                         ?.toLowerCase()
                         ?.includes(search.toLowerCase()) ||
-                      vendor.name?.toLowerCase().includes(search.toLowerCase())
+                      vendor.name?.toLowerCase().includes(search.toLowerCase()),
                   )
                 }
                 openState={[vendorOpen, setVendorOpen]}
@@ -339,7 +341,7 @@ export default function EditSalePurchaseList({
                 "bg-white/80 backdrop-blur-sm dark:bg-slate-900/50",
                 "text-slate-600 dark:text-slate-300 placeholder:text-slate-400",
                 "focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/40",
-                "disabled:opacity-50 disabled:cursor-not-allowed"
+                "disabled:opacity-50 disabled:cursor-not-allowed",
               )}
             />
           </div>
