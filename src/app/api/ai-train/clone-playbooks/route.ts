@@ -43,16 +43,24 @@ export async function POST(req: Request) {
       );
     }
 
-    const playbooks = await db.servicePlaybook.findMany({
-      where: { companyId: Number(sourceCompanyId) },
-      include: {
-        pricingRules: true,
-        faqs: true,
-      },
-    });
+    const [playbooks, existing] = await Promise.all([
+      db.servicePlaybook.findMany({
+        where: { companyId: Number(sourceCompanyId) },
+        include: { pricingRules: true, faqs: true },
+      }),
+      db.servicePlaybook.findMany({
+        where: { companyId: Number(targetCompanyId) },
+        select: { serviceName: true },
+      }),
+    ]);
+
+    const existingNames = new Set(existing.map((pb) => pb.serviceName));
+    const toClone = playbooks.filter(
+      (pb) => !existingNames.has(pb.serviceName),
+    );
 
     const cloned = await Promise.all(
-      playbooks.map((pb) =>
+      toClone.map((pb) =>
         db.servicePlaybook.create({
           data: {
             serviceName: pb.serviceName,
@@ -86,10 +94,13 @@ export async function POST(req: Request) {
     return NextResponse.json({
       success: true,
       message: "Playbooks cloned successfully",
-      data: cloned,
+      data: {
+        created: cloned.length,
+        skipped: playbooks.length - toClone.length,
+        playbooks: cloned,
+      },
     });
   } catch (error) {
-    console.error(error);
     return NextResponse.json(
       { success: false, message: "Internal server error" },
       { status: 500 },

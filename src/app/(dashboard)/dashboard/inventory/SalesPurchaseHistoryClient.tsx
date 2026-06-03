@@ -250,7 +250,7 @@ function Table({
           const isSale = type === "Sale";
           const total =
             parseFloat(history.price?.toString() ?? "0") *
-            Number(history.quantity);
+            parseFloat(history.quantity?.toString() ?? "0");
 
           // Determine the record's main contact name
           const contactName = isSale

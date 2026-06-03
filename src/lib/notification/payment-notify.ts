@@ -41,7 +41,7 @@ export async function sendPaymentReceivedNotification({
     for (const user of getUsers) {
       sendUserNotifications({
         userId: user.id,
-        userName: `${user.firstName} ${user.lastName}`,
+        userName: `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim(),
         userEmail: user.email || "",
         userPhoneNo: user.phone || "",
         companyId: companyUniqueId,

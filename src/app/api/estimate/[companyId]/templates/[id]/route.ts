@@ -838,7 +838,17 @@ export async function DELETE(
       );
     }
 
-    await db.invoiceTemplate.delete({ where: { id } });
+    await db.$transaction(async (tx) => {
+      await tx.templatePhoto.deleteMany({ where: { invoiceTemplateId: id } });
+      await tx.invoiceInspection.deleteMany({
+        where: { invoiceTemplateId: id },
+      });
+      await tx.invoiceTags.deleteMany({ where: { invoiceTemplateId: id } });
+      await tx.task.deleteMany({ where: { invoiceTemplateId: id } });
+      await tx.material.deleteMany({ where: { invoiceTemplateId: id } });
+      await tx.invoiceItem.deleteMany({ where: { invoiceTemplateId: id } });
+      await tx.invoiceTemplate.delete({ where: { id } });
+    });
 
     return NextResponse.json({
       success: true,
