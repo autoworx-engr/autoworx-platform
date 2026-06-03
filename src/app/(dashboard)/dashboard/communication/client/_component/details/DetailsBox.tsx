@@ -2,7 +2,6 @@ import { db } from "@/lib/db";
 import { getClientById } from "../../_actions/getClientById";
 import ClientDescription from "./ClientDescription";
 import ClientHeading from "./ClientHeading";
-import NoClientFound from "../NoClientFound";
 
 type Props = {
   clientId: number;
@@ -26,7 +25,7 @@ export default async function DetailsBox({ clientId, showDetails }: Props) {
     vehiclesPromise,
   ]);
 
-  if (!client) return <NoClientFound />;
+  if (!client) return null;
 
   const showDetailsClass = showDetails === "true" ? "block" : "hidden";
   return (

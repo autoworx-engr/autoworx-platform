@@ -5,7 +5,6 @@ import SMS from "./sms/SMS";
 import Messenger from "./messenger/Messenger";
 import { getClientById } from "../../_actions/getClientById";
 import Phone from "../phone/Phone";
-import NoClientFound from "../NoClientFound";
 import DetailsBtn from "./DetailsBtn";
 import BackDetailsBtn from "./BackDetailsBtn";
 import { getCompanyId } from "@/lib/companyId";
@@ -49,7 +48,7 @@ export default async function ConversationsBox({
   const showChatClass =
     showChat === "true" && showDetails !== "true" ? "" : "hidden xl:block";
 
-  if (!client) return <NoClientFound />;
+  if (!client) return null;
 
   return (
     <div
