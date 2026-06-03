@@ -3,6 +3,12 @@ import { authOptions } from "@/authOptions";
 import { db } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import ShopNotFound from "@/app/subdomain/[subdomain]/components/giftcards/ShopNotFound";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Virtual Shop Admin",
+  description: "Virtual shop admin",
+};
 
 const DEFAULT_TAB = "services";
 
@@ -20,13 +26,10 @@ type VirtualShopAdminPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
-const resolveTabRoute = (
-  tabParam: string | string[] | undefined,
-): string => {
+const resolveTabRoute = (tabParam: string | string[] | undefined): string => {
   const tabValue = Array.isArray(tabParam) ? tabParam[0] : tabParam;
-  const resolvedTab = tabValue && TAB_TO_ROUTE[tabValue]
-    ? tabValue
-    : DEFAULT_TAB;
+  const resolvedTab =
+    tabValue && TAB_TO_ROUTE[tabValue] ? tabValue : DEFAULT_TAB;
 
   return TAB_TO_ROUTE[resolvedTab];
 };
@@ -56,4 +59,3 @@ export default async function VirtualShopAdminPage({
 
   redirect(`/dashboard/virtual-shop/admin/${shops[0].id}/${routeSegment}`);
 }
-

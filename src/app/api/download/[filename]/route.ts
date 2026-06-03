@@ -24,9 +24,10 @@ import os from "os";
  *         description: Server error
  */
 export async function GET(
-  req: NextRequest,
-  { params }: { params: { filename: string } }
+  _req: NextRequest,
+  props: { params: Promise<{ filename: string }> },
 ) {
+  const params = await props.params;
   try {
     // serverless-safe writable path
     const uploadDir = path.join(os.tmpdir(), "uploads");

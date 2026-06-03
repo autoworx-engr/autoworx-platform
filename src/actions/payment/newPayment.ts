@@ -251,7 +251,7 @@ export async function newPayment({
         sendPaymentReceivedNotification({
           companyId,
           clientName:
-            invoice?.client?.firstName + " " + invoice?.client?.lastName,
+            `${invoice?.client?.firstName} ${invoice?.client?.lastName ?? ""}`.trim(),
           amount: amount,
           invoiceId: invoice.id,
         });
@@ -277,7 +277,7 @@ export async function newPayment({
       {
         timeout: 15000, // 15 seconds
         maxWait: 6000, // 6 seconds
-      }
+      },
     );
 
     revalidatePath("/dashboard/estimate/edit");

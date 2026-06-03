@@ -56,7 +56,7 @@ export async function GET(req: NextRequest) {
     if (!clientId) {
       return NextResponse.json(
         { success: false, message: "clientId is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -73,7 +73,7 @@ export async function GET(req: NextRequest) {
         success: false,
         message: error.message || "Failed to retrieve invoices",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

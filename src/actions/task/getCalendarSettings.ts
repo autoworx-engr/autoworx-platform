@@ -18,6 +18,6 @@ export async function getCalenderSettings(
     });
     return calendarSettings;
   } catch (err: any) {
-    throw new Error("Error: ", err);
+    throw new Error(`Error: ${err?.message ?? err}`);
   }
 }

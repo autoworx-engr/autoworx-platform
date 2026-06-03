@@ -12,9 +12,15 @@ import FilterHeader from "./FilterHeader";
 import PaymentDisplay from "./PaymentDisplay";
 import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 import { PaymentType, Prisma } from "@prisma/client";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Analytics - Payments",
+  description: "Analyze payment trends and manage overdue invoices",
+};
 
 type TProps = {
-  searchParams: {
+  searchParams: Promise<{
     category?: string;
     startDate?: string;
     endDate?: string;
@@ -23,7 +29,7 @@ type TProps = {
     page?: string;
     take?: string;
     paymentMethod: string;
-  };
+  }>;
 };
 
 type TSliderData = {
@@ -54,7 +60,8 @@ const filterMultipleSliders: TSliderData[] = [
     max: 500,
   },
 ];
-export default async function PaymentReportPage({ searchParams }: TProps) {
+export default async function PaymentReportPage(props: TProps) {
+  const searchParams = await props.searchParams;
   const session = await getServerSession(authOptions);
   const { timezone = moment.tz.guess() } = (await getCompanyTimezone()) || {};
   const companyId = session?.user?.companyId;
@@ -223,7 +230,7 @@ export default async function PaymentReportPage({ searchParams }: TProps) {
     filteredTotalCount,
     filteredPayments,
     outStandingPayment,
-  ] = await db.$transaction([
+  ] = await Promise.all([
     db.payment.aggregate({
       where: {
         companyId,
@@ -309,7 +316,7 @@ export default async function PaymentReportPage({ searchParams }: TProps) {
         <Calculation
           content="TOTAL PAYMENT (Filtered)"
           amount={
-            searchParams?.paymentMethod === "Refund"
+            searchParams?.paymentMethod?.toUpperCase() === "REFUND"
               ? totalRefunded
               : filteredTotalAmount
           }

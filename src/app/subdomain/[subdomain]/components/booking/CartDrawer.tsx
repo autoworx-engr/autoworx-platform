@@ -43,7 +43,10 @@ export const CartDrawer = () => {
           </DrawerTitle>
         </DrawerHeader>
 
-        <div className="px-4 space-y-3 overflow-y-auto flex-1">
+        <div
+          className="px-4 space-y-3 overflow-y-auto flex-1"
+          data-vaul-no-drag
+        >
           {cart.map((item) => {
             const vehicleExtra =
               item.service.vehicleTypePricing[
@@ -56,7 +59,10 @@ export const CartDrawer = () => {
                 className="flex items-center gap-3 p-3 rounded-lg bg-muted/50"
               >
                 <img
-                  src={item.service.images[0] || "https://img.freepik.com/free-vector/businessman-with-smartphone-rents-car-street-via-carsharing-service-carsharing-service-short-periods-rent-best-taxi-alternative-concept_335657-2201.jpg?t=st=1774777481~exp=1774781081~hmac=392773361784ea1099eb657d3d5371390f1e88bb056a7d5b0aa0c5585b60204d&w=1480"}
+                  src={
+                    item.service.images[0] ||
+                    "https://img.freepik.com/free-vector/businessman-with-smartphone-rents-car-street-via-carsharing-service-carsharing-service-short-periods-rent-best-taxi-alternative-concept_335657-2201.jpg?t=st=1774777481~exp=1774781081~hmac=392773361784ea1099eb657d3d5371390f1e88bb056a7d5b0aa0c5585b60204d&w=1480"
+                  }
                   alt=""
                   className="w-14 h-14 rounded-lg object-cover"
                 />
@@ -76,8 +82,10 @@ export const CartDrawer = () => {
                   </div>
                 </div>
                 <button
+                  type="button"
+                  data-vaul-no-drag
                   onClick={() => removeFromCart(item.service.id)}
-                  className="p-1.5 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                  className="p-1.5 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors relative z-50"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -102,8 +110,10 @@ export const CartDrawer = () => {
           </div>
           <DrawerClose asChild>
             <Button
+              type="button"
+              data-vaul-no-drag
               size="lg"
-              className="w-full gap-2"
+              className="w-full gap-2 relative z-50 touch-manipulation"
               onClick={() => setStep("datetime")}
             >
               Choose Date & Time <ArrowRight className="w-4 h-4" />

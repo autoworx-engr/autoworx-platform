@@ -1,3 +1,4 @@
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
@@ -85,18 +86,19 @@ import { db } from "@/lib/db";
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { companyId: string; id: string } },
+  { params }: { params: Promise<{ companyId: string; id: string }> },
 ) {
   try {
-    const companyId = Number(params.companyId);
-    const { id } = params;
-
-    if (!companyId || isNaN(companyId)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid company ID" },
-        { status: 400 },
-      );
+    const { companyId: companyIdParam, id } = await params;
+    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
+    if (jwtCompanyId === null) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const urlCompanyId = parseInt(companyIdParam, 10);
+    if (isNaN(urlCompanyId) || urlCompanyId !== jwtCompanyId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    const companyId = jwtCompanyId;
 
     // Load source template with all relations
     const source = await db.invoiceTemplate.findFirst({
@@ -223,9 +225,11 @@ export async function POST(
             });
 
             // Clone labor tags
-            const laborTagIds = item.labor.tags.map((t: any) =>
-              typeof t === "object" && "tagId" in t ? t.tagId : t?.tag?.id,
-            ).filter(Boolean);
+            const laborTagIds = item.labor.tags
+              .map((t: any) =>
+                typeof t === "object" && "tagId" in t ? t.tagId : t?.tag?.id,
+              )
+              .filter(Boolean);
 
             if (laborTagIds.length > 0) {
               await tx.laborTag.createMany({
@@ -269,9 +273,11 @@ export async function POST(
             });
 
             // Clone material tags
-            const matTagIds = mat.tags.map((t: any) =>
-              typeof t === "object" && "tagId" in t ? t.tagId : t?.tag?.id,
-            ).filter(Boolean);
+            const matTagIds = mat.tags
+              .map((t: any) =>
+                typeof t === "object" && "tagId" in t ? t.tagId : t?.tag?.id,
+              )
+              .filter(Boolean);
 
             if (matTagIds.length > 0) {
               await tx.materialTag.createMany({
@@ -284,9 +290,11 @@ export async function POST(
           }
 
           // Clone item tags
-          const itemTagIds = item.tags.map((t: any) =>
-            typeof t === "object" && "tagId" in t ? t.tagId : t?.tag?.id,
-          ).filter(Boolean);
+          const itemTagIds = item.tags
+            .map((t: any) =>
+              typeof t === "object" && "tagId" in t ? t.tagId : t?.tag?.id,
+            )
+            .filter(Boolean);
 
           if (itemTagIds.length > 0) {
             await tx.itemTag.createMany({

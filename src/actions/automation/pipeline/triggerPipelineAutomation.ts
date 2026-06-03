@@ -37,7 +37,7 @@ export async function updatePipelineAutomationTrigger({
           leadId,
           columnId,
         }),
-      }
+      },
     );
 
     const data = await response.json();
@@ -51,6 +51,7 @@ export async function updatePipelineAutomationTrigger({
 
     if (data.statusCode === 401) {
       console.error("Error updating pipeline automation trigger:", data.errors);
+      throw new Error(data.errors);
     }
 
     return {
@@ -101,7 +102,7 @@ export async function updatePipelineAutomationTriggerWithToken({
           leadId,
           columnId,
         }),
-      }
+      },
     );
 
     const data = await response.json();

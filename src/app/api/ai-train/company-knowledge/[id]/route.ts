@@ -31,8 +31,9 @@ import { validateCompanyId } from "../../utils";
  */
 export async function GET(
   req: Request,
-  { params }: { params: { id: number } },
+  props: { params: Promise<{ id: string }> },
 ) {
+  const params = await props.params;
   try {
     const validation = validateCompanyId(req);
     if (validation instanceof NextResponse) return validation;
@@ -130,8 +131,9 @@ export async function GET(
  */
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: number } },
+  props: { params: Promise<{ id: string }> },
 ) {
+  const params = await props.params;
   try {
     const body = await req.json();
     const validation = validateCompanyId(req);
@@ -211,8 +213,9 @@ export async function PATCH(
  */
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: number } },
+  props: { params: Promise<{ id: string }> },
 ) {
+  const params = await props.params;
   try {
     const validation = validateCompanyId(req);
     if (validation instanceof NextResponse) return validation;

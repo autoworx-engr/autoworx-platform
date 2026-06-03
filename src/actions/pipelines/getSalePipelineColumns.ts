@@ -11,8 +11,9 @@ export const getSalePipelineColumns = async (
   searchTerm?: string,
   initialLoad: boolean = true,
   orderBy?: "asc" | "desc",
+  companyIdOverride?: number,
 ) => {
-  const companyId = await getCompanyId();
+  const companyId = companyIdOverride ?? (await getCompanyId());
   let columns = await db.column.findMany({
     where: { type, companyId: companyId },
     orderBy: { order: "asc" },
@@ -24,6 +25,7 @@ export const getSalePipelineColumns = async (
         searchTerm: searchTerm,
         orderBy: orderBy,
         columnId: column.id,
+        companyId,
         // For initial load, fetch only 10 leads per column for faster perceived performance
         ...(initialLoad && { take: defaultTake, skip: defaultSkip }),
         // For subsequent loads, fetch all leads (no pagination)

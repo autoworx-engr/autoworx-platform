@@ -24,7 +24,7 @@ type DateSelectorProps = {
 // Custom hook for detecting clicks outside an element
 function useOnClickOutside(
   ref: React.RefObject<HTMLElement | null>,
-  handler: () => void
+  handler: () => void,
 ) {
   useEffect(() => {
     const listener = (event: MouseEvent | TouchEvent) => {
@@ -186,7 +186,7 @@ function DateSelector({ type, weekStart = 1 }: DateSelectorProps) {
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 mt-1 w-auto min-w-[280px] rounded-md border border-gray-200 bg-white shadow-lg">
+        <div className="absolute right-0 z-50 mt-1 w-auto min-w-[280px] max-w-[calc(100vw-1rem)] rounded-md border border-gray-200 bg-white shadow-lg">
           {renderCalendarContent()}
         </div>
       )}

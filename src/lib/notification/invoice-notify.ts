@@ -85,6 +85,10 @@ export const sendInvoiceAuthorizeNotification = async ({
     // get all company admins and managers
     const getUsers = await getUsersByRole(companyUniqueId, sendRoles, {
       id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      phone: true,
     });
 
     const vehicleInfo = await getVehicleByInvoiceId(invoiceId);
@@ -140,6 +144,10 @@ export const sendEstimateCreateNotification = async ({
     // get all company admins and managers
     const getUsers = await getUsersByRole(companyUniqueId, sendRoles, {
       id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      phone: true,
     });
 
     const redirectUrl = `/dashboard/estimate/view/${invoiceId}`;
@@ -186,6 +194,10 @@ export const sendInvoiceDeliveredNotification = async ({
     // get all company admins and managers
     const getUsers = await getUsersByRole(companyUniqueId, sendRoles, {
       id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      phone: true,
     });
 
     const vehicleInfo = await getVehicleByInvoiceId(invoiceId);

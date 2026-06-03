@@ -3,10 +3,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { updateShopServiceSchema } from "@/validations/schemas/virtual-shop/shop-service.validation";
 
-import { Labor, Material, Service, Tag } from "@prisma/client";
-import { jwtVerifyToken } from "@/lib/jwtVerify";
 import { AppError } from "@/error-boundary/error";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { jwtVerifyToken } from "@/lib/jwtVerify";
 import { getToken } from "next-auth/jwt";
 // Use your update schema if you have one, otherwise falling back to the create schema
 
@@ -97,9 +96,15 @@ import { getToken } from "next-auth/jwt";
  *                     isActive:
  *                       type: boolean
  *                       example: true
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
+ *                     updatedAt:
+ *                       type: string
+ *                       format: date-time
  *                     invoiceItems:
  *                       type: array
- *                       description: Nested invoice items containing detailed breakdown of the service, labor, and materials.
+ *                       description: Nested invoice items containing detailed breakdown of the service, labor, materials, and tags.
  *                       items:
  *                         type: object
  *                         properties:
@@ -113,16 +118,25 @@ import { getToken } from "next-auth/jwt";
  *                           laborId:
  *                             type: integer
  *                             nullable: true
- *                             example: null
+ *                             example: 202
  *                           service:
  *                             type: object
  *                             nullable: true
  *                             example: { "id": 5, "name": "Basic Wash", "categoryId": 2 }
+ *                           labor:
+ *                             type: object
+ *                             nullable: true
+ *                             example: { "id": 202, "name": "Standard Labor", "hours": 1, "charge": 80 }
  *                           materials:
  *                             type: array
  *                             items:
  *                               type: object
  *                             example: [{ "id": 50, "name": "Premium Wax", "cost": 10, "sell": 15 }]
+ *                           tags:
+ *                             type: array
+ *                             items:
+ *                               type: object
+ *                             example: [{ "id": 1, "name": "Exterior" }]
  *       400:
  *         description: Invalid or missing parameter (id).
  *         content:
@@ -144,9 +158,10 @@ import { getToken } from "next-auth/jwt";
  */
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } },
+  props: { params: Promise<{ id: string }> },
 ) {
   try {
+    const params = await props.params;
     const { id } = params;
 
     if (!id || isNaN(Number(id))) {
@@ -257,6 +272,16 @@ export async function GET(
  *                 type: boolean
  *                 description: Toggle service availability.
  *                 example: true
+ *               customDuration:
+ *                 type: number
+ *                 description: Explicit duration in minutes.
+ *                 example: 120
+ *               category:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: One or more categories to associate with the shop service. Can also be a single string.
+ *                 example: ["Detailing"]
  *               items:
  *                 type: array
  *                 description: Nested array for rebuilding invoice configurations. At least one item is required, and each item must have materials or labor.
@@ -287,23 +312,20 @@ export async function GET(
  *           example:
  *             shopId: 1
  *             title: "Full Ceramic Coating & Detail"
- *             companyId: 4
- *             description: "Complete exterior paint correction and c..."
+ *             description: "Complete exterior paint correction and ceramic coating application."
  *             imageUrl: "https://example.com/ceramic-coating.jpg"
  *             modifierCoupe: "0"
  *             modifierSedan: "50"
  *             modifierSUV: "100"
  *             modifierTruck: "150"
  *             isActive: true
+ *             category: ["Detailing"]
+ *             customDuration: 120
  *             items:
  *               - service:
  *                   id: 2526
- *                   name: "Test Door Serffvice 6"
+ *                   name: "Test Door Service 6"
  *                   description: "Full exterior paint correction service."
- *                   companyId: 4
- *                   categoryId: 421
- *                   createdAt: "2024-01-15T08:00:00.000Z"
- *                   updatedAt: "2024-06-10T12:00:00.000Z"
  *                 labor:
  *                   name: "Master Detailer"
  *                   notes: "Apply carefully"
@@ -311,7 +333,6 @@ export async function GET(
  *                   hours: 2
  *                   charge: 150
  *                   discount: 0
- *                   cannedLabor: false
  *                 materials:
  *                   - name: "ISO 70% ALC"
  *                     notes: "Apply in shaded area only"
@@ -319,11 +340,7 @@ export async function GET(
  *                     cost: 45
  *                     sell: 150
  *                     discount: 0
- *                     companyId: 4
  *                     productId: 1
- *                     createdAt: "2024-01-15T08:00:00.000Z"
- *                     updatedAt: "2024-06-10T12:00:00.000Z"
- *                     tags: []
  *                 tags: []
  *     responses:
  *       200:
@@ -338,7 +355,54 @@ export async function GET(
  *                   example: true
  *                 data:
  *                   type: object
- *                   description: Updated Shop Service object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                       example: 10
+ *                     shopId:
+ *                       type: integer
+ *                       example: 1
+ *                     title:
+ *                       type: string
+ *                       example: "Full Detail Package"
+ *                     description:
+ *                       type: string
+ *                       example: "Updated premium deep cleaning."
+ *                     price:
+ *                       type: number
+ *                       example: 299
+ *                     duration:
+ *                       type: integer
+ *                       example: 300
+ *                     category:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                       example: ["Detailing"]
+ *                     imageUrl:
+ *                       type: string
+ *                       example: "https://example.com/image.jpg"
+ *                     modifierCoupe:
+ *                       type: number
+ *                       example: 0
+ *                     modifierSedan:
+ *                       type: number
+ *                       example: 50
+ *                     modifierSUV:
+ *                       type: number
+ *                       example: 75
+ *                     modifierTruck:
+ *                       type: number
+ *                       example: 100
+ *                     isActive:
+ *                       type: boolean
+ *                       example: true
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
+ *                     updatedAt:
+ *                       type: string
+ *                       format: date-time
  *       400:
  *         description: Invalid or missing data.
  *         content:
@@ -347,12 +411,6 @@ export async function GET(
  *               $ref: '#/components/schemas/ErrorResponse'
  *       401:
  *         description: Unauthorized.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *       403:
- *         description: Company ID not found.
  *         content:
  *           application/json:
  *             schema:
@@ -372,9 +430,10 @@ export async function GET(
  */
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  props: { params: Promise<{ id: string }> },
 ) {
   try {
+    const params = await props.params;
     const serviceId = parseInt(params.id, 10);
     if (isNaN(serviceId)) {
       throw new AppError(400, "Invalid Shop Service ID");
@@ -414,6 +473,7 @@ export async function PUT(
 
     const {
       title,
+      shortDescription,
       description,
       imageUrl,
       items,
@@ -422,6 +482,8 @@ export async function PUT(
       modifierSUV,
       modifierTruck,
       isActive,
+      customDuration,
+      category: providedCategory,
     } = validatedData;
 
     if (!companyId) {
@@ -443,7 +505,7 @@ export async function PUT(
     let totalDuration = 0;
     const categoryIdsToFetch = new Set<number>();
 
-    items?.forEach(item => {
+    items?.forEach((item) => {
       if (item.service?.categoryId) {
         categoryIdsToFetch.add(item.service.categoryId);
       }
@@ -456,7 +518,7 @@ export async function PUT(
         totalDuration += (Number(item.labor.hours) || 0) * 60;
       }
 
-      item.materials?.forEach(mat => {
+      item.materials?.forEach((mat) => {
         if (!mat || !mat.name) return;
         const matQuantity = Number(mat.quantity) || 0;
         const matSell = Number(mat.sell) || 0;
@@ -470,11 +532,22 @@ export async function PUT(
       where: { id: { in: Array.from(categoryIdsToFetch) } },
       select: { name: true },
     });
-    const categories = fetchedCategories.map(c => c.name);
+
+    const categorySet = new Set(fetchedCategories.map((c) => c.name));
+
+    if (providedCategory) {
+      if (Array.isArray(providedCategory)) {
+        providedCategory.forEach((c) => categorySet.add(c));
+      } else {
+        categorySet.add(providedCategory);
+      }
+    }
+
+    const categories = Array.from(categorySet);
 
     // 3. DATABASE TRANSACTION
     const updatedShopService = await db.$transaction(
-      async tx => {
+      async (tx) => {
         // --- BULK CLEANUP PHASE ---
         // Fetch IDs needed for cascading manual deletes
         const oldInvoiceItems = await tx.invoiceItem.findMany({
@@ -482,9 +555,9 @@ export async function PUT(
           select: { id: true, laborId: true },
         });
 
-        const oldInvoiceItemIds = oldInvoiceItems.map(i => i.id);
+        const oldInvoiceItemIds = oldInvoiceItems.map((i) => i.id);
         const oldLaborIds = oldInvoiceItems
-          .map(i => i.laborId)
+          .map((i) => i.laborId)
           .filter(Boolean) as number[]; // Assuming Int
 
         if (oldInvoiceItemIds.length > 0) {
@@ -493,7 +566,7 @@ export async function PUT(
             where: { invoiceItemId: { in: oldInvoiceItemIds } },
             select: { id: true },
           });
-          const oldMaterialIds = oldMaterials.map(m => m.id);
+          const oldMaterialIds = oldMaterials.map((m) => m.id);
 
           if (oldMaterialIds.length > 0) {
             await tx.materialTag.deleteMany({
@@ -522,7 +595,7 @@ export async function PUT(
         // --- REBUILD PHASE ---
         if (items && items.length > 0) {
           await Promise.all(
-            items.map(async item => {
+            items.map(async (item) => {
               let newLaborId;
 
               if (item.labor) {
@@ -544,7 +617,7 @@ export async function PUT(
                     (tag): tag is NonNullable<typeof tag> => !!(tag && tag.id),
                   );
                   await tx.laborTag.createMany({
-                    data: validTags.map(tag => ({
+                    data: validTags.map((tag) => ({
                       laborId: newLabor.id,
                       tagId: tag.id!,
                     })),
@@ -562,7 +635,7 @@ export async function PUT(
 
               if (item.materials?.length) {
                 await Promise.all(
-                  item.materials.map(async material => {
+                  item.materials.map(async (material) => {
                     if (!material || !material.name) return;
 
                     const newMat = await tx.material.create({
@@ -587,7 +660,7 @@ export async function PUT(
                           !!(tag && tag.id),
                       );
                       await tx.materialTag.createMany({
-                        data: validTags.map(tag => ({
+                        data: validTags.map((tag) => ({
                           materialId: newMat.id,
                           tagId: tag.id!,
                         })),
@@ -602,7 +675,7 @@ export async function PUT(
                   (tag): tag is NonNullable<typeof tag> => !!(tag && tag.id),
                 );
                 await tx.itemTag.createMany({
-                  data: validTags.map(tag => ({
+                  data: validTags.map((tag) => ({
                     itemId: invoiceItem.id,
                     tagId: tag.id!,
                   })),
@@ -617,6 +690,7 @@ export async function PUT(
           where: { id: serviceId },
           data: {
             title,
+            shortDescription,
             description,
             imageUrl,
             category: categories,
@@ -626,7 +700,13 @@ export async function PUT(
             modifierTruck: modifierTruck ? Number(modifierTruck) : 0,
             isActive: isActive !== undefined ? isActive : true,
             price: totalPrice,
-            duration: totalDuration > 0 ? totalDuration : 30,
+            duration: (() => {
+              const base =
+                customDuration !== undefined && customDuration !== null
+                  ? Number(customDuration)
+                  : totalDuration;
+              return base > 0 ? base : 30;
+            })(),
           },
         });
       },
@@ -684,9 +764,6 @@ export async function PUT(
  *                 message:
  *                   type: string
  *                   example: "Shop service deleted successfully"
- *                 data:
- *                   type: object
- *                   description: The raw response data for the deleted service.
  *       400:
  *         description: Missing required id or bad request.
  *         content:
@@ -705,6 +782,12 @@ export async function PUT(
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: Shop service not found.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
  *         description: Internal server error.
  *         content:
@@ -714,9 +797,10 @@ export async function PUT(
  */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  props: { params: Promise<{ id: string }> },
 ) {
   try {
+    const params = await props.params;
     const authHeader = req.headers.get("authorization") ?? "";
     const accessToken = authHeader.startsWith("Bearer ")
       ? authHeader.split(" ")[1]

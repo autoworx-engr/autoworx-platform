@@ -41,7 +41,7 @@ export default function RevenueTableRow({
   const refundedAmount =
     invoice?.Refund?.reduce(
       (acc, refund) => acc + Number(refund.amount || 0),
-      0
+      0,
     ) || 0;
 
   const totalProfit = Number((invoice as any).profitPrice).toFixed(2);
@@ -57,7 +57,7 @@ export default function RevenueTableRow({
     <tr
       className={cn(
         "cursor-pointer rounded-md py-3",
-        index % 2 === 0 ? "bg-background" : "bg-blue-100"
+        index % 2 === 0 ? "bg-background" : "bg-blue-100",
       )}
     >
       <td className="border-b px-4 py-2 text-left">
@@ -102,11 +102,11 @@ export default function RevenueTableRow({
                 preserveAspectRatio="xMidYMid meet"
                 fill="#000000"
               >
-                <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
                 <g
                   id="SVGRepo_tracerCarrier"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 ></g>
                 <g id="SVGRepo_iconCarrier">
                   {" "}

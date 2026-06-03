@@ -25,8 +25,8 @@ export function ImagesInput({ photos, setPhotos }: ImagesInputProps) {
             maxSizeMB: 1, // max size in MB
             maxWidthOrHeight: 1920, // limit resolution
             useWebWorker: true,
-          })
-        )
+          }),
+        ),
       );
       console.log({ compressPhotos });
       const formData = new FormData();
@@ -100,10 +100,10 @@ export function ImagesInput({ photos, setPhotos }: ImagesInputProps) {
             key={i}
           >
             {
-               
               <Image
                 src={photo.photo ?? ""}
                 fill
+                sizes="(max-width: 768px) 100vw, 200px"
                 className="object-contain p-1 rounded-sm"
                 alt={`image-${i}`}
               />

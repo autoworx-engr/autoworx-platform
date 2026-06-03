@@ -6,25 +6,26 @@ import NewFleet from "@/app/(dashboard)/dashboard/fleet/components/NewFleet";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import { ArrowLeft } from "lucide-react";
+import { notFound } from "next/navigation";
+import { Metadata } from "next";
 
 type PropsType = {
-  params: {
+  params: Promise<{
     id?: string;
-  };
-  searchParams: {
+  }>;
+  searchParams: Promise<{
     search?: string;
-  };
+  }>;
 };
 
-const info = {
-  jobsCount: 567,
-  customerLifetimeValue: 567,
-  paidInvoiceCount: 567,
-  unpaidInvoiceCount: 567,
+export const metadata: Metadata = {
+  title: "Fleet Details",
+  description: "View fleet details and invoices.",
 };
 
 const page = async (props: PropsType) => {
-  const { params, searchParams } = props;
+  const params = await props.params;
+  const searchParams = await props.searchParams;
   const { id } = params;
 
   const companyId = await getCompanyId();
@@ -33,19 +34,21 @@ const page = async (props: PropsType) => {
     include: {
       fleet: true,
       Invoice: {
-        where: {
-          type: "Invoice",
-        },
+        where: { type: "Invoice" },
         include: {
           column: true,
           vehicle: true,
         },
+        orderBy: { createdAt: "desc" },
+        take: 100,
       },
       tag: {
         where: { type: "CLIENT" },
       },
     },
   });
+
+  if (!client) return notFound();
 
   return (
     <div className="p-2">
@@ -59,18 +62,16 @@ const page = async (props: PropsType) => {
           Fleet Details
         </h1>
 
-        {/* Add new fleet button */}
-
-        <NewFleet
+        {/* <NewFleet
           buttonElement={
             <button className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#6571FF] to-[#8088FF] px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-[#6571FF]/40 transition-all duration-300 hover:from-[#505aff] hover:to-[#6571FF] hover:shadow-xl">
               + Add New Fleet
             </button>
           }
-        />
+        /> */}
       </div>
       {/* Fleet Details */}
-      <FleetDetails fleet={client} info={info} />
+      <FleetDetails fleet={client} />
 
       {/* Invoice and Statement */}
       <InvoiceAndStatementList client={client} searchParams={searchParams} />

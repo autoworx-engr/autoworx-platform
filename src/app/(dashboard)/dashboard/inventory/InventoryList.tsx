@@ -1,9 +1,15 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/Tabs";
-import { User } from "@prisma/client";
+import { Category, InventoryProduct, User, Vendor } from "@prisma/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
+
+type InventoryProductWithRelations = InventoryProduct & {
+  category: Category | null;
+  vendor: Vendor | null;
+  User?: User | null;
+};
 import ProductTable from "./ProductTable";
 import SearchFilter from "./SearchFilter";
 
@@ -24,8 +30,8 @@ export default function InventoryList({
   totalSupplies,
   isLoading,
 }: {
-  products: any;
-  supplies: any;
+  products: InventoryProductWithRelations[];
+  supplies: InventoryProductWithRelations[];
   productId: number;
   user: User;
   isFullWidth?: boolean;
@@ -90,7 +96,7 @@ export default function InventoryList({
       {view === "products" && (
         <TabsContent
           value="products"
-          className={`mx-2 my-0 py-0 flex min-h-0 flex-col overflow-y-auto md:visible md:static md:opacity-100 ${productId ? "invisible absolute opacity-0" : "visible static opacity-100"}`}
+          className={`mx-2 my-0 py-0 flex min-h-0 flex-col overflow-y-auto lg:overflow-hidden md:visible md:static md:opacity-100 ${productId ? "invisible absolute opacity-0" : "visible static opacity-100"}`}
         >
           <div className="relative flex h-full w-full flex-col">
             <div className="sticky top-0 z-50 bg-white pb-2 pt-2">
@@ -115,7 +121,7 @@ export default function InventoryList({
       {view === "supplies" && (
         <TabsContent
           value="supplies"
-          className={`mx-2 my-0 py-0 flex min-h-0 flex-col overflow-y-auto md:visible md:static md:opacity-100 ${productId ? "invisible absolute opacity-0" : "visible static opacity-100"}`}
+          className={`mx-2 my-0 py-0 flex min-h-0 flex-col overflow-y-auto lg:overflow-hidden md:visible md:static md:opacity-100 ${productId ? "invisible absolute opacity-0" : "visible static opacity-100"}`}
         >
           <div className="relative flex h-full w-full flex-col">
             <div className="sticky top-0 z-50 bg-white pb-2 pt-2">

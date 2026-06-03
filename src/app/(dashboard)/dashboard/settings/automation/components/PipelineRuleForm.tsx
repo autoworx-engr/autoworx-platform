@@ -31,7 +31,6 @@ export type Rule = {
   timeDelay?: number | string | null;
   targetColumnId: number | null;
   companyId: number | null;
-  // createdBy: string | null;
 };
 
 type PipelineRuleFormProps = {
@@ -50,7 +49,6 @@ const PipelineRuleForm = ({
   companyId,
   user,
 }: PipelineRuleFormProps) => {
-  // const [loading, setLoading] = useState(false);
   const {
     data: allPipelineRules,
     isLoading: pipelineIsLoading,
@@ -64,7 +62,6 @@ const PipelineRuleForm = ({
     timeDelay: null,
     targetColumnId: null,
     companyId: companyId,
-    // createdBy: null,
   });
 
   const [showGuide, setShowGuide] = useState(true);
@@ -94,23 +91,23 @@ const PipelineRuleForm = ({
     const loadData = async () => {
       if (isEdit && id && data?.data) {
         const condType = data?.data?.conditionType || "";
-        const timeDelay = condType === "TIME_DELAY" 
-          ? parseSecondsToTimeDelay(data?.data?.timeDelay)
-          : null;
-          
+        const timeDelay =
+          condType === "TIME_DELAY"
+            ? parseSecondsToTimeDelay(data?.data?.timeDelay)
+            : null;
+
         const payload: Rule = {
           id: data?.data?.id,
           companyId: data?.data?.companyId,
           conditionType: condType,
-          stageIds: data?.data?.stages?.map((stage: any) => stage.columnId) || [],
+          stageIds:
+            data?.data?.stages?.map((stage: any) => stage.columnId) || [],
           targetColumnId: data?.data?.targetColumnId?.toString() || null,
           title: data?.data?.title || "",
           timeDelay: timeDelay,
-          // createdBy: data?.data?.createdBy,
         };
         setFormData(payload);
         setInitialFormData(payload);
-        // setLoading(false);
       } else {
         const payload: Rule = {
           title: "",
@@ -119,7 +116,6 @@ const PipelineRuleForm = ({
           timeDelay: null,
           targetColumnId: null,
           companyId: companyId,
-          // createdBy: null,
         };
         setFormData(payload);
         setInitialFormData(payload);
@@ -192,22 +188,23 @@ const PipelineRuleForm = ({
     }
 
     try {
+      const payload = {
+        ...formData,
+        timeDelay:
+          formData.timeDelay != null
+            ? parseTimeDelayToSeconds(formData.timeDelay)
+            : null,
+        targetColumnId:
+          formData.targetColumnId != null
+            ? Number(formData.targetColumnId)
+            : null,
+      };
+
       if (isEdit && id) {
-        if (formData.timeDelay != null) {
-          const seconds = parseTimeDelayToSeconds(formData.timeDelay!);
-          formData.timeDelay = seconds;
-        }
-        formData.targetColumnId = Number(formData.targetColumnId);
-        updateRule({ id, data: formData });
-        // setLoading(true);
+        updateRule({ id, data: payload });
       } else {
-        if (formData.timeDelay != null) {
-          const seconds = parseTimeDelayToSeconds(formData.timeDelay!);
-          formData.timeDelay = seconds;
-        }
-        formData.targetColumnId = Number(formData.targetColumnId);
-        // formData.createdBy = user.firstName + " " + user.lastName;
-        createRule(formData);
+        createRule(payload);
+
         setFormData({
           title: "",
           stageIds: [],
@@ -215,7 +212,6 @@ const PipelineRuleForm = ({
           timeDelay: null,
           targetColumnId: null,
           companyId: companyId,
-          // createdBy: null,
         });
       }
     } catch (error) {
@@ -316,14 +312,12 @@ const PipelineRuleForm = ({
             />
             <MultiSelect
               options={stages}
-              // value={formData?.stageIds}
               value={
                 Array.isArray(formData?.stageIds)
                   ? formData?.stageIds
                   : formData?.stageIds
               }
               onChange={(value) => handleInputChange("stageIds", value)}
-              // label="Stage"
               placeholder="Select options"
               required
               error={error.stageIds}
@@ -398,7 +392,6 @@ const PipelineRuleForm = ({
             />
             <Selector
               name="action"
-              // label="Action"
               options={actionOptions}
               value={formData?.targetColumnId!}
               onChange={(value) => handleInputChange("targetColumnId", value)}

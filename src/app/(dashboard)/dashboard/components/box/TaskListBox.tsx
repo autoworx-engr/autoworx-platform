@@ -40,14 +40,21 @@ export default function TaskListBox() {
   // Check if calendarAndTask feature permission is enabled at company
   const calendarAndTaskFeatureEnabled =
     data?.data?.find(
-      (permission: any) => permission.permission_name === "calendar"
+      (permission: any) => permission.permission_name === "calendar",
     )?.enabled !== false;
+
+  // Company role permission is a ceiling — if the role blocks it, individual override cannot grant access
+  const companyRoleAllowsTask =
+    companyEmployeePermissions?.calendarTask !== false;
+  const individualAllowsTask =
+    userPermissions?.calendarTask !== undefined
+      ? Boolean(userPermissions.calendarTask)
+      : true;
 
   const hasTaskPermission =
     calendarAndTaskFeatureEnabled &&
-    (userPermissions?.calendarTask !== undefined
-      ? userPermissions.calendarTask
-      : companyEmployeePermissions?.calendarTask !== false);
+    companyRoleAllowsTask &&
+    individualAllowsTask;
 
   // --- Content Loading/State Logic (Enhanced for premium look) ---
   if (!hasTaskPermission) {
@@ -113,7 +120,7 @@ export default function TaskListBox() {
           shadow-xl dark:shadow-2xl dark:shadow-blue-900/20
           transition-all duration-300
           overflow-hidden // Important for height control
-        `
+        `,
         )}
       >
         {/* BoxTitle (Assumed to be a clean heading component) */}

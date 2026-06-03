@@ -61,7 +61,7 @@ export async function deleteFleetStatement(data: {
 
     if (hasPaidInvoices) {
       throw new Error(
-        "Cannot delete statement with paid or partially paid invoices."
+        "Cannot delete statement with paid or partially paid invoices.",
       );
     }
 

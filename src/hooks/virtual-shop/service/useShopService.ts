@@ -167,18 +167,27 @@ export const useGetAppointmentSlots = (
   shopId?: number,
   date?: string,
   nextAvailable?: boolean,
+  duration?: number,
 ) => {
   return useQuery({
-    queryKey: ["appointment-slots", shopId, date, nextAvailable],
-    queryFn: () => getAppointmentSlots(Number(shopId), date, nextAvailable),
+    queryKey: ["appointment-slots", shopId, date, nextAvailable, duration],
+    queryFn: () =>
+      getAppointmentSlots(Number(shopId), date, nextAvailable, duration),
     enabled: !!shopId && (!!date || !!nextAvailable),
   });
 };
 
 export const useCreateVirtualShopServiceBooking = () => {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: (payload: CreateVirtualShopServiceBookingPayload) =>
       createVirtualShopServiceBooking(payload),
+    onSuccess: (_response, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["appointment-slots", variables?.shopId],
+      });
+    },
   });
 };
 
@@ -186,5 +195,25 @@ export const useLookupClientByPhone = () => {
   return useMutation({
     mutationFn: (payload: { phone: string; shopId: number }) =>
       lookupClientByPhone(payload),
+  });
+};
+
+export const useInfiniteShopServices = (
+  shopId?: number,
+  limit = 10,
+  enabled = true,
+) => {
+  return useInfiniteQuery({
+    queryKey: ["virtual-shop-services-infinite", shopId, limit],
+    queryFn: ({ pageParam }) =>
+      getShopServices({
+        shopId: Number(shopId),
+        page: pageParam as number,
+        limit,
+      }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage: ShopServicesResponse) =>
+      lastPage.meta.hasNextPage ? lastPage.meta.page + 1 : undefined,
+    enabled: enabled && !!shopId,
   });
 };

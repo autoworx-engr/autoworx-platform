@@ -3,13 +3,10 @@ import { db } from "@/lib/db";
 import { sendPaymentReceivedNotification } from "@/lib/notification/payment-notify";
 import { settleGiftCardReloadPayment } from "@/services/giftCardReloadSettlementService";
 import { confirmShopBooking } from "@/services/confirmShopBooking";
-import { env } from "next-runtime-env";
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 
-const stripe = new Stripe(
-  (process.env.STRIPE_SECRET_KEY || env("STRIPE_SECRET_KEY")) as string,
-);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
 const parsePaymentNotes = (notes: string | null) => {
   if (!notes) return {} as Record<string, any>;
@@ -61,8 +58,7 @@ export async function POST(req: NextRequest) {
     event = stripe.webhooks.constructEvent(
       rawBody,
       signature,
-      (process.env.STRIPE_WEBHOOK_SECRET ||
-        env("STRIPE_WEBHOOK_SECRET")) as string,
+      process.env.STRIPE_WEBHOOK_SECRET as string,
     );
 
     // Handle specific event types
@@ -451,7 +447,8 @@ export async function POST(req: NextRequest) {
         sendPaymentReceivedNotification({
           companyId: paymentData.companyId,
           amount: totalPaid,
-          clientName: `${firstInvoice?.client?.firstName} ${firstInvoice?.client?.lastName}`,
+          clientName:
+            `${firstInvoice?.client?.firstName} ${firstInvoice?.client?.lastName ?? ""}`.trim(),
           invoiceId: paymentData.statementId,
           isDeposit: false,
         });
@@ -673,7 +670,8 @@ export async function POST(req: NextRequest) {
         sendPaymentReceivedNotification({
           companyId: paymentData.companyId,
           amount: paymentData.amount,
-          clientName: `${stripeInvoice?.client?.firstName} ${stripeInvoice?.client?.lastName}`,
+          clientName:
+            `${stripeInvoice?.client?.firstName} ${stripeInvoice?.client?.lastName ?? ""}`.trim(),
           invoiceId: paymentData.invoiceId,
           isDeposit,
         });

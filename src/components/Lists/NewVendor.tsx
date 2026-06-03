@@ -1,5 +1,6 @@
 "use client";
 
+import type { JSX } from "react";
 import { newVendor } from "@/actions/vendor/newVendor";
 import {
   Dialog,
@@ -122,7 +123,7 @@ export default function NewVendor({
     if (
       website &&
       !/^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/.test(
-        website
+        website,
       )
     ) {
       showError({
@@ -333,7 +334,7 @@ export default function NewVendor({
                 if (
                   value &&
                   !/^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/.test(
-                    value
+                    value,
                   )
                 ) {
                   showError({

@@ -23,8 +23,9 @@ import { Priority } from "@prisma/client";
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  props: { params: Promise<{ id: string }> },
 ) {
+  const params = await props.params;
   try {
     const taskId = Number(params.id);
 
@@ -82,8 +83,9 @@ export async function GET(
  */
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  props: { params: Promise<{ id: string }> },
 ) {
+  const params = await props.params;
   try {
     const taskId = Number(params.id);
     const body = await req.json();
@@ -100,42 +102,39 @@ export async function PATCH(
       assignedUsers,
     } = body;
 
-    const updatedTask = await db.task.update({
-      where: { id: taskId },
-      data: {
-        title,
-        description,
-        date: date ? new Date(date) : null,
-        startTime,
-        endTime,
-        priority: priority as Priority,
-        clientId,
-        leadId,
-      },
-      include: {
-        taskUser: true,
-        client: true,
-        lead: true,
-      },
-    });
-
-    if (assignedUsers) {
-      // Remove old users
-      await db.taskUser.deleteMany({
-        where: {
-          taskId: taskId,
+    const updatedTask = await db.$transaction(async (tx) => {
+      const task = await tx.task.update({
+        where: { id: taskId },
+        data: {
+          title,
+          description,
+          date: date ? new Date(date) : null,
+          startTime,
+          endTime,
+          priority: priority as Priority,
+          clientId,
+          leadId,
+        },
+        include: {
+          taskUser: true,
+          client: true,
+          lead: true,
         },
       });
 
-      // Add new users
-      await db.taskUser.createMany({
-        data: assignedUsers.map((userId: number) => ({
-          taskId: taskId,
-          userId,
-          eventId: null,
-        })),
-      });
-    }
+      if (assignedUsers) {
+        await tx.taskUser.deleteMany({ where: { taskId } });
+        await tx.taskUser.createMany({
+          data: assignedUsers.map((userId: number) => ({
+            taskId,
+            userId,
+            eventId: null,
+          })),
+        });
+      }
+
+      return task;
+    });
 
     return NextResponse.json({
       success: true,
@@ -172,8 +171,9 @@ export async function PATCH(
  */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  props: { params: Promise<{ id: string }> },
 ) {
+  const params = await props.params;
   try {
     const taskId = Number(params.id);
 

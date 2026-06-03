@@ -1,5 +1,5 @@
 "use server";
-import axiosInstance from "@/helpers/axios";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { serverAxios } from "@/helpers/server-axios";
 
 type TUpdateServiceAutomationTrigger = {
@@ -8,15 +8,16 @@ type TUpdateServiceAutomationTrigger = {
   columnId: number;
 };
 export const updateServiceAutomationTrigger = async function (
-  payload: TUpdateServiceAutomationTrigger
+  payload: TUpdateServiceAutomationTrigger,
 ) {
   try {
     const response = await serverAxios.patch(
       "/service-automation-trigger",
-      payload
+      payload,
     );
     return response.data;
   } catch (error) {
-    console.log("🚀 ~ error:", error);
+    const err = errorHandler(error);
+    throw err;
   }
 };

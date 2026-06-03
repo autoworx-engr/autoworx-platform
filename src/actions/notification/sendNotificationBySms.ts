@@ -30,7 +30,7 @@ export default async function sendNotificationBySms({
       twilioCredentials.apiKeySecret,
       {
         accountSid: twilioCredentials.accountSid,
-      }
+      },
     );
 
     if (twilioCredentials.phoneNumber && userPhoneNo && description) {

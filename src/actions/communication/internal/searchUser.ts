@@ -3,36 +3,58 @@
 import { authOptions } from "@/authOptions";
 import { db } from "@/lib/db";
 import { getServerSession } from "next-auth";
+import { buildUserSearchWhere } from "./_utils/userSearch";
+
+const DEFAULT_TAKE = 30;
+
+type SearchOptions = {
+  /** 1-based page number. */
+  pageParam?: number;
+  take?: number;
+};
 
 export const searchUsers = async (
   searchTerm: string,
-  notNeededUser?: { id: number }[] | null,
+  excludeIds?: number[] | null,
+  { pageParam = 1, take = DEFAULT_TAKE }: SearchOptions = {},
 ) => {
   const session = await getServerSession(authOptions);
-  let withoutNeedUser = [{ id: parseInt(session?.user?.id!) }];
-  if (notNeededUser && notNeededUser.length) {
-    withoutNeedUser = [...withoutNeedUser, ...notNeededUser];
-  }
-  try {
-    const usersFromDB = await db.user.findMany({
-      where: {
-        companyId: session?.user?.companyId,
-        NOT: withoutNeedUser,
-      },
-    });
-    const filteredUsers = usersFromDB.filter((user) => {
-      const fullName = `${user.firstName} ${user.lastName}`;
-      return (
-        fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.phone?.includes(searchTerm)
-      );
-    });
+  if (!session?.user?.id || !session.user.companyId) {
     return {
-      success: true,
-      data: filteredUsers,
+      success: false,
+      data: [] as never[],
+      hasMore: false,
+      nextPage: undefined as number | undefined,
     };
-  } catch (err: any) {
-    throw new Error(err);
   }
+
+  const currentUserId = parseInt(session.user.id, 10);
+  const excludedIdSet = new Set<number>([currentUserId]);
+  if (excludeIds && excludeIds.length) {
+    for (const id of excludeIds) excludedIdSet.add(id);
+  }
+
+  const skip = Math.max(0, (pageParam - 1) * take);
+  const where = {
+    companyId: session.user.companyId,
+    id: { notIn: [...excludedIdSet] },
+    ...buildUserSearchWhere(searchTerm),
+  };
+
+  // Take + 1 so we can detect a next page without a separate count query.
+  const rows = await db.user.findMany({
+    where,
+    orderBy: [{ firstName: "asc" }, { id: "asc" }],
+    skip,
+    take: take + 1,
+  });
+  const hasMore = rows.length > take;
+  const data = hasMore ? rows.slice(0, take) : rows;
+
+  return {
+    success: true,
+    data,
+    hasMore,
+    nextPage: hasMore ? pageParam + 1 : undefined,
+  };
 };

@@ -6,6 +6,7 @@ import type {
 } from "@/service/virtual-shop/api";
 import { getServerSession } from "next-auth";
 import CalendarTab from "../../../components/CalendarTab";
+import { Metadata } from "next";
 
 type PageSearchParams = {
   mode?: string | string[];
@@ -17,9 +18,9 @@ type PageSearchParams = {
 };
 
 type VirtualShopCalendarPageProps = {
-  params: {
+  params: Promise<{
     shopId: string;
-  };
+  }>;
   searchParams?: Promise<PageSearchParams>;
 };
 
@@ -48,7 +49,9 @@ const toPositiveInt = (value: string | undefined, fallback: number) => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 };
 
-function emptyListResponse(page: number): VirtualShopServiceBookingListResponse {
+function emptyListResponse(
+  page: number,
+): VirtualShopServiceBookingListResponse {
   return {
     success: true,
     meta: {
@@ -63,22 +66,24 @@ function emptyListResponse(page: number): VirtualShopServiceBookingListResponse 
   };
 }
 
-function toCalendarData(items: VirtualShopServiceBookingItem[]): VirtualShopBookingCalendarItem[] {
+function toCalendarData(
+  items: VirtualShopServiceBookingItem[],
+): VirtualShopBookingCalendarItem[] {
   return items.map((item) => ({
     id: item.id,
     status: item.status,
     appointment: item.appointment
       ? {
-        date: item.appointment.date,
-        startTime: item.appointment.startTime,
-        endTime: item.appointment.endTime,
-      }
+          date: item.appointment.date,
+          startTime: item.appointment.startTime,
+          endTime: item.appointment.endTime,
+        }
       : null,
     client: item.client
       ? {
-        firstName: item.client.firstName,
-        lastName: item.client.lastName,
-      }
+          firstName: item.client.firstName,
+          lastName: item.client.lastName,
+        }
       : null,
   }));
 }
@@ -106,27 +111,41 @@ async function fetchServiceBookings({
 
     if (!response.ok) return null;
 
-    const json = (await response.json()) as VirtualShopServiceBookingListResponse;
+    const json =
+      (await response.json()) as VirtualShopServiceBookingListResponse;
     return json?.success ? json : null;
   } catch {
     return null;
   }
 }
 
+export const metadata: Metadata = {
+  title: "Shop Booking Calendar",
+  description: "View and manage your virtual shop bookings and appointments.",
+};
+
 export default async function VirtualShopCalendarPage({
   params,
   searchParams,
 }: VirtualShopCalendarPageProps) {
+  const resolvedParams = await params;
   const now = new Date();
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const session = await getServerSession(authOptions);
   const accessToken = session?.accessToken;
-  const shopId = Number.parseInt(params.shopId, 10);
+  const shopId = Number.parseInt(resolvedParams.shopId, 10);
 
-  const viewMode = first(resolvedSearchParams?.mode) === "list" ? "list" : "grid";
-  const viewYear = toPositiveInt(first(resolvedSearchParams?.year), now.getFullYear());
+  const viewMode =
+    first(resolvedSearchParams?.mode) === "list" ? "list" : "grid";
+  const viewYear = toPositiveInt(
+    first(resolvedSearchParams?.year),
+    now.getFullYear(),
+  );
   const month1Based = Math.min(
-    Math.max(toPositiveInt(first(resolvedSearchParams?.month), now.getMonth() + 1), 1),
+    Math.max(
+      toPositiveInt(first(resolvedSearchParams?.month), now.getMonth() + 1),
+      1,
+    ),
     12,
   );
   const viewMonth = month1Based - 1;
@@ -137,15 +156,23 @@ export default async function VirtualShopCalendarPage({
   const selectedDate =
     first(resolvedSearchParams?.date) ||
     `${viewYear}-${String(month1Based).padStart(2, "0")}-${String(defaultDay).padStart(2, "0")}`;
-  const selectedDatePage = toPositiveInt(first(resolvedSearchParams?.selectedPage), 1);
+  const selectedDatePage = toPositiveInt(
+    first(resolvedSearchParams?.selectedPage),
+    1,
+  );
   const listPage = toPositiveInt(first(resolvedSearchParams?.listPage), 1);
 
-  let monthCalendarResponse: { success: boolean; data: VirtualShopBookingCalendarItem[] } = {
+  let monthCalendarResponse: {
+    success: boolean;
+    data: VirtualShopBookingCalendarItem[];
+  } = {
     success: true,
     data: [],
   };
-  let selectedDateResponse: VirtualShopServiceBookingListResponse = emptyListResponse(selectedDatePage);
-  let monthListResponse: VirtualShopServiceBookingListResponse = emptyListResponse(listPage);
+  let selectedDateResponse: VirtualShopServiceBookingListResponse =
+    emptyListResponse(selectedDatePage);
+  let monthListResponse: VirtualShopServiceBookingListResponse =
+    emptyListResponse(listPage);
 
   if (accessToken && Number.isFinite(shopId)) {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL;

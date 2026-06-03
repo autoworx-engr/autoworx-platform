@@ -22,14 +22,19 @@ import { CreateTab } from "../../create/tabs/CreateTab";
 import EstimateInspectionsTab from "../../create/tabs/EstimateInspectionsTab";
 import PaymentTab from "../../create/tabs/PaymentTab";
 import DynamicTemplateLoader from "../../DynamicTemplateLoader";
+import { Metadata } from "next";
 
-export default async function Page({
-  params,
-  searchParams,
-}: {
-  params: { id: string };
-  searchParams: { clientId?: string; templateId?: string };
+export const metadata: Metadata = {
+  title: "Edit Estimate",
+  description: "Edit and manage your estimate details.",
+};
+
+export default async function Page(props: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ clientId?: string; templateId?: string }>;
 }) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const session = await getServerSession(authOptions);
   const templateId = searchParams.templateId ? searchParams.templateId : null;
 
@@ -359,6 +364,8 @@ export default async function Page({
         <BillSummary
           isEstimateServiceFee={Number(invoice.serviceFee) > 0}
           isEstimateTax={Number(invoice.tax) > 0}
+          storedTax={Number(invoice.tax)}
+          storedServiceFee={Number(invoice.serviceFee)}
         />
       </div>
     </div>

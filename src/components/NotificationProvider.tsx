@@ -1,12 +1,26 @@
 import React, { useCallback, useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Bell, CheckCheck, Clock, Settings, Circle, Layers, Check, CheckCircle } from "lucide-react";
+import {
+  Bell,
+  CheckCheck,
+  Clock,
+  Settings,
+  Circle,
+  Layers,
+  Check,
+  CheckCircle,
+  Store,
+} from "lucide-react";
 import { fToNow } from "src/utils/formatDate";
 import { cn } from "@/lib/utils";
 
 // Shadcn UI Components
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -14,7 +28,10 @@ import { Separator } from "@/components/ui/separator";
 
 // Logic Imports
 import { getNotifications } from "@/actions/notification/getNotifications";
-import { markAsAllRead, markAsReadById } from "@/actions/notification/markAsRead";
+import {
+  markAsAllRead,
+  markAsReadById,
+} from "@/actions/notification/markAsRead";
 import { pusher } from "@/lib/pusher/client";
 import { errorToast } from "@/lib/toast";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
@@ -55,12 +72,14 @@ export function NotificationsPopover() {
   useEffect(() => {
     if (!userId) return;
     let ignore = false;
-    pusher.subscribe(`noti-${userId}`).bind("notification", function (data: Notification) {
-      if (!ignore) {
-        setNotifications((prev) => [data, ...prev]);
-        setTotalUnRead((prev) => prev + 1);
-      }
-    });
+    pusher
+      .subscribe(`noti-${userId}`)
+      .bind("notification", function (data: Notification) {
+        if (!ignore) {
+          setNotifications((prev) => [data, ...prev]);
+          setTotalUnRead((prev) => prev + 1);
+        }
+      });
     return () => {
       ignore = true;
       pusher.unsubscribe(`noti-${userId}`);
@@ -81,7 +100,9 @@ export function NotificationsPopover() {
   const handleMarkReadById = async (id: number) => {
     const updated = await markAsReadById(id);
     if (updated.type === "success") {
-      setNotifications(notifications.map((n) => (n.id === id ? { ...n, isUnRead: false } : n)));
+      setNotifications(
+        notifications.map((n) => (n.id === id ? { ...n, isUnRead: false } : n)),
+      );
       setTotalUnRead((prev) => Math.max(0, prev - 1));
     } else {
       errorToast("Failed to mark all as read");
@@ -98,13 +119,13 @@ export function NotificationsPopover() {
             fill="currentColor"
             className="h-5 w-5 sm:h-7 sm:w-7 text-white sm:text-[#6571FF]"
             stroke="currentColor"
-            stroke-width="0.41600000000000004"
+            strokeWidth="0.41600000000000004"
           >
-            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+            <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
             <g
               id="SVGRepo_tracerCarrier"
-              stroke-linecap="round"
-              stroke-linejoin="round"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             ></g>
             <g id="SVGRepo_iconCarrier">
               {" "}
@@ -119,16 +140,28 @@ export function NotificationsPopover() {
         </button>
       </PopoverTrigger>
 
-      <PopoverContent align="end" className="w-[380px] rounded-[2rem] p-0 shadow-2xl border-slate-100 overflow-hidden">
+      <PopoverContent
+        align="end"
+        className="w-[380px] rounded-[2rem] p-0 shadow-2xl border-slate-100 overflow-hidden"
+      >
         <div className="flex items-center justify-between p-5">
           <div className="space-y-0.5">
-            <h3 className="text-lg font-semibold text-slate-700">Notifications</h3>
+            <h3 className="text-lg font-semibold text-slate-700">
+              Notifications
+            </h3>
             <p className="text-xs font-medium text-slate-500">
-              {totalUnRead > 0 ? `You have ${totalUnRead} unread updates` : "All caught up!"}
+              {totalUnRead > 0
+                ? `You have ${totalUnRead} unread updates`
+                : "All caught up!"}
             </p>
           </div>
           {totalUnRead > 0 && (
-            <Button variant="ghost" size="icon" className="text-[#6571FF]" onClick={handleMarkAllAsRead}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-[#6571FF]"
+              onClick={handleMarkAllAsRead}
+            >
               <CheckCheck size={18} />
             </Button>
           )}
@@ -160,7 +193,10 @@ export function NotificationsPopover() {
           <div className="p-3 bg-slate-50/50 hover:bg-slate-100 border-t border-slate-200">
             <button
               className="w-full font-semibold text-[#6571FF]"
-              onClick={() => { setLimit(maxLimit); setIsViewAll(true); }}
+              onClick={() => {
+                setLimit(maxLimit);
+                setIsViewAll(true);
+              }}
             >
               View All
             </button>
@@ -178,19 +214,35 @@ function NotificationItem({ notification, setIsOpen, onMarkRead }: any) {
   const handleAction = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (notification.isUnRead) startTransition(() => onMarkRead(notification.id));
+    if (notification.isUnRead)
+      startTransition(() => onMarkRead(notification.id));
   };
 
   return (
-    <div className={cn("group relative flex items-start gap-4 p-4 transition-all hover:bg-slate-50", notification.isUnRead && "bg-[#6571FF]/[0.02]")}>
-      <div className={cn("mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl", notification.isUnRead ? "bg-[#6571FF] text-white shadow-lg shadow-[#6571FF]/30" : "bg-[#6571FF]/20 text-[#6571FF]")}>
+    <div
+      className={cn(
+        "group relative flex items-start gap-4 p-4 transition-all hover:bg-slate-50",
+        notification.isUnRead && "bg-[#6571FF]/[0.02]",
+      )}
+    >
+      <div
+        className={cn(
+          "mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl",
+          notification.isUnRead
+            ? "bg-[#6571FF] text-white shadow-lg shadow-[#6571FF]/30"
+            : "bg-[#6571FF]/20 text-[#6571FF]",
+        )}
+      >
         {avatarUrl}
       </div>
 
       <div className="flex flex-1 flex-col gap-1">
         <Link
           href={notification.redirectUrl || "#"}
-          onClick={() => { setIsOpen(false); if (notification.isUnRead) onMarkRead(notification.id); }}
+          onClick={() => {
+            setIsOpen(false);
+            if (notification.isUnRead) onMarkRead(notification.id);
+          }}
           className="text-sm font-semibold leading-tight text-slate-700"
         >
           {title}
@@ -202,7 +254,13 @@ function NotificationItem({ notification, setIsOpen, onMarkRead }: any) {
       </div>
 
       {notification.isUnRead && (
-        <Button variant="ghost" size="icon" className="h-6 w-6 text-[#6571FF] hover:text-[#6571FF]/80" onClick={handleAction} disabled={isPending}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 text-[#6571FF] hover:text-[#6571FF]/80"
+          onClick={handleAction}
+          disabled={isPending}
+        >
           <CheckCircle size={6} strokeWidth={2.5} className="animate-pulse" />
         </Button>
       )}
@@ -216,7 +274,9 @@ function renderContent(notification: Notification) {
   const title = (
     <span>
       {notification.title}{" "}
-      <span className="font-medium text-slate-400">{notification.description}</span>
+      <span className="font-medium text-slate-400">
+        {notification.description}
+      </span>
     </span>
   );
 
@@ -238,8 +298,14 @@ function renderContent(notification: Notification) {
     payment: "/icons/navbar/Payments.svg",
   };
 
+  const iconMap: Record<string, React.ReactNode> = {
+    virtualShop: <Store size={22} />,
+  };
+
   return {
-    avatarUrl: typeMap[notiType] ? getIcon(typeMap[notiType]) : <Bell size={18} />,
+    avatarUrl:
+      iconMap[notiType] ??
+      (typeMap[notiType] ? getIcon(typeMap[notiType]) : <Bell size={18} />),
     title,
   };
 }

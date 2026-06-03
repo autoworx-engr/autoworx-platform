@@ -76,8 +76,8 @@ export async function GET(req: Request) {
       "CANCELLED",
     ] as const;
 
-    const formattedData = allStatuses.map(status => {
-      const found = statuses.find(s => s.status === status);
+    const formattedData = allStatuses.map((status) => {
+      const found = statuses.find((s) => s.status === status);
       return {
         status,
         count: found ? found._count._all : 0,

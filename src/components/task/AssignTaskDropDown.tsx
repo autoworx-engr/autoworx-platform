@@ -1,13 +1,13 @@
 import Avatar from "@/components/Avatar";
 import Selector from "@/components/Selector";
 import { User } from "@prisma/client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser.ts";
 import { useIsAdminOrManager } from "@/utils/useIsAdminOrManager.ts";
 import { X } from "lucide-react";
+import useInfinityUsersQuery from "@/app/(dashboard)/dashboard/task/_hook/useInfinityUsersQuery";
 
 type TProps = {
-  companyUsers: Partial<User>[];
   onlyOneUser?: boolean;
   assignedUsers: number[];
   setAssignedUsers: React.Dispatch<React.SetStateAction<number[]>>;
@@ -15,7 +15,6 @@ type TProps = {
 };
 
 export default function AssignTaskDropDown({
-  companyUsers,
   onlyOneUser,
   assignedUsers,
   setAssignedUsers,
@@ -28,25 +27,93 @@ export default function AssignTaskDropDown({
 
   const [selectorOpen, setSelectorOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<Partial<User> | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
+    useInfinityUsersQuery(debouncedSearchTerm);
+
+  const infiniteUsers = useMemo(
+    () => data?.pages.flatMap((page) => page.data) ?? [],
+    [data],
+  );
+
+  const getFullName = (user: Partial<User>) => {
+    const firstName = user?.firstName?.trim() ?? "";
+    const lastName = user?.lastName?.trim() ?? "";
+    const combinedName = `${firstName} ${lastName}`.trim();
+
+    if (combinedName) {
+      return combinedName;
+    }
+
+    return user?.email?.trim() || "Unknown user";
+  };
+
+  const currentUserForAssign = useMemo<Partial<User>[]>(() => {
+    if (!authUser) {
+      return [];
+    }
+
+    const normalizedId = Number(authUser.id);
+    if (Number.isNaN(normalizedId)) {
+      return [];
+    }
+
+    const normalizedName = authUser.name?.trim() ?? "";
+    const [firstName = "", ...lastNameParts] = normalizedName.split(/\s+/);
+    const lastName = lastNameParts.join(" ");
+
+    return [
+      {
+        ...authUser,
+        id: normalizedId,
+        firstName,
+        lastName,
+      } as Partial<User>,
+    ];
+  }, [authUser]);
 
   // Filter users based on admin/manager permissions
   const userForAssign = useMemo(() => {
-    return isAdminOrManager
-      ? companyUsers
-      : companyUsers.filter((user) => user?.id === Number(authUser?.id));
-  }, [companyUsers, isAdminOrManager, authUser?.id]);
+    return isAdminOrManager ? infiniteUsers : currentUserForAssign;
+  }, [isAdminOrManager, infiniteUsers, currentUserForAssign]);
 
   // Get available users (not already assigned)
   const availableUsers = useMemo(() => {
-    return userForAssign.filter((user) => !assignedUsers.includes(user.id!));
+    return userForAssign.filter((user) => {
+      if (typeof user?.id !== "number") {
+        return false;
+      }
+
+      return !assignedUsers.includes(user.id);
+    });
   }, [userForAssign, assignedUsers]);
+
+  const usersById = useMemo(() => {
+    const mergedUsers = [...infiniteUsers, ...currentUserForAssign];
+    return mergedUsers.reduce((acc, user) => {
+      if (typeof user?.id === "number") {
+        acc.set(user.id, user as Partial<User>);
+      }
+      return acc;
+    }, new Map<number, Partial<User>>());
+  }, [infiniteUsers, currentUserForAssign]);
 
   // Get assigned user objects
   const assignedUserObjects = useMemo(() => {
     return assignedUsers
-      .map((userId) => companyUsers.find((user) => user.id === userId))
+      .map((userId) => usersById.get(userId))
       .filter(Boolean) as Partial<User>[];
-  }, [assignedUsers, companyUsers]);
+  }, [assignedUsers, usersById]);
 
   const handleAssignUser = (user: Partial<User>) => {
     if (user.id) {
@@ -90,7 +157,7 @@ export default function AssignTaskDropDown({
       </div> */}
       <div className="no-visible-scrollbar my-3 flex max-h-44 w-full flex-wrap items-center gap-2 overflow-y-auto p-1">
         {assignedUserObjects.map((userInfo) => {
-          const fullName = `${userInfo?.firstName} ${userInfo?.lastName}`;
+          const fullName = getFullName(userInfo);
           return (
             <div
               key={userInfo?.id}
@@ -151,21 +218,23 @@ export default function AssignTaskDropDown({
             <div className="flex items-center gap-3 py-2 px-3 hover:bg-gray-50">
               <Avatar photo={user.image} width={32} height={32} />
               <span className="font-medium text-gray-700">
-                {user.firstName} {user.lastName}
+                {getFullName(user)}
               </span>
             </div>
           )}
-          onSearch={(search: string) =>
-            availableUsers.filter((user) => {
-              const fullName =
-                `${user.firstName} ${user.lastName}`.toLowerCase();
-              return fullName.includes(search.toLowerCase());
-            })
-          }
+          onSearch={(search: string) => {
+            setSearchTerm(search);
+            return availableUsers;
+          }}
           openState={[selectorOpen, setSelectorOpen]}
           selectedItem={selectedUser}
           setSelectedItem={setSelectedUser}
           onSelect={handleAssignUser}
+          useInfiniteScroll={isAdminOrManager}
+          hasNextPage={hasNextPage}
+          fetchNextPage={fetchNextPage}
+          isFetchingNextPage={isFetchingNextPage}
+          isLoading={isAdminOrManager && isLoading}
           usePortal
         />
       </div>

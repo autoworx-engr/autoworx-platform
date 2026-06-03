@@ -1,5 +1,6 @@
 "use client";
 
+import type { JSX } from "react";
 import { addCustomer } from "@/actions/client/add";
 import { CLIENT_LIST_KEY } from "@/app/(dashboard)/dashboard/client/_hook/useClientQuery";
 import {
@@ -178,7 +179,7 @@ export default function NewCustomer({
         sourceId: clientSource?.id,
         photo,
       },
-      pathname
+      pathname,
     );
 
     if (res?.type === "globalError") {
@@ -496,7 +497,7 @@ export default function NewCustomer({
                     return clientSources.filter((clientSource: Source) =>
                       clientSource.name
                         .toLowerCase()
-                        .includes(search.toLowerCase())
+                        .includes(search.toLowerCase()),
                     );
                   }}
                   openState={[openClientSource, setOpenClientSource]}

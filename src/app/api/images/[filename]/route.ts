@@ -24,8 +24,9 @@ import { NextResponse } from "next/server";
  */
 export async function GET(
   req: Request,
-  { params }: { params: { filename: string } }
+  props: { params: Promise<{ filename: string }> },
 ) {
+  const params = await props.params;
   const { filename } = params;
   // ✅ use system temp dir, safe in serverless (Vercel/Lambda/etc.)
   const uploadDir = path.join(os.tmpdir(), "uploads");

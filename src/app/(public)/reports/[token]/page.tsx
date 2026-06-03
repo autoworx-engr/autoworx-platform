@@ -13,7 +13,7 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { errorToast, successToast } from "@/lib/toast";
 import toast from "react-hot-toast";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, use } from "react";
 import { usePublicReportData } from "@/hooks/public-report/usePublicReportData";
 
 import { format, parseISO } from "date-fns";
@@ -24,12 +24,13 @@ import { useCompanyQuery } from "@/hooks/useCompanyQuery";
 import CarLoading from "@/components/common/CarLoading";
 
 interface ReportPageProps {
-  params: {
+  params: Promise<{
     token: string;
-  };
+  }>;
 }
 
-export default function ReportPage({ params }: ReportPageProps) {
+export default function ReportPage(props: ReportPageProps) {
+  const params = use(props.params);
   const { token } = params;
   const router = useRouter();
   const [isGenerating, setIsGenerating] = useState(false);
@@ -112,12 +113,8 @@ export default function ReportPage({ params }: ReportPageProps) {
     if (!decodedParams?.startDate || !decodedParams?.endDate) return "";
 
     try {
-      const parseUTCDate = (dateStr: string) => {
-        const d = new Date(dateStr);
-        return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
-      };
-      const start = parseUTCDate(decodedParams.startDate);
-      const end = parseUTCDate(decodedParams.endDate);
+      const start = parseISO(decodedParams.startDate);
+      const end = parseISO(decodedParams.endDate);
 
       switch (frequency) {
         case "daily":

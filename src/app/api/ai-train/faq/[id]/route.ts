@@ -36,8 +36,9 @@ import { validateCompanyId } from "../../utils";
  */
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: number } },
+  props: { params: Promise<{ id: string }> },
 ) {
+  const params = await props.params;
   try {
     const validation = validateCompanyId(req);
     if (validation instanceof NextResponse) return validation;

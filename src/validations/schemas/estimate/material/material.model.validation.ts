@@ -21,7 +21,7 @@ export const materialModelSchemaValidation = z
       .number()
       .max(99999999, "Material Quantity must be less than 100,000,000")
       .refine(
-        val => {
+        (val) => {
           return !isNaN(val) && val >= 0;
         },
         {
@@ -90,7 +90,7 @@ export const materialModelSchemaValidation = z
   //   },
   // )
   .refine(
-    data => {
+    (data) => {
       if (data.quantity) {
         const num = Number(data.quantity);
         return !isNaN(num) && num >= 0;

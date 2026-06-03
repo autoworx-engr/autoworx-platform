@@ -1,7 +1,34 @@
 import getAppointments from "@/actions/task/getAppointments";
-import { Appointment, AppointmentUser, User } from "@prisma/client";
+import { Appointment } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 import { appointmentQueryKey } from "../../../_constant";
+
+export type CalendarAppointmentUser = {
+  id: number;
+  firstName: string | null;
+  lastName: string | null;
+};
+
+export type CalendarAppointment = Omit<Appointment, never> & {
+  assignedUsers: CalendarAppointmentUser[];
+  client: {
+    id: number;
+    firstName: string | null;
+    lastName: string | null;
+    email: string | null;
+    mobile: string | null;
+  } | null;
+  vehicle: {
+    model: string | null;
+    make: string | null;
+    year: number | null;
+  } | null;
+  serviceCategory: {
+    id: number;
+    name: string;
+    color: string | null;
+  } | null;
+};
 
 export default function useAppointmentQuery(
   startDate: string,
@@ -12,13 +39,25 @@ export default function useAppointmentQuery(
     queryFn: async () => {
       const response = await getAppointments({
         where: {
-          date: {
-            gte: `${startDate}T00:00:00.000Z`,
-            lte: `${endDate}T23:59:59.999Z`,
-          },
-          OR: [
-            { AND: [{ startTime: { not: null } }, { endTime: { not: null } }] },
-            { AND: [{ startTime: null }, { endTime: null }] },
+          AND: [
+            { date: { lte: `${endDate}T23:59:59.999Z` } },
+            {
+              OR: [
+                { endDate: null, date: { gte: `${startDate}T00:00:00.000Z` } },
+                { endDate: { gte: `${startDate}T00:00:00.000Z` } },
+              ],
+            },
+            {
+              OR: [
+                {
+                  AND: [
+                    { startTime: { not: null } },
+                    { endTime: { not: null } },
+                  ],
+                },
+                { AND: [{ startTime: null }, { endTime: null }] },
+              ],
+            },
           ],
         },
         include: {
@@ -58,20 +97,19 @@ export default function useAppointmentQuery(
           },
         },
       });
-      const appointments = response.data as (Appointment & {
-        appointmentUsers: (AppointmentUser & { user: User })[];
+      const raw = response.data as (Appointment & {
+        appointmentUsers: { user: CalendarAppointmentUser }[];
+        client: CalendarAppointment["client"];
+        vehicle: CalendarAppointment["vehicle"];
+        serviceCategory: CalendarAppointment["serviceCategory"];
       })[];
 
-      // Transform appointmentUsers to assignedUsers to match CalendarAppointment interface
-      return appointments.map((appointment) => {
-        const { appointmentUsers, ...appointmentData } = appointment;
-        return {
+      return raw.map(
+        ({ appointmentUsers, ...appointmentData }): CalendarAppointment => ({
           ...appointmentData,
-          assignedUsers: appointmentUsers.map(
-            (appointmentUser) => appointmentUser.user,
-          ),
-        };
-      });
+          assignedUsers: appointmentUsers.map((au) => au.user),
+        }),
+      );
     },
   });
 }

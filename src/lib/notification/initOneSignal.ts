@@ -1,15 +1,13 @@
 import detectBrowser from "@/utils/detectBrowser";
-import { env } from "next-runtime-env";
 import OneSignal from "react-onesignal";
 import { successToast } from "../toast";
 import { isIosPwa } from "@/utils/isIosPwa";
 import { showOneSignalErrorToast } from "@/components/ui/CustomToast";
 
 // Environment validation
-const ONESIGNAL_APP_ID = env("NEXT_PUBLIC_ONESIGNAL_APP_ID") as string;
-const ONESIGNAL_SAFARI_WEB_ID = env(
-  "NEXT_PUBLIC_ONESIGNAL_SAFARI_WEB_ID",
-) as string;
+const ONESIGNAL_APP_ID = process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID as string;
+const ONESIGNAL_SAFARI_WEB_ID = process.env
+  .NEXT_PUBLIC_ONESIGNAL_SAFARI_WEB_ID as string;
 
 if (!ONESIGNAL_APP_ID) {
   console.error("OneSignal App ID is not configured");

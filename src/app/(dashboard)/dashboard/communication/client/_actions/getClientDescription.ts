@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 
 export async function getClientDescription(
   clientId: number,
-  companyId?: number
+  companyId?: number,
 ) {
   try {
     const cId = companyId || (await getCompanyId());

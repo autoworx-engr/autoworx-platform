@@ -7,23 +7,30 @@ interface ClientFilterState {
   pageSize: number;
   setCurrentPage(currentPage: number): void;
   setPageSize(pageSize: number): void;
+  setClear(): void;
 }
 
-export const useClientFilterStore = create<ClientFilterState>(set => ({
+export const useClientFilterStore = create<ClientFilterState>((set) => ({
   search: "",
   currentPage: 1,
   pageSize: 50,
   setFilter: ({ search }) =>
-    set(state => ({
+    set((state) => ({
       search: search ?? state.search,
     })),
-  setCurrentPage: currentPage =>
-    set(state => ({
+  setCurrentPage: (currentPage) =>
+    set((state) => ({
       currentPage: currentPage ?? state.currentPage,
     })),
-  setPageSize: pageSize =>
-    set(state => ({
+  setPageSize: (pageSize) =>
+    set((state) => ({
       pageSize: pageSize ?? state.pageSize,
+    })),
+  setClear: () =>
+    set((state) => ({
+      search: "",
+      currentPage: 1,
+      pageSize: 50,
     })),
 }));
 
@@ -32,17 +39,25 @@ type DemoClientFilterState = {
   filter: string;
   setFilter(search: string): void;
   setSearchTerm(searchTerm: string): void;
+  setClear(): void;
 };
 
-export const useDemoClientFilterStore = create<DemoClientFilterState>(set => ({
-  searchTerm: "",
-  filter: "All",
-  setSearchTerm: searchTerm =>
-    set(state => ({
-      searchTerm: searchTerm ?? state.searchTerm,
-    })),
-  setFilter: filter =>
-    set(state => ({
-      filter: filter ?? state.filter,
-    })),
-}));
+export const useDemoClientFilterStore = create<DemoClientFilterState>(
+  (set) => ({
+    searchTerm: "",
+    filter: "All",
+    setSearchTerm: (searchTerm) =>
+      set((state) => ({
+        searchTerm: searchTerm ?? state.searchTerm,
+      })),
+    setFilter: (filter) =>
+      set((state) => ({
+        filter: filter ?? state.filter,
+      })),
+    setClear: () =>
+      set((state) => ({
+        searchTerm: "",
+        filter: "All",
+      })),
+  }),
+);

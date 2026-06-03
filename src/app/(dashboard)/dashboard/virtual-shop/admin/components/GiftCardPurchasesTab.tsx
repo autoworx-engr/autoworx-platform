@@ -64,7 +64,8 @@ export default function GiftCardPurchasesTab({
     return () => clearTimeout(timeout);
   }, [searchInput, search, updateQuery]);
 
-  const closeModal = (name: string) => setActiveModal((p) => ({ ...p, [name]: false }));
+  const closeModal = (name: string) =>
+    setActiveModal((p) => ({ ...p, [name]: false }));
   const toggleModal = (name: string) =>
     setActiveModal((p) => ({
       ...Object.keys(p).reduce(
@@ -95,7 +96,8 @@ export default function GiftCardPurchasesTab({
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             {totalRecords} purchase{totalRecords !== 1 ? "s" : ""}
-            {status !== "ALL" && ` · ${status.charAt(0) + status.slice(1).toLowerCase()}`}
+            {status !== "ALL" &&
+              ` · ${status.charAt(0) + status.slice(1).toLowerCase()}`}
           </p>
         </div>
       </div>
@@ -132,4 +134,3 @@ export default function GiftCardPurchasesTab({
     </div>
   );
 }
-

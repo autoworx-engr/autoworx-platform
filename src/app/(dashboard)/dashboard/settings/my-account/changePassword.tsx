@@ -1,8 +1,9 @@
+"use client";
 import { changePassword } from "@/actions/settings/myAccount";
 import { SlimInput } from "@/components/SlimInput";
 import { errorToast, successToast } from "@/lib/toast";
 import { Eye, EyeOff } from "lucide-react";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 
 export const ChangePassword = () => {
   const [currentPw, setCurrentPw] = useState("");
@@ -13,11 +14,36 @@ export const ChangePassword = () => {
   const [toggleNewPassword, setToggleNewPassword] = useState<boolean>(false);
   const [toggleConfirmPassword, setToggleConfirmPassword] =
     useState<boolean>(false);
+  const [isPending, startTransition] = useTransition();
+
+  const handleChangePassword = () => {
+    if (newPw !== confirmNewPw) {
+      errorToast("Passwords do not match");
+      return;
+    }
+    startTransition(async () => {
+      const res = await changePassword(currentPw, newPw, confirmNewPw);
+      if (res?.type === "success") {
+        setCurrentPw("");
+        setNewPw("");
+        setConfirmNewPw("");
+        successToast("Password changed successfully");
+      } else if (res?.type === "globalError") {
+        errorToast(
+          res.errorSource && res.errorSource.length > 0
+            ? res.errorSource[0].message
+            : res.message,
+        );
+      }
+    });
+  };
 
   return (
-    <>
-      <h3 className="mt-4 text-lg font-bold">New Password</h3>
-      <div className="space-y-4 rounded-md p-4 shadow-md">
+    <div className="w-full">
+      <h3 className="mb-4 text-lg font-semibold text-slate-800">
+        New Password
+      </h3>
+      <div className="space-y-5 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="relative">
           <SlimInput
             name="currentPassword"
@@ -28,7 +54,7 @@ export const ChangePassword = () => {
           />
           <span
             onClick={() => setToggleCurrentPassword(!toggleCurrentPassword)}
-            className="absolute right-2 bottom-2
+            className="absolute right-2 bottom-2.5
 "
           >
             {toggleCurrentPassword ? (
@@ -48,7 +74,7 @@ export const ChangePassword = () => {
           />
           <span
             onClick={() => setToggleNewPassword(!toggleNewPassword)}
-            className="absolute right-2 bottom-2
+            className="absolute right-2 bottom-2.5
 "
           >
             {toggleNewPassword ? (
@@ -68,7 +94,7 @@ export const ChangePassword = () => {
           />
           <span
             onClick={() => setToggleConfirmPassword(!toggleConfirmPassword)}
-            className="absolute right-2 bottom-2"
+            className="absolute right-2 bottom-2.5"
           >
             {toggleConfirmPassword ? (
               <EyeOff className=" h-4 w-4 " />
@@ -77,36 +103,16 @@ export const ChangePassword = () => {
             )}
           </span>
         </div>
-        <div className="mt-4 text-right">
+        <div className="mt-6 flex justify-end border-t border-slate-100 pt-5">
           <button
-            onClick={async () => {
-              let res = await changePassword(currentPw, newPw, confirmNewPw);
-              if (newPw !== confirmNewPw) {
-                errorToast("Passwords do not match");
-                return;
-              }
-              if (res?.type === "success") {
-                setCurrentPw("");
-                setNewPw("");
-                setConfirmNewPw("");
-                successToast("Password changed successfully");
-              } else if (res?.type === "globalError") {
-                errorToast(
-                  res.errorSource && res.errorSource.length > 0
-                    ? res.errorSource[0].message
-                    : res.message
-                );
-              }
-            }}
-            disabled={
-              !currentPw || !newPw || !confirmNewPw || newPw !== confirmNewPw
-            }
-            className="ml-auto mt-4 rounded-md bg-[#6571FF] px-4 py-1 text-white disabled:bg-gray-400"
+            onClick={handleChangePassword}
+            disabled={isPending || !currentPw || !newPw || !confirmNewPw}
+            className="inline-flex items-center gap-2 rounded-lg bg-[#6571FF] px-6 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#5864e5] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
           >
-            Change Password
+            {isPending ? "Saving…" : "Change Password"}
           </button>
         </div>
       </div>
-    </>
+    </div>
   );
 };

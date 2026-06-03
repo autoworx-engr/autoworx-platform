@@ -1,42 +1,11 @@
-'use client';
+import { Metadata } from "next";
+import CameraPage from "./CameraPage";
 
-import { useRouter } from 'next/navigation';
-import React, { useState } from 'react';
-import { Scanner } from '@yudiel/react-qr-scanner';
+export const metadata: Metadata = {
+  title: "Inventory - QR Scanner",
+  description: "Scan QR codes to quickly find and manage inventory items",
+};
 
 export default function Page() {
-  const [result, setResult] = useState<string | null>(null);
-  const router = useRouter();
-
-  const handleDecode = (detectedCodes: { rawValue?: string }[]) => {
-    const text = detectedCodes[0]?.rawValue;
-    if (!text) return;
-    setResult(text);
-    router.push(text);
-  };
-
-  return (
-    <div className="flex h-screen flex-col items-center justify-center">
-      <h1 className="text-2xl font-bold">Scan QR Code</h1>
-
-      {result ? (
-        <h2>Redirecting to {result}</h2>
-      ) : (
-        <div className="h-[300px] w-[300px] lg:h-[400px] lg:w-[400px]">
-          <Scanner
-            constraints={{ facingMode: 'environment' }}
-            onScan={handleDecode}
-            onError={(err: unknown) => {
-              if (err && typeof err === 'object' && 'message' in err) {
-                console.error((err as any).message);
-              } else {
-                console.error(err);
-              }
-            }}
-            // You can adjust styles/sizes as needed
-          />
-        </div>
-      )}
-    </div>
-  );
+  return <CameraPage />;
 }

@@ -19,9 +19,9 @@ import {
   Info,
   ShieldCheck,
   Loader2,
+  AlertCircle,
 } from "lucide-react";
 
-// Formatting Helper
 const formatKey = (key: string) =>
   key
     .toLowerCase()
@@ -53,14 +53,15 @@ export function CompanyCustomPlanDialog({
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [selectedPlanId, setSelectedPlanId] = useState<string>("");
-
   const [price, setPrice] = useState<string>("");
   const [label, setLabel] = useState<string>("Custom Plan");
   const [trialMonths, setTrialMonths] = useState<string>("1");
   const [features, setFeatures] = useState<EditableFeature[]>([]);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open || plans.length === 0) return;
+    setSubmitError(null);
     const initialPlanId = currentPlanId || plans[0].id;
     setSelectedPlanId(initialPlanId);
     const plan = plans.find((p) => p.id === initialPlanId) || plans[0];
@@ -102,7 +103,20 @@ export function CompanyCustomPlanDialog({
   };
 
   const handleSubmit = () => {
-    if (!selectedPlanId || Number(price) <= 0) return;
+    setSubmitError(null);
+
+    // Validate price
+    const parsedPrice = Number(price);
+    if (!price || !Number.isFinite(parsedPrice) || parsedPrice <= 0) {
+      setSubmitError("Price must be a number greater than zero.");
+      return;
+    }
+
+    if (!selectedPlanId) {
+      setSubmitError("Please select a base plan.");
+      return;
+    }
+
     startTransition(async () => {
       try {
         const res = await fetch("/api/awx/custom-plan", {
@@ -111,7 +125,7 @@ export function CompanyCustomPlanDialog({
           body: JSON.stringify({
             companyId,
             label,
-            price: Number(price),
+            price: parsedPrice,
             trialLengthDays: Number(trialMonths),
             basePlanId: selectedPlanId,
             features: features.map((f) => ({
@@ -121,9 +135,19 @@ export function CompanyCustomPlanDialog({
             })),
           }),
         });
-        if (res.ok) setOpen(false);
+
+        if (res.ok) {
+          setOpen(false);
+        } else {
+          const data = await res.json().catch(() => null);
+          setSubmitError(data?.message || "Failed to apply custom plan.");
+        }
       } catch (error) {
-        console.error(error);
+        setSubmitError(
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred.",
+        );
       }
     });
   };
@@ -141,7 +165,7 @@ export function CompanyCustomPlanDialog({
       </DialogTrigger>
 
       <DialogContent className="max-w-2xl overflow-hidden rounded-[2.5rem] border-none bg-white/90 dark:bg-slate-950/90 p-0 shadow-2xl backdrop-blur-2xl ring-1 ring-slate-900/5 dark:ring-white/10">
-        {/* Header Branding */}
+        {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-200/50 dark:border-slate-800/50 px-8 py-6">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 dark:bg-slate-900 dark:text-slate-400">
@@ -162,6 +186,14 @@ export function CompanyCustomPlanDialog({
         </div>
 
         <div className="p-8 space-y-8">
+          {/* Error Banner */}
+          {submitError && (
+            <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-800 dark:bg-rose-900/20 dark:text-rose-400">
+              <AlertCircle size={16} className="shrink-0" />
+              {submitError}
+            </div>
+          )}
+
           {/* Base Settings Grid */}
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div className="space-y-2">
@@ -206,8 +238,12 @@ export function CompanyCustomPlanDialog({
                 <Input
                   name="price"
                   type="number"
+                  min="0.01"
                   value={price}
-                  onChange={(e: any) => setPrice(e.target.value)}
+                  onChange={(e: any) => {
+                    setPrice(e.target.value);
+                    setSubmitError(null);
+                  }}
                   className="h-11 rounded-xl border-none pl-10 font-bold text-[#00b8b0] ring-1 ring-slate-200 focus:ring-2 focus:ring-emerald-500 dark:ring-slate-800"
                 />
               </div>
@@ -299,7 +335,7 @@ export function CompanyCustomPlanDialog({
           <button
             onClick={handleSubmit}
             disabled={isPending}
-            className="group relative flex items-center gap-2 overflow-hidden rounded-xl bg-slate-900 px-6 py-2.5 text-xs font-bold text-white transition-all hover:bg-slate-800 dark:bg-white dark:text-slate-900"
+            className="group relative flex items-center gap-2 overflow-hidden rounded-xl bg-slate-900 px-6 py-2.5 text-xs font-bold text-white transition-all hover:bg-slate-800 dark:bg-white dark:text-slate-900 disabled:opacity-60"
           >
             {isPending ? (
               <Loader2 size={14} className="animate-spin" />

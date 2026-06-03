@@ -31,7 +31,7 @@ export async function updateCommunicationAutomationTrigger({
           leadId,
           columnId,
         }),
-      }
+      },
     );
     const data = await response.json();
     return {

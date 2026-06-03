@@ -2,6 +2,7 @@
 import { authOptions } from "@/authOptions";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
+import { getPaddedIdSearchCondition } from "@/lib/padId";
 import { EmployeeType, Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { cache } from "react";
@@ -39,7 +40,7 @@ type EmployeeParams = {
   filter?: {
     type?: EmployeeType;
     searchParams?: string;
-    dateRange?: { startDate: Date; endDate: Date };
+    dateRange?: { startDate: string; endDate: string };
   };
 };
 export const getEmployeesForPaginate = cache(
@@ -54,7 +55,8 @@ export const getEmployeesForPaginate = cache(
 
     if (filter?.searchParams) {
       const trimmed = filter?.searchParams.trim();
-      const numericId = /^\d+$/.test(trimmed) ? Number(trimmed) : null;
+      const idCondition = getPaddedIdSearchCondition(trimmed);
+
       whereClause.OR = filter.searchParams
         .split(" ")
         .flatMap((searchText) => [
@@ -63,7 +65,7 @@ export const getEmployeesForPaginate = cache(
           { email: { contains: searchText, mode: "insensitive" } },
           { phone: { contains: searchText, mode: "insensitive" } },
         ]) as Prisma.UserWhereInput[];
-      whereClause.OR.push(...(numericId !== null ? [{ id: numericId }] : []));
+      if (idCondition) whereClause.OR.push(idCondition);
     }
 
     if (
@@ -71,10 +73,8 @@ export const getEmployeesForPaginate = cache(
       filter.dateRange.startDate &&
       filter.dateRange.endDate
     ) {
-      const start = new Date(filter.dateRange.startDate);
-      start.setHours(0, 0, 0, 0);
-      const end = new Date(filter.dateRange.endDate);
-      end.setHours(23, 59, 59, 999);
+      const start = new Date(filter.dateRange.startDate + "T00:00:00.000Z");
+      const end = new Date(filter.dateRange.endDate + "T23:59:59.999Z");
 
       whereClause.joinDate = {
         gte: start,

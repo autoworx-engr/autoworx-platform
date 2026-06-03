@@ -100,7 +100,7 @@ export async function POST(request: Request) {
 
       if (!boundary) {
         throw new Error(
-          `Failed to extract boundary from content-type: ${contentType}`
+          `Failed to extract boundary from content-type: ${contentType}`,
         );
       }
 
@@ -180,7 +180,7 @@ export async function POST(request: Request) {
         } catch (attachmentError) {
           console.error(
             `Failed to process direct attachment ${attachment.filename}:`,
-            attachmentError
+            attachmentError,
           );
         }
       }
@@ -224,7 +224,7 @@ export async function POST(request: Request) {
                 } catch (attachmentError) {
                   console.error(
                     `Failed to process fallback attachment ${attachment.filename}:`,
-                    attachmentError
+                    attachmentError,
                   );
                 }
               }
@@ -282,7 +282,7 @@ export async function POST(request: Request) {
         } catch (jsonError) {
           console.error("JSON parsing error:", jsonError);
           throw new Error(
-            "Unsupported Content-Type and failed to parse as JSON"
+            "Unsupported Content-Type and failed to parse as JSON",
           );
         }
       } else {
@@ -305,7 +305,7 @@ export async function POST(request: Request) {
     if (isNaN(companyId) || !companyId) {
       console.error(
         "Invalid company ID extracted from recipient:",
-        emailData.recipient
+        emailData.recipient,
       );
       throw new Error("Invalid recipient format: Unable to extract company ID");
     }
@@ -321,7 +321,7 @@ export async function POST(request: Request) {
         "No Company Found for:",
         emailData.recipient,
         "Company ID:",
-        companyId
+        companyId,
       );
       throw new Error("Unauthorized: No Company Found");
     }
@@ -375,7 +375,7 @@ export async function POST(request: Request) {
         {
           method: "POST",
           body: formData2,
-        }
+        },
       );
 
       if (!uploadRes.ok) {
@@ -441,7 +441,7 @@ export async function POST(request: Request) {
     console.error("Error in Infobip webhook handler:", error.message);
     return NextResponse.json(
       { success: false, error: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

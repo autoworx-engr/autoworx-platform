@@ -28,9 +28,12 @@ type InitialServiceData = {
 
 const INITIAL_SERVICE_INFO: ServiceInfoState = {
   serviceTitle: "",
+  shortDescription: "",
   description: "",
+  customDuration: "",
   imageName: "",
   imageUrl: "",
+  category: [],
   vehicleTypeModifiers: {
     coupe: "0",
     sedan: "0",
@@ -162,12 +165,14 @@ function ServiceBillSummary({
               {isToggleItem && (
                 <div
                   onClick={() => toggleSetter((prev) => !prev)}
-                  className={`relative flex h-5 w-9 cursor-pointer items-center rounded-full px-1 transition-all duration-200 ${toggleState ? "bg-[#6571FF]" : "bg-slate-200"
-                    }`}
+                  className={`relative flex h-5 w-9 cursor-pointer items-center rounded-full px-1 transition-all duration-200 ${
+                    toggleState ? "bg-[#6571FF]" : "bg-slate-200"
+                  }`}
                 >
                   <div
-                    className={`h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform duration-200 ease-in-out ${toggleState ? "translate-x-3.5" : "translate-x-0"
-                      }`}
+                    className={`h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform duration-200 ease-in-out ${
+                      toggleState ? "translate-x-3.5" : "translate-x-0"
+                    }`}
                   />
                 </div>
               )}
@@ -177,10 +182,11 @@ function ServiceBillSummary({
                 readOnly
                 value={
                   isToggleItem
-                    ? `${toggleState ? Number(data).toFixed(2) : 0}%${toggleState && Number(data) > 0
-                      ? ` | ${((subtotal * Number(data)) / 100).toFixed(2)}`
-                      : ""
-                    }`
+                    ? `${toggleState ? Number(data).toFixed(2) : 0}%${
+                        toggleState && Number(data) > 0
+                          ? ` | ${((subtotal * Number(data)) / 100).toFixed(2)}`
+                          : ""
+                      }`
                     : data
                 }
                 className="w-[200px] rounded-lg bg-gray-500 px-3 py-1 text-right text-sm font-bold text-white ring-1 ring-inset ring-slate-100 focus:outline-none"
@@ -234,6 +240,7 @@ export default function ServiceCreateClient({
   const isSubmittingRef = useRef(false);
   const [validationErrors, setValidationErrors] = useState<{
     serviceTitle?: string;
+    shortDescription?: string;
     description?: string;
     items?: string;
   }>({});
@@ -319,12 +326,17 @@ export default function ServiceCreateClient({
     try {
       const nextErrors: {
         serviceTitle?: string;
+        shortDescription?: string;
         description?: string;
         items?: string;
       } = {};
 
       if (!serviceInfo.serviceTitle.trim()) {
         nextErrors.serviceTitle = "Service title is required";
+      }
+
+      if (!serviceInfo.shortDescription.trim()) {
+        nextErrors.shortDescription = "Short description is required";
       }
 
       if (!serviceInfo.description.trim()) {
@@ -338,8 +350,8 @@ export default function ServiceCreateClient({
         );
         const hasMaterial = Array.isArray(item?.materials)
           ? item.materials.some((material) =>
-            Boolean(material && String(material.name || "").trim()),
-          )
+              Boolean(material && String(material.name || "").trim()),
+            )
           : false;
 
         return {
@@ -352,24 +364,24 @@ export default function ServiceCreateClient({
 
       const hasAnySelectedRow = rowStates.some((row) => row.hasAny);
       const hasIncompleteSelectedRow = rowStates.some(
-        (row) => row.hasAny && !(row.hasService && row.hasLabor),
+        (row) => row.hasAny && !row.hasLabor,
       );
 
       if (!hasAnySelectedRow) {
-        nextErrors.items = "Service and labor is required";
+        nextErrors.items = "Labor is required";
       } else if (hasIncompleteSelectedRow) {
-        nextErrors.items = "Each selected row must include service and labor";
+        nextErrors.items = "Each selected row must include labor";
       }
 
       const invalidMaterialQuantity = (items || []).some((item) =>
         Array.isArray(item?.materials)
           ? item.materials.some((material) => {
-            if (!material || !String(material.name || "").trim()) {
-              return false;
-            }
+              if (!material || !String(material.name || "").trim()) {
+                return false;
+              }
 
-            return toSafeNumber(material.quantity) <= 0;
-          })
+              return toSafeNumber(material.quantity) <= 0;
+            })
           : false,
       );
 
@@ -393,6 +405,7 @@ export default function ServiceCreateClient({
         setValidationErrors(nextErrors);
         const validationMessage =
           nextErrors.serviceTitle ||
+          nextErrors.shortDescription ||
           nextErrors.description ||
           nextErrors.items ||
           "Please complete required fields";
@@ -414,17 +427,17 @@ export default function ServiceCreateClient({
         .map((item) => {
           const normalizedService = item.service
             ? {
-              id: Number(item.service.id),
-              name: item.service.name,
-              categoryId: item.service.categoryId ?? null,
-              description: item.service.description ?? null,
-              createdAt: toSafeDate(item.service.createdAt),
-              updatedAt: toSafeDate(item.service.updatedAt),
-              fromRequest: (item.service as any).fromRequest ?? null,
-              fromRequestedCompanyId:
-                (item.service as any).fromRequestedCompanyId ?? null,
-              companyId: Number(item.service.companyId || companyId),
-            }
+                id: Number(item.service.id),
+                name: item.service.name,
+                categoryId: item.service.categoryId ?? null,
+                description: item.service.description ?? null,
+                createdAt: toSafeDate(item.service.createdAt),
+                updatedAt: toSafeDate(item.service.updatedAt),
+                fromRequest: (item.service as any).fromRequest ?? null,
+                fromRequestedCompanyId:
+                  (item.service as any).fromRequestedCompanyId ?? null,
+                companyId: Number(item.service.companyId || companyId),
+              }
             : null;
 
           const normalizedMaterials = (item.materials || []).map((material) => {
@@ -463,25 +476,25 @@ export default function ServiceCreateClient({
           const normalizedLabor =
             item.labor && item.labor.name?.trim()
               ? {
-                name: item.labor.name,
-                categoryId: item.labor.categoryId ?? null,
-                notes: item.labor.notes ?? null,
-                tags: ((item.labor as any).tags || [])
-                  .filter((tag: any) => tag?.id && tag?.name)
-                  .map((tag: any) => ({
-                    id: Number(tag.id),
-                    name: String(tag.name),
-                    textColor: String(tag.textColor || "#000000"),
-                    bgColor: String(tag.bgColor || "#ffffff"),
-                    createdAt: toSafeDate(tag.createdAt),
-                    updatedAt: toSafeDate(tag.updatedAt),
-                    companyId: Number(tag.companyId || companyId),
-                  })),
-                hours: toSafeNumber(item.labor.hours),
-                charge: toSafeNumber(item.labor.charge),
-                discount: toSafeNumber(item.labor.discount),
-                cannedLabor: Boolean(item.labor.cannedLabor),
-              }
+                  name: item.labor.name,
+                  categoryId: item.labor.categoryId ?? null,
+                  notes: item.labor.notes ?? null,
+                  tags: ((item.labor as any).tags || [])
+                    .filter((tag: any) => tag?.id && tag?.name)
+                    .map((tag: any) => ({
+                      id: Number(tag.id),
+                      name: String(tag.name),
+                      textColor: String(tag.textColor || "#000000"),
+                      bgColor: String(tag.bgColor || "#ffffff"),
+                      createdAt: toSafeDate(tag.createdAt),
+                      updatedAt: toSafeDate(tag.updatedAt),
+                      companyId: Number(tag.companyId || companyId),
+                    })),
+                  hours: toSafeNumber(item.labor.hours),
+                  charge: toSafeNumber(item.labor.charge),
+                  discount: toSafeNumber(item.labor.discount),
+                  cannedLabor: Boolean(item.labor.cannedLabor),
+                }
               : null;
 
           const normalizedTags = (item.tags || [])
@@ -521,13 +534,19 @@ export default function ServiceCreateClient({
           shopId: Number(selectedShopId),
           companyId,
           title: serviceInfo.serviceTitle.trim(),
+          shortDescription: serviceInfo.shortDescription.trim(),
           description: serviceInfo.description.trim(),
           imageUrl,
           modifierCoupe: serviceInfo.vehicleTypeModifiers.coupe,
           modifierSedan: serviceInfo.vehicleTypeModifiers.sedan,
           modifierSUV: serviceInfo.vehicleTypeModifiers.suv,
           modifierTruck: serviceInfo.vehicleTypeModifiers.truck,
+          customDuration:
+            serviceInfo.customDuration === ""
+              ? undefined
+              : Number(serviceInfo.customDuration),
           isActive: true,
+          category: serviceInfo.category,
           items: payloadItems,
         };
 
@@ -564,13 +583,16 @@ export default function ServiceCreateClient({
           defaultValue="service-info"
           className="col-start-1 flex min-h-[40vh] flex-col overflow-clip lg:min-h-[72vh]"
         >
-          <TabsList className="-ml-4 grid grid-cols-4 rounded-bl-none md:inline-flex">
-            <TabsTriggerCreate value="create" className="order-2 md:order-3">
+          <TabsList className="w-[90%] grid grid-cols-2 rounded-bl-none md:-ml-4 md:inline-flex md:w-auto">
+            <TabsTriggerCreate
+              value="create"
+              className="order-2 w-full md:order-3 md:w-auto"
+            >
               Create
             </TabsTriggerCreate>
             <TabsTriggerCreate
               value="service-info"
-              className="order-1 md:order-4"
+              className="order-1 w-full md:order-4 md:w-auto"
             >
               Service Info
             </TabsTriggerCreate>
@@ -597,7 +619,7 @@ export default function ServiceCreateClient({
         </Tabs>
       </div>
 
-      <div className="flex-grow w-full xl:max-w-[32%]  app-shadow grid grid-rows-[1fr,auto,auto] divide-y rounded-md bg-slate-50 xl:max-h-[calc(100vh-16rem)] overflow-y-auto thin-scrollbar">
+      <div className="flex-grow w-full xl:max-w-[32%] xl:self-stretch app-shadow grid grid-rows-[1fr,auto,auto] divide-y rounded-md bg-slate-50 overflow-y-auto thin-scrollbar">
         <div>
           <Create />
         </div>

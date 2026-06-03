@@ -27,8 +27,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   _: NextRequest,
-  { params }: { params: { id: string } },
+  props: { params: Promise<{ id: string }> },
 ) {
+  const params = await props.params;
   const id = Number(params.id);
 
   const document = await db.knowledgeBaseDocument.findUnique({
@@ -103,8 +104,9 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  props: { params: Promise<{ id: string }> },
 ) {
+  const params = await props.params;
   try {
     const id = Number(params.id);
     const body = await req.json();
@@ -170,8 +172,9 @@ export async function PATCH(
 
 export async function DELETE(
   _: NextRequest,
-  { params }: { params: { id: string } },
+  props: { params: Promise<{ id: string }> },
 ) {
+  const params = await props.params;
   try {
     const id = Number(params.id);
 

@@ -1,6 +1,8 @@
 import { AppError } from "@/error-boundary/error";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
+import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -64,11 +66,13 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
+    const principal = await getAuthPrincipal(request);
+    if (!principal) throw new AppError(401, "Unauthorized");
+
     const searchParams = request.nextUrl.searchParams;
 
     const toIdRaw = searchParams.get("toId");
     const fromIdRaw = searchParams.get("fromId");
-    const companyId = searchParams.get("companyId");
     const sortBy = searchParams.get("sortBy");
     const sortOrder = searchParams.get("sortOrder");
 
@@ -77,18 +81,7 @@ export async function GET(request: NextRequest) {
 
     const toId = toIdRaw ? parseInt(toIdRaw) : null;
     const fromId = fromIdRaw ? parseInt(fromIdRaw) : null;
-    const companyIdNum = companyId ? parseInt(companyId) : null;
 
-    // Determine current user for perspective (sender/recipient)
-    // Preference: 1. fromId, 2. toId
-    const currentUserId = fromId || toId;
-
-    // Validation
-    if (!companyIdNum || isNaN(companyIdNum)) {
-      throw new AppError(400, "Valid Company ID is required");
-    }
-
-    // At least one of 'fromId' or 'toId' must be provided
     if ((!toId || isNaN(toId)) && (!fromId || isNaN(fromId))) {
       throw new AppError(
         400,
@@ -100,52 +93,44 @@ export async function GET(request: NextRequest) {
       throw new AppError(400, "Cannot send message to oneself");
     }
 
-    // Verify company exists
-    const findExistingCompany = await db.company.findUnique({
-      where: { id: companyIdNum },
-    });
-
-    if (!findExistingCompany) {
-      throw new AppError(404, "Company not found");
+    // Caller must be one of the conversation parties.
+    if (
+      (toId && toId !== principal.userId && fromId !== principal.userId) ||
+      (fromId && fromId !== principal.userId && toId !== principal.userId)
+    ) {
+      throw new AppError(403, "Forbidden");
     }
 
-    // Verify user(s) exist in the company
-    const userIdsToCheck = [];
-    if (toId) userIdsToCheck.push(toId);
-    if (fromId) userIdsToCheck.push(fromId);
-
-    const findUsers = await db.user.findMany({
-      where: {
-        id: { in: userIdsToCheck },
-        companyId: companyIdNum,
-      },
-    });
-
-    if (findUsers.length !== userIdsToCheck.length) {
-      throw new AppError(404, "One or more users not found in this company");
+    // Verify the other party is in the same company.
+    const otherId = toId === principal.userId ? fromId : toId;
+    if (otherId) {
+      const otherUser = await db.user.findFirst({
+        where: { id: otherId, companyId: principal.companyId },
+        select: { id: true },
+      });
+      if (!otherUser) {
+        throw new AppError(404, "User not found in this company");
+      }
     }
 
-    // Build WHERE clause based on provided parameters
-    const where: any = {
+    const where: Prisma.MessageWhereInput = {
       groupId: null,
       section: "internal",
     };
 
     if (toId && fromId) {
-      // Both provided: messages between two specific users (bidirectional)
       where.OR = [
         { from: fromId, to: toId },
         { from: toId, to: fromId },
       ];
     } else if (fromId) {
-      // Only fromId provided: all messages involving this user
       where.OR = [{ from: fromId }, { to: fromId }];
     } else if (toId) {
-      // Only toId provided: all messages involving this user
       where.OR = [{ from: toId }, { to: toId }];
     }
 
-    // Fetch messages
+    const sortField = sortBy === "updatedAt" ? "updatedAt" : "createdAt";
+
     const messages = await db.message.findMany({
       where,
       include: {
@@ -153,16 +138,15 @@ export async function GET(request: NextRequest) {
         requestEstimate: true,
       },
       orderBy: {
-        [sortBy ?? "createdAt"]: (sortOrder as any) ?? "desc",
+        [sortField]: sortOrder === "asc" ? "asc" : "desc",
       },
       skip: (pageNum - 1) * limitNum,
       take: limitNum,
     });
 
-    // Transform messages to add userType (sender or recipient)
-    const transformedMessages = messages.map((message: any) => ({
+    const transformedMessages = messages.map((message) => ({
       ...message,
-      userType: currentUserId === message.from ? "sender" : "recipient",
+      userType: principal.userId === message.from ? "sender" : "recipient",
     }));
 
     const totalRecords = await db.message.count({ where });

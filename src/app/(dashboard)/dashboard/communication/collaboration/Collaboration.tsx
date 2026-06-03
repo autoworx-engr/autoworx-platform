@@ -9,7 +9,6 @@ import {
 import { Session } from "next-auth";
 import { useEffect, useState } from "react";
 import List from "./List";
-import { useUnreadCollaborationMessages } from "./hooks/useUnreadCollaborationMessages";
 import CompanyArea from "./CompanyArea";
 import { useSearchParams } from "next/navigation";
 

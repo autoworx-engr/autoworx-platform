@@ -110,7 +110,9 @@ export default function WorkforceDisplay({
               <thead className="bg-background sticky top-0 ">
                 <tr className="h-10 border-b">
                   <th className="border-b px-4 py-2 text-left">Employee</th>
-                  <th className="border-b px-4 py-2 text-left">Employee Type </th>
+                  <th className="border-b px-4 py-2 text-left">
+                    Employee Type{" "}
+                  </th>
                   <th className="border-b px-4 py-2 text-left">Total Payout</th>
                   <th className="border-b px-4 py-2 text-left">Attendance</th>
                   <th className="border-b px-4 py-2 text-left">
@@ -141,30 +143,33 @@ export default function WorkforceDisplay({
 
                       return acc;
                     },
-                    0
+                    0,
                   );
 
-                  const totalPayout = employee.Technician.reduce((sum, tech) => {
-                    const techDate = tech.dateClosed
-                      ? moment(tech.dateClosed)
-                      : null;
+                  const totalPayout = employee.Technician.reduce(
+                    (sum, tech) => {
+                      const techDate = tech.dateClosed
+                        ? moment(tech.dateClosed)
+                        : null;
 
-                    const isDateValid =
-                      !hasDateRange ||
-                      (techDate &&
-                        techDate.isSameOrAfter(formattedStartDate) &&
-                        techDate.isSameOrBefore(formattedEndDate));
+                      const isDateValid =
+                        !hasDateRange ||
+                        (techDate &&
+                          techDate.isSameOrAfter(formattedStartDate) &&
+                          techDate.isSameOrBefore(formattedEndDate));
 
-                    if (tech.status === "Complete" && isDateValid) {
-                      return sum + Number(tech?.amount || 0);
-                    }
+                      if (tech.status === "Complete" && isDateValid) {
+                        return sum + Number(tech?.amount || 0);
+                      }
 
-                    return sum;
-                  }, 0);
+                      return sum;
+                    },
+                    0,
+                  );
 
                   // Get the latest completion date
                   const latestCompletionDate = employee.Technician.filter(
-                    (tech) => tech.status === "Complete" && tech.dateClosed
+                    (tech) => tech.status === "Complete" && tech.dateClosed,
                   )
                     .map((tech) => moment(tech.dateClosed))
                     .sort((a, b) => b.diff(a))[0];
@@ -174,7 +179,7 @@ export default function WorkforceDisplay({
                       key={employee.id}
                       className={cn(
                         "cursor-pointer rounded-md py-3",
-                        index % 2 === 0 ? "bg-background" : "bg-blue-100"
+                        index % 2 === 0 ? "bg-background" : "bg-blue-100",
                       )}
                     >
                       <Link

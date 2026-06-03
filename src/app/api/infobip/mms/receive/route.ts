@@ -196,6 +196,8 @@ export async function POST(req: NextRequest) {
             companyId: infobipConfig.companyId,
             clientId: client.id,
             clientName: client.firstName + " " + client.lastName,
+            message: messageText,
+            hasMedia: media.length > 0,
           });
 
           // Trigger Pusher notification

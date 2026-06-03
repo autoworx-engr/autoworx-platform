@@ -27,7 +27,9 @@ export default function ServiceCreate() {
     if (data?.service && data.edit) {
       setName(data.service.name);
 
-      setCategory(categories.find((cat) => cat.id === data.service.categoryId) || null);
+      setCategory(
+        categories.find((cat) => cat.id === data.service.categoryId) || null,
+      );
 
       setDescription(data?.serviceDesc || data?.service?.description);
     } else {
@@ -55,7 +57,7 @@ export default function ServiceCreate() {
       useEstimateCreateStore.setState((x) =>
         create(x, (x) => {
           x.items[i].service = res.data;
-        })
+        }),
       );
 
       // Add to listsStore
@@ -66,7 +68,7 @@ export default function ServiceCreate() {
       close();
     } else if (res.type === "globalError") {
       errorToast(
-        res.errorSource?.length ? res.errorSource[0].message : res.message
+        res.errorSource?.length ? res.errorSource[0].message : res.message,
       );
     }
   }
@@ -77,15 +79,13 @@ export default function ServiceCreate() {
       return;
     }
 
-    if (!data.service.canned) {
-      // Update the service
-      await updateService({
-        id: data?.service.id,
-        name,
-        categoryId: category?.id,
-        description,
-      });
-    }
+    // Update the service
+    await updateService({
+      id: data?.service.id,
+      name,
+      categoryId: category?.id,
+      description,
+    });
 
     // Change the service in the items
     // @ts-ignore
@@ -98,6 +98,7 @@ export default function ServiceCreate() {
               ...item.service,
               name,
               categoryId: category?.id,
+              category: category,
               description,
             },
             serviceDesc: description,
@@ -130,7 +131,7 @@ export default function ServiceCreate() {
           className={cn(
             "h-11 rounded-xl bg-white px-4 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30",
             data.service?.canned &&
-            "bg-slate-50 text-slate-600 cursor-not-allowed shadow-inner"
+              "bg-slate-50 text-slate-600 cursor-not-allowed shadow-inner",
           )}
           readOnly={data.service?.canned}
         />
@@ -144,8 +145,8 @@ export default function ServiceCreate() {
           onCategoryChange={setCategory}
           labelPosition="none"
           categoryData={category}
-          categoryOpen={data.service?.canned ? false : categoryOpen}
-          setCategoryOpen={data.service?.canned ? undefined : setCategoryOpen}
+          categoryOpen={categoryOpen}
+          setCategoryOpen={setCategoryOpen}
           className="max-w-full"
         />
       </div>

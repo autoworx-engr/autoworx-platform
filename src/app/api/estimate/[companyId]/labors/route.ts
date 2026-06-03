@@ -1,3 +1,4 @@
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
@@ -84,17 +85,19 @@ import { db } from "@/lib/db";
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { companyId: string } },
+  { params }: { params: Promise<{ companyId: string }> },
 ) {
   try {
-    const companyId = Number(params.companyId);
-
-    if (!companyId || isNaN(companyId)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid company ID" },
-        { status: 400 },
-      );
+    const { companyId: companyIdParam } = await params;
+    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
+    if (jwtCompanyId === null) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const urlCompanyId = parseInt(companyIdParam, 10);
+    if (isNaN(urlCompanyId) || urlCompanyId !== jwtCompanyId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    const companyId = jwtCompanyId;
 
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search") || undefined;
@@ -102,7 +105,10 @@ export async function GET(
       ? Number(searchParams.get("categoryId"))
       : undefined;
     const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
-    const limit = Math.min(200, Math.max(1, parseInt(searchParams.get("limit") || "50")));
+    const limit = Math.min(
+      200,
+      Math.max(1, parseInt(searchParams.get("limit") || "50")),
+    );
     const skip = (page - 1) * limit;
 
     const where: Record<string, any> = { companyId, cannedLabor: true };

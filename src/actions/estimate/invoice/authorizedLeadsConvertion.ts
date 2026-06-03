@@ -52,7 +52,7 @@ export async function authorizedLeadsConvertion(invoiceId: string) {
         });
       } else {
         console.error(
-          "No lead found for the client associated with the invoice"
+          "No lead found for the client associated with the invoice",
         );
       }
     } else {

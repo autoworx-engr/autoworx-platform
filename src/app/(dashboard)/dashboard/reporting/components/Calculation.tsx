@@ -25,9 +25,10 @@ export default function Calculation({
   const displayAmount = shouldShowTooltip
     ? formattedAmount.slice(0, 15) + "..."
     : formattedAmount;
-
+  console.log("displayAmount", displayAmount);
   return (
-    <div className="relative flex h-36 w-full flex-col items-center justify-center p-4 
+    <div
+      className="relative flex h-36 w-full flex-col items-center justify-center p-4 
         rounded-2xl transition-all duration-300 ease-in-out cursor-default
         sm:h-40 lg:h-48
         
@@ -38,7 +39,8 @@ export default function Calculation({
         
         // Hover effects: subtle lift and shadow glow
         hover:-translate-y-1 hover:shadow-xl hover:shadow-[#6571FF]/20 dark:hover:shadow-[#6571FF]/10
-        group">
+        group"
+    >
       {/* Content Label (text-slate-600 for neutral text) */}
       <span className="text-center text-base md:text-lg text-slate-600 dark:text-slate-300 font-medium mb-2">
         {content}

@@ -6,9 +6,15 @@ import { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import CannedTable from "../CannedTable";
 import NavigationTabs from "../NavigationTabs";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Invoices - Canned",
+  description: "Manage your canned estimates",
+};
 
 type TProps = {
-  searchParams: {
+  searchParams: Promise<{
     laborCategory?: string;
     laborSearch?: string;
     laborPage?: string;
@@ -17,10 +23,11 @@ type TProps = {
     serviceSearch?: string;
     servicePage?: string;
     serviceTake?: string;
-  };
+  }>;
 };
 
-export default async function CannedPage({ searchParams }: TProps) {
+export default async function CannedPage(props: TProps) {
+  const searchParams = await props.searchParams;
   const session = await getServerSession(authOptions);
   const companyId = session?.user?.companyId;
 

@@ -14,6 +14,6 @@ export async function deleteHoliday(holidayId: number) {
       data: holiday,
     };
   } catch (err: any) {
-    throw new Error("Failed to delete holiday: ", err);
+    throw new Error(`Failed to delete holiday: ${err?.message ?? err}`);
   }
 }

@@ -93,9 +93,10 @@ import { AppError } from "@/error-boundary/error";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { companyId: string } },
+  props: { params: Promise<{ companyId: string }> },
 ) {
   try {
+    const params = await props.params;
     const companyId = Number(params.companyId);
 
     if (!companyId) {

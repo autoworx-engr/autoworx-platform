@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     if (!to || !companyId) {
       return NextResponse.json(
         { error: "Missing required parameters" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     if (!infobipCredentials?.data) {
       return NextResponse.json(
         { error: "Infobip credentials not found" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     if (!infobipApiKey || !infobipBaseUrl) {
       return NextResponse.json(
         { error: "Infobip configuration not found" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json(
         { error: `Infobip call failed: ${JSON.stringify(errorData)}` },
-        { status: response.status }
+        { status: response.status },
       );
     }
 

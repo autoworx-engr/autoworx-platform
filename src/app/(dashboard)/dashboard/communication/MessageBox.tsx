@@ -2,6 +2,7 @@ import { deleteUserFromGroup } from "@/actions/communication/internal/deleteUser
 import { getUserInGroup } from "@/actions/communication/internal/query";
 import { renameGroup } from "@/actions/communication/internal/renameGroup";
 import { updateChatTrack } from "@/actions/communication/internal/updateChatTrack";
+import { normalizeGroupName } from "@/lib/utils/groupName";
 import Avatar from "@/components/Avatar";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { cn } from "@/lib/cn";
@@ -24,6 +25,7 @@ import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  Fragment,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -35,6 +37,7 @@ import { formatDate } from "./client/_component/conversations/mailgun/MailgunCon
 import AddUsersInGroupModal from "./internal/AddUsersInGroupModal";
 import { Message as TMessage } from "./internal/UsersArea";
 import Message from "./Message";
+import MessageListSkeleton from "./MessageListSkeleton";
 
 type TSection = "collaboration" | "internal";
 
@@ -49,17 +52,27 @@ export default function MessageBox({
   setGroupsList,
   existingGroups,
   section,
+  isLoadingOlder = false,
+  isLoadingInitial = false,
+  onScrollContainerRef,
+  topSlot,
 }: {
   user?: User; // TODO: type this
   setUsersList?: React.Dispatch<React.SetStateAction<any[]>>;
   setGroupsList?: React.Dispatch<React.SetStateAction<any[]>>;
-  messages: (TMessage & { attachment: Attachment | null })[];
+  messages: (TMessage & {
+    attachment: Attachment | Attachment[] | null;
+  })[];
   totalMessageBox: number;
   setMessages: React.Dispatch<React.SetStateAction<any[]>>;
   fromGroup?: boolean;
   group?: Group & { users: User[] };
   existingGroups?: Array<Group & { users: User[] }>;
   section: TSection;
+  isLoadingOlder?: boolean;
+  isLoadingInitial?: boolean;
+  onScrollContainerRef?: (el: HTMLDivElement | null) => void;
+  topSlot?: React.ReactNode;
 }) {
   const { data: session } = useSession();
   const attachmentRef = useRef<HTMLInputElement>(null);
@@ -85,7 +98,39 @@ export default function MessageBox({
   const [groupName, setGroupName] = useState(group?.name || "");
   const [isGroupNameEdited, setIsGroupNameEdited] = useState(false);
 
+  // Track which last-message id we've already scrolled to. We scroll to the
+  // bottom only when a genuinely new last-message id appears (initial load /
+  // new outgoing or incoming real-time message). We must NOT scroll when older
+  // pages are prepended (scroll-up reverse pagination).
+  //
+  // Two guards:
+  //   1. `isLoadingOlder` (= isFetchingNextPage) — blocks while the fetch is
+  //      in flight.
+  //   2. `wasLoadingOlderRef` — blocks on the EXACT render where
+  //      `isLoadingOlder` flips true→false (i.e. the page just landed).
+  //      Without this the effect would fire with `isLoadingOlder = false` and
+  //      the stale `lastId` check might not save us in every edge case.
+  const lastSeenIdRef = useRef<unknown>(null);
+  const wasLoadingOlderRef = useRef(false);
   useLayoutEffect(() => {
+    if (isLoadingOlder) {
+      wasLoadingOlderRef.current = true;
+      return;
+    }
+    // Just finished loading an older page — skip this render so the parent's
+    // useLayoutEffect (adjustAfterPagesChange) can restore scroll position
+    // without us fighting it.
+    if (wasLoadingOlderRef.current) {
+      wasLoadingOlderRef.current = false;
+      return;
+    }
+
+    const last = messages[messages.length - 1] as any;
+    const lastId = last?.id ?? last?.createdAt ?? null;
+    if (lastId == null) return;
+    if (lastId === lastSeenIdRef.current && !isImageLoaded) return;
+    lastSeenIdRef.current = lastId;
+
     const frame = requestAnimationFrame(() => {
       if (messageBoxRef.current) {
         messageBoxRef.current.scrollTop = messageBoxRef.current.scrollHeight;
@@ -94,7 +139,15 @@ export default function MessageBox({
     });
 
     return () => cancelAnimationFrame(frame);
-  }, [messages, isImageLoaded, totalMessageBox]);
+  }, [messages, isImageLoaded, totalMessageBox, isLoadingOlder]);
+
+  // Expose the inner scroll container to a parent that wants to wire up
+  // reverse-pagination on scroll-up.
+  useEffect(() => {
+    if (!onScrollContainerRef) return;
+    onScrollContainerRef(messageBoxRef.current);
+    return () => onScrollContainerRef(null);
+  }, [onScrollContainerRef]);
 
   async function handleSendMessage(e: any) {
     e.preventDefault();
@@ -339,10 +392,15 @@ export default function MessageBox({
                       <CircleCheckBig
                         className="ml-3 size-6 cursor-pointer"
                         onClick={async () => {
-                          const trimmedName = groupName.trim();
-                          const currentName = group?.name?.trim() || "";
+                          const trimmedName = normalizeGroupName(groupName);
+                          const currentName = normalizeGroupName(
+                            group?.name ?? "",
+                          );
                           if (!trimmedName) return;
-                          if (trimmedName === currentName) {
+                          if (
+                            trimmedName.toLowerCase() ===
+                            currentName.toLowerCase()
+                          ) {
                             toast.error("Group name must be different.");
                             return;
                           }
@@ -350,28 +408,33 @@ export default function MessageBox({
                             existingGroups?.some(
                               (existingGroup) =>
                                 existingGroup.id !== group?.id &&
-                                existingGroup.name?.trim().toLowerCase() ===
-                                  trimmedName.toLowerCase(),
+                                normalizeGroupName(
+                                  existingGroup.name ?? "",
+                                ).toLowerCase() === trimmedName.toLowerCase(),
                             ) ?? false;
                           if (hasDuplicateName) {
                             toast.error("Group name already exists.");
                             return;
                           }
-                          setIsGroupNameEdited(false);
-                          if (groupName !== group?.name) {
-                            setGroupName(trimmedName);
-                            if (group?.id) {
-                              const response = await renameGroup(
-                                trimmedName,
-                                group.id,
+                          if (groupName !== group?.name && group?.id) {
+                            const response = await renameGroup(
+                              trimmedName,
+                              group.id,
+                            );
+                            if (response?.status === 200) {
+                              setIsGroupNameEdited(false);
+                              setGroupName(trimmedName);
+                              successToast(
+                                response?.message ||
+                                  "Group renamed successfully.",
                               );
-                              if (response?.status === 200) {
-                                successToast(
-                                  response?.message ||
-                                    "Group renamed successfully.",
-                                );
-                              }
+                            } else {
+                              toast.error(
+                                response?.message || "Failed to rename group.",
+                              );
                             }
+                          } else {
+                            setIsGroupNameEdited(false);
                           }
                         }}
                       />
@@ -450,21 +513,47 @@ export default function MessageBox({
         )}
         ref={messageBoxRef}
       >
+        {topSlot}
+        {isLoadingInitial && messages.length === 0 && <MessageListSkeleton />}
         {messages.map((message: TMessage, index: number) => {
-          let lastDate = "";
+          const prev = index > 0 ? messages[index - 1] : null;
+          const currentTs = new Date(
+            message?.createdAt ?? new Date(),
+          ).getTime();
+          const prevTs = prev
+            ? new Date(prev.createdAt ?? new Date()).getTime()
+            : 0;
           const messageDate = format(
             new Date(message?.createdAt ?? new Date()),
             "PPP",
-          ); // 'Jan 1, 2024'
-          const messageTime = format(
-            new Date(message?.createdAt ?? new Date()),
-            "h:mm a",
-          ); // '12:30 PM'
+          );
+          const prevDate = prev
+            ? format(new Date(prev.createdAt ?? new Date()), "PPP")
+            : null;
 
-          const showDateSeparator = messageDate !== lastDate;
-          lastDate = messageDate;
+          // Day chip only when the calendar day changes (WhatsApp / Messenger
+          // style). Previously this was reset to "" on every iteration so
+          // every message got a separator.
+          const showDateSeparator = !prev || messageDate !== prevDate;
+
+          // Group with previous when: same sender, same userId (for group
+          // chats), same calendar day, and within 5 minutes — collapses
+          // avatar + name + extra spacing on stacked replies.
+          const FIVE_MIN = 5 * 60 * 1000;
+          const groupedWithPrev =
+            !!prev &&
+            !showDateSeparator &&
+            prev.sender === message.sender &&
+            (prev.userId ?? null) === (message.userId ?? null) &&
+            currentTs - prevTs < FIVE_MIN;
+
           return (
-            <>
+            <Fragment
+              key={
+                message.userId ??
+                `${message.createdAt?.toISOString?.() ?? index}-${index}`
+              }
+            >
               {showDateSeparator && (
                 <div className="block py-2 text-center text-xs text-gray-500">
                   {formatDate(
@@ -476,10 +565,11 @@ export default function MessageBox({
                 key={index}
                 fromGroup={fromGroup}
                 message={message}
+                groupedWithPrev={groupedWithPrev}
                 onDownload={handleDownload}
                 setIsImageLoaded={setIsImageLoaded}
               />
-            </>
+            </Fragment>
           );
         })}
       </div>

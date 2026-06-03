@@ -1,19 +1,27 @@
 import Title from "@/components/Title";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
+import { getPaddedIdSearchCondition } from "@/lib/padId";
 import { Prisma } from "@prisma/client";
 import Header from "./components/Header";
 import FleetList from "./components/FleetList";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Directory - Fleet",
+  description: "Manage your fleets",
+};
 
 type TProps = {
-  searchParams: {
+  searchParams: Promise<{
     search?: string;
     page?: string;
     take?: string;
-  };
+  }>;
 };
 
-export default async function Page({ searchParams }: TProps) {
+export default async function Page(props: TProps) {
+  const searchParams = await props.searchParams;
   const companyId = await getCompanyId();
   const defaultTake = 10;
 
@@ -85,12 +93,8 @@ export default async function Page({ searchParams }: TProps) {
       },
     ];
 
-    const numericSearch = Number.parseInt(trimmedSearch, 10);
-    if (!Number.isNaN(numericSearch)) {
-      orFilters.push({
-        id: numericSearch,
-      });
-    }
+    const idCondition = getPaddedIdSearchCondition(trimmedSearch);
+    if (idCondition) orFilters.push(idCondition);
 
     const [firstNameTerm, ...lastNameParts] = trimmedSearch.split(/\s+/);
     const lastNameTerm = lastNameParts.join(" ");

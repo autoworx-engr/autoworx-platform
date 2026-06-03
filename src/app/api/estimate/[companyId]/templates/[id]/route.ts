@@ -1,3 +1,4 @@
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
@@ -281,19 +282,20 @@ import { db } from "@/lib/db";
  */
 
 export async function GET(
-  _req: NextRequest,
-  { params }: { params: { companyId: string; id: string } },
+  req: NextRequest,
+  { params }: { params: Promise<{ companyId: string; id: string }> },
 ) {
   try {
-    const companyId = Number(params.companyId);
-    const { id } = params;
-
-    if (!companyId || isNaN(companyId)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid company ID" },
-        { status: 400 },
-      );
+    const { companyId: companyIdParam, id } = await params;
+    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
+    if (jwtCompanyId === null) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const urlCompanyId = parseInt(companyIdParam, 10);
+    if (isNaN(urlCompanyId) || urlCompanyId !== jwtCompanyId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    const companyId = jwtCompanyId;
 
     const template = await db.invoiceTemplate.findFirst({
       where: { id, companyId },
@@ -397,18 +399,19 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { companyId: string; id: string } },
+  { params }: { params: Promise<{ companyId: string; id: string }> },
 ) {
   try {
-    const companyId = Number(params.companyId);
-    const { id } = params;
-
-    if (!companyId || isNaN(companyId)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid company ID" },
-        { status: 400 },
-      );
+    const { companyId: companyIdParam, id } = await params;
+    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
+    if (jwtCompanyId === null) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const urlCompanyId = parseInt(companyIdParam, 10);
+    if (isNaN(urlCompanyId) || urlCompanyId !== jwtCompanyId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    const companyId = jwtCompanyId;
 
     const existing = await db.invoiceTemplate.findFirst({
       where: { id, companyId },
@@ -809,19 +812,20 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: { companyId: string; id: string } },
+  req: NextRequest,
+  { params }: { params: Promise<{ companyId: string; id: string }> },
 ) {
   try {
-    const companyId = Number(params.companyId);
-    const { id } = params;
-
-    if (!companyId || isNaN(companyId)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid company ID" },
-        { status: 400 },
-      );
+    const { companyId: companyIdParam, id } = await params;
+    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
+    if (jwtCompanyId === null) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const urlCompanyId = parseInt(companyIdParam, 10);
+    if (isNaN(urlCompanyId) || urlCompanyId !== jwtCompanyId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    const companyId = jwtCompanyId;
 
     const existing = await db.invoiceTemplate.findFirst({
       where: { id, companyId },

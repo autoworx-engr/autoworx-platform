@@ -21,15 +21,15 @@ export const slimInputClassName = cn(
   "focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/40", // Brand focus state
   "disabled:opacity-50 disabled:cursor-not-allowed",
   // Preserve styling on autofill using webkit-specific properties
-  "[&:-webkit-autofill]:[-webkit-text-fill-color:rgb(71_85_105)] dark:[&:-webkit-autofill]:[-webkit-text-fill-color:rgb(203_213_225)]",
-  "[&:-webkit-autofill]:shadow-[inset_0_0_0px_1000px_rgb(255_255_255_/_0.8)] dark:[&:-webkit-autofill]:shadow-[inset_0_0_0px_1000px_rgb(15_23_42_/_0.5)]",
-  "[&:-webkit-autofill]:transition-[background-color] [&:-webkit-autofill]:duration-[5000s]",
+  "autofill:[-webkit-text-fill-color:rgb(71,85,105)] dark:autofill:[-webkit-text-fill-color:rgb(203,213,225)]",
+  "autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255,0.8)] dark:autofill:shadow-[inset_0_0_0px_1000px_rgb(15,23,42,0.5)]",
+  "autofill:transition-[background-color] autofill:duration-[5000s]",
   // Preserve styling on autofill hover
-  "[&:-webkit-autofill:hover]:[-webkit-text-fill-color:rgb(71_85_105)] dark:[&:-webkit-autofill:hover]:[-webkit-text-fill-color:rgb(203_213_225)]",
-  "[&:-webkit-autofill:hover]:shadow-[inset_0_0_0px_1000px_rgb(255_255_255_/_0.8)] dark:[&:-webkit-autofill:hover]:shadow-[inset_0_0_0px_1000px_rgb(15_23_42_/_0.5)]",
+  "autofill:hover:[-webkit-text-fill-color:rgb(71,85,105)] dark:autofill:hover:[-webkit-text-fill-color:rgb(203,213,225)]",
+  "autofill:hover:shadow-[inset_0_0_0px_1000px_rgb(255,255,255,0.8)] dark:autofill:hover:shadow-[inset_0_0_0px_1000px_rgb(15,23,42,0.5)]",
   // Preserve styling on autofill focus
-  "[&:-webkit-autofill:focus]:[-webkit-text-fill-color:rgb(71_85_105)] dark:[&:-webkit-autofill:focus]:[-webkit-text-fill-color:rgb(203_213_225)]",
-  "[&:-webkit-autofill:focus]:shadow-[inset_0_0_0px_1000px_rgb(255_255_255_/_0.8)] dark:[&:-webkit-autofill:focus]:shadow-[inset_0_0_0px_1000px_rgb(15_23_42_/_0.5)]",
+  "autofill:focus:[-webkit-text-fill-color:rgb(71,85,105)] dark:autofill:focus:[-webkit-text-fill-color:rgb(203,213,225)]",
+  "autofill:focus:shadow-[inset_0_0_0px_1000px_rgb(255,255,255,0.8)] dark:autofill:focus:shadow-[inset_0_0_0px_1000px_rgb(15,23,42,0.5)]",
 );
 
 export function SlimInput({
@@ -66,7 +66,6 @@ export function SlimInput({
       <div className="relative">
         <input
           id={inputId}
-          type="text"
           required={required}
           className={cn(
             slimInputClassName,

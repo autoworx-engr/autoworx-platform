@@ -1,4 +1,5 @@
-import { updateLeadColumn } from "@/actions/pipelines/getLeads";
+import { db } from "@/lib/db";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -7,6 +8,8 @@ import { NextRequest, NextResponse } from "next/server";
  *   put:
  *     summary: Update lead column
  *     tags: [Sales Pipeline Leads]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -30,14 +33,27 @@ import { NextRequest, NextResponse } from "next/server";
  *         description: Lead column updated successfully
  *       400:
  *         description: Missing columnId or invalid lead ID
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Lead not found
  *       500:
  *         description: Failed to update lead column
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  props: { params: Promise<{ id: string }> },
 ) {
   try {
+    const companyId = (await getAuthPrincipal(request))?.companyId ?? null;
+    if (!companyId) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+
+    const params = await props.params;
     const leadId = parseInt(params.id);
 
     if (isNaN(leadId)) {
@@ -57,7 +73,20 @@ export async function PUT(
       );
     }
 
-    const updatedLead = await updateLeadColumn(leadId, parseInt(finalColumnId));
+    const lead = await db.lead.findFirst({ where: { id: leadId, companyId } });
+    if (!lead) {
+      return NextResponse.json(
+        { success: false, error: "Lead not found" },
+        { status: 404 },
+      );
+    }
+
+    const updatedLead = await db.lead.update({
+      where: { id: leadId },
+      data: { columnId: parseInt(finalColumnId), columnChangedAt: new Date() },
+      include: { column: true },
+    });
+
     return NextResponse.json({ success: true, data: updatedLead });
   } catch (error) {
     return NextResponse.json(

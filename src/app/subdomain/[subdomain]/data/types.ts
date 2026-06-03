@@ -10,6 +10,7 @@ export interface VehicleTypePricing {
 export interface Service {
   id: string;
   title: string;
+  shortDescription?: string;
   description: string;
   price: number;
   estimatedMinutes: number;

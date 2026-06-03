@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { AppError } from "@/error-boundary/error";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
 
 /**
  * @swagger
@@ -93,9 +94,10 @@ import { AppError } from "@/error-boundary/error";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  props: { params: Promise<{ id: string }> },
 ) {
   try {
+    const params = await props.params;
     const id = Number(params.id);
 
     if (!id) {
@@ -192,9 +194,10 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  props: { params: Promise<{ id: string }> },
 ) {
   try {
+    const params = await props.params;
     const id = Number(params.id);
 
     if (!id) {
@@ -210,6 +213,9 @@ export async function PATCH(
       bannerUrl,
       themeConfig,
       isActive,
+      termsConditions,
+      privacyPolicy,
+      urgentBookingNotificationsEnabled,
     } = body;
 
     const existingShop = await db.shop.findUnique({
@@ -234,6 +240,10 @@ export async function PATCH(
         bannerUrl,
         themeConfig,
         isActive,
+        termsConditions: termsConditions ?? null,
+        privacyPolicy: privacyPolicy ?? null,
+        urgentBookingNotificationsEnabled:
+          urgentBookingNotificationsEnabled ?? false,
       },
     });
 
@@ -243,15 +253,15 @@ export async function PATCH(
       data: updatedShop,
     });
   } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json(
-        { success: false, message: error.message },
-        { status: error.statusCode },
-      );
-    }
-    // console.error(error);
-
-    throw new AppError(500, "Failed to update shop");
+    const formattedError = errorHandler(error);
+    return NextResponse.json(
+      {
+        success: false,
+        message: formattedError.message,
+        errorDetails: formattedError,
+      },
+      { status: formattedError.statusCode },
+    );
   }
 }
 /**
@@ -283,9 +293,10 @@ export async function PATCH(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  props: { params: Promise<{ id: string }> },
 ) {
   try {
+    const params = await props.params;
     const id = Number(params.id);
 
     if (!id) {

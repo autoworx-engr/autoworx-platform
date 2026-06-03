@@ -66,9 +66,10 @@ const updateStatusSchema = z.object({
  */
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  props: { params: Promise<{ id: string }> },
 ) {
   try {
+    const params = await props.params;
     const serviceId = parseInt(params.id, 10);
     if (isNaN(serviceId)) {
       throw new AppError(400, "Invalid Shop Service ID");

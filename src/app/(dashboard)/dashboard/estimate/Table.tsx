@@ -64,7 +64,7 @@ export default function Table({
     parseInt(take ?? "", 10) || defaultTake,
   );
   // const [showPagination, setShowPagination] = useState(false);
-  const allStatusesFromStore = useListsStore(x => x.statuses);
+  const allStatusesFromStore = useListsStore((x) => x.statuses);
 
   const pathname = usePathname();
   const router = useRouter();

@@ -77,7 +77,11 @@ export async function GET(req: NextRequest) {
 
     if (result.type === "error") {
       return NextResponse.json(
-        { success: false, message: (result as any).message || "Failed to retrieve message count" },
+        {
+          success: false,
+          message:
+            (result as any).message || "Failed to retrieve message count",
+        },
         { status: 500 },
       );
     }

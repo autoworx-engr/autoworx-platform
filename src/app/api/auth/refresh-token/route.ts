@@ -36,10 +36,13 @@ export async function POST(request: Request) {
       return new Response("Unauthorized", { status: 401 });
     }
 
-    const payload = jwt.verify(
-      refreshAccessToken,
-      process.env.REFRESH_SECRET || ""
-    );
+    const refreshSecret = process.env.REFRESH_SECRET || "";
+
+    if (!refreshSecret) {
+      return new Response("Invalid token", { status: 500 });
+    }
+
+    const payload = jwt.verify(refreshAccessToken, refreshSecret);
 
     if (!payload || typeof payload !== "object" || !payload.email) {
       return Response.json({
@@ -71,7 +74,7 @@ export async function POST(request: Request) {
       },
       {
         status: 200,
-      }
+      },
     );
   } catch (error) {
     console.error("refresh token request error:", error);

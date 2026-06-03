@@ -44,7 +44,7 @@ export async function checkLoginWithTwoFactor(values: TValues): Promise<{
         return { type: "fail", message: "Invalid code!" };
       }
 
-      const sessionCookie = cookies().get("2fa_session")?.value;
+      const sessionCookie = (await cookies()).get("2fa_session")?.value;
 
       if (
         twoFactorToken.sessionId &&
@@ -91,7 +91,7 @@ export async function checkLoginWithTwoFactor(values: TValues): Promise<{
       await db.twoFactorToken.delete({ where: { id: twoFactorToken.id } });
 
       // 2. Clear the temp cookie
-      cookies().delete("2fa_session");
+      (await cookies()).delete("2fa_session");
 
       const existingConfirmation = await db.twoFactorConfirmation.findUnique({
         where: { userId: existingUser.id },

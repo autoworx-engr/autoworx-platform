@@ -1,3 +1,4 @@
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
@@ -44,18 +45,20 @@ import { db } from "@/lib/db";
  *         description: Internal server error
  */
 export async function GET(
-  _req: NextRequest,
-  { params }: { params: { companyId: string } },
+  req: NextRequest,
+  { params }: { params: Promise<{ companyId: string }> },
 ) {
   try {
-    const companyId = Number(params.companyId);
-
-    if (!companyId || isNaN(companyId)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid company ID" },
-        { status: 400 },
-      );
+    const { companyId: companyIdParam } = await params;
+    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
+    if (jwtCompanyId === null) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const urlCompanyId = parseInt(companyIdParam, 10);
+    if (isNaN(urlCompanyId) || urlCompanyId !== jwtCompanyId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    const companyId = jwtCompanyId;
 
     const paymentMethods = await db.paymentMethod.findMany({
       where: { companyId },

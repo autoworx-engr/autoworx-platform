@@ -2,21 +2,29 @@
 import { regenerateZapierToken } from "@/actions/settings/regenerateZapierToken";
 import { successToast } from "@/lib/toast";
 import { Copy, Eye, EyeOff } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Company } from "@prisma/client";
 
-export default function SecurityPage({ company }: { company: any }) {
+export default function SecurityPage({
+  company,
+}: {
+  company: Pick<Company, "zapierToken"> | null;
+}) {
   const [showToken, setShowToken] = useState(false);
   const [isTokenGenerating, setIsTokenGenerating] = useState(false);
-  if (!company?.zapierToken) {
-    regenerateZapierToken();
-  }
+
+  useEffect(() => {
+    if (!company?.zapierToken) {
+      regenerateZapierToken();
+    }
+  }, []);
   return (
     <div className=" w-full  items-start">
       <div className="space-y-4">
         {/* Contact Number Settings */}
         <div>
           <h2 className="mb-2 text-xl font-semibold">Security</h2>
-          <div className="space-y-3 rounded-sm border p-5">
+          <div className="space-y-3 rounded-lg border border-gray-200 p-5">
             {/* draft email */}
             <div className="grid grid-cols-1 items-start space-x-3">
               <label className="block">

@@ -80,7 +80,7 @@ export function NewAppointmentPipeline({
   }) => void;
   onUpdateAppointmentInLead?: (
     appointment: Appointment,
-    columnInfo: { leadId: number; columnId: number }
+    columnInfo: { leadId: number; columnId: number },
   ) => void;
   // settings: CalendarSettings;
   // employees: User[];
@@ -93,7 +93,7 @@ export function NewAppointmentPipeline({
   const { data: newAppointmentData } = useServerGet(
     getDataForNewAppointment,
     clientId,
-    vehicleId
+    vehicleId,
   );
 
   const { showError } = useFormErrorStore();
@@ -101,7 +101,7 @@ export function NewAppointmentPipeline({
     (value: boolean) => {
       value ? open("ADD_TASK") : close();
     },
-    [open, close]
+    [open, close],
   );
   const { estimates } = useListsStore();
 
@@ -109,7 +109,7 @@ export function NewAppointmentPipeline({
   const [title, setTitle] = useState<string>("");
 
   const [date, setDate] = useState<string | undefined>(
-    moment().toISOString().split("T")[0]
+    moment().toISOString().split("T")[0],
   );
   const [startTime, setStartTime] = useState("00:00");
   const [endTime, setEndTime] = useState("00:00");
@@ -118,10 +118,10 @@ export function NewAppointmentPipeline({
   const [allDay, setAllDay] = useState(false);
 
   const [client, setClient] = useState<Client | null>(
-    newAppointmentData?.client ? newAppointmentData.client : null
+    newAppointmentData?.client ? newAppointmentData.client : null,
   );
   const [vehicle, setVehicle] = useState<Vehicle | null>(
-    newAppointmentData?.vehicle ? newAppointmentData.vehicle : null
+    newAppointmentData?.vehicle ? newAppointmentData.vehicle : null,
   );
   const [draft, setDraft] = useState<string | null>(null);
   const [draftEstimates, setDraftEstimates] = useState<string[]>([]);
@@ -233,7 +233,7 @@ export function NewAppointmentPipeline({
     if (estimates) {
       // filter all estimates where clientId is client.id
       const filteredEstimates = estimates.filter(
-        (estimate) => estimate.clientId === client?.id
+        (estimate) => estimate.clientId === client?.id,
       );
       // map the filtered estimates to get the id
       const estimateIds = filteredEstimates.map((estimate) => estimate.id);
@@ -252,7 +252,7 @@ export function NewAppointmentPipeline({
 
       if (date && (!startTime || !endTime)) {
         return errorToast(
-          "Start time and End time are required when a date is selected!"
+          "Start time and End time are required when a date is selected!",
         );
       }
 
@@ -269,7 +269,7 @@ export function NewAppointmentPipeline({
         !company?.timezone
       ) {
         return errorToast(
-          "Set company timezone in Settings > Business Profile to send client reminders."
+          "Set company timezone in Settings > Business Profile to send client reminders.",
         );
       }
 
@@ -441,7 +441,7 @@ export function NewAppointmentPipeline({
     // data.reset();
     setTimeout(() => {
       router.push(
-        `${pathname}?view=pipelines&clientId=${clientId}${params.get("details") ? "&chat=true&details=true" : ""} `
+        `${pathname}?view=pipelines&clientId=${clientId}${params.get("details") ? "&chat=true&details=true" : ""} `,
       );
     }, 500);
   };
@@ -460,7 +460,7 @@ export function NewAppointmentPipeline({
 
   const handleTimeChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    type: "start" | "end"
+    type: "start" | "end",
   ) => {
     let timeValue = e.target.value;
 
@@ -577,7 +577,7 @@ export function NewAppointmentPipeline({
           employee.employeeType === "Sales" &&
           !assignedUsers.find((user) => user.id === employee.id)
         );
-      }
+      },
     );
     setFilteredSales(filteredSalesPersons);
 
@@ -587,7 +587,7 @@ export function NewAppointmentPipeline({
           employee.employeeType === "Technician" &&
           !assignedUsers.find((user) => user.id === employee.id)
         );
-      }
+      },
     );
     setFilteredTechnicians(filteredTechnicians);
   }, [newAppointmentData, assignedUsers]);
@@ -643,7 +643,7 @@ export function NewAppointmentPipeline({
               type="button"
               className={cn(
                 "rounded-full px-4 py-1 font-semibold",
-                tab === Tab.Schedule && "bg-background"
+                tab === Tab.Schedule && "bg-background",
               )}
               onClick={() => setTab(Tab.Schedule)}
             >
@@ -655,7 +655,7 @@ export function NewAppointmentPipeline({
               type="button"
               className={cn(
                 "rounded-full px-4 py-1 font-semibold",
-                tab === Tab.Reminder && "bg-background"
+                tab === Tab.Reminder && "bg-background",
               )}
               onClick={() => setTab(Tab.Reminder)}
             >
@@ -665,13 +665,13 @@ export function NewAppointmentPipeline({
                 fill="currentColor"
                 className="h-6 w-6 inline mr-2"
                 stroke="currentColor"
-                stroke-width="0.41600000000000004"
+                strokeWidth="0.41600000000000004"
               >
-                <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
                 <g
                   id="SVGRepo_tracerCarrier"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 ></g>
                 <g id="SVGRepo_iconCarrier">
                   {" "}
@@ -796,7 +796,7 @@ export function NewAppointmentPipeline({
                       <button
                         onClick={() => {
                           let filteredAssignedUser = assignedUsers.filter(
-                            (assignedUser) => user.id != assignedUser.id
+                            (assignedUser) => user.id != assignedUser.id,
                           );
                           setAssignedUsers(filteredAssignedUser);
                         }}
@@ -883,7 +883,7 @@ export function NewAppointmentPipeline({
                       <button
                         onClick={() => {
                           let filteredAssignedUser = assignedUsers.filter(
-                            (assignedUser) => user.id != assignedUser.id
+                            (assignedUser) => user.id != assignedUser.id,
                           );
                           setAssignedUsers(filteredAssignedUser);
                         }}
@@ -983,7 +983,7 @@ export function NewAppointmentPipeline({
               displayList={(item) => <p className="text-[#6571FF]">{item}</p>}
               onSearch={(search) => {
                 return draftEstimates.filter((draft) =>
-                  draft.toLowerCase().includes(search.toLowerCase())
+                  draft.toLowerCase().includes(search.toLowerCase()),
                 );
               }}
             />

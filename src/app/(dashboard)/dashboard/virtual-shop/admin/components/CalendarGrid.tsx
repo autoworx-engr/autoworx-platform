@@ -24,7 +24,11 @@ export default function CalendarGrid({
   onSelectDate: (date: string) => void;
 }) {
   const today = new Date();
-  const todayKey = formatDateKey(today.getFullYear(), today.getMonth(), today.getDate());
+  const todayKey = formatDateKey(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+  );
   const daysInMonth = getDaysInMonth(year, month);
   const firstDay = getFirstDayOfMonth(year, month);
 
@@ -52,7 +56,12 @@ export default function CalendarGrid({
 
       {cells.map((day, idx) => {
         if (day === null) {
-          return <div key={`empty-${idx}`} className="bg-white dark:bg-slate-900 min-h-[52px] sm:min-h-[80px] md:min-h-[88px]" />;
+          return (
+            <div
+              key={`empty-${idx}`}
+              className="bg-white dark:bg-slate-900 min-h-[52px] sm:min-h-[80px] md:min-h-[88px]"
+            />
+          );
         }
 
         const dateKey = formatDateKey(year, month, day);
@@ -64,18 +73,20 @@ export default function CalendarGrid({
           <button
             key={dateKey}
             onClick={() => onSelectDate(dateKey)}
-            className={`relative bg-white dark:bg-slate-900 min-h-[52px] sm:min-h-[80px] md:min-h-[88px] p-1 sm:p-2 flex flex-col items-start text-left transition-all duration-200 hover:bg-slate-50 dark:hover:bg-slate-800/60 focus-visible:outline-none ${isSelected
-              ? "ring-2 ring-inset ring-[#6571FF] bg-indigo-50/40 dark:bg-indigo-900/10"
-              : ""
-              }`}
+            className={`relative bg-white dark:bg-slate-900 min-h-[52px] sm:min-h-[80px] md:min-h-[88px] p-1 sm:p-2 flex flex-col items-start text-left transition-all duration-200 hover:bg-slate-50 dark:hover:bg-slate-800/60 focus-visible:outline-none ${
+              isSelected
+                ? "ring-2 ring-inset ring-[#6571FF] bg-[#6571FF]/5 dark:bg-[#6571FF]/10"
+                : ""
+            }`}
           >
             <span
-              className={`text-[9px] sm:text-xs font-semibold mb-0.5 sm:mb-1.5 w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 flex items-center justify-center rounded-full transition-colors ${isSelected
-                ? "bg-[#6571FF] text-white"
-                : isToday
-                  ? "text-[#6571FF] bg-indigo-100 dark:bg-indigo-900/40"
-                  : "text-slate-600 dark:text-slate-400"
-                }`}
+              className={`text-[9px] sm:text-xs font-semibold mb-0.5 sm:mb-1.5 w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 flex items-center justify-center rounded-full transition-colors ${
+                isSelected
+                  ? "bg-[#6571FF] text-white"
+                  : isToday
+                    ? "text-[#6571FF] bg-[#6571FF]/15 dark:bg-[#6571FF]/25"
+                    : "text-slate-600 dark:text-slate-400"
+              }`}
             >
               {day}
             </span>
@@ -88,7 +99,9 @@ export default function CalendarGrid({
                   />
                 ))}
                 {dayAppts.length > 3 && (
-                  <span className="hidden sm:inline text-[10px] text-slate-400 dark:text-slate-500 font-medium">+{dayAppts.length - 3}</span>
+                  <span className="hidden sm:inline text-[10px] text-slate-400 dark:text-slate-500 font-medium">
+                    +{dayAppts.length - 3}
+                  </span>
                 )}
               </div>
             )}

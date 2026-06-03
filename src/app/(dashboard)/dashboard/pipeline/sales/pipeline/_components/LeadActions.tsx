@@ -18,6 +18,8 @@ import { createLeadDraftEstimate } from "@/actions/pipelines/createLeadDraftEsti
 import { Calendar, CalendarCheck } from "lucide-react";
 import { updateInvoiceAutomationTrigger } from "@/service/invoice-automation-trigger/api";
 import { useRouter } from "next/navigation";
+import { canAccessEstimate } from "@/utils/permissions";
+import { usePermissionStore } from "@/stores/permissionStore";
 
 type TProps = {
   lead: LeadWithSalesUser;
@@ -36,7 +38,8 @@ export default function LeadActions({ lead }: TProps) {
   const dispatch = useColumnDispatch();
   const router = useRouter();
   const [invoiceId, setInvoiceId] = useState<string | null>(null);
-
+  const { permissions } = usePermissionStore();
+  const canCreateEstimate = canAccessEstimate(permissions);
   // const handleCreateDraftEstimate = async ({
   //   columnId,
   //   leadId,
@@ -277,7 +280,7 @@ export default function LeadActions({ lead }: TProps) {
       : undefined;
   const fromEdit = !!appointment?.id;
   const vehicleId = lead?.vehicleId;
-  const clientId = lead?.client?.id;
+  const clientId = lead?.client?.id ?? lead?.clientId ?? undefined;
   return (
     <>
       <div className="flex justify-between">
@@ -285,7 +288,7 @@ export default function LeadActions({ lead }: TProps) {
           {/* client message notification or redirect to client section component */}
           <CommunicationsNoti lead={lead} />
           <button
-            disabled={pending}
+            disabled={pending || !canCreateEstimate}
             type="button"
             onClick={() => {
               if (lead?.columnId && lead.id && lead?.client) {
@@ -317,6 +320,7 @@ export default function LeadActions({ lead }: TProps) {
           </button>
           {/* TODO: shown a mark when create a appointment */}
           <AppointmentCreateOrEdit
+            key={`lead-${lead.id}-appt-${appointment?.id ?? "new"}`}
             fromEdit={fromEdit}
             fromLead
             appointmentId={fromEdit ? appointment?.id : undefined}
@@ -329,7 +333,7 @@ export default function LeadActions({ lead }: TProps) {
                 )}
 
                 <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-                  New Appointment
+                  Appointment
                 </span>
               </button>
             }

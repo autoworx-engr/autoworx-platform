@@ -12,7 +12,7 @@ export function GiftCardPurchaseStats({ summary }: GiftCardPurchaseStatsProps) {
       value: summary.totalIssued.toLocaleString(),
       sub: "gift cards",
       color: "text-[#6571FF]",
-      bg: "bg-indigo-50 dark:bg-indigo-900/20",
+      bg: "bg-[#6571FF]/10 dark:bg-[#6571FF]/20",
     },
     {
       label: "Total Value Sold",
@@ -48,7 +48,9 @@ export function GiftCardPurchaseStats({ summary }: GiftCardPurchaseStatsProps) {
             {label}
           </p>
           <p className={`text-lg font-bold mt-1 ${color}`}>{value}</p>
-          <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{sub}</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+            {sub}
+          </p>
         </div>
       ))}
     </div>

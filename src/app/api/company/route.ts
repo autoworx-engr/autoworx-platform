@@ -15,7 +15,7 @@ import { NextResponse } from "next/server";
  *       500:
  *         description: Server error
  */
-export async function GET(req: Request, res: Response) {
+export async function GET(req: Request) {
   try {
     const allCompanies = await db.company.findMany({});
     return NextResponse.json(allCompanies);
@@ -23,7 +23,7 @@ export async function GET(req: Request, res: Response) {
     console.error("Error fetching companies:", error);
     return NextResponse.json(
       { error: "All company fetch failed" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

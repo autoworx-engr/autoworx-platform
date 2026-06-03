@@ -195,12 +195,18 @@ export default function InventoryDisplay({
                   <tr className="h-10 border-b">
                     <th className="border-b px-4 py-2 text-left">Product #</th>
                     <th className="border-b px-4 py-2 text-left">Name </th>
-                    <th className="border-b px-4 py-2 text-left">Average Cost</th>
-                    <th className="border-b px-4 py-2 text-left">Average Sell</th>
+                    <th className="border-b px-4 py-2 text-left">
+                      Average Cost
+                    </th>
+                    <th className="border-b px-4 py-2 text-left">
+                      Average Sell
+                    </th>
                     <th className="border-b px-4 py-2 text-left">Stock Qty.</th>
                     <th className="border-b px-4 py-2 text-left">Qty. Sold</th>
                     <th className="border-b px-4 py-2 text-left">Type</th>
-                    <th className="border-b px-4 py-2 text-left">ROI Average</th>
+                    <th className="border-b px-4 py-2 text-left">
+                      ROI Average
+                    </th>
                     <th className="border-b px-4 py-2 text-left">
                       Purchase Date
                     </th>
@@ -224,7 +230,7 @@ export default function InventoryDisplay({
                   ))}
                 </tbody>
               </table>
-            </ div>
+            </div>
           )}
           {showPagination && (
             <div className="mt-4 flex justify-end">
@@ -254,7 +260,7 @@ export default function InventoryDisplay({
             index={
               currentPage > 1 ? index + pageSize * (currentPage - 1) : index
             }
-          // timezone={timezone}
+            // timezone={timezone}
           />
         ))}
       </div>

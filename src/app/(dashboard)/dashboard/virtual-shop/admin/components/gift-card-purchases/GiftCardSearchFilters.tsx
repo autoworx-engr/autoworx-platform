@@ -24,7 +24,10 @@ export function GiftCardSearchFilters({
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <div className="relative flex-1 sm:max-w-sm">
-        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <Search
+          size={14}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+        />
         <input
           value={searchInput}
           onChange={(e) => onSearchChange(e.target.value)}

@@ -8,7 +8,7 @@ import {
 
 export function canAccessRoute(
   route: string,
-  permissions: PermissionsResult | null
+  permissions: PermissionsResult | null,
 ): boolean {
   const routeWithoutQuery = route.split("?")[0];
   if (!permissions) return true;
@@ -37,7 +37,7 @@ export function canAccessRoute(
       //@ts-ignore
       const hasCompanyPermission = Boolean(
         //@ts-ignore
-        permissions.companyPermissions?.[key]
+        permissions.companyPermissions?.[key],
       );
       if (hasCompanyPermission && permissions?.userPermissions) {
         //@ts-ignore
@@ -52,7 +52,7 @@ export function canAccessRoute(
 
   const hasCompanyPermission = Boolean(
     //@ts-ignore
-    permissions.companyPermissions?.[permissionKey]
+    permissions.companyPermissions?.[permissionKey],
   );
   if (hasCompanyPermission && permissions?.userPermissions) {
     //@ts-ignore

@@ -1,3 +1,10 @@
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Coupon QR Code",
+  description: "Thank you for scanning the coupon QR code.",
+};
+
 // TODO: improve this page. add link to home.
 export default function page() {
   return (

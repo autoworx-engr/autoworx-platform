@@ -40,7 +40,6 @@ export default function SearchFilter({ searchParams }: TSearchFilterProps) {
     router.push(`${pathname}?${searchParam.toString()}`);
   }, 500);
 
-
   const handleCategoryChange = (value: string) => {
     setFilter({ category: value === "All Categories" ? "" : value });
     const searchParam = new URLSearchParams(params);
@@ -70,7 +69,7 @@ export default function SearchFilter({ searchParams }: TSearchFilterProps) {
           </span>
           <input
             type="text"
-            placeholder="Search by name, category"
+            placeholder="Search by name..."
             className="w-full bg-transparent text-sm font-medium text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none"
             value={search}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {

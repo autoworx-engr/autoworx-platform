@@ -71,7 +71,10 @@ export async function PATCH(req: NextRequest) {
 
     if (result.type === "error") {
       return NextResponse.json(
-        { success: false, message: result.message || "Failed to update invoice status" },
+        {
+          success: false,
+          message: result.message || "Failed to update invoice status",
+        },
         { status: 400 },
       );
     }

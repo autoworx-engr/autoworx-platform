@@ -6,18 +6,19 @@ import VirtualShopTabs from "../../components/VirtualShopTabs";
 
 type VirtualShopTabsLayoutProps = {
   children: React.ReactNode;
-  params: {
+  params: Promise<{
     shopId: string;
-  };
+  }>;
 };
 
 export default async function VirtualShopTabsLayout({
   children,
   params,
 }: VirtualShopTabsLayoutProps) {
+  const { shopId: shopIdParam } = await params;
   const session = await getServerSession(authOptions);
   const companyId = session?.user?.companyId;
-  const shopId = Number.parseInt(params.shopId, 10);
+  const shopId = Number.parseInt(shopIdParam, 10);
 
   if (!companyId || !Number.isFinite(shopId)) {
     return <ShopNotFound />;

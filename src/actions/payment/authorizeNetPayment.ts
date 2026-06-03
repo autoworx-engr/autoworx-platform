@@ -1,7 +1,6 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { env } from "next-runtime-env";
 const ApiContracts = require("authorizenet").APIContracts;
 const ApiControllers = require("authorizenet").APIControllers;
 const SDKConstants = require("authorizenet").Constants;
@@ -315,13 +314,13 @@ export const createAuthorizeNetPaymentLink = async ({
     orderSetting.setSettingValue('{"show": false}');
     settings.push(orderSetting);
 
-    // Hide billing & shipping address blocks on the hosted form.
-    // Note: the account's Payment Form > Form Fields settings must
-    // also NOT mark these fields as "Required", otherwise Authorize.Net
-    // can still enforce them even if they are hidden here.
+    // Show billing address block so customers can enter name on card
+    // and zip code. Only name and zip are required; other address
+    // fields should be set to optional in the Authorize.Net merchant
+    // portal (Payment Form > Form Fields).
     const billingOptions = new ApiContracts.SettingType();
     billingOptions.setSettingName("hostedPaymentBillingAddressOptions");
-    billingOptions.setSettingValue('{"show": false, "required": false}');
+    billingOptions.setSettingValue('{"show": true, "required": false}');
     settings.push(billingOptions);
 
     const shippingOptions = new ApiContracts.SettingType();
@@ -343,8 +342,7 @@ export const createAuthorizeNetPaymentLink = async ({
     // domain. Prefer the current page origin if provided, because
     // multi-domain setups (e.g. test.dev.* vs dev.*) can break
     // postMessage handling when this is hard-coded.
-    const configuredAppUrl =
-      process.env.NEXT_PUBLIC_APP_URL || env("NEXT_PUBLIC_APP_URL") || "";
+    const configuredAppUrl = process.env.NEXT_PUBLIC_APP_URL || "";
 
     let communicatorBaseUrl = configuredAppUrl;
     if (redirectUrl) {

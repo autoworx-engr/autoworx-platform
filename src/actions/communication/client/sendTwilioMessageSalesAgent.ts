@@ -4,6 +4,7 @@ import { updatePipelineAutomationTrigger } from "@/actions/automation/pipeline/t
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import { normalizeUSPhoneNumber } from "@/lib/normalizeUSPhoneNumber";
+import receiveTwiloMessage from "@/lib/pusher/receiveTwiloMessage";
 import { revalidatePath } from "next/cache";
 import Twilio from "twilio";
 import { updateNewSMSChatTrack } from "./chat-track";
@@ -115,20 +116,11 @@ export async function sendTwilioMessageSalesAgent({
         },
       });
 
-      try {
-        if (client?.Lead?.id && client?.Lead?.columnId) {
-          if (data?.sentBy == "Company") {
-            await updatePipelineAutomationTrigger({
-              companyId: client.companyId,
-              condition: "MESSAGE_SENT_CLIENT",
-              leadId: client?.Lead.id,
-              columnId: client?.Lead?.columnId,
-            });
-          }
-        }
-      } catch (error) {}
+      if (data) {
+        await receiveTwiloMessage(data);
+      }
 
-      revalidatePath("/dashboard/communication/client");
+      revalidatePath(`/dashboard/communication/client/${clientId}`);
 
       return {
         success: true,
@@ -138,7 +130,6 @@ export async function sendTwilioMessageSalesAgent({
       throw new Error("Missing required parameters");
     }
   } catch (error) {
-    console.log("Error sending message", error);
     return {
       success: false,
       error,

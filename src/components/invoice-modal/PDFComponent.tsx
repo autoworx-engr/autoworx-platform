@@ -617,7 +617,13 @@ const PDFComponent = function PDF({
     totals.map(([k, v]) => [String(k), v]),
   );
 
-  const leftFields = ["subtotal", "discount", "tax", "vehicle extra cost", "shop supplies"];
+  const leftFields = [
+    "subtotal",
+    "discount",
+    "tax",
+    "vehicle extra cost",
+    "shop supplies",
+  ];
   const rightFields = ["grand total", "deposit", "payment", "refunded", "due"];
 
   const formatTotalsValue = (field: string, value: unknown) => {
@@ -634,11 +640,9 @@ const PDFComponent = function PDF({
 
   const paymentEntries = (invoice.payments ?? [])
     .filter((payment) => payment.invoiceId === invoice.id)
-    .reverse()
+    .reverse();
 
-  const getPaymentMethodText = (
-    payment: (typeof paymentEntries)[number],
-  ) => {
+  const getPaymentMethodText = (payment: (typeof paymentEntries)[number]) => {
     if (payment.type === "OTHER") {
       return payment.other?.paymentMethod?.name || "OTHER";
     }
@@ -965,14 +969,14 @@ const PDFInvoiceItems = ({
   })[];
 }) => {
   return items.map((item) => {
-    if (!item.service) return null;
+    if (!item.service && !item.labor) return null;
 
     const materialCost = item.materials.reduce((acc, material) => {
       return (
         acc +
         (material && material.sell
           ? parseFloat(material.sell.toString()) *
-          Number(material.quantity ?? 0)
+            Number(material.quantity ?? 0)
           : 0)
       );
     }, 0);
@@ -991,11 +995,59 @@ const PDFInvoiceItems = ({
       }, 0) +
       (item.labor?.discount ? parseFloat(item.labor?.discount.toString()) : 0);
     const serviceTotal = materialCost + laborCost - totalDiscount;
+    const isLaborOnly = !item.service;
+
+    if (isLaborOnly) {
+      return (
+        <View key={item.id} style={styles.itemCard}>
+          <View style={styles.itemHeader}>
+            <Text style={styles.itemName}>{item.labor?.name ?? "Labor"}</Text>
+            <Text style={styles.itemPrice}>{formatCurrency(serviceTotal)}</Text>
+          </View>
+          {item.labor?.notes && (
+            <Text style={styles.itemDesc}>{item.labor.notes}</Text>
+          )}
+          {item.materials.filter(Boolean).length > 0 && (
+            <View style={{ marginBottom: 6 }}>
+              {item.materials.map((material, index) => {
+                if (!material) return null;
+                const lineTotal = material.sell
+                  ? parseFloat(material.sell.toString()) *
+                    Number(material.quantity ?? 0)
+                  : 0;
+                return (
+                  <View key={index} style={styles.lineItem}>
+                    <Text style={styles.lineItemText}>
+                      Material - {material.name}
+                    </Text>
+                    <Text style={styles.lineItemText}>
+                      {formatCurrency(lineTotal)}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+          )}
+          <View style={styles.lineItem}>
+            <Text style={styles.lineItemText}>Labor Cost</Text>
+            <Text style={styles.lineItemText}>{formatCurrency(laborCost)}</Text>
+          </View>
+          {totalDiscount > 0 && (
+            <View style={[styles.lineItem, { marginTop: 4 }]}>
+              <Text style={styles.lineItemText}>Discount</Text>
+              <Text style={styles.lineItemText}>
+                -{formatCurrency(totalDiscount)}
+              </Text>
+            </View>
+          )}
+        </View>
+      );
+    }
 
     return (
       <View key={item.id} style={styles.itemCard}>
         <View style={styles.itemHeader}>
-          <Text style={styles.itemName}>Service - {item.service.name}</Text>
+          <Text style={styles.itemName}>Service - {item.service!.name}</Text>
           <Text style={styles.itemPrice}>{formatCurrency(serviceTotal)}</Text>
         </View>
 
@@ -1011,7 +1063,7 @@ const PDFInvoiceItems = ({
               if (!material) return null;
               const lineTotal = material.sell
                 ? parseFloat(material.sell.toString()) *
-                Number(material.quantity ?? 0)
+                  Number(material.quantity ?? 0)
                 : 0;
               return (
                 <View key={index} style={styles.lineItem}>

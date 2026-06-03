@@ -1,9 +1,9 @@
-'use server';
+"use server";
 
-import { authOptions } from '@/authOptions';
-import { db } from '@/lib/db';
-import { ServerAction } from '@/types/action';
-import { getServerSession } from 'next-auth';
+import { authOptions } from "@/authOptions";
+import { db } from "@/lib/db";
+import { ServerAction } from "@/types/action";
+import { getServerSession } from "next-auth";
 
 export async function updateCalendarSettings(data: {
   weekStart: string;
@@ -16,7 +16,7 @@ export async function updateCalendarSettings(data: {
   const companyId = session?.user.companyId;
 
   if (!companyId) {
-    throw new Error('Company ID is required to create an email template.');
+    throw new Error("Company ID is required to create an email template.");
   }
 
   // Create or Update the calendar settings
@@ -41,5 +41,5 @@ export async function updateCalendarSettings(data: {
     },
   });
 
-  return { type: 'success', data: newCalendarSettings };
+  return { type: "success", data: newCalendarSettings };
 }

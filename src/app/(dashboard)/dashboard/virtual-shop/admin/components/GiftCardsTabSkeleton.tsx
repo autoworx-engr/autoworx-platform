@@ -8,7 +8,9 @@ import {
 } from "lucide-react";
 
 function SkeletonLine({ className = "" }: { className?: string }) {
-  return <div className={`h-4 animate-pulse rounded bg-gray-200 ${className}`} />;
+  return (
+    <div className={`h-4 animate-pulse rounded bg-gray-200 ${className}`} />
+  );
 }
 
 function SectionSkeleton({

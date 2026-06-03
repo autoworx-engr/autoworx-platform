@@ -7,6 +7,7 @@ import GiftCardPurchasesTab, {
   type IssuedGiftCardItem,
   type GiftCardPurchaseSummary,
 } from "../../../components/GiftCardPurchasesTab";
+import { Metadata } from "next";
 
 type PageSearchParams = {
   search?: string | string[];
@@ -17,7 +18,7 @@ type PageSearchParams = {
 };
 
 type Props = {
-  params: { shopId: string };
+  params: Promise<{ shopId: string }>;
   searchParams?: Promise<PageSearchParams>;
 };
 
@@ -45,12 +46,21 @@ const emptySummary: GiftCardPurchaseSummary = {
   statusBreakdown: {},
 };
 
-export default async function GiftCardPurchasesPage({ params, searchParams }: Props) {
+export const metadata: Metadata = {
+  title: "Gift Card Purchases",
+  description: "View and manage your virtual shop gift card purchases.",
+};
+
+export default async function GiftCardPurchasesPage(props: Props) {
+  const params = await props.params;
+  const searchParams = props.searchParams;
   const resolved = searchParams ? await searchParams : undefined;
 
   const search = first(resolved?.search)?.trim() || "";
   const rawStatus = (first(resolved?.status) || "").toUpperCase();
-  const status: GiftCardStatusFilter = (VALID_STATUSES as readonly string[]).includes(rawStatus)
+  const status: GiftCardStatusFilter = (
+    VALID_STATUSES as readonly string[]
+  ).includes(rawStatus)
     ? (rawStatus as GiftCardStatusFilter)
     : "ALL";
   const page = toPositiveInt(first(resolved?.page), 1);
@@ -142,7 +152,11 @@ export default async function GiftCardPurchasesPage({ params, searchParams }: Pr
     scheduledSendAt: row.scheduledSendAt ?? null,
     createdAt: row.createdAt,
     template: row.template
-      ? { id: row.template.id, name: row.template.name, imageUrl: row.template.imageUrl }
+      ? {
+          id: row.template.id,
+          name: row.template.name,
+          imageUrl: row.template.imageUrl,
+        }
       : null,
     transactionCount: row._count?.transactions ?? 0,
   }));

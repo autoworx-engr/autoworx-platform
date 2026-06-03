@@ -7,10 +7,13 @@ import sendClientMailOrSMSNotify from "@/lib/pusher/client-conversation-notify";
 import receiveTwiloMessage from "@/lib/pusher/receiveTwiloMessage";
 import { getPusherInstance } from "@/lib/pusher/server";
 import { NextRequest, NextResponse } from "next/server";
-import { sendSMSToAgent } from "@/service/ai-agent/api";
+import { debounceSmsAgent } from "@/lib/pgboss/debounceSmsAgent";
 import { revalidatePath } from "next/cache";
 import { allCompanyFeaturePermissions } from "@/service/feature-permissions/api";
-import { normalizePhoneForStorage, phoneLookupWhereClause } from "@/utils/normalizePhone";
+import {
+  normalizePhoneForStorage,
+  phoneLookupWhereClause,
+} from "@/utils/normalizePhone";
 
 const pusher = getPusherInstance();
 
@@ -258,27 +261,52 @@ export async function POST(req: NextRequest) {
 
           const isCompanySalesAgent = company?.isSalesAgent === true;
           const isClientSalesAgent = client?.isSalesAgent === true;
+
+          console.log("[Infobip] Sales-agent gate check", {
+            companyId: infobipConfig.companyId,
+            clientId: client.id,
+            isCompanySalesAgent,
+            isClientSalesAgent,
+            isSalesAgentEnabled,
+            clientSMSTo: clientSMS?.to,
+            infobipPhone: infobipConfig.phoneNumber,
+            phoneMatch: clientSMS?.to === infobipConfig.phoneNumber,
+          });
+
           if (
             isCompanySalesAgent &&
             isClientSalesAgent &&
             isSalesAgentEnabled
           ) {
             if (clientSMS && clientSMS?.to === infobipConfig.phoneNumber) {
-              try {
-                await sendSMSToAgent({
-                  company_id: client.companyId,
-                  message: clientSMS?.message,
-                  send_from: clientSMS?.from,
-                  send_to: clientSMS?.to,
-                  client_id: client.id,
-                });
-              } catch (error) {
-                return Response.json(
-                  { message: `Sales agent error: ${error}` },
-                  { status: 200 },
-                );
-              }
+              console.log(
+                "[Infobip] All gates passed — calling debounceSmsAgent for clientId",
+                client.id,
+              );
+              debounceSmsAgent({
+                clientId: client.id,
+                companyId: client.companyId,
+                sendFrom: clientSMS.from,
+                sendTo: clientSMS.to,
+                windowStart: clientSMS.createdAt.toISOString(),
+              }).catch((err) =>
+                console.error("[Infobip] debounceSmsAgent enqueue error:", err),
+              );
+            } else {
+              console.log("[Infobip] Phone mismatch — skipping debounce", {
+                clientSMSTo: clientSMS?.to,
+                infobipPhone: infobipConfig.phoneNumber,
+              });
             }
+          } else {
+            console.log(
+              "[Infobip] Sales-agent gate FAILED — skipping debounce",
+              {
+                isCompanySalesAgent,
+                isClientSalesAgent,
+                isSalesAgentEnabled,
+              },
+            );
           }
 
           // Count unread messages
@@ -291,19 +319,20 @@ export async function POST(req: NextRequest) {
           });
 
           // Update chat track
-          updateNewSMSChatTrack({
+          await updateNewSMSChatTrack({
             clientId: client.id,
             smsLastMessage: cleanedMessageText,
             lastMessageBy: "Client",
             attachments: processedAttachments,
-          });
+          }).catch(console.error);
 
           // Send notifications
-          sendClientMessageNotification({
+          await sendClientMessageNotification({
             companyId: infobipConfig.companyId,
             clientId: client.id,
             clientName: client.firstName + " " + client.lastName,
-          });
+            message: cleanedMessageText,
+          }).catch(console.error);
 
           // Trigger Pusher notification
           const channelName = `message-${client.id}`;
@@ -321,15 +350,13 @@ export async function POST(req: NextRequest) {
           }
 
           // Send client mail or SMS notification
-          try {
-            sendClientMailOrSMSNotify(client.id);
-          } catch (pusherError) {
+          sendClientMailOrSMSNotify(client.id).catch((pusherError) =>
             console.error(
               "Pusher sendClientMailOrSMSNotify error:",
               pusherError,
-            );
-            // Continue processing even if pusher fails
-          }
+            ),
+          );
+          // Continue processing even if pusher fails
 
           // Trigger pipeline automation if applicable
           try {
@@ -351,7 +378,9 @@ export async function POST(req: NextRequest) {
                 condition: "MESSAGE_RECEIVED_CLIENT",
                 leadId: clientWithLead.Lead.id,
                 columnId: clientWithLead.Lead.columnId,
-              });
+              }).catch((automationError) =>
+                console.error("Pipeline automation error:", automationError),
+              );
             }
           } catch (automationError) {
             console.error("Pipeline automation error:", automationError);
@@ -365,7 +394,7 @@ export async function POST(req: NextRequest) {
         }
       }
     }
-    revalidatePath("/dashboard/communication/client");
+    revalidatePath("/dashboard/communication/client/${clientId}");
     return NextResponse.json(
       {
         message: "Webhook processed successfully",
@@ -398,7 +427,6 @@ async function fetchInfobipMedia(url: string, contentType: string) {
 
   return new File([blob], fileName, { type: contentType });
 }
-
 
 // Optional: Add GET endpoint for testing webhook URL
 export async function GET() {

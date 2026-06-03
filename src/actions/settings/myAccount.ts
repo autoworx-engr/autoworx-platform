@@ -35,13 +35,13 @@ export async function editMyAccountInfo({
       city,
       state,
       zip,
-      countryCode
+      countryCode,
     });
     const session = await getServerSession(authOptions);
     const userId = session?.user.id;
 
     if (!userId) {
-      throw new Error("User ID is required to create an email template.");
+      throw new Error("User ID is required to update account info.");
     }
     const updatedUser = await db.user.update({
       where: {
@@ -60,7 +60,7 @@ export async function editMyAccountInfo({
         countryCode,
       },
     });
-    revalidatePath("/settings/my-account");
+    revalidatePath("/dashboard/settings/my-account");
     return { type: "success", data: updatedUser };
   } catch (error) {
     return errorHandler(error);
@@ -77,7 +77,7 @@ export async function changePassword(
     const userId = session?.user.id;
 
     if (!userId) {
-      throw new Error("User ID is required to create an email template.");
+      throw new Error("User ID is required to change password.");
     }
     const user = await db.user.findUnique({
       where: {
@@ -87,6 +87,9 @@ export async function changePassword(
 
     if (!user) {
       throw new Error("User not found");
+    }
+    if (currentPassword === newPassword) {
+      throw new Error("New password cannot be same as current password");
     }
 
     let comparePassword = await bcrypt.compare(currentPassword, user.password);

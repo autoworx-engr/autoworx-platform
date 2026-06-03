@@ -7,8 +7,9 @@ import { usePathname } from "next/navigation";
 
 export default function ShopNotFound() {
   const pathname = usePathname();
-  const shouldShowConfigure =
-    pathname.startsWith("/dashboard/virtual-shop/admin");
+  const shouldShowConfigure = pathname.startsWith(
+    "/dashboard/virtual-shop/admin",
+  );
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-white to-gray-100 p-4">
@@ -19,14 +20,11 @@ export default function ShopNotFound() {
             Shop Not Found
           </h1>
           <p className="mx-auto max-w-xl text-lg text-gray-600">
-            Oops! The shop you&apos;re looking for doesn&apos;t exist. {shouldShowConfigure ? (
-              <span>
-                Please configure your shop to access this section.
-              </span>
+            Oops! The shop you&apos;re looking for doesn&apos;t exist.{" "}
+            {shouldShowConfigure ? (
+              <span>Please configure your shop to access this section.</span>
             ) : (
-              <span>
-                It might have been moved or the URL is incorrect.
-              </span>
+              <span>It might have been moved or the URL is incorrect.</span>
             )}
           </p>
 
@@ -51,8 +49,6 @@ export default function ShopNotFound() {
             </div>
           )}
         </div>
-
-
       </Card>
     </div>
   );

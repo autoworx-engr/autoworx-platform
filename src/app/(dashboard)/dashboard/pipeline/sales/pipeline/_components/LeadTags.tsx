@@ -1,6 +1,9 @@
 import { actionTypes } from "@/constants/lead.constant";
 import { useColumnDispatch } from "@/context/sales-pipeline.context";
-import { useAddLeadTagMutation, useRemoveLeadTagMutation } from "@/hooks/pipeline/usePipelineLeads";
+import {
+  useAddLeadTagMutation,
+  useRemoveLeadTagMutation,
+} from "@/hooks/pipeline/usePipelineLeads";
 import { cn } from "@/lib/cn";
 import { updateTagAutomationTrigger } from "@/service/tag-automation-trigger/api";
 import { LeadWithSalesUser } from "@/types/invoiceLead";

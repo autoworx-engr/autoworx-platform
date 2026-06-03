@@ -4,12 +4,18 @@ import React from "react";
 import UseProductForm from "../../UseProductForm";
 import ReplenishProductForm from "../../ReplenishProductForm";
 import { getCompanyId } from "@/lib/companyId";
+import { Metadata } from "next";
 
-export default async function Page({
-  params: { id },
-}: {
-  params: { id: string };
-}) {
+export const metadata: Metadata = {
+  title: "Inventory - Product",
+  description: "View and manage inventory product details.",
+};
+
+export default async function Page(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+
+  const { id } = params;
+
   console.log({ id });
   if (!id) return notFound();
 

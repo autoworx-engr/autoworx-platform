@@ -15,12 +15,13 @@ const itemValidationSchema = z
     service: serviceModelDataValidationSchema.nullable(),
     materials: z
       .array(
-        z.intersection(
-          materialModelSchemaValidation,
-          z.object({
-            tags: z.array(tagModelValidationSchema.optional()).optional(),
-          })
-        )
+        z
+          .intersection(
+            materialModelSchemaValidation,
+            z.object({
+              tags: z.array(tagModelValidationSchema.optional()).optional(),
+            }),
+          )
           .nullable()
           .optional(),
         {
@@ -35,7 +36,7 @@ const itemValidationSchema = z
     }),
   })
   .refine(
-    data => {
+    (data) => {
       const hasLabor = !!data.labor;
       const hasMaterials =
         Array.isArray(data.materials) && data.materials.length > 0;
@@ -60,6 +61,13 @@ const baseShopServiceSchema = z.object({
       invalid_type_error: "Title must be a string",
     })
     .min(1, "Title is required"),
+  shortDescription: z
+    .string({
+      required_error: "Short description is required",
+      invalid_type_error: "Short description must be a string",
+    })
+    .min(1, "Short description is required")
+    .max(500, "Short description must be 500 characters or less"),
   description: z
     .string({ invalid_type_error: "Description must be a string" })
     .optional(),
@@ -77,7 +85,7 @@ const baseShopServiceSchema = z.object({
       invalid_type_error: "Modifier for Coupe must be a string or number",
     })
     .refine(
-      val => {
+      (val) => {
         if (val === null || val === undefined) return true;
         const numVal = Number(val);
         return !isNaN(numVal) && numVal >= 0;
@@ -92,7 +100,7 @@ const baseShopServiceSchema = z.object({
       invalid_type_error: "Modifier for Sedan must be a string or number",
     })
     .refine(
-      val => {
+      (val) => {
         if (val === null || val === undefined) return true;
         const numVal = Number(val);
         return !isNaN(numVal) && numVal >= 0;
@@ -107,7 +115,7 @@ const baseShopServiceSchema = z.object({
       invalid_type_error: "Modifier for SUV must be a string or number",
     })
     .refine(
-      val => {
+      (val) => {
         if (val === null || val === undefined) return true;
         const numVal = Number(val);
         return !isNaN(numVal) && numVal >= 0;
@@ -122,7 +130,7 @@ const baseShopServiceSchema = z.object({
       invalid_type_error: "Modifier for Truck must be a string or number",
     })
     .refine(
-      val => {
+      (val) => {
         if (val === null || val === undefined) return true;
         const numVal = Number(val);
         return !isNaN(numVal) && numVal >= 0;
@@ -134,6 +142,26 @@ const baseShopServiceSchema = z.object({
     .optional(),
   isActive: z
     .boolean({ invalid_type_error: "Active status must be a boolean value" })
+    .optional(),
+  customDuration: z
+    .union([z.string(), z.number()], {
+      invalid_type_error: "Custom duration must be a string or number",
+    })
+    .refine(
+      (val) => {
+        if (val === null || val === undefined) return true;
+        const numVal = Number(val);
+        return !isNaN(numVal) && numVal >= 0;
+      },
+      {
+        message: "Custom duration must be a non-negative number",
+      },
+    )
+    .optional(),
+  category: z
+    .union([z.string(), z.array(z.string())], {
+      invalid_type_error: "Category must be a string or an array of strings",
+    })
     .optional(),
 });
 

@@ -7,7 +7,7 @@ import { ServerAction } from "@/types/action";
 import { TErrorHandler } from "@/types/globalError";
 
 export async function addVehicleColor(
-  name: string
+  name: string,
 ): Promise<ServerAction | TErrorHandler> {
   try {
     const companyId = await getCompanyId();

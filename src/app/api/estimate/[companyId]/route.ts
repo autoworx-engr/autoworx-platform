@@ -1,3 +1,4 @@
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { InvoiceType } from "@prisma/client";
@@ -276,17 +277,19 @@ import { InvoiceType } from "@prisma/client";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { companyId: string } },
+  { params }: { params: Promise<{ companyId: string }> },
 ) {
   try {
-    const companyId = Number(params.companyId);
-
-    if (!companyId || isNaN(companyId)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid company ID" },
-        { status: 400 },
-      );
+    const { companyId: companyIdParam } = await params;
+    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
+    if (jwtCompanyId === null) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const urlCompanyId = parseInt(companyIdParam, 10);
+    if (isNaN(urlCompanyId) || urlCompanyId !== jwtCompanyId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    const companyId = jwtCompanyId;
 
     const { searchParams } = new URL(req.url);
     const type = searchParams.get("type") as InvoiceType | null;
@@ -394,17 +397,19 @@ export async function GET(
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { companyId: string } },
+  { params }: { params: Promise<{ companyId: string }> },
 ) {
   try {
-    const companyId = Number(params.companyId);
-
-    if (!companyId || isNaN(companyId)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid company ID" },
-        { status: 400 },
-      );
+    const { companyId: companyIdParam } = await params;
+    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
+    if (jwtCompanyId === null) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const urlCompanyId = parseInt(companyIdParam, 10);
+    if (isNaN(urlCompanyId) || urlCompanyId !== jwtCompanyId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    const companyId = jwtCompanyId;
 
     const company = await db.company.findUnique({ where: { id: companyId } });
     if (!company) {

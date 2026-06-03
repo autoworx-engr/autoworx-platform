@@ -61,8 +61,9 @@ export default function CalendarTab({
 
   const calendarAppointments = useMemo(
     () =>
-      (monthCalendarResponse?.data || []).map((item: VirtualShopBookingCalendarItem) =>
-        mapCalendarItemToAppointment(item),
+      (monthCalendarResponse?.data || []).map(
+        (item: VirtualShopBookingCalendarItem) =>
+          mapCalendarItemToAppointment(item),
       ),
     [monthCalendarResponse?.data],
   );
@@ -153,9 +154,8 @@ export default function CalendarTab({
     });
   })();
 
-  const totalAppts = viewMode === "grid"
-    ? calendarAppointments.length
-    : monthTotal;
+  const totalAppts =
+    viewMode === "grid" ? calendarAppointments.length : monthTotal;
 
   return (
     <div className="flex flex-col gap-6">
@@ -166,7 +166,10 @@ export default function CalendarTab({
               onClick={goToPrev}
               className="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
             >
-              <ChevronLeft size={16} className="text-slate-600 dark:text-slate-300" />
+              <ChevronLeft
+                size={16}
+                className="text-slate-600 dark:text-slate-300"
+              />
             </button>
             <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 min-w-[110px] sm:min-w-[160px] text-center tabular-nums">
               {MONTH_NAMES[viewMonth]} {viewYear}
@@ -175,11 +178,14 @@ export default function CalendarTab({
               onClick={goToNext}
               className="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
             >
-              <ChevronRight size={16} className="text-slate-600 dark:text-slate-300" />
+              <ChevronRight
+                size={16}
+                className="text-slate-600 dark:text-slate-300"
+              />
             </button>
           </div>
           {totalAppts > 0 && (
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 dark:bg-indigo-900/30 text-[#6571FF]">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#6571FF]/10 dark:bg-[#6571FF]/20 text-[#6571FF]">
               {totalAppts} appt{totalAppts !== 1 ? "s" : ""}
             </span>
           )}
@@ -196,10 +202,11 @@ export default function CalendarTab({
                 ["listPage"],
               )
             }
-            className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold transition-all duration-200 ${viewMode === "grid"
-              ? "bg-[#6571FF] text-white"
-              : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
-              }`}
+            className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold transition-all duration-200 ${
+              viewMode === "grid"
+                ? "bg-[#6571FF] text-white"
+                : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
+            }`}
           >
             <LayoutGrid size={14} /> Calendar
           </button>
@@ -213,10 +220,11 @@ export default function CalendarTab({
                 ["date", "selectedPage"],
               )
             }
-            className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold transition-all duration-200 ${viewMode === "list"
-              ? "bg-[#6571FF] text-white"
-              : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
-              }`}
+            className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold transition-all duration-200 ${
+              viewMode === "list"
+                ? "bg-[#6571FF] text-white"
+                : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
+            }`}
           >
             <List size={14} /> List
           </button>
@@ -262,16 +270,21 @@ export default function CalendarTab({
             appointments={calendarAppointments}
             selectedDate={selectedDate}
             onSelectDate={(date) => {
-              pushWithParams({
-                mode: "grid",
-                date,
-                selectedPage: "1",
-              }, ["listPage"]);
+              pushWithParams(
+                {
+                  mode: "grid",
+                  date,
+                  selectedPage: "1",
+                },
+                ["listPage"],
+              );
             }}
           />
 
           <div>
-            <p className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 mb-2 sm:mb-3">{selectedDateLabel}</p>
+            <p className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 mb-2 sm:mb-3">
+              {selectedDateLabel}
+            </p>
             {isPending && selectedAppts.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/30 text-slate-400 dark:text-slate-500">
                 <Loader2 size={16} className="animate-spin" />
@@ -279,8 +292,12 @@ export default function CalendarTab({
               </div>
             ) : selectedAppts.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/30 text-slate-400 dark:text-slate-500">
-                <p className="text-sm font-medium">No appointments on this day</p>
-                <p className="text-xs mt-1 opacity-70">Select a date with dots to view appointments</p>
+                <p className="text-sm font-medium">
+                  No appointments on this day
+                </p>
+                <p className="text-xs mt-1 opacity-70">
+                  Select a date with dots to view appointments
+                </p>
               </div>
             ) : (
               <div className="space-y-3">

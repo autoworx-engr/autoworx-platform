@@ -122,7 +122,7 @@ export default function RefundModal({
       }
       if (roundedAmount > totalAmount) {
         errorToast(
-          `Refund amount cannot exceed original payment amount: $${totalAmount.toFixed(2)}`
+          `Refund amount cannot exceed original payment amount: $${totalAmount.toFixed(2)}`,
         );
         return;
       }
@@ -156,7 +156,7 @@ export default function RefundModal({
             "message" in res.errorSource[0] &&
             typeof (res.errorSource[0] as any).message === "string"
             ? (res.errorSource[0] as any).message
-            : (res as any).message
+            : (res as any).message,
         );
       }
     } catch (err) {
@@ -164,7 +164,7 @@ export default function RefundModal({
       errorToast(
         formattedError?.errorSource?.length
           ? formattedError.errorSource[0].message
-          : formattedError.message
+          : formattedError.message,
       );
     }
   }
@@ -199,7 +199,7 @@ export default function RefundModal({
             "message" in res.errorSource[0] &&
             typeof (res.errorSource[0] as any).message === "string"
             ? (res.errorSource[0] as any).message
-            : (res as any).message
+            : (res as any).message,
         );
       }
     } catch (err) {
@@ -207,7 +207,7 @@ export default function RefundModal({
       errorToast(
         formattedError?.errorSource?.length
           ? formattedError.errorSource[0].message
-          : formattedError.message
+          : formattedError.message,
       );
     }
   }
@@ -318,11 +318,11 @@ export default function RefundModal({
                     width="24"
                     xmlns="http://www.w3.org/2000/svg"
                   >
-                    <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                    <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
                     <g
                       id="SVGRepo_tracerCarrier"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
                     ></g>
                     <g id="SVGRepo_iconCarrier">
                       {" "}

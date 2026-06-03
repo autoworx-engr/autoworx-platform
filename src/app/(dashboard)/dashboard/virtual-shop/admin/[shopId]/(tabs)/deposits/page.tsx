@@ -1,15 +1,23 @@
 import DepositsTab from "../../../components/DepositsTab";
 
+import { Metadata } from "next";
+
 type VirtualShopDepositsPageProps = {
-  params: {
+  params: Promise<{
     shopId: string;
-  };
+  }>;
 };
 
-export default function VirtualShopDepositsPage({
+export const metadata: Metadata = {
+  title: "Virtual Shop Deposits",
+  description: "View and manage your virtual shop deposits.",
+};
+
+export default async function VirtualShopDepositsPage({
   params,
 }: VirtualShopDepositsPageProps) {
-  const shopId = Number.parseInt(params.shopId, 10);
+  const resolvedParams = await params;
+  const shopId = Number.parseInt(resolvedParams.shopId, 10);
 
   return <DepositsTab shopId={Number.isFinite(shopId) ? shopId : 0} />;
 }

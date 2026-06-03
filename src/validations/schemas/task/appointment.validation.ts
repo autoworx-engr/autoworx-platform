@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const createAppointmentValidationSchema = z.object({
+const baseAppointmentSchema = z.object({
   title: z
     .string({
       required_error: "Title is required",
@@ -11,10 +11,20 @@ export const createAppointmentValidationSchema = z.object({
     .string({
       invalid_type_error: "Date must be a string",
     })
-    .refine(date => {
+    .refine((date) => {
       if (!date) return true;
       return !isNaN(Date.parse(date));
     }, "Invalid date format")
+    .optional(),
+  endDate: z
+    .string({
+      invalid_type_error: "End date must be a string",
+    })
+    .refine((date) => {
+      if (!date) return true;
+      return !isNaN(Date.parse(date));
+    }, "Invalid end date format")
+    .nullable()
     .optional(),
   startTime: z
     .string({
@@ -90,7 +100,7 @@ export const createAppointmentValidationSchema = z.object({
             required_error: "Date is required",
             invalid_type_error: "Date must be a string",
           })
-          .refine(date => !isNaN(Date.parse(date)), "Invalid date format"),
+          .refine((date) => !isNaN(Date.parse(date)), "Invalid date format"),
         time: z.string({
           required_error: "Time is required",
           invalid_type_error: "Time must be a string",
@@ -118,9 +128,29 @@ export const createAppointmentValidationSchema = z.object({
     .optional(),
 });
 
+const endDateAfterStart = (data: {
+  date?: string;
+  endDate?: string | null;
+}) => {
+  if (!data.date || !data.endDate) return true;
+  return Date.parse(data.endDate) >= Date.parse(data.date);
+};
+const endDateRefineMessage = {
+  message: "End date cannot be before start date",
+  path: ["endDate"] as [string],
+};
+
+export const createAppointmentValidationSchema = baseAppointmentSchema.refine(
+  endDateAfterStart,
+  endDateRefineMessage,
+);
+
 export const updateAppointmentValidationSchema = z.object({
   id: z.number().int("Id must be integer").nonnegative(),
-  appointment: z.object({ ...createAppointmentValidationSchema.shape }),
+  appointment: baseAppointmentSchema.refine(
+    endDateAfterStart,
+    endDateRefineMessage,
+  ),
 });
 
 export type TCreateAppointmentValidationSchema = z.infer<

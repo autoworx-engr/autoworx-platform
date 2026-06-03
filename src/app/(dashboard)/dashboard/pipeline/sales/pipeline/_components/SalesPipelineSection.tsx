@@ -126,11 +126,11 @@ export default function SalesPipelineSection() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ newColumnId }),
             })
-              .then(res => res.json())
-              .then(data => {
+              .then((res) => res.json())
+              .then((data) => {
                 if (!data.success) throw new Error(data.error);
               })
-              .catch(error => {
+              .catch((error) => {
                 console.error("Failed to update lead column:", error);
                 // Revert the optimistic update on error
                 dispatch({
@@ -177,7 +177,7 @@ export default function SalesPipelineSection() {
               screenWidth={screenWidth}
               totalLeads={column?.totalLeads || 0}
             >
-              {leads =>
+              {(leads) =>
                 leads.map((lead, leadIndex) => (
                   <LeadCard
                     key={lead.id}

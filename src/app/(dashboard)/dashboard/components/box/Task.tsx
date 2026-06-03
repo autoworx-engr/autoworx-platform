@@ -1,5 +1,5 @@
 "use client";
-import { deleteTask } from "@/actions/task/deleteTask";
+import { completeTask } from "@/actions/task/completeTask";
 import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
 import { cn } from "@/lib/cn";
 import { queryKeys } from "@/lib/queryKeys";
@@ -131,7 +131,7 @@ const Task = ({ task, onTaskDeleted }: TaskProps) => {
           // Enforce compact height
           h-auto min-h-[44px] max-h-[50px]
           `,
-          priorityClass // Applies the gradient colors and shadow
+          priorityClass, // Applies the gradient colors and shadow
         )}
         onClick={handleTaskClick}
       >
@@ -189,7 +189,7 @@ const Task = ({ task, onTaskDeleted }: TaskProps) => {
             onOpenChange={setPopconfirmVisible}
             onConfirm={async (e) => {
               e?.stopPropagation();
-              await deleteTask(task.id);
+              await completeTask(task.id);
               revalidateTask();
               successToast("Task completed");
               onTaskDeleted?.(task.id); // Call prop handler if available

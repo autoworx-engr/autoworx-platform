@@ -86,21 +86,21 @@ export default function Users() {
       </div>
     );
   } else if (!isLoading && !isError && users && users.length > 0) {
-    content = users.map((user, index) => {
-      const isSelected = selectedUser === index;
+    content = users.map((user) => {
+      const isSelected = selectedUser === user.id;
 
       function handleClick() {
         if (isSelected) {
           setSelectedUser(null);
         } else {
-          setSelectedUser(index);
+          setSelectedUser(user.id);
         }
         setMinimized(false);
       }
 
       return (
         <UserComponent
-          key={index}
+          key={user.id}
           isSelected={isSelected}
           onSelect={handleClick}
           user={user}

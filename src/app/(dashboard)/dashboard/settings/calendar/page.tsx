@@ -1,4 +1,10 @@
 import MenuDropDown from "./MenuDropDown";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Settings - Calendar",
+  description: "Configure calendar settings",
+};
 
 const days = [
   "Sunday",
