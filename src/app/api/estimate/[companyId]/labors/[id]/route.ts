@@ -115,7 +115,7 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const { name, categoryId, charge, notes, tagIds } = body;
+    const { name, categoryId, hours, charge, discount, notes, tagIds } = body;
 
     if (name !== undefined && !name?.trim()) {
       return NextResponse.json(
@@ -132,7 +132,15 @@ export async function PATCH(
           ...(categoryId !== undefined && {
             categoryId: categoryId ? Number(categoryId) : null,
           }),
-          ...(charge !== undefined && { charge: Number(charge) }),
+          ...(hours !== undefined && {
+            hours: hours !== null ? Number(hours) : null,
+          }),
+          ...(charge !== undefined && {
+            charge: charge !== null ? Number(charge) : null,
+          }),
+          ...(discount !== undefined && {
+            discount: discount !== null ? Number(discount) : null,
+          }),
           ...(notes !== undefined && { notes: notes?.trim() || null }),
         },
       });

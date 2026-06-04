@@ -136,12 +136,14 @@ export async function POST(
     const paymentAmount = Number(amount);
     if (isNaN(paymentAmount) || paymentAmount <= 0) {
       return NextResponse.json(
-        { success: false, message: "amount must be a valid number greater than 0" },
+        {
+          success: false,
+          message: "amount must be a valid number greater than 0",
+        },
         { status: 400 },
       );
     }
 
-    const paymentAmount = Number(amount);
     const dueAfterPayment = Number(invoice.due ?? 0) - paymentAmount;
     const paymentDate = date ? new Date(date) : new Date();
 

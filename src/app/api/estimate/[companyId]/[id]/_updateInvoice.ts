@@ -202,6 +202,18 @@ export async function fullUpdateInvoice(
                     data: matData,
                   });
                   keptMatIds.push(existingMat.id);
+                  // Sync material tags
+                  await tx.materialTag.deleteMany({
+                    where: { materialId: existingMat.id },
+                  });
+                  if ((mat.tagIds ?? []).length > 0) {
+                    await tx.materialTag.createMany({
+                      data: (mat.tagIds as number[]).map((tagId) => ({
+                        materialId: existingMat.id,
+                        tagId,
+                      })),
+                    });
+                  }
                 } else {
                   const newMat = await tx.material.create({ data: matData });
                   keptMatIds.push(newMat.id);
