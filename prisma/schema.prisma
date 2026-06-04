@@ -760,6 +760,13 @@ model Company {
   // Meta / Facebook Messenger
   facebookPages     FacebookPage[]
   messengerMessages MessengerMessage[]
+
+  // Google Business Profile
+  gbpAccessToken    String?       @map("gbp_access_token") @db.Text
+  gbpRefreshToken   String?       @map("gbp_refresh_token") @db.Text
+  gbpTokenExpiresAt DateTime?     @map("gbp_token_expires_at")
+  gbpAccountId      String?       @map("gbp_account_id")
+  gbpLocations      GbpLocation[]
 }
 
 model Reviews {
@@ -2303,6 +2310,7 @@ model User {
   reviews                        Reviews[]
   messengerMessages              MessengerMessage[]
   reviewedEmergencyRequests      EmergencyBookingRequest[]       @relation("EmergencyReviewer")
+  gbpActivityLogs                GbpReviewActivityLog[]
 
   @@index([companyId], name: "fk_users_company")
 }
@@ -3554,4 +3562,75 @@ enum EmergencyRequestStatus {
   REJECTED // Cannot accommodate
   EXPIRED // Not reviewed within time window
   CANCELLED // Client cancelled the request
+}
+
+// ─── Google Business Profile ───────────────────────────────────────────────
+
+model GbpLocation {
+  id               Int         @id @default(autoincrement())
+  companyId        Int         @map("company_id")
+  googleLocationId String      @map("google_location_id")
+  googleAccountId  String      @map("google_account_id")
+  name             String
+  address          String?
+  isActive         Boolean     @default(true) @map("is_active")
+  createdAt        DateTime    @default(now()) @map("created_at")
+  updatedAt        DateTime    @updatedAt @map("updated_at")
+
+  company Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  reviews GbpReview[]
+
+  @@unique([companyId, googleLocationId])
+  @@index([companyId])
+  @@map("gbp_locations")
+}
+
+model GbpReview {
+  id             Int           @id @default(autoincrement())
+  locationId     Int           @map("location_id")
+  googleReviewId String        @map("google_review_id")
+  authorName     String        @map("author_name")
+  authorPhotoUrl String?       @map("author_photo_url")
+  rating         Int
+  comment        String?       @db.Text
+  replyText      String?       @map("reply_text") @db.Text
+  replyUpdatedAt DateTime?     @map("reply_updated_at")
+  syncStatus     GbpSyncStatus @default(SYNCED) @map("sync_status")
+  createdAt      DateTime      @map("created_at")
+  updatedAt      DateTime      @default(now()) @updatedAt @map("updated_at")
+
+  location    GbpLocation          @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  activityLog GbpReviewActivityLog[]
+
+  @@unique([locationId, googleReviewId])
+  @@index([locationId])
+  @@map("gbp_reviews")
+}
+
+model GbpReviewActivityLog {
+  id          Int             @id @default(autoincrement())
+  reviewId    Int             @map("review_id")
+  actionType  GbpReviewAction @map("action_type")
+  performedBy Int?            @map("performed_by")
+  note        String?
+  createdAt   DateTime        @default(now()) @map("created_at")
+
+  review GbpReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  user   User?     @relation(fields: [performedBy], references: [id], onDelete: SetNull)
+
+  @@index([reviewId])
+  @@map("gbp_review_activity_logs")
+}
+
+enum GbpSyncStatus {
+  SYNCED
+  REPLY_PENDING
+  REPLY_FAILED
+}
+
+enum GbpReviewAction {
+  REPLY_CREATED
+  REPLY_UPDATED
+  SYNCED
+  WEBHOOK_RECEIVED
 }

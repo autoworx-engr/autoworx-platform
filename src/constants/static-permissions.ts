@@ -92,11 +92,11 @@ export const staticPermissions = [
     permission_name: "serviceAutomation",
     status: false,
   },
-  // {
-  //   title: 'Reputation Management',
-  //   permission_name: 'reputationManagement',
-  //   status: false,
-  // },
+  {
+    title: "Reputation Management",
+    permission_name: "reputationManagement",
+    status: false,
+  },
   {
     title: "AI Smart Replies",
     permission_name: "aiSmartReplies",
