@@ -513,6 +513,20 @@ export async function POST(
         },
       });
 
+      // Mark lead as estimate created
+      if (type === "Estimate" && clientId) {
+        const theClient = await tx.client.findFirst({
+          where: { id: Number(clientId) },
+          select: { leadId: true },
+        });
+        if (theClient?.leadId) {
+          await tx.lead.update({
+            where: { id: theClient.leadId },
+            data: { isEstimateCreated: true },
+          });
+        }
+      }
+
       // Photos
       if (photos.length > 0) {
         await tx.invoicePhoto.createMany({
@@ -562,6 +576,14 @@ export async function POST(
             },
           });
           laborId = newLabor.id;
+          if ((item.labor.tagIds ?? []).length > 0) {
+            await tx.laborTag.createMany({
+              data: (item.labor.tagIds as number[]).map((tagId) => ({
+                laborId: newLabor.id,
+                tagId,
+              })),
+            });
+          }
         }
 
         const invoiceItem = await tx.invoiceItem.create({
