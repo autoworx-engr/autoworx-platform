@@ -81,7 +81,7 @@ export default function SearchScroll({
         params.toString() ? `${pathname}?${params.toString()}` : pathname,
       );
     });
-  }, 300);
+  }, 500);
 
   // Handle clicks outside filter dropdown to close it
   useEffect(() => {
