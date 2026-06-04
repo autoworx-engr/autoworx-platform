@@ -51,6 +51,12 @@ import { NextRequest, NextResponse } from "next/server";
  *           type: string
  *         description: Filter leads by status
  *       - in: query
+ *         name: orderBy
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *         description: Sort direction by createdAt (default desc). Must match the initial load order.
+ *       - in: query
  *         name: startDate
  *         schema:
  *           type: string
@@ -87,6 +93,13 @@ export async function GET(request: NextRequest) {
     const service = searchParams.get("service") || undefined;
     const status = searchParams.get("status") || undefined;
 
+    // Mobile may send a sort field ("createdAt", "updatedAt", ...); getLeads
+    // expects a direction. Treat any non-direction value as the default "desc"
+    // so paginated "load more" pages keep the same order as the initial load.
+    const orderByParam = searchParams.get("orderBy");
+    const orderBy: "asc" | "desc" =
+      orderByParam === "asc" || orderByParam === "desc" ? orderByParam : "desc";
+
     const startDateStr = searchParams.get("startDate");
     const endDateStr = searchParams.get("endDate");
     let dateRange: [string | null, string | null] | undefined = undefined;
@@ -109,6 +122,7 @@ export async function GET(request: NextRequest) {
       source,
       service,
       status,
+      orderBy,
       dateRange,
     });
 

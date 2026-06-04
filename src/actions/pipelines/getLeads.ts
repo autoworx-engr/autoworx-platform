@@ -33,6 +33,7 @@ type TGetLeadsWithCount = {
   source?: string;
   service?: string;
   status?: string;
+  orderBy?: "asc" | "desc";
   // YYYY-MM-DD strings so the action can parse them directly in the company
   // timezone — avoids off-by-one-day errors when browser tz ≠ company tz.
   dateRange?: [string | null, string | null];
@@ -233,6 +234,7 @@ export const getLeadsWithCount = async ({
   source,
   service,
   status,
+  orderBy,
   dateRange,
 }: TGetLeadsWithCount): Promise<{
   leads: LeadWithSalesUser[];
@@ -297,7 +299,7 @@ export const getLeadsWithCount = async ({
         take,
         skip,
         orderBy: {
-          createdAt: "desc",
+          createdAt: orderBy ?? "desc",
         },
         include: {
           salesUser: {
@@ -443,6 +445,7 @@ export const getLeadsWithCountOptimized = async ({
   source,
   service,
   status,
+  orderBy,
   dateRange,
 }: TGetLeadsWithCount): Promise<{
   leads: LeadWithSalesUser[];
@@ -509,7 +512,7 @@ export const getLeadsWithCountOptimized = async ({
         take,
         skip,
         orderBy: {
-          createdAt: "desc",
+          createdAt: orderBy ?? "desc",
         },
         include: {
           salesUser: {
