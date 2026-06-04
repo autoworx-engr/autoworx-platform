@@ -119,6 +119,8 @@ const ZapForm = ({ company }: ZapFormProps) => {
     }
   }, []);
 
+  const NAME_REGEX = /^[A-Za-z\s\-']+$/;
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
@@ -128,6 +130,13 @@ const ZapForm = ({ company }: ZapFormProps) => {
     });
 
     clearFieldError(name);
+
+    if (name === "name" && value && !NAME_REGEX.test(value)) {
+      setFieldErrors((prev) => ({
+        ...prev,
+        name: "Name can only contain letters, spaces, hyphens, and apostrophes",
+      }));
+    }
   };
 
   const clearFieldError = (field: string) => {
@@ -165,18 +174,23 @@ const ZapForm = ({ company }: ZapFormProps) => {
 
     if (!formData.name.trim()) {
       requiredFieldErrors.name = "Full name is required";
+    } else if (!/^[A-Za-z\s\-']+$/.test(formData.name.trim())) {
+      requiredFieldErrors.name =
+        "Name can only contain letters, spaces, hyphens, and apostrophes";
     }
 
-    if (!formData.vehicle_year) {
-      requiredFieldErrors.vehicle_year = "Year is required";
-    }
+    if (!formData.others) {
+      if (!formData.vehicle_year) {
+        requiredFieldErrors.vehicle_year = "Year is required";
+      }
 
-    if (!formData.vehicle_make) {
-      requiredFieldErrors.vehicle_make = "Make is required";
-    }
+      if (!formData.vehicle_make) {
+        requiredFieldErrors.vehicle_make = "Make is required";
+      }
 
-    if (!formData.vehicle_model) {
-      requiredFieldErrors.vehicle_model = "Model is required";
+      if (!formData.vehicle_model) {
+        requiredFieldErrors.vehicle_model = "Model is required";
+      }
     }
 
     if (Object.keys(requiredFieldErrors).length > 0) {
@@ -197,8 +211,8 @@ const ZapForm = ({ company }: ZapFormProps) => {
       const serviceTitle =
         formData.multiServices && formData.multiServices.length > 0
           ? formData.multiServices
-            .map((s: { title: string }) => s.title)
-            .join(", ")
+              .map((s: { title: string }) => s.title)
+              .join(", ")
           : "";
 
       // Use 'others' as vehicle info if filled, else use year/make/model
@@ -435,8 +449,9 @@ const ZapForm = ({ company }: ZapFormProps) => {
                 }}
                 isSearch={true}
                 isClear={true}
+                disabled={formData.others !== ""}
                 error={fieldErrors.vehicle_year}
-              // error={isYearFetchError ? "Failed to fetch years" : undefined}
+                // error={isYearFetchError ? "Failed to fetch years" : undefined}
               />
               <Selector
                 name="vehicle_make"
@@ -451,8 +466,9 @@ const ZapForm = ({ company }: ZapFormProps) => {
                 }}
                 isSearch={true}
                 isClear={true}
+                disabled={formData.others !== ""}
                 error={fieldErrors.vehicle_make}
-              // error={isMakeFetchError ? "Failed to fetch Makes" : undefined}
+                // error={isMakeFetchError ? "Failed to fetch Makes" : undefined}
               />
 
               <Selector
@@ -469,10 +485,11 @@ const ZapForm = ({ company }: ZapFormProps) => {
                 }}
                 isSearch={true}
                 isClear={true}
+                disabled={formData.others !== ""}
                 error={fieldErrors.vehicle_model}
-              // error={
-              //   isModelsFetchError ? "Failed to fetch Models" : undefined
-              // }
+                // error={
+                //   isModelsFetchError ? "Failed to fetch Models" : undefined
+                // }
               />
             </div>
             <div className="space-y-2">
@@ -492,15 +509,21 @@ const ZapForm = ({ company }: ZapFormProps) => {
                 name="others"
                 value={formData.others}
                 onChange={handleChange}
+                disabled={
+                  formData.vehicle_year !== "" ||
+                  formData.vehicle_make !== "" ||
+                  formData.vehicle_model !== ""
+                }
                 className="w-full rounded-md border-2 border-gray-300 px-4 py-2 placeholder:text-gray-500 focus:border-[#00b8b0] focus:outline-none focus:ring-2 focus:ring-[#00b8b0] disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
             </div>
             {formStatus.message && (
               <div
-                className={`rounded-md p-3 ${formStatus.type === "success"
-                  ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
-                  : "border border-red-200 bg-red-50 text-red-700"
-                  }`}
+                className={`rounded-md p-3 ${
+                  formStatus.type === "success"
+                    ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
+                    : "border border-red-200 bg-red-50 text-red-700"
+                }`}
               >
                 {formStatus.message}
               </div>
@@ -513,9 +536,10 @@ const ZapForm = ({ company }: ZapFormProps) => {
                 !consent ||
                 !!fieldErrors.phone ||
                 !formData.name.trim() ||
-                !formData.vehicle_year ||
-                !formData.vehicle_make ||
-                !formData.vehicle_model
+                (!formData.others &&
+                  (!formData.vehicle_year ||
+                    !formData.vehicle_make ||
+                    !formData.vehicle_model))
               }
             >
               {isSubmitting ? "Submitting..." : "Request Service"}
