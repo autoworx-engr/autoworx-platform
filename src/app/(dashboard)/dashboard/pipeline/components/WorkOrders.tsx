@@ -49,15 +49,22 @@ const WorkOrders = () => {
       if (!search) return true;
 
       const searchLower = search.toLowerCase();
+      const words = searchLower.split(/\s+/).filter(Boolean);
+
       const fullName =
         `${invoice.client?.firstName ?? ""} ${invoice.client?.lastName ?? ""}`.toLowerCase();
+      const vehicleString =
+        `${invoice.vehicle?.year ?? ""} ${invoice.vehicle?.make ?? ""} ${invoice.vehicle?.model ?? ""} ${invoice.vehicle?.submodel ?? ""} ${invoice.vehicle?.other ?? ""}`
+          .toLowerCase()
+          .trim();
+
+      const matchesAllWords = (haystack: string) =>
+        words.every((word) => haystack.includes(word));
 
       return (
-        fullName.includes(searchLower) ||
+        matchesAllWords(fullName) ||
         invoice.id?.toString().toLowerCase().includes(searchLower) ||
-        invoice.vehicle?.year?.toString().toLowerCase().includes(searchLower) ||
-        invoice.vehicle?.make?.toLowerCase().includes(searchLower) ||
-        invoice.vehicle?.model?.toLowerCase().includes(searchLower) ||
+        matchesAllWords(vehicleString) ||
         invoice.invoiceItems.some((item) =>
           item.service?.name?.toLowerCase().includes(searchLower),
         )
