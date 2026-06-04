@@ -133,9 +133,10 @@ export async function POST(
         { status: 400 },
       );
     }
-    if (!amount || Number(amount) <= 0) {
+    const paymentAmount = Number(amount);
+    if (isNaN(paymentAmount) || paymentAmount <= 0) {
       return NextResponse.json(
-        { success: false, message: "amount must be greater than 0" },
+        { success: false, message: "amount must be a valid number greater than 0" },
         { status: 400 },
       );
     }
