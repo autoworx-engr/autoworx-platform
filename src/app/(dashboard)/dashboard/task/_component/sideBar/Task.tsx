@@ -66,7 +66,9 @@ export default function TaskComponent({ task }: TaskComponentProps) {
           ...old,
           pages: old.pages.map((page) => ({
             ...page,
-            data: page.data.filter((t) => t.id !== taskId),
+            data: Array.isArray(page.data)
+              ? page.data.filter((t) => t.id !== taskId)
+              : [],
           })),
         };
       },

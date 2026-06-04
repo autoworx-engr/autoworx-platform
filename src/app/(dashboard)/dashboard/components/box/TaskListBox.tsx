@@ -34,7 +34,7 @@ export default function TaskListBox() {
     queryClient.setQueryData(
       queryKeys.dashboardTask,
       (old: { id: number }[] | undefined) =>
-        old ? old.filter((t) => t.id !== taskId) : old,
+        Array.isArray(old) ? old.filter((t) => t.id !== taskId) : old,
     );
   };
 

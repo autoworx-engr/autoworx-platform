@@ -4,7 +4,8 @@ import Link from "next/link";
 import { cn } from "@/lib/cn";
 import { ExternalLink } from "lucide-react";
 import { useCalendarStore } from "@/stores/calendarStore";
-import moment from "moment";
+import moment from "moment-timezone";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 
 type TBoxTitleProps = {
   title: string;
@@ -18,10 +19,11 @@ export default function BoxTitle({
   className,
 }: TBoxTitleProps) {
   const { setDate, setStartTime } = useCalendarStore();
+  const timezone = useCompanyTimezone();
 
   const handleClick = () => {
     if (redirectLink?.startsWith("/dashboard/task")) {
-      setDate(moment().format("YYYY-MM-DD"));
+      setDate(moment().tz(timezone).format("YYYY-MM-DD"));
       setStartTime(null);
     }
   };
