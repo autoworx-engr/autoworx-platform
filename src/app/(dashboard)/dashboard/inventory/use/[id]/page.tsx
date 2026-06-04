@@ -4,6 +4,12 @@ import React from "react";
 import UseProductForm from "../../UseProductForm";
 import ReplenishProductForm from "../../ReplenishProductForm";
 import { getCompanyId } from "@/lib/companyId";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Inventory - Product",
+  description: "View and manage inventory product details.",
+};
 
 export default async function Page(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;

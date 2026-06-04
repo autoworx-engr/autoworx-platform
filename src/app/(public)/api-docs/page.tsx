@@ -1,4 +1,11 @@
 import React from "react";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Zapier API Documentation",
+  description:
+    "Documentation for Autoworx Zapier API endpoints and integrations.",
+};
 
 export default function Page() {
   return (

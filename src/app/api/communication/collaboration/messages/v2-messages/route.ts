@@ -1,7 +1,7 @@
 import { AppError } from "@/error-boundary/error";
 import { db } from "@/lib/db";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
-import { getCompanyIdFromBearer } from "@/lib/authPrincipal";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { revalidatePath } from "next/cache";
 import { getPusherInstance } from "@/lib/pusher/server";
 
@@ -147,7 +147,7 @@ const pusher = getPusherInstance();
 
 export async function GET(req: Request) {
   try {
-    const callerCompanyId = await getCompanyIdFromBearer(req);
+    const callerCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
     if (!callerCompanyId) {
       throw new AppError(401, "Unauthorized");
     }

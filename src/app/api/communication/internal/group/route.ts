@@ -1,29 +1,7 @@
-import { AppError } from "@/error-boundary/error";
-import { errorHandler } from "@/error-boundary/globalErrorHandler";
-import { db } from "@/lib/db";
-import { getPusherInstance } from "@/lib/pusher/server";
-import { NextRequest, NextResponse } from "next/server";
-
-const pusher = getPusherInstance();
-
-const findUsers = (users: { id: number; action?: string }[]) => {
-  return Promise.all(
-    users.map(async (user: { id: number; action?: string }) => {
-      if (!user.id) {
-        throw new Error("User ID is required");
-      }
-      const findUser = await db.user.findUnique({
-        where: {
-          id: user.id,
-        },
-      });
-      if (!findUser) {
-        throw new Error(`User with ID ${user.id} not found`);
-      }
-      return findUser;
-    }),
-  );
-};
+import { NextRequest } from "next/server";
+import { createGroupHandler } from "./_handlers/createGroup";
+import { listGroupsHandler } from "./_handlers/listGroups";
+import { updateGroupHandler } from "./_handlers/updateGroup";
 
 /**
  * @swagger
@@ -85,61 +63,7 @@ const findUsers = (users: { id: number; action?: string }[]) => {
  *       500:
  *         description: Internal server error
  */
-export const POST = async (req: NextRequest) => {
-  try {
-    const { name, users, companyId } = await req.json();
-
-    if (!companyId) {
-      throw new AppError(400, "Company ID is required");
-    }
-
-    const findUser = await findUsers(users);
-
-    if (findUser && findUser?.length !== users?.length) {
-      throw new AppError(400, "One or more users not found");
-    }
-    // Your logic for handling the POST request goes here.
-    const groupData = await db.group.create({
-      data: {
-        name: name,
-        companyId: companyId,
-        users: {
-          connect: users,
-        },
-      },
-      include: {
-        users: true,
-      },
-    });
-
-    if (groupData) {
-      pusher.trigger("create-group", "create", {
-        groupId: groupData.id,
-        usersIds: users,
-      });
-    }
-
-    return NextResponse.json(
-      {
-        success: true,
-        data: groupData,
-        message: "Group created successfully",
-      },
-      { status: 200 },
-    );
-  } catch (error) {
-    const errors = errorHandler(error);
-    const message = errors?.message || "Internal Server Error";
-    const status = errors?.statusCode || 500;
-    return NextResponse.json(
-      {
-        success: false,
-        error: message,
-      },
-      { status },
-    );
-  }
-};
+export const POST = (req: NextRequest) => createGroupHandler(req);
 
 /**
  * @swagger
@@ -226,78 +150,7 @@ export const POST = async (req: NextRequest) => {
  *       500:
  *         description: Internal server error
  */
-export const GET = async (req: NextRequest) => {
-  try {
-    const searchParams = req.nextUrl.searchParams;
-    const userId = searchParams.get("userId") ?? "";
-
-    const findUser = await db.user.findUnique({
-      where: { id: parseInt(userId) },
-    });
-
-    if (!findUser) {
-      throw new AppError(404, "User not found");
-    }
-
-    const pageNum = parseInt(searchParams.get("page") || "1");
-    const limitNum = parseInt(searchParams.get("limit") || "20");
-    const search = searchParams.get("search") || "";
-    const sortBy = searchParams.get("sortBy") || "updatedAt";
-    const sortOrder = searchParams.get("sortOrder") || "desc";
-
-    const where: any = {
-      users: { some: { id: parseInt(userId) } },
-    };
-
-    if (search) {
-      where.name = {
-        contains: search,
-        mode: "insensitive",
-      };
-    }
-
-    const groups = await db.group.findMany({
-      where,
-      include: {
-        users: true,
-      },
-      orderBy: {
-        [sortBy]: sortOrder,
-      },
-      skip: (pageNum - 1) * limitNum,
-      take: limitNum,
-    });
-
-    const totalGroups = await db.group.count({
-      where,
-    });
-
-    return NextResponse.json(
-      {
-        success: true,
-        data: groups,
-        message: "Groups fetched successfully",
-        meta: {
-          totalRecords: totalGroups,
-          page: pageNum,
-          limit: limitNum,
-        },
-      },
-      { status: 200 },
-    );
-  } catch (error) {
-    const errors = errorHandler(error);
-    const message = errors?.message || "Internal Server Error";
-    const status = errors?.statusCode || 500;
-    return NextResponse.json(
-      {
-        success: false,
-        error: message,
-      },
-      { status },
-    );
-  }
-};
+export const GET = (req: NextRequest) => listGroupsHandler(req);
 
 /**
  * @swagger
@@ -365,84 +218,4 @@ export const GET = async (req: NextRequest) => {
  *       500:
  *         description: Internal server error
  */
-export const PUT = async (req: NextRequest) => {
-  try {
-    const { groupId, name, users } = await req.json();
-
-    if (!groupId) {
-      throw new AppError(400, "Group ID is required");
-    }
-    const findGroup = await db.group.findUnique({
-      where: { id: groupId },
-    });
-
-    if (!findGroup) {
-      throw new AppError(404, "Group not found");
-    }
-
-    const connectUsers =
-      users
-        ?.filter((u: any) => u.action === "add" || !u.action)
-        .map((u: any) => ({ id: u.id })) || [];
-    const disconnectUsers =
-      users
-        ?.filter((u: any) => u.action === "remove")
-        .map((u: any) => ({ id: u.id })) || [];
-
-    if (connectUsers.length > 0) {
-      const findUser = await findUsers(connectUsers);
-      if (findUser && findUser?.length !== connectUsers?.length) {
-        throw new AppError(400, "One or more users to add not found");
-      }
-    }
-
-    const updatedGroup = await db.group.update({
-      where: { id: groupId },
-      data: {
-        name: name,
-        users: {
-          connect: connectUsers.length > 0 ? connectUsers : undefined,
-          disconnect: disconnectUsers.length > 0 ? disconnectUsers : undefined,
-        },
-      },
-      include: {
-        users: true,
-      },
-    });
-
-    if (updatedGroup) {
-      if (connectUsers.length > 0) {
-        pusher.trigger("add-member-in-group", "add-member", {
-          groupId: updatedGroup.id,
-          userIds: connectUsers,
-        });
-      }
-      if (disconnectUsers.length > 0) {
-        pusher.trigger("remove-member-from-group", "remove-member", {
-          groupId: updatedGroup.id,
-          userIds: disconnectUsers,
-        });
-      }
-    }
-
-    return NextResponse.json(
-      {
-        success: true,
-        data: updatedGroup,
-        message: "Group updated successfully",
-      },
-      { status: 200 },
-    );
-  } catch (error) {
-    const errors = errorHandler(error);
-    const message = errors?.message || "Internal Server Error";
-    const status = errors?.statusCode || 500;
-    return NextResponse.json(
-      {
-        success: false,
-        error: message,
-      },
-      { status },
-    );
-  }
-};
+export const PUT = (req: NextRequest) => updateGroupHandler(req);

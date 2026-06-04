@@ -7,6 +7,12 @@ import Problem from "@/components/solution-ui/Problem";
 import Solution from "@/components/solution-ui/Solution";
 import Testimonial from "@/components/solution-ui/Testimonial";
 import React from "react";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Solution",
+  description: "Discover how Autoworx solves your shop management challenges.",
+};
 
 export default function SolutionPage() {
   return (

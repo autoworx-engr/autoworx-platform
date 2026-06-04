@@ -9,6 +9,12 @@ import React from "react";
 import PerformanceReport from "./PerformanceReport";
 import TechnicianDetails from "@/app/(dashboard)/dashboard/reporting/technicianreporting/TechnicianDetails";
 import TechnicianAttendance from "./TechnicianAttendance";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Technician Reporting",
+  description: "View and analyze technician performance and reports.",
+};
 
 export default async function TechnicianReportingPage() {
   const currentUser = await getUserFromSession();

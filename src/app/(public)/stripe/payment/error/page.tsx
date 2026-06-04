@@ -1,6 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { CircleX } from "lucide-react";
 import Link from "next/link";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Payment Failed",
+  description: "There was an error processing your payment. Please try again.",
+};
 
 export default function ErrorPage() {
   return (

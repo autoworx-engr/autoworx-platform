@@ -1,6 +1,6 @@
 import { getLeadsWithCountOptimized } from "@/actions/pipelines/getLeads";
 import { db } from "@/lib/db";
-import { getCompanyIdFromBearer } from "@/lib/authPrincipal";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -187,7 +187,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const companyId = await getCompanyIdFromBearer(request);
+    const companyId = (await getAuthPrincipal(request))?.companyId ?? null;
     if (!companyId) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },
