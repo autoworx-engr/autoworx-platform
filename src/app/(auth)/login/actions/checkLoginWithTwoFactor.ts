@@ -2,8 +2,16 @@
 
 import send2faOtpMail from "@/actions/two-factor/send2faOtpMail";
 import { db } from "@/lib/db";
+import { createRateLimiter } from "@/lib/rateLimit";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
+
+// 10 verification attempts per email per 15 minutes.
+// Server actions have no Request object, so email is used as the rate-limit key.
+const emailLimiter = createRateLimiter({
+  windowMs: 15 * 60_000,
+  maxRequests: 10,
+});
 
 type TValues = {
   email: string;
@@ -18,6 +26,16 @@ export async function checkLoginWithTwoFactor(values: TValues): Promise<{
   nextLogin?: boolean;
 }> {
   const { email, password, code } = values;
+
+  // ── Rate limiting ──────────────────────────────────────────────────────────
+  const emailCheck = emailLimiter.check(email.toLowerCase());
+  if (!emailCheck.allowed) {
+    return {
+      type: "fail",
+      message: "Too many attempts. Please try again later.",
+    };
+  }
+  // ──────────────────────────────────────────────────────────────────────────
 
   const existingUser = await db.user.findUnique({ where: { email } });
 
