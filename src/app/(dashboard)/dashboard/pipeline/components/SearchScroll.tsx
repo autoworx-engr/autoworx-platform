@@ -117,16 +117,15 @@ export default function SearchScroll({
         return;
       }
       // Unified search logic for both pipelines
+      const words = searchTerm.toLowerCase().split(/\s+/).filter(Boolean);
+      const matchesAllWords = (haystack: string) =>
+        words.every((w) => haystack.includes(w));
+
       column.leads?.forEach((lead: any, leadIndex: number) => {
-        // Search by client name
-        const nameMatch = (lead.name || lead.clientName || "")
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase());
-        // Search by vehicle info — lead.vehicle is the combined "year make model" string
-        const vehicleMatch =
-          lead.vehicle &&
-          lead.vehicle.toLowerCase().includes(searchTerm.toLowerCase());
-        if (nameMatch || vehicleMatch) {
+        const nameStr = (lead.name || lead.clientName || "").toLowerCase();
+        const vehicleStr = (lead.vehicle || "").toLowerCase();
+
+        if (matchesAllWords(nameStr) || matchesAllWords(vehicleStr)) {
           results.push({ columnIndex, leadIndex });
         }
       });
