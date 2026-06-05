@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { createRateLimiter } from "@/lib/rateLimit";
+import { createRateLimiter, extractClientIp } from "@/lib/rateLimit";
 import { verifyOTP } from "@/utils/otp";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -40,10 +40,10 @@ const emailLimiter = createRateLimiter({
  */
 export async function POST(req: NextRequest) {
   // ── Rate limiting ──────────────────────────────────────────────────────────
-  const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
-    req.headers.get("x-real-ip") ??
-    "unknown";
+  const ip = extractClientIp(
+    req.headers.get("x-forwarded-for"),
+    req.headers.get("x-real-ip"),
+  );
 
   const ipCheck = ipLimiter.check(ip);
   if (!ipCheck.allowed) {
@@ -58,7 +58,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { email, otp } = await req.json();
+  const body = await req.json();
+  const email = typeof body?.email === "string" ? body.email.trim() : null;
+  const otp = typeof body?.otp === "string" ? body.otp.trim() : null;
 
   if (!email || !otp) {
     return NextResponse.json(
@@ -67,7 +69,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const emailCheck = emailLimiter.check((email as string).toLowerCase());
+  const emailCheck = emailLimiter.check(email.toLowerCase());
   if (!emailCheck.allowed) {
     return NextResponse.json(
       { error: "Too many attempts for this email. Please try again later." },

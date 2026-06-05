@@ -27,16 +27,6 @@ export async function checkLoginWithTwoFactor(values: TValues): Promise<{
 }> {
   const { email, password, code } = values;
 
-  // ── Rate limiting ──────────────────────────────────────────────────────────
-  const emailCheck = emailLimiter.check(email.toLowerCase());
-  if (!emailCheck.allowed) {
-    return {
-      type: "fail",
-      message: "Too many attempts. Please try again later.",
-    };
-  }
-  // ──────────────────────────────────────────────────────────────────────────
-
   const existingUser = await db.user.findUnique({ where: { email } });
 
   if (!existingUser || !existingUser.password) {
@@ -54,6 +44,17 @@ export async function checkLoginWithTwoFactor(values: TValues): Promise<{
   if (existingUser?.twoFactorEnabled && existingUser?.emailVerified) {
     // CASE A: User sent the code (Phase 2)
     if (code) {
+      // ── Rate limiting (Phase 2 only) ────────────────────────────────────────
+      // Applied only here so normal login attempts on shared IPs are unaffected.
+      const emailCheck = emailLimiter.check(email.toLowerCase());
+      if (!emailCheck.allowed) {
+        return {
+          type: "fail",
+          message: "Too many attempts. Please try again later.",
+        };
+      }
+      // ────────────────────────────────────────────────────────────────────────
+
       const twoFactorToken = await db.twoFactorToken.findUnique({
         where: { userId: existingUser.id },
       });
@@ -84,6 +85,14 @@ export async function checkLoginWithTwoFactor(values: TValues): Promise<{
         };
       }
 
+      const hasExpired = new Date(twoFactorToken?.expiresAt) < new Date();
+      if (hasExpired) {
+        await db.twoFactorToken.delete({
+          where: { id: twoFactorToken.id },
+        });
+        return { type: "fail", message: "Code expired!" };
+      }
+
       const isValidCode = await bcrypt.compare(
         code,
         twoFactorToken?.tokenHash || "",
@@ -98,11 +107,6 @@ export async function checkLoginWithTwoFactor(values: TValues): Promise<{
           },
         });
         return { type: "fail", message: "Invalid code!" };
-      }
-
-      const hasExpired = new Date(twoFactorToken?.expiresAt) < new Date();
-      if (hasExpired) {
-        return { type: "fail", message: "Code expired!" };
       }
 
       // Valid Code! Create Confirmation to allow NextAuth login

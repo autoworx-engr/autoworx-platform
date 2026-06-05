@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { generatePasswordResetEmailHtml } from "@/lib/emails-template/password-reset";
-import { createRateLimiter } from "@/lib/rateLimit";
+import { createRateLimiter, extractClientIp } from "@/lib/rateLimit";
 import { generateOTP, hashOTP } from "@/utils/otp";
 import { randomUUID } from "crypto";
 import { addMinutes } from "date-fns";
@@ -159,10 +159,10 @@ async function sendInfobipEmailAPI(
 
 export async function POST(req: NextRequest) {
   // ── Rate limiting ──────────────────────────────────────────────────────────
-  const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
-    req.headers.get("x-real-ip") ??
-    "unknown";
+  const ip = extractClientIp(
+    req.headers.get("x-forwarded-for"),
+    req.headers.get("x-real-ip"),
+  );
 
   const ipCheck = ipLimiter.check(ip);
   if (!ipCheck.allowed) {
