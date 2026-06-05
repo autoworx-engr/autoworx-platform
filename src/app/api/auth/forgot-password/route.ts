@@ -158,7 +158,6 @@ async function sendInfobipEmailAPI(
  */
 
 export async function POST(req: NextRequest) {
-  // ── Rate limiting ──────────────────────────────────────────────────────────
   const ip = extractClientIp(
     req.headers.get("x-forwarded-for"),
     req.headers.get("x-real-ip"),
@@ -177,11 +176,15 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { email } = await req.json();
+  const body = await req.json();
+  const rawEmail = body.email;
+  const email =
+    typeof rawEmail === "string" ? rawEmail.trim().toLowerCase() : "";
+
   if (!email)
     return NextResponse.json({ error: "Email is required" }, { status: 400 });
 
-  const emailCheck = emailLimiter.check(email.toLowerCase());
+  const emailCheck = emailLimiter.check(email);
   if (!emailCheck.allowed) {
     return NextResponse.json(
       { error: "Too many requests for this email. Please try again later." },

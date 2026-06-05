@@ -39,7 +39,6 @@ const emailLimiter = createRateLimiter({
  *         description: Too many requests
  */
 export async function POST(req: NextRequest) {
-  // ── Rate limiting ──────────────────────────────────────────────────────────
   const ip = extractClientIp(
     req.headers.get("x-forwarded-for"),
     req.headers.get("x-real-ip"),
@@ -59,8 +58,9 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const email = typeof body?.email === "string" ? body.email.trim() : null;
-  const otp = typeof body?.otp === "string" ? body.otp.trim() : null;
+  const email =
+    typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
+  const otp = typeof body?.otp === "string" ? body.otp.trim() : "";
 
   if (!email || !otp) {
     return NextResponse.json(
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const emailCheck = emailLimiter.check(email.toLowerCase());
+  const emailCheck = emailLimiter.check(email);
   if (!emailCheck.allowed) {
     return NextResponse.json(
       { error: "Too many attempts for this email. Please try again later." },

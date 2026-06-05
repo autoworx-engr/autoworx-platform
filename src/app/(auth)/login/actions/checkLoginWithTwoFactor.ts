@@ -6,9 +6,12 @@ import { createRateLimiter } from "@/lib/rateLimit";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 
-// 10 verification attempts per email per 15 minutes.
-// Server actions have no Request object, so email is used as the rate-limit key.
-const emailLimiter = createRateLimiter({
+const loginEmailLimiter = createRateLimiter({
+  windowMs: 15 * 60_000,
+  maxRequests: 10,
+});
+
+const otpEmailLimiter = createRateLimiter({
   windowMs: 15 * 60_000,
   maxRequests: 10,
 });
@@ -25,7 +28,31 @@ export async function checkLoginWithTwoFactor(values: TValues): Promise<{
   twoFactor?: boolean;
   nextLogin?: boolean;
 }> {
-  const { email, password, code } = values;
+  const { email: rawEmail, password, code } = values;
+  const email =
+    typeof rawEmail === "string" ? rawEmail.trim().toLowerCase() : "";
+
+  if (!email) {
+    return { type: "fail", message: "Email is required" };
+  }
+
+  if (code) {
+    const otpCheck = otpEmailLimiter.check(email);
+    if (!otpCheck.allowed) {
+      return {
+        type: "fail",
+        message: "Too many OTP attempts. Please try again later.",
+      };
+    }
+  } else {
+    const loginCheck = loginEmailLimiter.check(email);
+    if (!loginCheck.allowed) {
+      return {
+        type: "fail",
+        message: "Too many login attempts. Please try again later.",
+      };
+    }
+  }
 
   const existingUser = await db.user.findUnique({ where: { email } });
 
@@ -44,17 +71,6 @@ export async function checkLoginWithTwoFactor(values: TValues): Promise<{
   if (existingUser?.twoFactorEnabled && existingUser?.emailVerified) {
     // CASE A: User sent the code (Phase 2)
     if (code) {
-      // ── Rate limiting (Phase 2 only) ────────────────────────────────────────
-      // Applied only here so normal login attempts on shared IPs are unaffected.
-      const emailCheck = emailLimiter.check(email.toLowerCase());
-      if (!emailCheck.allowed) {
-        return {
-          type: "fail",
-          message: "Too many attempts. Please try again later.",
-        };
-      }
-      // ────────────────────────────────────────────────────────────────────────
-
       const twoFactorToken = await db.twoFactorToken.findUnique({
         where: { userId: existingUser.id },
       });
