@@ -1,8 +1,18 @@
 import { db } from "@/lib/db";
 import { generatePasswordResetEmailHtml } from "@/lib/emails-template/password-reset";
+import { createRateLimiter, extractClientIp } from "@/lib/rateLimit";
+import { generateOTP, hashOTP } from "@/utils/otp";
 import { randomUUID } from "crypto";
 import { addMinutes } from "date-fns";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+
+// 5 send attempts per IP per 15 minutes
+const ipLimiter = createRateLimiter({ windowMs: 15 * 60_000, maxRequests: 5 });
+// 3 send attempts per email per 15 minutes
+const emailLimiter = createRateLimiter({
+  windowMs: 15 * 60_000,
+  maxRequests: 3,
+});
 
 // Infobip Email API configuration
 const INFOBIP_BASE_URL = process.env.INFOBIP_BASE_URL;
@@ -147,25 +157,62 @@ async function sendInfobipEmailAPI(
  *                   example: Failed to send password reset email
  */
 
-export async function POST(req: Request) {
-  const { email } = await req.json();
+export async function POST(req: NextRequest) {
+  const ip = extractClientIp(
+    req.headers.get("x-forwarded-for"),
+    req.headers.get("x-real-ip"),
+  );
+
+  const ipCheck = ipLimiter.check(ip);
+  if (!ipCheck.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(Math.ceil(ipCheck.retryAfterMs / 1000)),
+        },
+      },
+    );
+  }
+
+  const body = await req.json();
+  const rawEmail = body.email;
+  const email =
+    typeof rawEmail === "string" ? rawEmail.trim().toLowerCase() : "";
+
   if (!email)
     return NextResponse.json({ error: "Email is required" }, { status: 400 });
+
+  const emailCheck = emailLimiter.check(email);
+  if (!emailCheck.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests for this email. Please try again later." },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(Math.ceil(emailCheck.retryAfterMs / 1000)),
+        },
+      },
+    );
+  }
+  // ──────────────────────────────────────────────────────────────────────────
 
   const user = await db.user.findUnique({ where: { email } });
   if (!user)
     return NextResponse.json({ error: "User not found" }, { status: 404 });
 
-  // Generate new token and OTP
+  // Generate a cryptographically secure OTP and hash it before storing.
   const token = randomUUID();
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const otpPlain = generateOTP(); // replaces insecure Math.random()
+  const otpHash = await hashOTP(otpPlain); // bcrypt hash — never store plain text
   const expiresAt = addMinutes(new Date(), 15); // OTP valid for 15 minutes
 
   // Atomically replace any existing token with the new one
   await db.$transaction([
     db.passwordResetToken.deleteMany({ where: { userId: user.id } }),
     db.passwordResetToken.create({
-      data: { token, otp, userId: user.id, expiresAt },
+      data: { token, otp: otpHash, userId: user.id, expiresAt },
     }),
   ]);
 
@@ -178,7 +225,12 @@ export async function POST(req: Request) {
 
   const companyName = company?.name ?? "AutoWorx";
   const fromEmail = `${companyName} <mail@${process.env.INFOBIP_DOMAIN}>`;
-  const htmlBody = generatePasswordResetEmailHtml(resetUrl, otp, companyName);
+  // Pass the plain-text OTP to the email template so the user sees it.
+  const htmlBody = generatePasswordResetEmailHtml(
+    resetUrl,
+    otpPlain,
+    companyName,
+  );
 
   // Send the email with the reset instructions using Infobip
   try {
