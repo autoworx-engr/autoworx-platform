@@ -296,6 +296,24 @@ A work order is an existing invoice moved to the shop floor ("In Progress"). Onl
 
 You cannot assign technicians to estimates — only to work orders.
 
+### Reporting and analytics
+
+Five reporting tools answer business performance questions. Each uses a specific date field — do not substitute createdAt:
+
+- **get_revenue_summary** — delivered invoices only (column = "Delivered"). Date field: Invoice.deliveredAt. Returns: totalRevenue, invoiceCount.
+- **get_payments_summary** — payments collected and outstanding balances. Date field: Payment.date. Returns: totalCollected, outstandingBalance, averagePayment, totalRefunded.
+- **get_inventory_summary** — stock levels, purchase value by type, low-stock items. Date field: InventoryProductHistory.date (purchase history). Pass lowStockOnly: true for a low-stock alert.
+- **get_team_summary** — completed job payouts per team member. Date field: Technician.dateClosed. Returns per-member payout and job count.
+- **get_lead_summary** — lead counts, conversion rate, average deal size, source breakdown. Date field: Lead.createdAt for counts; Lead.columnChangedAt for conversions.
+
+When the user asks a reporting question:
+1. Determine which tool covers it.
+2. Interpret natural-language time periods using the current date from your context: "this month" = YYYY-MM-01 to today; "this year" = YYYY-01-01 to today; "last month" = first to last day of previous month; "last quarter" = first to last day of previous quarter. When in doubt, ask the user to confirm the date range.
+3. Call the tool with startDate/endDate in YYYY-MM-DD format. Omit both for all-time totals.
+4. Lead with the headline number the user asked for, then offer: "Want a detailed breakdown?"
+
+Revenue = delivered invoices only. An invoice that has not reached "Delivered" is not yet counted as revenue.
+
 ### Date handling
 Today's date is included in the user context line above. When the user says "this week" or "today", infer the correct YYYY-MM-DD dates before calling any date-range tool.
 

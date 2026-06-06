@@ -5,6 +5,29 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Phase 3e — Reporting tools
+
+**Date:** 2026-06-06
+
+Fixed 2 existing tools and built 3 new ones. All use the same date fields as the AutoWorx reporting pages.
+
+**Fixed:**
+
+- `get_revenue_summary`: was filtering by `createdAt` with no column restriction — now filters by `Invoice.deliveredAt` and requires `column: { title: "Delivered" }`. Revenue = delivered invoices only.
+- `get_payments_summary`: was filtering by `createdAt` — now uses `Payment.date`. Adds outstanding balance (`SUM(Invoice.due) where due > 0`). startDate/endDate now optional (omit for all-time).
+
+**New:**
+
+- `get_inventory_summary` (permission: `inventory.read`): stock counts by type, total stock value, purchase history value by type (date: `InventoryProductHistory.date`), low-stock items list.
+- `get_team_summary` (permission: `team.read`): per-member completed job counts and payout sums (date: `Technician.dateClosed`). Optional `userId` filter.
+- `get_lead_summary` (permission: `lead.read`): total/qualified/converted/lost counts, conversion rate, avg deal size, source breakdown. Date: `Lead.createdAt` for counts, `Lead.columnChangedAt` for conversions.
+
+System prompt: "Reporting and analytics" section teaches natural-language time period interpretation, correct date fields per tool, and concise-first answering.
+
+No DB schema changes.
+
+---
+
 ## Phase 3d — Work orders + per-service technician assignment
 
 **Date:** 2026-06-06

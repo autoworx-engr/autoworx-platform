@@ -7,45 +7,34 @@ import {
 } from "@/lib/copilot/tools/registry";
 
 const inputSchema = z.object({
-  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Must be YYYY-MM-DD"),
-  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Must be YYYY-MM-DD"),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
 });
 
 type Input = z.infer<typeof inputSchema>;
 
 async function execute(input: unknown, ctx: ToolContext): Promise<ToolResult> {
   const { startDate, endDate } = input as Input;
-  const start = new Date(`${startDate}T00:00:00.000Z`);
-  const end = new Date(`${endDate}T23:59:59.999Z`);
 
-  const [invoices, materials] = await Promise.all([
-    db.invoice.findMany({
-      where: {
-        companyId: ctx.companyId,
-        createdAt: { gte: start, lte: end },
-        type: "Invoice",
-      },
-      select: { grandTotal: true, totalPayment: true },
-    }),
-    db.material.findMany({
-      where: {
-        companyId: ctx.companyId,
-        createdAt: { gte: start, lte: end },
-      },
-      select: { cost: true, quantity: true },
-    }),
-  ]);
+  const invoices = await db.invoice.findMany({
+    where: {
+      companyId: ctx.companyId,
+      type: "Invoice",
+      column: { title: "Delivered" },
+      ...(startDate && endDate
+        ? {
+            deliveredAt: {
+              gte: new Date(`${startDate}T00:00:00.000Z`),
+              lte: new Date(`${endDate}T23:59:59.999Z`),
+            },
+          }
+        : {}),
+    },
+    select: { grandTotal: true },
+  });
 
   const totalRevenue = invoices.reduce(
     (sum, inv) => sum + Number(inv.grandTotal ?? 0),
-    0,
-  );
-  const paidCount = invoices.filter(
-    (inv) => Number(inv.totalPayment ?? 0) >= Number(inv.grandTotal ?? 0),
-  ).length;
-  const unpaidCount = invoices.length - paidCount;
-  const totalCost = materials.reduce(
-    (sum, m) => sum + Number(m.cost ?? 0) * Number(m.quantity ?? 1),
     0,
   );
 
@@ -53,11 +42,8 @@ async function execute(input: unknown, ctx: ToolContext): Promise<ToolResult> {
     ok: true,
     data: {
       totalRevenue: Math.round(totalRevenue * 100) / 100,
-      totalCost: Math.round(totalCost * 100) / 100,
-      grossProfit: Math.round((totalRevenue - totalCost) * 100) / 100,
-      paidCount,
-      unpaidCount,
-      dateRange: { startDate, endDate },
+      invoiceCount: invoices.length,
+      period: startDate && endDate ? { startDate, endDate } : "all time",
     },
   };
 }
@@ -65,7 +51,7 @@ async function execute(input: unknown, ctx: ToolContext): Promise<ToolResult> {
 registerTool({
   name: "get_revenue_summary",
   description:
-    "Fetch total revenue, cost, profit, and payment breakdown for a date range. Use when the user asks about earnings, revenue, income, or financial performance.",
+    "Returns revenue from DELIVERED invoices only (column = 'Delivered'). Date filter uses Invoice.deliveredAt — not createdAt. Use when the user asks about revenue, earnings, or income.",
   permission: "report.revenue.read",
   inputSchema,
   anthropicInputSchema: {
@@ -73,14 +59,14 @@ registerTool({
     properties: {
       startDate: {
         type: "string",
-        description: "Start date in YYYY-MM-DD format",
+        description: "Start date in YYYY-MM-DD format. Omit for all-time.",
       },
       endDate: {
         type: "string",
-        description: "End date in YYYY-MM-DD format",
+        description: "End date in YYYY-MM-DD format. Omit for all-time.",
       },
     },
-    required: ["startDate", "endDate"],
+    required: [],
   },
   execute,
 });

@@ -30,6 +30,9 @@ import "./handlers/createVendorTool";
 import "./handlers/getTeamMembers";
 import "./handlers/createWorkOrderTool";
 import "./handlers/assignTechnicianTool";
+import "./handlers/getInventorySummary";
+import "./handlers/getTeamSummary";
+import "./handlers/getLeadSummary";
 
 export { toolsForAnthropic, allTools, getTool } from "./registry";
 export type { ToolContext, ToolResult, ToolDefinition } from "./registry";

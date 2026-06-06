@@ -190,6 +190,30 @@ yarn dev
 
 ---
 
+## Phase 3e — Reporting tools
+
+All five reporting tools are direct Prisma reads (no API routes). Each date field is critical — they differ by tool and must not be substituted with `createdAt`:
+
+| Tool                    | Model                                                      | Date field    |
+| ----------------------- | ---------------------------------------------------------- | ------------- |
+| `get_revenue_summary`   | Invoice                                                    | `deliveredAt` |
+| `get_payments_summary`  | Payment                                                    | `date`        |
+| `get_inventory_summary` | InventoryProductHistory                                    | `date`        |
+| `get_team_summary`      | Technician                                                 | `dateClosed`  |
+| `get_lead_summary`      | Lead (counts: `createdAt`; conversions: `columnChangedAt`) |
+
+**Revenue gate:** `get_revenue_summary` adds `column: { title: "Delivered" }` to the Invoice query. An invoice that has not reached the "Delivered" column is not counted as revenue — this matches the reporting page's behavior exactly.
+
+**Outstanding balance:** `get_payments_summary` adds `db.invoice.aggregate({ where: { due: { gt: 0 } } }, _sum: { due })` — mirrors the payments page's `outStandingPayment` query.
+
+**Low-stock filter:** `get_inventory_summary` fetches all products then filters in JS (`quantity <= lowInventoryAlert`). The Prisma-level equivalent would require a raw query comparing two columns; JS filtering is safe at typical inventory sizes.
+
+**Lead deal size:** `get_lead_summary` follows the `getLeadInfo.ts` pattern: converted leads → `Lead.Client[]` → `Client.Invoice[]` where type=Invoice → avg grandTotal. The `Client[]` relation on Lead is a many array linked via `leadId` on the Client side.
+
+No DB schema changes.
+
+---
+
 ## Phase 3d — Work orders + per-service technician assignment
 
 Work orders are `Invoice` rows with `isWorkOrder = true`. The `InvoiceType` enum has no `WorkOrder` value — work orders are distinguished by the flag alone.
