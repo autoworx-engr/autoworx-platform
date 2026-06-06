@@ -14,6 +14,7 @@ const inputSchema = z.object({
   unit: z.string().max(5).optional(),
   description: z.string().optional(),
   lowInventoryAlert: z.number().int().nonnegative().optional(),
+  vendorId: z.number().int().positive().optional(),
 });
 
 type Input = z.infer<typeof inputSchema>;
@@ -105,6 +106,11 @@ registerTool({
       lowInventoryAlert: {
         type: "number",
         description: "Alert threshold — must be less than quantity. Optional.",
+      },
+      vendorId: {
+        type: "number",
+        description:
+          "Vendor id from get_vendor_by_name or create_vendor. Links this product to its supplier.",
       },
     },
     required: ["name", "type", "quantity", "price"],

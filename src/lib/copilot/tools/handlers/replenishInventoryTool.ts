@@ -12,6 +12,7 @@ const inputSchema = z.object({
   price: z.number().nonnegative(),
   date: z.string().optional(),
   notes: z.string().optional(),
+  vendorId: z.number().int().positive().optional(),
 });
 
 type Input = z.infer<typeof inputSchema>;
@@ -84,6 +85,11 @@ registerTool({
       notes: {
         type: "string",
         description: "Optional notes (e.g., PO number, lot number)",
+      },
+      vendorId: {
+        type: "number",
+        description:
+          "Vendor id from get_vendor_by_name. Links this replenishment to its supplier.",
       },
     },
     required: ["productId", "quantity", "price"],
