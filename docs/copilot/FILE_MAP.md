@@ -1,186 +1,192 @@
-# AI Copilot — File Map
+# Copilot — File Map
 
-Index of every file created or modified during the copilot build.
-
----
-
-## New files
-
-### Phase 3a
-
-| Path                                            | Purpose                                                                                                                                                              |
-| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/lib/mobileAuth.ts`                         | `getCompanyIdFromBearer(req)` — extracts companyId from Bearer JWT, returns null on failure. Used by all Phase 3 routes. Ported from taiseer/secure-estimate-routes. |
-| `src/lib/copilot/internalApiClient.ts`          | `callInternalApi({method, path, userId, body})` — server-side HTTP client for copilot → API route calls. Mints JWT, attaches Bearer, returns structured result.      |
-| `src/app/api/lead/company/[companyId]/route.ts` | POST: create a lead. Template route for Phase 3. Auth: Bearer JWT + companyId cross-check. Calls `createLeadRecord`. Audit logs.                                     |
+Complete inventory of every file created or modified by this branch. Current as of Phase 3g.
 
 ---
 
-### Phase 2
+## Tool Handlers (`src/lib/copilot/tools/handlers/`)
 
-| Path                                                            | Purpose                                              |
-| --------------------------------------------------------------- | ---------------------------------------------------- |
-| `src/lib/copilot/tools/registry.ts`                             | ToolDefinition type, registry Map, toolsForAnthropic |
-| `src/lib/copilot/tools/dispatcher.ts`                           | executeTool — permission → Zod → execute → audit     |
-| `src/lib/copilot/tools/index.ts`                                | Barrel that registers all handlers as side effects   |
-| `src/lib/copilot/tools/handlers/getRevenueSummary.ts`           | Revenue + cost aggregation                           |
-| `src/lib/copilot/tools/handlers/getPaymentsSummary.ts`          | Payment totals by method                             |
-| `src/lib/copilot/tools/handlers/getClientByName.ts`             | Fuzzy client search                                  |
-| `src/lib/copilot/tools/handlers/getVehicleByClient.ts`          | Vehicles for a client                                |
-| `src/lib/copilot/tools/handlers/getInventoryItemByName.ts`      | Inventory fuzzy search                               |
-| `src/lib/copilot/tools/handlers/getEstimateByNumber.ts`         | Estimate by ID                                       |
-| `src/lib/copilot/tools/handlers/getAppointmentsForDateRange.ts` | Appointments date range                              |
-| `src/lib/copilot/tools/handlers/getTasksForUser.ts`             | Tasks for user (non-admin enforced)                  |
-| `src/components/copilot/CopilotToolPills.tsx`                   | Animated tool-call status pills                      |
+41 handler files. Each calls `registerTool()` as a side effect on module load.
 
----
+### Read / Search (11)
 
-### Phase 1
+| File                              | Tool name                       |
+| --------------------------------- | ------------------------------- |
+| `getClientByName.ts`              | get_client_by_name              |
+| `getVehicleByClient.ts`           | get_vehicle_by_client           |
+| `getEstimatesForClient.ts`        | get_estimates_for_client        |
+| `getEstimateByNumber.ts`          | get_estimate_by_number          |
+| `getAppointmentsForDateRange.ts`  | get_appointments_for_date_range |
+| `getTasksForUser.ts`              | get_tasks_for_user              |
+| `getLeadTagsTool.ts`              | get_lead_tags                   |
+| `getConfirmationTemplatesTool.ts` | get_confirmation_templates      |
+| `getInventoryItemByName.ts`       | get_inventory_item_by_name      |
+| `getVendorByName.ts`              | get_vendor_by_name              |
+| `getTeamMembers.ts`               | get_team_members                |
 
-| Path                                                  | Purpose                                           |
-| ----------------------------------------------------- | ------------------------------------------------- |
-| `src/lib/copilot/rateLimit.ts`                        | In-memory fixed-window rate limiter               |
-| `src/lib/copilot/systemPrompt.ts`                     | System prompt builder with memory injection       |
-| `src/lib/copilot/generateSessionSummary.ts`           | Haiku-based session summarizer                    |
-| `src/app/api/copilot/chat/route.ts`                   | SSE streaming chat endpoint                       |
-| `src/app/api/copilot/sessions/route.ts`               | Sessions list (GET last 20)                       |
-| `src/app/api/copilot/sessions/[id]/route.ts`          | Session detail + messages                         |
-| `src/app/api/copilot/sessions/[id]/close/route.ts`    | Close + summarize session                         |
-| `src/stores/copilotStore.ts`                          | Zustand: isOpen, sessionId, messages, isStreaming |
-| `src/components/copilot/CopilotIcon.tsx`              | Header icon, hasCopilot gate                      |
-| `src/components/copilot/CopilotPanel.tsx`             | Sheet + SSE consumer orchestrator                 |
-| `src/components/copilot/CopilotChatHeader.tsx`        | Panel header                                      |
-| `src/components/copilot/CopilotMessageList.tsx`       | Scrollable message list                           |
-| `src/components/copilot/CopilotMessageCard.tsx`       | Single message bubble                             |
-| `src/components/copilot/CopilotChatInput.tsx`         | Textarea + send                                   |
-| `src/components/copilot/CopilotConversationList.tsx`  | History list                                      |
-| `src/components/copilot/CopilotThinkingIndicator.tsx` | Streaming dots indicator                          |
+### Write (17)
 
----
+| File                            | Tool name                 |
+| ------------------------------- | ------------------------- |
+| `createLeadTool.ts`             | create_lead               |
+| `createAppointmentTool.ts`      | create_appointment        |
+| `updateAppointmentTool.ts`      | update_appointment        |
+| `createTaskTool.ts`             | create_task               |
+| `updateTaskTool.ts`             | update_task               |
+| `createClientTool.ts`           | create_client             |
+| `createVehicleForClientTool.ts` | create_vehicle_for_client |
+| `createEstimateTool.ts`         | create_estimate           |
+| `addMaterialsToEstimateTool.ts` | add_materials_to_estimate |
+| `addLeadTagTool.ts`             | add_lead_tag              |
+| `removeLeadTagTool.ts`          | remove_lead_tag           |
+| `createTagTool.ts`              | create_tag                |
+| `createInventoryProductTool.ts` | create_inventory_product  |
+| `replenishInventoryTool.ts`     | replenish_inventory       |
+| `createVendorTool.ts`           | create_vendor             |
+| `createWorkOrderTool.ts`        | create_work_order         |
+| `assignTechnicianTool.ts`       | assign_technician         |
 
-### src/lib/
+### Analytics / Reporting (13)
 
-| Path                                       | Purpose                                                     |
-| ------------------------------------------ | ----------------------------------------------------------- |
-| `src/lib/leads/createLeadRecord.ts`        | Pure DB logic for lead creation (Phase 0a)                  |
-| `src/lib/anthropic.ts`                     | Anthropic SDK singleton + pinned model constants (Phase 0b) |
-| `src/lib/copilot/audit.ts`                 | PII-redacting audit log writer (Phase 0b)                   |
-| `src/lib/copilot/normalizeActionResult.ts` | Server action response normalizer (Phase 0b)                |
-| `src/lib/copilot/canUserDo.ts`             | Permission check for all copilot actions (Phase 0b)         |
-
-### src/actions/
-
-| Path                                           | Purpose                                          |
-| ---------------------------------------------- | ------------------------------------------------ |
-| `src/actions/lead/createLead.ts`               | Session-auth wrapper for createLeadRecord (0a)   |
-| `src/actions/estimate/invoice/sendEstimate.ts` | Unified email/SMS send with audit log (Phase 0b) |
-
-### prisma/
-
-| Path                                                             | Purpose            |
-| ---------------------------------------------------------------- | ------------------ |
-| `prisma/migrations/20260510000000_add_copilot_and_audit_log.sql` | Phase 0a migration |
-
-### docs/copilot/
-
-| Path                | Purpose                                                                           |
-| ------------------- | --------------------------------------------------------------------------------- |
-| `README.md`         | Entry point — reading order for reviewers                                         |
-| `ARCHITECTURE.md`   | System design (phases 0–2 reflected; design-only sections for 3+)                 |
-| `BUILD_PHASES.md`   | Phased build plan — phases 0a–2 complete, 3+ design only                          |
-| `TOOL_REGISTRY.md`  | Spec for every copilot tool — read-only tools shipped, write/external design only |
-| `PRISMA_SCHEMA.md`  | DB model design — migration applied in Phase 0a                                   |
-| `RECON_REPORT.md`   | Initial codebase recon (historical, read once)                                    |
-| `CHANGELOG.md`      | Chronological build log — one entry per phase                                     |
-| `FILE_MAP.md`       | This file — index of every file touched                                           |
-| `REVIEWER_GUIDE.md` | PR reviewer guide — TL;DR, risk, how to test                                      |
-| `MERGE_NOTES.md`    | Deployment and migration checklist                                                |
+| File                       | Tool name               |
+| -------------------------- | ----------------------- |
+| `getRevenueSummary.ts`     | get_revenue_summary     |
+| `getPaymentsSummary.ts`    | get_payments_summary    |
+| `getInventorySummary.ts`   | get_inventory_summary   |
+| `getTeamSummary.ts`        | get_team_summary        |
+| `getLeadSummary.ts`        | get_lead_summary        |
+| `getWorkOrderSummary.ts`   | get_work_order_summary  |
+| `getTaskSummary.ts`        | get_task_summary        |
+| `getAppointmentSummary.ts` | get_appointment_summary |
+| `getClientStats.ts`        | get_client_stats        |
+| `getProfitAnalysis.ts`     | get_profit_analysis     |
+| `getMaterialUsage.ts`      | get_material_usage      |
+| `getServicePerformance.ts` | get_service_performance |
+| `getClockReport.ts`        | get_clock_report        |
 
 ---
 
-## Modified files
+## Tool Infrastructure (`src/lib/copilot/`)
 
-| Path                                                                                | Phase | Change                                                                  |
-| ----------------------------------------------------------------------------------- | ----- | ----------------------------------------------------------------------- |
-| `prisma/schema.prisma`                                                              | 0a    | Added User.hasCopilot + 3 models + 2 enums                              |
-| `src/app/api/lead-generate/route.ts`                                                | 0a    | Extracted DB logic to helper                                            |
-| `src/actions/lead/createLeadFromForm.ts`                                            | 0a    | Direct createLead call                                                  |
-| `src/actions/appointment/addAppointment.ts`                                         | 0.5   | Replaced inline draft-estimate logic with `createDraftEstimate` call    |
-| `src/actions/appointment/editAppointment.ts`                                        | 0.5   | Replaced inline draft-estimate logic; fixes invisible-estimate bug      |
-| `src/app/(dashboard)/dashboard/pipeline/sales/pipeline/_components/LeadActions.tsx` | 0.5   | Removed stale `createDraftEstimate` import                              |
-| `src/authOptions.ts`                                                                | 1     | Added `hasCopilot` to JWT refresh DB select, token, and session         |
-| `src/components/TopNavbarIcons.tsx`                                                 | 1     | Added `<CopilotIcon />` between BugReport and NotificationsPopover      |
-| `src/components/copilot/CopilotPanel.tsx`                                           | 1.1   | `flushSync` per `appendToken` call to unblock React 18 batching         |
-| `src/app/api/copilot/sessions/[id]/route.ts`                                        | 1.1   | Async params (`await props.params`) for Next.js 16                      |
-| `src/app/api/copilot/sessions/[id]/close/route.ts`                                  | 1.1   | Async params; removed `messageCount > 0` guard                          |
-| `src/app/api/copilot/chat/route.ts`                                                 | 1.1   | `startTime` capture + `latencyMs` on audit log                          |
-| `src/app/api/copilot/chat/route.ts`                                                 | 1.2   | Capture `cache_read_input_tokens` → `cachedTokens`; log cacheWrite      |
-| `docs/copilot/REVIEWER_GUIDE.md`                                                    | 1.2   | Added cost optimization section                                         |
-| `package.json`                                                                      | 0b    | Added `@anthropic-ai/sdk ^0.95.1`                                       |
-| `yarn.lock`                                                                         | 0b    | Lockfile updated for new SDK dep                                        |
-| `.env.example`                                                                      | 0b    | Added `ANTHROPIC_API_KEY=` placeholder (commit cd095b27)                |
-| `src/app/api/copilot/chat/route.ts`                                                 | 2     | Multi-turn tool-use loop; SSE tool events; employeeType for ToolContext |
-| `src/lib/copilot/systemPrompt.ts`                                                   | 2     | TOOL_GUIDE section + prompt injection warning                           |
-| `src/stores/copilotStore.ts`                                                        | 2     | activeToolCalls + addToolCall/resolveToolCall                           |
-| `src/components/copilot/CopilotPanel.tsx`                                           | 2     | Handle tool SSE events; pass activeToolCalls to MessageList             |
-| `src/components/copilot/CopilotMessageList.tsx`                                     | 2     | Render CopilotToolPills during streaming tool calls                     |
+| File                        | Purpose                                                                                       |
+| --------------------------- | --------------------------------------------------------------------------------------------- |
+| `tools/index.ts`            | Barrel — imports all 41 handlers as side effects; exports registry helpers                    |
+| `tools/registry.ts`         | `ToolDefinition` type, in-memory registry Map, `toolsForAnthropic()`, `getTool()`             |
+| `tools/dispatcher.ts`       | `executeTool()` — permission check → Zod validate → execute → audit log                       |
+| `systemPrompt.ts`           | `buildSystemPrompt(ctx)` — constructs full system prompt with user context, memory, all rules |
+| `internalApiClient.ts`      | `callInternalApi()` — mints Bearer JWT, makes server-side HTTP calls to API routes            |
+| `canUserDo.ts`              | `CopilotAction` union type, `PERMISSION_MAP`, `canUserDo()` helper                            |
+| `estimateMath.ts`           | `round2()` and money math helpers shared by estimate tools                                    |
+| `audit.ts`                  | `writeAuditLog()` — never throws; always logs tool call + result to AuditLog                  |
+| `generateSessionSummary.ts` | Haiku-based session summarizer — called on session close                                      |
+| `rateLimit.ts`              | In-memory fixed-window rate limiter                                                           |
+| `normalizeActionResult.ts`  | Normalizes legacy `{success, message}` server action results                                  |
 
 ---
 
-## Module dependency graph
+## Copilot API Routes (`src/app/api/copilot/`)
 
-### Phase 0a — Lead creation paths
+| Path                           | Purpose                                                                    |
+| ------------------------------ | -------------------------------------------------------------------------- |
+| `chat/route.ts`                | POST — main chat endpoint; SSE streaming; calls Anthropic SDK + dispatcher |
+| `sessions/route.ts`            | GET — list last 20 sessions for current user                               |
+| `sessions/[id]/route.ts`       | GET — session detail + messages                                            |
+| `sessions/[id]/close/route.ts` | POST — closes session and triggers Haiku summarization                     |
 
-In-platform (thunderbolt form):
+---
 
-```
-createLeadFromForm.ts → createLead.ts → createLeadRecord.ts → DB
-```
+## Bearer-safe API Routes (added/modified by this branch)
 
-External webhook:
+### New routes
 
-```
-/api/lead-generate route → createLeadRecord.ts → DB
-```
+| Path                                                             | Method | Purpose                     |
+| ---------------------------------------------------------------- | ------ | --------------------------- |
+| `src/app/api/lead/company/[companyId]/route.ts`                  | POST   | Create lead                 |
+| `src/app/api/lead/company/[companyId]/[id]/route.ts`             | PATCH  | Update lead column          |
+| `src/app/api/pipeline/sales/leads/route.ts`                      | POST   | Create lead (pipeline path) |
+| `src/app/api/pipeline/sales/leads/[id]/column/route.ts`          | PATCH  | Move lead column            |
+| `src/app/api/appointment/company/[companyId]/route.ts`           | POST   | Create appointment          |
+| `src/app/api/appointment/company/[companyId]/[id]/route.ts`      | PATCH  | Update appointment          |
+| `src/app/api/task/company/[companyId]/route.ts`                  | POST   | Create task (DB-direct)     |
+| `src/app/api/task/company/[companyId]/[id]/route.ts`             | PATCH  | Update task                 |
+| `src/app/api/client/company/[companyId]/route.ts`                | POST   | Create client               |
+| `src/app/api/vehicle/client/[clientId]/route.ts`                 | POST   | Create vehicle for client   |
+| `src/app/api/invoice/company/[companyId]/route.ts`               | POST   | Create invoice (mobile)     |
+| `src/app/api/inventory/[companyId]/products/route.ts`            | POST   | Create InventoryProduct     |
+| `src/app/api/inventory/[companyId]/replenish/route.ts`           | POST   | Replenish stock             |
+| `src/app/api/vendor/[companyId]/route.ts`                        | POST   | Create vendor               |
+| `src/app/api/work-order/[companyId]/[invoiceId]/route.ts`        | PATCH  | Convert to work order       |
+| `src/app/api/work-order/[companyId]/[invoiceId]/assign/route.ts` | POST   | Assign technician           |
 
-### Phase 0b — Helper dependency graph
+### Modified existing routes
 
-```
-sendEstimate.ts → sendInvoiceEmail.ts / sendInvoiceSms.ts
-              → normalizeActionResult.ts
-              → audit.ts → db
-              → getEssentials() → getServerSession
+| Path                                        | Change                                                                         |
+| ------------------------------------------- | ------------------------------------------------------------------------------ |
+| `src/app/api/estimate/[companyId]/route.ts` | POST added; added numeric ID generation via `customAlphabet("1234567890", 10)` |
 
-canUserDo.ts → getPermissions.ts → db
+---
 
-anthropic.ts  (leaf — no local dependencies, reads ANTHROPIC_API_KEY at runtime)
-```
+## UI Components (`src/components/copilot/`)
 
-### Phase 1–2 — Chat route + tool dispatch
+All new files — no existing components modified.
 
-```
-/api/copilot/chat  (POST)
-  → getServerSession() → hasCopilot check
-  → checkRateLimit()
-  → db.copilotSession (find or create)
-  → generateSessionSummary() [lazy fallback]     → anthropic.ts (Haiku)
-  → db.copilotSession.findMany (prior summaries)
-  → buildSystemPrompt()                          → systemPrompt.ts
-  → tools/index.ts (imports all handlers)        → tools/registry.ts
-  │                                              → tools/handlers/*.ts → db
-  → anthropic.messages.stream()                  → anthropic.ts (Sonnet)
-  │
-  ├── [stop_reason: text] → stream text_delta SSE events → client
-  │
-  └── [stop_reason: tool_use] →
-        tools/dispatcher.ts
-          → canUserDo()    → canUserDo.ts → getPermissions.ts → db
-          → Zod validate
-          → handler.execute() → db
-          → writeAuditLog()   → audit.ts → db
-        → tool_result → back to Anthropic (next loop iteration)
+| File                           | Purpose                                                                |
+| ------------------------------ | ---------------------------------------------------------------------- |
+| `CopilotIcon.tsx`              | Header icon, `hasCopilot` gate                                         |
+| `CopilotPanel.tsx`             | Sheet slide-over + SSE consumer orchestrator                           |
+| `CopilotChatHeader.tsx`        | Panel header (session title + controls)                                |
+| `CopilotMessageList.tsx`       | Scrollable message list                                                |
+| `CopilotMessageCard.tsx`       | Single message bubble — assistant messages rendered via react-markdown |
+| `CopilotChatInput.tsx`         | Textarea + send button                                                 |
+| `CopilotConversationList.tsx`  | History session list                                                   |
+| `CopilotThinkingIndicator.tsx` | Streaming dots indicator                                               |
+| `CopilotToolPills.tsx`         | Animated tool-call status pills (shown while tool runs)                |
 
-/api/copilot/sessions/[id]/close  (POST)
-  → generateSessionSummary()                    → anthropic.ts (Haiku)
-  → db.copilotSession.update (summary)
-```
+---
+
+## Other Modified Platform Files
+
+| File                                         | Change                                                               |
+| -------------------------------------------- | -------------------------------------------------------------------- |
+| `src/components/TopNavbarIcons.tsx`          | Added `<CopilotIcon />` between Bug Report and Notifications icons   |
+| `src/authOptions.ts`                         | Added `hasCopilot` to DB select, JWT token, and session              |
+| `src/actions/lead/createLeadFromForm.ts`     | Calls `createLead` directly instead of HTTP self-proxy               |
+| `src/actions/appointment/addAppointment.ts`  | Replaced inline draft-estimate logic with `createDraftEstimate` call |
+| `src/actions/appointment/editAppointment.ts` | Same refactor; fixes missing `columnId` on estimate creation         |
+| `src/app/api/lead-generate/route.ts`         | Refactored 283 → 136 lines; behavioral equivalence tested            |
+
+---
+
+## State / Store
+
+| File                         | Purpose                                                   |
+| ---------------------------- | --------------------------------------------------------- |
+| `src/stores/copilotStore.ts` | Zustand: `isOpen`, `sessionId`, `messages`, `isStreaming` |
+| `src/lib/mobileAuth.ts`      | `getCompanyIdFromBearer()`, shared with mobile API routes |
+
+---
+
+## DB Migration
+
+| File                                                             | Purpose                                                                               |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `prisma/migrations/20260510000000_add_copilot_and_audit_log.sql` | Adds `User.hasCopilot`, `CopilotSession`, `CopilotMessage`, `AuditLog` tables + enums |
+| `prisma/migrations/20260515000000_add_messenger_columns.sql`     | **Authored by this branch** — bridges schema/DB divergence from prior PR              |
+
+---
+
+## Documentation (`docs/copilot/`)
+
+| File                           | Status                                            |
+| ------------------------------ | ------------------------------------------------- |
+| `REVIEWER_GUIDE.md`            | Current through Phase 3g                          |
+| `TOOL_REGISTRY.md`             | Current through Phase 3g (41 tools)               |
+| `FILE_MAP.md`                  | This file — current through Phase 3g              |
+| `CHANGELOG.md`                 | Current through Phase 3g                          |
+| `MERGE_NOTES.md`               | Current through Phase 3g                          |
+| `ARCHITECTURE.md`              | Current through Phase 2 (infrastructure design)   |
+| `BUILD_PHASES.md`              | Phase plan (historical)                           |
+| `BUILD_STATUS_FOR_DEV_TEAM.md` | Status snapshot — see CHANGELOG for current state |
+| `PHASE_3_PLAN.md`              | Phase 3 design plan (historical)                  |
+| `PRISMA_SCHEMA.md`             | Schema reference (may be stale)                   |
+| `RECON_REPORT.md`              | Pre-build recon (historical)                      |

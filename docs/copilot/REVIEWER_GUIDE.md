@@ -6,586 +6,277 @@ For the AutoWorx dev team. Read top-to-bottom before reviewing the PR.
 
 ## TL;DR
 
-Phases 0a–2: Adds an AI Copilot to AutoWorx — a sliding panel in the dashboard header (gated on `User.hasCopilot`) that streams chat responses via SSE, persists conversation history, generates cross-session memory summaries, and can look up live shop data (revenue, payments, clients, vehicles, inventory, estimates, appointments, tasks) using 8 read-only tools backed by the Anthropic API.
+The AI Copilot is an in-app chat assistant for AutoWorx auto specialty shops. It handles client intake, estimates, inventory management, work orders, team assignment, and business reporting — all through natural-language conversation, streamed in real time.
+
+**Surface area:**
+
+- **41 tool handlers** (11 read/search, 17 write, 13 analytics/reporting)
+- **17 Bearer-safe API routes** (new or modified)
+- **System prompt** (~450 lines) — rules, per-tool guidance, write workflow
+- **9 UI components** — chat panel, streaming, tool pills, markdown rendering
+- **1 DB migration** — additive only, safe to run on live DB
+
+**Gating:** All copilot UI is behind `User.hasCopilot = false` by default. No user sees anything without a manual DB flip.
 
 ---
 
-## What this feature does
+## What was built, by phase
 
-- **Chat panel**: Bot icon in top navbar opens a `<Sheet>` slide-over. Users can send messages, see streaming responses token-by-token, and switch between past sessions.
-- **Session memory**: Each session is summarized on close (Haiku 4.5, 200 tokens). Last 5 summaries are injected into the system prompt of the next session.
-- **8 read-only tools (Phase 2)**: The AI can call tools to fetch live data — revenue summaries, payment breakdowns, client/vehicle lookup, inventory search, estimate details, appointments, and tasks. Tool calls are permission-checked, Zod-validated, audited, and shown as animated pills in the UI while in progress.
-- **Security**: `companyId` always from session. AI-provided IDs are ignored. Tool results treated as data, not instructions (anti-prompt-injection rule in system prompt).
-- **Cost controls**: Prompt caching (90% discount on cached tokens), `max_tokens: 1024`, Haiku for summarization.
+### Phases 0a–2 — Infrastructure and read tools
 
----
+Chat panel (SSE streaming), session persistence, cross-session memory summarization (Haiku), prompt caching, 8 initial read-only tools, audit logging, rate limiting. See [ARCHITECTURE.md](ARCHITECTURE.md) for the full technical design.
 
-## Scope boundaries — NOT in this PR
+### Phase 3b — Core CRM write tools
 
-- Mobile integration
-- Billing/seat licensing (gated only on User.hasCopilot for now)
-- Cross-conversation embedding-based RAG
-- Voice input
-- Audit log viewer UI
-- Cost tracking dashboard
+Leads, appointments (with confirmation email templates), tasks, clients (with phone-country-code normalization), vehicles, tags. Also includes:
 
----
+- **Phone disambiguation:** `get_client_by_name` returns `phoneLast4` and vehicle list; the model must confirm before writing when multiple clients match.
+- **Idempotency guard:** lead creation route rejects near-duplicate leads within 2 minutes (HTTP 409) as a code-level safety net on top of prompt rules.
+- **Client duplicate-phone recovery:** `create_client` handles 409 gracefully by looking up the existing client and returning it as a soft success rather than an error.
+- **Appointment confirmation messages:** `get_confirmation_templates` tool added; copilot can send confirmation after scheduling.
 
-## Risk assessment
+### Phase 3c — Estimates and inventory
 
-### Files modified that touch existing functionality
+| Phase | What shipped                                                                                                                   |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------ |
+| 3c.1  | Estimate read tools: list for client, detail by ID with InvoiceItem IDs, digital/edit links                                    |
+| 3c.2  | `create_estimate` — services + labor; all money math server-side                                                               |
+| 3c.3  | `add_materials_to_estimate` — attaches to existing service's InvoiceItem (NOT a new line item); totals recomputed from scratch |
+| 3c.4  | `applyShopSupplies` + `applyTax` toggles on create_estimate; company rates included in system prompt user context              |
+| 3c.5  | Inventory-aware materials: word-by-word fuzzy search, cost vs sell distinction, soft stock warning                             |
+| 3c.6  | Inventory create + replenish (weighted average cost); vendor lookup + create                                                   |
 
-| File                                                                                | Risk                                                                            | Mitigation                                                                                                                                     |
-| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/app/api/lead-generate/route.ts`                                                | **HIGH** — called by every customer's external website contact form via webhook | Behavioral equivalence verified via curl regression test; 283→136 lines but identical output                                                   |
-| `src/actions/lead/createLeadFromForm.ts`                                            | **MEDIUM** — powers the thunderbolt "Add Lead" form in the header               | Manually tested via UI; now calls `createLead` directly instead of HTTP self-proxy                                                             |
-| `src/actions/appointment/addAppointment.ts`                                         | **MEDIUM** — used by calendar and client panel appointment creation             | Inline draft-estimate logic replaced with `createDraftEstimate` call; behavior preserved + one pre-existing bug fixed                          |
-| `src/actions/appointment/editAppointment.ts`                                        | **MEDIUM** — used when editing existing appointments                            | Same refactor; fixes pre-existing bug where edited estimates had no `columnId` (were pipeline-invisible)                                       |
-| `src/app/(dashboard)/dashboard/pipeline/sales/pipeline/_components/LeadActions.tsx` | **LOW** — pipeline card button component                                        | Only change: removed stale `createDraftEstimate` import (no longer used by this component)                                                     |
-| `src/components/TopNavbarIcons.tsx`                                                 | **LOW** — adds one component between existing icons                             | Adds `<CopilotIcon />` between BugReport and NotificationsPopover. `CopilotIcon` is gated on `hasCopilot`, invisible to users without the flag |
-| `src/authOptions.ts`                                                                | **LOW** — JWT token refresh path only                                           | Adds `hasCopilot` to DB select + token + session. No behavior change for existing auth; only adds a field                                      |
-| `prisma/schema.prisma`                                                              | **LOW** — additive only                                                         | Non-destructive migration; new tables + one boolean column (default false) on User                                                             |
+**Money math (all server-side, never AI-supplied):**
 
-### Files added (isolated, low review burden)
+```
+subtotal = Σ(labor.charge × labor.hours) + Σ(material.sell × quantity)
+taxAdd = materialSubtotal × (taxRate / 100)
+suppliesFeeAdd = subtotal × (serviceFeeRate / 100)
+grandTotal = (subtotal − discount) + taxAdd + suppliesFeeAdd
+```
 
-**Phase 2 — tools (all new, no existing code touched):**
+`tax` and `serviceFee` stored as **rates (percentages)**, not dollar amounts. The estimate route stores caller-supplied totals; the math is done in `estimateMath.ts` helpers.
 
-| File                                               | Notes                                                        |
-| -------------------------------------------------- | ------------------------------------------------------------ |
-| `src/lib/copilot/tools/registry.ts`                | Pure in-memory Map. No side effects.                         |
-| `src/lib/copilot/tools/dispatcher.ts`              | Calls canUserDo + writeAuditLog — both never-throw wrappers. |
-| `src/lib/copilot/tools/index.ts`                   | Barrel import only.                                          |
-| `src/lib/copilot/tools/handlers/get*.ts` (8 files) | Read-only DB queries scoped to companyId.                    |
-| `src/components/copilot/CopilotToolPills.tsx`      | Presentational only — pure React, no data fetching.          |
+**`add_materials_to_estimate` — important behavior change from initial design:**
+Previously created a new materials-only `InvoiceItem`. Now requires a `serviceItemId` (InvoiceItem.id from `get_estimate_by_number`) and attaches materials to the existing service's item. Corrected because materials in the existing platform UI always belong to a service line, not standalone items.
 
-**Phases 0b–1 — copilot infrastructure (all new):** See FILE_MAP.md for the full list.
+### Phase 3d — Work orders and technician assignment
 
----
+`create_work_order` converts an existing invoice to a work order via PATCH (`isWorkOrder=true`, moves to "In Progress" column resolved at runtime by title — never hardcoded). Estimates cannot become work orders directly.
 
-## Bugs introduced by Phase 0a refactor and fixed in Phase 2.1 (coordination catch)
+`assign_technician` does per-service assignment (one Technician record per InvoiceItem). The `Technician.serviceId` field is `NOT NULL` in the schema, but copilot-created `InvoiceItem` rows have `serviceId = null`. The route resolves this in a `$transaction`:
 
-Caught by coordination with @AbuBokorprog who did a parallel refactor of /api/lead-generate on origin/development.
+1. Case-insensitive match on `InvoiceItem.serviceDesc` against the `Service` catalog
+2. If no match, auto-creates a Service record from the serviceDesc
+3. Backfills `InvoiceItem.serviceId`
+4. Creates the `Technician` record
 
-1. **Missing systemCall: true** on Twilio/Infobip calls inside createLeadRecord. AI opening SMS would have silently failed to send for webhook-generated leads.
-2. **CRM zapierToken branch dropped** for automation triggers. External website leads (CRM mode) would have lost automation triggers.
+**This means copilot usage will auto-populate the Service catalog from free-text service descriptions.** This is intentional — it's how the platform's Technician constraint gets satisfied without requiring a pre-populated catalog. Team should be aware; it may add entries to the Service table.
 
-These slipped past Phase 0a smoke testing due to local dev environment limitations (no CRM-enabled company in dev DB; ai_personalities schema drift masked the systemCall issue with a different failure). Caught before merge by parallel-refactor coordination.
+### Phase 3e–3g — Reporting (13 tools)
 
-The Phase 0a "latent bug fixes" section below previously credited us with these fixes — that credit was incorrect; we actually re-introduced them. Phase 2.1 restores correct behavior.
+Each reporting tool uses the **same date field as the corresponding AutoWorx reporting page** — using `createdAt` instead would return wrong numbers. Critical date field mapping:
 
----
+| Tool                      | Model                   | Date field                                             |
+| ------------------------- | ----------------------- | ------------------------------------------------------ |
+| `get_revenue_summary`     | Invoice                 | `deliveredAt`                                          |
+| `get_payments_summary`    | Payment                 | `date`                                                 |
+| `get_inventory_summary`   | InventoryProductHistory | `date`                                                 |
+| `get_team_summary`        | Technician              | `dateClosed`                                           |
+| `get_lead_summary`        | Lead                    | `createdAt` (counts) / `columnChangedAt` (conversions) |
+| `get_work_order_summary`  | Invoice                 | `workOrderCreatedAt`                                   |
+| `get_task_summary`        | Task                    | `date`                                                 |
+| `get_appointment_summary` | Appointment             | `date`                                                 |
+| `get_client_stats`        | Client                  | `createdAt` (new clients)                              |
+| `get_profit_analysis`     | Invoice                 | `deliveredAt`                                          |
+| `get_material_usage`      | Material                | `createdAt`                                            |
+| `get_service_performance` | Invoice → InvoiceItem   | `deliveredAt`                                          |
+| `get_clock_report`        | ClockInOut              | `clockIn`                                              |
 
-## Latent bugs fixed (pre-existing, incidental to refactor)
-
-1. **`editAppointment.ts` missing `columnId` on draft estimate creation (Phase 0.5):**
-   When a user edited an appointment to add or change a draft estimate, the server action
-   created the `Invoice` row without a `columnId`. Since every shop pipeline column view
-   filters by `columnId`, these estimates were invisible in the UI — users could not find
-   or access them from the pipeline. Fixed by delegating to `createDraftEstimate`, which
-   performs a proper `title: "Pending", type: "shop"` column lookup before creating the
-   invoice. Pre-existing orphan Invoice rows (from before this fix) will remain in the DB
-   with `columnId = null`; a one-time backfill migration could fix them but is out of scope.
-
-See CHANGELOG.md for full details.
+**Revenue = delivered invoices only.** `get_revenue_summary` and `get_profit_analysis` filter by `column: { title: "Delivered" }`. An invoice that has not reached "Delivered" is not counted as revenue.
 
 ---
 
-## Pre-existing issues flagged (separate team decisions needed)
+## High-risk areas for review
 
-These were noticed during the build and deliberately NOT changed. Each requires a team decision.
+### Modified platform files (not copilot-only)
 
-### 1. Automation trigger asymmetry — draft estimate creation
+| File                                                         | Change                                                                                                                                                                                                                                   | Risk                                                                                                                               |
+| ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `src/app/api/estimate/[companyId]/route.ts`                  | Added `customAlphabet("1234567890", 10)` ID generation before `invoice.create` — mirrors the estimate-create UI which uses numeric IDs. Previously this route fell back to cuid(), producing IDs inconsistent with UI-created estimates. | **LOW** — one-line behavioral change. All existing mobile/UI behavior unchanged; cuid format was already working but inconsistent. |
+| `src/components/copilot/CopilotMessageCard.tsx`              | Assistant messages now rendered through `react-markdown` (new dependency).                                                                                                                                                               | **LOW** — purely presentational. No data fetching.                                                                                 |
+| `src/actions/lead/createLeadFromForm.ts`                     | Refactored to call `createLead` directly instead of HTTP self-proxy.                                                                                                                                                                     | **LOW** — behavior equivalent; tested via UI.                                                                                      |
+| `src/actions/appointment/addAppointment.ts`                  | Inline draft-estimate logic replaced with `createDraftEstimate` call; fixes pre-existing bug where edited appointments created `columnId = null` estimates (invisible in pipeline).                                                      | **MEDIUM** — fixes a pre-existing bug; same behavior preserved.                                                                    |
+| `src/app/api/lead-generate/route.ts`                         | Refactored from 283 to 136 lines; behavioral equivalence verified via curl regression test.                                                                                                                                              | **HIGH** — called by every external website contact form webhook. Tested.                                                          |
+| `prisma/migrations/20260515000000_add_messenger_columns.sql` | **AUTHORED BY THIS BRANCH** — bridges schema/DB divergence from a prior merged PR. Team should confirm this is the intended migration.                                                                                                   | **MEDIUM** — additive SQL; confirm it matches what PR #830 intended.                                                               |
 
-`createLeadDraftEstimate` (pipeline card button) does **NOT** call `updateInvoiceAutomationTrigger`. `createDraftEstimate` (client panel, appointments) **DOES**.
+### New dependencies
 
-Automation rules on estimate creation will fire for client-panel flows but NOT pipeline card clicks. One path is wrong. Team should confirm canonical behavior and align the other.
+| Package             | Version   | Why                                                        |
+| ------------------- | --------- | ---------------------------------------------------------- |
+| `@anthropic-ai/sdk` | `^0.95.1` | Anthropic API client — all LLM calls                       |
+| `react-markdown`    | `^10.1.0` | Renders assistant messages as markdown (bold, code, links) |
 
-### 2. Non-transactional appointment + invoice creation in `addAppointment.ts`
+`nanoid` (`^5.0.6`) was already in `package.json` before this branch; the estimate route now uses it for numeric IDs.
 
-Appointment is committed to DB first, then `createDraftEstimate` runs as a separate operation. If the estimate creation fails (e.g., Pending column not found), the appointment record has a non-null `draftEstimate` pointing to an invoice that was never created. Fix requires wrapping in a transaction or adding a reconciliation read. Out of scope for this PR.
+### New `CopilotAction` enum values
 
-### 3. `ai_personalities.human_handoff_message` column drift
+Added to `src/lib/copilot/canUserDo.ts`:
 
-Field exists in `prisma/schema.prisma` but was absent from local dev DB during testing. Production DB may or may not have it. Should be verified before merging.
+```
+estimate.create       gated on estimatesInvoices
+estimate.add_materials gated on estimatesInvoices
+estimate.read         gated on estimatesInvoices
+invoice.read          gated on estimatesInvoices
+inventory.create      gated on inventoryAll
+inventory.update      gated on inventoryAll
+inventory.read        gated on inventoryAll
+vendor.create         gated on inventoryAll
+team.read             open (all authenticated roles)
+workorder.create      gated on estimatesInvoices
+workorder.assign      gated on estimatesInvoices
+vehicle.create        gated on salesPipeline
+client.create         gated on salesPipeline
+```
 
-### 4. `Task.completed` field doesn't exist
+(Plus pre-existing: `lead.*`, `appointment.*`, `task.*`, `estimate.send`, `invoice.send`, `report.revenue.read`, `report.payments.read`, `client.read`, `vehicle.read`)
 
-The `get_tasks_for_user` copilot tool uses `date < now` as a proxy for task completion. If the team wants accurate completion tracking via the copilot, a `completed: Boolean` field needs to be added to the `Task` model (schema change + migration).
+### New Bearer-safe API routes
 
-### 5. `Priority` enum missing `Urgent`
+Routes added or modified by this branch:
 
-The TOOL_REGISTRY.md spec called for tasks to have `Low | Medium | High | Urgent` priority. The Prisma schema only has `Low | Medium | High`. The copilot tool returns actual enum values. Team should decide whether to add `Urgent` to the schema.
+| Route                                             | Method   | Phase    | Calls                                                 |
+| ------------------------------------------------- | -------- | -------- | ----------------------------------------------------- |
+| `/api/lead/company/[companyId]/`                  | POST     | 3a       | `createLeadRecord`                                    |
+| `/api/lead/company/[companyId]/[id]/`             | PATCH    | 3b       | column update                                         |
+| `/api/pipeline/sales/leads/`                      | POST     | 3b       | create lead (pipeline path)                           |
+| `/api/pipeline/sales/leads/[id]/column/`          | PATCH    | 3b       | move lead column                                      |
+| `/api/appointment/company/[companyId]/`           | POST     | 3b       | `addAppointment`                                      |
+| `/api/appointment/company/[companyId]/[id]/`      | PATCH    | 3b       | update appointment                                    |
+| `/api/task/company/[companyId]/`                  | POST     | 3b       | create task (DB-direct)                               |
+| `/api/task/company/[companyId]/[id]/`             | PATCH    | 3b       | update task                                           |
+| `/api/client/company/[companyId]/`                | POST     | 3b.8     | `addCustomer` server action                           |
+| `/api/vehicle/client/[clientId]/`                 | POST     | 3b.8     | `addVehicle` server action                            |
+| `/api/invoice/company/[companyId]/`               | POST     | 3b       | create invoice (mobile)                               |
+| `/api/estimate/[companyId]/`                      | POST+GET | 3c.2     | Create/list estimates — **modified existing**         |
+| `/api/inventory/[companyId]/products/`            | POST     | 3c.6     | Create `InventoryProduct` + history in `$transaction` |
+| `/api/inventory/[companyId]/replenish/`           | POST     | 3c.6     | Add stock + history, weighted average cost            |
+| `/api/vendor/[companyId]/`                        | POST     | 3c.6 fix | Create `Vendor`                                       |
+| `/api/work-order/[companyId]/[invoiceId]/`        | PATCH    | 3d       | Flip `isWorkOrder = true`                             |
+| `/api/work-order/[companyId]/[invoiceId]/assign/` | POST     | 3d       | Create `Technician` record                            |
 
-### 6. `Task` API routes have no JWT Bearer auth (future security pass needed)
+**Auth pattern on all routes:** `getCompanyIdFromBearer(req)` → 401 if null. URL `companyId` vs JWT `companyId` → 403 if mismatch. JWT value wins; URL is only for routing.
 
-`src/app/api/task/route.ts` (POST) and `src/app/api/task/[id]/route.ts` (PATCH) read `companyId` directly from the request body without any token verification. Any caller that can reach these endpoints can pass an arbitrary `companyId` and write tasks for another company. This was pre-existing before this PR and is **not introduced by the copilot feature**.
+---
 
-Phase 3 write tools will call these routes from server-side copilot code only (never client-exposed), which limits the immediate blast radius. However, a team security pass should add JWT Bearer verification and cross-check the body `companyId` against the token claim — the same pattern used by `src/app/api/estimate/[companyId]/route.ts`. **Do not fix as part of this PR; flag for a dedicated security pass.**
+## Architecture overview
+
+```
+User message
+    ↓
+POST /api/copilot/chat  ← rate-limited, session-scoped
+    ↓
+Anthropic SDK (Sonnet 4.x, prompt cache on system prompt block)
+    ↓
+tool_use block in response?
+    ↓
+dispatcher.ts: canUserDo → Zod validation → execute() → writeAuditLog
+    ↓
+  read tools: direct Prisma query (companyId from ctx)
+  write tools: callInternalApi → Bearer JWT → API route → DB
+    ↓
+tool result returned to Anthropic → next streaming chunk
+    ↓
+SSE stream → client
+```
+
+**Why Bearer JWT for write tools instead of direct Prisma?** The copilot is not a special case — it uses the same API surface as the mobile app. This means mobile clients, copilot, and future integrations share one tested, audited write path. The copilot mints a JWT via `generateAccessToken(user)` (short-lived), calls the route, and the route verifies it identically to a mobile call.
+
+**Why direct Prisma for read tools?** Read tools have no side effects, are always scoped by `companyId` from the session (not from AI input), and benefit from being a simple Prisma call rather than an HTTP round-trip.
+
+**Multi-tenant isolation:** Every read tool query includes `where: { companyId: ctx.companyId }`. Every write route cross-checks the URL `companyId` against the JWT claim. AI-supplied IDs for clients/vehicles/estimates are validated against the DB before any write proceeds (e.g., `createEstimateTool` verifies `clientId` belongs to `ctx.companyId` before calling the route).
+
+---
+
+## Known limitations
+
+1. **Confirmation loop:** In long multi-action conversations, the model occasionally re-enters the gather phase instead of calling the tool after a "yes". Fresh sessions are reliable. This is a model reasoning limitation, partially mitigated by the write workflow rules in the system prompt.
+
+2. **Context bleed:** In a single session, a new request may carry stale IDs from a prior completed workflow (e.g., a `clientId` from an earlier estimate flows into an unrelated new request). Mitigated by the "new request = fresh context" rule in the prompt, but not eliminated.
+
+3. **Estimate→invoice conversion:** Not supported via copilot. `convertInvoice` uses `getServerSession` (cookie-based), not Bearer-safe.
+
+4. **Work orders require existing invoices:** The copilot can create work orders only from existing invoices, not from scratch. Estimates must be converted to invoices in the main app first.
+
+5. **`Task.completed` field does not exist:** The schema has no boolean `completed` field on `Task`. `get_tasks_for_user` uses `date < now` as a proxy for overdue, not completion.
+
+6. **Task route auth gap (pre-existing):** `/api/task/route.ts` POST and `/api/task/[id]/route.ts` PATCH accept `companyId` from the request body without JWT verification. Pre-existing issue; copilot always calls these routes from server-side code with a valid JWT. A dedicated security pass should add Bearer verification to these routes.
+
+7. **Service catalog auto-population:** Assigning a technician via the copilot may auto-create `Service` catalog entries from free-text `InvoiceItem.serviceDesc` values. Expected behavior — documented in Phase 3d above.
+
+---
+
+## Pre-existing issues flagged (team decisions needed)
+
+1. **Automation trigger asymmetry** — `createLeadDraftEstimate` (pipeline card) does NOT call `updateInvoiceAutomationTrigger`; `createDraftEstimate` (client panel, appointments) DOES. One path is wrong.
+
+2. **Non-transactional appointment + invoice** — if `createDraftEstimate` fails after the appointment is saved, the appointment row has a `draftEstimate` FK pointing to a non-existent invoice.
+
+3. **`ai_personalities.human_handoff_message` column drift** — exists in `schema.prisma` but was absent from dev DB during testing. Verify it exists in production before merging.
+
+4. **`Priority` enum missing `Urgent`** — Prisma schema has `Low | Medium | High`. The original TOOL_REGISTRY.md spec included `Urgent`. Tasks are being created without it.
 
 ---
 
 ## How to test locally
-
-### Prerequisites
-
-- Node 20+, `yarn`
-- PostgreSQL running locally (matching the dev database)
-- An Anthropic API key — ask Taiseer for the AWX shared dev key, or create a personal key at console.anthropic.com
 
 ### Setup
 
 ```bash
 git checkout taiseer/ai-copilot
 yarn install
-cp .env.example .env.local   # then add real values
-```
+cp .env.example .env.local
+# Add to .env.local:
+# ANTHROPIC_API_KEY=sk-ant-...
 
-Add to `.env.local`:
-
-```
-ANTHROPIC_API_KEY=sk-ant-...
-```
-
-Run the copilot migration (if not already applied):
-
-```bash
 yarn prisma migrate deploy
 ```
 
-Enable copilot access for your test user (Prisma Studio or psql):
+Enable copilot for your test user:
 
 ```sql
 UPDATE "User" SET "hasCopilot" = true WHERE email = 'your-test@email.com';
 ```
 
-### Starting the app
+**Full logout → login required** after flipping `hasCopilot` — the JWT refresh path reads the flag.
 
-```bash
-yarn dev
-```
+### Basic smoke test
 
-**Important:** Do a full logout → login after enabling `hasCopilot`. The JWT refresh path populates the flag; an existing session won't see the new value until the token rotates.
+1. **Bot icon** appears in navbar (between Bug Report and Notifications)
+2. **Panel opens** — shows empty state
+3. **Streaming** — ask "What can you help me with?" — tokens appear progressively
+4. **Read tool** — ask "What's my revenue this month?" — blue pill appears, then revenue answer
+5. **Write tool** — ask "Create an appointment for [client] on [date]" — copilot gathers, confirms, creates
+6. **Session persistence** — close panel → reopen → History icon → prior session visible
+7. **Memory** — new session → send a message → prior session context in system context (check server console for `[copilot] tokens`)
 
-### What to verify
+### Tool-specific tests
 
-1. **Bot icon appears** in top navbar (between Bug Report and Notifications icons)
-2. **Panel opens** on click — shows empty state "Ask me anything about AutoWorx"
-3. **Basic chat** — ask "What can you help me with?" — should get a streaming response
-4. **Streaming** — tokens appear character-by-character (not all at once)
-5. **Read tool** — ask "What's my revenue for this month?" — should see a blue "Looking up Revenue summary" pill while the tool runs, then a revenue answer
-6. **Client lookup** — ask "Do you have a client named Smith?" — should call `get_client_by_name` and return matches
-7. **Multi-tool chain** — ask "Show me vehicles for client [ID]" — should chain `get_client_by_name` → `get_vehicle_by_client`
-8. **Session persistence** — close panel, reopen, click History icon — prior session should appear
-9. **Session memory** — start a new session, send a message — prior session summary should influence the system context (check server console for `[copilot] tokens`)
-10. **Rate limit** — send 60 messages rapidly — should see soft warning at 60, hard 429 at 120
-11. **AuditLog** — Prisma Studio → AuditLog — entries should appear with valid `latencyMs` and `copilotSessionId`
-12. **Cache hits** — server console: `cached:N` should be > 0 after the first message in a session
-
-### Server console signals
-
-```
-[copilot] iter:1 in:X out:Y cached:Z cacheWrite:W   ← token usage per tool loop iteration
-[copilot] stream error: ...                           ← only appears on actual errors
-```
+- **Revenue accuracy:** Compare copilot answer to `/dashboard/reporting/revenue` page for the same period
+- **Client disambiguation:** Two clients with the same last name → copilot should ask which one
+- **Inventory materials:** Create an estimate → name a material that's in inventory → copilot should search first
+- **Work order:** Find an existing invoice → ask copilot to make it a work order → verify column change in pipeline
 
 ---
 
-## Phase 3e — Reporting tools
+## How to extend the copilot
 
-All five reporting tools are direct Prisma reads (no API routes). Each date field is critical — they differ by tool and must not be substituted with `createdAt`:
+See [CLAUDE.md](../../CLAUDE.md) — "Copilot Development Conventions" section covers:
 
-| Tool                    | Model                                                      | Date field    |
-| ----------------------- | ---------------------------------------------------------- | ------------- |
-| `get_revenue_summary`   | Invoice                                                    | `deliveredAt` |
-| `get_payments_summary`  | Payment                                                    | `date`        |
-| `get_inventory_summary` | InventoryProductHistory                                    | `date`        |
-| `get_team_summary`      | Technician                                                 | `dateClosed`  |
-| `get_lead_summary`      | Lead (counts: `createdAt`; conversions: `columnChangedAt`) |
+- Adding new tools (registerTool pattern)
+- Adding new Bearer-safe routes (auth template)
+- Adding new CopilotAction enum values
+- Key files to read first
 
-**Revenue gate:** `get_revenue_summary` adds `column: { title: "Delivered" }` to the Invoice query. An invoice that has not reached the "Delivered" column is not counted as revenue — this matches the reporting page's behavior exactly.
-
-**Outstanding balance:** `get_payments_summary` adds `db.invoice.aggregate({ where: { due: { gt: 0 } } }, _sum: { due })` — mirrors the payments page's `outStandingPayment` query.
-
-**Low-stock filter:** `get_inventory_summary` fetches all products then filters in JS (`quantity <= lowInventoryAlert`). The Prisma-level equivalent would require a raw query comparing two columns; JS filtering is safe at typical inventory sizes.
-
-**Lead deal size:** `get_lead_summary` follows the `getLeadInfo.ts` pattern: converted leads → `Lead.Client[]` → `Client.Invoice[]` where type=Invoice → avg grandTotal. The `Client[]` relation on Lead is a many array linked via `leadId` on the Client side.
-
-No DB schema changes.
-
----
-
-## Phase 3d — Work orders + per-service technician assignment
-
-Work orders are `Invoice` rows with `isWorkOrder = true`. The `InvoiceType` enum has no `WorkOrder` value — work orders are distinguished by the flag alone.
-
-**Routes** (`src/app/api/work-order/[companyId]/[invoiceId]/`):
-
-- `PATCH route.ts` — converts an existing invoice to a work order. Validates `type === "Invoice"` (400 if estimate), checks not already a work order (409), resolves "In Progress" column by title at runtime (never hardcoded), sets `isWorkOrder`, `workOrderCreatedAt`, and `columnId`.
-- `POST assign/route.ts` — assigns a team member to a specific `InvoiceItem` on a work order. **Key complexity:** `Technician.serviceId` is `NOT NULL` but copilot-created `InvoiceItem` rows have `serviceId = null`. The route resolves this in a `$transaction`: case-insensitive match on `InvoiceItem.serviceDesc` against the `Service` catalog, auto-creates a `Service` record if no match, backfills `InvoiceItem.serviceId`, then creates the `Technician` row. This keeps the platform's `Technician` invariant intact without requiring a pre-populated service catalog.
-
-**Copilot tools**:
-
-- `get_team_members` — direct Prisma read, no API route needed. Word-by-word name search on `User` where `companyId`. Returns `{ id, firstName, lastName, role }`. Omit `searchTerm` to list all (up to 20). Permission: `team.read` (open to all authenticated users).
-- `create_work_order` — calls the PATCH route. Handles 409 (already a work order) as a soft path offering to view/assign rather than an error.
-- `assign_technician` — calls the POST assign route. Defaults `date` to today, `priority` to "Medium", `amount` to the InvoiceItem's `labor.charge × labor.hours`. Fetches the user's name after success for a friendly confirmation.
-
-**New CopilotAction values**: `team.read` (open), `workorder.create` (estimatesInvoices), `workorder.assign` (estimatesInvoices).
-
-No DB schema changes. Service records auto-created from `InvoiceItem.serviceDesc` are visible in the Service catalog — this is intentional.
-
----
-
-## Phase 3c.6 — Inventory create + replenish
-
-Two new Bearer-safe API routes and two new copilot tools for adding and restocking inventory items.
-
-**New API routes** (`src/app/api/inventory/[companyId]/`):
-
-- `products/route.ts` (POST) — creates a new `InventoryProduct`. Body validation via Zod. Name uniqueness checked against `companyId` (returns 409 if duplicate). `lowInventoryAlert < quantity` enforced (returns 400 if violated). Writes `InventoryProduct` + `InventoryProductHistory` in a `$transaction`, mirroring the existing `createProduct()` server action. Returns `{ productId, name, type, quantity, price, unit }` with HTTP 201.
-- `replenish/route.ts` (POST) — adds stock to an existing product. Verifies `productId` belongs to the JWT's `companyId` (404 if not). Increments quantity (`newQuantity = current + added`); does NOT replace. Writes `InventoryProductHistory` entry (type `"Purchase"`) and updates `price`, `unit`, `lot`. Returns `{ productId, newQuantity, price }`.
-
-Both routes use the same Bearer JWT auth + URL companyId cross-check as the estimate route. All DB operations scoped to `companyId`.
-
-**New copilot tools** (`src/lib/copilot/tools/handlers/`):
-
-- `createInventoryProductTool.ts` — permission: `inventory.create`. Handles 409 with actionable error pointing to `get_inventory_item_by_name`. Returns flat `{ productId, name, type, quantity, costPrice, unit, message }`.
-- `replenishInventoryTool.ts` — permission: `inventory.update`. Defaults `date` to today if omitted. Handles 404 with actionable error. Returns `{ productId, newQuantity, costPrice, message }`.
-
-Both registered in `tools/index.ts`. System prompt adds a "Managing inventory" section with create-vs-replenish decision logic.
-
-No DB schema changes. No new migrations.
-
----
-
-## Phase 3c.5 — Inventory-aware materials
-
-When a user names a material for an estimate or add-materials flow, the copilot now searches the shop's inventory before asking for a sell price.
-
-**`getInventoryItemByName.ts`** — two changes:
-
-- Search upgraded from single `contains` to word-by-word AND query. Each keyword must appear independently (any order) in the product name. Pattern mirrors `getClientByName`. "3M vinyl" now finds "3M High Gloss Black Vinyl"; "ceramic kit" finds "Ceramic Coating Kit".
-- `price` renamed to `costPrice` in the return shape. This is an important semantic clarification: `InventoryProduct.price` is the shop's acquisition cost (confirmed by three sources: materials/route.ts, estimate/create/page.tsx, virtual-shop page). It is NOT the customer sell price. The `Material` model has separate `cost` and `sell` fields; `InventoryProduct.price` maps to `cost`.
-
-System prompt adds a full inventory-aware flow: search → present candidates with stock/cost/unit → confirm match → ask sell price (dollar or % markup) → soft stock warning if qty > stock. Free-text fallback when no match. Free-text pass-through when user provides price directly.
-
-No new tools, no new routes, no DB migrations.
-
----
-
-## Phase 3c.4 — Shop-supplies and tax toggles on create_estimate
-
-Completes the original `create_estimate` spec. Both shop supplies (serviceFee) and tax can be toggled off per estimate without changing company defaults.
-
-Two optional booleans added to the tool input: `applyShopSupplies` and `applyTax`. Semantics: omitted or `true` applies the company rate; `false` stores the effective rate as 0 for that estimate only. The stored `Invoice.tax` / `Invoice.serviceFee` are therefore 0 (not the company rate) when toggled off, exactly matching the UI's toggle behavior.
-
-The system prompt guides the copilot to present toggles at restate — not during gather — with dollar amounts computed from the company rates injected into the user-context line (`Company tax rate: X%. Company shop-supplies rate: Y%.`). Tax line is omitted entirely for labor-only estimates. Pre-stated preferences are honored without re-asking.
-
-Math layer unchanged. `taxRateToUse` and `serviceFeeRateToUse` variables replace the flat rate lookups in `execute()`.
-
-No DB migrations.
-
----
-
-## Phase 3c.3 — Materials on estimates + add-to-existing + line-item reads
-
-**`create_estimate`** extended with optional `materials[]` per service (name, quantity, sellPrice, optional costPrice/discount/productId). Tax math now live: `taxAdd = Σ(sell × qty) × (taxRate/100)`. `material.discount` is a dollar amount flowing into invoice-level discount (not subtracted from tax base). Shared `estimateMath.ts` helper extracted for `round2` and `MaterialInput`.
-
-**`add_materials_to_estimate`** — new tool. Direct DB write path (PATCH route doesn't support items). Transaction: new `InvoiceItem` + `Material` rows + `Invoice` totals update. Refuses if `type !== "Estimate"`. New `estimate.add_materials` action in `CopilotAction` + `PERMISSION_MAP`. Multi-tenant: `InvoiceItem` scoped via `invoiceId → Invoice.companyId`; `Material` has explicit `companyId: ctx.companyId`.
-
-**`get_estimate_by_number`** — now returns `invoiceItems` with nested `labor` and `materials`. Copilot can answer "what's on this estimate?" directly.
-
-No DB migrations.
-
----
-
-## Phase 3c.2 — create_estimate (services + labor)
-
-New `create_estimate` write tool. Creates a draft estimate (type="Estimate") for a client with one or more services and labor line items.
-
-**Total computation lives in `execute()`, not in the route.** Pre-build recon confirmed `POST /api/estimate/[companyId]/` stores caller-supplied totals verbatim — it computes only `profit`. The tool's `execute()` therefore owns all money math:
-
-- `subtotal = Σ (laborHours × laborRate)` across all services
-- `taxAdd = 0` — tax applies to materials only; no materials in this phase
-- `serviceFeeRate` and `taxRate` fetched from `Company` using `ctx.companyId` — never from AI input
-- `suppliesFeeAdd = subtotal × (serviceFeeRate / 100)`
-- `grandTotal = subtotal + suppliesFeeAdd`
-- `Invoice.tax` and `Invoice.serviceFee` are stored as **percentage rates** (not dollar amounts), matching the app's own BillSummary behavior
-
-**serviceDesc free-text**: The route creates Labor records inline from the item payload. No pre-existing Service row is required — the AI passes the user's plain-language service name as `serviceDesc`, which the route stores on `InvoiceItem.serviceDesc`.
-
-**columnId omitted**: The route auto-resolves the "Pending" column when `columnId` is absent.
-
-**Permission**: `estimate.create` (already in `CopilotAction` enum and `PERMISSION_MAP`, gated on `estimatesInvoices`).
-
-**System prompt additions**: duplicate soft guard (check `get_estimates_for_client` before creating), estimates-only guard (copilot cannot create invoices — redirects to estimate workflow), and updated write-discipline rules.
-
-Services + labor only. Materials → 3c.3. Supply/tax toggles → 3c.4. No DB migrations.
-
----
-
-## Phase 3c.1 — Estimate read tools completed
-
-Two tools read estimates and invoices:
-
-- **`get_estimates_for_client`** — lists up to 20 most recent estimates/invoices for a given client (by `clientId`). Returns `id`, `type`, `status`, `grandTotal`, `vehicleId`, `vehicleInfo`, `publicLink`, `editLink`, and `createdAt`. Requires `get_client_by_name` first to resolve the `clientId`.
-- **`get_estimate_by_number`** — fetches one specific estimate by its `id`. Returns full line-item detail.
-
-Both are gated on the `estimate.read` permission (`estimatesInvoices` AWX field). `companyId` is always from session — the AI cannot read estimates for another company.
-
-Every estimate and invoice result includes a `publicLink` (client-facing digital link: `${APP_URL}/public-invoice/${id}`) and an `editLink` (internal route: `/dashboard/estimate/edit/${id}`). The system prompt instructs the copilot to include `publicLink` whenever presenting estimates to users. No DB changes in this phase.
-
----
-
-## Phase 3b.4 — Tool execution discipline
-
-During smoke testing, the copilot was observed saying "task created" and "tag added to lead" without actually calling the corresponding write tools. Audit log + DB inspection confirmed the writes never happened — pure overclaim.
-
-**Test 4e**: zero `task.create` audit entries, zero Task rows. The model composed a success reply without a tool call.
-
-**Test 4j**: `create_tag` was called and wrote to DB; `add_lead_tag` was never called. No LeadTags row. The model treated tag creation as completing a tag-application request.
-
-Fix: three system prompt rules enforcing that (1) success language requires actual tool invocation in the same turn, (2) multi-step chains must complete all steps before claiming done, and (3) final messages must reflect actual tool returns. Explicit step-by-step chains provided for tag application and other multi-tool flows.
-
-Limitation noted: prompt-based fixes for AI overclaiming are mitigation, not elimination. Flagged for Phase 5+ structural enforcement review if it persists in production.
-
----
-
-## Phase 3b.3 — Lead update removed; tag management added; client search fixed
-
-### Product decision
-
-Owner (Taiseer) decided the copilot does NOT update leads. Lead data integrity (pipeline column, creation date, source attribution) is preserved by keeping edits a deliberate UI action. When the user asks to edit lead fields, the copilot responds with a fixed redirect message and does nothing else.
-
-Tag management on leads IS allowed because tagging is operational organization, not content editing.
-
-### What was removed
-
-- `update_lead` tool — file deleted, barrel import removed. The `/api/lead/company/[companyId]/[id]` PUT route remains (mobile/future use) but is no longer called by the copilot.
-
-### What was added
-
-| Tool              | Permission    | Notes                                                                    |
-| ----------------- | ------------- | ------------------------------------------------------------------------ |
-| `get_lead_tags`   | `lead.read`   | Lists all company tags; no mutation                                      |
-| `add_lead_tag`    | `lead.update` | Verifies lead + tag ownership before join; idempotent                    |
-| `remove_lead_tag` | `lead.update` | Verifies ownership; idempotent                                           |
-| `create_tag`      | `lead.update` | Case-insensitive duplicate guard; defaults to SALES type; default colors |
-
-All write tools follow the existing restate-and-confirm pattern.
-
-### What was fixed
-
-- **`get_client_by_name` full-name search** — split-and-AND replaces single-column `contains`. "Jane Phase3bTest" now matches firstName="Jane" AND lastName="Phase3bTest".
-- **`get_client_by_name` leads inline** — each returned client now includes its originating Lead (id, vehicleInfo, services). AI can obtain a leadId in one call without a separate lookup tool.
-
-### What to review
-
-1. **New tool files** — all in `src/lib/copilot/tools/handlers/`. Each follows the established pattern: Zod schema, `execute(input, ctx)`, `registerTool(...)`. No new routes or server actions.
-2. **Multi-tenant isolation** — `addLeadTagTool` and `removeLeadTagTool` verify both `leadId` and `tagId` against `companyId` before any write. The `leadTags` join-table create/delete is unscoped by design (IDs already verified upstream).
-3. **`createTagTool` color defaults** — Tag model requires `textColor` and `bgColor` (both non-nullable strings). Defaults: `#374151` / `#F3F4F6`. User can override via input.
-4. **System prompt** — decline message for lead edits, tag fuzzy-match workflow, multi-lead disambiguation by vehicle, updated tool lists.
-
----
-
-## Phase 3 — Write tools via API wrappers
-
-### What changed
-
-The team decided (Tanvir, AbuBokorprog) that all copilot write operations go through API routes for stable contracts and mobile reuse. Phase 3a builds the foundation: a unified Bearer JWT auth helper and an internal API client so the copilot can mint JWTs and call its own routes server-to-server.
-
-### What to review
-
-1. **`src/lib/mobileAuth.ts`** — ported from secure-estimate-routes branch. Same content. Once both branches merge to development, this becomes one file across both.
-
-2. **`src/lib/copilot/internalApiClient.ts`** — the copilot's HTTP client to its own API. Verify:
-   - JWT minting loads a real DB `User` record (not synthesized) — payload matches what routes expect
-   - Token expires in 1 hour via `generateAccessToken`
-   - Internal call uses absolute URL (`NEXTAUTH_URL` env var, falls back to `localhost:3000`)
-   - Error handling returns structured `{ ok, error, status }` result — never throws
-
-3. **`src/app/api/lead/company/[companyId]/route.ts`** — the template route for Phase 3. All subsequent Phase 3 routes mirror this shape. Verify:
-   - Bearer JWT auth via `getCompanyIdFromBearer` (returns null → 401)
-   - URL `companyId` cross-checked against JWT claim → 403 on mismatch (multi-tenant isolation)
-   - Zod schema validates body → 400 with `field` name on failure
-   - Business logic calls `createLeadRecord` (pure function, no session needed)
-   - Audit log fires on both success AND failure paths
-   - Response envelope: `{ success, message, data?, field? }`
-
-### Middleware interaction
-
-`proxy.ts` middleware runs before all `/api/*` routes (except `PUBLIC_API_ROUTES`). It verifies the Bearer JWT — invalid tokens are rejected at the middleware level (HTTP 200 with embedded `{status: 401}` in body — pre-existing convention). Valid tokens pass through to the route, where `getCompanyIdFromBearer` extracts the companyId claim and the route performs the URL vs JWT companyId cross-check.
-
----
-
-## Phase 3b — Write tools: leads, appointments, tasks
-
-### What changed
-
-Six reversible-write copilot tools backed by authenticated API routes:
-
-| Tool                 | Route                                             |
-| -------------------- | ------------------------------------------------- |
-| `create_lead`        | POST `/api/lead/company/{companyId}`              |
-| `update_lead`        | PUT `/api/lead/company/{companyId}/{leadId}`      |
-| `create_appointment` | POST `/api/appointment/company/{companyId}`       |
-| `update_appointment` | PATCH `/api/appointment/company/{companyId}/{id}` |
-| `create_task`        | POST `/api/task/company/{companyId}`              |
-| `update_task`        | PUT `/api/task/company/{companyId}/{id}`          |
-
-All routes follow the Phase 3a template: Bearer JWT → companyId cross-check → Zod validate → server action (or DB-direct for task create) → audit log on all paths.
-
-### What to review
-
-1. **Multi-tenant isolation** — every `db.*` query in the new server actions (`updateAppointment.ts`, `updateTask.ts`, `updateLead.ts`) scopes by `companyId` in BOTH the ownership `findFirst` AND the `update` WHERE clause. Cross-company writes are rejected at two layers.
-
-2. **`updateAppointment.ts` `as any` cast** — required because spreading `rest` (which includes nullable FK fields like `clientId: number | null | undefined`) trips Prisma's union type checker. Zod validates the shape upstream; the cast is safe.
-
-3. **Task create is DB-direct** — `createTask` server action is coupled to Google Calendar + notifications; rather than adding force params, Phase 3b uses a DB-direct insert in the task POST route (same pattern as estimate POST).
-
-4. **`assignedUsers` defaults** — `createAppointmentTool` and `createTaskTool` default `assignedUsers` to `[ctx.userId]` when empty, matching the web UI behavior.
-
----
-
-## Phase 3b.2 — UX hardening: restate-and-confirm
-
-### What changed
-
-`src/lib/copilot/systemPrompt.ts` — the 4-line "Write tool guidance" section was replaced with a 9-step enforced "Workflow for write operations" that applies to all 6 reversible-write tools.
-
-### What to review
-
-1. **No code changes** — this is a prompt-only change. No routes, actions, or tool handlers were modified.
-
-2. **The new workflow gate** — before any write tool fires, the model must:
-   - Restate intent as a structured summary with labelled fields
-   - End with `Confirm? (yes / no / change [field])`
-   - Wait for explicit confirmation before calling the tool
-
-3. **Smoke test re-run needed** — test 4a (create lead, verify confirmation fires) should be re-run against this build. The prior run revealed the copilot skipping confirmation; this build enforces it.
-
----
-
-## Architecture decision needed before Phase 3
-
-**RESOLVED — team chose Path 1 (thin API wrappers) with JWT Bearer auth. See PHASE_3_PLAN.md for full decision record.**
-
-### Background
-
-Phase 2 tools query the DB directly (read-only, safe). Phase 3 write tools (create_lead, create_appointment, create_task, create_draft_estimate) need to call existing server actions. Two problems:
-
-1. **Server actions are "use server" and use `getServerSession()`** — they're designed for browser-to-server calls, not internal server-to-server calls. The copilot route (already server-side) can call them but gets a null session, because `getServerSession()` needs the HTTP request context.
-
-2. **Server action signatures weren't designed for copilot use** — they often take `FormData` or have implicit session assumptions that don't work when called from a route handler.
-
-### The three paths forward
-
-**Option A — Pass `forceCompanyId` / `forceUserId` through action signatures**
-
-- Already started in `addAppointment.ts` (PR includes `forceCompanyId`, `forceUserId` params)
-- Requires updating each action signature to accept override params when called from copilot context
-- Medium refactor, contained to each action file
-
-**Option B — Extract pure DB functions (the `createLeadRecord` pattern)**
-
-- What we did in Phase 0a: extract `createLeadRecord.ts` as a pure async function, then `createLead.ts` wraps it with session auth
-- Copilot calls the pure function directly, bypassing the server action
-- Cleanest separation, most work, but pays dividends long-term
-
-**Option C — Thin internal API routes for each write operation**
-
-- Create `POST /api/copilot/internal/create-lead` etc. that the chat route calls directly
-- Avoids touching server actions at all
-- Most explicit about the copilot's write surface
-
-The team's choice here determines how Phase 3 is structured. **Decision needed before Phase 3 starts.**
-
----
-
-## Open questions deferred to team
-
-1. **Phase 3 write architecture** (see "Architecture decision" section above — blocks Phase 3)
-
-2. **Automation trigger asymmetry** — `createLeadDraftEstimate` does NOT trigger `updateInvoiceAutomationTrigger`; `createDraftEstimate` does. Which is canonical? (See pre-existing issues section)
-
-3. **Non-transactional appointment + invoice** — if `createDraftEstimate` fails after the appointment is created, you get a dangling reference. Accept this or wrap in a transaction?
-
-4. **`Task.completed` field** — the Task model has no boolean `completed` field; the copilot `get_tasks_for_user` tool uses `date < now` as a proxy. Should we add the field to the schema (and a migration), or live with the heuristic?
-
-5. **Priority enum missing `Urgent`** — TOOL_REGISTRY.md spec called for `Urgent` in task priority. The Prisma enum only has `Low | Medium | High`. Add it, or change the tool spec?
-
-6. **`hasCopilot` seat management** — currently set manually via DB. Phase 5 will add billing/seat licensing. In the interim, who owns flipping the flag and what's the process?
-
-7. **`ai_personalities.human_handoff_message` column** — exists in `schema.prisma` but reportedly absent from some dev DBs. Confirm it exists in production before merging.
-
-8. **Task API route auth gap** — `/api/task/route.ts` POST and `/api/task/[id]/route.ts` PATCH have no JWT Bearer auth; `companyId` accepted from body unverified (see Pre-existing issues §6). Needs a dedicated security pass — not in scope for this PR.
-
----
-
-### Phase 3b.7 — Appointment confirmation messages
-
-The copilot can now send appointment confirmation messages. After gathering appointment details it asks the user whether to send a confirmation and, if yes, which template (via the new `get_confirmation_templates` read tool). The confirmation fields were already supported by `addAppointment` and the appointment route — only the copilot tool, a new read tool, and the system prompt changed. Reminders were already working and are untouched.
-
----
-
-### Phase 3b.6 — Lead creation refinements
-
-create_lead now requires at least one contact method (phone or email), enforced by a Zod refinement in the API route — applies to mobile callers too, not just the copilot. The system prompt also now instructs the copilot to gather all required fields in one message instead of one at a time.
-
----
-
-### Phase 3b.5 — Duplicate lead fix
-
-The copilot was observed creating duplicate leads (up to 3) when scheduling an appointment for a freshly-created client. Root cause was AI reasoning — it called create_lead to "obtain" client info instead of get_client_by_name. The appointment code itself was clean.
-
-Fixed in three layers: tool description rewrites (create_appointment + create_lead), a hardened system prompt rule with a worked anti-pattern example, and a code-level idempotency guard on the lead creation route (rejects near-identical leads within 2 minutes, HTTP 409).
-
-The idempotency guard is a deliberate safety net — prompt fixes reduce but don't guarantee correct AI behavior, so the route enforces it structurally.
-
----
-
-## Cost optimization (active in current build)
-
-- **Prompt caching on system prompt block** — `cache_control: { type: "ephemeral" }` applied to the system prompt content block. Anthropic charges 90% less for cached input tokens. The cache window is 5 minutes; the system prompt is stable across turns, so multi-turn conversations benefit fully. First message in a session writes the cache; all subsequent messages read it.
-- **max_tokens capped at 1024** for chat responses — limits worst-case output cost. Normal conversational replies are well under this cap. Users asking for very long outputs get a clean truncation.
-- **Haiku 4.5 for session summarization** — `claude-haiku-4-5-20251001` is used in `generateSessionSummary.ts` (200 max tokens). Approximately 1/3 the cost of Sonnet for these short, structured tasks.
-- **Cache token visibility** — `cachedTokens` is persisted on every `CopilotMessage` assistant row. Query Prisma Studio → CopilotMessage → `cachedTokens` to confirm cache is hitting. Dev console also logs: `[copilot] tokens — in:X out:Y cached:Z cacheWrite:W`.
-
-Future optimizations not yet active:
-
-- Haiku 4.5 routing for simple read-only tool calls (Phase 3 candidate — currently all tool-use turns use Sonnet)
-- Conversation context trimming for sessions > 20 messages (Phase 6)
-- Per-seat usage caps and billing integration (Phase 5)
-
----
-
-### Phase 3b.8 — Client + vehicle creation
-
-Two new API routes (client create, vehicle create) wrapping existing server actions (`addCustomer`, `addVehicle`) per the Path 1 pattern established in Phase 3. Two new copilot tools (`create_client`, `create_vehicle_for_client`).
-
-**Fleet is deliberately excluded:** a fleet client needs a companion `Fleet` record created atomically (`fleetName` + `contactName`). The existing `PATCH /api/client/client-details/[id]` can toggle `isFleet` WITHOUT creating that record — a data-integrity trap. `create_client` has no `isFleet` field at all; fleet requests are redirected to the main app's Fleet page with an explanatory message.
-
-**Multi-tenant safety on the vehicle route:** keyed by `clientId` in the URL (not `companyId`). The handler first verifies the client belongs to the JWT's company (`db.client.findFirst({ where: { id, companyId } })`). A client from another company returns 404 — same as if the record didn't exist.
-
-**Idempotency:** `addVehicle` already deduplicates on (clientId + year + make + model + companyId) and returns the existing record rather than an error. This means the copilot can safely retry without creating duplicates.
-
-**Permissions:** `client.create` and `vehicle.create` both gate on `salesPipeline`, the same permission as `lead.create`. All users who can create leads can create clients and vehicles.
-
-No DB migrations. No changes to `addCustomer` or `addVehicle`.
-
----
-
-### Phase 3b.9 — Client phone country-code normalization
-
-Copilot-created clients were storing bare 10-digit phone numbers while UI-created clients store `+1XXXXXXXXXX`. The `create_client` route now prepends `+1` for US numbers (only when there's no existing `"+"` prefix and the country is US or unspecified), so copilot- and UI-created clients are consistent. The logic lives in `ensureCountryCode.ts` (sibling to the route) to keep the route file within the line-count limit. Historical rows are not backfilled.
-
----
-
-### Phase 3b.10 — Client disambiguation by phone/vehicle
-
-Previously, `get_client_by_name` returned multiple matches but gave the model no guidance on how to handle ambiguity, and returned the full mobile number for each match. In shops with multiple clients sharing a name, the copilot would silently pick the first result and proceed — risking writes (appointments, tags, tasks) against the wrong client.
-
-**Tool change:** `get_client_by_name` now returns a top-level `matchCount` and, for each match, includes `phoneLast4` (last 4 digits of mobile only — full numbers are never surfaced), `vehicles` (array of readable strings from the client's actual Vehicle records, not just the lead's vehicleInfo), and a composite `name` field. Zero-match now returns `{ matchCount: 0, clients: [] }` (success) rather than `ok: false`, so the model can offer to create a new client rather than treating it as an error.
-
-**Prompt change:** A new "Identifying the right client when names collide" section enforces the disambiguation flow: 1 match → proceed; >1 → list candidates by phone last-4 + vehicle and ask which; 0 → offer to create. The model must never perform write operations until a specific client is confirmed.
-
-No DB migrations. Additive change to tool return shape (no existing callers parse it in TypeScript).
+For the full tool inventory, see [TOOL_REGISTRY.md](TOOL_REGISTRY.md).
+For the full file inventory, see [FILE_MAP.md](FILE_MAP.md).

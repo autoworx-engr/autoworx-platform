@@ -17,7 +17,8 @@ For coordinating the merge into development and production deployment.
 - [ ] Run migrations: `yarn prisma migrate deploy`
 - [ ] Set `ANTHROPIC_API_KEY` in target environment (Railway → Variables)
 - [ ] Verify `ai_personalities.human_handoff_message` column exists in target DB
-- [ ] Architecture decision confirmed for Phase 3 write tools (see REVIEWER_GUIDE.md)
+- [x] Architecture decision confirmed for Phase 3 write tools — **Decided: Bearer-safe API routes, same pattern as mobile API. Implemented across all 17 routes.**
+- [ ] Confirm `prisma/migrations/20260515000000_add_messenger_columns.sql` is the intended fix for schema/DB divergence from PR #830
 - [ ] Flip `User.hasCopilot = true` for designated pilot users
 
 ---
@@ -103,11 +104,14 @@ No DB migrations. New server actions, API routes, and copilot tool handlers only
 
 ## Packages added
 
-| Package             | Version   | Added in | Purpose              |
-| ------------------- | --------- | -------- | -------------------- |
-| `@anthropic-ai/sdk` | `^0.95.1` | Phase 0b | Anthropic API client |
+| Package             | Version   | Added in      | Purpose                                        |
+| ------------------- | --------- | ------------- | ---------------------------------------------- |
+| `@anthropic-ai/sdk` | `^0.95.1` | Phase 0b      | Anthropic API client — all LLM calls           |
+| `react-markdown`    | `^10.1.0` | Hyperlink fix | Renders copilot assistant messages as markdown |
 
-Run `yarn install` on first deploy to pick up the new package.
+`nanoid` (`^5.0.6`) was already in `package.json`; the estimate route now uses it for numeric Invoice IDs.
+
+Run `yarn install` on first deploy to pick up new packages.
 
 ---
 
@@ -146,10 +150,37 @@ The key is already stubbed in `.env.example`. Railway environment must have it s
 
 ---
 
-## Deferred work
+## Bearer-safe API routes added by this branch
 
-- Phase 3b write tools: shipped (create/update lead, appointment, task — 6 copilot tools total)
-- Phase 3 remaining: create_draft_estimate copilot tool
-- Phase 5: Billing/seat licensing
-- Phase 6: Hardening, audit log viewer UI, cost dashboard
+| Route                                             | Method   | Purpose                                       |
+| ------------------------------------------------- | -------- | --------------------------------------------- |
+| `/api/lead/company/[companyId]/`                  | POST     | Create lead                                   |
+| `/api/lead/company/[companyId]/[id]/`             | PATCH    | Update lead column                            |
+| `/api/pipeline/sales/leads/`                      | POST     | Create lead (pipeline path)                   |
+| `/api/pipeline/sales/leads/[id]/column/`          | PATCH    | Move lead column                              |
+| `/api/appointment/company/[companyId]/`           | POST     | Create appointment                            |
+| `/api/appointment/company/[companyId]/[id]/`      | PATCH    | Update appointment                            |
+| `/api/task/company/[companyId]/`                  | POST     | Create task                                   |
+| `/api/task/company/[companyId]/[id]/`             | PATCH    | Update task                                   |
+| `/api/client/company/[companyId]/`                | POST     | Create client                                 |
+| `/api/vehicle/client/[clientId]/`                 | POST     | Create vehicle                                |
+| `/api/invoice/company/[companyId]/`               | POST     | Create invoice (mobile)                       |
+| `/api/estimate/[companyId]/`                      | POST+GET | Create/list estimates — **modified existing** |
+| `/api/inventory/[companyId]/products/`            | POST     | Create InventoryProduct                       |
+| `/api/inventory/[companyId]/replenish/`           | POST     | Replenish stock                               |
+| `/api/vendor/[companyId]/`                        | POST     | Create vendor                                 |
+| `/api/work-order/[companyId]/[invoiceId]/`        | PATCH    | Convert invoice to work order                 |
+| `/api/work-order/[companyId]/[invoiceId]/assign/` | POST     | Assign technician to service                  |
+
+---
+
+## Deferred / out of scope
+
+- Estimate→invoice conversion via copilot — `convertInvoice` uses `getServerSession`, not Bearer-safe
+- Full per-service Technician assignment with pre-populated Service catalog — Phase 3d uses auto-create from `InvoiceItem.serviceDesc`
+- Gift card reporting — data queryable but no dedicated copilot tool built
+- Coupon analytics — data queryable but no dedicated copilot tool built
+- Task completion status — `Task` model has no `completed` boolean; `get_task_summary` uses `date < today` as overdue proxy
+- Phase 5: Billing/seat licensing (`User.hasCopilot` must be flipped manually for now)
+- Phase 6: Audit log viewer UI, cost tracking dashboard, context trimming for long sessions
 - Mobile integration
