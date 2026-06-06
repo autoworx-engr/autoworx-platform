@@ -125,6 +125,12 @@ export const getLeads = async ({
                 emailIsRead: true,
               },
             },
+            Invoice: {
+              where: { type: "Estimate" },
+              select: { id: true },
+              orderBy: { createdAt: "asc" },
+              take: 1,
+            },
           },
         },
       },
@@ -175,6 +181,12 @@ export const getLeads = async ({
                   emailIsRead: true,
                 },
               },
+              Invoice: {
+                where: { type: "Estimate" },
+                select: { id: true },
+                orderBy: { createdAt: "asc" },
+                take: 1,
+              },
             },
           }))!;
         }
@@ -215,6 +227,7 @@ export const getLeads = async ({
           client: clientData,
           column,
           totalMessage: isShowConversationIndicator ? 1 : 0,
+          invoiceId: client?.Invoice?.[0]?.id ?? null,
         };
       }),
     );
@@ -336,6 +349,12 @@ export const getLeadsWithCount = async ({
                   emailIsRead: true,
                 },
               },
+              Invoice: {
+                where: { type: "Estimate" },
+                select: { id: true },
+                orderBy: { createdAt: "asc" },
+                take: 1,
+              },
             },
           },
         },
@@ -386,6 +405,12 @@ export const getLeadsWithCount = async ({
                   emailIsRead: true,
                 },
               },
+              Invoice: {
+                where: { type: "Estimate" },
+                select: { id: true },
+                orderBy: { createdAt: "desc" },
+                take: 1,
+              },
             },
           }))!;
         }
@@ -425,6 +450,7 @@ export const getLeadsWithCount = async ({
           client: clientData,
           column,
           totalMessage: isShowConversationIndicator ? 1 : 0,
+          invoiceId: client?.Invoice?.[0]?.id ?? null,
         };
       }),
     );
@@ -551,6 +577,12 @@ export const getLeadsWithCountOptimized = async ({
                   emailIsRead: true,
                 },
               },
+              Invoice: {
+                where: { type: "Estimate" },
+                select: { id: true },
+                orderBy: { createdAt: "asc" },
+                take: 1,
+              },
             },
           },
         },
@@ -614,6 +646,7 @@ export const getLeadsWithCountOptimized = async ({
         client: clientData,
         column,
         totalMessage: isShowConversationIndicator ? 1 : 0,
+        invoiceId: client?.Invoice?.[0]?.id ?? null,
       } as LeadWithSalesUser;
     });
 
