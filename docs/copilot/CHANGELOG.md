@@ -5,6 +5,24 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Fix — add_materials attaches to existing service, not new line item
+
+**Date:** 2026-06-06
+
+add_materials_to_estimate previously created a new materials-only InvoiceItem (serviceDesc: "Materials"). Now it attaches materials to an existing service's InvoiceItem.
+
+- New required field: `serviceItemId` — the InvoiceItem id of the service to attach materials to.
+- Tool validates that `serviceItemId` belongs to the estimate before writing.
+- `get_estimate_by_number` now returns each item's `id` field so the model can reference the correct service.
+- Material schema gains `vendorId` (optional).
+- System prompt updated: copilot now calls get_estimate_by_number to see services, asks which service the material belongs to when multiple exist, and passes serviceItemId.
+
+Estimate→invoice conversion: inventory decrement **works automatically** for copilot-created estimates. convert.ts merges materials by productId, decrements InventoryProduct.quantity, creates a "Sale" history entry, and fires a low-inventory notification. The only gate is a hard block if requested quantity exceeds stock — the copilot's soft stock warning on create/replenish aligns with this behavior.
+
+No DB schema changes.
+
+---
+
 ## Phase 3c.6 fixes — vendor tools + weighted average cost
 
 **Date:** 2026-06-02

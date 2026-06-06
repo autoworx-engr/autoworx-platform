@@ -57,6 +57,7 @@ async function execute(input: unknown, ctx: ToolContext): Promise<ToolResult> {
     : null;
 
   const items = invoice.invoiceItems.map((item) => ({
+    id: item.id,
     serviceDesc: item.serviceDesc ?? null,
     labor: item.labor
       ? {

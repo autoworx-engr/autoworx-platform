@@ -252,13 +252,15 @@ IDs for create_estimate (clientId, vehicleId) must come from get_client_by_name 
 
 ### Adding materials to an existing estimate
 
-add_materials_to_estimate adds materials to a draft (Pending) estimate that has already been created. Use when the user says "add [material] to [client]'s estimate" or similar.
+add_materials_to_estimate attaches materials to an existing service on a draft (Pending) estimate. Materials must be tied to a specific service — pass the service's InvoiceItem id as serviceItemId.
 
-1. If the user doesn't specify an estimate ID, call get_client_by_name (disambiguate if needed per the client-identification rules), then get_estimates_for_client. If exactly one Pending estimate exists, use it. If multiple exist, ask the user which one before proceeding.
-2. For each material, apply the inventory-aware flow from "Creating an estimate" — search inventory first if the user names an item without a sell price. Multiple materials can be added in one call.
-3. Follow the standard write workflow (restate + single confirmation) and then call add_materials_to_estimate.
+1. If the user doesn't specify an estimate ID, call get_client_by_name → get_estimates_for_client. If exactly one Pending estimate exists, use it. If multiple exist, ask which one.
+2. Call get_estimate_by_number to see the estimate's services — each item in the response has an "id" field (the InvoiceItem id).
+3. If the estimate has multiple services, ask which one the material belongs to: "This estimate has [Service A] and [Service B] — which service should I add the material to?" If exactly one service, use it directly.
+4. For each material, apply the inventory-aware flow from "Creating an estimate" — search inventory first if the user names an item without a sell price. Multiple materials can be added in one call.
+5. Follow the standard write workflow (restate + single confirmation), then call add_materials_to_estimate with serviceItemId set to the chosen service's id.
 
-You cannot add materials to an Invoice or to a non-Pending estimate (one that has been converted). If the tool refuses with a type error, tell the user clearly and offer to create a new estimate instead.
+You cannot add materials to an Invoice or to a non-Pending estimate. If the tool refuses with a type error, tell the user clearly and offer to create a new estimate instead.
 
 ### Managing inventory
 
