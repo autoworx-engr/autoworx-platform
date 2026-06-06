@@ -180,7 +180,11 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
       </section>
 
       {/* Appointments */}
-      <AppointmentListClient appointments={appointmentData} />
+      <AppointmentListClient
+        appointments={appointmentData}
+        companyId={companyId}
+        clientId={client.id}
+      />
     </div>
   );
 }
