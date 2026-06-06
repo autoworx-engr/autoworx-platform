@@ -5,6 +5,23 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Phase 3g — Cross-domain reporting tools
+
+**Date:** 2026-06-06
+
+Four analytical tools with cross-model joins. Full reporting suite now covers 13 tools across all major business domains.
+
+- **get_profit_analysis**: revenue, cost, profit, margin from delivered invoices. GroupBy `client`, `service`, or `material` for ranked breakdowns. Per-service and per-material profit sorted by margin. Date: `Invoice.deliveredAt`.
+- **get_material_usage**: total material cost/sell/margin. Filter by vendorId or productId. GroupBy `material` (per-name cost/sell/margin/avg unit price) or `vendor` (spend by supplier). Date: `Material.createdAt`.
+- **get_service_performance**: service popularity ranking, revenue per service, avg labor rate, avg hours. Based on `InvoiceItem` from delivered invoices. InvoiceItem scoped via `invoice.companyId`. Date: `Invoice.deliveredAt`.
+- **get_clock_report**: per-employee gross hours minus `ClockBreak` deduction = net hours. Distinct days worked. Entries count. Scoped directly via `ClockInOut.companyId`. Date: `ClockInOut.clockIn`.
+
+System prompt: reporting section expanded with all 13 tools, cross-domain shortcuts, and domain-specific tool guidance.
+
+No DB schema changes.
+
+---
+
 ## Phase 3f — Expanded reporting
 
 **Date:** 2026-06-06

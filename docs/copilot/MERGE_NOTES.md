@@ -26,6 +26,8 @@ For coordinating the merge into development and production deployment.
 
 ### Fix — create_client return shape: No DB migrations. **createClientTool return shape changed** — no longer passes through the raw API body. Now returns flat `{ clientId, firstName, lastName, wasCreated, message }` at `data.*`, consistent with every other write tool. The create_client INPUT contract is unchanged.
 
+### Phase 3g: No DB migrations. New tools: `getProfitAnalysis.ts` (groupBy client/service/material), `getMaterialUsage.ts` (groupBy material/vendor), `getServicePerformance.ts` (InvoiceItem → delivered invoice join), `getClockReport.ts` (ClockInOut.companyId direct scope, ClockBreak deduction). All registered in `tools/index.ts`.
+
 ### Phase 3f: No DB migrations. Extended: `getRevenueSummary.ts` (profit, client/vehicle filter), `getPaymentsSummary.ts` (card filter, method/card-type breakdown), `getTeamSummary.ts` (hours, redos). New: `getWorkOrderSummary.ts`, `getTaskSummary.ts`, `getAppointmentSummary.ts`, `getClientStats.ts`. All registered in `tools/index.ts`.
 
 ### Phase 3e: No DB migrations. Fixed `getRevenueSummary.ts` (deliveredAt + column filter) and `getPaymentsSummary.ts` (Payment.date + outstanding). New tools: `getInventorySummary.ts`, `getTeamSummary.ts`, `getLeadSummary.ts`. All registered in `tools/index.ts`. System prompt: "Reporting and analytics" section added.

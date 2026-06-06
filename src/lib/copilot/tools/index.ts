@@ -37,6 +37,10 @@ import "./handlers/getWorkOrderSummary";
 import "./handlers/getTaskSummary";
 import "./handlers/getAppointmentSummary";
 import "./handlers/getClientStats";
+import "./handlers/getProfitAnalysis";
+import "./handlers/getMaterialUsage";
+import "./handlers/getServicePerformance";
+import "./handlers/getClockReport";
 
 export { toolsForAnthropic, allTools, getTool } from "./registry";
 export type { ToolContext, ToolResult, ToolDefinition } from "./registry";

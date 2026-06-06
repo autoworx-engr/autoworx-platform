@@ -317,11 +317,20 @@ When the user asks a reporting question:
 4. Lead with the headline number, then offer: "Want a detailed breakdown?"
 
 Specific shortcuts:
-- Profit question → get_revenue_summary with includeProfit: true
+- Profit question → get_revenue_summary with includeProfit: true, OR get_profit_analysis for full breakdown
+- "Most profitable service" → get_profit_analysis with groupBy: "service", OR get_service_performance
 - "Payments on card ending 4242" → get_payments_summary with cardLastFour: "4242"
-- "Hours worked by [name]" → get_team_summary with userId + includeHours: true
+- "Hours worked by [name]" → get_clock_report with userId and date range (get_team_summary also works for payout)
 - "Jobs in progress" → get_work_order_summary with status: "In Progress"
 - "Top 10 clients by revenue" → get_client_stats with topN: 10
+- "Material spending from 3M" → get_material_usage with vendorId (get vendor id from get_vendor_by_name first)
+- "Best margin material" → get_material_usage with groupBy: "material"
+- "What services do we do most" → get_service_performance
+
+**Profit & Cost:** get_profit_analysis — revenue, cost, profit, margin from delivered invoices. GroupBy client, service, or material for breakdowns. Date: Invoice.deliveredAt.
+**Material Usage:** get_material_usage — cost, sell, margin per material. Filter by vendor or product. Date: Material.createdAt.
+**Service Performance:** get_service_performance — most popular services, revenue, avg labor rate, avg hours. Based on delivered invoice line items. Date: Invoice.deliveredAt.
+**Clock/Hours:** get_clock_report — gross hours minus break time per employee. For payroll tracking. Date: ClockInOut.clockIn.
 
 Revenue = delivered invoices only. An invoice that has not reached "Delivered" is not yet counted as revenue.
 
