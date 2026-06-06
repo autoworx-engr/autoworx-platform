@@ -5,7 +5,6 @@ import { getInvoiceModalData } from "@/actions/estimate/invoice/getInvoiceModalD
 import { getIsWorkorderCreated } from "@/actions/estimate/invoice/getworkorderCreated";
 import { sendInvoiceEmail } from "@/actions/estimate/invoice/sendInvoiceEmail";
 import { sendInvoiceSms } from "@/actions/estimate/invoice/sendInvoiceSms";
-import { getOrCreateShortLinkAction } from "@/actions/shortener/getOrCreateShortLink";
 import { getPaymentGatewayInfo } from "@/app/(dashboard)/dashboard/settings/payments/getPaymentGatewayInfo";
 import { getStripeAccount } from "@/app/(dashboard)/dashboard/settings/payments/stripe";
 import {
@@ -307,23 +306,9 @@ export default function InvoiceModalBody({
     successToast("Invoice sent successfully");
   };
   const handleCopyLink = async () => {
-    // 1. Identify what you want to copy
-    const clientName =
-      invoice?.client?.firstName || invoice?.client?.lastName || "";
-
-    const shortLinkResult = await getOrCreateShortLinkAction({
-      invoiceId: invoiceId!,
-      clientName,
-    });
-
-    const urlToCopy =
-      shortLinkResult.success && shortLinkResult.shortUrl
-        ? shortLinkResult.shortUrl
-        : shortLinkResult.originalUrl ||
-          `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoiceId}`;
+    const urlToCopy = `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoiceId}`;
 
     try {
-      // 2. Check if the Clipboard API is available AND the context is secure
       if (
         typeof window !== "undefined" &&
         navigator.clipboard &&
@@ -332,7 +317,6 @@ export default function InvoiceModalBody({
         await navigator.clipboard.writeText(urlToCopy);
         successToast("Link copied to clipboard");
       } else {
-        // 3. Fallback for insecure connections (like your IP address testing)
         throw new Error("Clipboard API unavailable");
       }
     } catch (error) {
