@@ -190,6 +190,27 @@ yarn dev
 
 ---
 
+## Phase 3d — Work orders + per-service technician assignment
+
+Work orders are `Invoice` rows with `isWorkOrder = true`. The `InvoiceType` enum has no `WorkOrder` value — work orders are distinguished by the flag alone.
+
+**Routes** (`src/app/api/work-order/[companyId]/[invoiceId]/`):
+
+- `PATCH route.ts` — converts an existing invoice to a work order. Validates `type === "Invoice"` (400 if estimate), checks not already a work order (409), resolves "In Progress" column by title at runtime (never hardcoded), sets `isWorkOrder`, `workOrderCreatedAt`, and `columnId`.
+- `POST assign/route.ts` — assigns a team member to a specific `InvoiceItem` on a work order. **Key complexity:** `Technician.serviceId` is `NOT NULL` but copilot-created `InvoiceItem` rows have `serviceId = null`. The route resolves this in a `$transaction`: case-insensitive match on `InvoiceItem.serviceDesc` against the `Service` catalog, auto-creates a `Service` record if no match, backfills `InvoiceItem.serviceId`, then creates the `Technician` row. This keeps the platform's `Technician` invariant intact without requiring a pre-populated service catalog.
+
+**Copilot tools**:
+
+- `get_team_members` — direct Prisma read, no API route needed. Word-by-word name search on `User` where `companyId`. Returns `{ id, firstName, lastName, role }`. Omit `searchTerm` to list all (up to 20). Permission: `team.read` (open to all authenticated users).
+- `create_work_order` — calls the PATCH route. Handles 409 (already a work order) as a soft path offering to view/assign rather than an error.
+- `assign_technician` — calls the POST assign route. Defaults `date` to today, `priority` to "Medium", `amount` to the InvoiceItem's `labor.charge × labor.hours`. Fetches the user's name after success for a friendly confirmation.
+
+**New CopilotAction values**: `team.read` (open), `workorder.create` (estimatesInvoices), `workorder.assign` (estimatesInvoices).
+
+No DB schema changes. Service records auto-created from `InvoiceItem.serviceDesc` are visible in the Service catalog — this is intentional.
+
+---
+
 ## Phase 3c.6 — Inventory create + replenish
 
 Two new Bearer-safe API routes and two new copilot tools for adding and restocking inventory items.

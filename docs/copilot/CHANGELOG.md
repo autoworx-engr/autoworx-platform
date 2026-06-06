@@ -5,6 +5,22 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Phase 3d — Work orders + per-service technician assignment
+
+**Date:** 2026-06-06
+
+Work order creation and per-service technician assignment.
+
+- **get_team_members**: word-by-word name search on company users. Returns `{ id, firstName, lastName, role }`. Omit `searchTerm` to list all. Permission: `team.read` (all authenticated users).
+- **create_work_order**: converts an existing invoice to a work order via PATCH (`isWorkOrder=true`, `workOrderCreatedAt=now()`, `columnId="In Progress"`). Estimates cannot become work orders — only invoices. Handles already-work-order (409) gracefully. Permission: `workorder.create` (estimatesInvoices).
+- **assign_technician**: assigns a team member to a specific service (InvoiceItem) on a work order. Auto-resolves the `Technician.serviceId NOT NULL` constraint: case-insensitive match against `Service` catalog by `InvoiceItem.serviceDesc`, auto-creates a Service record if no match, backfills `InvoiceItem.serviceId`. Creates `Technician` record with userId, dates, priority, amount (defaults to labor charge×hours). Permission: `workorder.assign` (estimatesInvoices).
+- **New routes**: `PATCH /api/work-order/[companyId]/[invoiceId]/` and `POST /api/work-order/[companyId]/[invoiceId]/assign/`.
+- **New CopilotAction values**: `team.read`, `workorder.create`, `workorder.assign`.
+- System prompt: new "Work orders" section with creation + assignment flow.
+- No DB schema changes. Service catalog records auto-created from `InvoiceItem.serviceDesc` as needed.
+
+---
+
 ## Fix — add_materials attaches to existing service, not new line item
 
 **Date:** 2026-06-06

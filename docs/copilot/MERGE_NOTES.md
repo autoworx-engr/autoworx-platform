@@ -26,6 +26,8 @@ For coordinating the merge into development and production deployment.
 
 ### Fix — create_client return shape: No DB migrations. **createClientTool return shape changed** — no longer passes through the raw API body. Now returns flat `{ clientId, firstName, lastName, wasCreated, message }` at `data.*`, consistent with every other write tool. The create_client INPUT contract is unchanged.
 
+### Phase 3d: No DB migrations. Two new API routes under `/api/work-order/[companyId]/[invoiceId]/` (PATCH and POST .../assign/). New copilot tools: `getTeamMembers.ts`, `createWorkOrderTool.ts`, `assignTechnicianTool.ts`. New CopilotAction values: `team.read`, `workorder.create`, `workorder.assign`. Service catalog records may be auto-created from `InvoiceItem.serviceDesc` during technician assignment — this is expected behavior.
+
 ### Phase 3c.6 fixes — vendor + WAC: No DB migrations. New route: `POST /api/vendor/[companyId]/`. New copilot tools: `getVendorByName.ts`, `createVendorTool.ts`. `vendor.create` added to `CopilotAction` + `PERMISSION_MAP`. Replenish route: weighted average cost replaces overwrite. System prompt: inventory section expanded with vendor guidance + WAC note.
 
 ### Phase 3c.6: No DB migrations. Two new API routes under `/api/inventory/[companyId]/` (products POST, replenish POST). New copilot tools: `createInventoryProductTool.ts`, `replenishInventoryTool.ts`. Both registered in `tools/index.ts`. System prompt: "Managing inventory" section added.

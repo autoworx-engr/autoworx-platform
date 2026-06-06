@@ -27,6 +27,9 @@ import "./handlers/createInventoryProductTool";
 import "./handlers/replenishInventoryTool";
 import "./handlers/getVendorByName";
 import "./handlers/createVendorTool";
+import "./handlers/getTeamMembers";
+import "./handlers/createWorkOrderTool";
+import "./handlers/assignTechnicianTool";
 
 export { toolsForAnthropic, allTools, getTool } from "./registry";
 export type { ToolContext, ToolResult, ToolDefinition } from "./registry";

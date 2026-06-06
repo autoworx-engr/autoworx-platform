@@ -20,6 +20,9 @@ export type CopilotAction =
   | "inventory.update"
   | "inventory.read"
   | "vendor.create"
+  | "team.read"
+  | "workorder.create"
+  | "workorder.assign"
   | "report.revenue.read"
   | "report.payments.read"
   | "client.read"
@@ -173,6 +176,24 @@ const PERMISSION_MAP: Record<
       p.role === "Admin" ||
       !!(p.userPermissions?.inventoryAll ?? cp(p, "inventoryAll")),
     reason: "You don't have permission to create vendors (inventoryAll).",
+  },
+  "team.read": {
+    check: () => true,
+    reason: "",
+  },
+  "workorder.create": {
+    check: (p) =>
+      p.role === "Admin" ||
+      !!(p.userPermissions?.estimatesInvoices ?? cp(p, "estimatesInvoices")),
+    reason:
+      "You don't have permission to create work orders (estimatesInvoices).",
+  },
+  "workorder.assign": {
+    check: (p) =>
+      p.role === "Admin" ||
+      !!(p.userPermissions?.estimatesInvoices ?? cp(p, "estimatesInvoices")),
+    reason:
+      "You don't have permission to assign technicians (estimatesInvoices).",
   },
   "report.revenue.read": {
     // Uses !== false pattern — reporting defaults to allowed unless explicitly disabled
