@@ -1,9 +1,4 @@
 "use client";
-import { createLeadDraftEstimate } from "@/actions/pipelines/createLeadDraftEstimate";
-import {
-  getLeadsWithCountOptimized as getLeadsWithCount,
-  updateLeadColumn,
-} from "@/actions/pipelines/getLeads";
 import {
   getLeadFilterOptions,
   LeadFilterOptions,
@@ -13,6 +8,7 @@ import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCre
 import DateRange from "@/components/DateRange";
 import ResponsiveSalesPipelineCard from "@/components/mobile-responsive/pipeline/ResponsiveSalesPipelineCard";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { useCreateDraftEstimate } from "@/hooks/pipeline/useCreateDraftEstimate";
 import { cn } from "@/lib/cn";
 import { errorToast, successToast } from "@/lib/toast";
 import { updatePipelineAutomationTrigger } from "@/service/pipeline-automation-trigger/api";
@@ -23,21 +19,14 @@ import { Appointment, Column, User } from "@prisma/client";
 import { Pagination, Select } from "antd";
 import { Calendar, CalendarCheck, MessageCircleMore } from "lucide-react";
 import moment from "moment";
-import { customAlphabet } from "nanoid";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import React, {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  useTransition,
-} from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 
 import LeadsFilterDropdown, { LeadFilter } from "./LeadsFilterDropdown";
-import LeadsSearch from "./LeadsSearch";
 import { LeadsMobileSkeleton } from "./LeadsMobileSkeleton";
+import LeadsSearch from "./LeadsSearch";
 import { LeadsTableSkeleton } from "./LeadsTableSkeleton";
 import { NewAppointmentPipeline } from "./NewAppointmentPipeline";
 import TaskForm from "./TaskForm";
@@ -307,6 +296,9 @@ const Leads = ({ salesColumn }: TProps) => {
 
     fetchUserAndCompanyUsers();
   }, []);
+  const { mutateAsync: createDraftEstimate, isPending } =
+    useCreateDraftEstimate();
+
   // Memoize the draft estimate handler to prevent re-creation on every render
   const handleCreateDraftEstimate = useCallback(
     async ({
@@ -319,15 +311,21 @@ const Leads = ({ salesColumn }: TProps) => {
       vehicleId: number | undefined;
     }) => {
       try {
-        const draftEstimateId = customAlphabet("1234567890", 10)();
-        const res = await createLeadDraftEstimate({
-          id: draftEstimateId,
+        if (!currentUser?.companyId) {
+          errorToast("Company structure is not properly loaded.");
+          return;
+        }
+
+        const res = await createDraftEstimate({
           leadId,
           clientId: clientId!,
           vehicleId: vehicleId,
-          type: "Estimate",
+          companyId: currentUser.companyId.toString(),
         });
-        if (res.type === "success") {
+
+        console.log(res, "createDraftEstimate response");
+
+        if (res.success) {
           successToast(res?.message || "Draft estimate created");
           setLeads((prevLeads) => {
             return prevLeads.map((lead) => {
@@ -337,26 +335,20 @@ const Leads = ({ salesColumn }: TProps) => {
               return lead;
             });
           });
-        } else if (res.type === "error") {
+        } else if (!res.success && res.data?.id) {
+          // A draft estimate already exists, so route to it
           router.push(`/dashboard/estimate/view/${res.data.id}`);
-        } else if (res.type === "globalError") {
-          errorToast(
-            res?.errorSource && res?.errorSource.length > 0
-              ? res?.errorSource[0].message
-              : res.message,
-          );
+        } else {
+          errorToast(res?.message || "Failed to create draft estimate.");
         }
       } catch (err) {
         const formattedError = errorHandler(err);
-        errorToast(
-          formattedError?.errorSource && formattedError?.errorSource.length > 0
-            ? formattedError?.errorSource[0].message
-            : formattedError.message,
-        );
+        errorToast(formattedError.message);
       }
     },
-    [router],
-  ); // Only depend on router
+    [router, currentUser, createDraftEstimate],
+  );
+
   //sort leads by time created in descending order (already sorted by backend)
   // leads?.sort((a, b) => {
   //   return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -628,6 +620,7 @@ const Leads = ({ salesColumn }: TProps) => {
                                     vehicleId: lead?.client?.vehicle?.id,
                                   })
                                 }
+                                disabled={isPending}
                                 className="group relative"
                               >
                                 {lead.isEstimateCreated ? (
