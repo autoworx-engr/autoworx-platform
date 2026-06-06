@@ -5,6 +5,31 @@ Most recent at the top. Each phase appends a section.
 
 ---
 
+## Phase 3f — Expanded reporting
+
+**Date:** 2026-06-06
+
+Extended 3 existing tools and built 4 new ones. Total reporting coverage: 9 tools across 9 business domains.
+
+**Extended:**
+
+- `get_revenue_summary`: new params `clientId`, `vehicleId` (filter), `includeProfit` (returns totalProfit, totalCost, profitMargin %). Also returns `averageInvoiceValue`.
+- `get_payments_summary`: new params `paymentType` filter, `cardLastFour` filter (matched in JS against CardPayment.creditCard). Returns `byMethod` breakdown (card/cash/check/other/deposit) and `byCardType` breakdown (visa/mastercard/amex/other). Also returns `refundCount`.
+- `get_team_summary`: new params `includeHours` (computes hours from ClockInOut records), `includeRedos` (counts InvoiceRedo per technician, computes redoRate %).
+
+**New:**
+
+- `get_work_order_summary`: jobs by pipeline status, avg completion time (workOrderCreatedAt → completedAt). Date: `Invoice.workOrderCreatedAt`.
+- `get_task_summary`: task count, overdue (date < today), by priority (Low/Medium/High). Date: `Task.date`.
+- `get_appointment_summary`: total, upcoming vs past, by userId. Date: `Appointment.date`.
+- `get_client_stats`: total/new clients, top N by delivered revenue, by acquisition source. Date: `Client.createdAt` (new clients).
+
+System prompt: reporting section expanded to cover all 9 tools with domain-specific shortcuts.
+
+No DB schema changes.
+
+---
+
 ## Phase 3e — Reporting tools
 
 **Date:** 2026-06-06

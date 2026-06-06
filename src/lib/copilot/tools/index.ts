@@ -33,6 +33,10 @@ import "./handlers/assignTechnicianTool";
 import "./handlers/getInventorySummary";
 import "./handlers/getTeamSummary";
 import "./handlers/getLeadSummary";
+import "./handlers/getWorkOrderSummary";
+import "./handlers/getTaskSummary";
+import "./handlers/getAppointmentSummary";
+import "./handlers/getClientStats";
 
 export { toolsForAnthropic, allTools, getTool } from "./registry";
 export type { ToolContext, ToolResult, ToolDefinition } from "./registry";

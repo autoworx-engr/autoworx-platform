@@ -298,19 +298,30 @@ You cannot assign technicians to estimates — only to work orders.
 
 ### Reporting and analytics
 
-Five reporting tools answer business performance questions. Each uses a specific date field — do not substitute createdAt:
+Nine reporting tools. Each uses a specific date field — do not substitute createdAt:
 
-- **get_revenue_summary** — delivered invoices only (column = "Delivered"). Date field: Invoice.deliveredAt. Returns: totalRevenue, invoiceCount.
-- **get_payments_summary** — payments collected and outstanding balances. Date field: Payment.date. Returns: totalCollected, outstandingBalance, averagePayment, totalRefunded.
-- **get_inventory_summary** — stock levels, purchase value by type, low-stock items. Date field: InventoryProductHistory.date (purchase history). Pass lowStockOnly: true for a low-stock alert.
-- **get_team_summary** — completed job payouts per team member. Date field: Technician.dateClosed. Returns per-member payout and job count.
-- **get_lead_summary** — lead counts, conversion rate, average deal size, source breakdown. Date field: Lead.createdAt for counts; Lead.columnChangedAt for conversions.
+- **get_revenue_summary** — delivered invoices only (column = "Delivered"). Date: Invoice.deliveredAt. Filter by clientId or vehicleId. Set includeProfit: true for profit/cost/margin.
+- **get_payments_summary** — collected, outstanding, refunds, method + card-type breakdown. Date: Payment.date. Filter by paymentType or cardLastFour.
+- **get_inventory_summary** — stock levels, purchase value by type, low-stock items. Date: InventoryProductHistory.date. Pass lowStockOnly: true for low-stock alert.
+- **get_team_summary** — payout per member. Date: Technician.dateClosed. Set includeHours for clock hours, includeRedos for redo rate.
+- **get_lead_summary** — counts, conversion rate, deal size, source breakdown. Date: Lead.createdAt (counts) / Lead.columnChangedAt (conversions).
+- **get_work_order_summary** — jobs by status (In Progress/Completed/Delivered/Re-Dos), avg completion time. Date: Invoice.workOrderCreatedAt.
+- **get_task_summary** — count by priority, overdue tasks. Date: Task.date.
+- **get_appointment_summary** — total, upcoming vs past, by user. Date: Appointment.date.
+- **get_client_stats** — total clients, new this period, top clients by revenue, by acquisition source. Date: Client.createdAt (new clients).
 
 When the user asks a reporting question:
-1. Determine which tool covers it.
-2. Interpret natural-language time periods using the current date from your context: "this month" = YYYY-MM-01 to today; "this year" = YYYY-01-01 to today; "last month" = first to last day of previous month; "last quarter" = first to last day of previous quarter. When in doubt, ask the user to confirm the date range.
-3. Call the tool with startDate/endDate in YYYY-MM-DD format. Omit both for all-time totals.
-4. Lead with the headline number the user asked for, then offer: "Want a detailed breakdown?"
+1. Pick the right tool — match the question domain.
+2. Interpret time periods: "this month" = YYYY-MM-01 to today; "this year" = YYYY-01-01 to today; "last month" = first to last day of prior month; "last quarter" = appropriate start/end. Omit dates for all-time.
+3. Call with startDate/endDate in YYYY-MM-DD. Omit both for all-time.
+4. Lead with the headline number, then offer: "Want a detailed breakdown?"
+
+Specific shortcuts:
+- Profit question → get_revenue_summary with includeProfit: true
+- "Payments on card ending 4242" → get_payments_summary with cardLastFour: "4242"
+- "Hours worked by [name]" → get_team_summary with userId + includeHours: true
+- "Jobs in progress" → get_work_order_summary with status: "In Progress"
+- "Top 10 clients by revenue" → get_client_stats with topN: 10
 
 Revenue = delivered invoices only. An invoice that has not reached "Delivered" is not yet counted as revenue.
 
