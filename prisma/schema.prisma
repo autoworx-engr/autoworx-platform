@@ -553,6 +553,8 @@ model Client {
   messengerMessages MessengerMessage[]
 
   @@index([companyId], name: "fk_customers_company")
+  @@index([firstName])
+  @@index([lastName])
   @@map("Client")
 }
 
@@ -1516,6 +1518,10 @@ model Invoice {
 
   @@index([companyId], name: "fk_invoices_company")
   @@index([companyId, type])
+  @@index([clientId])
+  @@index([vehicleId])
+  @@index([isWorkOrder])
+  @@index([columnId])
 }
 
 model InvoiceTemplate {
@@ -1641,6 +1647,9 @@ model Technician {
   company        Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
   InvoiceRedo    InvoiceRedo[]
   invoiceItem    InvoiceItem       @relation(fields: [invoiceItemId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([invoiceId])
 }
 
 model TechnicianImage {
@@ -2640,6 +2649,8 @@ model Vehicle {
   emergencyBookingRequests EmergencyBookingRequest[]
 
   @@index([companyId], name: "fk_vehicles_company")
+  @@index([make])
+  @@index([model])
 }
 
 model VehicleColor {

@@ -33,6 +33,7 @@ type TGetLeadsWithCount = {
   source?: string;
   service?: string;
   status?: string;
+  orderBy?: "asc" | "desc";
   // YYYY-MM-DD strings so the action can parse them directly in the company
   // timezone — avoids off-by-one-day errors when browser tz ≠ company tz.
   dateRange?: [string | null, string | null];
@@ -124,6 +125,12 @@ export const getLeads = async ({
                 emailIsRead: true,
               },
             },
+            Invoice: {
+              where: { type: "Estimate" },
+              select: { id: true },
+              orderBy: { createdAt: "asc" },
+              take: 1,
+            },
           },
         },
       },
@@ -174,6 +181,12 @@ export const getLeads = async ({
                   emailIsRead: true,
                 },
               },
+              Invoice: {
+                where: { type: "Estimate" },
+                select: { id: true },
+                orderBy: { createdAt: "asc" },
+                take: 1,
+              },
             },
           }))!;
         }
@@ -214,6 +227,7 @@ export const getLeads = async ({
           client: clientData,
           column,
           totalMessage: isShowConversationIndicator ? 1 : 0,
+          invoiceId: client?.Invoice?.[0]?.id ?? null,
         };
       }),
     );
@@ -233,6 +247,7 @@ export const getLeadsWithCount = async ({
   source,
   service,
   status,
+  orderBy,
   dateRange,
 }: TGetLeadsWithCount): Promise<{
   leads: LeadWithSalesUser[];
@@ -297,7 +312,7 @@ export const getLeadsWithCount = async ({
         take,
         skip,
         orderBy: {
-          createdAt: "desc",
+          createdAt: orderBy ?? "desc",
         },
         include: {
           salesUser: {
@@ -333,6 +348,12 @@ export const getLeadsWithCount = async ({
                   smsIsRead: true,
                   emailIsRead: true,
                 },
+              },
+              Invoice: {
+                where: { type: "Estimate" },
+                select: { id: true },
+                orderBy: { createdAt: "asc" },
+                take: 1,
               },
             },
           },
@@ -384,6 +405,12 @@ export const getLeadsWithCount = async ({
                   emailIsRead: true,
                 },
               },
+              Invoice: {
+                where: { type: "Estimate" },
+                select: { id: true },
+                orderBy: { createdAt: "desc" },
+                take: 1,
+              },
             },
           }))!;
         }
@@ -423,6 +450,7 @@ export const getLeadsWithCount = async ({
           client: clientData,
           column,
           totalMessage: isShowConversationIndicator ? 1 : 0,
+          invoiceId: client?.Invoice?.[0]?.id ?? null,
         };
       }),
     );
@@ -443,6 +471,7 @@ export const getLeadsWithCountOptimized = async ({
   source,
   service,
   status,
+  orderBy,
   dateRange,
 }: TGetLeadsWithCount): Promise<{
   leads: LeadWithSalesUser[];
@@ -509,7 +538,7 @@ export const getLeadsWithCountOptimized = async ({
         take,
         skip,
         orderBy: {
-          createdAt: "desc",
+          createdAt: orderBy ?? "desc",
         },
         include: {
           salesUser: {
@@ -547,6 +576,12 @@ export const getLeadsWithCountOptimized = async ({
                   smsIsRead: true,
                   emailIsRead: true,
                 },
+              },
+              Invoice: {
+                where: { type: "Estimate" },
+                select: { id: true },
+                orderBy: { createdAt: "asc" },
+                take: 1,
               },
             },
           },
@@ -611,6 +646,7 @@ export const getLeadsWithCountOptimized = async ({
         client: clientData,
         column,
         totalMessage: isShowConversationIndicator ? 1 : 0,
+        invoiceId: client?.Invoice?.[0]?.id ?? null,
       } as LeadWithSalesUser;
     });
 

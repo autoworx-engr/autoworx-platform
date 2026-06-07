@@ -250,9 +250,12 @@ export function useTaskForm({
         queryClient.invalidateQueries({
           queryKey: taskQueryKey.taskById(id.toString()),
         });
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.dashboardTask,
-        });
+
+        queryClient.setQueryData(
+          queryKeys.dashboardTask,
+          (old: { id: number }[] | undefined) =>
+            Array.isArray(old) ? old.filter((t) => t.id !== id) : old,
+        );
         setUpdateVariable();
         onTaskDeleted && onTaskDeleted(id);
         successToast("Task deleted successfully.");

@@ -56,13 +56,30 @@ export default function TaskComponent({ task }: TaskComponentProps) {
     event.dataTransfer.setData("text/plain", `task|${task.id}`);
     setIsDragging(true);
   };
+
+  const removeTaskFromScrollCache = (taskId: number) => {
+    queryClient.setQueryData(
+      taskQueryKey.allTaskByScroll,
+      (old: { pages?: { data: Task[] }[] } | undefined) => {
+        if (!old?.pages) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            data: Array.isArray(page.data)
+              ? page.data.filter((t) => t.id !== taskId)
+              : [],
+          })),
+        };
+      },
+    );
+  };
+
   const handleConfirm = async () => {
     try {
       await completeTask(task.id);
       successToast("Task Completed successfully.");
-      queryClient.invalidateQueries({
-        queryKey: taskQueryKey.allTaskByScroll,
-      });
+      removeTaskFromScrollCache(task.id);
       setPopconfirmVisible(false);
     } catch (error) {
       console.error("Failed to delete task:", error);
@@ -108,12 +125,13 @@ export default function TaskComponent({ task }: TaskComponentProps) {
   };
 
   const handleDeleteTask = (taskId: number) => {
-    queryClient.setQueryData([taskQueryKey.allTasks], (oldData: Task[]) => {
-      return oldData && oldData.length > 0
-        ? oldData.filter((task) => task.id !== taskId)
-        : [];
+    removeTaskFromScrollCache(taskId);
+    queryClient.invalidateQueries({
+      queryKey: [taskQueryKey.allTasks, dateFormat],
     });
-    revalidateTaskQueries();
+    queryClient.invalidateQueries({
+      queryKey: [taskQueryKey.allTasks, weekStartDate, weekEndDate],
+    });
   };
 
   const priorityStyle =

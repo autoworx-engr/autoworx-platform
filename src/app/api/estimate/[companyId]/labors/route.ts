@@ -127,7 +127,7 @@ export async function GET(
     const [labors, total] = await Promise.all([
       db.labor.findMany({
         where,
-        orderBy: { name: "asc" },
+        orderBy: { id: "desc" },
         skip,
         take: limit,
         include: {

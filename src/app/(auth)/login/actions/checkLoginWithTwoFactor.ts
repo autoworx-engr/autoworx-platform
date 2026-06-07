@@ -2,8 +2,19 @@
 
 import send2faOtpMail from "@/actions/two-factor/send2faOtpMail";
 import { db } from "@/lib/db";
+import { createRateLimiter } from "@/lib/rateLimit";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
+
+const loginEmailLimiter = createRateLimiter({
+  windowMs: 15 * 60_000,
+  maxRequests: 10,
+});
+
+const otpEmailLimiter = createRateLimiter({
+  windowMs: 15 * 60_000,
+  maxRequests: 10,
+});
 
 type TValues = {
   email: string;
@@ -17,7 +28,31 @@ export async function checkLoginWithTwoFactor(values: TValues): Promise<{
   twoFactor?: boolean;
   nextLogin?: boolean;
 }> {
-  const { email, password, code } = values;
+  const { email: rawEmail, password, code } = values;
+  const email =
+    typeof rawEmail === "string" ? rawEmail.trim().toLowerCase() : "";
+
+  if (!email) {
+    return { type: "fail", message: "Email is required" };
+  }
+
+  if (code) {
+    const otpCheck = otpEmailLimiter.check(email);
+    if (!otpCheck.allowed) {
+      return {
+        type: "fail",
+        message: "Too many OTP attempts. Please try again later.",
+      };
+    }
+  } else {
+    const loginCheck = loginEmailLimiter.check(email);
+    if (!loginCheck.allowed) {
+      return {
+        type: "fail",
+        message: "Too many login attempts. Please try again later.",
+      };
+    }
+  }
 
   const existingUser = await db.user.findUnique({ where: { email } });
 
@@ -66,6 +101,14 @@ export async function checkLoginWithTwoFactor(values: TValues): Promise<{
         };
       }
 
+      const hasExpired = new Date(twoFactorToken?.expiresAt) < new Date();
+      if (hasExpired) {
+        await db.twoFactorToken.delete({
+          where: { id: twoFactorToken.id },
+        });
+        return { type: "fail", message: "Code expired!" };
+      }
+
       const isValidCode = await bcrypt.compare(
         code,
         twoFactorToken?.tokenHash || "",
@@ -80,11 +123,6 @@ export async function checkLoginWithTwoFactor(values: TValues): Promise<{
           },
         });
         return { type: "fail", message: "Invalid code!" };
-      }
-
-      const hasExpired = new Date(twoFactorToken?.expiresAt) < new Date();
-      if (hasExpired) {
-        return { type: "fail", message: "Code expired!" };
       }
 
       // Valid Code! Create Confirmation to allow NextAuth login

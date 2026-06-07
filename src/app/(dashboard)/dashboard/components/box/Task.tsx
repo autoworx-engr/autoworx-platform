@@ -190,9 +190,10 @@ const Task = ({ task, onTaskDeleted }: TaskProps) => {
             onConfirm={async (e) => {
               e?.stopPropagation();
               await completeTask(task.id);
-              revalidateTask();
               successToast("Task completed");
-              onTaskDeleted?.(task.id); // Call prop handler if available
+              // Removes the task from the cache in-place (no refetch) so the
+              // list keeps its scroll position.
+              onTaskDeleted?.(task.id);
               setPopconfirmVisible(false);
             }}
             onCancel={(e) => {

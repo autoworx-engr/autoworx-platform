@@ -1,7 +1,6 @@
 import { fetchMailsMailgun } from "@/actions/communication/client/fetchMailgunMails";
 import getSms from "@/actions/communication/client/getSms";
 import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
-import { cn } from "@/lib/cn";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import { Client, Vehicle } from "@prisma/client";
@@ -106,6 +105,30 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
 
   const allSmsAttachments = smsData?.flatMap((s) => s.attachments) ?? [];
 
+  const priorityStyles: Record<
+    string,
+    { background: string; borderLeft: string; color: string; boxShadow: string }
+  > = {
+    Low: {
+      background: "linear-gradient(to right, #f5f3ff, #ede9fe)",
+      borderLeft: "3px solid #6d28d9",
+      color: "#6d28d9",
+      boxShadow: "0 2px 8px rgba(109, 40, 217, 0.15)",
+    },
+    Medium: {
+      background: "linear-gradient(to right, #f0f9ff, #e0f2fe)",
+      borderLeft: "3px solid #0284c7",
+      color: "#0284c7",
+      boxShadow: "0 2px 8px rgba(2, 132, 199, 0.15)",
+    },
+    High: {
+      background: "linear-gradient(to right, #b2f2bb, #d3f9d8)",
+      borderLeft: "3px solid #22a7b8",
+      color: "#22a7b8",
+      boxShadow: "0 2px 8px rgba(34, 167, 184, 0.15)",
+    },
+  };
+
   return (
     <div className="thin-scrollbar h-[60%] 2xl:h-[60%] overflow-y-auto px-4 space-y-6">
       {/* Client notes */}
@@ -146,27 +169,28 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
 
         <div className="flex flex-wrap items-center gap-2">
           {tasks?.length ? (
-            tasks.map((task) => (
-              <div
-                key={task.id}
-                className={cn(
-                  "group flex items-center gap-2 rounded-full border border-transparent  px-3 py-1.5 text-xs font-medium text-white shadow-sm transition-colors",
-                  {
-                    "bg-[#6571FF]": task.priority === "Low",
-                    "bg-[#25AADD]": task.priority === "Medium",
-                    "bg-[#006d77]": task.priority === "High",
-                  },
-                )}
-                title={task.title}
-              >
-                <span className="truncate max-w-[12rem]">
-                  {task.title.length > 40
-                    ? task.title.slice(0, 40) + "…"
-                    : task.title}
-                </span>
-                <TaskActions task={task} />
-              </div>
-            ))
+            tasks.map((task) => {
+              const style =
+                priorityStyles[task.priority ?? "Low"] ?? priorityStyles.Low;
+              return (
+                <div
+                  key={task.id}
+                  className="group flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all"
+                  style={style}
+                  title={task.title}
+                >
+                  <span
+                    className="truncate max-w-[12rem]"
+                    style={{ color: style.color }}
+                  >
+                    {task.title.length > 40
+                      ? task.title.slice(0, 40) + "…"
+                      : task.title}
+                  </span>
+                  <TaskActions task={task} color={style.color} />
+                </div>
+              );
+            })
           ) : (
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
               No tasks yet — add one below.
@@ -180,7 +204,11 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
       </section>
 
       {/* Appointments */}
-      <AppointmentListClient appointments={appointmentData} />
+      <AppointmentListClient
+        appointments={appointmentData}
+        companyId={companyId}
+        clientId={client.id}
+      />
     </div>
   );
 }
