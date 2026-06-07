@@ -70,6 +70,21 @@ export async function fetchAndTransformData(
       OR v.model ILIKE '%${decodedSearchTerm}%'
       OR CAST(v.year AS TEXT) ILIKE '%${decodedSearchTerm}%'
       OR col.title ILIKE '%${decodedSearchTerm}%'
+      OR CONCAT(
+        v.year, ' ',
+        v.make, ' ',
+        v.model
+      ) ILIKE '%${decodedSearchTerm}%'
+      OR CONCAT(
+        v.make, ' ',
+        v.year, ' ',
+        v.model
+      ) ILIKE '%${decodedSearchTerm}%'
+      OR CONCAT(
+        v.model, ' ',
+        v.year, ' ',
+        v.make
+      ) ILIKE '%${decodedSearchTerm}%'
     )
   `
     : "";
