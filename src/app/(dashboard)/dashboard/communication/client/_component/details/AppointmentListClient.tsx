@@ -1,20 +1,51 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import moment from "moment";
 import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
 import { Appointment } from "@prisma/client";
 import AppointMentCard from "./AppointMentCard";
+import { pusher } from "@/lib/pusher/client";
 
 export default function AppointmentListClient({
-  appointments,
+  appointments: initialAppointments,
+  companyId,
+  clientId,
 }: {
   appointments: Appointment[];
+  companyId: number;
+  clientId: number;
 }) {
+  const [appointments, setAppointments] = useState<Appointment[]>(
+    initialAppointments || [],
+  );
   const [appointmentModalId, setAppointmentModalId] = useState<number | null>(
     null,
   );
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
+
+  useEffect(() => {
+    setAppointments(initialAppointments || []);
+  }, [initialAppointments]);
+
+  const removeAppointment = (id?: number) => {
+    if (!id) return;
+    setAppointments((prev) => prev.filter((a) => a.id !== id));
+  };
+
+  // realtime: drop the appointment from the list when an admin deletes it
+  useEffect(() => {
+    const channelName = `appointment-${companyId}-${clientId}`;
+    const channel = pusher.subscribe(channelName);
+    const handleDeleted = (data: { id: number }) => {
+      removeAppointment(data?.id);
+    };
+    channel.bind("appointment-deleted", handleDeleted);
+    return () => {
+      channel.unbind("appointment-deleted", handleDeleted);
+      pusher.unsubscribe(channelName);
+    };
+  }, [companyId, clientId]);
 
   const now = moment();
   const startOfToday = moment().startOf("day");
@@ -87,6 +118,7 @@ export default function AppointmentListClient({
         appointmentId={appointmentModalId ?? undefined}
         isModalOpen={isAppointmentModalOpen}
         setIsModalOpen={setIsAppointmentModalOpen}
+        onAppointmentDeleted={removeAppointment}
       />
     </section>
   );
