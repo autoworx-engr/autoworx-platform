@@ -70,13 +70,22 @@ export const createLeadDraftEstimate = async function (
     }
 
     const response = await db.$transaction(async (tx) => {
-      const client = await getClientByLead(tx, leadId);
-
-      const existingEstimate = await tx.invoice.findFirst({
-        where: { clientId: client.id },
+      const lead = await tx.lead.findUnique({
+        where: { id: leadId },
+        select: { id: true, isEstimateCreated: true },
       });
 
-      if (existingEstimate) {
+      if (!lead) {
+        throw new Error("Lead not found. Please check the lead ID.");
+      }
+
+      if (lead?.isEstimateCreated) {
+        const client = await getClientByLead(tx, leadId);
+
+        const existingEstimate = await tx.invoice.findFirst({
+          where: { clientId: client.id },
+          orderBy: { createdAt: "desc" },
+        });
         return {
           type: "error",
           message: "A draft estimate already exists for this client.",
@@ -105,14 +114,6 @@ export const createLeadDraftEstimate = async function (
           client: { select: { firstName: true, lastName: true } },
         },
       });
-
-      // await sendEstimateCreateNotification({
-      //   companyId: newEstimate?.companyId,
-      //   invoiceId: newEstimate.id,
-      //   invoiceType: newEstimate.type,
-      //   clientName:
-      //     `${newEstimate.client?.firstName ?? ""} ${newEstimate.client?.lastName ?? ""}`.trim(),
-      // });
 
       return {
         type: "success",
