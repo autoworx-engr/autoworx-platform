@@ -5,7 +5,10 @@ import { sendTaskCompleteNotification } from "@/lib/notification/task-and-appoin
 import { ServerAction } from "@/types/action";
 import { deleteTask } from "./deleteTask";
 
-export async function completeTask(id: number): Promise<ServerAction> {
+export async function completeTask(
+  id: number,
+  options?: { revalidate?: boolean },
+): Promise<ServerAction> {
   try {
     // find the task users
     const taskUsers = await db.taskUser.findMany({
@@ -14,8 +17,7 @@ export async function completeTask(id: number): Promise<ServerAction> {
       },
     });
 
-    // remove the task
-    const deletedTask = await deleteTask(id);
+    const deletedTask = await deleteTask(id, options);
 
     await sendTaskCompleteNotification({
       companyId: deletedTask.data.companyId,

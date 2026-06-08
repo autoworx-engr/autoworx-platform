@@ -77,7 +77,7 @@ export default function TaskComponent({ task }: TaskComponentProps) {
 
   const handleConfirm = async () => {
     try {
-      await completeTask(task.id);
+      await completeTask(task.id, { revalidate: false });
       successToast("Task Completed successfully.");
       removeTaskFromScrollCache(task.id);
       setPopconfirmVisible(false);
@@ -208,6 +208,7 @@ export default function TaskComponent({ task }: TaskComponentProps) {
           }
           taskId={task.id}
           fromEdit
+          revalidateOnDelete={false}
           onTaskUpdated={handleUpdate}
           onTaskDelete={handleDeleteTask}
         />
