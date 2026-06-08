@@ -40,7 +40,7 @@ interface PaymentData {
   date: Date;
   notes: string;
   amount: number;
-  companyId: number;
+  companyId?: number;
   additionalData:
     | CardPaymentData
     | CheckPaymentData
