@@ -36,7 +36,7 @@ const nextConfig = {
   },
   reactStrictMode: false,
   productionBrowserSourceMaps: process.env.NODE_ENV === "development",
-  allowedDevOrigins: ["feof-dash-live-inventory.trycloudflare.com"],
+  allowedDevOrigins: [],
 };
 
 export default nextConfig;
