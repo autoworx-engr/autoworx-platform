@@ -323,8 +323,6 @@ const Leads = ({ salesColumn }: TProps) => {
           companyId: currentUser.companyId.toString(),
         });
 
-        console.log(res, "createDraftEstimate response");
-
         if (res.success) {
           successToast(res?.message || "Draft estimate created");
           setLeads((prevLeads) => {
@@ -544,25 +542,17 @@ const Leads = ({ salesColumn }: TProps) => {
                             </Link>
                           </td>
                           <td className="border-b px-4 py-2 text-left">
-                            <Link href="#" className="block h-full w-full">
-                              {lead.vehicleInfo}
-                            </Link>
+                            {lead.vehicleInfo}
                           </td>
                           <td className="border-b px-4 py-2 text-left">
-                            <Link href="#" className="block h-full w-full">
-                              {lead.services}
-                            </Link>
+                            {lead.services}
                           </td>
                           <td className="border-b px-4 py-2 text-left">
-                            <Link href="#" className="block h-full w-full">
-                              {lead.salesUser?.firstName}{" "}
-                              {lead.salesUser?.lastName ?? ""}
-                            </Link>
+                            {lead.salesUser?.firstName}{" "}
+                            {lead.salesUser?.lastName ?? ""}
                           </td>
                           <td className="border-b px-4 py-2 text-left">
-                            <Link href="#" className="block h-full w-full">
-                              {lead.source}
-                            </Link>
+                            {lead.source}
                           </td>
                           <td className="border-b px-4 py-2 text-left">
                             {lead?.isQualified ? (
@@ -717,9 +707,7 @@ const Leads = ({ salesColumn }: TProps) => {
                             </div>
                           </td>
                           <td className="border-b px-4 py-2 text-left">
-                            <Link href="#" className="block h-full w-full">
-                              {timeCreated}
-                            </Link>
+                            {timeCreated}
                           </td>
                         </tr>
                       );

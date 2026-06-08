@@ -78,7 +78,11 @@ const ResponsiveSalesPipelineCard = ({
     >
       <CardHeader className="flex flex-row items-center justify-between p-4 pb-0">
         <CardTitle>
-          <Link href="#" passHref className="block w-full text-blue-600">
+          <Link
+            href={`/dashboard/client/${lead.clientId}`}
+            passHref
+            className="block w-full text-blue-600"
+          >
             {id}
           </Link>
         </CardTitle>
@@ -89,19 +93,16 @@ const ResponsiveSalesPipelineCard = ({
         <p className="font-medium">{clientEmail}</p>
         <div className="mt-2 flex items-end justify-between">
           <div>
-            <Link href="#">
-              <p className="line-clamp-1">
-                {vehicle.length > 20 ? vehicle.slice(0, 20) + "..." : vehicle}
-              </p>
-            </Link>
-            <Link href="#">
-              <p className="line-clamp-1">
-                {services?.length > 0 &&
-                  services?.map((s: string) =>
-                    s.length > 20 ? s.slice(0, 20) + "..." : s,
-                  )}
-              </p>
-            </Link>
+            <p className="line-clamp-1">
+              {vehicle.length > 20 ? vehicle.slice(0, 20) + "..." : vehicle}
+            </p>
+
+            <p className="line-clamp-1">
+              {services?.length > 0 &&
+                services?.map((s: string) =>
+                  s.length > 20 ? s.slice(0, 20) + "..." : s,
+                )}
+            </p>
           </div>
           {lead?.isQualified && salesColumn && onColumnChange ? (
             <Select
