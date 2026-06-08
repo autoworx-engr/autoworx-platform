@@ -242,7 +242,7 @@ export function CalendarHeader({
         <div className="flex-1" />
 
         {/* Search — hidden on mobile, shown md+ */}
-        <div className="hidden md:block w-48 lg:w-64">
+        <div className="hidden md:block w-56 lg:w-80 xl:w-96">
           <CalendarSearch type={type} />
         </div>
 
