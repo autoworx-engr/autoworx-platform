@@ -36,22 +36,13 @@ export const getEmployeeColumnByCompany = async (
   employeeType?: EmployeeType,
 ) => {
   const companyId = await getCompanyId();
-  let columns = await db.user.findMany({
+  return db.user.findMany({
     where: {
-      companyId: companyId,
+      companyId,
       ...(employeeType && { employeeType }),
-    },
-    include: {
-      Technician: {
-        include: {
-          invoice: true,
-        },
-      },
     },
     orderBy: { createdAt: "asc" },
   });
-
-  return columns;
 };
 
 export const createColumn = async (

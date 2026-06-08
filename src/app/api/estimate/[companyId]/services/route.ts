@@ -117,7 +117,7 @@ export async function GET(
     const [services, total] = await Promise.all([
       db.service.findMany({
         where,
-        orderBy: { name: "asc" },
+        orderBy: { id: "desc" },
         skip,
         take: limit,
         select: {
