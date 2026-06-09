@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { authOptions } from "@/authOptions";
 import { db } from "@/lib/db";
 import { SyncLists } from "@/components/SyncLists";
