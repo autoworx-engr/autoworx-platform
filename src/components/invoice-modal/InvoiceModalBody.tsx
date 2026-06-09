@@ -376,7 +376,6 @@ export default function InvoiceModalBody({
 
       if (response?.type === "success") {
         successToast("Invoice Authorized");
-        await authorizedLeadsConvertion(invoice.id);
       } else {
         errorToast("Signature upload failed");
         console.error("Signature upload failed:");

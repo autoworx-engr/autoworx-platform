@@ -332,7 +332,6 @@ export default async function PaymentTab({
 
   const mergedPaymentData = invoiceData.map((inv) => {
     const tx = transactionData.find((t) => t.paymentId === inv.paymentId);
-    console.log("transactionData", tx);
 
     return {
       id: inv.paymentId,
