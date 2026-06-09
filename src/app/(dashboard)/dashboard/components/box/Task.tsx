@@ -44,7 +44,7 @@ const Task = ({ task, onTaskDeleted }: TaskProps) => {
   const getTaskDateTimeSummary = (task: TaskType) => {
     if (!task.date) return null;
 
-    const taskMoment = moment.utc(task.date).tz(timezone);
+    const taskMoment = moment.utc(task.date);
     const timeFormat = task.startTime
       ? moment(task.startTime, "HH:mm").format("h:mmA")
       : null;
@@ -64,9 +64,7 @@ const Task = ({ task, onTaskDeleted }: TaskProps) => {
     : null;
 
   // Get date part
-  const datePart = task.date
-    ? moment.utc(task.date).tz(timezone).format("MMM DD")
-    : null;
+  const datePart = task.date ? moment.utc(task.date).format("MMM DD") : null;
 
   const handleTaskClick = () => {
     const dateString = task?.date
