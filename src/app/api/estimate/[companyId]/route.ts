@@ -444,6 +444,7 @@ export async function POST(
       photos = [],
       tasks = [],
       inspections = [],
+      id,
     } = body;
 
     if (!type || !["Estimate", "Invoice"].includes(type)) {
@@ -488,6 +489,7 @@ export async function POST(
     const invoice = await db.$transaction(async (tx) => {
       const newInvoice = await tx.invoice.create({
         data: {
+          id,
           type: type as InvoiceType,
           clientId: clientId ? Number(clientId) : undefined,
           vehicleId: vehicleId ? Number(vehicleId) : undefined,
