@@ -162,6 +162,23 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
       return;
     }
 
+    const hasVehicle =
+      formData.vehicle_year || formData.vehicle_make || formData.vehicle_model;
+    if (!hasVehicle && !formData.others) {
+      errorToast("Please enter vehicle information");
+      return;
+    }
+
+    if (!formData.service) {
+      errorToast("Please select a service");
+      return;
+    }
+
+    if (!formData.source) {
+      errorToast("Please select a lead source");
+      return;
+    }
+
     setIsSubmitting(true);
     setFormStatus({ message: "", type: null });
 
