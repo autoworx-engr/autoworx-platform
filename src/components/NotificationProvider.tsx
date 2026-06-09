@@ -236,7 +236,7 @@ function NotificationItem({ notification, setIsOpen, onMarkRead }: any) {
         {avatarUrl}
       </div>
 
-      <div className="flex flex-1 flex-col gap-1">
+      <div className="flex flex-1 min-w-0 flex-col gap-1">
         <Link
           href={notification.redirectUrl || "#"}
           onClick={() => {
