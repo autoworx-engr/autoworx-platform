@@ -162,11 +162,15 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
       return;
     }
 
-    const hasVehicle =
-      formData.vehicle_year || formData.vehicle_make || formData.vehicle_model;
-    if (!hasVehicle && !formData.others) {
-      errorToast("Please enter vehicle information");
-      return;
+    if (!formData.others) {
+      if (
+        !formData.vehicle_year ||
+        !formData.vehicle_make ||
+        !formData.vehicle_model
+      ) {
+        errorToast("Please select Year, Make, and Model for the vehicle");
+        return;
+      }
     }
 
     if (!formData.service) {
