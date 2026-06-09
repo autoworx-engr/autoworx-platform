@@ -85,10 +85,13 @@ export async function POST(req: NextRequest) {
 
   // Fetch the token by email (OTP is now stored as a bcrypt hash, so we
   // cannot query by otp value directly — we compare with verifyOTP() instead).
+  // An already-verified OTP is excluded so it cannot be reused after a page
+  // reload / session reload.
   const token = await db.passwordResetToken.findFirst({
     where: {
       user: { email },
       expiresAt: { gt: new Date() },
+      otpVerified: false,
     },
   });
 
@@ -102,6 +105,21 @@ export async function POST(req: NextRequest) {
   // Use constant-time bcrypt comparison to prevent timing attacks.
   const isValid = await verifyOTP(otp, token.otp);
   if (!isValid) {
+    return NextResponse.json(
+      { error: "Invalid or expired OTP" },
+      { status: 400 },
+    );
+  }
+
+  // Mark the OTP as consumed. The guard on otpVerified makes this a one-time
+  // operation even under concurrent submissions — a second request matches 0
+  // rows and the OTP is already gone from the eligible set above on reload.
+  const consumed = await db.passwordResetToken.updateMany({
+    where: { id: token.id, otpVerified: false },
+    data: { otpVerified: true },
+  });
+
+  if (consumed.count === 0) {
     return NextResponse.json(
       { error: "Invalid or expired OTP" },
       { status: 400 },
