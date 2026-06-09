@@ -112,7 +112,7 @@ export function NotificationsPopover() {
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        <button className="relative h-9 w-9 rounded-full hover:bg-slate-100 p-1">
+        <button className="relative h-9 w-9 rounded-full p-1">
           <svg
             viewBox="-1.28 -1.28 18.56 18.56"
             xmlns="http://www.w3.org/2000/svg"
@@ -133,7 +133,7 @@ export function NotificationsPopover() {
             </g>
           </svg>
           {totalUnRead > 0 && (
-            <Badge className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-red-500 p-0 text-[10px] font-bold text-white">
+            <Badge className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-red-500 hover:bg-red-600 p-0 text-[10px] font-bold text-white">
               {totalUnRead > 99 ? "99+" : totalUnRead}
             </Badge>
           )}
