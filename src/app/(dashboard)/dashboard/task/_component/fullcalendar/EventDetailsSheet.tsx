@@ -168,7 +168,7 @@ export const EventDetailsSheet = ({
     taskKeys.forEach(removeFromCache);
     onOpenChange(false);
 
-    const result = await completeTask(taskId);
+    const result = await completeTask(taskId, { revalidate: false });
     if (result.type === "success") {
       successToast("Task Completed successfully.");
       invalidateCalendarQueries();
