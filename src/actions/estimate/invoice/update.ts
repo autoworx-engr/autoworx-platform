@@ -710,6 +710,7 @@ export async function updateInvoice(
     );
 
     revalidatePath("/dashboard/estimate");
+    console.log("updated invoice", updateInvoice);
     return {
       type: "success",
       data: updatedInvoice,
