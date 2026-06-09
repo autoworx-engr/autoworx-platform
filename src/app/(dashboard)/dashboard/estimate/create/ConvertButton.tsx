@@ -27,21 +27,28 @@ export default function ConvertButton({
   const resetLists = useListsStore((state) => state.reset);
 
   async function handleSubmit() {
-    const res = await createInvoice();
-    console.log("ConvertButton response", res);
-    if (res.type === "success") {
-      if (type === "Estimate") {
-        router.push("/dashboard/estimate");
-      } else {
-        router.push("/dashboard/estimate/invoices");
+    try {
+      const res = await createInvoice();
+      console.log("ConvertButton response", res);
+      if (res.type === "success") {
+        console.log("ConvertButton response check success");
+        if (res?.data.type === "Estimate") {
+          console.log("ConvertButton response estimate check");
+          router.push("/dashboard/estimate");
+        } else {
+          router.push("/dashboard/estimate/invoices");
+        }
+        resetEstimateCreate();
+        resetLists();
+      } else if (res.type === "globalError") {
+        console.log("ConvertButton response global error check", res);
+        errorToast(
+          res.errorSource?.length ? res.errorSource[0].message : res.message,
+        );
+        return;
       }
-      resetEstimateCreate();
-      resetLists();
-    } else if (res.type === "globalError") {
-      errorToast(
-        res.errorSource?.length ? res.errorSource[0].message : res.message,
-      );
-      return;
+    } catch (error) {
+      console.log("ConvertButton response catch error ", error);
     }
   }
 
