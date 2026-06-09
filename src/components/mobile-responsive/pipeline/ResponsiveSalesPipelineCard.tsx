@@ -94,7 +94,9 @@ const ResponsiveSalesPipelineCard = ({
         <div className="mt-2 flex items-end justify-between">
           <div>
             <p className="line-clamp-1">
-              {vehicle && vehicle.length > 20 ? vehicle.slice(0, 20) + "..." : (vehicle || "")}
+              {vehicle && vehicle.length > 20
+                ? vehicle.slice(0, 20) + "..."
+                : vehicle || ""}
             </p>
 
             <p className="line-clamp-1">
