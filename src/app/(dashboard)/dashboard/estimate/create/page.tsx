@@ -19,6 +19,12 @@ import { CreateTab } from "./tabs/CreateTab";
 import PaymentTab from "./tabs/PaymentTab";
 import EstimateInspectionsTab from "./tabs/EstimateInspectionsTab";
 import DynamicTemplateLoader from "../DynamicTemplateLoader";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Invoices - Create Estimates",
+  description: "Create new estimate",
+};
 
 export default async function Page(props: {
   searchParams: Promise<{ clientId?: string; templateId?: string }>;
@@ -201,6 +207,8 @@ export default async function Page(props: {
             template ? Number(template?.serviceFee) > 0 : true
           }
           isEstimateTax={template ? Number(template?.tax) > 0 : true}
+          storedTax={template ? Number(template.tax) : undefined}
+          storedServiceFee={template ? Number(template.serviceFee) : undefined}
         />
       </div>
     </div>

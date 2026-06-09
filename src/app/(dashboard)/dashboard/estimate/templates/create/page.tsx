@@ -16,6 +16,12 @@ import Create from "../../create/Create";
 import { TemplateBillSummary } from "../TemplateBillSummary";
 import SyncEstimate from "../../create/SyncEstimate";
 import Header from "../../create/Header";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Invoices - Create Template",
+  description: "Create a new template",
+};
 
 export default async function Page(props: {
   searchParams: Promise<{ templateId?: string; isEdit?: boolean }>;
@@ -297,6 +303,8 @@ export default async function Page(props: {
           isEdit={isEdit}
           isEstimateServiceFee={Number(invoice?.serviceFee) > 0}
           isEstimateTax={Number(invoice?.tax) > 0}
+          storedTax={isEdit ? Number(invoice?.tax) : undefined}
+          storedServiceFee={isEdit ? Number(invoice?.serviceFee) : undefined}
         />
       </div>
     </div>
