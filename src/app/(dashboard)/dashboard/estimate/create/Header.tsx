@@ -49,7 +49,7 @@ export default function Header({
     title,
     template,
     setTemplate,
-    items,
+    grandTotal,
   } = useEstimateCreateStore();
   const { status: selectedStatus } = useListsStore();
 
@@ -169,15 +169,18 @@ export default function Header({
           setOpen={setStatusOpenDropdown}
           isAllServicesCompleted={isAllServicesCompleted}
         />
-        {!isTemplate && (isEstimateCreate || isEstimateEdit) && (
-          <SelectTemplate
-            openDropdown={templateOpenDropdown}
-            setOpenDropdown={setTemplateOpenDropdown}
-            setValue={setTemplate}
-            value={template || selectedTemplate}
-            name="templateId"
-          />
-        )}
+        {!isTemplate &&
+          (isEstimateCreate ||
+            (isEstimateEdit && template) ||
+            (isEstimateEdit && grandTotal === 0)) && (
+            <SelectTemplate
+              openDropdown={templateOpenDropdown}
+              setOpenDropdown={setTemplateOpenDropdown}
+              setValue={setTemplate}
+              value={template || selectedTemplate}
+              name="templateId"
+            />
+          )}
       </div>
     </div>
   );

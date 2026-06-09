@@ -12,6 +12,7 @@ import { ServerAction } from "@/types/action";
 import { TErrorHandler } from "@/types/globalError";
 import { InvoiceType } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { authorizedLeadsConvertion } from "./authorizedLeadsConvertion";
 
 export async function authorizeInvoice(
   invoiceId: string,
@@ -136,6 +137,7 @@ export async function authorizeInvoice(
         invoiceType: updatedInvoice.type,
       });
 
+      await authorizedLeadsConvertion(updatedInvoice.id);
       // await updateServiceAutomationTrigger({
       //   companyId: updatedInvoice?.companyId,
       //   estimateId: updatedInvoice?.id,

@@ -80,6 +80,7 @@ export async function POST(req: NextRequest) {
     }
 
     const result = await newPayment({
+      companyId: principal.companyId,
       invoiceId,
       type: type as PaymentType,
       date: new Date(date),
