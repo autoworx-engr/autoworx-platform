@@ -34,9 +34,9 @@ export default function ConvertButton({
         console.log("ConvertButton response check success");
         if (res?.data.type === "Estimate") {
           console.log("ConvertButton response estimate check");
-          router.push("/dashboard/estimate");
+          window.location.href = "/dashboard/estimate";
         } else {
-          router.push("/dashboard/estimate/invoices");
+          window.location.href = "/dashboard/estimate/invoices";
         }
         resetEstimateCreate();
         resetLists();
