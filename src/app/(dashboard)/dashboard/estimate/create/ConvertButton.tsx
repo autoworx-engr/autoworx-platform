@@ -34,8 +34,8 @@ export default function ConvertButton({
       } else {
         router.replace("/dashboard/estimate/invoices");
       }
-      resetEstimateCreate();
-      resetLists();
+      // resetEstimateCreate();
+      // resetLists();
     } else if (res.type === "globalError") {
       errorToast(
         res.errorSource?.length ? res.errorSource[0].message : res.message,
