@@ -1,7 +1,7 @@
 /**
  * AUTO-GENERATED — do not edit manually.
  * Run: yarn generate:search
- * Generated: 2026-06-10T12:01:25.643Z
+ * Generated: 2026-06-10T16:00:59.991Z
  * Source: src/app
  */
 

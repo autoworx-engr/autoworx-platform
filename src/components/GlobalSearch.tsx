@@ -1,17 +1,17 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { Search } from "lucide-react";
 import {
   Dialog,
   DialogContent,
-  DialogTrigger,
-  DialogTitle,
   DialogDescription,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/Dialog";
 import { Input } from "@/components/ui/input";
 import { useSearch } from "@/hooks/useGlobalSearch";
+import { Search } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 export default function GlobalSearch({
   iconClassName,
@@ -26,26 +26,24 @@ export default function GlobalSearch({
   const [lastInteraction, setLastInteraction] = useState<"mouse" | "keyboard">(
     "keyboard",
   );
-  const inputRef = useRef<HTMLInputElement>(null);
+
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (open) {
-      setTimeout(() => inputRef.current?.focus(), 0);
       setSelectedIndex(0);
       setLastInteraction("keyboard");
     }
   }, [open]);
 
   useEffect(() => {
-    setSelectedIndex(0);
-    setLastInteraction("keyboard");
-  }, [query]);
-
-  useEffect(() => {
     if (open && results.length > 0 && lastInteraction === "keyboard") {
-      const el = document.getElementById(`search-result-${selectedIndex}`);
-      if (el) {
-        el.scrollIntoView({ block: "nearest" });
+      const container = containerRef.current;
+      const activeEl = container?.querySelector(
+        `[data-index="${selectedIndex}"]`,
+      ) as HTMLElement;
+      if (activeEl) {
+        activeEl.scrollIntoView({ block: "nearest" });
       }
     }
   }, [selectedIndex, open, results, lastInteraction]);
@@ -104,15 +102,22 @@ export default function GlobalSearch({
         <div className="flex items-center border-b px-3">
           <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
           <Input
-            ref={inputRef}
+            autoFocus
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setSelectedIndex(0);
+              setLastInteraction("keyboard");
+            }}
             onKeyDown={handleKeyDown}
             placeholder="Search..."
             className="flex h-12 w-full rounded-md bg-transparent py-3 text-base outline-none border-none placeholder:text-muted-foreground focus-visible:ring-0 shadow-none disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
-        <div className="max-h-[350px] overflow-y-auto overflow-x-hidden p-2">
+        <div
+          ref={containerRef}
+          className="max-h-[350px] overflow-y-auto overflow-x-hidden p-2"
+        >
           {isSearching && !hasResults && (
             <div className="py-6 text-center text-sm text-muted-foreground">
               No results found.
@@ -123,7 +128,7 @@ export default function GlobalSearch({
               {results.map((result, index) => (
                 <button
                   key={result.id}
-                  id={`search-result-${index}`}
+                  data-index={index}
                   onClick={() => handleSelect(result.href)}
                   onMouseEnter={() => handleMouseEnter(index)}
                   className={`relative flex cursor-pointer select-none items-center justify-between rounded-sm px-3 py-2 outline-none transition-colors text-left w-full ${

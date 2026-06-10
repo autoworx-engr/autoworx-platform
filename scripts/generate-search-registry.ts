@@ -190,12 +190,12 @@ function filePathToHref(filePath: string): string {
 
   // Special case: Reporting tabs require a ?view query parameter to correctly select the active tab.
   const reportingTabs = ["revenue", "inventory", "leads", "payments", "teams"];
+  const lastSegment = href.split("/").pop() || "";
   const isReportingTab =
     href.startsWith("/dashboard/reporting/") &&
-    reportingTabs.includes(href.split("/").pop() || "");
+    reportingTabs.includes(lastSegment);
   if (isReportingTab) {
-    const tabName = href.split("/").pop();
-    href = `${href}?view=${tabName}`;
+    href = `${href}?view=${lastSegment}`;
   }
 
   return href;

@@ -22,7 +22,7 @@ function scoreItem(item: SearchItem, query: string): number {
 
   if (label.includes(q)) score += 50;
 
-  for (const keyword of item.keywords) {
+  for (const keyword of item.keywords || []) {
     const k = keyword.toLowerCase();
 
     if (k === q) score += 40;
