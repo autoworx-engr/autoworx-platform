@@ -57,10 +57,14 @@ export function SelectClientTags({
   );
 
   const fetchTags = useCallback(async () => {
-    const res = await getTags("CLIENT");
-    if (res.type === "success") {
-      setTags(res.data);
-    } else {
+    try {
+      const res = await getTags("CLIENT");
+      if (res.type === "success") {
+        setTags(res.data);
+      } else {
+        setError("Failed to load tags.");
+      }
+    } catch {
       setError("Failed to load tags.");
     }
   }, []);
@@ -89,12 +93,16 @@ export function SelectClientTags({
   }, [handleClickOutside]);
 
   async function handleDelete(id: number) {
-    const res = await deleteTag(id);
+    try {
+      const res = await deleteTag(id);
 
-    if (res.type === "success") {
-      setTags((prev: Tag[]) => prev.filter((tag) => tag.id !== id));
-      if (tag?.id === id) setTag(undefined!);
-    } else {
+      if (res.type === "success") {
+        setTags((prev: Tag[]) => prev.filter((tag) => tag.id !== id));
+        if (tag?.id === id) setTag(undefined!);
+      } else {
+        setError("Failed to delete tag.");
+      }
+    } catch {
       setError("Failed to delete tag.");
     }
   }

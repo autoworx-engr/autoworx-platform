@@ -20,7 +20,8 @@ import { errorToast } from "@/lib/toast";
 import { useFormErrorStore } from "@/stores/form-error";
 import { EmployeeType, SalaryType, User } from "@prisma/client";
 import { CircleUserRound as UserIcon, SquarePen } from "lucide-react";
-import React, { useRef, useState } from "react";
+import Image from "next/image";
+import React, { useEffect, useRef, useState } from "react";
 import PhoneInput from "../PhoneInput";
 
 export default function AddNewEmployee({
@@ -34,6 +35,7 @@ export default function AddNewEmployee({
   const [employeeTypeOpen, setEmployeeTypeOpen] = useState(false);
   const [salaryTypeOpen, setSalaryTypeOpen] = useState(false);
   const [profilePic, setProfilePic] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   // const [mobile, setMobile] = useState("+1");
   // const [country, setCountry] = useState('');
   // const [countryIsoCode, setCountryIsoCode] = useState('');
@@ -51,6 +53,16 @@ export default function AddNewEmployee({
   const { data: companyName } = useServerGet(getCompany);
   const { showError, clearError } = useFormErrorStore();
   const { mobile, country, countryIsoCode } = phoneDataRef.current;
+
+  useEffect(() => {
+    if (!profilePic) {
+      setPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(profilePic);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [profilePic]);
   async function handleSubmit() {
     clearError();
     let photo;
@@ -302,9 +314,12 @@ export default function AddNewEmployee({
             {profilePic ? (
               <div className="relative group">
                 <div className="relative h-16 w-16 rounded-full overflow-hidden ring-4 ring-white dark:ring-slate-800 shadow-md transition-transform group-hover:scale-105">
-                  <img
-                    src={URL.createObjectURL(profilePic)}
+                  <Image
+                    src={previewUrl!}
                     alt="profile"
+                    width={64}
+                    height={64}
+                    unoptimized
                     className="h-full w-full object-cover"
                   />
                 </div>
