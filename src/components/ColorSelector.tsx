@@ -59,7 +59,7 @@ export default function ColorSelector({
       setFilteredColors(colors);
     } else {
       const filtered = colors.filter((color) =>
-        color.name.toLowerCase().includes(query)
+        color.name.toLowerCase().includes(query),
       );
       setFilteredColors(filtered);
     }
@@ -126,10 +126,9 @@ export default function ColorSelector({
                 <button
                   key={color.id}
                   type="button"
-                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="flex w-full items-center gap-2 px-3 py-2 border-b border-slate-200 rounded-sm dark:border-slate-800 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
                   onClick={() => handleSelectColor(color)}
                 >
-                  <span className="h-3.5 w-3.5 rounded-full bg-slate-300" aria-hidden />
                   <span>{color.name}</span>
                 </button>
               ))}
