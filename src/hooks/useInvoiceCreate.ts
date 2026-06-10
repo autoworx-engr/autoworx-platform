@@ -170,6 +170,7 @@ export function useInvoiceCreate(type: InvoiceType) {
       }
     }
 
+    console.log("useInvoiceCreate Hook response", res);
     return res;
   }
 

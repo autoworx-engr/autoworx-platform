@@ -45,6 +45,22 @@ export function SlimInput({
   // Generate a unique ID if not provided, for accessibility
   const inputId = props.id ?? props.name;
   const IconComponent = InfoCircleOutlined;
+
+  const isDateLike =
+    props.type === "date" ||
+    props.type === "time" ||
+    props.type === "datetime-local" ||
+    props.type === "month";
+  const isEmptyDate =
+    isDateLike &&
+    (props.value === undefined || props.value === null || props.value === "");
+  const datePlaceholder =
+    typeof props.placeholder === "string" && props.placeholder.length > 0
+      ? props.placeholder
+      : props.type === "time"
+        ? "Select time"
+        : "Select date";
+
   return (
     <div className={cn("group flex flex-col gap-1.5", rootClassName)}>
       <label
@@ -67,8 +83,17 @@ export function SlimInput({
         <input
           id={inputId}
           required={required}
+          data-empty={isEmptyDate || undefined}
           className={cn(
             slimInputClassName,
+            // Normalize native date/time inputs so they don't balloon on mobile
+            isDateLike &&
+              cn(
+                "h-[38px] appearance-none",
+                "[&::-webkit-date-and-time-value]:text-left [&::-webkit-date-and-time-value]:m-0",
+                "[&::-webkit-calendar-picker-indicator]:opacity-60",
+                "data-[empty]:[&::-webkit-datetime-edit]:opacity-0",
+              ),
             // Error state styling overrides
             error &&
               "border-rose-400 focus:border-rose-500 focus:ring-rose-500/10 text-rose-600",
@@ -76,6 +101,11 @@ export function SlimInput({
           )}
           {...props}
         />
+        {isEmptyDate && (
+          <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-md text-slate-400">
+            {datePlaceholder}
+          </span>
+        )}
       </div>
 
       {/* Error Message with subtle slide-in animation logic */}

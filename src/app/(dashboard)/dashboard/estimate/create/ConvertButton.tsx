@@ -30,12 +30,12 @@ export default function ConvertButton({
     const res = await createInvoice();
     if (res.type === "success") {
       if (type === "Estimate") {
-        router.push("/dashboard/estimate");
+        router.replace("/dashboard/estimate");
       } else {
-        router.push("/dashboard/estimate/invoices");
+        router.replace("/dashboard/estimate/invoices");
       }
-      resetEstimateCreate();
-      resetLists();
+      // resetEstimateCreate();
+      // resetLists();
     } else if (res.type === "globalError") {
       errorToast(
         res.errorSource?.length ? res.errorSource[0].message : res.message,
