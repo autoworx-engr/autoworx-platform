@@ -16,16 +16,12 @@ function scoreItem(item: SearchItem, query: string): number {
 
   let score = 0;
 
-  // Exact label match
   if (label === q) score += 100;
 
-  // Label starts with query
   if (label.startsWith(q)) score += 75;
 
-  // Label contains query
   if (label.includes(q)) score += 50;
 
-  // Keyword matches
   for (const keyword of item.keywords) {
     const k = keyword.toLowerCase();
 
@@ -34,7 +30,6 @@ function scoreItem(item: SearchItem, query: string): number {
     else if (k.includes(q)) score += 20;
   }
 
-  // Description match
   if (description.includes(q)) score += 10;
 
   return score;

@@ -41,7 +41,6 @@ export default function GlobalSearch({
     setLastInteraction("keyboard");
   }, [query]);
 
-  // Scroll active item into view only on keyboard interaction
   useEffect(() => {
     if (open && results.length > 0 && lastInteraction === "keyboard") {
       const el = document.getElementById(`search-result-${selectedIndex}`);
