@@ -97,7 +97,7 @@ export default function GlobalSearch({
           />
         </button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] gap-0 p-0 overflow-hidden">
+      <DialogContent className="top-[10%] translate-y-0 sm:top-[50%] sm:translate-y-[-50%] w-[95vw] sm:w-full sm:max-w-[600px] rounded-2xl sm:rounded-lg gap-0 p-0 overflow-hidden shadow-2xl">
         <DialogTitle className="sr-only">Global Search</DialogTitle>
         <DialogDescription className="sr-only">
           Search for pages, settings, and forms
