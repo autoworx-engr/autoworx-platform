@@ -61,6 +61,9 @@ const EXCLUDED_HREF_PREFIXES = [
   "/reports", // token-based public report view
   "/awx-dashboard",
   "/api-docs",
+  "/dashboard/communication/photo",
+  "/dashboard/estimate/photo",
+  "/dashboard/settings/my-account/leave-requests",
 ];
 
 // Keyword stopwords — short/common words that add noise to search
@@ -205,7 +208,8 @@ function filePathToHref(filePath: string): string {
 function hrefToLabel(href: string): string {
   if (href === "/") return "Home";
 
-  const segments = href.split("/").filter(Boolean);
+  const cleanHref = href.split("?")[0];
+  const segments = cleanHref.split("/").filter(Boolean);
 
   return segments
     .map((seg) => {
@@ -223,13 +227,23 @@ function hrefToLabel(href: string): string {
  * Handles:
  *   export const metadata = { title: "...", description: "..." }
  *   export const metadata: Metadata = { title: "...", description: "..." }
+ *
+ * Note: Only reads inside the metadata export block to avoid matching
+ * unrelated `title` or `description` fields elsewhere in the file.
  */
 function extractStaticMetadata(source: string): {
   title?: string;
   description?: string;
 } {
-  const titleMatch = source.match(/title\s*:\s*["'`]([^"'`]+)["'`]/);
-  const descMatch = source.match(/description\s*:\s*["'`]([^"'`]+)["'`]/);
+  // Narrow to just the metadata export block to avoid matching title/description
+  // fields in unrelated component config objects elsewhere in the file.
+  const metadataBlockMatch = source.match(
+    /export\s+const\s+metadata[^=]*=\s*(\{[\s\S]*?\n\})/,
+  );
+  const scope = metadataBlockMatch ? metadataBlockMatch[1] : source;
+
+  const titleMatch = scope.match(/title\s*:\s*["'`]([^"'`]+)["'`]/);
+  const descMatch = scope.match(/description\s*:\s*["'`]([^"'`]+)["'`]/);
   return {
     title: titleMatch?.[1],
     description: descMatch?.[1],
@@ -249,7 +263,8 @@ function detectType(href: string, source: string): ItemType {
  * Derive keywords from the href path segments (useful for fuzzy matching).
  */
 function deriveKeywords(href: string, label: string): string[] {
-  const fromPath = href
+  const cleanHref = href.split("?")[0]; // strip query string
+  const fromPath = cleanHref
     .split("/")
     .filter((s) => s && !/^\[.*\]$/.test(s))
     .map((s) => s.toLowerCase().replace(/[-_]/g, " "));
@@ -268,7 +283,10 @@ function deriveKeywords(href: string, label: string): string[] {
  * Slugify a href into a stable string ID.
  */
 function hrefToId(href: string): string {
-  return href === "/" ? "home" : href.replace(/^\//, "").replace(/\//g, "-");
+  const cleanHref = href.split("?")[0]; // strip query string
+  return cleanHref === "/"
+    ? "home"
+    : cleanHref.replace(/^\//, "").replace(/\//g, "-");
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────

@@ -1,7 +1,7 @@
 /**
  * AUTO-GENERATED — do not edit manually.
  * Run: yarn generate:search
- * Generated: 2026-06-10T11:18:00.550Z
+ * Generated: 2026-06-10T12:01:25.643Z
  * Source: src/app
  */
 
@@ -58,13 +58,6 @@ export const generatedRegistry: SearchItem[] = [
     description: "Manage client and supplier collaboration",
   },
   {
-    id: "dashboard-communication-photo",
-    label: "Dashboard › Communication › Photo",
-    href: "/dashboard/communication/photo",
-    type: "page",
-    keywords: ["dashboard", "communication", "photo"],
-  },
-  {
     id: "dashboard-employee",
     label: "Directory - Employee",
     href: "/dashboard/employee",
@@ -103,13 +96,6 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "estimate", "invoices"],
     description: "View and manage all your invoices.",
-  },
-  {
-    id: "dashboard-estimate-photo",
-    label: "Dashboard › Estimate › Photo",
-    href: "/dashboard/estimate/photo",
-    type: "page",
-    keywords: ["dashboard", "estimate", "photo"],
   },
   {
     id: "dashboard-estimate-templates",
@@ -176,10 +162,11 @@ export const generatedRegistry: SearchItem[] = [
   },
   {
     id: "dashboard-pipeline-sales-lead",
-    label: "Dashboard › Pipeline › Sales › Lead",
+    label: "Sales Leads",
     href: "/dashboard/pipeline/sales/lead",
     type: "page",
-    keywords: ["dashboard", "pipeline", "sales", "lead"],
+    keywords: ["dashboard", "pipeline", "sales", "lead", "leads"],
+    description: "View and manage your sales leads",
   },
   {
     id: "dashboard-pipeline-sales-pipeline",
@@ -199,10 +186,11 @@ export const generatedRegistry: SearchItem[] = [
   },
   {
     id: "dashboard-pipeline-shop-workorder",
-    label: "Dashboard › Pipeline › Shop › Workorder",
+    label: "Work Orders",
     href: "/dashboard/pipeline/shop/workorder",
     type: "page",
-    keywords: ["dashboard", "pipeline", "shop", "workorder"],
+    keywords: ["dashboard", "pipeline", "shop", "workorder", "work", "orders"],
+    description: "View and manage your work orders",
   },
   {
     id: "dashboard-pipeline-team-pipeline",
@@ -214,65 +202,42 @@ export const generatedRegistry: SearchItem[] = [
   },
   {
     id: "dashboard-pipeline-team-workorder",
-    label: "Dashboard › Pipeline › Team › Workorder",
+    label: "Team Work Orders",
     href: "/dashboard/pipeline/team/workorder",
     type: "page",
-    keywords: ["dashboard", "pipeline", "team", "workorder"],
+    keywords: ["dashboard", "pipeline", "team", "workorder", "work", "orders"],
+    description: "View and manage your team work orders",
   },
   {
-    id: "dashboard-reporting-inventory?view=inventory",
+    id: "dashboard-reporting-inventory",
     label: "Analytics - Inventory",
     href: "/dashboard/reporting/inventory?view=inventory",
     type: "page",
-    keywords: [
-      "dashboard",
-      "reporting",
-      "inventory?view=inventory",
-      "analytics",
-      "inventory",
-    ],
+    keywords: ["dashboard", "reporting", "inventory", "analytics"],
     description: "Analyze inventory performance and profitability",
   },
   {
-    id: "dashboard-reporting-leads?view=leads",
+    id: "dashboard-reporting-leads",
     label: "Analytics - Leads",
     href: "/dashboard/reporting/leads?view=leads",
     type: "page",
-    keywords: [
-      "dashboard",
-      "reporting",
-      "leads?view=leads",
-      "analytics",
-      "leads",
-    ],
+    keywords: ["dashboard", "reporting", "leads", "analytics"],
     description: "Analyze lead generation and conversion performance",
   },
   {
-    id: "dashboard-reporting-payments?view=payments",
+    id: "dashboard-reporting-payments",
     label: "Analytics - Payments",
     href: "/dashboard/reporting/payments?view=payments",
     type: "page",
-    keywords: [
-      "dashboard",
-      "reporting",
-      "payments?view=payments",
-      "analytics",
-      "payments",
-    ],
+    keywords: ["dashboard", "reporting", "payments", "analytics"],
     description: "Analyze payment trends and manage overdue invoices",
   },
   {
-    id: "dashboard-reporting-revenue?view=revenue",
+    id: "dashboard-reporting-revenue",
     label: "Analytics - Revenue",
     href: "/dashboard/reporting/revenue?view=revenue",
     type: "page",
-    keywords: [
-      "dashboard",
-      "reporting",
-      "revenue?view=revenue",
-      "analytics",
-      "revenue",
-    ],
+    keywords: ["dashboard", "reporting", "revenue", "analytics"],
     description: "Analyze your shop",
   },
   {
@@ -284,17 +249,11 @@ export const generatedRegistry: SearchItem[] = [
     description: "View and analyze your sales reports and performance.",
   },
   {
-    id: "dashboard-reporting-teams?view=teams",
+    id: "dashboard-reporting-teams",
     label: "Analytics - Teams",
     href: "/dashboard/reporting/teams?view=teams",
     type: "page",
-    keywords: [
-      "dashboard",
-      "reporting",
-      "teams?view=teams",
-      "analytics",
-      "teams",
-    ],
+    keywords: ["dashboard", "reporting", "teams", "analytics"],
     description: "Manage employee performance and payouts",
   },
   {
@@ -491,21 +450,6 @@ export const generatedRegistry: SearchItem[] = [
     description: "Manage your account",
   },
   {
-    id: "dashboard-settings-my-account-leave-requests",
-    label: "Dashboard › Settings › My Account › Leave Requests",
-    href: "/dashboard/settings/my-account/leave-requests",
-    type: "settings",
-    keywords: [
-      "dashboard",
-      "settings",
-      "my account",
-      "leave requests",
-      "account",
-      "leave",
-      "requests",
-    ],
-  },
-  {
     id: "dashboard-settings-networks",
     label: "Settings - Networks",
     href: "/dashboard/settings/networks",
@@ -539,7 +483,7 @@ export const generatedRegistry: SearchItem[] = [
   },
   {
     id: "dashboard-settings-sales-agent-ai-settings",
-    label: "Dashboard › Settings › Sales Agent › Ai Settings",
+    label: "Settings - Sales Agent AI",
     href: "/dashboard/settings/sales-agent/ai-settings",
     type: "settings",
     keywords: [
@@ -550,6 +494,7 @@ export const generatedRegistry: SearchItem[] = [
       "sales",
       "agent",
     ],
+    description: "Configure AI settings for your sales agent",
   },
   {
     id: "dashboard-settings-security",
@@ -613,7 +558,7 @@ export const generatedRegistry: SearchItem[] = [
   },
   {
     id: "dashboard-virtual-shop-admin-service-create",
-    label: "Dashboard › Virtual Shop › Admin › Service › Create",
+    label: "Virtual Shop - Create Service",
     href: "/dashboard/virtual-shop/admin/service/create",
     type: "page",
     keywords: [
@@ -625,6 +570,7 @@ export const generatedRegistry: SearchItem[] = [
       "virtual",
       "shop",
     ],
+    description: "Create or edit a virtual shop service",
   },
   {
     id: "dashboard-visualization",
@@ -643,4 +589,4 @@ export const generatedRegistry: SearchItem[] = [
   },
 ];
 
-// 67 route(s) registered
+// 64 route(s) registered
