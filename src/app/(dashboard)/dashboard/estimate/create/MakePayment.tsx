@@ -784,7 +784,9 @@ export default function MakePayment() {
                   type="text"
                   label="Deposit Method"
                   value={depositMethod}
-                  onChange={(e) => setDepositMethod(e.target.value)}
+                  onChange={(e) =>
+                    setDepositMethod(e.target.value.replace(/[^a-zA-Z ]/g, ""))
+                  }
                   required={true}
                 />
               </div>
