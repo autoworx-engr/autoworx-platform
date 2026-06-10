@@ -34,6 +34,7 @@ const EXCLUDED_SEGMENTS = new Set([
 // Routes that start with any of these prefixes are excluded from the registry.
 // These are public/auth/utility pages not useful in an authenticated app search.
 const EXCLUDED_HREF_PREFIXES = [
+  "/",
   "/login",
   "/register",
   "/forgot-password",
@@ -54,11 +55,12 @@ const EXCLUDED_HREF_PREFIXES = [
   "/booking-url",
   "/bookingurl",
   "/subdomain", // public virtual shop storefront
-  "/s/", // short-link redirects
+  "/s", // short-link redirects (/s/[shortCode])
   "/stripe/payment", // post-payment landing pages
   "/public-invoice", // client-facing invoice view
   "/reports", // token-based public report view
   "/awx-dashboard",
+  "/api-docs",
 ];
 
 // Keyword stopwords — short/common words that add noise to search
@@ -181,7 +183,19 @@ function filePathToHref(filePath: string): string {
     return "/";
   }
 
-  return "/" + segments.join("/");
+  let href = "/" + segments.join("/");
+
+  // Special case: Reporting tabs require a ?view query parameter to correctly select the active tab.
+  const reportingTabs = ["revenue", "inventory", "leads", "payments", "teams"];
+  const isReportingTab =
+    href.startsWith("/dashboard/reporting/") &&
+    reportingTabs.includes(href.split("/").pop() || "");
+  if (isReportingTab) {
+    const tabName = href.split("/").pop();
+    href = `${href}?view=${tabName}`;
+  }
+
+  return href;
 }
 
 /**
@@ -271,13 +285,11 @@ function generate(): void {
   for (const file of pageFiles) {
     const href = filePathToHref(file);
 
-    // Skip purely dynamic routes like /invoices/[id] — they're data-driven,
-    // not useful as static search entries. Keep if there's a static prefix.
-    const isDynamicOnly = href
-      .split("/")
-      .every((s) => !s || /^\[.*\]$/.test(s));
-    if (isDynamicOnly) {
-      skipped.push(`[dynamic-only] ${href}`);
+    // Skip any route that contains a dynamic segment like [id] or [clientId].
+    // These require a real ID to navigate to and aren't useful as static search entries.
+    const hasDynamicSegment = href.split("/").some((s) => /^\[.*\]$/.test(s));
+    if (hasDynamicSegment) {
+      skipped.push(`[dynamic-segment] ${href}`);
       continue;
     }
 
@@ -328,7 +340,7 @@ function generate(): void {
 
   if (skipped.length) {
     const dynamicOnly = skipped.filter((s) =>
-      s.startsWith("[dynamic-only]"),
+      s.startsWith("[dynamic-segment]"),
     ).length;
     const internal = skipped.filter((s) =>
       s.startsWith("[internal-route]"),
