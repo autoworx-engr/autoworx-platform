@@ -92,7 +92,6 @@ export default function TaskContentModal({
         isLoading ? "block" : "flex flex-col",
         "min-h-[500px] overflow-y-auto",
       )}
-      onCloseAutoFocus={(e) => e.preventDefault()}
       onClick={(e) => {
         e.stopPropagation();
       }}
