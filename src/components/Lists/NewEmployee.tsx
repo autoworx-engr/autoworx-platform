@@ -19,8 +19,9 @@ import { cn } from "@/lib/cn";
 import { errorToast } from "@/lib/toast";
 import { useFormErrorStore } from "@/stores/form-error";
 import { EmployeeType, SalaryType, User } from "@prisma/client";
-import { CircleUserRound as UserIcon } from "lucide-react";
-import React, { useRef, useState } from "react";
+import { CircleUserRound as UserIcon, SquarePen } from "lucide-react";
+import Image from "next/image";
+import React, { useEffect, useRef, useState } from "react";
 import PhoneInput from "../PhoneInput";
 
 export default function AddNewEmployee({
@@ -34,6 +35,7 @@ export default function AddNewEmployee({
   const [employeeTypeOpen, setEmployeeTypeOpen] = useState(false);
   const [salaryTypeOpen, setSalaryTypeOpen] = useState(false);
   const [profilePic, setProfilePic] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   // const [mobile, setMobile] = useState("+1");
   // const [country, setCountry] = useState('');
   // const [countryIsoCode, setCountryIsoCode] = useState('');
@@ -51,6 +53,16 @@ export default function AddNewEmployee({
   const { data: companyName } = useServerGet(getCompany);
   const { showError, clearError } = useFormErrorStore();
   const { mobile, country, countryIsoCode } = phoneDataRef.current;
+
+  useEffect(() => {
+    if (!profilePic) {
+      setPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(profilePic);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [profilePic]);
   async function handleSubmit() {
     clearError();
     let photo;
@@ -76,7 +88,7 @@ export default function AddNewEmployee({
       document.querySelector<HTMLInputElement>("[name='state']")?.value;
     const zip = document.querySelector<HTMLInputElement>("[name='zip']")?.value;
     const commission = document.querySelector<HTMLInputElement>(
-      "[name='commission']"
+      "[name='commission']",
     )?.value;
     const date =
       document.querySelector<HTMLInputElement>("[name='date']")?.value;
@@ -85,7 +97,7 @@ export default function AddNewEmployee({
     // const startDate =
     //   document.querySelector<HTMLInputElement>("[name='startDate']")?.value;
     const salaryType = document.querySelector<HTMLInputElement>(
-      "[name='salaryType']"
+      "[name='salaryType']",
     )?.value;
     const salary =
       document.querySelector<HTMLInputElement>("[name='salary']")?.value;
@@ -93,7 +105,7 @@ export default function AddNewEmployee({
     const password =
       document.querySelector<HTMLInputElement>("[name='password']")?.value;
     const confirmPassword = document.querySelector<HTMLInputElement>(
-      "[name='confirmPassword']"
+      "[name='confirmPassword']",
     )?.value;
 
     // Validate required fields
@@ -301,12 +313,31 @@ export default function AddNewEmployee({
 
             {profilePic ? (
               <div className="relative group">
-                <img
-                  src={URL.createObjectURL(profilePic)}
-                  alt="profile"
-                  className="h-16 w-16 cursor-pointer rounded-full object-cover ring-4 ring-white dark:ring-slate-800 shadow-md transition-transform group-hover:scale-105"
-                  onClick={() => {
-                    setProfilePic(null);
+                <div className="relative h-16 w-16 rounded-full overflow-hidden ring-4 ring-white dark:ring-slate-800 shadow-md transition-transform group-hover:scale-105">
+                  <Image
+                    src={previewUrl!}
+                    alt="profile"
+                    width={64}
+                    height={64}
+                    unoptimized
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+                <label
+                  htmlFor="profilePicture"
+                  className="absolute bottom-0 right-0 p-1 bg-[#6571FF] rounded-full shadow-sm cursor-pointer transition-colors"
+                >
+                  <SquarePen className="w-3 h-3 text-white" />
+                </label>
+                <input
+                  type="file"
+                  name="profilePicture"
+                  id="profilePicture"
+                  hidden
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) setProfilePic(file);
                   }}
                 />
               </div>
@@ -431,7 +462,7 @@ export default function AddNewEmployee({
                 <label
                   htmlFor="password"
                   className={cn(
-                    "flex items-center gap-1 text-base font-medium text-slate-700 dark:text-slate-200 transition-colors duration-300"
+                    "flex items-center gap-1 text-base font-medium text-slate-700 dark:text-slate-200 transition-colors duration-300",
                   )}
                 >
                   Password <span className="text-[#E9405F]">*</span>
@@ -447,7 +478,7 @@ export default function AddNewEmployee({
                 <label
                   htmlFor="confirmPassword"
                   className={cn(
-                    "flex items-center gap-1 text-base font-medium text-slate-700 dark:text-slate-200 transition-colors duration-300"
+                    "flex items-center gap-1 text-base font-medium text-slate-700 dark:text-slate-200 transition-colors duration-300",
                   )}
                 >
                   Confirm Password <span className="text-[#E9405F]">*</span>

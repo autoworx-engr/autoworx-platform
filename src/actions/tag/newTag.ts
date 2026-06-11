@@ -37,7 +37,7 @@ export default async function newTag({
   if (isExist) {
     return {
       type: "error",
-      message: "This Tag is already exists.",
+      message: "This tag already exists.",
     };
   }
   const newTag = await db.tag.create({

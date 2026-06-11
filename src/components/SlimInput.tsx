@@ -53,7 +53,10 @@ export function SlimInput({
     props.type === "month";
   const isEmptyDate =
     isDateLike &&
-    (props.value === undefined || props.value === null || props.value === "");
+    (props.value === undefined || props.value === null || props.value === "") &&
+    (props.defaultValue === undefined ||
+      props.defaultValue === null ||
+      props.defaultValue === "");
   const datePlaceholder =
     typeof props.placeholder === "string" && props.placeholder.length > 0
       ? props.placeholder

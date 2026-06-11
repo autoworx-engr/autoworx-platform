@@ -22,12 +22,6 @@ export default function ResetPassword({
   const router = useRouter();
   const { showError } = useFormErrorStore();
   const [password, setPassword] = useState("");
-  // const [isStrong, setIsStrong] = useState(false);
-
-  const strongPasswordRegex =
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
-
-  const isStrong = strongPasswordRegex.test(password);
 
   const getStrengthScore = (password: string) => {
     let score = 0;
@@ -192,13 +186,6 @@ export default function ResetPassword({
                     style={{ width: `${(strength / 5) * 100}%` }}
                   />
                 </div>
-                <p
-                  className={`text-xs mt-2 ${isStrong ? "text-green-500" : "text-red-500"}`}
-                >
-                  {isStrong
-                    ? "Strong password ✓"
-                    : "Must include uppercase, lowercase, number and symbol (min 8 chars)"}
-                </p>
               </div>
 
               {/* <div className="rounded-xl border border-slate-200/70 bg-white/60 px-4 py-3 text-xs text-slate-600 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/60 dark:text-slate-300">

@@ -3,7 +3,7 @@ import { completeTask } from "@/actions/task/completeTask";
 import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
 import { cn } from "@/lib/cn";
 import { queryKeys } from "@/lib/queryKeys";
-import { successToast } from "@/lib/toast";
+import { successToast, errorToast } from "@/lib/toast";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { Task as TaskType } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -42,8 +42,8 @@ const Task = ({ task, onTaskDeleted }: TaskProps) => {
     // Format: "MMM DD" or "MMM DD, h:mmA" if time is present
     const datePart = taskMoment.format("MMM DD");
 
-    if (timePart) {
-      return `${datePart}, ${timePart}`;
+    if (timeFormat) {
+      return `${datePart}, ${timeFormat}`;
     }
     return datePart;
   };
@@ -176,11 +176,13 @@ const Task = ({ task, onTaskDeleted }: TaskProps) => {
             onOpenChange={setPopconfirmVisible}
             onConfirm={async (e) => {
               e?.stopPropagation();
-              await completeTask(task.id);
-              successToast("Task completed");
-              // Removes the task from the cache in-place (no refetch) so the
-              // list keeps its scroll position.
-              onTaskDeleted?.(task.id);
+              const result = await completeTask(task.id);
+              if (result.type === "success") {
+                successToast("Task completed");
+                onTaskDeleted?.(task.id);
+              } else {
+                errorToast("Failed to complete task. Please try again.");
+              }
               setPopconfirmVisible(false);
             }}
             onCancel={(e) => {

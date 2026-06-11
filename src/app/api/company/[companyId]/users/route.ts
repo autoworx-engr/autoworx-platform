@@ -38,6 +38,15 @@ import { db } from "@/lib/db";
  *           type: string
  *           example: john
  *         description: Search by first name, last name, email or phone
+ *       - in: query
+ *         name: type
+ *         required: false
+ *         schema:
+ *           type: string
+ *           example: Sales
+ *         description: >-
+ *           Optional employeeType filter. Case-insensitive single value
+ *           (e.g. "Sales"). Valid values: Admin, Manager, Sales, Technician, Other.
  *     responses:
  *       200:
  *         description: Users fetched successfully
@@ -109,6 +118,7 @@ export async function GET(
     const page = Number(searchParams.get("page") || 1);
     const limit = Number(searchParams.get("limit") || 10);
     const search = searchParams.get("search") || "";
+    const type = searchParams.get("type") || "";
 
     const skip = (page - 1) * limit;
 
@@ -123,6 +133,24 @@ export async function GET(
         { email: { contains: search, mode: "insensitive" } },
         { phone: { contains: search, mode: "insensitive" } },
       ];
+    }
+
+    const VALID_EMPLOYEE_TYPES = [
+      "Admin",
+      "Manager",
+      "Sales",
+      "Technician",
+      "Other",
+    ];
+
+    if (type) {
+      const matched = VALID_EMPLOYEE_TYPES.find(
+        (et) => et.toLowerCase() === type.trim().toLowerCase(),
+      );
+
+      if (matched) {
+        where.employeeType = matched;
+      }
     }
 
     const [users, total] = await Promise.all([

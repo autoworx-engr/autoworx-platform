@@ -58,16 +58,14 @@ export default function TaskComponent({ task }: TaskComponentProps) {
   };
 
   const handleConfirm = async () => {
-    try {
-      await completeTask(task.id, { revalidate: false });
+    const result = await completeTask(task.id, { revalidate: false });
+    if (result.type === "success") {
       successToast("Task Completed successfully.");
       removeTaskFromScrollCache(task.id);
-      setPopconfirmVisible(false);
-    } catch (error) {
-      console.error("Failed to delete task:", error);
-      errorToast("Failed to delete task. Please try again.");
-      setPopconfirmVisible(false);
+    } else {
+      errorToast("Failed to complete task. Please try again.");
     }
+    setPopconfirmVisible(false);
   };
 
   useEffect(() => {

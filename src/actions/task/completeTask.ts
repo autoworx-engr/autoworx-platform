@@ -19,6 +19,10 @@ export async function completeTask(
 
     const deletedTask = await deleteTask(id, options);
 
+    if (deletedTask.type !== "success" || !deletedTask.data) {
+      return { type: "error" };
+    }
+
     await sendTaskCompleteNotification({
       companyId: deletedTask.data.companyId,
       taskDate: deletedTask.data.date && deletedTask.data?.date,

@@ -2,8 +2,14 @@ import { getColumnsByType } from "@/actions/pipelines/pipelinesColumn";
 import Leads from "../../components/Leads";
 import { Suspense } from "react";
 import CarLoading from "@/components/common/CarLoading";
+import { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Sales Leads",
+  description: "View and manage your sales leads",
+};
 
 // Loading component for better UX
 function LoadingLeads() {

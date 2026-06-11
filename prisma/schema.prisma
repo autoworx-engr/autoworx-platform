@@ -2377,13 +2377,14 @@ model TwoFactorConfirmation {
 }
 
 model PasswordResetToken {
-  id        String   @id @default(uuid())
-  token     String   @unique
-  otp       String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    Int      @unique @map("user_id")
-  expiresAt DateTime @map("expires_at")
-  createdAt DateTime @default(now()) @map("created_at")
+  id          String   @id @default(uuid())
+  token       String   @unique
+  otp         String
+  otpVerified Boolean  @default(false) @map("otp_verified")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      Int      @unique @map("user_id")
+  expiresAt   DateTime @map("expires_at")
+  createdAt   DateTime @default(now()) @map("created_at")
 }
 
 // OAuth token for user.
