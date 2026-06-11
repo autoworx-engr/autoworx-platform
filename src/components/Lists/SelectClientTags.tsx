@@ -1,15 +1,13 @@
 "use client";
 
 import { INVOICE_COLORS } from "@/lib/consts";
-import { useFormErrorStore } from "@/stores/form-error";
 import { Tag } from "@prisma/client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "../DropdownMenu";
-import FormError from "../FormError";
 import Submit from "../Submit";
 import newTag from "@/actions/tag/newTag";
 import { getTags } from "../../actions/tag/getTags";
@@ -39,68 +37,75 @@ export function SelectClientTags({
   const state = useState(value);
   const [tag, setTag] = setValue ? [value, setValue] : state;
   const [tags, setTags] = useState<Tag[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [filteredTagList, setFilteredTagList] = useState<Tag[]>(tags);
   const [search, setSearch] = useState<string>("");
   const [pickerOpen, setPickerOpen] = useState(false);
   const [selectedColor, setSelectedColor] = useState<SelectedColor>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  const handleClickOutside = useCallback(
+    (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setOpen && setOpen(false);
+      }
+    },
+    [setOpen],
+  );
+
+  const fetchTags = useCallback(async () => {
+    try {
+      const res = await getTags("CLIENT");
+      if (res.type === "success") {
+        setTags(res.data);
+      } else {
+        setError("Failed to load tags.");
+      }
+    } catch {
+      setError("Failed to load tags.");
+    }
+  }, []);
+
   useEffect(() => {
     fetchTags();
-  }, []);
+  }, [fetchTags]);
 
   useEffect(() => {
     if (search) {
       setFilteredTagList(
         tags.filter((tag) =>
-          tag.name.toLowerCase().includes(search.toLowerCase())
-        )
+          tag.name.toLowerCase().includes(search.toLowerCase()),
+        ),
       );
     } else {
       setFilteredTagList(tags);
     }
-  }, [search]);
-
-  useEffect(() => {
-    setFilteredTagList(tags);
-  }, [tags]);
+  }, [search, tags]);
 
   useEffect(() => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, []);
-
-  async function fetchTags() {
-    const res = await getTags("CLIENT");
-    if (res.type === "success") {
-      setTags(res.data);
-    }
-  }
+  }, [handleClickOutside]);
 
   async function handleDelete(id: number) {
-    const res = await deleteTag(id);
+    try {
+      const res = await deleteTag(id);
 
-    if (res.type === "success") {
-      setTags((prev: Tag[]) => {
-        return prev.filter((tag) => tag.id !== id);
-      });
-
-      if (tag?.id === id) {
-        setTag(undefined!);
+      if (res.type === "success") {
+        setTags((prev: Tag[]) => prev.filter((tag) => tag.id !== id));
+        if (tag?.id === id) setTag(undefined!);
+      } else {
+        setError("Failed to delete tag.");
       }
+    } catch {
+      setError("Failed to delete tag.");
     }
   }
-
-  const handleClickOutside = (event: MouseEvent) => {
-    if (
-      dropdownRef.current &&
-      !dropdownRef.current.contains(event.target as Node)
-    ) {
-      setOpen && setOpen(false);
-    }
-  };
 
   return (
     <>
@@ -114,7 +119,7 @@ export function SelectClientTags({
         <DropdownMenuTrigger
           className={cn(
             "flex w-full h-10 items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 shadow-sm transition-all hover:shadow-md",
-            customStyles
+            customStyles,
           )}
           style={{
             backgroundColor: tag?.bgColor,
@@ -125,13 +130,15 @@ export function SelectClientTags({
             setOpen && setOpen(!open);
           }}
         >
-          <span className={cn("text-sm font-medium", !tag && "text-slate-500")}>{showPlaceholder ? (tag?.name ?? "Select Tag") : ""}</span>
+          <span className={cn("text-sm font-medium", !tag && "text-slate-500")}>
+            {showPlaceholder ? (tag?.name ?? "Select Tag") : ""}
+          </span>
           <ChevronDown
             size={16}
             className={cn(
               "shrink-0 transition-transform duration-200",
               open ? "rotate-180" : "rotate-0",
-              tag ? "" : "text-slate-400"
+              tag ? "" : "text-slate-400",
             )}
           />
         </DropdownMenuTrigger>
@@ -187,14 +194,20 @@ export function SelectClientTags({
                   onClick={() => handleDelete(tagItem.id)}
                   className="ml-1.5 transition-transform hover:scale-110"
                 >
-                  <div className="rounded-full border  text-slate-500 border-slate-100 p-0.5 hover:bg-red-100 hover:text-red-600">
+                  <div className="rounded-full border text-slate-500 border-slate-100 p-0.5 hover:bg-red-100 hover:text-red-600">
                     <X size={16} strokeWidth={2.5} />
                   </div>
                 </button>
               </div>
             ))}
           </div>
-          <FormError />
+
+          {error && (
+            <div className="mx-2 mb-1 flex items-center justify-between rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600 ring-1 ring-red-200">
+              <span>{error}</span>
+            </div>
+          )}
+
           {/* Quick Add Footer */}
           <div className="border-t border-slate-100 bg-slate-50/50 p-3">
             <QuickAddForm
@@ -225,7 +238,7 @@ export function SelectClientTags({
                       "flex h-8 items-center justify-center rounded-lg text-xs font-bold transition-all hover:scale-105",
                       selectedColor?.textColor === color.textColor
                         ? "ring-2 ring-[#6571FF] ring-offset-1"
-                        : "ring-1 ring-transparent"
+                        : "ring-1 ring-transparent",
                     )}
                   >
                     Aa
@@ -271,23 +284,24 @@ function QuickAddForm({
   selectedColor: SelectedColor;
   setTags: React.Dispatch<React.SetStateAction<Tag[]>>;
 }) {
-  const { showError } = useFormErrorStore();
   const formRef = useRef<HTMLFormElement | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(data: FormData) {
     const name = data.get("name") as string;
 
+    if (!name?.trim()) {
+      setError("Tag name is required.");
+      return;
+    }
+
     const res = await newTag({ name, type: "CLIENT", ...selectedColor });
 
     if (res.type === "error") {
-      showError({
-        field: res.field || "name",
-        message: res.message || "",
-      });
+      setError(res.message || "Failed to create tag.");
     } else {
-      setTags((prev: Tag[]) => {
-        return [...prev, res.data];
-      });
+      setError(null);
+      setTags((prev: Tag[]) => [...prev, res.data]);
       formRef.current?.reset();
       onSuccess?.(res.data);
     }
@@ -301,8 +315,15 @@ function QuickAddForm({
           type="text"
           required
           placeholder="New tag name..."
-          className="h-10 w-full rounded-lg bg-white px-2 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30 placeholder:text-slate-400"
+          onChange={() => error && setError(null)}
+          className={cn(
+            "h-10 w-full rounded-lg bg-white px-2 text-sm font-medium ring-1 ring-inset transition-all focus:outline-none focus:ring-2 placeholder:text-slate-400",
+            error
+              ? "ring-red-300 focus:ring-red-400/30"
+              : "ring-slate-200 focus:ring-[#6571FF]/30",
+          )}
         />
+        {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
       </div>
 
       <div className="flex w-full items-center justify-end gap-2">
