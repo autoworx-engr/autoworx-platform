@@ -587,6 +587,17 @@ const PDFComponent = function PDF({
       ).toFixed(2),
     ) === 0;
 
+  const totalMaterialSell = invoice.invoiceItems.reduce(
+    (invoiceSum: number, invoiceItem: any) =>
+      invoiceSum +
+      (invoiceItem.materials ?? []).reduce(
+        (materialSum: number, material: { quantity?: number; sell?: number }) =>
+          materialSum + (material.quantity ?? 0) * (material.sell ?? 0),
+        0,
+      ),
+    0,
+  );
+
   const refundAmount =
     (invoice as any).Refund?.reduce(
       (acc: number, r: { amount: number }) => acc + (Number(r?.amount) || 0),
@@ -630,9 +641,9 @@ const PDFComponent = function PDF({
     if (field === "tax" || field === "shop supplies") {
       const pct = Number(value) || 0;
       if (pct === 0) return "0%";
-      const amount = formatCurrency(
-        (Number(invoice.subtotal as any) * pct) / 100,
-      );
+      const base =
+        field === "tax" ? totalMaterialSell : Number(invoice.subtotal as any);
+      const amount = formatCurrency((base * pct) / 100);
       return `${pct}% (${amount})`;
     }
     return formatCurrency(parseFloat("" + value));
