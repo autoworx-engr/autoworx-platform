@@ -14,7 +14,6 @@ export async function GET(req: NextRequest) {
   const challenge = searchParams.get("hub.challenge");
 
   if (!VERIFY_TOKEN) {
-    console.error("[meta/webhook] META_WEBHOOK_VERIFY_TOKEN is not set in env");
     return NextResponse.json(
       { error: "Server misconfigured: verify token not set" },
       { status: 500 },
