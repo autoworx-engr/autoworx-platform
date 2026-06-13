@@ -51,9 +51,13 @@ export async function sendMessengerMessage({
 
   if (!metaRes.ok) {
     const errJson = await metaRes.json().catch(() => ({}));
-    throw new Error(
-      (errJson as any)?.error?.message ?? "Meta Messenger API error",
-    );
+    const metaError = (errJson as any)?.error;
+    if (metaError?.code === 10) {
+      throw new Error(
+        "The 24-hour messaging window has closed. You can only reply within 24 hours of the client's last message.",
+      );
+    }
+    throw new Error(metaError?.message ?? "Failed to send via Messenger.");
   }
 
   const metaData = (await metaRes.json()) as { message_id?: string };
