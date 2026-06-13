@@ -105,6 +105,7 @@ async function handleMessagingEvent(pageId: string, event: any) {
 
     const company = await db.company.findUniqueOrThrow({
       where: { id: companyId },
+      select: { name: true },
     });
 
     const newClient = await db.client.create({
