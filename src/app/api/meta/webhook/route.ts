@@ -94,12 +94,27 @@ async function handleMessagingEvent(pageId: string, event: any) {
     );
     const { firstName, lastName } = parseMetaName(metaProfile?.name);
 
+    let source = await db.source.findFirst({
+      where: { name: { equals: "facebook", mode: "insensitive" }, companyId },
+    });
+    if (!source) {
+      source = await db.source.create({
+        data: { name: "facebook", companyId },
+      });
+    }
+
+    const company = await db.company.findUniqueOrThrow({
+      where: { id: companyId },
+    });
+
     const newClient = await db.client.create({
       data: {
         firstName,
         lastName,
         companyId,
         photo: metaProfile?.profile_pic ?? "/images/default.png",
+        customerCompany: company.name,
+        sourceId: source.id,
       },
     });
     await db.facebookClientProfile.create({
