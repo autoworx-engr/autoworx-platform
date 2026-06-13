@@ -19,6 +19,21 @@ export default async function Messenger({ clientId }: { clientId: number }) {
     );
   }
 
+  const clientProfile = await db.facebookClientProfile.findFirst({
+    where: { clientId },
+  });
+
+  if (!clientProfile) {
+    return (
+      <div className="flex h-full items-center justify-center px-6">
+        <p className="text-center text-sm text-zinc-500">
+          This client has not started a Messenger conversation yet.
+          Conversations begin when the client messages your Facebook Page.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="relative h-full">
       <MessengerContainer clientId={clientId} />

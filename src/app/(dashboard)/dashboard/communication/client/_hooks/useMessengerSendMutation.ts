@@ -82,8 +82,8 @@ export default function useMessengerSendMutation(clientId: number) {
       );
     },
 
-    onError: (_err, _args, context) => {
-      errorToast("Failed to send message");
+    onError: (err: any, _args, context) => {
+      errorToast(err?.message || "Failed to send message");
       if (context?.prev) {
         queryClient.setQueryData(
           messengerQueryKey.allByClientId(clientId),
