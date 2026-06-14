@@ -1,12 +1,13 @@
-import { createColumn } from "@/actions/pipelines/pipelinesColumn";
+import { createInvoiceTag } from "@/actions/pipelines/invoiceTag";
 import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
  * @swagger
- * /api/pipeline/shop/create-column:
+ * /api/pipeline/shop/create-invoice-tag:
  *   post:
- *     summary: Create a new column in the shop pipeline
+ *     summary: Create a new invoice tag for the company
+ *     description: Creates a new GENERAL-type tag that can be attached to invoices in the shop pipeline.
  *     tags: [Shop Pipeline]
  *     security:
  *       - bearerAuth: []
@@ -17,22 +18,14 @@ import { NextRequest, NextResponse } from "next/server";
  *           schema:
  *             type: object
  *             required:
- *               - title
+ *               - name
  *             properties:
- *               title:
+ *               name:
  *                 type: string
- *                 example: In Progress
- *               textColor:
- *                 type: string
- *                 nullable: true
- *                 example: "#000000"
- *               bgColor:
- *                 type: string
- *                 nullable: true
- *                 example: "#ffffff"
+ *                 example: VIP
  *     responses:
  *       200:
- *         description: Column created successfully
+ *         description: Invoice tag created successfully
  *         content:
  *           application/json:
  *             schema:
@@ -43,22 +36,20 @@ import { NextRequest, NextResponse } from "next/server";
  *                   example: true
  *                 message:
  *                   type: string
- *                   example: Column created successfully
+ *                   example: Invoice tag created successfully
  *                 data:
  *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: number
+ *                       example: 1
+ *                     tag:
+ *                       type: string
+ *                       example: VIP
  *       400:
  *         description: Bad request
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: Title is required
+ *       401:
+ *         description: Unauthorized
  *       500:
  *         description: Internal server error
  */
@@ -72,33 +63,39 @@ export async function POST(req: NextRequest) {
   }
   try {
     const body = await req.json();
-    const { title, textColor, bgColor } = body;
+    const { name, textColor, bgColor } = body;
 
-    if (!title) {
+    if (!name || typeof name !== "string" || !name.trim()) {
       return NextResponse.json(
-        { success: false, message: "Title is required" },
+        { success: false, message: "name is required" },
         { status: 400 },
       );
     }
 
-    const data = await createColumn(
-      title,
-      "shop",
+    const result = await createInvoiceTag(
+      name.trim(),
+      principal.companyId,
       textColor,
       bgColor,
-      principal.companyId,
     );
+
+    if (result.type === "error") {
+      return NextResponse.json(
+        { success: false, message: result.message },
+        { status: 500 },
+      );
+    }
 
     return NextResponse.json({
       success: true,
-      message: "Column created successfully",
-      data,
+      message: "Invoice tag created successfully",
+      data: result.data,
     });
   } catch (error: any) {
     return NextResponse.json(
       {
         success: false,
-        message: error?.message || "Failed to create column",
+        message: error?.message || "Failed to create invoice tag",
       },
       { status: 500 },
     );

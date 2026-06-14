@@ -36,6 +36,7 @@ const nextConfig = {
   },
   reactStrictMode: false,
   productionBrowserSourceMaps: process.env.NODE_ENV === "development",
+  allowedDevOrigins: [],
 };
 
 export default nextConfig;

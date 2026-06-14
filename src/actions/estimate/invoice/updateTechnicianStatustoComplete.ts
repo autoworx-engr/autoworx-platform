@@ -6,9 +6,17 @@ import { sendTechnicianJobCompleteNotification } from "@/lib/notification/workOr
 import { getServerSession } from "next-auth";
 import { TECHNICIAN_STATUS } from "@/lib/consts";
 
-export const updateTechnicianStatustoComplete = async (invoiceId: string) => {
+export const updateTechnicianStatustoComplete = async (
+  invoiceId: string,
+  userId?: number,
+) => {
   try {
-    const getCurrentUser = await getServerSession(authOptions);
+    let resolvedUserId = userId;
+    if (!resolvedUserId) {
+      const getCurrentUser = await getServerSession(authOptions);
+      resolvedUserId = Number(getCurrentUser?.user?.id);
+    }
+
     const updatedTechnician = await db.technician.updateMany({
       where: { invoiceId: invoiceId },
       data: { status: TECHNICIAN_STATUS.COMPLETE, dateClosed: new Date() },
@@ -17,7 +25,7 @@ export const updateTechnicianStatustoComplete = async (invoiceId: string) => {
     // send a notification when technician jobs are completed
     sendTechnicianJobCompleteNotification({
       invoiceId,
-      technicianUserId: Number(getCurrentUser?.user?.id),
+      technicianUserId: resolvedUserId,
       isAllJobsCompleted: true,
     });
     return updatedTechnician;

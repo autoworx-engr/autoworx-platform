@@ -386,6 +386,17 @@ export default function InvoiceModalBody({
     }
   };
 
+  const totalMaterialSell = invoice.invoiceItems.reduce(
+    (invoiceSum: number, invoiceItem: any) =>
+      invoiceSum +
+      (invoiceItem.materials ?? []).reduce(
+        (materialSum: number, material: { quantity?: number; sell?: number }) =>
+          materialSum + (material.quantity ?? 0) * (material.sell ?? 0),
+        0,
+      ),
+    0,
+  );
+
   return (
     <DialogPortal>
       <DialogOverlay />
@@ -965,10 +976,13 @@ export default function InvoiceModalBody({
                           {Number(value)}%
                           {Number(value) !== 0 && (
                             <span>
-                              {" "}
                               |
                               {formatCurrency(
-                                (Number(invoice.subtotal as any) *
+                                (Number(
+                                  key === "tax"
+                                    ? totalMaterialSell
+                                    : (invoice.subtotal as any),
+                                ) *
                                   Number(value)) /
                                   100,
                               )}

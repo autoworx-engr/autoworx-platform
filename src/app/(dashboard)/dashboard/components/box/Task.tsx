@@ -3,7 +3,7 @@ import { completeTask } from "@/actions/task/completeTask";
 import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
 import { cn } from "@/lib/cn";
 import { queryKeys } from "@/lib/queryKeys";
-import { successToast } from "@/lib/toast";
+import { successToast, errorToast } from "@/lib/toast";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { Task as TaskType } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -14,22 +14,12 @@ import { useState, useEffect } from "react";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { useDate } from "../../task/_hook/lib/useDate";
 import { CircleCheckBig, SquarePen, Clock } from "lucide-react"; // Import Clock icon
+import { taskPriorityStyles } from "@/lib/taskPriorityStyles";
 
 type TaskProps = {
   task: TaskType;
   onTaskDeleted?: (taskId: number) => void;
 };
-
-// --- Custom Priority Classes with Gradient/Sleek Look ---
-const priorityClasses = {
-  // Low: Existing Blue/Purple (#6571FF) -> Gradient for Polish
-  Low: "bg-gradient-to-r from-[#505aff] to-[#6571FF] shadow-indigo-700/50",
-  // Medium: Existing Cyan (#25AADD) -> Gradient for Depth
-  Medium: "bg-gradient-to-r from-cyan-600 to-blue-500 shadow-cyan-600/50",
-  // High: Existing Teal/Dark Cyan (#006d77) -> Gradient for Intensity
-  High: "bg-gradient-to-r from-teal-700 to-green-700 shadow-teal-700/50",
-};
-// --- End Custom Classes ---
 
 const Task = ({ task, onTaskDeleted }: TaskProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -44,7 +34,7 @@ const Task = ({ task, onTaskDeleted }: TaskProps) => {
   const getTaskDateTimeSummary = (task: TaskType) => {
     if (!task.date) return null;
 
-    const taskMoment = moment.utc(task.date).tz(timezone);
+    const taskMoment = moment.utc(task.date);
     const timeFormat = task.startTime
       ? moment(task.startTime, "HH:mm").format("h:mmA")
       : null;
@@ -52,8 +42,8 @@ const Task = ({ task, onTaskDeleted }: TaskProps) => {
     // Format: "MMM DD" or "MMM DD, h:mmA" if time is present
     const datePart = taskMoment.format("MMM DD");
 
-    if (timePart) {
-      return `${datePart}, ${timePart}`;
+    if (timeFormat) {
+      return `${datePart}, ${timeFormat}`;
     }
     return datePart;
   };
@@ -64,9 +54,7 @@ const Task = ({ task, onTaskDeleted }: TaskProps) => {
     : null;
 
   // Get date part
-  const datePart = task.date
-    ? moment.utc(task.date).tz(timezone).format("MMM DD")
-    : null;
+  const datePart = task.date ? moment.utc(task.date).format("MMM DD") : null;
 
   const handleTaskClick = () => {
     const dateString = task?.date
@@ -100,9 +88,9 @@ const Task = ({ task, onTaskDeleted }: TaskProps) => {
     };
   }, [popconfirmVisible]);
 
-  const priorityClass =
-    priorityClasses[task.priority as keyof typeof priorityClasses] ||
-    priorityClasses.Low;
+  const priorityStyle =
+    taskPriorityStyles[task.priority as keyof typeof taskPriorityStyles] ||
+    taskPriorityStyles.Low;
 
   return (
     <>
@@ -120,19 +108,17 @@ const Task = ({ task, onTaskDeleted }: TaskProps) => {
         className={cn(
           `
           flex cursor-pointer items-center justify-between gap-x-2
-          rounded-lg py-1.5 md:py-2 px-3 md:px-4 text-white text-sm
+          rounded-lg py-1.5 md:py-2 px-3 md:px-4 text-sm
 
-          // Core effects: Smooth lift and
+          // Core effects: Smooth lift
           transition-all duration-300 ease-in-out
-          shadow-lg
           hover:-translate-y-0.5
-          hover:shadow-xl
 
           // Enforce compact height
           h-auto min-h-[44px] max-h-[50px]
           `,
-          priorityClass, // Applies the gradient colors and shadow
         )}
+        style={priorityStyle} // Pastel background, left border + text color per priority
         onClick={handleTaskClick}
       >
         {/* Task Title (Primary) */}
@@ -176,7 +162,8 @@ const Task = ({ task, onTaskDeleted }: TaskProps) => {
               setIsModalOpen(true);
             }}
             // Standardized Icon Size and Hover Feedback
-            className="h-4 w-4 text-white/90 hover:text-white transition-colors cursor-pointer md:h-5 md:w-5"
+            style={{ color: priorityStyle.color }}
+            className="h-4 w-4 opacity-70 hover:opacity-100 transition-opacity cursor-pointer md:h-5 md:w-5"
           />
 
           {/* Complete Popconfirm/Icon */}
@@ -189,11 +176,13 @@ const Task = ({ task, onTaskDeleted }: TaskProps) => {
             onOpenChange={setPopconfirmVisible}
             onConfirm={async (e) => {
               e?.stopPropagation();
-              await completeTask(task.id);
-              successToast("Task completed");
-              // Removes the task from the cache in-place (no refetch) so the
-              // list keeps its scroll position.
-              onTaskDeleted?.(task.id);
+              const result = await completeTask(task.id);
+              if (result.type === "success") {
+                successToast("Task completed");
+                onTaskDeleted?.(task.id);
+              } else {
+                errorToast("Failed to complete task. Please try again.");
+              }
               setPopconfirmVisible(false);
             }}
             onCancel={(e) => {
@@ -203,7 +192,8 @@ const Task = ({ task, onTaskDeleted }: TaskProps) => {
           >
             <CircleCheckBig
               // Standardized Icon Size and Hover Feedback
-              className="h-4 w-4 text-white/90 hover:text-white transition-colors cursor-pointer md:h-5 md:w-5"
+              style={{ color: priorityStyle.color }}
+              className="h-4 w-4 opacity-70 hover:opacity-100 transition-opacity cursor-pointer md:h-5 md:w-5"
               onClick={(e) => {
                 e.stopPropagation();
                 setPopconfirmVisible(true);

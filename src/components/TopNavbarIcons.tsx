@@ -9,11 +9,12 @@ import QuickLink from "./QuickLink";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { RotateCw, SquarePlay } from "lucide-react";
+import GlobalSearch from "./GlobalSearch";
 
 const NotificationsPopover = dynamic(
   () =>
     import("./NotificationProvider").then((mod) => mod.NotificationsPopover),
-  { ssr: false }
+  { ssr: false },
 );
 
 export default function TopNavbarIcons() {
@@ -39,6 +40,7 @@ export default function TopNavbarIcons() {
       {/* <button className="bg-background text-[1.7rem] font-bold text-[#6571FF]">
         <MdOutlineNotifications />
       </button> */}
+      <GlobalSearch />
       <NotificationsPopover />
 
       {/* <ThemeSwitch /> */}
