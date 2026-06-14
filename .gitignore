@@ -3,6 +3,7 @@
 .vscode/
 .prettierignore
 
+graphify-out
 # dependencies
 /node_modules
 /.pnp

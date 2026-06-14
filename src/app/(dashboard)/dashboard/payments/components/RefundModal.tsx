@@ -288,8 +288,10 @@ export default function RefundModal({
                       // Prevent the default focus behavior to avoid opening the calendar popup
                       e.preventDefault();
                     }}
-                    value={moment(date).format("YYYY-MM-DD")}
-                    onChange={(e) => setDate(new Date(e.target.value))}
+                    value={moment.utc(date).format("YYYY-MM-DD")}
+                    onChange={(e) =>
+                      setDate(new Date(`${e.target.value}T00:00:00Z`))
+                    }
                   />
                 </div>
                 <div className="w-full">

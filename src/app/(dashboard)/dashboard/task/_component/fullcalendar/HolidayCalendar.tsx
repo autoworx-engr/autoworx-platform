@@ -55,7 +55,7 @@ export default function HolidayCalendar() {
         year: date.year,
         month: date.month.name,
         companyId: authUser.companyId,
-        date: new Date(date.format("YYYY-MM-DD") as string).toISOString(),
+        date: new Date(`${date.format("YYYY-MM-DD")}T00:00:00Z`).toISOString(),
       }));
 
       const response = await createHoliday(
