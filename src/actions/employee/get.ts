@@ -11,18 +11,26 @@ export async function getEmployees({
   excludeCurrentUser,
   type,
   notType,
+  companyId: providedCompanyId,
+  currentUserId: providedUserId,
 }: {
   excludeCurrentUser?: boolean;
   type?: EmployeeType;
   notType?: EmployeeType;
+  companyId?: number;
+  currentUserId?: number;
 }) {
-  const companyId = await getCompanyId();
-  const session = await getServerSession(authOptions);
+  const companyId = providedCompanyId ?? (await getCompanyId());
+  const currentUserId =
+    providedUserId ??
+    (excludeCurrentUser
+      ? parseInt((await getServerSession(authOptions))?.user?.id!)
+      : undefined);
   const employees = await db.user.findMany({
     where: {
       companyId,
       id: {
-        not: excludeCurrentUser ? parseInt(session?.user?.id!) : undefined,
+        not: excludeCurrentUser ? currentUserId : undefined,
       },
       employeeType: {
         equals: type,
