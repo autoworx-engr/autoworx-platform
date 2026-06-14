@@ -289,9 +289,11 @@ export default function RefundModal({
                       e.preventDefault();
                     }}
                     value={moment.utc(date).format("YYYY-MM-DD")}
-                    onChange={(e) =>
-                      setDate(new Date(`${e.target.value}T00:00:00Z`))
-                    }
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        setDate(new Date(`${e.target.value}T00:00:00Z`));
+                      }
+                    }}
                   />
                 </div>
                 <div className="w-full">
