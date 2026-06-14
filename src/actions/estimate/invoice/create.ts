@@ -146,11 +146,11 @@ export async function createInvoice({
 
     // Step 2: Get authenticated session and company ID
     let companyId = forceCompanyId;
-    let session = null;
+    let session: Awaited<ReturnType<typeof getServerSession>> | null = null;
 
     if (!companyId) {
       session = await getServerSession(authOptions);
-      companyId = session?.user.companyId;
+      companyId = (session as any)?.user?.companyId;
       if (!companyId) {
         throw new Error("Company ID is required to create an email template.");
       }
@@ -247,7 +247,7 @@ export async function createInvoice({
           customerNotes,
           customerComments,
           companyId,
-          userId: session?.user.id as any,
+          userId: (session as any)?.user?.id as any,
           columnId: finalColumnId,
           isWorkOrder,
           workOrderCreatedAt: isWorkOrder ? new Date() : null,
@@ -498,7 +498,7 @@ export async function createInvoice({
               invoiceId: newInvoice.id,
               clientId,
               companyId,
-              userId: parseInt(session?.user.id || "0") || null,
+              userId: parseInt((session as any)?.user?.id || "0") || null,
               createdBy: "user",
             };
           }),

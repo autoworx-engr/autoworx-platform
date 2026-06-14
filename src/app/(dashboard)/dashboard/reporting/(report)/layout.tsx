@@ -1,4 +1,6 @@
 "use client";
+
+export const dynamic = "force-dynamic";
 import { usePermissionStore } from "@/stores/permissionStore";
 import { Box, CreditCard, TrendingUp, UserPlus, Users } from "lucide-react";
 import Link from "next/link";
