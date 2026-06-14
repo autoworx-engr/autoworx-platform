@@ -30,7 +30,8 @@ export async function POST(req: NextRequest) {
   try {
     event = JSON.parse(bodyText);
   } catch {
-    return new NextResponse("Invalid JSON", { status: 400 });
+    console.error("[platform/webhook] invalid JSON body");
+    return new NextResponse("OK", { status: 200 });
   }
 
   if (!HANDLED_EVENTS.has(event.eventType)) {
@@ -40,7 +41,10 @@ export async function POST(req: NextRequest) {
   // notificationId is unique per delivery — use as idempotency key
   const eventId = event.notificationId || event.payload?.id;
   if (!eventId) {
-    return new NextResponse("Missing event ID", { status: 400 });
+    console.error("[platform/webhook] missing event ID", {
+      eventType: event.eventType,
+    });
+    return new NextResponse("OK", { status: 200 });
   }
 
   const existing = await db.webhookEvent.findUnique({
@@ -52,23 +56,32 @@ export async function POST(req: NextRequest) {
     return new NextResponse("OK", { status: 200 });
   }
 
-  await db.webhookEvent.upsert({
-    where: { eventId },
-    create: {
+  try {
+    await db.webhookEvent.upsert({
+      where: { eventId },
+      create: {
+        eventId,
+        gateway: "PLATFORM_AUTHORIZE_NET",
+        companyId: null,
+        payload: event,
+        status: "PENDING",
+      },
+      update: {
+        attempts: { increment: 1 },
+      },
+    });
+
+    const boss = getBoss();
+    await boss.send(QUEUE_PLATFORM_BILLING, { eventId });
+  } catch (err) {
+    console.error(
+      "[platform/webhook] Failed to persist/enqueue eventId:",
       eventId,
-      gateway: "PLATFORM_AUTHORIZE_NET",
-      companyId: null,
-      payload: event,
-      status: "PENDING",
-    },
-    update: {
-      attempts: { increment: 1 },
-    },
-  });
+      err,
+    );
+  }
 
-  const boss = getBoss();
-  await boss.send(QUEUE_PLATFORM_BILLING, { eventId });
-
+  // Always return 200 — non-200 causes Authorize.net to retry then DEACTIVATE the webhook
   return new NextResponse("OK", { status: 200 });
 }
 
