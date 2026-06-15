@@ -19,6 +19,13 @@ import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
  *     responses:
  *       200:
  *         description: Holiday deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean, example: true }
+ *                 message: { type: string, example: "Holiday deleted successfully" }
  *       400:
  *         description: Invalid holiday id
  *       401:
