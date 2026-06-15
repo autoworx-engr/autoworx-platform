@@ -29,10 +29,8 @@ export default function TaskListBox() {
   };
 
   const handleTaskDeleted = (taskId: number) => {
-    // Remove the task from the cache in-place instead of refetching, so the
-    // list doesn't rebuild and scroll back to the top.
-    queryClient.setQueryData(
-      queryKeys.dashboardTask,
+    queryClient.setQueriesData(
+      { queryKey: queryKeys.dashboardTask },
       (old: { id: number }[] | undefined) =>
         Array.isArray(old) ? old.filter((t) => t.id !== taskId) : old,
     );

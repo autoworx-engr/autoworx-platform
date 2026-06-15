@@ -141,7 +141,7 @@ export default function UserRolesTable() {
             <table className="w-full min-w-[720px] border-collapse text-sm">
               <thead>
                 <tr className="bg-slate-50/90">
-                  <th className="sticky left-0 z-20 border-b border-slate-200 bg-slate-50 px-4 py-3 text-left font-semibold text-slate-600">
+                  <th className="sticky left-0 z-20 w-[200px] min-w-[200px] max-w-[200px] border-b border-slate-200 bg-slate-50 px-4 py-3 text-left font-semibold text-slate-600">
                     Modules
                   </th>
                   {roles.map((role) => (
@@ -159,10 +159,10 @@ export default function UserRolesTable() {
                   Array.from({ length: 8 }).map((_, index) => (
                     <tr
                       key={`skeleton-${index + 1}`}
-                      className="border-b border-slate-100 last:border-b-0 even:bg-slate-50/30"
+                      className="border-b border-slate-100 bg-white last:border-b-0 even:bg-slate-50"
                     >
-                      <td className="sticky left-0 z-10 bg-inherit px-4 py-3">
-                        <div className="h-4 w-52 animate-pulse rounded bg-slate-200" />
+                      <td className="sticky left-0 z-10 w-[200px] min-w-[200px] max-w-[200px] bg-inherit px-4 py-3">
+                        <div className="h-4 w-40 animate-pulse rounded bg-slate-200" />
                       </td>
                       {roles.map((role) => (
                         <td key={role} className="px-5 py-3 text-center">
@@ -176,9 +176,9 @@ export default function UserRolesTable() {
                   permissionModuleForAdminManager.map((module, index) => (
                     <tr
                       key={index + 1}
-                      className="border-b border-slate-100 last:border-b-0 even:bg-slate-50/30"
+                      className="border-b border-slate-100 bg-white last:border-b-0 even:bg-slate-50"
                     >
-                      <td className="sticky left-0 z-10 bg-inherit px-4 py-3 font-medium text-slate-600">
+                      <td className="sticky left-0 z-10 w-[200px] min-w-[200px] max-w-[200px] whitespace-normal break-words bg-inherit px-4 py-3 font-medium text-slate-600">
                         {module.label}
                       </td>
                       {roles.map((role) => {

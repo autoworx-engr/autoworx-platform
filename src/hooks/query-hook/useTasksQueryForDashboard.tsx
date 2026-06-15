@@ -1,24 +1,25 @@
 import getTasks from "@/actions/task/getTasks";
 import { queryKeys } from "@/lib/queryKeys";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { useQuery } from "@tanstack/react-query";
+import moment from "moment-timezone";
 
 const defaultTake = 20;
 export default function useTasksQueryForDashboard(options?: {
   enabled?: boolean;
 }) {
+  const timezone = useCompanyTimezone();
+
   return useQuery({
-    queryKey: queryKeys.dashboardTask,
+    queryKey: [...queryKeys.dashboardTask, timezone],
     queryFn: async () => {
-      const now = new Date();
-      const todayStart = new Date(now);
-      todayStart.setHours(0, 0, 0, 0);
+      const nowTz = moment.tz(timezone);
+      const todayLocalDate = nowTz.format("YYYY-MM-DD");
 
-      const tomorrowStart = new Date(todayStart);
-      tomorrowStart.setDate(todayStart.getDate() + 1);
+      const todayStart = moment.utc(todayLocalDate).toDate();
+      const tomorrowStart = moment.utc(todayLocalDate).add(1, "day").toDate();
 
-      const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(
-        now.getMinutes(),
-      ).padStart(2, "0")}`;
+      const currentTime = nowTz.format("HH:mm");
 
       const response = await getTasks({
         where: {

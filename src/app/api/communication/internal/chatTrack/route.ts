@@ -45,7 +45,7 @@ export const PUT = (req: NextRequest) => updateChatTrackHandler(req);
  *   post:
  *     summary: Create or retrieve a chat track
  *     tags: [Internal]
- *   requestBody:
+ *     requestBody:
  *       required: true
  *       content:
  *         application/json:

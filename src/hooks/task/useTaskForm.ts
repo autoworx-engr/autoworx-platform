@@ -253,8 +253,8 @@ export function useTaskForm({
           queryKey: taskQueryKey.taskById(id.toString()),
         });
 
-        queryClient.setQueryData(
-          queryKeys.dashboardTask,
+        queryClient.setQueriesData(
+          { queryKey: queryKeys.dashboardTask },
           (old: { id: number }[] | undefined) =>
             Array.isArray(old) ? old.filter((t) => t.id !== id) : old,
         );

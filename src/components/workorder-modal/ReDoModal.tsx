@@ -6,7 +6,8 @@ import { useState, useTransition } from "react";
 import RedoTechnician from "./RedoTechnician";
 import toast from "react-hot-toast";
 import { RotatingLines } from "react-loader-spinner";
-import { createInvoiceRedo } from "@/actions/estimate/labor/createInvoiceRedo";
+import { createRedo } from "@/service/work-order/api";
+import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 
@@ -40,6 +41,7 @@ export default function ReDoModal({
   );
   const [pending, startTransition] = useTransition();
   const queryClient = useQueryClient();
+  const currentUser = useGetCurrentUser();
 
   const isInvoiceDelivered = invoiceStatus === "Delivered";
   const hasExistingRedo = existingRedos.length > 0;
@@ -84,16 +86,23 @@ export default function ReDoModal({
       toast.error("Please select at least one technician");
       return;
     }
+    if (!currentUser?.companyId) return;
     try {
-      const response = await createInvoiceRedo(redoTechnicians);
-      if (response.status === 200) {
-        setRedoTechnicians([]);
-        setOpen(false);
-        toast.success("Redo saved successfully");
-        await queryClient.invalidateQueries({
-          queryKey: queryKeys.getWorkOrderDataKey(parentInvoiceId),
-        });
-      }
+      await createRedo(
+        currentUser.companyId,
+        invoiceId,
+        redoTechnicians.map(({ serviceId, technicianId, notes }) => ({
+          serviceId,
+          technicianId,
+          notes,
+        })),
+      );
+      setRedoTechnicians([]);
+      setOpen(false);
+      toast.success("Redo saved successfully");
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.getWorkOrderDataKey(parentInvoiceId),
+      });
     } catch (err) {
       toast.error("Failed to save redo technicians");
     }

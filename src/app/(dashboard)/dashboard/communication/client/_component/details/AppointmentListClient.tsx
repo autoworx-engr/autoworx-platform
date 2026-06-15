@@ -48,14 +48,19 @@ export default function AppointmentListClient({
   }, [companyId, clientId]);
 
   const now = moment();
-  const startOfToday = moment().startOf("day");
+
+  const getStartEnd = (a: Appointment) => {
+    const dateStr = moment.utc(a.date).format("YYYY-MM-DD");
+    return {
+      start: moment(`${dateStr} ${a.startTime}`, "YYYY-MM-DD HH:mm"),
+      end: moment(`${dateStr} ${a.endTime}`, "YYYY-MM-DD HH:mm"),
+    };
+  };
 
   const current = useMemo(() => {
     return (appointments || []).filter((a) => {
       try {
-        const dateStr = moment.utc(a.date).format("YYYY-MM-DD");
-        const start = moment(`${dateStr} ${a.startTime}`, "YYYY-MM-DD HH:mm");
-        const end = moment(`${dateStr} ${a.endTime}`, "YYYY-MM-DD HH:mm");
+        const { start, end } = getStartEnd(a);
         return now.isBetween(start, end, null, "[]");
       } catch (err) {
         return false;
@@ -63,15 +68,17 @@ export default function AppointmentListClient({
     });
   }, [appointments]);
   const upcoming = useMemo(() => {
-    const currentIds = new Set(current.map((a) => a.id));
     return (appointments || [])
-      .filter(
-        (a) =>
-          moment.utc(a.date).startOf("day").valueOf() >=
-            startOfToday.valueOf() && !currentIds.has(a.id),
-      )
+      .filter((a) => {
+        try {
+          return getStartEnd(a).start.isAfter(now);
+        } catch (err) {
+          return false;
+        }
+      })
       .sort(
-        (x, y) => moment.utc(x.date).valueOf() - moment.utc(y.date).valueOf(),
+        (x, y) =>
+          getStartEnd(x).start.valueOf() - getStartEnd(y).start.valueOf(),
       );
   }, [appointments]);
 

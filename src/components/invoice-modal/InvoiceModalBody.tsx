@@ -1453,7 +1453,7 @@ export default function InvoiceModalBody({
                           src={x.photo}
                           alt="attachment"
                           fill
-                          className="cursor-pointer"
+                          className="cursor-pointer object-cover object-center"
                         />
                       </Link>
                     );

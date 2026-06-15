@@ -11,7 +11,6 @@ import { Popconfirm, Tooltip } from "antd";
 import moment from "moment-timezone";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { useDate } from "../../task/_hook/lib/useDate";
 import { CircleCheckBig, SquarePen, Clock } from "lucide-react"; // Import Clock icon
 import { taskPriorityStyles } from "@/lib/taskPriorityStyles";
@@ -27,26 +26,7 @@ const Task = ({ task, onTaskDeleted }: TaskProps) => {
   const router = useRouter();
   const { setNavigating, setDate } = useCalendarStore();
   const queryClient = useQueryClient();
-  const timezone = useCompanyTimezone();
   const queryDate = useDate();
-
-  // Helper function to format date and time in a summarized format
-  const getTaskDateTimeSummary = (task: TaskType) => {
-    if (!task.date) return null;
-
-    const taskMoment = moment.utc(task.date);
-    const timeFormat = task.startTime
-      ? moment(task.startTime, "HH:mm").format("h:mmA")
-      : null;
-
-    // Format: "MMM DD" or "MMM DD, h:mmA" if time is present
-    const datePart = taskMoment.format("MMM DD");
-
-    if (timeFormat) {
-      return `${datePart}, ${timeFormat}`;
-    }
-    return datePart;
-  };
 
   // Get time part only
   const timePart = task.startTime
@@ -58,9 +38,7 @@ const Task = ({ task, onTaskDeleted }: TaskProps) => {
 
   const handleTaskClick = () => {
     const dateString = task?.date
-      ? task.date instanceof Date
-        ? task.date.toLocaleDateString("en-CA") // 'YYYY-MM-DD' format
-        : moment(task.date).format("YYYY-MM-DD")
+      ? moment.utc(task.date).format("YYYY-MM-DD")
       : queryDate.format("YYYY-MM-DD");
 
     // Set navigation flag to prevent reset, then set date and navigate
