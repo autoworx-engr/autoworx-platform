@@ -113,7 +113,24 @@ export async function GET(req: NextRequest) {
  *                 example: ["2026-06-15", "2026-12-25"]
  *     responses:
  *       200:
- *         description: Holidays saved (returns the full set of requested holidays)
+ *         description: Holidays saved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean, example: true }
+ *                 message: { type: string, example: "Holidays saved successfully" }
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id: { type: integer, example: 5 }
+ *                       companyId: { type: integer, example: 10 }
+ *                       date: { type: string, format: date-time, example: "2026-06-15T00:00:00.000Z" }
+ *                       month: { type: string, example: "June" }
+ *                       year: { type: integer, example: 2026 }
  *       400:
  *         description: dates must be a non-empty array / No valid dates provided
  *       401:
