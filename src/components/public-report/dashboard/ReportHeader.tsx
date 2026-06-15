@@ -31,13 +31,13 @@ export const ReportHeader = ({
       <div className="flex items-center gap-4">
         {companyLogo ? (
           <div className="relative w-16 h-16 rounded-xl overflow-hidden border border-border/50 shadow-sm bg-white">
-            {/* <Image
+            <Image
               src={logoSrc as string}
               alt={companyName || "Company Logo"}
               fill
               className="object-contain p-2"
               crossOrigin="anonymous"
-            /> */}
+            />
           </div>
         ) : (
           <div className="w-16 h-16 rounded-xl bg-primary/5 flex items-center justify-center border border-primary/10 shadow-sm">

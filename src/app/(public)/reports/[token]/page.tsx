@@ -22,6 +22,7 @@ import { useRouter } from "next/navigation";
 import { getSession } from "next-auth/react";
 import { useCompanyQuery } from "@/hooks/useCompanyQuery";
 import CarLoading from "@/components/common/CarLoading";
+import { inlineImagesForCapture } from "@/lib/inlineImagesForCapture";
 
 interface ReportPageProps {
   params: Promise<{
@@ -165,10 +166,16 @@ export default function ReportPage(props: ReportPageProps) {
       return;
     }
 
+    let restoreImages: (() => void) | null = null;
+
     try {
       setIsGenerating(true);
       document.body.classList.add("is-generating-pdf");
       toast.loading("Preparing your PDF report...");
+
+      // Inline all images (e.g. S3 company logo) as base64 BEFORE capture so
+      // html2canvas never re-fetches them — cross-origin fetches stall capture.
+      restoreImages = await inlineImagesForCapture(reportElement);
 
       const isSafari = /^((?!chrome|android).)*safari/i.test(
         navigator.userAgent,
@@ -227,6 +234,7 @@ export default function ReportPage(props: ReportPageProps) {
       toast.dismiss();
       errorToast("Failed to generate PDF. Please try again.");
     } finally {
+      restoreImages?.();
       setIsGenerating(false);
       document.body.classList.remove("is-generating-pdf");
     }
