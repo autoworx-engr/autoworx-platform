@@ -192,7 +192,9 @@ export function SelectorWithSearch({
                 </div>
               ) : (
                 <div className="px-3 py-3 text-sm text-slate-500 dark:text-slate-400">
-                  No matching options
+                  {searchTerm
+                    ? `No matches found for "${searchTerm}". Press Enter to create it.`
+                    : "No matching options found. Type a new value and select it to create."}
                 </div>
               )}
             </div>

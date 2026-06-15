@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,12 +12,16 @@ import { formatDuration } from "@/lib/formatDuration";
 
 const vehicleTypes: VehicleType[] = ["Coupe", "Sedan", "SUV", "Truck"];
 
+const FALLBACK_IMAGE =
+  "https://img.freepik.com/free-vector/businessman-with-smartphone-rents-car-street-via-carsharing-service-carsharing-service-short-periods-rent-best-taxi-alternative-concept_335657-2201.jpg?t=st=1774777481~exp=1774781081~hmac=392773361784ea1099eb657d3d5371390f1e88bb056a7d5b0aa0c5585b60204d&w=1480";
+
 export const ServiceCard = ({ service }: { service: Service }) => {
   const { cart, addToCart, removeFromCart } = useBooking();
   const inCart = cart.some((i) => i.service.id === service.id);
   const cartItem = cart.find((i) => i.service.id === service.id);
   const [selectedType, setSelectedType] = useState<VehicleType>("Coupe");
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [imgSrc, setImgSrc] = useState(service.images[0] || FALLBACK_IMAGE);
 
   const activeType = inCart && cartItem ? cartItem.vehicleType : selectedType;
 
@@ -51,18 +56,14 @@ export const ServiceCard = ({ service }: { service: Service }) => {
         )}
       >
         <div className="relative aspect-[16/10] overflow-hidden">
-          <img
-            src={
-              service.images[0] ||
-              "https://img.freepik.com/free-vector/businessman-with-smartphone-rents-car-street-via-carsharing-service-carsharing-service-short-periods-rent-best-taxi-alternative-concept_335657-2201.jpg?t=st=1774777481~exp=1774781081~hmac=392773361784ea1099eb657d3d5371390f1e88bb056a7d5b0aa0c5585b60204d&w=1480"
-            }
+          <Image
+            src={imgSrc}
             alt={service.title}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            fill
+            sizes="(max-width: 768px) 100vw, 33vw"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src =
-                "https://img.freepik.com/free-vector/businessman-with-smartphone-rents-car-street-via-carsharing-service-carsharing-service-short-periods-rent-best-taxi-alternative-concept_335657-2201.jpg?t=st=1774777481~exp=1774781081~hmac=392773361784ea1099eb657d3d5371390f1e88bb056a7d5b0aa0c5585b60204d&w=1480";
-            }}
+            onError={() => setImgSrc(FALLBACK_IMAGE)}
           />
           {service.category && (
             <Badge className="absolute top-3 left-3 bg-background/90 text-foreground backdrop-blur-sm text-[10px] font-medium">
@@ -157,14 +158,14 @@ export const ServiceCard = ({ service }: { service: Service }) => {
         <DialogContent className="max-w-2xl overflow-hidden p-0 gap-0 [&>button]:hidden max-h-[90vh] flex flex-col">
           {/* Image header */}
           <div className="relative aspect-[16/6] w-full overflow-hidden flex-shrink-0">
-            <img
-              src={
-                service.images[0] ||
-                "https://img.freepik.com/free-vector/businessman-with-smartphone-rents-car-street-via-carsharing-service-carsharing-service-short-periods-rent-best-taxi-alternative-concept_335657-2201.jpg?t=st=1774777481~exp=1774781081~hmac=392773361784ea1099eb657d3d5371390f1e88bb056a7d5b0aa0c5585b60204d&w=1480"
-              }
+            <Image
+              src={imgSrc}
               alt={service.title}
-              className="h-full w-full object-cover"
+              fill
+              sizes="(max-width: 768px) 100vw, 672px"
+              className="object-cover"
               loading="lazy"
+              onError={() => setImgSrc(FALLBACK_IMAGE)}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
             {service.category && (
@@ -198,7 +199,7 @@ export const ServiceCard = ({ service }: { service: Service }) => {
           <div className="thin-scrollbar overflow-y-auto overflow-x-hidden flex-1 min-h-0 w-full">
             {service.description && (
               <div
-                className="px-5 pt-5 text-sm text-muted-foreground leading-relaxed break-words w-full [&_h1]:text-lg [&_h1]:font-bold [&_h1]:text-foreground [&_h1]:mb-2 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:text-foreground [&_h2]:mb-1.5 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:text-foreground [&_h3]:mb-1 [&_strong]:font-semibold [&_em]:italic [&_u]:underline [&_ul]:list-disc [&_ul]:ml-4 [&_ol]:list-decimal [&_ol]:ml-4 [&_li]:mb-1 [&_p]:mb-2 [&_p:last-child]:mb-0"
+                className="px-5 pt-5 text-sm text-muted-foreground leading-relaxed break-words w-full [&_h1]:text-lg [&_h1]:font-bold [&_h1]:text-foreground [&_h1]:mb-2 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:text-foreground [&_h2]:mb-1.5 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:text-foreground [&_h3]:mb-1 [&_strong]:font-semibold [&_em]:italic [&_u]:underline [&_ul]:list-disc [&_ul]:ml-4 [&_ol]:list-decimal [&_ol]:ml-4 [&_li]:mb-1 [&_p]:mb-2 [&_p:last-child]:mb-0 [&_a]:text-blue-500 [&_a]:underline [&_a]:cursor-pointer"
                 dangerouslySetInnerHTML={{ __html: service.description }}
               />
             )}

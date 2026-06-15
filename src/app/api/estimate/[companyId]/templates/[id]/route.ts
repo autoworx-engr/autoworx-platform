@@ -1,3 +1,4 @@
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
@@ -281,19 +282,20 @@ import { db } from "@/lib/db";
  */
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ companyId: string; id: string }> },
 ) {
   try {
     const { companyId: companyIdParam, id } = await params;
-    const companyId = Number(companyIdParam);
-
-    if (!companyId || isNaN(companyId)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid company ID" },
-        { status: 400 },
-      );
+    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
+    if (jwtCompanyId === null) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const urlCompanyId = parseInt(companyIdParam, 10);
+    if (isNaN(urlCompanyId) || urlCompanyId !== jwtCompanyId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    const companyId = jwtCompanyId;
 
     const template = await db.invoiceTemplate.findFirst({
       where: { id, companyId },
@@ -401,14 +403,15 @@ export async function PATCH(
 ) {
   try {
     const { companyId: companyIdParam, id } = await params;
-    const companyId = Number(companyIdParam);
-
-    if (!companyId || isNaN(companyId)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid company ID" },
-        { status: 400 },
-      );
+    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
+    if (jwtCompanyId === null) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const urlCompanyId = parseInt(companyIdParam, 10);
+    if (isNaN(urlCompanyId) || urlCompanyId !== jwtCompanyId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    const companyId = jwtCompanyId;
 
     const existing = await db.invoiceTemplate.findFirst({
       where: { id, companyId },
@@ -809,19 +812,20 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ companyId: string; id: string }> },
 ) {
   try {
     const { companyId: companyIdParam, id } = await params;
-    const companyId = Number(companyIdParam);
-
-    if (!companyId || isNaN(companyId)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid company ID" },
-        { status: 400 },
-      );
+    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
+    if (jwtCompanyId === null) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const urlCompanyId = parseInt(companyIdParam, 10);
+    if (isNaN(urlCompanyId) || urlCompanyId !== jwtCompanyId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    const companyId = jwtCompanyId;
 
     const existing = await db.invoiceTemplate.findFirst({
       where: { id, companyId },
@@ -834,7 +838,17 @@ export async function DELETE(
       );
     }
 
-    await db.invoiceTemplate.delete({ where: { id } });
+    await db.$transaction(async (tx) => {
+      await tx.templatePhoto.deleteMany({ where: { invoiceTemplateId: id } });
+      await tx.invoiceInspection.deleteMany({
+        where: { invoiceTemplateId: id },
+      });
+      await tx.invoiceTags.deleteMany({ where: { invoiceTemplateId: id } });
+      await tx.task.deleteMany({ where: { invoiceTemplateId: id } });
+      await tx.material.deleteMany({ where: { invoiceTemplateId: id } });
+      await tx.invoiceItem.deleteMany({ where: { invoiceTemplateId: id } });
+      await tx.invoiceTemplate.delete({ where: { id } });
+    });
 
     return NextResponse.json({
       success: true,

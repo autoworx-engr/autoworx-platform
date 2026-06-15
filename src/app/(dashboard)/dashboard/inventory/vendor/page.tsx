@@ -8,6 +8,12 @@ import NewVendor from "@/components/Lists/NewVendor";
 import TopVendors from "./TopVendors";
 import VendorCard from "./VendorCard";
 import VendorHeader from "../VendorHeader";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Inventory - Vendor",
+  description: "Manage your vendors",
+};
 
 export default async function Page(props: {
   searchParams: Promise<{ vendorId: string }>;

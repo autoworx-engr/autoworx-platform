@@ -10,6 +10,10 @@ import { updateCommunicationAutomationTrigger } from "../automation/communicatio
 import { updatePipelineAutomationTrigger } from "../automation/pipeline/triggerPipelineAutomation";
 import { updateTagAutomationTrigger } from "../automation/tag/triggerTagAutomation";
 import { getCompanyTimezone } from "../settings/getCompanyTimezone";
+import {
+  buildUpcomingAppointmentFilter,
+  upcomingAppointmentOrderBy,
+} from "./_upcomingAppointmentFilter";
 
 type TGetLeads = {
   columnId?: number;
@@ -29,10 +33,32 @@ type TGetLeadsWithCount = {
   source?: string;
   service?: string;
   status?: string;
+  orderBy?: "asc" | "desc";
   // YYYY-MM-DD strings so the action can parse them directly in the company
   // timezone — avoids off-by-one-day errors when browser tz ≠ company tz.
   dateRange?: [string | null, string | null];
 };
+
+function makeLeadSearchCondition(searchTerm?: string) {
+  if (!searchTerm?.trim()) return null;
+  const words = searchTerm.trim().split(/\s+/);
+  const makeWordCondition = (word: string) => {
+    const ci = { contains: word, mode: "insensitive" as const };
+    return {
+      OR: [
+        { clientName: ci },
+        { vehicleInfo: ci },
+        { services: ci },
+        { source: ci },
+        { Client: { some: { firstName: ci } } },
+        { Client: { some: { lastName: ci } } },
+      ],
+    };
+  };
+  return words.length === 1
+    ? makeWordCondition(words[0])
+    : { AND: words.map(makeWordCondition) };
+}
 
 export const getLeads = async ({
   columnId,
@@ -47,23 +73,14 @@ export const getLeads = async ({
   const timezone = companyTimezone?.timezone;
 
   try {
+    const searchCond = makeLeadSearchCondition(searchTerm);
     const query: Prisma.LeadWhereInput = {
       companyId,
       ...(columnId && { columnId }),
-      ...(searchTerm && {
-        OR: [
-          { clientName: { contains: searchTerm, mode: "insensitive" } },
-          { vehicleInfo: { contains: searchTerm, mode: "insensitive" } },
-          { services: { contains: searchTerm, mode: "insensitive" } },
-          { source: { contains: searchTerm, mode: "insensitive" } },
-        ],
-      }),
+      ...(searchCond ?? {}),
     };
 
-    const todayStart = moment
-      .tz(timezone ?? "UTC")
-      .startOf("day")
-      .toDate();
+    const upcomingApptFilter = buildUpcomingAppointmentFilter(timezone);
     // console.log({ orderBy });
 
     const leadsData = await db.lead.findMany({
@@ -91,12 +108,8 @@ export const getLeads = async ({
         Client: {
           include: {
             appointments: {
-              where: {
-                date: { gte: todayStart },
-              },
-              orderBy: {
-                date: "asc",
-              },
+              where: upcomingApptFilter,
+              orderBy: upcomingAppointmentOrderBy,
               take: 1,
               select: {
                 id: true,
@@ -111,6 +124,12 @@ export const getLeads = async ({
                 smsIsRead: true,
                 emailIsRead: true,
               },
+            },
+            Invoice: {
+              where: { type: "Estimate" },
+              select: { id: true },
+              orderBy: { createdAt: "asc" },
+              take: 1,
             },
           },
         },
@@ -145,12 +164,8 @@ export const getLeads = async ({
             },
             include: {
               appointments: {
-                where: {
-                  date: { gte: todayStart },
-                },
-                orderBy: {
-                  date: "asc",
-                },
+                where: upcomingApptFilter,
+                orderBy: upcomingAppointmentOrderBy,
                 take: 1,
                 select: {
                   id: true,
@@ -165,6 +180,12 @@ export const getLeads = async ({
                   smsIsRead: true,
                   emailIsRead: true,
                 },
+              },
+              Invoice: {
+                where: { type: "Estimate" },
+                select: { id: true },
+                orderBy: { createdAt: "asc" },
+                take: 1,
               },
             },
           }))!;
@@ -206,6 +227,7 @@ export const getLeads = async ({
           client: clientData,
           column,
           totalMessage: isShowConversationIndicator ? 1 : 0,
+          invoiceId: client?.Invoice?.[0]?.id ?? null,
         };
       }),
     );
@@ -225,6 +247,7 @@ export const getLeadsWithCount = async ({
   source,
   service,
   status,
+  orderBy,
   dateRange,
 }: TGetLeadsWithCount): Promise<{
   leads: LeadWithSalesUser[];
@@ -234,17 +257,11 @@ export const getLeadsWithCount = async ({
   const companyTimezone = await getCompanyTimezone();
   const timezone = companyTimezone?.timezone;
   try {
+    const searchCond = makeLeadSearchCondition(searchTerm);
     const query: Prisma.LeadWhereInput = {
       companyId,
       ...(columnId && { columnId }),
-      ...(searchTerm && {
-        OR: [
-          { clientName: { contains: searchTerm, mode: "insensitive" } },
-          { vehicleInfo: { contains: searchTerm, mode: "insensitive" } },
-          { services: { contains: searchTerm, mode: "insensitive" } },
-          { source: { contains: searchTerm, mode: "insensitive" } },
-        ],
-      }),
+      ...(searchCond ?? {}),
       ...(assignedTo && { assignedSalesUserId: parseInt(assignedTo) }),
       ...(source && { source }),
       ...(service && { services: service }),
@@ -286,10 +303,7 @@ export const getLeadsWithCount = async ({
         }),
     };
 
-    const todayStart = moment
-      .tz(timezone ?? "UTC")
-      .startOf("day")
-      .toDate();
+    const upcomingApptFilter = buildUpcomingAppointmentFilter(timezone);
 
     const [totalCount, leadsData] = await Promise.all([
       db.lead.count({ where: query }),
@@ -298,7 +312,7 @@ export const getLeadsWithCount = async ({
         take,
         skip,
         orderBy: {
-          createdAt: "desc",
+          createdAt: orderBy ?? "desc",
         },
         include: {
           salesUser: {
@@ -318,12 +332,8 @@ export const getLeadsWithCount = async ({
           Client: {
             include: {
               appointments: {
-                where: {
-                  date: { gte: todayStart },
-                },
-                orderBy: {
-                  date: "asc",
-                },
+                where: upcomingApptFilter,
+                orderBy: upcomingAppointmentOrderBy,
                 take: 1,
                 select: {
                   id: true,
@@ -338,6 +348,12 @@ export const getLeadsWithCount = async ({
                   smsIsRead: true,
                   emailIsRead: true,
                 },
+              },
+              Invoice: {
+                where: { type: "Estimate" },
+                select: { id: true },
+                orderBy: { createdAt: "asc" },
+                take: 1,
               },
             },
           },
@@ -372,12 +388,8 @@ export const getLeadsWithCount = async ({
             },
             include: {
               appointments: {
-                where: {
-                  date: { gte: todayStart },
-                },
-                orderBy: {
-                  date: "asc",
-                },
+                where: upcomingApptFilter,
+                orderBy: upcomingAppointmentOrderBy,
                 take: 1,
                 select: {
                   id: true,
@@ -392,6 +404,12 @@ export const getLeadsWithCount = async ({
                   smsIsRead: true,
                   emailIsRead: true,
                 },
+              },
+              Invoice: {
+                where: { type: "Estimate" },
+                select: { id: true },
+                orderBy: { createdAt: "desc" },
+                take: 1,
               },
             },
           }))!;
@@ -432,6 +450,7 @@ export const getLeadsWithCount = async ({
           client: clientData,
           column,
           totalMessage: isShowConversationIndicator ? 1 : 0,
+          invoiceId: client?.Invoice?.[0]?.id ?? null,
         };
       }),
     );
@@ -452,6 +471,7 @@ export const getLeadsWithCountOptimized = async ({
   source,
   service,
   status,
+  orderBy,
   dateRange,
 }: TGetLeadsWithCount): Promise<{
   leads: LeadWithSalesUser[];
@@ -462,17 +482,11 @@ export const getLeadsWithCountOptimized = async ({
   const timezone = companyTimezone?.timezone;
 
   try {
+    const searchCond = makeLeadSearchCondition(searchTerm);
     const query: Prisma.LeadWhereInput = {
       companyId,
       ...(columnId && { columnId }),
-      ...(searchTerm && {
-        OR: [
-          { clientName: { contains: searchTerm, mode: "insensitive" } },
-          { vehicleInfo: { contains: searchTerm, mode: "insensitive" } },
-          { services: { contains: searchTerm, mode: "insensitive" } },
-          { source: { contains: searchTerm, mode: "insensitive" } },
-        ],
-      }),
+      ...(searchCond ?? {}),
       ...(assignedTo && { assignedSalesUserId: parseInt(assignedTo) }),
       ...(source && { source }),
       ...(service && { services: service }),
@@ -514,10 +528,7 @@ export const getLeadsWithCountOptimized = async ({
         }),
     };
 
-    const todayStart = moment
-      .tz(timezone ?? "UTC")
-      .startOf("day")
-      .toDate();
+    const upcomingApptFilter = buildUpcomingAppointmentFilter(timezone);
 
     // Run count and data queries in parallel
     const [totalCount, leadsData] = await Promise.all([
@@ -527,7 +538,7 @@ export const getLeadsWithCountOptimized = async ({
         take,
         skip,
         orderBy: {
-          createdAt: "desc",
+          createdAt: orderBy ?? "desc",
         },
         include: {
           salesUser: {
@@ -549,12 +560,8 @@ export const getLeadsWithCountOptimized = async ({
           Client: {
             include: {
               appointments: {
-                where: {
-                  date: { gte: todayStart },
-                },
-                orderBy: {
-                  date: "asc",
-                },
+                where: upcomingApptFilter,
+                orderBy: upcomingAppointmentOrderBy,
                 take: 1,
                 select: {
                   id: true,
@@ -569,6 +576,12 @@ export const getLeadsWithCountOptimized = async ({
                   smsIsRead: true,
                   emailIsRead: true,
                 },
+              },
+              Invoice: {
+                where: { type: "Estimate" },
+                select: { id: true },
+                orderBy: { createdAt: "asc" },
+                take: 1,
               },
             },
           },
@@ -633,6 +646,7 @@ export const getLeadsWithCountOptimized = async ({
         client: clientData,
         column,
         totalMessage: isShowConversationIndicator ? 1 : 0,
+        invoiceId: client?.Invoice?.[0]?.id ?? null,
       } as LeadWithSalesUser;
     });
 
@@ -737,18 +751,12 @@ export async function getLeadsCountByColumnId(
   searchTerm?: string,
 ) {
   try {
+    const searchCond = makeLeadSearchCondition(searchTerm);
     const totalLeadCount = await db.lead.count({
       where: {
         columnId: columnId,
         companyId: companyId,
-        ...(searchTerm && {
-          OR: [
-            { clientName: { contains: searchTerm, mode: "insensitive" } },
-            { vehicleInfo: { contains: searchTerm, mode: "insensitive" } },
-            { services: { contains: searchTerm, mode: "insensitive" } },
-            { source: { contains: searchTerm, mode: "insensitive" } },
-          ],
-        }),
+        ...(searchCond ?? {}),
       },
     });
     return totalLeadCount;

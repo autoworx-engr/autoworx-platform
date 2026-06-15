@@ -296,6 +296,72 @@ export async function unreadClientSmsAndEmail(clientId: number) {
   }
 }
 
+export async function updateNewMessengerChatTrack({
+  clientId,
+  message,
+  sentBy,
+}: {
+  clientId: number;
+  message: string;
+  sentBy: string;
+}) {
+  try {
+    const track = await db.clientConversationTrack.findUnique({
+      where: { clientId },
+    });
+
+    const data = {
+      messengerIsRead: sentBy === "Company",
+      messengerUnReadCount: sentBy === "Company" ? 0 : undefined,
+      messengerLastMessage: message,
+      messengerLastBy: sentBy,
+      sendAt: new Date(),
+    };
+
+    if (!track) {
+      return db.clientConversationTrack.create({
+        data: {
+          clientId,
+          messengerIsRead: sentBy === "Company",
+          messengerUnReadCount: sentBy === "Company" ? 0 : 1,
+          messengerLastMessage: message,
+          messengerLastBy: sentBy,
+          sendAt: new Date(),
+        },
+      });
+    }
+
+    return db.clientConversationTrack.update({
+      where: { clientId },
+      data: {
+        messengerIsRead: sentBy === "Company",
+        messengerUnReadCount: { increment: sentBy === "Company" ? 0 : 1 },
+        messengerLastMessage: message,
+        messengerLastBy: sentBy,
+        sendAt: new Date(),
+      },
+    });
+  } catch (err) {
+    throw err;
+  }
+}
+
+export async function readClientMessenger(clientId: number) {
+  try {
+    const track = await db.clientConversationTrack.findUnique({
+      where: { clientId },
+    });
+    if (!track) return initialCreateClientChatTrack(clientId);
+    if (!track.messengerUnReadCount) return track;
+    return db.clientConversationTrack.update({
+      where: { clientId },
+      data: { messengerIsRead: true, messengerUnReadCount: 0 },
+    });
+  } catch (err) {
+    throw err;
+  }
+}
+
 export async function readClientSmsAndEmail(clientId: number) {
   try {
     const findClientChatTrack = await db.clientConversationTrack.findUnique({

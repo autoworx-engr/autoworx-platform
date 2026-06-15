@@ -1,5 +1,7 @@
+import { AppError } from "@/error-boundary/error";
 import { db } from "@/lib/db";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { revalidatePath } from "next/cache";
 import { getPusherInstance } from "@/lib/pusher/server";
 
@@ -145,6 +147,11 @@ const pusher = getPusherInstance();
 
 export async function GET(req: Request) {
   try {
+    const callerCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
+    if (!callerCompanyId) {
+      throw new AppError(401, "Unauthorized");
+    }
+
     const { searchParams } = new URL(req.url);
 
     const companyA = parseInt(searchParams.get("companyA") || "");
@@ -152,70 +159,75 @@ export async function GET(req: Request) {
     const viewerCompanyId = parseInt(searchParams.get("viewerCompanyId") || "");
 
     if (!companyA || !companyB || !viewerCompanyId) {
-      throw new Error("Missing required company IDs");
+      throw new AppError(400, "Missing required company IDs");
     }
 
-    const messages = await db.collaborationMessage.findMany({
-      where: {
-        section: "collaboration",
-        OR: [
-          {
-            AND: [{ fromCompanyId: companyA }, { toCompanyId: companyB }],
+    // Viewer must be the authenticated caller's company AND a participant
+    if (viewerCompanyId !== callerCompanyId) {
+      throw new AppError(403, "viewerCompanyId does not match your session");
+    }
+    if (companyA !== callerCompanyId && companyB !== callerCompanyId) {
+      throw new AppError(403, "You are not a participant in this conversation");
+    }
+
+    const take = Math.min(parseInt(searchParams.get("take") || "20"), 100);
+    const skip = Math.max(parseInt(searchParams.get("skip") || "0"), 0);
+
+    const where = {
+      section: "collaboration",
+      OR: [
+        { fromCompanyId: companyA, toCompanyId: companyB },
+        { fromCompanyId: companyB, toCompanyId: companyA },
+      ],
+    };
+
+    const [messages, total] = await Promise.all([
+      db.collaborationMessage.findMany({
+        where,
+        include: {
+          attachment: true,
+          senderUser: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              image: true,
+            },
           },
-          {
-            AND: [{ fromCompanyId: companyB }, { toCompanyId: companyA }],
-          },
-        ],
-      },
-      include: {
-        attachment: true,
-        senderUser: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            image: true,
+          requestEstimate: {
+            include: { invoice: true },
           },
         },
-        requestEstimate: {
-          include: {
-            invoice: true,
-          },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take,
+      }),
+      db.collaborationMessage.count({ where }),
+    ]);
+
+    // Only mark INBOUND messages as read on the first page load (skip === 0).
+    // Older-page loads must not retrigger the read receipt.
+    const otherCompanyId = viewerCompanyId === companyA ? companyB : companyA;
+    if (skip === 0) {
+      const readMessages = await db.companyChatTrack.updateMany({
+        where: {
+          senderCompanyId: otherCompanyId,
+          receiverCompanyId: viewerCompanyId,
+          isRead: false,
         },
-      },
-      orderBy: {
-        createdAt: "asc",
-      },
-    });
-
-    const readMessages = await db.companyChatTrack.updateMany({
-      where: {
-        OR: [
-          {
-            AND: [
-              { senderCompanyId: companyA },
-              { receiverCompanyId: companyB },
-            ],
-          },
-          {
-            AND: [
-              { senderCompanyId: companyB },
-              { receiverCompanyId: companyA },
-            ],
-          },
-        ],
-        isRead: false,
-      },
-      data: {
-        isRead: true,
-      },
-    });
-
-    if (readMessages) {
-      await pusher.trigger(`company-track-${companyA}`, "chat-read", {
-        senderCompanyId: companyB,
-        receiverCompanyId: companyA,
+        data: { isRead: true },
       });
+
+      if (readMessages.count > 0) {
+        try {
+          await pusher.trigger(`company-track-${otherCompanyId}`, "chat-read", {
+            senderCompanyId: otherCompanyId,
+            receiverCompanyId: viewerCompanyId,
+          });
+        } catch {
+          // Pusher trigger failure is non-fatal
+        }
+      }
     }
 
     /* ---------------- ADD UI FLAGS ---------------- */
@@ -231,11 +243,21 @@ export async function GET(req: Request) {
       toCompanyId: msg.toCompanyId,
       isOwnMessage: msg.fromCompanyId === viewerCompanyId,
     }));
-    revalidatePath("/dashboard/communication/collaboration");
+
+    if (skip === 0) {
+      revalidatePath("/dashboard/communication/collaboration");
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
         messages: formattedMessages,
+        meta: {
+          total,
+          skip,
+          take,
+          hasMore: skip + messages.length < total,
+        },
       }),
       { status: 200 },
     );

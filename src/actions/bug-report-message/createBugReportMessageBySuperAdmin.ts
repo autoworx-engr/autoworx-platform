@@ -22,7 +22,6 @@ type SuperAdminBugMessagePayload = {
   content: string;
   attachments?: AttachmentInput[];
   companyId: number;
-  senderType: string;
 };
 
 export async function createBugReportMessageBySuperAdmin(
@@ -32,12 +31,12 @@ export async function createBugReportMessageBySuperAdmin(
     const session = await getServerSession(authOptions);
     const user = session?.user;
 
-    if (!user || data.senderType !== "super_admin") {
+    if (!user?.isSuperAdmin) {
       throw new Error("Only super admins are allowed to perform this action.");
     }
 
     const existingReport = await db.bugReport.findUnique({
-      where: { id: data.bugReportId, companyId: data.companyId },
+      where: { id: +data.bugReportId, companyId: +data.companyId },
     });
 
     if (!existingReport) {
@@ -49,7 +48,7 @@ export async function createBugReportMessageBySuperAdmin(
         bugReportId: +data.bugReportId,
         subject: null,
         content: data.content,
-        senderType: data.senderType,
+        senderType: "super_admin",
         userId: +user.id,
         ...(data.attachments && data.attachments.length > 0
           ? {

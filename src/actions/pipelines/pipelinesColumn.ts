@@ -36,22 +36,13 @@ export const getEmployeeColumnByCompany = async (
   employeeType?: EmployeeType,
 ) => {
   const companyId = await getCompanyId();
-  let columns = await db.user.findMany({
+  return db.user.findMany({
     where: {
-      companyId: companyId,
+      companyId,
       ...(employeeType && { employeeType }),
-    },
-    include: {
-      Technician: {
-        include: {
-          invoice: true,
-        },
-      },
     },
     orderBy: { createdAt: "asc" },
   });
-
-  return columns;
 };
 
 export const createColumn = async (
@@ -59,11 +50,15 @@ export const createColumn = async (
   type: string,
   textColor?: string,
   bgColor?: string,
+  companyId?: number,
 ) => {
-  const session = await getServerSession(authOptions);
-  const companyId = session?.user.companyId;
+  let resolvedCompanyId = companyId;
+  if (!resolvedCompanyId) {
+    const session = await getServerSession(authOptions);
+    resolvedCompanyId = session?.user.companyId;
+  }
 
-  if (!companyId) {
+  if (!resolvedCompanyId) {
     throw new Error("Company ID is required to create an email template.");
   }
   const maxOrder = await db.column.findFirst({
@@ -79,7 +74,7 @@ export const createColumn = async (
       title,
       type,
       order: newOrder,
-      companyId,
+      companyId: resolvedCompanyId,
       textColor: textColor ?? undefined,
       bgColor: bgColor ?? undefined,
     },

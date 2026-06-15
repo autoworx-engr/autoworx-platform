@@ -19,6 +19,7 @@ import { revalidatePath } from "next/cache";
 export interface AppointmentToAdd {
   title: string;
   date?: string;
+  endDate?: string | null;
   startTime?: string;
   endTime?: string;
   assignedUsers: number[];
@@ -40,17 +41,21 @@ export async function addAppointment(
 ): Promise<ServerAction | TErrorHandler> {
   try {
     await createAppointmentValidationSchema.parseAsync(appointment);
-    const session = await getServerSession(authOptions);
-    const sessionUserId = session?.user.id;
-
     let companyId = appointment.forceCompanyId;
+
+    const session =
+      !appointment.forceUserId || !appointment.forceCompanyId
+        ? await getServerSession(authOptions)
+        : null;
+    const sessionUserId = (session as any)?.user?.id as string | undefined;
+
     let userId = appointment.forceUserId ?? sessionUserId;
 
     if (!userId) {
       return { type: "error", message: "User not found", field: "user" };
     }
     if (!companyId) {
-      companyId = session?.user?.companyId;
+      companyId = (session as any)?.user?.companyId;
       if (!companyId) {
         throw new Error("Company ID is required to create an appointment.");
       }
@@ -73,6 +78,9 @@ export async function addAppointment(
       data: {
         title: appointment.title,
         date: appointment.date ? new Date(appointment.date) : undefined,
+        endDate: appointment.endDate
+          ? new Date(appointment.endDate)
+          : undefined,
         startTime: appointment.startTime,
         endTime: appointment.endTime,
         clientId: appointment.clientId,
@@ -212,7 +220,11 @@ export async function addAppointment(
       console.log("🚀 ~ addAppointment ~ error:", error);
     }
 
-    revalidatePath("/dashboard/communication/client/${clientId}");
+    try {
+      revalidatePath("/dashboard/communication/client/${clientId}");
+    } catch {
+      // no-op: best-effort when called from worker context
+    }
 
     return { type: "success", data: newAppointment };
   } catch (error) {

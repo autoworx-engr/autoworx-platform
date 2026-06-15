@@ -40,6 +40,7 @@ interface PaymentData {
   date: Date;
   notes: string;
   amount: number;
+  companyId?: number;
   additionalData:
     | CardPaymentData
     | CheckPaymentData
@@ -55,9 +56,18 @@ export async function newPayment({
   notes,
   amount,
   additionalData,
+  companyId,
 }: PaymentData): Promise<ServerAction | TErrorHandler> {
   try {
-    const companyId = await getCompanyId();
+    let cId = companyId;
+
+    if (cId == null) {
+      cId = await getCompanyId();
+    }
+
+    if (!cId) {
+      throw new Error("Company ID could not be resolved");
+    }
 
     await createPaymentValidationSchema.parseAsync({
       invoiceId,
@@ -91,7 +101,7 @@ export async function newPayment({
           case "CARD":
             newPayment = await tx.payment.create({
               data: {
-                companyId,
+                companyId: cId,
                 invoiceId,
                 date: new Date(date),
                 notes,
@@ -114,7 +124,7 @@ export async function newPayment({
           case "CHECK":
             newPayment = await tx.payment.create({
               data: {
-                companyId,
+                companyId: cId,
                 invoiceId,
                 date: new Date(date),
                 notes,
@@ -137,7 +147,7 @@ export async function newPayment({
           case "CASH":
             newPayment = await tx.payment.create({
               data: {
-                companyId,
+                companyId: cId,
                 invoiceId,
                 date: new Date(date),
                 notes,
@@ -160,7 +170,7 @@ export async function newPayment({
           case "OTHER":
             newPayment = await tx.payment.create({
               data: {
-                companyId,
+                companyId: cId,
                 invoiceId,
                 date: new Date(date),
                 notes,
@@ -189,7 +199,7 @@ export async function newPayment({
             // Update the invoice with the deposit amount, method, and notes
             newPayment = await tx.payment.create({
               data: {
-                companyId,
+                companyId: cId,
                 invoiceId,
                 date: new Date(date),
                 notes,
@@ -249,9 +259,9 @@ export async function newPayment({
         });
 
         sendPaymentReceivedNotification({
-          companyId,
+          companyId: cId,
           clientName:
-            invoice?.client?.firstName + " " + invoice?.client?.lastName,
+            `${invoice?.client?.firstName} ${invoice?.client?.lastName ?? ""}`.trim(),
           amount: amount,
           invoiceId: invoice.id,
         });

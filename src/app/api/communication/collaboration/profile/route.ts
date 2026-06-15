@@ -1,5 +1,8 @@
-import { getUserPermissions } from "@/actions/settings/teamManagement";
+import { AppError } from "@/error-boundary/error";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
+import { getFilteredConnectedCompanies } from "@/lib/collaboration/getFilteredConnectedCompanies";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -93,8 +96,12 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
+    const callerCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
+    if (!callerCompanyId) {
+      throw new AppError(401, "Unauthorized");
+    }
 
+    const { searchParams } = new URL(req.url);
     const companyId = Number(searchParams.get("companyId"));
 
     if (!companyId) {
@@ -124,122 +131,28 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const reviews = await db.reviews.findMany({
-      where: { companyId },
-      select: {
-        id: true,
-        rate: true,
-        message: true,
-        sendUserId: true,
-        sendCompanyId: true,
-      },
-    });
+    const [reviews, finalCompanies, completedJobs] = await Promise.all([
+      db.reviews.findMany({
+        where: { companyId },
+        select: {
+          id: true,
+          rate: true,
+          message: true,
+          sendUserId: true,
+          sendCompanyId: true,
+        },
+      }),
+      getFilteredConnectedCompanies(companyId),
+      db.technician.count({ where: { companyId, status: "Complete" } }),
+    ]);
 
     const totalReviews = reviews.length;
-
     const avgRate =
       totalReviews > 0
         ? reviews.reduce((sum, r) => sum + Number(r.rate), 0) / totalReviews
         : 0;
 
-    const connectedCompanies = await db.companyJoin.findMany({
-      where: {
-        OR: [
-          {
-            companyOneId: companyId,
-            companyTwo: {
-              isCollaborators: true,
-            },
-          },
-          {
-            companyTwoId: companyId,
-            companyOne: {
-              isCollaborators: true,
-            },
-          },
-        ],
-        status: "ACCEPTED",
-      },
-      include: {
-        companyOne: {
-          include: {
-            users: {
-              where: {
-                employeeType: {
-                  in: ["Admin", "Manager", "Sales"],
-                },
-              },
-            },
-          },
-        },
-        companyTwo: {
-          include: {
-            users: {
-              where: {
-                employeeType: {
-                  in: ["Admin", "Manager", "Sales"],
-                },
-              },
-            },
-          },
-        },
-      },
-    });
-
-    const oppositeCompanies = connectedCompanies.map((join) => {
-      if (join.companyOneId === companyId) {
-        return join.companyTwo;
-      } else {
-        return join.companyOne;
-      }
-    });
-    // Filter users in oppositeCompanies based on their collaboration permissions
-    const filteredOppositeCompanies = await Promise.all(
-      oppositeCompanies.map(async (company) => {
-        // Filter users who have collaboration permission
-        const filteredUsers = await Promise.all(
-          company.users.map(async (user) => {
-            try {
-              const permissions = await getUserPermissions(
-                user.id,
-                user.employeeType,
-              );
-
-              // Check communicationHubCollaboration permission
-              const hasCollaboration =
-                permissions?.communicationHubCollaboration === true;
-
-              return hasCollaboration ? user : null;
-            } catch (error) {
-              console.error(`  ERROR for user ${user.firstName}:`, error);
-              return null;
-            }
-          }),
-        );
-
-        const filtered = filteredUsers.filter((user) => user !== null);
-
-        return {
-          ...company,
-          users: filtered,
-        };
-      }),
-    );
-
-    // Remove companies that have no users with collaboration permission
-    const finalCompanies = filteredOppositeCompanies.filter(
-      (company) => company.users.length > 0,
-    );
-
-    // completed jobs
-    const completedJobs = await db.technician.count({
-      where: {
-        companyId,
-        status: "Complete",
-      },
-    });
-
-    const response = {
+    return NextResponse.json({
       id: company.id,
       name: company.name,
       image: company.image,
@@ -249,16 +162,14 @@ export async function GET(req: NextRequest) {
       address: company.city,
       avgRate: Number(avgRate.toFixed(1)),
       totalReviews,
-      totalCollaboration: finalCompanies?.length,
+      totalCollaboration: finalCompanies.length,
       totalJobsDone: completedJobs,
-    };
-
-    return NextResponse.json(response);
+    });
   } catch (error) {
-    console.error(error);
+    const errors = errorHandler(error);
     return NextResponse.json(
-      { message: "Something went wrong" },
-      { status: 500 },
+      { message: errors?.message || "Something went wrong" },
+      { status: errors?.statusCode || 500 },
     );
   }
 }

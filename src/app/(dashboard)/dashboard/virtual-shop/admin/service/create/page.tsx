@@ -3,8 +3,14 @@ import Title from "@/components/Title";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import { Material, Tag } from "@prisma/client";
+import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import ServiceCreateClient from "./ServiceCreateClient";
+
+export const metadata = {
+  title: "Virtual Shop - Create Service",
+  description: "Create or edit a virtual shop service",
+};
 
 type InitialServiceData = {
   id: number;
@@ -15,6 +21,7 @@ type InitialServiceData = {
     customDuration: string;
     imageName: string;
     imageUrl: string;
+    category: string[];
     vehicleTypeModifiers: {
       coupe: string;
       sedan: string;
@@ -104,6 +111,9 @@ export default async function Page({
         customDuration: String(shopService.duration ?? ""),
         imageName: "",
         imageUrl: shopService.imageUrl || "",
+        category: Array.isArray(shopService.category)
+          ? shopService.category
+          : [],
         vehicleTypeModifiers: {
           coupe: String(shopService.modifierCoupe ?? 0),
           sedan: String(shopService.modifierSedan ?? 0),

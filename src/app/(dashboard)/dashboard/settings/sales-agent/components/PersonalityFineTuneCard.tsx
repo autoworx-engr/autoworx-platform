@@ -15,6 +15,7 @@ import {
   Lightbulb,
   Volume2,
   MessageSquare,
+  AlertTriangle,
   Brain,
   Loader2,
 } from "lucide-react";
@@ -50,6 +51,7 @@ export default function PersonalityFineTuneCard() {
     matchCustomerTone: true,
     useEmojis: true,
     openingMessage: "",
+    humanHandoffMessage: "",
     systemPrompt: "",
   });
 
@@ -68,7 +70,11 @@ export default function PersonalityFineTuneCard() {
 
   const handleInputChange = useCallback(
     (
-      field: "assistantName" | "openingMessage" | "systemPrompt",
+      field:
+        | "assistantName"
+        | "openingMessage"
+        | "humanHandoffMessage"
+        | "systemPrompt",
       value: string,
     ) => {
       setPersonality((prev) => ({ ...prev, [field]: value }));
@@ -248,6 +254,38 @@ export default function PersonalityFineTuneCard() {
             <p className="text-xs text-muted-foreground">
               Leave empty to let the AI generate a greeting based on its
               personality and training.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Human Handoff Message */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5" />
+            Human Handoff Message
+          </CardTitle>
+          <CardDescription>
+            The message your AI sends when it needs to hand off the conversation
+            to a real person
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>Handoff Message</Label>
+            <Textarea
+              value={personality?.humanHandoffMessage || ""}
+              onChange={(e) =>
+                handleInputChange("humanHandoffMessage", e.target.value)
+              }
+              placeholder="Hey, let me get one of our team members to help you out! They'll be with you shortly 🙏"
+              rows={3}
+            />
+            <p className="text-xs text-muted-foreground">
+              Triggered when the AI detects slang, abusive language, or a
+              request it can&apos;t handle. Leave empty for a default handoff
+              response.
             </p>
           </div>
         </CardContent>

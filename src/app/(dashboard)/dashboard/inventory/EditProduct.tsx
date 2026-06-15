@@ -29,6 +29,7 @@ import {
 import { SquarePen } from "lucide-react";
 import { useEffect, useState } from "react";
 import { editProduct } from "../../../../actions/inventory/edit";
+import { ProductFormFields } from "./ProductFormFields";
 
 type TProps = {
   productData: InventoryProduct & { category: Category; vendor: Vendor };
@@ -50,7 +51,7 @@ export default function EditProduct({ productData }: TProps) {
   const { vendors } = useListsStore(); // useful
   const [vendor, setVendor] = useState<Vendor | null>(productData.vendor);
   const [category, setCategory] = useState<Category | null>(
-    productData.category
+    productData.category,
   );
 
   const { showError, clearError } = useFormErrorStore();
@@ -72,11 +73,36 @@ export default function EditProduct({ productData }: TProps) {
   useEffect(() => setCategoryOpen(false), [vendorOpen]);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const name = e.target.name as string;
     const value = e.target.value as string;
     setProduct({ ...product, [name]: value });
+  };
+
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const numericValue = parseFloat(value);
+    if (!isNaN(numericValue)) clearError();
+    setProduct((prev) => ({ ...prev, price: numericValue }));
+    if (!value.trim() || isNaN(numericValue)) {
+      showError({
+        field: "price",
+        message: "Price is required and must be a valid number.",
+      });
+    }
+  };
+
+  const handleUnitChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setProduct({ ...product, unit: value });
+    if (!value.trim()) {
+      showError({ field: "unit", message: "Unit is required." });
+    } else if (/\d/.test(value.trim())) {
+      showError({ field: "unit", message: "Unit cannot contain any numbers." });
+    } else {
+      clearError();
+    }
   };
 
   async function handleSubmit() {
@@ -210,7 +236,7 @@ export default function EditProduct({ productData }: TProps) {
       errorToast(
         formattedError.errorSource && formattedError.errorSource.length > 0
           ? formattedError.errorSource[0].message
-          : formattedError.message
+          : formattedError.message,
       );
     }
   }
@@ -348,8 +374,8 @@ export default function EditProduct({ productData }: TProps) {
                           ?.toLowerCase()
                           ?.includes(search.toLowerCase()) ||
                         (vendor?.name?.toLowerCase() || "").includes(
-                          search.toLowerCase()
-                        )
+                          search.toLowerCase(),
+                        ),
                     )
                   }
                   displayList={(vendor: Vendor) => (
@@ -373,42 +399,22 @@ export default function EditProduct({ productData }: TProps) {
                   "bg-white/80 backdrop-blur-sm dark:bg-slate-900/50", // Subtle glass texture
                   "text-slate-600 dark:text-slate-300 placeholder:text-slate-400",
                   "focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/40", // Brand focus state
-                  "disabled:opacity-50 disabled:cursor-not-allowed"
+                  "disabled:opacity-50 disabled:cursor-not-allowed",
                 )}
                 value={product.description as string}
               />
             </div>
 
-            {/* Desktop screen */}
-            <div className="md:grid grid-cols-1 hidden md:grid-cols-3 w-full gap-5">
+            <ProductFormFields cols={3}>
               <SlimInput
-                onChange={handleChange}
+                onChange={handlePriceChange}
                 value={product.price as number}
                 name="price"
                 type="number"
                 required
               />
               <SlimInput
-                onChange={(e) => {
-                  const value = e.target.value;
-                  // Update the product state
-                  setProduct({ ...product, unit: value });
-
-                  // Validation
-                  if (!value.trim()) {
-                    showError({
-                      field: "unit",
-                      message: "Unit is required.",
-                    });
-                  } else if (/\d/.test(value.trim())) {
-                    showError({
-                      field: "unit",
-                      message: "Unit cannot contain any numbers.",
-                    });
-                  } else {
-                    clearError();
-                  }
-                }}
+                onChange={handleUnitChange}
                 value={product.unit as string}
                 name="unit"
                 type="text"
@@ -421,72 +427,7 @@ export default function EditProduct({ productData }: TProps) {
                 label="Lot#"
                 required={false}
               />
-            </div>
-            {/* mobile screen */}
-            <div className="block md:hidden space-y-4">
-              <SlimInput
-                onChange={(e) => {
-                  const value = e.target.value;
-                  const numericValue = parseFloat(value);
-
-                  // Clear previous errors if value is valid
-                  if (!isNaN(numericValue)) {
-                    clearError();
-                  }
-
-                  // Update the product price
-                  setProduct((prevProduct) => ({
-                    ...prevProduct,
-                    price: numericValue,
-                  }));
-
-                  // Show error if value is empty or invalid
-                  if (!value.trim() || isNaN(numericValue)) {
-                    showError({
-                      field: "price",
-                      message: "Price is required and must be a valid number.",
-                    });
-                  }
-                }}
-                value={product.price as number}
-                name="price"
-                type="number"
-                required
-              />
-              <SlimInput
-                onChange={(e) => {
-                  const value = e.target.value;
-                  // Update the product state
-                  setProduct({ ...product, unit: value });
-
-                  // Validation
-                  if (!value.trim()) {
-                    showError({
-                      field: "unit",
-                      message: "Unit is required.",
-                    });
-                  } else if (/\d/.test(value.trim())) {
-                    showError({
-                      field: "unit",
-                      message: "Unit cannot contain any numbers.",
-                    });
-                  } else {
-                    clearError();
-                  }
-                }}
-                value={product.unit as string}
-                name="unit"
-                type="text"
-                required
-              />
-              <SlimInput
-                onChange={handleChange}
-                value={product.lot as string}
-                name="lot"
-                label="Lot#"
-                required={false}
-              />
-            </div>
+            </ProductFormFields>
             <div>
               <SlimInput
                 type="text"

@@ -22,7 +22,8 @@ import { useListsStore } from "@/stores/lists";
 import { stateStore } from "@/stores/stateStore";
 import { Client, Source, Tag } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { CircleUserRound as UserIcon, X } from "lucide-react";
+import { CircleUserRound as UserIcon, SquarePen, X } from "lucide-react";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { RotatingLines } from "react-loader-spinner";
@@ -50,6 +51,7 @@ export default function NewCustomer({
   const [tagOpenDropdown, setTagOpenDropdown] = useState(false);
   const [tag, setTag] = useState<Tag>();
   const [profilePic, setProfilePic] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [clientSources, setClientSources] = useState<Source[]>([]);
   const { showError, clearError } = useFormErrorStore();
   const [mobile, setMobile] = useState("+1");
@@ -74,6 +76,16 @@ export default function NewCustomer({
     zip: "",
     customerCompany: "",
   });
+
+  useEffect(() => {
+    if (!profilePic) {
+      setPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(profilePic);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [profilePic]);
 
   async function getClientSources() {
     const data = await getSources();
@@ -277,14 +289,35 @@ export default function NewCustomer({
             </div>
 
             {profilePic ? (
-              <img
-                src={URL.createObjectURL(profilePic)}
-                alt="profile"
-                className="h-16 w-16 cursor-pointer rounded-full object-cover ring-4 ring-white dark:ring-slate-800 shadow-md transition-transform group-hover:scale-105"
-                onClick={() => {
-                  setProfilePic(null);
-                }}
-              />
+              <div className="relative group">
+                <div className="relative h-16 w-16 rounded-full overflow-hidden ring-4 ring-white dark:ring-slate-800 shadow-md transition-transform group-hover:scale-105">
+                  <Image
+                    src={previewUrl!}
+                    alt="profile"
+                    width={64}
+                    height={64}
+                    unoptimized
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+                <label
+                  htmlFor="profilePicture"
+                  className="absolute bottom-0 right-0 p-1 bg-[#6571FF] rounded-full shadow-sm cursor-pointer transition-colors"
+                >
+                  <SquarePen className="w-3 h-3 text-white" />
+                </label>
+                <input
+                  type="file"
+                  name="profilePicture"
+                  id="profilePicture"
+                  hidden
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) setProfilePic(file);
+                  }}
+                />
+              </div>
             ) : (
               <label
                 className="

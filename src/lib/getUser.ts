@@ -9,7 +9,7 @@ import { redirect } from "next/navigation";
 
 const getUser = cache(async function (userId?: number): Promise<User> {
   const session = await getServerSession(authOptions);
-  if (!session || !session.user) {
+  if (!userId && (!session || !session.user)) {
     // throw new Error("Unauthorized access: No session found");
     redirect("/login");
   }

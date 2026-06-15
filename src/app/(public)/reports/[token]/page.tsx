@@ -113,12 +113,8 @@ export default function ReportPage(props: ReportPageProps) {
     if (!decodedParams?.startDate || !decodedParams?.endDate) return "";
 
     try {
-      const parseUTCDate = (dateStr: string) => {
-        const d = new Date(dateStr);
-        return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
-      };
-      const start = parseUTCDate(decodedParams.startDate);
-      const end = parseUTCDate(decodedParams.endDate);
+      const start = parseISO(decodedParams.startDate);
+      const end = parseISO(decodedParams.endDate);
 
       switch (frequency) {
         case "daily":
@@ -174,14 +170,19 @@ export default function ReportPage(props: ReportPageProps) {
       document.body.classList.add("is-generating-pdf");
       toast.loading("Preparing your PDF report...");
 
-      const canvas = await html2canvas(reportElement, {
-        scale: 1.5, // Slightly reduced scale for better performance
+      const isSafari = /^((?!chrome|android).)*safari/i.test(
+        navigator.userAgent,
+      );
+
+      const html2canvasOptions = {
+        scale: 1.5,
         useCORS: true,
-        logging: true, // Enable logging for debugging
+        allowTaint: isSafari,
+        logging: false,
         backgroundColor: "#ffffff",
         windowWidth: reportElement.scrollWidth,
         windowHeight: reportElement.scrollHeight,
-        ignoreElements: (element) => {
+        ignoreElements: (element: Element) => {
           return (
             element.classList.contains("xl:col-span-1") ||
             element.tagName === "BUTTON" ||
@@ -189,7 +190,16 @@ export default function ReportPage(props: ReportPageProps) {
               element.classList.contains("grayscale"))
           );
         },
-      });
+      };
+
+      const timeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("PDF generation timed out")), 30000),
+      );
+
+      const canvas = await Promise.race([
+        html2canvas(reportElement, html2canvasOptions),
+        timeout,
+      ]);
 
       const imgData = canvas.toDataURL("image/jpeg", 0.8); // Use JPEG with 0.8 quality
       const pdf = new jsPDF({

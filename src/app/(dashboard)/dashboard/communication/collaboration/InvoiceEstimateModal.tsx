@@ -56,7 +56,6 @@ export default function InvoiceEstimateModal({
   };
 
   const handleEstimateSubmit = async () => {
-    console.log("request estimate");
     try {
       setError("");
 
@@ -137,24 +136,14 @@ export default function InvoiceEstimateModal({
         throw new Error("Message wasn't sent");
       }
 
-      /* ---------------- LOCAL STATE UPDATE ---------------- */
-
-      // const newMessage: any = {
-      //   message: "",
-      //   sender: "COMPANY",
-      //   attachment: null,
-      //   requestEstimate: requestEstimateFromDB,
-      //   createdAt: new Date(),
-      // };
-
-      // setMessages((prev) => [...prev, newMessage]);
       setPhotos([]);
       setShowAttachment(false);
       toast.success("Estimate requested successfully");
-    } catch (err: any) {
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to request estimate";
       toast.error("Failed to request estimate");
-      setError(err.message);
-      console.error(err);
+      setError(message);
     }
   };
 

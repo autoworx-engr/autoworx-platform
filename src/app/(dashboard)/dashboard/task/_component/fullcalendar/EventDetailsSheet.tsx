@@ -10,6 +10,7 @@ import { errorToast, successToast } from "@/lib/toast";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { CheckCircle, Edit, MessageSquare } from "lucide-react";
 import { Popconfirm } from "antd";
+import moment from "moment";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { CustomEventProps } from "../../_utils/calendar.types";
@@ -92,6 +93,24 @@ export const EventDetailsSheet = ({
     selectedEvent.start ? formatTime(selectedEvent.start) : "N/A"
   }${selectedEvent.end ? ` to ${formatTime(selectedEvent.end)}` : ""}`;
 
+  const formatDateLabel = () => {
+    const rawStart = originalData?.date;
+    const rawEnd = originalData?.endDate;
+    if (!rawStart) return "";
+    const start = moment.utc(rawStart);
+    if (!start.isValid()) return "";
+    if (!rawEnd) return start.format("MMM D, YYYY");
+    const end = moment.utc(rawEnd);
+    if (!end.isValid() || end.isSame(start, "day")) {
+      return start.format("MMM D, YYYY");
+    }
+    if (start.isSame(end, "year")) {
+      return `${start.format("MMM D")} – ${end.format("MMM D, YYYY")}`;
+    }
+    return `${start.format("MMM D, YYYY")} – ${end.format("MMM D, YYYY")}`;
+  };
+  const dateLabel = formatDateLabel();
+
   // Appointment: icon colors from category color
   const catColor = props?.serviceCategoryColor;
   const aptIconStyle = isHexColor(catColor)
@@ -149,7 +168,7 @@ export const EventDetailsSheet = ({
     taskKeys.forEach(removeFromCache);
     onOpenChange(false);
 
-    const result = await completeTask(taskId);
+    const result = await completeTask(taskId, { revalidate: false });
     if (result.type === "success") {
       successToast("Task Completed successfully.");
       invalidateCalendarQueries();
@@ -202,6 +221,7 @@ export const EventDetailsSheet = ({
               <div className="space-y-5">
                 {eventType === "appointment" && (
                   <AppointmentDetailCard
+                    dateLabel={dateLabel}
                     timeRange={timeRange}
                     clientName={appointmentClientName}
                     clientEmail={appointmentClientEmail}
@@ -217,6 +237,7 @@ export const EventDetailsSheet = ({
 
                 {eventType === "task" && (
                   <TaskDetailCard
+                    dateLabel={dateLabel}
                     timeRange={timeRange}
                     priority={originalData?.priority}
                     taskUsers={originalData?.taskUser}

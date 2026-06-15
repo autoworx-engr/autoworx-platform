@@ -77,7 +77,7 @@ const CustomizeUserRole = ({ user, onBack }: CustomizeUserRolesProps) => {
     };
 
     fetchRolePermissions();
-  }, []);
+  }, [refetch]);
 
   // Helper function to check if permission is allowed for user's role
   const isPermissionAllowedForRole = (key: string): boolean => {
@@ -191,13 +191,22 @@ const CustomizeUserRole = ({ user, onBack }: CustomizeUserRolesProps) => {
                 <td className="px-4 py-3">
                   <div className="flex items-center">
                     {!module.viewOnly && (
-                      <Switch
-                        checked={permissions[module.key] ?? false}
-                        onChange={(checked) =>
-                          handlePermissionChange(module.key, checked)
+                      <Tooltip
+                        title={
+                          !isPermissionAllowedForRole(module.key)
+                            ? "Disabled by role settings"
+                            : undefined
                         }
-                        className="shadow-sm"
-                      />
+                      >
+                        <Switch
+                          checked={permissions[module.key] ?? false}
+                          disabled={!isPermissionAllowedForRole(module.key)}
+                          onChange={(checked) =>
+                            handlePermissionChange(module.key, checked)
+                          }
+                          className="shadow-sm"
+                        />
+                      </Tooltip>
                     )}
                   </div>
                 </td>

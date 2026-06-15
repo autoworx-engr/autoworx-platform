@@ -56,8 +56,16 @@ export const clientSortByUpdatedMessage = (
     const bTrack = b.conversationsTrack;
 
     // Check if clients have actual messages
-    const aHasMessages = !!(aTrack?.smsLastMessage || aTrack?.emailLastMessage);
-    const bHasMessages = !!(bTrack?.smsLastMessage || bTrack?.emailLastMessage);
+    const aHasMessages = !!(
+      aTrack?.smsLastMessage ||
+      aTrack?.emailLastMessage ||
+      aTrack?.messengerLastMessage
+    );
+    const bHasMessages = !!(
+      bTrack?.smsLastMessage ||
+      bTrack?.emailLastMessage ||
+      bTrack?.messengerLastMessage
+    );
 
     // Helper function to get the best available timestamp for sorting
     const getEffectiveTimestamp = (

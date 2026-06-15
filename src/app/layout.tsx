@@ -67,7 +67,12 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await getServerSession(authOptions);
+  let session = null;
+  try {
+    session = await getServerSession(authOptions);
+  } catch {
+    // auth failure must not crash public pages
+  }
   const employeeType = session?.user?.employeeType;
   const canReceiveCalls = ["Admin", "Manager", "Sales"].includes(
     employeeType as string,
@@ -77,7 +82,7 @@ export default async function RootLayout({
   //   redirect("/login");
   // }
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
         <Script
           defer

@@ -283,7 +283,10 @@ export const FleetStatementModalBody: React.FC<
                   )
                 }
                 gatewayInfo={{
-                  paymentGateway: gatewayInfo?.paymentGateway || "STRIPE",
+                  paymentGateway: (gatewayInfo?.paymentGateway || "STRIPE") as
+                    | "STRIPE"
+                    | "AUTHORIZE_NET"
+                    | "BOTH",
                   hasStripe: gatewayInfo?.hasStripe || false,
                   hasAuthorizeNet: gatewayInfo?.hasAuthorizeNet || false,
                   tipEnabled: gatewayInfo?.tipEnabled ?? false,

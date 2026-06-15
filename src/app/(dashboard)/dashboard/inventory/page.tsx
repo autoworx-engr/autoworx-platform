@@ -10,6 +10,12 @@ import { cache } from "react";
 import AddNewProduct from "./AddNewProduct";
 import ClientInventoryList from "./ClientInventoryList";
 import Sidebar from "./Sidebar";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Inventory",
+  description: "Manage your inventory, products, and supplies",
+};
 
 async function getCategories() {
   const session = await getServerSession(authOptions);
@@ -73,30 +79,25 @@ const getInventoryItem = cache(
             ]
           : []),
       ];
-      const items = await db.inventoryProduct.findMany({
-        where: {
-          companyId,
-          type: type,
-          OR: search ? searchFilterOR : undefined,
-          category: { name: category },
-        },
-        include: {
-          category: true,
-          vendor: true,
-          User: type === "Supply" ? true : false,
-        },
-        skip: (page - 1) * limit,
-        take: limit,
-        orderBy: { name: "asc" },
-      });
-      const totalItems = await db.inventoryProduct.count({
-        where: {
-          companyId,
-          type: type,
-          OR: search ? searchFilterOR : undefined,
-          category: { name: category },
-        },
-      });
+      const whereClause = {
+        companyId,
+        type: type,
+        OR: search ? searchFilterOR : undefined,
+        ...(category ? { category: { name: category } } : {}),
+      };
+      const [items, totalItems] = await Promise.all([
+        db.inventoryProduct.findMany({
+          where: whereClause,
+          include: {
+            category: true,
+            vendor: true,
+            User: type === "Supply" ? true : false,
+          },
+          ...(search ? {} : { skip: (page - 1) * limit, take: limit }),
+          orderBy: { name: "asc" },
+        }),
+        db.inventoryProduct.count({ where: whereClause }),
+      ]);
       return { data: items, totalItems: totalItems };
     } catch (error) {
       console.log(error);
@@ -127,28 +128,36 @@ export default async function Page(props: {
   } = searchParams;
 
   const companyId = await getCompanyId();
-  const { data: supplies, totalItems: totalSupplies } = await getInventoryItem({
-    type: "Supply",
-    page: parseInt(page),
-    limit: parseInt(limit),
-    search,
-    category,
-  });
 
-  const { data: products, totalItems: totalProducts } = await getInventoryItem({
-    type: "Product",
-    page: parseInt(page),
-    limit: parseInt(limit),
-    search,
-    category,
-  });
+  const [
+    { data: supplies, totalItems: totalSupplies },
+    { data: products, totalItems: totalProducts },
+    inventoryCategoriesResult,
+    categories,
+    vendors,
+    user,
+  ] = await Promise.all([
+    getInventoryItem({
+      type: "Supply",
+      page: parseInt(page),
+      limit: parseInt(limit),
+      search,
+      category,
+    }),
+    getInventoryItem({
+      type: "Product",
+      page: parseInt(page),
+      limit: parseInt(limit),
+      search,
+      category,
+    }),
+    getCategories(),
+    db.category.findMany({ where: { companyId } }),
+    db.vendor.findMany({ where: { companyId } }),
+    getUser(),
+  ]);
 
-  const inventoryCategories = (await getCategories()) ?? [];
-  // console.log("inventoryCategories", inventoryCategories);
-  const categories = await db.category.findMany({ where: { companyId } });
-  const vendors = await db.vendor.findMany({ where: { companyId } });
-
-  const user = await getUser();
+  const inventoryCategories = inventoryCategoriesResult ?? [];
 
   return (
     <div className="h-full w-full">

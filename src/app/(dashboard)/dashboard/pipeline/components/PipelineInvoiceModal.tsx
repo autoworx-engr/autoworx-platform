@@ -20,7 +20,7 @@ export default function PipelineInvoiceModal({ invoiceId }: TProps) {
         />
       </DialogTrigger>
 
-      {invoiceId && <InvoiceModalBody invoiceId={invoiceId} />}
+      {invoiceId && open && <InvoiceModalBody invoiceId={invoiceId} />}
     </Dialog>
   );
 }

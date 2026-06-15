@@ -32,6 +32,7 @@ type ShopFormData = {
   bannerUrl?: string;
   themeConfig: ThemeConfig;
   isActive: boolean;
+  urgentBookingNotificationsEnabled: boolean;
   termsConditions?: string;
   privacyPolicy?: string;
 };
@@ -67,6 +68,7 @@ export default function ShopForm({
       fontFamily: "Inter",
     },
     isActive: true,
+    urgentBookingNotificationsEnabled: true,
     termsConditions: "",
     privacyPolicy: "",
   });
@@ -124,6 +126,8 @@ export default function ShopForm({
           fontFamily: "Inter",
         },
         isActive: data.isActive ?? true,
+        urgentBookingNotificationsEnabled:
+          data.urgentBookingNotificationsEnabled ?? true,
         termsConditions: data.termsConditions ?? "",
         privacyPolicy: data.privacyPolicy ?? "",
       });
@@ -275,7 +279,7 @@ export default function ShopForm({
         onClose={() => setCropModal((prev) => ({ ...prev, open: false }))}
         onComplete={handleCropComplete}
       />
-      <div className="mx-auto w-full max-w-6xl space-y-4 px-0 py-4 sm:space-y-6 sm:px-6 sm:py-6">
+      <div className="mx-auto w-full space-y-4 px-0 py-4">
         <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
           <div className="absolute -right-14 -top-14 h-40 w-40 rounded-full bg-[#6571FF]/10 blur-2xl" />
           <div className="absolute -bottom-16 right-12 h-36 w-36 rounded-full bg-[#6571FF]/10 blur-2xl" />
@@ -582,6 +586,31 @@ export default function ShopForm({
               setForm((p) => ({
                 ...p,
                 isActive: checked,
+              }))
+            }
+          />
+        </div>
+
+        {/* URGENT BOOKING NOTIFICATIONS */}
+        <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div>
+            <p className="text-sm font-medium text-slate-700">
+              Urgent Booking Notifications
+            </p>
+            <p className="text-xs text-slate-500">
+              Receive platform notifications when a customer submits an urgent
+              service request.
+            </p>
+          </div>
+
+          <Switch
+            checked={form.urgentBookingNotificationsEnabled}
+            className="data-[state=checked]:!bg-[#6571FF] data-[state=unchecked]:bg-slate-200"
+            disabled={isCreating || isUpdating || isFetching}
+            onCheckedChange={(checked) =>
+              setForm((p) => ({
+                ...p,
+                urgentBookingNotificationsEnabled: checked,
               }))
             }
           />

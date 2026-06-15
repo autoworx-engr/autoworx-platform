@@ -14,28 +14,10 @@ import useWeekStartEndDays from "../../_hook/lib/useWeekStartEndDays";
 import { CircleCheckBig, SquarePen } from "lucide-react";
 import { sendTaskCompleteNotification } from "@/lib/notification/task-and-appointment-notify";
 import { completeTask } from "@/actions/task/completeTask";
+import { taskPriorityStyles as priorityStyles } from "@/lib/taskPriorityStyles";
 
-// Colors matching FullCalendar task event colors
-const priorityStyles = {
-  Low: {
-    background: "linear-gradient(to right, #f5f3ff, #ede9fe)",
-    borderLeft: "3px solid #6d28d9",
-    color: "#6d28d9",
-    boxShadow: "0 2px 8px rgba(109, 40, 217, 0.15)",
-  },
-  Medium: {
-    background: "linear-gradient(to right, #f0f9ff, #e0f2fe)",
-    borderLeft: "3px solid #0284c7",
-    color: "#0284c7",
-    boxShadow: "0 2px 8px rgba(2, 132, 199, 0.15)",
-  },
-  High: {
-    background: "linear-gradient(to right, #b2f2bb, #d3f9d8)",
-    borderLeft: "3px solid #22a7b8",
-    color: "#22a7b8",
-    boxShadow: "0 2px 8px rgba(34, 167, 184, 0.15)",
-  },
-};
+// Priority colors are shared with the dashboard Task List box via
+// `taskPriorityStyles` so both render identically (imported above).
 
 type TaskComponentProps = {
   task: Task;
@@ -56,19 +38,34 @@ export default function TaskComponent({ task }: TaskComponentProps) {
     event.dataTransfer.setData("text/plain", `task|${task.id}`);
     setIsDragging(true);
   };
+
+  const removeTaskFromScrollCache = (taskId: number) => {
+    queryClient.setQueryData(
+      taskQueryKey.allTaskByScroll,
+      (old: { pages?: { data: Task[] }[] } | undefined) => {
+        if (!old?.pages) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            data: Array.isArray(page.data)
+              ? page.data.filter((t) => t.id !== taskId)
+              : [],
+          })),
+        };
+      },
+    );
+  };
+
   const handleConfirm = async () => {
-    try {
-      await completeTask(task.id);
+    const result = await completeTask(task.id, { revalidate: false });
+    if (result.type === "success") {
       successToast("Task Completed successfully.");
-      queryClient.invalidateQueries({
-        queryKey: taskQueryKey.allTaskByScroll,
-      });
-      setPopconfirmVisible(false);
-    } catch (error) {
-      console.error("Failed to delete task:", error);
-      errorToast("Failed to delete task. Please try again.");
-      setPopconfirmVisible(false);
+      removeTaskFromScrollCache(task.id);
+    } else {
+      errorToast("Failed to complete task. Please try again.");
     }
+    setPopconfirmVisible(false);
   };
 
   useEffect(() => {
@@ -108,12 +105,13 @@ export default function TaskComponent({ task }: TaskComponentProps) {
   };
 
   const handleDeleteTask = (taskId: number) => {
-    queryClient.setQueryData([taskQueryKey.allTasks], (oldData: Task[]) => {
-      return oldData && oldData.length > 0
-        ? oldData.filter((task) => task.id !== taskId)
-        : [];
+    removeTaskFromScrollCache(taskId);
+    queryClient.invalidateQueries({
+      queryKey: [taskQueryKey.allTasks, dateFormat],
     });
-    revalidateTaskQueries();
+    queryClient.invalidateQueries({
+      queryKey: [taskQueryKey.allTasks, weekStartDate, weekEndDate],
+    });
   };
 
   const priorityStyle =
@@ -190,6 +188,7 @@ export default function TaskComponent({ task }: TaskComponentProps) {
           }
           taskId={task.id}
           fromEdit
+          revalidateOnDelete={false}
           onTaskUpdated={handleUpdate}
           onTaskDelete={handleDeleteTask}
         />

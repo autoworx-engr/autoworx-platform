@@ -1,3 +1,4 @@
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { InvoiceType } from "@prisma/client";
@@ -280,14 +281,15 @@ export async function GET(
 ) {
   try {
     const { companyId: companyIdParam } = await params;
-    const companyId = Number(companyIdParam);
-
-    if (!companyId || isNaN(companyId)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid company ID" },
-        { status: 400 },
-      );
+    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
+    if (jwtCompanyId === null) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const urlCompanyId = parseInt(companyIdParam, 10);
+    if (isNaN(urlCompanyId) || urlCompanyId !== jwtCompanyId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    const companyId = jwtCompanyId;
 
     const { searchParams } = new URL(req.url);
     const type = searchParams.get("type") as InvoiceType | null;
@@ -399,14 +401,15 @@ export async function POST(
 ) {
   try {
     const { companyId: companyIdParam } = await params;
-    const companyId = Number(companyIdParam);
-
-    if (!companyId || isNaN(companyId)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid company ID" },
-        { status: 400 },
-      );
+    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
+    if (jwtCompanyId === null) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const urlCompanyId = parseInt(companyIdParam, 10);
+    if (isNaN(urlCompanyId) || urlCompanyId !== jwtCompanyId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    const companyId = jwtCompanyId;
 
     const company = await db.company.findUnique({ where: { id: companyId } });
     if (!company) {
@@ -441,6 +444,7 @@ export async function POST(
       photos = [],
       tasks = [],
       inspections = [],
+      id,
     } = body;
 
     if (!type || !["Estimate", "Invoice"].includes(type)) {
@@ -485,6 +489,7 @@ export async function POST(
     const invoice = await db.$transaction(async (tx) => {
       const newInvoice = await tx.invoice.create({
         data: {
+          id,
           type: type as InvoiceType,
           clientId: clientId ? Number(clientId) : undefined,
           vehicleId: vehicleId ? Number(vehicleId) : undefined,
@@ -509,6 +514,20 @@ export async function POST(
           convertedAt: new Date(),
         },
       });
+
+      // Mark lead as estimate created
+      if (type === "Estimate" && clientId) {
+        const theClient = await tx.client.findFirst({
+          where: { id: Number(clientId) },
+          select: { leadId: true },
+        });
+        if (theClient?.leadId) {
+          await tx.lead.update({
+            where: { id: theClient.leadId },
+            data: { isEstimateCreated: true },
+          });
+        }
+      }
 
       // Photos
       if (photos.length > 0) {
@@ -559,6 +578,14 @@ export async function POST(
             },
           });
           laborId = newLabor.id;
+          if ((item.labor.tagIds ?? []).length > 0) {
+            await tx.laborTag.createMany({
+              data: (item.labor.tagIds as number[]).map((tagId) => ({
+                laborId: newLabor.id,
+                tagId,
+              })),
+            });
+          }
         }
 
         const invoiceItem = await tx.invoiceItem.create({

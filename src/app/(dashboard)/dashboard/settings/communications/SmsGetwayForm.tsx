@@ -4,14 +4,8 @@ import { createTwilioCredentials } from "@/actions/communication/client/createTw
 import { getTwilioCredentials } from "@/actions/communication/client/sendTwilioMessage";
 import { useServerGet } from "@/hooks/useServerGet";
 import { errorToast, successToast } from "@/lib/toast";
-import React, {
-  ChangeEvent,
-  FormEvent,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-import { useParams } from "next/navigation";
+import { useSession } from "next-auth/react";
+import React, { ChangeEvent, FormEvent, useEffect, useState } from "react";
 
 type FormData = {
   companyId: number;
@@ -25,13 +19,15 @@ type FormData = {
 };
 
 const SmsGetwayForm: React.FC = () => {
-  const params = useParams<{ id: string }>();
-  const arg = useMemo(() => ({ companyId: Number(params.id) }), []);
+  const { data: session } = useSession();
+  const companyId = session?.user?.companyId ?? 0;
 
-  const { data: twilioCredentials } = useServerGet(getTwilioCredentials, arg);
+  const { data: twilioCredentials } = useServerGet(getTwilioCredentials, {
+    companyId,
+  });
 
   const [formData, setFormData] = useState<FormData>({
-    companyId: Number(params.id),
+    companyId,
     accountSid: twilioCredentials?.accountSid ?? "",
     phoneNumber: twilioCredentials?.phoneNumber ?? "",
     apiKeySid: twilioCredentials?.apiKeySid ?? "",
@@ -77,11 +73,7 @@ const SmsGetwayForm: React.FC = () => {
     // }
 
     try {
-      //   call api
-      // console.log("formData........................", formData);
-      let res = await createTwilioCredentials(formData);
-
-      console.log("response from twiloo", res);
+      const res = await createTwilioCredentials(formData);
       if (res.success) {
         successToast("Twilio Credentials Updated Successfully");
       } else {
@@ -101,7 +93,7 @@ const SmsGetwayForm: React.FC = () => {
   };
   useEffect(() => {
     setFormData({
-      companyId: Number(params.id),
+      companyId,
       accountSid: twilioCredentials?.accountSid ?? "",
       phoneNumber: twilioCredentials?.phoneNumber ?? "",
       apiKeySid: twilioCredentials?.apiKeySid ?? "",

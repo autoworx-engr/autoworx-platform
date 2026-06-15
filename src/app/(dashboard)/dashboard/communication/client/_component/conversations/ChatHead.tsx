@@ -13,6 +13,19 @@ import { companyPermissionModule } from "@/constants/company-permission";
 import { cn } from "@/lib/cn";
 import { AtSign, Phone } from "lucide-react";
 
+function MessengerIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className={className}
+      aria-hidden
+    >
+      <path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.906 1.318 5.51 3.396 7.28V23l4.128-2.267c1.104.305 2.274.473 3.476.473 5.523 0 10-4.145 10-9.243S17.523 2 12 2zm1.008 12.445-2.55-2.72-4.977 2.72 5.474-5.806 2.613 2.72 4.914-2.72-5.474 5.806z" />
+    </svg>
+  );
+}
+
 type TClient =
   | (Client & {
       conversationsTrack?: ClientConversationTrack | null;
@@ -32,6 +45,10 @@ export default function ChatHead({
 }: TProps) {
   const [selected, setSelected] = useState<string>(selectedConversation);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
+
+  useEffect(() => {
+    setSelected(selectedConversation);
+  }, [selectedConversation]);
   // const [client, setClient] = useState<TClient | undefined>(initialClient);
   const user = useGetCurrentUser();
   const pathname = usePathname();
@@ -42,6 +59,11 @@ export default function ChatHead({
   const isCallingAccess = companyFeaturePermission.find(
     (permission) =>
       permission.permission_name === companyPermissionModule.CALLING_ACCESS,
+  );
+
+  const isMessengerAccess = companyFeaturePermission.find(
+    (permission) =>
+      permission.permission_name === companyPermissionModule?.MESSENGER,
   );
 
   const handleTabChange = (tab: string) => {
@@ -115,7 +137,9 @@ export default function ChatHead({
           <span className="absolute -top-1 -right-1 z-10">
             <span className="absolute -inset-0.5 animate-ping rounded-full bg-rose-400/70" />
             <span className="relative flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold leading-none text-white ring-2 ring-white/80">
-              1
+              {clientConversationTrack.emailIsUnReadCount > 9
+                ? "9+"
+                : clientConversationTrack.emailIsUnReadCount || 1}
             </span>
           </span>
         )}
@@ -139,7 +163,9 @@ export default function ChatHead({
           <span className="absolute -top-1 -right-1 z-10">
             <span className="absolute -inset-0.5 animate-ping rounded-full bg-rose-400/70" />
             <span className="relative flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold leading-none text-white ring-2 ring-white/80">
-              1
+              {clientConversationTrack.smsUnReadCount > 9
+                ? "9+"
+                : clientConversationTrack.smsUnReadCount || 1}
             </span>
           </span>
         )}
@@ -170,27 +196,50 @@ export default function ChatHead({
         </svg>
       </button>
 
-      {/* PHONE */}
-      <button
-        onClick={() => handleTabChange("PHONE")}
-        role="tab"
-        aria-selected={selected === "PHONE"}
-        aria-controls="panel-phone"
-        title="Phone"
-        className={cn(
-          "relative rounded-full p-3 transition-all",
-          "hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/70",
-          selected === "PHONE" ? "bg-white/30" : "bg-transparent",
-        )}
-      >
-        <Phone className="w-5 h-5 fill-current text-white" />
-      </button>
+      {/* MESSENGER */}
+      {isMessengerAccess?.enabled && (
+        <button
+          onClick={() => handleTabChange("MESSENGER")}
+          role="tab"
+          aria-selected={selected === "MESSENGER"}
+          aria-controls="panel-messenger"
+          title="Messenger"
+          className={cn(
+            "relative rounded-full p-3 transition-all",
+            "hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/70",
+            selected === "MESSENGER" ? "bg-white/30" : "bg-transparent",
+          )}
+        >
+          {clientConversationTrack &&
+            !clientConversationTrack?.messengerIsRead && (
+              <span className="absolute -top-1 -right-1 z-10">
+                <span className="absolute -inset-0.5 animate-ping rounded-full bg-rose-400/70" />
+                <span className="relative flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold leading-none text-white ring-2 ring-white/80">
+                  {clientConversationTrack.messengerUnReadCount ?? 1}
+                </span>
+              </span>
+            )}
+          <MessengerIcon className="w-5 h-5 text-white" />
+        </button>
+      )}
 
-      {/* <PremiumModal
-        open={showPremiumModal}
-        onClose={() => setShowPremiumModal(false)}
-        featureName="calling feature"
-      /> */}
+      {/* PHONE */}
+      {isCallingAccess?.enabled && (
+        <button
+          onClick={() => handleTabChange("PHONE")}
+          role="tab"
+          aria-selected={selected === "PHONE"}
+          aria-controls="panel-phone"
+          title="Phone"
+          className={cn(
+            "relative rounded-full p-3 transition-all",
+            "hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/70",
+            selected === "PHONE" ? "bg-white/30" : "bg-transparent",
+          )}
+        >
+          <Phone className="w-5 h-5 fill-current text-white" />
+        </button>
+      )}
     </div>
   );
 }

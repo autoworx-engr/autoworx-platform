@@ -1,3 +1,4 @@
+import { sendNotification } from "@/actions/notification/sendNotification";
 import { sendUserNotifications } from "@/actions/notification/sendUserNotification";
 import { getUsersByRole } from "@/actions/user/getUserByRole";
 import { EmployeeType } from "@prisma/client";
@@ -40,7 +41,7 @@ export async function sendPaymentReceivedNotification({
     for (const user of getUsers) {
       sendUserNotifications({
         userId: user.id,
-        userName: `${user.firstName} ${user.lastName}`,
+        userName: `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim(),
         userEmail: user.email || "",
         userPhoneNo: user.phone || "",
         companyId: companyUniqueId,
@@ -54,5 +55,43 @@ export async function sendPaymentReceivedNotification({
   } catch (err) {
     console.error(err);
     throw err;
+  }
+}
+
+type TSendPaymentFailedNotification = {
+  companyId: number;
+  gateway: string;
+  eventId: string;
+  error: string;
+};
+
+export async function sendPaymentFailedNotification({
+  companyId,
+  gateway,
+  eventId,
+  error,
+}: TSendPaymentFailedNotification) {
+  try {
+    const getUsers = await getUsersByRole(companyId, ["Admin", "Manager"], {
+      id: true,
+    });
+    const redirectUrl = "/dashboard/settings/payments/webhook-events";
+    const title = "Payment Processing Failed";
+    const reason = error ? ` Reason: ${error.slice(0, 140)}.` : "";
+    const description = `A ${gateway} payment failed to process (ref: ${eventId}).${reason} Check webhook events for details.`;
+
+    for (const user of getUsers) {
+      // Bypass notification settings — payment failures are critical alerts
+      await sendNotification({
+        userId: user.id,
+        title,
+        description,
+        companyId,
+        type: "payment",
+        redirectUrl,
+      });
+    }
+  } catch (err) {
+    console.error("[sendPaymentFailedNotification]", err);
   }
 }

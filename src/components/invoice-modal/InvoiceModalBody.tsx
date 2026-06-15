@@ -5,7 +5,6 @@ import { getInvoiceModalData } from "@/actions/estimate/invoice/getInvoiceModalD
 import { getIsWorkorderCreated } from "@/actions/estimate/invoice/getworkorderCreated";
 import { sendInvoiceEmail } from "@/actions/estimate/invoice/sendInvoiceEmail";
 import { sendInvoiceSms } from "@/actions/estimate/invoice/sendInvoiceSms";
-import { getOrCreateShortLinkAction } from "@/actions/shortener/getOrCreateShortLink";
 import { getPaymentGatewayInfo } from "@/app/(dashboard)/dashboard/settings/payments/getPaymentGatewayInfo";
 import { getStripeAccount } from "@/app/(dashboard)/dashboard/settings/payments/stripe";
 import {
@@ -74,6 +73,8 @@ import { InspectionItems } from "./InspectionItems";
 import { InvoiceItems } from "./InvoiceItems";
 import { PayNow } from "./PayNow";
 import { AppointmentCreateOrEdit } from "../appointment/AppointmentCreateOrEdit";
+import { usePermissionStore } from "@/stores/permissionStore";
+import { canAccessEstimate } from "@/utils/permissions";
 
 const DownloadPDF = dynamic(() => import("./DownloadInvoice"), {
   ssr: false,
@@ -152,6 +153,9 @@ export default function InvoiceModalBody({
   const [openGroup, setOpenGroup] = useState<"export" | "share" | null>(null);
   const isExportOpen = openGroup === "export";
   const isShareOpen = openGroup === "share";
+
+  const { permissions } = usePermissionStore();
+  const canEdit = canAccessEstimate(permissions);
 
   // Detect if we're coming from an intercepted route
   const fromInterceptedRoute =
@@ -302,23 +306,9 @@ export default function InvoiceModalBody({
     successToast("Invoice sent successfully");
   };
   const handleCopyLink = async () => {
-    // 1. Identify what you want to copy
-    const clientName =
-      invoice?.client?.firstName || invoice?.client?.lastName || "";
-
-    const shortLinkResult = await getOrCreateShortLinkAction({
-      invoiceId: invoiceId!,
-      clientName,
-    });
-
-    const urlToCopy =
-      shortLinkResult.success && shortLinkResult.shortUrl
-        ? shortLinkResult.shortUrl
-        : shortLinkResult.originalUrl ||
-          `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoiceId}`;
+    const urlToCopy = `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoiceId}`;
 
     try {
-      // 2. Check if the Clipboard API is available AND the context is secure
       if (
         typeof window !== "undefined" &&
         navigator.clipboard &&
@@ -327,7 +317,6 @@ export default function InvoiceModalBody({
         await navigator.clipboard.writeText(urlToCopy);
         successToast("Link copied to clipboard");
       } else {
-        // 3. Fallback for insecure connections (like your IP address testing)
         throw new Error("Clipboard API unavailable");
       }
     } catch (error) {
@@ -387,7 +376,6 @@ export default function InvoiceModalBody({
 
       if (response?.type === "success") {
         successToast("Invoice Authorized");
-        await authorizedLeadsConvertion(invoice.id);
       } else {
         errorToast("Signature upload failed");
         console.error("Signature upload failed:");
@@ -397,6 +385,17 @@ export default function InvoiceModalBody({
       console.error("Signature upload failed:", err);
     }
   };
+
+  const totalMaterialSell = invoice.invoiceItems.reduce(
+    (invoiceSum: number, invoiceItem: any) =>
+      invoiceSum +
+      (invoiceItem.materials ?? []).reduce(
+        (materialSum: number, material: { quantity?: number; sell?: number }) =>
+          materialSum + (material.quantity ?? 0) * (material.sell ?? 0),
+        0,
+      ),
+    0,
+  );
 
   return (
     <DialogPortal>
@@ -424,14 +423,34 @@ export default function InvoiceModalBody({
               <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
                 {/* Edit Link */}
                 {isShowEdit && (
-                  <Tooltip title="Edit">
-                    <Link
-                      className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-2 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
-                      href={`/dashboard/estimate/edit/${invoice.id}?clientId=${invoice.clientId}`}
+                  <Tooltip
+                    title={
+                      canEdit ? "Edit" : "You don't have permission to edit"
+                    }
+                  >
+                    <span
+                      className={
+                        !canEdit ? "cursor-not-allowed opacity-50" : undefined
+                      }
                     >
-                      <SquarePen className="h-4 w-4 md:h-5 md:w-5" />
-                      {/* <span className="hidden md:inline">Edit</span> */}
-                    </Link>
+                      <Link
+                        className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-2 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
+                        href={
+                          canEdit
+                            ? `/dashboard/estimate/edit/${invoice.id}?clientId=${invoice.clientId}`
+                            : "#"
+                        }
+                        onClick={(e) => {
+                          if (!canEdit) e.preventDefault();
+                        }}
+                        aria-disabled={!canEdit}
+                        tabIndex={!canEdit ? -1 : undefined}
+                        style={!canEdit ? { pointerEvents: "none" } : undefined}
+                      >
+                        <SquarePen className="h-4 w-4 md:h-5 md:w-5" />
+                        {/* <span className="hidden md:inline">Edit</span> */}
+                      </Link>
+                    </span>
                   </Tooltip>
                 )}
 
@@ -596,6 +615,37 @@ export default function InvoiceModalBody({
                   }}
                 />
               </div>
+            </div>
+          )}
+
+          {/* Download and Copy Link buttons for public invoice */}
+          {isPublic && client && (
+            <div className="mt-6 flex w-full justify-center gap-2 print:hidden">
+              <button className="flex items-center justify-center whitespace-nowrap rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95">
+                <DownloadPDF
+                  id={invoice.id}
+                  invoice={invoice}
+                  client={client}
+                  vehicle={vehicle}
+                  companyDetails={company}
+                  authorizedName={authorizedName}
+                  signImageUrl={signImage ?? undefined}
+                  isStripe={
+                    (gatewayInfo?.success &&
+                      (gatewayInfo?.hasStripe ||
+                        gatewayInfo?.hasAuthorizeNet) &&
+                      parseFloat(Number(invoice?.due ?? 0).toFixed(2)) > 0) ??
+                    false
+                  }
+                />
+              </button>
+              <button
+                className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95"
+                onClick={handleCopyLink}
+              >
+                <Copy className="h-4 w-4" />
+                <span>Copy Link</span>
+              </button>
             </div>
           )}
 
@@ -926,10 +976,13 @@ export default function InvoiceModalBody({
                           {Number(value)}%
                           {Number(value) !== 0 && (
                             <span>
-                              {" "}
                               |
                               {formatCurrency(
-                                (Number(invoice.subtotal as any) *
+                                (Number(
+                                  key === "tax"
+                                    ? totalMaterialSell
+                                    : (invoice.subtotal as any),
+                                ) *
                                   Number(value)) /
                                   100,
                               )}
@@ -1328,7 +1381,8 @@ export default function InvoiceModalBody({
                     open={isStripeDialogOpen}
                     setOpen={setIsStripeDialogOpen}
                     gatewayInfo={{
-                      paymentGateway: gatewayInfo.paymentGateway || "STRIPE",
+                      paymentGateway: (gatewayInfo.paymentGateway ||
+                        "STRIPE") as "STRIPE" | "AUTHORIZE_NET" | "BOTH",
                       hasStripe: gatewayInfo.hasStripe,
                       hasAuthorizeNet: gatewayInfo.hasAuthorizeNet,
                       tipEnabled: gatewayInfo.tipEnabled ?? false,
@@ -1399,7 +1453,7 @@ export default function InvoiceModalBody({
                           src={x.photo}
                           alt="attachment"
                           fill
-                          className="cursor-pointer"
+                          className="cursor-pointer object-cover object-center"
                         />
                       </Link>
                     );

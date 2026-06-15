@@ -4,6 +4,11 @@
   box-shadow: none !important;
 }
 
+/* Match the week view's "today" highlight (#eff6ff) in month and day views. */
+.calendarScope :global(.fc-day-today) {
+  background-color: #eff6ff !important;
+}
+
 .calendarScope :global(.fc-daygrid-event-harness) {
   margin-bottom: 2px;
 }
@@ -13,7 +18,7 @@
 }
 
 .calendarScope :global(.fc-timegrid-col-bg .fc-non-business) {
-  background-color: rgba(241, 245, 249, 0.72) !important;
+  background-color: rgba(241, 241, 241, 0.72) !important;
 }
 
 .calendarScope :global(.fc-timegrid-slot-lane).nonBusinessSlot {
@@ -113,7 +118,8 @@
 }
 
 .calendarBody {
-  min-height: 600px;
+  min-height: 60vh;
+  max-height: 70vh;
 }
 
 /* week/day view width fix */

@@ -81,7 +81,7 @@ export default function SearchScroll({
         params.toString() ? `${pathname}?${params.toString()}` : pathname,
       );
     });
-  }, 300);
+  }, 500);
 
   // Handle clicks outside filter dropdown to close it
   useEffect(() => {
@@ -117,19 +117,15 @@ export default function SearchScroll({
         return;
       }
       // Unified search logic for both pipelines
+      const words = searchTerm.toLowerCase().split(/\s+/).filter(Boolean);
+      const matchesAllWords = (haystack: string) =>
+        words.every((w) => haystack.includes(w));
+
       column.leads?.forEach((lead: any, leadIndex: number) => {
-        // Search by client name
-        const nameMatch = (lead.name || lead.clientName || "")
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase());
-        // Search by vehicle information (year, make, model)
-        const vehicleMatch =
-          lead.vehicle &&
-          lead.vehicle.toLowerCase().includes(searchTerm.toLowerCase());
-        const vehicleYearMatch =
-          lead.year &&
-          lead.year.toLowerCase().includes(searchTerm.toLowerCase());
-        if (nameMatch || vehicleMatch || vehicleYearMatch) {
+        const nameStr = (lead.name || lead.clientName || "").toLowerCase();
+        const vehicleStr = (lead.vehicle || "").toLowerCase();
+
+        if (matchesAllWords(nameStr) || matchesAllWords(vehicleStr)) {
           results.push({ columnIndex, leadIndex });
         }
       });

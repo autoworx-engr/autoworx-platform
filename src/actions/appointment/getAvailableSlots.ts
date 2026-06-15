@@ -42,8 +42,10 @@ export async function getAvailableSlots(
 
     const timezone = shop?.company?.timezone || "UTC";
 
-    // Parse the selected date in the company's timezone
-    const requestMoment = moment.tz(dateString, timezone);
+    // Parse the selected date in the company's timezone.
+    // Use an explicit format so a bare "YYYY-MM-DD" is anchored to the shop
+    // timezone instead of moment's loose ISO/Date fallback (DST/offset safe).
+    const requestMoment = moment.tz(dateString, "YYYY-MM-DD", timezone);
     const selectedDateStr = requestMoment.format("YYYY-MM-DD");
     const dayOfWeek = getDayOfWeekEnum(selectedDateStr, timezone);
 
@@ -68,7 +70,7 @@ export async function getAvailableSlots(
       return {
         success: true,
         date: requestMoment.toDate(),
-        availableSlots: [],
+        slots: [],
       };
     }
 
@@ -100,26 +102,33 @@ export async function getAvailableSlots(
       currentSlotTime.add(intervalMinutes, "minutes");
     }
 
-    // Day boundaries anchored to company timezone midnight (converted to UTC for DB)
-    const startOfSelectedDay = moment
-      .tz(selectedDateStr, "YYYY-MM-DD", timezone)
-      .startOf("day")
-      .toDate();
-    const startOfNextDay = moment
-      .tz(selectedDateStr, "YYYY-MM-DD", timezone)
-      .startOf("day")
-      .add(1, "day")
-      .toDate();
+    // Appointments / holds are stored as UTC-midnight day anchors with
+    // wall-clock startTime/endTime strings. Anchor day boundaries to UTC
+    // midnight so the query matches stored rows. MUST stay consistent with
+    // the hold route (service-booking/hold) or the UI and the reservation
+    // check disagree about which slots are taken.
+    const startOfSelectedDay = new Date(`${selectedDateStr}T00:00:00.000Z`);
+    const startOfNextDay = new Date(
+      startOfSelectedDay.getTime() + 24 * 60 * 60 * 1000,
+    );
 
     const existingAppointments = await db.appointment.findMany({
       where: {
         companyId: shop?.companyId,
-        date: {
-          gte: startOfSelectedDay,
-          lt: startOfNextDay,
-        },
+        AND: [
+          { date: { lt: startOfNextDay } },
+          {
+            OR: [
+              { endDate: { gte: startOfSelectedDay } },
+              {
+                endDate: null,
+                date: { gte: startOfSelectedDay },
+              },
+            ],
+          },
+        ],
       },
-      select: { startTime: true, endTime: true },
+      select: { date: true, endDate: true, startTime: true, endTime: true },
     });
 
     const activeHolds = await db.shopSlotHold.findMany({
@@ -153,14 +162,20 @@ export async function getAvailableSlots(
       }
 
       const appointmentsInSlot = existingAppointments.filter((app) => {
-        if (!app.startTime || !app.endTime) return false;
+        if (!app.startTime || !app.endTime || !app.date) return false;
+        // Read the stored calendar day in UTC (matches how date is persisted)
+        // so the wall-clock startTime/endTime line up with the slot's day.
+        const startDateStr = moment.utc(app.date).format("YYYY-MM-DD");
+        const endAnchorDate = app.endDate ?? app.date;
+        const endDateStr = moment.utc(endAnchorDate).format("YYYY-MM-DD");
+
         const appStartMoment = moment.tz(
-          `${selectedDateStr} ${app.startTime}`,
+          `${startDateStr} ${app.startTime}`,
           "YYYY-MM-DD HH:mm",
           timezone,
         );
         const appEndMoment = moment.tz(
-          `${selectedDateStr} ${app.endTime}`,
+          `${endDateStr} ${app.endTime}`,
           "YYYY-MM-DD HH:mm",
           timezone,
         );

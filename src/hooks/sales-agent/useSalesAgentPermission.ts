@@ -51,7 +51,7 @@ export const useToggleCompanySalesAgent = () => {
         queryKey: ["company-sales-agent", variables.companyId],
       });
       queryClient.invalidateQueries({
-        queryKey: ["clients", variables.companyId],
+        queryKey: ["company-clients", variables.companyId],
       });
     },
   });
@@ -77,10 +77,7 @@ export const useToggleClientSalesAgent = () => {
     onSuccess: (_, variables) => {
       toast.success("Client sales Agent permission updated");
       queryClient.invalidateQueries({
-        queryKey: ["clients", variables?.clientId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["company-sales-agent", variables?.clientId],
+        queryKey: ["company-sales-agent"],
       });
       queryClient.invalidateQueries({
         queryKey: ["company-clients"],

@@ -98,6 +98,8 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
       clearFieldError("phone");
     }
   }, [phoneNumber, countryCode, isoCode]);
+  const NAME_REGEX = /^[A-Za-z\s\-']+$/;
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
@@ -124,6 +126,15 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
         ...formData,
         [name]: value,
       });
+
+      if (name === "name" && value && !NAME_REGEX.test(value)) {
+        setFieldErrors((prev) => ({
+          ...prev,
+          name: "Name can only contain letters, spaces, hyphens, and apostrophes",
+        }));
+      } else {
+        clearFieldError(name);
+      }
     }
   };
 
@@ -142,6 +153,36 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    if (formData.name && !/^[A-Za-z\s\-']+$/.test(formData.name.trim())) {
+      setFieldErrors((prev) => ({
+        ...prev,
+        name: "Name can only contain letters, spaces, hyphens, and apostrophes",
+      }));
+      return;
+    }
+
+    if (!formData.others) {
+      if (
+        !formData.vehicle_year ||
+        !formData.vehicle_make ||
+        !formData.vehicle_model
+      ) {
+        errorToast("Please select Year, Make, and Model for the vehicle");
+        return;
+      }
+    }
+
+    if (!formData.service) {
+      errorToast("Please select a service");
+      return;
+    }
+
+    if (!formData.source) {
+      errorToast("Please select a lead source");
+      return;
+    }
+
     setIsSubmitting(true);
     setFormStatus({ message: "", type: null });
 
@@ -260,6 +301,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
             value={formData.name}
             onChange={handleChange}
             required
+            error={fieldErrors.name}
           />
           <SlimInput
             name="email"

@@ -10,6 +10,7 @@ import {
   Layers,
   Check,
   CheckCircle,
+  Store,
 } from "lucide-react";
 import { fToNow } from "src/utils/formatDate";
 import { cn } from "@/lib/utils";
@@ -111,7 +112,7 @@ export function NotificationsPopover() {
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        <button className="relative h-9 w-9 rounded-full hover:bg-slate-100 p-1">
+        <button className="relative h-9 w-9 rounded-full p-1">
           <svg
             viewBox="-1.28 -1.28 18.56 18.56"
             xmlns="http://www.w3.org/2000/svg"
@@ -132,7 +133,7 @@ export function NotificationsPopover() {
             </g>
           </svg>
           {totalUnRead > 0 && (
-            <Badge className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-red-500 p-0 text-[10px] font-bold text-white">
+            <Badge className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-red-500 hover:bg-red-600 p-0 text-[10px] font-bold text-white">
               {totalUnRead > 99 ? "99+" : totalUnRead}
             </Badge>
           )}
@@ -235,7 +236,7 @@ function NotificationItem({ notification, setIsOpen, onMarkRead }: any) {
         {avatarUrl}
       </div>
 
-      <div className="flex flex-1 flex-col gap-1">
+      <div className="flex flex-1 min-w-0 flex-col gap-1">
         <Link
           href={notification.redirectUrl || "#"}
           onClick={() => {
@@ -297,12 +298,14 @@ function renderContent(notification: Notification) {
     payment: "/icons/navbar/Payments.svg",
   };
 
+  const iconMap: Record<string, React.ReactNode> = {
+    virtualShop: <Store size={22} />,
+  };
+
   return {
-    avatarUrl: typeMap[notiType] ? (
-      getIcon(typeMap[notiType])
-    ) : (
-      <Bell size={18} />
-    ),
+    avatarUrl:
+      iconMap[notiType] ??
+      (typeMap[notiType] ? getIcon(typeMap[notiType]) : <Bell size={18} />),
     title,
   };
 }

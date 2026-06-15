@@ -356,6 +356,12 @@ export async function GET(req: Request) {
  *               isActive:
  *                 type: boolean
  *                 example: true
+ *               category:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: One or more categories to associate with the shop service. Can also be a single string.
+ *                 example: ["Detailing"]
  *               items:
  *                 type: array
  *                 description: Includes materials and labor to auto-calculate the service base price. At least one item is required, and each item must have materials or labor.
@@ -393,6 +399,7 @@ export async function GET(req: Request) {
  *             modifierSUV: "100"
  *             modifierTruck: "150"
  *             isActive: true
+ *             category: ["Detailing"]
  *             customDuration: 120
  *             items:
  *               - service:
@@ -522,6 +529,7 @@ type TCreateShopServiceRequest = {
   modifierTruck?: string;
   isActive?: boolean;
   customDuration?: string | number;
+  category?: string | string[];
 };
 
 export async function POST(req: NextRequest) {
@@ -568,6 +576,7 @@ export async function POST(req: NextRequest) {
       modifierTruck,
       isActive,
       customDuration,
+      category: providedCategory,
     } = body;
 
     if (!shopId || !title) {
@@ -630,7 +639,18 @@ export async function POST(req: NextRequest) {
       where: { id: { in: Array.from(categoryIdsToFetch) } },
       select: { name: true },
     });
-    const categories = fetchedCategories.map((c) => c.name);
+
+    const categorySet = new Set(fetchedCategories.map((c) => c.name));
+
+    if (providedCategory) {
+      if (Array.isArray(providedCategory)) {
+        providedCategory.forEach((c) => categorySet.add(c));
+      } else {
+        categorySet.add(providedCategory);
+      }
+    }
+
+    const categories = Array.from(categorySet);
 
     // 3. DATABASE TRANSACTION
     const newShopService = await db.$transaction(async (tx) => {

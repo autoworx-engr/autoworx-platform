@@ -1,3 +1,10 @@
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Communication Hub - Client",
+  description: "Manage client and supplier collaboration",
+};
+
 type TProps = {
   params?: {
     id: string;

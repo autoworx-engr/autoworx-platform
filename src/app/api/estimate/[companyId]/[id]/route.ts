@@ -1,6 +1,7 @@
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { InvoiceType } from "@prisma/client";
+import { fullUpdateInvoice } from "./_updateInvoice";
 
 /**
  * @swagger
@@ -179,19 +180,20 @@ import { InvoiceType } from "@prisma/client";
  */
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ companyId: string; id: string }> },
 ) {
   try {
     const { companyId: companyIdParam, id } = await params;
-    const companyId = Number(companyIdParam);
-
-    if (!companyId || isNaN(companyId)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid company ID" },
-        { status: 400 },
-      );
+    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
+    if (jwtCompanyId === null) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const urlCompanyId = parseInt(companyIdParam, 10);
+    if (isNaN(urlCompanyId) || urlCompanyId !== jwtCompanyId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    const companyId = jwtCompanyId;
 
     const estimate = await db.invoice.findFirst({
       where: { id, companyId },
@@ -266,149 +268,48 @@ export async function PATCH(
 ) {
   try {
     const { companyId: companyIdParam, id } = await params;
-    const companyId = Number(companyIdParam);
-
-    if (!companyId || isNaN(companyId)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid company ID" },
-        { status: 400 },
-      );
+    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
+    if (jwtCompanyId === null) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    const existing = await db.invoice.findFirst({
-      where: { id, companyId },
-      include: { column: { select: { title: true } } },
-    });
-
-    if (!existing) {
-      return NextResponse.json(
-        { success: false, message: "Estimate not found" },
-        { status: 404 },
-      );
+    const urlCompanyId = parseInt(companyIdParam, 10);
+    if (isNaN(urlCompanyId) || urlCompanyId !== jwtCompanyId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const body = await req.json();
-
-    const {
-      clientId,
-      vehicleId,
-      columnId,
-      subtotal,
-      discount,
-      tax,
-      serviceFee,
-      vehicleExtraCost,
-      grandTotal,
-      deposit,
-      due,
-      internalNotes,
-      terms,
-      policy,
-      customerNotes,
-      customerComments,
-      damageNotes,
-      type,
-    } = body;
-
-    // Resolve column to determine type override
-    let resolvedType: InvoiceType = (type as InvoiceType) ?? existing.type;
-    let isWorkOrder = existing.isWorkOrder;
-    let deliveredAt = existing.deliveredAt;
-    let completedAt = existing.completedAt;
-
-    if (columnId) {
-      const column = await db.column.findFirst({
-        where: { id: Number(columnId), companyId },
-      });
-      if (!column) {
-        return NextResponse.json(
-          { success: false, message: "Column not found for this company" },
-          { status: 400 },
-        );
-      }
-      if (column.title === "In Progress") {
-        resolvedType = "Invoice";
-        isWorkOrder = true;
-        deliveredAt = null;
-      } else if (column.title === "Delivered" && !deliveredAt) {
-        deliveredAt = new Date();
-      } else if (column.title === "Completed" && !completedAt) {
-        completedAt = new Date();
-      }
-    }
-
-    const updated = await db.invoice.update({
-      where: { id },
-      data: {
-        clientId:
-          clientId !== undefined
-            ? clientId
-              ? Number(clientId)
-              : null
-            : undefined,
-        vehicleId:
-          vehicleId !== undefined
-            ? vehicleId
-              ? Number(vehicleId)
-              : null
-            : undefined,
-        columnId:
-          columnId !== undefined
-            ? columnId
-              ? Number(columnId)
-              : null
-            : undefined,
-        subtotal: subtotal !== undefined ? Number(subtotal) : undefined,
-        discount: discount !== undefined ? Number(discount) : undefined,
-        tax: tax !== undefined ? Number(tax) : undefined,
-        serviceFee: serviceFee !== undefined ? Number(serviceFee) : undefined,
-        grandTotal: grandTotal !== undefined ? Number(grandTotal) : undefined,
-        deposit: deposit !== undefined ? Number(deposit) : undefined,
-        due: due !== undefined ? Number(due) : undefined,
-        internalNotes: internalNotes !== undefined ? internalNotes : undefined,
-        terms: terms !== undefined ? terms : undefined,
-        policy: policy !== undefined ? policy : undefined,
-        customerNotes: customerNotes !== undefined ? customerNotes : undefined,
-        customerComments:
-          customerComments !== undefined ? customerComments : undefined,
-        damageNotes: damageNotes !== undefined ? damageNotes : undefined,
-        type: resolvedType,
-        isWorkOrder,
-        deliveredAt,
-        completedAt,
-        convertedAt: new Date(),
-        isViewed: false,
-      },
-    });
-
-    return NextResponse.json({
-      success: true,
-      message: "Estimate updated successfully",
-      data: updated,
-    });
-  } catch (error) {
+    const result = await fullUpdateInvoice(id, jwtCompanyId, body);
+    return NextResponse.json(
+      { success: result.success, message: result.message, data: result.data },
+      { status: result.status },
+    );
+  } catch (error: any) {
     console.error("ESTIMATE UPDATE ERROR:", error);
     return NextResponse.json(
-      { success: false, message: "Failed to update estimate" },
+      {
+        success: false,
+        message: error?.message || "Failed to update estimate",
+      },
       { status: 500 },
     );
   }
 }
 
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ companyId: string; id: string }> },
 ) {
   try {
     const { companyId: companyIdParam, id } = await params;
-    const companyId = Number(companyIdParam);
-
-    if (!companyId || isNaN(companyId)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid company ID" },
-        { status: 400 },
-      );
+    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
+    if (jwtCompanyId === null) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const urlCompanyId = parseInt(companyIdParam, 10);
+    if (isNaN(urlCompanyId) || urlCompanyId !== jwtCompanyId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    const companyId = jwtCompanyId;
 
     const existing = await db.invoice.findFirst({
       where: { id, companyId },

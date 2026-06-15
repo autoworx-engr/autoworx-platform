@@ -3,6 +3,7 @@ import {
   saveInvoiceTag,
   removeInvoiceTag,
 } from "@/actions/pipelines/invoiceTag";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -106,8 +107,15 @@ import { NextRequest, NextResponse } from "next/server";
  *         description: Internal server error
  */
 export async function GET(req: NextRequest) {
+  const principal = await getAuthPrincipal(req);
+  if (!principal) {
+    return NextResponse.json(
+      { success: false, message: "Unauthorized" },
+      { status: 401 },
+    );
+  }
   try {
-    const result = await getInvoiceTags();
+    const result = await getInvoiceTags(principal.companyId);
 
     if (result.type === "error") {
       return NextResponse.json(
@@ -136,6 +144,13 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const principal = await getAuthPrincipal(req);
+  if (!principal) {
+    return NextResponse.json(
+      { success: false, message: "Unauthorized" },
+      { status: 401 },
+    );
+  }
   try {
     const body = await req.json();
     const { invoiceId, tagId } = body;
@@ -166,6 +181,13 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const principal = await getAuthPrincipal(req);
+  if (!principal) {
+    return NextResponse.json(
+      { success: false, message: "Unauthorized" },
+      { status: 401 },
+    );
+  }
   try {
     const body = await req.json();
     const { invoiceId, tagId } = body;

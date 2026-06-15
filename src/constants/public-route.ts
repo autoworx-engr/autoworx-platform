@@ -16,6 +16,7 @@ export const PUBLIC_API_ROUTES = [
   "/api/ai-train-company",
   "/api/notifications/client-abuse",
   // Webhook endpoints
+  "/api/meta/webhook",
   "/api/pusher/collaboration",
   "/api/stripe/invoice-pay-hook",
   "/api/twilio/token",
@@ -56,6 +57,7 @@ export const PUBLIC_API_ROUTES = [
   "/api/virtual-shop/gift-card-templates/public",
   "/api/virtual-shop/client-lookup/by-phone",
   "/api/virtual-shop/service-booking/hold",
+  "/api/virtual-shop/emergency-requests",
 ];
 
 export const PUBLIC_DYNAMIC_API_ROUTES = [

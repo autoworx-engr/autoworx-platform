@@ -1,12 +1,11 @@
 import { fetchMailsMailgun } from "@/actions/communication/client/fetchMailgunMails";
 import getSms from "@/actions/communication/client/getSms";
 import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
-import { cn } from "@/lib/cn";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import { Client, Vehicle } from "@prisma/client";
 import ClientEstimates from "./ClientEstimates";
-import SaveAttachment from "./SaveAttachment";
+import SharedFilesSection from "./SharedFilesSection";
 import TaskActions from "./TaskActions";
 import {
   AppointmentListClient,
@@ -29,6 +28,12 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
       id: true,
       type: true,
     },
+    take: 5,
+    orderBy: { createdAt: "desc" },
+  });
+
+  const estimatesCountPromise = db.invoice.count({
+    where: { clientId: client?.id },
   });
 
   const tasksPromise = db.task.findMany({
@@ -70,6 +75,7 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
   const [
     conversationsData,
     estimates,
+    estimatesCount,
     tasksData,
     companyUsers,
     smsData,
@@ -77,6 +83,7 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
   ] = await Promise.all([
     conversationsPromise,
     estimatesPromise,
+    estimatesCountPromise,
     tasksPromise,
     companyUsersPromise,
     smsPromise,
@@ -92,9 +99,35 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
   const conversations = conversationsData.data;
 
   const allEmailAttachments =
-    conversations?.flatMap((e) => e.attachments) ?? [];
+    conversations?.flatMap((e) =>
+      e.attachments.map((a) => ({ ...a, createdAt: e.createdAt })),
+    ) ?? [];
 
   const allSmsAttachments = smsData?.flatMap((s) => s.attachments) ?? [];
+
+  const priorityStyles: Record<
+    string,
+    { background: string; borderLeft: string; color: string; boxShadow: string }
+  > = {
+    Low: {
+      background: "linear-gradient(to right, #f5f3ff, #ede9fe)",
+      borderLeft: "3px solid #6d28d9",
+      color: "#6d28d9",
+      boxShadow: "0 2px 8px rgba(109, 40, 217, 0.15)",
+    },
+    Medium: {
+      background: "linear-gradient(to right, #f0f9ff, #e0f2fe)",
+      borderLeft: "3px solid #0284c7",
+      color: "#0284c7",
+      boxShadow: "0 2px 8px rgba(2, 132, 199, 0.15)",
+    },
+    High: {
+      background: "linear-gradient(to right, #b2f2bb, #d3f9d8)",
+      borderLeft: "3px solid #22a7b8",
+      color: "#22a7b8",
+      boxShadow: "0 2px 8px rgba(34, 167, 184, 0.15)",
+    },
+  };
 
   return (
     <div className="thin-scrollbar h-[60%] 2xl:h-[60%] overflow-y-auto px-4 space-y-6">
@@ -103,78 +136,10 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
         <ClientNotes clientId={client.id} clientNotes={client?.notes || ""} />
       </section>
 
-      {/* Shared files */}
-      <section className="rounded-2xl border border-zinc-200/70 bg-white p-4 shadow-sm transition-colors dark:border-white/10 dark:bg-zinc-900/60">
-        <header className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-semibold tracking-tight text-zinc-800 dark:text-zinc-100">
-            Shared Files
-          </h3>
-          <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-600 dark:bg-white/10 dark:text-zinc-300">
-            {(conversations?.flatMap((e) => e.attachments).length || 0) +
-              (smsData?.flatMap((s) => s.attachments).length || 0)}
-          </span>
-        </header>
-
-        {/* Email attachments */}
-        <div className="mt-1">
-          <div className="flex items-center gap-2">
-            <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-              Email
-            </p>
-            <span className="rounded-full bg-zinc-100 px-1.5 py-0.5 text-[10px] text-zinc-600 dark:bg-white/10 dark:text-zinc-300">
-              {conversations?.flatMap((e) => e.attachments).length || 0}
-            </span>
-          </div>
-
-          <div className="mt-3 flex flex-wrap gap-3">
-            {conversations && conversations.length > 0 ? (
-              conversations.map((email) =>
-                email.attachments.map((attachment) => (
-                  <SaveAttachment
-                    key={attachment.id}
-                    attachment={attachment}
-                    allAttachments={allEmailAttachments}
-                  />
-                )),
-              )
-            ) : (
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                No files shared via email yet.
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* SMS attachments */}
-        <div className="mt-5">
-          <div className="flex items-center gap-2">
-            <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-              SMS
-            </p>
-            <span className="rounded-full bg-zinc-100 px-1.5 py-0.5 text-[10px] text-zinc-600 dark:bg-white/10 dark:text-zinc-300">
-              {smsData?.flatMap((s) => s.attachments).length || 0}
-            </span>
-          </div>
-
-          <div className="mt-3 flex flex-wrap gap-3">
-            {smsData && smsData.length > 0 ? (
-              smsData.map((sms) =>
-                sms.attachments.map((attachment) => (
-                  <SaveAttachment
-                    key={attachment.id}
-                    attachment={attachment}
-                    allAttachments={allSmsAttachments}
-                  />
-                )),
-              )
-            ) : (
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                No files shared via SMS yet.
-              </p>
-            )}
-          </div>
-        </div>
-      </section>
+      <SharedFilesSection
+        emailAttachments={allEmailAttachments}
+        smsAttachments={allSmsAttachments}
+      />
 
       {/* Estimates & Invoices */}
       <section className="rounded-2xl border border-zinc-200/70 bg-white p-4 shadow-sm transition-colors dark:border-white/10 dark:bg-zinc-900/60">
@@ -187,6 +152,7 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
           clientId={client.id}
           estimates={estimates}
           vehicles={vehicles}
+          totalCount={estimatesCount}
         />
       </section>
 
@@ -203,27 +169,28 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
 
         <div className="flex flex-wrap items-center gap-2">
           {tasks?.length ? (
-            tasks.map((task) => (
-              <div
-                key={task.id}
-                className={cn(
-                  "group flex items-center gap-2 rounded-full border border-transparent  px-3 py-1.5 text-xs font-medium text-white shadow-sm transition-colors",
-                  {
-                    "bg-[#6571FF]": task.priority === "Low",
-                    "bg-[#25AADD]": task.priority === "Medium",
-                    "bg-[#006d77]": task.priority === "High",
-                  },
-                )}
-                title={task.title}
-              >
-                <span className="truncate max-w-[12rem]">
-                  {task.title.length > 40
-                    ? task.title.slice(0, 40) + "…"
-                    : task.title}
-                </span>
-                <TaskActions task={task} />
-              </div>
-            ))
+            tasks.map((task) => {
+              const style =
+                priorityStyles[task.priority ?? "Low"] ?? priorityStyles.Low;
+              return (
+                <div
+                  key={task.id}
+                  className="group flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all"
+                  style={style}
+                  title={task.title}
+                >
+                  <span
+                    className="truncate max-w-[12rem]"
+                    style={{ color: style.color }}
+                  >
+                    {task.title.length > 40
+                      ? task.title.slice(0, 40) + "…"
+                      : task.title}
+                  </span>
+                  <TaskActions task={task} color={style.color} />
+                </div>
+              );
+            })
           ) : (
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
               No tasks yet — add one below.
@@ -237,7 +204,11 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
       </section>
 
       {/* Appointments */}
-      <AppointmentListClient appointments={appointmentData} />
+      <AppointmentListClient
+        appointments={appointmentData}
+        companyId={companyId}
+        clientId={client.id}
+      />
     </div>
   );
 }

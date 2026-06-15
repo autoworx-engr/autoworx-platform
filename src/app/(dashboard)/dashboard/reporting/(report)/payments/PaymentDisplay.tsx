@@ -1,4 +1,5 @@
 "use client";
+import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
 import { cn } from "@/lib/cn";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { Payment, Prisma } from "@prisma/client";
@@ -158,7 +159,13 @@ export default function PaymentDisplay({
                       </td>
 
                       <td className="border-b px-4 py-2 text-left">
-                        {payment.invoiceId}
+                        {payment.invoiceId && (
+                          <InvoiceModal
+                            invoiceId={payment.invoiceId}
+                            buttonChild={<button>{payment.invoiceId}</button>}
+                            buttonChildClassName="text-blue-500"
+                          />
+                        )}
                       </td>
                       <td className="border-b px-4 py-2 text-left">
                         {payment.invoice?.client?.firstName}{" "}
