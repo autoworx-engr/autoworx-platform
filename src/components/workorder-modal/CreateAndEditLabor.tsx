@@ -1,7 +1,5 @@
 "use client";
-import { getEmployees } from "@/actions/employee/get";
-import { addTechnician } from "@/actions/estimate/technician/addTechnician";
-import { updateTechnician } from "@/actions/estimate/technician/updateTechnician";
+import { addTechnician, updateTechnician } from "@/service/work-order/api";
 import ComponentsLightbox from "@/components/common/LightBox";
 import {
   Dialog,
@@ -110,7 +108,7 @@ export default function CreateAndEditLabor({
   });
 
   const [technicianNote, setTechnicianNote] = useState(
-    technician?.technicianNote || ""
+    technician?.technicianNote || "",
   );
 
   const [formData, setFormData] = useState<{
@@ -123,19 +121,27 @@ export default function CreateAndEditLabor({
   const [imageUploadIsLoading, setImageUploadIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [lightboxItems, setLightboxItems] = useState<{ src: string }[] | null>(
-    null
+    null,
   );
   const [priority, setPriority] = useState<Priority>("Low");
   const [loading, setLoading] = useState(false); // Loading state
 
   const isAdminOrManger = useIsAdminOrManager();
   const currentUser = useGetCurrentUser();
+  const companyId = currentUser?.companyId;
   const isTechnician = currentUser?.employeeType === "Technician";
 
   useEffect(() => {
     const fetchEmployees = async () => {
-      const employees = await getEmployees({ notType: "Sales" });
-      setEmployeeList(employees);
+      try {
+        const res = await fetch(
+          "/api/pipeline/shop/get-employees?notType=Sales",
+        );
+        const json = await res.json();
+        setEmployeeList(json?.data ?? []);
+      } catch {
+        setEmployeeList([]);
+      }
     };
     fetchEmployees();
   }, []);
@@ -173,7 +179,7 @@ export default function CreateAndEditLabor({
     }
   }, [technician, employeeList]);
   const handleChange = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = event.target;
 
@@ -220,67 +226,65 @@ export default function CreateAndEditLabor({
         // For technicians, only allow updating status, keep other fields from the original technician
         const updatedPayload = isTechnician
           ? {
-            date: new Date(technician.date || new Date()),
-            due: new Date(technician.due || new Date()),
-            amount: Number(technician.amount) || 0,
-            note: technician.note || "",
-            technicianNote: technicianNote || "",
-            userId: technician.userId,
-            status,
-            priority: technician.priority || "Low",
-            invoiceId,
-            serviceId,
-          }
+              date: new Date(technician.date || new Date()),
+              due: new Date(technician.due || new Date()),
+              amount: Number(technician.amount) || 0,
+              note: technician.note || "",
+              technicianNote: technicianNote || "",
+              userId: technician.userId,
+              status,
+              priority: technician.priority || "Low",
+              invoiceId,
+              serviceId,
+            }
           : {
-            date: new Date(inputValues.date),
-            due: new Date(inputValues.due),
-            amount: Number(inputValues.amount),
-            note: inputValues.note,
-            technicianNote: technicianNote,
-            userId: employee?.id,
-            status,
-            priority,
-            invoiceId,
-            serviceId,
-          };
+              date: new Date(inputValues.date),
+              due: new Date(inputValues.due),
+              amount: Number(inputValues.amount),
+              note: inputValues.note,
+              technicianNote: technicianNote,
+              userId: employee?.id,
+              status,
+              priority,
+              invoiceId,
+              serviceId,
+            };
 
-        const response = await updateTechnician(
+        const updated = await updateTechnician(
+          companyId!,
+          invoiceId,
           technician.id,
-          updatedPayload,
-          isTechnician ? technician.vehicleParts || [] : selectedVehicleParts,
-          finalImageUrls
+          {
+            ...updatedPayload,
+            vehicleParts: isTechnician
+              ? technician.vehicleParts || []
+              : selectedVehicleParts,
+            imageUrls: finalImageUrls,
+          },
         );
 
-        if (response.type === "success") {
-          const newImages: TechnicianImage[] = finalImageUrls.map((url) => {
-            return {
-              fileUrl: url,
-              uploadedAt: new Date(),
-              technicianId: technician.id,
-            } as TechnicianImage;
-          });
+        const newImages: TechnicianImage[] = finalImageUrls.map((url) => {
+          return {
+            fileUrl: url,
+            uploadedAt: new Date(),
+            technicianId: technician.id,
+          } as TechnicianImage;
+        });
 
-          setFormData({ attachments: newImages });
-          setOpen(false);
-          setTechnicians((prev) =>
-            prev.map((tech) =>
-              tech.id === technician.id
-                ? {
-                  ...response.data,
+        setFormData({ attachments: newImages });
+        setOpen(false);
+        setTechnicians((prev) =>
+          prev.map((tech) =>
+            tech.id === technician.id
+              ? {
+                  ...updated,
                   images: newImages,
                   hasPermission: tech.hasPermission,
                   vehicleParts: selectedVehicleParts as Parts[],
                 }
-                : tech
-            )
-          );
-        } else if (response.type === "globalError") {
-          setError(
-            response?.errorSource?.length
-              ? response.errorSource[0].message
-              : response.message
-          );
-        }
+              : tech,
+          ),
+        );
       } else {
         const payload = {
           serviceId: Number(serviceId),
@@ -295,32 +299,27 @@ export default function CreateAndEditLabor({
           invoiceItemId,
           technicianNote: technicianNote,
         };
-        const response = await addTechnician(payload, selectedVehicleParts);
-        if (response.type === "success") {
-          setOpen(false);
-          setTechnicians((prev) => [
-            ...prev,
-            {
-              ...response.data,
-              hasPermission: true,
-              vehicleParts: selectedVehicleParts as Parts[],
-            },
-          ]);
-          setSelectedVehicleParts([]);
-        } else if (response.type === "globalError") {
-          setError(
-            response?.errorSource?.length
-              ? response.errorSource[0].message
-              : response.message
-          );
-        }
+        const created = await addTechnician(companyId!, invoiceId, {
+          ...payload,
+          vehicleParts: selectedVehicleParts,
+        });
+        setOpen(false);
+        setTechnicians((prev) => [
+          ...prev,
+          {
+            ...created,
+            hasPermission: true,
+            vehicleParts: selectedVehicleParts as Parts[],
+          },
+        ]);
+        setSelectedVehicleParts([]);
       }
     } catch (error) {
       const formattedError = errorHandler(error);
       setError(
         formattedError?.errorSource?.length
           ? formattedError.errorSource[0].message
-          : formattedError.message
+          : formattedError.message,
       );
     } finally {
       queryClient.invalidateQueries({
@@ -372,13 +371,13 @@ export default function CreateAndEditLabor({
   useEffect(() => {
     return () => {
       // Reset the pending state when the component unmounts
-      startTransition(() => { });
+      startTransition(() => {});
     };
   }, []);
 
   //show only them who are not assigned
   const availableEmployees = employeeList.filter(
-    (emp) => !technicianList?.some((tech) => tech.userId === emp.id)
+    (emp) => !technicianList?.some((tech) => tech.userId === emp.id),
   );
   // parts select handler
   const handleSelectParts = (part: { label: string; value: string }) => {
@@ -393,7 +392,7 @@ export default function CreateAndEditLabor({
   const handleRemoveParts = (part: { label: string; value: string }) => {
     if (isTechnician) return; // Prevent technicians from removing parts
     setSelectedVehicleParts((prev) =>
-      prev.filter((vPart) => vPart.partsName !== part.value)
+      prev.filter((vPart) => vPart.partsName !== part.value),
     );
   };
 
@@ -457,7 +456,7 @@ export default function CreateAndEditLabor({
                   availableEmployees.filter((employee) =>
                     `${employee.firstName} ${employee.lastName}`
                       .toLowerCase()
-                      .includes(search.toLowerCase())
+                      .includes(search.toLowerCase()),
                   )
                 }
                 openState={[employeeOpen, setEmployeeOpen]}
@@ -552,20 +551,24 @@ export default function CreateAndEditLabor({
         {technician && (
           <div>
             <div className="flex justify-between">
-              <p className="text-left text-sm font-semibold text-slate-700">Work Note</p>
+              <p className="text-left text-sm font-semibold text-slate-700">
+                Work Note
+              </p>
             </div>
             <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
               <div className="space-y-1.5">
                 <p className="text-xs text-slate-500">{formattedDate}</p>
-                <p className="text-sm text-slate-700">{technician?.note || "No notes"}</p>
+                <p className="text-sm text-slate-700">
+                  {technician?.note || "No notes"}
+                </p>
               </div>
             </div>
           </div>
         )}
         {isTechnician ||
-          (isAdminOrManger &&
-            ((technicianNote && technicianNote.length > 0) ||
-              formData.attachments.length > 0)) ? (
+        (isAdminOrManger &&
+          ((technicianNote && technicianNote.length > 0) ||
+            formData.attachments.length > 0)) ? (
           <div className="space-y-4 mb-4 pb-4 border-b border-slate-100">
             <h3 className="text-left text-sm font-semibold text-slate-700">
               Technician Work Details
@@ -658,7 +661,7 @@ export default function CreateAndEditLabor({
                             onClick={() => {
                               setFormData((prev) => ({
                                 attachments: prev.attachments.filter(
-                                  (_, i) => i !== idx
+                                  (_, i) => i !== idx,
                                 ),
                               }));
                             }}

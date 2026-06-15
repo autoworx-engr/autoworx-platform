@@ -1,9 +1,8 @@
 "use client";
 
-import {
-  getWorkOrderData,
-  IWorkOrderData,
-} from "@/actions/estimate/invoice/getWorkOrderData";
+import type { IWorkOrderData } from "@/actions/estimate/invoice/getWorkOrderData";
+import { getWorkOrderData } from "@/service/work-order/api";
+import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import {
   Dialog,
   DialogTrigger,
@@ -47,11 +46,13 @@ export default function WorkOrderModalBody({
 }) {
   const [dueDate, setDueDate] = useState<string | null>("");
   const isAdminOrManager = useIsAdminOrManager();
+  const currentUser = useGetCurrentUser();
+  const companyId = currentUser?.companyId;
   const [openService, setOpenService] = useState<number | null>(null);
   const { data, error, isLoading, isFetched } = useQuery({
     queryKey: queryKeys.getWorkOrderDataKey(invoiceId),
-    queryFn: () => getWorkOrderData(invoiceId),
-    enabled: !!invoiceId,
+    queryFn: () => getWorkOrderData(companyId!, invoiceId),
+    enabled: !!invoiceId && !!companyId,
   });
 
   useEffect(() => {
