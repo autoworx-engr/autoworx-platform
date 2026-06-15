@@ -80,19 +80,24 @@ export async function POST(req: NextRequest) {
 
     const unique = Array.from(new Map(parsed.map((p) => [p.date, p])).values());
 
-    if (unique.length > 0) {
-      const existing = await db.holiday.findMany({
-        where: { companyId, date: { in: unique.map((p) => p.date) } },
-        select: { date: true },
-      });
-      const existingDates = new Set(existing.map((h) => h.date.toISOString()));
-      const toCreate = unique.filter((p) => !existingDates.has(p.date));
+    if (unique.length === 0) {
+      return NextResponse.json(
+        { success: false, message: "No valid dates provided" },
+        { status: 400 },
+      );
+    }
 
-      if (toCreate.length > 0) {
-        await db.holiday.createMany({
-          data: toCreate.map((p) => ({ companyId, ...p })),
-        });
-      }
+    const existing = await db.holiday.findMany({
+      where: { companyId, date: { in: unique.map((p) => p.date) } },
+      select: { date: true },
+    });
+    const existingDates = new Set(existing.map((h) => h.date.toISOString()));
+    const toCreate = unique.filter((p) => !existingDates.has(p.date));
+
+    if (toCreate.length > 0) {
+      await db.holiday.createMany({
+        data: toCreate.map((p) => ({ companyId, ...p })),
+      });
     }
 
     const data = await db.holiday.findMany({
