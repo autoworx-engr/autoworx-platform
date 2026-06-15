@@ -20,6 +20,7 @@ type NewTaskProps = {
   onTaskCreated?: (task: Task) => void;
   onTaskUpdated?: (task: Task) => void;
   onTaskDelete?: (taskId: number) => void;
+  revalidateOnDelete?: boolean;
 };
 
 // **Helper Class for Primary CTA Styling**
@@ -51,6 +52,7 @@ export default function TaskCreateOrEdit({
   onTaskCreated,
   onTaskUpdated,
   onTaskDelete,
+  revalidateOnDelete = true,
 }: NewTaskProps) {
   const state = useState(false);
 
@@ -113,6 +115,7 @@ export default function TaskCreateOrEdit({
           onTaskCreated={onTaskCreated}
           onTaskUpdated={onTaskUpdated}
           onTaskDeleted={onTaskDelete}
+          revalidateOnDelete={revalidateOnDelete}
           clientId={clientId}
           fromEdit={fromEdit}
           onClose={() => setOpen(false)}

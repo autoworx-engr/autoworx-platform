@@ -1,4 +1,5 @@
 import { createColumn } from "@/actions/pipelines/pipelinesColumn";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -62,6 +63,13 @@ import { NextRequest, NextResponse } from "next/server";
  *         description: Internal server error
  */
 export async function POST(req: NextRequest) {
+  const principal = await getAuthPrincipal(req);
+  if (!principal) {
+    return NextResponse.json(
+      { success: false, message: "Unauthorized" },
+      { status: 401 },
+    );
+  }
   try {
     const body = await req.json();
     const { title, textColor, bgColor } = body;
@@ -73,7 +81,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const data = await createColumn(title, "shop", textColor, bgColor);
+    const data = await createColumn(
+      title,
+      "shop",
+      textColor,
+      bgColor,
+      principal.companyId,
+    );
 
     return NextResponse.json({
       success: true,

@@ -28,6 +28,7 @@ type NewTaskProps = {
   onTaskCreated?: (task: Task) => void;
   onTaskUpdated?: (task: Task) => void;
   onTaskDeleted?: (taskId: number) => void;
+  revalidateOnDelete?: boolean;
 };
 
 export default function TaskContentModal({
@@ -41,6 +42,7 @@ export default function TaskContentModal({
   onTaskCreated,
   onTaskUpdated,
   onTaskDeleted,
+  revalidateOnDelete = true,
 }: NewTaskProps) {
   const { state, actions } = useTaskForm({
     taskId,
@@ -52,6 +54,7 @@ export default function TaskContentModal({
     onTaskCreated,
     onTaskUpdated,
     onTaskDeleted,
+    revalidateOnDelete,
   });
 
   const {

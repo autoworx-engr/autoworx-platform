@@ -19,10 +19,14 @@ export default function HolidayDeleteConfirmation({
     try {
       const response = await deleteHoliday(holidayId);
       if (response?.status === 200) {
-        const removedHoliday = moment(response.data.date).format(
-          "MMMM DD, YYYY"
-        );
-        toast.success(`${removedHoliday} - Holiday removed successfully!`);
+        if (response.data) {
+          const removedHoliday = moment(response.data.date).format(
+            "MMMM DD, YYYY",
+          );
+          toast.success(`${removedHoliday} - Holiday removed successfully!`);
+        } else {
+          toast.success("Holiday removed successfully!");
+        }
         setOpen(false);
       } else {
         throw new Error("Failed to remove holiday");

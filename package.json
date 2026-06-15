@@ -20,7 +20,9 @@
     "prepare": "husky",
     "worker": "tsx src/workers/start.ts",
     "worker:dev": "tsx watch -r dotenv/config src/workers/start.ts",
-    "worker:build": "prisma generate"
+    "worker:build": "prisma generate",
+    "generate:search": "tsx scripts/generate-search-registry.ts",
+    "prebuild": "yarn generate:search"
   },
   "dependencies": {
     "@atlaskit/pragmatic-drag-and-drop": "^1.7.7",

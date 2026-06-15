@@ -45,11 +45,10 @@ export async function POST(request: Request) {
     const payload = jwt.verify(refreshAccessToken, refreshSecret);
 
     if (!payload || typeof payload !== "object" || !payload.email) {
-      return Response.json({
-        message: "Invalid token",
-        error: "InvalidRefreshTokenError",
-        status: 401,
-      });
+      return Response.json(
+        { message: "Invalid token", error: "InvalidRefreshTokenError" },
+        { status: 401 },
+      );
     }
 
     const user = await db.user.findUnique({
@@ -57,11 +56,10 @@ export async function POST(request: Request) {
     });
 
     if (!user) {
-      return Response.json({
-        message: "User not found",
-        error: "UserNotFoundError",
-        status: 404,
-      });
+      return Response.json(
+        { message: "User not found", error: "UserNotFoundError" },
+        { status: 404 },
+      );
     }
 
     const newAccessToken = generateAccessToken(user) as string;
@@ -78,10 +76,9 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     console.error("refresh token request error:", error);
-    return Response.json({
-      message: "Invalid Refresh Token",
-      error: "InvalidRefreshTokenError",
-      status: 403,
-    });
+    return Response.json(
+      { message: "Invalid Refresh Token", error: "InvalidRefreshTokenError" },
+      { status: 403 },
+    );
   }
 }

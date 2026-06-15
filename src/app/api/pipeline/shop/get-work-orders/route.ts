@@ -1,4 +1,4 @@
-import { getCompanyId } from "@/lib/companyId";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { db } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
@@ -98,6 +98,13 @@ import { NextRequest, NextResponse } from "next/server";
  *         description: Internal server error
  */
 export async function GET(req: NextRequest) {
+  const principal = await getAuthPrincipal(req);
+  if (!principal) {
+    return NextResponse.json(
+      { success: false, message: "Unauthorized" },
+      { status: 401 },
+    );
+  }
   try {
     const { searchParams } = req.nextUrl;
 
@@ -123,7 +130,7 @@ export async function GET(req: NextRequest) {
       ? sortOrder
       : "desc";
 
-    const companyId = await getCompanyId();
+    const companyId = principal.companyId;
 
     const where: Prisma.InvoiceWhereInput = {
       companyId,

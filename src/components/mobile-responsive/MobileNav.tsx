@@ -11,6 +11,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import BugReport from "../bug-report/BugReport";
+import GlobalSearch from "../GlobalSearch";
 import LogoutBtn from "../LogoutBtn";
 import { NotificationsPopover } from "../NotificationProvider";
 import QuickLink from "../QuickLink";
@@ -155,6 +156,7 @@ export default function MobileNav({ navList, permissions }: TProps) {
               isDashboard && <QuickLink />}
             {!isDashboard && <BugReport />}
 
+            <GlobalSearch iconClassName="size-5 text-white" />
             <NotificationsPopover />
             <div className="text-white">{/* <ThemeSwitch /> */}</div>
             <LogoutBtn className="text-[1.7rem] font-bold text-white" />

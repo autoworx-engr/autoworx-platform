@@ -298,6 +298,17 @@ const PDFComponent = ({
   companyDetails: Company | null;
   authorizedName: string;
 }) => {
+  const totalMaterialSell = invoice.invoiceItems.reduce(
+    (invoiceSum: number, invoiceItem: any) =>
+      invoiceSum +
+      (invoiceItem.materials ?? []).reduce(
+        (materialSum: number, material: { quantity?: number; sell?: number }) =>
+          materialSum + (material.quantity ?? 0) * (material.sell ?? 0),
+        0,
+      ),
+    0,
+  );
+
   return (
     <Document>
       <Page
@@ -384,7 +395,7 @@ const PDFComponent = ({
                   calculateDue(
                     Number(invoice.grandTotal),
                     Number(invoice.totalPayment),
-                    Number(invoice.deposit)
+                    Number(invoice.deposit),
                   ),
                 ],
               ].map(([field, value], ind) => (
@@ -393,7 +404,24 @@ const PDFComponent = ({
                   <Text style={styles.totalLabel}>{field || ""}</Text>
                   <Text style={styles.totalValue}>
                     {field == "tax" || field == "shop supplies" ? (
-                      <> %{Number(value)}</>
+                      <>
+                        {Number(value)}%
+                        {Number(value) !== 0 && (
+                          <>
+                            {" "}
+                            |{" "}
+                            {formatCurrency(
+                              (Number(
+                                field === "tax"
+                                  ? totalMaterialSell
+                                  : invoice.subtotal,
+                              ) *
+                                Number(value)) /
+                                100,
+                            )}
+                          </>
+                        )}
+                      </>
                     ) : (
                       formatCurrency(parseFloat("" + value))
                     )}
@@ -520,7 +548,7 @@ const PDFInvoiceItems = ({
                         Number(material.quantity ?? 0)
                       : 0) -
                     parseFloat(
-                      material.discount ? material.discount.toString() : "0"
+                      material.discount ? material.discount.toString() : "0",
                     )
                   ).toFixed(2)}
                 </Text>

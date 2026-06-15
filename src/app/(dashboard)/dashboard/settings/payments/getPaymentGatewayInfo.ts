@@ -3,12 +3,12 @@
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 
-export async function getPaymentGatewayInfo() {
+export async function getPaymentGatewayInfo(companyId?: number) {
   try {
-    const companyId = await getCompanyId();
+    const resolvedId = companyId ?? (await getCompanyId());
 
     const company = await db.company.findUnique({
-      where: { id: companyId },
+      where: { id: resolvedId },
       select: {
         stripeAccountId: true,
         authorizeNetApiLoginId: true,

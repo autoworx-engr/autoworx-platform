@@ -445,36 +445,7 @@ export function PayNow({
             </DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            {/* Gateway Selection */}
-            {availableGateways.length > 1 ? (
-              <div className="space-y-2">
-                <Label htmlFor="gateway">Payment Gateway</Label>
-                <select
-                  id="gateway"
-                  value={selectedGateway}
-                  onChange={(e) =>
-                    setSelectedGateway(
-                      e.target.value as "STRIPE" | "AUTHORIZE_NET",
-                    )
-                  }
-                  className="w-full rounded-lg border px-3 py-2 bg-white"
-                >
-                  {gatewayInfo?.hasStripe && (
-                    <option value="STRIPE">Stripe</option>
-                  )}
-                  {gatewayInfo?.hasAuthorizeNet && (
-                    <option value="AUTHORIZE_NET">Authorize.Net</option>
-                  )}
-                </select>
-              </div>
-            ) : availableGateways.length === 1 ? (
-              <div className="space-y-2">
-                <Label>Payment Gateway</Label>
-                <div className="w-full rounded-lg border px-3 py-2 bg-gray-50 text-gray-700">
-                  {gatewayName}
-                </div>
-              </div>
-            ) : null}
+            {/* Gateway selection is internal — not shown to customers */}
 
             {/* Amount Input */}
             <div className="space-y-2">
@@ -600,7 +571,7 @@ export function PayNow({
               disabled={isLoading || !amount || Number(amount) <= 0}
               onClick={handlePayment}
             >
-              {isLoading ? "Processing..." : `Checkout with ${gatewayName}`}
+              {isLoading ? "Processing..." : "Checkout"}
             </Button>
           </DialogFooter>
         </DialogContent>

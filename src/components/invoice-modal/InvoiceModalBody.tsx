@@ -376,7 +376,6 @@ export default function InvoiceModalBody({
 
       if (response?.type === "success") {
         successToast("Invoice Authorized");
-        await authorizedLeadsConvertion(invoice.id);
       } else {
         errorToast("Signature upload failed");
         console.error("Signature upload failed:");
@@ -386,6 +385,17 @@ export default function InvoiceModalBody({
       console.error("Signature upload failed:", err);
     }
   };
+
+  const totalMaterialSell = invoice.invoiceItems.reduce(
+    (invoiceSum: number, invoiceItem: any) =>
+      invoiceSum +
+      (invoiceItem.materials ?? []).reduce(
+        (materialSum: number, material: { quantity?: number; sell?: number }) =>
+          materialSum + (material.quantity ?? 0) * (material.sell ?? 0),
+        0,
+      ),
+    0,
+  );
 
   return (
     <DialogPortal>
@@ -966,10 +976,13 @@ export default function InvoiceModalBody({
                           {Number(value)}%
                           {Number(value) !== 0 && (
                             <span>
-                              {" "}
                               |
                               {formatCurrency(
-                                (Number(invoice.subtotal as any) *
+                                (Number(
+                                  key === "tax"
+                                    ? totalMaterialSell
+                                    : (invoice.subtotal as any),
+                                ) *
                                   Number(value)) /
                                   100,
                               )}
@@ -1440,7 +1453,7 @@ export default function InvoiceModalBody({
                           src={x.photo}
                           alt="attachment"
                           fill
-                          className="cursor-pointer"
+                          className="cursor-pointer object-cover object-center"
                         />
                       </Link>
                     );

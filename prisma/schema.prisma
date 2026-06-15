@@ -3,8 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  // directUrl   = env("DIRECT_URL")
+  provider  = "postgresql"
 }
 
 // Appointment for a company.
@@ -717,11 +716,13 @@ model Company {
   stripeAccountId                  String?
   authorizeNetApiLoginId           String?                            @map("authorize_net_api_login_id")
   authorizeNetTransactionKey       String?                            @map("authorize_net_transaction_key")
+  authorizeNetSignatureKey         String?                            @map("authorize_net_signature_key")
   paymentGateway                   PaymentGateway                     @default(STRIPE)
   tipEnabled                       Boolean                            @default(true) @map("tip_enabled")
   timezone                         String?
   stripePayment                    StripePayment[]
   authorizeNetPayment              AuthorizeNetPayment[]
+  webhookEvents                    WebhookEvent[]
   leadLink                         LeadLink[]
   PipelineAutomationRule           PipelineAutomationRule[]
   ServiceMaintenanceAutomationRule ServiceMaintenanceAutomationRule[]
@@ -1885,6 +1886,7 @@ enum NotificationType {
   INVOICE_AUTHORIZED
   PAYMENT_RECEIVED
   PAYMENT_DUE
+  PAYMENT_FAILED
   DEPOSIT
   WORK_ORDER_CREATED
   WORK_ORDER_COMPLETED
@@ -2066,6 +2068,25 @@ model AuthorizeNetPayment {
   company       Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@map("authorize_net_payments")
+}
+
+model WebhookEvent {
+  id          Int       @id @default(autoincrement())
+  eventId     String    @unique @map("event_id")
+  gateway     String
+  companyId   Int?      @map("company_id")
+  payload     Json
+  status      String    @default("PENDING")
+  attempts    Int       @default(0)
+  lastError   String?   @map("last_error")
+  receivedAt  DateTime  @default(now()) @map("received_at")
+  processedAt DateTime? @map("processed_at")
+  company     Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([gateway])
+  @@index([companyId])
+  @@map("webhook_events")
 }
 
 model PaymentMethod {
@@ -2356,13 +2377,14 @@ model TwoFactorConfirmation {
 }
 
 model PasswordResetToken {
-  id        String   @id @default(uuid())
-  token     String   @unique
-  otp       String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    Int      @unique @map("user_id")
-  expiresAt DateTime @map("expires_at")
-  createdAt DateTime @default(now()) @map("created_at")
+  id          String   @id @default(uuid())
+  token       String   @unique
+  otp         String
+  otpVerified Boolean  @default(false) @map("otp_verified")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      Int      @unique @map("user_id")
+  expiresAt   DateTime @map("expires_at")
+  createdAt   DateTime @default(now()) @map("created_at")
 }
 
 // OAuth token for user.

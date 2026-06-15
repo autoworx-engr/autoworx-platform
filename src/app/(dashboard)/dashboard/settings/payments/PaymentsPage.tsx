@@ -11,7 +11,8 @@ import {
 import StripeStatus from "./StripeStatus";
 import AuthorizeNetConfig from "./AuthorizeNetConfig";
 import Image from "next/image";
-import { CircleCheckBig, ExternalLink } from "lucide-react";
+import Link from "next/link";
+import { CircleCheckBig, ExternalLink, History } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { successToast, errorToast } from "@/lib/toast";
 import { getPaymentGatewayInfo } from "./getPaymentGatewayInfo";
@@ -100,9 +101,8 @@ export default function PaymentsPage() {
   };
 
   const gatewayOptions = [
-    { value: "STRIPE", label: "Stripe Only" },
-    { value: "AUTHORIZE_NET", label: "Authorize.Net Only" },
-    { value: "BOTH", label: "Both" },
+    { value: "STRIPE", label: "Stripe" },
+    { value: "AUTHORIZE_NET", label: "Authorize.Net" },
   ];
 
   if (isLoading) {
@@ -117,6 +117,17 @@ export default function PaymentsPage() {
         <p className="text-xs text-gray-400 mt-0.5">
           Configure your payment gateways and integrations
         </p>
+      </div>
+
+      {/* Webhook events link */}
+      <div className="flex justify-end">
+        <Link
+          href="/dashboard/settings/payments/webhook-events"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-500 transition-colors hover:border-[#6571ff] hover:text-[#6571ff]"
+        >
+          <History className="h-3.5 w-3.5" />
+          View Webhook Events
+        </Link>
       </div>
 
       {/* Top row: Gateway + Options side by side */}
@@ -238,6 +249,10 @@ export default function PaymentsPage() {
           <AuthorizeNetConfig
             isConfigured={authorizeNetData?.configured || false}
             hasApiLoginId={authorizeNetData?.hasApiLoginId || false}
+            hasSignatureKey={authorizeNetData?.hasSignatureKey || false}
+            initialApiLoginId={authorizeNetData?.apiLoginId || ""}
+            initialTransactionKey={authorizeNetData?.transactionKey || ""}
+            initialSignatureKey={authorizeNetData?.signatureKey || ""}
             onUpdate={() => {}}
           />
         )}
