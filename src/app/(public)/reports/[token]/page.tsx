@@ -73,11 +73,12 @@ export default function ReportPage(props: ReportPageProps) {
 
   const frequency = (decodedParams?.frequency || "DAILY").toLowerCase();
 
-  const servicesFormatted = useMemo(() => {
-    if (!reportData?.servicesPerformance)
-      return { services: [], categories: [] };
+  const servicesPerformance = reportData?.servicesPerformance;
 
-    const services = reportData.servicesPerformance.map((s) => ({
+  const servicesFormatted = useMemo(() => {
+    if (!servicesPerformance) return { services: [], categories: [] };
+
+    const services = servicesPerformance.map((s) => ({
       name: s.serviceName,
       revenue: s.revenue,
       jobs: s.jobCount,
@@ -85,7 +86,7 @@ export default function ReportPage(props: ReportPageProps) {
     }));
 
     const catMap: Record<string, number> = {};
-    reportData.servicesPerformance.forEach((s) => {
+    servicesPerformance.forEach((s) => {
       catMap[s.categoryName] = (catMap[s.categoryName] || 0) + s.revenue;
     });
 
@@ -95,11 +96,10 @@ export default function ReportPage(props: ReportPageProps) {
     }));
 
     return { services, categories };
-  }, [reportData?.servicesPerformance]);
+  }, [servicesPerformance]);
 
   const teamFormatted = useMemo(() => {
     if (!reportData?.teamPerformance) return [];
-
     return reportData.teamPerformance.map((t) => ({
       name: t.name,
       type: "Staff",
@@ -107,7 +107,7 @@ export default function ReportPage(props: ReportPageProps) {
       revenue: t.revenue,
       pay: 0,
     }));
-  }, [reportData?.teamPerformance]);
+  }, [reportData]);
 
   const reportDateRange = useMemo(() => {
     if (!decodedParams?.startDate || !decodedParams?.endDate) return "";
