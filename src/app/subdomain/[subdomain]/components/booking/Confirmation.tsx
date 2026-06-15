@@ -149,9 +149,8 @@ END:VCALENDAR`;
             </p>
             <div className="text-sm space-y-0.5">
               <p className="font-medium">{customerInfo.fullName}</p>
-              <p className="text-muted-foreground">
-                {customerInfo.email} • {customerInfo.phone}
-              </p>
+              <p className="text-muted-foreground">{customerInfo.email}</p>
+              <p className="text-muted-foreground">{customerInfo.phone}</p>
               {customerInfo.vehicleYear && (
                 <p className="text-muted-foreground">
                   {customerInfo.vehicleYear} {customerInfo.vehicleMake}{" "}

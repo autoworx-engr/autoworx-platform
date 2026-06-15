@@ -91,7 +91,7 @@ export const createSalesTag = async (data: {
     });
 
     if (isExistingTag) {
-      return { type: "error", message: "This tag is already exists" };
+      return { type: "error", message: "This tag is already exist" };
     }
 
     const newTag = await db.tag.create({
