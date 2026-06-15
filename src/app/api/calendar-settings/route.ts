@@ -83,7 +83,24 @@ export async function GET(req: NextRequest) {
  *               weekend2: { type: string, example: sunday }
  *     responses:
  *       200:
- *         description: Calendar settings saved (created or updated)
+ *         description: Calendar settings saved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean, example: true }
+ *                 message: { type: string, example: "Calendar settings updated successfully" }
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id: { type: integer, example: 3 }
+ *                     companyId: { type: integer, example: 10 }
+ *                     weekStart: { type: string, example: "monday" }
+ *                     dayStart: { type: string, example: "08:00" }
+ *                     dayEnd: { type: string, example: "18:00" }
+ *                     weekend1: { type: string, example: "saturday" }
+ *                     weekend2: { type: string, example: "sunday" }
  *       400:
  *         description: Missing required field
  *       401:
