@@ -6,7 +6,13 @@ import { useServerGet } from "@/hooks/useServerGet";
 import { errorToast, successToast } from "@/lib/toast";
 import { useSession } from "next-auth/react";
 import { useParams } from "next/navigation";
-import React, { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import React, {
+  ChangeEvent,
+  FormEvent,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 type FormData = {
   companyId: number;
@@ -27,9 +33,11 @@ const SmsGetwayForm: React.FC = () => {
     ? routeCompanyId
     : (session?.user?.companyId ?? 0);
 
-  const { data: twilioCredentials } = useServerGet(getTwilioCredentials, {
-    companyId,
-  });
+  const twilioArg = useMemo(() => ({ companyId }), [companyId]);
+  const { data: twilioCredentials } = useServerGet(
+    getTwilioCredentials,
+    twilioArg,
+  );
 
   const [formData, setFormData] = useState<FormData>({
     companyId,
