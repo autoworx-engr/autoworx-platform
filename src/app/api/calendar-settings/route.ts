@@ -17,9 +17,10 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true, data });
-  } catch (error: any) {
+  } catch (error) {
+    console.error("Error fetching calendar settings:", error);
     return NextResponse.json(
-      { success: false, message: error?.message || "Internal server error" },
+      { success: false, message: "Internal server error" },
       { status: 500 },
     );
   }
@@ -64,9 +65,10 @@ export async function PUT(req: NextRequest) {
       message: "Calendar settings updated successfully",
       data,
     });
-  } catch (error: any) {
+  } catch (error) {
+    console.error("Error updating calendar settings:", error);
     return NextResponse.json(
-      { success: false, message: error?.message || "Internal server error" },
+      { success: false, message: "Internal server error" },
       { status: 500 },
     );
   }
