@@ -1,19 +1,73 @@
-import { getCalendarSettings } from "@/actions/calendar-settings/getCalendarSettings";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 
-/**
- * @swagger
- * /api/calendar-settings:
- *   get:
- *     summary: Get calendar settings
- *     tags: [Settings]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Calendar settings
- */
-export async function GET() {
-  const settings = await getCalendarSettings();
-  return NextResponse.json(settings);
+export async function GET(req: NextRequest) {
+  try {
+    const companyId = (await getAuthPrincipal(req))?.companyId ?? null;
+    if (companyId === null) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+
+    const data = await db.calendarSettings.findFirst({
+      where: { companyId },
+    });
+
+    return NextResponse.json({ success: true, data });
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, message: error?.message || "Internal server error" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function PUT(req: NextRequest) {
+  try {
+    const companyId = (await getAuthPrincipal(req))?.companyId ?? null;
+    if (companyId === null) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+
+    const body = await req.json();
+    const { weekStart, dayStart, dayEnd, weekend1, weekend2 } = body;
+
+    for (const [key, val] of [
+      ["weekStart", weekStart],
+      ["dayStart", dayStart],
+      ["dayEnd", dayEnd],
+      ["weekend1", weekend1],
+      ["weekend2", weekend2],
+    ] as [string, unknown][]) {
+      if (!val) {
+        return NextResponse.json(
+          { success: false, message: `${key} is required` },
+          { status: 400 },
+        );
+      }
+    }
+
+    const data = await db.calendarSettings.upsert({
+      where: { companyId },
+      update: { weekStart, dayStart, dayEnd, weekend1, weekend2 },
+      create: { companyId, weekStart, dayStart, dayEnd, weekend1, weekend2 },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Calendar settings updated successfully",
+      data,
+    });
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, message: error?.message || "Internal server error" },
+      { status: 500 },
+    );
+  }
 }
