@@ -24,25 +24,24 @@ export async function DELETE(
       );
     }
 
-    const existing = await db.holiday.findFirst({
+    const { count } = await db.holiday.deleteMany({
       where: { id, companyId },
     });
-    if (!existing) {
+    if (count === 0) {
       return NextResponse.json(
         { success: false, message: "Holiday not found" },
         { status: 404 },
       );
     }
 
-    await db.holiday.delete({ where: { id } });
-
     return NextResponse.json({
       success: true,
       message: "Holiday deleted successfully",
     });
-  } catch (error: any) {
+  } catch (error) {
+    console.error("Error deleting holiday:", error);
     return NextResponse.json(
-      { success: false, message: error?.message || "Internal server error" },
+      { success: false, message: "Internal server error" },
       { status: 500 },
     );
   }
