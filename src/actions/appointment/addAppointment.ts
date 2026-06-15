@@ -47,7 +47,7 @@ export async function addAppointment(
       !appointment.forceUserId || !appointment.forceCompanyId
         ? await getServerSession(authOptions)
         : null;
-    const sessionUserId = session?.user.id;
+    const sessionUserId = (session as any)?.user?.id as string | undefined;
 
     let userId = appointment.forceUserId ?? sessionUserId;
 
@@ -55,7 +55,7 @@ export async function addAppointment(
       return { type: "error", message: "User not found", field: "user" };
     }
     if (!companyId) {
-      companyId = session?.user?.companyId;
+      companyId = (session as any)?.user?.companyId;
       if (!companyId) {
         throw new Error("Company ID is required to create an appointment.");
       }
@@ -220,7 +220,11 @@ export async function addAppointment(
       console.log("🚀 ~ addAppointment ~ error:", error);
     }
 
-    revalidatePath("/dashboard/communication/client/${clientId}");
+    try {
+      revalidatePath("/dashboard/communication/client/${clientId}");
+    } catch {
+      // no-op: best-effort when called from worker context
+    }
 
     return { type: "success", data: newAppointment };
   } catch (error) {

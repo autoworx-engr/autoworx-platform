@@ -206,9 +206,13 @@ export async function convertInvoice(
       return updatedInvoiceData;
     });
 
-    revalidatePath("/estimate");
-    revalidatePath("/dashboard/estimate");
-    revalidatePath(`/dashboard/estimate/view/${id}`);
+    try {
+      revalidatePath("/estimate");
+      revalidatePath("/dashboard/estimate");
+      revalidatePath(`/dashboard/estimate/view/${id}`);
+    } catch {
+      // no-op: best-effort when called from worker context
+    }
 
     return {
       type: "success",

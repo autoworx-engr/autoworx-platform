@@ -1,10 +1,10 @@
 "use client";
 import React, { useEffect, useState, useTransition } from "react";
 import { Technician, TechnicianImage, VehicleParts } from "@prisma/client";
-import { deleteTechnician } from "@/actions/estimate/technician/deleteTechnician";
 import CreateAndEditLabor from "./CreateAndEditLabor";
 import { cn } from "@/lib/utils";
-import { getTechniciansWithPermission } from "@/actions/estimate/technician/getTechniciansWithPermission";
+import { getTechnicians, deleteTechnician } from "@/service/work-order/api";
+import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import { queryKeys } from "@/lib/queryKeys";
 import { useQueryClient } from "@tanstack/react-query";
 import { Popconfirm } from "antd";
@@ -33,40 +33,40 @@ export default function LaborItems({
   const [pending, startTransition] = useTransition();
 
   const queryClient = useQueryClient();
+  const currentUser = useGetCurrentUser();
+  const companyId = currentUser?.companyId;
 
   useEffect(() => {
     const fetchTechnicians = async () => {
+      if (!companyId) return;
       try {
-        const technicians = await getTechniciansWithPermission({
+        const technicians = await getTechnicians(
+          companyId,
           invoiceId,
           invoiceItemId,
-        });
+        );
         setTechnicians(technicians);
       } catch (err: any) {
         setError(err.message);
       }
     };
     fetchTechnicians();
-  }, []);
+  }, [companyId]);
 
   const handleTechnicianDelete = async (technicianId: number) => {
+    if (!companyId) return;
     try {
-      const response = await deleteTechnician({
-        id: technicianId,
-        invoiceId,
+      await deleteTechnician(companyId, invoiceId, technicianId);
+
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.getInvoiceModalDataKey(invoiceId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.getWorkOrderDataKey(invoiceId),
       });
 
-      if (response.type === "success") {
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.getInvoiceModalDataKey(invoiceId),
-        });
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.getWorkOrderDataKey(invoiceId),
-        });
-      }
-
       const updatedTechnicians = technicians.filter(
-        (technician) => technician.id !== technicianId
+        (technician) => technician.id !== technicianId,
       );
       setTechnicians(updatedTechnicians);
       setError("");
@@ -100,7 +100,7 @@ export default function LaborItems({
             className={cn(
               "flex items-center justify-evenly space-x-1 text-nowrap rounded-full border bg-[#6571FF] px-3 py-0.5",
               !technician.hasPermission &&
-                "cursor-default border-[#6571FF] bg-transparent"
+                "cursor-default border-[#6571FF] bg-transparent",
             )}
           >
             <CreateAndEditLabor
