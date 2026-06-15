@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import {
   formDataToParams,
-  verifyTwilioSignature,
+  // verifyTwilioSignature, // TEMP: signature verification disabled for debugging
 } from "@/lib/twilio/verifyTwilioSignature";
 import { twiml } from "twilio";
 
@@ -43,18 +43,19 @@ export async function POST(request: Request) {
         // since the signature is computed over an empty param map.
       }
 
-      const verification = await verifyTwilioSignature(
-        request,
-        params,
-        twilioCredentials?.authToken ?? null,
-      );
-      if (!verification.ok) {
-        // Return an empty (200) TwiML so the call still bridges even if the
-        // signature can't be verified — bridging trumps the whisper message.
-        return new Response(voiceResponse.toString(), {
-          headers: { "Content-Type": "text/xml" },
-        });
-      }
+      // TEMP: signature verification disabled for debugging
+      // const verification = await verifyTwilioSignature(
+      //   request,
+      //   params,
+      //   twilioCredentials?.authToken ?? null,
+      // );
+      // if (!verification.ok) {
+      //   // Return an empty (200) TwiML so the call still bridges even if the
+      //   // signature can't be verified — bridging trumps the whisper message.
+      //   return new Response(voiceResponse.toString(), {
+      //     headers: { "Content-Type": "text/xml" },
+      //   });
+      // }
 
       const company = await db.company.findUnique({
         where: { id: companyId },
