@@ -63,6 +63,7 @@ const ZapForm = ({ company }: ZapFormProps) => {
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [phoneResetKey, setPhoneResetKey] = useState(0);
   const [formStatus, setFormStatus] = useState<{
     message: string;
     type: "success" | "error" | null;
@@ -264,6 +265,9 @@ const ZapForm = ({ company }: ZapFormProps) => {
           multiServices: [],
           countryCode: "US",
         });
+
+        // Force PhoneInput to remount so its internal state clears
+        setPhoneResetKey((prev) => prev + 1);
       } else {
         setFormStatus({
           message: "Failed to create lead. Please try again.",
@@ -406,6 +410,7 @@ const ZapForm = ({ company }: ZapFormProps) => {
             </div>
             <div className="space-y-2">
               <PhoneInput
+                key={phoneResetKey}
                 label="Phone Number"
                 // value={formData.phone}
                 onChange={(num, code, isoCode) =>
