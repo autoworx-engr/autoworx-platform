@@ -187,7 +187,12 @@ export default function PaymentDisplay({
                             : payment.type}
                       </td>
                       <td className="border-b px-4 py-2 text-left">
-                        {formatCurrency(Number(payment.amount))}
+                        <div>{formatCurrency(Number(payment.amount))}</div>
+                        {Number(payment.tip) > 0 && (
+                          <div className="text-xs text-gray-500">
+                            Tip: {formatCurrency(Number(payment.tip))}
+                          </div>
+                        )}
                         {hasRefund && (
                           <div className="flex items-center gap-1 text-red-500 text-xs font-normal">
                             <ArrowDown size={14} strokeWidth={2} />
