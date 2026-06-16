@@ -58,7 +58,7 @@ export default function PaymentMobileCard({
           className={cn(
             `font-medium`,
             paymentStatus === "due" && "font-semibold text-red-500",
-            paymentStatus === "paid" && "font-semibold text-[#66738C]"
+            paymentStatus === "paid" && "font-semibold text-[#66738C]",
           )}
         >
           {paymentStatus}
@@ -100,11 +100,16 @@ export default function PaymentMobileCard({
           <div className="font-semibold text-[#66738C]">
             {formatCurrency(Number(payment.amount))}
           </div>
+          {Number(payment.tip) > 0 && (
+            <div className="text-xs text-gray-500">
+              Tip: {formatCurrency(Number(payment.tip))}
+            </div>
+          )}
         </div>
         <div className="col-span-2">
           <div className="text-sm text-[#66738C]">Cash Received</div>
           <div className="font-semibold text-[#66738C]">
-            {payment.cash?.receivedCash ? payment.cash.receivedCash : 'N/A'}
+            {payment.cash?.receivedCash ? payment.cash.receivedCash : "N/A"}
           </div>
         </div>
       </div>
