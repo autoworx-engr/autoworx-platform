@@ -15,7 +15,7 @@ import { Search, SquarePen } from "lucide-react";
 import moment from "moment-timezone";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMediaQuery } from "react-responsive";
 import ConvertTo from "./ConvertTo";
 
@@ -71,6 +71,18 @@ export default function Table({
   const params = useSearchParams();
 
   const isMax640 = useMediaQuery({ query: "(max-width: 640px)" });
+
+  // After an estimate is updated, the edit page redirects here with
+  // ?openEstimateId=<id> so the matching row's modal opens automatically.
+  // Capture it once on mount, then strip it from the URL so a refresh
+  // (or pagination) doesn't keep re-opening the modal.
+  const [autoOpenId] = useState(() => params.get("openEstimateId"));
+
+  useEffect(() => {
+    if (autoOpenId && typeof window !== "undefined") {
+      window.history.replaceState(null, "", pathname);
+    }
+  }, [autoOpenId, pathname]);
 
   // useEffect(() => {
   //   if (estimateData.totalEstimate > defaultTake) {
@@ -154,6 +166,7 @@ export default function Table({
                 invoiceEstimate={data}
                 key={data.id}
                 index={index}
+                autoOpen={data.id === autoOpenId}
               />
             ))}
           </div>
@@ -223,6 +236,7 @@ export default function Table({
                           invoiceId={data.id}
                           buttonChild={<button>{data.id}</button>}
                           buttonChildClassName="block w-full text-blue-600"
+                          autoOpen={data.id === autoOpenId}
                         />
                         {data.isShopBooking && (
                           <span className="mt-1 block text-center text-[10px] font-bold uppercase tracking-wider text-[#6571FF] bg-[#6571FF]/10 rounded-full px-2 py-0.5">
