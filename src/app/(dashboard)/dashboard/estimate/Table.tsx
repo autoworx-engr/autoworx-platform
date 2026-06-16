@@ -72,10 +72,6 @@ export default function Table({
 
   const isMax640 = useMediaQuery({ query: "(max-width: 640px)" });
 
-  // After an estimate is updated, the edit page redirects here with
-  // ?openEstimateId=<id> so the matching row's modal opens automatically.
-  // Capture it once on mount, then strip it from the URL so a refresh
-  // (or pagination) doesn't keep re-opening the modal.
   const [autoOpenId] = useState(() => params.get("openEstimateId"));
 
   useEffect(() => {
