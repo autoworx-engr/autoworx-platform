@@ -39,6 +39,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Bad request" }, { status: 400 });
   }
 
+  if (body.object === "instagram") {
+    for (const entry of body.entry ?? []) {
+      const igUserId: string = entry.id;
+      for (const event of entry.messaging ?? []) {
+        await handleInstagramEvent(igUserId, event).catch(console.error);
+      }
+    }
+    return NextResponse.json({ status: "ok" });
+  }
+
   if (body.object !== "page") {
     return NextResponse.json({ status: "ignored" });
   }
@@ -208,4 +218,100 @@ function parseMetaName(fullName?: string): {
   const lastName = parts.length > 1 ? parts.slice(1).join(" ") : null;
 
   return { firstName, lastName };
+}
+
+// ── Instagram DM handler ──────────────────────────────────────────────────────
+async function handleInstagramEvent(igUserId: string, event: any) {
+  const mid: string | undefined = event.message?.mid;
+  const text: string | undefined = event.message?.text;
+  const igsid: string = event.sender?.id;
+
+  if (!igsid || !event.message) return;
+  if (event.message.is_echo) return;
+
+  const igAccount = await db.instagramAccount.findFirst({
+    where: { igUserId, isActive: true },
+  });
+  if (!igAccount) return;
+
+  const { id: igAccountId, companyId } = igAccount;
+
+  if (mid) {
+    const exists = await db.instagramMessage.findFirst({ where: { mid } });
+    if (exists) return;
+  }
+
+  const clientProfile = await db.instagramClientProfile.findUnique({
+    where: { igAccountId_igsid: { igAccountId, igsid } },
+    include: { client: true },
+  });
+
+  let clientId: number;
+
+  if (clientProfile) {
+    clientId = clientProfile.clientId;
+  } else {
+    let source = await db.source.findFirst({
+      where: { name: { equals: "instagram", mode: "insensitive" }, companyId },
+    });
+    if (!source) {
+      source = await db.source.create({
+        data: { name: "instagram", companyId },
+      });
+    }
+
+    const newClient = await db.client.create({
+      data: {
+        firstName: "Instagram",
+        lastName: "User",
+        companyId,
+        photo: "/images/default.png",
+        sourceId: source.id,
+        isSalesAgent: true,
+      },
+    });
+
+    await db.instagramClientProfile.create({
+      data: { clientId: newClient.id, igAccountId, igsid },
+    });
+
+    clientId = newClient.id;
+  }
+
+  const saved = await db.instagramMessage.create({
+    data: {
+      companyId,
+      clientId,
+      igAccountId,
+      mid: mid ?? null,
+      message: text ?? null,
+      sentBy: "Client",
+      isRead: false,
+    },
+    include: {
+      attachments: true,
+      user: { select: { firstName: true, lastName: true } },
+    },
+  });
+
+  const { updateNewInstagramChatTrack } =
+    await import("@/actions/communication/client/chat-track");
+  const track = await updateNewInstagramChatTrack({
+    clientId,
+    message: text ?? "",
+    sentBy: "Client",
+  });
+
+  const pusher = getPusherInstance();
+  await Promise.all([
+    pusher.trigger(`instagram-${companyId}-${clientId}`, "instagram", saved),
+    track &&
+      pusher.trigger(`client-notify-${companyId}`, "client-notify", track),
+    track &&
+      pusher.trigger(
+        `client-notify-${companyId}-${clientId}`,
+        "client-notify",
+        track,
+      ),
+  ]);
 }

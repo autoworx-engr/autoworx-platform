@@ -1,25 +1,25 @@
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import RedirectToSettings from "../mailgun/RedirectToSettings";
-import MessengerContainer from "./MessengerContainer";
+import InstagramContainer from "./InstagramContainer";
 
-export default async function Messenger({ clientId }: { clientId: number }) {
+export default async function Instagram({ clientId }: { clientId: number }) {
   const companyId = await getCompanyId();
 
-  const facebookPage = await db.facebookPage.findFirst({
+  const igAccount = await db.instagramAccount.findFirst({
     where: { companyId, isActive: true },
   });
 
-  if (!facebookPage) {
+  if (!igAccount) {
     return (
       <RedirectToSettings
-        message="Connect a Facebook Page to enable Messenger conversations."
+        message="Connect an Instagram Professional account to enable DM conversations."
         link="/dashboard/settings/communications"
       />
     );
   }
 
-  const clientProfile = await db.facebookClientProfile.findFirst({
+  const clientProfile = await db.instagramClientProfile.findFirst({
     where: { clientId },
   });
 
@@ -27,14 +27,14 @@ export default async function Messenger({ clientId }: { clientId: number }) {
     return (
       <div className="flex h-full items-center justify-center px-6">
         <p className="text-center text-sm text-zinc-500">
-          This client has not started a Messenger conversation yet.
-          Conversations begin when the client messages your Facebook Page.
+          This client has not started an Instagram DM conversation yet.
+          Conversations begin when the client messages your Instagram account.
         </p>
       </div>
     );
   }
 
-  const lastClientMessage = await db.messengerMessage.findFirst({
+  const lastClientMessage = await db.instagramMessage.findFirst({
     where: { clientId, sentBy: "Client" },
     orderBy: { createdAt: "desc" },
     select: { createdAt: true },
@@ -42,13 +42,12 @@ export default async function Messenger({ clientId }: { clientId: number }) {
 
   const windowClosed =
     !lastClientMessage ||
-    // eslint-disable-next-line react-hooks/purity
     Date.now() - new Date(lastClientMessage.createdAt).getTime() >
       24 * 60 * 60 * 1000;
 
   return (
     <div className="relative h-full">
-      <MessengerContainer clientId={clientId} windowClosed={windowClosed} />
+      <InstagramContainer clientId={clientId} windowClosed={windowClosed} />
     </div>
   );
 }
