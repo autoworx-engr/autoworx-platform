@@ -92,7 +92,7 @@ export default function AppointmentForm({
   const { Option } = Select;
 
   return (
-    <div className="h-full sm:h-full overflow-y-auto thin-scrollbar max-h-[80vh]">
+    <div className="h-full sm:h-full overflow-y-auto thin-scrollbar max-h-[80vh] lg:max-h-none">
       <div className="space-y-4 p-6">
         <FormError />
 
