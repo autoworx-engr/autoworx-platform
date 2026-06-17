@@ -362,6 +362,64 @@ export async function readClientMessenger(clientId: number) {
   }
 }
 
+export async function updateNewInstagramChatTrack({
+  clientId,
+  message,
+  sentBy,
+}: {
+  clientId: number;
+  message: string;
+  sentBy: string;
+}) {
+  try {
+    const track = await db.clientConversationTrack.findUnique({
+      where: { clientId },
+    });
+
+    if (!track) {
+      return db.clientConversationTrack.create({
+        data: {
+          clientId,
+          instagramIsRead: sentBy === "Company",
+          instagramUnReadCount: sentBy === "Company" ? 0 : 1,
+          instagramLastMessage: message,
+          instagramLastBy: sentBy,
+          sendAt: new Date(),
+        },
+      });
+    }
+
+    return db.clientConversationTrack.update({
+      where: { clientId },
+      data: {
+        instagramIsRead: sentBy === "Company",
+        instagramUnReadCount: { increment: sentBy === "Company" ? 0 : 1 },
+        instagramLastMessage: message,
+        instagramLastBy: sentBy,
+        sendAt: new Date(),
+      },
+    });
+  } catch (err) {
+    throw err;
+  }
+}
+
+export async function readClientInstagram(clientId: number) {
+  try {
+    const track = await db.clientConversationTrack.findUnique({
+      where: { clientId },
+    });
+    if (!track) return initialCreateClientChatTrack(clientId);
+    if (!track.instagramUnReadCount) return track;
+    return db.clientConversationTrack.update({
+      where: { clientId },
+      data: { instagramIsRead: true, instagramUnReadCount: 0 },
+    });
+  } catch (err) {
+    throw err;
+  }
+}
+
 export async function readClientSmsAndEmail(clientId: number) {
   try {
     const findClientChatTrack = await db.clientConversationTrack.findUnique({
