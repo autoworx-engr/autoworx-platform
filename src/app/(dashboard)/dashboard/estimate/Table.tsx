@@ -76,7 +76,11 @@ export default function Table({
 
   useEffect(() => {
     if (autoOpenId && typeof window !== "undefined") {
-      window.history.replaceState(null, "", pathname);
+      const searchParams = new URLSearchParams(window.location.search);
+      searchParams.delete("openEstimateId");
+      const queryString = searchParams.toString();
+      const newUrl = queryString ? pathname + "?" + queryString : pathname;
+      window.history.replaceState(null, "", newUrl);
     }
   }, [autoOpenId, pathname]);
 
