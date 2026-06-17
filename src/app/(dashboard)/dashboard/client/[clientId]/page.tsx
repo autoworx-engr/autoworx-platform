@@ -6,7 +6,6 @@ import { Vehicle } from "@prisma/client";
 import { ArrowLeft, Search } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import EditClient from "../../client/EditClient";
 import ClientInformation from "../ClientInformation";
 import OrderList from "../OrderList";
 import VehicleList from "../VehicleList";
@@ -92,9 +91,6 @@ const Page = async (props: Props) => {
 
       <div className="items-start justify-between gap-x-4 lg:flex lg:h-[70vh] 2xl:h-[78vh]">
         <div className="relative lg:hidden">
-          <div className="absolute right-2 top-1">
-            <EditClient client={client} settingIcon />
-          </div>
           <ResponsiveEmployeeCard data={client} index={0} />
         </div>
         <div

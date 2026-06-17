@@ -116,15 +116,6 @@ const ResponsiveEmployeeCard = ({
               </div>
             </div>
           </div>
-
-          {/* Chat Icon */}
-          <Link
-            onClick={(e) => e.stopPropagation()}
-            href={communicationUrl}
-            className="p-2 hover:bg-blue-50 rounded-lg transition-colors flex-shrink-0 ml-2 inline-flex items-center"
-          >
-            <MessageCircle className="w-5 h-5 text-[#6571FF]" />
-          </Link>
         </div>
 
         {/* Footer */}
