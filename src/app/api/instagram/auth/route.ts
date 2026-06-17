@@ -3,13 +3,10 @@ import { NextResponse } from "next/server";
 const META_APP_ID = process.env.META_APP_ID!;
 const REDIRECT_URI = `${process.env.NEXT_PUBLIC_APP_URL}/api/instagram/callback`;
 
-// instagram_manage_messages requires Meta App Review before going live
+// Instagram Business Login scopes (new API — replaces old facebook OAuth dialog)
 const SCOPES = [
-  "instagram_basic",
-  "instagram_manage_messages",
-  "pages_show_list",
-  "pages_manage_metadata",
-  "pages_messaging",
+  "instagram_business_basic",
+  "instagram_business_manage_messages",
 ].join(",");
 
 export async function GET() {
@@ -20,7 +17,8 @@ export async function GET() {
     );
   }
 
-  const authUrl = new URL("https://www.facebook.com/v19.0/dialog/oauth");
+  // Instagram Business Login OAuth — shows Instagram login, not Facebook
+  const authUrl = new URL("https://www.instagram.com/oauth/authorize");
   authUrl.searchParams.set("client_id", META_APP_ID);
   authUrl.searchParams.set("redirect_uri", REDIRECT_URI);
   authUrl.searchParams.set("scope", SCOPES);
