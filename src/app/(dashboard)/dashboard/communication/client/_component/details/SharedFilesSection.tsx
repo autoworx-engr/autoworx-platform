@@ -1,17 +1,22 @@
 "use client";
 
-import { ClientSmsAttachments, MailgunEmailAttachment } from "@prisma/client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { isAudio, isImage } from "../../_utils";
 import SaveAttachment from "./SaveAttachment";
 
-type EmailAttachment = MailgunEmailAttachment & { createdAt: Date };
-type Attachment = EmailAttachment | ClientSmsAttachments;
-type TabId = "email" | "sms" | "docs" | "audio";
+type SharedAttachment = {
+  id: number;
+  name: string | null;
+  url: string;
+  createdAt: Date | string;
+};
+type TabId = "email" | "sms" | "messenger" | "instagram" | "docs" | "audio";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "email", label: "Email" },
   { id: "sms", label: "SMS" },
+  { id: "messenger", label: "Msngr" },
+  { id: "instagram", label: "IG" },
   { id: "docs", label: "Docs" },
   { id: "audio", label: "Audio" },
 ];
@@ -77,14 +82,14 @@ function ImageGrid({
   attachments,
   label,
 }: {
-  attachments: Attachment[];
+  attachments: SharedAttachment[];
   label: string;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const images = useMemo(
     () =>
       [...attachments]
-        .filter((a) => isImage(a.name))
+        .filter((a) => isImage(a.name ?? ""))
         .sort((a, b) => b.id - a.id),
     [attachments],
   );
@@ -132,7 +137,7 @@ function ChipList({
   attachments,
   emptyText,
 }: {
-  attachments: Attachment[];
+  attachments: SharedAttachment[];
   emptyText: string;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -183,29 +188,57 @@ function ChipList({
 export default function SharedFilesSection({
   emailAttachments,
   smsAttachments,
+  messengerAttachments,
+  instagramAttachments,
 }: {
-  emailAttachments: Attachment[];
-  smsAttachments: Attachment[];
+  emailAttachments: SharedAttachment[];
+  smsAttachments: SharedAttachment[];
+  messengerAttachments: SharedAttachment[];
+  instagramAttachments: SharedAttachment[];
 }) {
   const [activeTab, setActiveTab] = useState<TabId>("email");
 
   const allDocs = useMemo(
     () =>
-      [...emailAttachments, ...smsAttachments].filter(
-        (a) => !isImage(a.name) && !isAudio(a.name),
-      ),
-    [emailAttachments, smsAttachments],
+      [
+        ...emailAttachments,
+        ...smsAttachments,
+        ...messengerAttachments,
+        ...instagramAttachments,
+      ].filter((a) => !isImage(a.name ?? "") && !isAudio(a.name ?? "")),
+    [
+      emailAttachments,
+      smsAttachments,
+      messengerAttachments,
+      instagramAttachments,
+    ],
   );
   const allAudio = useMemo(
     () =>
-      [...emailAttachments, ...smsAttachments].filter((a) => isAudio(a.name)),
-    [emailAttachments, smsAttachments],
+      [
+        ...emailAttachments,
+        ...smsAttachments,
+        ...messengerAttachments,
+        ...instagramAttachments,
+      ].filter((a) => isAudio(a.name ?? "")),
+    [
+      emailAttachments,
+      smsAttachments,
+      messengerAttachments,
+      instagramAttachments,
+    ],
   );
 
-  const totalCount = emailAttachments.length + smsAttachments.length;
+  const totalCount =
+    emailAttachments.length +
+    smsAttachments.length +
+    messengerAttachments.length +
+    instagramAttachments.length;
   const tabCounts: Record<TabId, number> = {
-    email: emailAttachments.filter((a) => isImage(a.name)).length,
-    sms: smsAttachments.filter((a) => isImage(a.name)).length,
+    email: emailAttachments.filter((a) => isImage(a.name ?? "")).length,
+    sms: smsAttachments.filter((a) => isImage(a.name ?? "")).length,
+    messenger: messengerAttachments.filter((a) => isImage(a.name ?? "")).length,
+    instagram: instagramAttachments.filter((a) => isImage(a.name ?? "")).length,
     docs: allDocs.length,
     audio: allAudio.length,
   };
@@ -251,6 +284,12 @@ export default function SharedFilesSection({
       )}
       {activeTab === "sms" && (
         <ImageGrid attachments={smsAttachments} label="SMS" />
+      )}
+      {activeTab === "messenger" && (
+        <ImageGrid attachments={messengerAttachments} label="Messenger" />
+      )}
+      {activeTab === "instagram" && (
+        <ImageGrid attachments={instagramAttachments} label="Instagram" />
       )}
       {activeTab === "docs" && (
         <ChipList attachments={allDocs} emptyText="No docs shared yet." />
