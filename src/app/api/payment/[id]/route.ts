@@ -147,12 +147,22 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
     const body = await req.json();
     const { type, date, notes, amount, additionalData } = body;
 
-    if (!type || !date || amount === undefined || !additionalData) {
+    if (!type || !date || amount === undefined) {
       return NextResponse.json(
-        { error: "type, date, amount and additionalData are required" },
+        { error: "type, date and amount are required" },
         { status: 400 },
       );
     }
+
+    const mergedAdditionalData = {
+      creditCard: additionalData?.creditCard || "",
+      cardType: additionalData?.cardType || "MASTERCARD",
+      checkNumber: additionalData?.checkNumber || "",
+      receivedCash: additionalData?.receivedCash || "",
+      paymentMethodId: additionalData?.paymentMethodId,
+      depositMethod: additionalData?.depositMethod || "",
+      depositNotes: additionalData?.depositNotes,
+    };
 
     const result = await updatePayment({
       id,
@@ -160,7 +170,7 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
       date: new Date(date),
       notes: notes || "",
       amount: Number(amount),
-      additionalData,
+      additionalData: mergedAdditionalData,
     });
 
     if (result.type !== "success") {
