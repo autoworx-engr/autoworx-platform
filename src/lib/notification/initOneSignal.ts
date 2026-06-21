@@ -16,6 +16,8 @@ if (!ONESIGNAL_APP_ID) {
 // Guard against calling OneSignal.init() more than once per session
 let isOneSignalInitialized = false;
 
+export const isOneSignalReady = (): boolean => isOneSignalInitialized;
+
 function isWebPushSupported(): boolean {
   return (
     typeof window !== "undefined" &&
