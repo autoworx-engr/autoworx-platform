@@ -1,11 +1,20 @@
 import { db } from "@/lib/db";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: { id: string } },
 ) {
   try {
+    const principal = await getAuthPrincipal(req);
+    if (!principal) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+
     const id = Number(params.id);
     if (!id) {
       return NextResponse.json(
@@ -14,7 +23,18 @@ export async function DELETE(
       );
     }
 
-    await db.appointmentTitle.delete({ where: { id } });
+    const existing = await db.appointmentTitle.findFirst({
+      where: { id, companyId: principal.companyId },
+      select: { id: true },
+    });
+    if (!existing) {
+      return NextResponse.json(
+        { success: false, message: "Appointment title not found" },
+        { status: 404 },
+      );
+    }
+
+    await db.appointmentTitle.delete({ where: { id: existing.id } });
 
     return NextResponse.json({
       success: true,
