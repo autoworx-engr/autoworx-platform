@@ -1,8 +1,8 @@
 /**
  * AUTO-GENERATED — do not edit manually.
  * Run: yarn generate:search
- * Generated: 2026-06-17T15:23:14.636Z
- * Source: src/app
+ * Generated: 2026-06-21T08:16:35.259Z
+ * Source: src\app
  */
 
 export type SearchItemType = "page" | "form" | "settings" | "section";
