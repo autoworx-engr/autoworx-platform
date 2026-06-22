@@ -91,22 +91,37 @@ export async function GET(
 
     const where: Prisma.TaskWhereInput = { companyId };
 
+    // Collect each filter as its own OR group and AND them together, so search
+    // and the date window can be combined without overwriting where.OR.
+    const andConditions: Prisma.TaskWhereInput[] = [];
+
     if (search) {
-      where.OR = [
-        { title: { contains: search, mode: "insensitive" } },
-        { client: { firstName: { contains: search, mode: "insensitive" } } },
-        { client: { lastName: { contains: search, mode: "insensitive" } } },
-      ];
-    } else if (startDate && endDate) {
-      where.OR = [
-        { date: null },
-        {
-          date: {
-            gte: new Date(`${startDate}T00:00:00.000Z`),
-            lte: new Date(`${endDate}T23:59:59.999Z`),
+      // Free-text search across title and client name.
+      andConditions.push({
+        OR: [
+          { title: { contains: search, mode: "insensitive" } },
+          { client: { firstName: { contains: search, mode: "insensitive" } } },
+          { client: { lastName: { contains: search, mode: "insensitive" } } },
+        ],
+      });
+    }
+
+    if (startDate && endDate) {
+      andConditions.push({
+        OR: [
+          { date: null },
+          {
+            date: {
+              gte: new Date(`${startDate}T00:00:00.000Z`),
+              lte: new Date(`${endDate}T23:59:59.999Z`),
+            },
           },
-        },
-      ];
+        ],
+      });
+    }
+
+    if (andConditions.length > 0) {
+      where.AND = andConditions;
     }
 
     const [tasks, total] = await Promise.all([
