@@ -102,7 +102,7 @@ export function useAppointmentFormState({
   });
 
   const timezone = useCompanyTimezone();
-  const today = moment.tz(timezone).format("YYYY-MM-DD");
+  const today = moment().format("YYYY-MM-DD");
 
   const [tab, setTab] = useState(Tab.Reminder);
   const [date, setDate] = useState<string | undefined>(
@@ -337,6 +337,8 @@ export function useAppointmentFormState({
   }, [fromEdit, today, draftEstimateId]);
 
   useEffect(() => {
+    if (fromEdit) return;
+
     if (selectedStartTime) {
       if (
         typeof selectedStartTime === "string" &&
@@ -368,7 +370,7 @@ export function useAppointmentFormState({
         }
       }
     }
-  }, [selectedDate, selectedStartTime]);
+  }, [selectedDate, selectedStartTime, fromEdit]);
 
   useEffect(() => {
     if (!fromEdit && !selectedDate) {
@@ -408,7 +410,7 @@ export function useAppointmentFormState({
           }
         }
       } else {
-        let now = moment.tz(timezone);
+        let now = moment();
         const roundedMinutes = Math.ceil(now.minute() / 15) * 15;
         now.minute(roundedMinutes).second(0).millisecond(0);
         setStartTime(now.format("HH:mm"));
@@ -416,16 +418,16 @@ export function useAppointmentFormState({
         setEndTime(end.format("HH:mm"));
       }
     }
-  }, [allDay, settings, date, fromEdit, appointment, timezone]);
+  }, [allDay, settings, date, fromEdit, appointment]);
 
   useEffect(() => {
-    let now = moment.tz(timezone);
+    let now = moment();
     const roundedMinutes = Math.ceil(now.minute() / 15) * 15;
     now.minute(roundedMinutes).second(0).millisecond(0);
     setStartTime(now.format("HH:mm"));
     const end = now.clone().add(1, "hours");
     setEndTime(end.format("HH:mm"));
-  }, [timezone]);
+  }, []);
 
   useEffect(() => {
     setFormChanged(
