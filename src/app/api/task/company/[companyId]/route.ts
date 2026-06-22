@@ -85,12 +85,19 @@ export async function GET(
     const limit = Number(searchParams.get("limit") || 10);
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
+    const search = searchParams.get("search")?.trim();
 
     const skip = (page - 1) * limit;
 
     const where: Prisma.TaskWhereInput = { companyId };
 
-    if (startDate && endDate) {
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: "insensitive" } },
+        { client: { firstName: { contains: search, mode: "insensitive" } } },
+        { client: { lastName: { contains: search, mode: "insensitive" } } },
+      ];
+    } else if (startDate && endDate) {
       where.OR = [
         { date: null },
         {

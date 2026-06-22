@@ -75,6 +75,7 @@ export async function GET(
     const userId = searchParams.get("userId")
       ? Number(searchParams.get("userId"))
       : undefined;
+    const search = searchParams.get("search")?.trim();
 
     const where: Prisma.AppointmentWhereInput = { companyId };
 
@@ -87,6 +88,20 @@ export async function GET(
 
     if (userId) {
       where.appointmentUsers = { some: { userId } };
+    }
+
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: "insensitive" } },
+        { client: { firstName: { contains: search, mode: "insensitive" } } },
+        { client: { lastName: { contains: search, mode: "insensitive" } } },
+        { client: { mobile: { contains: search } } },
+        { vehicle: { make: { contains: search, mode: "insensitive" } } },
+        { vehicle: { model: { contains: search, mode: "insensitive" } } },
+        {
+          serviceCategory: { name: { contains: search, mode: "insensitive" } },
+        },
+      ];
     }
 
     const [total, appointments] = await Promise.all([
