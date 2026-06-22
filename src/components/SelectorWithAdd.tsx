@@ -377,7 +377,7 @@ export function SelectorWithAdd({
                               ? "bg-[#6571FF]/10 text-[#6571FF] font-semibold"
                               : "text-slate-600 hover:bg-slate-50 hover:text-slate-900",
                           )}
-                          onClick={() => handleSelect(opt?.id.toString())}
+                          onClick={() => handleSelect(opt?.id?.toString())}
                         >
                           <span className="truncate">{opt?.title}</span>
                           <div className="flex shrink-0 items-center gap-1.5">
