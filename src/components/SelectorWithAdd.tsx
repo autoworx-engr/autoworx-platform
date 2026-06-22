@@ -367,7 +367,7 @@ export function SelectorWithAdd({
                       const isDeletable =
                         allowDelete &&
                         !!onDelete &&
-                        /^\d+$/.test(String(opt?.id));
+                        !String(opt?.id).startsWith("custom_");
                       return (
                         <div
                           key={opt?.id}
