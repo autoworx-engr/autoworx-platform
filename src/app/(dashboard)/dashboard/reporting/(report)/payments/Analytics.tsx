@@ -106,9 +106,9 @@ export default async function Analytics({
         {/* bar chart */}
         <PaymentBarChartContainer paymentData={paymentData} />
         {/* pie chart */}
-        <div className="flex h-full items-center justify-center rounded-lg border border-gray-300 bg-white p-4 shadow">
+        {/* <div className="flex h-full items-center justify-center rounded-lg border border-gray-300 bg-white p-4 shadow">
           <p className="text-xl font-semibold text-gray-500">Coming Soon...</p>
-        </div>
+        </div> */}
         {/* <PaymentPieChartContainer
           totalPayments={totalPayments}
           paymentDue={paymentDue}
