@@ -298,9 +298,9 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="my-4 box-border flex flex-col lg:w-1/2">
+    <div className="my-4 box-border flex w-full flex-col lg:w-1/2">
       <h2 className="mb-2 text-xl font-bold">Attendance</h2>
-      <div className="relative flex h-auto w-full flex-col gap-8 rounded border bg-background p-1 lg:p-6">
+      <div className="relative flex flex-1 w-full flex-col gap-8 rounded-lg border bg-background p-1 lg:p-6">
         <div className="left-3 top-3 w-fit">
           <DateRange
             dateRange={[
