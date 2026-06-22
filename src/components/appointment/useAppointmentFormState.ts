@@ -9,13 +9,12 @@ import useEstimatesQueryByClient from "@/hooks/query-hook/useEstimatesQueryByCli
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { queryKeys } from "@/lib/queryKeys";
 import { errorToast, successToast } from "@/lib/toast";
-import { useFormErrorStore } from "@/stores/form-error";
 import { useCalendarStore } from "@/stores/calendarStore";
+import { useFormErrorStore } from "@/stores/form-error";
 import { formatTime12Hour } from "@/utils/formateTime12Hours";
 import { normalizeTime } from "@/utils/normalizeTime";
 import { formatTime } from "@/utils/taskAndActivity";
 import { addOneHour } from "@/utils/time";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   Appointment,
   Client,
@@ -24,6 +23,7 @@ import type {
   User,
   Vehicle,
 } from "@prisma/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import moment from "moment-timezone";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
