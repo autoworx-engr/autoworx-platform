@@ -115,6 +115,20 @@ export async function GET(
       }),
     ]);
 
+    const draftEstimateIds = appointments
+      .map((a) => a.draftEstimate)
+      .filter((id): id is string => !!id);
+    let invoiceMap = new Map<string, number>();
+    if (draftEstimateIds.length > 0) {
+      const invoices = await db.invoice.findMany({
+        where: { id: { in: draftEstimateIds } },
+        select: { id: true, grandTotal: true },
+      });
+      invoiceMap = new Map(
+        invoices.map((i) => [i.id, Number(i.grandTotal) || 0]),
+      );
+    }
+
     return NextResponse.json({
       success: true,
       pagination: {
@@ -123,7 +137,12 @@ export async function GET(
         limit,
         totalPages: Math.ceil(total / limit),
       },
-      data: appointments.map(serialize),
+      data: appointments.map((a) => ({
+        ...serialize(a),
+        invoiceGrandTotal: a.draftEstimate
+          ? invoiceMap.get(a.draftEstimate) || 0
+          : 0,
+      })),
     });
   } catch {
     return NextResponse.json(
