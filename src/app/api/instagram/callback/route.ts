@@ -7,14 +7,35 @@ const META_APP_SECRET = process.env.META_APP_SECRET!;
 const REDIRECT_URI = `${process.env.NEXT_PUBLIC_APP_URL}/api/instagram/callback`;
 const SETTINGS_URL = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings/communications`;
 
+const STATE_COOKIE = "ig_oauth_state";
+
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
   const code = searchParams.get("code");
   const error = searchParams.get("error");
+  const returnedState = searchParams.get("state");
+
+  // Verify CSRF state before doing anything else
+  const storedState = req.cookies.get(STATE_COOKIE)?.value;
+  const stateValid =
+    returnedState && storedState && returnedState === storedState;
+
+  const clearStateCookie = (res: NextResponse) => {
+    res.cookies.delete(STATE_COOKIE);
+    return res;
+  };
+
+  if (!stateValid) {
+    return clearStateCookie(
+      NextResponse.redirect(`${SETTINGS_URL}?ig_error=invalid_state`),
+    );
+  }
 
   if (error || !code) {
-    return NextResponse.redirect(
-      `${SETTINGS_URL}?ig_error=${encodeURIComponent(error ?? "access_denied")}`,
+    return clearStateCookie(
+      NextResponse.redirect(
+        `${SETTINGS_URL}?ig_error=${encodeURIComponent(error ?? "access_denied")}`,
+      ),
     );
   }
 
@@ -128,15 +149,19 @@ export async function GET(req: NextRequest) {
     }
 
     if (saved === 0) {
-      return NextResponse.redirect(
-        `${SETTINGS_URL}?ig_error=no_instagram_accounts`,
+      return clearStateCookie(
+        NextResponse.redirect(`${SETTINGS_URL}?ig_error=no_instagram_accounts`),
       );
     }
 
-    return NextResponse.redirect(`${SETTINGS_URL}?ig_success=1`);
+    return clearStateCookie(
+      NextResponse.redirect(`${SETTINGS_URL}?ig_success=1`),
+    );
   } catch (err: any) {
-    return NextResponse.redirect(
-      `${SETTINGS_URL}?ig_error=${encodeURIComponent(err?.message ?? "unknown")}`,
+    return clearStateCookie(
+      NextResponse.redirect(
+        `${SETTINGS_URL}?ig_error=${encodeURIComponent(err?.message ?? "unknown")}`,
+      ),
     );
   }
 }

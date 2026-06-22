@@ -13,6 +13,8 @@ const SCOPES = [
   "pages_messaging",
 ].join(",");
 
+const STATE_COOKIE = "ig_oauth_state";
+
 export async function GET() {
   if (!META_APP_ID) {
     return NextResponse.json(
@@ -21,11 +23,26 @@ export async function GET() {
     );
   }
 
+  // Generate a cryptographically random state for CSRF protection
+  const state = crypto.randomUUID();
+
   const authUrl = new URL("https://www.facebook.com/v19.0/dialog/oauth");
   authUrl.searchParams.set("client_id", META_APP_ID);
   authUrl.searchParams.set("redirect_uri", REDIRECT_URI);
   authUrl.searchParams.set("scope", SCOPES);
   authUrl.searchParams.set("response_type", "code");
+  authUrl.searchParams.set("state", state);
 
-  return NextResponse.redirect(authUrl.toString());
+  const response = NextResponse.redirect(authUrl.toString());
+
+  // Store state in HTTP-only cookie — verified in /api/instagram/callback
+  response.cookies.set(STATE_COOKIE, state, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 600, // 10 minutes — enough time to complete OAuth
+    path: "/",
+  });
+
+  return response;
 }

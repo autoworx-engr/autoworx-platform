@@ -128,6 +128,8 @@ export default async function InstagramSettings({
 
 function friendlyError(code: string): string {
   const map: Record<string, string> = {
+    invalid_state:
+      "Security check failed (invalid state). Please try connecting again.",
     access_denied:
       "You denied access. Please try again and approve permissions.",
     no_pages_found: "No Facebook Pages found on your account.",
