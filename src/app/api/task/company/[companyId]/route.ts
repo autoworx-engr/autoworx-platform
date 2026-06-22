@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import type { Prisma } from "@prisma/client";
 
 /**
  * @swagger
@@ -27,6 +28,18 @@ import { db } from "@/lib/db";
  *         schema:
  *           type: integer
  *           example: 10
+ *       - in: query
+ *         name: startDate
+ *         required: false
+ *         schema:
+ *           type: string
+ *           example: "2026-06-01"
+ *       - in: query
+ *         name: endDate
+ *         required: false
+ *         schema:
+ *           type: string
+ *           example: "2026-06-30"
  *     responses:
  *       200:
  *         description: Paginated tasks list
@@ -70,10 +83,24 @@ export async function GET(
 
     const page = Number(searchParams.get("page") || 1);
     const limit = Number(searchParams.get("limit") || 10);
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
 
     const skip = (page - 1) * limit;
 
-    const where = { companyId };
+    const where: Prisma.TaskWhereInput = { companyId };
+
+    if (startDate && endDate) {
+      where.OR = [
+        { date: null },
+        {
+          date: {
+            gte: new Date(`${startDate}T00:00:00.000Z`),
+            lte: new Date(`${endDate}T23:59:59.999Z`),
+          },
+        },
+      ];
+    }
 
     const [tasks, total] = await Promise.all([
       db.task.findMany({
