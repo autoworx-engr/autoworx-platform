@@ -54,7 +54,7 @@ const InfobipConfig = (props: Props) => {
             type="text"
             id="phone_number"
             name="phoneNumber"
-            placeholder="Enter phone number"
+            placeholder="Enter Phone Number"
             onChange={(e) => setPhone(e.target.value)}
             value={phone}
             required

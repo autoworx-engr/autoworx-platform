@@ -65,7 +65,7 @@ export default function Header({ initialSearch = "" }: TProps) {
                 w-full bg-transparent text-sm font-medium text-slate-700 dark:text-slate-200 
                 placeholder:text-slate-400 focus:outline-none
               "
-            placeholder="Search by fleet ID, name, email or phone..."
+            placeholder="Search by Fleet ID, Name, Email or Phone..."
             value={searchTerm}
             onChange={(event) => {
               const value = event.target.value;

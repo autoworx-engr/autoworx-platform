@@ -55,8 +55,8 @@ export function ClientTagSelector({
     if (search) {
       setFilteredTagList(
         tags.filter((tag) =>
-          tag.name.toLowerCase().includes(search.toLowerCase())
-        )
+          tag.name.toLowerCase().includes(search.toLowerCase()),
+        ),
       );
     } else {
       setFilteredTagList(tags);
@@ -103,14 +103,11 @@ export function ClientTagSelector({
   return (
     <>
       <input type="hidden" name={name} value={tag?.id ?? ""} />
-      <DropdownMenu
-        open={open}
-        onOpenChange={(open) => setOpen?.(open)}
-      >
+      <DropdownMenu open={open} onOpenChange={(open) => setOpen?.(open)}>
         <DropdownMenuTrigger
           className={cn(
             "flex w-full h-10 items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 shadow-sm transition-all hover:shadow-md",
-            customStyles
+            customStyles,
           )}
           style={{
             backgroundColor: tag?.bgColor,
@@ -127,7 +124,7 @@ export function ClientTagSelector({
             className={cn(
               "shrink-0 transition-transform duration-200",
               open ? "rotate-180" : "rotate-0",
-              tag ? "" : "text-slate-400"
+              tag ? "" : "text-slate-400",
             )}
           />
         </DropdownMenuTrigger>
@@ -229,7 +226,7 @@ export function ClientTagSelector({
                       "flex h-8 items-center justify-center rounded-lg text-xs font-bold transition-all hover:scale-105",
                       selectedColor?.textColor === color.textColor
                         ? "ring-2 ring-[#6571FF] ring-offset-1"
-                        : "ring-1 ring-transparent"
+                        : "ring-1 ring-transparent",
                     )}
                   >
                     Aa
@@ -277,7 +274,7 @@ function QuickAddClientTagForm({
           name="name"
           type="text"
           required
-          placeholder="New tag name..."
+          placeholder="New Tag Name..."
           className="h-10 w-full rounded-lg bg-white px-2 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30 placeholder:text-slate-400"
           onKeyDown={(e) => e.stopPropagation()}
         />

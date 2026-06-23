@@ -290,7 +290,7 @@ export default function PhoneInput({
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder="Search country..."
+                placeholder="Search Country..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full px-3 py-2 text-sm rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"

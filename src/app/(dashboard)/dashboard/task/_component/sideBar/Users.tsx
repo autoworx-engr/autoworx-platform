@@ -191,7 +191,7 @@ export default function Users() {
             focus:ring-2 focus:ring-[#6571FF] focus:bg-white dark:focus:bg-slate-800
             placeholder:text-slate-500 dark:placeholder:text-slate-500
           "
-                placeholder="Search users..."
+                placeholder="Search Users..."
                 name="search"
                 // Continuous search as the user types (if desired by the original logic)
                 onChange={(e) => searchUser(e.target.value)}

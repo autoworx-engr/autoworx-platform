@@ -147,7 +147,7 @@ export function TermsAndPolicyEditor() {
                         onChange={setTermsContent}
                         modules={quillModules}
                         formats={quillFormats}
-                        placeholder="Enter your terms of service content here. Use the toolbar to format headings, lists, links, and more..."
+                        placeholder="Enter your Terms of Service content here. Use the toolbar to format headings, lists, links, and more..."
                         style={{ height: "400px" }}
                       />
                     </div>
@@ -169,7 +169,7 @@ export function TermsAndPolicyEditor() {
                         onChange={setPolicyContent}
                         modules={quillModules}
                         formats={quillFormats}
-                        placeholder="Enter your privacy policy content here. Structure your policy with headings, bullet points, and professional formatting..."
+                        placeholder="Enter your Privacy Policy content here. Structure your policy with headings, bullet points, and professional formatting..."
                         style={{ height: "400px" }}
                       />
                     </div>
