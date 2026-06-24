@@ -1,7 +1,7 @@
 /**
  * AUTO-GENERATED — do not edit manually.
  * Run: yarn generate:search
- * Generated: 2026-06-13T22:23:29.211Z
+ * Generated: 2026-06-21T08:36:26.397Z
  * Source: src/app
  */
 
@@ -474,6 +474,20 @@ export const generatedRegistry: SearchItem[] = [
     description: "Configure payment gateways and integrations",
   },
   {
+    id: "dashboard-settings-payments-webhook-events",
+    label: "Dashboard › Settings › Payments › Webhook Events",
+    href: "/dashboard/settings/payments/webhook-events",
+    type: "settings",
+    keywords: [
+      "dashboard",
+      "settings",
+      "payments",
+      "webhook events",
+      "webhook",
+      "events",
+    ],
+  },
+  {
     id: "dashboard-settings-sales-agent",
     label: "Settings - Sales Agent",
     href: "/dashboard/settings/sales-agent",
@@ -589,4 +603,4 @@ export const generatedRegistry: SearchItem[] = [
   },
 ];
 
-// 64 route(s) registered
+// 65 route(s) registered

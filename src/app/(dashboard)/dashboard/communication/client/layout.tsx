@@ -1,5 +1,11 @@
 import { ReactNode } from "react";
 import ClientLists from "./_component/ClientLists";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Communication Hub - Client",
+  description: "Manage client and supplier collaboration",
+};
 
 type TProps = {
   children: ReactNode;

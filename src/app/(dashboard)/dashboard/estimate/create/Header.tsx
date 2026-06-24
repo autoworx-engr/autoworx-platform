@@ -141,7 +141,7 @@ export default function Header({
             className="py-[5px] mx-0.5 rounded-lg"
             required
             value={title}
-            placeholder="Enter a title"
+            placeholder="Enter a Title"
             onChange={(e) => setTitle(e.target.value)}
           />
         ) : (

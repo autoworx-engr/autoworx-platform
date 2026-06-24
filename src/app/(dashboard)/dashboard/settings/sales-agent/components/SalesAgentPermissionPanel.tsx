@@ -79,7 +79,7 @@ export default function SalesAgentPermissionPanel({ companyId }: Props) {
 
           {/* Search */}
           <Input
-            placeholder="Search clients..."
+            placeholder="Search Clients..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />

@@ -131,7 +131,7 @@ export default function AppointmentModalBody(props: AppointmentModalBodyProps) {
         </div>
       </DialogHeader>
 
-      <div className="-mx-6 max-h-[66vh] lg:max-h-fit h-full lg:grid gap-px border-solid lg:grid-cols-2 md:border-y">
+      <div className="-mx-6 min-h-0 max-h-[66vh] lg:max-h-none h-full lg:grid gap-px border-solid lg:grid-cols-2 md:border-y lg:overflow-hidden">
         <AppointmentForm
           {...state}
           fromLead={fromLead}

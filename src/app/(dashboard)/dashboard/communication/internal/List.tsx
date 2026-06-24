@@ -204,8 +204,8 @@ export default function List({
         onChange={setSearchTerm}
         placeholder={
           tab === "users"
-            ? "Search by name, email or phone"
-            : "Search groups by name"
+            ? "Search by Name, Email or Phone"
+            : "Search Groups by Name"
         }
       />
 

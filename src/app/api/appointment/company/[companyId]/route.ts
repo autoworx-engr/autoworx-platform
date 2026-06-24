@@ -75,6 +75,7 @@ export async function GET(
     const userId = searchParams.get("userId")
       ? Number(searchParams.get("userId"))
       : undefined;
+    const search = searchParams.get("search")?.trim();
 
     const where: Prisma.AppointmentWhereInput = { companyId };
 
@@ -89,6 +90,20 @@ export async function GET(
       where.appointmentUsers = { some: { userId } };
     }
 
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: "insensitive" } },
+        { client: { firstName: { contains: search, mode: "insensitive" } } },
+        { client: { lastName: { contains: search, mode: "insensitive" } } },
+        { client: { mobile: { contains: search } } },
+        { vehicle: { make: { contains: search, mode: "insensitive" } } },
+        { vehicle: { model: { contains: search, mode: "insensitive" } } },
+        {
+          serviceCategory: { name: { contains: search, mode: "insensitive" } },
+        },
+      ];
+    }
+
     const [total, appointments] = await Promise.all([
       db.appointment.count({ where }),
       db.appointment.findMany({
@@ -100,6 +115,20 @@ export async function GET(
       }),
     ]);
 
+    const draftEstimateIds = appointments
+      .map((a) => a.draftEstimate)
+      .filter((id): id is string => !!id);
+    let invoiceMap = new Map<string, number>();
+    if (draftEstimateIds.length > 0) {
+      const invoices = await db.invoice.findMany({
+        where: { id: { in: draftEstimateIds } },
+        select: { id: true, grandTotal: true },
+      });
+      invoiceMap = new Map(
+        invoices.map((i) => [i.id, Number(i.grandTotal) || 0]),
+      );
+    }
+
     return NextResponse.json({
       success: true,
       pagination: {
@@ -108,7 +137,12 @@ export async function GET(
         limit,
         totalPages: Math.ceil(total / limit),
       },
-      data: appointments.map(serialize),
+      data: appointments.map((a) => ({
+        ...serialize(a),
+        invoiceGrandTotal: a.draftEstimate
+          ? invoiceMap.get(a.draftEstimate) || 0
+          : 0,
+      })),
     });
   } catch {
     return NextResponse.json(

@@ -160,7 +160,7 @@ export default function CreateGroupModal({
             name="groupName"
             type="text"
             className="w-full text-slate-600 dark:text-white"
-            placeholder="Add a group name..."
+            placeholder="Add a Group Name..."
           />
         </div>
 

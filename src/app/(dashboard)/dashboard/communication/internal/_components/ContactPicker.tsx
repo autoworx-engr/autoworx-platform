@@ -78,7 +78,7 @@ export function ContactPicker({
                   ref={inputRef}
                   onChange={onSearch}
                   type="text"
-                  placeholder="Search users..."
+                  placeholder="Search Users..."
                   className="w-full rounded-lg border border-slate-300/70 bg-white/80 py-1 pl-9 pr-8 leading-6 outline-none transition-colors duration-300 ease-in-out placeholder:text-slate-400 focus:border-[#00b8b0] dark:border-slate-700 dark:bg-slate-700 dark:text-white dark:focus:border-[#0098da]"
                 />
                 <ChevronUp
