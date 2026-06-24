@@ -215,8 +215,8 @@ const Dashboard = () => {
 
     if (isCurrentlyEditing) {
       return (
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col items-center gap-2">
+          <div className="flex items-center justify-center gap-2">
             <input
               type="time"
               value={editingState.value}
@@ -251,7 +251,7 @@ const Dashboard = () => {
     }
 
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-center gap-2">
         <span className="min-w-[80px]">
           {typeof data[field] === "string"
             ? data[field]
