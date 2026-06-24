@@ -131,7 +131,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Params }) {
         ...rest,
         invoiceId: id,
         date: new Date(rest.date),
-        due: new Date(rest.due),
+        due: rest.due ? new Date(rest.due) : null,
         amount: Number(rest.amount),
         serviceId: Number(rest.serviceId),
         userId: Number(rest.userId),
