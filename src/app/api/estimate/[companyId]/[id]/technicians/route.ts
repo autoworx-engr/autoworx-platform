@@ -141,7 +141,7 @@ export async function POST(
         ...rest,
         invoiceId: id,
         date: new Date(rest.date),
-        due: new Date(rest.due),
+        due: rest.due ? new Date(rest.due) : null,
         amount: Number(rest.amount),
         serviceId: Number(rest.serviceId),
         invoiceItemId: Number(rest.invoiceItemId),
