@@ -3,6 +3,7 @@ import ChatHead from "../conversations/ChatHead";
 import MailGunEmail from "../conversations/mailgun/MailgunEmail";
 import SMS from "./sms/SMS";
 import Messenger from "./messenger/Messenger";
+import Instagram from "./instagram/Instagram";
 import { getClientById } from "../../_actions/getClientById";
 import Phone from "../phone/Phone";
 import DetailsBtn from "./DetailsBtn";
@@ -37,6 +38,9 @@ export default async function ConversationsBox({
       break;
     case "MESSENGER":
       MessageBox = <Messenger clientId={clientId} />;
+      break;
+    case "INSTAGRAM":
+      MessageBox = <Instagram clientId={clientId} />;
       break;
     case "EMAIL":
       MessageBox = <MailGunEmail clientId={clientId} />;
