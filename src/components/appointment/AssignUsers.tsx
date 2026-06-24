@@ -145,7 +145,9 @@ export default function AssignUsers({
 
         {assignedUsers.length === 0 && (
           <p className="ml-1 text-xs italic text-slate-400">
-            {employeeType === "Sales" ? "No sales person assigned yet." : "No Technician assigned yet."}
+            {employeeType === "Sales"
+              ? "No sales person assigned yet."
+              : "No Technician assigned yet."}
           </p>
         )}
       </div>
@@ -164,7 +166,7 @@ export default function AssignUsers({
                 name="search"
                 className="h-10 w-full rounded-xl border-none bg-white pl-10 pr-4 text-sm text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all focus:ring-2 focus:ring-[#6571FF]/30 outline-none placeholder:text-slate-400"
                 type="text"
-                placeholder="Search employees..."
+                placeholder="Search Employees..."
                 value={assignedEmployeeSearch}
                 onChange={(e) => setAssignedEmployeeSearch(e.target.value)}
               />

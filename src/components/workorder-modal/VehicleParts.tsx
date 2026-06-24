@@ -158,12 +158,12 @@ export default function VehicleParts({
   // Search filtering
   const filteredParts = searchTerm
     ? parts.filter((part) =>
-      part.label.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+        part.label.toLowerCase().includes(searchTerm.toLowerCase()),
+      )
     : parts;
 
   const visibleParts = filteredParts.filter(
-    (part) => isWriteAccess || part.selected
+    (part) => isWriteAccess || part.selected,
   );
 
   return (
@@ -178,7 +178,7 @@ export default function VehicleParts({
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search parts..."
+            placeholder="Search Parts..."
             className="w-full rounded border border-gray-300 px-3 py-1.5 pr-8 text-[12px] outline-none"
           />
           {searchTerm && (
@@ -220,7 +220,7 @@ export default function VehicleParts({
                 type="button"
                 className={cn(
                   "relative w-full overflow-hidden text-nowrap rounded-full border border-gray-300 px-3 py-1.5 text-[12px]",
-                  part.selected ? "bg-[#6571FF] text-white" : "bg-background"
+                  part.selected ? "bg-[#6571FF] text-white" : "bg-background",
                 )}
               >
                 <span className="w-full">{part.label}</span>

@@ -131,7 +131,7 @@ export default function ServicesTab({
             type="text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search services..."
+            placeholder="Search Services..."
             className="w-full bg-transparent text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none"
           />
         </div>

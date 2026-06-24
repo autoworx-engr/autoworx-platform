@@ -47,22 +47,22 @@ const BarChartComponent: React.FC<BarChartComponentProps> = ({
 }) => {
   return (
     <div
-      className={`${boldTitle && "my-8 text-xl font-semibold"}`}
-      style={{ width: "100%" }}
+      className={boldTitle ? "my-8 text-xl font-semibold" : ""}
+      style={{ width: "100%", height: height === "100%" ? "100%" : height }}
     >
       <h2
-        className={`${boldTitle && "my-8 text-xl font-semibold"}`}
+        className={boldTitle ? "my-8 text-xl font-semibold" : ""}
         style={{ marginLeft: "35px" }}
       >
         {title}
       </h2>
-      <ResponsiveContainer width="90%" height={height}>
+      <ResponsiveContainer
+        width="100%"
+        height={height === "100%" ? "100%" : height}
+      >
         <BarChart
           data={data}
-          margin={{
-            top: 55,
-            bottom: 5,
-          }}
+          margin={{ top: 40, right: 10, left: -10, bottom: 5 }}
         >
           <XAxis dataKey="label" />
           <YAxis tick={false}>
@@ -88,7 +88,7 @@ const BarChartComponent: React.FC<BarChartComponentProps> = ({
             fill="#03A7A2"
             shape={<CustomBar />}
             label={<CustomLabel />}
-            barSize={68}
+            barSize={40}
           />
         </BarChart>
       </ResponsiveContainer>

@@ -78,7 +78,7 @@ export default async function Sidebar({
     <div
       className={`mt-3 ${
         hidden ? "hidden" : !!productId ? "flex" : "hidden lg:flex"
-      }  h-fit lg:h-full w-full mx-auto flex-col md:mt-12 lg:w-1/2`}
+      }  h-fit lg:h-[calc(83vh-2.25rem)] w-full mx-auto flex-col md:mt-12 lg:w-1/2`}
     >
       <div className="flex flex-col gap-6 lg:flex-row">
         {/* LEFT COLUMN: Financial Metrics */}

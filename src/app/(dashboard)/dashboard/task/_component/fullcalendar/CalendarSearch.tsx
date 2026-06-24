@@ -40,7 +40,7 @@ export default function CalendarSearch({ type }: { type: string }) {
               setIsDropdownOpen(true);
             }
           }}
-          placeholder="Search tasks and appointments..."
+          placeholder="Search Tasks and Appointments..."
           className="w-full bg-transparent text-sm font-medium text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none"
         />
       </div>

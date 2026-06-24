@@ -69,7 +69,7 @@ export default function SearchFilter({ searchParams }: TSearchFilterProps) {
           </span>
           <input
             type="text"
-            placeholder="Search by name..."
+            placeholder="Search by Name..."
             className="w-full bg-transparent text-sm font-medium text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none"
             value={search}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
