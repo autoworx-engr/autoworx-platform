@@ -282,6 +282,7 @@ export const EventDetailsSheet = ({
                   cancelText="No"
                   trigger="click"
                   zIndex={9999}
+                  placement="topRight"
                   getPopupContainer={(triggerNode) =>
                     triggerNode?.parentElement ?? document.body
                   }
