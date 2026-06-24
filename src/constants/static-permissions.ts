@@ -127,6 +127,11 @@ export const staticPermissions = [
     permission_name: "messenger",
     status: false,
   },
+  {
+    title: "Instagram",
+    permission_name: "instagram",
+    status: false,
+  },
 ];
 
 export const CHILD_PERMISSIONS = [

@@ -11,6 +11,7 @@ import { allCompanyFeaturePermissions } from "@/service/feature-permissions/api"
 import { companyPermissionModule } from "@/constants/company-permission";
 import SecurityPage from "../security/SecurityPage";
 import FacebookPagesSettings from "./FacebookPagesSettings";
+import InstagramSettings from "./InstagramSettings";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -19,20 +20,29 @@ export const metadata: Metadata = {
 };
 
 type TProps = {
-  searchParams: Promise<{ meta_success?: string; meta_error?: string }>;
+  searchParams: Promise<{
+    meta_success?: string;
+    meta_error?: string;
+    ig_success?: string;
+    ig_error?: string;
+  }>;
 };
 
 export default async function CommunicationPage({ searchParams }: TProps) {
   const companyId = await getCompanyId();
   const company = await getCompany();
   const entitlements = await getCompanyEntitlements(companyId);
-  const { meta_success, meta_error } = await searchParams;
+  const { meta_success, meta_error, ig_success, ig_error } = await searchParams;
 
   const permissionsRes = await allCompanyFeaturePermissions(companyId);
   const permissions: { permission_name: string; enabled: boolean }[] =
     permissionsRes?.data ?? [];
   const isMessengerEnabled = permissions.find(
     (p) => p.permission_name === companyPermissionModule.MESSENGER,
+  )?.enabled;
+
+  const isInstagramEnabled = permissions.find(
+    (p) => p.permission_name === companyPermissionModule.INSTAGRAM,
   )?.enabled;
 
   return (
@@ -48,6 +58,10 @@ export default async function CommunicationPage({ searchParams }: TProps) {
             successParam={meta_success}
             errorParam={meta_error}
           />
+        )}
+        {/* Instagram DM integration */}
+        {isInstagramEnabled && (
+          <InstagramSettings successParam={ig_success} errorParam={ig_error} />
         )}
       </div>
       {/* Sidebar */}
