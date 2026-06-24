@@ -47,11 +47,11 @@ const BarChartComponent: React.FC<BarChartComponentProps> = ({
 }) => {
   return (
     <div
-      className={`${boldTitle && "my-8 text-xl font-semibold"}`}
+      className={boldTitle ? "my-8 text-xl font-semibold" : ""}
       style={{ width: "100%", height: height === "100%" ? "100%" : height }}
     >
       <h2
-        className={`${boldTitle && "my-8 text-xl font-semibold"}`}
+        className={boldTitle ? "my-8 text-xl font-semibold" : ""}
         style={{ marginLeft: "35px" }}
       >
         {title}
