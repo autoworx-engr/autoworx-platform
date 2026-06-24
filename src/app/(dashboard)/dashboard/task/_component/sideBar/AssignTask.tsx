@@ -16,8 +16,13 @@ import useInfinityTaskQuery from "../../_hook/task/query/useInfinityTask";
 import { useInView } from "framer-motion";
 
 export default function AssignTask() {
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
-  const inView = useInView(sentinelRef, { amount: 0.5 });
+  const inView = useInView(sentinelRef, {
+    root: scrollContainerRef,
+    margin: "0px 0px 120px 0px",
+    amount: 0.1,
+  });
 
   const {
     data,
@@ -153,8 +158,9 @@ export default function AssignTask() {
           <form>
             {/* Task List Container - Max height with scroll and subtle glass effect for the scrollable area */}
             <div
+              ref={scrollContainerRef}
               className={`
-                flex max-h-[15rem] flex-col gap-1 overflow-y-auto p-3 
+                flex max-h-[15rem] flex-col gap-1 overflow-y-auto p-3
                 bg-slate-100/30 dark:bg-slate-900/30 rounded-xl ring-1 ring-slate-200 dark:ring-slate-700
                 backdrop-blur-sm
                 transition-shadow duration-300
