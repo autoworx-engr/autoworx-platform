@@ -23,6 +23,7 @@ const updateClientSchema = z.object({
   notes: z.string().optional().nullable(),
   isFleet: z.boolean().optional(),
   isStarred: z.boolean().optional(),
+  photo: z.string().optional(),
 });
 
 /**
@@ -149,6 +150,9 @@ export async function GET(
  *               isStarred:
  *                 type: boolean
  *                 example: true
+ *               photo:
+ *                 type: string
+ *                 example: "https://example.com/photo.jpg"
  *     responses:
  *       200:
  *         description: Client updated successfully
