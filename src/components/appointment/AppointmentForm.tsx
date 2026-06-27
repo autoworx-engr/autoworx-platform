@@ -144,14 +144,13 @@ export default function AppointmentForm({
               <span className="mb-2 font-medium text-slate-600">
                 Start Time <span className="text-[#E9405F]">*</span>
               </span>
-              <div>
-                <Select
-                  value={startTime}
-                  onChange={(value) =>
-                    handleTimeChange({ target: { value } } as any, "start")
-                  }
-                  style={{ width: "100%" }}
-                  className="
+              <Select
+                value={startTime}
+                onChange={(value) =>
+                  handleTimeChange({ target: { value } } as any, "start")
+                }
+                style={{ width: "100%" }}
+                className="
                     h-[38px] w-full
                     rounded-lg border-none
                     bg-slate-50/50
@@ -161,21 +160,20 @@ export default function AppointmentForm({
                     focus-within:ring-2 focus-within:ring-[#6571FF]/40 focus:outline-none
                     text-slate-600 font-medium thin-scrollbar
                   "
-                  dropdownClassName="rounded-xl border-none shadow-2xl backdrop-blur-md bg-white/90"
-                >
-                  {timeOptions
-                    .filter((time) => time.value <= "22:45")
-                    .map((time) => (
-                      <Option
-                        key={time.value}
-                        value={time.value}
-                        className="py-2 px-3 text-slate-600 transition-colors hover:bg-[#6571FF]/10 hover:text-[#6571FF]"
-                      >
-                        <p className="text-base text-gray-600">{time.label}</p>
-                      </Option>
-                    ))}
-                </Select>
-              </div>
+                dropdownClassName="rounded-xl border-none shadow-2xl backdrop-blur-md bg-white/90"
+              >
+                {timeOptions
+                  .filter((time) => time.value <= "22:45")
+                  .map((time) => (
+                    <Option
+                      key={time.value}
+                      value={time.value}
+                      className="py-2 px-3 text-slate-600 transition-colors hover:bg-[#6571FF]/10 hover:text-[#6571FF]"
+                    >
+                      {time.label}
+                    </Option>
+                  ))}
+              </Select>
             </label>
 
             <label className="flex flex-col items-start">
