@@ -32,8 +32,7 @@ export default async function InstagramSettings({
         </div>
         <Link
           href="/api/instagram/auth"
-          className="inline-flex items-center gap-1.5 rounded-md px-4 py-1.5 text-sm font-medium text-white transition"
-          style={{ background: "linear-gradient(135deg,#E1306C,#833AB4)" }}
+          className="inline-flex items-center gap-1.5 rounded-md bg-[#6470FF] px-4 py-1.5 text-sm font-medium text-white transition hover:bg-[#4f5ce6]"
         >
           <Link2 className="h-3.5 w-3.5" />
           {accounts.length === 0 ? "Connect Instagram" : "Add Another Account"}
