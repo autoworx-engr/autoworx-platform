@@ -11,6 +11,13 @@ export async function POST(req: NextRequest) {
       countryCode,
       email,
       address,
+      city,
+      state,
+      zip,
+      customerCompany,
+      sourceId,
+      tagId,
+      photo,
       companyId,
     } = body;
 
@@ -34,6 +41,13 @@ export async function POST(req: NextRequest) {
       countryCode,
       email: email?.trim() || undefined,
       address: address?.trim() || undefined,
+      city: city?.trim() || undefined,
+      state: state?.trim() || undefined,
+      zip: zip?.trim() || undefined,
+      customerCompany: customerCompany?.trim() || undefined,
+      sourceId: typeof sourceId === "number" ? sourceId : undefined,
+      tagId: typeof tagId === "number" ? tagId : undefined,
+      photo: photo?.trim() || undefined,
       forceCompanyId: companyId,
     });
 
