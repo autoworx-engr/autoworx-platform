@@ -63,7 +63,7 @@ export default function NewLabor({
   useEffect(() => {
     if (currentSelectedCategoryId) {
       setCategory(
-        categories.find((cat) => cat.id === currentSelectedCategoryId)!
+        categories.find((cat) => cat.id === currentSelectedCategoryId)!,
       );
     }
   }, [currentSelectedCategoryId]);
@@ -273,7 +273,7 @@ export default function NewLabor({
                   }
                 }}
                 className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg outline-none transition-all placeholder:text-slate-400 focus:border-blue-500"
-                placeholder="Enter labor name"
+                placeholder="Enter labor Name"
               />
             </div>
 

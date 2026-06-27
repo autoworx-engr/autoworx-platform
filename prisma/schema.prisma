@@ -3670,3 +3670,16 @@ model InstagramMessageAttachment {
 
   @@map("instagram_message_attachments")
 }
+
+// Mobile app version management — controls soft/force update behavior
+model AppVersion {
+  id                  Int      @id @default(autoincrement())
+  latestVersion       String   @map("latest_version")
+  minSupportedVersion String   @map("min_supported_version")
+  forceUpdate         Boolean  @default(false) @map("force_update")
+  message             String?
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("app_versions")
+}

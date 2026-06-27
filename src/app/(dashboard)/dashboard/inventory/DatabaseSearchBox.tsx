@@ -14,7 +14,7 @@ export default function DatabaseSearchBox() {
     debounce((value: string) => {
       setSearch(value);
       setPage(1);
-    }, 500)
+    }, 500),
   );
 
   const handleInputChange = useCallback(
@@ -23,7 +23,7 @@ export default function DatabaseSearchBox() {
       setSearchTerm(value);
       debouncedSearchRef.current(value);
     },
-    []
+    [],
   );
 
   return (
@@ -35,7 +35,7 @@ export default function DatabaseSearchBox() {
 
         <input
           type="text"
-          placeholder="Search by name, category"
+          placeholder="Search by Name, Category"
           className="w-full bg-transparent text-sm font-medium text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none"
           value={searchTerm}
           onChange={handleInputChange}

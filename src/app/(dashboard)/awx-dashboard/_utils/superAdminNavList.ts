@@ -31,4 +31,10 @@ export const superAdminNavList = [
     link: "/awx-dashboard/reporting/revenue",
     path: "/awx-dashboard/reporting",
   },
+  {
+    title: "App Settings",
+    icon: "/icons/navbar/Settings.svg",
+    link: "/awx-dashboard/app-settings",
+    path: "/awx-dashboard/app-settings",
+  },
 ];

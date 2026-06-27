@@ -79,7 +79,7 @@ export default async function EmployeeInformation({
                 Manage contact info and primary details.
               </p>
             </div>
-            {canEdit && <EditEmployee employee={employee} settingIcon />}
+            {canEdit && <EditEmployee employee={employee} />}
           </div>
 
           <div className="grid flex-1 grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">

@@ -2,6 +2,7 @@ import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { InvoiceType, Prisma } from "@prisma/client";
+import { customAlphabet } from "nanoid";
 
 /**
  * @swagger
@@ -504,7 +505,7 @@ export async function POST(
     const invoice = await db.$transaction(async (tx) => {
       const newInvoice = await tx.invoice.create({
         data: {
-          id,
+          id: customAlphabet("1234567890", 10)(),
           type: type as InvoiceType,
           clientId: clientId ? Number(clientId) : undefined,
           vehicleId: vehicleId ? Number(vehicleId) : undefined,

@@ -97,7 +97,7 @@ export default function List({
       {/* Search */}
       <input
         type="text"
-        placeholder="Search company"
+        placeholder="Search Company"
         value={searchInput}
         onChange={(e) => setSearchInput(e.target.value)}
         className="my-3 w-full rounded-md border-2 border-[#006D77] p-2"

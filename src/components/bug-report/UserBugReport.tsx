@@ -406,7 +406,7 @@ const UserBugReport = () => {
                     options={moduleOptions}
                     value={selectedModule!}
                     onChange={handleModuleSelect}
-                    placeholder="Choose a module..."
+                    placeholder="Choose Module..."
                     clearable
                     searchable
                     className="w-full text-black"
