@@ -8,10 +8,11 @@ import { successToast, errorToast } from "@/lib/toast";
 
 export const APP_VERSION_QUERY_KEY = ["app-version"] as const;
 
-export function useAppVersion() {
+export function useAppVersion(initialData?: AppVersionData) {
   return useQuery({
     queryKey: [...APP_VERSION_QUERY_KEY],
     queryFn: getAppVersion,
+    initialData,
   });
 }
 

@@ -3,6 +3,14 @@ import { db } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/authOptions";
 
+function compareSemver(a: string, b: string): number {
+  const [aMaj, aMin, aPatch] = a.split(".").map(Number);
+  const [bMaj, bMin, bPatch] = b.split(".").map(Number);
+  if (aMaj !== bMaj) return aMaj - bMaj;
+  if (aMin !== bMin) return aMin - bMin;
+  return aPatch - bPatch;
+}
+
 /**
  * @swagger
  * components:
@@ -83,8 +91,8 @@ import { authOptions } from "@/authOptions";
  */
 export async function GET() {
   try {
-    const version = await db.appVersion.findFirst({
-      orderBy: { updatedAt: "desc" },
+    const version = await db.appVersion.findUnique({
+      where: { id: 1 },
       select: {
         latestVersion: true,
         minSupportedVersion: true,
@@ -188,6 +196,16 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
+    if (compareSemver(latestVersion, minSupportedVersion) < 0) {
+      return NextResponse.json(
+        {
+          message:
+            "latestVersion must be greater than or equal to minSupportedVersion",
+        },
+        { status: 400 },
+      );
+    }
+
     const data = {
       latestVersion,
       minSupportedVersion,
@@ -195,10 +213,11 @@ export async function PATCH(req: NextRequest) {
       message: message || null,
     };
 
-    const existing = await db.appVersion.findFirst();
-    const version = existing
-      ? await db.appVersion.update({ where: { id: existing.id }, data })
-      : await db.appVersion.create({ data });
+    const version = await db.appVersion.upsert({
+      where: { id: 1 },
+      update: data,
+      create: { id: 1, ...data },
+    });
 
     return NextResponse.json(
       { message: "App version updated successfully", data: version },

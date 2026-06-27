@@ -6,7 +6,10 @@ import { ArrowLeft, Smartphone } from "lucide-react";
 import { SlimInput } from "@/components/SlimInput";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { useUpdateAppVersion } from "@/hooks/query-hook/useAppVersion";
+import {
+  useAppVersion,
+  useUpdateAppVersion,
+} from "@/hooks/query-hook/useAppVersion";
 import type { AppVersionData } from "@/service/app-version/api";
 
 type Props = {
@@ -27,6 +30,9 @@ export const AppVersionManager = ({ initialData }: Props) => {
     message: initialData?.message ?? "",
   });
   const [errors, setErrors] = useState<FormErrors>({});
+
+  const { data: liveData } = useAppVersion(initialData ?? undefined);
+  const snapshot = liveData ?? initialData;
 
   const mutation = useUpdateAppVersion();
 
@@ -85,7 +91,7 @@ export const AppVersionManager = ({ initialData }: Props) => {
       </div>
 
       {/* Current config snapshot */}
-      {initialData && (
+      {snapshot && (
         <div className="mb-6 rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm ring-1 ring-slate-900/5">
           <div className="mb-3 flex items-center gap-2">
             <Smartphone size={15} className="text-[#6571FF]" />
@@ -95,19 +101,19 @@ export const AppVersionManager = ({ initialData }: Props) => {
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {[
-              { label: "Latest Version", value: initialData.latestVersion },
+              { label: "Latest Version", value: snapshot.latestVersion },
               {
                 label: "Min Supported",
-                value: initialData.minSupportedVersion,
+                value: snapshot.minSupportedVersion,
               },
               {
                 label: "Force Update",
-                value: initialData.forceUpdate ? "Enabled" : "Disabled",
-                valueClass: initialData.forceUpdate
+                value: snapshot.forceUpdate ? "Enabled" : "Disabled",
+                valueClass: snapshot.forceUpdate
                   ? "text-rose-600"
                   : "text-emerald-600",
               },
-              { label: "Message", value: initialData.message || "—" },
+              { label: "Message", value: snapshot.message || "—" },
             ].map(({ label, value, valueClass }) => (
               <div key={label} className="rounded-xl bg-slate-50 p-3">
                 <p className="text-slate-400">{label}</p>
