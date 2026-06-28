@@ -551,6 +551,9 @@ export const getLeadsWithCountOptimized = async ({
           tasks: {
             take: 5, // Limit tasks to reduce payload
           },
+          _count: {
+            select: { tasks: true },
+          },
           column: true,
           leadTags: {
             include: {
@@ -647,6 +650,7 @@ export const getLeadsWithCountOptimized = async ({
         column,
         totalMessage: isShowConversationIndicator ? 1 : 0,
         invoiceId: client?.Invoice?.[0]?.id ?? null,
+        taskCount: lead._count?.tasks ?? 0,
       } as LeadWithSalesUser;
     });
 
