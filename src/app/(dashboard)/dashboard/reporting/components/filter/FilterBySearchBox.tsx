@@ -5,9 +5,14 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 type TProps = {
   searchText: string;
-  paramKey?: string; // 👈 unique key: "serviceSearch" or "laborSearch"
+  paramKey?: string;
+  placeholder?: string;
 };
-export default function FilterBySearchBox({ searchText, paramKey }: TProps) {
+export default function FilterBySearchBox({
+  searchText,
+  paramKey,
+  placeholder,
+}: TProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const router = useRouter();
   const pathname = usePathname();
@@ -48,7 +53,9 @@ export default function FilterBySearchBox({ searchText, paramKey }: TProps) {
   const handleSearchChange = useDebounce(handleInputChange, 500);
 
   const getPlaceholderForPath = () => {
-    if (pathname.includes("revenue")) {
+    if (placeholder) {
+      return placeholder;
+    } else if (pathname.includes("revenue")) {
       return "Search by Invoice, Customer or Vehicle";
     } else if (pathname.includes("inventory")) {
       return "Search by Name";

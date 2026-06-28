@@ -130,6 +130,45 @@ export default async function PaymentReportPage(props: TProps) {
           },
         },
       },
+      {
+        invoice: {
+          is: {
+            vehicle: {
+              is: {
+                make: {
+                  ...containsInsensitive(trimmedSearch),
+                },
+              },
+            },
+          },
+        },
+      },
+      {
+        invoice: {
+          is: {
+            vehicle: {
+              is: {
+                model: {
+                  ...containsInsensitive(trimmedSearch),
+                },
+              },
+            },
+          },
+        },
+      },
+      {
+        invoice: {
+          is: {
+            vehicle: {
+              is: {
+                vin: {
+                  ...containsInsensitive(trimmedSearch),
+                },
+              },
+            },
+          },
+        },
+      },
       ...(firstNameTerm && lastNameTerm
         ? [
             {
