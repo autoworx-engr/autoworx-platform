@@ -43,7 +43,7 @@ export default function Header() {
                 w-full bg-transparent text-sm font-medium text-slate-700 dark:text-slate-200 
                 placeholder:text-slate-400 focus:outline-none
               "
-            placeholder="Search by client ID, name, email or phone..."
+            placeholder="Search by Client ID, Name, Email or Phone..."
             value={searchTerm}
             onChange={(event) => {
               const value = event.target.value;

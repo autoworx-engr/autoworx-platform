@@ -72,6 +72,23 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
 
   const smsPromise = getSms(client?.id);
 
+  const messengerPromise = db.messengerMessage.findMany({
+    where: { clientId: client.id },
+    select: {
+      attachments: {
+        select: { id: true, name: true, url: true, createdAt: true },
+      },
+    },
+  });
+
+  const instagramPromise = db.instagramMessage.findMany({
+    where: { clientId: client.id },
+    select: {
+      createdAt: true,
+      attachments: { select: { id: true, name: true, url: true } },
+    },
+  });
+
   const [
     conversationsData,
     estimates,
@@ -80,6 +97,8 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
     companyUsers,
     smsData,
     appointmentData,
+    messengerData,
+    instagramData,
   ] = await Promise.all([
     conversationsPromise,
     estimatesPromise,
@@ -88,6 +107,8 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
     companyUsersPromise,
     smsPromise,
     appointmentsPromise,
+    messengerPromise,
+    instagramPromise,
   ]);
 
   // Transform tasks to include assignedUsers in the correct format
@@ -104,6 +125,11 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
     ) ?? [];
 
   const allSmsAttachments = smsData?.flatMap((s) => s.attachments) ?? [];
+
+  const allMessengerAttachments = messengerData.flatMap((m) => m.attachments);
+  const allInstagramAttachments = instagramData.flatMap((m) =>
+    m.attachments.map((a) => ({ ...a, createdAt: m.createdAt })),
+  );
 
   const priorityStyles: Record<
     string,
@@ -139,6 +165,8 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
       <SharedFilesSection
         emailAttachments={allEmailAttachments}
         smsAttachments={allSmsAttachments}
+        messengerAttachments={allMessengerAttachments}
+        instagramAttachments={allInstagramAttachments}
       />
 
       {/* Estimates & Invoices */}

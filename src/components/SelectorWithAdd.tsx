@@ -7,7 +7,16 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import SelectCategory from "./Lists/SelectCategory";
 import { Category } from "@prisma/client";
-import { ChevronDown, Plus, X, Check, AlertCircle, Search } from "lucide-react";
+import { Popconfirm } from "antd";
+import {
+  ChevronDown,
+  Plus,
+  X,
+  Check,
+  AlertCircle,
+  Search,
+  Trash2,
+} from "lucide-react";
 
 export type SelectorWithAddProps = {
   label?: ReactNode;
@@ -28,6 +37,10 @@ export type SelectorWithAddProps = {
   onAddNew?: (newItem: string, category?: Category | null) => void;
   addNewPlaceholder?: string;
   selectCategory?: boolean;
+  allowDelete?: boolean;
+  onDelete?: (id: string | number) => void;
+  deleteConfirmTitle?: string;
+  deleteConfirmDescription?: string;
 };
 
 const sentenceCase = (str: string) => {
@@ -59,6 +72,10 @@ export function SelectorWithAdd({
   onAddNew,
   addNewPlaceholder = "Enter new item",
   selectCategory = false,
+  allowDelete = false,
+  onDelete,
+  deleteConfirmTitle = "Remove this option",
+  deleteConfirmDescription = "Are you sure you want to remove this?",
 }: SelectorWithAddProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedValue, setSelectedValue] = useState(value?.toString() || "");
@@ -80,6 +97,12 @@ export function SelectorWithAdd({
 
   useEffect(() => {
     const handleClickOutside = (event: Event) => {
+      const target = event.target as HTMLElement | null;
+      // Ignore clicks inside antd portaled popups (e.g. the delete Popconfirm),
+      // otherwise the dropdown unmounts before the confirm action can run.
+      if (target?.closest?.(".ant-popover, .ant-popconfirm")) {
+        return;
+      }
       if (
         dropdownRef.current &&
         !dropdownRef.current.contains(event.target as Node)
@@ -341,21 +364,46 @@ export function SelectorWithAdd({
                   {filteredOptions?.length > 0 ? (
                     filteredOptions?.map((opt) => {
                       const isSelected = selectedValue === opt?.id?.toString();
+                      const isDeletable =
+                        allowDelete &&
+                        !!onDelete &&
+                        !String(opt?.id).startsWith("custom_");
                       return (
                         <div
                           key={opt?.id}
                           className={cn(
-                            "group flex cursor-pointer touch-manipulation items-center justify-between rounded-lg px-3 py-2 text-sm transition-all duration-200",
+                            "group/item flex cursor-pointer touch-manipulation items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm transition-all duration-200",
                             isSelected
                               ? "bg-[#6571FF]/10 text-[#6571FF] font-semibold"
                               : "text-slate-600 hover:bg-slate-50 hover:text-slate-900",
                           )}
-                          onClick={() => handleSelect(opt?.id.toString())}
+                          onClick={() => handleSelect(opt?.id?.toString())}
                         >
-                          {opt?.title}
-                          {isSelected && (
-                            <Check className="h-4 w-4" strokeWidth={3} />
-                          )}
+                          <span className="truncate">{opt?.title}</span>
+                          <div className="flex shrink-0 items-center gap-1.5">
+                            {isSelected && (
+                              <Check className="h-4 w-4" strokeWidth={3} />
+                            )}
+                            {isDeletable && (
+                              <Popconfirm
+                                title={deleteConfirmTitle}
+                                description={deleteConfirmDescription}
+                                okText="Yes"
+                                cancelText="No"
+                                onConfirm={() => onDelete?.(opt.id)}
+                              >
+                                <button
+                                  type="button"
+                                  title="Remove"
+                                  aria-label={`Remove ${opt?.title}`}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="flex h-6 w-6 items-center justify-center rounded-md text-slate-300 opacity-0 transition-all hover:bg-rose-50 hover:text-rose-600 group-hover/item:opacity-100"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </button>
+                              </Popconfirm>
+                            )}
+                          </div>
                         </div>
                       );
                     })

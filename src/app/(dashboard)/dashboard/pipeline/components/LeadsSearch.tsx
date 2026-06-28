@@ -27,7 +27,7 @@ const LeadsSearch = React.memo(function LeadsSearch({
       <input
         type="text"
         value={search}
-        placeholder="Search by client, vehicle, services..."
+        placeholder="Search by Client, Vehicle, Services..."
         onChange={handleSearchChange}
         className={cn(
           "w-full h-11 pl-12 pr-4 rounded-xl border  bg-white",

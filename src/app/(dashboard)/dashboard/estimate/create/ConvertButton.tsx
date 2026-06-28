@@ -22,6 +22,7 @@ export default function ConvertButton({
 }) {
   const router = useRouter();
   const createInvoice = useInvoiceCreate(type);
+  const invoiceId = useEstimateCreateStore((state) => state.invoiceId);
   const resetEstimateCreate = useEstimateCreateStore((state) => state.reset);
 
   const resetLists = useListsStore((state) => state.reset);
@@ -29,10 +30,13 @@ export default function ConvertButton({
   async function handleSubmit() {
     const res = await createInvoice();
     if (res.type === "success") {
+      // Carry the just-saved id so the table view auto-opens its modal.
+      const savedId = res.data?.id ?? invoiceId;
+      const openParam = savedId ? `?openEstimateId=${savedId}` : "";
       if (type === "Estimate") {
-        router.replace("/dashboard/estimate");
+        router.replace(`/dashboard/estimate${openParam}`);
       } else {
-        router.replace("/dashboard/estimate/invoices");
+        router.replace(`/dashboard/estimate/invoices${openParam}`);
       }
       // resetEstimateCreate();
       // resetLists();

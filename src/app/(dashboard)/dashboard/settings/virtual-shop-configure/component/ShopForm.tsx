@@ -482,7 +482,7 @@ export default function ShopForm({
             <SlimTextarea
               value={form.termsConditions}
               name="termsConditions"
-              placeholder="Enter your terms and conditions..."
+              placeholder="Enter your Terms and Conditions..."
               maxLength={1500}
               onChange={(e) => {
                 const value = e.target.value;
@@ -527,7 +527,7 @@ export default function ShopForm({
             <SlimTextarea
               value={form.privacyPolicy}
               name="privacyPolicy"
-              placeholder="Enter your privacy policy..."
+              placeholder="Enter your Privacy Policy..."
               maxLength={1500}
               onChange={(e) => {
                 const value = e.target.value;

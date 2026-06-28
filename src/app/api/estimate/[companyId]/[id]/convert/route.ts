@@ -65,7 +65,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const converted = await convertInvoice(id);
+    const converted = await convertInvoice(id, jwtCompanyId);
 
     return NextResponse.json({
       success: true,

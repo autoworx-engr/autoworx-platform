@@ -8,14 +8,16 @@ export default function InvoiceModal({
   buttonChild,
   buttonChildClassName,
   isShowEdit = true,
+  autoOpen = false,
 }: {
   invoiceId: string;
   buttonChild: React.ReactNode;
   buttonChildClassName?: string;
   isShowEdit?: boolean;
+  autoOpen?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
-  const [dataFetched, setDataFetched] = useState(false);
+  const [open, setOpen] = useState(autoOpen);
+  const [dataFetched, setDataFetched] = useState(autoOpen);
 
   return (
     <Dialog

@@ -62,7 +62,7 @@ const ServiceSelectAndAddPublic = ({
         errorToast("Failed to create new service");
       }
     },
-    [onChange, token, value]
+    [onChange, token, value],
   );
 
   // Fetch only canned services
@@ -98,7 +98,7 @@ const ServiceSelectAndAddPublic = ({
       allowAddNew={true}
       onAddNew={handleAddNew}
       addNewLabel="Add new service"
-      addNewPlaceholder="Enter service name"
+      addNewPlaceholder="Enter Service Name"
       selectCategory={false} // No category selection for public form
       placeholder="Full Car Wrap, Front End PPF"
       disabled={disabled || isLoading}

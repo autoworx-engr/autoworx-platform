@@ -118,8 +118,9 @@ export interface LeadWithSalesUser extends Lead {
     tag: Tag;
   }[];
   totalMessage: number;
-  // Draft estimate invoice tied to this lead's client (null if none yet)
   invoiceId?: string | null;
+
+  taskCount?: number;
 }
 
 export interface ColumnWithLeads extends Column {

@@ -79,6 +79,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
     }
 
+    const mergedAdditionalData = {
+      creditCard: additionalData?.creditCard || "",
+      cardType: additionalData?.cardType || "MASTERCARD",
+      checkNumber: additionalData?.checkNumber || "",
+      receivedCash: additionalData?.receivedCash || "",
+      paymentMethodId: additionalData?.paymentMethodId,
+      depositMethod: additionalData?.depositMethod || "",
+      depositNotes: additionalData?.depositNotes,
+    };
+
     const result = await newPayment({
       companyId: principal.companyId,
       invoiceId,
@@ -86,7 +96,7 @@ export async function POST(req: NextRequest) {
       date: new Date(date),
       notes: notes || "",
       amount: Number(amount),
-      additionalData,
+      additionalData: mergedAdditionalData,
     });
 
     if (result.type !== "success") {

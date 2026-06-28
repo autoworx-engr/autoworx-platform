@@ -238,7 +238,7 @@ export function NetworkSettingsPanel({
           />
           <input
             type="text"
-            placeholder="Search by company name..."
+            placeholder="Search by Company Name..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full h-10 pl-9 pr-4 rounded-xl border border-gray-200 text-sm text-gray-600 focus:border-[#6571FF] focus:ring-1 focus:ring-[#6571FF] focus:outline-none transition"
