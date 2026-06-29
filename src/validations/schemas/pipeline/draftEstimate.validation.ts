@@ -6,7 +6,12 @@ export const createDraftEstimateValidationSchema = z.object({
   }),
   userId: z.number().int("User Id must be an integer").nonnegative(),
   companyId: z.number().int("Company Id must be an integer").nonnegative(),
-  leadId: z.number().int("Lead Id must be an integer").nonnegative(),
+  leadId: z
+    .number()
+    .int("Lead Id must be an integer")
+    .nonnegative()
+    .optional()
+    .nullable(),
   vehicleId: z
     .number({
       required_error: "Vehicle Id must be required",
