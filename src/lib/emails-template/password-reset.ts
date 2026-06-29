@@ -5,7 +5,6 @@ export function generatePasswordResetEmailHtml(
 ): string {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
   // const logoUrl = `${appUrl}/images/solution/logo1.png`;
-  // const logoUrl = `${appUrl}/icons/autoworx-logo.png`;
   const logoUrl = `${appUrl}/images/autoworx-logo.webp`;
 
   return `<!DOCTYPE html>
