@@ -71,6 +71,7 @@ export async function GET(
         source: true,
         fleet: true,
         conversationsTrack: true,
+        Vehicle: true,
       },
     });
 
