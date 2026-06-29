@@ -6,7 +6,7 @@ import VehicleCard from "@/components/mobile-responsive/client/VehicleCard";
 import { cn } from "@/lib/cn";
 import { Vehicle } from "@prisma/client";
 import { Popconfirm } from "antd";
-import { X } from "lucide-react";
+import { Car, CarFront, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 export default function VehicleList({
@@ -57,6 +57,21 @@ export default function VehicleList({
             </thead>
 
             <tbody className="border border-gray-200">
+              {vehicles.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="py-16 text-center">
+                    <div className="flex flex-col items-center gap-3 text-slate-400">
+                      <Car size={40} strokeWidth={1.5} />
+                      <p className="text-sm font-medium">
+                        No vehicles found for this client
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        Click &quot;+ Add New Vehicle&quot; to get started
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              )}
               {vehicles.map((vehicle, index) => (
                 <tr
                   key={index}
