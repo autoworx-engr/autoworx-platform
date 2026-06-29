@@ -422,6 +422,8 @@ export default function BusinessForm({ company }: TProps) {
               label="About"
               name="about"
               placeholder="Briefly describe your business and what you offer"
+              rows={3}
+              className="max-h-18 resize-none overflow-y-auto thin-scrollbar"
               onChange={(e) =>
                 setBusinessSettings({
                   ...businessSettings,
