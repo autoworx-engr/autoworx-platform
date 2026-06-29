@@ -36,6 +36,7 @@ export const makeFleetStatementPaymentValidationSchema = z.object({
   creditCard: z.string().optional(),
   cardType: z.enum(["VISA", "MASTERCARD", "AMEX", "DISCOVER"]).optional(),
   paymentMethodId: z.number().optional(),
+  receivedCash: z.string().optional(),
 });
 
 export type CreateFleetStatementInput = z.infer<
