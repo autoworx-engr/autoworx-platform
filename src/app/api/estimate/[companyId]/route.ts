@@ -359,7 +359,7 @@ export async function GET(
     const [estimates, total] = await Promise.all([
       db.invoice.findMany({
         where,
-        orderBy: { createdAt: "desc" },
+        orderBy: { updatedAt: "desc" },
         skip,
         take: limit,
         include: {

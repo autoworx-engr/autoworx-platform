@@ -107,7 +107,7 @@ export async function fetchAndTransformData(
       i."is_shop_booking" AS "isShopBooking"
     ${joins}
     ${baseWhere}
-    ORDER BY i."created_at" DESC
+    ORDER BY i."updated_at" DESC
     LIMIT ${take} OFFSET ${offset}
   `;
 
