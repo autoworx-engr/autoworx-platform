@@ -196,7 +196,14 @@ export default function Page() {
             {/* Icon section */}
             <div className="flex justify-center lg:justify-end lg:items-center">
               <Image
-                src={`/icons/CompanyLogo${plans.findIndex((p) => p.id === currentPlan?.id) + 1 || 1}.svg`}
+                src={`/icons/CompanyLogo${
+                  (Math.max(
+                    0,
+                    plans.findIndex((p) => p.id === currentPlan?.id),
+                  ) %
+                    3) +
+                  1
+                }.svg`}
                 width={150}
                 height={150}
                 alt="Company logo"
