@@ -26,7 +26,7 @@ const CustomLabel = ({ x, y, width, value, data }: any) => {
   const originalValue =
     data.find(
       (item: { salePrice: number; absoluteSalePrice: number }) =>
-        Math.abs(item.absoluteSalePrice) === Math.abs(value)
+        Math.abs(item.absoluteSalePrice) === Math.abs(value),
     )?.salePrice ?? value;
 
   return (
@@ -105,9 +105,14 @@ export default function RevenueBarChartContainer({ data }: TProps) {
     absoluteSalePrice: Math.abs(item.salePrice),
   }));
 
+  const chartData =
+    transformedData.length > 0
+      ? transformedData
+      : [{ categoryName: "No Data", salePrice: 0, absoluteSalePrice: 0 }];
+
   return (
     <div className="chart-container border-none w-[95%] max-w-3xl mx-auto rounded-lg overflow-hidden">
-      <BarChartComponent height={500} title="" data={transformedData}>
+      <BarChartComponent height={500} title="" data={chartData}>
         <XAxis tick={false} dataKey={"categoryName"}>
           <Label
             angle={-360}
