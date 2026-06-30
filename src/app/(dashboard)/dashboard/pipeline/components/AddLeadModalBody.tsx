@@ -330,7 +330,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
             Vehicle Information <span className="text-[#E9405F]">*</span>
           </h3>
           <p className="mt-0.5 text-xs text-slate-400">
-            Select year, make &amp; model — or use the field below for unlisted
+            Select year, make &amp; model or use the field below for unlisted
             vehicles
           </p>
         </div>
