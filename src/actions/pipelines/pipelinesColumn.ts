@@ -7,8 +7,11 @@ import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
 
 // Fetch all columns by type
-export const getColumnsByType = async (type: string) => {
-  const companyId = await getCompanyId();
+export const getColumnsByType = async (
+  type: string,
+  companyIdOverride?: number,
+) => {
+  const companyId = companyIdOverride ?? (await getCompanyId());
   let columns = await db.column.findMany({
     where: { type, companyId: companyId },
     include: {
