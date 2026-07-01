@@ -37,6 +37,9 @@ type TGetLeadsWithCount = {
   // YYYY-MM-DD strings so the action can parse them directly in the company
   // timezone — avoids off-by-one-day errors when browser tz ≠ company tz.
   dateRange?: [string | null, string | null];
+  // Explicit company override for callers without a next-auth session (mobile /
+  // external Bearer-token requests) where getCompanyId() would return undefined.
+  companyId?: number;
 };
 
 function makeLeadSearchCondition(searchTerm?: string) {
@@ -473,12 +476,13 @@ export const getLeadsWithCountOptimized = async ({
   status,
   orderBy,
   dateRange,
+  companyId: companyIdOverride,
 }: TGetLeadsWithCount): Promise<{
   leads: LeadWithSalesUser[];
   totalCount: number;
 }> => {
-  const companyId = await getCompanyId();
-  const companyTimezone = await getCompanyTimezone();
+  const companyId = companyIdOverride ?? (await getCompanyId());
+  const companyTimezone = await getCompanyTimezone(companyId);
   const timezone = companyTimezone?.timezone;
 
   try {
