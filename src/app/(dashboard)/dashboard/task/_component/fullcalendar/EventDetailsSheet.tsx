@@ -230,6 +230,7 @@ export const EventDetailsSheet = ({
                     invoiceGrandTotal={originalData?.invoiceGrandTotal}
                     serviceCategoryName={originalData?.serviceCategory?.name}
                     assignedUsers={originalData?.assignedUsers}
+                    reminderTimes={originalData?.times}
                     aptIconClass={aptIconClass}
                     aptIconStyle={aptIconStyle}
                   />
