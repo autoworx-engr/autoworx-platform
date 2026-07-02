@@ -108,8 +108,7 @@ export async function GET(
       db.client.findMany({
         where,
         orderBy: { firstName: "asc" },
-        skip,
-        take: limit,
+        ...(search ? {} : { skip, take: limit }),
         select: {
           id: true,
           firstName: true,
@@ -125,13 +124,21 @@ export async function GET(
     return NextResponse.json({
       success: true,
       data: clients,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasMore: skip + clients.length < total,
-      },
+      pagination: search
+        ? {
+            page: 1,
+            limit: total,
+            total,
+            totalPages: 1,
+            hasMore: false,
+          }
+        : {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+            hasMore: skip + clients.length < total,
+          },
     });
   } catch (error) {
     console.error("ESTIMATE CLIENTS ERROR:", error);

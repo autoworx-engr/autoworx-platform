@@ -128,8 +128,7 @@ export async function GET(
       db.labor.findMany({
         where,
         orderBy: { id: "desc" },
-        skip,
-        take: limit,
+        ...(search ? {} : { skip, take: limit }),
         include: {
           tags: {
             include: { tag: true },
@@ -148,13 +147,21 @@ export async function GET(
     return NextResponse.json({
       success: true,
       data: laborsWithFlatTags,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasMore: skip + labors.length < total,
-      },
+      pagination: search
+        ? {
+            page: 1,
+            limit: total,
+            total,
+            totalPages: 1,
+            hasMore: false,
+          }
+        : {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+            hasMore: skip + labors.length < total,
+          },
     });
   } catch (error) {
     console.error("ESTIMATE LABORS ERROR:", error);

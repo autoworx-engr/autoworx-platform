@@ -355,8 +355,7 @@ export async function GET(
       db.invoiceTemplate.findMany({
         where,
         orderBy: { createdAt: "desc" },
-        skip,
-        take: limit,
+        ...(searchTerm ? {} : { skip, take: limit }),
         select: {
           id: true,
           title: true,
@@ -391,13 +390,21 @@ export async function GET(
     return NextResponse.json({
       success: true,
       data,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasMore: skip + templates.length < total,
-      },
+      pagination: searchTerm
+        ? {
+            page: 1,
+            limit: total,
+            total,
+            totalPages: 1,
+            hasMore: false,
+          }
+        : {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+            hasMore: skip + templates.length < total,
+          },
     });
   } catch (error) {
     console.error("TEMPLATE LIST ERROR:", error);

@@ -360,8 +360,7 @@ export async function GET(
       db.invoice.findMany({
         where,
         orderBy: { updatedAt: "desc" },
-        skip,
-        take: limit,
+        ...(searchTerm ? {} : { skip, take: limit }),
         include: {
           client: {
             select: {
@@ -394,13 +393,21 @@ export async function GET(
     return NextResponse.json({
       success: true,
       data: estimates,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasMore: skip + estimates.length < total,
-      },
+      pagination: searchTerm
+        ? {
+            page: 1,
+            limit: total,
+            total,
+            totalPages: 1,
+            hasMore: false,
+          }
+        : {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+            hasMore: skip + estimates.length < total,
+          },
     });
   } catch (error) {
     console.error("ESTIMATE LIST ERROR:", error);

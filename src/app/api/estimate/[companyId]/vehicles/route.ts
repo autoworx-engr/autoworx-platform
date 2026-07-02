@@ -123,8 +123,7 @@ export async function GET(
       db.vehicle.findMany({
         where,
         orderBy: { createdAt: "desc" },
-        skip,
-        take: limit,
+        ...(search ? {} : { skip, take: limit }),
         select: {
           id: true,
           make: true,
@@ -141,13 +140,21 @@ export async function GET(
     return NextResponse.json({
       success: true,
       data: vehicles,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasMore: skip + vehicles.length < total,
-      },
+      pagination: search
+        ? {
+            page: 1,
+            limit: total,
+            total,
+            totalPages: 1,
+            hasMore: false,
+          }
+        : {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+            hasMore: skip + vehicles.length < total,
+          },
     });
   } catch (error) {
     console.error("ESTIMATE VEHICLES ERROR:", error);

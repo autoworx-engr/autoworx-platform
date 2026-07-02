@@ -118,8 +118,7 @@ export async function GET(
       db.service.findMany({
         where,
         orderBy: { id: "desc" },
-        skip,
-        take: limit,
+        ...(search ? {} : { skip, take: limit }),
         select: {
           id: true,
           name: true,
@@ -133,13 +132,21 @@ export async function GET(
     return NextResponse.json({
       success: true,
       data: services,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasMore: skip + services.length < total,
-      },
+      pagination: search
+        ? {
+            page: 1,
+            limit: total,
+            total,
+            totalPages: 1,
+            hasMore: false,
+          }
+        : {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+            hasMore: skip + services.length < total,
+          },
     });
   } catch (error) {
     console.error("ESTIMATE SERVICES ERROR:", error);
