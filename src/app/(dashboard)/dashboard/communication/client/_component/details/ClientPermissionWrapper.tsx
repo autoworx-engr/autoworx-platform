@@ -8,14 +8,12 @@ type Props = {
   companyId: number;
   clientId: number;
   initialValue: boolean;
-  companyIsSalesAgent?: boolean;
 };
 
 export default function ClientPermissionWrapper({
   companyId,
   clientId,
   initialValue,
-  companyIsSalesAgent = true,
 }: Props) {
   const { data: entitlementsRes, loading } = useServerGet(
     getEntitlements,
@@ -32,7 +30,7 @@ export default function ClientPermissionWrapper({
     <ClientSalesAgentToggle
       clientId={clientId}
       initialValue={initialValue}
-      isRestricted={!planEnabled || !companyIsSalesAgent}
+      isRestricted={!planEnabled}
     />
   );
 }
