@@ -33,16 +33,7 @@ export default async function ClientHeading({ client, vehicles = [] }: TProps) {
     },
   });
 
-  const companyPromise = db.company.findUnique({
-    where: { id: client.companyId },
-    select: { isSalesAgent: true },
-  });
-
-  const [lead, invoices, company] = await Promise.all([
-    leadPromise,
-    invoicesPromise,
-    companyPromise,
-  ]);
+  const [lead, invoices] = await Promise.all([leadPromise, invoicesPromise]);
 
   return (
     <div
@@ -73,7 +64,6 @@ export default async function ClientHeading({ client, vehicles = [] }: TProps) {
           companyId={client?.companyId}
           clientId={client.id}
           initialValue={client.isSalesAgent ?? false}
-          companyIsSalesAgent={company?.isSalesAgent ?? true}
         />
       </div>
 
