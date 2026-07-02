@@ -49,6 +49,16 @@ function serialize(appt: Record<string, unknown>) {
   };
 }
 
+type ParsedDate = { ok: true; value: Date | null | undefined } | { ok: false };
+
+function parseEditableDate(value: unknown): ParsedDate {
+  if (value === undefined) return { ok: true, value: undefined };
+  if (!value) return { ok: true, value: null };
+  const parsed = new Date(value as string);
+  if (isNaN(parsed.getTime())) return { ok: false };
+  return { ok: true, value: parsed };
+}
+
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function GET(_req: NextRequest, context: Ctx) {
@@ -102,13 +112,29 @@ export async function PATCH(req: NextRequest, context: Ctx) {
       timezone,
     } = body;
 
+    const parsedDate = parseEditableDate(date);
+    if (!parsedDate.ok) {
+      return NextResponse.json(
+        { success: false, message: "Invalid date format" },
+        { status: 400 },
+      );
+    }
+
+    const parsedEndDate = parseEditableDate(endDate);
+    if (!parsedEndDate.ok) {
+      return NextResponse.json(
+        { success: false, message: "Invalid end date format" },
+        { status: 400 },
+      );
+    }
+
     const updated = await db.appointment.update({
       where: { id: Number(id) },
       data: {
         ...(title !== undefined && { title }),
-        ...(date !== undefined && { date: date ? new Date(date) : null }),
-        ...(endDate !== undefined && {
-          endDate: endDate ? new Date(endDate) : null,
+        ...(parsedDate.value !== undefined && { date: parsedDate.value }),
+        ...(parsedEndDate.value !== undefined && {
+          endDate: parsedEndDate.value,
         }),
         ...(startTime !== undefined && { startTime }),
         ...(endTime !== undefined && { endTime }),
