@@ -1,6 +1,7 @@
 "use server";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
+import { getOrCreatePendingColumn } from "@/lib/ensureShopColumns";
 import { ServerAction } from "@/types/action";
 import { TErrorHandler } from "@/types/globalError";
 import {
@@ -116,17 +117,9 @@ export async function addAppointment(
         where: { id: appointment.draftEstimate },
       });
 
-      const pendingColumn = await db.column.findFirst({
-        where: { title: "Pending", companyId },
-      });
-
-      if (!pendingColumn) {
-        throw new Error(
-          "Pending column not found for draft estimate at new appointment",
-        );
-      }
-
       if (!draftEstimate) {
+        const pendingColumn = await getOrCreatePendingColumn(companyId);
+
         await db.invoice.create({
           data: {
             id: appointment.draftEstimate,
