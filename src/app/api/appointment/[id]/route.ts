@@ -85,6 +85,7 @@ export async function PATCH(req: NextRequest, context: Ctx) {
     const {
       title,
       date,
+      endDate,
       startTime,
       endTime,
       clientId,
@@ -97,6 +98,7 @@ export async function PATCH(req: NextRequest, context: Ctx) {
       reminderEmailTemplateId,
       reminderEmailTemplateStatus,
       assignedUsers,
+      times,
       timezone,
     } = body;
 
@@ -105,6 +107,9 @@ export async function PATCH(req: NextRequest, context: Ctx) {
       data: {
         ...(title !== undefined && { title }),
         ...(date !== undefined && { date: date ? new Date(date) : null }),
+        ...(endDate !== undefined && {
+          endDate: endDate ? new Date(endDate) : null,
+        }),
         ...(startTime !== undefined && { startTime }),
         ...(endTime !== undefined && { endTime }),
         ...(clientId !== undefined && { clientId }),
@@ -124,6 +129,7 @@ export async function PATCH(req: NextRequest, context: Ctx) {
         ...(reminderEmailTemplateStatus !== undefined && {
           reminderEmailTemplateStatus,
         }),
+        ...(times !== undefined && { times }),
         ...(timezone !== undefined && { timezone }),
       },
       include: INCLUDE,
