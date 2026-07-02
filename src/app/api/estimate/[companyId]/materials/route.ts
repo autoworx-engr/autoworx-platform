@@ -275,7 +275,7 @@ export async function GET(
     if (search) {
       where.OR = [
         { name: { contains: search, mode: "insensitive" } },
-        { notes: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } },
       ];
     }
 
@@ -283,8 +283,7 @@ export async function GET(
       db.inventoryProduct.findMany({
         where,
         orderBy: { name: "asc" },
-        skip,
-        take: limit,
+        ...(search ? {} : { skip, take: limit }),
         include: {
           tags: {
             include: { tag: true },
@@ -306,13 +305,21 @@ export async function GET(
     return NextResponse.json({
       success: true,
       data: materials,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasMore: skip + products.length < total,
-      },
+      pagination: search
+        ? {
+            page: 1,
+            limit: total,
+            total,
+            totalPages: 1,
+            hasMore: false,
+          }
+        : {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+            hasMore: skip + products.length < total,
+          },
     });
   } catch (error) {
     console.error("ESTIMATE MATERIALS ERROR:", error);
