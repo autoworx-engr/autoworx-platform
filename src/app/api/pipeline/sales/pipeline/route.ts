@@ -1,4 +1,5 @@
 import { getSalePipelineColumns } from "@/actions/pipelines/getSalePipelineColumns";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -32,6 +33,17 @@ import { NextRequest, NextResponse } from "next/server";
  */
 export async function GET(request: NextRequest) {
   try {
+    // Resolve company from the authenticated principal (Bearer token for mobile
+    // or next-auth session for web). Never trust a client-supplied companyId —
+    // doing so would let a caller read another company's pipeline.
+    const companyId = (await getAuthPrincipal(request))?.companyId ?? null;
+    if (!companyId) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const type = "sales"; // Fixed type as this is the sales pipeline API
     const searchTerm = searchParams.get("searchTerm") || undefined;
@@ -43,8 +55,6 @@ export async function GET(request: NextRequest) {
     const orderByParam = searchParams.get("orderBy");
     const orderBy: "asc" | "desc" =
       orderByParam === "asc" || orderByParam === "desc" ? orderByParam : "desc";
-    const companyIdParam = searchParams.get("companyId");
-    const companyId = companyIdParam ? parseInt(companyIdParam, 10) : undefined;
 
     const columns = await getSalePipelineColumns(
       type,
