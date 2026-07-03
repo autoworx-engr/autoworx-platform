@@ -76,6 +76,14 @@ import { NextRequest, NextResponse } from "next/server";
  */
 export async function GET(request: NextRequest) {
   try {
+    const companyId = (await getAuthPrincipal(request))?.companyId ?? null;
+    if (!companyId) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+
     const searchParams = request.nextUrl.searchParams;
 
     const columnIdStr = searchParams.get("columnId");
@@ -124,6 +132,7 @@ export async function GET(request: NextRequest) {
       status,
       orderBy,
       dateRange,
+      companyId,
     });
 
     return NextResponse.json({
