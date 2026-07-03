@@ -10,7 +10,11 @@ import {
   DollarSign,
   Tag,
   Users,
+  BellRing,
 } from "lucide-react";
+import moment from "moment";
+
+type ReminderTime = { date: string; time: string };
 
 interface AppointmentDetailCardProps {
   dateLabel?: string;
@@ -22,8 +26,17 @@ interface AppointmentDetailCardProps {
   invoiceGrandTotal?: number | null;
   serviceCategoryName?: string;
   assignedUsers?: any[];
+  reminderTimes?: ReminderTime[] | null;
   aptIconClass: string;
   aptIconStyle?: React.CSSProperties;
+}
+
+function formatReminder({ date, time }: ReminderTime): string {
+  const d = moment.utc(date);
+  const dateStr = d.isValid() ? d.format("MMM D, YYYY") : date;
+  const t = moment.utc(time, ["HH:mm", "HH:mm:ss"], true);
+  const timeStr = t.isValid() ? t.format("h:mm A") : time;
+  return `${dateStr} · ${timeStr}`;
 }
 
 export function AppointmentDetailCard({
@@ -36,6 +49,7 @@ export function AppointmentDetailCard({
   invoiceGrandTotal,
   serviceCategoryName,
   assignedUsers,
+  reminderTimes,
   aptIconClass,
   aptIconStyle,
 }: AppointmentDetailCardProps) {
@@ -135,6 +149,32 @@ export function AppointmentDetailCard({
                 .filter(Boolean)
                 .join(", ")}
             </p>
+          </div>
+        </div>
+      )}
+
+      {reminderTimes && reminderTimes.length > 0 && (
+        <div className="flex items-start gap-3">
+          <div
+            className={`p-2 rounded-lg shrink-0 ${aptIconClass}`}
+            style={aptIconStyle}
+          >
+            <BellRing className="size-4" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-0.5">
+              Schedule Reminders
+            </p>
+            <div className="space-y-0.5">
+              {reminderTimes.map((t, i) => (
+                <p
+                  key={`${t.date}-${t.time}-${i}`}
+                  className="text-sm font-medium text-gray-900"
+                >
+                  {formatReminder(t)}
+                </p>
+              ))}
+            </div>
           </div>
         </div>
       )}
