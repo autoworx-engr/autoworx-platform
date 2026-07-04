@@ -331,7 +331,7 @@ export async function GET(
       // Resolve matching invoice IDs across client, vehicle and column fields
       // via raw SQL (mirrors src/lib/fetchAndTransformData.ts), since Prisma
       // can't search the Int year column or concatenated vehicle strings.
-      const searchPattern = `%${searchTerm.trim()}%`;
+      const searchPattern = `%${searchTerm.trim().replace(/\s+/g, " ")}%`;
       const matches = await db.$queryRaw<{ id: string }[]>(Prisma.sql`
         SELECT i.id
         FROM "Invoice" i

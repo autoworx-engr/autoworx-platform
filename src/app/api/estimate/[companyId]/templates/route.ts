@@ -2,6 +2,7 @@ import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { customAlphabet } from "nanoid";
+import { buildWordSearchAnd } from "@/lib/wordSearch";
 
 /**
  * @swagger
@@ -347,8 +348,9 @@ export async function GET(
       }
     }
 
-    if (searchTerm) {
-      where.title = { contains: searchTerm, mode: "insensitive" };
+    const searchAnd = buildWordSearchAnd(searchTerm, ["title"]);
+    if (searchAnd) {
+      where.AND = searchAnd;
     }
 
     const [templates, total] = await Promise.all([
@@ -369,7 +371,7 @@ export async function GET(
           damageNotes: true,
           columnId: true,
           column: {
-            select: { id: true, title: true },
+            select: { id: true, title: true, bgColor: true, textColor: true },
           },
           tags: {
             include: { tag: true },

@@ -1,6 +1,7 @@
 import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { buildWordSearchAnd } from "@/lib/wordSearch";
 
 /**
  * @swagger
@@ -107,11 +108,9 @@ export async function GET(
       where.categoryId = categoryId;
     }
 
-    if (search) {
-      where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        { description: { contains: search, mode: "insensitive" } },
-      ];
+    const searchAnd = buildWordSearchAnd(search, ["name", "description"]);
+    if (searchAnd) {
+      where.AND = searchAnd;
     }
 
     const [services, total] = await Promise.all([

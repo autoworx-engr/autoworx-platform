@@ -1,6 +1,7 @@
 import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { buildWordSearchAnd } from "@/lib/wordSearch";
 
 /**
  * @swagger
@@ -96,15 +97,13 @@ export async function GET(
 
     const where: Record<string, any> = { companyId };
 
-    if (search) {
-      const terms = search.trim().split(/\s+/).filter(Boolean);
-      where.AND = terms.map((term) => ({
-        OR: [
-          { firstName: { contains: term, mode: "insensitive" } },
-          { lastName: { contains: term, mode: "insensitive" } },
-          { email: { contains: term, mode: "insensitive" } },
-        ],
-      }));
+    const searchAnd = buildWordSearchAnd(search, [
+      "firstName",
+      "lastName",
+      "email",
+    ]);
+    if (searchAnd) {
+      where.AND = searchAnd;
     }
 
     const [clients, total] = await Promise.all([
