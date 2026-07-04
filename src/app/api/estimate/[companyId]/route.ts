@@ -380,7 +380,7 @@ export async function GET(
             },
           },
           column: {
-            select: { id: true, title: true },
+            select: { id: true, title: true, bgColor: true, textColor: true },
           },
           tags: {
             include: { tag: true },
