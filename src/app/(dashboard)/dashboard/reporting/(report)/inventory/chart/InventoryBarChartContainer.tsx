@@ -113,10 +113,10 @@ const InventoryBarChartContainer = ({ chartData, yAxisLabel }: TProps) => {
 
   // Format the purchasesData to ensure salePrice values have toFixed(2) applied
   const formattedChartData =
-    chartData.length > 0
+    chartData && chartData.length > 0
       ? chartData.map((item) => ({
-          categoryName: item.categoryName || "Uncategorized",
-          salePrice: Number(Number(item.salePrice).toFixed(2)),
+          categoryName: item?.categoryName || "Uncategorized",
+          salePrice: Number(Number(item?.salePrice || 0).toFixed(2)),
         }))
       : [{ categoryName: "No Data", salePrice: 0 }];
 
