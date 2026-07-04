@@ -40,6 +40,10 @@ type TGetLeadsWithCount = {
   // Explicit company override for callers without a next-auth session (mobile /
   // external Bearer-token requests) where getCompanyId() would return undefined.
   companyId?: number;
+  // Exclude leads removed from the pipeline (columnId === null) so paginated
+  // totalCount/take match what mobile's list actually renders. Opt-in: the web
+  // Sales Leads table still shows no-stage leads as "Unqualified".
+  excludeNoStage?: boolean;
 };
 
 function makeLeadSearchCondition(searchTerm?: string) {
@@ -477,6 +481,7 @@ export const getLeadsWithCountOptimized = async ({
   orderBy,
   dateRange,
   companyId: companyIdOverride,
+  excludeNoStage,
 }: TGetLeadsWithCount): Promise<{
   leads: LeadWithSalesUser[];
   totalCount: number;
@@ -487,9 +492,16 @@ export const getLeadsWithCountOptimized = async ({
 
   try {
     const searchCond = makeLeadSearchCondition(searchTerm);
+    let columnIdFilter: Prisma.LeadWhereInput = {};
+    if (columnId) {
+      columnIdFilter = { columnId };
+    } else if (excludeNoStage) {
+      columnIdFilter = { columnId: { not: null } };
+    }
+
     const query: Prisma.LeadWhereInput = {
       companyId,
-      ...(columnId && { columnId }),
+      ...columnIdFilter,
       ...(searchCond ?? {}),
       ...(assignedTo && { assignedSalesUserId: parseInt(assignedTo) }),
       ...(source && { source }),
