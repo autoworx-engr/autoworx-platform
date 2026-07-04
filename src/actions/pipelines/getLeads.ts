@@ -564,9 +564,7 @@ export const getLeadsWithCountOptimized = async ({
               lastName: true,
             },
           },
-          tasks: {
-            take: 5, // Limit tasks to reduce payload
-          },
+          tasks: true,
           _count: {
             select: { tasks: true },
           },
