@@ -97,11 +97,14 @@ export async function GET(
     const where: Record<string, any> = { companyId };
 
     if (search) {
-      where.OR = [
-        { firstName: { contains: search, mode: "insensitive" } },
-        { lastName: { contains: search, mode: "insensitive" } },
-        { email: { contains: search, mode: "insensitive" } },
-      ];
+      const terms = search.trim().split(/\s+/).filter(Boolean);
+      where.AND = terms.map((term) => ({
+        OR: [
+          { firstName: { contains: term, mode: "insensitive" } },
+          { lastName: { contains: term, mode: "insensitive" } },
+          { email: { contains: term, mode: "insensitive" } },
+        ],
+      }));
     }
 
     const [clients, total] = await Promise.all([
