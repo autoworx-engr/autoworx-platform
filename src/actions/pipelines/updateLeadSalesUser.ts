@@ -1,5 +1,4 @@
 "use server";
-import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import { sendLeadAssignNotification } from "@/lib/notification/pipeline-notify";
 import { revalidatePath } from "next/cache";

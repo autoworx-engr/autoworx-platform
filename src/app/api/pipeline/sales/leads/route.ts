@@ -57,6 +57,11 @@ import { NextRequest, NextResponse } from "next/server";
  *           enum: [asc, desc]
  *         description: Sort direction by createdAt (default desc). Must match the initial load order.
  *       - in: query
+ *         name: excludeNoStage
+ *         schema:
+ *           type: boolean
+ *         description: When true, exclude leads with no pipeline stage (columnId null) from results and totalCount. Ignored if columnId is set. Default false.
+ *       - in: query
  *         name: startDate
  *         schema:
  *           type: string
@@ -76,6 +81,14 @@ import { NextRequest, NextResponse } from "next/server";
  */
 export async function GET(request: NextRequest) {
   try {
+    const companyId = (await getAuthPrincipal(request))?.companyId ?? null;
+    if (!companyId) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+
     const searchParams = request.nextUrl.searchParams;
 
     const columnIdStr = searchParams.get("columnId");
@@ -92,6 +105,12 @@ export async function GET(request: NextRequest) {
     const source = searchParams.get("source") || undefined;
     const service = searchParams.get("service") || undefined;
     const status = searchParams.get("status") || undefined;
+
+    // Mobile's list view hides no-stage (columnId null) leads client-side;
+    // excluding them here keeps totalCount/page size in sync with what the
+    // list renders so infinite scroll doesn't stall. Opt-in — web still
+    // shows no-stage leads as "Unqualified".
+    const excludeNoStage = searchParams.get("excludeNoStage") === "true";
 
     // Mobile may send a sort field ("createdAt", "updatedAt", ...); getLeads
     // expects a direction. Treat any non-direction value as the default "desc"
@@ -124,6 +143,8 @@ export async function GET(request: NextRequest) {
       status,
       orderBy,
       dateRange,
+      companyId,
+      excludeNoStage,
     });
 
     return NextResponse.json({
