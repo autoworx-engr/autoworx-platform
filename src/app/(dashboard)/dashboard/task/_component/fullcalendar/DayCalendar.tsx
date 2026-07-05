@@ -5,10 +5,12 @@ import { getWeekStartNumber } from "../../_utils/utils.DateSelector";
 export default function DayCalendar({
   selectedDate,
   onSelect,
+  onStep,
   weekStart = 1,
 }: {
   selectedDate: string;
   onSelect: (date: string) => void;
+  onStep?: (date: string) => void;
   weekStart: number | string;
 }) {
   const [viewDate, setViewDate] = useState(moment(selectedDate));
@@ -59,13 +61,14 @@ export default function DayCalendar({
 
   const days = getDaysInMonth();
 
-  const goToPrevMonth = () => {
-    setViewDate(moment(viewDate).subtract(1, "month"));
+  const stepDay = (delta: number) => {
+    const next = moment(selectedDate).add(delta, "day");
+    setViewDate(next);
+    (onStep ?? onSelect)(next.format("YYYY-MM-DD"));
   };
 
-  const goToNextMonth = () => {
-    setViewDate(moment(viewDate).add(1, "month"));
-  };
+  const goToPrevDay = () => stepDay(-1);
+  const goToNextDay = () => stepDay(1);
 
   const goToToday = () => {
     setViewDate(moment());
@@ -80,7 +83,7 @@ export default function DayCalendar({
         </div>
         <div className="flex gap-2">
           <button
-            onClick={goToPrevMonth}
+            onClick={goToPrevDay}
             className="rounded-full p-1 hover:bg-gray-100"
           >
             &lt;
@@ -92,7 +95,7 @@ export default function DayCalendar({
             Today
           </button>
           <button
-            onClick={goToNextMonth}
+            onClick={goToNextDay}
             className="rounded-full p-1 hover:bg-gray-100"
           >
             &gt;
