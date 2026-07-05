@@ -421,7 +421,7 @@ export default function AppointmentForm({
             name="notes"
             placeholder="Notes"
             className={cn(
-              "h-20 w-full rounded-md border border-slate-300 outline-none bg-background px-2 py-0.5 leading-6 transition-all duration-300 thin-scrollbar",
+              "min-h-[96px] max-h-[220px] w-full resize-y overflow-y-auto rounded-md border border-slate-300 outline-none bg-background px-2 py-0.5 leading-6 transition-all duration-300 thin-scrollbar",
               "bg-white/80 backdrop-blur-sm",
               "text-slate-600 placeholder:text-slate-400",
               "focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/40",
