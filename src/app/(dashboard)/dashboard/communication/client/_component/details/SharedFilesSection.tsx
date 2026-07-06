@@ -105,10 +105,7 @@ function ImageGrid({
   }
 
   return (
-    <div
-      ref={scrollRef}
-      className="thin-scrollbar max-h-[280px] overflow-y-auto pr-1"
-    >
+    <div ref={scrollRef} className="thin-scrollbar h-full overflow-y-auto pr-1">
       <div className="space-y-3">
         {groups.map((group) => (
           <div key={group.label}>
@@ -157,10 +154,7 @@ function ChipList({
   }
 
   return (
-    <div
-      ref={scrollRef}
-      className="thin-scrollbar max-h-[280px] overflow-y-auto pr-1"
-    >
+    <div ref={scrollRef} className="thin-scrollbar h-full overflow-y-auto pr-1">
       <div className="space-y-3">
         {groups.map((group) => (
           <div key={group.label}>
@@ -244,8 +238,8 @@ export default function SharedFilesSection({
   };
 
   return (
-    <section className="rounded-2xl border border-zinc-200/70 bg-white p-4 shadow-sm transition-colors dark:border-white/10 dark:bg-zinc-900/60">
-      <header className="mb-3 flex items-center justify-between">
+    <section className="flex h-full flex-col rounded-2xl border border-zinc-200/70 bg-white p-4 shadow-sm transition-colors dark:border-white/10 dark:bg-zinc-900/60">
+      <header className="mb-3 flex shrink-0 items-center justify-between">
         <h3 className="text-sm font-semibold tracking-tight text-zinc-800 dark:text-zinc-100">
           Shared Files
         </h3>
@@ -254,7 +248,7 @@ export default function SharedFilesSection({
         </span>
       </header>
 
-      <div className="mb-4 flex gap-0.5 border-b border-zinc-100 dark:border-white/10">
+      <div className="mb-4 flex shrink-0 gap-0.5 border-b border-zinc-100 dark:border-white/10">
         {TABS.map((tab) => (
           <button
             key={tab.id}
@@ -279,24 +273,26 @@ export default function SharedFilesSection({
         ))}
       </div>
 
-      {activeTab === "email" && (
-        <ImageGrid attachments={emailAttachments} label="Email" />
-      )}
-      {activeTab === "sms" && (
-        <ImageGrid attachments={smsAttachments} label="SMS" />
-      )}
-      {activeTab === "messenger" && (
-        <ImageGrid attachments={messengerAttachments} label="Messenger" />
-      )}
-      {activeTab === "instagram" && (
-        <ImageGrid attachments={instagramAttachments} label="Instagram" />
-      )}
-      {activeTab === "docs" && (
-        <ChipList attachments={allDocs} emptyText="No docs shared yet." />
-      )}
-      {activeTab === "audio" && (
-        <ChipList attachments={allAudio} emptyText="No audio shared yet." />
-      )}
+      <div className="min-h-0 flex-1">
+        {activeTab === "email" && (
+          <ImageGrid attachments={emailAttachments} label="Email" />
+        )}
+        {activeTab === "sms" && (
+          <ImageGrid attachments={smsAttachments} label="SMS" />
+        )}
+        {activeTab === "messenger" && (
+          <ImageGrid attachments={messengerAttachments} label="Messenger" />
+        )}
+        {activeTab === "instagram" && (
+          <ImageGrid attachments={instagramAttachments} label="Instagram" />
+        )}
+        {activeTab === "docs" && (
+          <ChipList attachments={allDocs} emptyText="No docs shared yet." />
+        )}
+        {activeTab === "audio" && (
+          <ChipList attachments={allAudio} emptyText="No audio shared yet." />
+        )}
+      </div>
     </section>
   );
 }
