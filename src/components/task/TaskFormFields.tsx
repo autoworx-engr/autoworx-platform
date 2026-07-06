@@ -93,6 +93,7 @@ export function TaskFormFields({
         <input
           type="text"
           name="title"
+          maxLength={100}
           className={cn(
             "mt-2 rounded-md border-2 border-gray-500 p-1",
             slimInputClassName,

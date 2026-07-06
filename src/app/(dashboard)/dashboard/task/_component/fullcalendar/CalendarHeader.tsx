@@ -16,6 +16,7 @@ import { Appointment, Lead } from "@prisma/client";
 import CalendarSearch from "./CalendarSearch";
 import DateSelector from "./DateSelector";
 import DisplayDate from "./DisplayDate";
+import MonthYearPicker from "./MonthYearPicker";
 import Settings from "./Settings";
 import {
   appointmentQueryKey,
@@ -106,8 +107,14 @@ export function CalendarHeader({
     calendarRef.current?.getApi().today();
   };
 
-  const handlePrev = () => calendarRef.current?.getApi().prev();
-  const handleNext = () => calendarRef.current?.getApi().next();
+  const stepDay = (delta: number) => {
+    const next = date.clone().add(delta, "day");
+    setDate(next.format("YYYY-MM-DD"));
+    setMonth(next.format("YYYY-MM"));
+    setWeek(next.format("YYYY-[W]WW"));
+  };
+  const handlePrev = () => stepDay(-1);
+  const handleNext = () => stepDay(1);
 
   const handleViewChange = (value: string) => {
     router.push(`/dashboard/task/${value}`);
@@ -258,9 +265,10 @@ export function CalendarHeader({
 
       {/* ── Row 2: Date title + Stats ─────────────────── */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t px-3 py-2 sm:px-4">
-        {/* Date */}
+        {/* Date — month view gets clickable month + year pickers; other views
+            keep the descriptive title (day/week selection is via DateSelector). */}
         <h2 className="mr-auto text-base font-semibold text-slate-900 sm:text-lg">
-          <DisplayDate type={type} />
+          {type === "month" ? <MonthYearPicker /> : <DisplayDate type={type} />}
         </h2>
 
         {/* Stats */}

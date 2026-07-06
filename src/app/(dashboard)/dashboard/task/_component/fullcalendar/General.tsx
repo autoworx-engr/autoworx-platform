@@ -4,6 +4,7 @@ import { CalendarSettings, EmployeeType } from "@prisma/client";
 import { DialogClose, DialogFooter } from "@/components/Dialog";
 import Submit from "@/components/Submit";
 import { updateCalendarSettings } from "@/actions/appointment/updateCalendarSettings";
+import { successToast, errorToast } from "@/lib/toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { calenderQueryKey } from "../../_constant";
@@ -66,21 +67,31 @@ export default function General({
       return;
     }
 
-    await updateCalendarSettings({
-      weekStart,
-      dayStart,
-      dayEnd,
-      weekend1,
-      weekend2,
-    });
+    try {
+      const result = await updateCalendarSettings({
+        weekStart,
+        dayStart,
+        dayEnd,
+        weekend1,
+        weekend2,
+      });
 
-    queryClient.invalidateQueries({
-      queryKey: [calenderQueryKey.calendarSettings],
-    });
-    queryClient.invalidateQueries({
-      queryKey: [calenderQueryKey.weekStartEndDaysSettings],
-    });
-    onClose();
+      if (result?.type === "success") {
+        queryClient.invalidateQueries({
+          queryKey: [calenderQueryKey.calendarSettings],
+        });
+        queryClient.invalidateQueries({
+          queryKey: [calenderQueryKey.weekStartEndDaysSettings],
+        });
+        setError(null);
+        successToast("Calendar settings saved");
+        onClose();
+      } else {
+        errorToast(result?.message || "Failed to save calendar settings");
+      }
+    } catch {
+      errorToast("Failed to save calendar settings");
+    }
   }
 
   return (
