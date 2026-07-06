@@ -63,7 +63,6 @@ export default function Table({
   const [pageSize, setPageSize] = useState(
     parseInt(take ?? "", 10) || defaultTake,
   );
-  // const [showPagination, setShowPagination] = useState(false);
   const allStatusesFromStore = useListsStore((x) => x.statuses);
 
   const pathname = usePathname();
@@ -84,32 +83,10 @@ export default function Table({
     }
   }, [autoOpenId, pathname]);
 
-  // useEffect(() => {
-  //   if (estimateData.totalEstimate > defaultTake) {
-  //     setShowPagination(true);
-  //   } else {
-  //     setShowPagination(false);
-  //   }
-  // }, [estimateData.totalEstimate]);
-
   // optimize calculation with useMemo
   const showPagination = useMemo(() => {
     return estimateData.totalEstimate > defaultTake;
   }, [estimateData.totalEstimate]);
-
-  // const handlePageChange = (page: number, pageSize?: number) => {
-  //   const searchParams = new URLSearchParams(params.toString());
-  //   searchParams.set("page", page.toString());
-  //   if (pageSize) {
-  //     setPageSize(pageSize);
-  //     searchParams.set("take", pageSize.toString());
-  //   } else {
-  //     searchParams.delete("take");
-  //   }
-  //   setCurrentPage(page);
-  //   const newPath = `${pathname}?${searchParams.toString()}`;
-  //   router.push(newPath);
-  // };
 
   // for preventing unnecessary re-renders
   const handlePageChange = useCallback(
@@ -152,12 +129,12 @@ export default function Table({
   };
 
   return (
-    <div
-      // className="min-h-[65vh] overflow-x-scroll rounded-md bg-background xl:overflow-auto xl:overflow-y-hidden flex flex-col "
-      className="relative max-h-[70vh] overflow-auto rounded-md bg-background flex flex-col 
-    [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-    >
-      <div className="flex-grow ">
+    <div className="relative flex h-[70vh] flex-col rounded-md bg-background">
+      {/* Scrollable area — only the table/cards scroll here, header stays sticky within it */}
+      <div
+        className="flex-1 overflow-auto
+        [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
         {isMax640 ? (
           <div className="flex  w-full flex-col items-center justify-center gap-y-4">
             {estimateData?.data?.map((data, index) => (
@@ -195,15 +172,9 @@ export default function Table({
                 </p>
               </div>
             ) : (
-              <table
-                // className="w-full"
-                className="w-full border-separate border-spacing-0"
-              >
+              <table className="w-full border-separate border-spacing-0">
                 {/* Estimate Header */}
-                <thead
-                  // className="sticky top-0  bg-background"
-                  className="sticky top-0 z-10 bg-white shadow-sm"
-                >
+                <thead className="sticky top-0 z-10 bg-white shadow-sm">
                   <tr className="h-10 border-b">
                     <th className="px-4 py-2 text-left">Invoice ID</th>
                     <th className="px-4 py-2 text-left">Client</th>
@@ -312,24 +283,24 @@ export default function Table({
             )}
           </>
         )}
-        <div className="mt-auto">
-          {showPagination && (
-            <div className="mt-4 flex justify-end ">
-              <Pagination
-                className="custom-pagination"
-                current={currentPage}
-                pageSize={pageSize}
-                total={estimateData.totalEstimate}
-                onChange={handlePageChange}
-                showSizeChanger={true}
-                onShowSizeChange={handlePageChange}
-                size={isMax640 ? "small" : "default"} // Use smaller size on mobile
-                responsive={true}
-              />
-            </div>
-          )}
-        </div>
       </div>
+
+      {/* Fixed footer — outside the scroll area, always pinned to the bottom of the box */}
+      {showPagination && (
+        <div className="flex shrink-0 justify-end bg-white px-4 py-2 shadow-[0_-1px_2px_rgba(0,0,0,0.04)]">
+          <Pagination
+            className="custom-pagination"
+            current={currentPage}
+            pageSize={pageSize}
+            total={estimateData.totalEstimate}
+            onChange={handlePageChange}
+            showSizeChanger={true}
+            onShowSizeChange={handlePageChange}
+            size={isMax640 ? "small" : "default"} // Use smaller size on mobile
+            responsive={true}
+          />
+        </div>
+      )}
     </div>
   );
 }
