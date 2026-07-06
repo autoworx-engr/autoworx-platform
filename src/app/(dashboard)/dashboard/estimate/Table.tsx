@@ -129,7 +129,7 @@ export default function Table({
   };
 
   return (
-    <div className="relative flex h-[70vh] flex-col rounded-md bg-background">
+    <div className="relative flex h-[70vh] flex-col overflow-hidden rounded-md bg-background">
       {/* Scrollable area — only the table/cards scroll here, header stays sticky within it */}
       <div
         className="flex-1 overflow-auto

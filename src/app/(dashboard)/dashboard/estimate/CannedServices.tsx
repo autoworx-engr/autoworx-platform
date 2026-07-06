@@ -130,7 +130,7 @@ export default function CannedServices({
         </div>
       </section>
       {/* Desktop View */}
-      <div className="overflow-y-auto thin-scrollbar hidden flex-1 h-full md:block mt-4 border border-gray-200">
+      <div className="hidden flex-1 h-full md:block mt-4 border border-gray-200">
         <Table className="border-separate border-spacing-0">
           <TableHeader className="bg-gray-50">
             <TableRow>

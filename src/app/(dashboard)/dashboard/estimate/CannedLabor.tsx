@@ -132,7 +132,7 @@ export default function CannedLabor({
         </div>
       </section>
       {/* Desktop View */}
-      <div className="hidden flex-1 h-full overflow-y-auto thin-scrollbar md:block mt-4 border border-gray-200">
+      <div className="hidden flex-1 h-full md:block mt-4 border border-gray-200">
         <Table className="h-full border-separate border-spacing-0">
           <TableHeader className="bg-gray-50">
             <TableRow>
