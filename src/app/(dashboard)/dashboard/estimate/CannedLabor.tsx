@@ -1,18 +1,4 @@
 "use client";
-import { deleteLabor } from "@/actions/estimate/labor/deleteLabor";
-import { CannedLaborItem } from "./CannedLaborItem";
-import { updateLabor } from "@/actions/estimate/labor/updateLabor";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/Dialog";
-import SelectCategory from "@/components/Lists/SelectCategory";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -21,18 +7,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { cn } from "@/lib/cn";
-import { errorToast, successToast } from "@/lib/toast";
-import { useEstimateCreateStore } from "@/stores/estimate-create";
-import { useListsStore } from "@/stores/lists";
-import { formatCurrency } from "@/utils/formatCurrency";
 import { Category, Labor } from "@prisma/client";
-import { Pagination, Popconfirm } from "antd";
-import { SquarePen, Trash2 } from "lucide-react";
+import { Pagination } from "antd";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import FilterBySearchBox from "../reporting/components/filter/FilterBySearchBox";
 import CannedFilterBySelection from "./CannedFilterBySelected";
+import { CannedLaborItem } from "./CannedLaborItem";
 import NewLabor from "./NewLabor";
 
 export type TFilterModalState = {
@@ -151,20 +132,20 @@ export default function CannedLabor({
         </div>
       </section>
       {/* Desktop View */}
-      <div className="hidden flex-1 h-full overflow-y-auto thin-scrollbar md:block mt-4">
-        <Table className="h-full border border-gray-200 rounded-lg">
-          <TableHeader className="sticky top-0 bg-gray-50 border-b border-gray-200">
+      <div className="hidden flex-1 h-full overflow-y-auto thin-scrollbar md:block mt-4 border border-gray-200">
+        <Table className="h-full border-separate border-spacing-0">
+          <TableHeader className="bg-gray-50">
             <TableRow>
-              <TableHead className="font-semibold text-gray-700">
+              <TableHead className="sticky top-0 z-10 bg-gray-50 font-semibold text-gray-700 border-b border-gray-200">
                 Labor Name
               </TableHead>
-              <TableHead className="font-semibold text-gray-700">
+              <TableHead className="sticky top-0 z-10 bg-gray-50 font-semibold text-gray-700 border-b border-gray-200">
                 Category
               </TableHead>
-              <TableHead className="font-semibold text-gray-700">
+              <TableHead className="sticky top-0 z-10 bg-gray-50 font-semibold text-gray-700 border-b border-gray-200">
                 $/Hour
               </TableHead>
-              <TableHead className="font-semibold text-gray-700">
+              <TableHead className="sticky top-0 z-10 bg-gray-50 font-semibold text-gray-700 border-b border-gray-200">
                 Actions
               </TableHead>
             </TableRow>

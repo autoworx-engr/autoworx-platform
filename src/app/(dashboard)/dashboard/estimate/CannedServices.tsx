@@ -1,18 +1,4 @@
 "use client";
-import { deleteService } from "@/actions/estimate/service/deleteService";
-import { CannedServiceItem } from "./CannedServiceItem";
-import { updateService } from "@/actions/estimate/service/updateService";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/Dialog";
-import SelectCategory from "@/components/Lists/SelectCategory";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -21,17 +7,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { cn } from "@/lib/cn";
-import { errorToast, successToast } from "@/lib/toast";
-import { useEstimateCreateStore } from "@/stores/estimate-create";
-import { useListsStore } from "@/stores/lists";
 import { Category, Service } from "@prisma/client";
-import { Pagination, Popconfirm } from "antd";
-import { SquarePen, Trash2 } from "lucide-react";
+import { Pagination } from "antd";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import FilterBySearchBox from "../reporting/components/filter/FilterBySearchBox";
 import CannedFilterBySelection from "./CannedFilterBySelected";
+import { CannedServiceItem } from "./CannedServiceItem";
 import NewService from "./NewService";
 
 const evenColor = "bg-background";
@@ -148,20 +130,20 @@ export default function CannedServices({
         </div>
       </section>
       {/* Desktop View */}
-      <div className="overflow-y-auto thin-scrollbar hidden flex-1 h-full md:block mt-4">
-        <Table className="border border-gray-200 rounded-lg">
-          <TableHeader className="sticky top-0 bg-gray-50 border-b border-gray-200">
+      <div className="overflow-y-auto thin-scrollbar hidden flex-1 h-full md:block mt-4 border border-gray-200">
+        <Table className="border-separate border-spacing-0">
+          <TableHeader className="bg-gray-50">
             <TableRow>
-              <TableHead className="font-semibold text-gray-700">
+              <TableHead className="sticky top-0 z-10 bg-gray-50 font-semibold text-gray-700 border-b border-gray-200">
                 Service Name
               </TableHead>
-              <TableHead className="font-semibold text-gray-700">
+              <TableHead className="sticky top-0 z-10 bg-gray-50 font-semibold text-gray-700 border-b border-gray-200">
                 Category
               </TableHead>
-              <TableHead className="font-semibold text-gray-700">
+              <TableHead className="sticky top-0 z-10 bg-gray-50 font-semibold text-gray-700 border-b border-gray-200">
                 Description
               </TableHead>
-              <TableHead className="font-semibold text-gray-700">
+              <TableHead className="sticky top-0 z-10 bg-gray-50 font-semibold text-gray-700 border-b border-gray-200">
                 Actions
               </TableHead>
             </TableRow>
