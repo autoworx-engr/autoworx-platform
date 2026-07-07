@@ -3,6 +3,7 @@
 import { updateGoogleReviewLink } from "@/actions/settings/updateGoogleReviewLink";
 import { SlimInput } from "@/components/SlimInput";
 import { errorToast, successToast } from "@/lib/toast";
+import { Star } from "lucide-react";
 import { useState } from "react";
 
 interface GoogleReviewSettingsProps {
@@ -74,9 +75,22 @@ export default function GoogleReviewSettings({
   };
 
   return (
-    <div className="mt-4">
-      <h2 className="my-2 text-xl font-semibold">Google Review</h2>
-      <div className="space-y-3 rounded-lg border border-gray-200 p-5">
+    <div className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200/60 bg-white p-4 shadow-sm md:p-6">
+      <div className="flex items-center gap-2 border-b border-slate-200/70 pb-3">
+        <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-300 text-slate-500">
+          <Star className="h-4.5 w-4.5" />
+        </span>
+        <div>
+          <h4 className="text-lg font-semibold text-slate-600">
+            Google Review
+          </h4>
+          <p className="text-sm text-slate-500">
+            Share a link so customers can leave you a review.
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-5 space-y-3">
         <SlimInput
           error={error}
           value={reviewLink}
@@ -87,7 +101,7 @@ export default function GoogleReviewSettings({
           className="focus:border-[#6571FF] focus:outline-none focus:ring-2 focus:ring-[#6571FF]"
         />
 
-        <div className="mt-2 flex gap-2">
+        <div className="flex gap-2">
           <button
             onClick={handleSave}
             disabled={isLoading}

@@ -2,6 +2,7 @@ import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { customAlphabet } from "nanoid";
+import { buildWordSearchAnd } from "@/lib/wordSearch";
 
 /**
  * @swagger
@@ -347,16 +348,16 @@ export async function GET(
       }
     }
 
-    if (searchTerm) {
-      where.title = { contains: searchTerm, mode: "insensitive" };
+    const searchAnd = buildWordSearchAnd(searchTerm, ["title"]);
+    if (searchAnd) {
+      where.AND = searchAnd;
     }
 
     const [templates, total] = await Promise.all([
       db.invoiceTemplate.findMany({
         where,
         orderBy: { createdAt: "desc" },
-        skip,
-        take: limit,
+        ...(searchTerm ? {} : { skip, take: limit }),
         select: {
           id: true,
           title: true,
@@ -370,7 +371,7 @@ export async function GET(
           damageNotes: true,
           columnId: true,
           column: {
-            select: { id: true, title: true },
+            select: { id: true, title: true, bgColor: true, textColor: true },
           },
           tags: {
             include: { tag: true },
@@ -391,13 +392,21 @@ export async function GET(
     return NextResponse.json({
       success: true,
       data,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasMore: skip + templates.length < total,
-      },
+      pagination: searchTerm
+        ? {
+            page: 1,
+            limit: total,
+            total,
+            totalPages: 1,
+            hasMore: false,
+          }
+        : {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+            hasMore: skip + templates.length < total,
+          },
     });
   } catch (error) {
     console.error("TEMPLATE LIST ERROR:", error);

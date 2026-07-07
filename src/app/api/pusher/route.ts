@@ -305,11 +305,11 @@ export async function POST(req: Request) {
     }
 
     if (type === sendType.User && section === "internal") {
-      // send message notification
-      // Send a notification to the user about the new message
-      // Send a notification to the user about the new message
+      // Send a notification to the user about the new message.
+      // Pass the sender id explicitly — mobile app requests have no web session.
       sendInternalMessageNotification({
         toUserId: to,
+        fromUserId: userId,
         message: message,
       });
     }
@@ -329,6 +329,7 @@ export async function POST(req: Request) {
       if (company) {
         sendCollaborationMessageNotification({
           companyId: company?.id,
+          senderUserId: userId,
         });
       }
     }

@@ -46,8 +46,8 @@ export const sendClientEmailNotification = async ({
       });
     }
   } catch (err) {
-    console.log("client email error", err);
-    throw err;
+    // Notification failure must not fail the caller (webhook/API routes)
+    console.error("client email notification error", err);
   }
 };
 
@@ -113,28 +113,30 @@ export const sendClientMessageNotification = async ({
       });
     }
   } catch (err) {
-    console.error(err);
-    throw err;
+    console.error("client message notification error", err);
   }
 };
 
 type TInternalMessageNotification = {
   companyId?: number;
   toUserId: number;
-  message: number;
+  fromUserId?: number;
+  message?: string;
 };
 
 // COMMUNICATION NOTIFICATION FOR INTERNAL MESSAGES
 export const sendInternalMessageNotification = async ({
   toUserId,
-  message,
+  fromUserId,
 }: TInternalMessageNotification) => {
   try {
-    const sessionUser = await getUser();
+    // Pass fromUserId from API routes (mobile app has no web session);
+    // getUser() without an id falls back to the web session.
+    const sender = await getUser(fromUserId);
     const toUser = await getUser(toUserId);
-    const redirectUrl = `/dashboard/communication/internal?id=${sessionUser?.id}`;
-    const sessionUserFullName = `${sessionUser.firstName} ${sessionUser.lastName}`;
-    const description = `New internal message from ${sessionUserFullName}. View it in Autoworx`;
+    const redirectUrl = `/dashboard/communication/internal?id=${sender?.id}`;
+    const senderFullName = `${sender.firstName} ${sender.lastName}`;
+    const description = `New internal message from ${senderFullName}. View it in Autoworx`;
     const title = "New Internal Message";
     sendUserNotifications({
       userId: toUserId,
@@ -149,25 +151,26 @@ export const sendInternalMessageNotification = async ({
       redirectUrl,
     });
   } catch (err) {
-    console.error(err);
-    throw err;
+    console.error("internal message notification error", err);
   }
 };
 
 type TCollaborationMessageNotification = {
   companyId: number;
+  senderUserId?: number;
   sendRoles?: EmployeeType[];
 };
 // COMMUNICATION NOTIFICATION FOR COLLABORATION MESSAGES
 export const sendCollaborationMessageNotification = async ({
   companyId,
+  senderUserId,
   sendRoles = ["Admin", "Manager", "Sales"],
 }: TCollaborationMessageNotification) => {
-  const company = await db.company.findUniqueOrThrow({
-    where: { id: companyId },
-  });
-
   try {
+    const company = await db.company.findUniqueOrThrow({
+      where: { id: companyId },
+    });
+
     const getUsers = await getUsersByRole(companyId, sendRoles, {
       id: true,
       firstName: true,
@@ -177,10 +180,12 @@ export const sendCollaborationMessageNotification = async ({
       companyId: true,
     });
 
-    const sessionUser = await getUser();
+    // Pass senderUserId from API routes (mobile app has no web session);
+    // getUser() without an id falls back to the web session.
+    const sender = await getUser(senderUserId);
     const redirectUrl = `/dashboard/communication/collaboration`;
-    const sessionUserFullName = `${sessionUser.firstName} ${sessionUser.lastName}`;
-    const description = `New collaboration message from ${sessionUserFullName} in ${company?.name}. View it in Autoworx`;
+    const senderFullName = `${sender.firstName} ${sender.lastName}`;
+    const description = `New collaboration message from ${senderFullName} in ${company?.name}. View it in Autoworx`;
     const title = "New Collaboration Message";
 
     for (const user of getUsers) {
@@ -198,7 +203,6 @@ export const sendCollaborationMessageNotification = async ({
       });
     }
   } catch (err) {
-    console.error(err);
-    throw err;
+    console.error("collaboration message notification error", err);
   }
 };
