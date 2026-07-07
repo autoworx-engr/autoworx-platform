@@ -12,6 +12,7 @@ import { useCompanyFeaturePermissionStore } from "@/stores/companyFeaturePermiss
 import { companyPermissionModule } from "@/constants/company-permission";
 import { cn } from "@/lib/cn";
 import { AtSign, Phone } from "lucide-react";
+import { refreshClientMetaPhoto } from "@/actions/communication/client/refreshClientMetaPhoto";
 
 function MessengerIcon({ className }: { className?: string }) {
   return (
@@ -49,6 +50,13 @@ export default function ChatHead({
   useEffect(() => {
     setSelected(selectedConversation);
   }, [selectedConversation]);
+
+  // Silently refresh Meta profile pic whenever a client is opened
+  useEffect(() => {
+    if (initialClient?.id) {
+      void refreshClientMetaPhoto(initialClient.id);
+    }
+  }, [initialClient?.id]);
   // const [client, setClient] = useState<TClient | undefined>(initialClient);
   const user = useGetCurrentUser();
   const pathname = usePathname();

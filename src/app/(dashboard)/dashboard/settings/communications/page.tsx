@@ -12,6 +12,7 @@ import { companyPermissionModule } from "@/constants/company-permission";
 import SecurityPage from "../security/SecurityPage";
 import FacebookPagesSettings from "./FacebookPagesSettings";
 import InstagramSettings from "./InstagramSettings";
+import { refreshSettingsPhotos } from "@/actions/meta/refreshSettingsPhotos";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -30,6 +31,10 @@ type TProps = {
 
 export default async function CommunicationPage({ searchParams }: TProps) {
   const companyId = await getCompanyId();
+
+  // Refresh FB page + IG account profile pictures in the background
+  refreshSettingsPhotos().catch(() => {});
+
   const company = await getCompany();
   const entitlements = await getCompanyEntitlements(companyId);
   const { meta_success, meta_error, ig_success, ig_error } = await searchParams;
