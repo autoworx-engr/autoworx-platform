@@ -107,14 +107,16 @@ export function CalendarHeader({
     calendarRef.current?.getApi().today();
   };
 
-  const stepDay = (delta: number) => {
-    const next = date.clone().add(delta, "day");
+  const step = (delta: number) => {
+    const unit: moment.unitOfTime.DurationConstructor =
+      type === "week" ? "week" : type === "month" ? "month" : "day";
+    const next = date.clone().add(delta, unit);
     setDate(next.format("YYYY-MM-DD"));
     setMonth(next.format("YYYY-MM"));
     setWeek(next.format("YYYY-[W]WW"));
   };
-  const handlePrev = () => stepDay(-1);
-  const handleNext = () => stepDay(1);
+  const handlePrev = () => step(-1);
+  const handleNext = () => step(1);
 
   const handleViewChange = (value: string) => {
     router.push(`/dashboard/task/${value}`);
