@@ -331,7 +331,7 @@ export async function GET(
       // Resolve matching invoice IDs across client, vehicle and column fields
       // via raw SQL (mirrors src/lib/fetchAndTransformData.ts), since Prisma
       // can't search the Int year column or concatenated vehicle strings.
-      const searchPattern = `%${searchTerm.trim()}%`;
+      const searchPattern = `%${searchTerm.trim().replace(/\s+/g, " ")}%`;
       const matches = await db.$queryRaw<{ id: string }[]>(Prisma.sql`
         SELECT i.id
         FROM "Invoice" i
@@ -360,8 +360,7 @@ export async function GET(
       db.invoice.findMany({
         where,
         orderBy: { updatedAt: "desc" },
-        skip,
-        take: limit,
+        ...(searchTerm ? {} : { skip, take: limit }),
         include: {
           client: {
             select: {
@@ -381,7 +380,7 @@ export async function GET(
             },
           },
           column: {
-            select: { id: true, title: true },
+            select: { id: true, title: true, bgColor: true, textColor: true },
           },
           tags: {
             include: { tag: true },
@@ -394,13 +393,21 @@ export async function GET(
     return NextResponse.json({
       success: true,
       data: estimates,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasMore: skip + estimates.length < total,
-      },
+      pagination: searchTerm
+        ? {
+            page: 1,
+            limit: total,
+            total,
+            totalPages: 1,
+            hasMore: false,
+          }
+        : {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+            hasMore: skip + estimates.length < total,
+          },
     });
   } catch (error) {
     console.error("ESTIMATE LIST ERROR:", error);
