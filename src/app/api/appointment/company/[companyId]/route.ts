@@ -80,10 +80,17 @@ export async function GET(
     const where: Prisma.AppointmentWhereInput = { companyId };
 
     if (startDate && endDate) {
-      where.date = {
-        gte: new Date(`${startDate}T00:00:00.000Z`),
-        lte: new Date(`${endDate}T23:59:59.999Z`),
-      };
+      const startISO = new Date(`${startDate}T00:00:00.000Z`);
+      const endISO = new Date(`${endDate}T23:59:59.999Z`);
+      where.AND = [
+        { date: { lte: endISO } },
+        {
+          OR: [
+            { endDate: null, date: { gte: startISO } },
+            { endDate: { gte: startISO } },
+          ],
+        },
+      ];
     }
 
     if (userId) {
