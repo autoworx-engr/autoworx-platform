@@ -140,6 +140,17 @@ export default function ServiceInfo({
     toCounterInputValue(initialCounter.minutes),
   );
   const [isDragOver, setIsDragOver] = useState(false);
+  const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null);
+
+  // Revoke the object URL when it changes or the component unmounts.
+  useEffect(() => {
+    if (!localPreviewUrl) return;
+    return () => URL.revokeObjectURL(localPreviewUrl);
+  }, [localPreviewUrl]);
+
+  const setPreviewFromFile = (file: File | null) => {
+    setLocalPreviewUrl(file ? URL.createObjectURL(file) : null);
+  };
 
   useEffect(() => {
     const incomingDuration = Number.parseInt(customDuration, 10);
@@ -200,6 +211,7 @@ export default function ServiceInfo({
       ...prev,
       imageName: file?.name || "",
     }));
+    setPreviewFromFile(file);
     onImageSelect(file);
   };
 
@@ -209,12 +221,14 @@ export default function ServiceInfo({
     const file = event.dataTransfer.files?.[0] || null;
     if (file && ["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
       onChange((prev) => ({ ...prev, imageName: file.name || "" }));
+      setPreviewFromFile(file);
       onImageSelect(file);
     }
   };
 
   const handleClearImage = () => {
     onChange((prev) => ({ ...prev, imageName: "", imageUrl: "" }));
+    setPreviewFromFile(null);
     onImageSelect(null);
   };
 
@@ -532,7 +546,13 @@ export default function ServiceInfo({
         {hasImage ? (
           <div className="flex items-center gap-3 rounded-lg border border-[#6571FF]/25 bg-[#6571FF]/5 px-4 py-3">
             <div className="flex-shrink-0 overflow-hidden rounded-lg border border-slate-200 shadow-sm">
-              {shouldShowExistingImage ? (
+              {localPreviewUrl ? (
+                <img
+                  src={localPreviewUrl}
+                  alt={displayImageName || "Selected service image"}
+                  className="h-24 w-28 object-cover"
+                />
+              ) : shouldShowExistingImage ? (
                 <img
                   src={imageUrl}
                   alt="Current service image"
