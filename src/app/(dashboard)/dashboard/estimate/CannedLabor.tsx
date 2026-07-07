@@ -89,7 +89,7 @@ export default function CannedLabor({
 
   return (
     <div ref={contentRef} className="h-full w-full flex flex-col">
-      <section className="pb-4 border-b border-gray-200">
+      <section className="relative z-20 pb-4 border-b border-gray-200">
         <div className="flex items-center gap-x-4">
           <h3 className="text-2xl font-extrabold text-gray-800">
             Canned Labor
