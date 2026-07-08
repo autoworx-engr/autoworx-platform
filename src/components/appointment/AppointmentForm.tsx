@@ -93,7 +93,7 @@ export default function AppointmentForm({
 
   return (
     <div className="h-full sm:h-full overflow-y-auto thin-scrollbar max-h-[80vh] lg:max-h-none">
-      <div className="space-y-4 p-6">
+      <div className="space-y-2 p-6">
         <FormError />
 
         <AppointmentTitleSelectAndAdd
@@ -259,8 +259,8 @@ export default function AppointmentForm({
         />
       </div>
 
-      <div className="row-start-2 space-y-4 p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="row-start-2 space-y-3 p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           <SelectAppointmentClient
             clientId={clientId}
             fromLead={fromLead}
@@ -296,25 +296,23 @@ export default function AppointmentForm({
                     setDraftOpen(!draftOpen);
                   }}
                   className={cn(
-                    "flex h-11 w-full items-center justify-between rounded-xl px-4 py-2 text-sm transition-all",
-                    "border border-slate-200 bg-white shadow-sm hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900",
-                    "focus:outline-none focus:ring-2 focus:ring-[#6571FF]/40",
-                    draftOpen && "ring-2 ring-[#6571FF]/40 border-[#6571FF]",
+                    "mt-1 flex h-9 w-full items-center justify-between rounded-lg px-4 text-sm transition-all",
+                    "bg-white/80 shadow-sm outline-none backdrop-blur-sm ring-1 ring-slate-200 hover:shadow-md hover:ring-slate-300 dark:bg-slate-900/50 dark:ring-slate-800",
+                    "focus:outline-none focus:ring-2 focus:ring-[#6571FF]/60",
+                    draftOpen && "ring-2 ring-[#6571FF]/60",
                   )}
                 >
-                  <div className="flex flex-col items-start overflow-hidden text-left">
+                  <div className="min-w-0 flex-1 overflow-hidden text-left">
                     {selectedDraftOption ? (
-                      <>
-                        <div className="flex items-center gap-1.5 w-full min-w-0">
-                          <span className="truncate text-sm font-semibold text-slate-900 dark:text-white">
-                            {selectedDraftOption.vehicle}
-                          </span>
-                        </div>
-                        <span className="text-xs text-slate-500">
+                      <div className="flex min-w-0 items-baseline gap-1.5">
+                        <span className="truncate text-sm font-semibold text-slate-900 dark:text-white">
+                          {selectedDraftOption.vehicle}
+                        </span>
+                        <span className="shrink-0 text-[11px] text-slate-500">
                           ID: {selectedDraftOption.id} • $
                           {selectedDraftOption.price.toFixed(2)}
                         </span>
-                      </>
+                      </div>
                     ) : (
                       <span className="text-slate-500">
                         Select Invoice/Estimate
