@@ -16,7 +16,7 @@ export default function Tasks({
   users: User[];
   companyUsers: User[];
 }) {
-  const minimized = useCalendarSidebarStore(x => x.minimized);
+  const minimized = useCalendarSidebarStore((x) => x.minimized);
 
   return (
     <div
@@ -41,7 +41,7 @@ export default function Tasks({
           {!tasks ? (
             <TaskListSkeleton rows={4} />
           ) : tasks.length > 0 ? (
-            tasks.map(task => (
+            tasks.map((task) => (
               <TaskComponent
                 key={task.id}
                 task={task}

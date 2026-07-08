@@ -148,7 +148,7 @@ export default function Users() {
   return (
     <div
       className={cn(
-        "md:app-shadow relative mt-5 flex flex-grow flex-col gap-2 overflow-hidden rounded-[12px] md:bg-background w-full max-w-80",
+        "md:app-shadow relative mt-5 flex flex-grow flex-col gap-2 overflow-hidden rounded-lg md:bg-background w-full max-w-80",
         minimized || "p-3",
       )}
     >
