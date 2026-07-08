@@ -172,7 +172,7 @@ export default function Calendar({ type }: { type: CalendarType }) {
     setView(arg.view.type);
     syncStoreDatesSet(arg);
 
-    const viewStart = moment.utc(arg.view.currentStart);
+    const viewStart = moment(arg.view.currentStart);
     if (arg.view.type === "dayGridMonth") {
       setDateRange({
         start: viewStart.clone().startOf("month").format("YYYY-MM-DD"),
@@ -180,8 +180,8 @@ export default function Calendar({ type }: { type: CalendarType }) {
       });
     } else {
       setDateRange({
-        start: moment.utc(arg.start).format("YYYY-MM-DD"),
-        end: moment.utc(arg.end - 1).format("YYYY-MM-DD"),
+        start: moment(arg.start).format("YYYY-MM-DD"),
+        end: moment(arg.end - 1).format("YYYY-MM-DD"),
       });
     }
   };
