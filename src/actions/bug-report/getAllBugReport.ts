@@ -10,23 +10,26 @@ export default async function getAllBugReport(params: { take?: number } = {}) {
   }
 
   try {
-    const allReports = await db.bugReport.findMany({
-      include: {
-        company: true,
-        BugReportMessage: {
-          orderBy: { createdAt: "desc" },
-          include: {
-            attachment: true,
+    const [allReports, unresolvedCount] = await Promise.all([
+      db.bugReport.findMany({
+        include: {
+          company: true,
+          BugReportMessage: {
+            orderBy: { createdAt: "desc" },
+            include: {
+              attachment: true,
+            },
           },
         },
-      },
-      orderBy: {
-        id: "desc",
-      },
-      take: params.take,
-    });
+        orderBy: {
+          id: "desc",
+        },
+        take: params.take,
+      }),
+      db.bugReport.count({ where: { isResolved: false } }),
+    ]);
 
-    return allReports;
+    return { reports: allReports, unresolvedCount };
   } catch (error) {
     throw new Error(`Failed to get bug reports`);
   }
