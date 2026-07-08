@@ -1,24 +1,22 @@
 import type { CSSProperties } from "react";
 
-// Shared priority styles for task list items, so the dashboard "Task List" box
-// and the Task & Activity sidebar render identical colors per priority.
 export const taskPriorityStyles: Record<string, CSSProperties> = {
   Low: {
-    background: "linear-gradient(to right, #f5f3ff, #ede9fe)",
-    borderLeft: "3px solid #6d28d9",
-    color: "#6d28d9",
-    boxShadow: "0 2px 8px rgba(109, 40, 217, 0.15)",
+    background: "linear-gradient(to right, #f0faf1, #dcefdd)",
+    borderLeft: "3px solid #4CAF50",
+    color: "#3d8b40",
+    boxShadow: "0 2px 8px rgba(76, 175, 80, 0.15)",
   },
   Medium: {
-    background: "linear-gradient(to right, #f0f9ff, #e0f2fe)",
-    borderLeft: "3px solid #0284c7",
-    color: "#0284c7",
-    boxShadow: "0 2px 8px rgba(2, 132, 199, 0.15)",
+    background: "linear-gradient(to right, #fff8f0, #ffecd6)",
+    borderLeft: "3px solid #FF9800",
+    color: "#e07f00",
+    boxShadow: "0 2px 8px rgba(255, 152, 0, 0.15)",
   },
   High: {
-    background: "linear-gradient(to right, #b2f2bb, #d3f9d8)",
-    borderLeft: "3px solid #22a7b8",
-    color: "#22a7b8",
-    boxShadow: "0 2px 8px rgba(34, 167, 184, 0.15)",
+    background: "linear-gradient(to right, #fef2f2, #fdd9d7)",
+    borderLeft: "3px solid #f44336",
+    color: "#d32f2f",
+    boxShadow: "0 2px 8px rgba(244, 67, 54, 0.15)",
   },
 };

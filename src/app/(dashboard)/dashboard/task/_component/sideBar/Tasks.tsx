@@ -14,7 +14,7 @@ import TaskError from "../ui/TaskError";
 import TaskNotFound from "../ui/TaskNotFound";
 import TaskSpinner from "../ui/TaskSpinner";
 import { MinimizeButton } from "./MinimizeButton";
-import TaskComponent from "./Task";
+import TaskListItem from "@/components/task/TaskListItem";
 import TaskListSkeleton from "@/components/ui/TaskListSkeleton";
 
 export default function Tasks() {
@@ -45,19 +45,6 @@ export default function Tasks() {
     }
   }, [inView, hasNextPage]);
 
-  let content = null;
-
-  if (isLoading && !isError) {
-    // content = <TaskSpinner />;
-    content = <TaskListSkeleton rows={11} />;
-  } else if (!isLoading && isError) {
-    content = <TaskError message="Failed to load task" />;
-  } else if (!isLoading && !isError && tasks && tasks?.length === 0) {
-    content = <TaskNotFound message={"No Task found"} />;
-  } else if (!isLoading && !isError && tasks && tasks?.length > 0) {
-    content = tasks.map((task) => <TaskComponent key={task.id} task={task} />);
-  }
-
   const revalidateTaskQueries = () => {
     queryClient.invalidateQueries({
       queryKey: [taskQueryKey.allTasks, dateFormat],
@@ -75,6 +62,52 @@ export default function Tasks() {
   const handleTaskCreated = () => {
     revalidateTaskQueries();
   };
+
+  const handleTaskRemoved = (taskId: number) => {
+    queryClient.setQueryData(
+      taskQueryKey.allTaskByScroll,
+      (old: { pages?: { data: Task[] }[] } | undefined) => {
+        if (!old?.pages) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            data: Array.isArray(page.data)
+              ? page.data.filter((t) => t.id !== taskId)
+              : [],
+          })),
+        };
+      },
+    );
+    queryClient.invalidateQueries({
+      queryKey: [taskQueryKey.allTasks, dateFormat],
+    });
+    queryClient.invalidateQueries({
+      queryKey: [taskQueryKey.allTasks, weekStartDate, weekEndDate],
+    });
+  };
+
+  let content = null;
+
+  if (isLoading && !isError) {
+    // content = <TaskSpinner />;
+    content = <TaskListSkeleton rows={11} />;
+  } else if (!isLoading && isError) {
+    content = <TaskError message="Failed to load task" />;
+  } else if (!isLoading && !isError && tasks && tasks?.length === 0) {
+    content = <TaskNotFound message={"No Task found"} />;
+  } else if (!isLoading && !isError && tasks && tasks?.length > 0) {
+    content = tasks.map((task) => (
+      <TaskListItem
+        key={task.id}
+        task={task}
+        draggable
+        onTaskRemoved={handleTaskRemoved}
+        onTaskUpdated={revalidateTaskQueries}
+      />
+    ));
+  }
+
   return (
     <div
       className={cn(
