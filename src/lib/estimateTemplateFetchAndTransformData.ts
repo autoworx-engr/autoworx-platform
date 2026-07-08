@@ -66,6 +66,10 @@ export async function estimateTemplateFetchAndTransformData(
   `
     : "";
 
+  const paginationClause = decodedSearchTerm
+    ? ""
+    : `LIMIT ${take} OFFSET ${offset}`;
+
   const query = `
     SELECT
       i.id,
@@ -82,7 +86,7 @@ export async function estimateTemplateFetchAndTransformData(
       ${statusFilter}
       ${searchFilter}
     ORDER BY i."created_at" DESC
-    LIMIT ${take} OFFSET ${offset};
+    ${paginationClause};
   `;
 
   const countQuery = `

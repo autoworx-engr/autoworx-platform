@@ -56,7 +56,12 @@ const subscriptionBadge = (
 };
 
 const AWXDashboard = ({ companies, platformStats }: Props) => {
-  const { data: reports, isFetching, isLoading } = useGetAllBugReports(20);
+  const {
+    data: bugReportsData,
+    isFetching,
+    isLoading,
+  } = useGetAllBugReports(20);
+  const reports = bugReportsData?.reports;
   const [inputValue, setInputValue] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -95,7 +100,7 @@ const AWXDashboard = ({ companies, platformStats }: Props) => {
       title: "Growth Rate",
       value: `${platformStats.growthRate}%`,
     },
-    { title: "Bugs", value: reports?.length ?? 0 },
+    { title: "Bugs", value: bugReportsData?.unresolvedCount ?? 0 },
   ];
 
   return (
