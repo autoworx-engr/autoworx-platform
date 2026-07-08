@@ -165,11 +165,12 @@ export default function SendCall({
     if (!currentConnection) setIsMuted(false);
   }, [currentConnection]);
 
-  const handleSetupDevice = async () => {
-    if (phoneNumber) {
-      await globalSetupDevice(phoneNumber, provider);
+  useEffect(() => {
+    if (phoneNumber && !isDeviceReady && canUseVoice) {
+      globalSetupDevice(phoneNumber, provider);
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phoneNumber, isDeviceReady, canUseVoice]);
 
   if (!client) return null;
 
@@ -185,43 +186,6 @@ export default function SendCall({
         </div>
       )}
       <div className="mt-auto flex w-full gap-3">
-        {/* Setup Device Button */}
-        <button
-          className={`group relative overflow-hidden w-full rounded-xl px-4 py-3.5 text-base font-semibold text-white shadow-lg transition-all duration-300 ${
-            isDeviceReady
-              ? "bg-gradient-to-br from-emerald-500 to-teal-600 shadow-emerald-500/20 cursor-default"
-              : "bg-gradient-to-br from-[#6571FF] to-[#5563E8] shadow-[#6571FF]/20 hover:shadow-xl hover:shadow-[#6571FF]/30 hover:-translate-y-0.5 active:scale-95"
-          }`}
-          onClick={handleSetupDevice}
-          disabled={isDeviceReady || !canUseVoice}
-        >
-          {!isDeviceReady && (
-            <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
-          )}
-          <div className="relative flex items-center justify-center gap-2">
-            {isDeviceReady ? (
-              <>
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-                Device Ready
-              </>
-            ) : (
-              "Setup Device"
-            )}
-          </div>
-        </button>
-
         {/* Make Call Button */}
         <button
           className={`group relative overflow-hidden w-full rounded-xl px-4 py-3.5 text-base font-semibold text-white shadow-lg transition-all duration-300 ${
@@ -329,7 +293,12 @@ export default function SendCall({
           </div>
         </button>
       </div>
-      <CallStatus callStatus={callStatus} callDuration={callDuration} />
+      <CallStatus
+        callStatus={callStatus}
+        callDuration={callDuration}
+        isDeviceReady={isDeviceReady}
+        hasActiveCall={!!currentConnection}
+      />
     </>
   );
 }
