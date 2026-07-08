@@ -24,9 +24,9 @@ export default function HeaderSearch({ activeTab }: HeaderSearchProps) {
   }, [activeTab, setFilter]);
 
   return (
-    <div className="mt-5 flex w-full flex-wrap items-center gap-y-2 px-2">
-      <div className="flex w-full flex-col gap-2 lg:flex-row lg:gap-4">
-        <div className="group relative flex w-full items-center rounded-xl bg-white dark:bg-slate-900 px-4 py-2.5 lg:w-[400px] xl:w-[500px] ring-1 ring-slate-200 dark:ring-slate-700 shadow-sm transition-all duration-300 ease-out focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500/50 focus-within:shadow-md focus-within:shadow-indigo-500/5 hover:ring-slate-300 dark:hover:ring-slate-600">
+    <div className="mt-5 flex w-full flex-col gap-4 lg:flex-row lg:items-center lg:justify-between px-2">
+      <div className="flex w-full flex-col gap-2 lg:flex-row lg:gap-4 lg:w-auto">
+        <div className="group relative flex w-full items-center rounded-xl bg-white dark:bg-slate-900 px-4 py-2.5 lg:w-[400px] xl:w-[500px] ring-1 ring-slate-200 dark:ring-slate-700 shadow-sm transition-all duration-300 ease-out focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500/5 focus-within:shadow-md focus-within:shadow-indigo-500/5 hover:ring-slate-300 dark:hover:ring-slate-600">
           <span className="text-slate-400 group-focus-within:text-[#6571FF] transition-colors duration-300">
             <Search className="w-5 h-5" />
           </span>
@@ -42,7 +42,7 @@ export default function HeaderSearch({ activeTab }: HeaderSearchProps) {
             onChange={(e) => setFilter({ search: e.target.value })}
           />
         </div>
-        <div className="z-50 flex w-full flex-wrap items-center gap-4 sm:flex-nowrap">
+        <div className="z-50 flex w-full flex-wrap items-center gap-4 sm:flex-nowrap lg:w-auto">
           <div className="transition-transform hover:scale-[1.01] z-50">
             <DateRange
               dateRange={dateRange}
@@ -56,7 +56,7 @@ export default function HeaderSearch({ activeTab }: HeaderSearchProps) {
         </div>
       </div>
 
-      <div className="mr-4 flex gap-4">
+      <div className="flex shrink-0">
         <Link
           href="/dashboard/reporting/payments"
           className="

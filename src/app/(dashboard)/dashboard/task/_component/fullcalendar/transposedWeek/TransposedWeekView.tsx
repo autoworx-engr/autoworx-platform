@@ -20,14 +20,12 @@ import {
   minutesToPixels,
   parseTimeToMinutes,
   rowHeightForLanes,
-  weekendNamesToDow,
 } from "./transposedWeekUtils";
 import styles from "./transposedWeek.module.css";
 
 interface Props {
   events: EventInput[];
   firstDay: number;
-  weekendDayNames?: string[];
   businessStart?: string;
   businessEnd?: string;
   session: any;
@@ -45,7 +43,6 @@ interface Props {
 export function TransposedWeekView({
   events,
   firstDay,
-  weekendDayNames,
   businessStart,
   businessEnd,
   session,
@@ -61,12 +58,10 @@ export function TransposedWeekView({
     () => (storeDate ? moment(storeDate) : moment()),
     [storeDate],
   );
-  const weekDays = useMemo(() => {
-    const all = getWeekDays(anchor, firstDay);
-    if (!weekendDayNames?.length) return all;
-    const skip = weekendNamesToDow(weekendDayNames);
-    return all.filter((d) => !skip.has(d.day()));
-  }, [anchor, firstDay, weekendDayNames]);
+  const weekDays = useMemo(
+    () => getWeekDays(anchor, firstDay),
+    [anchor, firstDay],
+  );
   const scrollerRef = useRef<HTMLDivElement>(null);
   const hasInitialScrolledRef = useRef(false);
   const positioned = useTransposedLayout(events, weekDays);

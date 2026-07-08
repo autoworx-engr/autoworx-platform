@@ -1,7 +1,8 @@
 import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { InvoiceType } from "@prisma/client";
+import { InvoiceType, Prisma } from "@prisma/client";
+import { customAlphabet } from "nanoid";
 
 /**
  * @swagger
@@ -327,25 +328,39 @@ export async function GET(
     }
 
     if (searchTerm) {
-      where.OR = [
-        {
-          client: {
-            OR: [
-              { firstName: { contains: searchTerm, mode: "insensitive" } },
-              { lastName: { contains: searchTerm, mode: "insensitive" } },
-            ],
-          },
-        },
-        { id: { contains: searchTerm, mode: "insensitive" } },
-      ];
+      // Resolve matching invoice IDs across client, vehicle and column fields
+      // via raw SQL (mirrors src/lib/fetchAndTransformData.ts), since Prisma
+      // can't search the Int year column or concatenated vehicle strings.
+      const searchPattern = `%${searchTerm.trim().replace(/\s+/g, " ")}%`;
+      const matches = await db.$queryRaw<{ id: string }[]>(Prisma.sql`
+        SELECT i.id
+        FROM "Invoice" i
+        LEFT JOIN "Client" c ON i."customer_id" = c.id
+        LEFT JOIN "Vehicle" v ON i."vehicle_id" = v.id
+        LEFT JOIN "Column" col ON i."column_id" = col.id
+        WHERE i."company_id" = ${companyId}
+          AND (
+            i.id::text ILIKE ${searchPattern}
+            OR LOWER(CONCAT(c."first_name", ' ', c."last_name")) ILIKE LOWER(${searchPattern})
+            OR c.email ILIKE ${searchPattern}
+            OR c.mobile ILIKE ${searchPattern}
+            OR v.make ILIKE ${searchPattern}
+            OR v.model ILIKE ${searchPattern}
+            OR CAST(v.year AS TEXT) ILIKE ${searchPattern}
+            OR col.title ILIKE ${searchPattern}
+            OR CONCAT(CAST(v.year AS TEXT), ' ', v.make, ' ', v.model) ILIKE ${searchPattern}
+            OR CONCAT(v.make, ' ', CAST(v.year AS TEXT), ' ', v.model) ILIKE ${searchPattern}
+            OR CONCAT(v.model, ' ', CAST(v.year AS TEXT), ' ', v.make) ILIKE ${searchPattern}
+          )
+      `);
+      where.id = { in: matches.map((m) => m.id) };
     }
 
     const [estimates, total] = await Promise.all([
       db.invoice.findMany({
         where,
-        orderBy: { createdAt: "desc" },
-        skip,
-        take: limit,
+        orderBy: { updatedAt: "desc" },
+        ...(searchTerm ? {} : { skip, take: limit }),
         include: {
           client: {
             select: {
@@ -365,7 +380,7 @@ export async function GET(
             },
           },
           column: {
-            select: { id: true, title: true },
+            select: { id: true, title: true, bgColor: true, textColor: true },
           },
           tags: {
             include: { tag: true },
@@ -378,13 +393,21 @@ export async function GET(
     return NextResponse.json({
       success: true,
       data: estimates,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasMore: skip + estimates.length < total,
-      },
+      pagination: searchTerm
+        ? {
+            page: 1,
+            limit: total,
+            total,
+            totalPages: 1,
+            hasMore: false,
+          }
+        : {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+            hasMore: skip + estimates.length < total,
+          },
     });
   } catch (error) {
     console.error("ESTIMATE LIST ERROR:", error);
@@ -489,7 +512,7 @@ export async function POST(
     const invoice = await db.$transaction(async (tx) => {
       const newInvoice = await tx.invoice.create({
         data: {
-          id,
+          id: customAlphabet("1234567890", 10)(),
           type: type as InvoiceType,
           clientId: clientId ? Number(clientId) : undefined,
           vehicleId: vehicleId ? Number(vehicleId) : undefined,

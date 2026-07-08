@@ -2,6 +2,7 @@ import {
   getColumnsByType,
   createColumn,
 } from "@/actions/pipelines/pipelinesColumn";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -83,6 +84,14 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    const principal = await getAuthPrincipal(request);
+    if (!principal) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+
     const body = await request.json();
     const { title, type, textColor, bgColor } = body;
 
@@ -93,7 +102,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const newColumn = await createColumn(title, type, textColor, bgColor);
+    const newColumn = await createColumn(
+      title,
+      type,
+      textColor,
+      bgColor,
+      principal.companyId,
+    );
 
     return NextResponse.json({ success: true, data: newColumn });
   } catch (error: any) {

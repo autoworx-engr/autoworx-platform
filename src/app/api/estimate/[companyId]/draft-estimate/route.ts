@@ -53,16 +53,13 @@ export const POST = async (req: NextRequest) => {
     }
     const body = await req.json();
     const { leadId, clientId, vehicleId } = body as {
-      leadId: number;
+      leadId?: number;
       clientId: number;
       vehicleId?: number;
     };
 
-    if (!leadId || !clientId) {
-      throw new AppError(
-        400,
-        "Missing required fields: draftEstimateId, leadId, clientId",
-      );
+    if (!clientId) {
+      throw new AppError(400, "Missing required fields: clientId");
     }
 
     const draftEstimateId = customAlphabet("1234567890", 10)();

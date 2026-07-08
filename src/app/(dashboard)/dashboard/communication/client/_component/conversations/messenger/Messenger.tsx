@@ -42,6 +42,7 @@ export default async function Messenger({ clientId }: { clientId: number }) {
 
   const windowClosed =
     !lastClientMessage ||
+    // eslint-disable-next-line react-hooks/purity
     Date.now() - new Date(lastClientMessage.createdAt).getTime() >
       24 * 60 * 60 * 1000;
 

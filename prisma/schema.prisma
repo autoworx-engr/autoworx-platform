@@ -552,6 +552,10 @@ model Client {
   facebookProfiles  FacebookClientProfile[]
   messengerMessages MessengerMessage[]
 
+  // Instagram DM
+  instagramProfiles InstagramClientProfile[]
+  instagramMessages InstagramMessage[]
+
   @@index([companyId], name: "fk_customers_company")
   @@index([firstName])
   @@index([lastName])
@@ -616,6 +620,10 @@ model ClientConversationTrack {
   messengerUnReadCount Int       @default(0) @map("messenger_unread_count")
   messengerLastMessage String?   @map("messenger_last_message") @db.Text
   messengerLastBy      String?   @map("messenger_last_by")
+  instagramIsRead      Boolean   @default(true)  @map("instagram_is_read")
+  instagramUnReadCount Int       @default(0)     @map("instagram_unread_count")
+  instagramLastMessage String?   @map("instagram_last_message") @db.Text
+  instagramLastBy      String?   @map("instagram_last_by")
   createdAt            DateTime  @default(now()) @map("created_at")
   updatedAt            DateTime  @default(now()) @updatedAt @map("updated_at")
   client               Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
@@ -763,6 +771,10 @@ model Company {
   // Meta / Facebook Messenger
   facebookPages     FacebookPage[]
   messengerMessages MessengerMessage[]
+
+  // Instagram DM
+  instagramAccounts InstagramAccount[]
+  instagramMessages InstagramMessage[]
 }
 
 model Reviews {
@@ -2332,6 +2344,7 @@ model User {
   collaborationMessages          CollaborationMessage[]
   reviews                        Reviews[]
   messengerMessages              MessengerMessage[]
+  instagramMessages              InstagramMessage[]
   reviewedEmergencyRequests      EmergencyBookingRequest[]       @relation("EmergencyReviewer")
 
   @@index([companyId], name: "fk_users_company")
@@ -3587,4 +3600,86 @@ enum EmergencyRequestStatus {
   REJECTED // Cannot accommodate
   EXPIRED // Not reviewed within time window
   CANCELLED // Client cancelled the request
+}
+
+// ── Instagram DM ──────────────────────────────────────────────────────────────
+
+model InstagramAccount {
+  id                Int                      @id @default(autoincrement())
+  companyId         Int                      @map("company_id")
+  igUserId          String                   @map("ig_user_id")
+  username          String?
+  pageAccessToken   String                   @map("page_access_token")
+  facebookPageId    String?                  @map("facebook_page_id")
+  pictureUrl        String?                  @map("picture_url")
+  isActive          Boolean                  @default(true)  @map("is_active")
+  webhookSubscribed Boolean                  @default(false) @map("webhook_subscribed")
+  createdAt         DateTime                 @default(now()) @map("created_at")
+  updatedAt         DateTime                 @default(now()) @updatedAt @map("updated_at")
+  company           Company                  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  clientProfiles    InstagramClientProfile[]
+  messages          InstagramMessage[]
+
+  @@unique([companyId, igUserId], name: "companyId_igUserId")
+  @@map("instagram_accounts")
+}
+
+model InstagramClientProfile {
+  id          Int              @id @default(autoincrement())
+  igAccountId Int              @map("ig_account_id")
+  igsid       String
+  clientId    Int              @map("client_id")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @default(now()) @updatedAt @map("updated_at")
+  igAccount   InstagramAccount @relation(fields: [igAccountId], references: [id], onDelete: Cascade)
+  client      Client           @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([igAccountId, igsid], name: "igAccountId_igsid")
+  @@map("instagram_client_profiles")
+}
+
+model InstagramMessage {
+  id          Int                          @id @default(autoincrement())
+  companyId   Int                          @map("company_id")
+  clientId    Int                          @map("client_id")
+  igAccountId Int                          @map("ig_account_id")
+  mid         String?                      @unique
+  message     String?                      @db.Text
+  sentBy      String                       @map("sent_by")
+  isRead      Boolean                      @default(false) @map("is_read")
+  userId      Int?                         @map("user_id")
+  createdAt   DateTime                     @default(now()) @map("created_at")
+  updatedAt   DateTime                     @default(now()) @updatedAt @map("updated_at")
+  company     Company                      @relation(fields: [companyId], references: [id])
+  client      Client                       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  igAccount   InstagramAccount             @relation(fields: [igAccountId], references: [id])
+  user        User?                        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  attachments InstagramMessageAttachment[]
+
+  @@index([companyId, clientId])
+  @@map("instagram_messages")
+}
+
+model InstagramMessageAttachment {
+  id             Int              @id @default(autoincrement())
+  messageId      Int              @map("message_id")
+  url            String
+  name           String?
+  attachmentType String           @map("attachment_type")
+  message        InstagramMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@map("instagram_message_attachments")
+}
+
+// Mobile app version management — controls soft/force update behavior
+model AppVersion {
+  id                  Int      @id @default(autoincrement())
+  latestVersion       String   @map("latest_version")
+  minSupportedVersion String   @map("min_supported_version")
+  forceUpdate         Boolean  @default(false) @map("force_update")
+  message             String?
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("app_versions")
 }

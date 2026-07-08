@@ -243,7 +243,9 @@ export function Selector({
               ) : (
                 <div className="flex flex-col items-center justify-center py-6 px-4">
                   <Search size={18} className="text-slate-300 mb-1.5" />
-                  <p className="text-sm text-slate-400">No options available</p>
+                  <p className="text-sm text-slate-400 text-center">
+                    No options available
+                  </p>
                 </div>
               )}
             </div>

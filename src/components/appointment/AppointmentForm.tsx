@@ -92,7 +92,7 @@ export default function AppointmentForm({
   const { Option } = Select;
 
   return (
-    <div className="h-full sm:h-full overflow-y-auto thin-scrollbar max-h-[80vh]">
+    <div className="h-full sm:h-full overflow-y-auto thin-scrollbar max-h-[80vh] lg:max-h-none">
       <div className="space-y-4 p-6">
         <FormError />
 
@@ -144,14 +144,13 @@ export default function AppointmentForm({
               <span className="mb-2 font-medium text-slate-600">
                 Start Time <span className="text-[#E9405F]">*</span>
               </span>
-              <div>
-                <Select
-                  value={startTime}
-                  onChange={(value) =>
-                    handleTimeChange({ target: { value } } as any, "start")
-                  }
-                  style={{ width: "100%" }}
-                  className="
+              <Select
+                value={startTime}
+                onChange={(value) =>
+                  handleTimeChange({ target: { value } } as any, "start")
+                }
+                style={{ width: "100%" }}
+                className="
                     h-[38px] w-full
                     rounded-lg border-none
                     bg-slate-50/50
@@ -161,21 +160,20 @@ export default function AppointmentForm({
                     focus-within:ring-2 focus-within:ring-[#6571FF]/40 focus:outline-none
                     text-slate-600 font-medium thin-scrollbar
                   "
-                  dropdownClassName="rounded-xl border-none shadow-2xl backdrop-blur-md bg-white/90"
-                >
-                  {timeOptions
-                    .filter((time) => time.value <= "22:45")
-                    .map((time) => (
-                      <Option
-                        key={time.value}
-                        value={time.value}
-                        className="py-2 px-3 text-slate-600 transition-colors hover:bg-[#6571FF]/10 hover:text-[#6571FF]"
-                      >
-                        <p className="text-base text-gray-600">{time.label}</p>
-                      </Option>
-                    ))}
-                </Select>
-              </div>
+                dropdownClassName="rounded-xl border-none shadow-2xl backdrop-blur-md bg-white/90"
+              >
+                {timeOptions
+                  .filter((time) => time.value <= "22:45")
+                  .map((time) => (
+                    <Option
+                      key={time.value}
+                      value={time.value}
+                      className="py-2 px-3 text-slate-600 transition-colors hover:bg-[#6571FF]/10 hover:text-[#6571FF]"
+                    >
+                      {time.label}
+                    </Option>
+                  ))}
+              </Select>
             </label>
 
             <label className="flex flex-col items-start">
@@ -423,7 +421,7 @@ export default function AppointmentForm({
             name="notes"
             placeholder="Notes"
             className={cn(
-              "h-20 w-full rounded-md border border-slate-300 outline-none bg-background px-2 py-0.5 leading-6 transition-all duration-300 thin-scrollbar",
+              "min-h-[96px] max-h-[220px] w-full resize-y overflow-y-auto rounded-md border border-slate-300 outline-none bg-background px-2 py-0.5 leading-6 transition-all duration-300 thin-scrollbar",
               "bg-white/80 backdrop-blur-sm",
               "text-slate-600 placeholder:text-slate-400",
               "focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/40",

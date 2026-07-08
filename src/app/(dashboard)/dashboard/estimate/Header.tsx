@@ -6,9 +6,10 @@ import { useEstimateCreateStore } from "@/stores/estimate-create";
 import { useEstimateFilterStore } from "@/stores/estimate-filter";
 import { useEstimatePopupStore } from "@/stores/estimate-popup";
 import { useListsStore } from "@/stores/lists";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRef } from "react";
 import { Filter } from "./Filter";
 
 type THeaderProps = {
@@ -30,6 +31,7 @@ export default function Header({
   const router = useRouter();
   const params = useSearchParams();
   const windowWidth = window.innerWidth;
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const { reset: resetEstimateCreate } = useEstimateCreateStore();
   const { reset: resetLists } = useListsStore();
@@ -48,6 +50,15 @@ export default function Header({
     router.push(newPath);
   }, 500);
 
+  const handleClearSearch = () => {
+    if (inputRef.current) {
+      inputRef.current.value = "";
+      inputRef.current.focus();
+    }
+    setFilter({ search: "" });
+    handleSearchChange("");
+  };
+
   return (
     <div
       // className={`mt-5 flex justify-between items-center flex-col-reverse gap-4 lg:gap-0 lg:flex-row`}
@@ -63,6 +74,7 @@ export default function Header({
           />
 
           <input
+            ref={inputRef}
             type="text"
             placeholder={
               isTemplate
@@ -78,11 +90,16 @@ export default function Header({
             }}
           />
 
-          {/* Subtle indicator for search activity (Optional) */}
+          {/* Clear search button */}
           {searchTerm && (
-            <div className="absolute right-3 flex h-5 w-5 animate-pulse items-center justify-center rounded-full bg-[#6571FF]/10 text-[#6571FF]">
-              <div className="h-1.5 w-1.5 rounded-full bg-[#6571FF]" />
-            </div>
+            <button
+              type="button"
+              onClick={handleClearSearch}
+              aria-label="Clear search"
+              className="absolute right-3 flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 text-slate-500 transition-colors hover:bg-[#6571FF]/10 hover:text-[#6571FF]"
+            >
+              <X size={12} />
+            </button>
           )}
         </div>
 

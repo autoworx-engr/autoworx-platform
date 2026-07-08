@@ -51,8 +51,22 @@ export const CustomerForm = ({
   const normalized = normalizePhone(form.phone);
   const phoneError = localNumTooLong || normalized.length > 15;
 
+  const handleFormKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
+    if (e.key === "Enter" && !phoneLookedUp) {
+      e.preventDefault();
+      const normalized = normalizePhone(form.phone);
+      if (!isLookingUp && normalized.length >= 12 && !phoneError) {
+        onContinue();
+      }
+    }
+  };
+
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form
+      onSubmit={onSubmit}
+      onKeyDown={handleFormKeyDown}
+      className="space-y-4"
+    >
       <div className="space-y-1.5">
         <Label htmlFor="phone" className="text-xs">
           Phone Number <span className="text-red-500 ml-1">*</span>

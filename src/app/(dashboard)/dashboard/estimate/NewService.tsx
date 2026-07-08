@@ -48,7 +48,7 @@ export default function NewService({
       if (data?.service && data.edit) {
         setName(data.service.name);
         setCategory(
-          categories.find((cat) => cat.id === data.service.categoryId) || null
+          categories.find((cat) => cat.id === data.service.categoryId) || null,
         );
         setDescription(data.service.description);
       } else {
@@ -273,7 +273,7 @@ export default function NewService({
               <input
                 type="text"
                 id="service-name"
-                placeholder="Enter service name"
+                placeholder="Enter Service Name"
                 value={name}
                 onChange={(e) => {
                   const value = e.target.value;
@@ -285,10 +285,11 @@ export default function NewService({
                   }
                 }}
                 onBlur={() => setNameTouched(true)}
-                className={`w-full px-4 py-2.5 text-sm border rounded-lg outline-none transition-all placeholder:text-slate-400 ${nameError
+                className={`w-full px-4 py-2.5 text-sm border rounded-lg outline-none transition-all placeholder:text-slate-400 ${
+                  nameError
                     ? "border-red-500 focus:border-red-600"
                     : "border-slate-300 focus:border-blue-500"
-                  }`}
+                }`}
                 aria-invalid={nameError ? "true" : "false"}
                 aria-describedby={nameError ? "name-error" : undefined}
               />
@@ -371,7 +372,7 @@ export default function NewService({
 
                   if (value.length > maxDescriptionLength) {
                     toast.error(
-                      "Description must be less than 1500 characters"
+                      "Description must be less than 1500 characters",
                     );
                     return false;
                   }
@@ -385,10 +386,11 @@ export default function NewService({
                   Provide a detailed description of what this service includes
                 </p>
                 <span
-                  className={`text-xs ${descriptionLength > maxDescriptionLength * 0.9
-                    ? "text-red-600 font-medium"
-                    : "text-slate-500"
-                    }`}
+                  className={`text-xs ${
+                    descriptionLength > maxDescriptionLength * 0.9
+                      ? "text-red-600 font-medium"
+                      : "text-slate-500"
+                  }`}
                 >
                   {descriptionLength}/{maxDescriptionLength}
                 </span>

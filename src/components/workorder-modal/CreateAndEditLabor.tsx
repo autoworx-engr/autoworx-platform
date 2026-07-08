@@ -101,7 +101,7 @@ export default function CreateAndEditLabor({
   const [error, setError] = useState<string | null>(null);
   const [inputValues, setInputValues] = useState({
     date: moment().format("YYYY-MM-DD"),
-    due: "",
+    due: moment().add(1, "day").format("YYYY-MM-DD"),
     amount: "",
     note: "",
     technicianNote: "",
@@ -162,7 +162,11 @@ export default function CreateAndEditLabor({
       } = technician;
 
       const formattedDate = moment(date).utc().format("YYYY-MM-DD");
-      const formattedDue = moment(due).utc().format("YYYY-MM-DD");
+
+      const formattedDue = due
+        ? moment(due).utc().format("YYYY-MM-DD")
+        : moment().add(1, "day").format("YYYY-MM-DD");
+
       setInputValues({
         date: formattedDate,
         due: formattedDue,
@@ -227,7 +231,7 @@ export default function CreateAndEditLabor({
         const updatedPayload = isTechnician
           ? {
               date: new Date(technician.date || new Date()),
-              due: new Date(technician.due || new Date()),
+              due: technician.due ? new Date(technician.due) : null,
               amount: Number(technician.amount) || 0,
               note: technician.note || "",
               technicianNote: technicianNote || "",
@@ -239,7 +243,7 @@ export default function CreateAndEditLabor({
             }
           : {
               date: new Date(inputValues.date),
-              due: new Date(inputValues.due),
+              due: inputValues.due ? new Date(inputValues.due) : null,
               amount: Number(inputValues.amount),
               note: inputValues.note,
               technicianNote: technicianNote,
@@ -289,7 +293,7 @@ export default function CreateAndEditLabor({
         const payload = {
           serviceId: Number(serviceId),
           date: new Date(inputValues.date),
-          due: new Date(inputValues.due),
+          due: inputValues.due ? new Date(inputValues.due) : null,
           amount: Number(inputValues.amount),
           note: inputValues.note,
           userId: employee?.id,
@@ -340,7 +344,7 @@ export default function CreateAndEditLabor({
   const reset = () => {
     setInputValues({
       date: moment().format("YYYY-MM-DD"),
-      due: "",
+      due: moment().add(1, "day").format("YYYY-MM-DD"),
       amount: "",
       note: "",
       technicianNote: "",

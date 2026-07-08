@@ -47,7 +47,8 @@ export default function ClientNotes({ clientId, clientNotes }: TProps) {
       </header>
 
       <textarea
-        className="w-full rounded-md border border-[#006D76] p-2 text-xs text-[#797979]"
+        className="min-h-[96px] max-h-[220px] w-full resize-y overflow-y-auto rounded-md border border-[#006D76] p-2 text-xs text-[#797979]"
+        rows={4}
         value={draft || ""}
         onChange={handleChange}
         placeholder="Type your notes here..."

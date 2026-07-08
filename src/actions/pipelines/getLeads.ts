@@ -37,6 +37,13 @@ type TGetLeadsWithCount = {
   // YYYY-MM-DD strings so the action can parse them directly in the company
   // timezone — avoids off-by-one-day errors when browser tz ≠ company tz.
   dateRange?: [string | null, string | null];
+  // Explicit company override for callers without a next-auth session (mobile /
+  // external Bearer-token requests) where getCompanyId() would return undefined.
+  companyId?: number;
+  // Exclude leads removed from the pipeline (columnId === null) so paginated
+  // totalCount/take match what mobile's list actually renders. Opt-in: the web
+  // Sales Leads table still shows no-stage leads as "Unqualified".
+  excludeNoStage?: boolean;
 };
 
 function makeLeadSearchCondition(searchTerm?: string) {
@@ -473,19 +480,28 @@ export const getLeadsWithCountOptimized = async ({
   status,
   orderBy,
   dateRange,
+  companyId: companyIdOverride,
+  excludeNoStage,
 }: TGetLeadsWithCount): Promise<{
   leads: LeadWithSalesUser[];
   totalCount: number;
 }> => {
-  const companyId = await getCompanyId();
-  const companyTimezone = await getCompanyTimezone();
+  const companyId = companyIdOverride ?? (await getCompanyId());
+  const companyTimezone = await getCompanyTimezone(companyId);
   const timezone = companyTimezone?.timezone;
 
   try {
     const searchCond = makeLeadSearchCondition(searchTerm);
+    let columnIdFilter: Prisma.LeadWhereInput = {};
+    if (columnId) {
+      columnIdFilter = { columnId };
+    } else if (excludeNoStage) {
+      columnIdFilter = { columnId: { not: null } };
+    }
+
     const query: Prisma.LeadWhereInput = {
       companyId,
-      ...(columnId && { columnId }),
+      ...columnIdFilter,
       ...(searchCond ?? {}),
       ...(assignedTo && { assignedSalesUserId: parseInt(assignedTo) }),
       ...(source && { source }),
@@ -548,8 +564,9 @@ export const getLeadsWithCountOptimized = async ({
               lastName: true,
             },
           },
-          tasks: {
-            take: 5, // Limit tasks to reduce payload
+          tasks: true,
+          _count: {
+            select: { tasks: true },
           },
           column: true,
           leadTags: {
@@ -647,6 +664,7 @@ export const getLeadsWithCountOptimized = async ({
         column,
         totalMessage: isShowConversationIndicator ? 1 : 0,
         invoiceId: client?.Invoice?.[0]?.id ?? null,
+        taskCount: lead._count?.tasks ?? 0,
       } as LeadWithSalesUser;
     });
 

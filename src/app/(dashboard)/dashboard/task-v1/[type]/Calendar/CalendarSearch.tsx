@@ -75,9 +75,9 @@ export default function CalendarSearch({
         return {
           id: appointment.id,
           title,
-          date: appointment.date || new Date(), 
+          date: appointment.date || new Date(),
           type: "appointment" as const,
-          startTime: appointment.startTime || undefined, 
+          startTime: appointment.startTime || undefined,
           searchText: normalize(combined),
         };
       }),
@@ -116,7 +116,7 @@ export default function CalendarSearch({
     setSearchResults(filteredResults.slice(0, 10)); // Limit to 10 results
   };
 
-const debouncedSearch = useDebounce(handleSearch, 300);
+  const debouncedSearch = useDebounce(handleSearch, 300);
   // useEffect(() => {
   //   if (searchTerm.trim() === "") {
   //     setSearchResults([]);
@@ -184,16 +184,16 @@ const debouncedSearch = useDebounce(handleSearch, 300);
           value={searchTerm}
           onChange={(e) => {
             const value = e.target.value;
-                        setSearchTerm(value);
-                        setIsDropdownOpen(value.trim() !== "");
-                        debouncedSearch(value);
+            setSearchTerm(value);
+            setIsDropdownOpen(value.trim() !== "");
+            debouncedSearch(value);
           }}
           onFocus={() => {
             if (searchTerm.trim() !== "") {
               setIsDropdownOpen(true);
             }
           }}
-          placeholder="Search tasks and appointments..."
+          placeholder="Search Tasks and Appointments..."
           className="w-full rounded-md border border-input bg-background px-3 py-2 pl-10 text-sm"
         />
         <Search

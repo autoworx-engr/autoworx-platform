@@ -753,7 +753,7 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                   value={newTemplateName}
                   onChange={setNewTemplateName}
                   required
-                  placeholder="Enter template name"
+                  placeholder="Enter Template Name"
                 />
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-semibold text-gray-700">

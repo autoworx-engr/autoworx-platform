@@ -50,7 +50,7 @@ export default function SalesPurchaseHistoryClient({
   const view = searchParams?.get("view");
 
   return (
-    <div className="app-shadow mt-4 block min-h-[300px] overflow-y-auto rounded-lg bg-background p-4 lg:max-h-[52%] lg:min-h-[52%]">
+    <div className="app-shadow mt-4 flex-1 min-h-[300px] lg:min-h-0 overflow-y-auto rounded-lg bg-background p-4">
       <Tabs.Root value={tab} onValueChange={(value) => setTab(value as Tab)}>
         <Tabs.List className="w-fit flex gap-3 items-center p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 shadow-sm">
           <Tabs.Trigger

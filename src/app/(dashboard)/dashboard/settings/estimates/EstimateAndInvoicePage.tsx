@@ -10,13 +10,11 @@ import { useEffect, useState } from "react";
 import EmailTemplates from "./EmailTemplates";
 import { errorToast, successToast } from "@/lib/toast";
 import { DollarSign, FileText, Percent, Info } from "lucide-react";
-import { cn } from "@/lib/utils"; // Ensure you have this utility for tailwind merging
+import { cn } from "@/lib/utils";
 import Selector from "@/components/Selector";
+import { CURRENCIES } from "@/lib/currencies";
 
 export default function EstimateAndInvoicePage() {
-  const [currencies, setCurrencies] = useState<
-    { value: string; label: string }[]
-  >([]);
   const [currency, setCurrency] = useState<string>("USD");
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const maxLength = 800;
@@ -41,41 +39,6 @@ export default function EstimateAndInvoicePage() {
   }, [currentTermsLength, currentPolicyLength]);
 
   useEffect(() => {
-    async function getCurrencies() {
-      try {
-        const response = await fetch(
-          "https://restcountries.com/v3.1/all?fields=currencies",
-        );
-        if (!response.ok) throw new Error("Failed to fetch currencies");
-        const data = await response.json();
-
-        const currenciesMap: Record<string, any> = {};
-
-        data?.forEach((item: any) => {
-          if (item.currencies) {
-            Object.entries(item.currencies).forEach(
-              ([code, curr]: [string, any]) => {
-                currenciesMap[code] = {
-                  name: curr.name,
-                  symbol: curr.symbol || "",
-                };
-              },
-            );
-          }
-        });
-        const currencyOptions = Object.entries(currenciesMap).map(
-          ([code, curr]) => ({
-            value: code,
-            label: `${curr.symbol ? curr.symbol + " " : ""}${code}`,
-          }),
-        );
-
-        setCurrencies(currencyOptions);
-      } catch {
-        errorToast("Failed to load currencies");
-      }
-    }
-
     const fetchTermsPolicy = async () => {
       try {
         const data = await getCompanyTermsAndPolicyTax();
@@ -91,7 +54,7 @@ export default function EstimateAndInvoicePage() {
     const loadPageData = async () => {
       setIsLoading(true);
       try {
-        await Promise.all([getCurrencies(), fetchTermsPolicy()]);
+        await fetchTermsPolicy();
       } catch (_error) {
         errorToast("Failed to load page data");
       } finally {
@@ -217,8 +180,8 @@ export default function EstimateAndInvoicePage() {
                     </label>
                     <Selector
                       className="w-full"
-                      items={currencies}
-                      selectedItem={currencies.find(
+                      items={CURRENCIES}
+                      selectedItem={CURRENCIES.find(
                         (c) => c.value === currency,
                       )}
                       label={(item) => item?.label || "Select currency"}
@@ -231,7 +194,7 @@ export default function EstimateAndInvoicePage() {
                         </div>
                       )}
                       onSearch={(term) =>
-                        currencies.filter((c) =>
+                        CURRENCIES.filter((c) =>
                           `${c.label} ${c.value}`
                             .toLowerCase()
                             .includes(term.toLowerCase()),

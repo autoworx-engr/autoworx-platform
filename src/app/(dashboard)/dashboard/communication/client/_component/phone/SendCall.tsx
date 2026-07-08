@@ -38,6 +38,7 @@ export default function SendCall({
   const [localCallStatus, setLocalCallStatus] = useState("");
   const [localCallDuration, setLocalCallDuration] = useState(0);
   const [timer, setTimer] = useState<NodeJS.Timeout | null>(null);
+  const [isMuted, setIsMuted] = useState(false);
   const micStreamRef = useRef<MediaStream | null>(null);
 
   // Determine which connection is active (global incoming or local outgoing)
@@ -143,7 +144,26 @@ export default function SendCall({
       stopMicStream();
       setTimeout(() => router.refresh(), 3000);
     }
+    setIsMuted(false);
   };
+
+  // Mute/unmute the active call. currentConnection covers both the local
+  // outgoing call and a global incoming one; both expose Twilio's .mute(bool).
+  const toggleMute = () => {
+    if (!currentConnection) return;
+    const next = !isMuted;
+    try {
+      currentConnection.mute(next);
+      setIsMuted(next);
+    } catch (error) {
+      console.error("Failed to toggle mute:", error);
+    }
+  };
+
+  // Reset mute when the active call goes away (each call starts un-muted).
+  useEffect(() => {
+    if (!currentConnection) setIsMuted(false);
+  }, [currentConnection]);
 
   const handleSetupDevice = async () => {
     if (phoneNumber) {
@@ -232,6 +252,54 @@ export default function SendCall({
             Make Call
           </div>
         </button>
+
+        {/* Mute Button — only while a call is active */}
+        {currentConnection && (
+          <button
+            type="button"
+            aria-pressed={isMuted}
+            aria-label={isMuted ? "Unmute call" : "Mute call"}
+            className={`group relative overflow-hidden w-full rounded-xl px-4 py-3.5 text-base font-semibold shadow-lg transition-all duration-300 hover:-translate-y-0.5 active:scale-95 ${
+              isMuted
+                ? "bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-amber-500/20"
+                : "bg-slate-100 text-slate-700 shadow-slate-200 hover:bg-slate-200"
+            }`}
+            onClick={toggleMute}
+          >
+            <div className="relative flex items-center justify-center gap-2">
+              {isMuted ? (
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z M17 9l4 4m0-4l-4 4"
+                  />
+                </svg>
+              ) : (
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 11a7 7 0 01-14 0m7 7v3m-4 0h8M12 3a3 3 0 00-3 3v5a3 3 0 006 0V6a3 3 0 00-3-3z"
+                  />
+                </svg>
+              )}
+              {isMuted ? "Unmute" : "Mute"}
+            </div>
+          </button>
+        )}
 
         {/* End Call Button */}
         <button

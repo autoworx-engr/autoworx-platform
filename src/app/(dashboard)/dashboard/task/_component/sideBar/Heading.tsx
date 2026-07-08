@@ -11,6 +11,8 @@ export default function Heading() {
     sessionUser.data?.user?.employeeType === "Admin" ||
     sessionUser.data?.user?.employeeType === "Manager";
 
+  if (minimized) return null;
+
   return (
     <div className="flex w-full items-center gap-2 rounded-2xl border border-slate-200 bg-white/50 p-1.5 shadow-sm backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/50">
       {!minimized && (

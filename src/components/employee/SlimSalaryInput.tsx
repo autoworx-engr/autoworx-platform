@@ -78,7 +78,7 @@ export default function SlimSalaryInput({
             required={false}
             step="0.01"
             min="0"
-            placeholder="Salary amount"
+            placeholder="Salary Amount"
             defaultValue={
               initialSalaryAmount ? initialSalaryAmount.toString() : ""
             }

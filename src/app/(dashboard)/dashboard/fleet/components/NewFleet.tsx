@@ -346,7 +346,7 @@ export default function NewFleet({
               name="contactName"
               value={contactName}
               onChange={(e) => setContactName(e.target.value)}
-              label="Name of contact"
+              label="Name of Contact"
               required={true}
             />
           </div>
@@ -429,7 +429,9 @@ export default function NewFleet({
             </div>
 
             <div className="w-full">
-              <p className="mb-1 font-medium">Tag</p>
+              <p className="mb-1 font-medium text-slate-600 dark:text-slate-200 transition-colors duration-300">
+                Tag
+              </p>
               <SelectClientTags
                 value={tag}
                 setValue={setTag}

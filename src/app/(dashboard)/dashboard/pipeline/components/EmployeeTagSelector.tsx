@@ -77,8 +77,8 @@ export function EmployeeTagSelector({
   const filteredTags = useMemo(() => {
     return search
       ? tags.filter((tag) =>
-        tag.name.toLowerCase().includes(search.toLowerCase())
-      )
+          tag.name.toLowerCase().includes(search.toLowerCase()),
+        )
       : tags;
   }, [search, tags]);
 
@@ -115,7 +115,7 @@ export function EmployeeTagSelector({
             />
             <input
               type="text"
-              placeholder="Search tags..."
+              placeholder="Search Tags..."
               className="h-9 w-full rounded-lg bg-white pl-9 pr-10 text-sm font-medium ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30"
               value={search}
               onKeyDown={(e) => e.stopPropagation()}
@@ -133,7 +133,7 @@ export function EmployeeTagSelector({
           <div className="thin-scrollbar my-1 max-h-[200px] overflow-y-auto px-2">
             {filteredTags
               .filter(
-                (el) => !employeeTags.map((tag) => tag.name).includes(el.name)
+                (el) => !employeeTags.map((tag) => tag.name).includes(el.name),
               )
               .map((tagItem) => (
                 <div
@@ -158,7 +158,7 @@ export function EmployeeTagSelector({
                     onClick={() => handleDeleteTag(tagItem.id)}
                     className={cn(
                       "ml-1.5 transition-transform hover:scale-110",
-                      isRestrictedUser ? "hidden" : ""
+                      isRestrictedUser ? "hidden" : "",
                     )}
                   >
                     <div className="rounded-full bg-white/20 p-0.5 hover:bg-white/40">
@@ -205,7 +205,7 @@ export function EmployeeTagSelector({
                       "flex h-8 items-center justify-center rounded-lg text-xs font-bold transition-all hover:scale-105",
                       selectedColor?.textColor === color.textColor
                         ? "ring-2 ring-[#6571FF] ring-offset-1"
-                        : "ring-1 ring-transparent"
+                        : "ring-1 ring-transparent",
                     )}
                   >
                     Aa

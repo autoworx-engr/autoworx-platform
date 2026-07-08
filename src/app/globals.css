@@ -3,6 +3,12 @@
 @import "simplebar-react/dist/simplebar.min.css";
 @import "react-date-range/dist/styles.css";
 @import "react-date-range/dist/theme/default.css";
+
+/* Remove italic from Quill editor placeholder */
+.ql-container .ql-editor.ql-blank::before {
+  font-style: normal !important;
+  /* Optional: you can also change the color or font family here */
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

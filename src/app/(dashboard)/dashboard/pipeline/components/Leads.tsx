@@ -526,20 +526,32 @@ const Leads = ({ salesColumn }: TProps) => {
                           )}
                         >
                           <td className="border-b px-4 py-2 text-left">
-                            <Link
-                              href={`/dashboard/client/${lead.clientId}`}
-                              className="block h-full w-full text-[#6571FF]"
-                            >
-                              {(currentPage - 1) * pageSize + index + 1}
-                            </Link>
+                            {lead.clientId ? (
+                              <Link
+                                href={`/dashboard/client/${lead.clientId}`}
+                                className="block h-full w-full text-[#6571FF]"
+                              >
+                                {(currentPage - 1) * pageSize + index + 1}
+                              </Link>
+                            ) : (
+                              <span className="block h-full w-full text-[#6571FF]">
+                                {(currentPage - 1) * pageSize + index + 1}
+                              </span>
+                            )}
                           </td>
                           <td className="border-b px-4 py-2 text-left">
-                            <Link
-                              href={`/dashboard/client/${lead.clientId}`}
-                              className="block h-full w-full"
-                            >
-                              {formatDisplayName(lead.clientName)}
-                            </Link>
+                            {lead.clientId ? (
+                              <Link
+                                href={`/dashboard/client/${lead.clientId}`}
+                                className="block h-full w-full"
+                              >
+                                {formatDisplayName(lead.clientName)}
+                              </Link>
+                            ) : (
+                              <span className="block h-full w-full">
+                                {formatDisplayName(lead.clientName)}
+                              </span>
+                            )}
                           </td>
                           <td className="border-b px-4 py-2 text-left">
                             {lead.vehicleInfo}
@@ -590,18 +602,27 @@ const Leads = ({ salesColumn }: TProps) => {
 
                           <td className="border-b px-4 py-2 text-left">
                             <div className="flex items-center gap-2">
-                              <Link
-                                href={`/dashboard/communication/client/${lead?.client?.id ?? lead?.clientId}?source=lead`}
-                                className="group relative"
-                              >
-                                <MessageCircleMore
-                                  size={20}
-                                  className="duration-300 hover:text-[#6571FF]"
-                                />
-                                <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-                                  Communications
+                              {(lead?.client?.id ?? lead?.clientId) ? (
+                                <Link
+                                  href={`/dashboard/communication/client/${lead?.client?.id ?? lead?.clientId}?source=lead`}
+                                  className="group relative"
+                                >
+                                  <MessageCircleMore
+                                    size={20}
+                                    className="duration-300 hover:text-[#6571FF]"
+                                  />
+                                  <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                                    Communications
+                                  </span>
+                                </Link>
+                              ) : (
+                                <span className="group relative cursor-not-allowed opacity-40">
+                                  <MessageCircleMore size={20} />
+                                  <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                                    Communications
+                                  </span>
                                 </span>
-                              </Link>
+                              )}
                               <button
                                 onClick={() =>
                                   handleCreateDraftEstimate({
@@ -699,6 +720,7 @@ const Leads = ({ salesColumn }: TProps) => {
                                   companyUsers={companyUsers}
                                   leadId={lead.id}
                                   previousTasks={lead.tasks || []}
+                                  totalTasksCount={lead.taskCount ?? 0}
                                 />
                                 <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
                                   Add Task

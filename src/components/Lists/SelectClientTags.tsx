@@ -263,7 +263,7 @@ const Input = ({
   return (
     <input
       type="text"
-      placeholder="Search tags"
+      placeholder="Search Tags"
       className="h-9 w-full rounded-lg bg-white pl-9 pr-10 text-sm font-medium ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30"
       value={search}
       onChange={(e) => {

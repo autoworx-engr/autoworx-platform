@@ -23,12 +23,14 @@ type TProps = {
   invoiceEstimate: InvoiceData;
   index: number;
   onConvert: () => void;
+  autoOpen?: boolean;
 };
 
 export default function ResponsiveEstimateCard({
   invoiceEstimate,
   index,
   onConvert,
+  autoOpen = false,
 }: TProps) {
   const {
     id,
@@ -62,6 +64,7 @@ export default function ResponsiveEstimateCard({
           <InvoiceModal
             invoiceId={id}
             buttonChild={<button className="text-blue-600">{id}</button>}
+            autoOpen={autoOpen}
           />
           {isShopBooking && (
             <span className="mt-1 block text-center text-[10px] font-bold uppercase tracking-wider text-[#6571FF] bg-[#6571FF]/10 rounded-full px-2 py-0.5 w-fit">

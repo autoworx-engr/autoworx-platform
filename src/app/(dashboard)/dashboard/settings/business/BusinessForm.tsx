@@ -402,6 +402,7 @@ export default function BusinessForm({ company }: TProps) {
               onChange={handleChange}
               label="Legal Business Name"
               name="legalBusinessName"
+              placeholder="e.g. Acme Auto Works LLC"
               required
               error={validationErrors.legalBusinessName}
             />
@@ -411,6 +412,7 @@ export default function BusinessForm({ company }: TProps) {
               onChange={handleChange}
               label="Business Registration ID Number"
               name="businessRegistrationIDNumber"
+              placeholder="e.g. 12-3456789"
               error={validationErrors.businessRegistrationIDNumber}
             />
             <SlimTextarea
@@ -419,6 +421,9 @@ export default function BusinessForm({ company }: TProps) {
               // onChange={(e)}
               label="About"
               name="about"
+              placeholder="Briefly describe your business and what you offer"
+              rows={3}
+              className="max-h-18 resize-none overflow-y-auto thin-scrollbar"
               onChange={(e) =>
                 setBusinessSettings({
                   ...businessSettings,
@@ -433,6 +438,7 @@ export default function BusinessForm({ company }: TProps) {
               onChange={handleChange}
               label="Business Type"
               name="businessType"
+              placeholder="e.g. Auto Detailing, Body Shop"
               error={validationErrors.businessType}
             />
             <div className="flex flex-col gap-1.5 w-full">
@@ -491,6 +497,7 @@ export default function BusinessForm({ company }: TProps) {
               onChange={handleChange}
               label="Industry/Specialization (Optional)"
               name="industrySpecialization"
+              placeholder="e.g. Ceramic Coating, Vinyl Wrap"
               error={validationErrors.industrySpecialization}
               tooltipText="This will appear on your Collaboration Profile. Example: Dry Install PPF, Wet Install PPF, Vinyl Wrap, Ceramic Coating."
             />
@@ -527,6 +534,7 @@ export default function BusinessForm({ company }: TProps) {
               onChange={handleChange}
               label="Business Email"
               name="businessEmail"
+              placeholder="e.g. contact@yourbusiness.com"
               error={validationErrors.businessEmail}
             />
           </div>
@@ -537,6 +545,7 @@ export default function BusinessForm({ company }: TProps) {
               onChange={handleChange}
               label="Business Website (Optional)"
               name="businessWebsite"
+              placeholder="e.g. https://www.yourbusiness.com"
               error={validationErrors.businessWebsite}
             />
           </div>
@@ -569,6 +578,7 @@ export default function BusinessForm({ company }: TProps) {
                 onChange={handleChange}
                 label="Company Address"
                 name="companyAddress"
+                placeholder="e.g. 123 Main Street"
                 error={validationErrors.companyAddress}
               />
             </div>
@@ -578,6 +588,7 @@ export default function BusinessForm({ company }: TProps) {
                 onChange={handleChange}
                 label="City"
                 name="city"
+                placeholder="e.g. New York"
                 error={validationErrors.city}
               />
               <SlimInput
@@ -585,6 +596,7 @@ export default function BusinessForm({ company }: TProps) {
                 onChange={handleChange}
                 label="State"
                 name="state"
+                placeholder="e.g. NY"
                 error={validationErrors.state}
               />
               <SlimInput
@@ -592,6 +604,7 @@ export default function BusinessForm({ company }: TProps) {
                 onChange={handleChange}
                 label="Zip"
                 name="zip"
+                placeholder="e.g. 10001"
                 error={validationErrors.zip}
               />
             </div>
