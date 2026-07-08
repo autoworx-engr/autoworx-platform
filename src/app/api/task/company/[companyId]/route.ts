@@ -91,8 +91,6 @@ export async function GET(
 
     const where: Prisma.TaskWhereInput = { companyId };
 
-    // Collect each filter as its own OR group and AND them together, so search
-    // and the date window can be combined without overwriting where.OR.
     const andConditions: Prisma.TaskWhereInput[] = [];
 
     if (search) {
@@ -128,7 +126,18 @@ export async function GET(
       db.task.findMany({
         where,
         include: {
-          taskUser: true,
+          taskUser: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  employeeType: true,
+                },
+              },
+            },
+          },
           client: true,
           lead: true,
         },

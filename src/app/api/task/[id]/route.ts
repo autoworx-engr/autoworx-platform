@@ -32,7 +32,18 @@ export async function GET(
     const task = await db.task.findUnique({
       where: { id: taskId },
       include: {
-        taskUser: true,
+        taskUser: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                employeeType: true,
+              },
+            },
+          },
+        },
         client: true,
         lead: true,
       },
