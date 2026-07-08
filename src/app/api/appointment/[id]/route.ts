@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import type { Prisma } from "@prisma/client";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
+import { deleteAppointment } from "@/actions/appointment/deleteAppointment";
 
 const INCLUDE = {
   appointmentUsers: {
@@ -194,10 +196,48 @@ export async function PATCH(req: NextRequest, context: Ctx) {
   }
 }
 
-export async function DELETE(_req: NextRequest, context: Ctx) {
+export async function DELETE(req: NextRequest, context: Ctx) {
   try {
     const { id } = await context.params;
-    await db.appointment.delete({ where: { id: Number(id) } });
+    const appointmentId = Number(id);
+    if (!Number.isFinite(appointmentId)) {
+      return NextResponse.json(
+        { success: false, message: "Invalid appointment id" },
+        { status: 400 },
+      );
+    }
+
+    // Scope the delete to the caller's company so a mobile token can't remove
+    // another company's appointment.
+    const companyId = (await getAuthPrincipal(req))?.companyId ?? null;
+    if (companyId !== null) {
+      const appt = await db.appointment.findUnique({
+        where: { id: appointmentId },
+        select: { companyId: true },
+      });
+      if (!appt) {
+        return NextResponse.json(
+          { success: false, message: "Appointment not found" },
+          { status: 404 },
+        );
+      }
+      if (appt.companyId !== companyId) {
+        return NextResponse.json(
+          { success: false, message: "Forbidden: company mismatch" },
+          { status: 403 },
+        );
+      }
+    }
+
+    // Reuse the shared server action so reminders (Nest), Google Calendar events
+    // and Pusher notifications are cleaned up the same way the web modal does.
+    const result = await deleteAppointment(appointmentId);
+    if (result.type === "error") {
+      return NextResponse.json(
+        { success: false, message: "Server error" },
+        { status: 500 },
+      );
+    }
     return NextResponse.json({ success: true, message: "Appointment deleted" });
   } catch {
     return NextResponse.json(
