@@ -59,22 +59,31 @@ export default function UserTaskList({ user }: UserTaskListProps) {
       </div>
     );
   } else if (!isLoading && !isError && taskUser && taskUser.length > 0) {
-    content = taskUser.map((task, index) => (
-      <div className="ml-4 mt-2 flex items-center gap-2" key={index}>
-        <div
-          className="h-[10px] w-[10px] rounded-full"
-          style={{ backgroundColor: TASK_COLOR[task.priority] }}
-        ></div>
-        <p className="text-[16px]">{task.title}</p>
+    content = (
+      <div className="space-y-1">
+        {taskUser.map((task, index) => (
+          <div
+            className="flex items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors hover:bg-accent"
+            key={index}
+          >
+            <span
+              className="h-2.5 w-2.5 shrink-0 rounded-full"
+              style={{ backgroundColor: TASK_COLOR[task.priority] }}
+            />
+            <p className="truncate text-sm font-medium text-slate-600 dark:text-slate-300">
+              {task.title}
+            </p>
+          </div>
+        ))}
       </div>
-    ));
+    );
   }
   return (
     <div className="my-3">
       {content}
 
       <button
-        className="mt-3 rounded-2xl bg-slate-500 px-5 py-1 text-[15px] text-white sm:text-xs"
+        className="mt-3 inline-flex items-center gap-1 rounded-lg border border-dashed border-[#6571FF]/40 px-4 py-1.5 text-sm font-medium text-[#6571FF] transition-colors hover:border-[#6571FF] hover:bg-[#6571FF]/10"
         onClick={() =>
           open("ASSIGN_TASK", {
             user,
