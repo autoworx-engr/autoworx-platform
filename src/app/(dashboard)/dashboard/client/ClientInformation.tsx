@@ -69,7 +69,15 @@ export default function ClientInformation({
         <div className="flex w-full flex-col items-center gap-6 pt-6 lg:flex-row lg:items-start lg:pt-0">
           {/* Avatar Area */}
           <div className="shrink-0">
-            <Avatar photo={client.photo} width={100} height={100} />
+            <Avatar
+              photo={
+                client?.photo?.includes("autoworx-production")
+                  ? client.photo
+                  : "/images/default.png"
+              }
+              width={100}
+              height={100}
+            />
           </div>
 
           {/* Details Grid */}
