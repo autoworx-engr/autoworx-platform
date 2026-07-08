@@ -82,6 +82,9 @@ export function SelectorWithAdd({
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [newItemValue, setNewItemValue] = useState("");
+  const [deleteConfirmOpenId, setDeleteConfirmOpenId] = useState<string | null>(
+    null,
+  );
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const addNewInputRef = useRef<HTMLInputElement>(null);
@@ -363,7 +366,10 @@ export function SelectorWithAdd({
                 <div className="max-h-56 overflow-y-auto p-1.5 thin-scrollbar">
                   {filteredOptions?.length > 0 ? (
                     filteredOptions?.map((opt) => {
-                      const isSelected = selectedValue === opt?.id?.toString();
+                      const optionId = opt?.id?.toString();
+                      const isSelected = selectedValue === optionId;
+                      const isDeleteConfirmOpen =
+                        deleteConfirmOpenId === optionId;
                       const isDeletable =
                         allowDelete &&
                         !!onDelete &&
@@ -377,7 +383,16 @@ export function SelectorWithAdd({
                               ? "bg-[#6571FF]/10 text-[#6571FF] font-semibold"
                               : "text-slate-600 hover:bg-slate-50 hover:text-slate-900",
                           )}
-                          onClick={() => handleSelect(opt?.id?.toString())}
+                          onClick={(e) => {
+                            const target = e.target as HTMLElement;
+                            if (
+                              target.closest("[data-selector-delete-trigger]")
+                            ) {
+                              return;
+                            }
+
+                            handleSelect(opt?.id?.toString());
+                          }}
                         >
                           <span className="truncate">{opt?.title}</span>
                           <div className="flex shrink-0 items-center gap-1.5">
@@ -385,23 +400,42 @@ export function SelectorWithAdd({
                               <Check className="h-4 w-4" strokeWidth={3} />
                             )}
                             {isDeletable && (
-                              <Popconfirm
-                                title={deleteConfirmTitle}
-                                description={deleteConfirmDescription}
-                                okText="Yes"
-                                cancelText="No"
-                                onConfirm={() => onDelete?.(opt.id)}
-                              >
-                                <button
-                                  type="button"
-                                  title="Remove"
-                                  aria-label={`Remove ${opt?.title}`}
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="flex h-6 w-6 items-center justify-center rounded-md text-slate-300 opacity-0 transition-all hover:bg-rose-50 hover:text-rose-600 group-hover/item:opacity-100"
+                              <span data-selector-delete-trigger>
+                                <Popconfirm
+                                  title={deleteConfirmTitle}
+                                  description={deleteConfirmDescription}
+                                  okText="Yes"
+                                  cancelText="No"
+                                  onOpenChange={(open) => {
+                                    setDeleteConfirmOpenId(
+                                      open ? optionId : null,
+                                    );
+                                  }}
+                                  onCancel={(e) => {
+                                    e?.stopPropagation();
+                                    setDeleteConfirmOpenId(null);
+                                  }}
+                                  onConfirm={(e) => {
+                                    e?.stopPropagation();
+                                    setDeleteConfirmOpenId(null);
+                                    onDelete?.(opt.id);
+                                  }}
                                 >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </button>
-                              </Popconfirm>
+                                  <button
+                                    type="button"
+                                    title="Remove"
+                                    aria-label={`Remove ${opt?.title}`}
+                                    className={cn(
+                                      "flex h-6 w-6 items-center justify-center rounded-md text-slate-300 transition-all hover:bg-rose-50 hover:text-rose-600 group-hover/item:opacity-100",
+                                      isDeleteConfirmOpen
+                                        ? "opacity-100"
+                                        : "opacity-0",
+                                    )}
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </button>
+                                </Popconfirm>
+                              </span>
                             )}
                           </div>
                         </div>
