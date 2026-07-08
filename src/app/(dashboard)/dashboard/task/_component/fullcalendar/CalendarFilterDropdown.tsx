@@ -106,7 +106,7 @@ export function CalendarFilterDropdown({
           </button>
         </div>
 
-        <div className="max-h-72 overflow-y-auto">
+        <div className="max-h-72 h-full overflow-y-auto overflow-x-hidden">
           {activeFilterTab === "teamMate" ? (
             <>
               {teamMates.length > 0 ? (
@@ -130,7 +130,9 @@ export function CalendarFilterDropdown({
                         handleToggleTeamMate(mate.id, Boolean(checked))
                       }
                     >
-                      {mate.name}
+                      <span className="min-w-0 flex-1 truncate">
+                        {mate.name}
+                      </span>
                     </DropdownMenuCheckboxItem>
                   ))}
                 </>
@@ -163,7 +165,9 @@ export function CalendarFilterDropdown({
                         handleToggleCategory(cat.id, Boolean(checked))
                       }
                     >
-                      {cat.name}
+                      <span className="min-w-0 flex-1 truncate">
+                        {cat.name}
+                      </span>
                     </DropdownMenuCheckboxItem>
                   ))}
                 </>
