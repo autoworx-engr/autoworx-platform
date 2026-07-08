@@ -12,7 +12,7 @@ export function useCalendarStoreSync(
   useEffect(() => {
     if (!calendarRef.current || !date) return;
     const calApi = calendarRef.current.getApi();
-    if (moment.utc(calApi.getDate()).format("YYYY-MM-DD") !== date) {
+    if (moment(calApi.getDate()).format("YYYY-MM-DD") !== date) {
       isNavigatingFromCalendar.current = true;
       setTimeout(() => calApi.gotoDate(date), 0);
     }
@@ -24,7 +24,7 @@ export function useCalendarStoreSync(
       return;
     }
 
-    const viewStart = moment.utc(arg.view.currentStart);
+    const viewStart = moment(arg.view.currentStart);
 
     if (arg.view.type === "dayGridMonth") {
       const monthStart = viewStart.clone().startOf("month");
