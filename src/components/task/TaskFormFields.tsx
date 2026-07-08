@@ -5,7 +5,11 @@ import { Check } from "lucide-react";
 import { Select } from "antd";
 import { Priority } from "@prisma/client";
 import { cn } from "@/lib/cn";
-import { SlimInput, slimInputClassName } from "@/components/SlimInput";
+import { SlimInput } from "@/components/SlimInput";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { taskPriorityStyles } from "@/lib/taskPriorityStyles";
 import AssignTaskDropDown from "./AssignTaskDropDown";
 import { formatTime12Hour } from "@/utils/formateTime12Hours";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
@@ -61,43 +65,23 @@ export function TaskFormFields({
     return { value, label };
   });
 
-  const priorityStyles = {
-    Low: {
-      background: "linear-gradient(to right, #f5f3ff, #ede9fe)",
-      borderLeft: "3px solid #6d28d9",
-      color: "#6d28d9",
-      boxShadow: "0 2px 8px rgba(109, 40, 217, 0.15)",
-    },
-    Medium: {
-      background: "linear-gradient(to right, #f0f9ff, #e0f2fe)",
-      borderLeft: "3px solid #0284c7",
-      color: "#0284c7",
-      boxShadow: "0 2px 8px rgba(2, 132, 199, 0.15)",
-    },
-    High: {
-      background: "linear-gradient(to right, #b2f2bb, #d3f9d8)",
-      borderLeft: "3px solid #22a7b8",
-      color: "#22a7b8",
-      boxShadow: "0 2px 8px rgba(34, 167, 184, 0.15)",
-    },
-  };
+  // Shared with the task list / calendar so priority colors match everywhere.
+  const priorityStyles = taskPriorityStyles;
 
   const priorityItems = [{ id: "Low" }, { id: "Medium" }, { id: "High" }];
 
   return (
     <>
-      <div className="mb-4 flex flex-col">
-        <label htmlFor="title" className="font-medium text-slate-600">
-          Title <span className="text-[#E9405F]">*</span>
-        </label>
-        <input
+      <div className="mb-4 flex flex-col gap-1.5">
+        <Label htmlFor="title" className="text-base">
+          Title <span className="text-destructive">*</span>
+        </Label>
+        <Input
+          id="title"
           type="text"
           name="title"
           maxLength={100}
-          className={cn(
-            "mt-2 rounded-md border-2 border-gray-500 p-1",
-            slimInputClassName,
-          )}
+          placeholder="e.g. Follow up with client"
           value={title}
           onChange={(e) => {
             const value = e.target.value;
@@ -112,16 +96,16 @@ export function TaskFormFields({
         />
       </div>
 
-      <div className="mb-4 flex flex-col">
-        <label htmlFor="description" className="font-medium text-slate-600">
+      <div className="mb-4 flex flex-col gap-1.5">
+        <Label htmlFor="description" className="text-base">
           Description
-        </label>
-        <textarea
+        </Label>
+        <Textarea
+          id="description"
           name="description"
-          className={cn(
-            "mt-2 rounded-md border-2 border-gray-500 p-1",
-            slimInputClassName,
-          )}
+          rows={4}
+          placeholder="Add any details, notes or instructions for this task..."
+          className="min-h-[120px] resize-y"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
@@ -141,8 +125,8 @@ export function TaskFormFields({
             />
             <div className="flex items-end gap-2 mt-2 lg:mt-0">
               <label className="flex flex-col items-start">
-                <span className="mb-2 font-medium text-slate-600">
-                  Start Time <span className="text-[#E9405F]">*</span>
+                <span className="mb-2 flex items-center gap-1 text-base font-medium">
+                  Start Time <span className="text-destructive">*</span>
                 </span>
                 <Select
                   value={startTime}
@@ -172,8 +156,8 @@ export function TaskFormFields({
               </label>
 
               <label className="flex flex-col items-start">
-                <span className="mb-2 font-medium text-slate-600">
-                  End Time <span className="text-[#E9405F]">*</span>
+                <span className="mb-2 flex items-center gap-1 text-base font-medium">
+                  End Time <span className="text-destructive">*</span>
                 </span>
                 <Select
                   value={endTime}
@@ -205,11 +189,9 @@ export function TaskFormFields({
       </div>
 
       {taskData?.client && taskData?.createdBy === "sales_agent" && (
-        <div className="mb-4 flex flex-col">
-          <label className="font-medium text-slate-600">
-            Client Information
-          </label>
-          <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
+        <div className="mb-4 flex flex-col gap-1.5">
+          <Label className="text-base">Client Information</Label>
+          <div className="rounded-lg border bg-muted/40 p-3 space-y-2">
             <div className="flex flex-col">
               <span className="text-xs text-slate-500">Client Name</span>
               <span className="text-sm font-medium text-slate-700">
@@ -240,7 +222,7 @@ export function TaskFormFields({
       />
 
       <div className="mb-6 flex flex-col space-y-3">
-        <label className="font-medium text-slate-600">Priority Level</label>
+        <Label className="text-base">Priority Level</Label>
         <div className="flex items-center gap-3">
           {priorityItems.map((item) => {
             const isActive = priority === item.id;

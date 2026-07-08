@@ -122,37 +122,23 @@ export default function TaskContentModal({
             taskData={taskData}
           />
 
-          <div className="flex justify-end gap-10 md:gap-0">
-            <DialogFooter className=" flex flex-row justify-end space-x-2 ">
-              <DialogClose asChild>
-                <button
-                  type="button"
-                  className="
-                rounded-xl mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500 
-                hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
-                transition-colors border
-              "
-                >
-                  Cancel
-                </button>
-              </DialogClose>
-              <Submit
-                className="
-                rounded-xl px-6 py-2.5 text-sm font-medium text-white
-                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
-                shadow-lg shadow-indigo-500/30
-                hover:shadow-xl hover:shadow-indigo-500/40
-                hover:-translate-y-0.5 hover:scale-[1.02]
-                active:translate-y-0 active:scale-100
-                transition-all duration-200
-              "
-                formAction={handleSubmit}
-                disabled={isLoading || (fromEdit && !isFetched)}
+          <DialogFooter className="mt-4 flex flex-row justify-end gap-2">
+            <DialogClose asChild>
+              <button
+                type="button"
+                className="rounded-md border px-5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
               >
-                Save
-              </Submit>
-            </DialogFooter>
-          </div>
+                Cancel
+              </button>
+            </DialogClose>
+            <Submit
+              className="rounded-md bg-gradient-to-r from-[#6571FF] to-[#5a66ee] px-6 py-2 text-sm font-medium text-white shadow transition-all duration-200 hover:shadow-lg hover:shadow-indigo-500/30 disabled:opacity-50"
+              formAction={handleSubmit}
+              disabled={isLoading || (fromEdit && !isFetched)}
+            >
+              Save
+            </Submit>
+          </DialogFooter>
         </form>
       )}
     </DialogContent>
