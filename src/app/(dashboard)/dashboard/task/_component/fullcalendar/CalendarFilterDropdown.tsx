@@ -106,73 +106,75 @@ export function CalendarFilterDropdown({
           </button>
         </div>
 
-        {activeFilterTab === "teamMate" ? (
-          <>
-            {teamMates.length > 0 ? (
-              <>
-                <DropdownMenuCheckboxItem
-                  checked={allTeamMatesSelected}
-                  onCheckedChange={(checked) =>
-                    handleToggleAllTeamMates(Boolean(checked))
-                  }
-                >
-                  Select All
-                </DropdownMenuCheckboxItem>
-
-                <DropdownMenuSeparator />
-
-                {teamMates.map((mate) => (
+        <div className="max-h-72 overflow-y-auto">
+          {activeFilterTab === "teamMate" ? (
+            <>
+              {teamMates.length > 0 ? (
+                <>
                   <DropdownMenuCheckboxItem
-                    key={mate.id}
-                    checked={selectedTeamMateIds.includes(mate.id)}
+                    checked={allTeamMatesSelected}
                     onCheckedChange={(checked) =>
-                      handleToggleTeamMate(mate.id, Boolean(checked))
+                      handleToggleAllTeamMates(Boolean(checked))
                     }
                   >
-                    {mate.name}
+                    Select All
                   </DropdownMenuCheckboxItem>
-                ))}
-              </>
-            ) : (
-              <div className="px-3 py-3 text-sm text-slate-500">
-                No team mate available
-              </div>
-            )}
-          </>
-        ) : (
-          <>
-            {categories.length > 0 ? (
-              <>
-                <DropdownMenuCheckboxItem
-                  checked={allCategoriesSelected}
-                  onCheckedChange={(checked) =>
-                    handleToggleAllCategories(Boolean(checked))
-                  }
-                >
-                  Select All
-                </DropdownMenuCheckboxItem>
 
-                <DropdownMenuSeparator />
+                  <DropdownMenuSeparator />
 
-                {categories.map((cat) => (
+                  {teamMates.map((mate) => (
+                    <DropdownMenuCheckboxItem
+                      key={mate.id}
+                      checked={selectedTeamMateIds.includes(mate.id)}
+                      onCheckedChange={(checked) =>
+                        handleToggleTeamMate(mate.id, Boolean(checked))
+                      }
+                    >
+                      {mate.name}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </>
+              ) : (
+                <div className="px-3 py-3 text-sm text-slate-500">
+                  No team mate available
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              {categories.length > 0 ? (
+                <>
                   <DropdownMenuCheckboxItem
-                    key={cat.id}
-                    checked={selectedCategoryIds.includes(cat.id)}
+                    checked={allCategoriesSelected}
                     onCheckedChange={(checked) =>
-                      handleToggleCategory(cat.id, Boolean(checked))
+                      handleToggleAllCategories(Boolean(checked))
                     }
                   >
-                    {cat.name}
+                    Select All
                   </DropdownMenuCheckboxItem>
-                ))}
-              </>
-            ) : (
-              <div className="px-3 py-3 text-sm text-slate-500">
-                No category available
-              </div>
-            )}
-          </>
-        )}
+
+                  <DropdownMenuSeparator />
+
+                  {categories.map((cat) => (
+                    <DropdownMenuCheckboxItem
+                      key={cat.id}
+                      checked={selectedCategoryIds.includes(cat.id)}
+                      onCheckedChange={(checked) =>
+                        handleToggleCategory(cat.id, Boolean(checked))
+                      }
+                    >
+                      {cat.name}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </>
+              ) : (
+                <div className="px-3 py-3 text-sm text-slate-500">
+                  No category available
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );
