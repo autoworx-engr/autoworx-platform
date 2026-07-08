@@ -282,6 +282,37 @@ export const EventDetailsSheet = ({
 
           <div className="p-4 border-t bg-white space-y-3 shrink-0">
             <div className="flex gap-3">
+              {(eventType === "task" || eventType === "appointment") && (
+                <Popconfirm
+                  title={
+                    eventType === "task" ? "Delete Task" : "Delete Appointment"
+                  }
+                  description={`Are you sure you want to delete this ${eventType}?`}
+                  okText="Yes"
+                  cancelText="No"
+                  okButtonProps={{ danger: true }}
+                  trigger="click"
+                  zIndex={9999}
+                  placement="topRight"
+                  getPopupContainer={(triggerNode) =>
+                    triggerNode?.parentElement ?? document.body
+                  }
+                  onConfirm={handleDelete}
+                >
+                  <Button
+                    variant="outline"
+                    aria-label={
+                      eventType === "task"
+                        ? "Delete task"
+                        : "Delete appointment"
+                    }
+                    className="w-fit justify-center shadow-sm border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </Popconfirm>
+              )}
+
               {eventType === "task" && taskId ? (
                 <Button
                   variant="outline"
@@ -334,33 +365,6 @@ export const EventDetailsSheet = ({
                 <MessageSquare className="mr-2 h-4 w-4" />
                 Message Client
               </Button>
-            )}
-
-            {(eventType === "task" || eventType === "appointment") && (
-              <Popconfirm
-                title={
-                  eventType === "task" ? "Delete Task" : "Delete Appointment"
-                }
-                description={`Are you sure you want to delete this ${eventType}?`}
-                okText="Yes"
-                cancelText="No"
-                okButtonProps={{ danger: true }}
-                trigger="click"
-                zIndex={9999}
-                placement="topRight"
-                getPopupContainer={(triggerNode) =>
-                  triggerNode?.parentElement ?? document.body
-                }
-                onConfirm={handleDelete}
-              >
-                <Button
-                  variant="outline"
-                  className="w-full justify-center shadow-sm border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete {eventType === "task" ? "Task" : "Appointment"}
-                </Button>
-              </Popconfirm>
             )}
           </div>
         </div>

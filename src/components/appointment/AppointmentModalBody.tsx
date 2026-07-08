@@ -1,6 +1,5 @@
 "use client";
 
-import { deleteAppointment } from "@/actions/appointment/deleteAppointment";
 import {
   DialogClose,
   DialogContent,
@@ -9,12 +8,11 @@ import {
   DialogTitle,
 } from "@/components/Dialog";
 import { cn } from "@/lib/cn";
-import { errorToast, successToast } from "@/lib/toast";
-import { Bell, Calendar, Trash2 } from "lucide-react";
-import { Popconfirm } from "antd";
+import { errorToast } from "@/lib/toast";
+import { Bell, Calendar } from "lucide-react";
+import AppointmentForm from "./AppointmentForm";
 import { Reminder } from "./Reminder";
 import ScheduleTab from "./ScheduleTab";
-import AppointmentForm from "./AppointmentForm";
 import {
   Tab,
   useAppointmentFormState,
@@ -26,8 +24,6 @@ export default function AppointmentModalBody(props: AppointmentModalBodyProps) {
     fromEdit,
     appointmentId,
     setIsAppointmentModalOpen,
-    onModalClose,
-    onAppointmentDeleted,
     fromLead,
     clientId,
     vehicleId,

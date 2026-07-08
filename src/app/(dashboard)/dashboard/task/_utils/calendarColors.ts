@@ -6,17 +6,17 @@ export const SERVICE_COLORS: Record<
   { gradient: string[]; accentColor: string; borderColor: string }
 > = {
   Low: {
-    gradient: ["#f0faf1", "#dcefdd"],
+    gradient: ["#dcefdd", "#dcefdd"],
     borderColor: "rgba(76, 175, 80, 0.45)",
     accentColor: "#4CAF50",
   },
   Medium: {
-    gradient: ["#fff8f0", "#ffecd6"],
+    gradient: ["#ffecd6", "#ffecd6"],
     borderColor: "rgba(255, 152, 0, 0.45)",
     accentColor: "#FF9800",
   },
   High: {
-    gradient: ["#fef2f2", "#fdd9d7"],
+    gradient: ["#fdd9d7", "#fdd9d7"],
     borderColor: "rgba(244, 67, 54, 0.45)",
     accentColor: "#f44336",
   },
