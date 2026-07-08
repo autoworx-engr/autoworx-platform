@@ -1,4 +1,5 @@
 import { assignTask } from "@/actions/task/assignTask";
+import { errorToast, successToast } from "@/lib/toast";
 import FormError from "@/components/FormError";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -71,7 +72,15 @@ export default function AssignTask() {
   async function handleSubmit() {
     setIsSubmitting(true);
     try {
-      await assignTask({ userId: user.id, tasksToAssign: taskDataInput });
+      const result = await assignTask({
+        userId: user.id,
+        tasksToAssign: taskDataInput,
+      });
+
+      if (result.type !== "success") {
+        errorToast("Failed to assign tasks. Please try again.");
+        return;
+      }
 
       queryClient.setQueryData(
         taskQueryKey.taskByUserId(user.id.toString()),
@@ -84,7 +93,10 @@ export default function AssignTask() {
         },
       );
 
+      successToast("Tasks assigned successfully.");
       close();
+    } catch {
+      errorToast("Failed to assign tasks. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
