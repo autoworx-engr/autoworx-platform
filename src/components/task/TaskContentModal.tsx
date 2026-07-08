@@ -11,8 +11,6 @@ import FormError from "@/components/FormError";
 import Submit from "@/components/Submit";
 import { cn } from "@/lib/cn";
 import { Task } from "@prisma/client";
-import { Popconfirm } from "antd";
-import { Trash2 } from "lucide-react";
 import TaskSpinner from "@/app/(dashboard)/dashboard/task/_component/ui/TaskSpinner";
 import { useTaskForm } from "@/hooks/task/useTaskForm";
 import { TaskFormFields } from "./TaskFormFields";
@@ -79,7 +77,6 @@ export default function TaskContentModal({
     setDate,
     handleTimeChange,
     handleSubmit,
-    handleDeleteTask,
   } = actions;
 
   if (fromEdit && isError) {
@@ -125,29 +122,7 @@ export default function TaskContentModal({
             taskData={taskData}
           />
 
-          <div
-            className={cn(
-              "flex justify-between gap-10 md:gap-0",
-              !fromEdit && "justify-end",
-            )}
-          >
-            {fromEdit && taskId && (
-              <Popconfirm
-                title="Delete Task"
-                description="Are you sure you want to delete this task?"
-                onConfirm={() => handleDeleteTask(taskId)}
-                okText="Yes"
-                cancelText="No"
-                okButtonProps={{ danger: true }}
-              >
-                <button
-                  className="text-red-500 hover:text-red-700"
-                  type="button"
-                >
-                  <Trash2 size={20} />
-                </button>
-              </Popconfirm>
-            )}
+          <div className="flex justify-end gap-10 md:gap-0">
             <DialogFooter className=" flex flex-row justify-end space-x-2 ">
               <DialogClose asChild>
                 <button

@@ -186,35 +186,7 @@ export default function AppointmentModalBody(props: AppointmentModalBodyProps) {
         </div>
       </div>
 
-      <div
-        className={cn(
-          "flex gap-5 md:gap-0",
-          fromEdit && appointmentId ? "justify-between" : "justify-end",
-        )}
-      >
-        {fromEdit && appointmentId && (
-          <Popconfirm
-            title="Delete the appointment"
-            description="Are you sure to delete this appointment?"
-            okText="Yes"
-            cancelText="No"
-            onConfirm={async () => {
-              try {
-                await deleteAppointment(appointmentId);
-                onAppointmentDeleted && onAppointmentDeleted(appointmentId);
-                onModalClose();
-                successToast("Appointment deleted successfully");
-              } catch (error) {
-                errorToast("Failed to delete appointment");
-              }
-            }}
-          >
-            <Trash2
-              size={20}
-              className="text-red-500 hover:text-red-600 cursor-pointer"
-            />
-          </Popconfirm>
-        )}
+      <div className="flex justify-end gap-5 md:gap-0">
         <DialogFooter className="justify-end">
           <DialogClose asChild>
             <button
