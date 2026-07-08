@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import moment from "moment";
 import { getWeekStartNumber } from "../../_utils/utils.DateSelector";
 
@@ -11,15 +11,7 @@ export default function WeekCalendar({
   onSelect: (week: string) => void;
   weekStart: number | string;
 }) {
-  // Set the locale configuration at the component level
-  useEffect(() => {
-    const weekStartNumber = getWeekStartNumber(weekStart);
-    moment.updateLocale("en", {
-      week: {
-        dow: weekStartNumber,
-      },
-    });
-  }, [weekStart]);
+  moment.updateLocale("en", { week: { dow: getWeekStartNumber(weekStart) } });
 
   // Parse the selected week
   const [year, weekNum] = selectedWeek.split("-W");
