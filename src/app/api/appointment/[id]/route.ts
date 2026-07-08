@@ -63,11 +63,62 @@ function parseEditableDate(value: unknown): ParsedDate {
 
 type Ctx = { params: Promise<{ id: string }> };
 
-export async function GET(_req: NextRequest, context: Ctx) {
+async function authorizeAppointmentAccess(
+  req: NextRequest,
+  rawId: string,
+): Promise<{ error: NextResponse } | { appointmentId: number }> {
+  const appointmentId = Number(rawId);
+  if (!Number.isFinite(appointmentId)) {
+    return {
+      error: NextResponse.json(
+        { success: false, message: "Invalid appointment id" },
+        { status: 400 },
+      ),
+    };
+  }
+
+  const principal = await getAuthPrincipal(req);
+  if (!principal) {
+    return {
+      error: NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 },
+      ),
+    };
+  }
+
+  const appt = await db.appointment.findUnique({
+    where: { id: appointmentId },
+    select: { companyId: true },
+  });
+  if (!appt) {
+    return {
+      error: NextResponse.json(
+        { success: false, message: "Appointment not found" },
+        { status: 404 },
+      ),
+    };
+  }
+  if (appt.companyId !== principal.companyId) {
+    return {
+      error: NextResponse.json(
+        { success: false, message: "Forbidden: company mismatch" },
+        { status: 403 },
+      ),
+    };
+  }
+
+  return { appointmentId };
+}
+
+export async function GET(req: NextRequest, context: Ctx) {
   try {
     const { id } = await context.params;
+    const access = await authorizeAppointmentAccess(req, id);
+    if ("error" in access) return access.error;
+
     const appt = await db.appointment.findUnique({
-      where: { id: Number(id) },
+      where: { id: access.appointmentId },
       include: INCLUDE,
     });
     if (!appt) {
@@ -92,6 +143,10 @@ export async function GET(_req: NextRequest, context: Ctx) {
 export async function PATCH(req: NextRequest, context: Ctx) {
   try {
     const { id } = await context.params;
+    const access = await authorizeAppointmentAccess(req, id);
+    if ("error" in access) return access.error;
+    const appointmentId = access.appointmentId;
+
     const body = await req.json();
 
     const {
@@ -130,8 +185,8 @@ export async function PATCH(req: NextRequest, context: Ctx) {
       );
     }
 
-    const updated = await db.appointment.update({
-      where: { id: Number(id) },
+    await db.appointment.update({
+      where: { id: appointmentId },
       data: {
         ...(title !== undefined && { title }),
         ...(parsedDate.value !== undefined && { date: parsedDate.value }),
@@ -165,12 +220,12 @@ export async function PATCH(req: NextRequest, context: Ctx) {
 
     if (assignedUsers && Array.isArray(assignedUsers)) {
       await db.appointmentUser.deleteMany({
-        where: { appointmentId: Number(id) },
+        where: { appointmentId },
       });
       if (assignedUsers.length > 0) {
         await db.appointmentUser.createMany({
           data: assignedUsers.map((uid: number) => ({
-            appointmentId: Number(id),
+            appointmentId,
             userId: uid,
             eventId: null,
           })),
@@ -179,7 +234,7 @@ export async function PATCH(req: NextRequest, context: Ctx) {
     }
 
     const result = await db.appointment.findUnique({
-      where: { id: Number(id) },
+      where: { id: appointmentId },
       include: INCLUDE,
     });
 
@@ -199,39 +254,11 @@ export async function PATCH(req: NextRequest, context: Ctx) {
 export async function DELETE(req: NextRequest, context: Ctx) {
   try {
     const { id } = await context.params;
-    const appointmentId = Number(id);
-    if (!Number.isFinite(appointmentId)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid appointment id" },
-        { status: 400 },
-      );
-    }
 
-    // Scope the delete to the caller's company so a mobile token can't remove
-    // another company's appointment.
-    const companyId = (await getAuthPrincipal(req))?.companyId ?? null;
-    if (companyId !== null) {
-      const appt = await db.appointment.findUnique({
-        where: { id: appointmentId },
-        select: { companyId: true },
-      });
-      if (!appt) {
-        return NextResponse.json(
-          { success: false, message: "Appointment not found" },
-          { status: 404 },
-        );
-      }
-      if (appt.companyId !== companyId) {
-        return NextResponse.json(
-          { success: false, message: "Forbidden: company mismatch" },
-          { status: 403 },
-        );
-      }
-    }
+    const access = await authorizeAppointmentAccess(req, id);
+    if ("error" in access) return access.error;
 
-    // Reuse the shared server action so reminders (Nest), Google Calendar events
-    // and Pusher notifications are cleaned up the same way the web modal does.
-    const result = await deleteAppointment(appointmentId);
+    const result = await deleteAppointment(access.appointmentId);
     if (result.type === "error") {
       return NextResponse.json(
         { success: false, message: "Server error" },
