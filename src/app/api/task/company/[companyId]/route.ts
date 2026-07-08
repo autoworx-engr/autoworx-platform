@@ -89,12 +89,11 @@ export async function GET(
 
     const skip = (page - 1) * limit;
 
-    const where: Prisma.TaskWhereInput = { companyId };
+    const where: Prisma.TaskWhereInput = { companyId, status: "pending" };
 
     const andConditions: Prisma.TaskWhereInput[] = [];
 
     if (search) {
-      // Free-text search across title and client name.
       andConditions.push({
         OR: [
           { title: { contains: search, mode: "insensitive" } },

@@ -15,6 +15,7 @@ export default async function getTaskUser(userId: number) {
           in: taskUsers.map((taskUser) => taskUser.taskId),
         },
         companyId,
+        status: "pending",
       },
       select: {
         id: true,

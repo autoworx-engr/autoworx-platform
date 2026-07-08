@@ -111,6 +111,7 @@ export async function PATCH(
       clientId,
       leadId,
       assignedUsers,
+      status,
     } = body;
 
     const data: Record<string, unknown> = {};
@@ -122,6 +123,10 @@ export async function PATCH(
     if (priority !== undefined) data.priority = priority as Priority;
     if (clientId !== undefined) data.clientId = clientId;
     if (leadId !== undefined) data.leadId = leadId;
+    if (status !== undefined) {
+      data.status = status;
+      data.completedAt = status === "completed" ? new Date() : null;
+    }
 
     const updatedTask = await db.$transaction(async (tx) => {
       const task = await tx.task.update({

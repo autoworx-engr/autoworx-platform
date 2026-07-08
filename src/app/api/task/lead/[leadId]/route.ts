@@ -73,7 +73,7 @@ export async function GET(
 
     const skip = (page - 1) * limit;
 
-    const where = { leadId };
+    const where = { leadId, status: "pending" as const };
 
     const [tasks, total] = await Promise.all([
       db.task.findMany({

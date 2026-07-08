@@ -53,6 +53,7 @@ export async function fetchTaskPageData(month: string) {
     tasks = await db.task.findMany({
       where: {
         companyId,
+        status: "pending",
       },
     });
   } else {
@@ -77,6 +78,7 @@ export async function fetchTaskPageData(month: string) {
     tasks = await db.task.findMany({
       where: {
         companyId,
+        status: "pending",
         OR: [
           {
             taskUser: {
@@ -195,6 +197,7 @@ export async function fetchTaskPageData(month: string) {
           in: taskUsers.map((taskUser) => taskUser.taskId),
         },
         companyId,
+        status: "pending",
       },
     });
 
