@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
@@ -44,7 +45,7 @@ export async function GET(req: NextRequest) {
 
     // 1. Exchange code for short-lived user token
     const tokenRes = await fetch(
-      `https://graph.facebook.com/v19.0/oauth/access_token?` +
+      `https://graph.facebook.com/v21.0/oauth/access_token?` +
         new URLSearchParams({
           client_id: META_APP_ID,
           client_secret: META_APP_SECRET,
@@ -59,7 +60,7 @@ export async function GET(req: NextRequest) {
 
     // 2. Upgrade to long-lived token (60-day)
     const longRes = await fetch(
-      `https://graph.facebook.com/v19.0/oauth/access_token?` +
+      `https://graph.facebook.com/v21.0/oauth/access_token?` +
         new URLSearchParams({
           grant_type: "fb_exchange_token",
           client_id: META_APP_ID,
@@ -74,7 +75,7 @@ export async function GET(req: NextRequest) {
 
     // 3. Fetch Facebook Pages and their linked Instagram Business accounts
     const pagesRes = await fetch(
-      `https://graph.facebook.com/v19.0/me/accounts?` +
+      `https://graph.facebook.com/v21.0/me/accounts?` +
         new URLSearchParams({
           fields:
             "id,name,access_token,instagram_business_account{id,username,profile_picture_url}",
@@ -82,21 +83,35 @@ export async function GET(req: NextRequest) {
         }),
     );
     if (!pagesRes.ok) throw new Error("Failed to fetch pages");
-    const { data: pages } = (await pagesRes.json()) as {
-      data: {
-        id: string;
-        name: string;
-        access_token: string;
-        instagram_business_account?: {
-          id: string;
-          username?: string;
-          profile_picture_url?: string;
-        };
-      }[];
-    };
+    const pagesJson = await pagesRes.json();
+    console.log("[ig/callback] /me/accounts raw:", JSON.stringify(pagesJson));
 
-    if (!pages?.length) {
-      return NextResponse.redirect(`${SETTINGS_URL}?ig_error=no_pages_found`);
+    const pages = (pagesJson.data ?? []) as {
+      id: string;
+      name: string;
+      access_token: string;
+      instagram_business_account?: {
+        id: string;
+        username?: string;
+        profile_picture_url?: string;
+      };
+    }[];
+
+    console.log(
+      "[ig/callback] pages found:",
+      pages.map((p) => ({
+        pageId: p.id,
+        name: p.name,
+        hasInstagram: !!p.instagram_business_account,
+        igId: p.instagram_business_account?.id,
+        igUsername: p.instagram_business_account?.username,
+      })),
+    );
+
+    if (!pages.length) {
+      return clearStateCookie(
+        NextResponse.redirect(`${SETTINGS_URL}?ig_error=no_pages_found`),
+      );
     }
 
     let saved = 0;
@@ -130,7 +145,7 @@ export async function GET(req: NextRequest) {
 
       // Subscribe the Facebook Page to receive Instagram message webhooks
       const subRes = await fetch(
-        `https://graph.facebook.com/v19.0/${page.id}/subscribed_apps?` +
+        `https://graph.facebook.com/v21.0/${page.id}/subscribed_apps?` +
           new URLSearchParams({
             subscribed_fields: "messages,messaging_seen",
             access_token: pageAccessToken,

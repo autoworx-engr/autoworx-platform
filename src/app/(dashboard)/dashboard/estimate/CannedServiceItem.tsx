@@ -352,6 +352,8 @@ export const CannedServiceItem = ({
           description="Are you sure to delete this canned service?"
           okText="Yes"
           cancelText="No"
+          placement="topLeft"
+          getPopupContainer={() => document.body}
           onConfirm={async () => {
             await deleteService(service.id);
           }}

@@ -45,7 +45,7 @@ const AWXBugReport = () => {
   } = useGetAllBugReports(50);
 
   const filteredContacts =
-    data?.filter((contact: any) =>
+    data?.reports?.filter((contact: any) =>
       contact.BugReportMessage?.[contact.BugReportMessage.length - 1]?.subject
         ?.toLowerCase()
         ?.includes(searchQuery.toLowerCase()),

@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  context: { params: Promise<{ id: string }> },
 ) {
   try {
     const principal = await getAuthPrincipal(req);
@@ -15,7 +15,8 @@ export async function DELETE(
       );
     }
 
-    const id = Number(params.id);
+    const { id: idParam } = await context.params;
+    const id = Number(idParam);
     if (!id) {
       return NextResponse.json(
         { success: false, message: "Invalid id" },

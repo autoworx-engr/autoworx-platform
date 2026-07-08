@@ -236,8 +236,10 @@ export async function POST(req: Request) {
     );
 
     if (toCompanyId) {
+      // Pass the sender id explicitly — mobile app requests have no web session.
       sendCollaborationMessageNotification({
         companyId: toCompanyId,
+        senderUserId,
       });
     }
 

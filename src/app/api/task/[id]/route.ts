@@ -102,19 +102,20 @@ export async function PATCH(
       assignedUsers,
     } = body;
 
+    const data: Record<string, unknown> = {};
+    if (title !== undefined) data.title = title;
+    if (description !== undefined) data.description = description;
+    if (date !== undefined) data.date = date ? new Date(date) : null;
+    if (startTime !== undefined) data.startTime = startTime;
+    if (endTime !== undefined) data.endTime = endTime;
+    if (priority !== undefined) data.priority = priority as Priority;
+    if (clientId !== undefined) data.clientId = clientId;
+    if (leadId !== undefined) data.leadId = leadId;
+
     const updatedTask = await db.$transaction(async (tx) => {
       const task = await tx.task.update({
         where: { id: taskId },
-        data: {
-          title,
-          description,
-          date: date ? new Date(date) : null,
-          startTime,
-          endTime,
-          priority: priority as Priority,
-          clientId,
-          leadId,
-        },
+        data,
         include: {
           taskUser: true,
           client: true,

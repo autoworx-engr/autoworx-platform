@@ -3,8 +3,8 @@ import { NextResponse } from "next/server";
 const META_APP_ID = process.env.META_APP_ID!;
 const REDIRECT_URI = `${process.env.NEXT_PUBLIC_APP_URL}/api/instagram/callback`;
 
-// Scopes for Instagram DM access via Facebook OAuth
-// instagram_manage_messages + pages_* scopes access IG Business accounts via linked Facebook Pages
+// Scopes for Instagram DM access via Facebook OAuth dialog (graph.facebook.com)
+// instagram_business_* scopes are ONLY for https://www.instagram.com/oauth/authorize
 const SCOPES = [
   "instagram_basic",
   "instagram_manage_messages",
@@ -26,7 +26,7 @@ export async function GET() {
   // Generate a cryptographically random state for CSRF protection
   const state = crypto.randomUUID();
 
-  const authUrl = new URL("https://www.facebook.com/v19.0/dialog/oauth");
+  const authUrl = new URL("https://www.facebook.com/v21.0/dialog/oauth");
   authUrl.searchParams.set("client_id", META_APP_ID);
   authUrl.searchParams.set("redirect_uri", REDIRECT_URI);
   authUrl.searchParams.set("scope", SCOPES);

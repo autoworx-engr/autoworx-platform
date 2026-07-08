@@ -169,7 +169,7 @@ export default async function Analytics({
   return (
     <div className="rounded-lg border p-6">
       <h1 className="py-4 text-4xl font-bold">Analytics</h1>
-      <div className="min-w-2xl mx-10">
+      <div className="mx-5 md:mx-10 grid grid-cols-1 gap-x-10 md:gap-x-20">
         <RevenueBarChartContainer data={lastMonthServiceCategoryRevenue} />
       </div>
     </div>

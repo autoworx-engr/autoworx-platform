@@ -248,7 +248,7 @@ async function handleMessagingEvent(pageId: string, event: any) {
 async function fetchMetaProfile(psid: string, pageAccessToken: string) {
   try {
     const res = await fetch(
-      `https://graph.facebook.com/v19.0/${psid}?fields=name,profile_pic&access_token=${pageAccessToken}`,
+      `https://graph.facebook.com/v21.0/${psid}?fields=name,profile_pic&access_token=${pageAccessToken}`,
     );
     if (!res.ok) return null;
     return res.json() as Promise<{
@@ -260,12 +260,12 @@ async function fetchMetaProfile(psid: string, pageAccessToken: string) {
   }
 }
 
-function parseMetaName(fullName?: string): {
-  firstName: string;
-  lastName: string | null;
-} {
+function parseMetaName(
+  fullName?: string,
+  fallbackFirstName = "Messenger",
+): { firstName: string; lastName: string | null } {
   const trimmed = (fullName ?? "").trim();
-  if (!trimmed) return { firstName: "Messenger", lastName: "User" };
+  if (!trimmed) return { firstName: fallbackFirstName, lastName: "User" };
   const parts = trimmed.split(/\s+/);
   return {
     firstName: parts[0],
@@ -326,7 +326,14 @@ async function handleInstagramEvent(igUserId: string, event: any) {
     clientId = clientProfile.clientId;
     log("instagram", `existing client clientId=${clientId}`);
   } else {
-    log("instagram", "new client — creating from igsid");
+    log("instagram", "new client — fetching Instagram profile");
+    const igProfile = await fetchMetaProfile(igsid, igAccount.pageAccessToken);
+    const { firstName, lastName } = parseMetaName(igProfile?.name, "Instagram");
+    log(
+      "instagram",
+      `IG profile: name="${firstName} ${lastName ?? ""}" pic=${!!igProfile?.profile_pic}`,
+    );
+
     let source = await db.source.findFirst({
       where: { name: { equals: "instagram", mode: "insensitive" }, companyId },
     });
@@ -339,10 +346,10 @@ async function handleInstagramEvent(igUserId: string, event: any) {
 
     const newClient = await db.client.create({
       data: {
-        firstName: "Instagram",
-        lastName: "User",
+        firstName,
+        lastName,
         companyId,
-        photo: "/images/default.png",
+        photo: igProfile?.profile_pic ?? "/images/default.png",
         sourceId: source.id,
         isSalesAgent: true,
       },
