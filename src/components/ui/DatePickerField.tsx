@@ -73,7 +73,8 @@ export function DatePickerField({
             variant="outline"
             disabled={disabled}
             className={cn(
-              "h-9 w-full justify-start gap-2 rounded-md border-input px-3 font-normal shadow-sm",
+              "h-9 w-full justify-start gap-2 rounded-md border-input bg-transparent px-3 font-normal shadow-sm",
+              "hover:bg-transparent focus-visible:ring-1 focus-visible:ring-ring",
               !selected && "text-muted-foreground",
               error && "border-destructive focus-visible:ring-destructive/30",
               triggerClassName,

@@ -445,7 +445,6 @@ export default function AddNewEmployee({
                 name="password"
                 placeholder="Enter password"
                 required={true}
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring md:text-sm"
               />
             </div>
             <div className="flex flex-col gap-1.5">
@@ -456,7 +455,6 @@ export default function AddNewEmployee({
                 name="confirmPassword"
                 placeholder="Enter confirm password"
                 required={true}
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring md:text-sm"
               />
             </div>
           </div>
