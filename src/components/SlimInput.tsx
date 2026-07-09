@@ -80,8 +80,16 @@ export function SlimInput({
             isDateLike &&
               cn(
                 "appearance-none",
+                // Align the native value text with the rest of the shadcn inputs
+                "text-foreground",
+                "[&::-webkit-datetime-edit]:p-0 [&::-webkit-datetime-edit]:leading-none",
+                "[&::-webkit-datetime-edit-fields-wrapper]:p-0",
                 "[&::-webkit-date-and-time-value]:m-0 [&::-webkit-date-and-time-value]:text-left",
-                "[&::-webkit-calendar-picker-indicator]:opacity-60",
+                // Calendar icon on the right, subtle
+                "[&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-60",
+                "[&::-webkit-calendar-picker-indicator]:hover:opacity-100",
+                // While empty: hide native text and stretch the picker over the
+                // whole field so our custom placeholder + icon shows instead.
                 "data-[empty]:[&::-webkit-datetime-edit]:opacity-0",
                 "data-[empty]:[&::-webkit-calendar-picker-indicator]:absolute",
                 "data-[empty]:[&::-webkit-calendar-picker-indicator]:inset-0",

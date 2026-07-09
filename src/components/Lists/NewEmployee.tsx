@@ -13,6 +13,7 @@ import {
 import FormError from "@/components/FormError";
 import Password from "@/components/Password";
 import { SlimInput } from "@/components/SlimInput";
+import { DatePickerField } from "@/components/ui/DatePickerField";
 import { Label } from "@/components/ui/label";
 import SlimSalaryInput from "@/components/employee/SlimSalaryInput";
 import { useServerGet } from "@/hooks/useServerGet";
@@ -515,12 +516,9 @@ export default function AddNewEmployee({
               employeeTypeOpen={employeeTypeOpen}
               setEmployeeTypeOpen={setEmployeeTypeOpen}
             />
-            <SlimInput
+            <DatePickerField
               name="date"
               label="Date joined"
-              rootClassName="grow"
-              type="date"
-              required={false}
               defaultValue={new Date().toISOString().split("T")[0]}
             />
           </div>

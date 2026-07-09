@@ -4,7 +4,7 @@ import React from "react";
 import { Check } from "lucide-react";
 import { Priority } from "@prisma/client";
 import { cn } from "@/lib/cn";
-import { SlimInput } from "@/components/SlimInput";
+import { DatePickerField } from "@/components/ui/DatePickerField";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -118,14 +118,11 @@ export function TaskFormFields({
       <div id="timer-parent" className="mb-4 flex flex-col">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="lg:col-span-2">
-            <SlimInput
-              name="date"
+            <DatePickerField
               label="Date"
-              rootClassName="w-full"
-              type="date"
-              value={date ?? ""}
               required
-              onChange={(event) => setDate(event.currentTarget.value)}
+              value={date ?? ""}
+              onChange={(value) => setDate(value)}
             />
           </div>
 
@@ -137,7 +134,11 @@ export function TaskFormFields({
               value={startTime || undefined}
               onValueChange={(value) => handleTimeChange(value, "start")}
             >
-              <SelectTrigger id="startTime" className="w-full">
+              <SelectTrigger
+                id="startTime"
+                size="md"
+                className="w-full rounded-md"
+              >
                 <SelectValue placeholder="Start Time" />
               </SelectTrigger>
               <SelectContent className="max-h-60">
@@ -160,7 +161,11 @@ export function TaskFormFields({
               value={endTime || undefined}
               onValueChange={(value) => handleTimeChange(value, "end")}
             >
-              <SelectTrigger id="endTime" className="w-full">
+              <SelectTrigger
+                id="endTime"
+                size="md"
+                className="w-full rounded-md"
+              >
                 <SelectValue placeholder="End Time" />
               </SelectTrigger>
               <SelectContent className="max-h-60">
