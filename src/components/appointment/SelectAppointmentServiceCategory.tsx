@@ -4,7 +4,8 @@ import Selector from "@/components/Selector";
 import { useListsStore } from "@/stores/lists";
 import { Category } from "@prisma/client";
 import newCategory from "@/actions/category/newCategory";
-import { Plus } from "lucide-react";
+import deleteCategory from "@/actions/category/deleteCategory";
+import { Plus, Trash2 } from "lucide-react";
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -47,6 +48,7 @@ export function SelectAppointmentServiceCategory({
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [selectedColor, setSelectedColor] = useState(STATIC_CATEGORY_COLORS[0]);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!serviceCategoryId) {
@@ -120,6 +122,40 @@ export function SelectAppointmentServiceCategory({
     }
   };
 
+  const handleDeleteCategory = async (category: Category) => {
+    if (deletingId) return;
+    if (
+      !window.confirm(
+        `Delete category "${category.name}"? It will be removed from any items using it.`,
+      )
+    )
+      return;
+
+    try {
+      setDeletingId(category.id);
+      const res = await deleteCategory({ categoryId: category.id });
+
+      if (res.type !== "success") {
+        toast.error(res.message || "Failed to delete category");
+        return;
+      }
+
+      useListsStore.setState((state) => ({
+        categories: state.categories.filter((c) => c.id !== category.id),
+      }));
+      if (serviceCategoryId === category.id) {
+        setSelectedCategory(null);
+        setServiceCategoryId(null);
+      }
+      toast.success("Category deleted successfully.");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to delete category");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
     <>
       <input type="hidden" name={name} value={serviceCategoryId ?? ""} />
@@ -175,16 +211,30 @@ export function SelectAppointmentServiceCategory({
           );
         }}
         displayList={(category: Category) => (
-          <div className="flex items-center gap-2">
-            <span
-              className="h-2.5 w-2.5 rounded-full border border-slate-200"
-              style={{
-                backgroundColor: getCategoryColor((category as any).color),
+          <div className="flex w-full items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span
+                className="h-2.5 w-2.5 rounded-full border border-slate-200"
+                style={{
+                  backgroundColor: getCategoryColor((category as any).color),
+                }}
+              />
+              <p className="text-sm font-medium text-slate-700 transition-colors group-hover:text-[#6571FF]">
+                {category.name}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteCategory(category);
               }}
-            />
-            <p className="text-sm font-medium text-slate-700 group-hover:text-[#6571FF] transition-colors">
-              {category.name}
-            </p>
+              disabled={deletingId === category.id}
+              aria-label={`Delete ${category.name}`}
+              className="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
           </div>
         )}
         onSelect={(category) => {
