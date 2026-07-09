@@ -2,7 +2,7 @@
 import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
 import useTasksQueryForDashboard from "@/hooks/query-hook/useTasksQueryForDashboard";
 import BoxTitle from "./BoxTitle";
-import Task from "./Task";
+import TaskListItem from "@/components/task/TaskListItem";
 import { queryKeys } from "@/lib/queryKeys";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePermissionStore } from "@/stores/permissionStore";
@@ -101,8 +101,7 @@ export default function TaskListBox() {
     );
   } else if (tasks && tasks.length > 0) {
     content = tasks.map((task, idx) => (
-      // Note: Task component needs its own styling update for premium look
-      <Task key={idx} task={task} onTaskDeleted={handleTaskDeleted} />
+      <TaskListItem key={idx} task={task} onTaskRemoved={handleTaskDeleted} />
     ));
   }
 

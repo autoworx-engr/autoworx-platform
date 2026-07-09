@@ -281,13 +281,9 @@ export default function Selector<T>({
           }}
           disabled={disabledDropdown}
           className={cn(
-            "group flex h-9 mt-1 w-[99%] items-center justify-between rounded-lg px-4 transition-all duration-300 outline-none",
-            "bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm hover:shadow-md",
-            "ring-1 ring-slate-200 dark:ring-slate-800",
-            isOpen
-              ? "ring-2 ring-[#6571FF]/60 border-transparent"
-              : "hover:ring-slate-300",
-            disabledDropdown && "opacity-50 cursor-not-allowed",
+            "group flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 shadow-sm outline-none transition-colors",
+            isOpen && "ring-1 ring-ring border-ring",
+            disabledDropdown && "cursor-not-allowed opacity-50",
           )}
         >
           <TooltipProvider>
@@ -307,10 +303,10 @@ export default function Selector<T>({
 
           {!disabledDropdown && (
             <ChevronDown
-              size={18}
+              size={16}
               className={cn(
-                "text-slate-400 transition-transform duration-300",
-                isOpen && "rotate-180 text-[#6571FF]",
+                "text-muted-foreground transition-transform duration-200",
+                isOpen && "rotate-180 text-ring",
               )}
             />
           )}

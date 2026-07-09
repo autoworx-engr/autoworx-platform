@@ -3,30 +3,30 @@
 import { db } from "@/lib/db";
 import { sendTaskCompleteNotification } from "@/lib/notification/task-and-appointment-notify";
 import { ServerAction } from "@/types/action";
-import { deleteTask } from "./deleteTask";
 
 export async function completeTask(
   id: number,
-  options?: { revalidate?: boolean },
+  _options?: { revalidate?: boolean },
 ): Promise<ServerAction> {
   try {
-    // find the task users
     const taskUsers = await db.taskUser.findMany({
       where: {
         taskId: id,
       },
     });
 
-    const deletedTask = await deleteTask(id, options);
-
-    if (deletedTask.type !== "success" || !deletedTask.data) {
-      return { type: "error" };
-    }
+    const completedTask = await db.task.update({
+      where: { id },
+      data: {
+        status: "completed",
+        completedAt: new Date(),
+      },
+    });
 
     await sendTaskCompleteNotification({
-      companyId: deletedTask.data.companyId,
-      taskDate: deletedTask.data.date && deletedTask.data?.date,
-      taskTitle: deletedTask.data?.title,
+      companyId: completedTask.companyId,
+      taskDate: completedTask.date && completedTask.date,
+      taskTitle: completedTask.title,
       assignTaskUserId: taskUsers.map((user) => user.userId),
     });
 
@@ -34,7 +34,7 @@ export async function completeTask(
       type: "success",
     };
   } catch (error) {
-    // console.log("🚀 ~ deleteTask ~ error:", error);
+    // console.log("🚀 ~ completeTask ~ error:", error);
     return {
       type: "error",
     };

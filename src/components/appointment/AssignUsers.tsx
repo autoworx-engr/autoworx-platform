@@ -109,7 +109,7 @@ export default function AssignUsers({
         onClick={() => setAddEmployeePersonOpen(true)}
       >
         {title}
-        <span className="absolute -bottom-0.5 left-0 h-0.5 w-0 transition-all duration-300 group-hover:w-full bg-[#6571FF]" />
+        {/* <span className="absolute -bottom-0.5 left-0 h-0.5 w-0 transition-all duration-300 group-hover:w-full bg-[#6571FF]" /> */}
       </button>
 
       {/* Assigned Users List */}
