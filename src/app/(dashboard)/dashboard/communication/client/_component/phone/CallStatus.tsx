@@ -32,7 +32,7 @@ export default function CallStatus({
         Status:{" "}
         <span
           className={`font-semibold ${
-            !hasActiveCall && isDeviceReady
+            displayStatus === "Device Ready"
               ? "text-emerald-600"
               : "text-slate-800"
           }`}
