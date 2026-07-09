@@ -4,6 +4,7 @@ import Selector from "@/components/Selector";
 import { useListsStore } from "@/stores/lists";
 import { Category } from "@prisma/client";
 import newCategory from "@/actions/category/newCategory";
+import { Plus } from "lucide-react";
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
