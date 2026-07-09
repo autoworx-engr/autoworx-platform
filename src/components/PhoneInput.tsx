@@ -225,7 +225,7 @@ export default function PhoneInput({
             "flex h-9 items-center rounded-md border bg-transparent shadow-sm transition-colors",
             error
               ? "border-destructive focus-within:ring-1 focus-within:ring-destructive/30"
-              : "border-input focus-within:border-ring focus-within:ring-1 focus-within:ring-ring",
+              : "border-input focus-within:ring-1 focus-within:ring-ring",
             disabled && "cursor-not-allowed bg-muted opacity-50",
           )}
         >
