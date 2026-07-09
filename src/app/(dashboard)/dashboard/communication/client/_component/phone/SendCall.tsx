@@ -72,6 +72,9 @@ export default function SendCall({
     if (!client?.mobile) return;
 
     try {
+      setLocalCallStatus("Connecting…");
+      setLocalCallDuration(0);
+
       // Update first contact time
       await updateFirstContactTimeClient(client?.id);
 
