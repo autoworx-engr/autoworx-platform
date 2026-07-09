@@ -125,6 +125,7 @@ export default function AppointmentForm({
 
           <DatePickerField
             label="End Date"
+            clearable
             value={endDate ?? ""}
             onChange={(value) => {
               if (!value) {
