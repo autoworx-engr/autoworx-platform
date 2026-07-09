@@ -2,20 +2,24 @@
 
 import React from "react";
 import { Check } from "lucide-react";
-import { Select } from "antd";
 import { Priority } from "@prisma/client";
 import { cn } from "@/lib/cn";
 import { SlimInput } from "@/components/SlimInput";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { taskPriorityStyles } from "@/lib/taskPriorityStyles";
 import AssignTaskDropDown from "./AssignTaskDropDown";
 import { formatTime12Hour } from "@/utils/formateTime12Hours";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { useFormErrorStore } from "@/stores/form-error";
-
-const { Option } = Select;
 
 interface TaskFormFieldsProps {
   title: string;
@@ -130,20 +134,21 @@ export function TaskFormFields({
               Start Time <span className="text-destructive">*</span>
             </Label>
             <Select
-              id="startTime"
               value={startTime || undefined}
-              placeholder="Start Time"
-              onChange={(value) => handleTimeChange(value, "start")}
-              className="task-time-select"
-              popupClassName="task-time-dropdown"
+              onValueChange={(value) => handleTimeChange(value, "start")}
             >
-              {timeOptions
-                .filter((time) => time.value <= "22:45")
-                .map((time) => (
-                  <Option key={time.value} value={time.value}>
-                    {time.label}
-                  </Option>
-                ))}
+              <SelectTrigger id="startTime" className="w-full">
+                <SelectValue placeholder="Start Time" />
+              </SelectTrigger>
+              <SelectContent className="max-h-60">
+                {timeOptions
+                  .filter((time) => time.value <= "22:45")
+                  .map((time) => (
+                    <SelectItem key={time.value} value={time.value}>
+                      {time.label}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
             </Select>
           </div>
 
@@ -152,18 +157,19 @@ export function TaskFormFields({
               End Time <span className="text-destructive">*</span>
             </Label>
             <Select
-              id="endTime"
               value={endTime || undefined}
-              placeholder="End Time"
-              onChange={(value) => handleTimeChange(value, "end")}
-              className="task-time-select"
-              popupClassName="task-time-dropdown"
+              onValueChange={(value) => handleTimeChange(value, "end")}
             >
-              {timeOptions.map((time) => (
-                <Option key={time.value} value={time.value}>
-                  {time.label}
-                </Option>
-              ))}
+              <SelectTrigger id="endTime" className="w-full">
+                <SelectValue placeholder="End Time" />
+              </SelectTrigger>
+              <SelectContent className="max-h-60">
+                {timeOptions.map((time) => (
+                  <SelectItem key={time.value} value={time.value}>
+                    {time.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
         </div>
