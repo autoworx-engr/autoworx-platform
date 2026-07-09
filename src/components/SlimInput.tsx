@@ -3,6 +3,7 @@ import { sentenceCase } from "change-case";
 import { cn } from "@/lib/cn";
 import { Tooltip } from "antd";
 import { InfoCircleOutlined } from "@ant-design/icons";
+import { CalendarDays } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -82,6 +83,13 @@ export function SlimInput({
                 "[&::-webkit-date-and-time-value]:m-0 [&::-webkit-date-and-time-value]:text-left",
                 "[&::-webkit-calendar-picker-indicator]:opacity-60",
                 "data-[empty]:[&::-webkit-datetime-edit]:opacity-0",
+                "data-[empty]:[&::-webkit-calendar-picker-indicator]:absolute",
+                "data-[empty]:[&::-webkit-calendar-picker-indicator]:inset-0",
+                "data-[empty]:[&::-webkit-calendar-picker-indicator]:m-0",
+                "data-[empty]:[&::-webkit-calendar-picker-indicator]:h-full",
+                "data-[empty]:[&::-webkit-calendar-picker-indicator]:w-full",
+                "data-[empty]:[&::-webkit-calendar-picker-indicator]:cursor-pointer",
+                "data-[empty]:[&::-webkit-calendar-picker-indicator]:opacity-0",
               ),
             // Error state styling overrides
             error &&
@@ -91,8 +99,9 @@ export function SlimInput({
           {...props}
         />
         {isEmptyDate && (
-          <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-md text-muted-foreground">
-            {datePlaceholder}
+          <span className="pointer-events-none absolute inset-y-0 left-3 right-3 flex items-center justify-between text-md text-muted-foreground">
+            <span>{datePlaceholder}</span>
+            <CalendarDays className="h-4 w-4 opacity-60" />
           </span>
         )}
       </div>

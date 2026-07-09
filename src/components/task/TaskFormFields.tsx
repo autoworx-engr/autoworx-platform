@@ -112,78 +112,59 @@ export function TaskFormFields({
       </div>
 
       <div id="timer-parent" className="mb-4 flex flex-col">
-        <div className="flex items-center space-x-2">
-          <div className="flex w-full flex-col space-y-4 lg:flex-row lg:space-x-2 lg:space-y-0">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="lg:col-span-2">
             <SlimInput
               name="date"
               label="Date"
-              rootClassName="grow"
+              rootClassName="w-full"
               type="date"
               value={date ?? ""}
               required
               onChange={(event) => setDate(event.currentTarget.value)}
             />
-            <div className="flex items-end gap-2 mt-2 lg:mt-0">
-              <label className="flex flex-col items-start">
-                <span className="mb-2 flex items-center gap-1 text-base font-medium">
-                  Start Time <span className="text-destructive">*</span>
-                </span>
-                <Select
-                  value={startTime}
-                  onChange={(value) => handleTimeChange(value, "start")}
-                  style={{ width: "100%" }}
-                  className="h-[38px] w-full rounded-lg border-none bg-slate-50/50 ring-1 ring-slate-200 transition-all duration-300 hover:bg-white hover:ring-[#6571FF]/80 hover:scale-[1.01] hover:shadow-sm focus-within:ring-2 focus-within:ring-[#6571FF]/40 focus:outline-none text-slate-600 font-medium thin-scrollbar"
-                  dropdownClassName="rounded-xl border-none shadow-2xl backdrop-blur-md bg-white/90"
-                >
-                  <Option value="" className="text-slate-400 italic">
-                    Start Time
-                  </Option>
-                  {timeOptions
-                    .filter((time) => time.value <= "22:45")
-                    .map((time) => (
-                      <Option
-                        key={time.value}
-                        value={time.value}
-                        className="py-2 px-3 text-slate-600 transition-colors hover:bg-[#6571FF]/10 hover:text-[#6571FF]"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="h-1.5 w-1.5 rounded-full bg-slate-300 group-hover:bg-[#6571FF]" />
-                          {time.label}
-                        </div>
-                      </Option>
-                    ))}
-                </Select>
-              </label>
+          </div>
 
-              <label className="flex flex-col items-start">
-                <span className="mb-2 flex items-center gap-1 text-base font-medium">
-                  End Time <span className="text-destructive">*</span>
-                </span>
-                <Select
-                  value={endTime}
-                  onChange={(value) => handleTimeChange(value, "end")}
-                  style={{ width: "100%" }}
-                  className="h-[38px] w-full rounded-lg border-none bg-slate-50/50 ring-1 ring-slate-200 transition-all duration-300 hover:bg-white hover:ring-[#6571FF]/80 hover:scale-[1.01] hover:shadow-sm focus-within:ring-2 focus-within:ring-[#6571FF]/40 focus:outline-none text-slate-600 font-medium thin-scrollbar"
-                  dropdownClassName="rounded-xl border-none shadow-2xl backdrop-blur-md bg-white/90"
-                >
-                  <Option value="" className="text-slate-400 italic">
-                    End Time
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="startTime" className="text-base">
+              Start Time <span className="text-destructive">*</span>
+            </Label>
+            <Select
+              id="startTime"
+              value={startTime || undefined}
+              placeholder="Start Time"
+              onChange={(value) => handleTimeChange(value, "start")}
+              className="task-time-select"
+              popupClassName="task-time-dropdown"
+            >
+              {timeOptions
+                .filter((time) => time.value <= "22:45")
+                .map((time) => (
+                  <Option key={time.value} value={time.value}>
+                    {time.label}
                   </Option>
-                  {timeOptions.map((time) => (
-                    <Option
-                      key={time.value}
-                      value={time.value}
-                      className="py-2 px-3 text-slate-600 transition-colors hover:bg-[#6571FF]/10 hover:text-[#6571FF]"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="h-1.5 w-1.5 rounded-full bg-slate-300 group-hover:bg-[#6571FF]" />
-                        {time.label}
-                      </div>
-                    </Option>
-                  ))}
-                </Select>
-              </label>
-            </div>
+                ))}
+            </Select>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="endTime" className="text-base">
+              End Time <span className="text-destructive">*</span>
+            </Label>
+            <Select
+              id="endTime"
+              value={endTime || undefined}
+              placeholder="End Time"
+              onChange={(value) => handleTimeChange(value, "end")}
+              className="task-time-select"
+              popupClassName="task-time-dropdown"
+            >
+              {timeOptions.map((time) => (
+                <Option key={time.value} value={time.value}>
+                  {time.label}
+                </Option>
+              ))}
+            </Select>
           </div>
         </div>
       </div>

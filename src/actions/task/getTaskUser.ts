@@ -21,6 +21,22 @@ export default async function getTaskUser(userId: number) {
         id: true,
         title: true,
         priority: true,
+        description: true,
+        date: true,
+        startTime: true,
+        endTime: true,
+        taskUser: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                image: true,
+              },
+            },
+          },
+        },
       },
     });
     return tasks;
