@@ -209,13 +209,15 @@ export default function Selector<T>({
                   )}
                 >
                   <div className="flex-1 min-w-0">{displayList(item)}</div>
-                  {isSelected && (
-                    <Check
-                      size={14}
-                      strokeWidth={3}
-                      className="shrink-0 text-[#6571FF]"
-                    />
-                  )}
+                  <span className="flex w-4 shrink-0 items-center justify-center">
+                    {isSelected && (
+                      <Check
+                        size={14}
+                        strokeWidth={3}
+                        className="text-[#6571FF]"
+                      />
+                    )}
+                  </span>
                 </button>
               );
             } else {

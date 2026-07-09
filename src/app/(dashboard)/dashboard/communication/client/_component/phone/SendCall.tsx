@@ -293,12 +293,14 @@ export default function SendCall({
           </div>
         </button>
       </div>
-      <CallStatus
-        callStatus={callStatus}
-        callDuration={callDuration}
-        isDeviceReady={isDeviceReady}
-        hasActiveCall={!!currentConnection}
-      />
+      {canUseVoice && (
+        <CallStatus
+          callStatus={callStatus}
+          callDuration={callDuration}
+          isDeviceReady={isDeviceReady}
+          hasActiveCall={!!currentConnection}
+        />
+      )}
     </>
   );
 }

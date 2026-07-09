@@ -492,7 +492,7 @@ export function Reminder({
         </div>
 
         {/* Reminders List Area */}
-        <div className="no-visible-scrollbar h-[250px] overflow-y-auto bg-white md:h-[320px]">
+        <div className="no-visible-scrollbar h-[220px] overflow-y-auto bg-white">
           {times.length > 0 ? (
             <div className="space-y-1">
               {times.map((timeObj, index) => {
@@ -539,9 +539,9 @@ export function Reminder({
               })}
             </div>
           ) : (
-            <div className="flex h-full flex-col items-center justify-center text-center p-6">
-              <div className="mb-2 rounded-full bg-slate-50 p-3 text-slate-300">
-                <Calendar size={24} />
+            <div className="flex h-full flex-col items-center justify-center p-4 text-center">
+              <div className="mb-1.5 rounded-full bg-slate-50 p-2.5 text-slate-300">
+                <Calendar size={20} />
               </div>
               <p className="text-sm font-medium text-slate-400">
                 No reminders scheduled

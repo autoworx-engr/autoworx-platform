@@ -73,7 +73,33 @@ export async function DELETE(
       );
     }
 
-    await db.category.delete({ where: { id } });
+    await db.$transaction([
+      db.appointment.updateMany({
+        where: { serviceCategoryId: id },
+        data: { serviceCategoryId: null },
+      }),
+      db.service.updateMany({
+        where: { categoryId: id },
+        data: { categoryId: null },
+      }),
+      db.material.updateMany({
+        where: { categoryId: id },
+        data: { categoryId: null },
+      }),
+      db.labor.updateMany({
+        where: { categoryId: id },
+        data: { categoryId: null },
+      }),
+      db.inventoryProduct.updateMany({
+        where: { categoryId: id },
+        data: { categoryId: null },
+      }),
+      db.servicePlaybook.updateMany({
+        where: { categoryId: id },
+        data: { categoryId: null },
+      }),
+      db.category.delete({ where: { id } }),
+    ]);
 
     return NextResponse.json({
       success: true,
