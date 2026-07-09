@@ -73,15 +73,17 @@ export function DatePickerField({
             variant="outline"
             disabled={disabled}
             className={cn(
-              "h-9 w-full justify-start gap-2 rounded-md border-input bg-transparent px-3 font-normal shadow-sm",
+              "h-9 w-full justify-between gap-2 rounded-md border-input bg-transparent px-3 font-normal shadow-sm",
               "hover:bg-transparent focus-visible:ring-1 focus-visible:ring-ring",
               !selected && "text-muted-foreground",
               error && "border-destructive focus-visible:ring-destructive/30",
               triggerClassName,
             )}
           >
+            <span className="truncate">
+              {selected ? format(selected, "MMM d, yyyy") : placeholder}
+            </span>
             <CalendarIcon className="h-4 w-4 shrink-0 opacity-60" />
-            {selected ? format(selected, "MMM d, yyyy") : placeholder}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">

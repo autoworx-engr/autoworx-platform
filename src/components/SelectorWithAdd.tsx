@@ -237,12 +237,12 @@ export function SelectorWithAdd({
       {/* Label Styling */}
       <div
         className={cn(
-          "mb-1.5 flex items-center gap-1 font-semibold text-slate-600",
+          "mb-1.5 flex items-center gap-1 text-base font-medium",
           labelClassName,
         )}
       >
         {label ?? sentenceCase(name)}
-        {required && <span className="text-rose-500">*</span>}
+        {required && <span className="text-destructive">*</span>}
       </div>
 
       <div className="relative">
