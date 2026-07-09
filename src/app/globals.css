@@ -197,52 +197,6 @@ html {
   box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
 }
 
-/* Task modal time pickers (antd Select) — styled to match the shadcn Input,
-   with brand-indigo hover/focus instead of antd's default blue. */
-.task-time-select.ant-select .ant-select-selector {
-  height: 2.25rem !important; /* h-9, matches shadcn Input */
-  border-radius: 0.375rem !important; /* rounded-md */
-  border: 1px solid hsl(var(--input)) !important;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
-  background: transparent !important;
-  display: flex;
-  align-items: center;
-  transition:
-    border-color 0.15s ease,
-    box-shadow 0.15s ease;
-}
-.task-time-select.ant-select:hover .ant-select-selector {
-  border-color: hsl(var(--ring)) !important;
-}
-.task-time-select.ant-select-focused .ant-select-selector {
-  border-color: hsl(var(--ring)) !important;
-  box-shadow: 0 0 0 1px hsl(var(--ring)) !important;
-}
-.task-time-select.ant-select .ant-select-selection-item,
-.task-time-select.ant-select .ant-select-selection-placeholder {
-  line-height: 2.25rem !important;
-  font-size: 0.875rem;
-}
-.task-time-select.ant-select .ant-select-selection-placeholder {
-  color: hsl(var(--muted-foreground));
-}
-
-/* Dropdown option colors — brand indigo for active/selected/hover. */
-.task-time-dropdown {
-  border-radius: 0.5rem !important;
-}
-.task-time-dropdown
-  .ant-select-item-option-active:not(.ant-select-item-option-disabled) {
-  background-color: hsl(var(--primary) / 0.1) !important;
-  color: hsl(var(--primary)) !important;
-}
-.task-time-dropdown
-  .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
-  background-color: hsl(var(--primary) / 0.15) !important;
-  color: hsl(var(--primary)) !important;
-  font-weight: 600;
-}
-
 .invoice-link {
   position: relative;
   z-index: 1;
