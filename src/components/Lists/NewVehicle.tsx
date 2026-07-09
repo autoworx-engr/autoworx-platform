@@ -186,7 +186,10 @@ export default function NewVehicle({
           ) : newButton ? (
             newButton
           ) : (
-            <button type="button" className="text-xs text-[#6571FF]">
+            <button
+              type="button"
+              className="text-xs font-medium text-[#6571FF] transition-colors hover:text-[#5a66ee]"
+            >
               + New Vehicle
             </button>
           )}
@@ -199,10 +202,10 @@ export default function NewVehicle({
       >
         <div className="mt-8 flex items-center justify-between px-2 md:px-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-600 dark:text-slate-100">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
               Add Vehicle
             </h1>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="mt-1 text-sm text-muted-foreground">
               Enter vehicle details for the client
             </p>
           </div>
@@ -210,7 +213,7 @@ export default function NewVehicle({
 
         <FormError />
 
-        <div className="space-y-4 overflow-y-auto py-2 px-2 md:px-4 thin-scrollbar scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent">
+        <div className="thin-scrollbar scrollbar-track-transparent scrollbar-thumb-muted space-y-4 overflow-y-auto px-2 py-2 md:px-4">
           <div className="grid gap-4 sm:grid-cols-2">
             {/* Year */}
             <SelectorWithSearch
@@ -309,7 +312,7 @@ export default function NewVehicle({
                 !!formData.vehicleYear &&
                 !!formData.vehicleMake &&
                 !!formData.vehicleModel &&
-                "cursor-not-allowed bg-gray-100 opacity-50"
+                "cursor-not-allowed bg-muted opacity-50"
               }`}
               onChange={(e) => {
                 let value = e.target.value;
@@ -330,25 +333,11 @@ export default function NewVehicle({
         </div>
 
         <DialogFooter>
-          <DialogClose
-            className="
-              rounded-xl mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500
-              hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
-              transition-colors border
-            "
-          >
+          <DialogClose className="mt-2 rounded-md border px-5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground sm:mt-0">
             Cancel
           </DialogClose>
           <Submit
-            className="
-              rounded-xl px-6 py-2.5 text-sm font-medium text-white
-              bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
-              shadow-lg shadow-indigo-500/30
-              hover:shadow-xl hover:shadow-indigo-500/40
-              hover:-translate-y-0.5 hover:scale-[1.02]
-              active:translate-y-0 active:scale-100
-              transition-all duration-200
-            "
+            className="rounded-md bg-gradient-to-r from-[#6571FF] to-[#5a66ee] px-6 py-2 text-sm font-medium text-white shadow transition-all duration-200 hover:shadow-lg hover:shadow-indigo-500/30 disabled:opacity-50"
             formAction={handleSubmit}
             disabled={loading}
           >
