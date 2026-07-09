@@ -223,18 +223,6 @@ export function SelectAppointmentServiceCategory({
                 {category.name}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setCategoryToDelete(category);
-              }}
-              disabled={deletingId === category.id}
-              aria-label={`Delete ${category.name}`}
-              className="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
           </div>
         )}
         onSelect={(category) => {
