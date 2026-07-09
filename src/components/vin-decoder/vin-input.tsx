@@ -27,19 +27,15 @@ export default function VINInputCamera({ onVehicleInfo }: VINInputProps) {
   };
   return (
     <>
-      <div className="space-y-4">
-        <div className="relative flex items-center gap-2">
-          <Button
-            type="button"
-            onClick={onCameraClick}
-            size="icon"
-            className="bg-[#6571FF] text-white hover:bg-[#5a66ee]"
-            title="Open scanner"
-          >
-            <CameraIcon className="h-5 w-5" />
-          </Button>
-        </div>
-      </div>
+      <Button
+        type="button"
+        onClick={onCameraClick}
+        size="icon"
+        className="h-9 w-9 shrink-0 bg-[#6571FF] text-white hover:bg-[#5a66ee]"
+        title="Open scanner"
+      >
+        <CameraIcon className="h-5 w-5" />
+      </Button>
       {/* {createPortal( */}
       <VINScannerModal
         isOpen={isModalOpen}

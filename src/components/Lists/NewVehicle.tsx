@@ -264,8 +264,13 @@ export default function NewVehicle({
               error={isModelsFetchError ? "Failed to fetch Models" : undefined}
             />
 
-            <SlimInput name="submodel" required={false} label="Sub Model" />
-            <SlimInput name="type" required={false} />
+            <SlimInput
+              name="submodel"
+              required={false}
+              label="Sub Model"
+              placeholder="Enter sub model"
+            />
+            <SlimInput name="type" required={false} placeholder="Enter type" />
 
             {/* Use the reusable ColorSelector component */}
             <ColorSelector
@@ -273,21 +278,35 @@ export default function NewVehicle({
               onSelect={setSelectedColor}
             />
 
-            <SlimInput name="transmission" required={false} />
+            <SlimInput
+              name="transmission"
+              required={false}
+              placeholder="Enter transmission"
+            />
             <SlimInput
               name="engineSize"
               required={false}
+              placeholder="Enter engine size"
               value={engineSize}
               onChange={(e) => setEngineSize(e.target.value)}
             />
-            <SlimInput name="license" required={false} label="License Plate" />
+            <SlimInput
+              name="license"
+              required={false}
+              label="License Plate"
+              placeholder="Enter license plate"
+            />
             <div className="flex items-end gap-2">
-              <SlimInput
-                name="vin"
-                required={false}
-                value={vinCode}
-                onChange={(e) => setVinCOde(e.target.value)}
-              />
+              <div className="flex-1">
+                <SlimInput
+                  name="vin"
+                  label="Vin"
+                  required={false}
+                  placeholder="Enter VIN"
+                  value={vinCode}
+                  onChange={(e) => setVinCOde(e.target.value)}
+                />
+              </div>
 
               <VINInputCamera
                 onVehicleInfo={(value) => {
@@ -308,6 +327,7 @@ export default function NewVehicle({
               name="other"
               label="Other (Vehicle not listed or non-vehicle job? Enter details here)"
               required={false}
+              placeholder="Enter vehicle details"
               rootClassName={`col-span-full ${
                 !!formData.vehicleYear &&
                 !!formData.vehicleMake &&
@@ -327,6 +347,7 @@ export default function NewVehicle({
             <SlimInput
               name="notes"
               required={false}
+              placeholder="Enter notes"
               rootClassName="col-span-full"
             />
           </div>

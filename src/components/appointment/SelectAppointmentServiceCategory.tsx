@@ -5,6 +5,7 @@ import { useListsStore } from "@/stores/lists";
 import { Category } from "@prisma/client";
 import newCategory from "@/actions/category/newCategory";
 import deleteCategory from "@/actions/category/deleteCategory";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 import { Plus, Trash2 } from "lucide-react";
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -49,6 +50,9 @@ export function SelectAppointmentServiceCategory({
   const [isCreating, setIsCreating] = useState(false);
   const [selectedColor, setSelectedColor] = useState(STATIC_CATEGORY_COLORS[0]);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!serviceCategoryId) {
@@ -122,14 +126,9 @@ export function SelectAppointmentServiceCategory({
     }
   };
 
-  const handleDeleteCategory = async (category: Category) => {
-    if (deletingId) return;
-    if (
-      !window.confirm(
-        `Delete category "${category.name}"? It will be removed from any items using it.`,
-      )
-    )
-      return;
+  const handleConfirmDelete = async () => {
+    if (!categoryToDelete || deletingId) return;
+    const category = categoryToDelete;
 
     try {
       setDeletingId(category.id);
@@ -148,6 +147,7 @@ export function SelectAppointmentServiceCategory({
         setServiceCategoryId(null);
       }
       toast.success("Category deleted successfully.");
+      setCategoryToDelete(null);
     } catch (error) {
       console.error(error);
       toast.error("Failed to delete category");
@@ -227,7 +227,7 @@ export function SelectAppointmentServiceCategory({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                handleDeleteCategory(category);
+                setCategoryToDelete(category);
               }}
               disabled={deletingId === category.id}
               aria-label={`Delete ${category.name}`}
@@ -241,6 +241,23 @@ export function SelectAppointmentServiceCategory({
           setSelectedCategory(category);
           setServiceCategoryId(category.id);
         }}
+      />
+
+      <ConfirmModal
+        open={!!categoryToDelete}
+        onOpenChange={(open) => {
+          if (!open && !deletingId) setCategoryToDelete(null);
+        }}
+        title="Delete category?"
+        description={
+          categoryToDelete
+            ? `"${categoryToDelete.name}" will be removed from any items using it. This action can't be undone.`
+            : undefined
+        }
+        confirmText="Delete"
+        destructive
+        loading={!!deletingId}
+        onConfirm={handleConfirmDelete}
       />
     </>
   );
