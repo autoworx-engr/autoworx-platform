@@ -168,7 +168,10 @@ export const createTwilioCredentials = async ({
         });
       }
 
-      const twimlAppName = `Autoworx_TwiML_App_${companyId}_${process.env.NODE_ENV ?? "development"}`;
+      const appHost = new URL(
+        process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost",
+      ).hostname;
+      const twimlAppName = `Autoworx_TwiML_App_${companyId}_${appHost}`;
 
       const existingApps = await cuurentClient.applications.list({
         friendlyName: twimlAppName,

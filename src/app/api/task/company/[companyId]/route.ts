@@ -89,14 +89,11 @@ export async function GET(
 
     const skip = (page - 1) * limit;
 
-    const where: Prisma.TaskWhereInput = { companyId };
+    const where: Prisma.TaskWhereInput = { companyId, status: "pending" };
 
-    // Collect each filter as its own OR group and AND them together, so search
-    // and the date window can be combined without overwriting where.OR.
     const andConditions: Prisma.TaskWhereInput[] = [];
 
     if (search) {
-      // Free-text search across title and client name.
       andConditions.push({
         OR: [
           { title: { contains: search, mode: "insensitive" } },
@@ -128,7 +125,18 @@ export async function GET(
       db.task.findMany({
         where,
         include: {
-          taskUser: true,
+          taskUser: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  employeeType: true,
+                },
+              },
+            },
+          },
           client: true,
           lead: true,
         },

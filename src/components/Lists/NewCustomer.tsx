@@ -16,6 +16,7 @@ import FormError from "@/components/FormError";
 import { ClientTagSelector } from "@/components/Lists/ClientTagSelector";
 import SelectClientSource from "@/components/Lists/SelectClientSource";
 import { SlimInput } from "@/components/SlimInput";
+import { Label } from "@/components/ui/label";
 import { useClientFilterStore } from "@/stores/clientFilter";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
@@ -280,10 +281,10 @@ export default function NewCustomer({
         >
           <div className="mt-8 flex items-center justify-between">
             <div className="px-2">
-              <h1 className="text-2xl font-bold tracking-tight text-slate-600 dark:text-slate-100">
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">
                 Add Client
               </h1>
-              <p className="text-sm text-slate-500 mt-1">
+              <p className="mt-1 text-sm text-muted-foreground">
                 Enter details for the new client
               </p>
             </div>
@@ -485,8 +486,8 @@ export default function NewCustomer({
                 }}
               />
 
-              <div className="w-full">
-                <p className="mb-1 font-medium">Client Source</p>
+              <div className="flex w-full flex-col gap-1.5">
+                <Label className="text-base">Client Source</Label>
                 <SelectClientSource
                   clickabled={false}
                   label={(clientSrc) =>
@@ -538,8 +539,8 @@ export default function NewCustomer({
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
-              <div className="w-full">
-                <p className="mb-1 font-medium text-slate-600">Tag</p>
+              <div className="flex w-full flex-col gap-1.5">
+                <Label className="text-base">Tag</Label>
                 <ClientTagSelector
                   value={tag}
                   setValue={setTag}
@@ -552,11 +553,7 @@ export default function NewCustomer({
 
           <DialogFooter>
             <DialogClose
-              className="
-                rounded-xl mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500
-                hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
-                transition-colors border
-              "
+              className="mt-2 rounded-md border px-5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground sm:mt-0"
               onClick={() => {
                 clearError();
                 setIsClientOpen(false);
@@ -569,15 +566,7 @@ export default function NewCustomer({
               disabled={pending}
               type="button"
               onClick={() => startTransition(handleSubmit)}
-              className="
-                  rounded-xl px-6 py-2.5 text-sm font-medium text-white
-                  bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
-                  shadow-lg shadow-indigo-500/30
-                  hover:shadow-xl hover:shadow-indigo-500/40
-                  hover:-translate-y-0.5 hover:scale-[1.02]
-                  active:translate-y-0 active:scale-100
-                  transition-all duration-200
-                "
+              className="rounded-md bg-gradient-to-r from-[#6571FF] to-[#5a66ee] px-6 py-2 text-sm font-medium text-white shadow transition-all duration-200 hover:shadow-lg hover:shadow-indigo-500/30 disabled:opacity-50"
             >
               {pending ? (
                 <div className="flex flex-col items-center justify-center">
@@ -618,7 +607,7 @@ export default function NewCustomer({
           </DialogHeader>
 
           <div className="py-4">
-            <p className="text-lg text-slate-700 dark:text-slate-300">
+            <p className="text-lg text-foreground">
               Would you like to add a vehicle for{" "}
               <span className="font-semibold">
                 {createdClient?.firstName} {createdClient?.lastName}
@@ -630,11 +619,7 @@ export default function NewCustomer({
           <DialogFooter>
             <button
               type="button"
-              className="
-                rounded-xl px-5 py-2.5 text-sm font-medium text-slate-500
-                hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
-                transition-colors border
-              "
+              className="rounded-md border px-5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
               onClick={handleVehicleCancel}
             >
               No, Skip
@@ -642,15 +627,7 @@ export default function NewCustomer({
             <button
               type="button"
               onClick={handleVehicleConfirm}
-              className="
-                rounded-xl px-6 py-2.5 text-sm font-medium text-white
-                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
-                shadow-lg shadow-indigo-500/30
-                hover:shadow-xl hover:shadow-indigo-500/40
-                hover:-translate-y-0.5 hover:scale-[1.02]
-                active:translate-y-0 active:scale-100
-                transition-all duration-200
-              "
+              className="rounded-md bg-gradient-to-r from-[#6571FF] to-[#5a66ee] px-6 py-2 text-sm font-medium text-white shadow transition-all duration-200 hover:shadow-lg hover:shadow-indigo-500/30 disabled:opacity-50"
             >
               Yes, Add Vehicle
             </button>

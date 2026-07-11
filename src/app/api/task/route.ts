@@ -310,6 +310,7 @@ export async function POST(req: NextRequest) {
 export async function GET() {
   try {
     const tasks = await db.task.findMany({
+      where: { status: "pending" },
       include: {
         taskUser: true,
         client: true,

@@ -15,11 +15,28 @@ export default async function getTaskUser(userId: number) {
           in: taskUsers.map((taskUser) => taskUser.taskId),
         },
         companyId,
+        status: "pending",
       },
       select: {
         id: true,
         title: true,
         priority: true,
+        description: true,
+        date: true,
+        startTime: true,
+        endTime: true,
+        taskUser: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                image: true,
+              },
+            },
+          },
+        },
       },
     });
     return tasks;

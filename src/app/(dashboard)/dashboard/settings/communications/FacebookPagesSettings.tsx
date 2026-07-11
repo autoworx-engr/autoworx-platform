@@ -74,7 +74,7 @@ export default async function FacebookPagesSettings({
               {/* Left: avatar + info */}
               <div className="flex min-w-0 items-center gap-3">
                 <Image
-                  src={page.pictureUrl ?? "/images/default.png"}
+                  src={"/images/default.png"}
                   alt={page.pageName}
                   width={40}
                   height={40}

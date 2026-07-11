@@ -122,7 +122,7 @@ export function CalendarHeader({
     router.push(`/dashboard/task/${value}`);
     const fcView =
       VIEW_OPTIONS.find((v) => v.value === value)?.fcView ?? "timeGridDay";
-    const targetDate = moment().utc().format("YYYY-MM-DD");
+    const targetDate = moment().format("YYYY-MM-DD");
 
     calendarRef.current?.getApi().changeView(fcView, targetDate);
   };

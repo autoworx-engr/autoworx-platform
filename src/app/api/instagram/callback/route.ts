@@ -130,7 +130,7 @@ export async function GET(req: NextRequest) {
           username: igAccount.username ?? null,
           pageAccessToken,
           facebookPageId: page.id,
-          pictureUrl: igAccount.profile_picture_url ?? null,
+          pictureUrl: "/images/default.png",
           isActive: true,
           webhookSubscribed: false,
         },
@@ -138,7 +138,7 @@ export async function GET(req: NextRequest) {
           username: igAccount.username ?? null,
           pageAccessToken,
           facebookPageId: page.id,
-          pictureUrl: igAccount.profile_picture_url ?? null,
+          pictureUrl: "/images/default.png",
           isActive: true,
         },
       });

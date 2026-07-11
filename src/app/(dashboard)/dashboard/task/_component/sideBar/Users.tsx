@@ -15,6 +15,7 @@ import UserComponent from "./UserComponent";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Search, User as UserIcon } from "lucide-react";
 import UserListSkeleton from "@/components/ui/UserListSkeleton";
+import { Button } from "@/components/ui/button";
 
 export default function Users() {
   const ref = useRef<HTMLDivElement | null>(null);
@@ -51,16 +52,7 @@ export default function Users() {
 
   let content = null;
   if (isLoading && !isError) {
-    content = (
-      // <div className="flex flex-col items-center justify-center py-10 text-center">
-      //   <TaskSpinner />
-      //   <h3 className="text-lg font-semibold text-gray-700 md:text-[#797979]">
-      //     Loading users...
-      //   </h3>
-      // </div>
-
-      <UserListSkeleton rows={8} />
-    );
+    content = <UserListSkeleton rows={8} />;
   } else if (!isLoading && isError) {
     content = (
       <div className="flex flex-col items-center justify-center py-10 text-center">
@@ -148,7 +140,7 @@ export default function Users() {
   return (
     <div
       className={cn(
-        "md:app-shadow relative mt-5 flex flex-grow flex-col gap-2 overflow-hidden rounded-[12px] md:bg-background w-full max-w-80",
+        "md:app-shadow relative mt-5 flex flex-grow flex-col gap-2 overflow-hidden rounded-lg md:bg-background w-full max-w-80",
         minimized || "p-3",
       )}
     >
@@ -197,23 +189,6 @@ export default function Users() {
                 onChange={(e) => searchUser(e.target.value)}
               />
             </div>
-
-            {/* Submit Button - Styled as a secondary action with professional flair */}
-            {/* <button
-              type="submit"
-              className="
-          w-auto px-4 py-2 text-sm font-bold rounded-xl 
-          text-white 
-         bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
-                shadow-[0_4px_14px_0_rgba(101,113,255,0.39)]
-                hover:shadow-[0_6px_20px_rgba(101,113,255,0.23)]
-                hover:-translate-y-0.5
-                active:translate-y-0 active:scale-100
-                transition-all duration-300 ease-in-out
-        "
-            >
-              Search
-            </button> */}
           </form>
         )}
       </div>
@@ -235,23 +210,7 @@ export default function Users() {
 
       {!minimized && (
         <NewEmployee
-          button={
-            <button
-              className="mt-4 w-full rounded-xl bg-blue-600 py-2 text-[15px] flex items-center justify-center gap-2 px-6  text-sm font-semibold text-white transition-all duration-300 ease-in-out
-
-  // Gradient Background (Blue/Indigo)
-  bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
-
-  // Subtle Lift and Shadow Glow on Hover
-  shadow-md shadow-[#6571FF]/40
-  hover:-translate-y-0.5
-  hover:scale-[1.01]
-  hover:shadow-lg hover:shadow-[#6571FF]/60
-  dark:shadow-[#6571FF]/40 dark:hover:shadow-[#6571FF]/60"
-            >
-              + Add User
-            </button>
-          }
+          button={<Button className="w-full rounded-lg">+ Add User</Button>}
           onSuccess={(newUser) => {
             if (newUser) {
               handleCreateUsers(newUser);

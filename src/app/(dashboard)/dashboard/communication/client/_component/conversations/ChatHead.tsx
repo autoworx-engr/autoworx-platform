@@ -182,7 +182,7 @@ export default function ChatHead({
           id="Icon"
           xmlns="http://www.w3.org/2000/svg"
           viewBox="-5.28 -5.28 34.56 34.56"
-          enable-background="new 0 0 24 24"
+          enableBackground="new 0 0 24 24"
           stroke="#ffffff"
           strokeWidth="0.36"
         >

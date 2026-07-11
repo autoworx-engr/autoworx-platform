@@ -2229,9 +2229,16 @@ model Task {
   invoiceTemplate   InvoiceTemplate?                 @relation(fields: [invoiceTemplateId], references: [id])
   invoiceTemplateId String?
   createdBy         TaskAndAppointmentCreatedByEnum? @default(user)
+  status            TaskStatus                       @default(pending)
+  completedAt       DateTime?                        @map("completed_at")
 
   @@index([userId])
   @@index([companyId])
+}
+
+enum TaskStatus {
+  pending
+  completed
 }
 
 // Assigned user for a task.
