@@ -97,21 +97,25 @@ export default function Tasks() {
   } else if (!isLoading && !isError && tasks && tasks?.length === 0) {
     content = <TaskNotFound message={"No Task found"} />;
   } else if (!isLoading && !isError && tasks && tasks?.length > 0) {
-    content = tasks.map((task) => (
-      <TaskListItem
-        key={task.id}
-        task={task}
-        draggable
-        onTaskRemoved={handleTaskRemoved}
-        onTaskUpdated={revalidateTaskQueries}
-      />
-    ));
+    content = (
+      <div className="flex flex-col gap-2">
+        {tasks.map((task) => (
+          <TaskListItem
+            key={task.id}
+            task={task}
+            draggable
+            onTaskRemoved={handleTaskRemoved}
+            onTaskUpdated={revalidateTaskQueries}
+          />
+        ))}
+      </div>
+    );
   }
 
   return (
     <div
       className={cn(
-        "md:app-shadow relative mt-5 flex flex-grow flex-col gap-2 overflow-hidden rounded-lg md:bg-background w-full max-w-80",
+        "md:app-shadow relative flex h-full min-h-0 flex-1 flex-col gap-2 overflow-hidden rounded-lg md:bg-background w-full max-w-80",
         minimized || "p-3",
       )}
     >
@@ -127,7 +131,7 @@ export default function Tasks() {
       </h2>
 
       {!minimized && (
-        <div className="thin-scrollbar max-h-[500px] space-y-2 overflow-y-auto md:max-h-full">
+        <div className="thin-scrollbar flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto md:max-h-full">
           {content}
           <div ref={ref} className="text-center text-sm text-gray-500">
             {isFetchingNextPage ? (

@@ -22,7 +22,7 @@ export default function CalendarSidebar() {
   return (
     <div
       className={cn(
-        "hidden flex-col overflow-x-clip transition-[width] ease-in md:flex",
+        "hidden h-full flex-col overflow-x-clip transition-[width] ease-in md:flex",
         minimized
           ? "md:w-10 md:min-w-10 md:max-w-10"
           : "md:w-[20%] md:min-w-[300px] md:max-w-[320px] md:shrink-0",
@@ -31,7 +31,10 @@ export default function CalendarSidebar() {
       <Tabs
         value={type}
         onValueChange={(value) => setType(value as "USERS" | "TASKS")}
-        className={cn("flex min-h-0 flex-col", !minimized && "flex-grow")}
+        className={cn(
+          "flex min-h-0 h-full flex-col",
+          !minimized && "flex-grow",
+        )}
       >
         {!minimized && (
           <TabsList className="flex h-auto w-full items-center gap-2 rounded-xl border border-slate-200 bg-white/50 p-1.5 shadow-sm backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/50">
@@ -48,7 +51,7 @@ export default function CalendarSidebar() {
         <TabsContent
           value="USERS"
           className={cn(
-            "mt-0 flex min-h-0 flex-col",
+            "mt-2 flex min-h-0 flex-1 flex-col data-[state=inactive]:hidden",
             !minimized && "flex-grow",
           )}
         >
@@ -57,7 +60,7 @@ export default function CalendarSidebar() {
         <TabsContent
           value="TASKS"
           className={cn(
-            "mt-0 flex min-h-0 flex-col",
+            "mt-2 flex min-h-0 flex-1 flex-col data-[state=inactive]:hidden",
             !minimized && "flex-grow",
           )}
         >

@@ -140,12 +140,12 @@ export default function Users() {
   return (
     <div
       className={cn(
-        "md:app-shadow relative mt-5 flex flex-grow flex-col gap-2 overflow-hidden rounded-lg md:bg-background w-full max-w-80",
+        "md:app-shadow relative flex h-full min-h-0 flex-1 flex-col gap-2 overflow-hidden rounded-lg md:bg-background w-full max-w-80",
         minimized || "p-3",
       )}
     >
       <div>
-        <h2 className="flex items-center justify-between">
+        <h2 className="flex items-center justify-between ">
           {!minimized && (
             <div className="mb-4 text-base font-semibold text-gray-900 md:text-[16px] md:text-[#797979]">
               User List
@@ -194,7 +194,7 @@ export default function Users() {
       </div>
 
       {!minimized && (
-        <div className="thin-scrollbar h-full space-y-2 overflow-y-auto">
+        <div className="thin-scrollbar min-h-0 flex-1 space-y-2 overflow-y-auto">
           {content}
           <div ref={ref} className="text-center text-sm text-gray-500">
             {isFetchingNextPage ? (
