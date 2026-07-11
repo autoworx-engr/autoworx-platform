@@ -1,4 +1,5 @@
 import { cn } from "@/lib/cn";
+import { normalizeSearch } from "@/utils/normalizeSearch";
 import { VehicleParts as Parts } from "@prisma/client";
 import { Popconfirm } from "antd";
 import { CircleX, X } from "lucide-react";
@@ -158,7 +159,7 @@ export default function VehicleParts({
   // Search filtering
   const filteredParts = searchTerm
     ? parts.filter((part) =>
-        part.label.toLowerCase().includes(searchTerm.toLowerCase()),
+        normalizeSearch(part.label).includes(normalizeSearch(searchTerm)),
       )
     : parts;
 
