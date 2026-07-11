@@ -95,6 +95,7 @@ export default function AppointmentDetails({
               .map((assigned) =>
                 `${assigned.firstName ?? ""} ${assigned.lastName ?? ""}`.trim(),
               )
+              .filter(Boolean)
               .join(", ")}
           >
             {assignedUsers.map((assigned, idx) => (
