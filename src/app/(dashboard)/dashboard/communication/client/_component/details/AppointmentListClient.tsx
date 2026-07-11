@@ -6,6 +6,7 @@ import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCre
 import { Appointment } from "@prisma/client";
 import AppointMentCard from "./AppointMentCard";
 import { pusher } from "@/lib/pusher/client";
+import { useClientCommunicationStore } from "@/stores/client-store";
 
 export default function AppointmentListClient({
   appointments: initialAppointments,
@@ -23,6 +24,9 @@ export default function AppointmentListClient({
     null,
   );
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
+  const setUpcomingAppointmentCount = useClientCommunicationStore(
+    (state) => state.setUpcomingAppointmentCount,
+  );
 
   useEffect(() => {
     setAppointments(initialAppointments || []);
@@ -81,6 +85,12 @@ export default function AppointmentListClient({
           getStartEnd(x).start.valueOf() - getStartEnd(y).start.valueOf(),
       );
   }, [appointments]);
+
+  // Publish the visible (current + upcoming) count so the tab badge matches
+  // exactly what is rendered here — no need to recompute it elsewhere.
+  useEffect(() => {
+    setUpcomingAppointmentCount(current.length + upcoming.length);
+  }, [current.length, upcoming.length, setUpcomingAppointmentCount]);
 
   const openEditor = (id: number) => {
     setAppointmentModalId(id);
