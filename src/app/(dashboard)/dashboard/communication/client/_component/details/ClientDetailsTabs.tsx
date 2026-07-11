@@ -10,6 +10,7 @@ import {
   Receipt,
 } from "lucide-react";
 import { useState } from "react";
+import { useClientCommunicationStore } from "@/stores/client-store";
 
 type TabId =
   | "vehicle"
@@ -45,6 +46,9 @@ export default function ClientDetailsTabs({
   counts,
 }: TProps) {
   const [active, setActive] = useState<TabId>("vehicle");
+  const upcomingAppointmentCount = useClientCommunicationStore(
+    (state) => state.upcomingAppointmentCount,
+  );
 
   const tabs: {
     id: TabId;
@@ -66,7 +70,7 @@ export default function ClientDetailsTabs({
       id: "appointments",
       label: "Appointments",
       icon: CalendarClock,
-      count: counts.appointments,
+      count: upcomingAppointmentCount ?? counts.appointments,
     },
   ];
 
