@@ -15,24 +15,6 @@ const axiosInstance = axios.create({
 // === REQUEST INTERCEPTOR ===
 axiosInstance.interceptors.request.use(
   async (config) => {
-    // This instance is meant for client components, but some server-side
-    // code (server actions/services) calls it too. next-auth/react's
-    // getSession() only works in the browser, so on the server delegate to
-    // the same auth resolution serverAxios uses instead of silently sending
-    // an unauthenticated request.
-    if (typeof window === "undefined") {
-      const { getServerAuthHeaders } = await import("./server-auth");
-      const data = config.data;
-      const fallbackCompanyId =
-        data && typeof data === "object" && typeof data.companyId === "number"
-          ? data.companyId
-          : undefined;
-
-      const authHeaders = await getServerAuthHeaders(fallbackCompanyId);
-      Object.assign(config.headers, authHeaders);
-      return config;
-    }
-
     const session = await getSession();
     const token = session?.accessToken || null;
     if (token) {
