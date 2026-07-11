@@ -149,6 +149,14 @@ export function useTaskForm({
       return;
     }
 
+    if (title.trim().length > 100) {
+      showError({
+        field: "title",
+        message: "Title must be 100 characters or fewer",
+      });
+      return;
+    }
+
     if (date && date.trim() !== "" && (!startTime || !endTime)) {
       showError({
         field: "all",

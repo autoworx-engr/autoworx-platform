@@ -202,6 +202,7 @@ const Sidebar = ({ isLegacy = false }: Props) => {
   }) => {
     const isActive =
       path === setting.link ||
+      path.startsWith(setting.link + "/") ||
       (path === "/dashboard/settings/sales-agent/ai-settings" &&
         setting.link === "/dashboard/settings/sales-agent");
     return (

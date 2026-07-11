@@ -141,6 +141,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         ...(tab === "OTHER" && {
           paymentMethodId: paymentMethod?.id,
         }),
+        ...(tab === "CASH" && {
+          receivedCash: cash,
+        }),
       };
 
       const result = await makeFleetStatementPayment(paymentData);

@@ -84,15 +84,11 @@ export default function LeadInfinityScroll({
   }, [columnId, leadsLength, searchTerm, dispatch, orderBy]);
 
   useEffect(() => {
-    if (searchTerm) {
-      setHasMore(false);
-    } else {
-      setHasMore(
-        totalLeads !== undefined
-          ? leadsLength < totalLeads
-          : leadsLength >= defaultTakeLeads,
-      );
-    }
+    setHasMore(
+      totalLeads !== undefined
+        ? leadsLength < totalLeads
+        : leadsLength >= defaultTakeLeads,
+    );
   }, [searchTerm, leadsLength, totalLeads]);
 
   useEffect(() => {
@@ -159,7 +155,7 @@ export default function LeadInfinityScroll({
         style={{ maxHeight: "65vh" }}
       >
         {children(leads)}
-        {hasMore && !searchTerm && (
+        {hasMore && (
           <div ref={loaderRef} className="text-center">
             <div className="mx-auto h-6 w-6 animate-spin rounded-full border-4 border-dashed border-yellow-500"></div>
             <h2 className="mt-4 text-zinc-900 dark:text-white">Loading...</h2>

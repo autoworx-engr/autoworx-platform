@@ -74,7 +74,7 @@ export default async function InstagramSettings({
             >
               <div className="flex min-w-0 items-center gap-3">
                 <Image
-                  src={account.pictureUrl ?? "/images/default.png"}
+                  src={"/images/default.png"}
                   alt={account.username ?? "Instagram"}
                   width={40}
                   height={40}

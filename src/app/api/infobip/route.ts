@@ -1,6 +1,6 @@
-import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
-import { NextResponse } from "next/server";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
+import { NextRequest, NextResponse } from "next/server";
 
 /**
  * @swagger
@@ -24,9 +24,12 @@ import { NextResponse } from "next/server";
  *       200:
  *         description: Use /api/infobip/sms/send for sending messages
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const companyId = await getCompanyId();
+    const companyId = (await getAuthPrincipal(request))?.companyId ?? null;
+    if (!companyId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const infobipConfig = await db.infobipConfig.findFirst({
       where: { companyId },

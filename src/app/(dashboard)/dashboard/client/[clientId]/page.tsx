@@ -59,8 +59,6 @@ const Page = async (props: Props) => {
     },
   });
 
-  console.log("vehicles", vehicles);
-
   return (
     <div className="mb-2 h-fit p-2">
       <div className="">

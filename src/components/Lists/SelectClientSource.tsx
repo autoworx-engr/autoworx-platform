@@ -106,25 +106,30 @@ export default function SelectClientSource<T>({
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-      <div className="w-full mt-1.5">
+      <div className="w-full">
         <DropdownMenuTrigger
           onClick={() => setIsOpen(true)}
           className={cn(
-            "flex h-auto w-full items-center justify-between rounded-md border border-slate-300 bg-white px-4 py-1.5",
+            "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 shadow-sm outline-none transition-colors focus-visible:ring-1 focus-visible:ring-ring",
             isOpen && "invisible",
           )}
         >
           {/* Display selected item or label */}
-          <p className="text-sm font-medium text-slate-600">
+          <p
+            className={cn(
+              "text-sm font-medium",
+              selected ? "text-foreground" : "text-muted-foreground",
+            )}
+          >
             {selected ? label(selected) : label(null)}
           </p>
-          <ChevronDown className="text-slate-500" />
+          <ChevronDown className="h-4 w-4 text-muted-foreground" />
         </DropdownMenuTrigger>
 
         <DropdownMenuContent
           align="start"
-          sideOffset={-40}
-          className="z-50 w-full rounded-md border border-slate-300 bg-background shadow-md"
+          sideOffset={-36}
+          className="z-50 w-full rounded-md border border-input bg-background shadow-md"
           style={{
             minWidth: "var(--radix-popper-anchor-width)",
             maxWidth: "var(--radix-popper-anchor-width)",

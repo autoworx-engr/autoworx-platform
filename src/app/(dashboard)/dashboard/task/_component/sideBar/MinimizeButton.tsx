@@ -12,8 +12,10 @@ export function MinimizeButton() {
       type="button"
       onClick={toggleMinimized}
       className={cn(
-        "rounded-lg p-2 transition-transform ease-in hover:bg-gray-300",
-        minimized ? "mx-auto rotate-180" : "rotate-0"
+        "rounded-lg p-2  transition-transform ease-in hover:bg-gray-300",
+        minimized
+          ? "mx-auto rotate-180 border border-slate-200 bg-white/50 shadow-sm backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/50"
+          : "rotate-0",
       )}
     >
       <ArrowLeftFromLine size={18} />

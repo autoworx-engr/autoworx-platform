@@ -50,6 +50,7 @@ export const ChangePassword = () => {
             type={toggleCurrentPassword ? "text" : "password"}
             value={currentPw}
             required={true}
+            autoComplete="new-password"
             onChange={(e) => setCurrentPw(e.target.value)}
           />
           <span
@@ -70,6 +71,7 @@ export const ChangePassword = () => {
             required={true}
             type={toggleNewPassword ? "text" : "password"}
             value={newPw}
+            autoComplete="new-password"
             onChange={(e) => setNewPw(e.target.value)}
           />
           <span
@@ -90,6 +92,7 @@ export const ChangePassword = () => {
             type={toggleConfirmPassword ? "text" : "password"}
             required={true}
             value={confirmNewPw}
+            autoComplete="new-password"
             onChange={(e) => setConfirmNewPw(e.target.value)}
           />
           <span

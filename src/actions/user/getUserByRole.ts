@@ -9,6 +9,16 @@ export const getUsersByRole = async <T extends Record<string, any>>(
   select: T,
 ): Promise<Prisma.UserGetPayload<{ select: T }>[]> => {
   try {
+    const company = await db.company.findUnique({
+      where: {
+        id: companyId,
+      },
+    });
+
+    if (!company) {
+      throw new Error("Company not found");
+    }
+
     const users = await db.user.findMany({
       where: {
         companyId,

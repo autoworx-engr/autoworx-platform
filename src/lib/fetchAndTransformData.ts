@@ -73,6 +73,10 @@ export async function fetchAndTransformData(
     `
     : Prisma.empty;
 
+  const paginationClause = decodedSearchTerm
+    ? Prisma.empty
+    : Prisma.sql`LIMIT ${take} OFFSET ${offset}`;
+
   const joins = Prisma.sql`
     FROM "Invoice" i
     LEFT JOIN "Client" c ON i."customer_id" = c.id
@@ -107,8 +111,8 @@ export async function fetchAndTransformData(
       i."is_shop_booking" AS "isShopBooking"
     ${joins}
     ${baseWhere}
-    ORDER BY i."created_at" DESC
-    LIMIT ${take} OFFSET ${offset}
+    ORDER BY i."updated_at" DESC
+    ${paginationClause}
   `;
 
   const countQuery = Prisma.sql`

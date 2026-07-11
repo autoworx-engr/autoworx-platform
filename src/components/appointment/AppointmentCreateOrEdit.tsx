@@ -8,6 +8,7 @@ import { useState } from "react";
 import AppointmentModalBody from "./AppointmentModalBody";
 import { AppointModalBodyTechnician } from "./AppointModalBodyTechnician";
 import { Plus } from "lucide-react";
+import { Button } from "../ui/button";
 
 type TAppointmentCreateOrEditProps = {
   fromLead?: boolean;
@@ -68,23 +69,14 @@ export function AppointmentCreateOrEdit({
     trigger = triggerIcon;
   } else {
     trigger = (
-      <button
-        type="button"
-        className="flex items-center gap-2 rounded-xl px-3 h-9 md:px-5 py-2.5 md:h-10 text-sm font-semibold text-white
-          bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
-          shadow-[0_4px_14px_0_rgba(101,113,255,0.39)]
-          hover:shadow-[0_6px_20px_rgba(101,113,255,0.23)]
-          hover:-translate-y-0.5
-          active:translate-y-0 active:scale-100
-          transition-all duration-300 ease-in-out"
-      >
+      <Button>
         <span className="hidden lg:inline">
           {fromEdit ? "Edit" : "New"} Appointment
         </span>
         <span className="lg:hidden text-xs flex items-center gap-1">
           <Plus size={16} /> Appointment
         </span>
-      </button>
+      </Button>
     );
   }
   return (

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import type { Prisma } from "@prisma/client";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
+import { deleteAppointment } from "@/actions/appointment/deleteAppointment";
 
 const INCLUDE = {
   appointmentUsers: {
@@ -49,13 +51,74 @@ function serialize(appt: Record<string, unknown>) {
   };
 }
 
+type ParsedDate = { ok: true; value: Date | null | undefined } | { ok: false };
+
+function parseEditableDate(value: unknown): ParsedDate {
+  if (value === undefined) return { ok: true, value: undefined };
+  if (!value) return { ok: true, value: null };
+  const parsed = new Date(value as string);
+  if (isNaN(parsed.getTime())) return { ok: false };
+  return { ok: true, value: parsed };
+}
+
 type Ctx = { params: Promise<{ id: string }> };
 
-export async function GET(_req: NextRequest, context: Ctx) {
+async function authorizeAppointmentAccess(
+  req: NextRequest,
+  rawId: string,
+): Promise<{ error: NextResponse } | { appointmentId: number }> {
+  const appointmentId = Number(rawId);
+  if (!Number.isFinite(appointmentId)) {
+    return {
+      error: NextResponse.json(
+        { success: false, message: "Invalid appointment id" },
+        { status: 400 },
+      ),
+    };
+  }
+
+  const principal = await getAuthPrincipal(req);
+  if (!principal) {
+    return {
+      error: NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 },
+      ),
+    };
+  }
+
+  const appt = await db.appointment.findUnique({
+    where: { id: appointmentId },
+    select: { companyId: true },
+  });
+  if (!appt) {
+    return {
+      error: NextResponse.json(
+        { success: false, message: "Appointment not found" },
+        { status: 404 },
+      ),
+    };
+  }
+  if (appt.companyId !== principal.companyId) {
+    return {
+      error: NextResponse.json(
+        { success: false, message: "Forbidden: company mismatch" },
+        { status: 403 },
+      ),
+    };
+  }
+
+  return { appointmentId };
+}
+
+export async function GET(req: NextRequest, context: Ctx) {
   try {
     const { id } = await context.params;
+    const access = await authorizeAppointmentAccess(req, id);
+    if ("error" in access) return access.error;
+
     const appt = await db.appointment.findUnique({
-      where: { id: Number(id) },
+      where: { id: access.appointmentId },
       include: INCLUDE,
     });
     if (!appt) {
@@ -80,11 +143,16 @@ export async function GET(_req: NextRequest, context: Ctx) {
 export async function PATCH(req: NextRequest, context: Ctx) {
   try {
     const { id } = await context.params;
+    const access = await authorizeAppointmentAccess(req, id);
+    if ("error" in access) return access.error;
+    const appointmentId = access.appointmentId;
+
     const body = await req.json();
 
     const {
       title,
       date,
+      endDate,
       startTime,
       endTime,
       clientId,
@@ -97,14 +165,34 @@ export async function PATCH(req: NextRequest, context: Ctx) {
       reminderEmailTemplateId,
       reminderEmailTemplateStatus,
       assignedUsers,
+      times,
       timezone,
     } = body;
 
-    const updated = await db.appointment.update({
-      where: { id: Number(id) },
+    const parsedDate = parseEditableDate(date);
+    if (!parsedDate.ok) {
+      return NextResponse.json(
+        { success: false, message: "Invalid date format" },
+        { status: 400 },
+      );
+    }
+
+    const parsedEndDate = parseEditableDate(endDate);
+    if (!parsedEndDate.ok) {
+      return NextResponse.json(
+        { success: false, message: "Invalid end date format" },
+        { status: 400 },
+      );
+    }
+
+    await db.appointment.update({
+      where: { id: appointmentId },
       data: {
         ...(title !== undefined && { title }),
-        ...(date !== undefined && { date: date ? new Date(date) : null }),
+        ...(parsedDate.value !== undefined && { date: parsedDate.value }),
+        ...(parsedEndDate.value !== undefined && {
+          endDate: parsedEndDate.value,
+        }),
         ...(startTime !== undefined && { startTime }),
         ...(endTime !== undefined && { endTime }),
         ...(clientId !== undefined && { clientId }),
@@ -124,6 +212,7 @@ export async function PATCH(req: NextRequest, context: Ctx) {
         ...(reminderEmailTemplateStatus !== undefined && {
           reminderEmailTemplateStatus,
         }),
+        ...(times !== undefined && { times }),
         ...(timezone !== undefined && { timezone }),
       },
       include: INCLUDE,
@@ -131,12 +220,12 @@ export async function PATCH(req: NextRequest, context: Ctx) {
 
     if (assignedUsers && Array.isArray(assignedUsers)) {
       await db.appointmentUser.deleteMany({
-        where: { appointmentId: Number(id) },
+        where: { appointmentId },
       });
       if (assignedUsers.length > 0) {
         await db.appointmentUser.createMany({
           data: assignedUsers.map((uid: number) => ({
-            appointmentId: Number(id),
+            appointmentId,
             userId: uid,
             eventId: null,
           })),
@@ -145,7 +234,7 @@ export async function PATCH(req: NextRequest, context: Ctx) {
     }
 
     const result = await db.appointment.findUnique({
-      where: { id: Number(id) },
+      where: { id: appointmentId },
       include: INCLUDE,
     });
 
@@ -162,10 +251,20 @@ export async function PATCH(req: NextRequest, context: Ctx) {
   }
 }
 
-export async function DELETE(_req: NextRequest, context: Ctx) {
+export async function DELETE(req: NextRequest, context: Ctx) {
   try {
     const { id } = await context.params;
-    await db.appointment.delete({ where: { id: Number(id) } });
+
+    const access = await authorizeAppointmentAccess(req, id);
+    if ("error" in access) return access.error;
+
+    const result = await deleteAppointment(access.appointmentId);
+    if (result.type === "error") {
+      return NextResponse.json(
+        { success: false, message: "Server error" },
+        { status: 500 },
+      );
+    }
     return NextResponse.json({ success: true, message: "Appointment deleted" });
   } catch {
     return NextResponse.json(
