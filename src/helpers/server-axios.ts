@@ -14,10 +14,18 @@ const createServerAxiosInstance = () => {
     },
   });
 
-  // Request interceptor to add auth headers
+  // Request interceptor to add auth headers. If the outgoing payload
+  // carries a companyId, it's used as a last-resort fallback (minting an
+  // admin token) when there's no live request/session to authenticate with.
   instance.interceptors.request.use(
     async (config) => {
-      const authHeaders = await getServerAuthHeaders();
+      const data = config.data;
+      const fallbackCompanyId =
+        data && typeof data === "object" && typeof data.companyId === "number"
+          ? data.companyId
+          : undefined;
+
+      const authHeaders = await getServerAuthHeaders(fallbackCompanyId);
       Object.assign(config.headers, authHeaders);
       return config;
     },
