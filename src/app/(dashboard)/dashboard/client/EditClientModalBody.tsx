@@ -232,7 +232,6 @@ export default function EditClientModalBody({
                 alt="profile"
                 className="h-full w-full object-cover"
                 unoptimized={newProfilePic !== null}
-                crossOrigin="anonymous"
               />
             </div>
             <label
