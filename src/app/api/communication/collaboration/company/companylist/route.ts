@@ -6,6 +6,7 @@ import {
   hasCollaborationPermission,
 } from "@/lib/collaboration/batchUserPermissions";
 import { getFilteredConnectedCompanies } from "@/lib/collaboration/getFilteredConnectedCompanies";
+import { normalizeCollaborationSearch } from "@/lib/collaboration/normalizeCollaborationSearch";
 import { jwtVerifyToken } from "@/lib/jwtVerify";
 import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
@@ -45,7 +46,9 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const pageNum = parseInt(searchParams.get("page") || "1");
     const limitNum = parseInt(searchParams.get("limit") || "20");
-    const search = searchParams.get("search") || "";
+    const search = normalizeCollaborationSearch(
+      searchParams.get("search") || "",
+    );
     const skip = (pageNum - 1) * limitNum;
     const authHeader = request.headers.get("authorization") ?? "";
 
