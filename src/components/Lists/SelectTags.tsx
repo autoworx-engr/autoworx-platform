@@ -20,6 +20,8 @@ import Submit from "../Submit";
 import { SelectProps } from "./select-props";
 import { ChevronDown, ChevronUp, Palette, Search, X } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { normalizeSearch } from "@/utils/normalizeSearch";
+
 type SelectedColor = { textColor: string; bgColor: string } | null;
 
 export function SelectTags({
@@ -172,7 +174,9 @@ export function SelectTags({
                   .filter((x) => !tagIds.has(x.id))
                   .filter((x) =>
                     searchQuery
-                      ? x.name.toLowerCase().includes(searchQuery.toLowerCase())
+                      ? normalizeSearch(x.name).includes(
+                          normalizeSearch(searchQuery),
+                        )
                       : true,
                   )
                   .map((tag) => (
