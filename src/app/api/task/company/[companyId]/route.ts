@@ -80,6 +80,13 @@ export async function GET(
   try {
     const companyId = Number(params.companyId);
 
+    if (!companyId || isNaN(companyId)) {
+      return NextResponse.json(
+        { success: false, message: "Invalid companyId" },
+        { status: 400 },
+      );
+    }
+
     const principal = await getAuthPrincipal(req);
     if (!principal) {
       return NextResponse.json(
@@ -87,7 +94,7 @@ export async function GET(
         { status: 401 },
       );
     }
-    if (!companyId || isNaN(companyId) || companyId !== principal.companyId) {
+    if (companyId !== principal.companyId) {
       return NextResponse.json(
         { success: false, message: "Forbidden" },
         { status: 403 },
