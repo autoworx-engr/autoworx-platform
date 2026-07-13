@@ -37,7 +37,9 @@ export default async function ClientHeading({ client, vehicles = [] }: TProps) {
     `${client.firstName?.[0] ?? ""}${client.lastName?.[0] ?? ""}`.toUpperCase() ||
     "?";
   const hasPhoto =
-    !!client.photo && !client.photo.includes("/images/default.png");
+    !!client.photo &&
+    client.photo.trim() !== "" &&
+    !client.photo.includes("example.com");
 
   return (
     <div

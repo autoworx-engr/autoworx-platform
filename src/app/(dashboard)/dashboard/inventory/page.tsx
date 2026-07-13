@@ -48,6 +48,12 @@ type TGetInventoryItem = {
   category?: string;
 };
 
+const escapeRegExp = (value: string) =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const matchesWord = (name: string, term: string) =>
+  new RegExp(`\\b${escapeRegExp(term)}`, "i").test(name);
+
 const getInventoryItem = cache(
   async ({ type, page, limit, search = "", category }: TGetInventoryItem) => {
     try {
@@ -85,7 +91,7 @@ const getInventoryItem = cache(
         OR: search ? searchFilterOR : undefined,
         ...(category ? { category: { name: category } } : {}),
       };
-      const [items, totalItems] = await Promise.all([
+      const [fetchedItems, fetchedCount] = await Promise.all([
         db.inventoryProduct.findMany({
           where: whereClause,
           include: {
@@ -98,7 +104,16 @@ const getInventoryItem = cache(
         }),
         db.inventoryProduct.count({ where: whereClause }),
       ]);
-      return { data: items, totalItems: totalItems };
+
+      if (search && searchTerms.length > 0) {
+        const filtered = fetchedItems.filter((item) => {
+          const name = (item.name ?? "").toLowerCase();
+          return searchTerms.every((term) => matchesWord(name, term));
+        });
+        return { data: filtered, totalItems: filtered.length };
+      }
+
+      return { data: fetchedItems, totalItems: fetchedCount };
     } catch (error) {
       console.log(error);
       throw new Error(`Failed to fetch ${type.toLowerCase()}s`);
