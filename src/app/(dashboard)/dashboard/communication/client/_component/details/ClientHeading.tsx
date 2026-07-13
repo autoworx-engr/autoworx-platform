@@ -36,12 +36,10 @@ export default async function ClientHeading({ client, vehicles = [] }: TProps) {
   const initials =
     `${client.firstName?.[0] ?? ""}${client.lastName?.[0] ?? ""}`.toUpperCase() ||
     "?";
-  // Show the photo for any real URL (including /images/default.png). Fall back
-  // to initials only when there's no photo or it's placeholder "example" data.
   const hasPhoto =
     !!client.photo &&
     client.photo.trim() !== "" &&
-    !client.photo.includes("example");
+    !client.photo.includes("example.com");
 
   return (
     <div
