@@ -26,6 +26,7 @@ export async function addCustomer(
     photo?: string;
     sourceId?: number;
     countryCode?: string;
+    isPremium?: boolean;
     forceCompanyId?: number;
   },
   pathname?: string,
@@ -72,16 +73,29 @@ export async function addCustomer(
       }
     }
 
-    const { forceCompanyId: _, ...rest } = data;
+    const { forceCompanyId: _, isPremium, ...rest } = data;
     const newCustomer = await db.client.create({
       data: {
         ...rest,
         mobile: normalizedMobile,
         companyId,
         photo: data.photo ? data.photo : undefined,
+        isFleet: isPremium ?? false,
         isSalesAgent: true,
       },
     });
+
+    if (newCustomer.isFleet) {
+      await db.fleet.create({
+        data: {
+          clientId: newCustomer.id,
+          fleetName:
+            `${newCustomer.firstName} ${newCustomer.lastName ?? ""}`.trim(),
+          contactName: newCustomer.firstName,
+          preferredPaymentTerm: null,
+        },
+      });
+    }
 
     await initialCreateClientChatTrack(newCustomer.id);
 

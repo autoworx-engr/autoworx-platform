@@ -81,17 +81,37 @@ export async function GET(
 
     const { searchParams } = new URL(req.url);
 
-    const page = Number(searchParams.get("page") || 1);
-    const limit = Number(searchParams.get("limit") || 10);
+    // Parse numeric params defensively — a non-numeric value (e.g. ?page=abc)
+    // must not leak NaN into Prisma skip/take and crash the query.
+    const toPositiveInt = (raw: string | null): number | undefined => {
+      if (raw == null) return undefined;
+      const n = Number(raw);
+      return Number.isFinite(n) && n > 0 ? Math.floor(n) : undefined;
+    };
+
+    const page = toPositiveInt(searchParams.get("page")) ?? 1;
+    const limit = toPositiveInt(searchParams.get("limit"));
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
     const search = searchParams.get("search")?.trim();
+    const userId = toPositiveInt(searchParams.get("userId"));
+    const upcoming = searchParams.get("upcoming") === "true";
+    const today = searchParams.get("today");
+    const currentTime = searchParams.get("currentTime") ?? "";
 
-    const skip = (page - 1) * limit;
+    const skip = limit ? (page - 1) * limit : undefined;
 
     const where: Prisma.TaskWhereInput = { companyId, status: "pending" };
 
     const andConditions: Prisma.TaskWhereInput[] = [];
+
+    // Scope tasks to the acting user (creator OR assignee), mirroring the web
+    // getTasks server action. Applies to all roles.
+    if (userId) {
+      andConditions.push({
+        OR: [{ userId }, { taskUser: { some: { userId } } }],
+      });
+    }
 
     if (search) {
       andConditions.push({
@@ -103,7 +123,29 @@ export async function GET(
       });
     }
 
-    if (startDate && endDate) {
+    if (upcoming && today) {
+      const todayStart = new Date(`${today}T00:00:00.000Z`);
+      const tomorrowStart = new Date(todayStart);
+      tomorrowStart.setUTCDate(tomorrowStart.getUTCDate() + 1);
+      andConditions.push({
+        OR: [
+          { date: { gte: tomorrowStart } },
+          {
+            AND: [
+              { date: { gte: todayStart } },
+              { date: { lt: tomorrowStart } },
+              {
+                OR: [
+                  { startTime: null },
+                  { startTime: "" },
+                  { startTime: { gte: currentTime } },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+    } else if (startDate && endDate) {
       andConditions.push({
         OR: [
           { date: null },
@@ -140,8 +182,8 @@ export async function GET(
           client: true,
           lead: true,
         },
-        skip,
-        take: limit,
+        ...(skip !== undefined ? { skip } : {}),
+        ...(limit !== undefined ? { take: limit } : {}),
         orderBy: { createdAt: "desc" },
       }),
       db.task.count({ where }),
@@ -152,8 +194,8 @@ export async function GET(
       pagination: {
         total,
         page,
-        limit,
-        totalPages: Math.ceil(total / limit),
+        limit: limit ?? total,
+        totalPages: limit ? Math.ceil(total / limit) : 1,
       },
       data: tasks,
     });

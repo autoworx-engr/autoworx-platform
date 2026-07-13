@@ -65,50 +65,75 @@ export async function GET(
     }
 
     const { searchParams } = req.nextUrl;
-    const page = Math.max(1, Number(searchParams.get("page") ?? 1));
-    const limit = Math.min(
-      200,
-      Math.max(1, Number(searchParams.get("limit") ?? 50)),
-    );
+
+    // Parse numeric params defensively — a non-numeric value (e.g. ?page=abc)
+    // must not leak NaN into Prisma skip/take and crash the query.
+    const toPositiveInt = (raw: string | null): number | undefined => {
+      if (raw == null) return undefined;
+      const n = Number(raw);
+      return Number.isFinite(n) && n > 0 ? Math.floor(n) : undefined;
+    };
+
+    const page = toPositiveInt(searchParams.get("page")) ?? 1;
+    const parsedLimit = toPositiveInt(searchParams.get("limit"));
+    const limit = parsedLimit ? Math.min(200, parsedLimit) : undefined;
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
-    const userId = searchParams.get("userId")
-      ? Number(searchParams.get("userId"))
-      : undefined;
+    const userId = toPositiveInt(searchParams.get("userId"));
+    const employeeType = searchParams.get("employeeType") ?? undefined;
     const search = searchParams.get("search")?.trim();
 
+    // Admin/Manager/Sales see every company appointment; other roles see only
+    // appointments they created or are assigned to — mirrors the web
+    // getAppointments server action.
+    const COMPANY_WIDE_ROLES = ["Admin", "Manager", "Sales"];
+    const seesAll = employeeType
+      ? COMPANY_WIDE_ROLES.includes(employeeType)
+      : false;
+
     const where: Prisma.AppointmentWhereInput = { companyId };
+    const andConditions: Prisma.AppointmentWhereInput[] = [];
 
     if (startDate && endDate) {
       const startISO = new Date(`${startDate}T00:00:00.000Z`);
       const endISO = new Date(`${endDate}T23:59:59.999Z`);
-      where.AND = [
-        { date: { lte: endISO } },
-        {
-          OR: [
-            { endDate: null, date: { gte: startISO } },
-            { endDate: { gte: startISO } },
-          ],
-        },
-      ];
+      andConditions.push({ date: { lte: endISO } });
+      andConditions.push({
+        OR: [
+          { endDate: null, date: { gte: startISO } },
+          { endDate: { gte: startISO } },
+        ],
+      });
     }
 
-    if (userId) {
-      where.appointmentUsers = { some: { userId } };
+    // Non-privileged roles are scoped to their own appointments (creator OR
+    // assignee). Privileged roles skip this entirely.
+    if (!seesAll && userId) {
+      andConditions.push({
+        OR: [{ userId }, { appointmentUsers: { some: { userId } } }],
+      });
     }
 
     if (search) {
-      where.OR = [
-        { title: { contains: search, mode: "insensitive" } },
-        { client: { firstName: { contains: search, mode: "insensitive" } } },
-        { client: { lastName: { contains: search, mode: "insensitive" } } },
-        { client: { mobile: { contains: search } } },
-        { vehicle: { make: { contains: search, mode: "insensitive" } } },
-        { vehicle: { model: { contains: search, mode: "insensitive" } } },
-        {
-          serviceCategory: { name: { contains: search, mode: "insensitive" } },
-        },
-      ];
+      andConditions.push({
+        OR: [
+          { title: { contains: search, mode: "insensitive" } },
+          { client: { firstName: { contains: search, mode: "insensitive" } } },
+          { client: { lastName: { contains: search, mode: "insensitive" } } },
+          { client: { mobile: { contains: search } } },
+          { vehicle: { make: { contains: search, mode: "insensitive" } } },
+          { vehicle: { model: { contains: search, mode: "insensitive" } } },
+          {
+            serviceCategory: {
+              name: { contains: search, mode: "insensitive" },
+            },
+          },
+        ],
+      });
+    }
+
+    if (andConditions.length > 0) {
+      where.AND = andConditions;
     }
 
     const [total, appointments] = await Promise.all([
@@ -117,8 +142,9 @@ export async function GET(
         where,
         include: INCLUDE,
         orderBy: [{ date: "asc" }, { startTime: "asc" }],
-        skip: (page - 1) * limit,
-        take: limit,
+        ...(limit !== undefined
+          ? { skip: (page - 1) * limit, take: limit }
+          : {}),
       }),
     ]);
 
@@ -141,8 +167,8 @@ export async function GET(
       pagination: {
         total,
         page,
-        limit,
-        totalPages: Math.ceil(total / limit),
+        limit: limit ?? total,
+        totalPages: limit ? Math.ceil(total / limit) : 1,
       },
       data: appointments.map((a) => ({
         ...serialize(a),
