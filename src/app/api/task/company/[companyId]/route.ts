@@ -123,8 +123,9 @@ export async function GET(
       });
     }
 
-    if (upcoming && today) {
-      const todayStart = new Date(`${today}T00:00:00.000Z`);
+    const todayStart =
+      upcoming && today ? new Date(`${today}T00:00:00.000Z`) : null;
+    if (todayStart && !isNaN(todayStart.getTime())) {
       const tomorrowStart = new Date(todayStart);
       tomorrowStart.setUTCDate(tomorrowStart.getUTCDate() + 1);
       andConditions.push({
