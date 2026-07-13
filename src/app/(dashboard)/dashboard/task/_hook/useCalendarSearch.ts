@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import moment from "moment";
 import { useCalendarStore } from "@/stores/calendarStore";
@@ -11,6 +11,7 @@ export type SearchResult = {
   id: number;
   title: string;
   date: Date | string;
+  createdAt: Date | string;
   type: "task" | "appointment";
   startTime?: string;
   firstName?: string;
@@ -29,16 +30,32 @@ export function useCalendarSearch(type: string) {
   const router = useRouter();
 
   const {
-    data: tasks = [],
+    data: taskData,
     isLoading: isTaskLoad,
     isError: isTaskError,
+    hasNextPage: taskHasNext,
+    isFetchingNextPage: taskFetchingNext,
+    fetchNextPage: fetchNextTasks,
   } = useTaskSearchQuery(searchTerm);
 
   const {
-    data: appointments = [],
+    data: appointmentData,
     isLoading: isAppointmentLoad,
     isError: isAppointmentError,
+    hasNextPage: apptHasNext,
+    isFetchingNextPage: apptFetchingNext,
+    fetchNextPage: fetchNextAppointments,
   } = useAppointmentSearchQuery(searchTerm);
+
+  // Flatten the server-paginated pages loaded so far.
+  const tasks = useMemo(
+    () => taskData?.pages.flatMap((p) => p.items) ?? [],
+    [taskData],
+  );
+  const appointments = useMemo(
+    () => appointmentData?.pages.flatMap((p) => p.items) ?? [],
+    [appointmentData],
+  );
 
   const searchResults = useMemo<SearchResult[]>(() => {
     const trimmed = searchTerm.trim().toLowerCase();
@@ -49,6 +66,7 @@ export function useCalendarSearch(type: string) {
         id: task.id,
         title: task.title,
         date: task?.date || "",
+        createdAt: task?.createdAt || "",
         type: "task" as const,
         startTime: task.startTime ?? "",
         firstName: task.client?.firstName || "",
@@ -61,6 +79,7 @@ export function useCalendarSearch(type: string) {
         id: appointment.id,
         title: appointment.title || "Untitled Appointment",
         date: appointment?.date || "",
+        createdAt: appointment?.createdAt || "",
         type: "appointment" as const,
         startTime: appointment.startTime ?? "",
         firstName: appointment.client?.firstName || "",
@@ -84,9 +103,27 @@ export function useCalendarSearch(type: string) {
             field.split(" ").some((word) => word.startsWith(trimmed)),
         );
       })
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .slice(0, 10);
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
   }, [searchTerm, tasks, appointments]);
+
+  // Infinite scroll is server-side: pull the next page from whichever list
+  // still has one. Results re-merge/sort as pages arrive.
+  const hasMore = !!taskHasNext || !!apptHasNext;
+  const isFetchingMore = taskFetchingNext || apptFetchingNext;
+  const loadMore = useCallback(() => {
+    if (isFetchingMore) return;
+    if (taskHasNext) fetchNextTasks();
+    if (apptHasNext) fetchNextAppointments();
+  }, [
+    isFetchingMore,
+    taskHasNext,
+    apptHasNext,
+    fetchNextTasks,
+    fetchNextAppointments,
+  ]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -124,6 +161,8 @@ export function useCalendarSearch(type: string) {
     searchTerm,
     setSearchTerm,
     searchResults,
+    hasMore,
+    loadMore,
     isDropdownOpen,
     setIsDropdownOpen,
     isTaskLoad,
