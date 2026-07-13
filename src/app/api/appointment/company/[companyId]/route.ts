@@ -154,7 +154,11 @@ export async function GET(
       db.appointment.findMany({
         where,
         include: INCLUDE,
-        orderBy: [{ date: "asc" }, { startTime: "asc" }],
+        // Search results are ordered newest-created-first (matches the calendar
+        // search); the calendar grid keeps chronological date order.
+        orderBy: search
+          ? [{ createdAt: "desc" }]
+          : [{ date: "asc" }, { startTime: "asc" }],
         ...(limit !== undefined
           ? { skip: (page - 1) * limit, take: limit }
           : {}),
