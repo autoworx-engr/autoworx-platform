@@ -20,6 +20,8 @@ const updateClientSchema = z.object({
   state: z.string().optional().nullable(),
   zip: z.string().optional().nullable(),
   customerCompany: z.string().optional().nullable(),
+  sourceId: z.number().int().nullable().optional(),
+  tagId: z.number().int().nullable().optional(),
   notes: z.string().optional().nullable(),
   isFleet: z.boolean().optional(),
   isStarred: z.boolean().optional(),
