@@ -81,15 +81,20 @@ export async function GET(
 
     const { searchParams } = new URL(req.url);
 
-    const page = Number(searchParams.get("page") || 1);
-    const limitValue = searchParams.get("limit");
-    const limit = limitValue ? Number(limitValue) : undefined;
+    // Parse numeric params defensively — a non-numeric value (e.g. ?page=abc)
+    // must not leak NaN into Prisma skip/take and crash the query.
+    const toPositiveInt = (raw: string | null): number | undefined => {
+      if (raw == null) return undefined;
+      const n = Number(raw);
+      return Number.isFinite(n) && n > 0 ? Math.floor(n) : undefined;
+    };
+
+    const page = toPositiveInt(searchParams.get("page")) ?? 1;
+    const limit = toPositiveInt(searchParams.get("limit"));
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
     const search = searchParams.get("search")?.trim();
-    const userId = searchParams.get("userId")
-      ? Number(searchParams.get("userId"))
-      : undefined;
+    const userId = toPositiveInt(searchParams.get("userId"));
 
     const skip = limit ? (page - 1) * limit : undefined;
 
