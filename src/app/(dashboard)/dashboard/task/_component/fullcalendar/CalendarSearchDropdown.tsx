@@ -11,6 +11,8 @@ interface CalendarSearchDropdownProps {
   isAppointmentError: boolean;
   searchTerm: string;
   searchResults: SearchResult[];
+  hasMore: boolean;
+  loadMore: () => void;
   handleResultClick: (result: SearchResult) => void;
   dropdownRef: React.RefObject<HTMLDivElement | null>;
 }
@@ -22,6 +24,8 @@ export function CalendarSearchDropdown({
   isAppointmentError,
   searchTerm,
   searchResults,
+  hasMore,
+  loadMore,
   handleResultClick,
   dropdownRef,
 }: CalendarSearchDropdownProps) {
@@ -86,7 +90,17 @@ export function CalendarSearchDropdown({
         ref={dropdownRef}
         className="absolute z-50 mt-2 w-full lg:w-80 xl:w-80 overflow-hidden rounded-xl ring-1 ring-slate-900/5 dark:ring-slate-700/50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm shadow-xl"
       >
-        <div className="max-h-80 overflow-y-auto thin-scrollbar">
+        <div
+          className="max-h-80 overflow-y-auto thin-scrollbar"
+          onScroll={(e) => {
+            if (!hasMore) return;
+            const el = e.currentTarget;
+            // Load the next window when scrolled near the bottom.
+            if (el.scrollHeight - el.scrollTop - el.clientHeight < 80) {
+              loadMore();
+            }
+          }}
+        >
           {searchResults.map((result, index) => (
             <div key={`${result.type}-${result.id}`}>
               <div
