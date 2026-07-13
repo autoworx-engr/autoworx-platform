@@ -7,28 +7,56 @@ type ShopServiceLike = {
 };
 
 /**
- * Finds (or creates) the company-level default Service matching a
- * ShopService title. Uses the global db client intentionally: createInvoice
- * runs on its own connection, so a Service created inside the caller's
- * transaction would not be visible to it.
+ * Resolves the company-level default Services for the given shop services
+ * in bulk (one findMany, and if any are missing, one createMany + refetch —
+ * at most 3 roundtrips regardless of service count). Uses the global db
+ * client intentionally: createInvoice runs on its own connection, so a
+ * Service created inside the caller's transaction would not be visible
+ * to it. Returns a Map keyed by service title.
  */
-async function findOrCreateDefaultService(
-  title: string,
-  description: string | null | undefined,
+async function resolveDefaultServices(
+  shopServices: ShopServiceLike[],
   companyId: number,
 ) {
-  const existing = await db.service.findFirst({
-    where: { name: title, companyId },
-  });
-  if (existing) return existing;
+  const defaultsByTitle = new Map<string, any>();
+  if (shopServices.length === 0) return defaultsByTitle;
 
-  return db.service.create({
-    data: {
-      name: title,
-      description: description || title,
-      companyId,
-    },
+  const titles = [...new Set(shopServices.map((srv) => srv.title))];
+  const existing = await db.service.findMany({
+    where: { companyId, name: { in: titles } },
+    orderBy: { id: "asc" },
   });
+  for (const service of existing) {
+    if (!defaultsByTitle.has(service.name)) {
+      defaultsByTitle.set(service.name, service);
+    }
+  }
+
+  const missing = shopServices.filter(
+    (srv, index, arr) =>
+      !defaultsByTitle.has(srv.title) &&
+      arr.findIndex((s) => s.title === srv.title) === index,
+  );
+  if (missing.length > 0) {
+    await db.service.createMany({
+      data: missing.map((srv) => ({
+        name: srv.title,
+        description: srv.description || srv.title,
+        companyId,
+      })),
+    });
+    const created = await db.service.findMany({
+      where: { companyId, name: { in: missing.map((srv) => srv.title) } },
+      orderBy: { id: "asc" },
+    });
+    for (const service of created) {
+      if (!defaultsByTitle.has(service.name)) {
+        defaultsByTitle.set(service.name, service);
+      }
+    }
+  }
+
+  return defaultsByTitle;
 }
 
 /**
@@ -41,23 +69,17 @@ export async function buildInvoiceItemsWithDefaults(
   shopServices: ShopServiceLike[],
   companyId: number,
 ) {
+  const needsDefault = shopServices.filter(
+    (srv) =>
+      !srv.invoiceItems?.length ||
+      srv.invoiceItems.some((item) => !item.service),
+  );
+  const defaultsByTitle = await resolveDefaultServices(needsDefault, companyId);
+
   const allInvoiceItems: any[] = [];
-
   for (const srv of shopServices) {
-    let cachedDefaultService: any = null;
-    const getDefaultService = async () => {
-      if (!cachedDefaultService) {
-        cachedDefaultService = await findOrCreateDefaultService(
-          srv.title,
-          srv.description,
-          companyId,
-        );
-      }
-      return cachedDefaultService;
-    };
-
     if (!srv.invoiceItems || srv.invoiceItems.length === 0) {
-      const defaultService = await getDefaultService();
+      const defaultService = defaultsByTitle.get(srv.title);
       allInvoiceItems.push({
         id: 0,
         serviceId: defaultService.id,
@@ -69,7 +91,7 @@ export async function buildInvoiceItemsWithDefaults(
     } else {
       for (const item of srv.invoiceItems) {
         if (!item.service) {
-          const defaultService = await getDefaultService();
+          const defaultService = defaultsByTitle.get(srv.title);
           item.serviceId = defaultService.id;
           item.service = defaultService;
         }
