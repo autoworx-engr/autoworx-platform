@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import type { Prisma } from "@prisma/client";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 
 /**
  * @swagger
@@ -79,6 +80,20 @@ export async function GET(
   try {
     const companyId = Number(params.companyId);
 
+    const principal = await getAuthPrincipal(req);
+    if (!principal) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+    if (!companyId || isNaN(companyId) || companyId !== principal.companyId) {
+      return NextResponse.json(
+        { success: false, message: "Forbidden" },
+        { status: 403 },
+      );
+    }
+
     const { searchParams } = new URL(req.url);
 
     // Parse numeric params defensively — a non-numeric value (e.g. ?page=abc)
@@ -94,7 +109,7 @@ export async function GET(
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
     const search = searchParams.get("search")?.trim();
-    const userId = toPositiveInt(searchParams.get("userId"));
+    const userId = principal.userId;
     const upcoming = searchParams.get("upcoming") === "true";
     const today = searchParams.get("today");
     const currentTime = searchParams.get("currentTime") ?? "";
@@ -114,13 +129,8 @@ export async function GET(
     }
 
     if (search) {
-      andConditions.push({
-        OR: [
-          { title: { contains: search, mode: "insensitive" } },
-          { client: { firstName: { contains: search, mode: "insensitive" } } },
-          { client: { lastName: { contains: search, mode: "insensitive" } } },
-        ],
-      });
+      // Web task search matches title only (useTaskSearchQuery), so keep parity.
+      andConditions.push({ title: { contains: search, mode: "insensitive" } });
     }
 
     const todayStart =

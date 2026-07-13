@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import type { Prisma } from "@prisma/client";
 import { addAppointment } from "@/actions/appointment/addAppointment";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 
 const INCLUDE = {
   appointmentUsers: {
@@ -64,10 +65,22 @@ export async function GET(
       );
     }
 
+    const principal = await getAuthPrincipal(req);
+    if (!principal) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+    if (companyId !== principal.companyId) {
+      return NextResponse.json(
+        { success: false, message: "Forbidden" },
+        { status: 403 },
+      );
+    }
+
     const { searchParams } = req.nextUrl;
 
-    // Parse numeric params defensively — a non-numeric value (e.g. ?page=abc)
-    // must not leak NaN into Prisma skip/take and crash the query.
     const toPositiveInt = (raw: string | null): number | undefined => {
       if (raw == null) return undefined;
       const n = Number(raw);
@@ -79,16 +92,16 @@ export async function GET(
     const limit = parsedLimit ? Math.min(200, parsedLimit) : undefined;
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
-    const userId = toPositiveInt(searchParams.get("userId"));
-    const employeeType = searchParams.get("employeeType") ?? undefined;
+    const userId = principal.userId;
     const search = searchParams.get("search")?.trim();
 
-    // Admin/Manager/Sales see every company appointment; other roles see only
-    // appointments they created or are assigned to — mirrors the web
-    // getAppointments server action.
+    const dbUser = await db.user.findUnique({
+      where: { id: userId },
+      select: { employeeType: true },
+    });
     const COMPANY_WIDE_ROLES = ["Admin", "Manager", "Sales"];
-    const seesAll = employeeType
-      ? COMPANY_WIDE_ROLES.includes(employeeType)
+    const seesAll = dbUser?.employeeType
+      ? COMPANY_WIDE_ROLES.includes(dbUser.employeeType)
       : false;
 
     const where: Prisma.AppointmentWhereInput = { companyId };
