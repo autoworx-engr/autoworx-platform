@@ -15,6 +15,10 @@ import {
   normalizePhoneForStorage,
   phoneLookupWhereClause,
 } from "@/utils/normalizePhone";
+import {
+  buildInvoiceItemsWithDefaults,
+  mapInvoiceItemsForCreate,
+} from "@/services/shopServiceInvoiceItems";
 
 import z from "zod";
 
@@ -1333,70 +1337,21 @@ export async function POST(req: Request) {
           );
         }
 
-        const allInvoiceItems: any[] = [];
-        for (const srv of selectedServices) {
-          let cachedDefaultService: any = null;
+        // Guarantee every invoice item references a valid Service —
+        // shop services without invoice items get a default Service
+        const allInvoiceItems = await buildInvoiceItemsWithDefaults(
+          selectedServices,
+          companyId,
+        );
 
-          const getDefaultService = async () => {
-            if (cachedDefaultService) return cachedDefaultService;
-            cachedDefaultService = await db.service.findFirst({
-              where: { name: srv.title, companyId },
-            });
-            if (!cachedDefaultService) {
-              cachedDefaultService = await db.service.create({
-                data: {
-                  name: srv.title,
-                  description: srv.description || srv.title,
-                  companyId,
-                },
-              });
-            }
-            return cachedDefaultService;
-          };
-
-          if (!srv.invoiceItems || srv.invoiceItems.length === 0) {
-            const defaultService = await getDefaultService();
-            allInvoiceItems.push({
-              id: 0,
-              serviceId: defaultService.id,
-              service: defaultService,
-              materials: [],
-              labor: null,
-              tags: [],
-            });
-          } else {
-            for (const item of srv.invoiceItems) {
-              if (!item.service) {
-                const defaultService = await getDefaultService();
-                item.serviceId = defaultService.id;
-                item.service = defaultService as any;
-              }
-              allInvoiceItems.push(item);
-            }
-          }
+        if (allInvoiceItems.length === 0) {
+          throw new AppError(
+            400,
+            "Cannot create an invoice without at least one service item.",
+          );
         }
 
-        const items = allInvoiceItems.map(({ id, ...item }) => ({
-          ...item,
-          materials: item.materials.map((material: any) => ({
-            ...material,
-            quantity: (Number(material.quantity) || 0) as any,
-            cost: (Number(material.cost) || 0) as any,
-            sell: (Number(material.sell) || 0) as any,
-            discount: (Number(material.discount) || 0) as any,
-            tags: material.tags.map((mt: any) => mt.tag),
-          })),
-          labor: item.labor
-            ? {
-                ...item.labor,
-                hours: (Number(item.labor.hours) || 0) as any,
-                charge: (Number(item.labor.charge) || 0) as any,
-                discount: (Number(item.labor.discount) || 0) as any,
-                tags: item.labor.tags.map((lt: any) => lt.tag),
-              }
-            : null,
-          tags: item.tags.map((it: any) => it.tag),
-        }));
+        const items = mapInvoiceItemsForCreate(allInvoiceItems);
 
         const vehicleExtraCost = selectedServices.reduce((acc, srv) => {
           const userInput = shopServices.find(
