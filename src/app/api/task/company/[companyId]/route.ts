@@ -81,15 +81,23 @@ export async function GET(
 
     const { searchParams } = new URL(req.url);
 
-    const page = Number(searchParams.get("page") || 1);
-    const limitValue = searchParams.get("limit");
-    const limit = limitValue ? Number(limitValue) : undefined;
+    // Parse numeric params defensively — a non-numeric value (e.g. ?page=abc)
+    // must not leak NaN into Prisma skip/take and crash the query.
+    const toPositiveInt = (raw: string | null): number | undefined => {
+      if (raw == null) return undefined;
+      const n = Number(raw);
+      return Number.isFinite(n) && n > 0 ? Math.floor(n) : undefined;
+    };
+
+    const page = toPositiveInt(searchParams.get("page")) ?? 1;
+    const limit = toPositiveInt(searchParams.get("limit"));
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
     const search = searchParams.get("search")?.trim();
-    const userId = searchParams.get("userId")
-      ? Number(searchParams.get("userId"))
-      : undefined;
+    const userId = toPositiveInt(searchParams.get("userId"));
+    const upcoming = searchParams.get("upcoming") === "true";
+    const today = searchParams.get("today");
+    const currentTime = searchParams.get("currentTime") ?? "";
 
     const skip = limit ? (page - 1) * limit : undefined;
 
@@ -115,7 +123,29 @@ export async function GET(
       });
     }
 
-    if (startDate && endDate) {
+    if (upcoming && today) {
+      const todayStart = new Date(`${today}T00:00:00.000Z`);
+      const tomorrowStart = new Date(todayStart);
+      tomorrowStart.setUTCDate(tomorrowStart.getUTCDate() + 1);
+      andConditions.push({
+        OR: [
+          { date: { gte: tomorrowStart } },
+          {
+            AND: [
+              { date: { gte: todayStart } },
+              { date: { lt: tomorrowStart } },
+              {
+                OR: [
+                  { startTime: null },
+                  { startTime: "" },
+                  { startTime: { gte: currentTime } },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+    } else if (startDate && endDate) {
       andConditions.push({
         OR: [
           { date: null },

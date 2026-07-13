@@ -65,16 +65,21 @@ export async function GET(
     }
 
     const { searchParams } = req.nextUrl;
-    const page = Math.max(1, Number(searchParams.get("page") ?? 1));
-    const limitValue = searchParams.get("limit");
-    const limit = limitValue
-      ? Math.min(200, Math.max(1, Number(limitValue)))
-      : undefined;
+
+    // Parse numeric params defensively — a non-numeric value (e.g. ?page=abc)
+    // must not leak NaN into Prisma skip/take and crash the query.
+    const toPositiveInt = (raw: string | null): number | undefined => {
+      if (raw == null) return undefined;
+      const n = Number(raw);
+      return Number.isFinite(n) && n > 0 ? Math.floor(n) : undefined;
+    };
+
+    const page = toPositiveInt(searchParams.get("page")) ?? 1;
+    const parsedLimit = toPositiveInt(searchParams.get("limit"));
+    const limit = parsedLimit ? Math.min(200, parsedLimit) : undefined;
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
-    const userId = searchParams.get("userId")
-      ? Number(searchParams.get("userId"))
-      : undefined;
+    const userId = toPositiveInt(searchParams.get("userId"));
     const employeeType = searchParams.get("employeeType") ?? undefined;
     const search = searchParams.get("search")?.trim();
 
