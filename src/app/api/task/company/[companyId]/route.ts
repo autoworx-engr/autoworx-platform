@@ -95,6 +95,9 @@ export async function GET(
     const endDate = searchParams.get("endDate");
     const search = searchParams.get("search")?.trim();
     const userId = toPositiveInt(searchParams.get("userId"));
+    const upcoming = searchParams.get("upcoming") === "true";
+    const today = searchParams.get("today");
+    const currentTime = searchParams.get("currentTime") ?? "";
 
     const skip = limit ? (page - 1) * limit : undefined;
 
@@ -120,7 +123,29 @@ export async function GET(
       });
     }
 
-    if (startDate && endDate) {
+    if (upcoming && today) {
+      const todayStart = new Date(`${today}T00:00:00.000Z`);
+      const tomorrowStart = new Date(todayStart);
+      tomorrowStart.setUTCDate(tomorrowStart.getUTCDate() + 1);
+      andConditions.push({
+        OR: [
+          { date: { gte: tomorrowStart } },
+          {
+            AND: [
+              { date: { gte: todayStart } },
+              { date: { lt: tomorrowStart } },
+              {
+                OR: [
+                  { startTime: null },
+                  { startTime: "" },
+                  { startTime: { gte: currentTime } },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+    } else if (startDate && endDate) {
       andConditions.push({
         OR: [
           { date: null },
