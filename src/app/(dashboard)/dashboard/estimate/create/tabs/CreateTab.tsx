@@ -13,6 +13,7 @@ import { create } from "mutative";
 import { nanoid } from "nanoid";
 import React, { useState, useEffect } from "react";
 import { useMediaQuery } from "react-responsive";
+import { normalizeSearch } from "@/utils/normalizeSearch";
 
 export function CreateTab() {
   const { items, removeMaterial } = useEstimateCreateStore();
@@ -78,7 +79,9 @@ export function CreateTab() {
             <thead>
               <tr>
                 {["Services", "Materials/Parts", "Labor", "Tags"].map((x) => (
-                  <th key={x} className="w-[24%]">{x}</th>
+                  <th key={x} className="w-[24%]">
+                    {x}
+                  </th>
                 ))}
                 <th>
                   <span className="sr-only">Actions</span>
@@ -103,7 +106,7 @@ export function CreateTab() {
                                   .filter(
                                     (service) =>
                                       service?.name &&
-                                      service.name.trim() !== ""
+                                      service.name.trim() !== "",
                                   )
                                   .reverse()}
                                 display="name"
@@ -119,21 +122,21 @@ export function CreateTab() {
                                   useEstimateCreateStore.setState((x) =>
                                     create(x, (x) => {
                                       x.items[i].service = service;
-                                    })
+                                    }),
                                   )
                                 }
                                 onSearch={(search) => {
                                   const validServices = services.filter(
                                     (service) =>
                                       service?.name &&
-                                      service.name.trim() !== ""
+                                      service.name.trim() !== "",
                                   );
 
                                   if (search) {
                                     return validServices.filter((service) =>
-                                      service.name
-                                        .toLowerCase()
-                                        .includes(search.toLowerCase())
+                                      normalizeSearch(service.name).includes(
+                                        normalizeSearch(search),
+                                      ),
                                     );
                                   }
                                   return validServices;
@@ -160,7 +163,10 @@ export function CreateTab() {
                           );
                         case "materials":
                           return item.materials.length >= 0 ? (
-                            <td className="relative" key={`materials-${item.id}`}>
+                            <td
+                              className="relative"
+                              key={`materials-${item.id}`}
+                            >
                               {item.materials.length > 0 &&
                                 item.materials.map((material, j) => (
                                   <div
@@ -200,7 +206,7 @@ export function CreateTab() {
                                               ...material,
                                               quantity: Decimal(0),
                                             };
-                                          })
+                                          }),
                                         );
 
                                         open("MATERIAL", {
@@ -217,9 +223,11 @@ export function CreateTab() {
                                         if (search) {
                                           const filteredMaterials =
                                             materials.filter((material) =>
-                                              material.name
-                                                .toLowerCase()
-                                                .includes(search.toLowerCase())
+                                              normalizeSearch(
+                                                material.name,
+                                              ).includes(
+                                                normalizeSearch(search),
+                                              ),
                                             );
                                           return filteredMaterials;
                                         } else {
@@ -241,7 +249,7 @@ export function CreateTab() {
                                           useEstimateCreateStore.setState((x) =>
                                             create(x, (x) => {
                                               x.items[i].materials.push(null);
-                                            })
+                                            }),
                                           );
                                         }}
                                       >
@@ -281,7 +289,7 @@ export function CreateTab() {
                                             ...material,
                                             quantity: Decimal(0),
                                           };
-                                        })
+                                        }),
                                       );
 
                                       open("MATERIAL", {
@@ -297,7 +305,7 @@ export function CreateTab() {
                                           materials.filter((material) =>
                                             material.name
                                               .toLowerCase()
-                                              .includes(search.toLowerCase())
+                                              .includes(search.toLowerCase()),
                                           );
                                         return filteredMaterials;
                                       } else {
@@ -319,11 +327,12 @@ export function CreateTab() {
                                         useEstimateCreateStore.setState((x) =>
                                           create(x, (x) => {
                                             x.items[i].materials.push(null);
-                                          })
+                                          }),
                                         );
                                       }}
                                     >
-                                      <CirclePlus size={16} strokeWidth={2.5} /> Add More
+                                      <CirclePlus size={16} strokeWidth={2.5} />{" "}
+                                      Add More
                                     </button>
                                   ) : null}
                                 </div>
@@ -355,7 +364,7 @@ export function CreateTab() {
                                         ...labor,
                                         hours: new Decimal(0),
                                       };
-                                    })
+                                    }),
                                   );
 
                                   open("LABOR", {
@@ -371,9 +380,9 @@ export function CreateTab() {
                                   if (search) {
                                     const filteredLabors = labors.filter(
                                       (labor) =>
-                                        labor.name
-                                          .toLowerCase()
-                                          .includes(search.toLowerCase())
+                                        normalizeSearch(labor.name).includes(
+                                          normalizeSearch(search),
+                                        ),
                                     );
 
                                     return filteredLabors;
@@ -413,7 +422,7 @@ export function CreateTab() {
                                         tags instanceof Function
                                           ? tags(item.tags)
                                           : tags;
-                                    })
+                                    }),
                                   );
                                 }}
                                 index={[i, j]}
@@ -423,7 +432,7 @@ export function CreateTab() {
                             </td>
                           );
                       }
-                    }
+                    },
                   )}
                   <td className="w-[1rem] pb-2">
                     <button
