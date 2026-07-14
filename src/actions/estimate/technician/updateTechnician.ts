@@ -40,13 +40,15 @@ export const updateTechnician = async (
     // Normalize the assigned date to 00:00:00 like the due date
     const normalizedDate = payload.date
       ? new Date(
-          payload.date.getFullYear(),
-          payload.date.getMonth(),
-          payload.date.getDate(),
-          0,
-          0,
-          0,
-          0,
+          Date.UTC(
+            payload.date.getUTCFullYear(),
+            payload.date.getUTCMonth(),
+            payload.date.getUTCDate(),
+            0,
+            0,
+            0,
+            0,
+          ),
         )
       : payload.date;
 

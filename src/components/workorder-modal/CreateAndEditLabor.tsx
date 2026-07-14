@@ -179,12 +179,12 @@ export default function CreateAndEditLabor({
       // default used in reset().
       const formattedDate = moment(date).isValid()
         ? moment(date).utc().format("YYYY-MM-DD")
-        : moment().format("YYYY-MM-DD");
+        : moment().utc().format("YYYY-MM-DD");
 
       const formattedDue =
         due && moment(due).isValid()
           ? moment(due).utc().format("YYYY-MM-DD")
-          : moment().add(1, "day").format("YYYY-MM-DD");
+          : moment().add(1, "day").utc().format("YYYY-MM-DD");
 
       setInputValues({
         date: formattedDate,
