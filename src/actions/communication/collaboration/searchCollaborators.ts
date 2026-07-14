@@ -30,21 +30,32 @@ export async function searchCollaborators({
     const pageNum = Math.max(page, 1);
     const limitNum = Math.min(Math.max(limit, 1), 50);
     const term = normalizeCollaborationSearch(search);
+    const words = term.split(/\s+/).filter(Boolean);
     const skip = (pageNum - 1) * limitNum;
 
-    const companySearchCondition: Prisma.CompanyWhereInput = term
+    const userWordCondition = (word: string): Prisma.UserWhereInput => ({
+      OR: [
+        { firstName: { contains: word, mode: "insensitive" } },
+        { lastName: { contains: word, mode: "insensitive" } },
+        { email: { contains: word, mode: "insensitive" } },
+      ],
+    });
+
+    const companySearchCondition: Prisma.CompanyWhereInput = words.length
       ? {
           OR: [
-            { name: { contains: term, mode: "insensitive" } },
+            {
+              AND: words.map(
+                (word): Prisma.CompanyWhereInput => ({
+                  name: { contains: word, mode: "insensitive" },
+                }),
+              ),
+            },
             {
               users: {
                 some: {
                   employeeType: "Admin",
-                  OR: [
-                    { firstName: { contains: term, mode: "insensitive" } },
-                    { lastName: { contains: term, mode: "insensitive" } },
-                    { email: { contains: term, mode: "insensitive" } },
-                  ],
+                  AND: words.map(userWordCondition),
                 },
               },
             },
@@ -52,14 +63,18 @@ export async function searchCollaborators({
         }
       : {};
 
-    const userSearchCondition: Prisma.UserWhereInput = term
+    const userSearchCondition: Prisma.UserWhereInput = words.length
       ? {
-          OR: [
-            { firstName: { contains: term, mode: "insensitive" } },
-            { lastName: { contains: term, mode: "insensitive" } },
-            { email: { contains: term, mode: "insensitive" } },
-            { company: { name: { contains: term, mode: "insensitive" } } },
-          ],
+          AND: words.map(
+            (word): Prisma.UserWhereInput => ({
+              OR: [
+                { firstName: { contains: word, mode: "insensitive" } },
+                { lastName: { contains: word, mode: "insensitive" } },
+                { email: { contains: word, mode: "insensitive" } },
+                { company: { name: { contains: word, mode: "insensitive" } } },
+              ],
+            }),
+          ),
         }
       : {};
 
