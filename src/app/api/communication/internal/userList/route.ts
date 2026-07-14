@@ -55,7 +55,7 @@ export const GET = async (request: NextRequest) => {
     if (!principal) throw new AppError(401, "Unauthorized");
 
     const searchParams = request.nextUrl.searchParams;
-    const search = searchParams.get("search") || "";
+    const search = (searchParams.get("search") || "").trim();
     const pageNum = Math.max(1, parseInt(searchParams.get("page") || "1"));
     const limitNum = Math.max(1, parseInt(searchParams.get("limit") || "20"));
     const excludeGroupIdRaw = searchParams.get("excludeGroupId");

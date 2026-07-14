@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const pageNum = parseInt(searchParams.get("page") || "1");
     const limitNum = parseInt(searchParams.get("limit") || "20");
-    const search = searchParams.get("search") || "";
+    const search = (searchParams.get("search") || "").trim();
     const skip = (pageNum - 1) * limitNum;
     const authHeader = request.headers.get("authorization") ?? "";
 
