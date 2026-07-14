@@ -9,6 +9,8 @@ export default function CalendarSearch({ type }: { type: string }) {
     searchTerm,
     setSearchTerm,
     searchResults,
+    hasMore,
+    loadMore,
     isDropdownOpen,
     setIsDropdownOpen,
     isTaskLoad,
@@ -53,6 +55,8 @@ export default function CalendarSearch({ type }: { type: string }) {
           isAppointmentError={isAppointmentError}
           searchTerm={searchTerm}
           searchResults={searchResults}
+          hasMore={hasMore}
+          loadMore={loadMore}
           handleResultClick={handleResultClick}
           dropdownRef={dropdownRef}
         />
