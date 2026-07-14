@@ -36,23 +36,27 @@ export const GET = async (
     const { groupId } = await props.params;
 
     // Legacy groups can have companyId = null; membership check enforces tenant isolation.
+    // Members are paginated via /group/{groupId}/members — here we return only the
+    // member count so the client can render "Members (N)" without loading everyone.
     const findGroup = await db.group.findFirst({
       where: {
         id: parseInt(groupId, 10),
         OR: [{ companyId: principal.companyId }, { companyId: null }],
         users: { some: { id: principal.userId } },
       },
-      include: { users: true },
+      include: { _count: { select: { users: true } } },
     });
 
     if (!findGroup) {
       throw new AppError(404, "Group not found");
     }
 
+    const { _count, ...group } = findGroup;
+
     return NextResponse.json(
       {
         success: true,
-        data: findGroup,
+        data: { ...group, membersCount: _count.users },
         message: "Group fetched successfully",
       },
       { status: 200 },
