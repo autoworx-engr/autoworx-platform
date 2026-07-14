@@ -31,9 +31,9 @@ export default function CreateAppointment({ clientId }: { clientId: number }) {
         <button
           className={cn(
             "inline-flex w-full items-center justify-center gap-1.5",
-            "rounded-lg border border-white/40 bg-white/10 px-4 py-2.5 text-xs font-semibold text-white backdrop-blur",
-            "transition hover:bg-white/20 active:scale-[0.98]",
-            "focus:outline-none focus:ring-2 focus:ring-white/40 2xl:text-sm",
+            "rounded-lg border border-[#CDE4E6] bg-[#CDE4E6] px-4 py-2.5 text-xs font-semibold text-[#006D77]",
+            "transition hover:bg-[#b9d9dc] active:scale-[0.98]",
+            "focus:outline-none focus:ring-2 focus:ring-[#CDE4E6] 2xl:text-sm",
           )}
         >
           <Plus className="h-4 w-4" />
