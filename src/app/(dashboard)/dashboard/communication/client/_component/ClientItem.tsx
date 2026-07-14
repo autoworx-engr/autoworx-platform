@@ -237,19 +237,6 @@ export default function ClientItem({
           >
             {client?.firstName} {client?.lastName}
           </p>
-
-          {!!client?.isStarred && (
-            <span
-              className={cn(
-                "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium",
-                selected
-                  ? "bg-white/15 text-white"
-                  : "bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300",
-              )}
-            >
-              ★ Favorite
-            </span>
-          )}
         </div>
 
         {client?.customerCompany && (
