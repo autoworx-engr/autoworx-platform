@@ -2123,6 +2123,7 @@ enum CardType {
   MASTERCARD
   VISA
   AMEX
+  DISCOVER
   OTHER
 }
 

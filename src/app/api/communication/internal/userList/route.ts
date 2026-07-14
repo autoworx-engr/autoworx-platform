@@ -58,13 +58,14 @@ export const GET = async (request: NextRequest) => {
     const search = searchParams.get("search") || "";
     const pageNum = Math.max(1, parseInt(searchParams.get("page") || "1"));
     const limitNum = Math.max(1, parseInt(searchParams.get("limit") || "20"));
+    const excludeGroupIdRaw = searchParams.get("excludeGroupId");
+    const excludeGroupId = excludeGroupIdRaw
+      ? parseInt(excludeGroupIdRaw, 10)
+      : null;
 
     const userIdNum = principal.userId;
     const skip = (pageNum - 1) * limitNum;
 
-    // Search predicate as a Prisma `where` fragment — same one drives the
-    // `findMany` and the `count`, so `meta.totalRecords` and `data` can never
-    // disagree under search.
     const searchTerm = search.trim();
     const searchWords = searchTerm ? searchTerm.split(/\s+/) : [];
     const buildSearchWhere = (): Prisma.UserWhereInput => {
@@ -87,23 +88,18 @@ export const GET = async (request: NextRequest) => {
       return { OR: conditions };
     };
 
+    const excludeMembersWhere: Prisma.UserWhereInput =
+      excludeGroupId != null && !Number.isNaN(excludeGroupId)
+        ? { groups: { none: { id: excludeGroupId } } }
+        : {};
+
     const where: Prisma.UserWhereInput = {
       companyId: principal.companyId,
       NOT: { id: userIdNum },
+      ...excludeMembersWhere,
       ...buildSearchWhere(),
     };
 
-    // Strategy: both chatted and never-chatted halves are paginated at the
-    // DB level. Per-page work scales with `limitNum`, not with the company's
-    // user/chat counts. Frontend sends `page`; this handler computes that
-    // page only.
-    //
-    //   1. Chatted half → `chatTrack.findMany` skip/take ordered by
-    //      updatedAt desc. One chatTrack = one counterpart.
-    //   2. Never-chatted half (only when the page actually crosses into it)
-    //      → `user.findMany` skip/take with `NOT IN chattedIds`. The full
-    //      chatted-id set is loaded once and only on pages that need
-    //      never-chatted rows.
     const userSelect = {
       id: true,
       firstName: true,

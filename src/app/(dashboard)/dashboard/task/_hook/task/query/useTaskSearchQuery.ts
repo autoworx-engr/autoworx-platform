@@ -1,46 +1,48 @@
 import getTasks from "@/actions/task/getTasks";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { taskQueryKey } from "../../../_constant";
 import { Task } from "@prisma/client";
 
+export const TASK_SEARCH_PAGE_SIZE = 10;
+
+export type TaskSearchItem = Task & {
+  client: { id: number; firstName: string; lastName: string } | null;
+  Invoice: {
+    vehicle: { id: number; make: string; model: string; year: string } | null;
+  } | null;
+};
+
+/**
+ * Server-paginated task search. Fetches one page at a time (skip/take) and
+ * exposes fetchNextPage so the calendar search dropdown can infinite-scroll
+ * against the server rather than slicing a fully-loaded list client-side.
+ */
 export default function useTaskSearchQuery(searchTerm: string) {
-  return useQuery({
-    queryKey: [taskQueryKey.allTasks, searchTerm],
-    queryFn: async () => {
+  return useInfiniteQuery({
+    queryKey: [taskQueryKey.allTasks, "search", searchTerm],
+    initialPageParam: 0,
+    queryFn: async ({ pageParam = 0 }) => {
       const response = await getTasks({
         where: {
-          OR: [
-            {
-              title: { contains: searchTerm, mode: "insensitive" },
-            },
-          ],
+          OR: [{ title: { contains: searchTerm, mode: "insensitive" } }],
         },
         include: {
-          client: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-            },
-          },
-          Invoice: {
-            select: {
-              vehicle: true,
-            },
-          },
+          client: { select: { id: true, firstName: true, lastName: true } },
+          Invoice: { select: { vehicle: true } },
         },
+        orderBy: { createdAt: "desc" },
+        skip: pageParam,
+        take: TASK_SEARCH_PAGE_SIZE,
       });
-      return response.data as (Task & {
-        client: { id: number; firstName: string; lastName: string } | null;
-        Invoice: {
-          vehicle: {
-            id: number;
-            make: string;
-            model: string;
-            year: string;
-          } | null;
-        } | null;
-      })[];
+      return {
+        items: response.data as TaskSearchItem[],
+        total: response.totalTask ?? 0,
+        skip: pageParam,
+      };
+    },
+    getNextPageParam: (lastPage) => {
+      const loaded = lastPage.skip + lastPage.items.length;
+      return loaded < lastPage.total ? loaded : undefined;
     },
     enabled: !!searchTerm.trim(),
   });

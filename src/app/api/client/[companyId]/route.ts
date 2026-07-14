@@ -5,7 +5,7 @@ import { buildWordSearchAnd } from "@/lib/wordSearch";
 
 /**
  * @swagger
- * /api/estimate/{companyId}/clients:
+ * /api/client/{companyId}:
  *   get:
  *     summary: Get clients for a company
  *     description: Returns all clients belonging to the given company. Used to populate the customer selector when creating or editing an estimate.

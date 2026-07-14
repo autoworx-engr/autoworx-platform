@@ -7,6 +7,7 @@ import {
   hasCollaborationPermission,
 } from "@/lib/collaboration/batchUserPermissions";
 import { getFilteredConnectedCompanies } from "@/lib/collaboration/getFilteredConnectedCompanies";
+import { normalizeCollaborationSearch } from "@/lib/collaboration/normalizeCollaborationSearch";
 import { Prisma } from "@prisma/client";
 
 export type TSearchArgs = {
@@ -28,7 +29,7 @@ export async function searchCollaborators({
 
     const pageNum = Math.max(page, 1);
     const limitNum = Math.min(Math.max(limit, 1), 50);
-    const term = search.trim();
+    const term = normalizeCollaborationSearch(search);
     const skip = (pageNum - 1) * limitNum;
 
     const companySearchCondition: Prisma.CompanyWhereInput = term

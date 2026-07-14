@@ -2,6 +2,7 @@
 
 import { getCompanyId } from "@/lib/companyId";
 import { getFilteredConnectedCompanies } from "@/lib/collaboration/getFilteredConnectedCompanies";
+import { normalizeCollaborationSearch } from "@/lib/collaboration/normalizeCollaborationSearch";
 
 export type TListArgs = {
   page?: number;
@@ -22,7 +23,7 @@ export async function listCollaborationCompanies({
 
     const pageNum = Math.max(page, 1);
     const limitNum = Math.min(Math.max(limit, 1), 50);
-    const term = search.trim().toLowerCase();
+    const term = normalizeCollaborationSearch(search).toLowerCase();
 
     const all = await getFilteredConnectedCompanies(companyId);
     const filtered = term

@@ -2,7 +2,10 @@ import { deleteUserFromGroup } from "@/actions/communication/internal/deleteUser
 import { getUserInGroup } from "@/actions/communication/internal/query";
 import { renameGroup } from "@/actions/communication/internal/renameGroup";
 import { updateChatTrack } from "@/actions/communication/internal/updateChatTrack";
-import { normalizeGroupName } from "@/lib/utils/groupName";
+import {
+  GROUP_NAME_MAX_LENGTH,
+  normalizeGroupName,
+} from "@/lib/utils/groupName";
 import Avatar from "@/components/Avatar";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { cn } from "@/lib/cn";
@@ -366,6 +369,7 @@ export default function MessageBox({
                       type="text"
                       value={groupName}
                       onChange={(e) => setGroupName(e.target.value)}
+                      maxLength={GROUP_NAME_MAX_LENGTH}
                       className="text-black rounded-md px-2 py-1 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-white"
                       autoFocus
                     ></input>
