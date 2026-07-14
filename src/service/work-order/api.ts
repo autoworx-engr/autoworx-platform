@@ -75,7 +75,6 @@ export const updateTechnician = async (
   techId: number,
   payload: any,
 ) => {
-  console.log("Payload:", payload);
   try {
     const res = await nextAxios.patch(
       `${base(companyId, invoiceId)}/technicians/${techId}`,

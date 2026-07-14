@@ -261,7 +261,9 @@ export default function CreateAndEditLabor({
               serviceId,
             }
           : {
-              date: new Date(inputValues.date || moment().format("YYYY-MM-DD")),
+              date: new Date(
+                inputValues.date || moment().utc().format("YYYY-MM-DD"),
+              ),
               due: inputValues.due ? new Date(inputValues.due) : null,
               amount: Number(inputValues.amount),
               note: inputValues.note,
@@ -311,7 +313,9 @@ export default function CreateAndEditLabor({
       } else {
         const payload = {
           serviceId: Number(serviceId),
-          date: new Date(inputValues.date || moment().format("YYYY-MM-DD")),
+          date: new Date(
+            inputValues.date || moment().utc().format("YYYY-MM-DD"),
+          ),
           due: inputValues.due ? new Date(inputValues.due) : null,
           amount: Number(inputValues.amount),
           note: inputValues.note,
