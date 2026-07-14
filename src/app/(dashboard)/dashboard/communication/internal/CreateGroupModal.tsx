@@ -7,6 +7,7 @@ import {
   DialogTrigger,
 } from "@/components/Dialog";
 import { SlimInput } from "@/components/SlimInput";
+import { GROUP_NAME_MAX_LENGTH } from "@/lib/utils/groupName";
 import { Group, User } from "@prisma/client";
 import { Users } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -159,6 +160,7 @@ export default function CreateGroupModal({
             }
             name="groupName"
             type="text"
+            maxLength={GROUP_NAME_MAX_LENGTH}
             className="w-full text-slate-600 dark:text-white"
             placeholder="Add a Group Name..."
           />
