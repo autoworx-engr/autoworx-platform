@@ -41,25 +41,28 @@ export async function searchCollaborators({
       ],
     });
 
+    // Each word must match SOMETHING about the company — its name, or any one
+    // of its admins — but different words are allowed to match different
+    // places. This lets a cross-entity query like "Acme John" (company name
+    // "Acme Corp" + admin firstName "John") match, which a strict "all words
+    // in the name" OR "all words on one admin" check would miss entirely.
     const companySearchCondition: Prisma.CompanyWhereInput = words.length
       ? {
-          OR: [
-            {
-              AND: words.map(
-                (word): Prisma.CompanyWhereInput => ({
-                  name: { contains: word, mode: "insensitive" },
-                }),
-              ),
-            },
-            {
-              users: {
-                some: {
-                  employeeType: "Admin",
-                  AND: words.map(userWordCondition),
+          AND: words.map(
+            (word): Prisma.CompanyWhereInput => ({
+              OR: [
+                { name: { contains: word, mode: "insensitive" } },
+                {
+                  users: {
+                    some: {
+                      employeeType: "Admin",
+                      ...userWordCondition(word),
+                    },
+                  },
                 },
-              },
-            },
-          ],
+              ],
+            }),
+          ),
         }
       : {};
 
