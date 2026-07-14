@@ -74,6 +74,17 @@ type TProps = {
 
 type TStatus = "Pending" | "In Progress" | "Complete" | "Cancel";
 
+// Shared label styling so every field label in the grid renders with the
+// same font-size/weight/line-height. Previously "Assign To" used its own
+// inline className while SlimInput fields used labelClassName="text-sm
+// md:text-base", which reverts to text-base (16px) at the md breakpoint —
+// that mismatch was the real source of the row misalignment. The actual
+// height mismatch between Selector and SlimInput/DropdownSelection is now
+// fixed directly in Selector.tsx (h-9 mt-1 -> h-10), so this component no
+// longer needs to work around it with wrapper classes.
+const FIELD_LABEL_CLASS = "block px-1 text-sm font-medium text-slate-600";
+const FIELD_WRAPPER_CLASS = "flex flex-col gap-1.5";
+
 export default function CreateAndEditLabor({
   invoiceItemId,
   invoiceId,
@@ -161,11 +172,19 @@ export default function CreateAndEditLabor({
         images,
       } = technician;
 
-      const formattedDate = moment(date).utc().format("YYYY-MM-DD");
+      // FIX: moment(undefined/null/invalid) silently resolves to the Unix
+      // epoch (01/01/1970) instead of throwing, which is what produced the
+      // bogus "Assigned Date" value. Only format `date` when it's a valid
+      // date; otherwise fall back to today, same as the "new technician"
+      // default used in reset().
+      const formattedDate = moment(date).isValid()
+        ? moment(date).utc().format("YYYY-MM-DD")
+        : moment().utc().format("YYYY-MM-DD");
 
-      const formattedDue = due
-        ? moment(due).utc().format("YYYY-MM-DD")
-        : moment().add(1, "day").format("YYYY-MM-DD");
+      const formattedDue =
+        due && moment(due).isValid()
+          ? moment(due).utc().format("YYYY-MM-DD")
+          : moment().add(1, "day").utc().format("YYYY-MM-DD");
 
       setInputValues({
         date: formattedDate,
@@ -242,7 +261,9 @@ export default function CreateAndEditLabor({
               serviceId,
             }
           : {
-              date: new Date(inputValues.date),
+              date: new Date(
+                inputValues.date || moment().utc().format("YYYY-MM-DD"),
+              ),
               due: inputValues.due ? new Date(inputValues.due) : null,
               amount: Number(inputValues.amount),
               note: inputValues.note,
@@ -292,7 +313,9 @@ export default function CreateAndEditLabor({
       } else {
         const payload = {
           serviceId: Number(serviceId),
-          date: new Date(inputValues.date),
+          date: new Date(
+            inputValues.date || moment().utc().format("YYYY-MM-DD"),
+          ),
           due: inputValues.due ? new Date(inputValues.due) : null,
           amount: Number(inputValues.amount),
           note: inputValues.note,
@@ -438,10 +461,8 @@ export default function CreateAndEditLabor({
         <div className="grid grid-cols-2 gap-x-4 gap-y-3">
           {" "}
           {/* Assigned by */}
-          <div>
-            <label className="mb-1 px-1 text-sm font-medium text-slate-600">
-              Assign To
-            </label>
+          <div className={FIELD_WRAPPER_CLASS}>
+            <label className={FIELD_LABEL_CLASS}>Assign To</label>
             <div
               className={isTechnician ? "pointer-events-none opacity-50" : ""}
             >
@@ -473,8 +494,8 @@ export default function CreateAndEditLabor({
           <SlimInput
             value={inputValues.date}
             onChange={handleChange}
-            labelClassName="text-sm md:text-base"
-            className="h-10"
+            labelClassName={FIELD_LABEL_CLASS}
+            className="h-10 text-sm font-normal text-slate-700"
             label="Assigned Date"
             name="date"
             type="date"
@@ -483,8 +504,8 @@ export default function CreateAndEditLabor({
           <SlimInput
             onChange={handleChange}
             value={inputValues.due}
-            labelClassName="text-sm md:text-base"
-            className="h-10"
+            labelClassName={FIELD_LABEL_CLASS}
+            className="h-10 text-sm font-normal text-slate-700"
             label="Due Date"
             name="due"
             type="date"
@@ -493,16 +514,14 @@ export default function CreateAndEditLabor({
           <SlimInput
             onChange={handleChange}
             value={inputValues.amount}
-            labelClassName="text-sm md:text-base"
-            className="h-10"
+            labelClassName={FIELD_LABEL_CLASS}
+            className="h-10 text-sm font-normal text-slate-700"
             label="Amount"
             name="amount"
             readOnly={isTechnician}
           />{" "}
-          <div>
-            <label className="mb-1 px-1 text-sm font-medium text-slate-600">
-              Priority
-            </label>
+          <div className={FIELD_WRAPPER_CLASS}>
+            <label className={FIELD_LABEL_CLASS}>Priority</label>
             <div
               className={isTechnician ? "pointer-events-none opacity-50" : ""}
             >
@@ -519,27 +538,21 @@ export default function CreateAndEditLabor({
               />
             </div>
           </div>
-          <div>
-            <label
-              htmlFor="status"
-              className="mb-1 px-1 text-sm font-medium text-slate-600"
-            >
+          <div className={FIELD_WRAPPER_CLASS}>
+            <label htmlFor="status" className={FIELD_LABEL_CLASS}>
               Status
             </label>
             <DropdownSelection
               dropDownValues={["Pending", "In Progress", "Complete", "Cancel"]}
               onValueChange={(value) => setStatus(value as any)}
               changesValue={status}
-              buttonClassName="h-10 cursor-pointer rounded-md border border-slate-300 px-3 py-2 outline-none w-full text-sm font-medium text-slate-700 hover:border-slate-400 transition-colors"
+              buttonClassName="h-10 cursor-pointer rounded-md border border-slate-300 px-3 py-2 outline-none w-full text-sm font-normal text-slate-700 hover:border-slate-400 transition-colors"
             />
           </div>
         </div>{" "}
         {isAdminOrManger && (
-          <div>
-            <label
-              htmlFor="note"
-              className="mb-1 px-1 text-sm font-medium text-slate-600"
-            >
+          <div className={FIELD_WRAPPER_CLASS}>
+            <label htmlFor="note" className={FIELD_LABEL_CLASS}>
               New Note
             </label>
             <textarea
@@ -553,7 +566,7 @@ export default function CreateAndEditLabor({
           </div>
         )}
         {technician && (
-          <div>
+          <div className={FIELD_WRAPPER_CLASS}>
             <div className="flex justify-between">
               <p className="text-left text-sm font-semibold text-slate-700">
                 Work Note
