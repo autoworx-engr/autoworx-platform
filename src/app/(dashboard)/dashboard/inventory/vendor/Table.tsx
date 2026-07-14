@@ -32,9 +32,8 @@ export default function Table({
     setActive(!!vendorId);
   }, [vendorId, setActive]);
 
+  const term = searchTerm.trim().toLowerCase();
   const filterVendor = vendors?.filter((vendor) => {
-    const term = searchTerm.trim().toLowerCase();
-
     return (
       vendor.name?.toLowerCase().includes(term) ||
       vendor.companyName?.toLowerCase().includes(term) ||

@@ -40,9 +40,8 @@ const VendorCard = ({
     return null;
   }
 
+  const term = searchTerm.trim().toLowerCase();
   const filterVendor = vendors?.filter((vendor) => {
-    const term = searchTerm.trim().toLowerCase();
-
     return (
       vendor.name?.toLowerCase().includes(term) ||
       vendor.companyName?.toLowerCase().includes(term) ||
