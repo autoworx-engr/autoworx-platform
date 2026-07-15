@@ -205,6 +205,7 @@ export async function GET(
             lastName: true,
             email: true,
             mobile: true,
+            countryCode: true,
           },
         },
         vehicle: {
