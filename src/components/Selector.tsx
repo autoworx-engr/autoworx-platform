@@ -264,9 +264,15 @@ export default function Selector<T>({
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-      <div
-        className={cn("w-full max-w-sm transition-all duration-300", className)}
-      >
+      {/*
+        FIX (alignment): the wrapper previously capped width at `max-w-sm`
+        (384px), which kept this control from stretching to match the width
+        of sibling SlimInput/DropdownSelection fields in a grid. `className`
+        (passed by callers) now comes after `w-full` with no competing
+        max-w-* utility, so callers can still constrain width when they
+        actually want to.
+      */}
+      <div className={cn("w-full transition-all duration-300", className)}>
         <DropdownMenuTrigger
           onPointerDown={
             useCompactTriggerBehavior ? (e) => e.preventDefault() : undefined
@@ -283,9 +289,20 @@ export default function Selector<T>({
           }}
           disabled={disabledDropdown}
           className={cn(
-            "group flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 shadow-sm outline-none transition-colors",
-            isOpen && "ring-1 ring-ring border-ring",
-            disabledDropdown && "cursor-not-allowed opacity-50",
+            // FIX (alignment): was `h-9 mt-1 w-[99%]`. The 9-unit height
+            // (36px) was 4px shorter than the h-10 (40px) SlimInput/
+            // DropdownSelection controls it sits next to in the grid, and
+            // `mt-1` added an extra 4px top offset on top of that — together
+            // these produced the vertical misalignment between "Assign To"/
+            // "Priority" and the other fields in the same row. `w-[99%]`
+            // is replaced with `w-full` to match sibling fields exactly.
+            "group flex h-10 w-full items-center justify-between rounded-lg px-4 transition-all duration-300 outline-none",
+            "bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm hover:shadow-md",
+            "ring-1 ring-slate-200 dark:ring-slate-800",
+            isOpen
+              ? "ring-2 ring-[#6571FF]/60 border-transparent"
+              : "hover:ring-slate-300",
+            disabledDropdown && "opacity-50 cursor-not-allowed",
           )}
         >
           <TooltipProvider>

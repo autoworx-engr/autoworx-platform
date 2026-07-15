@@ -59,7 +59,7 @@ export function DropdownSelection({
           <Button
             variant="outline"
             className={cn(
-              "flex items-center justify-center gap-x-1 text-xs lg:gap-x-2 lg:text-base",
+              "flex items-center justify-center gap-x-1 text-xs lg:gap-x-2",
               "rounded-xl px-3 py-2 transition-transform duration-500 ease-out transform hover:scale-[1.02]",
               // base appearance
               "bg-white dark:bg-slate-900/40",
@@ -67,7 +67,7 @@ export function DropdownSelection({
               "ring-1 ring-slate-900/5 dark:ring-slate-700/20 hover:ring-[#6470fd]/50 hover:shadow-sm",
               // when menu is open (radix sets aria-expanded)
               "aria-[expanded=true]:ring-2 aria-[expanded=true]:ring-[#6470fd] aria-[expanded=true]:shadow-[0_20px_40px_-12px_rgba(100,112,253,0.10)]",
-              buttonClassName
+              buttonClassName,
             )}
           >
             <span className="truncate max-w-[10rem] text-slate-600 dark:text-slate-200">
@@ -97,7 +97,7 @@ export function DropdownSelection({
           "rounded-2xl p-2 m-2 backdrop-blur-md bg-white dark:bg-slate-900/50",
           "ring-1 ring-slate-900/5 dark:ring-slate-700/20 shadow-lg border-transparent",
           "transition-all duration-200",
-          contentClassName
+          contentClassName,
         )}
       >
         {menuLabel && (
@@ -123,7 +123,7 @@ export function DropdownSelection({
                   "text-slate-600 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60",
                   "transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#6470fd]/20",
                   "data-[state=checked]:bg-[#6470fd] data-[state=checked]:text-white",
-                  "data-[state=checked]:shadow-[0_8px_30px_rgba(100,112,253,0.12)]"
+                  "data-[state=checked]:shadow-[0_8px_30px_rgba(100,112,253,0.12)]",
                 )}
               >
                 <span className="flex items-center gap-1">
@@ -140,7 +140,7 @@ export function DropdownSelection({
                 "text-slate-600 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60",
                 "transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#6470fd]/20",
                 "data-[state=checked]:bg-[#6470fd] data-[state=checked]:text-white",
-                "data-[state=checked]:shadow-[0_8px_30px_rgba(100,112,253,0.12)]"
+                "data-[state=checked]:shadow-[0_8px_30px_rgba(100,112,253,0.12)]",
               )}
             >
               <span className="flex items-center gap-1">

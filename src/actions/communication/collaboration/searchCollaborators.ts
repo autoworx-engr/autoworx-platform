@@ -7,6 +7,7 @@ import {
   hasCollaborationPermission,
 } from "@/lib/collaboration/batchUserPermissions";
 import { getFilteredConnectedCompanies } from "@/lib/collaboration/getFilteredConnectedCompanies";
+import { normalizeCollaborationSearch } from "@/lib/collaboration/normalizeCollaborationSearch";
 import { Prisma } from "@prisma/client";
 
 export type TSearchArgs = {
@@ -28,37 +29,55 @@ export async function searchCollaborators({
 
     const pageNum = Math.max(page, 1);
     const limitNum = Math.min(Math.max(limit, 1), 50);
-    const term = search.trim();
+    const term = normalizeCollaborationSearch(search);
+    const words = term.split(/\s+/).filter(Boolean);
     const skip = (pageNum - 1) * limitNum;
 
-    const companySearchCondition: Prisma.CompanyWhereInput = term
+    const userWordCondition = (word: string): Prisma.UserWhereInput => ({
+      OR: [
+        { firstName: { contains: word, mode: "insensitive" } },
+        { lastName: { contains: word, mode: "insensitive" } },
+        { email: { contains: word, mode: "insensitive" } },
+      ],
+    });
+
+    // Each word must match SOMETHING about the company — its name, or any one
+    // of its admins — but different words are allowed to match different
+    // places. This lets a cross-entity query like "Acme John" (company name
+    // "Acme Corp" + admin firstName "John") match, which a strict "all words
+    // in the name" OR "all words on one admin" check would miss entirely.
+    const companySearchCondition: Prisma.CompanyWhereInput = words.length
       ? {
-          OR: [
-            { name: { contains: term, mode: "insensitive" } },
-            {
-              users: {
-                some: {
-                  employeeType: "Admin",
-                  OR: [
-                    { firstName: { contains: term, mode: "insensitive" } },
-                    { lastName: { contains: term, mode: "insensitive" } },
-                    { email: { contains: term, mode: "insensitive" } },
-                  ],
+          AND: words.map(
+            (word): Prisma.CompanyWhereInput => ({
+              OR: [
+                { name: { contains: word, mode: "insensitive" } },
+                {
+                  users: {
+                    some: {
+                      employeeType: "Admin",
+                      ...userWordCondition(word),
+                    },
+                  },
                 },
-              },
-            },
-          ],
+              ],
+            }),
+          ),
         }
       : {};
 
-    const userSearchCondition: Prisma.UserWhereInput = term
+    const userSearchCondition: Prisma.UserWhereInput = words.length
       ? {
-          OR: [
-            { firstName: { contains: term, mode: "insensitive" } },
-            { lastName: { contains: term, mode: "insensitive" } },
-            { email: { contains: term, mode: "insensitive" } },
-            { company: { name: { contains: term, mode: "insensitive" } } },
-          ],
+          AND: words.map(
+            (word): Prisma.UserWhereInput => ({
+              OR: [
+                { firstName: { contains: word, mode: "insensitive" } },
+                { lastName: { contains: word, mode: "insensitive" } },
+                { email: { contains: word, mode: "insensitive" } },
+                { company: { name: { contains: word, mode: "insensitive" } } },
+              ],
+            }),
+          ),
         }
       : {};
 

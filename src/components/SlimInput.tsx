@@ -79,17 +79,18 @@ export function SlimInput({
             // Normalize native date/time inputs so they don't balloon on mobile
             isDateLike &&
               cn(
-                "appearance-none",
-                // Align the native value text with the rest of the shadcn inputs
-                "text-foreground",
-                "[&::-webkit-datetime-edit]:p-0 [&::-webkit-datetime-edit]:leading-none",
-                "[&::-webkit-datetime-edit-fields-wrapper]:p-0",
-                "[&::-webkit-date-and-time-value]:m-0 [&::-webkit-date-and-time-value]:text-left",
-                // Calendar icon on the right, subtle
-                "[&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-60",
-                "[&::-webkit-calendar-picker-indicator]:hover:opacity-100",
-                // While empty: hide native text and stretch the picker over the
-                // whole field so our custom placeholder + icon shows instead.
+                "h-[38px] appearance-none",
+                // FIX (font): the native date/time value (rendered by the
+                // browser via this pseudo-element, not by our own text
+                // node) doesn't inherit `font-medium`/`text-base` from
+                // `slimInputClassName` the way a plain text value does.
+                // Left unset, that made date fields (e.g. "Assigned Date")
+                // render visibly lighter/differently-sized than sibling
+                // text fields like "Amount", even though both use the same
+                // input classes. Pin the weight and size explicitly so the
+                // rendered value matches.
+                "[&::-webkit-date-and-time-value]:font-medium [&::-webkit-date-and-time-value]:text-base [&::-webkit-date-and-time-value]:text-left [&::-webkit-date-and-time-value]:m-0",
+                "[&::-webkit-calendar-picker-indicator]:opacity-60",
                 "data-[empty]:[&::-webkit-datetime-edit]:opacity-0",
                 "data-[empty]:[&::-webkit-calendar-picker-indicator]:absolute",
                 "data-[empty]:[&::-webkit-calendar-picker-indicator]:inset-0",
