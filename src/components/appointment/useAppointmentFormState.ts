@@ -124,8 +124,8 @@ export function useAppointmentFormState({
     }
   }, [title]);
   const [notes, setNotes] = useState("");
-  const [startTime, setStartTime] = useState("00:00");
-  const [endTime, setEndTime] = useState("00:00");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
   const [allDay, setAllDay] = useState(false);
   const [vehicle, setVehicle] = useState<Partial<Vehicle> | null>(null);
   const [serviceCategoryId, setServiceCategoryId] = useState<number | null>(
@@ -190,8 +190,8 @@ export function useAppointmentFormState({
     setTitle("");
     setDate(today);
     setEndDate(undefined);
-    setStartTime("00:00");
-    setEndTime("00:00");
+    setStartTime("");
+    setEndTime("");
     setClient(null);
     setVehicle(null);
     setServiceCategoryId(null);
@@ -414,25 +414,11 @@ export function useAppointmentFormState({
             setEndTime(parsed.format("HH:mm"));
           }
         }
-      } else {
-        let now = moment();
-        const roundedMinutes = Math.ceil(now.minute() / 15) * 15;
-        now.minute(roundedMinutes).second(0).millisecond(0);
-        setStartTime(now.format("HH:mm"));
-        const end = now.clone().add(1, "hours");
-        setEndTime(end.format("HH:mm"));
       }
+      // On create (not edit, not all-day) leave the times empty so the user
+      // picks them — mirrors the task form. No auto "now" default.
     }
   }, [allDay, settings, date, fromEdit, appointment]);
-
-  useEffect(() => {
-    let now = moment();
-    const roundedMinutes = Math.ceil(now.minute() / 15) * 15;
-    now.minute(roundedMinutes).second(0).millisecond(0);
-    setStartTime(now.format("HH:mm"));
-    const end = now.clone().add(1, "hours");
-    setEndTime(end.format("HH:mm"));
-  }, []);
 
   useEffect(() => {
     setFormChanged(
