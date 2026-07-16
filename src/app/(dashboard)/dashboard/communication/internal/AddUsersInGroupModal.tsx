@@ -126,10 +126,10 @@ export default function AddUsersInGroupModal({
           <button
             onClick={handleAddUserInGroup}
             disabled={isLoading || contactList.length === 0}
-            className={`relative flex items-center justify-center gap-2 rounded-xl border border-[#6571FF] px-5 py-2 text-white transition-all duration-300 ease-in-out overflow-hidden ${
+            className={`relative flex items-center justify-center gap-2 rounded-xl border border-primary px-5 py-2 text-white transition-all duration-300 ease-in-out overflow-hidden ${
               isLoading || contactList.length === 0
                 ? "cursor-not-allowed bg-slate-400 border-slate-400"
-                : "bg-[#6571FF] hover:bg-[#5a67e8] hover:shadow-lg hover:shadow-indigo-500/50"
+                : "bg-primary hover:bg-[#5a67e8] hover:shadow-lg hover:shadow-indigo-500/50"
             }`}
           >
             {isLoading && (

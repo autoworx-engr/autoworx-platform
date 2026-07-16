@@ -1,25 +1,25 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { makeFleetStatementPayment } from "@/actions/fleet/statement";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogClose,
-  DialogFooter,
 } from "@/components/Dialog";
-import { SlimInput } from "@/components/SlimInput";
 import Selector from "@/components/Selector";
-import { PaymentType, CardType, PaymentMethod } from "@prisma/client";
-import { makeFleetStatementPayment } from "@/actions/fleet/statement";
+import { SlimInput } from "@/components/SlimInput";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
+import { cn } from "@/lib/cn";
 import { errorToast, successToast } from "@/lib/toast";
 import { useListsStore } from "@/stores/lists";
-import { cn } from "@/lib/cn";
+import { CardType, PaymentMethod, PaymentType } from "@prisma/client";
 import * as Tabs from "@radix-ui/react-tabs";
 import moment from "moment-timezone";
 import Image from "next/image";
-import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
+import React, { useEffect, useState } from "react";
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -46,11 +46,11 @@ function TabTrigger({
         "group relative flex items-center justify-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-300 ease-out md:text-base",
         isActive
           ? "text-white shadow-md shadow-indigo-500/25 ring-1 ring-black/5 translate-y-[-1px]"
-          : "text-slate-500 hover:bg-slate-100 hover:text-slate-900 [&>svg]:text-slate-400 [&>svg]:group-hover:text-[#6571FF]",
+          : "text-slate-500 hover:bg-slate-100 hover:text-slate-900 [&>svg]:text-slate-400 [&>svg]:group-hover:text-primary",
       )}
     >
       {isActive && (
-        <div className="absolute inset-0 -z-10 rounded-xl bg-gradient-to-r from-[#6571FF] to-[#5a66ee]" />
+        <div className="absolute inset-0 -z-10 rounded-xl bg-gradient-to-r from-primary to-[#5a66ee]" />
       )}
       {children}
     </Tabs.Trigger>
@@ -600,7 +600,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 Cancel
               </button>
               <button
-                className="rounded-xl bg-gradient-to-r from-[#6571FF] to-[#5a66ee] px-6 py-2.5 text-sm font-medium text-white shadow-lg shadow-indigo-500/30 transition-all duration-200 hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-xl hover:shadow-indigo-500/40 active:translate-y-0 active:scale-100 disabled:opacity-60"
+                className="rounded-xl bg-gradient-to-r from-primary to-[#5a66ee] px-6 py-2.5 text-sm font-medium text-white shadow-lg shadow-indigo-500/30 transition-all duration-200 hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-xl hover:shadow-indigo-500/40 active:translate-y-0 active:scale-100 disabled:opacity-60"
                 onClick={handleSubmit}
                 disabled={loading}
                 type="button"

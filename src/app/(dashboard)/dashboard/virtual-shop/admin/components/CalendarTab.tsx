@@ -1,7 +1,6 @@
 "use client";
 
-import { useMemo, useTransition } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import type { VirtualShopBookingCalendarItem } from "@/service/virtual-shop/api";
 import { Pagination } from "antd";
 import {
   ChevronLeft,
@@ -10,10 +9,11 @@ import {
   List,
   Loader2,
 } from "lucide-react";
-import type { VirtualShopBookingCalendarItem } from "@/service/virtual-shop/api";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useMemo, useTransition } from "react";
+import CalendarAppointmentCard from "./CalendarAppointmentCard";
 import CalendarGrid from "./CalendarGrid";
 import CalendarListView from "./CalendarListView";
-import CalendarAppointmentCard from "./CalendarAppointmentCard";
 import type { CalendarTabProps } from "./CalendarTab.types";
 import {
   MONTH_NAMES,
@@ -185,7 +185,7 @@ export default function CalendarTab({
             </button>
           </div>
           {totalAppts > 0 && (
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#6571FF]/10 dark:bg-[#6571FF]/20 text-[#6571FF]">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 dark:bg-primary/20 text-primary">
               {totalAppts} appt{totalAppts !== 1 ? "s" : ""}
             </span>
           )}
@@ -204,7 +204,7 @@ export default function CalendarTab({
             }
             className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold transition-all duration-200 ${
               viewMode === "grid"
-                ? "bg-[#6571FF] text-white"
+                ? "bg-primary text-white"
                 : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
             }`}
           >
@@ -222,7 +222,7 @@ export default function CalendarTab({
             }
             className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold transition-all duration-200 ${
               viewMode === "list"
-                ? "bg-[#6571FF] text-white"
+                ? "bg-primary text-white"
                 : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
             }`}
           >

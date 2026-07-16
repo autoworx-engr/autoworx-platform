@@ -115,7 +115,7 @@ const CreateStatementModal = ({
     <div>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <button className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#6571FF] to-[#8088FF] px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-[#6571FF]/40 transition-all duration-300 hover:from-[#505aff] hover:to-[#6571FF] hover:shadow-xl">
+          <button className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-primary to-[#8088FF] px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-primary/40 transition-all duration-300 hover:from-[#505aff] hover:to-primary hover:shadow-xl">
             Create Statement
           </button>
         </DialogTrigger>
@@ -170,7 +170,7 @@ const CreateStatementModal = ({
                           }
                         />
                       </td>
-                      <td className="border-b px-4 py-2 text-left text-[#6571FF]">
+                      <td className="border-b px-4 py-2 text-left text-primary">
                         <InvoiceModal
                           invoiceId={invoice?.id}
                           buttonChild={<button>{invoice?.id}</button>}
@@ -231,7 +231,7 @@ const CreateStatementModal = ({
               <button
                 className="
                 rounded-xl px-6 py-2.5 text-sm font-medium text-white
-                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                bg-gradient-to-r from-primary to-[#5a66ee]
                 shadow-lg shadow-indigo-500/30
                 hover:shadow-xl hover:shadow-indigo-500/40
                 hover:-translate-y-0.5 hover:scale-[1.02]

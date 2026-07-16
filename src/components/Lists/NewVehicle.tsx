@@ -6,8 +6,6 @@ import {
   DialogClose,
   DialogContent,
   DialogFooter,
-  DialogHeader,
-  DialogTitle,
   DialogTrigger,
 } from "@/components/Dialog";
 import FormError from "@/components/FormError";
@@ -24,8 +22,8 @@ import { Spin } from "antd";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { addVehicle } from "../../actions/vehicle/addVehicle";
-import SelectorWithSearch from "./SelectorWithSearch";
 import VINInputCamera from "../vin-decoder/vin-input";
+import SelectorWithSearch from "./SelectorWithSearch";
 
 type TProps = {
   newButton?: React.ReactNode;
@@ -188,7 +186,7 @@ export default function NewVehicle({
           ) : (
             <button
               type="button"
-              className="text-xs font-medium text-[#6571FF] transition-colors hover:text-[#5a66ee]"
+              className="text-xs font-medium text-primary transition-colors hover:text-[#5a66ee]"
             >
               + New Vehicle
             </button>
@@ -358,7 +356,7 @@ export default function NewVehicle({
             Cancel
           </DialogClose>
           <Submit
-            className="rounded-md bg-gradient-to-r from-[#6571FF] to-[#5a66ee] px-6 py-2 text-sm font-medium text-white shadow transition-all duration-200 hover:shadow-lg hover:shadow-indigo-500/30 disabled:opacity-50"
+            className="rounded-md bg-gradient-to-r from-primary to-[#5a66ee] px-6 py-2 text-sm font-medium text-white shadow transition-all duration-200 hover:shadow-lg hover:shadow-indigo-500/30 disabled:opacity-50"
             formAction={handleSubmit}
             disabled={loading}
           >

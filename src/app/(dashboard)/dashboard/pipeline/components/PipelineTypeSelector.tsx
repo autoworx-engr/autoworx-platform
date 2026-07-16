@@ -95,7 +95,7 @@ export default function PipelineTypeSelector({
               className={cn(
                 "w-full text-left px-4 py-3 text-sm font-medium transition-colors hover:bg-slate-50",
                 option.type === currentType
-                  ? "bg-indigo-50 text-[#6571FF]"
+                  ? "bg-indigo-50 text-primary"
                   : "text-slate-700",
               )}
             >

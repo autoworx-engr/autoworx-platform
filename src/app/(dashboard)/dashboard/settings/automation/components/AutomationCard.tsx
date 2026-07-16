@@ -1,26 +1,25 @@
 "use client";
+import { useDeleteCommunicationAutomationRule } from "@/hooks/communication-automation/useDeleteCommunicationAutomationRule";
+import { useUpdateCommunicationAutomationRule } from "@/hooks/communication-automation/useUpdateCommunicationAutomationRule";
+import { useDeleteInventoryAutomationRule } from "@/hooks/inventory-automation/useDeleteInventoryAutomationRule";
+import { useUpdateInventoryAutomationRule } from "@/hooks/inventory-automation/useUpdateInventoryAutomationRule";
+import { useDeleteInvoiceAutomationRule } from "@/hooks/invoice-automation/useDeleteInvoiceAutomationRule";
+import { useUpdateInvoiceAutomationRule } from "@/hooks/invoice-automation/useUpdateInvoiceAutomationRule";
+import { useDeleteMarketingAutomationRule } from "@/hooks/marketing-automation/useDeleteMarketingAutomationRule";
+import { useUpdateMarketingAutomationRule } from "@/hooks/marketing-automation/useUpdateMarketingAutomationRule";
+import { useDeleteReportingAutomationRule } from "@/hooks/reporting-automation/useDeleteReportingAutomationRule";
+import { useUpdateReportingAutomationRule } from "@/hooks/reporting-automation/useUpdateReportingAutomationRule";
+import { useDeleteServiceMaintenanceAutomationRule } from "@/hooks/service-maintenance-automation/useDeleteServicemaintenanceAutomationRule";
+import { useUpdateServiceMaintenanceAutomationRule } from "@/hooks/service-maintenance-automation/useUpdateServiceMaintenanceAutomationRule";
+import { useDeleteTagAutomationRule } from "@/hooks/tag-automation/useDeleteTagAutomationRule";
+import { useUpdateTagAutomationRule } from "@/hooks/tag-automation/useUpdateTagAutomationRule";
+import { errorToast } from "@/lib/toast";
+import { Popconfirm, Spin } from "antd";
+import { CirclePause, CirclePlay, SquarePen, Trash2 } from "lucide-react";
+import moment from "moment";
 import { FC } from "react";
 import { useDeletePipelineAutomationRule } from "../../../../../../hooks/pipeline-automation/useDeletePipelineAutomationRule";
 import { useUpdatePipelineAutomationRule } from "../../../../../../hooks/pipeline-automation/useUpdatePipelineAutomationRule";
-import { useUpdateCommunicationAutomationRule } from "@/hooks/communication-automation/useUpdateCommunicationAutomationRule";
-import { useDeleteCommunicationAutomationRule } from "@/hooks/communication-automation/useDeleteCommunicationAutomationRule";
-import moment from "moment";
-import { useDeleteMarketingAutomationRule } from "@/hooks/marketing-automation/useDeleteMarketingAutomationRule";
-import { useUpdateMarketingAutomationRule } from "@/hooks/marketing-automation/useUpdateMarketingAutomationRule";
-import { errorToast } from "@/lib/toast";
-import { useUpdateServiceMaintenanceAutomationRule } from "@/hooks/service-maintenance-automation/useUpdateServiceMaintenanceAutomationRule";
-import { useDeleteServiceMaintenanceAutomationRule } from "@/hooks/service-maintenance-automation/useDeleteServicemaintenanceAutomationRule";
-import { Popconfirm, Spin } from "antd";
-import { useDeleteInvoiceAutomationRule } from "@/hooks/invoice-automation/useDeleteInvoiceAutomationRule";
-import { useUpdateInvoiceAutomationRule } from "@/hooks/invoice-automation/useUpdateInvoiceAutomationRule";
-import { useDeleteInventoryAutomationRule } from "@/hooks/inventory-automation/useDeleteInventoryAutomationRule";
-import { useUpdateInventoryAutomationRule } from "@/hooks/inventory-automation/useUpdateInventoryAutomationRule";
-import { CirclePause, CirclePlay, SquarePen, Trash2 } from "lucide-react";
-import { useUpdateTagAutomationRule } from "@/hooks/tag-automation/useUpdateTagAutomationRule";
-import { useDeleteTagAutomationRule } from "@/hooks/tag-automation/useDeleteTagAutomationRule";
-import CarLoading from "@/components/common/CarLoading";
-import { useDeleteReportingAutomationRule } from "@/hooks/reporting-automation/useDeleteReportingAutomationRule";
-import { useUpdateReportingAutomationRule } from "@/hooks/reporting-automation/useUpdateReportingAutomationRule";
 
 interface Item {
   id: string;
@@ -195,7 +194,7 @@ const AutomationCard: FC<AutomationCardProps> = ({
         </div>
 
         {item.startTime && type == "marketing" ? (
-          <div className="absolute left-1/2 top-0 flex w-[85%] -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-2 rounded-md bg-[#6571FF] px-4 py-0.5 text-xs text-white shadow-md 2xl:w-[60%]">
+          <div className="absolute left-1/2 top-0 flex w-[85%] -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-2 rounded-md bg-primary px-4 py-0.5 text-xs text-white shadow-md 2xl:w-[60%]">
             <span className="font-semibold text-xs">Starts:</span>
             <span className="text-xs">
               {moment(item.startTime).format("MMM-DD-YY, h:mm A")}{" "}
@@ -225,7 +224,7 @@ const AutomationCard: FC<AutomationCardProps> = ({
           ) : (
             <button
               onClick={() => handlePause(item.id)}
-              className="text-[#6571FF] hover:text-indigo-700"
+              className="text-primary hover:text-indigo-700"
             >
               {item?.isPaused ? (
                 <CirclePlay size={20} />
@@ -237,7 +236,7 @@ const AutomationCard: FC<AutomationCardProps> = ({
 
           <button
             onClick={() => handleSetIsEdit(item.id)}
-            className="text-[#6571FF] hover:text-indigo-700"
+            className="text-primary hover:text-indigo-700"
           >
             <SquarePen size={20} />
           </button>

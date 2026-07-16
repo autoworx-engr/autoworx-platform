@@ -88,7 +88,7 @@ export default function AppointmentModalBody(props: AppointmentModalBodyProps) {
             className={cn(
               "flex items-center justify-center rounded-full px-6 py-2 text-sm font-bold transition-all duration-300 ease-out",
               tab === Tab.Schedule
-                ? "bg-white text-[#6571FF] shadow-sm ring-1 ring-slate-200"
+                ? "bg-white text-primary shadow-sm ring-1 ring-slate-200"
                 : "text-slate-400 hover:bg-slate-200/50 hover:text-slate-600",
             )}
             onClick={() => setTab(Tab.Schedule)}
@@ -96,7 +96,7 @@ export default function AppointmentModalBody(props: AppointmentModalBodyProps) {
             <Calendar
               className={cn(
                 "mr-2 transition-colors",
-                tab === Tab.Schedule ? "text-[#6571FF]" : "text-slate-400",
+                tab === Tab.Schedule ? "text-primary" : "text-slate-400",
               )}
               size={18}
               strokeWidth={2.5}
@@ -109,7 +109,7 @@ export default function AppointmentModalBody(props: AppointmentModalBodyProps) {
             className={cn(
               "flex items-center justify-center rounded-full px-6 py-2 text-sm font-bold transition-all duration-300 ease-out",
               tab === Tab.Reminder
-                ? "bg-white text-[#6571FF] shadow-sm ring-1 ring-slate-200"
+                ? "bg-white text-primary shadow-sm ring-1 ring-slate-200"
                 : "text-slate-400 hover:bg-slate-200/50 hover:text-slate-600",
             )}
             onClick={() => setTab(Tab.Reminder)}
@@ -117,7 +117,7 @@ export default function AppointmentModalBody(props: AppointmentModalBodyProps) {
             <Bell
               className={cn(
                 "mr-2 transition-colors",
-                tab === Tab.Reminder ? "text-[#6571FF]" : "text-slate-400",
+                tab === Tab.Reminder ? "text-primary" : "text-slate-400",
               )}
               size={18}
               strokeWidth={2.5}
@@ -198,7 +198,7 @@ export default function AppointmentModalBody(props: AppointmentModalBodyProps) {
             className={cn(
               "rounded-md px-6 py-2 text-sm font-medium text-white shadow transition-all duration-200",
               formChanged && !isSubmitting
-                ? "cursor-pointer bg-gradient-to-r from-[#6571FF] to-[#5a66ee] hover:shadow-lg hover:shadow-indigo-500/30"
+                ? "cursor-pointer bg-gradient-to-r from-primary to-[#5a66ee] hover:shadow-lg hover:shadow-indigo-500/30"
                 : "cursor-not-allowed bg-gray-400",
             )}
             onClick={handleSubmit}

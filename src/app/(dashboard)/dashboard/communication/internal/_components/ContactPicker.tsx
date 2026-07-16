@@ -49,7 +49,7 @@ export function ContactPicker({
         {contactList.map((u) => (
           <div
             key={u.id}
-            className="group flex items-center justify-between space-x-1 rounded-full bg-[#6571FF] px-3 py-1 text-white shadow-sm transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:scale-[1.02] hover:bg-[#5a67e8] hover:shadow-indigo-500/50"
+            className="group flex items-center justify-between space-x-1 rounded-full bg-primary px-3 py-1 text-white shadow-sm transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:scale-[1.02] hover:bg-[#5a67e8] hover:shadow-indigo-500/50"
           >
             <p className="text-sm font-medium">{u.name}</p>
             <CircleX
@@ -111,7 +111,7 @@ export function ContactPicker({
                 >
                   {isLoading && groupUsers.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-8">
-                      <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-[#6571FF]" />
+                      <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-primary" />
                     </div>
                   ) : groupUsers.length > 0 ? (
                     groupUsers.map((user) => (

@@ -37,7 +37,7 @@ export const EmployeeLeaveRequest = ({
           onClick={async () => {
             const res = await updateLeaveRequestStatus(
               leaveRequest.id,
-              "Approved"
+              "Approved",
             );
             if (res.success) {
               successToast(res.message);
@@ -45,7 +45,7 @@ export const EmployeeLeaveRequest = ({
               errorToast(res.message);
             }
           }}
-          className="w-full rounded bg-[#6571FF] py-1 text-white"
+          className="w-full rounded bg-primary py-1 text-white"
         >
           Accept
         </button>
@@ -53,7 +53,7 @@ export const EmployeeLeaveRequest = ({
           onClick={async () => {
             const res = await updateLeaveRequestStatus(
               leaveRequest.id,
-              "Rejected"
+              "Rejected",
             );
             if (res.success) {
               successToast(res.message);

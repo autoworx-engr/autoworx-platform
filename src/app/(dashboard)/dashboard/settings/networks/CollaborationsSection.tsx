@@ -3,7 +3,6 @@ import { acceptCompanyJoin } from "@/actions/communication/collaboration/acceptC
 import { rejectCompanyJoin } from "@/actions/communication/collaboration/rejectCompanyJoin";
 import { CompanyCard } from "@/components/ui/companyCard";
 import { Company } from "@prisma/client";
-import { CheckCircle, Clock, XCircle } from "lucide-react";
 
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat("en-US", {
@@ -39,7 +38,7 @@ export function CollaborationsSection({
           <div className="flex items-center gap-2 mb-3">
             <h3 className="text-sm font-semibold text-gray-600">Active</h3>
             {active.length > 0 && (
-              <span className="ml-auto text-xs font-medium px-2 py-1 rounded-full bg-[#6571FF]/10 text-[#6571FF]">
+              <span className="ml-auto text-xs font-medium px-2 py-1 rounded-full bg-primary/10 text-primary">
                 {active.length}
               </span>
             )}
@@ -177,7 +176,7 @@ export function CollaborationsSection({
                       onClick={() =>
                         acceptCompanyJoin(joinId, currentCompanyId)
                       }
-                      className="text-xs font-medium px-3 py-1.5 rounded-lg bg-[#6571FF] hover:bg-[#5864e5] text-white transition shrink-0"
+                      className="text-xs font-medium px-3 py-1.5 rounded-lg bg-primary hover:bg-[#5864e5] text-white transition shrink-0"
                     >
                       Re-accept
                     </button>

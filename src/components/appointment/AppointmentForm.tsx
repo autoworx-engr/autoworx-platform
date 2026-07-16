@@ -332,7 +332,7 @@ export default function AppointmentForm({
                             setDraft(item.id);
                             setDraftOpen(false);
                           }}
-                          className="group flex cursor-pointer flex-col gap-1 rounded-lg px-3 py-2.5 outline-none hover:bg-slate-50 data-[highlighted]:bg-[#6571FF]/10 dark:hover:bg-slate-800"
+                          className="group flex cursor-pointer flex-col gap-1 rounded-lg px-3 py-2.5 outline-none hover:bg-slate-50 data-[highlighted]:bg-primary/10 dark:hover:bg-slate-800"
                         >
                           <div className="flex items-center justify-between gap-2">
                             <div className="flex items-center gap-2 min-w-0">
@@ -340,7 +340,7 @@ export default function AppointmentForm({
                                 {item.vehicle}
                               </span>
                             </div>
-                            <span className="shrink-0 text-sm font-bold text-[#6571FF]">
+                            <span className="shrink-0 text-sm font-bold text-primary">
                               ${item.price.toFixed(2)}
                             </span>
                           </div>
@@ -376,7 +376,7 @@ export default function AppointmentForm({
                       }}
                       disabled={!client || !vehicle}
                       className={cn(
-                        "flex w-full items-center justify-center gap-2 rounded-lg bg-[#6571FF] py-2.5 text-sm font-semibold text-white transition-opacity",
+                        "flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-sm font-semibold text-white transition-opacity",
                         "hover:opacity-90 active:scale-[0.98]",
                         (!client || !vehicle) &&
                           "cursor-not-allowed opacity-60",
@@ -416,7 +416,7 @@ export default function AppointmentForm({
             className={cn(
               "flex items-center justify-center rounded-full px-6 py-2 text-sm font-bold transition-all duration-300 ease-out",
               tab === Tab.Schedule
-                ? "bg-white text-[#6571FF] shadow-sm ring-1 ring-slate-200"
+                ? "bg-white text-primary shadow-sm ring-1 ring-slate-200"
                 : "text-slate-400 hover:bg-slate-200/50 hover:text-slate-600",
             )}
             onClick={() => setTab(Tab.Schedule)}
@@ -424,7 +424,7 @@ export default function AppointmentForm({
             <Calendar
               className={cn(
                 "mr-2 transition-colors",
-                tab === Tab.Schedule ? "text-[#6571FF]" : "text-slate-400",
+                tab === Tab.Schedule ? "text-primary" : "text-slate-400",
               )}
               size={18}
               strokeWidth={2.5}
@@ -437,7 +437,7 @@ export default function AppointmentForm({
             className={cn(
               "flex items-center justify-center rounded-full px-6 py-2 text-sm font-bold transition-all duration-300 ease-out",
               tab === Tab.Reminder
-                ? "bg-white text-[#6571FF] shadow-sm ring-1 ring-slate-200"
+                ? "bg-white text-primary shadow-sm ring-1 ring-slate-200"
                 : "text-slate-400 hover:bg-slate-200/50 hover:text-slate-600",
             )}
             onClick={() => setTab(Tab.Reminder)}
@@ -445,7 +445,7 @@ export default function AppointmentForm({
             <Bell
               className={cn(
                 "mr-2 transition-colors",
-                tab === Tab.Reminder ? "text-[#6571FF]" : "text-slate-400",
+                tab === Tab.Reminder ? "text-primary" : "text-slate-400",
               )}
               size={18}
               strokeWidth={2.5}

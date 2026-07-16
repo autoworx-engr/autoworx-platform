@@ -1,14 +1,12 @@
 "use client";
 
-import type { JSX } from "react";
-import { cn } from "@/lib/cn";
-import React, {
-  ChangeEvent,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/Tooltip";
+import { Button } from "@/components/ui/button";
 import {
   Combobox,
   ComboboxContent,
@@ -19,13 +17,9 @@ import {
   ComboboxTrigger,
   ComboboxValue,
 } from "@/components/ui/combobox";
-import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/Tooltip";
+import { cn } from "@/lib/cn";
+import type { JSX } from "react";
+import React, { ChangeEvent, useEffect, useRef, useState } from "react";
 
 interface SelectComboboxProps<T> {
   label: (item: T | null) => string;
@@ -160,7 +154,7 @@ export default function SelectCombobox<T>({
                 "bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm hover:shadow-md",
                 "ring-1 ring-slate-200 dark:ring-slate-800",
                 isOpen
-                  ? "ring-2 ring-[#6571FF]/60 border-transparent"
+                  ? "ring-2 ring-primary/60 border-transparent"
                   : "hover:ring-slate-300",
                 disabled && "opacity-50 cursor-not-allowed",
               )}
@@ -191,7 +185,7 @@ export default function SelectCombobox<T>({
           <div className="relative p-2 border-b border-slate-100 dark:border-slate-800">
             <ComboboxInput
               placeholder="Search items..."
-              className="w-full rounded-md bg-slate-50 dark:bg-slate-800/50 py-1.5 pl-8 pr-8 text-sm outline-none ring-1 ring-transparent focus:ring-[#6571FF]/30 focus:bg-white transition-all"
+              className="w-full rounded-md bg-slate-50 dark:bg-slate-800/50 py-1.5 pl-8 pr-8 text-sm outline-none ring-1 ring-transparent focus:ring-primary/30 focus:bg-white transition-all"
               onChange={handleSearchChange}
               value={searchTerm}
               autoFocus

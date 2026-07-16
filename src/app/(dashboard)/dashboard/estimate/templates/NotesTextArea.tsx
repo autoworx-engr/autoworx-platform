@@ -19,8 +19,8 @@ const NotesTextArea = ({
         "col-span-full w-full rounded-2xl p-4 text-sm font-medium transition-all duration-200",
         "bg-slate-50 border-2 border-slate-100 outline-none",
         "placeholder:text-slate-400 placeholder:font-normal",
-        "focus:bg-white focus:border-[#6571FF]/30 focus:ring-4 focus:ring-[#6571FF]/10",
-        "resize-none hover:border-slate-200"
+        "focus:bg-white focus:border-primary/30 focus:ring-4 focus:ring-primary/10",
+        "resize-none hover:border-slate-200",
       )}
       name={name}
       rows={5}

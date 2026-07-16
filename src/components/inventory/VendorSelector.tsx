@@ -38,7 +38,7 @@ export default function VendorSelector({
             button={
               <button
                 type="button"
-                className="text-xs text-[#6571FF] hover:underline"
+                className="text-xs text-primary hover:underline"
               >
                 + New Vendor
               </button>

@@ -17,13 +17,12 @@ const InspectionsTab: React.FC<InspectionsTabsProps> = ({
   damageNotes,
   setDamageNotes,
 }) => {
-
   const findInspectionIndex = (title: string) =>
     inspections.findIndex((i) => i.title === title);
 
   const handleCheckboxChange = (
     part: string,
-    field: "driver" | "passenger"
+    field: "driver" | "passenger",
   ) => {
     const inspectionIndex = findInspectionIndex(part);
 
@@ -44,10 +43,9 @@ const InspectionsTab: React.FC<InspectionsTabsProps> = ({
 
     updateInspection(
       inspectionIndex !== -1 ? inspectionIndex : inspections.length,
-      updatedInspection
+      updatedInspection,
     );
   };
-
 
   const handleNotesChange = (part: string, notes: string) => {
     const inspectionIndex = findInspectionIndex(part);
@@ -69,7 +67,7 @@ const InspectionsTab: React.FC<InspectionsTabsProps> = ({
 
     updateInspection(
       inspectionIndex !== -1 ? inspectionIndex : inspections.length,
-      updatedInspection
+      updatedInspection,
     );
   };
 
@@ -90,7 +88,7 @@ const InspectionsTab: React.FC<InspectionsTabsProps> = ({
         {carParts.map((part, index) => {
           // Find if this car part exists in inspections by title
           const existingInspection = inspections.find(
-            (inspection) => inspection.title === part
+            (inspection) => inspection.title === part,
           );
 
           return (
@@ -116,8 +114,8 @@ const InspectionsTab: React.FC<InspectionsTabsProps> = ({
                     className={cn(
                       "flex h-5 w-5 items-center justify-center rounded-lg border-2 transition-all duration-200 md:h-6 md:w-6",
                       "border-slate-200 bg-white shadow-sm",
-                      "peer-checked:border-[#6571FF] peer-checked:bg-[#6571FF] peer-checked:shadow-md peer-checked:shadow-[#6571FF]/20",
-                      "group-hover:border-[#6571FF]/50 peer-focus:ring-2 peer-focus:ring-[#6571FF]/20"
+                      "peer-checked:border-primary peer-checked:bg-primary peer-checked:shadow-md peer-checked:shadow-primary/20",
+                      "group-hover:border-primary/50 peer-focus:ring-2 peer-focus:ring-primary/20",
                     )}
                   >
                     <svg
@@ -131,7 +129,7 @@ const InspectionsTab: React.FC<InspectionsTabsProps> = ({
                         "h-3 w-3 transition-all duration-200 md:h-3.5 md:w-3.5",
                         existingInspection?.driver
                           ? "scale-100 opacity-100"
-                          : "scale-50 opacity-0"
+                          : "scale-50 opacity-0",
                       )}
                     >
                       <polyline points="20 6 9 17 4 12" />
@@ -151,8 +149,8 @@ const InspectionsTab: React.FC<InspectionsTabsProps> = ({
                     className={cn(
                       "flex h-5 w-5 items-center justify-center rounded-lg border-2 transition-all duration-200 md:h-6 md:w-6",
                       "border-slate-200 bg-white shadow-sm",
-                      "peer-checked:border-[#6571FF] peer-checked:bg-[#6571FF] peer-checked:shadow-md peer-checked:shadow-[#6571FF]/20",
-                      "group-hover:border-[#6571FF]/50 peer-focus:ring-2 peer-focus:ring-[#6571FF]/20"
+                      "peer-checked:border-primary peer-checked:bg-primary peer-checked:shadow-md peer-checked:shadow-primary/20",
+                      "group-hover:border-primary/50 peer-focus:ring-2 peer-focus:ring-primary/20",
                     )}
                   >
                     <svg
@@ -166,7 +164,7 @@ const InspectionsTab: React.FC<InspectionsTabsProps> = ({
                         "h-3 w-3 transition-all duration-200 md:h-3.5 md:w-3.5",
                         existingInspection?.passenger
                           ? "scale-100 opacity-100"
-                          : "scale-50 opacity-0"
+                          : "scale-50 opacity-0",
                       )}
                     >
                       <polyline points="20 6 9 17 4 12" />

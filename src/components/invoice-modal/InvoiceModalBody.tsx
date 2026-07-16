@@ -1,6 +1,5 @@
 "use client";
 import { authorizeInvoice } from "@/actions/estimate/invoice/authorize";
-import { authorizedLeadsConvertion } from "@/actions/estimate/invoice/authorizedLeadsConvertion";
 import { getInvoiceModalData } from "@/actions/estimate/invoice/getInvoiceModalData";
 import { getIsWorkorderCreated } from "@/actions/estimate/invoice/getworkorderCreated";
 import { sendInvoiceEmail } from "@/actions/estimate/invoice/sendInvoiceEmail";
@@ -16,14 +15,20 @@ import {
 import { useServerGet } from "@/hooks/useServerGet";
 import { queryKeys } from "@/lib/queryKeys";
 import { errorToast, successToast } from "@/lib/toast";
+import { usePermissionStore } from "@/stores/permissionStore";
 import { calculateDue } from "@/utils/calculateDue";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { getFileFromCanvas } from "@/utils/getFileFromCanvas";
+import { canAccessEstimate } from "@/utils/permissions";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import {
+  CardPayment,
+  CashPayment,
+  CheckPayment,
   Client,
   Column,
   Company,
+  DepositPayment,
   InfobipConfig,
   Invoice,
   InvoiceItem,
@@ -31,15 +36,11 @@ import {
   InvoiceType,
   Labor,
   Material,
+  OtherPayment,
   Payment,
   PaymentMethod,
   Refund,
   Service,
-  CardPayment,
-  CheckPayment,
-  CashPayment,
-  OtherPayment,
-  DepositPayment,
   TwilioCredentials,
   User,
   Vehicle,
@@ -47,12 +48,12 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { Popconfirm, Tooltip } from "antd";
 import {
+  Calendar,
   ChevronDown,
   Copy,
   Eye,
   FileDown,
   Mail,
-  Calendar,
   MessageCircle,
   MessageCircleMore,
   Printer,
@@ -67,14 +68,12 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import SignatureCanvas from "react-signature-canvas";
 import { useReactToPrint } from "react-to-print";
+import { AppointmentCreateOrEdit } from "../appointment/AppointmentCreateOrEdit";
 import CarLoading from "../common/CarLoading";
 import WorkOrderModal from "../workorder-modal/WorkOrderModal";
 import { InspectionItems } from "./InspectionItems";
 import { InvoiceItems } from "./InvoiceItems";
 import { PayNow } from "./PayNow";
-import { AppointmentCreateOrEdit } from "../appointment/AppointmentCreateOrEdit";
-import { usePermissionStore } from "@/stores/permissionStore";
-import { canAccessEstimate } from "@/utils/permissions";
 
 const DownloadPDF = dynamic(() => import("./DownloadInvoice"), {
   ssr: false,
@@ -434,7 +433,7 @@ export default function InvoiceModalBody({
                       }
                     >
                       <Link
-                        className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-2 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
+                        className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary from-70% to-[#5a66ee] px-4 py-2 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
                         href={
                           canEdit
                             ? `/dashboard/estimate/edit/${invoice.id}?clientId=${invoice.clientId}`
@@ -458,7 +457,7 @@ export default function InvoiceModalBody({
                 <Tooltip title="Communications" placement="top">
                   <Link
                     href={`/dashboard/communication/client/${invoice.clientId}?chat=true`}
-                    className="flex items-center justify-center rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-2 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
+                    className="flex items-center justify-center rounded-xl bg-gradient-to-r from-primary from-70% to-[#5a66ee] px-4 py-2 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
                   >
                     <MessageCircleMore className="h-4 w-4 md:h-5 md:w-5" />
                   </Link>
@@ -467,7 +466,7 @@ export default function InvoiceModalBody({
                 {/* Export Group — Print/PDF */}
                 <div className="flex items-center gap-0 rounded-2xl border border-slate-200 bg-white/80 px-1 py-1 shadow-sm dark:border-slate-700 dark:bg-slate-900/60">
                   <button
-                    className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95"
+                    className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95"
                     onClick={() =>
                       setOpenGroup((p) => (p === "export" ? null : "export"))
                     }
@@ -492,7 +491,7 @@ export default function InvoiceModalBody({
                     <div className="overflow-hidden">
                       <div className="flex items-center gap-1 pl-1">
                         <button
-                          className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95"
+                          className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-primary from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95"
                           onClick={handlePrint}
                         >
                           <Printer className="h-4 w-4" />
@@ -500,7 +499,7 @@ export default function InvoiceModalBody({
                         </button>
 
                         {client && (
-                          <button className="flex items-center justify-center whitespace-nowrap rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95">
+                          <button className="flex items-center justify-center whitespace-nowrap rounded-xl bg-gradient-to-r from-primary from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95">
                             <DownloadPDF
                               id={invoice.id}
                               invoice={invoice}
@@ -529,7 +528,7 @@ export default function InvoiceModalBody({
                 {/* Share Group — Email/SMS */}
                 <div className="flex items-center gap-0 rounded-2xl border border-slate-200 bg-white/80 px-3 py-1 shadow-sm dark:border-slate-700 dark:bg-slate-900/60">
                   <button
-                    className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-slate-500 transition-colors hover:text-[#6571FF] dark:text-slate-400 md:text-xs"
+                    className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-slate-500 transition-colors hover:text-primary dark:text-slate-400 md:text-xs"
                     onClick={() =>
                       setOpenGroup((p) => (p === "share" ? null : "share"))
                     }
@@ -557,7 +556,7 @@ export default function InvoiceModalBody({
                           okText="Yes"
                           cancelText="No"
                         >
-                          <button className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95">
+                          <button className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-primary from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95">
                             <Mail className="h-4 w-4" />
                             <span className="hidden md:inline">Email</span>
                           </button>
@@ -570,7 +569,7 @@ export default function InvoiceModalBody({
                             okText="Yes"
                             cancelText="No"
                           >
-                            <button className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95">
+                            <button className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-primary from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95">
                               <MessageCircle className="h-4 w-4" />
                               <span className="hidden md:inline">SMS</span>
                             </button>
@@ -579,7 +578,7 @@ export default function InvoiceModalBody({
 
                         {/* Copy Link Button */}
                         <button
-                          className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95"
+                          className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-primary from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95"
                           onClick={handleCopyLink}
                         >
                           <Copy className="h-4 w-4" />
@@ -594,7 +593,7 @@ export default function InvoiceModalBody({
                 <Tooltip title="Create Appointment" placement="top">
                   <button
                     type="button"
-                    className="flex items-center justify-center rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-2 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base print:hidden"
+                    className="flex items-center justify-center rounded-xl bg-gradient-to-r from-primary from-70% to-[#5a66ee] px-4 py-2 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base print:hidden"
                     onClick={() => setIsAppointmentModalOpen(true)}
                   >
                     <Calendar className="h-4 w-4 md:h-5 md:w-5" />
@@ -621,7 +620,7 @@ export default function InvoiceModalBody({
           {/* Download and Copy Link buttons for public invoice */}
           {isPublic && client && (
             <div className="mt-6 flex w-full justify-center gap-2 print:hidden">
-              <button className="flex items-center justify-center whitespace-nowrap rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95">
+              <button className="flex items-center justify-center whitespace-nowrap rounded-xl bg-gradient-to-r from-primary from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95">
                 <DownloadPDF
                   id={invoice.id}
                   invoice={invoice}
@@ -640,7 +639,7 @@ export default function InvoiceModalBody({
                 />
               </button>
               <button
-                className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95"
+                className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-primary from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95"
                 onClick={handleCopyLink}
               >
                 <Copy className="h-4 w-4" />
@@ -679,7 +678,7 @@ export default function InvoiceModalBody({
 
             {/* Contact Information with Clean Hierarchy */}
             <div className="flex flex-col text-right">
-              <h2 className="mb-1.5 text-sm font-black uppercase tracking-[0.2em] text-[#6571FF] dark:text-indigo-400">
+              <h2 className="mb-1.5 text-sm font-black uppercase tracking-[0.2em] text-primary dark:text-indigo-400">
                 Contact Information
               </h2>
 
@@ -743,7 +742,7 @@ export default function InvoiceModalBody({
                       }`}
                     >
                       {isActive && (
-                        <span className="absolute inset-0 -z-10 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee]" />
+                        <span className="absolute inset-0 -z-10 rounded-xl bg-gradient-to-r from-primary from-70% to-[#5a66ee]" />
                       )}
                       <span className="whitespace-nowrap">{tab.label}</span>
                     </button>
@@ -830,7 +829,7 @@ export default function InvoiceModalBody({
                     <div className="flex flex-col items-start">
                       <p>{invoice.id}</p>
                       {invoice.isShopBooking && (
-                        <span className="rounded-full bg-[#6571FF]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#6571FF] my-1.5">
+                        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary my-1.5">
                           Virtual Shop
                         </span>
                       )}
@@ -968,11 +967,11 @@ export default function InvoiceModalBody({
                 <div key={key}>
                   {key === "tax" || key === "shop supplies" ? (
                     Number(value) > 0 && (
-                      <div className="flex rounded border border-solid border-[#6571FF]">
-                        <span className="min-w-0 flex-1 overflow-x-clip text-ellipsis whitespace-nowrap px-2 font-bold uppercase text-[#6571FF]">
+                      <div className="flex rounded border border-solid border-primary">
+                        <span className="min-w-0 flex-1 overflow-x-clip text-ellipsis whitespace-nowrap px-2 font-bold uppercase text-primary">
                           {key}
                         </span>
-                        <div className="shrink-0 w-[10rem] rounded bg-[#6571FF] px-2 text-white">
+                        <div className="shrink-0 w-[10rem] rounded bg-primary px-2 text-white">
                           {Number(value)}%
                           {Number(value) !== 0 && (
                             <span>
@@ -992,11 +991,11 @@ export default function InvoiceModalBody({
                       </div>
                     )
                   ) : (
-                    <div className="flex rounded border border-solid border-[#6571FF]">
-                      <span className="min-w-0 flex-1 overflow-x-clip text-ellipsis whitespace-nowrap px-2 font-bold uppercase text-[#6571FF]">
+                    <div className="flex rounded border border-solid border-primary">
+                      <span className="min-w-0 flex-1 overflow-x-clip text-ellipsis whitespace-nowrap px-2 font-bold uppercase text-primary">
                         {key}
                       </span>
-                      <div className="shrink-0 w-[10rem] rounded bg-gradient-to-br from-[#6571FF] from-60% to-[#4A55E2] px-2 text-white">
+                      <div className="shrink-0 w-[10rem] rounded bg-gradient-to-br from-primary from-60% to-[#4A55E2] px-2 text-white">
                         {formatCurrency(parseFloat("" + value))}
                       </div>
                     </div>
@@ -1097,7 +1096,7 @@ export default function InvoiceModalBody({
                           <p className="font-semibold text-slate-700">
                             {getPaymentMethodText(payment)}
                           </p>
-                          <p className="font-semibold text-[#6571FF]">
+                          <p className="font-semibold text-primary">
                             {formatCurrency(Number(payment.amount || 0))}
                           </p>
                         </div>
@@ -1221,11 +1220,11 @@ export default function InvoiceModalBody({
 
                   <hr className="border-slate-500 bg-slate-500" />
                   <div className="flex items-center gap-x-4">
-                    <span className="rounded-sm border border-[#6571ff] px-4 py-1 text-sm text-[#6571ff]">
+                    <span className="rounded-sm border border-primary px-4 py-1 text-sm text-primary">
                       Authorized
                     </span>
                     {/* <button
-                      className="text-lg text-[#6571ff] print:hidden"
+                      className="text-lg text-primary print:hidden"
                       onClick={async () => {
                         setShowAuthorizedName(true);
                       }}
@@ -1266,7 +1265,7 @@ export default function InvoiceModalBody({
                       // setShowAuthorizedName(true);
                       setShowSignaturePad(true);
                     }}
-                    className="rounded-xl pt-1 bg-gradient-to-r from-70% from-[#6571FF] to-[#5a66ee] px-8 pb-2 text-white print:hidden"
+                    className="rounded-xl pt-1 bg-gradient-to-r from-70% from-primary to-[#5a66ee] px-8 pb-2 text-white print:hidden"
                   >
                     {invoice?.wasAuthorized ? "Re-Authorize" : "Authorize"}
                   </button>
@@ -1331,7 +1330,7 @@ export default function InvoiceModalBody({
                       setShowAuthorizedName(false);
                       setShowSignaturePad(false);
                     }}
-                    className="flex-[2] rounded-xl bg-gradient-to-r from-[#6571FF] to-[#5a66ee] py-2 text-sm font-semibold text-white shadow-md shadow-indigo-500/20 transition-all hover:shadow-lg hover:shadow-indigo-500/30 active:scale-95"
+                    className="flex-[2] rounded-xl bg-gradient-to-r from-primary to-[#5a66ee] py-2 text-sm font-semibold text-white shadow-md shadow-indigo-500/20 transition-all hover:shadow-lg hover:shadow-indigo-500/30 active:scale-95"
                   >
                     Save
                   </button>
@@ -1347,7 +1346,7 @@ export default function InvoiceModalBody({
                   alt="signature"
                   className="border border-gray-300 rounded-md"
                 />
-                <span className="rounded-sm border border-[#6571ff] px-4 py-1 text-sm text-[#6571ff]">
+                <span className="rounded-sm border border-primary px-4 py-1 text-sm text-primary">
                   Authorized
                 </span>
               </div>
@@ -1361,7 +1360,7 @@ export default function InvoiceModalBody({
                   alt="signature"
                   className="border border-gray-300 rounded-md"
                 />
-                <span className="rounded-sm border border-[#6571ff] px-4 py-1 text-sm text-[#6571ff]">
+                <span className="rounded-sm border border-primary px-4 py-1 text-sm text-primary">
                   Authorized
                 </span>
               </div>
@@ -1417,7 +1416,7 @@ export default function InvoiceModalBody({
                     }`}
                   >
                     {isActive && (
-                      <span className="absolute inset-0 -z-10 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee]" />
+                      <span className="absolute inset-0 -z-10 rounded-xl bg-gradient-to-r from-primary from-70% to-[#5a66ee]" />
                     )}
                     <span className="whitespace-nowrap">{tab.label}</span>
                   </button>
@@ -1501,7 +1500,7 @@ export default function InvoiceModalBody({
                       });
                     }}
                     buttonChild={
-                      <button className="w-full rounded bg-[#6571FF] px-4 py-2 text-white">
+                      <button className="w-full rounded bg-primary px-4 py-2 text-white">
                         {invoice?.isWorkOrder
                           ? "View Work Order"
                           : "Create Work Order"}
@@ -1511,7 +1510,7 @@ export default function InvoiceModalBody({
                 )}
               {/* <button
                 onClick={handleEmail}
-                className="flex w-full items-center justify-center gap-2 rounded-md bg-background py-2 text-[#6571FF]"
+                className="flex w-full items-center justify-center gap-2 rounded-md bg-background py-2 text-primary"
               >
                 Share Invoice
                 <svg

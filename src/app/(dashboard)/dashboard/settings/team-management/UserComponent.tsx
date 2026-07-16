@@ -143,7 +143,7 @@ const UserList: React.FC = () => {
                         <div className="shrink-0">
                           <button
                             onClick={() => handleEditClick(user)}
-                            className="inline-flex items-center gap-2 rounded-full border border-[#6571FF]/20 bg-[#6571FF]/10 px-3 py-1.5 text-xs font-semibold text-[#6571FF]/90 transition-colors hover:bg-indigo-100"
+                            className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary/90 transition-colors hover:bg-indigo-100"
                             title={`Edit ${user.firstName}'s permissions`}
                             aria-label={`Edit ${name} permissions`}
                           >

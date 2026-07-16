@@ -21,7 +21,7 @@ export function TasksInput({ tasks }: TasksInputProps) {
               tasks: [...tasks, { id: undefined, task: "" }],
             }));
           }}
-          className="flex items-center gap-1 text-[#6571FF]"
+          className="flex items-center gap-1 text-primary"
         >
           <CirclePlus size={20} />
           Task
@@ -53,7 +53,7 @@ export function TasksInput({ tasks }: TasksInputProps) {
               }}
               className="absolute right-0 top-0 -translate-y-1/2 translate-x-1/2 text-[#6470FF]"
             >
-              <div className="rounded-full bg-[#6571FF] p-1 text-white">
+              <div className="rounded-full bg-primary p-1 text-white">
                 <X size={10} />
               </div>
             </button>

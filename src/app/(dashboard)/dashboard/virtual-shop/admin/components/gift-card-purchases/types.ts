@@ -1,10 +1,4 @@
-import {
-  CheckCircle2,
-  MinusCircle,
-  Clock,
-  ShieldOff,
-  LucideIcon,
-} from "lucide-react";
+import { CheckCircle2, Clock, MinusCircle, ShieldOff } from "lucide-react";
 
 export type GiftCardStatusFilter =
   | "ALL"
@@ -116,6 +110,6 @@ export function filterButtonClasses(
     case "FROZEN":
       return "bg-rose-400 text-white border-rose-400 shadow-md shadow-rose-200 dark:shadow-rose-900/30";
     default:
-      return "bg-[#6571FF] text-white border-[#6571FF] shadow-md shadow-indigo-200 dark:shadow-indigo-900/30";
+      return "bg-primary text-white border-primary shadow-md shadow-indigo-200 dark:shadow-indigo-900/30";
   }
 }

@@ -1,12 +1,13 @@
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { SetStateAction, useEffect, useRef, useState } from "react";
+import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
+import WorkOrderModal from "@/components/workorder-modal/WorkOrderModal";
+import { Employee, ShopLead, ShopPipelineData } from "@/types/invoiceLead";
+import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import {
   draggable,
   dropTargetForElements,
 } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { Tag, User } from "@prisma/client";
-import { Employee, ShopLead, ShopPipelineData } from "@/types/invoiceLead";
 import {
   ArrowRightLeft,
   BookCheck,
@@ -15,16 +16,15 @@ import {
   CirclePlus,
   MessageCircleMore,
 } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { SetStateAction, useEffect, useRef, useState } from "react";
 import { EmployeeSelector } from "./EmployeeSelector";
-import ShopColumnDropdown from "./ShopColumnDropdown";
 import { EmployeeTagSelector } from "./EmployeeTagSelector";
 import ServiceSelector from "./ServiceSelector";
-import Link from "next/link";
-import WorkOrderModal from "@/components/workorder-modal/WorkOrderModal";
-import Image from "next/image";
+import ShopColumnDropdown from "./ShopColumnDropdown";
 import TaskForm from "./TaskForm";
-import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
-import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
 type DraggableLeadProps = {
   screenWidth: number;
   categoryIndex: number;
@@ -306,7 +306,7 @@ const DraggableLead = ({
         {!isTeamPipeline && (
           <button
             onClick={() => handleTagDropdownToggle(categoryIndex, leadIndex)}
-            className="inline-flex h-[20px] items-center justify-center rounded bg-[#6571FF] px-1 py-1 text-xs font-semibold text-white"
+            className="inline-flex h-[20px] items-center justify-center rounded bg-primary px-1 py-1 text-xs font-semibold text-white"
           >
             + Add
           </button>

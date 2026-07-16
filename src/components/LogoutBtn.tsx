@@ -1,13 +1,13 @@
 "use client";
 
 import { cn } from "@/lib/cn";
-import { useRouter } from "next/navigation";
-import { useTransition } from "react";
-import { errorToast } from "@/lib/toast";
-import { signOut } from "next-auth/react";
-import OneSignal from "react-onesignal";
 import { isOneSignalReady } from "@/lib/notification/initOneSignal";
 import { setOneSignalLoggingOut } from "@/lib/notification/logoutState";
+import { errorToast } from "@/lib/toast";
+import { signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
+import OneSignal from "react-onesignal";
 
 type TProps = {
   className?: string;
@@ -52,19 +52,19 @@ export default function LogoutBtn({ className, ...props }: TProps) {
       className={cn(
         className
           ? className
-          : "bg-background text-[1.7rem] font-bold text-[#6571FF] disabled:text-gray-500",
+          : "bg-background text-[1.7rem] font-bold text-primary disabled:text-gray-500",
       )}
       disabled={pending}
     >
       {pending ? (
-        <div className="size-6 animate-spin rounded-full border-4 border-gray-300 border-t-[#6571FF]"></div>
+        <div className="size-6 animate-spin rounded-full border-4 border-gray-300 border-t-primary"></div>
       ) : (
         <svg
           viewBox="-2.2 -2.2 24.40 24.40"
           xmlns="http://www.w3.org/2000/svg"
           fill="currentColor"
           stroke="currentColor"
-          className="h-5 w-5 sm:h-7 sm:w-7 text-white sm:text-[#6571FF]"
+          className="h-5 w-5 sm:h-7 sm:w-7 text-white sm:text-primary"
           strokeWidth="0.80"
         >
           <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>

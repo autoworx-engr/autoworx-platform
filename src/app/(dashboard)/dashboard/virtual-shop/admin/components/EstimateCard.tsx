@@ -1,17 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
 import Selector from "@/components/Selector";
 import { updateVirtualShopServiceBookingStatus } from "@/service/virtual-shop/api";
 import {
   CalendarDays,
-  Clock,
   Car,
-  User,
   ChevronDown,
   ChevronUp,
+  Clock,
+  User,
 } from "lucide-react";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import type { AppointmentStatus, Estimate } from "./EstimatesTab.types";
 
 const BOOKING_STATUSES: AppointmentStatus[] = [
@@ -82,7 +82,7 @@ export default function EstimateCard({
     <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden">
       <div className="flex items-start justify-between px-4 sm:px-5 pt-3 sm:pt-4 pb-2 sm:pb-3 gap-2 sm:gap-4">
         <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-[#6571FF] to-[#5a66ee] flex items-center justify-center shadow-sm flex-shrink-0">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-primary to-[#5a66ee] flex items-center justify-center shadow-sm flex-shrink-0">
             <User size={16} className="text-white" />
           </div>
           <div className="min-w-0">
@@ -206,7 +206,7 @@ export default function EstimateCard({
               <span className="text-sm font-bold text-slate-800 dark:text-slate-100">
                 Total
               </span>
-              <span className="text-base font-bold text-[#6571FF]">
+              <span className="text-base font-bold text-primary">
                 ${estimate.total.toLocaleString()}
               </span>
             </div>

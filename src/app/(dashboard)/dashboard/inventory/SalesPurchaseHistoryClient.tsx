@@ -3,6 +3,7 @@
 import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
 import { cn } from "@/lib/cn";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { FormatUtcToTimezone } from "@/utils/FormatUtcToTimezone";
 import {
   Client,
   InventoryProduct,
@@ -12,12 +13,11 @@ import {
   Vendor,
 } from "@prisma/client";
 import * as Tabs from "@radix-ui/react-tabs";
+import { DollarSign, ShoppingCart, SquarePen } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import EditSalePurchaseList from "./EditSalePurchaseList";
-import { FormatUtcToTimezone } from "@/utils/FormatUtcToTimezone";
-import { SquarePen, ShoppingCart, Truck, DollarSign } from "lucide-react";
 
 enum Tab {
   Sales = "sales",
@@ -58,7 +58,7 @@ export default function SalesPurchaseHistoryClient({
             className={cn(
               "group relative flex items-center gap-2.5 rounded-lg px-4 py-2 text-sm 2xl:text-lg font-medium transition-all duration-300",
               tab === Tab.Sales
-                ? "text-white shadow-md shadow-indigo-500/25 ring-1 ring-black/5 translate-y-[-1px] bg-gradient-to-r from-[#6571FF] to-[#5a66ee]"
+                ? "text-white shadow-md shadow-indigo-500/25 ring-1 ring-black/5 translate-y-[-1px] bg-gradient-to-r from-primary to-[#5a66ee]"
                 : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200",
             )}
           >
@@ -69,7 +69,7 @@ export default function SalesPurchaseHistoryClient({
                 "transition-colors duration-300",
                 tab === Tab.Sales
                   ? "text-white"
-                  : "text-slate-500 group-hover:text-[#6571FF]",
+                  : "text-slate-500 group-hover:text-primary",
               )}
             />
             <span className="whitespace-nowrap">
@@ -81,7 +81,7 @@ export default function SalesPurchaseHistoryClient({
             className={cn(
               "group relative flex items-center gap-2.5 rounded-lg px-4 py-2 text-sm 2xl:text-lg font-medium transition-all duration-300",
               tab === Tab.Purchase
-                ? "text-white shadow-md shadow-indigo-500/25 ring-1 ring-black/5 translate-y-[-1px] bg-gradient-to-r from-[#6571FF] to-[#5a66ee]"
+                ? "text-white shadow-md shadow-indigo-500/25 ring-1 ring-black/5 translate-y-[-1px] bg-gradient-to-r from-primary to-[#5a66ee]"
                 : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200",
             )}
           >
@@ -92,7 +92,7 @@ export default function SalesPurchaseHistoryClient({
                 "transition-colors duration-300",
                 tab === Tab.Purchase
                   ? "text-white"
-                  : "text-slate-500 group-hover:text-[#6571FF]",
+                  : "text-slate-500 group-hover:text-primary",
               )}
             />
             <span className="whitespace-nowrap">Purchase List</span>
@@ -180,7 +180,7 @@ function Table({
               className={cn("py-3", index % 2 === 0 ? evenColor : oddColor)}
             >
               {product?.type === "Product" && (
-                <td className="text-center text-[#6571FF]">
+                <td className="text-center text-primary">
                   {type === "Sale" ? (
                     history.invoiceId ? (
                       <InvoiceModal
@@ -275,7 +275,7 @@ function Table({
                   history.invoiceId ? (
                     <Link
                       href={`/dashboard/estimate/view/${history.invoiceId}`}
-                      className="text-[#6571FF] hover:underline"
+                      className="text-primary hover:underline"
                     >
                       {history.invoiceId}
                     </Link>
@@ -297,7 +297,7 @@ function Table({
                           {!isSale && history.invoiceId ? (
                             <Link
                               href={`/dashboard/estimate/edit/${history.invoiceId}?clientId=${history.client?.id}`}
-                              className="text-[#6571FF] hover:text-indigo-500 transition-colors"
+                              className="text-primary hover:text-indigo-500 transition-colors"
                             >
                               <SquarePen className="h-4 w-4" />
                             </Link>

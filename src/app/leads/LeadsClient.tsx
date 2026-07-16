@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import { getCompanyById } from "@/actions/settings/getCompnayById";
+import CarLoading from "@/components/common/CarLoading";
 import ZapForm from "@/components/ZapForm";
 import { errorToast } from "@/lib/toast";
-import CarLoading from "@/components/common/CarLoading";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 interface CompanyInfo {
   name: string;
@@ -93,7 +93,7 @@ export default function LeadsClient() {
           </p>
           <Link
             href="/"
-            className="mt-4 inline-block rounded-md bg-[#6571FF] px-4 py-2 text-white transition hover:bg-[#4e5bff] focus:outline-none focus:ring-2 focus:ring-[#6571FF] focus:ring-offset-2"
+            className="mt-4 inline-block rounded-md bg-primary px-4 py-2 text-white transition hover:bg-[#4e5bff] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
           >
             Go Back Home
           </Link>

@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { sentenceCase } from "change-case";
 import { Check, ChevronDown, Search, X } from "lucide-react";
+import type { ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export type SelectorProps = {
   label?: ReactNode;
@@ -152,7 +152,7 @@ export function Selector({
             "group flex h-9 w-full items-center justify-between rounded-lg px-3 text-left outline-none transition-all duration-200",
             "bg-white dark:bg-slate-900/50 shadow-sm hover:shadow-md",
             "ring-1 ring-slate-200 dark:ring-slate-700 hover:ring-slate-300",
-            isOpen && "ring-2 ring-[#6571FF]/60",
+            isOpen && "ring-2 ring-primary/60",
             error && "ring-red-400",
             disabled && "cursor-not-allowed opacity-50",
           )}
@@ -174,7 +174,7 @@ export function Selector({
             size={16}
             className={cn(
               "shrink-0 text-slate-400 transition-transform duration-200",
-              isOpen && "rotate-180 text-[#6571FF]",
+              isOpen && "rotate-180 text-primary",
             )}
           />
         </button>
@@ -196,7 +196,7 @@ export function Selector({
                 <input
                   ref={searchInputRef}
                   type="text"
-                  className="w-full rounded-md bg-slate-50 py-1.5 pl-8 pr-3 text-sm outline-none border border-transparent focus:border-[#6571FF]/40 focus:bg-white placeholder:text-slate-400 transition-colors duration-150 dark:bg-slate-800 dark:text-slate-200"
+                  className="w-full rounded-md bg-slate-50 py-1.5 pl-8 pr-3 text-sm outline-none border border-transparent focus:border-primary/40 focus:bg-white placeholder:text-slate-400 transition-colors duration-150 dark:bg-slate-800 dark:text-slate-200"
                   placeholder="Search..."
                   value={searchTerm}
                   onChange={handleSearchChange}
@@ -216,8 +216,8 @@ export function Selector({
                       type="button"
                       className={cn(
                         "flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors duration-100",
-                        "hover:bg-[#6571FF]/5 active:bg-[#6571FF]/10 dark:hover:bg-[#6571FF]/10",
-                        isSelected && "bg-[#6571FF]/10 text-[#6571FF]",
+                        "hover:bg-primary/5 active:bg-primary/10 dark:hover:bg-primary/10",
+                        isSelected && "bg-primary/10 text-primary",
                       )}
                       onClick={() => handleSelect(opt.id.toString())}
                     >
@@ -226,7 +226,7 @@ export function Selector({
                         <Check
                           size={14}
                           strokeWidth={3}
-                          className="shrink-0 text-[#6571FF]"
+                          className="shrink-0 text-primary"
                         />
                       )}
                     </button>
@@ -235,7 +235,7 @@ export function Selector({
               ) : searchTerm ? (
                 <button
                   type="button"
-                  className="w-full px-3 py-2 text-left text-sm text-[#6571FF] hover:bg-[#6571FF]/5 transition-colors"
+                  className="w-full px-3 py-2 text-left text-sm text-primary hover:bg-primary/5 transition-colors"
                   onClick={() => handleSelect(searchTerm)}
                 >
                   Use &ldquo;{searchTerm}&rdquo;

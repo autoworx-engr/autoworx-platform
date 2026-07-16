@@ -56,13 +56,13 @@ export function InvoiceItems({ items, isPrinting = false }: InvoiceItemsProps) {
       return (
         <div
           key={item.id}
-          className="rounded-md border border-[#6571FF] px-5 py-1"
+          className="rounded-md border border-primary px-5 py-1"
         >
           <div
             onClick={() =>
               setOpenService(openService === item.id ? null : item.id)
             }
-            className="flex w-full cursor-pointer justify-between text-[#6571FF]"
+            className="flex w-full cursor-pointer justify-between text-primary"
           >
             <p>{item.labor?.name ?? "Labor"}</p>
             <button
@@ -78,7 +78,7 @@ export function InvoiceItems({ items, isPrinting = false }: InvoiceItemsProps) {
           </div>
           {(openService === item.id || isPrinting) && (
             <>
-              <div className="mt-2 text-[#6571FF]">
+              <div className="mt-2 text-primary">
                 {item.materials.map((material, index) => {
                   if (!material) return null;
                   return (
@@ -97,7 +97,7 @@ export function InvoiceItems({ items, isPrinting = false }: InvoiceItemsProps) {
                 })}
               </div>
               <div className="mt-2">
-                <div className="flex justify-between text-[#6571FF]">
+                <div className="flex justify-between text-primary">
                   <p>Labor Cost</p>
                   <p>{formatCurrency(laborCost)}</p>
                 </div>
@@ -107,7 +107,7 @@ export function InvoiceItems({ items, isPrinting = false }: InvoiceItemsProps) {
               </div>
               {totalDiscount > 0 && (
                 <div>
-                  <div className="flex justify-between text-[#6571FF]">
+                  <div className="flex justify-between text-primary">
                     <p>Discount</p>
                     <p>{formatCurrency(totalDiscount)}</p>
                   </div>
@@ -120,15 +120,12 @@ export function InvoiceItems({ items, isPrinting = false }: InvoiceItemsProps) {
     }
 
     return (
-      <div
-        key={item.id}
-        className="rounded-md border border-[#6571FF] px-5 py-1"
-      >
+      <div key={item.id} className="rounded-md border border-primary px-5 py-1">
         <div
           onClick={() =>
             setOpenService(openService === item.id ? null : item.id)
           }
-          className="flex w-full cursor-pointer justify-between text-[#6571FF]"
+          className="flex w-full cursor-pointer justify-between text-primary"
         >
           <p>{item.service!.name}</p>
           <button
@@ -147,7 +144,7 @@ export function InvoiceItems({ items, isPrinting = false }: InvoiceItemsProps) {
             <p className="whitespace-pre-wrap">
               {item.serviceDesc || item.service!.description}
             </p>
-            <div className="mt-2 text-[#6571FF]">
+            <div className="mt-2 text-primary">
               <div>
                 {item.materials.map((material, index) => {
                   if (!material) return null;
@@ -170,7 +167,7 @@ export function InvoiceItems({ items, isPrinting = false }: InvoiceItemsProps) {
             </div>
 
             <div className="mt-2 ">
-              <div className="flex justify-between text-[#6571FF]">
+              <div className="flex justify-between text-primary">
                 <p>{item.labor ? item.labor.name : "Labor"}</p>
                 <p>
                   {formatCurrency(
@@ -184,7 +181,7 @@ export function InvoiceItems({ items, isPrinting = false }: InvoiceItemsProps) {
               <p>{item.labor?.notes}</p>
             </div>
             <div>
-              <div className="flex justify-between text-[#6571FF]">
+              <div className="flex justify-between text-primary">
                 <p>Discount</p>
                 <p>{formatCurrency(totalDiscount)}</p>
               </div>

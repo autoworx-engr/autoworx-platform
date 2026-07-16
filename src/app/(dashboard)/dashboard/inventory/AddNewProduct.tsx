@@ -16,13 +16,13 @@ import Selector from "@/components/Selector";
 import { SlimInput } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { cn } from "@/lib/cn";
 import { errorToast, successToast } from "@/lib/toast";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import { Category, InventoryProductType, Vendor } from "@prisma/client";
 import { useEffect, useState } from "react";
 import { createProduct } from "../../../../actions/inventory/create";
-import { cn } from "@/lib/cn";
 import { ProductFormFields } from "./ProductFormFields";
 
 type ProductProps = {
@@ -361,7 +361,7 @@ export default function AddNewProduct({
           onClick={handleAddNewProduct}
           className="
           flex items-center justify-center gap-2 w-full text-center rounded-lg px-5 py-2.5 text-sm font-semibold text-white
-          bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+          bg-gradient-to-r from-primary to-[#5a66ee]
           shadow-[0_4px_14px_0_rgba(101,113,255,0.39)]
           hover:shadow-[0_6px_20px_rgba(101,113,255,0.23)]
           hover:-translate-y-0.5
@@ -492,7 +492,7 @@ export default function AddNewProduct({
                     button={
                       <button
                         type="button"
-                        className="text-xs text-[#6571FF] hover:underline"
+                        className="text-xs text-primary hover:underline"
                       >
                         + New Vendor
                       </button>
@@ -539,7 +539,7 @@ export default function AddNewProduct({
                 "h-20 w-full rounded-md border border-slate-300 outline-none bg-background px-2 py-0.5 leading-6 transition-all duration-300 thin-scrollbar",
                 "bg-white/80 backdrop-blur-sm dark:bg-slate-900/50",
                 "text-slate-600 dark:text-slate-300 placeholder:text-slate-400",
-                "focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/40",
+                "focus:border-primary/60 focus:ring-2 focus:ring-primary/40",
                 "disabled:opacity-50 disabled:cursor-not-allowed",
               )}
             />
@@ -612,7 +612,7 @@ export default function AddNewProduct({
           <Submit
             className="
                 rounded-xl px-6 py-2.5 text-sm font-medium text-white
-                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                bg-gradient-to-r from-primary to-[#5a66ee]
                 shadow-lg shadow-indigo-500/30
                 hover:shadow-xl hover:shadow-indigo-500/40
                 hover:-translate-y-0.5 hover:scale-[1.02]

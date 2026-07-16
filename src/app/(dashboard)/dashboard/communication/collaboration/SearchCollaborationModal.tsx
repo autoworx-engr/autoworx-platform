@@ -276,7 +276,7 @@ export default function SearchCollaborationModal({}: TProps) {
               setOpen(false);
               setOpenUserList(false);
             }}
-            className="rounded-lg bg-[#6571FF] px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#525ceb] active:scale-95"
+            className="rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#525ceb] active:scale-95"
           >
             Done
           </button>

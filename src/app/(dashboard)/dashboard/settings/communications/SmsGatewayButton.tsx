@@ -1,9 +1,9 @@
 "use client";
-import { useState, useEffect } from "react";
-import SmsGetwayForm from "./SmsGetwayForm";
-import InfobipConfig from "./InfobipConfig";
-import { useServerGet } from "@/hooks/useServerGet";
 import { getSmsGateway } from "@/actions/communication/client/createInfobipConfig";
+import { useServerGet } from "@/hooks/useServerGet";
+import { useEffect, useState } from "react";
+import InfobipConfig from "./InfobipConfig";
+import SmsGetwayForm from "./SmsGetwayForm";
 
 export default function SmsGatewayButton() {
   const [selected, setSelected] = useState("TWILIO");
@@ -26,7 +26,7 @@ export default function SmsGatewayButton() {
           className={`px-6 py-2 text-sm font-medium transition-colors
           ${
             selected === "TWILIO"
-              ? "bg-[#6571FF] text-white"
+              ? "bg-primary text-white"
               : "bg-white text-gray-600 hover:bg-gray-100"
           }`}
         >
@@ -40,7 +40,7 @@ export default function SmsGatewayButton() {
           className={`px-6 py-2 text-sm font-medium transition-colors
           ${
             selected === "INFOBIP"
-              ? "bg-[#6571FF] text-white"
+              ? "bg-primary text-white"
               : "bg-white text-gray-600 hover:bg-gray-100"
           }`}
         >

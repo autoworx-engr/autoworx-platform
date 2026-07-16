@@ -12,19 +12,19 @@ import { cn } from "@/lib/cn";
 import { db } from "@/lib/db";
 import { formatCurrency } from "@/utils/formatCurrency";
 import {
-  Edit,
-  Hash,
-  DollarSign,
-  User,
-  Building2,
-  Phone,
-  Mail,
-  Globe,
   ArrowLeft,
+  Building2,
+  DollarSign,
+  Edit,
+  Globe,
+  Hash,
+  Mail,
+  Phone,
+  User,
 } from "lucide-react";
 import moment from "moment-timezone";
-import Link from "next/link";
 import { Metadata } from "next";
+import Link from "next/link";
 
 // --- STYLES DEFINITION ---
 const evenColor = "bg-white dark:bg-slate-800";
@@ -242,7 +242,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
                     {/* Price */}
                     <div>
                       <div className="text-muted-foreground">Price</div>
-                      <div className={`font-medium text-[#6571FF]`}>
+                      <div className={`font-medium text-primary`}>
                         {formatCurrency(Number(product?.price))}
                       </div>
                     </div>
@@ -418,7 +418,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
               <div className="h-20 space-y-2">
                 <div className="flex items-center gap-3">
                   <div
-                    className={`p-1 rounded-md bg-gradient-to-br from-indigo-50 to-white text-[#6571FF]`}
+                    className={`p-1 rounded-md bg-gradient-to-br from-indigo-50 to-white text-primary`}
                   >
                     <DollarSign size={20} />
                   </div>
@@ -458,7 +458,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
               <div className="h-20 space-y-2">
                 <div className="flex items-center gap-3">
                   <div
-                    className={`p-1 rounded-md bg-gradient-to-br from-indigo-50 to-white text-[#6571FF]`}
+                    className={`p-1 rounded-md bg-gradient-to-br from-indigo-50 to-white text-primary`}
                   >
                     <Hash size={20} />
                   </div>

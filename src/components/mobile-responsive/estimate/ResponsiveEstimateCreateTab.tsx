@@ -4,6 +4,7 @@ import MaterialCreate from "@/app/(dashboard)/dashboard/estimate/create/Material
 import ServiceCreate from "@/app/(dashboard)/dashboard/estimate/create/ServiceCreate";
 import ItemSelector from "@/components/ItemSelector";
 import { SelectTags } from "@/components/Lists/SelectTags";
+import MobileItemSelector from "@/components/MobileItemSelector";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -11,12 +12,11 @@ import { cn } from "@/lib/cn";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
 import { useEstimatePopupStore } from "@/stores/estimate-popup";
 import { useListsStore } from "@/stores/lists";
+import Decimal from "decimal.js";
+import { CirclePlus, CircleX } from "lucide-react";
 import { create } from "mutative";
 import { useEffect, useState } from "react";
 import { useMediaQuery } from "react-responsive";
-import MobileItemSelector from "@/components/MobileItemSelector";
-import Decimal from "decimal.js";
-import { CirclePlus, CircleX } from "lucide-react";
 
 type TProps = {};
 
@@ -267,7 +267,7 @@ export default function ResponsiveEstimateCreateTab({}: TProps) {
                             {j === item.materials.length - 1 ? (
                               <button
                                 type="button"
-                                className="absolute flex items-center gap-1 text-sm text-[#6571FF]"
+                                className="absolute flex items-center gap-1 text-sm text-primary"
                                 onClick={() => {
                                   useEstimateCreateStore.setState((x) =>
                                     create(x, (x) => {
@@ -339,7 +339,7 @@ export default function ResponsiveEstimateCreateTab({}: TProps) {
                           {/* Add new material button */}
                           <button
                             type="button"
-                            className="absolute flex items-center gap-1 text-sm text-[#6571FF]"
+                            className="absolute flex items-center gap-1 text-sm text-primary"
                             onClick={() => {
                               useEstimateCreateStore.setState((x) =>
                                 create(x, (x) => {

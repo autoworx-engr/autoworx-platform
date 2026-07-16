@@ -1,13 +1,11 @@
 "use client";
 import {
   getEmailTemplate,
-  getOrCreateEmailTemplate,
   updateEmailTemplate,
 } from "@/actions/settings/emailTemplates";
 import { AppointmentTemplateVariable } from "@/components/Lists/NewTemplate";
 import { successToast } from "@/lib/toast";
 import { CompanyEmailTemplate } from "@prisma/client";
-import { Input } from "antd";
 import { Mail } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -112,7 +110,7 @@ export default function EstimateAndInvoicePage() {
           <button
             type="button"
             onClick={handleUpdate}
-            className="rounded-lg bg-[#6571FF] px-8 py-2 text-base font-medium text-white shadow-md hover:bg-[#5661FF] transition duration-150"
+            className="rounded-lg bg-primary px-8 py-2 text-base font-medium text-white shadow-md hover:bg-[#5661FF] transition duration-150"
           >
             Save Template
           </button>

@@ -75,16 +75,16 @@ export default function CalendarGrid({
             onClick={() => onSelectDate(dateKey)}
             className={`relative bg-white dark:bg-slate-900 min-h-[52px] sm:min-h-[80px] md:min-h-[88px] p-1 sm:p-2 flex flex-col items-start text-left transition-all duration-200 hover:bg-slate-50 dark:hover:bg-slate-800/60 focus-visible:outline-none ${
               isSelected
-                ? "ring-2 ring-inset ring-[#6571FF] bg-[#6571FF]/5 dark:bg-[#6571FF]/10"
+                ? "ring-2 ring-inset ring-primary bg-primary/5 dark:bg-primary/10"
                 : ""
             }`}
           >
             <span
               className={`text-[9px] sm:text-xs font-semibold mb-0.5 sm:mb-1.5 w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 flex items-center justify-center rounded-full transition-colors ${
                 isSelected
-                  ? "bg-[#6571FF] text-white"
+                  ? "bg-primary text-white"
                   : isToday
-                    ? "text-[#6571FF] bg-[#6571FF]/15 dark:bg-[#6571FF]/25"
+                    ? "text-primary bg-primary/15 dark:bg-primary/25"
                     : "text-slate-600 dark:text-slate-400"
               }`}
             >

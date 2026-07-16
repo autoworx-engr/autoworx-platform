@@ -1,14 +1,14 @@
 "use client";
 
+import { useGetPipelineColumns } from "@/hooks/pipeline/usePipelineColumns";
+import { cn } from "@/lib/utils";
 import SessionUserType from "@/types/sessionUserType";
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { useGetPipelineColumns } from "@/hooks/pipeline/usePipelineColumns";
 import ManagePipelines from "./ManagePipelines";
 import PipelineTypeSelector from "./PipelineTypeSelector";
-import { cn } from "@/lib/utils";
-import { ChevronRight } from "lucide-react";
 
 interface PipelineHeaderProps {
   title?: string;
@@ -89,14 +89,14 @@ export default function PipelineHeader({
                       "group flex items-center justify-between rounded py-2.5 transition-all duration-300",
                       "lg:border lg:px-4",
                       pathname === button.href
-                        ? "hidden lg:flex lg:bg-[#6571FF] lg:text-white"
-                        : "border-[#6571FF] text-[#6571FF] lg:bg-background",
+                        ? "hidden lg:flex lg:bg-primary lg:text-white"
+                        : "border-primary text-primary lg:bg-background",
                     )}
                   >
                     <span className="font-medium tracking-wide">
                       {button.label}
                     </span>
-                    <div className="ml-2 flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-r from-[#6571FF] to-[#818eff] shadow-sm text-white transition-all duration-300 group-hover:translate-x-1 group-hover:shadow-md lg:hidden">
+                    <div className="ml-2 flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-r from-primary to-[#818eff] shadow-sm text-white transition-all duration-300 group-hover:translate-x-1 group-hover:shadow-md lg:hidden">
                       <ChevronRight
                         className="h-3.5 w-3.5"
                         aria-hidden="true"
@@ -129,7 +129,7 @@ export default function PipelineHeader({
                       }`}
                     >
                       {isActive && (
-                        <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#6571FF] to-[#5a66ee] -z-10" />
+                        <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary to-[#5a66ee] -z-10" />
                       )}
                       <span className="whitespace-nowrap">{button.label}</span>
                     </Link>
@@ -148,7 +148,7 @@ export default function PipelineHeader({
             onClick={() => setPipelineManaged(true)}
             className="
               w-48 hidden lg:flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white
-              bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+              bg-gradient-to-r from-primary to-[#5a66ee]
               shadow-[0_4px_14px_0_rgba(101,113,255,0.39)]
               active:translate-y-0 active:scale-100
             

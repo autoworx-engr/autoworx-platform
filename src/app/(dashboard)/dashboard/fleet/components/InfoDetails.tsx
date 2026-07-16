@@ -1,12 +1,10 @@
-import React from "react";
 import Avatar from "@/components/Avatar";
-import InputDetails from "./InputDetails";
+import ResponsiveEmployeeCard from "@/components/mobile-responsive/employee/ResponsiveEmployeeCard";
+import { Client, Fleet, Invoice, Tag } from "@prisma/client";
+import { SquarePen } from "lucide-react";
 import FleetStatistics from "./FleetStatistics";
 import FleetSubHeading from "./FleetSubHeading";
 import NewFleet from "./NewFleet";
-import { Client, Fleet, Invoice, Tag } from "@prisma/client";
-import ResponsiveEmployeeCard from "@/components/mobile-responsive/employee/ResponsiveEmployeeCard";
-import { SquarePen } from "lucide-react";
 
 const InfoDetails = ({
   client,
@@ -66,7 +64,7 @@ const InfoDetails = ({
 
       {/* Desktop Card */}
       <div className="hidden flex-[0.4] lg:block">
-        <div className="relative rounded-2xl bg-white p-6 shadow-md ring-1 ring-slate-900/5 transition-all duration-300 hover:shadow-2xl hover:shadow-[#6571FF]/10">
+        <div className="relative rounded-2xl bg-white p-6 shadow-md ring-1 ring-slate-900/5 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10">
           {/* Action Buttons (Top Right) */}
           <div className="absolute right-4 top-4">
             <div className="flex items-center gap-2">

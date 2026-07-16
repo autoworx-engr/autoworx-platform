@@ -1,10 +1,10 @@
 "use client";
 // import { generateAuthURL, getGoogleCalendarToken } from "./googleCalendarAuth";
-import { useServerGet } from "@/hooks/useServerGet";
 import {
   generateAuthURL,
   getGoogleCalendarToken,
 } from "@/actions/calendar-settings/getGoogleCalendarAuth";
+import { useServerGet } from "@/hooks/useServerGet";
 import { Check } from "lucide-react";
 
 type Props = {};
@@ -22,7 +22,7 @@ const ConnectGoogle = (props: Props) => {
       <button
         type="button"
         onClick={getAuthUrls}
-        className="rounded-md bg-[#6571FF] px-10 py-1.5 text-[14px] text-white md:text-[16px]"
+        className="rounded-md bg-primary px-10 py-1.5 text-[14px] text-white md:text-[16px]"
       >
         Connect with Google Calendar
       </button>
@@ -34,13 +34,13 @@ const ConnectGoogle = (props: Props) => {
           <span className="text-green-500">
             <Check size={18} />
           </span>
-          <span className="text-[#6571FF]">Connected with Google Calendar</span>
+          <span className="text-primary">Connected with Google Calendar</span>
         </div>
 
         <button
           type="button"
           onClick={getAuthUrls}
-          className="rounded-md bg-[#6571FF] px-10 py-1.5 text-[14px] text-white md:text-[16px]"
+          className="rounded-md bg-primary px-10 py-1.5 text-[14px] text-white md:text-[16px]"
         >
           Reconnect{" "}
         </button>

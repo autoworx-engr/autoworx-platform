@@ -529,12 +529,12 @@ const Leads = ({ salesColumn }: TProps) => {
                             {lead.clientId ? (
                               <Link
                                 href={`/dashboard/client/${lead.clientId}`}
-                                className="block h-full w-full text-[#6571FF]"
+                                className="block h-full w-full text-primary"
                               >
                                 {(currentPage - 1) * pageSize + index + 1}
                               </Link>
                             ) : (
-                              <span className="block h-full w-full text-[#6571FF]">
+                              <span className="block h-full w-full text-primary">
                                 {(currentPage - 1) * pageSize + index + 1}
                               </span>
                             )}
@@ -609,7 +609,7 @@ const Leads = ({ salesColumn }: TProps) => {
                                 >
                                   <MessageCircleMore
                                     size={20}
-                                    className="duration-300 hover:text-[#6571FF]"
+                                    className="duration-300 hover:text-primary"
                                   />
                                   <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
                                     Communications

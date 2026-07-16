@@ -1,22 +1,22 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
-import { MessageCircleWarning } from "lucide-react";
-import { Card, CardContent } from "../ui/card";
-import { useGetAllBugReports } from "@/hooks/bug-reports/useGetAllBugReports";
-import { useGetAllBugReportsMessages } from "@/hooks/bug-reports-messages/useGetAllBugReportsMessages";
 import { createBugReportMessageBySuperAdmin } from "@/actions/bug-report-message/createBugReportMessageBySuperAdmin";
-import { errorHandler } from "@/error-boundary/globalErrorHandler";
-import { resolvedBugReport } from "@/actions/bug-report-message/resolvedBugReport";
-import { useBugReportAdminStore } from "@/stores/bugReportAdminStore";
 import { ReadMessage } from "@/actions/bug-report-message/ReadMessage";
-import { MessageCard } from "./MessageCard";
+import { resolvedBugReport } from "@/actions/bug-report-message/resolvedBugReport";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { useGetAllBugReportsMessages } from "@/hooks/bug-reports-messages/useGetAllBugReportsMessages";
+import { useGetAllBugReports } from "@/hooks/bug-reports/useGetAllBugReports";
+import { useBugReportAdminStore } from "@/stores/bugReportAdminStore";
+import { TBugReportMessage } from "@/types/BugReportMessage";
+import { MessageCircleWarning } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
+import { Card, CardContent } from "../ui/card";
+import { BugReportDropdownCard } from "./BugReportDropdownCard";
 import { ChatHeader } from "./ChatHeader";
 import { ChatInput } from "./ChatInput";
-import { BugReportDropdownCard } from "./BugReportDropdownCard";
 import { MessageBubbleSkeleton } from "./MessageBubbleSkeleton";
-import { TBugReportMessage } from "@/types/BugReportMessage";
+import { MessageCard } from "./MessageCard";
 import OptimisticMessageCard from "./OptimisticMessageCard";
-import toast from "react-hot-toast";
 
 interface Contact {
   id: string;
@@ -224,7 +224,7 @@ const AWXBugReport = () => {
           }}
           className="flex items-center"
         >
-          <MessageCircleWarning className="mr-2 h-5 w-5 sm:h-7 sm:w-7 text-white sm:text-[#6571FF]" />
+          <MessageCircleWarning className="mr-2 h-5 w-5 sm:h-7 sm:w-7 text-white sm:text-primary" />
         </button>
 
         {/* Dropdown */}

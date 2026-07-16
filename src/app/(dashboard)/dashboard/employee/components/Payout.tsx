@@ -22,12 +22,12 @@ export default async function Payout({
 }: PayoutProps) {
   // Calculate unified earnings (work-based + salary if available)
   const previousMonthEarnings = await calculateUnifiedPreviousMonthEarnings(
-    info as History[]
+    info as History[],
   );
   const secondPreviousMonthEarnings =
     await calculateUnified2ndPreviousMonthEarnings(info as History[]);
   const currentMonthEarnings = await calculateUnifiedCurrentMonthEarnings(
-    info as History[]
+    info as History[],
   );
   const totalEarnings = await calculateUnifiedTotalEarnings(info as History[]);
 
@@ -88,7 +88,7 @@ export default async function Payout({
             showBreakdown: true,
           }}
           // Highlight current month slightly
-          customStyles="ring-2 ring-[#6571FF]/20 dark:ring-[#6571FF]/20 shadow-xl shadow-indigo-100 dark:shadow-none"
+          customStyles="ring-2 ring-primary/20 dark:ring-primary/20 shadow-xl shadow-indigo-100 dark:shadow-none"
         />
         <UnifiedPayoutCard
           title="Year To Date"
@@ -118,7 +118,7 @@ export default async function Payout({
         amount={currentMonthEarnings}
         percentage={currentMonthPercentageChange}
         increased={currentMonthIncreased}
-        customStyles="ring-2 ring-[#6571FF]/20 shadow-lg shadow-indigo-100"
+        customStyles="ring-2 ring-primary/20 shadow-lg shadow-indigo-100"
       />
       <PayoutCard title="YTD Payout" amount={totalEarnings} />
     </div>

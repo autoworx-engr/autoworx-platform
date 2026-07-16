@@ -210,7 +210,7 @@ export default function Table({
                           autoOpen={data.id === autoOpenId}
                         />
                         {data.isShopBooking && (
-                          <span className="mt-1 block text-center text-[10px] font-bold uppercase tracking-wider text-[#6571FF] bg-[#6571FF]/10 rounded-full px-2 py-0.5">
+                          <span className="mt-1 block text-center text-[10px] font-bold uppercase tracking-wider text-primary bg-primary/10 rounded-full px-2 py-0.5">
                             Virtual Shop
                           </span>
                         )}
@@ -273,7 +273,7 @@ export default function Table({
                           className="text-2xl text-blue-600"
                           onClick={() => setActionType("edit")}
                         >
-                          <SquarePen size={18} className="text-[#6571FF]" />
+                          <SquarePen size={18} className="text-primary" />
                         </Link>
                       </td>
                     </tr>

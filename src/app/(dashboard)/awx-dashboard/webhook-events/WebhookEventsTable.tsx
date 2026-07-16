@@ -80,7 +80,7 @@ export default function WebhookEventsTable({
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#6571ff]/30"
+          className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary/30"
         >
           <option value="">All Statuses</option>
           <option value="PENDING">PENDING</option>
@@ -91,7 +91,7 @@ export default function WebhookEventsTable({
         <select
           value={gatewayFilter}
           onChange={(e) => setGatewayFilter(e.target.value)}
-          className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#6571ff]/30"
+          className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary/30"
         >
           <option value="">All Gateways</option>
           <option value="STRIPE">Stripe</option>
@@ -173,7 +173,7 @@ export default function WebhookEventsTable({
                           handleRetry(event.eventId, event.gateway)
                         }
                         disabled={isPending && retryingId === event.eventId}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600 transition-colors hover:border-[#6571ff] hover:text-[#6571ff] disabled:opacity-50"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600 transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
                       >
                         <RefreshCw
                           className={`h-3 w-3 ${isPending && retryingId === event.eventId ? "animate-spin" : ""}`}

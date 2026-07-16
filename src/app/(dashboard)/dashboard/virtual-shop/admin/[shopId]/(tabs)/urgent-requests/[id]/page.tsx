@@ -1,10 +1,10 @@
 import { authOptions } from "@/authOptions";
-import { getServerSession } from "next-auth";
 import { UrgentRequest } from "@/service/virtual-shop/api";
-import UrgentRequestDetail from "./_components/UrgentRequestDetail";
-import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { Metadata } from "next";
+import { getServerSession } from "next-auth";
+import Link from "next/link";
+import UrgentRequestDetail from "./_components/UrgentRequestDetail";
 
 type PageProps = {
   params: Promise<{ shopId: string; id: string }>;
@@ -54,7 +54,7 @@ export default async function ShopUrgentRequestDetailPage({
       <div className="p-6">
         <Link
           href={`/dashboard/virtual-shop/admin/${shopId}/urgent-requests`}
-          className="mb-6 flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#6571FF]"
+          className="mb-6 flex items-center gap-1.5 text-sm text-slate-500 hover:text-primary"
         >
           <ChevronLeft size={16} />
           Back to Urgent Requests

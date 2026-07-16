@@ -94,10 +94,11 @@ export default function PaymentMethodFilter({
     <div className="relative w-full md:w-auto">
       <button
         onClick={() => toggleModal(modalName)}
-        className={`flex h-10 items-center justify-center rounded-xl px-4 text-sm font-medium transition-all duration-300 min-w-[120px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#6571ff] active:shadow-lg ${selectedMethod !== "All"
-          ? "bg-[#6571ff] text-white shadow-[#6571ff]/50"
-          : "bg-white ring-1 ring-slate-200 text-slate-500 hover:bg-slate-50"
-          }`}
+        className={`flex h-10 items-center justify-center rounded-xl px-4 text-sm font-medium transition-all duration-300 min-w-[120px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary active:shadow-lg ${
+          selectedMethod !== "All"
+            ? "bg-primary text-white shadow-primary/50"
+            : "bg-white ring-1 ring-slate-200 text-slate-500 hover:bg-slate-50"
+        }`}
       >
         {selectedMethod === "All" ? "Filter" : selectedMethod}
       </button>
@@ -109,16 +110,19 @@ export default function PaymentMethodFilter({
             className="mt-2 w-72 rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl shadow-slate-200/50 lg:w-[400px]"
           >
             <div className="mb-4">
-              <h3 className="mb-2 text-sm font-semibold text-slate-700">Payment Method</h3>
+              <h3 className="mb-2 text-sm font-semibold text-slate-700">
+                Payment Method
+              </h3>
               <div className="flex flex-wrap gap-2">
                 {paymentMethods.map((method) => (
                   <button
                     key={method}
                     onClick={() => handleMethodSelect(method)}
-                    className={`flex items-center justify-center rounded-lg border px-3 py-1 text-base font-medium transition-all duration-200 hover:scale-105 ${selectedMethod === method
-                      ? "bg-[#6571ff] text-white border-transparent shadow-md"
-                      : "border-slate-200 text-slate-700 hover:bg-slate-50"
-                      }`}
+                    className={`flex items-center justify-center rounded-lg border px-3 py-1 text-base font-medium transition-all duration-200 hover:scale-105 ${
+                      selectedMethod === method
+                        ? "bg-primary text-white border-transparent shadow-md"
+                        : "border-slate-200 text-slate-700 hover:bg-slate-50"
+                    }`}
                   >
                     {method}
                   </button>
@@ -129,7 +133,7 @@ export default function PaymentMethodFilter({
             <div className="flex space-x-2 border-t border-slate-100 pt-4">
               <button
                 onClick={applyFilter}
-                className="rounded-xl bg-gradient-to-r from-[#6571ff] to-[#5a66ee] px-6 py-2 text-sm font-bold text-white shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 hover:scale-[1.02] transition-all active:scale-95"
+                className="rounded-xl bg-gradient-to-r from-primary to-[#5a66ee] px-6 py-2 text-sm font-bold text-white shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 hover:scale-[1.02] transition-all active:scale-95"
               >
                 Apply
               </button>

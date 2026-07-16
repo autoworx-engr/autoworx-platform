@@ -1,5 +1,3 @@
-import React from "react";
-
 const LogoCard = () => {
   return (
     <div className="g:h-[65vh]">
@@ -50,7 +48,7 @@ const LogoCard = () => {
           />
         </div>
 
-        <button className="font-inter absolute left-[140px] top-[400px] rounded-md bg-[#6571FF] px-6 py-2 text-[21px] font-medium leading-[25px] text-white lg:top-[530px]">
+        <button className="font-inter absolute left-[140px] top-[400px] rounded-md bg-primary px-6 py-2 text-[21px] font-medium leading-[25px] text-white lg:top-[530px]">
           Save
         </button>
       </div>

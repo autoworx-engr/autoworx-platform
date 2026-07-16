@@ -1,3 +1,4 @@
+import { updateTemplate } from "@/actions/appointment/updateTemplate";
 import {
   Dialog,
   DialogClose,
@@ -7,14 +8,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/Dialog";
+import FormError from "@/components/FormError";
+import { AppointmentTemplateVariable } from "@/components/Lists/NewTemplate";
 import { SlimInput, slimInputClassName } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
-import { useState } from "react";
-import FormError from "@/components/FormError";
 import { useFormErrorStore } from "@/stores/form-error";
-import { updateTemplate } from "@/actions/appointment/updateTemplate";
 import { useListsStore } from "@/stores/lists";
-import { AppointmentTemplateVariable } from "@/components/Lists/NewTemplate";
+import { useState } from "react";
 
 export default function UpdateTemplate({
   id,
@@ -63,7 +63,7 @@ export default function UpdateTemplate({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button type="button" className="text-xs text-[#6571FF]">
+        <button type="button" className="text-xs text-primary">
           Edit
         </button>
       </DialogTrigger>
@@ -103,7 +103,7 @@ export default function UpdateTemplate({
             Cancel
           </DialogClose>
           <Submit
-            className="rounded-lg border bg-[#6571FF] px-5 py-2 text-white"
+            className="rounded-lg border bg-primary px-5 py-2 text-white"
             formAction={handleSubmit}
           >
             Save

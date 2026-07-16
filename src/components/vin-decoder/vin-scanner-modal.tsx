@@ -52,7 +52,7 @@ export default function VINScannerModal({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-xl rounded-2xl p-0 shadow-2xl">
         <div className="relative rounded-2xl bg-white p-6">
           <DialogHeader>
@@ -66,7 +66,7 @@ export default function VINScannerModal({
               <BarcodeScanTab onDetectedValue={vin => setManualInput(vin)} />
             )} */}
 
-            <TextScanTab onDetectedValue={vin => setManualInput(vin)} />
+            <TextScanTab onDetectedValue={(vin) => setManualInput(vin)} />
 
             <div className="mt-8 border-t border-gray-200 pt-6">
               <p className="mb-4 text-sm font-medium text-gray-700">
@@ -81,7 +81,7 @@ export default function VINScannerModal({
                   type="text"
                   value={manualInput}
                   autoFocus
-                  onChange={e => setManualInput(e.target.value.toUpperCase())}
+                  onChange={(e) => setManualInput(e.target.value.toUpperCase())}
                   placeholder="Enter VIN (17 characters max)"
                   maxLength={17}
                   autoComplete="off"
@@ -93,7 +93,7 @@ export default function VINScannerModal({
                   disabled={manualInput.length < 5 || isLoading}
                   className="
                 rounded-xl px-6 py-2.5 text-sm font-medium text-white cursor-pointer
-                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                bg-gradient-to-r from-primary to-[#5a66ee]
                 shadow-lg shadow-indigo-500/30
                 hover:shadow-xl hover:shadow-indigo-500/40
                 hover:-translate-y-0.5 hover:scale-[1.02]

@@ -303,7 +303,7 @@ const SmsGetwayForm: React.FC = () => {
           <button
             disabled={isSubmitDisabled}
             type="submit"
-            className={`CO rounded-md px-10 py-1.5 text-white focus:outline-none focus:ring-2 focus:ring-offset-2 ${isSubmitDisabled ? "cursor-not-allowed bg-gray-400" : "bg-[#6571FF] hover:bg-indigo-600 focus:ring-blue-500"} `}
+            className={`CO rounded-md px-10 py-1.5 text-white focus:outline-none focus:ring-2 focus:ring-offset-2 ${isSubmitDisabled ? "cursor-not-allowed bg-gray-400" : "bg-primary hover:bg-indigo-600 focus:ring-blue-500"} `}
           >
             Save
           </button>

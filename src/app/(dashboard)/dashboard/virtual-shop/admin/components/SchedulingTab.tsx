@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import toast from "react-hot-toast";
-import { useSession } from "next-auth/react";
 import { Switch } from "@/components/Switch";
 import { Button } from "@/components/ui/button";
-import { useCalendarSettingsStore } from "@/stores/calendarSettingsStore";
 import {
   useGetShopBookingSettings,
   useUpdateShopBookingSettings,
 } from "@/hooks/virtual-shop/booking-settings/useShopBookingSettings";
+import { useCalendarSettingsStore } from "@/stores/calendarSettingsStore";
+import { useSession } from "next-auth/react";
+import { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 
 const DAYS = [
   "Monday",
@@ -246,7 +246,7 @@ export default function SchedulingTab({ shopId = 0 }: SchedulingTabProps) {
   return (
     <div className="min-h-[560px] rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
       <h2 className="text-2xl font-bold text-gray-900">Appointment Logic</h2>
-      <p className="mt-1 text-sm text-[#6571FF]">
+      <p className="mt-1 text-sm text-primary">
         Configure scheduling rules and availability
       </p>
 
@@ -316,7 +316,7 @@ export default function SchedulingTab({ shopId = 0 }: SchedulingTabProps) {
                   min="1"
                   value={stackingLimit}
                   onChange={(e) => setStackingLimit(e.target.value)}
-                  className="w-24 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 outline-none focus:border-[#6571FF] focus:ring-1 focus:ring-[#6571FF]"
+                  className="w-24 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 outline-none focus:border-primary focus:ring-1 focus:ring-primary"
                 />
               </div>
             )}
@@ -333,7 +333,7 @@ export default function SchedulingTab({ shopId = 0 }: SchedulingTabProps) {
               step="5"
               value={timeSlotInterval}
               onChange={(e) => setTimeSlotInterval(e.target.value)}
-              className="w-24 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 outline-none focus:border-[#6571FF] focus:ring-1 focus:ring-[#6571FF]"
+              className="w-24 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 outline-none focus:border-primary focus:ring-1 focus:ring-primary"
             />
           </div>
 
@@ -366,7 +366,7 @@ export default function SchedulingTab({ shopId = 0 }: SchedulingTabProps) {
                         onChange={(e) =>
                           updateSchedule(day, { start: e.target.value })
                         }
-                        className="rounded-md border border-gray-200 bg-gray-50 px-2 py-1.5 text-sm text-gray-700 outline-none focus:border-[#6571FF] focus:ring-1 focus:ring-[#6571FF]"
+                        className="rounded-md border border-gray-200 bg-gray-50 px-2 py-1.5 text-sm text-gray-700 outline-none focus:border-primary focus:ring-1 focus:ring-primary"
                       />
                       <span className="text-sm text-gray-400">to</span>
                       <input
@@ -375,7 +375,7 @@ export default function SchedulingTab({ shopId = 0 }: SchedulingTabProps) {
                         onChange={(e) =>
                           updateSchedule(day, { end: e.target.value })
                         }
-                        className="rounded-md border border-gray-200 bg-gray-50 px-2 py-1.5 text-sm text-gray-700 outline-none focus:border-[#6571FF] focus:ring-1 focus:ring-[#6571FF]"
+                        className="rounded-md border border-gray-200 bg-gray-50 px-2 py-1.5 text-sm text-gray-700 outline-none focus:border-primary focus:ring-1 focus:ring-primary"
                       />
                     </div>
                   )}
@@ -389,7 +389,7 @@ export default function SchedulingTab({ shopId = 0 }: SchedulingTabProps) {
               type="button"
               onClick={handleSave}
               disabled={isLoading || isSaving || !shopId}
-              className="bg-[#6571FF] hover:bg-[#5a66ee]"
+              className="bg-primary hover:bg-[#5a66ee]"
             >
               {isSaving ? "Saving..." : "Save Scheduling"}
             </Button>

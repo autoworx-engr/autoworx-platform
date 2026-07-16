@@ -8,7 +8,7 @@ export default function PaymentsPage() {
       <div className="space-y-3">
         <div className="flex items-center space-x-4">
           <h2 className="text-xl font-bold">Taxes</h2>
-          <button className="rounded-md bg-[#6571FF] px-3 py-1.5 text-white">
+          <button className="rounded-md bg-primary px-3 py-1.5 text-white">
             +New
           </button>
         </div>

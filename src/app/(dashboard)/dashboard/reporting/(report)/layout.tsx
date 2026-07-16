@@ -127,12 +127,12 @@ export default function ReportLayout({ children }: TProps) {
                         }`}
                       >
                         {isActive && (
-                          <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#6571FF] to-[#5a66ee] -z-10" />
+                          <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary to-[#5a66ee] -z-10" />
                         )}
                         {Icon && (
                           <Icon
                             size={18}
-                            className={`transition-colors duration-300 ${isActive ? "text-white" : "text-slate-400 group-hover:text-[#6571FF]"}`}
+                            className={`transition-colors duration-300 ${isActive ? "text-white" : "text-slate-400 group-hover:text-primary"}`}
                           />
                         )}
                         <span className="whitespace-nowrap">

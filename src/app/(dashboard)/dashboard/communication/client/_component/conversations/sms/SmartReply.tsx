@@ -60,7 +60,7 @@ export default function SmartReplyBar({
         <button
           type="button"
           onClick={() => setShowUpgradeBanner((prev) => !prev)}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#6571FF] to-[#8B5CF6] text-white shadow transition hover:opacity-90"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-primary to-[#8B5CF6] text-white shadow transition hover:opacity-90"
           aria-label="Show AI Smart Replies upgrade info"
           title="AI Smart Replies requires an upgrade"
         >

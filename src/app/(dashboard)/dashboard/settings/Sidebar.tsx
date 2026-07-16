@@ -1,30 +1,28 @@
 "use client";
 import { cn } from "@/lib/cn";
-import { usePermissionStore } from "@/stores/permissionStore";
-import { useCompanyFeaturePermissionStore } from "@/stores/companyFeaturePermissionStore";
 import { FEATURE_PERMISSIONS_MAP } from "@/lib/routePermissionsMap";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCompanyFeaturePermissionStore } from "@/stores/companyFeaturePermissionStore";
+import { usePermissionStore } from "@/stores/permissionStore";
 import {
-  Menu,
-  X,
-  User,
   Bell,
   Briefcase,
-  Users,
   CreditCard,
   DollarSign,
   FileText,
   Globe,
-  Zap,
-  Settings,
-  Shield,
-  LayoutDashboard,
-  Send,
   Headset,
+  Menu,
+  Send,
+  Shield,
   Store,
+  User,
+  Users,
+  X,
+  Zap,
 } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 type Props = {
   isLegacy?: boolean;
@@ -210,8 +208,8 @@ const Sidebar = ({ isLegacy = false }: Props) => {
         className={cn(
           "flex items-center gap-3 rounded-xl px-4 py-2.5 transition-all duration-200 text-base",
           isActive
-            ? "bg-[#6571FF] text-white font-medium shadow-md shadow-[#6571FF]/30" // Active link style
-            : "text-gray-600 hover:bg-gray-100 hover:text-[#6571FF]", // Inactive link style
+            ? "bg-primary text-white font-medium shadow-md shadow-primary/30" // Active link style
+            : "text-gray-600 hover:bg-gray-100 hover:text-primary", // Inactive link style
         )}
         key={setting.link}
         href={setting.link}

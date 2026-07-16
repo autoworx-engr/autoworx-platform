@@ -12,11 +12,14 @@ import {
   DialogTitle,
 } from "@/components/Dialog";
 import useOutsideClick from "@/hooks/useOutsideClick";
+import { cn } from "@/lib/cn";
 import { INVOICE_COLORS } from "@/lib/consts";
 import { errorToast } from "@/lib/toast";
+import { useEstimateCreateStore } from "@/stores/estimate-create";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import { Column } from "@prisma/client";
+import { Activity, ChevronUp, Palette, Search, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import {
   DropdownMenu,
@@ -25,9 +28,6 @@ import {
 } from "../DropdownMenu";
 import FormError from "../FormError";
 import Submit from "../Submit";
-import { useEstimateCreateStore } from "@/stores/estimate-create";
-import { Activity, ChevronUp, Palette, Search, X } from "lucide-react";
-import { cn } from "@/lib/cn";
 
 type SelectedColor = { textColor: string; bgColor: string } | null;
 
@@ -71,7 +71,7 @@ export function SelectStatus({
     }
   }, [statusList]);
   const filteredShopStatus = statusList.filter(
-    (status) => status.type === "shop"
+    (status) => status.type === "shop",
   );
   async function handleDelete(event: React.MouseEvent<HTMLButtonElement>) {
     event.stopPropagation();
@@ -133,14 +133,11 @@ export function SelectStatus({
           {/* Search Header */}
           <div className="bg-slate-50/50 p-3">
             <div className="relative flex items-center">
-              <Search
-                size={14}
-                className="absolute left-3 text-slate-400"
-              />
+              <Search size={14} className="absolute left-3 text-slate-400" />
               <input
                 type="text"
                 placeholder="Search statuses..."
-                className="h-9 w-full rounded-xl border-none bg-white pl-9 pr-8 text-xs font-medium ring-1 ring-slate-200 transition-all focus:ring-2 focus:ring-[#6571FF]/30 outline-none"
+                className="h-9 w-full rounded-xl border-none bg-white pl-9 pr-8 text-xs font-medium ring-1 ring-slate-200 transition-all focus:ring-2 focus:ring-primary/30 outline-none"
               />
               <button
                 className="absolute right-2 flex h-6 w-6 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100"
@@ -158,8 +155,17 @@ export function SelectStatus({
                 key={statusItem.id}
                 onClick={() => {
                   /* Logic remains untouched */
-                  if (statusItem.title === "Delivered" && due > 0) return errorToast("You cannot update this order to Delivered until all dues are cleared.");
-                  if (statusItem.title === "Delivered" && !isAllServicesCompleted) return errorToast("All services must be completed by Technicians before moving to delivered.");
+                  if (statusItem.title === "Delivered" && due > 0)
+                    return errorToast(
+                      "You cannot update this order to Delivered until all dues are cleared.",
+                    );
+                  if (
+                    statusItem.title === "Delivered" &&
+                    !isAllServicesCompleted
+                  )
+                    return errorToast(
+                      "All services must be completed by Technicians before moving to delivered.",
+                    );
                   setStatus(statusItem);
                   setOpen && setOpen(false);
                 }}
@@ -167,7 +173,10 @@ export function SelectStatus({
                 style={{
                   backgroundColor: statusItem?.bgColor ?? undefined,
                   color: statusItem?.textColor ?? undefined,
-                  boxShadow: statusItem?.id === status?.id ? `inset 0 0 0 2px ${status.textColor}40` : "none",
+                  boxShadow:
+                    statusItem?.id === status?.id
+                      ? `inset 0 0 0 2px ${status.textColor}40`
+                      : "none",
                 }}
               >
                 {statusItem.title}
@@ -215,7 +224,9 @@ export function SelectStatus({
                     }}
                     className={cn(
                       "flex h-8 items-center justify-center rounded-lg text-[10px] font-black transition-all hover:scale-110 shadow-sm",
-                      selectedColor?.textColor === color.textColor ? "ring-2 ring-offset-1 ring-slate-400" : ""
+                      selectedColor?.textColor === color.textColor
+                        ? "ring-2 ring-offset-1 ring-slate-400"
+                        : "",
                     )}
                   >
                     Aa
@@ -231,10 +242,13 @@ export function SelectStatus({
       <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
         <DialogContent className="max-w-sm rounded-[2rem] border-none shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="text-center text-lg font-extrabold text-slate-800">Delete Status</DialogTitle>
+            <DialogTitle className="text-center text-lg font-extrabold text-slate-800">
+              Delete Status
+            </DialogTitle>
           </DialogHeader>
           <p className="text-center text-sm font-medium text-slate-500 px-4">
-            Are you sure you want to delete this status? This action cannot be undone.
+            Are you sure you want to delete this status? This action cannot be
+            undone.
           </p>
           <DialogFooter className="mt-4 flex gap-2 sm:justify-center">
             <DialogClose className="flex-1 rounded-xl border-none bg-slate-100 py-2.5 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-200">
@@ -272,7 +286,7 @@ function QuickAddForm({
         title,
         "shop",
         selectedColor?.textColor || undefined,
-        selectedColor?.bgColor || undefined
+        selectedColor?.bgColor || undefined,
       );
 
       formRef.current?.reset();
@@ -286,17 +300,20 @@ function QuickAddForm({
   }
 
   return (
-    <form ref={formRef} className="flex items-center gap-2 p-3 bg-slate-50/50 rounded-xl mt-2 ring-1 ring-inset ring-slate-100">
+    <form
+      ref={formRef}
+      className="flex items-center gap-2 p-3 bg-slate-50/50 rounded-xl mt-2 ring-1 ring-inset ring-slate-100"
+    >
       <input
         name="name"
         type="text"
         required
         placeholder="New status name..."
-        className="h-10 flex-1 rounded-lg border-none bg-white px-3 text-sm font-medium ring-1 ring-slate-200 transition-all focus:ring-2 focus:ring-[#6571FF]/30 outline-none placeholder:text-slate-400"
+        className="h-10 flex-1 rounded-lg border-none bg-white px-3 text-sm font-medium ring-1 ring-slate-200 transition-all focus:ring-2 focus:ring-primary/30 outline-none placeholder:text-slate-400"
       />
 
       <button
-        className="flex h-10 w-10 shrink-0 items-center text-lg justify-center rounded-lg bg-white text-slate-500 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-50 hover:text-[#6571FF] active:scale-95"
+        className="flex h-10 w-10 shrink-0 items-center text-lg justify-center rounded-lg bg-white text-slate-500 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-50 hover:text-primary active:scale-95"
         onClick={() => setPickerOpen((prev: boolean) => !prev)}
         type="button"
       >
@@ -304,7 +321,7 @@ function QuickAddForm({
       </button>
 
       <Submit
-        className="h-10 shrink-0 rounded-lg bg-[#6571FF] px-4 text-xs font-bold uppercase tracking-tight text-white shadow-lg shadow-[#6571FF]/20 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50"
+        className="h-10 shrink-0 rounded-lg bg-primary px-4 text-xs font-bold uppercase tracking-tight text-white shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50"
         formAction={handleSubmit}
       >
         Add

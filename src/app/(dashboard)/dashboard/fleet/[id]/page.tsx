@@ -64,7 +64,7 @@ const page = async (props: PropsType) => {
 
         {/* <NewFleet
           buttonElement={
-            <button className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#6571FF] to-[#8088FF] px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-[#6571FF]/40 transition-all duration-300 hover:from-[#505aff] hover:to-[#6571FF] hover:shadow-xl">
+            <button className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-primary to-[#8088FF] px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-primary/40 transition-all duration-300 hover:from-[#505aff] hover:to-primary hover:shadow-xl">
               + Add New Fleet
             </button>
           }

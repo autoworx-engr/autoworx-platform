@@ -17,7 +17,7 @@ export function ConfigureCommunicationHub() {
         <DialogTrigger asChild>
           <Button
             variant="outline"
-            className="bg-[#6571FF] hover:bg-indigo-600 focus:ring-blue-500 text-white hover:text-white"
+            className="bg-primary hover:bg-indigo-600 focus:ring-blue-500 text-white hover:text-white"
           >
             Configure Communication Hub
           </Button>

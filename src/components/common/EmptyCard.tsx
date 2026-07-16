@@ -1,5 +1,5 @@
-import React from "react";
 import { LucideIcon } from "lucide-react";
+import React from "react";
 
 type EmptyCardProps = {
   title?: string;
@@ -23,8 +23,8 @@ const EmptyCard: React.FC<EmptyCardProps> = ({
         <div className="flex justify-center mb-4">
           {Icon && (
             <div className="flex justify-center mb-4">
-              <div className="bg-[#6571FF]/10 p-3 rounded-full">
-                <Icon className="w-6 h-6 text-[#6571FF]" />
+              <div className="bg-primary/10 p-3 rounded-full">
+                <Icon className="w-6 h-6 text-primary" />
               </div>
             </div>
           )}
@@ -38,7 +38,7 @@ const EmptyCard: React.FC<EmptyCardProps> = ({
         {onAction && (
           <button
             onClick={onAction}
-            className="px-4 py-2 bg-[#6571FF] text-white rounded-lg hover:bg-[#5a67d8] transition"
+            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-[#5a67d8] transition"
           >
             {actionText}
           </button>

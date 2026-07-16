@@ -1,8 +1,8 @@
 "use client";
 
-import { Clock, Car, User } from "lucide-react";
-import type { Appointment } from "./CalendarTab.types";
+import { Car, Clock, User } from "lucide-react";
 import CalendarStatusBadge from "./CalendarStatusBadge";
+import type { Appointment } from "./CalendarTab.types";
 import { getTotalRevenue } from "./CalendarTab.utils";
 
 export default function CalendarAppointmentCard({
@@ -17,7 +17,7 @@ export default function CalendarAppointmentCard({
       <div className="px-4 sm:px-5 pt-3 sm:pt-4 pb-3 border-b border-slate-100 dark:border-slate-800">
         <div className="flex items-start justify-between gap-2 mb-1.5">
           <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-[#6571FF] to-[#5a66ee] flex items-center justify-center shadow-sm flex-shrink-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-primary to-[#5a66ee] flex items-center justify-center shadow-sm flex-shrink-0">
               <User size={14} className="text-white" />
             </div>
             <p className="font-semibold text-slate-800 dark:text-slate-100 text-sm leading-tight truncate">
@@ -64,7 +64,7 @@ export default function CalendarAppointmentCard({
         <span className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wide">
           Total
         </span>
-        <span className="text-base font-bold text-[#6571FF]">
+        <span className="text-base font-bold text-primary">
           ${total.toLocaleString()}
         </span>
       </div>

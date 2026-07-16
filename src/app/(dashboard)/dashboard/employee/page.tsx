@@ -29,7 +29,7 @@ export default async function Page() {
             bg-gradient-to-b from-white to-slate-50 dark:from-slate-800 dark:to-slate-900
             ring-1 ring-slate-200 dark:ring-slate-700
             shadow-[0_1px_2px_rgba(0,0,0,0.05)]
-            text-[#6571FF] font-medium
+            text-primary font-medium
             transition-all duration-300 ease-out
             hover:shadow-lg hover:shadow-indigo-500/10
             hover:-translate-y-0.5 hover:scale-[1.02]
@@ -42,7 +42,7 @@ export default async function Page() {
               className="
               p-1.5 rounded-lg 
               bg-indigo-50 dark:bg-indigo-500/10 
-              text-[#6571FF]
+              text-primary
               group-hover:bg-indigo-100 dark:group-hover:bg-indigo-500/20 
               transition-colors duration-300
             "

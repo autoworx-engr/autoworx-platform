@@ -34,7 +34,7 @@ export default function LaborCreate() {
   useEffect(() => {
     if (currentSelectedCategoryId) {
       setCategory(
-        categories.find((cat) => cat.id === currentSelectedCategoryId)!
+        categories.find((cat) => cat.id === currentSelectedCategoryId)!,
       );
     }
   }, [currentSelectedCategoryId]);
@@ -54,10 +54,10 @@ export default function LaborCreate() {
       setNotes(data.labor.notes);
       setHours(data.labor.hours == 0 ? undefined : data.labor.hours);
       setCharge(
-        data.labor.charge == 0 ? undefined : parseFloat(data.labor.charge)
+        data.labor.charge == 0 ? undefined : parseFloat(data.labor.charge),
       );
       setDiscount(
-        data.labor.discount == 0 ? undefined : parseFloat(data.labor.discount)
+        data.labor.discount == 0 ? undefined : parseFloat(data.labor.discount),
       );
       setAddToCannedLabor(data.labor.addToCannedLabor);
     } else {
@@ -93,7 +93,7 @@ export default function LaborCreate() {
         const res = await newLabor(validatedLaborData);
         if (res.type === "globalError") {
           errorToast(
-            res.errorSource?.length ? res.errorSource[0].message : res.message
+            res.errorSource?.length ? res.errorSource[0].message : res.message,
           );
         }
       }
@@ -150,7 +150,7 @@ export default function LaborCreate() {
       errorToast(
         formattedError.errorSource?.length
           ? formattedError.errorSource[0].message
-          : formattedError.message
+          : formattedError.message,
       );
     }
   }
@@ -197,7 +197,10 @@ export default function LaborCreate() {
 
       {/* Labor Name */}
       <div className="flex items-center gap-3">
-        <label htmlFor="name" className="w-28 text-sm font-semibold tracking-wider text-slate-500">
+        <label
+          htmlFor="name"
+          className="w-28 text-sm font-semibold tracking-wider text-slate-500"
+        >
           Labor Name
         </label>
         <input
@@ -205,7 +208,7 @@ export default function LaborCreate() {
           id="name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="h-10 flex-1 appearance-none rounded-xl bg-white px-4 text-sm font-medium border border-slate-200 transition-all focus:outline-none focus:border-[#6571FF]/30 focus:ring-2 focus:ring-[#6571FF]/30"
+          className="h-10 flex-1 appearance-none rounded-xl bg-white px-4 text-sm font-medium border border-slate-200 transition-all focus:outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/30"
           placeholder="e.g. Oil Change"
         />
       </div>
@@ -229,7 +232,10 @@ export default function LaborCreate() {
 
       {/* Tags */}
       <div className="flex items-center gap-3">
-        <label htmlFor="tags" className="w-28 text-sm font-semibold tracking-wider text-slate-500">
+        <label
+          htmlFor="tags"
+          className="w-28 text-sm font-semibold tracking-wider text-slate-500"
+        >
           Tags
         </label>
         <div className="flex-1">
@@ -243,21 +249,27 @@ export default function LaborCreate() {
 
       {/* Notes */}
       <div className="flex items-start gap-3">
-        <label htmlFor="notes" className="mt-2 w-28 text-sm font-semibold tracking-wider text-slate-500">
+        <label
+          htmlFor="notes"
+          className="mt-2 w-28 text-sm font-semibold tracking-wider text-slate-500"
+        >
           Notes
         </label>
         <textarea
           id="notes"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          className="h-24 flex-1 appearance-none rounded-xl bg-white p-3 text-sm font-medium border border-slate-200 transition-all focus:outline-none focus:border-[#6571FF]/30 focus:ring-2 focus:ring-[#6571FF]/30 resize-none"
+          className="h-24 flex-1 appearance-none rounded-xl bg-white p-3 text-sm font-medium border border-slate-200 transition-all focus:outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/30 resize-none"
           placeholder="Additional details..."
         />
       </div>
 
       {/* Hours */}
       <div className="flex items-center gap-3">
-        <label htmlFor="hours" className="w-28 text-sm font-semibold tracking-wider text-slate-500">
+        <label
+          htmlFor="hours"
+          className="w-28 text-sm font-semibold tracking-wider text-slate-500"
+        >
           No. of Hours
         </label>
         <input
@@ -278,14 +290,17 @@ export default function LaborCreate() {
               setHours(value);
             }
           }}
-          className="h-10 flex-1 appearance-none rounded-xl bg-white px-4 text-sm font-medium border border-slate-200 transition-all focus:outline-none focus:border-[#6571FF]/30 focus:ring-2 focus:ring-[#6571FF]/30"
+          className="h-10 flex-1 appearance-none rounded-xl bg-white px-4 text-sm font-medium border border-slate-200 transition-all focus:outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/30"
           placeholder="0"
         />
       </div>
 
       {/* Charge ($/hr) */}
       <div className="flex items-center gap-3">
-        <label htmlFor="perhour" className="w-28 text-sm font-semibold tracking-wider text-slate-500">
+        <label
+          htmlFor="perhour"
+          className="w-28 text-sm font-semibold tracking-wider text-slate-500"
+        >
           $/hr
         </label>
         <input
@@ -306,14 +321,17 @@ export default function LaborCreate() {
               setCharge(value);
             }
           }}
-          className="h-10 flex-1 appearance-none rounded-xl bg-white px-4 text-sm font-medium border border-slate-200 transition-all focus:outline-none focus:border-[#6571FF]/30 focus:ring-2 focus:ring-[#6571FF]/30"
+          className="h-10 flex-1 appearance-none rounded-xl bg-white px-4 text-sm font-medium border border-slate-200 transition-all focus:outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/30"
           placeholder="0.00"
         />
       </div>
 
       {/* Discount */}
       <div className="flex items-center gap-3">
-        <label htmlFor="discount" className="w-28 text-sm font-semibold tracking-wider text-slate-500">
+        <label
+          htmlFor="discount"
+          className="w-28 text-sm font-semibold tracking-wider text-slate-500"
+        >
           Discount
         </label>
         <input
@@ -334,7 +352,7 @@ export default function LaborCreate() {
               setDiscount(value);
             }
           }}
-          className="h-10 flex-1 appearance-none rounded-xl bg-white px-4 text-sm font-medium border border-slate-200 transition-all focus:outline-none focus:border-[#6571FF]/30 focus:ring-2 focus:ring-[#6571FF]/30"
+          className="h-10 flex-1 appearance-none rounded-xl bg-white px-4 text-sm font-medium border border-slate-200 transition-all focus:outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/30"
           placeholder="0"
         />
       </div>
@@ -351,12 +369,14 @@ export default function LaborCreate() {
                 className="peer sr-only"
               />
 
-              <div className={cn(
-                "flex h-6 w-6 items-center justify-center rounded-lg border-2 transition-all duration-200",
-                "border-slate-200 bg-white shadow-sm",
-                "peer-checked:border-[#6571FF] peer-checked:bg-[#6571FF] peer-checked:shadow-md peer-checked:shadow-[#6571FF]/20",
-                "group-hover:border-[#6571FF]/50 peer-focus:ring-2 peer-focus:ring-[#6571FF]/20"
-              )}>
+              <div
+                className={cn(
+                  "flex h-6 w-6 items-center justify-center rounded-lg border-2 transition-all duration-200",
+                  "border-slate-200 bg-white shadow-sm",
+                  "peer-checked:border-primary peer-checked:bg-primary peer-checked:shadow-md peer-checked:shadow-primary/20",
+                  "group-hover:border-primary/50 peer-focus:ring-2 peer-focus:ring-primary/20",
+                )}
+              >
                 <svg
                   viewBox="0 0 24 24"
                   fill="none"
@@ -366,7 +386,9 @@ export default function LaborCreate() {
                   strokeLinejoin="round"
                   className={cn(
                     "h-3.5 w-3.5 transition-all duration-200",
-                    addToCannedLabor ? "scale-100 opacity-100" : "scale-50 opacity-0"
+                    addToCannedLabor
+                      ? "scale-100 opacity-100"
+                      : "scale-50 opacity-0",
                   )}
                 >
                   <polyline points="20 6 9 17 4 12" />
@@ -374,10 +396,12 @@ export default function LaborCreate() {
               </div>
             </div>
 
-            <span className={cn(
-              "font-semibold transition-colors duration-200",
-              addToCannedLabor ? "text-slate-800" : "text-slate-600"
-            )}>
+            <span
+              className={cn(
+                "font-semibold transition-colors duration-200",
+                addToCannedLabor ? "text-slate-800" : "text-slate-600",
+              )}
+            >
               Add to Canned Labor
             </span>
           </label>
@@ -388,7 +412,7 @@ export default function LaborCreate() {
       <div className="mt-4 flex items-center justify-end gap-3 border-t border-slate-100 pt-6">
         <Close />
         <button
-          className="rounded-xl bg-[#6571FF] px-10 py-2.5 text-sm font-bold text-white shadow-lg shadow-[#6571FF]/30 transition-all hover:bg-[#525ceb] active:scale-95"
+          className="rounded-xl bg-primary px-10 py-2.5 text-sm font-bold text-white shadow-lg shadow-primary/30 transition-all hover:bg-[#525ceb] active:scale-95"
           onClick={data?.edit ? handleEdit : handleSubmit}
           type="button"
         >

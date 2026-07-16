@@ -1,6 +1,6 @@
-import TimezoneSelect from "react-timezone-select";
-import { useState } from "react";
 import { Clock, Globe } from "lucide-react";
+import { useState } from "react";
+import TimezoneSelect from "react-timezone-select";
 
 const Timezone = ({
   timezone,
@@ -23,7 +23,7 @@ const Timezone = ({
   return (
     <div className="App space-y-3 p-4 border border-gray-200 rounded-lg bg-gray-50">
       <blockquote className="text-sm font-semibold text-gray-700 flex items-center mb-2">
-        <Globe className="h-4 w-4 mr-2 text-[#6571FF]" />
+        <Globe className="h-4 w-4 mr-2 text-primary" />
         Default Timezone
       </blockquote>
       <div className="select-wrapper flex flex-col gap-3 md:flex-row md:items-end">
@@ -43,14 +43,14 @@ const Timezone = ({
             className="min-w-64 react-select-container"
             classNames={{
               control: () =>
-                "py-1 px-3 border-2 border-[#6571FF] rounded-3xl shadow-sm bg-white focus:ring-2 focus:ring-[#6571FF] transition-all duration-150 flex items-center min-h-[36px]",
+                "py-1 px-3 border-2 border-primary rounded-3xl shadow-sm bg-white focus:ring-2 focus:ring-primary transition-all duration-150 flex items-center min-h-[36px]",
               option: ({ isSelected, isFocused }) =>
                 [
                   "px-4 py-2 cursor-pointer transition-colors duration-100",
                   isSelected
-                    ? "bg-[#6571FF] text-white"
+                    ? "bg-primary text-white"
                     : isFocused
-                      ? "bg-blue-50 text-[#6571FF]"
+                      ? "bg-blue-50 text-primary"
                       : "text-gray-700",
                 ].join(" "),
               menuList: () =>
@@ -108,7 +108,7 @@ const Timezone = ({
         <button
           type="button"
           onClick={handleBrowserTimezone}
-          className="rounded-md bg-[#6571FF] px-4 py-2 text-white text-sm font-medium transition duration-150 hover:bg-[#5a64e8] flex items-center justify-center shadow-md md:h-[42px]"
+          className="rounded-md bg-primary px-4 py-2 text-white text-sm font-medium transition duration-150 hover:bg-[#5a64e8] flex items-center justify-center shadow-md md:h-[42px]"
         >
           <Clock className="h-4 w-4 mr-2" />
           Use My Current Timezone

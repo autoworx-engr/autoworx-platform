@@ -3,15 +3,15 @@
 import EditVendor from "@/components/Lists/EditVendor";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { cn } from "@/lib/cn";
-import { Vendor } from "@prisma/client";
-import { Popconfirm } from "antd";
-import moment from "moment-timezone";
-import { useRouter } from "next/navigation";
-import { deleteVendor } from "../../../../../actions/vendor/deleteVendor";
-import { SquarePen, X } from "lucide-react";
 import { useDemoVendorFilterStore } from "@/stores/vendorFilter";
 import VendorListStore from "@/stores/vendorListStore";
+import { Vendor } from "@prisma/client";
+import { Popconfirm } from "antd";
+import { SquarePen, X } from "lucide-react";
+import moment from "moment-timezone";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { deleteVendor } from "../../../../../actions/vendor/deleteVendor";
 
 const evenColor = "bg-background";
 const oddColor = "bg-[#F8FAFF]";
@@ -64,7 +64,7 @@ export default function Table({
                 className={cn(
                   "cursor-pointer rounded-md py-3",
                   index % 2 === 0 ? evenColor : oddColor,
-                  vendorId === vendor.id && "border-2 border-[#6571FF]",
+                  vendorId === vendor.id && "border-2 border-primary",
                 )}
                 onClick={() =>
                   router.push(
@@ -95,7 +95,7 @@ export default function Table({
                   <EditVendor
                     button={
                       <button className="text-2xl text-blue-600">
-                        <SquarePen className="w-5 h-5 text-[#6571FF]" />
+                        <SquarePen className="w-5 h-5 text-primary" />
                       </button>
                     }
                     vendor={vendor}

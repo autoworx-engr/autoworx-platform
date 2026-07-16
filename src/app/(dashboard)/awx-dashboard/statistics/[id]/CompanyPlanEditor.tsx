@@ -56,7 +56,7 @@ export function CompanyPlanEditor({ companyId }: Props) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="group flex items-center gap-2 rounded-xl bg-gradient-to-br from-[#6571FF] to-[#5a66ee] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-[#6571FF]/20 transition-all hover:-translate-y-0.5 hover:shadow-[#6571FF]/40 active:scale-95"
+        className="group flex items-center gap-2 rounded-xl bg-gradient-to-br from-primary to-[#5a66ee] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5 hover:shadow-primary/40 active:scale-95"
       >
         <Settings2
           size={16}

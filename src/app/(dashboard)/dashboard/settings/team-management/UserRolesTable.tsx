@@ -1,13 +1,13 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import { Switch, Checkbox } from "antd";
-import { permissionModuleForAdminManager } from "@/lib/permissionModule";
 import {
   getPermissionsForRole,
   updatePermissionForRole,
 } from "@/actions/settings/teamManagement";
-import { successToast, errorToast } from "@/lib/toast";
+import { permissionModuleForAdminManager } from "@/lib/permissionModule";
+import { errorToast, successToast } from "@/lib/toast";
 import { useTeamManagementStore } from "@/stores/teamManagementStore";
+import { Checkbox, Switch } from "antd";
+import { useEffect, useState } from "react";
 
 interface PermissionWithIndexSignature {
   [key: string]: boolean;
@@ -197,7 +197,7 @@ export default function UserRolesTable() {
                               <div className="flex items-center justify-center">
                                 <Switch
                                   checked={permission}
-                                  className="max-w-2 !bg-slate-200 shadow-sm [&.ant-switch-checked]:!bg-[#6571FF]/80 [&.ant-switch-checked]:!border-[#6571FF]"
+                                  className="max-w-2 !bg-slate-200 shadow-sm [&.ant-switch-checked]:!bg-primary/80 [&.ant-switch-checked]:!border-primary"
                                   onChange={(checked) =>
                                     handleToggle(role, module.key, checked)
                                   }
@@ -209,7 +209,7 @@ export default function UserRolesTable() {
                             {canViewOnly && (
                               <div className="mt-1 flex items-center justify-center gap-1 text-[11px] text-slate-500">
                                 <Checkbox
-                                  className="[&_.ant-checkbox-checked_.ant-checkbox-inner]:!border-[#6571FF] [&_.ant-checkbox-checked_.ant-checkbox-inner]:!bg-[#6571FF]/80"
+                                  className="[&_.ant-checkbox-checked_.ant-checkbox-inner]:!border-primary [&_.ant-checkbox-checked_.ant-checkbox-inner]:!bg-primary/80"
                                   checked={isViewOnly}
                                   onChange={(e) =>
                                     handleToggle(

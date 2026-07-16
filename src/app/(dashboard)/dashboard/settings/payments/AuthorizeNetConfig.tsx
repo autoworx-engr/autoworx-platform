@@ -1,16 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { CircleCheckBig, CircleAlert } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+import { errorToast, successToast } from "@/lib/toast";
+import { CircleAlert, CircleCheckBig } from "lucide-react";
 import Image from "next/image";
+import { useState } from "react";
 import {
-  saveAuthorizeNetCredentials,
   removeAuthorizeNetCredentials,
+  saveAuthorizeNetCredentials,
 } from "./authorize-net";
-import { successToast, errorToast } from "@/lib/toast";
 
 interface AuthorizeNetConfigProps {
   isConfigured: boolean;
@@ -133,7 +133,7 @@ export default function AuthorizeNetConfig({
             <div className="flex items-center gap-3">
               <Button
                 onClick={() => setShowForm(true)}
-                className="rounded-lg bg-[#6571ff] px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#5561ef] hover:shadow-md"
+                className="rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#5561ef] hover:shadow-md"
               >
                 Update Credentials
               </Button>
@@ -163,7 +163,7 @@ export default function AuthorizeNetConfig({
                 value={apiLoginId}
                 onChange={(e) => setApiLoginId(e.target.value)}
                 disabled={isLoading}
-                className="rounded-lg border-gray-200 transition-colors focus:border-[#6571ff] focus:ring-[#6571ff]/20"
+                className="rounded-lg border-gray-200 transition-colors focus:border-primary focus:ring-primary/20"
               />
             </div>
 
@@ -181,7 +181,7 @@ export default function AuthorizeNetConfig({
                 value={transactionKey}
                 onChange={(e) => setTransactionKey(e.target.value)}
                 disabled={isLoading}
-                className="rounded-lg border-gray-200 transition-colors focus:border-[#6571ff] focus:ring-[#6571ff]/20"
+                className="rounded-lg border-gray-200 transition-colors focus:border-primary focus:ring-primary/20"
               />
             </div>
 
@@ -199,7 +199,7 @@ export default function AuthorizeNetConfig({
                 value={signatureKey}
                 onChange={(e) => setSignatureKey(e.target.value)}
                 disabled={isLoading}
-                className="rounded-lg border-gray-200 transition-colors focus:border-[#6571ff] focus:ring-[#6571ff]/20"
+                className="rounded-lg border-gray-200 transition-colors focus:border-primary focus:ring-primary/20"
               />
             </div>
 
@@ -232,7 +232,7 @@ export default function AuthorizeNetConfig({
                 disabled={
                   isLoading || !apiLoginId || !transactionKey || !signatureKey
                 }
-                className="rounded-lg bg-[#6571ff] px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#5561ef] hover:shadow-md disabled:opacity-50"
+                className="rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#5561ef] hover:shadow-md disabled:opacity-50"
               >
                 {isLoading ? "Saving..." : "Save Credentials"}
               </Button>

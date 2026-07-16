@@ -1,5 +1,6 @@
 "use client";
 
+import TaskSpinner from "@/app/(dashboard)/dashboard/task/_component/ui/TaskSpinner";
 import {
   DialogClose,
   DialogContent,
@@ -9,10 +10,9 @@ import {
 } from "@/components/Dialog";
 import FormError from "@/components/FormError";
 import Submit from "@/components/Submit";
+import { useTaskForm } from "@/hooks/task/useTaskForm";
 import { cn } from "@/lib/cn";
 import { Task } from "@prisma/client";
-import TaskSpinner from "@/app/(dashboard)/dashboard/task/_component/ui/TaskSpinner";
-import { useTaskForm } from "@/hooks/task/useTaskForm";
 import { TaskFormFields } from "./TaskFormFields";
 
 type NewTaskProps = {
@@ -132,7 +132,7 @@ export default function TaskContentModal({
               </button>
             </DialogClose>
             <Submit
-              className="rounded-md bg-gradient-to-r from-[#6571FF] to-[#5a66ee] px-6 py-2 text-sm font-medium text-white shadow transition-all duration-200 hover:shadow-lg hover:shadow-indigo-500/30 disabled:opacity-50"
+              className="rounded-md bg-gradient-to-r from-primary to-[#5a66ee] px-6 py-2 text-sm font-medium text-white shadow transition-all duration-200 hover:shadow-lg hover:shadow-indigo-500/30 disabled:opacity-50"
               formAction={handleSubmit}
               disabled={isLoading || (fromEdit && !isFetched)}
             >

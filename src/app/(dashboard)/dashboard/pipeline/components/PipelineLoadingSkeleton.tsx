@@ -14,7 +14,7 @@ const PipelineLoadingSkeleton = () => {
               padding: "0",
             }}
           >
-            <div className="rounded-lg bg-[#6571FF] px-4 py-3 text-center">
+            <div className="rounded-lg bg-primary px-4 py-3 text-center">
               <Skeleton.Button
                 active
                 className="w-full"

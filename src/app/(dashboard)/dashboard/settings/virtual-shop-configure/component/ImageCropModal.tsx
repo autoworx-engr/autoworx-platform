@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useCallback, useState } from "react";
-import Cropper from "react-easy-crop";
-import type { Area, Point } from "react-easy-crop";
-import { Loader2, RotateCcw, X, ZoomIn } from "lucide-react";
 import { getCroppedImg } from "@/utils/getCroppedImg";
+import { Loader2, RotateCcw, X, ZoomIn } from "lucide-react";
+import React, { useCallback, useState } from "react";
+import type { Area, Point } from "react-easy-crop";
+import Cropper from "react-easy-crop";
 
 export type ImageCropModalProps = {
   open: boolean;
@@ -154,7 +154,7 @@ export function ImageCropModal({
           <button
             onClick={handleDone}
             disabled={isCropping}
-            className="flex items-center gap-2 rounded-lg bg-[#6571FF] px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-[#6571FF]/90 disabled:cursor-not-allowed disabled:opacity-70"
+            className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-70"
           >
             {isCropping ? (
               <>
@@ -210,7 +210,7 @@ function SliderControl({
         step={step}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-[#6571FF]"
+        className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-primary"
       />
     </div>
   );

@@ -1,4 +1,3 @@
-import React from "react";
 import { GiftCardPurchaseSummary } from "./types";
 
 interface GiftCardPurchaseStatsProps {
@@ -11,8 +10,8 @@ export function GiftCardPurchaseStats({ summary }: GiftCardPurchaseStatsProps) {
       label: "Total Issued",
       value: summary.totalIssued.toLocaleString(),
       sub: "gift cards",
-      color: "text-[#6571FF]",
-      bg: "bg-[#6571FF]/10 dark:bg-[#6571FF]/20",
+      color: "text-primary",
+      bg: "bg-primary/10 dark:bg-primary/20",
     },
     {
       label: "Total Value Sold",

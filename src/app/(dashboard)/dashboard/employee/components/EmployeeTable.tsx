@@ -167,7 +167,7 @@ const EmployeeTable = ({
                           className="h-full w-full flex items-center gap-3 group "
                           href={`/dashboard/employee/${employee.id}?view=details`}
                         >
-                          <div className="w-6 h-6 rounded-full flex items-center justify-center text-[#6571FF]/80 ring-1 ring-indigo-100 dark:ring-indigo-900/30">
+                          <div className="w-6 h-6 rounded-full flex items-center justify-center text-primary/80 ring-1 ring-indigo-100 dark:ring-indigo-900/30">
                             <UserIcon size={16} />
                           </div>
                           <div>

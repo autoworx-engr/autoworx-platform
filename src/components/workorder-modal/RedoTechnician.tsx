@@ -27,7 +27,7 @@ export default function RedoTechnician({
         className="flex min-w-[150px] items-center justify-start space-x-3"
       >
         <input
-          className="size-4 shrink-0 accent-[#6571FF]"
+          className="size-4 shrink-0 accent-primary"
           type="checkbox"
           name={technician.name}
           id={technician.name}

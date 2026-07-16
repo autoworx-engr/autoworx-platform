@@ -8,8 +8,6 @@ import {
 import WorkOrderModal from "@/components/workorder-modal/WorkOrderModal";
 import { cn } from "@/lib/cn";
 import moment from "moment";
-import Link from "next/link";
-import React from "react";
 
 const ResponsiveShopPipelineCard = ({
   invoice,
@@ -40,14 +38,14 @@ const ResponsiveShopPipelineCard = ({
       key={index}
       className={cn(
         "mb-4 h-36 rounded-[5px] border border-[#BFC4FF] px-3 py-2 text-[#66738C] shadow-sm",
-        (index + 1) % 2 === 0 ? evenColor : oddColor
+        (index + 1) % 2 === 0 ? evenColor : oddColor,
       )}
     >
       <CardHeader className="flex flex-row items-center justify-between p-0">
         <CardTitle>
           <WorkOrderModal
             invoiceId={id}
-            buttonChild={<button className="text-[#6571FF]">{id}</button>}
+            buttonChild={<button className="text-primary">{id}</button>}
           />
         </CardTitle>
         <CardDescription className="font-bold">{timeCreated}</CardDescription>

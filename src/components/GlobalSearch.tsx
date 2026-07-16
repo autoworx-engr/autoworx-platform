@@ -90,7 +90,7 @@ export default function GlobalSearch({
       <DialogTrigger asChild>
         <button className="px-2 outline-none" title="Search">
           <Search
-            className={iconClassName || "size-5 sm:size-7 text-[#6571FF]"}
+            className={iconClassName || "size-5 sm:size-7 text-primary"}
           />
         </button>
       </DialogTrigger>

@@ -1,6 +1,5 @@
 "use client";
 
-import type { JSX } from "react";
 import { newVendor } from "@/actions/vendor/newVendor";
 import {
   Dialog,
@@ -16,6 +15,7 @@ import { successToast } from "@/lib/toast";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import { Vendor } from "@prisma/client";
+import type { JSX } from "react";
 import { useRef, useState } from "react";
 import PhoneInput from "../PhoneInput";
 import { SlimInput } from "../SlimInput";
@@ -371,7 +371,7 @@ export default function NewVendor({
           <button
             className="
                 rounded-xl px-6 py-2.5 text-sm font-medium text-white
-                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                bg-gradient-to-r from-primary to-[#5a66ee]
                 shadow-lg shadow-indigo-500/30
                 hover:shadow-xl hover:shadow-indigo-500/40
                 hover:-translate-y-0.5 hover:scale-[1.02]

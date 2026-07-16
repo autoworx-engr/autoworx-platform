@@ -1,27 +1,26 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import Image from "next/image";
-import moment from "moment-timezone";
-import { Award, History, Zap, Loader2 } from "lucide-react";
-import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
-import { PricePlans } from "./PricePlans";
-import {
-  getPlatformPlans,
-  getCurrentSubscription,
-} from "@/actions/platform-billing/plans";
-import { useSession } from "next-auth/react";
-import { CheckoutForm } from "@/components/platform-billing/CheckoutForm";
-import { toast } from "react-hot-toast";
-import { PlatformSubscriptionStatus } from "@prisma/client";
 import { cancelSubscription } from "@/actions/platform-billing/cancel";
-import { AlertCircle } from "lucide-react";
+import {
+  getCurrentSubscription,
+  getPlatformPlans,
+} from "@/actions/platform-billing/plans";
+import { CheckoutForm } from "@/components/platform-billing/CheckoutForm";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
+import { PlatformSubscriptionStatus } from "@prisma/client";
+import { Award, History, Loader2, Zap } from "lucide-react";
+import moment from "moment-timezone";
+import { useSession } from "next-auth/react";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
+import { PricePlans } from "./PricePlans";
 
 const planColors: { [key: string]: string } = {
   "Starter (Text Only)": "text-gray-500",
-  "Starter (Call + Text)": "text-[#6571FF]",
-  Growth: "text-[#6571FF]",
+  "Starter (Call + Text)": "text-primary",
+  Growth: "text-primary",
   Scale: "text-yellow-500",
 };
 
@@ -65,7 +64,7 @@ export default function Page() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-10 h-10 animate-spin text-[#6571FF]" />
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
       </div>
     );
   }
@@ -107,7 +106,7 @@ export default function Page() {
         {/* Subscription Section */}
         <div className="w-full">
           <h2 className="mb-4 flex items-center text-2xl font-bold ">
-            <Zap className="w-6 h-6 mr-2 text-[#6571FF]" />
+            <Zap className="w-6 h-6 mr-2 text-primary" />
             Subscription Details
           </h2>
           <div className="flex flex-col gap-6 rounded-xl border border-gray-200 bg-white p-6 shadow-xl lg:flex-row">
@@ -171,7 +170,7 @@ export default function Page() {
                       Cancel Plan
                     </button>
                     <button
-                      className="h-11 w-full rounded-lg bg-[#6571FF] text-base font-bold text-white shadow-md hover:bg-[#525fec] transition sm:w-36 lg:w-40"
+                      className="h-11 w-full rounded-lg bg-primary text-base font-bold text-white shadow-md hover:bg-[#525fec] transition sm:w-36 lg:w-40"
                       onClick={() => setPlansOpen(true)}
                     >
                       <Award className="w-5 h-5 inline mr-1" />
@@ -180,7 +179,7 @@ export default function Page() {
                   </>
                 ) : (
                   <button
-                    className="h-11 w-full rounded-lg bg-[#6571FF] text-base font-bold text-white shadow-md hover:bg-[#525fec] transition sm:w-48"
+                    className="h-11 w-full rounded-lg bg-primary text-base font-bold text-white shadow-md hover:bg-[#525fec] transition sm:w-48"
                     onClick={() => setPlansOpen(true)}
                   >
                     Choose a Plan
@@ -216,7 +215,7 @@ export default function Page() {
         {/* Payment History Section */}
         <div className="w-full">
           <h2 className="mb-4 flex items-center text-2xl font-bold ">
-            <History className="w-6 h-6 mr-2 text-[#6571FF]" />
+            <History className="w-6 h-6 mr-2 text-primary" />
             Payment History
           </h2>
           <div className="max-h-80 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">

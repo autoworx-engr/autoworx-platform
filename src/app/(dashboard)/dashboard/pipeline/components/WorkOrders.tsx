@@ -1,9 +1,10 @@
 "use client";
 import { getWorkOrders } from "@/actions/pipelines/getWorkOrders";
+import CarLoading from "@/components/common/CarLoading";
 import ResponsiveShopPipelineCard from "@/components/mobile-responsive/pipeline/ResponsiveShopPipelineCard";
+import WorkOrdersTableSkeleton from "@/components/ui/WorkOrdersTableSkeleton";
 import WorkOrderModal from "@/components/workorder-modal/WorkOrderModal";
 import { useServerGet } from "@/hooks/useServerGet";
-import WorkOrdersTableSkeleton from "@/components/ui/WorkOrdersTableSkeleton";
 import { cn } from "@/lib/cn";
 import { useEstimateFilterStore } from "@/stores/estimate-filter";
 import { usePipelineFilterStore } from "@/stores/PipelineFilterStore";
@@ -12,8 +13,6 @@ import { Pagination } from "antd";
 import moment from "moment";
 import { useEffect, useState } from "react";
 import Filter from "./Filter";
-import { Spin } from "antd";
-import CarLoading from "@/components/common/CarLoading";
 
 const WorkOrders = () => {
   const { data: invoices, setData: setInvoices } = useServerGet(getWorkOrders);
@@ -212,7 +211,7 @@ const WorkOrders = () => {
                           <WorkOrderModal
                             invoiceId={id}
                             buttonChild={
-                              <button className="text-[#6571FF]">{id}</button>
+                              <button className="text-primary">{id}</button>
                             }
                             onWorkOrderCreated={async () =>
                               setInvoices(await getWorkOrders())

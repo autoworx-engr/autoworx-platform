@@ -2,10 +2,13 @@
 
 import newTag from "@/actions/tag/newTag";
 import useOutsideClick from "@/hooks/useOutsideClick";
+import { cn } from "@/lib/cn";
 import { INVOICE_COLORS } from "@/lib/consts";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
+import { normalizeSearch } from "@/utils/normalizeSearch";
 import { Tag } from "@prisma/client";
+import { ChevronDown, ChevronUp, Palette, Search, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   DropdownMenu,
@@ -18,9 +21,6 @@ import {
 import FormError from "../FormError";
 import Submit from "../Submit";
 import { SelectProps } from "./select-props";
-import { ChevronDown, ChevronUp, Palette, Search, X } from "lucide-react";
-import { cn } from "@/lib/cn";
-import { normalizeSearch } from "@/utils/normalizeSearch";
 
 type SelectedColor = { textColor: string; bgColor: string } | null;
 
@@ -129,7 +129,7 @@ export function SelectTags({
               // }, 50);
             }
           }}
-          className="flex min-h-11 min-w-[150px] w-full items-center justify-between rounded-[10px] px-4 ring-1 ring-inset ring-slate-200 transition-all hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30"
+          className="flex min-h-11 min-w-[150px] w-full items-center justify-between rounded-[10px] px-4 ring-1 ring-inset ring-slate-200 transition-all hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary/30"
         >
           <p className="text-sm font-medium text-slate-400">Tags</p>
           <ChevronDown size={18} className="text-slate-400" />
@@ -153,7 +153,7 @@ export function SelectTags({
                   ref={searchRef}
                   type="text"
                   placeholder="Search tags..."
-                  className="h-9 w-full rounded-lg bg-white pl-9 pr-10 text-sm font-medium ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30"
+                  className="h-9 w-full rounded-lg bg-white pl-9 pr-10 text-sm font-medium ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/30"
                   onKeyDown={(e) => e.stopPropagation()}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -255,7 +255,7 @@ export function SelectTags({
                       className={cn(
                         "flex h-8 items-center justify-center rounded-lg text-xs font-bold transition-all hover:scale-105",
                         selectedColor?.textColor === color.textColor
-                          ? "ring-2 ring-[#6571FF] ring-offset-1"
+                          ? "ring-2 ring-primary ring-offset-1"
                           : "ring-1 ring-transparent",
                       )}
                     >
@@ -312,7 +312,7 @@ function QuickAddForm({
             type="text"
             required
             placeholder="New tag name..."
-            className="h-10 w-full rounded-lg bg-white px-2 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30 placeholder:text-slate-400"
+            className="h-10 w-full rounded-lg bg-white px-2 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-slate-400"
             onKeyDown={(e) => e.stopPropagation()}
           />
         </div>
@@ -327,7 +327,7 @@ function QuickAddForm({
         </button>
 
         <Submit
-          className="h-10 shrink-0 rounded-lg bg-[#6571FF] px-3 text-[11px] font-bold uppercase tracking-wider text-white shadow-sm shadow-[#6571FF]/30 transition-all hover:bg-[#525ceb] active:scale-95"
+          className="h-10 shrink-0 rounded-lg bg-primary px-3 text-[11px] font-bold uppercase tracking-wider text-white shadow-sm shadow-primary/30 transition-all hover:bg-[#525ceb] active:scale-95"
           formAction={handleSubmit}
         >
           Quick Add

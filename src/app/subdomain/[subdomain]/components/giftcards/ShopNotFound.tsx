@@ -42,7 +42,7 @@ export default function ShopNotFound() {
               <a
                 href="/dashboard/settings/virtual-shop-configure"
                 rel="noreferrer"
-                className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-[#6571FF] to-[#5a66ee] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_4px_14px_0_rgba(101,113,255,0.39)] transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(101,113,255,0.23)]"
+                className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-primary to-[#5a66ee] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_4px_14px_0_rgba(101,113,255,0.39)] transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(101,113,255,0.23)]"
               >
                 Go to shop configure
               </a>

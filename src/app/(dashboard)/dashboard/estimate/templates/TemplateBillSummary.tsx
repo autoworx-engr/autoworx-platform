@@ -231,7 +231,7 @@ export function TemplateBillSummary({
                 <div
                   onClick={() => toggleSetter((prev) => !prev)}
                   className={`ml-2 flex h-5 w-10 cursor-pointer items-center rounded-full px-1 transition-colors ${
-                    toggleState ? "bg-[#6571FF]" : "bg-gray-400"
+                    toggleState ? "bg-primary" : "bg-gray-400"
                   }`}
                 >
                   <div

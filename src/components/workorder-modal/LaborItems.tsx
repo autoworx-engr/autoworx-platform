@@ -1,14 +1,14 @@
 "use client";
-import React, { useEffect, useState, useTransition } from "react";
-import { Technician, TechnicianImage, VehicleParts } from "@prisma/client";
-import CreateAndEditLabor from "./CreateAndEditLabor";
-import { cn } from "@/lib/utils";
-import { getTechnicians, deleteTechnician } from "@/service/work-order/api";
-import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import { queryKeys } from "@/lib/queryKeys";
+import { cn } from "@/lib/utils";
+import { deleteTechnician, getTechnicians } from "@/service/work-order/api";
+import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
+import { Technician, TechnicianImage, VehicleParts } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { Popconfirm } from "antd";
 import { CircleX } from "lucide-react";
+import { useEffect, useState, useTransition } from "react";
+import CreateAndEditLabor from "./CreateAndEditLabor";
 
 export default function LaborItems({
   invoiceItemId,
@@ -81,7 +81,7 @@ export default function LaborItems({
   };
 
   return (
-    <div className="mx-10 h-32 overflow-y-auto rounded-md border border-solid border-[#6571FF] p-2">
+    <div className="mx-10 h-32 overflow-y-auto rounded-md border border-solid border-primary p-2">
       {error && <p className="text-center text-sm text-red-400">{error}</p>}
 
       <div className="flex flex-wrap items-center gap-2">
@@ -98,9 +98,9 @@ export default function LaborItems({
           <button
             key={technician.id}
             className={cn(
-              "flex items-center justify-evenly space-x-1 text-nowrap rounded-full border bg-[#6571FF] px-3 py-0.5",
+              "flex items-center justify-evenly space-x-1 text-nowrap rounded-full border bg-primary px-3 py-0.5",
               !technician.hasPermission &&
-                "cursor-default border-[#6571FF] bg-transparent",
+                "cursor-default border-primary bg-transparent",
             )}
           >
             <CreateAndEditLabor

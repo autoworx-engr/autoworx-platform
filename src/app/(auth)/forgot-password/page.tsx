@@ -17,7 +17,7 @@ export default function Page() {
 
         <div className="mb-8 text-center flex flex-col items-center gap-3">
           <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 shadow-inner dark:bg-slate-800/70 dark:text-slate-100">
-            <span className="h-2 w-2 rounded-full bg-[#6571FF]" />
+            <span className="h-2 w-2 rounded-full bg-primary" />
             Reset access
           </div>
           <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 bg-clip-text text-transparent dark:from-white dark:via-slate-200 dark:to-white">
@@ -45,7 +45,7 @@ export default function Page() {
               required
               autoFocus
               placeholder="you@example.com"
-              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 text-slate-900 transition-colors focus:border-[#6571FF]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:focus:border-[#6571FF]"
+              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 text-slate-900 transition-colors focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:focus:border-primary"
             />
           </div>
 
@@ -63,7 +63,7 @@ export default function Page() {
           Remember your password?{" "}
           <Link
             href="/login"
-            className="font-semibold text-[#6571FF] transition-colors hover:text-[#5059d4] hover:underline"
+            className="font-semibold text-primary transition-colors hover:text-[#5059d4] hover:underline"
           >
             Back to login
           </Link>

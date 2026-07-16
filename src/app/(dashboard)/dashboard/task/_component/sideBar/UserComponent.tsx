@@ -30,7 +30,7 @@ export default function UserComponent({
 
   // Selected = brand gradient; idle = subtle card with brand-tinted hover.
   const interactiveClasses = isSelected
-    ? "bg-gradient-to-r from-[#6571FF] to-[#5a66ee] text-white shadow-lg shadow-[#6571FF]/40 hover:shadow-xl hover:shadow-[#6571FF]/50"
+    ? "bg-gradient-to-r from-primary to-[#5a66ee] text-white shadow-lg shadow-primary/40 hover:shadow-xl hover:shadow-primary/50"
     : "bg-slate-50 ring-1 ring-transparent hover:bg-accent hover:ring-border dark:bg-slate-800 dark:hover:bg-slate-700/70";
 
   return (
@@ -64,7 +64,7 @@ export default function UserComponent({
       </button>
 
       {isSelected && !minimized && (
-        <div className="mt-2 pl-4 border-l-2 border-[#6571FF]/50 dark:border-[#5a66ee]/50 transition-all duration-300">
+        <div className="mt-2 pl-4 border-l-2 border-primary/50 dark:border-[#5a66ee]/50 transition-all duration-300">
           <UserTaskList user={user} />
         </div>
       )}

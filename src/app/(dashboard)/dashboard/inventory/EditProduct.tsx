@@ -359,7 +359,7 @@ export default function EditProduct({ productData }: TProps) {
                       button={
                         <button
                           type="button"
-                          className="text-xs text-[#6571FF] hover:underline"
+                          className="text-xs text-primary hover:underline"
                         >
                           + New Vendor
                         </button>
@@ -398,7 +398,7 @@ export default function EditProduct({ productData }: TProps) {
                   "h-20 w-full rounded-md border border-slate-300 outline-none bg-background px-2 py-0.5 leading-6 transition-all duration-300 thin-scrollbar mt-1",
                   "bg-white/80 backdrop-blur-sm dark:bg-slate-900/50", // Subtle glass texture
                   "text-slate-600 dark:text-slate-300 placeholder:text-slate-400",
-                  "focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/40", // Brand focus state
+                  "focus:border-primary/60 focus:ring-2 focus:ring-primary/40", // Brand focus state
                   "disabled:opacity-50 disabled:cursor-not-allowed",
                 )}
                 value={product.description as string}
@@ -465,7 +465,7 @@ export default function EditProduct({ productData }: TProps) {
             <Submit
               className="
                 rounded-xl px-6 py-2.5 text-sm font-medium text-white
-                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                bg-gradient-to-r from-primary to-[#5a66ee]
                 shadow-lg shadow-indigo-500/30
                 hover:shadow-xl hover:shadow-indigo-500/40
                 hover:-translate-y-0.5 hover:scale-[1.02]

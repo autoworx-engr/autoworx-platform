@@ -1,9 +1,9 @@
 "use client";
 import { regenerateZapierToken } from "@/actions/settings/regenerateZapierToken";
 import { successToast } from "@/lib/toast";
+import { Company } from "@prisma/client";
 import { Copy, Eye, EyeOff } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Company } from "@prisma/client";
 
 export default function SecurityPage({
   company,
@@ -46,14 +46,14 @@ export default function SecurityPage({
               <button
                 onClick={() => setShowToken(!showToken)}
                 type="button"
-                className="mr-6 rounded-md bg-[#6571FF] px-6 py-1.5 text-white"
+                className="mr-6 rounded-md bg-primary px-6 py-1.5 text-white"
               >
                 {showToken ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
 
               <button
                 type="button"
-                className="mr-6 rounded-md bg-[#6571FF] px-6 py-1.5 text-white"
+                className="mr-6 rounded-md bg-primary px-6 py-1.5 text-white"
                 onClick={() => {
                   company?.zapierToken &&
                     navigator.clipboard.writeText(company?.zapierToken);
@@ -64,7 +64,7 @@ export default function SecurityPage({
               </button>
               <button
                 type="button"
-                className="rounded-md hidden sm:block bg-[#6571FF] px-10 py-1.5 text-white"
+                className="rounded-md hidden sm:block bg-primary px-10 py-1.5 text-white"
                 disabled={isTokenGenerating}
                 onClick={async () => {
                   setIsTokenGenerating(true);
@@ -81,7 +81,7 @@ export default function SecurityPage({
             </div>
             <button
               type="button"
-              className="w-full mx-auto rounded-md sm:hidden bg-[#6571FF] px-6 py-1.5 text-white"
+              className="w-full mx-auto rounded-md sm:hidden bg-primary px-6 py-1.5 text-white"
               disabled={isTokenGenerating}
               onClick={async () => {
                 setIsTokenGenerating(true);

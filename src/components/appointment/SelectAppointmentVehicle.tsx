@@ -6,11 +6,11 @@ import { queryKeys } from "@/lib/queryKeys";
 import { useListsStore } from "@/stores/lists";
 import { Vehicle } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import NewVehicle from "../Lists/NewVehicle";
 import { SelectProps } from "../Lists/select-props";
-import { usePathname } from "next/navigation";
-import { Plus } from "lucide-react";
 
 export function SelectAppointmentVehicle({
   name = "vehicleId",
@@ -122,7 +122,7 @@ export function SelectAppointmentVehicle({
               newButton={
                 <button
                   type="button"
-                  className="flex w-full items-center justify-center gap-2 rounded-md bg-[#6571FF] px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-[#5A65F0]"
+                  className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-[#5A65F0]"
                 >
                   <Plus className="w-4 h-4" /> New Vehicle
                 </button>

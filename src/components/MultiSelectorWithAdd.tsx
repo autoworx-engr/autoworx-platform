@@ -1,12 +1,12 @@
 "use client";
 
-import type React from "react";
-import { useState, useRef, useEffect } from "react";
-import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import SelectCategory from "./Lists/SelectCategory";
 import { Category } from "@prisma/client";
 import { ChevronDown, Plus, X } from "lucide-react";
+import type React from "react";
+import type { ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
+import SelectCategory from "./Lists/SelectCategory";
 
 export type SelectorWithAddProps = {
   label?: ReactNode;
@@ -271,7 +271,7 @@ export function MultiSelectorWithAdd({
                     <button
                       onClick={handleAddNewSubmit}
                       disabled={!newItemValue.trim()}
-                      className="h-6 text-xs bg-[#6571FF] px-2 text-white rounded-md"
+                      className="h-6 text-xs bg-primary px-2 text-white rounded-md"
                     >
                       Add
                     </button>

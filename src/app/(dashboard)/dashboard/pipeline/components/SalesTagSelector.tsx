@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState, useMemo } from "react";
 import { Tag, User } from "@prisma/client";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-import { INVOICE_COLORS } from "@/lib/consts";
-import { useFormErrorStore } from "@/stores/form-error";
+import {
+  createSalesTag,
+  deleteSalesTag,
+  getSalesTags,
+} from "@/actions/pipelines/leadTag";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,14 +15,11 @@ import {
 } from "@/components/DropdownMenu";
 import FormError from "@/components/FormError";
 import Submit from "@/components/Submit";
-import {
-  getSalesTags,
-  createSalesTag,
-  deleteSalesTag,
-} from "@/actions/pipelines/leadTag";
-import getUser from "@/lib/getUser";
-import { ChevronDown, ChevronUp, Palette, Search, X } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { INVOICE_COLORS } from "@/lib/consts";
+import getUser from "@/lib/getUser";
+import { useFormErrorStore } from "@/stores/form-error";
+import { ChevronDown, ChevronUp, Palette, Search, X } from "lucide-react";
 
 type SelectedColor = { textColor: string; bgColor: string } | null;
 
@@ -120,7 +120,7 @@ export function SalesTagSelector({
             <input
               type="text"
               placeholder="Search Sales Tags..."
-              className="h-9 w-full rounded-lg bg-white pl-9 pr-10 text-sm font-medium ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30"
+              className="h-9 w-full rounded-lg bg-white pl-9 pr-10 text-sm font-medium ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/30"
               value={search}
               onKeyDown={(e) => e.stopPropagation()}
               onChange={(e) => setSearch(e.target.value)}
@@ -207,7 +207,7 @@ export function SalesTagSelector({
                     className={cn(
                       "flex h-8 items-center justify-center rounded-lg text-xs font-bold transition-all hover:scale-105",
                       selectedColor?.textColor === color.textColor
-                        ? "ring-2 ring-[#6571FF] ring-offset-1"
+                        ? "ring-2 ring-primary ring-offset-1"
                         : "ring-1 ring-transparent",
                     )}
                   >
@@ -258,7 +258,7 @@ function QuickAddSalesTagForm({
           type="text"
           required
           placeholder="New tag name..."
-          className="h-10 w-full rounded-lg bg-white px-2 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30 placeholder:text-slate-400"
+          className="h-10 w-full rounded-lg bg-white px-2 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-slate-400"
           onKeyDown={(e) => e.stopPropagation()}
         />
       </div>
@@ -273,7 +273,7 @@ function QuickAddSalesTagForm({
       </button>
 
       <Submit
-        className="h-10 shrink-0 rounded-lg bg-[#6571FF] px-3 text-[11px] font-bold uppercase tracking-wider text-white shadow-sm shadow-[#6571FF]/30 transition-all hover:bg-[#525ceb] active:scale-95"
+        className="h-10 shrink-0 rounded-lg bg-primary px-3 text-[11px] font-bold uppercase tracking-wider text-white shadow-sm shadow-primary/30 transition-all hover:bg-[#525ceb] active:scale-95"
         formAction={handleSubmit}
       >
         Quick Add

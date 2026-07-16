@@ -1,11 +1,11 @@
+import useInfinityUsersQuery from "@/app/(dashboard)/dashboard/task/_hook/useInfinityUsersQuery";
 import Avatar from "@/components/Avatar";
 import Selector from "@/components/Selector";
-import { User } from "@prisma/client";
-import { useState, useMemo, useEffect } from "react";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser.ts";
 import { useIsAdminOrManager } from "@/utils/useIsAdminOrManager.ts";
+import { User } from "@prisma/client";
 import { X } from "lucide-react";
-import useInfinityUsersQuery from "@/app/(dashboard)/dashboard/task/_hook/useInfinityUsersQuery";
+import { useEffect, useMemo, useState } from "react";
 
 type TProps = {
   onlyOneUser?: boolean;
@@ -166,7 +166,7 @@ export default function AssignTaskDropDown({
           bg-slate-100/80 px-3 py-1.5 
           ring-1 ring-slate-200/60
           transition-all duration-300
-          hover:bg-white hover:ring-[#6571FF]/30 hover:shadow-sm
+          hover:bg-white hover:ring-primary/30 hover:shadow-sm
           animate-in fade-in zoom-in-95
         "
             >

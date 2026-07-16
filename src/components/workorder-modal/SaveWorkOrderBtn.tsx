@@ -35,7 +35,7 @@ export default function SaveWorkOrderBtn({
     <button
       disabled={pending}
       onClick={() => startTransition(handleUpdateInvoice)}
-      className="mx-auto h-10 rounded bg-[#6571FF] px-8 py-2 text-white"
+      className="mx-auto h-10 rounded bg-primary px-8 py-2 text-white"
     >
       Save Work Order
     </button>

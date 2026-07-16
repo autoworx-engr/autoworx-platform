@@ -141,7 +141,7 @@ export default function LeadInfinityScroll({
         padding: "0",
       }}
     >
-      <h2 className="rounded-lg bg-[#6571FF] px-4 py-3 text-center text-white">
+      <h2 className="rounded-lg bg-primary px-4 py-3 text-center text-white">
         <p className="text-base font-bold">
           {columnTitle || ""}
           <span className="ml-2 rounded-lg bg-[#3F49B9] px-2">

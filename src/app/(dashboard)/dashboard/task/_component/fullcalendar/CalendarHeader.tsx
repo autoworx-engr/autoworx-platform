@@ -1,23 +1,7 @@
 "use client";
 
-import FullCalendar from "@fullcalendar/react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import moment from "moment";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { RefObject } from "react";
 import { updatePipelineAutomationTrigger } from "@/actions/automation/pipeline/triggerPipelineAutomation";
 import { getCalenderSettings } from "@/actions/task/getCalendarSettings";
-import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
-import { errorHandler } from "@/error-boundary/globalErrorHandler";
-import { useCalendarStore } from "@/stores/calendarStore";
-import { CalendarType } from "@/types/calendar";
-import { Appointment, Lead } from "@prisma/client";
-import CalendarSearch from "./CalendarSearch";
-import DateSelector from "./DateSelector";
-import DisplayDate from "./DisplayDate";
-import MonthYearPicker from "./MonthYearPicker";
-import Settings from "./Settings";
 import {
   appointmentQueryKey,
   calenderQueryKey,
@@ -25,6 +9,13 @@ import {
 import { useDate } from "@/app/(dashboard)/dashboard/task/_hook/lib/useDate";
 import useMonth from "@/app/(dashboard)/dashboard/task/_hook/lib/useMonth";
 import useWeekStartEndDays from "@/app/(dashboard)/dashboard/task/_hook/lib/useWeekStartEndDays";
+import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { useCalendarStore } from "@/stores/calendarStore";
+import { CalendarType } from "@/types/calendar";
+import FullCalendar from "@fullcalendar/react";
+import { Appointment, Lead } from "@prisma/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CalendarDays,
   ChevronLeft,
@@ -32,6 +23,10 @@ import {
   ClipboardList,
   DollarSign,
 } from "lucide-react";
+import moment from "moment";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { RefObject } from "react";
 import { Button } from "../../../../../../components/ui/button";
 import {
   Select,
@@ -41,6 +36,11 @@ import {
   SelectValue,
 } from "../../../../../../components/ui/select";
 import { CalendarFilterDropdown } from "./CalendarFilterDropdown";
+import CalendarSearch from "./CalendarSearch";
+import DateSelector from "./DateSelector";
+import DisplayDate from "./DisplayDate";
+import MonthYearPicker from "./MonthYearPicker";
+import Settings from "./Settings";
 
 const ALLOWED_ROLES_FOR_NEW_APPOINTMENT = ["Admin", "Manager", "Sales"];
 
@@ -204,7 +204,7 @@ export function CalendarHeader({
               onClick={() => handleViewChange(value)}
               className={`px-3 py-1 text-sm font-medium capitalize rounded transition-colors ${
                 type === value
-                  ? "bg-gradient-to-r from-[#6571FF] to-[#5a66ee] text-white"
+                  ? "bg-gradient-to-r from-primary to-[#5a66ee] text-white"
                   : "bg-white text-slate-600 hover:bg-slate-50"
               }`}
             >

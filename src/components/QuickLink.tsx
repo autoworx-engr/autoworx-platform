@@ -7,8 +7,8 @@ import useWeekStartEndDays from "@/app/(dashboard)/dashboard/task/_hook/lib/useW
 import { Card, CardContent } from "@/components/ui/card";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { usePermissionStore } from "@/stores/permissionStore";
-import { canAccessEstimate } from "@/utils/permissions";
 import { stateStore } from "@/stores/stateStore";
+import { canAccessEstimate } from "@/utils/permissions";
 import { Appointment, Lead } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -181,7 +181,7 @@ const QuickLink = () => {
         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
         className="flex items-center"
       >
-        <Zap className="h-5 w-5 sm:h-7 sm:w-7 text-white sm:text-[#6571FF]" />
+        <Zap className="h-5 w-5 sm:h-7 sm:w-7 text-white sm:text-primary" />
       </button>
       {isDropdownOpen && (
         <Card className="custom-scrollbar absolute top-10 -right-16 md:right-0 z-30 w-72 sm:w-80 max-h-80 overflow-y-auto shadow-xl">
@@ -197,7 +197,7 @@ const QuickLink = () => {
                         onClick={() => setIsDropdownOpen(false)}
                         className="flex cursor-pointer items-center space-x-3 rounded-lg border border-gray-200 bg-white p-3 transition hover:bg-[#F4F6FF]"
                       >
-                        <action.icon className="h-5 w-5 text-[#6571FF]" />
+                        <action.icon className="h-5 w-5 text-primary" />
                         <span className="text-sm font-medium text-gray-700">
                           {action.label}
                         </span>
@@ -208,7 +208,7 @@ const QuickLink = () => {
                           onClientCreated={handleClientCreated} // PASS THE NEW HANDLER
                           buttonElement={
                             <div className="flex cursor-pointer items-center space-x-3 rounded-lg border border-gray-200 bg-white p-3 transition hover:bg-[#F4F6FF]">
-                              <action.icon className="h-5 w-5 text-[#6571FF]" />
+                              <action.icon className="h-5 w-5 text-primary" />
                               <span className="text-sm font-medium text-gray-700">
                                 {action.label}
                               </span>
@@ -220,7 +220,7 @@ const QuickLink = () => {
                       <AddLeads
                         buttonChild={
                           <div className="flex cursor-pointer items-center space-x-3 rounded-lg border border-gray-200 bg-white p-3 transition hover:bg-[#F4F6FF]">
-                            <action.icon className="h-5 w-5 text-[#6571FF]" />
+                            <action.icon className="h-5 w-5 text-primary" />
                             <span className="text-sm font-medium text-gray-700">
                               {action.label}
                             </span>
@@ -234,7 +234,7 @@ const QuickLink = () => {
                         onClick={action.onClick}
                         className="flex cursor-pointer items-center space-x-3 rounded-lg border border-gray-200 bg-white p-3 transition hover:bg-[#F4F6FF]"
                       >
-                        <action.icon className="h-5 w-5 text-[#6571FF]" />
+                        <action.icon className="h-5 w-5 text-primary" />
                         <span className="text-sm font-medium text-gray-700">
                           {action.label}
                         </span>

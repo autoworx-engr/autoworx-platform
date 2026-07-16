@@ -289,7 +289,7 @@ export default function UpdateTask() {
 
             <div className="flex items-center gap-5">
               <button
-                className="relative flex w-full items-center justify-center rounded-md bg-[#6571FF] p-2 text-white"
+                className="relative flex w-full items-center justify-center rounded-md bg-primary p-2 text-white"
                 onClick={() => setPriority("Low")}
                 type="button"
               >
@@ -340,7 +340,7 @@ export default function UpdateTask() {
                 Cancel
               </DialogClose>
               <Submit
-                className="mb-1 rounded-md border bg-[#6571FF] px-4 py-1 text-white md:mb-0"
+                className="mb-1 rounded-md border bg-primary px-4 py-1 text-white md:mb-0"
                 formAction={handleSubmit}
               >
                 Save

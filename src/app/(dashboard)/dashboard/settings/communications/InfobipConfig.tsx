@@ -67,7 +67,7 @@ const InfobipConfig = (props: Props) => {
         <div className="flex justify-end">
           <button
             type="submit"
-            className="rounded-md bg-[#6571FF] px-10 py-1.5 text-white hover:bg-indigo-600
+            className="rounded-md bg-primary px-10 py-1.5 text-white hover:bg-indigo-600
                    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
             Save

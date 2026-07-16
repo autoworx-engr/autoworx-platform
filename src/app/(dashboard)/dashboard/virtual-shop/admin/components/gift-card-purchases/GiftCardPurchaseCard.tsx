@@ -1,13 +1,4 @@
-import React from "react";
-import {
-  Gift,
-  Mail,
-  Phone,
-  CreditCard,
-  CalendarClock,
-  ShoppingBag,
-  TrendingDown,
-} from "lucide-react";
+import { Gift, Mail, Phone, TrendingDown } from "lucide-react";
 import { IssuedGiftCardItem, statusMeta } from "./types";
 
 interface GiftCardPurchaseCardProps {
@@ -30,7 +21,7 @@ export function GiftCardPurchaseCard({ item }: GiftCardPurchaseCardProps) {
       <div className="flex items-start justify-between gap-3 px-4 sm:px-5 pt-4 pb-3">
         <div className="flex items-center gap-3 min-w-0">
           {/* Template thumbnail or fallback */}
-          <div className="w-10 h-10 flex-shrink-0 rounded-xl overflow-hidden bg-gradient-to-br from-[#6571FF] to-[#5a66ee] flex items-center justify-center shadow-sm">
+          <div className="w-10 h-10 flex-shrink-0 rounded-xl overflow-hidden bg-gradient-to-br from-primary to-[#5a66ee] flex items-center justify-center shadow-sm">
             {item.template?.imageUrl ? (
               <img
                 src={item.template.imageUrl}
@@ -95,7 +86,7 @@ export function GiftCardPurchaseCard({ item }: GiftCardPurchaseCardProps) {
             Balance
           </p>
           <div className="flex items-baseline gap-1.5">
-            <span className="text-base font-bold text-[#6571FF]">
+            <span className="text-base font-bold text-primary">
               $
               {item.currentBalance.toLocaleString("en-US", {
                 minimumFractionDigits: 2,
@@ -113,7 +104,7 @@ export function GiftCardPurchaseCard({ item }: GiftCardPurchaseCardProps) {
           {/* Progress bar */}
           <div className="mt-1.5 h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-[#6571FF] to-[#5a66ee] transition-all duration-300"
+              className="h-full rounded-full bg-gradient-to-r from-primary to-[#5a66ee] transition-all duration-300"
               style={{ width: `${Math.max(0, 100 - redemptionPercent)}%` }}
             />
           </div>

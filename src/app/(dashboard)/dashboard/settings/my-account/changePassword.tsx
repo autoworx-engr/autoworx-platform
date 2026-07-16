@@ -118,7 +118,7 @@ export const ChangePassword = () => {
           <button
             onClick={handleChangePassword}
             disabled={isPending || !currentPw || !newPw || !confirmNewPw}
-            className="inline-flex items-center gap-2 rounded-lg bg-[#6571FF] px-6 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#5864e5] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#5864e5] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
           >
             {isPending ? "Saving…" : "Change Password"}
           </button>

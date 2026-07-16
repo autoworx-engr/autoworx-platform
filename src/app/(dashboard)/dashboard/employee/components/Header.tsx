@@ -30,10 +30,9 @@ export default function Header() {
   return (
     <div className="w-full bg-slate-50 dark:bg-slate-950 p-4 sm:p-6 rounded-3xl">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-start">
-
         {/* Header Section */}
         <div className="space-y-1 flex items-center gap-2">
-          <div className="flex flex-col gap-2 text-sm font-medium text-[#6571FF] mb-2">
+          <div className="flex flex-col gap-2 text-sm font-medium text-primary mb-2">
             <span className="px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-900/50 text-xs uppercase tracking-wider w-fit">
               Employee Management
             </span>
@@ -45,13 +44,15 @@ export default function Header() {
 
         {/* Navigation Section */}
         <nav className="w-full lg:w-auto">
-          <ul className="
+          <ul
+            className="
                 flex items-center gap-1.5 p-1.5 
                 overflow-x-auto no-scrollbar
                 rounded-2xl border border-slate-200 dark:border-slate-800 
                 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm
                 shadow-sm
-            ">
+            "
+          >
             {toggleButtons.map((button, index) => {
               const isActive = button.view === currentView;
               const Icon = button.icon;
@@ -63,15 +64,16 @@ export default function Header() {
                     onClick={() => setCurrentView(button.view)}
                     className={`
                             group relative flex items-center gap-2.5 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-300 ease-out
-                            ${isActive
-                        ? "text-white shadow-md shadow-indigo-500/25 ring-1 ring-black/5 translate-y-[-1px]"
-                        : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
-                      }
+                            ${
+                              isActive
+                                ? "text-white shadow-md shadow-indigo-500/25 ring-1 ring-black/5 translate-y-[-1px]"
+                                : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
+                            }
                         `}
                   >
                     {/* Animated Background for Active State */}
                     {isActive && (
-                      <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#6571FF] to-[#5a66ee] -z-10" />
+                      <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary to-[#5a66ee] -z-10" />
                     )}
 
                     {/* Icon */}
@@ -79,7 +81,7 @@ export default function Header() {
                       size={16}
                       className={`
                             transition-colors duration-300
-                            ${isActive ? "text-white" : "text-slate-400 group-hover:text-[#6571FF]"}
+                            ${isActive ? "text-white" : "text-slate-400 group-hover:text-primary"}
                         `}
                     />
 

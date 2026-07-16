@@ -155,7 +155,7 @@ export function CompanyCustomPlanDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="group flex items-center gap-2 rounded-xl bg-gradient-to-br from-[#6571FF] to-[#5a66ee] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-[#6571FF]/20 transition-all hover:-translate-y-0.5 hover:shadow-[#6571FF]/40 active:scale-95">
+        <button className="group flex items-center gap-2 rounded-xl bg-gradient-to-br from-primary to-[#5a66ee] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5 hover:shadow-primary/40 active:scale-95">
           <Settings2
             size={16}
             className="transition-transform group-hover:rotate-45"
@@ -204,7 +204,7 @@ export function CompanyCustomPlanDialog({
                 <select
                   value={selectedPlanId}
                   onChange={(e) => handlePlanChange(e.target.value)}
-                  className="w-full appearance-none rounded-xl border-none bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-[#6571FF] dark:bg-slate-900 dark:text-slate-200 dark:ring-slate-800"
+                  className="w-full appearance-none rounded-xl border-none bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-primary dark:bg-slate-900 dark:text-slate-200 dark:ring-slate-800"
                 >
                   {plans.map((plan) => (
                     <option key={plan.id} value={plan.id}>
@@ -223,7 +223,7 @@ export function CompanyCustomPlanDialog({
                 name="CUSTOM LABEL"
                 value={label}
                 onChange={(e: any) => setLabel(e.target.value)}
-                className="h-11 rounded-xl border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-[#6571FF] dark:ring-slate-800 px-4"
+                className="h-11 rounded-xl border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-primary dark:ring-slate-800 px-4"
               />
             </div>
 
@@ -259,7 +259,7 @@ export function CompanyCustomPlanDialog({
                 min="0"
                 value={trialMonths}
                 onChange={(e: any) => setTrialMonths(e.target.value)}
-                className="h-11 rounded-xl border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-[#6571FF] dark:ring-slate-800 px-4"
+                className="h-11 rounded-xl border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-primary dark:ring-slate-800 px-4"
               />
             </div>
           </div>
@@ -314,7 +314,7 @@ export function CompanyCustomPlanDialog({
                         onChange={(e: any) =>
                           handleFeatureChange(index, e.target.value)
                         }
-                        className="px-4 w-full h-9 rounded-lg border-none text-right font-mono text-[11px] font-bold text-[#6571FF] ring-1 ring-slate-200 focus:ring-2 focus:ring-[#6571FF] dark:ring-slate-700"
+                        className="px-4 w-full h-9 rounded-lg border-none text-right font-mono text-[11px] font-bold text-primary ring-1 ring-slate-200 focus:ring-2 focus:ring-primary dark:ring-slate-700"
                       />
                     )}
                   </div>

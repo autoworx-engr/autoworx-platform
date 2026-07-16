@@ -1,8 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useRef } from "react";
 import {
   AlertTriangle,
   Calendar,
@@ -14,6 +11,9 @@ import {
   Settings,
   ShoppingBag,
 } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useEffect, useMemo, useRef } from "react";
 
 type VirtualShopTabsProps = {
   shopId?: number;
@@ -107,14 +107,14 @@ export default function VirtualShopTabs({
                   }`}
                 >
                   {isActive && (
-                    <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#6571FF] to-[#5a66ee] -z-10" />
+                    <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary to-[#5a66ee] -z-10" />
                   )}
                   <Icon
                     size={18}
                     className={`transition-colors duration-300 ${
                       isActive
                         ? "text-white"
-                        : "text-slate-400 group-hover:text-[#6571FF]"
+                        : "text-slate-400 group-hover:text-primary"
                     }`}
                   />
                   <span className="whitespace-nowrap">{label}</span>

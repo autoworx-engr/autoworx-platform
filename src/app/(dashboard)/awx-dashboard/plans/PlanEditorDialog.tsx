@@ -63,7 +63,7 @@ export const PlanEditorDialog = ({
   onSave,
 }: Props) => {
   const controlClassName =
-    "h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 shadow-sm outline-none transition focus:border-[#6571FF] focus:ring-2 focus:ring-[#6571FF]/20";
+    "h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 shadow-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20";
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -426,7 +426,7 @@ export const PlanEditorDialog = ({
                     setPrice(e.target.value);
                     setFieldErrors((prev) => ({ ...prev, price: undefined }));
                   }}
-                  className={`${controlClassName} font-semibold text-[#6571FF] ${fieldErrors.price ? "border-red-400 focus:border-red-400 focus:ring-red-200" : ""}`}
+                  className={`${controlClassName} font-semibold text-primary ${fieldErrors.price ? "border-red-400 focus:border-red-400 focus:ring-red-200" : ""}`}
                 />
                 {fieldErrors.price && (
                   <p className="text-xs text-red-600">{fieldErrors.price}</p>
@@ -495,7 +495,7 @@ export const PlanEditorDialog = ({
                       onClick={() => setIsActive(val)}
                       className={`rounded-md text-xs font-semibold transition ${
                         isActive === val
-                          ? "bg-[#6571FF] text-white"
+                          ? "bg-primary text-white"
                           : "text-slate-500"
                       }`}
                     >
@@ -529,7 +529,7 @@ export const PlanEditorDialog = ({
                 className={`w-full rounded-lg border bg-white p-3 text-sm text-slate-700 shadow-sm outline-none transition focus:ring-2 ${
                   fieldErrors.description
                     ? "border-red-400 focus:border-red-400 focus:ring-red-200"
-                    : "border-slate-300 focus:border-[#6571FF] focus:ring-[#6571FF]/20"
+                    : "border-slate-300 focus:border-primary focus:ring-primary/20"
                 }`}
                 rows={3}
               />
@@ -543,10 +543,10 @@ export const PlanEditorDialog = ({
 
           <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-4">
             <div className="flex items-center justify-between">
-              <h4 className="text-xs font-semibold uppercase tracking-wide text-[#6571FF]">
+              <h4 className="text-xs font-semibold uppercase tracking-wide text-primary">
                 Entitlement Overrides
               </h4>
-              <span className="rounded-md bg-[#EEF2FF] px-2 py-0.5 text-xs font-semibold text-[#6571FF]">
+              <span className="rounded-md bg-[#EEF2FF] px-2 py-0.5 text-xs font-semibold text-primary">
                 {features.length} features
               </span>
             </div>
@@ -582,7 +582,7 @@ export const PlanEditorDialog = ({
                             onClick={() => updateFeature(index, { value: val })}
                             className={`flex-1 rounded text-[11px] font-medium transition ${
                               feature.value === val
-                                ? "bg-[#6571FF] text-white"
+                                ? "bg-primary text-white"
                                 : "text-slate-500"
                             }`}
                           >
@@ -609,7 +609,7 @@ export const PlanEditorDialog = ({
                               }
                               className={`rounded-md border px-2 py-1 text-[10px] font-semibold capitalize transition ${
                                 isSelected
-                                  ? "border-[#6571FF] bg-[#6571FF] text-white"
+                                  ? "border-primary bg-primary text-white"
                                   : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
                               }`}
                             >
@@ -637,10 +637,10 @@ export const PlanEditorDialog = ({
                         onChange={(e: any) =>
                           updateFeature(index, { value: e.target.value })
                         }
-                        className={`w-full h-9 rounded-md border px-3 text-right text-sm text-[#6571FF] shadow-sm focus:ring-2 ${
+                        className={`w-full h-9 rounded-md border px-3 text-right text-sm text-primary shadow-sm focus:ring-2 ${
                           featureErrors[index]
                             ? "border-red-400 focus:border-red-400 focus:ring-red-200"
-                            : "border-slate-300 focus:border-[#6571FF] focus:ring-[#6571FF]/20"
+                            : "border-slate-300 focus:border-primary focus:ring-primary/20"
                         }`}
                       />
                     )}
@@ -683,7 +683,7 @@ export const PlanEditorDialog = ({
           <button
             onClick={handleSubmit}
             disabled={isSaving || !canSave}
-            className="flex items-center gap-2 rounded-md bg-[#6571FF] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#3730A3] disabled:opacity-60"
+            className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white transition hover:bg-[#3730A3] disabled:opacity-60"
           >
             {isSaving ? (
               <Loader2 size={14} className="animate-spin" />

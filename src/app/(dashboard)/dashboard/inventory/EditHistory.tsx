@@ -82,7 +82,7 @@ export default function EditHistory({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="text-[#6571FF]">
+        <button className="text-primary">
           <SquarePen size={20} />
         </button>
       </DialogTrigger>
@@ -150,7 +150,7 @@ export default function EditHistory({
             Cancel
           </DialogClose>
           <Submit
-            className="rounded-lg border bg-[#6571FF] px-5 py-2 text-white"
+            className="rounded-lg border bg-primary px-5 py-2 text-white"
             formAction={handleSubmit}
           >
             Submit

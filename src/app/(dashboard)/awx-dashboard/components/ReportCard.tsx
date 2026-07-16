@@ -27,7 +27,7 @@ const ReportCard = ({ report }: ReportCardProps) => {
         e.stopPropagation();
         setSelectedContact(report);
       }}
-      className="rounded-xl  mr-8 md:mr-2 bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+      className="rounded-xl  mr-8 md:mr-2 bg-gradient-to-r from-primary to-[#5a66ee]
                 shadow-[0_4px_14px_0_rgba(101,113,255,0.39)]
                 hover:shadow-[0_6px_20px_rgba(101,113,255,0.23)]
                 hover:-translate-y-0.5
@@ -38,7 +38,7 @@ const ReportCard = ({ report }: ReportCardProps) => {
     </button>
   );
   return (
-    <div className="relative rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm p-4 transition-all duration-300 hover:shadow-lg hover:shadow-slate-300/50 dark:hover:shadow-slate-900/50 hover:ring-2 hover:ring-[#6571FF]/20 hover:-translate-y-0.5">
+    <div className="relative rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm p-4 transition-all duration-300 hover:shadow-lg hover:shadow-slate-300/50 dark:hover:shadow-slate-900/50 hover:ring-2 hover:ring-primary/20 hover:-translate-y-0.5">
       <div className="flex items-center justify-between gap-6">
         <div className="min-w-0 flex-1 ">
           {/* Report Subject */}
@@ -69,7 +69,7 @@ const ReportCard = ({ report }: ReportCardProps) => {
         </div>
       </div>
       {/* Primary accent color bar for visual hierarchy and importance */}
-      <div className="absolute right-0 top-1/2 h-[90%] w-1 -translate-y-1/2 rounded-l-3xl bg-gradient-to-r from-[#6571FF] to-[#5a66ee]"></div>
+      <div className="absolute right-0 top-1/2 h-[90%] w-1 -translate-y-1/2 rounded-l-3xl bg-gradient-to-r from-primary to-[#5a66ee]"></div>
       <div className="shrink-0 pt-0.5">
         <ViewButton />
       </div>

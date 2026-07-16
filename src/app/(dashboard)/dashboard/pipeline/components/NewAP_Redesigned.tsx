@@ -333,7 +333,7 @@
 //         <DialogTrigger asChild>
 //           <button
 //             type="button"
-//             className="app-shadow rounded-md bg-[#6571FF] p-2 text-xs text-white sm:text-sm"
+//             className="app-shadow rounded-md bg-primary p-2 text-xs text-white sm:text-sm"
 //           >
 //             New Appointment
 //           </button>
@@ -532,7 +532,7 @@
 //                 openState={[draftOpen, setDraftOpen]}
 //                 newButton={
 //                   <button
-//                     className="text-[#6571FF] disabled:text-zinc-400"
+//                     className="text-primary disabled:text-zinc-400"
 //                     onClick={() => {
 //                       setDraft(customAlphabet("1234567890", 10)());
 //                       setDraftOpen(false);
@@ -546,7 +546,7 @@
 //                 items={draftEstimates}
 //                 selectedItem={draft}
 //                 setSelectedItem={setDraft}
-//                 displayList={(item) => <p className="text-[#6571FF]">{item}</p>}
+//                 displayList={(item) => <p className="text-primary">{item}</p>}
 //                 onSearch={(search) => {
 //                   return draftEstimates.filter((draft) =>
 //                     draft.toLowerCase().includes(search.toLowerCase()),
@@ -638,7 +638,7 @@
 //               </button>
 //             </DialogClose>
 //             <Submit
-//               className="rounded-md border bg-[#6571FF] px-4 py-1 text-white"
+//               className="rounded-md border bg-primary px-4 py-1 text-white"
 //               formAction={handleSubmit}
 //             >
 //               Save

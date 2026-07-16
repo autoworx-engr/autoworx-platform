@@ -100,7 +100,7 @@ export default function DirectShareButton({
     <div className="flex items-center gap-x-3">
       <button
         className={cn(
-          "flex w-full items-center justify-center gap-2.5 whitespace-nowrap rounded-xl bg-slate-50 px-4 py-2.5 text-sm font-bold text-slate-500 ring-1 ring-inset ring-slate-200 transition-all hover:bg-[#6571FF]/5 hover:text-[#6571FF] hover:ring-[#6571FF]/30 disabled:opacity-40 disabled:pointer-events-none active:scale-95",
+          "flex w-full items-center justify-center gap-2.5 whitespace-nowrap rounded-xl bg-slate-50 px-4 py-2.5 text-sm font-bold text-slate-500 ring-1 ring-inset ring-slate-200 transition-all hover:bg-primary/5 hover:text-primary hover:ring-primary/30 disabled:opacity-40 disabled:pointer-events-none active:scale-95",
         )}
         onClick={() =>
           startEmailTransition(() => handleSubmit({ type: "Email" }))
@@ -121,7 +121,7 @@ export default function DirectShareButton({
 
       <button
         className={cn(
-          "flex w-full items-center justify-center gap-2.5 whitespace-nowrap rounded-xl bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-500 ring-1 ring-inset ring-slate-200 transition-all hover:bg-[#6571FF]/5 hover:text-[#6571FF] hover:ring-[#6571FF]/30 disabled:opacity-40 disabled:pointer-events-none active:scale-95",
+          "flex w-full items-center justify-center gap-2.5 whitespace-nowrap rounded-xl bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-500 ring-1 ring-inset ring-slate-200 transition-all hover:bg-primary/5 hover:text-primary hover:ring-primary/30 disabled:opacity-40 disabled:pointer-events-none active:scale-95",
         )}
         onClick={() => startSmsTransition(() => handleSubmit({ type: "SMS" }))}
         disabled={pendingSms}
@@ -141,7 +141,7 @@ export default function DirectShareButton({
       {requestEstimate && (
         <button
           className={cn(
-            "flex w-full items-center justify-center gap-2.5 whitespace-nowrap rounded-xl bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-500 ring-1 ring-inset ring-slate-200 transition-all hover:bg-[#6571FF]/5 hover:text-[#6571FF] hover:ring-[#6571FF]/30 disabled:opacity-40 disabled:pointer-events-none active:scale-95",
+            "flex w-full items-center justify-center gap-2.5 whitespace-nowrap rounded-xl bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-500 ring-1 ring-inset ring-slate-200 transition-all hover:bg-primary/5 hover:text-primary hover:ring-primary/30 disabled:opacity-40 disabled:pointer-events-none active:scale-95",
           )}
           onClick={() =>
             startCollaborationTransition(() =>

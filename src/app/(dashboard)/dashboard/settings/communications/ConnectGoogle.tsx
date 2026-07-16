@@ -33,7 +33,7 @@ const ConnectGoogle = ({ company }: { company: Company | null }) => {
     return (
       <Link
         href={generateAuthURL()}
-        className="rounded-md bg-[#6571FF] px-10 py-1.5 text-white"
+        className="rounded-md bg-primary px-10 py-1.5 text-white"
       >
         Connect with Google
       </Link>
@@ -43,7 +43,7 @@ const ConnectGoogle = ({ company }: { company: Company | null }) => {
       <div className="flex items-center gap-5">
         <div className="flex flex-col gap-2">
           {/* <p className="text-gray-500">{company?.googleEmail}</p> */}
-          <p className="flex items-center text-[#6571FF]">
+          <p className="flex items-center text-primary">
             <span className="mr-2 text-green-500">
               <Check size={20} />
             </span>
@@ -53,7 +53,7 @@ const ConnectGoogle = ({ company }: { company: Company | null }) => {
 
         <Link
           href={generateAuthURL()}
-          className="rounded-md bg-[#6571FF] px-5 py-1.5 text-white"
+          className="rounded-md bg-primary px-5 py-1.5 text-white"
         >
           Reconnect
         </Link>
