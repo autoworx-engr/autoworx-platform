@@ -258,36 +258,6 @@ export async function newPayment({
           },
         });
 
-        sendPaymentReceivedNotification({
-          companyId: cId,
-          clientName:
-            `${invoice?.client?.firstName} ${invoice?.client?.lastName ?? ""}`.trim(),
-          amount: amount,
-          invoiceId: invoice.id,
-        }).catch((err) =>
-          console.error("sendPaymentReceivedNotification failed", err),
-        );
-
-        // invoice automation trigger
-        updateInvoiceAutomationTrigger({
-          companyId: invoice?.companyId!,
-          invoiceId: invoice?.id!,
-          columnId: invoice?.columnId!,
-          type: invoice?.type!,
-        }).catch((err) =>
-          console.error("updateInvoiceAutomationTrigger failed", err),
-        );
-
-        updateTagAutomationTrigger({
-          columnId: invoice?.columnId!,
-          companyId: invoice?.companyId!,
-          pipelineType: "SHOP",
-          conditionType: "post_tag",
-          invoiceId: invoice?.id!,
-        }).catch((err) =>
-          console.error("updateTagAutomationTrigger failed", err),
-        );
-
         return { newPayment, invoice };
       },
       {
@@ -295,6 +265,37 @@ export async function newPayment({
         maxWait: 6000, // 6 seconds
       },
     );
+
+    // Fire side effects only after the transaction has committed successfully,
+    // so a later rollback can't leave a notification/automation-trigger sent
+    // for a payment that never actually persisted.
+    sendPaymentReceivedNotification({
+      companyId: cId,
+      clientName:
+        `${invoice?.client?.firstName} ${invoice?.client?.lastName ?? ""}`.trim(),
+      amount: amount,
+      invoiceId: invoice.id,
+    }).catch((err) =>
+      console.error("sendPaymentReceivedNotification failed", err),
+    );
+
+    // invoice automation trigger
+    updateInvoiceAutomationTrigger({
+      companyId: invoice?.companyId!,
+      invoiceId: invoice?.id!,
+      columnId: invoice?.columnId!,
+      type: invoice?.type!,
+    }).catch((err) =>
+      console.error("updateInvoiceAutomationTrigger failed", err),
+    );
+
+    updateTagAutomationTrigger({
+      columnId: invoice?.columnId!,
+      companyId: invoice?.companyId!,
+      pipelineType: "SHOP",
+      conditionType: "post_tag",
+      invoiceId: invoice?.id!,
+    }).catch((err) => console.error("updateTagAutomationTrigger failed", err));
 
     revalidatePath("/dashboard/estimate/edit");
 
