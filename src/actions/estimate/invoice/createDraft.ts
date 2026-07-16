@@ -214,7 +214,9 @@ export async function createDraftEstimate({
       invoiceId: estimate.id,
       columnId: estimate.columnId!,
       type: estimate.type,
-    });
+    }).catch((err) =>
+      console.error("updateInvoiceAutomationTrigger failed", err),
+    );
 
     // send notification for invoice creation
     sendEstimateCreateNotification({
@@ -222,7 +224,9 @@ export async function createDraftEstimate({
       invoiceId: estimate.id,
       invoiceType: estimate.type,
       clientName: theClientOfLead?.firstName + " " + theClientOfLead?.lastName,
-    });
+    }).catch((err) =>
+      console.error("sendEstimateCreateNotification failed", err),
+    );
   } else {
     estimate = draftEstimate;
   }

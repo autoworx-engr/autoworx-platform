@@ -129,7 +129,9 @@ export const createLeadDraftEstimate = async function (
         invoiceType: response?.data.type,
         clientName:
           `${response?.data.client?.firstName ?? ""} ${response?.data.client?.lastName ?? ""}`.trim(),
-      });
+      }).catch((err) =>
+        console.error("sendEstimateCreateNotification failed", err),
+      );
     }
 
     return response;

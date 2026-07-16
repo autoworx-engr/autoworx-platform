@@ -81,7 +81,9 @@ export async function updateInvoiceStatus(
           companyId: updatedInvoice.companyId,
           invoiceId: updatedInvoice.id,
           clientName: `${updatedInvoice.client?.firstName} ${updatedInvoice.client?.lastName}`,
-        });
+        }).catch((err) =>
+          console.error("sendInvoiceDeliveredNotification failed", err),
+        );
       }
 
       await updateServiceAutomationTrigger({
