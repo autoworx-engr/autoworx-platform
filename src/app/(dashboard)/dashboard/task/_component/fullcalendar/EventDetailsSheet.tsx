@@ -144,6 +144,7 @@ export const EventDetailsSheet = ({
       queryKey: [appointmentQueryKey.allAppointments],
     });
     queryClient.invalidateQueries({ queryKey: taskQueryKey.allTaskByScroll });
+    queryClient.invalidateQueries({ queryKey: [taskQueryKey.userTasks] });
   };
 
   const handleTaskComplete = async () => {
@@ -164,7 +165,12 @@ export const EventDetailsSheet = ({
     const taskKeys = queryClient
       .getQueryCache()
       .getAll()
-      .filter((q) => (q.queryKey as unknown[])[0] === taskQueryKey.allTasks)
+      .filter((q) => {
+        const first = (q.queryKey as unknown[])[0];
+        return (
+          first === taskQueryKey.allTasks || first === taskQueryKey.userTasks
+        );
+      })
       .map((q) => q.queryKey as unknown[]);
 
     taskKeys.forEach(removeFromCache);
