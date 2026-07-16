@@ -1,5 +1,5 @@
+import { createSalesLeadFull } from "@/actions/pipelines/createSalesLeadFull";
 import { getLeadsWithCountOptimized } from "@/actions/pipelines/getLeads";
-import { db } from "@/lib/db";
 import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -249,28 +249,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let columnId: number | undefined = bodyColumnId;
-    if (!columnId) {
-      const defaultColumn = await db.column.findFirst({
-        where: { companyId, type: "sales", title: "New Leads" },
-        select: { id: true },
-      });
-      columnId = defaultColumn?.id;
-    }
-
-    const lead = await db.lead.create({
-      data: {
-        clientName,
-        clientEmail: clientEmail ?? null,
-        clientPhone: clientPhone ?? null,
-        countryCode: countryCode ?? "US",
-        vehicleInfo,
-        services,
-        source,
-        comments: comments ?? null,
-        companyId,
-        columnId: columnId ?? null,
-      },
+    const lead = await createSalesLeadFull({
+      companyId,
+      clientName,
+      clientEmail,
+      clientPhone,
+      countryCode,
+      vehicleInfo,
+      services,
+      source,
+      comments,
+      columnId: bodyColumnId,
     });
 
     return NextResponse.json({ success: true, data: lead }, { status: 201 });
