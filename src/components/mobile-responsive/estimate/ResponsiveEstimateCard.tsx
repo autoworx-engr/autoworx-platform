@@ -116,7 +116,7 @@ export default function ResponsiveEstimateCard({
         <Button variant="outline">
           <ConvertTo onConvert={onConvert} />
         </Button>
-        <Button className="bg-background">
+        <Button variant="outline">
           <Link
             href={`/dashboard/estimate/edit/${id}?clientId=${clientId}`}
             className="text-xl text-blue-600"
