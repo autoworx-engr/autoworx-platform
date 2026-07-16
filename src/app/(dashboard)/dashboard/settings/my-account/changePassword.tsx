@@ -1,5 +1,6 @@
 "use client";
 import { changePassword } from "@/actions/settings/myAccount";
+import { changePasswordValidationSchema } from "@/validations/schemas/settings/my-account/account.validation";
 import { SlimInput } from "@/components/SlimInput";
 import { errorToast, successToast } from "@/lib/toast";
 import { Eye, EyeOff } from "lucide-react";
@@ -17,8 +18,15 @@ export const ChangePassword = () => {
   const [isPending, startTransition] = useTransition();
 
   const handleChangePassword = () => {
-    if (newPw !== confirmNewPw) {
-      errorToast("Passwords do not match");
+    const validationResult = changePasswordValidationSchema.safeParse({
+      currentPassword: currentPw,
+      newPassword: newPw,
+      confirmNewPassword: confirmNewPw,
+    });
+
+    if (!validationResult.success) {
+      const errorMsg = validationResult.error.errors[0].message;
+      errorToast(errorMsg);
       return;
     }
     startTransition(async () => {
