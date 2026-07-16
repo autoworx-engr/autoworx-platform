@@ -12,6 +12,7 @@ import { cn } from "@/lib/cn";
 import { successToast } from "@/lib/toast";
 import { useChatTrackStore } from "@/stores/chatTrackStore";
 import { sendType } from "@/types/Chat";
+import { useQueryClient } from "@tanstack/react-query";
 import { Attachment, Group, User } from "@prisma/client";
 import { Popconfirm } from "antd";
 import { format } from "date-fns";
@@ -88,6 +89,7 @@ export default function MessageBox({
   );
 
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [showAttachment, setShowAttachment] = useState(false);
   const pathname = usePathname();
 
@@ -222,6 +224,8 @@ export default function MessageBox({
         setMessage("");
         setMultiAttachmentFile(null);
         setLastMessage(json.chatTrack);
+        queryClient.invalidateQueries({ queryKey: ["internal", "users"] });
+        queryClient.invalidateQueries({ queryKey: ["internal", "groups"] });
         router.refresh();
       } else {
         toast.error(json.message);
