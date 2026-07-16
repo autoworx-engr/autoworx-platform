@@ -104,7 +104,9 @@ export async function convertInvoice(
         invoiceId: updatedInvoiceData?.id!,
         columnId: updatedInvoiceData?.columnId!,
         type: updatedInvoiceData?.type!,
-      });
+      }).catch((err) =>
+        console.error("updateInvoiceAutomationTrigger failed", err),
+      );
 
       updateTagAutomationTrigger({
         columnId: updatedInvoiceData?.columnId!,
@@ -112,7 +114,9 @@ export async function convertInvoice(
         pipelineType: "SHOP",
         conditionType: "post_tag",
         invoiceId: updatedInvoiceData?.id!,
-      });
+      }).catch((err) =>
+        console.error("updateTagAutomationTrigger failed", err),
+      );
 
       await Promise.all(
         productsWithQuantity.map(async (product) => {
@@ -200,7 +204,9 @@ export async function convertInvoice(
           companyId: cId,
           invoiceId: updatedInvoiceData.id,
           invoiceType: updatedInvoiceData.type,
-        });
+        }).catch((err) =>
+          console.error("sendInvoiceConvertedNotification failed", err),
+        );
       }
 
       return updatedInvoiceData;

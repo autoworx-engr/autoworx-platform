@@ -616,7 +616,9 @@ export async function updateInvoice(
             companyId: updatedInvoice.companyId,
             invoiceId: updatedInvoice.id,
             clientName: `${updatedInvoice.client?.firstName} ${updatedInvoice.client?.lastName}`,
-          });
+          }).catch((err) =>
+            console.error("sendInvoiceDeliveredNotification failed", err),
+          );
         }
 
         if (invoice?.columnId !== updatedInvoice.columnId) {
@@ -626,7 +628,9 @@ export async function updateInvoice(
             invoiceId: updatedInvoice?.id!,
             columnId: updatedInvoice?.columnId!,
             type: updatedInvoice?.type!,
-          });
+          }).catch((err) =>
+            console.error("updateInvoiceAutomationTrigger failed", err),
+          );
         }
 
         if (updatedInvoice.type === "Invoice" && invoice?.type === "Estimate") {
@@ -634,7 +638,9 @@ export async function updateInvoice(
             companyId: updatedInvoice?.companyId,
             estimateId: updatedInvoice?.id,
             columnId: updatedInvoice?.columnId!,
-          });
+          }).catch((err) =>
+            console.error("updateServiceAutomationTrigger failed", err),
+          );
         }
 
         return updatedInvoice;

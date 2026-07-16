@@ -264,7 +264,9 @@ export async function newPayment({
             `${invoice?.client?.firstName} ${invoice?.client?.lastName ?? ""}`.trim(),
           amount: amount,
           invoiceId: invoice.id,
-        });
+        }).catch((err) =>
+          console.error("sendPaymentReceivedNotification failed", err),
+        );
 
         // invoice automation trigger
         updateInvoiceAutomationTrigger({
@@ -272,7 +274,9 @@ export async function newPayment({
           invoiceId: invoice?.id!,
           columnId: invoice?.columnId!,
           type: invoice?.type!,
-        });
+        }).catch((err) =>
+          console.error("updateInvoiceAutomationTrigger failed", err),
+        );
 
         updateTagAutomationTrigger({
           columnId: invoice?.columnId!,
@@ -280,7 +284,9 @@ export async function newPayment({
           pipelineType: "SHOP",
           conditionType: "post_tag",
           invoiceId: invoice?.id!,
-        });
+        }).catch((err) =>
+          console.error("updateTagAutomationTrigger failed", err),
+        );
 
         return { newPayment, invoice };
       },
