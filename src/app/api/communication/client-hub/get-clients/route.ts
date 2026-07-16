@@ -206,7 +206,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const companyId = parseInt(searchParams.get("companyId") || "0");
     const filter = searchParams.get("filter") || undefined;
-    const search = searchParams.get("search") || undefined;
+    const search = (searchParams.get("search") || "").trim() || undefined;
     const takeParam = searchParams.get("take");
     const take = takeParam ? parseInt(takeParam) : undefined;
     const userId = searchParams.get("userId");

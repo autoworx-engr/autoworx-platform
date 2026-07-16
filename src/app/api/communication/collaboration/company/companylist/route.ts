@@ -46,40 +46,56 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const pageNum = parseInt(searchParams.get("page") || "1");
     const limitNum = parseInt(searchParams.get("limit") || "20");
-    const search = normalizeCollaborationSearch(
-      searchParams.get("search") || "",
-    );
+    const term = normalizeCollaborationSearch(searchParams.get("search") || "");
+    const words = term.split(/\s+/).filter(Boolean);
     const skip = (pageNum - 1) * limitNum;
     const authHeader = request.headers.get("authorization") ?? "";
 
-    const companySearchCondition: Prisma.CompanyWhereInput = search
+    const userWordCondition = (word: string): Prisma.UserWhereInput => ({
+      OR: [
+        { firstName: { contains: word, mode: "insensitive" } },
+        { lastName: { contains: word, mode: "insensitive" } },
+        { email: { contains: word, mode: "insensitive" } },
+      ],
+    });
+
+    // Match each word independently so a multi-word query like "Auto worx"
+    // (name "Auto Worx") or a cross-entity "Acme John" still matches, and so
+    // extra/leading/trailing spaces don't break search. Each word must match
+    // the company name or one of its admins; different words may match
+    // different places.
+    const companySearchCondition: Prisma.CompanyWhereInput = words.length
       ? {
-          OR: [
-            { name: { contains: search, mode: "insensitive" } },
-            {
-              users: {
-                some: {
-                  employeeType: "Admin",
-                  OR: [
-                    { firstName: { contains: search, mode: "insensitive" } },
-                    { lastName: { contains: search, mode: "insensitive" } },
-                    { email: { contains: search, mode: "insensitive" } },
-                  ],
+          AND: words.map(
+            (word): Prisma.CompanyWhereInput => ({
+              OR: [
+                { name: { contains: word, mode: "insensitive" } },
+                {
+                  users: {
+                    some: {
+                      employeeType: "Admin",
+                      ...userWordCondition(word),
+                    },
+                  },
                 },
-              },
-            },
-          ],
+              ],
+            }),
+          ),
         }
       : {};
 
-    const userSearchCondition: Prisma.UserWhereInput = search
+    const userSearchCondition: Prisma.UserWhereInput = words.length
       ? {
-          OR: [
-            { firstName: { contains: search, mode: "insensitive" } },
-            { lastName: { contains: search, mode: "insensitive" } },
-            { email: { contains: search, mode: "insensitive" } },
-            { company: { name: { contains: search, mode: "insensitive" } } },
-          ],
+          AND: words.map(
+            (word): Prisma.UserWhereInput => ({
+              OR: [
+                { firstName: { contains: word, mode: "insensitive" } },
+                { lastName: { contains: word, mode: "insensitive" } },
+                { email: { contains: word, mode: "insensitive" } },
+                { company: { name: { contains: word, mode: "insensitive" } } },
+              ],
+            }),
+          ),
         }
       : {};
 
