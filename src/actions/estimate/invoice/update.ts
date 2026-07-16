@@ -607,36 +607,6 @@ export async function updateInvoice(
           },
         });
 
-        if (
-          invoice?.column?.title !== "Delivered" &&
-          column?.title === "Delivered"
-        ) {
-          // send notification when invoice is delivered
-          sendInvoiceDeliveredNotification({
-            companyId: updatedInvoice.companyId,
-            invoiceId: updatedInvoice.id,
-            clientName: `${updatedInvoice.client?.firstName} ${updatedInvoice.client?.lastName}`,
-          });
-        }
-
-        if (invoice?.columnId !== updatedInvoice.columnId) {
-          // if invoice status update invoice automation trigger
-          updateInvoiceAutomationTrigger({
-            companyId: updatedInvoice?.companyId!,
-            invoiceId: updatedInvoice?.id!,
-            columnId: updatedInvoice?.columnId!,
-            type: updatedInvoice?.type!,
-          });
-        }
-
-        if (updatedInvoice.type === "Invoice" && invoice?.type === "Estimate") {
-          updateServiceAutomationTrigger({
-            companyId: updatedInvoice?.companyId,
-            estimateId: updatedInvoice?.id,
-            columnId: updatedInvoice?.columnId!,
-          });
-        }
-
         return updatedInvoice;
       },
       {
@@ -645,6 +615,45 @@ export async function updateInvoice(
         isolationLevel: "Serializable", // Ensure data consistency
       },
     );
+
+    // Fire side effects only after the transaction has committed successfully,
+    // so a later rollback can't leave a notification/automation-trigger sent
+    // for a write that never actually persisted.
+    if (
+      invoice?.column?.title !== "Delivered" &&
+      column?.title === "Delivered"
+    ) {
+      // send notification when invoice is delivered
+      sendInvoiceDeliveredNotification({
+        companyId: updatedInvoice.companyId,
+        invoiceId: updatedInvoice.id,
+        clientName: `${updatedInvoice.client?.firstName} ${updatedInvoice.client?.lastName}`,
+      }).catch((err) =>
+        console.error("sendInvoiceDeliveredNotification failed", err),
+      );
+    }
+
+    if (invoice?.columnId !== updatedInvoice.columnId) {
+      // if invoice status update invoice automation trigger
+      updateInvoiceAutomationTrigger({
+        companyId: updatedInvoice?.companyId!,
+        invoiceId: updatedInvoice?.id!,
+        columnId: updatedInvoice?.columnId!,
+        type: updatedInvoice?.type!,
+      }).catch((err) =>
+        console.error("updateInvoiceAutomationTrigger failed", err),
+      );
+    }
+
+    if (updatedInvoice.type === "Invoice" && invoice?.type === "Estimate") {
+      updateServiceAutomationTrigger({
+        companyId: updatedInvoice?.companyId,
+        estimateId: updatedInvoice?.id,
+        columnId: updatedInvoice?.columnId!,
+      }).catch((err) =>
+        console.error("updateServiceAutomationTrigger failed", err),
+      );
+    }
 
     // task create or update this section
     const invoiceTasks = await Promise.all(

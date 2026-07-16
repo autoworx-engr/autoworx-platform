@@ -514,14 +514,18 @@ export async function createInvoice({
       invoiceId: invoice.id,
       invoiceType: invoice.type,
       clientName: invoice.client?.firstName + " " + invoice.client?.lastName,
-    });
+    }).catch((err) =>
+      console.error("sendEstimateCreateNotification failed", err),
+    );
 
     if (invoice.type == "Invoice") {
       updateServiceAutomationTrigger({
         companyId: invoice?.companyId,
         estimateId: invoice?.id,
         columnId: invoice?.columnId!,
-      });
+      }).catch((err) =>
+        console.error("updateServiceAutomationTrigger failed", err),
+      );
 
       updateTagAutomationTrigger({
         columnId: invoice?.columnId!,
@@ -529,7 +533,9 @@ export async function createInvoice({
         pipelineType: "SHOP",
         conditionType: "post_tag",
         invoiceId: invoice?.id,
-      });
+      }).catch((err) =>
+        console.error("updateTagAutomationTrigger failed", err),
+      );
     }
 
     // If newly invoice created invoice automation trigger
@@ -538,7 +544,9 @@ export async function createInvoice({
       invoiceId: invoice?.id!,
       columnId: invoice?.columnId!,
       type: invoice?.type!,
-    });
+    }).catch((err) =>
+      console.error("updateInvoiceAutomationTrigger failed", err),
+    );
 
     // Step 12: Revalidate the estimate page
 
