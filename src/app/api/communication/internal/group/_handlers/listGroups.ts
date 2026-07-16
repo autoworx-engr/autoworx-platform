@@ -17,7 +17,7 @@ export async function listGroupsHandler(req: NextRequest) {
 
     const pageNum = parseInt(searchParams.get("page") || "1");
     const limitNum = parseInt(searchParams.get("limit") || "20");
-    const search = searchParams.get("search") || "";
+    const search = (searchParams.get("search") || "").trim();
     const sortByRaw = searchParams.get("sortBy") || "updatedAt";
     const sortOrderRaw = searchParams.get("sortOrder") || "desc";
     const sortBy = ALLOWED_SORT_FIELDS.has(sortByRaw) ? sortByRaw : "updatedAt";

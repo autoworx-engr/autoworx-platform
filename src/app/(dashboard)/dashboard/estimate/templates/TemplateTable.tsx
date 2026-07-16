@@ -45,7 +45,7 @@ export default function TemplateTable({ take, page, data }: TTableProps) {
   const [currentPage, setCurrentPage] = useState(parseInt(page ?? "", 10) || 1);
   const timezone = useCompanyTimezone();
   const [pageSize, setPageSize] = useState(
-    parseInt(take ?? "", 10) || defaultTake
+    parseInt(take ?? "", 10) || defaultTake,
   );
 
   const pathname = usePathname();
@@ -74,7 +74,7 @@ export default function TemplateTable({ take, page, data }: TTableProps) {
       const newPath = `${pathname}?${searchParams.toString()}`;
       router.push(newPath);
     },
-    [params, pathname, router]
+    [params, pathname, router],
   );
 
   async function handleDeleteTemplate(id: string) {
@@ -162,7 +162,7 @@ export default function TemplateTable({ take, page, data }: TTableProps) {
                       key={data.id}
                       className={cn(
                         "py-3",
-                        index % 2 === 0 ? evenColor : oddColor
+                        index % 2 === 0 ? evenColor : oddColor,
                       )}
                     >
                       <td className="px-4 py-2 text-left">{data.id}</td>
@@ -212,6 +212,7 @@ export default function TemplateTable({ take, page, data }: TTableProps) {
                           description="Are you sure to delete this estimate template?"
                           okText="Yes"
                           cancelText="No"
+                          placement="topLeft"
                           onConfirm={() => handleDeleteTemplate(data?.id)}
                         >
                           <button

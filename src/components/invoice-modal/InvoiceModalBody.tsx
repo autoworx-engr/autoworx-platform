@@ -1391,7 +1391,7 @@ export default function InvoiceModalBody({
                 )}
             </div>
           )}
-          <p className="font-semibold">Powered by Autoworx.</p>
+          <p className="font-semibold">Powered by Autoworx</p>
         </div>
 
         <div className="flex w-full flex-col gap-1 space-y-1 md:flex md:h-[95vh] md:w-[394px] md:shrink md:grow-0 md:gap-4 md:space-y-0 md:overflow-y-auto print:hidden">

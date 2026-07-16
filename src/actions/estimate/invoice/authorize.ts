@@ -129,13 +129,17 @@ export async function authorizeInvoice(
         authorizedName,
         companyId: updatedInvoice.companyId,
         clientName,
-      });
+      }).catch((err) =>
+        console.error("sendInvoiceAuthorizeNotification failed", err),
+      );
       sendInvoiceConvertedNotification({
         invoiceId: updatedInvoice.id,
         clientName,
         companyId: updatedInvoice.companyId,
         invoiceType: updatedInvoice.type,
-      });
+      }).catch((err) =>
+        console.error("sendInvoiceConvertedNotification failed", err),
+      );
 
       await authorizedLeadsConvertion(updatedInvoice.id);
       // await updateServiceAutomationTrigger({
