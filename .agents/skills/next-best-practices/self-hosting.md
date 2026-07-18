@@ -48,7 +48,7 @@ RUN npm run build
 FROM base AS runner
 WORKDIR /app
 
-ENV NODE_ENV=production
+ENV APP_ENV=production
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs
@@ -79,7 +79,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NODE_ENV=production
+      - APP_ENV=production
     restart: unless-stopped
     healthcheck:
       test:
@@ -103,7 +103,7 @@ module.exports = {
       instances: "max",
       exec_mode: "cluster",
       env: {
-        NODE_ENV: "production",
+        APP_ENV: "production",
         PORT: 3000,
       },
     },

@@ -1,8 +1,8 @@
+import { showOneSignalErrorToast } from "@/components/ui/CustomToast";
 import detectBrowser from "@/utils/detectBrowser";
+import { isIosPwa } from "@/utils/isIosPwa";
 import OneSignal from "react-onesignal";
 import { successToast } from "../toast";
-import { isIosPwa } from "@/utils/isIosPwa";
-import { showOneSignalErrorToast } from "@/components/ui/CustomToast";
 
 // Environment validation
 const ONESIGNAL_APP_ID = process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID as string;
@@ -68,7 +68,7 @@ async function initializeOneSignal(
       autoRegister: true,
       safari_web_id: ONESIGNAL_SAFARI_WEB_ID,
       persistNotification: true,
-      allowLocalhostAsSecureOrigin: process.env.NODE_ENV === "development",
+      allowLocalhostAsSecureOrigin: process.env.APP_ENV === "development",
       requiresUserPrivacyConsent: false,
       notifyButton: {
         enable: true,
@@ -98,7 +98,7 @@ async function initializeOneSignal(
 
   // Set log level based on environment
   OneSignal.Debug.setLogLevel(
-    process.env.NODE_ENV === "development" ? "debug" : "error",
+    process.env.APP_ENV === "development" ? "debug" : "error",
   );
 
   console.log("OneSignal initialized successfully");
@@ -164,4 +164,4 @@ export const initOneSignal = async (
 };
 
 // Export utility functions for potential use elsewhere
-export { isWebPushSupported, checkServiceWorkerStatus };
+export { checkServiceWorkerStatus, isWebPushSupported };

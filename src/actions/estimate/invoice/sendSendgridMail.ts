@@ -60,7 +60,7 @@
 
 //       // mailSettings: {
 //       //   sandboxMode: {
-//       //     enable: process.env.NODE_ENV === "development", // Enable sandbox mode in development
+//       //     enable: process.env.APP_ENV === "development", // Enable sandbox mode in development
 //       //   },
 //       // },
 //       // trackingSettings: {
@@ -209,7 +209,7 @@
 //       attachments: attachments.length > 0 ? attachments : undefined,
 //       mailSettings: {
 //         sandboxMode: {
-//           enable: process.env.NODE_ENV === "development",
+//           enable: process.env.APP_ENV === "development",
 //         },
 //       },
 //       trackingSettings: {

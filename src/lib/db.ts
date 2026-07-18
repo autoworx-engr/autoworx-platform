@@ -1,7 +1,7 @@
-import "server-only";
-import "dotenv/config";
-import { PrismaClient, Prisma } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { Prisma, PrismaClient } from "@prisma/client";
+import "dotenv/config";
+import "server-only";
 
 // Highly optimized serializer
 function serializeResult(input: any): any {
@@ -77,7 +77,7 @@ const globalForPrisma = globalThis as unknown as {
 export const db = (globalForPrisma.prisma ||
   extendedPrisma) as unknown as PrismaClient;
 
-if (process.env.NODE_ENV !== "production") {
+if (process.env.APP_ENV !== "production") {
   globalForPrisma.prisma = extendedPrisma;
 }
 
@@ -97,6 +97,6 @@ export type TransactionClient = Prisma.TransactionClient;
 
 // export const db = globalForPrisma.prisma ?? new PrismaClient();
 
-// if (process.env.NODE_ENV !== "production") {
+// if (process.env.APP_ENV !== "production") {
 //   globalForPrisma.prisma = db;
 // }

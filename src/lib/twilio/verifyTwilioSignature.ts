@@ -22,7 +22,7 @@ export async function verifyTwilioSignature(
   authToken: string | null | undefined,
 ): Promise<VerifyResult> {
   if (!authToken) {
-    if (process.env.NODE_ENV === "production") {
+    if (process.env.APP_ENV === "production") {
       console.warn(
         "[twilio] authToken missing; skipping webhook signature verification (configure TwilioCredentials.authToken to enable).",
       );

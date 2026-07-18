@@ -2,11 +2,11 @@ import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 import { PUBLIC_API_ROUTES, PUBLIC_ROUTES } from "./constants/public-route";
 import { jwtVerifyToken } from "./lib/jwtVerify";
-import { isDynamicPublicApiRoute } from "./utils/isDynamicPublicApiRoute";
 import { rootDomain } from "./lib/subdomains";
 import { asyncLocalStorage } from "./middleware/requestId";
+import { isDynamicPublicApiRoute } from "./utils/isDynamicPublicApiRoute";
 
-const isProduction = process.env.NODE_ENV === "production";
+const isProduction = process.env.APP_ENV === "production";
 
 /**
  * Generate a request ID (matches UUID v4 format)

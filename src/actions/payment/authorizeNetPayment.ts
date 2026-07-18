@@ -1,10 +1,10 @@
 "use server";
 
 import { db } from "@/lib/db";
+import { PaymentLink, PaymentParams } from "@/lib/payment-gateway";
 const ApiContracts = require("authorizenet").APIContracts;
 const ApiControllers = require("authorizenet").APIControllers;
 const SDKConstants = require("authorizenet").Constants;
-import { PaymentParams, PaymentLink } from "@/lib/payment-gateway";
 
 /**
  * Create Authorize.Net payment form token using Accept Hosted
@@ -390,7 +390,7 @@ export const createAuthorizeNetPaymentLink = async ({
       );
 
       // Set endpoint to production or sandbox. We intentionally
-      // do NOT fall back to NODE_ENV here; if
+      // do NOT fall back to APP_ENV here; if
       // AUTHORIZE_NET_ENVIRONMENT is not explicitly set to
       // "production", we default to sandbox so that sandbox
       // credentials are never sent to production hosts by

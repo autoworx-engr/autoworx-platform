@@ -38,7 +38,7 @@ export async function GET() {
   // Store state in HTTP-only cookie — verified in /api/instagram/callback
   response.cookies.set(STATE_COOKIE, state, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: process.env.APP_ENV === "production",
     sameSite: "lax",
     maxAge: 600, // 10 minutes — enough time to complete OAuth
     path: "/",

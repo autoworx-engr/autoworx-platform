@@ -36,7 +36,7 @@ const nextConfig = {
   },
   serverExternalPackages: ["pg-boss"],
   reactStrictMode: false,
-  productionBrowserSourceMaps: process.env.NODE_ENV === "development",
+  productionBrowserSourceMaps: process.env.APP_ENV === "development",
   allowedDevOrigins: [
     "*.ngrok-free.app",
     "localhost:3000",

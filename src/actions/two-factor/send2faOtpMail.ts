@@ -1,15 +1,15 @@
 "use server";
 
 import { db } from "@/lib/db";
+import { TWO_FACTOR_CONFIG } from "@/types/two-factor";
 import {
   generateOTP,
   generateSessionId,
   getExpiryTime,
   hashOTP,
 } from "@/utils/otp";
-import { sendOTPEmail } from "./send2faMail";
 import { cookies } from "next/headers";
-import { TWO_FACTOR_CONFIG } from "@/types/two-factor";
+import { sendOTPEmail } from "./send2faMail";
 
 type TSend2faOtp = {
   userId: number;
@@ -84,7 +84,7 @@ export default async function send2faOtpMail({ userId, email }: TSend2faOtp) {
     // Attackers can't read this via JS
     (await cookies()).set("2fa_session", sessionId, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.APP_ENV === "production",
       sameSite: "strict",
       maxAge: TWO_FACTOR_CONFIG.expiryMinutes * 60,
     });

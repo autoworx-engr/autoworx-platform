@@ -1,10 +1,10 @@
-import { ZodError } from "zod";
-import handleZodError from "./handleZodErrors";
-import httpStatus from "http-status";
-import { AppError } from "./error";
 import { TErrorHandler } from "@/types/globalError";
-import { handlePrismaError } from "./handlePrismaError";
 import { AxiosError } from "axios";
+import httpStatus from "http-status";
+import { ZodError } from "zod";
+import { AppError } from "./error";
+import { handlePrismaError } from "./handlePrismaError";
+import handleZodError from "./handleZodErrors";
 import { queueProductionTelegramAlert } from "./sendProductionTelegramAlert";
 
 export type TErrorSource = {
@@ -79,7 +79,7 @@ export function normalizeGlobalError(error: any): TErrorHandler {
       prismaError?.statusCode && prismaError.statusCode < 500;
 
     message =
-      isUserFacingError || process.env.NODE_ENV === "development"
+      isUserFacingError || process.env.APP_ENV === "development"
         ? prismaError?.message!
         : "Internal server error";
     statusCode = prismaError?.statusCode || 500;
@@ -117,7 +117,7 @@ export function normalizeGlobalError(error: any): TErrorHandler {
     statusCode,
     message,
     errorSource,
-    stack: process.env.NODE_ENV === "development" ? error?.stack : null,
+    stack: process.env.APP_ENV === "development" ? error?.stack : null,
   };
 }
 

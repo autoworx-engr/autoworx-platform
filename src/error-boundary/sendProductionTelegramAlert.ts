@@ -3,12 +3,12 @@
  * Used by globalErrorHandler, telegramErrorHandler, and instrumentation.
  */
 
-import { sendTelegramAlert, formatTelegramErrorMessage } from "@/lib/telegram";
 import {
   generateErrorFingerprint,
-  shouldSendAlert,
   recordError,
+  shouldSendAlert,
 } from "@/lib/errorDeduplication";
+import { formatTelegramErrorMessage, sendTelegramAlert } from "@/lib/telegram";
 import { getCurrentRequestContext } from "@/middleware/requestId";
 
 export interface ProductionTelegramContext {
@@ -71,10 +71,10 @@ function generateFallbackRequestId(): string {
 
 /**
  * Telegram 5xx alerts run in production by default.
- * In development, set TELEGRAM_ALERTS_IN_DEV=true (or 1) to test without changing NODE_ENV.
+ * In development, set TELEGRAM_ALERTS_IN_DEV=true (or 1) to test without changing APP_ENV.
  */
 function telegramAlertsEnabledForCurrentEnv(): boolean {
-  if (process.env.NODE_ENV === "production") return true;
+  if (process.env.APP_ENV === "production") return true;
   const flag = process.env.TELEGRAM_ALERTS_IN_DEV;
   return flag === "true" || flag === "1";
 }

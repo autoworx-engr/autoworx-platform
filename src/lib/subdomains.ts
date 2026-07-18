@@ -1,5 +1,4 @@
-export const protocol =
-  process.env.NODE_ENV === "production" ? "https" : "http";
+export const protocol = process.env.APP_ENV === "production" ? "https" : "http";
 
 // Strip protocol and trailing slashes to prevent matching logic from breaking
 // if NEXT_PUBLIC_ROOT_DOMAIN is set incorrectly (e.g. "https://dev.autoworx.tech/")

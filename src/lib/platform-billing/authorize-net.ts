@@ -43,7 +43,7 @@ function getEnvironment() {
     return SDKConstants.endpoint.sandbox;
   }
 
-  return process.env.NODE_ENV === "production"
+  return process.env.APP_ENV === "production"
     ? SDKConstants.endpoint.production
     : SDKConstants.endpoint.sandbox;
 }
@@ -374,7 +374,7 @@ export async function validateCustomerPaymentProfile(
   const isLiveValidation =
     explicit === "production" ||
     explicit === "live" ||
-    (!explicit && process.env.NODE_ENV === "production");
+    (!explicit && process.env.APP_ENV === "production");
 
   const validateRequest =
     new ApiContracts.ValidateCustomerPaymentProfileRequest();
