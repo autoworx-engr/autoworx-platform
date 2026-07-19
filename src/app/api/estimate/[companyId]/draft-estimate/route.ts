@@ -100,6 +100,8 @@ export const POST = async (req: NextRequest) => {
           clientId,
           vehicleId,
           requestedServices: requestedServices as any,
+          cId: companyId,
+          uId: userId,
         })) as ServerAction)
       : await createLeadDraftEstimate({
           id: draftEstimateId,
