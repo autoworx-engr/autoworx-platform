@@ -124,6 +124,8 @@ export async function GET(
         isCollaborators: true,
         createdAt: true,
         updatedAt: true,
+        terms: true,
+        policy: true,
       },
     });
 
