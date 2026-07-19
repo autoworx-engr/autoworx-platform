@@ -53,10 +53,13 @@ export const sendNewAppointmentNotification = async ({
     }
 
     const formattedDate = moment(appointmentDate).format("MM-DD-YYYY");
-    const formattedTime = moment(startTime, "HH:mm").format("hh:mm A");
+    const timeMoment = moment(startTime, "HH:mm");
+    const timeText = timeMoment.isValid()
+      ? ` at ${timeMoment.format("hh:mm A")}`
+      : "";
     const description = clientName
-      ? `Appointment with ${clientName} on ${formattedDate} at ${formattedTime} has been created. Check your Autoworx calendar.`
-      : `Appointment ${title} on ${formattedDate} at ${formattedTime} has been created. Check your Autoworx calendar.`;
+      ? `Appointment with ${clientName} on ${formattedDate}${timeText} has been created. Check your Autoworx calendar.`
+      : `Appointment ${title} on ${formattedDate}${timeText} has been created. Check your Autoworx calendar.`;
 
     const sendNotiInfo = {
       title: "New Appointment",
@@ -130,10 +133,13 @@ export const sendNewTaskNotification = async ({
     const formattedDate = date.isValid()
       ? date.format("MM-DD-YYYY")
       : moment().format("MM-DD-YYYY");
-    const formattedTime = moment(startTime, "HH:mm").format("hh:mm A");
+    const timeMoment = moment(startTime, "HH:mm");
+    const timeText = timeMoment.isValid()
+      ? ` at ${timeMoment.format("hh:mm A")}`
+      : "";
     const description = clientName
-      ? `Task with ${clientName} on ${formattedDate} at ${formattedTime} has been created. Check your Autoworx calendar.`
-      : `Task ${title} on ${formattedDate} at ${formattedTime} has been created. Check your Autoworx calendar.`;
+      ? `Task with ${clientName} on ${formattedDate}${timeText} has been created. Check your Autoworx calendar.`
+      : `Task ${title} on ${formattedDate}${timeText} has been created. Check your Autoworx calendar.`;
 
     const sendNotiInfo = {
       title: "New Task",
@@ -199,7 +205,10 @@ export const sendAppointmentUpdateNotification = async ({
     }
 
     const formattedDate = moment(appointmentDate).format("YYYY-MM-DD");
-    const formattedTime = moment(startTime, "HH:mm").format("hh:mm A");
+    const timeMoment = moment(startTime, "HH:mm");
+    const timeText = timeMoment.isValid()
+      ? ` at ${timeMoment.format("hh:mm A")}`
+      : "";
 
     // new description
     const sendNotiInfo = {
@@ -208,8 +217,8 @@ export const sendAppointmentUpdateNotification = async ({
       type: "task",
       redirectUrl: `/dashboard/task/day?date=${formattedDate}`,
       description: clientName
-        ? `Appointment with ${clientName} on ${formattedDate} at ${formattedTime} has been created. Check your Autoworx calendar.`
-        : `Appointment ${title} on ${formattedDate} at ${formattedTime} has been updated. Check your Autoworx calendar.`,
+        ? `Appointment with ${clientName} on ${formattedDate}${timeText} has been created. Check your Autoworx calendar.`
+        : `Appointment ${title} on ${formattedDate}${timeText} has been updated. Check your Autoworx calendar.`,
     };
 
     const uniqueUsersToNotify = new Map<number, any>();
