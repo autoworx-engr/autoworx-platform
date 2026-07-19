@@ -138,10 +138,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const created = (result as { type: "success"; data: unknown }).data;
     return NextResponse.json({
       success: true,
       message: result.message ?? "Source added",
-      data: result.data,
+      data: created,
     });
   } catch (error: any) {
     return NextResponse.json(
