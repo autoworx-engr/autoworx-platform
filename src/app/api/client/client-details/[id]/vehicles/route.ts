@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
  * /api/client/client-details/{id}/vehicles:
  *   get:
  *     summary: Get client's vehicles and services (paginated)
- *     description: Retrieve a paginated list of the client's vehicles along with the list of services from the client's associated lead (if any).
+ *     description: Retrieve a paginated list of the client's vehicles along with the list of services from the client's associated lead (if any) merged with services found on the client's invoices.
  *     tags: [Clients]
  *     parameters:
  *       - in: path
@@ -94,7 +94,7 @@ import { db } from "@/lib/db";
  *                             format: date-time
  *                     services:
  *                       type: array
- *                       description: Services the client's lead is interested in (parsed from the lead's comma-separated services string). Empty array if the client has no associated lead.
+ *                       description: Unique list of service names — combining the lead's comma-separated services (if any) with service names from the client's invoice items.
  *                       items:
  *                         type: string
  *                       example: ["Oil Change", "Brake Repair", "Tire Rotation"]
@@ -156,7 +156,6 @@ export async function GET(
         { status: 404 },
       );
     }
-
     const leadPromise = client.leadId
       ? db.lead.findUnique({
           where: { id: client.leadId },
@@ -164,7 +163,14 @@ export async function GET(
         })
       : Promise.resolve(null);
 
-    const [vehicles, total, lead] = await Promise.all([
+    const invoicesPromise = db.invoice.findMany({
+      where: { clientId },
+      select: {
+        invoiceItems: { select: { service: { select: { name: true } } } },
+      },
+    });
+
+    const [vehicles, total, lead, invoices] = await Promise.all([
       db.vehicle.findMany({
         where: { clientId },
         orderBy: { createdAt: "desc" },
@@ -173,11 +179,21 @@ export async function GET(
       }),
       db.vehicle.count({ where: { clientId } }),
       leadPromise,
+      invoicesPromise,
     ]);
 
-    const services = lead?.services
-      ? lead.services.split(",").filter((s) => s.trim())
+    const leadServices = lead?.services
+      ? lead.services
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
       : [];
+
+    const invoiceServices = invoices
+      .flatMap((inv) => inv.invoiceItems.map((ii) => ii.service?.name))
+      .filter((name): name is string => !!name);
+
+    const services = Array.from(new Set([...leadServices, ...invoiceServices]));
 
     return NextResponse.json({
       success: true,
