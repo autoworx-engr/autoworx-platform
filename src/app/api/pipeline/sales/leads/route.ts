@@ -253,7 +253,7 @@ export async function POST(request: NextRequest) {
       companyId,
       clientName,
       clientEmail,
-      clientPhone: `${countryCode}${clientPhone}`,
+      clientPhone,
       countryCode,
       vehicleInfo,
       services,
