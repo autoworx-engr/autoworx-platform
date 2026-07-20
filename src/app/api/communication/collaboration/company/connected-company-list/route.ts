@@ -125,6 +125,7 @@ export async function GET(request: NextRequest) {
         select: {
           id: true,
           name: true,
+          image: true,
           users: {
             where: { employeeType: "Admin", ...userSearchCondition },
             select: {
@@ -231,6 +232,7 @@ export async function GET(request: NextRequest) {
         .map((user) => ({
           ...user,
           companyName: company.name,
+          companyImage: company.image,
           isConnected: connectedIds.has(user.companyId),
           companyStatus: joinStatus?.toLocaleLowerCase(),
           lastMessage: lastMessageByCompanyId.get(company.id) ?? null,
