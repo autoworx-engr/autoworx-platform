@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
  * /api/client/client-details/{id}/vehicles:
  *   get:
  *     summary: Get client's vehicles and services (paginated)
- *     description: Retrieve a paginated list of the client's vehicles along with the list of services from the client's associated lead (if any) merged with services found on the client's invoices.
+ *     description: Retrieve a paginated list of the client's vehicles (each with its own services, drawn from that vehicle's invoices) along with the list of services from the client's associated lead (if any).
  *     tags: [Clients]
  *     parameters:
  *       - in: path
@@ -92,9 +92,15 @@ import { db } from "@/lib/db";
  *                           updatedAt:
  *                             type: string
  *                             format: date-time
+ *                           services:
+ *                             type: array
+ *                             description: Unique list of service names from this vehicle's invoice items.
+ *                             items:
+ *                               type: string
+ *                             example: ["Oil Change", "Brake Repair"]
  *                     services:
  *                       type: array
- *                       description: Unique list of service names — combining the lead's comma-separated services (if any) with service names from the client's invoice items.
+ *                       description: Services the client's lead is interested in (parsed from the lead's comma-separated services string). Empty array if the client has no associated lead.
  *                       items:
  *                         type: string
  *                       example: ["Oil Change", "Brake Repair", "Tire Rotation"]
@@ -166,6 +172,7 @@ export async function GET(
     const invoicesPromise = db.invoice.findMany({
       where: { clientId },
       select: {
+        vehicleId: true,
         invoiceItems: { select: { service: { select: { name: true } } } },
       },
     });
@@ -182,23 +189,37 @@ export async function GET(
       invoicesPromise,
     ]);
 
-    const leadServices = lead?.services
+    const services = lead?.services
       ? lead.services
           .split(",")
           .map((s) => s.trim())
           .filter(Boolean)
       : [];
 
-    const invoiceServices = invoices
-      .flatMap((inv) => inv.invoiceItems.map((ii) => ii.service?.name))
-      .filter((name): name is string => !!name);
+    const invoiceServicesByVehicleId = new Map<number, string[]>();
+    for (const inv of invoices) {
+      if (!inv.vehicleId) continue;
+      const names = inv.invoiceItems
+        .map((ii) => ii.service?.name)
+        .filter((name): name is string => !!name);
+      if (!names.length) continue;
+      invoiceServicesByVehicleId.set(inv.vehicleId, [
+        ...(invoiceServicesByVehicleId.get(inv.vehicleId) ?? []),
+        ...names,
+      ]);
+    }
 
-    const services = Array.from(new Set([...leadServices, ...invoiceServices]));
+    const vehiclesWithServices = vehicles.map((vehicle) => ({
+      ...vehicle,
+      services: Array.from(
+        new Set(invoiceServicesByVehicleId.get(vehicle.id) ?? []),
+      ),
+    }));
 
     return NextResponse.json({
       success: true,
       data: {
-        vehicles,
+        vehicles: vehiclesWithServices,
         services,
       },
       pagination: {

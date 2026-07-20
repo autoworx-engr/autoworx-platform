@@ -18,6 +18,8 @@ type TCreateDaftEstimate = {
   clientId: number;
   vehicleId?: number;
   requestedServices?: TRequestedService[];
+  cId?: number;
+  uId?: number;
 };
 
 export async function createDraftEstimate({
@@ -25,12 +27,18 @@ export async function createDraftEstimate({
   clientId,
   vehicleId,
   requestedServices,
+  cId,
+  uId,
 }: TCreateDaftEstimate) {
   const session = await getServerSession(authOptions);
-  const companyId = session?.user.companyId;
+  const companyId = cId ?? session?.user.companyId;
+  const userId = uId ? uId : session?.user.id;
 
   if (!companyId) {
     throw new Error("Company ID is required to create an email template.");
+  }
+  if (!userId) {
+    throw new Error("User ID is required to create an email template.");
   }
 
   let estimate: Invoice;
@@ -172,7 +180,7 @@ export async function createDraftEstimate({
           type: "Estimate",
           clientId,
           vehicleId,
-          userId: session.user.id as any,
+          userId: Number(userId),
           companyId,
           columnId: columnId.id,
           invoiceItems: itemsToCreate,
@@ -184,7 +192,7 @@ export async function createDraftEstimate({
           id,
           type: "Estimate",
           clientId,
-          userId: session.user.id as any,
+          userId: Number(userId),
           companyId,
           columnId: columnId.id,
           invoiceItems: itemsToCreate,
