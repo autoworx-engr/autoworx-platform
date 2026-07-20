@@ -10,9 +10,13 @@ import { sourceValidationSchema } from "@/validations/schemas/client/source.vali
 
 export async function newSource(
   name: string,
+  forceCompanyId?: number,
 ): Promise<ServerAction | TErrorHandler> {
   try {
-    const companyId = await getCompanyId();
+    const companyId = forceCompanyId ?? (await getCompanyId());
+    if (!companyId) {
+      throw new Error("Company ID is required to create a source.");
+    }
     await sourceValidationSchema.parseAsync({ name });
 
     const source = await db.source.create({

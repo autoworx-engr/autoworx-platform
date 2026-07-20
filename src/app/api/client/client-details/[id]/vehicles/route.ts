@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
  * /api/client/client-details/{id}/vehicles:
  *   get:
  *     summary: Get client's vehicles and services (paginated)
- *     description: Retrieve a paginated list of the client's vehicles along with the list of services from the client's associated lead (if any).
+ *     description: Retrieve a paginated list of the client's vehicles (each with its own services, drawn from that vehicle's invoices) along with the list of services from the client's associated lead (if any).
  *     tags: [Clients]
  *     parameters:
  *       - in: path
@@ -92,6 +92,12 @@ import { db } from "@/lib/db";
  *                           updatedAt:
  *                             type: string
  *                             format: date-time
+ *                           services:
+ *                             type: array
+ *                             description: Unique list of service names from this vehicle's invoice items.
+ *                             items:
+ *                               type: string
+ *                             example: ["Oil Change", "Brake Repair"]
  *                     services:
  *                       type: array
  *                       description: Services the client's lead is interested in (parsed from the lead's comma-separated services string). Empty array if the client has no associated lead.
@@ -156,7 +162,6 @@ export async function GET(
         { status: 404 },
       );
     }
-
     const leadPromise = client.leadId
       ? db.lead.findUnique({
           where: { id: client.leadId },
@@ -164,7 +169,15 @@ export async function GET(
         })
       : Promise.resolve(null);
 
-    const [vehicles, total, lead] = await Promise.all([
+    const invoicesPromise = db.invoice.findMany({
+      where: { clientId },
+      select: {
+        vehicleId: true,
+        invoiceItems: { select: { service: { select: { name: true } } } },
+      },
+    });
+
+    const [vehicles, total, lead, invoices] = await Promise.all([
       db.vehicle.findMany({
         where: { clientId },
         orderBy: { createdAt: "desc" },
@@ -173,16 +186,40 @@ export async function GET(
       }),
       db.vehicle.count({ where: { clientId } }),
       leadPromise,
+      invoicesPromise,
     ]);
 
     const services = lead?.services
-      ? lead.services.split(",").filter((s) => s.trim())
+      ? lead.services
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
       : [];
+
+    const invoiceServicesByVehicleId = new Map<number, string[]>();
+    for (const inv of invoices) {
+      if (!inv.vehicleId) continue;
+      const names = inv.invoiceItems
+        .map((ii) => ii.service?.name)
+        .filter((name): name is string => !!name);
+      if (!names.length) continue;
+      invoiceServicesByVehicleId.set(inv.vehicleId, [
+        ...(invoiceServicesByVehicleId.get(inv.vehicleId) ?? []),
+        ...names,
+      ]);
+    }
+
+    const vehiclesWithServices = vehicles.map((vehicle) => ({
+      ...vehicle,
+      services: Array.from(
+        new Set(invoiceServicesByVehicleId.get(vehicle.id) ?? []),
+      ),
+    }));
 
     return NextResponse.json({
       success: true,
       data: {
-        vehicles,
+        vehicles: vehiclesWithServices,
         services,
       },
       pagination: {
