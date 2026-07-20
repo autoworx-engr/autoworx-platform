@@ -118,20 +118,21 @@ export default function Selector<T>({
 
   function handleSearchChange(e: ChangeEvent<HTMLInputElement>) {
     const searchQuery = e.target.value;
+    const trimmedQuery = searchQuery.trim();
     setSearchTerm(searchQuery);
     if (onSearch) {
-      setFilteredItems(onSearch(searchQuery));
+      setFilteredItems(onSearch(trimmedQuery));
     } else {
-      const searchedItems = searchQuery.trim()
+      const searchedItems = trimmedQuery
         ? items.filter(
             (item: any) =>
               item.clientName
                 ?.toLowerCase()
-                .includes(searchQuery.toLowerCase()) ||
+                .includes(trimmedQuery.toLowerCase()) ||
               item.id
                 ?.toString()
                 .toLowerCase()
-                .includes(searchQuery.toLowerCase()),
+                .includes(trimmedQuery.toLowerCase()),
           )
         : items;
       setFilteredItems(searchedItems);
