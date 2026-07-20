@@ -77,6 +77,8 @@ export async function getCurrentProjects(
         },
       },
       vehicle: true,
+      status: true,
+      column: true,
     },
   });
 
