@@ -183,7 +183,7 @@ export const sendCollaborationMessageNotification = async ({
     // Pass senderUserId from API routes (mobile app has no web session);
     // getUser() without an id falls back to the web session.
     const sender = await getUser(senderUserId);
-    const redirectUrl = `/dashboard/communication/collaboration`;
+    const redirectUrl = `/dashboard/communication/collaboration?companyId=${sender.companyId}`;
     const senderFullName = `${sender.firstName} ${sender.lastName}`;
     const description = `New collaboration message from ${senderFullName} in ${company?.name}. View it in Autoworx`;
     const title = "New Collaboration Message";

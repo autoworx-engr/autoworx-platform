@@ -39,12 +39,14 @@ export default function FilterBySearchBox({
       }
     }
 
-    // Keep canned list pagination behavior stable when search changes.
+    // Reset pagination to the first page whenever the search term changes,
+    // so matches on earlier pages aren't hidden behind the current page.
     if (paramKey === "laborSearch") {
       searchParams.set("laborPage", "1");
-    }
-    if (paramKey === "serviceSearch") {
+    } else if (paramKey === "serviceSearch") {
       searchParams.set("servicePage", "1");
+    } else {
+      searchParams.set("page", "1");
     }
 
     const newPath = `${pathname}?${searchParams.toString()}`;
