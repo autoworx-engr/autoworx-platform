@@ -21,8 +21,12 @@ export async function getBoss(): Promise<PgBoss> {
 
   await _boss.start();
 
-  // pg-boss v12 requires explicit queue creation before send/work
-  await _boss.createQueue(SMS_AGENT_QUEUE);
+  // pg-boss v12 requires explicit queue creation before send/work.
+  // policy: "exclusive" is required for singletonKey dedup to actually work —
+  // the default "standard" policy has no unique constraint covering
+  // created/retry/active states, so send() never returns null and a new job
+  // is created on every call regardless of singletonKey.
+  await _boss.createQueue(SMS_AGENT_QUEUE, { policy: "exclusive" });
   console.log("[PgBoss] Started — queue ready:", SMS_AGENT_QUEUE);
 
   return _boss;
