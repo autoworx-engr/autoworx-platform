@@ -10,19 +10,6 @@ export interface SmsAgentJobData {
   windowStart: string; // ISO timestamp — marks start of this debounce window
 }
 
-/**
- * Called on every incoming SMS from a client.
- *
- * Pass `windowStart` as the message's own `createdAt` so the first message
- * of a window is never missed by the worker's DB query.
- *
- * Uses pg-boss `singletonKey` to guarantee only ONE pending job per client:
- *   - First SMS of a window  → job created, fires in DEBOUNCE_SECONDS
- *   - Subsequent SMS in window → send() returns null (deduplicated, no new job)
- *   - Worker checks latest SMS time; if client still typing it requeues the job
- *     with a fresh delay, preserving the original windowStart so all messages
- *     in the window are combined when the agent is eventually called.
- */
 export async function debounceSmsAgent(params: {
   clientId: number;
   companyId: number;
