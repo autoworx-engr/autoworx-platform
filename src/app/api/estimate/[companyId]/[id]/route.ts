@@ -239,7 +239,15 @@ export async function GET(
         },
         photos: true,
         tasks: true,
-        payments: true,
+        payments: {
+          include: {
+            card: true,
+            check: true,
+            cash: true,
+            other: true,
+            deposit: true,
+          },
+        },
         tags: { include: { tag: true } },
         technician: true,
         Inspections: true,

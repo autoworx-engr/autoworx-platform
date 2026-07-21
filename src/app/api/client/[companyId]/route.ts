@@ -87,7 +87,7 @@ export async function GET(
     const companyId = jwtCompanyId;
 
     const { searchParams } = new URL(req.url);
-    const search = searchParams.get("search") || undefined;
+    const search = searchParams.get("search")?.trim() || undefined;
     const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
     const limit = Math.min(
       200,
