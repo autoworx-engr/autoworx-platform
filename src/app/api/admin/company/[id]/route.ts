@@ -126,6 +126,10 @@ export async function GET(
         updatedAt: true,
         terms: true,
         policy: true,
+        address: true,
+        city: true,
+        state: true,
+        zip: true,
       },
     });
 
