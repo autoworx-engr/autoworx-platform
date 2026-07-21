@@ -76,7 +76,11 @@ export default async function EstimatesPage(
 
       {/* Use the NavigationTabs component with the 'a-estimate' tab as active */}
       <NavigationTabs activeTab="a-estimate">
-        <Table estimateData={estimates} />
+        <Table
+          estimateData={estimates}
+          page={searchParams.page}
+          take={searchParams.take}
+        />
       </NavigationTabs>
     </div>
   );

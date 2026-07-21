@@ -85,7 +85,7 @@ export default function Table({
 
   // optimize calculation with useMemo
   const showPagination = useMemo(() => {
-    return estimateData.totalEstimate > defaultTake;
+    return estimateData.totalEstimate > 0;
   }, [estimateData.totalEstimate]);
 
   // for preventing unnecessary re-renders
