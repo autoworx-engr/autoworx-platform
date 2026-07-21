@@ -468,7 +468,7 @@ export async function GET(
       Math.max(1, parseInt(searchParams.get("limit") || "10")),
     );
     const skip = (page - 1) * limit;
-    const searchTerm = searchParams.get("searchTerm") || undefined;
+    const searchTerm = searchParams.get("searchTerm")?.trim() || undefined;
     const startDate = searchParams.get("startDate") || undefined;
     const endDate = searchParams.get("endDate") || undefined;
     const columnId = searchParams.get("columnId")
