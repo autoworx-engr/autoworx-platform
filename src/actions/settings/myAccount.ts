@@ -6,6 +6,7 @@ import { ServerAction } from "@/types/action";
 import { TErrorHandler } from "@/types/globalError";
 import {
   TUpdateUserValidationSchema,
+  changePasswordValidationSchema,
   updateUserValidationSchema,
 } from "@/validations/schemas/settings/my-account/account.validation";
 import bcrypt from "bcryptjs";
@@ -73,6 +74,12 @@ export async function changePassword(
   confirmNewPassword: string,
 ): Promise<ServerAction | TErrorHandler> {
   try {
+    await changePasswordValidationSchema.parseAsync({
+      currentPassword,
+      newPassword,
+      confirmNewPassword,
+    });
+
     const session = await getServerSession(authOptions);
     const userId = session?.user.id;
 
@@ -88,18 +95,11 @@ export async function changePassword(
     if (!user) {
       throw new Error("User not found");
     }
-    if (currentPassword === newPassword) {
-      throw new Error("New password cannot be same as current password");
-    }
 
     let comparePassword = await bcrypt.compare(currentPassword, user.password);
 
     if (!comparePassword) {
       throw new Error("Password is incorrect");
-    }
-
-    if (newPassword !== confirmNewPassword) {
-      throw new Error("Password don't match");
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);

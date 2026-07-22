@@ -334,7 +334,8 @@ export async function sendInfobipMessage({
           shouldSalesAgentStop &&
           client &&
           client?.isSalesAgent &&
-          !systemCall
+          !systemCall &&
+          process.env.APP_ENV === "production"
         ) {
           await tx.client.update({
             where: { id: clientId },
