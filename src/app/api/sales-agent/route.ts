@@ -44,8 +44,16 @@ import { sendTwilioMessageSalesAgent } from "@/actions/communication/client/send
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+    const tag = `[SalesAgentReply][companyId=${body.companyId}, clientId=${body.clientId}]`;
+
+    console.log(`${tag} reply webhook hit`, {
+      message: body.message,
+      attachments: body.attachments?.length ?? 0,
+      isSalesAgent: body.isSalesAgent,
+    });
 
     if (!body.companyId) {
+      console.error(`${tag} missing companyId — rejecting`);
       return NextResponse.json(
         { success: false, message: "Company id is required!" },
         { status: 404 },
@@ -56,9 +64,12 @@ export async function POST(req: NextRequest) {
       where: { id: Number(body.companyId) },
     });
 
+    console.log(`${tag} smsGateway=${companyInfo?.smsGateway}`);
+
     let data: any = null;
 
     if (companyInfo?.smsGateway === "TWILIO") {
+      console.log(`${tag} sending reply via Twilio`);
       data = await sendTwilioMessageSalesAgent({
         companyId: body.companyId,
         clientId: Number(body.clientId),
@@ -67,6 +78,7 @@ export async function POST(req: NextRequest) {
         isSalesAgent: Boolean(body.isSalesAgent),
       });
     } else {
+      console.log(`${tag} sending reply via Infobip`);
       data = await sendInfobipMessageSalesAgent({
         companyId: body.companyId,
         clientId: Number(body.clientId),
@@ -77,11 +89,14 @@ export async function POST(req: NextRequest) {
     }
 
     if (data?.success) {
+      console.log(`${tag} reply sent successfully`);
       return NextResponse.json({ success: true, data });
     } else {
+      console.error(`${tag} reply send failed`, data);
       return NextResponse.json({ ...data });
     }
   } catch (error: any) {
+    console.error("[SalesAgentReply] webhook error:", error);
     return NextResponse.json(
       { success: false, message: error.message },
       { status: 400 },
