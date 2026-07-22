@@ -5,7 +5,7 @@ import { sendClientMessageNotification } from "@/lib/notification/communication-
 import sendClientMailOrSMSNotify from "@/lib/pusher/client-conversation-notify";
 import receiveTwiloMessage from "@/lib/pusher/receiveTwiloMessage";
 import { getPusherInstance } from "@/lib/pusher/server";
-import { debounceSmsAgent } from "@/lib/pgboss/debounceSmsAgent";
+import { debounceSmsAgent } from "@/lib/salesAgent/debounceSmsAgent";
 import {
   normalizePhoneForStorage,
   phoneLookupWhereClause,

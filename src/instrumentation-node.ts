@@ -5,13 +5,6 @@
  */
 
 import { queueProductionTelegramAlert } from "./error-boundary/sendProductionTelegramAlert";
-import { startWorker } from "./workers/smsAgentWorker";
-
-// Start the pg-boss SMS agent worker inside the Next.js process.
-// pg-boss polls PostgreSQL internally — no separate Railway service needed.
-startWorker().catch((err) =>
-  console.error("[Instrumentation] SMS agent worker failed to start:", err),
-);
 
 function notify(
   reason: unknown,
