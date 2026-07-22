@@ -74,7 +74,14 @@ export async function POST(req: NextRequest) {
     const attachments = body.attachments ?? [];
     const messagesToSend = segments.length > 0 ? segments : [""];
 
-    console.log(`${tag} sending reply as ${messagesToSend.length} segment(s)`);
+    console.log(
+      `${tag} sending reply as ${messagesToSend.length} segment(s)`,
+      messagesToSend.map((s, i) => ({
+        segment: `${i + 1}/${messagesToSend.length}`,
+        length: s.length,
+        text: s,
+      })),
+    );
 
     let data: any = null;
 
@@ -83,11 +90,12 @@ export async function POST(req: NextRequest) {
       // Attachments ride along with the last segment only, so media isn't
       // duplicated across every text.
       const segmentAttachments = isLastSegment ? attachments : [];
+      const segmentLabel = `segment ${i + 1}/${messagesToSend.length} (len=${messagesToSend[i].length})`;
 
       if (companyInfo?.smsGateway === "TWILIO") {
-        console.log(
-          `${tag} sending reply segment ${i + 1}/${messagesToSend.length} via Twilio`,
-        );
+        console.log(`${tag} sending ${segmentLabel} via Twilio`, {
+          text: messagesToSend[i],
+        });
         data = await sendTwilioMessageSalesAgent({
           companyId: body.companyId,
           clientId: Number(body.clientId),
@@ -96,9 +104,9 @@ export async function POST(req: NextRequest) {
           isSalesAgent: Boolean(body.isSalesAgent),
         });
       } else {
-        console.log(
-          `${tag} sending reply segment ${i + 1}/${messagesToSend.length} via Infobip`,
-        );
+        console.log(`${tag} sending ${segmentLabel} via Infobip`, {
+          text: messagesToSend[i],
+        });
         data = await sendInfobipMessageSalesAgent({
           companyId: body.companyId,
           clientId: Number(body.clientId),
