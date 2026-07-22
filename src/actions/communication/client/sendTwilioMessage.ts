@@ -9,7 +9,6 @@ import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-servi
 import { revalidatePath } from "next/cache";
 import Twilio from "twilio";
 import { updateNewEmailChatTrack, updateNewSMSChatTrack } from "./chat-track";
-import { sendSMSToAgent } from "@/service/ai-agent/api";
 
 type TTwilioCredentials = {
   companyId?: number;
