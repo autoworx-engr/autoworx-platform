@@ -1,16 +1,3 @@
-/**
- * Splits a long outbound message into multiple SMS-sized segments.
- *
- * We send each segment as its own Twilio/Infobip message (not Twilio's
- * built-in multi-part concatenation), so the goal isn't the carrier's
- * 153/160-char GSM-7 rule — it's staying comfortably under the length that
- * makes carriers flag a single text as spam. Splitting is sentence-aware:
- * we cut at the nearest ". " / "! " / "? " at or before maxLength so a
- * sentence never gets torn in half across two texts. If no sentence
- * boundary exists in range (e.g. one long run-on sentence), we fall back
- * to the nearest word boundary, and only hard-cut mid-word as a last resort.
- */
-
 const DEFAULT_MAX_SEGMENT_LENGTH = 150;
 /** Below this fraction of maxLength, a sentence-boundary cut is too short to
  * be useful (would produce a tiny leading fragment) — prefer a word-boundary
@@ -21,7 +8,9 @@ export function segmentMessage(
   message: string | null | undefined,
   maxLength: number = DEFAULT_MAX_SEGMENT_LENGTH,
 ): string[] {
-  const text = (message ?? "").trim();
+  const text = normalizeSentenceSpacing(
+    normalizeGluedClauses((message ?? "").trim()),
+  );
   if (!text) return [];
   if (text.length <= maxLength) return [text];
 
@@ -43,6 +32,24 @@ export function segmentMessage(
 
   if (remaining) segments.push(remaining);
   return segments;
+}
+
+function normalizeGluedClauses(text: string): string {
+  return text.replace(
+    /([a-z]{2,}(?:ing|tion|sion|ment|ness|ance|ence|ous|ful|less|ly|ed))(?=[A-Z])/g,
+    "$1. ",
+  );
+}
+
+/**
+ * Inserts a space whenever "." / "!" / "?" / ":" is immediately followed by
+ * a capital letter with no space between them — the pattern the AI agent's
+ * output produces when it merges two sentences (or a list intro) together.
+ * Restricted to capital letters so numbers/decimals ("$89.99") and
+ * lowercase run-ons ("e.g.this") are left untouched.
+ */
+function normalizeSentenceSpacing(text: string): string {
+  return text.replace(/([.!?:])(?=[A-Z])/g, "$1 ");
 }
 
 /**
