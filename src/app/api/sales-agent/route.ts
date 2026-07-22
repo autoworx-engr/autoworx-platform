@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sendInfobipMessageSalesAgent } from "@/actions/communication/client/sendInfobipMessageSalesAgent";
 import { sendTwilioMessageSalesAgent } from "@/actions/communication/client/sendTwilioMessageSalesAgent";
-import { segmentMessage } from "@/lib/sms/segmentMessage";
+import { numberSmsSegments } from "@/lib/sms/numberSmsSegments";
 
 /**
  * @swagger
@@ -61,6 +61,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Require something to send: a non-empty (non-whitespace) message, or at
+    // least one attachment (attachment-only replies are valid). Reject early
+    // — before any DB/provider work — so an empty body never reaches the
+    // provider (Twilio rejects it with error 21602).
+    const hasMessage =
+      typeof body.message === "string" && body.message.trim().length > 0;
+
+    if (!hasMessage) {
+      console.error(`${tag} missing message — rejecting`);
+      return NextResponse.json(
+        { success: false, message: "Message is required!" },
+        { status: 400 },
+      );
+    }
+
     const companyInfo = await db.company.findFirst({
       where: { id: Number(body.companyId) },
     });
@@ -69,9 +84,14 @@ export async function POST(req: NextRequest) {
 
     // Carriers flag long single texts as spam, so a long AI-agent reply is
     // split into sentence-bounded chunks and sent as separate messages
-    // instead of relying on the agent's prompt to self-limit length.
-    const segments = segmentMessage(body.message);
+    // instead of relying on the agent's prompt to self-limit length. Each
+    // chunk is prefixed "(i/total)" because carriers don't guarantee delivery
+    // order for separate texts — the label lets the client read them in order.
+    const segments = numberSmsSegments(body.message);
     const attachments = body.attachments ?? [];
+
+    // Attachment-only replies (empty body validated above) send once with an
+    // empty body, which is a valid MMS.
     const messagesToSend = segments.length > 0 ? segments : [""];
 
     console.log(
