@@ -15,9 +15,15 @@ export async function debounceSmsAgent(
   params: SmsAgentDebounceParams,
 ): Promise<void> {
   const { clientId, companyId, sendFrom, sendTo, windowStart } = params;
+  const tag = `[sms-agent][clientId=${clientId}]`;
+  const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/sms-agent/debounce`;
+
+  console.log(
+    `${tag} triggering automation-backend debounce — url=${url} from=${sendFrom} to=${sendTo}`,
+  );
 
   try {
-    await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/sms-agent/debounce`, {
+    const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -28,7 +34,20 @@ export async function debounceSmsAgent(
         windowStart: windowStart ?? new Date().toISOString(),
       }),
     });
+
+    const responseBody = await response.text();
+
+    if (!response.ok) {
+      console.error(
+        `${tag} automation-backend returned ${response.status} — ${responseBody}`,
+      );
+      return;
+    }
+
+    console.log(
+      `${tag} automation-backend accepted debounce request — ${responseBody}`,
+    );
   } catch (err) {
-    console.error("[sms-agent] debounce enqueue error:", err);
+    console.error(`${tag} failed to reach automation-backend:`, err);
   }
 }

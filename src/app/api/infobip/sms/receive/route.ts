@@ -283,6 +283,7 @@ export async function POST(req: NextRequest) {
                 "[Infobip] All gates passed — calling debounceSmsAgent for clientId",
                 client.id,
               );
+
               debounceSmsAgent({
                 clientId: client.id,
                 companyId: client.companyId,
