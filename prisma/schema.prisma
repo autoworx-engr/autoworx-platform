@@ -664,6 +664,7 @@ model Company {
   googleRefreshToken               String?                            @map("google_refresh_token")
   googleCalendarToken              String?                            @map("google_calendar_token")
   isSalesAgent                     Boolean                            @default(true)
+  isTest                           Boolean                            @default(false) @map("is_test")
   createdAt                        DateTime                           @default(now()) @map("created_at")
   updatedAt                        DateTime                           @default(now()) @updatedAt @map("updated_at")
   companyLatitude                  Float?
@@ -3690,4 +3691,16 @@ model AppVersion {
   updatedAt           DateTime @default(now()) @updatedAt @map("updated_at")
 
   @@map("app_versions")
+}
+
+/// Global SMS test settings (single row). `allowlist` is a comma-separated
+/// string of test-safe recipient numbers. While an SMS send is restricted
+/// (non-production runtime, or a Company.isTest account in prod), only numbers
+/// in this string are actually delivered. See outboundSmsGuard.ts.
+model SmsTestConfig {
+  id        Int      @id @default(autoincrement())
+  allowlist String   @default("+18788797134,+16783739090,+14702560094") @db.Text
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("sms_test_config")
 }

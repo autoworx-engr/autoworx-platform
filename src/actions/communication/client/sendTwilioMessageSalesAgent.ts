@@ -4,6 +4,7 @@ import { updatePipelineAutomationTrigger } from "@/actions/automation/pipeline/t
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import { normalizeUSPhoneNumber } from "@/lib/normalizeUSPhoneNumber";
+import { guardOutboundSms, maskPhone } from "@/lib/sms/outboundSmsGuard";
 import receiveTwiloMessage from "@/lib/pusher/receiveTwiloMessage";
 import { revalidatePath } from "next/cache";
 import Twilio from "twilio";
@@ -63,12 +64,19 @@ export async function sendTwilioMessageSalesAgent({
     let to = normalizeUSPhoneNumber(client?.mobile!);
 
     if (twilioCredentials.phoneNumber && to && clientId) {
-      await twilio.messages.create({
-        body: message ?? "",
-        from: twilioCredentials.phoneNumber,
-        to,
-        mediaUrl: attachments.map((file) => file.url),
-      });
+      const gate = await guardOutboundSms(to, twilioCredentials.companyId);
+      if (gate.allowed) {
+        await twilio.messages.create({
+          body: message ?? "",
+          from: twilioCredentials.phoneNumber,
+          to,
+          mediaUrl: attachments.map((file) => file.url),
+        });
+      } else {
+        console.warn(
+          `[sms] outbound skipped (${gate.reason}); to=${maskPhone(to)}`,
+        );
+      }
 
       const dbMessage = await db.clientSMS.create({
         data: {
