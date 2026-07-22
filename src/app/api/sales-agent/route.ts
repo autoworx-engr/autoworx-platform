@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sendInfobipMessageSalesAgent } from "@/actions/communication/client/sendInfobipMessageSalesAgent";
 import { sendTwilioMessageSalesAgent } from "@/actions/communication/client/sendTwilioMessageSalesAgent";
+import { segmentMessage } from "@/lib/sms/segmentMessage";
 
 /**
  * @swagger
@@ -66,35 +67,58 @@ export async function POST(req: NextRequest) {
 
     console.log(`${tag} smsGateway=${companyInfo?.smsGateway}`);
 
+    // Carriers flag long single texts as spam, so a long AI-agent reply is
+    // split into sentence-bounded chunks and sent as separate messages
+    // instead of relying on the agent's prompt to self-limit length.
+    const segments = segmentMessage(body.message);
+    const attachments = body.attachments ?? [];
+    const messagesToSend = segments.length > 0 ? segments : [""];
+
+    console.log(`${tag} sending reply as ${messagesToSend.length} segment(s)`);
+
     let data: any = null;
 
-    if (companyInfo?.smsGateway === "TWILIO") {
-      console.log(`${tag} sending reply via Twilio`);
-      data = await sendTwilioMessageSalesAgent({
-        companyId: body.companyId,
-        clientId: Number(body.clientId),
-        message: body.message,
-        attachments: body.attachments ?? [],
-        isSalesAgent: Boolean(body.isSalesAgent),
-      });
-    } else {
-      console.log(`${tag} sending reply via Infobip`);
-      data = await sendInfobipMessageSalesAgent({
-        companyId: body.companyId,
-        clientId: Number(body.clientId),
-        message: body.message,
-        attachments: body.attachments ?? [],
-        isSalesAgent: Boolean(body.isSalesAgent),
-      });
+    for (let i = 0; i < messagesToSend.length; i++) {
+      const isLastSegment = i === messagesToSend.length - 1;
+      // Attachments ride along with the last segment only, so media isn't
+      // duplicated across every text.
+      const segmentAttachments = isLastSegment ? attachments : [];
+
+      if (companyInfo?.smsGateway === "TWILIO") {
+        console.log(
+          `${tag} sending reply segment ${i + 1}/${messagesToSend.length} via Twilio`,
+        );
+        data = await sendTwilioMessageSalesAgent({
+          companyId: body.companyId,
+          clientId: Number(body.clientId),
+          message: messagesToSend[i],
+          attachments: segmentAttachments,
+          isSalesAgent: Boolean(body.isSalesAgent),
+        });
+      } else {
+        console.log(
+          `${tag} sending reply segment ${i + 1}/${messagesToSend.length} via Infobip`,
+        );
+        data = await sendInfobipMessageSalesAgent({
+          companyId: body.companyId,
+          clientId: Number(body.clientId),
+          message: messagesToSend[i],
+          attachments: segmentAttachments,
+          isSalesAgent: Boolean(body.isSalesAgent),
+        });
+      }
+
+      if (!data?.success) {
+        console.error(
+          `${tag} reply send failed on segment ${i + 1}/${messagesToSend.length}`,
+          data,
+        );
+        return NextResponse.json({ ...data });
+      }
     }
 
-    if (data?.success) {
-      console.log(`${tag} reply sent successfully`);
-      return NextResponse.json({ success: true, data });
-    } else {
-      console.error(`${tag} reply send failed`, data);
-      return NextResponse.json({ ...data });
-    }
+    console.log(`${tag} reply sent successfully`);
+    return NextResponse.json({ success: true, data });
   } catch (error: any) {
     console.error("[SalesAgentReply] webhook error:", error);
     return NextResponse.json(
