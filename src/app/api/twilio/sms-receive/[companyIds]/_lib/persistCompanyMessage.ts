@@ -5,7 +5,7 @@ import { sendClientMessageNotification } from "@/lib/notification/communication-
 import sendClientMailOrSMSNotify from "@/lib/pusher/client-conversation-notify";
 import receiveTwiloMessage from "@/lib/pusher/receiveTwiloMessage";
 import { getPusherInstance } from "@/lib/pusher/server";
-import { debounceSmsAgent } from "@/lib/pgboss/debounceSmsAgent";
+import { debounceSmsAgent } from "@/lib/salesAgent/debounceSmsAgent";
 import {
   normalizePhoneForStorage,
   phoneLookupWhereClause,
@@ -146,21 +146,48 @@ export async function persistCompanyMessage({
   // matches this company's Twilio credential).
   const isCompanySalesAgent = company?.isSalesAgent === true;
   const isClientSalesAgent = client.isSalesAgent === true;
-  if (
-    isCompanySalesAgent &&
-    isClientSalesAgent &&
-    entitlements.awxSalesAgent &&
-    dbMessage.to === credential?.phoneNumber
-  ) {
-    debounceSmsAgent({
-      clientId: client.id,
-      companyId: client.companyId,
-      sendFrom: dbMessage.from,
-      sendTo: dbMessage.to,
-      windowStart: dbMessage.createdAt.toISOString(),
-    }).catch((err) =>
-      console.error("[sms-receive] debounceSmsAgent enqueue error:", err),
-    );
+  const isSalesAgentEnabled = entitlements.awxSalesAgent;
+  const phoneMatch = dbMessage.to === credential?.phoneNumber;
+
+  console.log("[Twilio] Sales-agent gate check", {
+    companyId,
+    clientId: client.id,
+    isCompanySalesAgent,
+    isClientSalesAgent,
+    isSalesAgentEnabled,
+    dbMessageTo: dbMessage.to,
+    credentialPhone: credential?.phoneNumber,
+    phoneMatch,
+  });
+
+  if (isCompanySalesAgent && isClientSalesAgent && isSalesAgentEnabled) {
+    if (phoneMatch) {
+      console.log(
+        "[Twilio] All gates passed — calling debounceSmsAgent for clientId",
+        client.id,
+      );
+
+      debounceSmsAgent({
+        clientId: client.id,
+        companyId: client.companyId,
+        sendFrom: dbMessage.from,
+        sendTo: dbMessage.to,
+        windowStart: dbMessage.createdAt.toISOString(),
+      }).catch((err) =>
+        console.error("[Twilio] debounceSmsAgent enqueue error:", err),
+      );
+    } else {
+      console.log("[Twilio] Phone mismatch — skipping debounce", {
+        dbMessageTo: dbMessage.to,
+        credentialPhone: credential?.phoneNumber,
+      });
+    }
+  } else {
+    console.log("[Twilio] Sales-agent gate FAILED — skipping debounce", {
+      isCompanySalesAgent,
+      isClientSalesAgent,
+      isSalesAgentEnabled,
+    });
   }
 
   receiveTwiloMessage({ ...dbMessage, attachments });
