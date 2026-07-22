@@ -13,7 +13,7 @@ import toast from "react-hot-toast";
 import EditProduct from "./EditProduct";
 
 const evenColor = "bg-background";
-const oddColor = "bg-blue-100";
+const oddColor = "bg-[#F8FAFF]";
 
 export default function ProductTable({
   currentProductId,

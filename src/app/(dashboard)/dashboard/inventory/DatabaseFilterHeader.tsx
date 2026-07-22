@@ -14,7 +14,7 @@ export default function DatabaseFilterHeader({ categories = [] }: TProps) {
     useInventoryDatabaseSearchStore();
 
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>(
-    categoryName
+    categoryName,
   );
 
   const handleCategoryChange = (value: string) => {
@@ -39,7 +39,7 @@ export default function DatabaseFilterHeader({ categories = [] }: TProps) {
   }, [categoryName]);
 
   return (
-    <div className="my-3 flex w-full flex-col gap-4 md:flex-row md:items-center md:justify-between md:gap-x-3">
+    <div className="m-3 flex w-full flex-col gap-4 md:flex-row md:items-center md:justify-between md:gap-x-3">
       <div className="flex flex-col items-end gap-2 md:flex-row md:items-center md:space-x-4">
         <div className="relative w-full md:min-w-[300px] md:max-w-[693px]">
           <DatabaseSearchBox />

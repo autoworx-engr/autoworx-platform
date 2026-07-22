@@ -6,6 +6,7 @@ import WorkOrdersTableSkeleton from "@/components/ui/WorkOrdersTableSkeleton";
 import WorkOrderModal from "@/components/workorder-modal/WorkOrderModal";
 import { useServerGet } from "@/hooks/useServerGet";
 import { cn } from "@/lib/cn";
+import { Search } from "lucide-react";
 import { useEstimateFilterStore } from "@/stores/estimate-filter";
 import { usePipelineFilterStore } from "@/stores/PipelineFilterStore";
 import SessionUserType from "@/types/sessionUserType";
@@ -131,127 +132,126 @@ const WorkOrders = () => {
   };
 
   return (
-    <div className="mx-1 space-y-8 bg-background px-3 py-1">
+    <div className="space-y-4 sm:space-y-6 md:space-y-8 px-2">
       <Filter pipelineType={type} />
-      <div>
-        {/* card list view  */}
-        <div className="overflow-y-auto lg:hidden">
-          {paginatedInvoices &&
-            paginatedInvoices.map((invoice, index) => {
-              return (
-                <ResponsiveShopPipelineCard
-                  key={index}
-                  invoice={invoice}
-                  index={index}
-                />
-              );
-            })}
-          {sortedInvoices && sortedInvoices.length > 10 && (
-            <div className="mt-4 flex justify-center">
-              <Pagination
-                current={currentPage}
-                pageSize={pageSize}
-                total={sortedInvoices.length}
-                onChange={handlePageChange}
-                simple
-              />
-            </div>
-          )}
-        </div>
-        {!invoices ? (
-          <WorkOrdersTableSkeleton rows={15} />
-        ) : !paginatedInvoices ? (
-          <div className="flex h-[70vh] pb-10 w-full items-center justify-center">
-            <CarLoading />
+      <div className="w-full p-4 bg-background dark:bg-slate-950 min-h-[65vh] flex flex-col rounded-lg drop-shadow-[0_4px_4px_rgb(0_0_0_/_0.25)]">
+        <div className="mx-auto flex-1 flex flex-col space-y-6 w-full">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-bold text-slate-600 dark:text-slate-100">
+              Work Orders{" "}
+              <span className="text-slate-400 font-normal">
+                ({sortedInvoices?.length ?? 0})
+              </span>
+            </h3>
           </div>
-        ) : (
-          <>
-            <table className="hidden w-full h-full shadow-md lg:table">
-              <thead className="bg-background">
-                <tr className="h-10 border-b">
-                  <th className="border-b px-4 py-2 text-left">Work Order#</th>
-                  <th className="border-b px-4 py-2 text-left">Client </th>
-                  <th className="border-b px-4 py-2 text-left">Vehicle Info</th>
-                  <th className="border-b px-4 py-2 text-left">Services</th>
-                  <th className="border-b px-4 py-2 text-left">Time Created</th>
-                  <th className="border-b px-4 py-2 text-left">Due Date</th>
-                  <th className="border-b px-4 py-2 text-left">Status</th>
-                </tr>
-              </thead>
 
-              <tbody>
-                {paginatedInvoices.length > 0 ? (
-                  paginatedInvoices?.map((invoice, index) => {
-                    const id = invoice.id;
-                    const client =
-                      (invoice.client?.firstName ?? "") +
-                      " " +
-                      (invoice.client?.lastName ?? "");
-                    const vehicle = `${invoice.vehicle?.year ?? ""} ${invoice.vehicle?.make ?? ""} ${invoice.vehicle?.model ?? ""} ${invoice.vehicle?.other ?? ""}`;
-                    const serviceString = invoice.invoiceItems
-                      .map((item) => item.service?.name)
-                      .join(", ");
-                    // TODO: this hasn't been tested properly. Need to test it.
-                    const timeCreated = moment(
-                      invoice.workOrderCreatedAt,
-                    ).format("MM/DD/YYYY");
-                    const dueDate = invoice.dueDate
-                      ? moment(invoice.dueDate).format("MM/DD/YYYY")
-                      : null;
-
-                    return (
-                      <tr
-                        key={index}
-                        className={cn(
-                          "rounded-md",
-                          index % 2 === 0 ? "bg-background" : "bg-blue-100",
-                        )}
-                      >
-                        <td className="border-b px-4 py-2 text-left">
-                          <WorkOrderModal
-                            invoiceId={id}
-                            buttonChild={
-                              <button className="text-primary">{id}</button>
-                            }
-                            onWorkOrderCreated={async () =>
-                              setInvoices(await getWorkOrders())
-                            }
-                          />
-                        </td>
-                        <td className="border-b px-4 py-2 text-left">
-                          {client}
-                        </td>
-                        <td className="border-b px-4 py-2 text-left">
-                          {vehicle}
-                        </td>
-                        <td className="border-b px-4 py-2 text-left">
-                          {serviceString}
-                        </td>
-                        <td className="border-b px-4 py-2 text-left">
-                          {timeCreated}
-                        </td>
-
-                        <td className="border-b px-4 py-2 text-left">
-                          {dueDate}
-                        </td>
-                        <td className="border-b px-4 py-2 text-left">
-                          {invoice.column?.title}
-                        </td>
-                      </tr>
-                    );
-                  })
+          <div className="relative flex flex-1 h-full flex-col overflow-hidden rounded-md bg-background">
+            <div className="flex-1 overflow-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {/* Mobile View */}
+              <div className="lg:hidden p-4 space-y-4">
+                {!invoices ? (
+                  <WorkOrdersTableSkeleton rows={5} />
+                ) : !paginatedInvoices || paginatedInvoices.length === 0 ? (
+                  <WorkOrdersEmptyState />
                 ) : (
-                  <tr>
-                    <td colSpan={8} className="text-center py-10">
-                      No work orders found.
-                    </td>
-                  </tr>
+                  paginatedInvoices.map((invoice, index) => (
+                    <ResponsiveShopPipelineCard
+                      key={index}
+                      invoice={invoice}
+                      index={index}
+                    />
+                  ))
                 )}
-              </tbody>
-            </table>
+              </div>
+
+              {/* Desktop View */}
+              <div className="hidden lg:block">
+                {!invoices ? (
+                  <WorkOrdersTableSkeleton rows={15} />
+                ) : !paginatedInvoices || paginatedInvoices.length === 0 ? (
+                  <WorkOrdersEmptyState />
+                ) : (
+                  <table className="w-full border-separate border-spacing-0">
+                    <thead className="sticky top-0 z-10 bg-white shadow-sm">
+                      <tr className="h-10 border-b">
+                        <th className="px-4 py-2 text-left">Work Order#</th>
+                        <th className="px-4 py-2 text-left">Client </th>
+                        <th className="px-4 py-2 text-left">Vehicle Info</th>
+                        <th className="px-4 py-2 text-left">Services</th>
+                        <th className="px-4 py-2 text-left">Time Created</th>
+                        <th className="px-4 py-2 text-left">Due Date</th>
+                        <th className="px-4 py-2 text-left">Status</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {paginatedInvoices.map((invoice, index) => {
+                        const id = invoice.id;
+                        const client =
+                          (invoice.client?.firstName ?? "") +
+                          " " +
+                          (invoice.client?.lastName ?? "");
+                        const vehicle = `${invoice.vehicle?.year ?? ""} ${invoice.vehicle?.make ?? ""} ${invoice.vehicle?.model ?? ""} ${invoice.vehicle?.other ?? ""}`;
+                        const serviceString = invoice.invoiceItems
+                          .map((item) => item.service?.name)
+                          .join(", ");
+                        // TODO: this hasn't been tested properly. Need to test it.
+                        const timeCreated = moment(
+                          invoice.workOrderCreatedAt,
+                        ).format("MM/DD/YYYY");
+                        const dueDate = invoice.dueDate
+                          ? moment(invoice.dueDate).format("MM/DD/YYYY")
+                          : null;
+
+                        return (
+                          <tr
+                            key={index}
+                            className={cn(
+                              "py-3",
+                              index % 2 === 0
+                                ? "bg-background"
+                                : "bg-[#F8FAFF]",
+                            )}
+                          >
+                            <td className="px-4 py-2 text-left">
+                              <WorkOrderModal
+                                invoiceId={id}
+                                buttonChild={
+                                  <button className="text-[#6571FF]">
+                                    {id}
+                                  </button>
+                                }
+                                onWorkOrderCreated={async () =>
+                                  setInvoices(await getWorkOrders())
+                                }
+                              />
+                            </td>
+                            <td className="px-4 py-2 text-left">{client}</td>
+                            <td className="px-4 py-2 text-left">{vehicle}</td>
+                            <td className="px-4 py-2 text-left">
+                              {serviceString}
+                            </td>
+                            <td className="px-4 py-2 text-left">
+                              {timeCreated}
+                            </td>
+
+                            <td className="px-4 py-2 text-left">{dueDate}</td>
+                            <td className="px-4 py-2 text-left">
+                              {invoice.column?.title}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+
             {sortedInvoices && sortedInvoices.length > 10 && (
-              <div className="mt-4 hidden items-center justify-end lg:flex">
+              <div className="mt-auto flex shrink-0 justify-end bg-white px-4 py-2 shadow-[0_-1px_2px_rgba(0,0,0,0.04)]">
                 <Pagination
+                  className="custom-pagination"
                   current={currentPage}
                   pageSize={pageSize}
                   total={sortedInvoices.length}
@@ -261,11 +261,29 @@ const WorkOrders = () => {
                 />
               </div>
             )}
-          </>
-        )}
+          </div>
+        </div>
       </div>
     </div>
   );
 };
+
+function WorkOrdersEmptyState() {
+  return (
+    <div className="flex min-h-[calc(100vh-250px)] w-full flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-100 bg-slate-50/30 p-12 text-center">
+      <div className="relative mb-6 flex h-16 w-16 items-center justify-center rounded-3xl bg-white shadow-sm ring-1 ring-slate-200/50">
+        <Search size={24} className="text-slate-300" strokeWidth={1.5} />
+        <div className="absolute inset-0 animate-ping rounded-3xl bg-slate-100 opacity-20" />
+      </div>
+      <h3 className="mb-2 text-lg font-bold text-slate-500">
+        No Results Found
+      </h3>
+      <p className="max-w-[280px] text-sm font-medium leading-relaxed text-slate-400">
+        We couldn&apos;t find what you&apos;re looking for. Try adjusting your
+        filters or search terms.
+      </p>
+    </div>
+  );
+}
 
 export default WorkOrders;

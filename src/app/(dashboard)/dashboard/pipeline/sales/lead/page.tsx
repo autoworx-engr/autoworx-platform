@@ -1,4 +1,5 @@
 import { getColumnsByType } from "@/actions/pipelines/pipelinesColumn";
+import Title from "@/components/Title";
 import Leads from "../../components/Leads";
 import { Suspense } from "react";
 import CarLoading from "@/components/common/CarLoading";
@@ -19,8 +20,11 @@ function LoadingLeads() {
 export default async function Page() {
   const columns = await getColumnsByType("sales");
   return (
-    <Suspense fallback={<LoadingLeads />}>
-      <Leads salesColumn={columns} />
-    </Suspense>
+    <div className="h-full w-full space-y-4 px-2">
+      <Title>Sales Leads</Title>
+      <Suspense fallback={<LoadingLeads />}>
+        <Leads salesColumn={columns} />
+      </Suspense>
+    </div>
   );
 }

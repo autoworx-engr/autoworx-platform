@@ -35,13 +35,13 @@ export default function DatabaseTable({
   };
 
   return (
-    <div className="pb-2">
+    <div className="w-full p-4 bg-background dark:bg-slate-950 flex flex-col rounded-lg drop-shadow-[0_4px_4px_rgb(0_0_0_/_0.25)] h-full">
       {/* Desktop View */}
-      <div className="hidden rounded-md border border-slate-200 bg-background md:block">
+      <div className="hidden bg-background md:block flex-1 overflow-auto">
         <table className="w-full border-separate border-spacing-0 md:table-fixed">
           {/* Database Header */}
-          <thead className="sticky top-0  bg-background">
-            <tr className="h-10">
+          <thead className="sticky top-0 z-10 bg-white shadow-sm">
+            <tr className="h-10 border-b">
               <th className="w-16 px-4 py-2 text-left">#</th>
               <th className="px-4 py-2 text-left">Name</th>
               <th className="px-4 py-2 text-left">Category</th>
@@ -176,8 +176,8 @@ export default function DatabaseTable({
         )}
       </div>
 
-      <div className="mt-4 flex justify-end">
-        {!isLoading && data.length > 0 && (
+      <div className="mt-auto flex shrink-0 justify-end bg-white px-4 py-2 shadow-[0_-1px_2px_rgba(0,0,0,0.04)]">
+        {!isLoading && data.length == 0 && (
           <Pagination
             className="custom-pagination"
             current={page}
