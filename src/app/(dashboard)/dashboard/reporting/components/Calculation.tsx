@@ -25,7 +25,7 @@ export default function Calculation({
   const displayAmount = shouldShowTooltip
     ? formattedAmount.slice(0, 15) + "..."
     : formattedAmount;
-  console.log("displayAmount", displayAmount);
+  // console.log("displayAmount", displayAmount);
   return (
     <div
       className="relative flex h-36 w-full flex-col items-center justify-center p-4 

@@ -3,7 +3,7 @@
 import ResponsiveEmployeeCard from "@/components/mobile-responsive/employee/ResponsiveEmployeeCard";
 import { Client, Fleet, Source, Tag } from "@prisma/client";
 import { Pagination } from "antd";
-import { SearchX } from "lucide-react";
+import { Search } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import FleetListTable from "./FleetListTable";
 
@@ -101,7 +101,7 @@ function EmptyState({ search }: { search: string | null }) {
   return (
     <div className="flex min-h-[calc(100vh-250px)] w-full flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-100 bg-slate-50/30 p-12 text-center">
       <div className="relative mb-6 flex h-16 w-16 items-center justify-center rounded-3xl bg-white shadow-sm ring-1 ring-slate-200/50">
-        <SearchX size={24} className="text-slate-300" strokeWidth={1.5} />
+        <Search size={24} className="text-slate-300" strokeWidth={1.5} />
         <div className="absolute inset-0 animate-ping rounded-3xl bg-slate-100 opacity-20" />
       </div>
       <h3 className="mb-2 text-lg font-bold text-slate-500">
