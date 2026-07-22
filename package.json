@@ -18,9 +18,6 @@
     "prisma:merge": "cat prisma/schema/*.prisma > prisma/schema.prisma",
     "db:sync-sequences": "ts-node prisma/syncSequences.ts",
     "prepare": "husky",
-    "worker": "tsx src/workers/start.ts",
-    "worker:dev": "tsx watch -r dotenv/config src/workers/start.ts",
-    "worker:build": "prisma generate",
     "generate:search": "tsx scripts/generate-search-registry.ts",
     "prebuild": "yarn generate:search"
   },

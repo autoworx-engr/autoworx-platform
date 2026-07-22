@@ -9,7 +9,6 @@ import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-servi
 import { revalidatePath } from "next/cache";
 import { updateNewSMSChatTrack } from "./chat-track";
 import { getInfobipConfigById } from "./createInfobipConfig";
-import { sendSMSToAgent } from "@/service/ai-agent/api";
 
 type TInfobipConfig = {
   companyId?: number;
