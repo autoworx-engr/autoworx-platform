@@ -1,14 +1,14 @@
 "use client";
 
 import Selector from "@/components/Selector";
+import { cn } from "@/lib/cn";
 import { useListsStore } from "@/stores/lists";
 import { Vehicle } from "@prisma/client";
+import { Plus } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import NewVehicle from "./NewVehicle";
 import { SelectProps } from "./select-props";
-import { cn } from "@/lib/cn";
-import { Plus } from "lucide-react";
 
 export function SelectVehicle({
   name = "vehicleId",
@@ -85,7 +85,7 @@ export function SelectVehicle({
               newButton={
                 <button
                   type="button"
-                  className="flex w-full items-center justify-center gap-2 rounded-md bg-[#6571FF] px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-[#5A65F0]"
+                  className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-[#5A65F0]"
                 >
                   <Plus className="w-4 h-4" /> New Vehicle
                 </button>

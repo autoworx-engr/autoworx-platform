@@ -183,7 +183,7 @@ export function LeadUploadModal({ buttonElement }: FileUploadModalProps) {
           <button
             className="
             flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white
-            bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+            bg-gradient-to-r from-primary to-[#5a66ee]
             shadow-[0_4px_14px_0_rgba(101,113,255,0.39)]
             hover:shadow-[0_6px_20px_rgba(101,113,255,0.23)]
             hover:-translate-y-0.5
@@ -302,7 +302,7 @@ export function LeadUploadModal({ buttonElement }: FileUploadModalProps) {
           <button
             onClick={handleUpload}
             disabled={!file || isLoading}
-            className="flex-1 px-4 py-2 text-white  bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+            className="flex-1 px-4 py-2 text-white  bg-gradient-to-r from-primary to-[#5a66ee]
                 shadow-lg shadow-indigo-500/30
                 hover:shadow-xl hover:shadow-indigo-500/40
                 hover:-translate-y-0.5 hover:scale-[1.02]

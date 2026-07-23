@@ -1,10 +1,10 @@
 "use client";
 
 import { getInspections } from "@/actions/estimate/invoice/getInspections";
-import { InvoiceInspection } from "@prisma/client";
-import { AlertCircle, ChevronDown, ChevronUp, ClipboardCheck } from "lucide-react";
-import { useEffect, useState } from "react";
 import { cn } from "@/lib/cn";
+import { InvoiceInspection } from "@prisma/client";
+import { AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface InspectionItemsProps {
   damageNotes?: string;
@@ -27,7 +27,7 @@ export function InspectionItems({
         const response = await getInspections(invoiceId);
         console.log("inspection response", response);
         const filtered = response.filter(
-          (r) => r.title && r.title.trim() !== "" && (r.driver || r.passenger)
+          (r) => r.title && r.title.trim() !== "" && (r.driver || r.passenger),
         );
         setInspectionData(filtered);
       } catch (error) {
@@ -54,8 +54,12 @@ export function InspectionItems({
             Vehicle Inspection Details
           </h3>
         </div>
-        <span className="text-slate-400 group-hover:text-[#6571FF]">
-          {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+        <span className="text-slate-400 group-hover:text-primary">
+          {isExpanded ? (
+            <ChevronUp className="h-5 w-5" />
+          ) : (
+            <ChevronDown className="h-5 w-5" />
+          )}
         </span>
       </div>
 
@@ -77,22 +81,31 @@ export function InspectionItems({
                   className="group border-b border-slate-50 last:border-b-0 dark:border-slate-800/50"
                 >
                   <div
-                    className={`grid cursor-pointer grid-cols-10 gap-1 p-4 transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/30 ${index % 2 === 0 ? "bg-white dark:bg-slate-900" : "bg-[#FBFBFF] dark:bg-slate-800/10"
-                      }`}
+                    className={`grid cursor-pointer grid-cols-10 gap-1 p-4 transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/30 ${
+                      index % 2 === 0
+                        ? "bg-white dark:bg-slate-900"
+                        : "bg-[#FBFBFF] dark:bg-slate-800/10"
+                    }`}
                     onClick={() => toggleItemExpansion(index)}
                   >
                     <div className="col-span-5 flex items-center">
-                      <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">{item.title}</span>
+                      <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+                        {item.title}
+                      </span>
                     </div>
 
                     {/* Checkmark Columns */}
                     {[item.driver, item.passenger].map((val, i) => (
-                      <div key={i} className={`${i === 0 ? "col-span-2" : "col-span-3"} flex items-center justify-center`}>
+                      <div
+                        key={i}
+                        className={`${i === 0 ? "col-span-2" : "col-span-3"} flex items-center justify-center`}
+                      >
                         <div
                           className={cn(
                             "flex h-5 w-5 items-center justify-center rounded-lg border-2 transition-all duration-200",
                             "border-slate-200 bg-white shadow-sm dark:bg-slate-900 dark:border-slate-700",
-                            val && "border-[#6571FF] bg-[#6571FF] shadow-md shadow-[#6571FF]/20"
+                            val &&
+                              "border-primary bg-primary shadow-md shadow-primary/20",
                           )}
                         >
                           <svg
@@ -104,7 +117,9 @@ export function InspectionItems({
                             strokeLinejoin="round"
                             className={cn(
                               "h-2.5 w-2.5 transition-all duration-200 mb-0.5",
-                              val ? "scale-100 opacity-100" : "scale-50 opacity-0"
+                              val
+                                ? "scale-100 opacity-100"
+                                : "scale-50 opacity-0",
                             )}
                           >
                             <polyline points="20 6 9 17 4 12" />
@@ -118,8 +133,12 @@ export function InspectionItems({
                   {expandedItem === index && item.notes && (
                     <div className="bg-slate-50/30 px-4 pb-4 dark:bg-slate-800/20">
                       <div className="rounded-xl border border-slate-100 bg-white p-3 text-xs shadow-sm dark:border-slate-700 dark:bg-slate-800">
-                        <p className="font-bold text-[#6571FF] uppercase text-[9px] mb-1 tracking-tighter">Technician Notes</p>
-                        <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{item.notes}</p>
+                        <p className="font-bold text-primary uppercase text-[9px] mb-1 tracking-tighter">
+                          Technician Notes
+                        </p>
+                        <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                          {item.notes}
+                        </p>
                       </div>
                     </div>
                   )}
@@ -133,9 +152,13 @@ export function InspectionItems({
             <div className="relative overflow-hidden rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 p-5 dark:border-slate-700 dark:bg-slate-800/30">
               <div className="flex items-center gap-2 mb-2">
                 <AlertCircle className="h-4 w-4 text-slate-400" />
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500">Damage Assessment</h4>
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                  Damage Assessment
+                </h4>
               </div>
-              <p className="text-sm italic leading-relaxed text-slate-600 dark:text-slate-400">{damageNotes}</p>
+              <p className="text-sm italic leading-relaxed text-slate-600 dark:text-slate-400">
+                {damageNotes}
+              </p>
             </div>
           )}
         </div>

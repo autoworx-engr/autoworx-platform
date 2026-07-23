@@ -17,7 +17,7 @@ export default function UpgradePlanBanner({
   return (
     <div className="w-full flex flex-wrap items-start gap-3 rounded-xl border border-indigo-100 bg-gradient-to-r from-indigo-50 to-violet-50 p-4 shadow-sm">
       {/* Icon */}
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#6571FF] to-[#8B5CF6] text-white shadow">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-[#8B5CF6] text-white shadow">
         <Sparkles size={15} />
       </div>
 
@@ -34,7 +34,7 @@ export default function UpgradePlanBanner({
         </div>
         <Link
           href="/dashboard/settings/billing?showPlans=true"
-          className="inline-flex w-fit shrink-0 items-center justify-center gap-1.5 rounded-lg bg-gradient-to-br from-[#6571FF] to-[#8B5CF6] px-4 py-2 text-xs font-semibold text-white shadow transition hover:opacity-90 hover:shadow-md active:scale-95"
+          className="inline-flex w-fit shrink-0 items-center justify-center gap-1.5 rounded-lg bg-gradient-to-br from-primary to-[#8B5CF6] px-4 py-2 text-xs font-semibold text-white shadow transition hover:opacity-90 hover:shadow-md active:scale-95"
         >
           <Sparkles size={12} />
           {ctaLabel}

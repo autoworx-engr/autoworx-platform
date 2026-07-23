@@ -5,7 +5,7 @@ import { DialogContent } from "@/components/Dialog";
 
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import PhoneInput from "@/components/PhoneInput";
 import ServiceSelectAndAdd from "@/components/ServiceSelectAndAdd";
@@ -16,10 +16,9 @@ import {
   useGetModelsByYearAndMake,
 } from "@/hooks/useCarData";
 import { cn } from "@/lib/cn";
-import { salesPipelineKeyStr } from "@/utils/enums/query-key-constant";
-import toast from "react-hot-toast";
-import Selector from "../../settings/automation/components/Selector";
 import { errorToast, successToast } from "@/lib/toast";
+import { salesPipelineKeyStr } from "@/utils/enums/query-key-constant";
+import Selector from "../../settings/automation/components/Selector";
 
 const AddLeads = ({ onClose }: { onClose?: () => void }) => {
   const queryClient = useQueryClient();
@@ -448,7 +447,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
 
         <button
           type="submit"
-          className="w-full rounded-lg bg-gradient-to-r from-[#6571FF] to-[#5a66ee] px-4 py-2 font-medium text-white transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full rounded-lg bg-gradient-to-r from-primary to-[#5a66ee] px-4 py-2 font-medium text-white transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50"
           disabled={isSubmitting || !!fieldErrors.phone}
         >
           {isSubmitting ? "Adding..." : "Add Lead"}

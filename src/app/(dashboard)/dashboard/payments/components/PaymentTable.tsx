@@ -1,9 +1,9 @@
+import { ReturnPayment } from "@/actions/payment/getPayments";
 import {
   getPaymentsPaginated,
   type PaymentMethodFilter,
   type PaymentStatusFilter,
 } from "@/actions/payment/getPaymentsPaginated";
-import { ReturnPayment } from "@/actions/payment/getPayments";
 import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { usePaymentFilterStore } from "@/stores/paymentFilter";
@@ -279,7 +279,7 @@ export default function PaymentTable() {
                   <div className="flex items-center justify-between">
                     <Link
                       href={`/dashboard/estimate/view/${item.invoiceId}`}
-                      className="text-lg font-semibold text-[#6571FF]"
+                      className="text-lg font-semibold text-primary"
                     >
                       {item.invoiceId}
                     </Link>

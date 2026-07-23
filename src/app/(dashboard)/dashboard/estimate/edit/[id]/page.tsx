@@ -357,7 +357,7 @@ export default async function Page(props: {
             text={`Update ${invoice.type}`}
             // text={`Update ${pageType}`
             icon={<Save size={18} />}
-            className="border-none bg-[#6571FF] px-8 text-white"
+            className="border-none bg-primary px-8 text-white"
           />
           {/* <ConvertTo invoice={invoice} /> */}
 

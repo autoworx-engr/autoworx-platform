@@ -1,10 +1,10 @@
-import { formatCurrency } from "@/utils/formatCurrency";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/Tooltip";
+import { formatCurrency } from "@/utils/formatCurrency";
 
 type TProps = {
   content: string;
@@ -38,7 +38,7 @@ export default function Calculation({
         shadow-lg
         
         // Hover effects: subtle lift and shadow glow
-        hover:-translate-y-1 hover:shadow-xl hover:shadow-[#6571FF]/20 dark:hover:shadow-[#6571FF]/10
+        hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/20 dark:hover:shadow-primary/10
         group"
     >
       {/* Content Label (text-slate-600 for neutral text) */}
@@ -68,7 +68,7 @@ export default function Calculation({
       </TooltipProvider>
 
       {/* Subtle Gradient Accent (for visual interest) */}
-      <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-[#6571FF] to-[#8088FF] rounded-b-2xl opacity-50 group-hover:opacity-100 transition-opacity duration-300 hover:from-[#505aff] hover:to-[#6571FF] hover:shadow-xl rounded-2xl"></div>
+      <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-primary to-[#8088FF] rounded-b-2xl opacity-50 group-hover:opacity-100 transition-opacity duration-300 hover:from-[#505aff] hover:to-primary hover:shadow-xl rounded-2xl"></div>
     </div>
   );
 }

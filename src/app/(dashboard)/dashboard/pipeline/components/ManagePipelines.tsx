@@ -1,18 +1,18 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 
-import { errorToast } from "@/lib/toast";
-import { INVOICE_COLORS } from "@/lib/consts";
-import { Column } from "@prisma/client";
-import { GripVertical, Lock, Plus, Tally2, X } from "lucide-react";
-import ColumnItem from "./ColumnItem";
 import {
   LocalColumn,
   restrictedColumns,
   useReorderPipelineColumns,
   useSavePipelineColumns,
 } from "@/hooks/pipeline/usePipelineColumns";
+import { INVOICE_COLORS } from "@/lib/consts";
+import { errorToast } from "@/lib/toast";
+import { Column } from "@prisma/client";
+import { Plus, X } from "lucide-react";
+import ColumnItem from "./ColumnItem";
 
 interface ManagePipelinesModalProps {
   columns: Column[];
@@ -175,7 +175,7 @@ export default function ManagePipelines({
               disabled={saveMutation.isPending}
               className="
                 rounded-xl px-6 py-2.5 text-sm font-medium text-white
-                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                bg-gradient-to-r from-primary to-[#5a66ee]
                 shadow-lg shadow-indigo-500/30
                 hover:shadow-xl hover:shadow-indigo-500/40
                 hover:-translate-y-0.5 hover:scale-[1.02]

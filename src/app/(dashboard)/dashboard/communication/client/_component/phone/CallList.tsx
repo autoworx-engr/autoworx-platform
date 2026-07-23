@@ -41,7 +41,7 @@ export const CallList = ({ data }: { data: CallListItem[] }) => {
             <div
               className={`group w-[85%] rounded-xl p-3 shadow-sm transition-all duration-300 hover:shadow-md ${
                 isSentByMe
-                  ? "rounded-br-none bg-gradient-to-br from-[#6571FF]/10 to-[#5563E8]/10 ring-1 ring-[#6571FF]/20 text-slate-800 hover:ring-[#6571FF]/30"
+                  ? "rounded-br-none bg-gradient-to-br from-primary/10 to-[#5563E8]/10 ring-1 ring-primary/20 text-slate-800 hover:ring-primary/30"
                   : "rounded-bl-none bg-white ring-1 ring-slate-200 text-slate-800 hover:ring-slate-300"
               }`}
             >
@@ -50,7 +50,7 @@ export const CallList = ({ data }: { data: CallListItem[] }) => {
                   {isSentByMe ? (
                     <span className="inline-flex items-center gap-1">
                       <svg
-                        className="h-3.5 w-3.5 text-[#6571FF]"
+                        className="h-3.5 w-3.5 text-primary"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"

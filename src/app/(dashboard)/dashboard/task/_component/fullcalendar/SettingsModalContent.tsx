@@ -1,13 +1,13 @@
 import { DialogContent, DialogHeader, DialogTitle } from "@/components/Dialog";
 import { EmployeeType } from "@prisma/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
+import { calenderQueryKey } from "../../_constant";
 import useSettingsQuery from "../../_hook/settings/query/useSettingsQuery";
 import TaskSpinner from "../ui/TaskSpinner";
 import General from "./General";
 import Holidays from "./Holidays";
-import { useQueryClient } from "@tanstack/react-query";
-import { calenderQueryKey } from "../../_constant";
 
 export default function SettingsModalContent({
   onClose,
@@ -43,7 +43,7 @@ export default function SettingsModalContent({
             onClick={() => setActiveTab("general")}
             className={`px-4 py-2 font-medium ${
               activeTab === "general"
-                ? "border-b-2 border-[#6571FF] text-[#6571FF]"
+                ? "border-b-2 border-primary text-primary"
                 : "text-gray-600"
             }`}
           >
@@ -54,7 +54,7 @@ export default function SettingsModalContent({
               onClick={() => setActiveTab("holidays")}
               className={`px-4 py-2 font-medium ${
                 activeTab === "holidays"
-                  ? "border-b-2 border-[#6571FF] text-[#6571FF]"
+                  ? "border-b-2 border-primary text-primary"
                   : "text-gray-600"
               }`}
             >

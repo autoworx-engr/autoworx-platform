@@ -2,21 +2,21 @@
 
 import type React from "react";
 
-import { useState, useRef, useEffect } from "react";
-import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import SelectCategory from "./Lists/SelectCategory";
 import { Category } from "@prisma/client";
 import { Popconfirm } from "antd";
 import {
+  AlertCircle,
+  Check,
   ChevronDown,
   Plus,
-  X,
-  Check,
-  AlertCircle,
   Search,
   Trash2,
+  X,
 } from "lucide-react";
+import type { ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
+import SelectCategory from "./Lists/SelectCategory";
 
 export type SelectorWithAddProps = {
   label?: ReactNode;
@@ -251,7 +251,7 @@ export function SelectorWithAdd({
           className={cn(
             "flex w-full touch-manipulation items-center justify-between rounded-lg border-none px-3 py-2 text-left text-sm leading-6 transition-all duration-300 outline-none ring-1",
             isOpen
-              ? "bg-white ring-[#6571FF] shadow-lg shadow-[#6571FF]/10"
+              ? "bg-white ring-primary shadow-lg shadow-primary/10"
               : "bg-slate-50/50 ring-slate-200 hover:bg-white hover:ring-slate-300 hover:shadow-sm",
             error && "ring-rose-500 focus:ring-rose-500",
             disabled &&
@@ -286,7 +286,7 @@ export function SelectorWithAdd({
             <ChevronDown
               className={cn(
                 "h-4 w-4 text-slate-400 transition-transform duration-300",
-                isOpen && "rotate-180 text-[#6571FF]",
+                isOpen && "rotate-180 text-primary",
               )}
             />
           </div>
@@ -303,7 +303,7 @@ export function SelectorWithAdd({
                   <input
                     ref={searchInputRef}
                     type="text"
-                    className="w-full rounded-lg bg-slate-100/50 py-1.5 pl-8 pr-3 text-sm text-slate-600 outline-none transition-all focus:bg-white focus:ring-2 focus:ring-[#6571FF]/20"
+                    className="w-full rounded-lg bg-slate-100/50 py-1.5 pl-8 pr-3 text-sm text-slate-600 outline-none transition-all focus:bg-white focus:ring-2 focus:ring-primary/20"
                     placeholder="Search..."
                     value={searchTerm}
                     onChange={handleSearchChange}
@@ -321,7 +321,7 @@ export function SelectorWithAdd({
                   <input
                     ref={addNewInputRef}
                     type="text"
-                    className="w-full rounded-lg border-none bg-white px-3 py-2 text-sm text-slate-600 shadow-sm ring-1 ring-slate-200 outline-none transition-all focus:ring-2 focus:ring-[#6571FF]/40"
+                    className="w-full rounded-lg border-none bg-white px-3 py-2 text-sm text-slate-600 shadow-sm ring-1 ring-slate-200 outline-none transition-all focus:ring-2 focus:ring-primary/40"
                     placeholder={addNewPlaceholder}
                     value={newItemValue}
                     onChange={(e) => setNewItemValue(e.target.value)}
@@ -346,7 +346,7 @@ export function SelectorWithAdd({
                       type="button"
                       onClick={handleAddNewSubmit}
                       disabled={!newItemValue.trim()}
-                      className="flex-1 touch-manipulation rounded-lg bg-[#6571FF] py-2 text-xs font-bold text-white shadow-md shadow-[#6571FF]/20 transition-all active:scale-95 disabled:opacity-50"
+                      className="flex-1 touch-manipulation rounded-lg bg-primary py-2 text-xs font-bold text-white shadow-md shadow-primary/20 transition-all active:scale-95 disabled:opacity-50"
                     >
                       Create New
                     </button>
@@ -380,7 +380,7 @@ export function SelectorWithAdd({
                           className={cn(
                             "group/item flex cursor-pointer touch-manipulation items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm transition-all duration-200",
                             isSelected
-                              ? "bg-[#6571FF]/10 text-[#6571FF] font-semibold"
+                              ? "bg-primary/10 text-primary font-semibold"
                               : "text-slate-600 hover:bg-slate-50 hover:text-slate-900",
                           )}
                           onClick={(e) => {
@@ -455,10 +455,10 @@ export function SelectorWithAdd({
                   <div className="border-t border-slate-100 bg-slate-50/30 p-1.5">
                     <button
                       type="button"
-                      className="flex w-full touch-manipulation items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-[#6571FF] transition-all hover:bg-[#6571FF]/5 active:scale-[0.98]"
+                      className="flex w-full touch-manipulation items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-primary transition-all hover:bg-primary/5 active:scale-[0.98]"
                       onClick={handleAddNewClick}
                     >
-                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#6571FF]/10">
+                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10">
                         <Plus className="h-3 w-3" strokeWidth={3} />
                       </div>
                       {addNewLabel}

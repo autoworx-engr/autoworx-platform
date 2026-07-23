@@ -1,17 +1,17 @@
 "use client";
 import { createLeaveRequest } from "@/actions/settings/my-account/leave-requests/createLeaveRequest";
 import { editMyAccountInfo } from "@/actions/settings/myAccount";
+import Setup2FA from "@/app/(dashboard)/dashboard/settings/my-account/setup-2fa";
 import PhoneInput from "@/components/PhoneInput";
 import { SlimInput } from "@/components/SlimInput";
 import { SlimTextarea } from "@/components/SlimTextarea";
 import { errorToast, successToast } from "@/lib/toast";
 import { User } from "@prisma/client";
+import { Loader2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { ChangePassword } from "./changePassword";
-import Setup2FA from "@/app/(dashboard)/dashboard/settings/my-account/setup-2fa";
-import { Loader2 } from "lucide-react";
 
 const MyAccount = ({ user }: { user: User }) => {
   const [profilePic, setProfilePic] = useState<File | null>(null);
@@ -307,7 +307,7 @@ const MyAccount = ({ user }: { user: User }) => {
                 <button
                   disabled={pending || !isUserInfoChanged}
                   onClick={() => startTransition(handleUserInfoSave)}
-                  className="inline-flex items-center gap-2 rounded-lg bg-[#6571FF] px-6 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#5864e5] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
+                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#5864e5] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
                 >
                   {pending && <Loader2 className="h-4 w-4 animate-spin" />}
                   {pending ? "Saving…" : "Save Changes"}
@@ -388,7 +388,7 @@ const MyAccount = ({ user }: { user: User }) => {
                     </Link>
                     <button
                       onClick={handleSubmitLeaveRequest}
-                      className="rounded-lg bg-[#6571FF] px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#5864e5]"
+                      className="rounded-lg bg-primary px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#5864e5]"
                     >
                       Submit Request
                     </button>

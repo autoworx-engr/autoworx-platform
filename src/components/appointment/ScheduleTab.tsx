@@ -1,14 +1,14 @@
+import styles from "@/app/(dashboard)/dashboard/task/_component/fullcalendar/fullcalendar.module.css";
+import { getServiceColor } from "@/app/(dashboard)/dashboard/task/_utils/calendarColors";
+import { getWeekStartNumber } from "@/app/(dashboard)/dashboard/task/_utils/utils.DateSelector";
+import { EventContentArg } from "@fullcalendar/core";
+import interactionPlugin from "@fullcalendar/interaction";
+import FullCalendar from "@fullcalendar/react";
+import timeGridPlugin from "@fullcalendar/timegrid";
 import { CalendarSettings } from "@prisma/client";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import moment from "moment";
 import { useEffect, useRef } from "react";
-import FullCalendar from "@fullcalendar/react";
-import timeGridPlugin from "@fullcalendar/timegrid";
-import interactionPlugin from "@fullcalendar/interaction";
-import { EventContentArg } from "@fullcalendar/core";
-import { getWeekStartNumber } from "@/app/(dashboard)/dashboard/task/_utils/utils.DateSelector";
-import { getServiceColor } from "@/app/(dashboard)/dashboard/task/_utils/calendarColors";
-import styles from "@/app/(dashboard)/dashboard/task/_component/fullcalendar/fullcalendar.module.css";
 
 type TScheduleTabProps = {
   rows?: string[];
@@ -109,7 +109,7 @@ export default function ScheduleTab({
         <button
           type="button"
           onClick={() => onDateUpDown("-")}
-          className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-slate-500 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-50 hover:text-[#6571FF]"
+          className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-slate-500 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-50 hover:text-primary"
         >
           <ChevronLeft size={20} />
         </button>
@@ -130,7 +130,7 @@ export default function ScheduleTab({
         <button
           type="button"
           onClick={() => onDateUpDown("+")}
-          className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-slate-500 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-50 hover:text-[#6571FF]"
+          className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-slate-500 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-50 hover:text-primary"
         >
           <ChevronRight size={20} />
         </button>

@@ -1,4 +1,9 @@
-import type { JSX } from "react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/Tooltip";
 import { cn } from "@/lib/cn";
 import {
   DropdownMenu,
@@ -6,20 +11,9 @@ import {
   DropdownMenuPortal,
   DropdownMenuTrigger,
 } from "@radix-ui/react-dropdown-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/Tooltip";
-import React, {
-  ChangeEvent,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-import { Check, ChevronDown, Search, X } from "lucide-react";
+import { Check, ChevronDown, Search } from "lucide-react";
+import type { JSX } from "react";
+import React, { ChangeEvent, useEffect, useRef, useState } from "react";
 
 interface SelectorProps<T> {
   label: (item: T | null) => string;
@@ -161,7 +155,7 @@ export default function Selector<T>({
           <input
             type="text"
             placeholder="Search..."
-            className="w-full rounded-md bg-slate-50 py-1.5 pl-8 pr-3 text-sm outline-none border border-transparent focus:border-[#6571FF]/40 focus:bg-white placeholder:text-slate-400 transition-colors duration-150"
+            className="w-full rounded-md bg-slate-50 py-1.5 pl-8 pr-3 text-sm outline-none border border-transparent focus:border-primary/40 focus:bg-white placeholder:text-slate-400 transition-colors duration-150"
             onChange={handleSearchChange}
             value={searchTerm}
           />
@@ -203,8 +197,8 @@ export default function Selector<T>({
                   key={key}
                   className={cn(
                     "flex w-full items-center gap-2 px-2.5 py-2 text-left text-sm transition-colors duration-100",
-                    "hover:bg-[#6571FF]/5 active:bg-[#6571FF]/10",
-                    isSelected && "bg-[#6571FF]/10",
+                    "hover:bg-primary/5 active:bg-primary/10",
+                    isSelected && "bg-primary/10",
                     border &&
                       "border-b border-slate-100 rounded-md last:border-b-0",
                   )}
@@ -215,7 +209,7 @@ export default function Selector<T>({
                       <Check
                         size={14}
                         strokeWidth={3}
-                        className="text-[#6571FF]"
+                        className="text-primary"
                       />
                     )}
                   </span>
@@ -227,7 +221,7 @@ export default function Selector<T>({
                   key={key}
                   className={cn(
                     "flex w-full items-center gap-2 px-2.5 py-2 text-left text-sm",
-                    "hover:bg-[#6571FF]/5",
+                    "hover:bg-primary/5",
                     border && "border-b border-slate-100 last:border-b-0",
                   )}
                 >
@@ -241,7 +235,7 @@ export default function Selector<T>({
         {/* Loading indicator for infinite scroll */}
         {isFetchingNextPage && (
           <div className="flex items-center justify-center gap-2 py-3">
-            <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-200 border-t-[#6571FF]" />
+            <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-200 border-t-primary" />
             <span className="text-xs text-slate-400">Loading...</span>
           </div>
         )}
@@ -301,7 +295,7 @@ export default function Selector<T>({
             "bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm hover:shadow-md",
             "ring-1 ring-slate-200 dark:ring-slate-800",
             isOpen
-              ? "ring-2 ring-[#6571FF]/60 border-transparent"
+              ? "ring-2 ring-primary/60 border-transparent"
               : "hover:ring-slate-300",
             disabledDropdown && "opacity-50 cursor-not-allowed",
           )}

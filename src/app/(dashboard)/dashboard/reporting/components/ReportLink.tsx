@@ -16,10 +16,10 @@ export default function ReportLink({ children, href, ...props }: TProps) {
       href={href}
       {...props}
       className={cn(
-        "flex h-10 w-full items-center justify-center rounded-md border border-[#6571FF] text-base font-semibold text-[#6571FF]",
+        "flex h-10 w-full items-center justify-center rounded-md border border-primary text-base font-semibold text-primary",
         "sm:h-11 sm:text-lg",
         "lg:h-12 lg:w-40 lg:text-xl",
-        isActive && "bg-[#6571FF] text-white",
+        isActive && "bg-primary text-white",
       )}
     >
       {children}

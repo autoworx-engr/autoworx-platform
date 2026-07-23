@@ -1,5 +1,6 @@
 "use client";
 
+import { editUseProduct } from "@/actions/inventory/editUseProduct";
 import {
   Dialog,
   DialogClose,
@@ -10,14 +11,13 @@ import {
   DialogTrigger,
 } from "@/components/Dialog";
 import FormError from "@/components/FormError";
+import Selector from "@/components/Selector";
 import { SlimInput } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
-import { useEffect, useState } from "react";
-import Selector from "@/components/Selector";
-import { InventoryProductHistory, InventoryProductType } from "@prisma/client";
-import { editUseProduct } from "@/actions/inventory/editUseProduct";
 import { useFormErrorStore } from "@/stores/form-error";
+import { InventoryProductHistory, InventoryProductType } from "@prisma/client";
 import { SquarePen } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export default function EditProductForm({
   productId,
@@ -72,7 +72,7 @@ export default function EditProductForm({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="flex w-full items-center justify-end text-[#6571FF] md:justify-center">
+        <button className="flex w-full items-center justify-end text-primary md:justify-center">
           <SquarePen size={20} />
         </button>
       </DialogTrigger>
@@ -136,7 +136,7 @@ export default function EditProductForm({
             Cancel
           </DialogClose>
           <Submit
-            className="mb-2 flex items-center justify-center rounded-lg border bg-[#6571FF] px-5 py-2 text-white md:mb-0"
+            className="mb-2 flex items-center justify-center rounded-lg border bg-primary px-5 py-2 text-white md:mb-0"
             formAction={handleSubmit}
           >
             Submit

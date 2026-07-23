@@ -2,18 +2,16 @@
 
 import { cn } from "@/lib/cn";
 import type { db } from "@/lib/db";
-import React, { useState } from "react";
-import LaborItems from "./LaborItems";
-import ReDoModal from "./ReDoModal";
 import {
   InvoiceRedo,
   Technician,
   TechnicianImage,
   VehicleParts,
 } from "@prisma/client";
-import { ChevronDown, ChevronUp, LucideImage } from "lucide-react";
-import { Dialog, DialogContent, DialogTrigger } from "../Dialog";
-import { ImagesDialogContent } from "../ImagesDialogContent";
+import { ChevronDown, ChevronUp } from "lucide-react";
+import React from "react";
+import LaborItems from "./LaborItems";
+import ReDoModal from "./ReDoModal";
 
 type TProps = {
   invoiceTechnicians: (Technician & { name: string })[];
@@ -62,11 +60,11 @@ export function InvoiceItems({
     return (
       <div
         key={item.id}
-        className="overflow-y-auto rounded-md border border-[#6571FF] py-2"
+        className="overflow-y-auto rounded-md border border-primary py-2"
       >
         <div
           className={cn(
-            "flex w-full cursor-pointer justify-between text-[#6571FF]",
+            "flex w-full cursor-pointer justify-between text-primary",
             openService && "border-b py-2",
           )}
           onClick={() =>
@@ -104,7 +102,7 @@ export function InvoiceItems({
         </div>
 
         {openService === item.id && (
-          <div className="my-2 grid w-full grid-cols-1 gap-1 text-[#6571FF]">
+          <div className="my-2 grid w-full grid-cols-1 gap-1 text-primary">
             {item.materials.map((material, index) => (
               <div key={index} className="ml-10">
                 <p className="capitalize">{material.name}</p>

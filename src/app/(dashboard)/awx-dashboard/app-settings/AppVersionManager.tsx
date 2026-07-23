@@ -94,7 +94,7 @@ export const AppVersionManager = ({ initialData }: Props) => {
       {snapshot && (
         <div className="mb-6 rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm ring-1 ring-slate-900/5">
           <div className="mb-3 flex items-center gap-2">
-            <Smartphone size={15} className="text-[#6571FF]" />
+            <Smartphone size={15} className="text-primary" />
             <span className="text-sm font-semibold text-slate-700">
               Current Configuration
             </span>

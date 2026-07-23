@@ -1,13 +1,13 @@
-import { TASK_COLOR } from "@/lib/consts";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import TaskSpinner from "../ui/TaskSpinner";
-import { taskQueryKey } from "../../_constant";
-import { usePopupStore } from "@/stores/popup";
-import { User } from "@prisma/client";
 import getTaskUser from "@/actions/task/getTaskUser";
 import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
+import { TASK_COLOR } from "@/lib/consts";
+import { usePopupStore } from "@/stores/popup";
+import { User } from "@prisma/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { taskQueryKey } from "../../_constant";
 import { EventDetailsSheet } from "../fullcalendar/EventDetailsSheet";
+import TaskSpinner from "../ui/TaskSpinner";
 
 type UserTask = Awaited<ReturnType<typeof getTaskUser>>[number];
 
@@ -126,7 +126,7 @@ export default function UserTaskList({ user }: UserTaskListProps) {
       {content}
 
       <button
-        className="mt-3 inline-flex items-center gap-1 rounded-lg border border-dashed border-[#6571FF]/40 px-4 py-1.5 text-sm font-medium text-[#6571FF] transition-colors hover:border-[#6571FF] hover:bg-[#6571FF]/10"
+        className="mt-3 inline-flex items-center gap-1 rounded-lg border border-dashed border-primary/40 px-4 py-1.5 text-sm font-medium text-primary transition-colors hover:border-primary hover:bg-primary/10"
         onClick={() =>
           open("ASSIGN_TASK", {
             user,

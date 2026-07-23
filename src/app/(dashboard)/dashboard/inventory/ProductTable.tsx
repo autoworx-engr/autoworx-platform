@@ -7,9 +7,9 @@ import { ProductCardProps } from "@/types/inventory";
 import { Category, InventoryProduct, User, Vendor } from "@prisma/client";
 import { Pagination, Popconfirm, Tooltip } from "antd"; // Importing the Pagination component from Ant Design
 import { Search, X } from "lucide-react";
-import toast from "react-hot-toast";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import EditProduct from "./EditProduct";
 
 const evenColor = "bg-background";
@@ -192,7 +192,7 @@ export default function ProductTable({
                       "h-full cursor-pointer rounded-md py-3",
                       index % 2 === 0 ? evenColor : oddColor,
                       currentProductId === product.id &&
-                        "border-2 border-[#6571FF]",
+                        "border-2 border-primary",
                     )}
                     onClick={() =>
                       router.push(`${pathname}?${params.toString()}`)

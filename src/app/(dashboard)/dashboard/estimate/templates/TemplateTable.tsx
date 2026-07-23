@@ -197,14 +197,14 @@ export default function TemplateTable({ take, page, data }: TTableProps) {
                         <button
                           onClick={() => handleDuplicateTemplate(data?.id)}
                         >
-                          <Copy size={18} className="text-[#6571FF]" />
+                          <Copy size={18} className="text-primary" />
                         </button>
                         <Link
                           href={`/dashboard/estimate/templates/create?isEdit=true&templateId=${data?.id}`}
                           className="text-2xl text-blue-600"
                           onClick={() => setActionType("edit")}
                         >
-                          <SquarePen size={18} className="text-[#6571FF]" />
+                          <SquarePen size={18} className="text-primary" />
                         </Link>
 
                         <Popconfirm

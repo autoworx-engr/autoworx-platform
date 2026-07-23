@@ -53,7 +53,7 @@ export const ImagesDialogueShareButtons = ({
           okText="Yes"
           cancelText="No"
         >
-          <button className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-1 py-0.5 text-sm text-white md:px-4 md:text-base">
+          <button className="flex items-center justify-center gap-1 rounded bg-primary px-1 py-0.5 text-sm text-white md:px-4 md:text-base">
             <Mail className="h-4 w-4 md:h-4 md:w-4" />
             <span className="hidden md:inline">Email</span>
           </button>
@@ -65,7 +65,7 @@ export const ImagesDialogueShareButtons = ({
             okText="Yes"
             cancelText="No"
           >
-            <button className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-sm text-white md:px-4 md:text-base">
+            <button className="flex items-center justify-center gap-1 rounded bg-primary px-2 py-1 text-sm text-white md:px-4 md:text-base">
               <svg
                 fill="#ffffff"
                 height="24"
@@ -97,7 +97,7 @@ export const ImagesDialogueShareButtons = ({
         )}
       </div>
       {/* <button
-        className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-sm text-white md:px-4 md:text-base"
+        className="flex items-center justify-center gap-1 rounded bg-primary px-2 py-1 text-sm text-white md:px-4 md:text-base"
         onClick={handleCopyShare}
       >
         <svg

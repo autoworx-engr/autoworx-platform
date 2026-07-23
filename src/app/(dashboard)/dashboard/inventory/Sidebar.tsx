@@ -4,21 +4,20 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/Tooltip";
-import { cn } from "@/lib/cn";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import getUser from "@/lib/getUser";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { CircleAlert } from "lucide-react";
-import Image from "next/image";
 import { unstable_cache } from "next/cache";
+import Image from "next/image";
 import QRCode from "qrcode";
 import EditProduct from "./EditProduct";
+import ProductTooltipContainer from "./ProductTooltipContainer";
 import QRcode from "./QRcode";
 import ReplenishProductForm from "./ReplenishProductForm";
 import SalesPurchaseHistory from "./SalesPurchaseHistory";
 import UseProductForm from "./UseProductForm";
-import ProductTooltipContainer from "./ProductTooltipContainer";
 
 export default async function Sidebar({
   productId,
@@ -85,7 +84,7 @@ export default async function Sidebar({
         <div className="flex flex-col sm:flex-row lg:flex-col gap-4 lg:w-1/3 xl:w-1/4">
           {/* Total Value Card */}
           <div className="group relative flex-1 flex items-center justify-center overflow-hidden rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-900/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-md dark:bg-slate-950 dark:ring-slate-800">
-            <div className="absolute inset-0 bg-gradient-to-br from-[#6571FF]/10 to-[#6571FF]/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-primary/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
             <div className="relative z-10 flex flex-col my-auto items-center justify-center space-y-2 text-center">
               <h3 className="text-sm font-medium uppercase tracking-wider text-slate-500">

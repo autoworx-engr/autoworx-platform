@@ -1,13 +1,6 @@
 "use client";
-import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
-import { cn } from "@/lib/cn";
-import { Appointment, Column, User } from "@prisma/client";
-import { Calendar, CalendarCheck, MessageCircleMore } from "lucide-react";
-import moment from "moment";
-import Image from "next/image";
-import Link from "next/link";
-import React, { useTransition } from "react";
 import TaskForm from "@/app/(dashboard)/dashboard/pipeline/components/TaskForm";
+import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
 import {
   Card,
   CardContent,
@@ -15,7 +8,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { cn } from "@/lib/cn";
+import { Appointment, Column, User } from "@prisma/client";
 import { Select } from "antd";
+import { Calendar, CalendarCheck, MessageCircleMore } from "lucide-react";
+import moment from "moment";
+import Image from "next/image";
+import Link from "next/link";
+import { useTransition } from "react";
 
 const ResponsiveSalesPipelineCard = ({
   lead,
@@ -153,7 +153,7 @@ const ResponsiveSalesPipelineCard = ({
           >
             <MessageCircleMore
               size={20}
-              className="duration-300 hover:text-[#6571FF]"
+              className="duration-300 hover:text-primary"
             />
           </Link>
 

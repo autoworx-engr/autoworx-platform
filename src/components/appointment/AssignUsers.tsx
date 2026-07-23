@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
-import Avatar from "../Avatar";
-import { EmployeeType, User } from "@prisma/client";
-import useEmployeeQuery from "@/hooks/query-hook/useEmployeeQuery";
-import TaskSpinner from "@/app/(dashboard)/dashboard/task/_component/ui/TaskSpinner";
 import TaskError from "@/app/(dashboard)/dashboard/task/_component/ui/TaskError";
 import TaskNotFound from "@/app/(dashboard)/dashboard/task/_component/ui/TaskNotFound";
+import TaskSpinner from "@/app/(dashboard)/dashboard/task/_component/ui/TaskSpinner";
+import useEmployeeQuery from "@/hooks/query-hook/useEmployeeQuery";
+import { EmployeeType, User } from "@prisma/client";
 import { Search, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import Avatar from "../Avatar";
 
 type TAssignedUser = {
   title: string;
@@ -104,11 +104,11 @@ export default function AssignUsers({
       {/* Add Employee Trigger */}
       <button
         type="button"
-        className="group relative mb-4 font-medium text-[#6571FF] transition-all duration-300"
+        className="group relative mb-4 font-medium text-primary transition-all duration-300"
         onClick={() => setAddEmployeePersonOpen(true)}
       >
         {title}
-        {/* <span className="absolute -bottom-0.5 left-0 h-0.5 w-0 transition-all duration-300 group-hover:w-full bg-[#6571FF]" /> */}
+        {/* <span className="absolute -bottom-0.5 left-0 h-0.5 w-0 transition-all duration-300 group-hover:w-full bg-primary" /> */}
       </button>
 
       {/* Assigned Users List */}
@@ -118,7 +118,7 @@ export default function AssignUsers({
           return (
             <div
               key={`${user.id}-${index}`}
-              className="group flex items-center gap-x-2 rounded-full bg-slate-100/80 px-3 py-1.5 ring-1 ring-slate-200/60 transition-all duration-300 hover:bg-white hover:ring-[#6571FF]/30 hover:shadow-sm animate-in fade-in zoom-in-95"
+              className="group flex items-center gap-x-2 rounded-full bg-slate-100/80 px-3 py-1.5 ring-1 ring-slate-200/60 transition-all duration-300 hover:bg-white hover:ring-primary/30 hover:shadow-sm animate-in fade-in zoom-in-95"
             >
               <Avatar
                 photo={user.image}

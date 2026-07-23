@@ -209,7 +209,7 @@ export default function VehicleParts({
                   cancelText="No"
                 >
                   <button className="absolute -right-[4px] -top-[4px] z-20">
-                    <CircleX className="size-5 rounded-full bg-background text-[#6571FF]" />
+                    <CircleX className="size-5 rounded-full bg-background text-primary" />
                   </button>
                 </Popconfirm>
               )}
@@ -221,7 +221,7 @@ export default function VehicleParts({
                 type="button"
                 className={cn(
                   "relative w-full overflow-hidden text-nowrap rounded-full border border-gray-300 px-3 py-1.5 text-[12px]",
-                  part.selected ? "bg-[#6571FF] text-white" : "bg-background",
+                  part.selected ? "bg-primary text-white" : "bg-background",
                 )}
               >
                 <span className="w-full">{part.label}</span>

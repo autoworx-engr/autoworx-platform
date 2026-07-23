@@ -70,7 +70,7 @@ export default function Header({
         <div className="group relative flex flex-1 items-center">
           <Search
             size={18}
-            className="absolute left-4 z-10 text-slate-400 transition-colors group-focus-within:text-[#6571FF]"
+            className="absolute left-4 z-10 text-slate-400 transition-colors group-focus-within:text-primary"
           />
 
           <input
@@ -81,7 +81,7 @@ export default function Header({
                 ? "Search by Template ID"
                 : "Search ID, client, vehicle, email..."
             }
-            className="h-11 w-full rounded-xl border-none bg-slate-50 pl-11 pr-4 text-sm font-medium text-slate-700 ring-1 ring-slate-200 transition-all duration-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-[#6571FF]/30 outline-none md:max-w-[450px]"
+            className="h-11 w-full rounded-xl border-none bg-slate-50 pl-11 pr-4 text-sm font-medium text-slate-700 ring-1 ring-slate-200 transition-all duration-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-primary/30 outline-none md:max-w-[450px]"
             defaultValue={searchTerm || ""}
             onChange={(e) => {
               const searchValue = e.target.value;
@@ -96,7 +96,7 @@ export default function Header({
               type="button"
               onClick={handleClearSearch}
               aria-label="Clear search"
-              className="absolute right-3 flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 text-slate-500 transition-colors hover:bg-[#6571FF]/10 hover:text-[#6571FF]"
+              className="absolute right-3 flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 text-slate-500 transition-colors hover:bg-primary/10 hover:text-primary"
             >
               <X size={12} />
             </button>
@@ -123,7 +123,7 @@ export default function Header({
             href="/dashboard/estimate/create"
             className="
               flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white
-              bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+              bg-gradient-to-r from-primary to-[#5a66ee]
               shadow-[0_4px_14px_0_rgba(101,113,255,0.39)]
               hover:shadow-[0_6px_20px_rgba(101,113,255,0.23)]
               hover:-translate-y-0.5
@@ -145,7 +145,7 @@ export default function Header({
           <Link
             href="/dashboard/estimate/templates/create"
             className="flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white
-              bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+              bg-gradient-to-r from-primary to-[#5a66ee]
               shadow-[0_4px_14px_0_rgba(101,113,255,0.39)]
               hover:shadow-[0_6px_20px_rgba(101,113,255,0.23)]
               hover:-translate-y-0.5

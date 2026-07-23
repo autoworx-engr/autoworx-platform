@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { CircleAlert, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CircleAlert, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const SESSION_KEY = "anet_sig_key_alert_shown";
 
@@ -66,7 +66,7 @@ export default function AuthorizeNetSignatureKeyAlert({
                   setOpen(false);
                   router.push("/dashboard/settings/payments");
                 }}
-                className="bg-[#6571ff] hover:bg-[#5561ef] text-white text-sm"
+                className="bg-primary hover:bg-[#5561ef] text-white text-sm"
               >
                 Go to Settings
               </Button>

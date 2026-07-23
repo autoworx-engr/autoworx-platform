@@ -1,22 +1,22 @@
 "use client";
 
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useServerGet } from "@/hooks/useServerGet";
+import { errorToast, successToast } from "@/lib/toast";
+import { CircleCheckBig, ExternalLink, History } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useState } from "react";
-import { getStripeAccount } from "./stripe";
 import {
   getAuthorizeNetStatus,
   updatePaymentGateway,
   updateTipEnabled,
 } from "./authorize-net";
-import StripeStatus from "./StripeStatus";
 import AuthorizeNetConfig from "./AuthorizeNetConfig";
-import Image from "next/image";
-import Link from "next/link";
-import { CircleCheckBig, ExternalLink, History } from "lucide-react";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { successToast, errorToast } from "@/lib/toast";
 import { getPaymentGatewayInfo } from "./getPaymentGatewayInfo";
 import PaymentsSkeleton from "./PaymentsSkeleton";
+import { getStripeAccount } from "./stripe";
+import StripeStatus from "./StripeStatus";
 
 function Toggle({
   checked,
@@ -31,8 +31,8 @@ function Toggle({
       role="switch"
       aria-checked={checked}
       onClick={onChange}
-      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#6571ff] focus:ring-offset-2 ${
-        checked ? "bg-[#6571ff]" : "bg-gray-200"
+      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+        checked ? "bg-primary" : "bg-gray-200"
       }`}
     >
       <span
@@ -123,7 +123,7 @@ export default function PaymentsPage() {
       <div className="flex justify-end">
         <Link
           href="/dashboard/settings/payments/webhook-events"
-          className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-500 transition-colors hover:border-[#6571ff] hover:text-[#6571ff]"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-500 transition-colors hover:border-primary hover:text-primary"
         >
           <History className="h-3.5 w-3.5" />
           View Webhook Events
@@ -151,8 +151,8 @@ export default function PaymentsPage() {
                   htmlFor={value}
                   className={`flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2.5 transition-colors ${
                     selectedGateway === value
-                      ? "border-[#6571ff] bg-[#6571ff]/5"
-                      : "border-gray-200 hover:border-[#6571ff]/40 hover:bg-gray-50"
+                      ? "border-primary bg-primary/5"
+                      : "border-gray-200 hover:border-primary/40 hover:bg-gray-50"
                   }`}
                 >
                   <RadioGroupItem value={value} id={value} />
@@ -231,7 +231,7 @@ export default function PaymentsPage() {
               onClick={() => {
                 window.location.href = `https://connect.stripe.com/oauth/authorize?response_type=code&client_id=${process.env.NEXT_PUBLIC_STRIPE_CLIENT_ID}&scope=read_write`;
               }}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#6571ff] px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#5561ef] hover:shadow-md"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#5561ef] hover:shadow-md"
             >
               <ExternalLink className="h-3.5 w-3.5" />
               {stripeData?.success

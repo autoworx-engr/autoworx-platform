@@ -40,7 +40,7 @@ const TabsTrigger = React.forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      "relative flex items-center justify-center whitespace-nowrap rounded-t-lg bg-[#6571FF] px-6 py-2.5 text-sm font-medium text-white ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground md:px-12 [@media(min-width:425px)]:px-9",
+      "relative flex items-center justify-center whitespace-nowrap rounded-t-lg bg-background px-6 py-2.5 text-sm font-medium text-foreground ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-white md:px-12 [@media(min-width:425px)]:px-9",
       styles.tab,
       className,
     )}
@@ -56,7 +56,7 @@ const TabsTriggerCreate = React.forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      "relative flex items-center justify-center whitespace-nowrap rounded-t-lg bg-[#6571FF] py-2.5 pl-4 text-xs font-medium text-white ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground md:p-0 md:px-12 md:text-sm",
+      "relative flex items-center justify-center whitespace-nowrap rounded-t-lg bg-background py-2.5 pl-4 text-xs font-medium text-foreground ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-white md:p-0 md:px-12 md:text-sm",
       styles.tab,
       className,
     )}

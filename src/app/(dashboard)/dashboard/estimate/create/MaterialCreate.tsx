@@ -473,7 +473,7 @@ export default function MaterialCreate() {
           id="name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="h-10 w-full sm:flex-1 rounded-[10px] bg-white px-4 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30"
+          className="h-10 w-full sm:flex-1 rounded-[10px] bg-white px-4 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-primary/30"
           placeholder="e.g. Brake Pads"
         />
       </div>
@@ -510,7 +510,7 @@ export default function MaterialCreate() {
                 button={
                   <button
                     type="button"
-                    className="flex items-center gap-1 text-xs font-semibold text-[#6571FF] hover:underline"
+                    className="flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
                   >
                     <Plus size={12} /> New Vendor
                   </button>
@@ -647,7 +647,7 @@ export default function MaterialCreate() {
           id="notes"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          className="h-24 flex-1 rounded-xl bg-white border border-slate-100 p-3 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30 resize-none"
+          className="h-24 flex-1 rounded-xl bg-white border border-slate-100 p-3 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
           placeholder="Additional details..."
         />
       </div>
@@ -667,8 +667,8 @@ export default function MaterialCreate() {
                 className={cn(
                   "flex h-6 w-6 items-center justify-center rounded-lg border-2 transition-all duration-200",
                   "border-slate-200 bg-white shadow-sm",
-                  "peer-checked:border-[#6571FF] peer-checked:bg-[#6571FF] peer-checked:shadow-md peer-checked:shadow-[#6571FF]/20",
-                  "group-hover:border-[#6571FF]/50 peer-focus:ring-2 peer-focus:ring-[#6571FF]/20",
+                  "peer-checked:border-primary peer-checked:bg-primary peer-checked:shadow-md peer-checked:shadow-primary/20",
+                  "group-hover:border-primary/50 peer-focus:ring-2 peer-focus:ring-primary/20",
                 )}
               >
                 <svg
@@ -704,7 +704,7 @@ export default function MaterialCreate() {
       <div className="mt-4 flex items-center justify-end gap-3">
         <Close />
         <button
-          className="rounded-xl bg-[#6571FF] px-10 py-2.5 text-sm font-bold text-white shadow-lg shadow-[#6571FF]/30 transition-all hover:bg-[#525ceb] active:scale-95"
+          className="rounded-xl bg-primary px-10 py-2.5 text-sm font-bold text-white shadow-lg shadow-primary/30 transition-all hover:bg-[#525ceb] active:scale-95"
           onClick={data.edit ? handleEdit : handleSubmit}
           type="button"
         >

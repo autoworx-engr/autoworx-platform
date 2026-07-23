@@ -1,12 +1,12 @@
 "use client";
 
+import deleteCategory from "@/actions/category/deleteCategory";
+import newCategory from "@/actions/category/newCategory";
 import Selector from "@/components/Selector";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 import { useListsStore } from "@/stores/lists";
 import { Category } from "@prisma/client";
-import newCategory from "@/actions/category/newCategory";
-import deleteCategory from "@/actions/category/deleteCategory";
-import ConfirmModal from "@/components/ui/ConfirmModal";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -191,7 +191,7 @@ export function SelectAppointmentServiceCategory({
                 type="button"
                 onClick={handleCreateCategory}
                 disabled={isCreating}
-                className="flex w-full items-center justify-center gap-2 rounded-md bg-[#6571FF] px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-[#5A65F0] disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-[#5A65F0] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Plus className="h-4 w-4" />
                 {isCreating ? "Adding..." : "Add Category"}
@@ -219,7 +219,7 @@ export function SelectAppointmentServiceCategory({
                   backgroundColor: getCategoryColor((category as any).color),
                 }}
               />
-              <p className="text-sm font-medium text-slate-700 transition-colors group-hover:text-[#6571FF]">
+              <p className="text-sm font-medium text-slate-700 transition-colors group-hover:text-primary">
                 {category.name}
               </p>
             </div>

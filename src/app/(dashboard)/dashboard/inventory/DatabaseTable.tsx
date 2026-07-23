@@ -119,7 +119,7 @@ export default function DatabaseTable({
                 index % 2 === 0
                   ? `bg-slate-50/70 ${evenColor}`
                   : `bg-white/70 ${oddColor}`, // Translucent backgrounds
-                "active:scale-[0.98] active:shadow-lg" // Subtle active state for touch
+                "active:scale-[0.98] active:shadow-lg", // Subtle active state for touch
               )}
             >
               <div className="flex flex-col gap-3">
@@ -139,7 +139,7 @@ export default function DatabaseTable({
                   </div>
                   {/* Highlighted ID with subtle background and accent color */}
                   <div className="bg-slate-100/80 px-3 py-1 rounded-full ring-1 ring-slate-200">
-                    <div className="text-sm font-bold text-[#6571FF]">
+                    <div className="text-sm font-bold text-primary">
                       {" "}
                       {/* Accent color for ID */}#{item.id}
                     </div>

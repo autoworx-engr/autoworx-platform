@@ -290,7 +290,7 @@ export default function EditClientModalBody({
             </div>
             <label
               htmlFor="profilePicture"
-              className="absolute bottom-0 right-0 p-1 bg-[#6571FF] rounded-full shadow-sm cursor-pointer transition-colors"
+              className="absolute bottom-0 right-0 p-1 bg-primary rounded-full shadow-sm cursor-pointer transition-colors"
             >
               <SquarePen className="w-3 h-3 text-white" />
             </label>
@@ -310,7 +310,7 @@ export default function EditClientModalBody({
                     rounded-full pl-4 pr-2 py-1.5
                     bg-white dark:bg-slate-800
                     border border-dashed border-slate-300 dark:border-slate-600
-                    hover:border-[#6571FF] hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20
+                    hover:border-primary hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20
                     transition-all duration-300
                 "
             htmlFor="profilePicture"
@@ -324,11 +324,11 @@ export default function EditClientModalBody({
               onChange={handleFileChange}
             />
             <div className="flex flex-col items-end">
-              <span className="text-sm font-semibold text-slate-600 dark:text-slate-300 group-hover:text-[#6571FF] transition-colors">
+              <span className="text-sm font-semibold text-slate-600 dark:text-slate-300 group-hover:text-primary transition-colors">
                 Upload Photo
               </span>
             </div>
-            <div className="p-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 group-hover:text-[#6571FF] group-hover:bg-white transition-colors">
+            <div className="p-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 group-hover:text-primary group-hover:bg-white transition-colors">
               <UserIcon size={32} strokeWidth={2} />
             </div>
           </label>
@@ -402,7 +402,7 @@ export default function EditClientModalBody({
             <button
               type="button"
               onClick={() => setOpenChangePassword(true)}
-              className="text-sm font-medium text-[#6571FF] hover:text-[#5a66ee] hover:underline transition-colors"
+              className="text-sm font-medium text-primary hover:text-[#5a66ee] hover:underline transition-colors"
             >
               Change password
             </button>
@@ -531,7 +531,7 @@ export default function EditClientModalBody({
         <Submit
           className="
                 rounded-xl px-6 py-2.5 text-sm font-medium text-white
-                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                bg-gradient-to-r from-primary to-[#5a66ee]
                 shadow-lg shadow-indigo-500/30
                 hover:shadow-xl hover:shadow-indigo-500/40
                 hover:-translate-y-0.5 hover:scale-[1.02]

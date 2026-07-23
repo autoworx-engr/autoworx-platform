@@ -1,39 +1,38 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { customAlphabet } from "nanoid";
 import { createDraftEstimate } from "@/actions/estimate/invoice/createDraft";
-import {
-  AlertTriangle,
-  Car,
-  Calendar,
-  Clock,
-  User,
-  Mail,
-  Phone,
-  MessageCircle,
-  ChevronLeft,
-  Store,
-  CheckCircle,
-  FileText,
-  Loader2,
-  X,
-  Receipt,
-} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { errorToast, successToast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import {
   EmergencyRequestStatus,
-  UrgentRequest,
   updateUrgentRequest,
   UpdateUrgentRequestPayload,
+  UrgentRequest,
 } from "@/service/virtual-shop/api";
 import { fToNow } from "@/utils/formatDate";
-import { errorToast, successToast } from "@/lib/toast";
+import {
+  AlertTriangle,
+  Calendar,
+  Car,
+  CheckCircle,
+  ChevronLeft,
+  Clock,
+  Loader2,
+  Mail,
+  MessageCircle,
+  Phone,
+  Receipt,
+  Store,
+  User,
+  X,
+} from "lucide-react";
+import { customAlphabet } from "nanoid";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 
 type Props = {
   request: UrgentRequest;
@@ -51,7 +50,7 @@ const STATUS_STYLES: Record<
   },
   UNDER_REVIEW: {
     label: "Under Review",
-    className: "bg-[#6571FF]/10 text-[#6571FF] border-[#6571FF]/20",
+    className: "bg-primary/10 text-primary border-primary/20",
   },
   APPROVED: {
     label: "Approved",
@@ -59,7 +58,7 @@ const STATUS_STYLES: Record<
   },
   ALTERNATIVE_PROPOSED: {
     label: "Alt. Proposed",
-    className: "bg-[#6571FF]/10 text-[#6571FF] border-[#6571FF]/20",
+    className: "bg-primary/10 text-primary border-primary/20",
   },
   CLIENT_CONFIRMED: {
     label: "Confirmed",
@@ -87,7 +86,7 @@ const STATUS_ACTIONS: {
   {
     value: "UNDER_REVIEW",
     label: "Mark Under Review",
-    className: "bg-[#6571FF] hover:bg-[#5a66ee] text-white",
+    className: "bg-primary hover:bg-[#5a66ee] text-white",
   },
   {
     value: "APPROVED",
@@ -97,7 +96,7 @@ const STATUS_ACTIONS: {
   {
     value: "ALTERNATIVE_PROPOSED",
     label: "Propose Alternative",
-    className: "bg-[#6571FF]/80 hover:bg-[#6571FF] text-white",
+    className: "bg-primary/80 hover:bg-primary text-white",
   },
   {
     value: "REJECTED",
@@ -243,7 +242,7 @@ export default function UrgentRequestDetail({
       {/* Back */}
       <Link
         href={`/dashboard/virtual-shop/admin/${shopId}/urgent-requests`}
-        className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#6571FF] w-fit"
+        className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-primary w-fit"
       >
         <ChevronLeft size={16} />
         Back to Urgent Requests
@@ -252,7 +251,7 @@ export default function UrgentRequestDetail({
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#6571FF] text-white shadow-lg shadow-[#6571FF]/30">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-white shadow-lg shadow-primary/30">
             <AlertTriangle size={22} />
           </div>
           <div>
@@ -279,7 +278,7 @@ export default function UrgentRequestDetail({
         {request.client?.id && (
           <Link
             href={`/dashboard/communication/client/${request.client.id}`}
-            className="flex items-center gap-2 rounded-xl bg-[#6571FF] px-4 py-2 text-sm font-semibold text-white shadow-md shadow-[#6571FF]/25 transition-opacity hover:opacity-90"
+            className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white shadow-md shadow-primary/25 transition-opacity hover:opacity-90"
           >
             <MessageCircle size={16} />
             Open Chat
@@ -354,7 +353,7 @@ export default function UrgentRequestDetail({
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-8 gap-1.5 text-xs font-semibold text-[#6571FF] border-[#6571FF]/20 hover:bg-[#6571FF]/5"
+                  className="h-8 gap-1.5 text-xs font-semibold text-primary border-primary/20 hover:bg-primary/5"
                   onClick={handleQuickEstimate}
                   disabled={pendingEstimate || !request.client?.id}
                   title={
@@ -377,7 +376,7 @@ export default function UrgentRequestDetail({
                     key={i}
                     className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700"
                   >
-                    <CheckCircle size={14} className="text-[#6571FF]" />
+                    <CheckCircle size={14} className="text-primary" />
                     <span>Service #{svc.shopServiceId ?? i + 1}</span>
                     {svc.vehicleType && (
                       <Badge className="bg-slate-100 text-slate-500 border-slate-200 text-[10px]">
@@ -421,11 +420,11 @@ export default function UrgentRequestDetail({
 
           {/* Admin Notes — if already set */}
           {request.adminNotes && (
-            <section className="rounded-2xl border border-[#6571FF]/20 bg-[#6571FF]/5 p-5 shadow-sm space-y-2">
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-[#6571FF]">
+            <section className="rounded-2xl border border-primary/20 bg-primary/5 p-5 shadow-sm space-y-2">
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-primary">
                 Admin Notes
               </h2>
-              <p className="text-sm text-[#6571FF]/80">{request.adminNotes}</p>
+              <p className="text-sm text-primary/80">{request.adminNotes}</p>
             </section>
           )}
 
@@ -441,8 +440,8 @@ export default function UrgentRequestDetail({
           {(request.proposedDate ||
             request.proposedTime ||
             request.alternativeNotes) && (
-            <section className="rounded-2xl border border-[#6571FF]/20 bg-[#6571FF]/5 p-5 shadow-sm space-y-3">
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-[#6571FF]">
+            <section className="rounded-2xl border border-primary/20 bg-primary/5 p-5 shadow-sm space-y-3">
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-primary">
                 Alternative Proposal
               </h2>
               <div className="grid grid-cols-2 gap-3">
@@ -462,7 +461,7 @@ export default function UrgentRequestDetail({
                 )}
               </div>
               {request.alternativeNotes && (
-                <p className="text-sm text-[#6571FF]/80">
+                <p className="text-sm text-primary/80">
                   {request.alternativeNotes}
                 </p>
               )}
@@ -515,7 +514,7 @@ export default function UrgentRequestDetail({
                   onChange={(e) => setAdminNotes(e.target.value)}
                   rows={3}
                   placeholder="Internal notes..."
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 outline-none focus:border-[#6571FF] focus:ring-2 focus:ring-[#6571FF]/20 resize-none"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none"
                 />
               </div>
 
@@ -528,7 +527,7 @@ export default function UrgentRequestDetail({
                   onChange={(e) => setRejectionReason(e.target.value)}
                   rows={2}
                   placeholder="If rejecting, explain why..."
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 outline-none focus:border-[#6571FF] focus:ring-2 focus:ring-[#6571FF]/20 resize-none"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none"
                 />
               </div>
 
@@ -551,7 +550,7 @@ export default function UrgentRequestDetail({
                         setProposedDate(e.target.value);
                         if (!e.target.value) setProposedTime("");
                       }}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 pr-8 text-sm text-slate-700 outline-none focus:border-[#6571FF] focus:ring-2 focus:ring-[#6571FF]/20"
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 pr-8 text-sm text-slate-700 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                     />
                     {proposedDate && (
                       <button
@@ -577,7 +576,7 @@ export default function UrgentRequestDetail({
                       value={proposedTime}
                       onChange={(e) => setProposedTime(e.target.value)}
                       disabled={!proposedDate}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 pr-8 text-sm text-slate-700 outline-none focus:border-[#6571FF] focus:ring-2 focus:ring-[#6571FF]/20 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 pr-8 text-sm text-slate-700 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
                     />
                     {proposedTime && (
                       <button
@@ -601,14 +600,14 @@ export default function UrgentRequestDetail({
                   onChange={(e) => setAlternativeNotes(e.target.value)}
                   rows={2}
                   placeholder="Details for the client..."
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 outline-none focus:border-[#6571FF] focus:ring-2 focus:ring-[#6571FF]/20 resize-none"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none"
                 />
               </div>
 
               <Button
                 onClick={handleSaveNotes}
                 disabled={isUpdating}
-                className="w-full rounded-xl bg-[#6571FF] text-white hover:bg-[#5a66ee]"
+                className="w-full rounded-xl bg-primary text-white hover:bg-[#5a66ee]"
               >
                 {isUpdating ? (
                   <Loader2 size={14} className="animate-spin mr-1" />

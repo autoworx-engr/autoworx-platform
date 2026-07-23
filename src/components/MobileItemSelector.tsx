@@ -2,15 +2,8 @@
 import { cn } from "@/lib/cn";
 import { Item } from "@/stores/estimate-create";
 import { useEstimatePopupStore } from "@/stores/estimate-popup";
-import {
-  ChevronDown,
-  ChevronUp,
-  Plus,
-  Search,
-  SquarePen,
-  X,
-} from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { ChevronDown, Plus, Search, SquarePen, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 type MobileItemSelectorProps<T> = {
   label: string;
@@ -139,7 +132,7 @@ export default function MobileItemSelector<T>({
         className={cn(
           "relative flex h-11 w-full items-center justify-between rounded-2xl bg-slate-50 px-4 transition-all",
           "ring-1 ring-inset ring-slate-200 hover:bg-slate-100",
-          isOpen && "ring-2 ring-[#6571FF]/40 bg-white shadow-sm",
+          isOpen && "ring-2 ring-primary/40 bg-white shadow-sm",
           !selected && "text-slate-400 font-normal",
           selected && "text-slate-600 font-bold",
         )}
@@ -157,7 +150,7 @@ export default function MobileItemSelector<T>({
         >
           <ChevronDown
             size={18}
-            className={isOpen ? "text-[#6571FF]" : "text-slate-400"}
+            className={isOpen ? "text-primary" : "text-slate-400"}
           />
         </div>
 
@@ -166,7 +159,7 @@ export default function MobileItemSelector<T>({
           <div className="absolute -top-2.5 -right-1 flex items-center gap-1.5">
             {onEdit && (
               <button
-                className="flex h-6 w-6 items-center justify-center rounded-full bg-[#6571FF] text-white shadow-lg shadow-[#6571FF]/30 transition-transform hover:scale-110 active:scale-90"
+                className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/30 transition-transform hover:scale-110 active:scale-90"
                 onClick={(e) => {
                   e.stopPropagation();
                   onEdit();
@@ -206,7 +199,7 @@ export default function MobileItemSelector<T>({
                 ref={searchRef}
                 placeholder={`Find ${label.toLowerCase()}...`}
                 value={searchText}
-                className="w-full rounded-xl bg-slate-50 py-2 pl-9 pr-4 text-sm font-medium outline-none ring-1 ring-inset ring-slate-100 focus:ring-2 focus:ring-[#6571FF]/20 transition-all"
+                className="w-full rounded-xl bg-slate-50 py-2 pl-9 pr-4 text-sm font-medium outline-none ring-1 ring-inset ring-slate-100 focus:ring-2 focus:ring-primary/20 transition-all"
                 onChange={(e) => handleSearch(e.target.value)}
               />
             </div>
@@ -219,9 +212,9 @@ export default function MobileItemSelector<T>({
                 key={i}
                 className={cn(
                   "w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-all",
-                  "hover:bg-[#6571FF]/5 hover:text-[#6571FF]",
+                  "hover:bg-primary/5 hover:text-primary",
                   selected && (selected as any).id === (item as any).id
-                    ? "bg-[#6571FF] text-white"
+                    ? "bg-primary text-white"
                     : "text-slate-600",
                 )}
                 onClick={() => handleSelect(item)}
@@ -239,7 +232,7 @@ export default function MobileItemSelector<T>({
           {/* New Item Button */}
           <div className="mt-2 border-t border-slate-50 pt-2">
             <button
-              className="flex w-full items-center justify-center gap-2 rounded-xl py-2 text-sm font-semibold text-[#6571FF] hover:bg-[#6571FF]/5 transition-colors"
+              className="flex w-full items-center justify-center gap-2 rounded-xl py-2 text-sm font-semibold text-primary hover:bg-primary/5 transition-colors"
               onClick={() => {
                 openPopup(type, { itemId: item.id, materialIndex });
                 setIsOpen(false);

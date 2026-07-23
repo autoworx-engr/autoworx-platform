@@ -56,8 +56,8 @@ const InventoryResponsiveCard: React.FC<InventoryResponsiveCardProps> = ({
       }}
       className={cn(
         "group min-h-[110px] cursor-pointer rounded-lg border border-[#BFC4FF] px-4 py-3 shadow-sm transition-all duration-200",
-        "hover:-translate-y-0.5 hover:border-[#6571FF] hover:shadow-md",
-        "focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6571FF]/50",
+        "hover:-translate-y-0.5 hover:border-primary hover:shadow-md",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
         (index + 1) % 2 === 0 ? evenColor : oddColor,
       )}
     >
@@ -74,11 +74,11 @@ const InventoryResponsiveCard: React.FC<InventoryResponsiveCardProps> = ({
                 <CircleAlert className="size-4 shrink-0 text-yellow-600" />
               </Tooltip>
             ) : null}
-            <h3 className="truncate text-lg font-bold text-slate-600 transition-colors group-hover:text-[#6571FF]">
+            <h3 className="truncate text-lg font-bold text-slate-600 transition-colors group-hover:text-primary">
               {product.name}
             </h3>
           </div>
-          <p className="truncate text-sm font-semibold text-[#6571FF]">
+          <p className="truncate text-sm font-semibold text-primary">
             {product.category?.name ?? "Unknown Category"}
           </p>
         </div>

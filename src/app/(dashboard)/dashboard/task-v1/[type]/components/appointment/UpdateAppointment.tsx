@@ -27,17 +27,13 @@ import type {
 // @ts-ignore
 import { deleteAppointment } from "@/actions/appointment/deleteAppointment";
 import { editAppointment } from "@/actions/appointment/editAppointment";
+import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 import Avatar from "@/components/Avatar";
+import { useServerGet } from "@/hooks/useServerGet";
 import { errorToast } from "@/lib/toast";
 import { useFormErrorStore } from "@/stores/form-error";
 import { formatTime } from "@/utils/taskAndActivity";
 import { addOneHour, formatDateToToday, getCurrentTime } from "@/utils/time";
-import moment from "moment";
-import { customAlphabet } from "nanoid";
-import { useEffect, useRef, useState } from "react";
-import { Reminder } from "./Reminder";
-import { useServerGet } from "@/hooks/useServerGet";
-import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 import {
   Bell,
   Calendar,
@@ -47,6 +43,10 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import moment from "moment";
+import { customAlphabet } from "nanoid";
+import { useEffect, useRef, useState } from "react";
+import { Reminder } from "./Reminder";
 
 enum Tab {
   Schedule = 0,
@@ -72,10 +72,10 @@ export function UpdateAppointment() {
   const [title, setTitle] = useState(appointment?.title);
   const [notes, setNotes] = useState(appointment?.notes || "");
   const [date, setDate] = useState<string | null>(
-    moment.utc(appointment?.date).format("YYYY-MM-DD")
+    moment.utc(appointment?.date).format("YYYY-MM-DD"),
   );
   const [startTime, setStartTime] = useState<string | null>(
-    appointment?.startTime
+    appointment?.startTime,
   );
 
   const [endTime, setEndTime] = useState<string | null>(appointment?.endTime);
@@ -89,14 +89,14 @@ export function UpdateAppointment() {
   const [client, setClient] = useState<Client | null>(appointment?.client);
   const [vehicle, setVehicle] = useState<Vehicle | null>(appointment?.vehicle);
   const [assignedUsers, setAssignedUsers] = useState<User[]>(
-    appointment?.assignedUsers
+    appointment?.assignedUsers,
   );
 
   const [employeesToDisplay, setEmployeesToDisplay] =
     useState<User[]>(employees);
 
   const [times, setTimes] = useState<{ time: string; date: string }[]>(
-    appointment?.times as any
+    appointment?.times as any,
   );
   const [confirmationTemplate, setConfirmationTemplate] =
     useState<EmailTemplate | null>(appointment?.confirmationEmailTemplate);
@@ -164,7 +164,7 @@ export function UpdateAppointment() {
     if (estimates) {
       // filter all estimates where clientId is client.id
       const filteredEstimates = estimates.filter(
-        (estimate) => estimate.clientId === client?.id
+        (estimate) => estimate.clientId === client?.id,
       );
       // map the filtered estimates to get the id
       const estimateIds = filteredEstimates.map((estimate) => estimate.id);
@@ -211,7 +211,7 @@ export function UpdateAppointment() {
 
     if (date && (!startTime || !endTime)) {
       return errorToast(
-        "Start time and End time are required when a date is selected!"
+        "Start time and End time are required when a date is selected!",
       );
     }
 
@@ -228,7 +228,7 @@ export function UpdateAppointment() {
       !company?.timezone
     ) {
       return errorToast(
-        "Set company timezone in Settings > Business Profile to send client reminders."
+        "Set company timezone in Settings > Business Profile to send client reminders.",
       );
     }
 
@@ -403,7 +403,7 @@ export function UpdateAppointment() {
 
   const handleTimeChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    type: "start" | "end"
+    type: "start" | "end",
   ) => {
     let timeValue = e.target.value;
 
@@ -560,7 +560,7 @@ export function UpdateAppointment() {
               type="button"
               className={cn(
                 "rounded-full px-4 py-1 font-semibold",
-                tab === Tab.Schedule && "bg-background"
+                tab === Tab.Schedule && "bg-background",
               )}
               onClick={() => setTab(Tab.Schedule)}
             >
@@ -572,7 +572,7 @@ export function UpdateAppointment() {
               type="button"
               className={cn(
                 "rounded-full px-4 py-1 font-semibold",
-                tab === Tab.Reminder && "bg-background"
+                tab === Tab.Reminder && "bg-background",
               )}
               onClick={() => setTab(Tab.Reminder)}
             >
@@ -677,7 +677,7 @@ export function UpdateAppointment() {
                     <button
                       onClick={() => {
                         let filteredAssignedUser = assignedUsers.filter(
-                          (assignedUser) => user.id != assignedUser.id
+                          (assignedUser) => user.id != assignedUser.id,
                         );
                         setAssignedUsers(filteredAssignedUser);
                       }}
@@ -761,7 +761,7 @@ export function UpdateAppointment() {
                     <button
                       onClick={() => {
                         let filteredAssignedUser = assignedUsers.filter(
-                          (assignedUser) => user.id != assignedUser.id
+                          (assignedUser) => user.id != assignedUser.id,
                         );
                         setAssignedUsers(filteredAssignedUser);
                       }}
@@ -842,7 +842,7 @@ export function UpdateAppointment() {
               openState={[draftOpen, setDraftOpen]}
               newButton={
                 <button
-                  className="text-[#6571FF] disabled:text-zinc-400"
+                  className="text-primary disabled:text-zinc-400"
                   onClick={() => {
                     setDraft(customAlphabet("1234567890", 10)());
                     setDraftOpen(false);
@@ -856,10 +856,10 @@ export function UpdateAppointment() {
               items={draftEstimates}
               selectedItem={draft}
               setSelectedItem={setDraft}
-              displayList={(item) => <p className="text-[#6571FF]">{item}</p>}
+              displayList={(item) => <p className="text-primary">{item}</p>}
               onSearch={(search) => {
                 return draftEstimates.filter((draft) =>
-                  draft.toLowerCase().includes(search.toLowerCase())
+                  draft.toLowerCase().includes(search.toLowerCase()),
                 );
               }}
             />
@@ -970,7 +970,7 @@ export function UpdateAppointment() {
             </DialogClose>
             <button
               className={`rounded-md border px-4 py-1 text-white ${
-                formChanged ? "bg-[#6571FF]" : "cursor-not-allowed bg-gray-400"
+                formChanged ? "bg-primary" : "cursor-not-allowed bg-gray-400"
               }`}
               formAction={handleSubmit}
               disabled={!formChanged}

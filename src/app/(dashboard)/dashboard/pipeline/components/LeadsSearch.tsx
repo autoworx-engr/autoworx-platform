@@ -22,7 +22,7 @@ const LeadsSearch = React.memo(function LeadsSearch({
     <div className="relative min-w-0 flex-1 group">
       <Search
         size={18}
-        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-[#6571FF]"
+        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-primary"
       />
       <input
         type="text"
@@ -34,7 +34,7 @@ const LeadsSearch = React.memo(function LeadsSearch({
           "text-sm font-medium text-slate-700 placeholder:text-slate-400 outline-none",
           "transition-all duration-300 ease-in-out",
           "hover:border-slate-200 hover:bg-slate-50/30",
-          "focus:border-[#6571FF]/40 focus:bg-white focus:ring-4 focus:ring-[#6571FF]/10",
+          "focus:border-primary/40 focus:bg-white focus:ring-4 focus:ring-primary/10",
         )}
       />
     </div>

@@ -1,15 +1,14 @@
 "use client";
-import { DialogContent, DialogFooter } from "@/components/Dialog";
-import { Dialog } from "@/components/Dialog";
-import { InvoiceRedo, Technician } from "@prisma/client";
-import { useState, useTransition } from "react";
-import RedoTechnician from "./RedoTechnician";
-import toast from "react-hot-toast";
-import { RotatingLines } from "react-loader-spinner";
+import { Dialog, DialogContent, DialogFooter } from "@/components/Dialog";
+import { queryKeys } from "@/lib/queryKeys";
 import { createRedo } from "@/service/work-order/api";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
+import { InvoiceRedo, Technician } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { queryKeys } from "@/lib/queryKeys";
+import { useState, useTransition } from "react";
+import toast from "react-hot-toast";
+import { RotatingLines } from "react-loader-spinner";
+import RedoTechnician from "./RedoTechnician";
 
 type TProps = {
   invoiceId: string;
@@ -117,7 +116,7 @@ export default function ReDoModal({
             e.stopPropagation();
             setOpen(true);
           }}
-          className="flex items-center gap-1 rounded-full bg-[#6571FF] px-2 py-0.5 text-white"
+          className="flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-white"
         >
           Re-Do
         </button>
@@ -156,7 +155,7 @@ export default function ReDoModal({
               <button
                 disabled={pending}
                 onClick={() => startTransition(handleSaveInvoiceRedo)}
-                className="mx-auto rounded bg-[#6571FF] px-8 py-2 text-white"
+                className="mx-auto rounded bg-primary px-8 py-2 text-white"
               >
                 {pending ? (
                   <RotatingLines

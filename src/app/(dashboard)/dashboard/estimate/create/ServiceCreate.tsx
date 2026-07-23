@@ -129,7 +129,7 @@ export default function ServiceCreate() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           className={cn(
-            "h-11 rounded-xl bg-white px-4 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30",
+            "h-11 rounded-xl bg-white px-4 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-primary/30",
             data.service?.canned &&
               "bg-slate-50 text-slate-600 cursor-not-allowed shadow-inner",
           )}
@@ -159,7 +159,7 @@ export default function ServiceCreate() {
           placeholder="Provide details about this service..."
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="h-32 rounded-xl bg-white p-4 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30 resize-none"
+          className="h-32 rounded-xl bg-white p-4 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
         />
       </div>
 
@@ -169,7 +169,7 @@ export default function ServiceCreate() {
           {/* Assuming Close is a component, ensure its internal classes match a 'ghost' style */}
 
           <button
-            className="bg-[#6571FF] text-white shadow-lg shadow-[#6571FF]/30 hover:bg-[#525ceb] hover:shadow-[#6571FF]/40 active:scale-95 px-8 py-2.5 rounded-xl text-sm font-bold"
+            className="bg-primary text-white shadow-lg shadow-primary/30 hover:bg-[#525ceb] hover:shadow-primary/40 active:scale-95 px-8 py-2.5 rounded-xl text-sm font-bold"
             onClick={edit ? handleEdit : handleSubmit}
             type="button"
           >
