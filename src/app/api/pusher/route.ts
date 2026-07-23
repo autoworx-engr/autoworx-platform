@@ -4,6 +4,7 @@ import {
   sendCollaborationMessageNotification,
   sendInternalMessageNotification,
 } from "@/lib/notification/communication-notify";
+import { sendInternalGroupMessageNotification } from "@/lib/notification/internal-group-notify";
 import { getPusherInstance } from "@/lib/pusher/server";
 import { sendType } from "@/types/Chat";
 import { MessageSection } from "@prisma/client";
@@ -159,6 +160,7 @@ export async function POST(req: Request) {
     };
 
     // send a message for group
+    let groupMemberIds: number[] | null = null;
     if (type === sendType.Group) {
       const isUserInExistGroup = await db.group.findFirst({
         where: {
@@ -168,6 +170,9 @@ export async function POST(req: Request) {
               id: userId,
             },
           },
+        },
+        include: {
+          users: { select: { id: true } },
         },
       });
       if (!isUserInExistGroup) {
@@ -180,6 +185,7 @@ export async function POST(req: Request) {
         );
       }
       channel = `group-${to}`;
+      groupMemberIds = isUserInExistGroup.users.map((user) => user.id);
       messageData = {
         from: userId,
         groupId: to,
@@ -311,6 +317,15 @@ export async function POST(req: Request) {
         toUserId: to,
         fromUserId: userId,
         message: message,
+      });
+    }
+
+    if (type === sendType.Group && section === "internal" && groupMemberIds) {
+      // Send a notification to every group member (except the sender).
+      sendInternalGroupMessageNotification({
+        groupId: to,
+        fromUserId: userId,
+        memberIds: groupMemberIds,
       });
     }
 
