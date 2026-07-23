@@ -16,6 +16,7 @@ export type TBodyProps = {
   groups: TGroup[];
   userChatTrack: (ChatTrack & { message?: Message | null })[];
   selectedUser: TUser | null;
+  selectedGroup?: TGroup | null;
   messages?: Message[];
 };
 
@@ -25,20 +26,29 @@ export default function Body({
   groups,
   userChatTrack,
   selectedUser,
+  selectedGroup,
   messages = [],
 }: TBodyProps) {
-  const [chatList, setChatList] = useState<ChatListItem[]>(() =>
-    selectedUser
-      ? [
-          {
-            id: `user-${selectedUser.id}`,
-            type: "user",
-            data: selectedUser,
-            timestamp: Date.now(),
-          },
-        ]
-      : [],
-  );
+  const [chatList, setChatList] = useState<ChatListItem[]>(() => {
+    const initial: ChatListItem[] = [];
+    if (selectedUser) {
+      initial.push({
+        id: `user-${selectedUser.id}`,
+        type: "user",
+        data: selectedUser,
+        timestamp: Date.now(),
+      });
+    }
+    if (selectedGroup) {
+      initial.push({
+        id: `group-${selectedGroup.id}`,
+        type: "group",
+        data: selectedGroup,
+        timestamp: Date.now(),
+      });
+    }
+    return initial;
+  });
 
   const usersList = chatList
     .filter(
