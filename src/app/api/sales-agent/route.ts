@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sendInfobipMessageSalesAgent } from "@/actions/communication/client/sendInfobipMessageSalesAgent";
 import { sendTwilioMessageSalesAgent } from "@/actions/communication/client/sendTwilioMessageSalesAgent";
-import { numberSmsSegments } from "@/lib/sms/numberSmsSegments";
+import { segmentMessage } from "@/lib/sms/segmentMessage";
 
 /**
  * @swagger
@@ -84,10 +84,8 @@ export async function POST(req: NextRequest) {
 
     // Carriers flag long single texts as spam, so a long AI-agent reply is
     // split into sentence-bounded chunks and sent as separate messages
-    // instead of relying on the agent's prompt to self-limit length. Each
-    // chunk is prefixed "(i/total)" because carriers don't guarantee delivery
-    // order for separate texts — the label lets the client read them in order.
-    const segments = numberSmsSegments(body.message);
+    // instead of relying on the agent's prompt to self-limit length.
+    const segments = segmentMessage(body.message);
     const attachments = body.attachments ?? [];
 
     // Attachment-only replies (empty body validated above) send once with an
