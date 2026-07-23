@@ -2,6 +2,7 @@ import { sendInfobipMessage } from "@/actions/communication/client/sendInfobipMe
 import { sendTwilioMessage } from "@/actions/communication/client/sendTwilioMessage";
 import { db } from "@/lib/db";
 import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
+import { sendClientCallMissedNotification } from "@/lib/notification/communication-notify";
 import {
   formDataToParams,
   // verifyTwilioSignature, // TEMP: signature verification disabled for debugging
@@ -43,6 +44,7 @@ export async function POST(request: Request) {
         status: true,
         clientId: true,
         companyId: true,
+        client: { select: { firstName: true, lastName: true } },
       },
     });
 
@@ -74,6 +76,9 @@ export async function POST(request: Request) {
       currentStatus: call.status,
       companyId: call.companyId,
       clientId: call.clientId,
+      clientName: [call.client?.firstName, call.client?.lastName]
+        .filter(Boolean)
+        .join(" "),
       dialCallStatus,
       callStatus,
     });
@@ -97,6 +102,7 @@ type ProcessInput = {
   currentStatus: string | null;
   companyId: number;
   clientId: number;
+  clientName: string;
   dialCallStatus: string;
   callStatus: string;
 };
@@ -106,12 +112,15 @@ async function processCallStatus({
   currentStatus,
   companyId,
   clientId,
+  clientName,
   dialCallStatus,
   callStatus,
 }: ProcessInput) {
   const isMissedCall = !!dialCallStatus && MISSED_STATUSES.has(dialCallStatus);
 
   if (isMissedCall) {
+    sendClientCallMissedNotification({ companyId, clientId, clientName });
+
     const company = await db.company.findUnique({
       where: { id: companyId },
       select: {
