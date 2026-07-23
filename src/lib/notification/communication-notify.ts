@@ -117,6 +117,52 @@ export const sendClientMessageNotification = async ({
   }
 };
 
+// send notification for when client misses a call
+type TClientCallMissedNotification = {
+  companyId: number;
+  clientName?: string;
+  clientId: number;
+  sendRoles?: EmployeeType[];
+};
+
+export const sendClientCallMissedNotification = async ({
+  companyId,
+  clientId,
+  clientName,
+  sendRoles = ["Admin", "Manager", "Sales"],
+}: TClientCallMissedNotification) => {
+  try {
+    const getUsers = await getUsersByRole(companyId, sendRoles, {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      phone: true,
+    });
+
+    const redirectUrl = `/dashboard/communication/client/${clientId}?open=PHONE`;
+    const description = `Missed call from ${clientName || "a client"}. Call to respond.`;
+    const title = "Missed Call";
+
+    for (const user of getUsers) {
+      sendUserNotifications({
+        userId: user.id,
+        userName: `${user.firstName} ${user.lastName}`,
+        userEmail: user.email || "",
+        userPhoneNo: user.phone || "",
+        companyId,
+        iconType: "communication",
+        title,
+        description,
+        type: "CLIENT_CALL_ALERT",
+        redirectUrl,
+      });
+    }
+  } catch (err) {
+    console.error("client call missed notification error", err);
+  }
+};
+
 type TInternalMessageNotification = {
   companyId?: number;
   toUserId: number;
