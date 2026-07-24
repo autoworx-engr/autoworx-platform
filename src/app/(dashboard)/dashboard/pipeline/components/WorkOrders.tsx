@@ -217,9 +217,7 @@ const WorkOrders = () => {
                               <WorkOrderModal
                                 invoiceId={id}
                                 buttonChild={
-                                  <button className="text-[#6571FF]">
-                                    {id}
-                                  </button>
+                                  <button className="text-primary">{id}</button>
                                 }
                                 onWorkOrderCreated={async () =>
                                   setInvoices(await getWorkOrders())

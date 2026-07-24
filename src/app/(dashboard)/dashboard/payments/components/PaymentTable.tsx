@@ -177,7 +177,7 @@ export default function PaymentTable() {
                       <div className="flex items-center justify-between">
                         <Link
                           href={`/dashboard/estimate/view/${item.invoiceId}`}
-                          className="text-lg font-semibold text-[#6571FF]"
+                          className="text-lg font-semibold text-primary"
                         >
                           {item.invoiceId}
                         </Link>

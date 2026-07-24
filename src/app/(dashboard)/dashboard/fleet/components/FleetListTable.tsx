@@ -82,7 +82,7 @@ const FleetListTable = ({ fleets }: TFleetListTableProps) => {
                   fleet={client}
                   isEdit={true}
                   buttonElement={
-                    <SquarePen className="w-5 h-5 cursor-pointer text-[#6571ff]" />
+                    <SquarePen className="w-5 h-5 cursor-pointer text-primary" />
                   }
                 />
                 <DeleteFleet id={client.fleet?.clientId} />
