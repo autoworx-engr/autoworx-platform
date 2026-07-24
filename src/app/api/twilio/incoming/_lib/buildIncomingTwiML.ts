@@ -54,6 +54,9 @@ export function buildIncomingTwiML(input: IncomingTwiMLInput): string {
         timeout: 30,
         answerOnBridge: true,
         action: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/call-status`,
+        // Play a ringback tone to the original caller while the forwarding
+        // number rings, so they don't hear silence (same fix as outbound PSTN).
+        ringTone: "us",
         ...recordingOptions,
       },
       callForwardingNumber,
