@@ -119,7 +119,6 @@ async function processCallStatus({
   const finalStatus = dialCallStatus || callStatus;
   const isMissedCall = !!finalStatus && MISSED_STATUSES.has(finalStatus);
 
-  console.log("callStatus ", callStatus);
   if (isMissedCall) {
     await sendClientCallMissedNotification({ companyId, clientId, clientName });
 
