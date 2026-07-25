@@ -9,12 +9,14 @@ export default function InvoiceModal({
   buttonChildClassName,
   isShowEdit = true,
   autoOpen = false,
+  fromCollaboration = false,
 }: {
   invoiceId: string;
   buttonChild: React.ReactNode;
   buttonChildClassName?: string;
   isShowEdit?: boolean;
   autoOpen?: boolean;
+  fromCollaboration?: boolean;
 }) {
   const [open, setOpen] = useState(autoOpen);
   const [dataFetched, setDataFetched] = useState(autoOpen);
@@ -34,7 +36,11 @@ export default function InvoiceModal({
       </DialogTrigger>
 
       {(open || dataFetched) && (
-        <InvoiceModalBody invoiceId={invoiceId} isShowEdit={isShowEdit} />
+        <InvoiceModalBody
+          invoiceId={invoiceId}
+          isShowEdit={isShowEdit}
+          fromCollaboration={fromCollaboration}
+        />
       )}
     </Dialog>
   );

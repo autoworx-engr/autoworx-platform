@@ -499,6 +499,7 @@ export default function CompanyMessageBox({
                               </button>
                             }
                             isShowEdit={false}
+                            fromCollaboration={true}
                           />
                         ) : (
                           <Link

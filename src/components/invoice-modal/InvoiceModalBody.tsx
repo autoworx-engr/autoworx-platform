@@ -106,10 +106,12 @@ export default function InvoiceModalBody({
   invoiceId,
   isPublic = false,
   isShowEdit = true,
+  fromCollaboration = false,
 }: {
   invoiceId?: string;
   isPublic?: boolean;
   isShowEdit?: boolean;
+  fromCollaboration?: boolean;
 }) {
   const searchParams = useSearchParams();
 
@@ -711,11 +713,19 @@ export default function InvoiceModalBody({
           </div>
 
           <DialogClose
-            className={`absolute right-2 top-2 z-50 flex h-8 w-8 items-center justify-center rounded-full bg-slate-100/50 text-slate-500 transition-all duration-300 hover:bg-red-50 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-red-200 active:scale-90 dark:bg-slate-800/50 dark:hover:bg-red-900/30 md:right-3 md:top-3 print:hidden ${
-              isPublic ? "hidden" : ""
-            }`}
+            className={`absolute z-50 flex items-center justify-center rounded-full bg-slate-100/50 text-slate-500 transition-all duration-300 hover:bg-red-50 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-red-200 active:scale-90 dark:bg-slate-800/50 dark:hover:bg-red-900/30 print:hidden ${
+              fromCollaboration
+                ? "right-1 top-1 h-6 w-6"
+                : "right-2 top-2 h-8 w-8 md:right-3 md:top-3"
+            } ${isPublic ? "hidden" : ""}`}
           >
-            <X className="h-5 w-5 stroke-[2.5px]" />
+            <X
+              className={
+                fromCollaboration
+                  ? "h-3.5 w-3.5 stroke-[2.5px]"
+                  : "h-5 w-5 stroke-[2.5px]"
+              }
+            />
             <span className="sr-only">Close</span>
           </DialogClose>
 
