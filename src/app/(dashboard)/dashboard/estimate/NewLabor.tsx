@@ -122,8 +122,21 @@ export default function NewLabor({
       return false;
     }
 
+    const subtotal = (parseFloat(hours) || 0) * (parseFloat(charge) || 0);
+    if (discount.trim() && parseFloat(discount) > subtotal) {
+      showError({
+        field: "discount",
+        message: "Discount cannot be greater than the subtotal",
+      });
+      return false;
+    }
+
     return true;
   };
+
+  const subtotal = (parseFloat(hours) || 0) * (parseFloat(charge) || 0);
+  const discountExceedsSubtotal =
+    !!discount.trim() && parseFloat(discount) > subtotal;
 
   async function handleSubmit() {
     if (!validateForm()) return;
@@ -389,12 +402,24 @@ export default function NewLabor({
                     type="number"
                     id="discount"
                     value={discount}
-                    onChange={(e) => setDiscount(e.target.value)}
+                    onChange={(e) => {
+                      setDiscount(e.target.value);
+                      clearError();
+                    }}
                     step="0.01"
-                    className="w-full pl-8 pr-4 py-2.5 text-sm border border-slate-300 rounded-lg outline-none transition-all placeholder:text-slate-400 focus:border-blue-500"
+                    className={`w-full pl-8 pr-4 py-2.5 text-sm border rounded-lg outline-none transition-all placeholder:text-slate-400 focus:border-blue-500 ${
+                      discountExceedsSubtotal
+                        ? "border-red-400"
+                        : "border-slate-300"
+                    }`}
                     placeholder="0.00"
                   />
                 </div>
+                {discountExceedsSubtotal && (
+                  <p className="text-xs text-red-500">
+                    Discount cannot exceed the subtotal (${subtotal.toFixed(2)})
+                  </p>
+                )}
               </div>
 
               {/* Total Calculation Display */}
@@ -403,7 +428,7 @@ export default function NewLabor({
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-slate-600">Subtotal:</span>
                     <span className="font-medium text-slate-900">
-                      ${(parseFloat(hours) * parseFloat(charge)).toFixed(2)}
+                      ${subtotal.toFixed(2)}
                     </span>
                   </div>
                   {discount && parseFloat(discount) > 0 && (
@@ -418,12 +443,14 @@ export default function NewLabor({
                         <span className="font-semibold text-slate-900">
                           Total:
                         </span>
-                        <span className="font-bold text-lg text-slate-900">
-                          $
-                          {(
-                            parseFloat(hours) * parseFloat(charge) -
-                            parseFloat(discount)
-                          ).toFixed(2)}
+                        <span
+                          className={`font-bold text-lg ${
+                            discountExceedsSubtotal
+                              ? "text-red-600"
+                              : "text-slate-900"
+                          }`}
+                        >
+                          ${(subtotal - parseFloat(discount)).toFixed(2)}
                         </span>
                       </div>
                     </>
@@ -462,6 +489,7 @@ export default function NewLabor({
           <button
             className="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={data?.edit && !fromCanned ? handleEdit : handleSubmit}
+            disabled={discountExceedsSubtotal}
             type="button"
           >
             {data?.edit && !fromCanned ? "Update Labor" : "Add Labor"}
