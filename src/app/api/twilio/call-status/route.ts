@@ -116,10 +116,11 @@ async function processCallStatus({
   dialCallStatus,
   callStatus,
 }: ProcessInput) {
-  const isMissedCall = !!dialCallStatus && MISSED_STATUSES.has(dialCallStatus);
+  const finalStatus = dialCallStatus || callStatus;
+  const isMissedCall = !!finalStatus && MISSED_STATUSES.has(finalStatus);
 
   if (isMissedCall) {
-    sendClientCallMissedNotification({ companyId, clientId, clientName });
+    await sendClientCallMissedNotification({ companyId, clientId, clientName });
 
     const company = await db.company.findUnique({
       where: { id: companyId },
