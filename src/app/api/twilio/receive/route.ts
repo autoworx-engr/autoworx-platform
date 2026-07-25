@@ -108,6 +108,10 @@ export async function POST(request: Request) {
       // Required for whisper: caller keeps hearing ringing while the whisper
       // message plays to the callee; call is only bridged after whisper finishes.
       answerOnBridge: true,
+      // Force Twilio to play a ringback tone to the caller while the dialed
+      // PSTN number rings. Without this, the WebRTC/mobile caller leg often
+      // gets no early media on outbound calls to regular numbers → silence.
+      ringTone: "us",
     });
     dial.number(
       {

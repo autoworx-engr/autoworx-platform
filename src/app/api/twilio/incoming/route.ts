@@ -121,6 +121,7 @@ export async function POST(request: Request) {
         firstName: client.firstName,
         lastName: client.lastName,
         fallbackName: from,
+        photo: client.photo,
       },
     });
 
