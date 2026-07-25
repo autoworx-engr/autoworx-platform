@@ -142,10 +142,13 @@ export default function ClientInfinityScroll({
         setHasMore(false);
       }
     }
+  }, [clients, isClientInitialPage]);
+
+  useEffect(() => {
     return () => {
       resetClientData();
     };
-  }, [clients, isClientInitialPage]);
+  }, [resetClientData]);
 
   const fetchData = async () => {
     try {
