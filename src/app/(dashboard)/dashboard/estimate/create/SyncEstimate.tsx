@@ -37,6 +37,39 @@ export default function SyncEstimate({
 }) {
   const { invoiceId } = useEstimateCreateStore();
   useEffect(() => {
+    const current = useEstimateCreateStore.getState();
+
+    // capture the pre-template state once, so "Clear Template" can restore it
+    if (template && !current.templateSnapshot) {
+      useEstimateCreateStore.setState({
+        templateSnapshot: {
+          subtotal: current.subtotal,
+          type: current.type,
+          photos: current.photos,
+          discount: current.discount,
+          tax: current.tax,
+          serviceFee: current.serviceFee,
+          vehicleExtraCost: current.vehicleExtraCost,
+          deposit: current.deposit,
+          grandTotal: current.grandTotal,
+          due: current.due,
+          internalNotes: current.internalNotes,
+          terms: current.terms,
+          policy: current.policy,
+          customerNotes: current.customerNotes,
+          customerComments: current.customerComments,
+          tasks: current.tasks,
+          items: current.items,
+          currentSelectedCategoryId: current.currentSelectedCategoryId,
+          payment: current.payment,
+          totalPayment: current.totalPayment,
+          damageNotes: current.damageNotes,
+          inspections: current.inspections,
+          title: current.title,
+        },
+      });
+    }
+
     // async function fetchPhotos() {
     //   const photoFiles = await Promise.all(
     //     photos.map(async (photo, index) => {
@@ -108,7 +141,9 @@ export default function SyncEstimate({
         id: task.id,
         task: `${task.title}: ${task.description || ""}`,
       })),
-      items,
+      // when applying a template, add its items to whatever was already there
+      // instead of replacing them (see templateSnapshot for the "clear" side)
+      items: template ? [...current.items, ...items] : items,
       currentSelectedCategoryId: null,
       payment,
       totalPayment: parseFloat(
