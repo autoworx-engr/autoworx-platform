@@ -236,7 +236,7 @@ export default function RefundModal({
             onClick={openRefundDialog}
             type="button"
             className={`
-                flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0
+                flex w-max items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-all duration-300 shadow-sm hover:shadow-md active:translate-y-0
                 ${isDisabled ? "cursor-not-allowed opacity-50" : ""} 
                 ${
                   hasRefund
@@ -247,7 +247,7 @@ export default function RefundModal({
             disabled={isDisabled}
           >
             <span>{hasRefund ? "Manage Refund" : "Refund"}</span>
-            {hasRefund && <Settings size={16} color="#6571FF" />}
+            {hasRefund && <Settings size={14} color="#6571FF" />}
           </button>
         </DialogTrigger>
 

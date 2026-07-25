@@ -41,6 +41,7 @@ export default function DeleteEmployee({ employee }: { employee: User }) {
       description="Are you sure to delete this employee?"
       okText="Yes"
       cancelText="No"
+      placement="topLeft"
       onConfirm={() => {
         handleEmployeeDelete(employee?.id);
       }}

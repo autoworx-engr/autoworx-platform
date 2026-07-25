@@ -1,10 +1,7 @@
 import { cn } from "@/lib/cn";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { FormatUtcToTimezone } from "@/utils/FormatUtcToTimezone";
-import {
-  InventoryProduct,
-  InventoryProductHistory
-} from "@prisma/client";
+import { InventoryProduct, InventoryProductHistory } from "@prisma/client";
 import Link from "next/link";
 
 type TProps = {
@@ -43,31 +40,31 @@ export default function InventoryTableRow({
   return (
     <tr
       className={cn(
-        "cursor-pointer rounded-md py-3",
-        index % 2 === 0 ? "bg-background" : "bg-blue-100",
+        "cursor-pointer py-3 duration-200 hover:bg-slate-50 dark:hover:bg-slate-800/50",
+        index % 2 === 0 ? "bg-background" : "bg-[#F8FAFF]",
       )}
     >
-      <td className="border-b px-4 py-2 text-left">
+      <td className="px-4 py-2 text-left">
         <Link className="text-blue-500" href={redirectUrl}>
           {index + 1}
         </Link>
       </td>
-      <td className="border-b px-4 py-2 text-left">{name}</td>
-      <td className="border-b px-4 py-2 text-left">
+      <td className="px-4 py-2 text-left">{name}</td>
+      <td className="px-4 py-2 text-left">
         {averageCost !== null && typeof averageCost === "number"
           ? formatCurrency(averageCost)
           : "-"}
       </td>
-      <td className="border-b px-4 py-2 text-left">
+      <td className="px-4 py-2 text-left">
         {type === "Supply" ? "-" : formatCurrency(averageSales ?? 0)}
       </td>
-      <td className="border-b px-4 py-2 text-left">{Number(quantity) ?? 0}</td>
-      <td className="border-b px-4 py-2 text-left">{quantitySold ?? 0}</td>
-      <td className="border-b px-4 py-2 text-left">{type}</td>
-      <td className="border-b px-4 py-2 text-left">
+      <td className="px-4 py-2 text-left">{Number(quantity) ?? 0}</td>
+      <td className="px-4 py-2 text-left">{quantitySold ?? 0}</td>
+      <td className="px-4 py-2 text-left">{type}</td>
+      <td className="px-4 py-2 text-left">
         {type === "Supply" ? "-" : `${ReturnAndInvestment ?? 0}%`}
       </td>
-      <td className="border-b px-4 py-2 text-left">
+      <td className="px-4 py-2 text-left">
         {history?.date &&
           FormatUtcToTimezone(history?.date, timezone, "MM/DD/YY")}
       </td>

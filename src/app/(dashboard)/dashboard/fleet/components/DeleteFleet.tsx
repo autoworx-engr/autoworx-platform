@@ -26,6 +26,7 @@ export default function DeleteFleet({ id }: { id: number }) {
       description="Are you sure to delete this fleet?"
       okText="Yes"
       cancelText="No"
+      placement="topLeft"
       onConfirm={handleDelete}
     >
       <X size={22} strokeWidth={3} cursor={"pointer"} color="#f87171" />
