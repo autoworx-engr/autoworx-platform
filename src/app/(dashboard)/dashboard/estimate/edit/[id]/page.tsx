@@ -46,6 +46,9 @@ export default async function Page(props: {
   const { id } = params;
   // const searchParams = useSearchParams();
   const companyId = await getCompanyId();
+  const template = templateId
+    ? await db.invoiceTemplate.findUnique({ where: { id: templateId } })
+    : null;
   const invoice = await db.invoice.findUnique({
     where: { id, companyId },
     include: {
@@ -364,10 +367,18 @@ export default async function Page(props: {
           <Create />
         </div>
         <BillSummary
-          isEstimateServiceFee={Number(invoice.serviceFee) > 0}
-          isEstimateTax={Number(invoice.tax) > 0}
-          storedTax={Number(invoice.tax)}
-          storedServiceFee={Number(invoice.serviceFee)}
+          isEstimateServiceFee={
+            template
+              ? Number(template?.serviceFee) > 0
+              : Number(invoice.serviceFee) > 0
+          }
+          isEstimateTax={
+            template ? Number(template?.tax) > 0 : Number(invoice.tax) > 0
+          }
+          storedTax={template ? Number(template.tax) : Number(invoice.tax)}
+          storedServiceFee={
+            template ? Number(template.serviceFee) : Number(invoice.serviceFee)
+          }
         />
       </div>
     </div>
