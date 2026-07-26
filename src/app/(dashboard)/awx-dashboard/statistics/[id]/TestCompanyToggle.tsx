@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 
-export function PlatformPlanToggle({
+export function TestCompanyToggle({
   companyId,
   initialEnabled,
 }: {
@@ -15,12 +15,12 @@ export function PlatformPlanToggle({
   const handleToggle = () => {
     const next = !enabled;
     startTransition(async () => {
-      const res = await fetch("/api/awx/platform-plan-toggle", {
+      const res = await fetch("/api/awx/test-company-toggle", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           companyId,
-          enforcePlatformPlan: next,
+          isTest: next,
         }),
       });
 
@@ -36,8 +36,8 @@ export function PlatformPlanToggle({
         type="button"
         onClick={handleToggle}
         disabled={isPending}
-        className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-          enabled ? "bg-primary" : "bg-gray-300"
+        className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+          enabled ? "bg-amber-500" : "bg-gray-300"
         }`}
         role="switch"
         aria-checked={enabled}
@@ -50,12 +50,12 @@ export function PlatformPlanToggle({
       </button>
       <div className="text-xs text-slate-600 dark:text-slate-300">
         <div className="font-semibold">
-          {enabled ? "Platform plan enforced" : "Legacy access"}
+          {enabled ? "Test company" : "Live company"}
         </div>
         <div>
           {enabled
-            ? "Entitlements are enforced for this company."
-            : "All plan restrictions are bypassed."}
+            ? "SMS restricted to the test allowlist."
+            : "SMS sends normally to customers."}
         </div>
       </div>
     </div>
