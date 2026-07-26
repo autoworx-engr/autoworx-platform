@@ -72,6 +72,7 @@ export default async function SalesPipelineBox({
           number={currentTotalLeads ?? 0}
           noRate={true} // Leads coming in often doesn't need a rate of change
         />
+
         <ChartData
           heading="Leads Converted"
           subHeading="/month"
