@@ -29,7 +29,7 @@ export interface TemplateData {
 const evenColor = "bg-background";
 const oddColor = "bg-[#F8FAFF]";
 
-const defaultTake = 50;
+const defaultTake = 10;
 
 type TTableProps = {
   data: {
@@ -105,13 +105,8 @@ export default function TemplateTable({ take, page, data }: TTableProps) {
   }
 
   return (
-    <div
-      // className="min-h-[65vh] overflow-x-scroll rounded-md bg-background xl:overflow-auto xl:overflow-y-hidden flex flex-col "
-
-      className="relative max-h-[70vh] overflow-auto rounded-md bg-background flex flex-col 
-    [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-    >
-      <div className="flex-grow">
+    <div className="relative flex flex-1 h-full flex-col overflow-hidden rounded-md bg-background">
+      <div className="flex-1 overflow-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {isMax640 ? (
           <div className="flex  w-full flex-col items-center justify-center gap-y-4">
             {data?.data?.map((data, index) => (
@@ -125,7 +120,7 @@ export default function TemplateTable({ take, page, data }: TTableProps) {
         ) : (
           <>
             {data?.data?.length === 0 ? (
-              <div className="flex min-h-[400px] w-full flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-100 bg-slate-50/30 p-12 text-center">
+              <div className="flex min-h-[calc(100vh-250px)] w-full flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-100 bg-slate-50/30 p-12 text-center">
                 <div className="relative mb-6 flex h-16 w-16 items-center justify-center rounded-3xl bg-white shadow-sm ring-1 ring-slate-200/50">
                   <Search
                     size={24}
@@ -230,24 +225,23 @@ export default function TemplateTable({ take, page, data }: TTableProps) {
             )}
           </>
         )}
-        <div className="mt-auto">
-          {showPagination && (
-            <div className="mt-4 flex justify-end ">
-              <Pagination
-                className="custom-pagination"
-                current={currentPage}
-                pageSize={pageSize}
-                total={data?.totalEstimate}
-                onChange={handlePageChange}
-                showSizeChanger={true}
-                onShowSizeChange={handlePageChange}
-                size={isMax640 ? "small" : "default"}
-                responsive={true}
-              />
-            </div>
-          )}
-        </div>
       </div>
+
+      {showPagination && (
+        <div className="flex shrink-0 justify-end bg-white px-4 py-2 shadow-[0_-1px_2px_rgba(0,0,0,0.04)]">
+          <Pagination
+            className="custom-pagination"
+            current={currentPage}
+            pageSize={pageSize}
+            total={data?.totalEstimate}
+            onChange={handlePageChange}
+            showSizeChanger={true}
+            onShowSizeChange={handlePageChange}
+            size={isMax640 ? "small" : "default"}
+            responsive={true}
+          />
+        </div>
+      )}
     </div>
   );
 }

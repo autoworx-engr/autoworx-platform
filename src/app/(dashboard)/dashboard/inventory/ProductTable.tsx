@@ -13,7 +13,7 @@ import toast from "react-hot-toast";
 import EditProduct from "./EditProduct";
 
 const evenColor = "bg-background";
-const oddColor = "bg-blue-100";
+const oddColor = "bg-[#F8FAFF]";
 
 export default function ProductTable({
   currentProductId,
@@ -92,14 +92,11 @@ export default function ProductTable({
       {/* card list  */}
       <div className="mt-4 space-y-2 lg:hidden ">
         {products.length === 0 ? (
-          <div className="flex items-center justify-center gap-2">
-            <Search size={20} /> No{" "}
-            {viewTab === "products" ? "products" : "supplies"} found{" "}
-            {search?.get("search") && (
-              <span>
-                for <mark>{search?.get("search")}</mark>
-              </span>
-            )}
+          <div className="py-8">
+            <InventoryEmptyState
+              viewTab={viewTab}
+              search={search?.get("search")}
+            />
           </div>
         ) : (
           products.map((product, index) => {
@@ -168,17 +165,11 @@ export default function ProductTable({
                       ? 6
                       : 5
                   }
-                  className="text-center p-20"
                 >
-                  <span className="flex items-center justify-center gap-2">
-                    <Search size={20} /> No{" "}
-                    {viewTab === "products" ? "products" : "supplies"} found{" "}
-                    {search?.get("search") && (
-                      <span>
-                        for <mark>{search?.get("search")}</mark>
-                      </span>
-                    )}
-                  </span>
+                  <InventoryEmptyState
+                    viewTab={viewTab}
+                    search={search?.get("search")}
+                  />
                 </td>
               </tr>
             ) : (
@@ -344,5 +335,31 @@ export default function ProductTable({
         </div>
       )}
     </>
+  );
+}
+
+function InventoryEmptyState({
+  viewTab,
+  search,
+}: {
+  viewTab: string | null;
+  search?: string | null;
+}) {
+  const itemType = viewTab === "products" ? "products" : "supplies";
+  return (
+    <div className="flex min-h-[55vh] w-full flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-100 bg-slate-50/30 p-12 text-center">
+      <div className="relative mb-6 flex h-16 w-16 items-center justify-center rounded-3xl bg-white shadow-sm ring-1 ring-slate-200/50">
+        <Search size={24} className="text-slate-300" strokeWidth={1.5} />
+        <div className="absolute inset-0 animate-ping rounded-3xl bg-slate-100 opacity-20" />
+      </div>
+      <h3 className="mb-2 text-lg font-bold text-slate-500">
+        No Results Found
+      </h3>
+      <p className="max-w-[280px] text-sm font-medium leading-relaxed text-slate-400">
+        We couldn&apos;t find any {itemType}{" "}
+        {search ? <span>for &quot;{search}&quot;</span> : ""}. Try adjusting
+        your filters or search terms.
+      </p>
+    </div>
   );
 }

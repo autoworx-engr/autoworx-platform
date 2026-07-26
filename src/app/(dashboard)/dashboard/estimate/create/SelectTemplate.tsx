@@ -5,6 +5,7 @@ import { InvoiceTemplate } from "@prisma/client";
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
 import useTemplateListInfiniteQuery from "@/hooks/query-hook/useTemplateListInfiniteQuery";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEstimateCreateStore } from "@/stores/estimate-create";
 
 interface SelectTemplateProps {
   name?: string;
@@ -44,6 +45,43 @@ export default function SelectTemplate({
 
   const handleClear = () => {
     setTemplate(null);
+
+    // remove everything the template added, restoring whatever was there before it was applied
+    const { templateSnapshot } = useEstimateCreateStore.getState();
+    if (templateSnapshot) {
+      useEstimateCreateStore.setState({
+        ...templateSnapshot,
+        templateSnapshot: null,
+      });
+    } else {
+      useEstimateCreateStore.setState({
+        items: [],
+        tasks: [],
+        photos: [],
+        subtotal: 0,
+        discount: 0,
+        tax: 0,
+        serviceFee: 0,
+        vehicleExtraCost: 0,
+        deposit: 0,
+        grandTotal: 0,
+        due: 0,
+        internalNotes: "",
+        terms: "",
+        policy: "",
+        customerNotes: "",
+        customerComments: "",
+        damageNotes: "",
+        title: "",
+        currentSelectedCategoryId: null,
+        inspections: Array.from({ length: 15 }, () => ({
+          title: "",
+          driver: false,
+          passenger: false,
+          notes: "",
+        })),
+      });
+    }
 
     const params = new URLSearchParams(searchParams?.toString());
     params.delete("templateId"); // <-- remove the param
