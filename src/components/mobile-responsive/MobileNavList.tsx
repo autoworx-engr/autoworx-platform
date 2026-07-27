@@ -53,7 +53,7 @@ export default function MobileNavList({ item, setOpenNav }: TProps) {
         )}
       </div>
       {isOpenSubNav && item?.subnav && (
-        <ul className="mt-3 flex flex-col items-center justify-center gap-y-4 rounded-md bg-[#0C1427] p-2">
+        <ul className="mt-3 flex flex-col items-start justify-center gap-y-4 rounded-md bg-[#0C1427] p-2 pl-6">
           {item.subnav?.map((subItem, index) => (
             <Link
               onClick={() => setOpenNav(false)}
