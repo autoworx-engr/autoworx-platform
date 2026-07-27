@@ -21,7 +21,7 @@ export default function GlobalSearch({
   const [open, setOpen] = useState(false);
   const { query, setQuery, results, hasResults, isSearching } = useSearch();
   const router = useRouter();
-
+  console.log("results", results?.length);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [lastInteraction, setLastInteraction] = useState<"mouse" | "keyboard">(
     "keyboard",
