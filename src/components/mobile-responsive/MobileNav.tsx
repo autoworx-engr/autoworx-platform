@@ -191,7 +191,7 @@ export default function MobileNav({ navList, permissions }: TProps) {
                 <CircleX strokeWidth={2} size={24} />
               </button>
             </div>
-            <ul className="mt-10 flex flex-col items-center justify-center gap-y-8">
+            <ul className="mt-10 flex flex-col items-start justify-center gap-y-8 px-4">
               {filteredNavList.map((item, index) => {
                 return (
                   <MobileNavList
