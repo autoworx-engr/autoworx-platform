@@ -248,12 +248,12 @@ export default function SharedFilesSection({
         </span>
       </header>
 
-      <div className="mb-4 flex shrink-0 gap-0.5 border-b border-zinc-100 dark:border-white/10">
+      <div className="thin-scrollbar mb-4 flex shrink-0 gap-0.5 overflow-x-auto overflow-y-hidden border-b border-zinc-100 dark:border-white/10">
         {TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`-mb-px flex items-center gap-1.5 border-b-2 px-3 py-1.5 text-xs font-medium transition-colors ${
+            className={`-mb-px flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-1.5 text-xs font-medium transition-colors ${
               activeTab === tab.id
                 ? "border-emerald-600 text-emerald-600 dark:border-emerald-500 dark:text-emerald-500"
                 : "border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"

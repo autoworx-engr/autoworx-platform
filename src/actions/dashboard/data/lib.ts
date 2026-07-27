@@ -126,12 +126,15 @@ export function getDateRanges(timezone: string) {
 //   };
 // }
 
+const MAX_GROWTH_RATE = 999;
+
 export function growthRate(current: number, previous: number) {
   let rate = 0;
   if (previous === 0) {
     rate = current > 0 ? 100 : 0;
   } else {
     rate = Math.round(((current - previous) / previous) * 100);
+    rate = Math.max(-MAX_GROWTH_RATE, Math.min(MAX_GROWTH_RATE, rate));
   }
 
   const isPositive = rate >= 0;
