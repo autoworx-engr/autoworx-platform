@@ -35,6 +35,7 @@ import LeadsSearch from "./LeadsSearch";
 import { LeadsTableSkeleton } from "./LeadsTableSkeleton";
 import { NewAppointmentPipeline } from "./NewAppointmentPipeline";
 import TaskForm from "./TaskForm";
+import useCompanyUsersQuery from "@/hooks/query-hook/useCompanyUsersQuery";
 
 type TProps = {
   salesColumn: Column[];
@@ -63,7 +64,7 @@ const Leads = ({ salesColumn }: TProps) => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
-  const [companyUsers, setCompanyUsers] = useState<User[]>([]);
+  const { data: companyUsers = [] } = useCompanyUsersQuery();
   const [filterOptions, setFilterOptions] = useState<LeadFilterOptions>({
     sources: [],
     services: [],
@@ -279,20 +280,6 @@ const Leads = ({ salesColumn }: TProps) => {
         if (userResponse.ok) {
           const userData = await userResponse.json();
           setCurrentUser(userData);
-
-          // Filter sales users based on current user
-          const salesUsers = companyUsers.filter(
-            (user) => user.employeeType === "Sales",
-          );
-
-          if (userData?.employeeType === "Sales") {
-            const currentSalesUser = salesUsers.find(
-              (user) => user.id.toString() === userData?.id.toString(),
-            );
-            setCompanyUsers(currentSalesUser ? [currentSalesUser] : []);
-          } else {
-            setCompanyUsers(salesUsers);
-          }
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
