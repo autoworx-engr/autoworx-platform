@@ -82,16 +82,11 @@ export default function AssignTask() {
         return;
       }
 
-      queryClient.setQueryData(
-        taskQueryKey.taskByUserId(user.id.toString()),
-        () => {
-          return tasks.filter((task) =>
-            taskDataInput.some(
-              (inputTask) => inputTask.taskId === task.id && inputTask.assigned,
-            ),
-          );
-        },
-      );
+      queryClient.invalidateQueries({
+        queryKey: taskQueryKey.taskByUserId(user.id.toString()),
+      });
+      queryClient.invalidateQueries({ queryKey: [taskQueryKey.allTasks] });
+      queryClient.invalidateQueries({ queryKey: taskQueryKey.allTaskByScroll });
 
       successToast("Tasks assigned successfully.");
       close();
