@@ -53,13 +53,31 @@ export async function fetchAndTransformData(
       ? Prisma.sql`AND i."column_id" IN (${Prisma.join(statusIds)})`
       : Prisma.empty;
 
-  const searchPattern = decodedSearchTerm ? `%${decodedSearchTerm}%` : null;
+  const searchPattern = decodedSearchTerm
+    ? `%${decodedSearchTerm.replace(/\s+/g, " ")}%`
+    : null;
+
+  // Match each typed word against first/last name independently (in either
+  // field, any order) so "ade ekram", "ekram", or extra whitespace in the
+  // stored name all still match "Ekram Ade" - not just an exact,
+  // contiguous "first_name last_name" substring.
+  const nameWords = decodedSearchTerm.split(/\s+/).filter(Boolean);
+  const nameCondition =
+    nameWords.length > 0
+      ? Prisma.sql`(${Prisma.join(
+          nameWords.map(
+            (word) =>
+              Prisma.sql`(c."first_name" ILIKE ${`%${word}%`} OR c."last_name" ILIKE ${`%${word}%`})`,
+          ),
+          " AND ",
+        )})`
+      : Prisma.sql`FALSE`;
 
   const searchFilter = searchPattern
     ? Prisma.sql`
       AND (
         i.id::text ILIKE ${searchPattern}
-        OR LOWER(CONCAT(c."first_name", ' ', c."last_name")) ILIKE LOWER(${searchPattern})
+        OR ${nameCondition}
         OR c.email ILIKE ${searchPattern}
         OR c.mobile ILIKE ${searchPattern}
         OR v.make ILIKE ${searchPattern}

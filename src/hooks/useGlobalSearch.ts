@@ -3,6 +3,9 @@ import {
   generatedRegistry,
   type SearchItem,
 } from "@/lib/search-registry.generated";
+import { canAccessRoute } from "@/lib/routeAccess";
+import { useGetPermissions } from "@/hooks/permissions/useGetPermissions";
+import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 
 const MAX_RESULTS = 20;
 
@@ -37,15 +40,31 @@ function scoreItem(item: SearchItem, query: string): number {
 
 export function useSearch() {
   const [query, setQuery] = useState("");
+  const user = useGetCurrentUser();
+  const { data: permissions } = useGetPermissions(
+    user?.companyId,
+    user?.id ? Number(user.id) : undefined,
+  );
+
+  // Company permission takes priority, and both the company AND the user
+  // must be allowed (mirrors the real route-access check) - so an item only
+  // shows here if navigating to it wouldn't be blocked either.
+  const accessibleRegistry = useMemo(
+    () =>
+      generatedRegistry.filter((item) =>
+        canAccessRoute(item.href, permissions ?? null),
+      ),
+    [permissions],
+  );
 
   const results = useMemo(() => {
     const q = query.trim();
 
     if (!q) {
-      return generatedRegistry.slice(0, MAX_RESULTS);
+      return accessibleRegistry.slice(0, MAX_RESULTS);
     }
 
-    return generatedRegistry
+    return accessibleRegistry
       .map((item) => ({
         item,
         score: scoreItem(item, q),
@@ -54,7 +73,7 @@ export function useSearch() {
       .sort((a, b) => b.score - a.score)
       .slice(0, MAX_RESULTS)
       .map((result) => result.item);
-  }, [query]);
+  }, [query, accessibleRegistry]);
 
   return {
     query,

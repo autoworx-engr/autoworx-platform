@@ -18,13 +18,17 @@ export type TaskSearchItem = Task & {
  * against the server rather than slicing a fully-loaded list client-side.
  */
 export default function useTaskSearchQuery(searchTerm: string) {
+  // Surrounding whitespace must never reach the `contains` filter — " test"
+  // matches nothing in the DB even when "test" does.
+  const term = searchTerm.trim();
+
   return useInfiniteQuery({
-    queryKey: [taskQueryKey.allTasks, "search", searchTerm],
+    queryKey: [taskQueryKey.allTasks, "search", term],
     initialPageParam: 0,
     queryFn: async ({ pageParam = 0 }) => {
       const response = await getTasks({
         where: {
-          OR: [{ title: { contains: searchTerm, mode: "insensitive" } }],
+          OR: [{ title: { contains: term, mode: "insensitive" } }],
         },
         include: {
           client: { select: { id: true, firstName: true, lastName: true } },
@@ -44,6 +48,6 @@ export default function useTaskSearchQuery(searchTerm: string) {
       const loaded = lastPage.skip + lastPage.items.length;
       return loaded < lastPage.total ? loaded : undefined;
     },
-    enabled: !!searchTerm.trim(),
+    enabled: !!term,
   });
 }

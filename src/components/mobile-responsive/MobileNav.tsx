@@ -137,9 +137,6 @@ export default function MobileNav({ navList, permissions }: TProps) {
                 width={40}
                 height={40}
               />
-              <div className="py-0.1 absolute top-3 ml-6 rotate-12 transform gap-2 rounded-md border border-white bg-gradient-to-r from-[#00b8b0] to-[#0098da] px-1 text-[8px] font-bold tracking-wider text-black shadow-lg">
-                Beta
-              </div>
             </Link>
           </div>
           <div className="flex items-center gap-1 px-3">
@@ -191,7 +188,7 @@ export default function MobileNav({ navList, permissions }: TProps) {
                 <CircleX strokeWidth={2} size={24} />
               </button>
             </div>
-            <ul className="mt-10 flex flex-col items-center justify-center gap-y-8">
+            <ul className="mt-10 flex flex-col items-start justify-center gap-y-8 px-4">
               {filteredNavList.map((item, index) => {
                 return (
                   <MobileNavList

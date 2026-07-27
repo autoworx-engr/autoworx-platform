@@ -2,6 +2,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/Tooltip";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { ArrowUp, ArrowDown } from "lucide-react"; // Using Lucide icons for sleeker SVGs
 
+const MAX_DISPLAYED_RATE = 999;
+
 const ChartData = ({
   heading,
   subHeading,
@@ -17,6 +19,10 @@ const ChartData = ({
   // Define performance colors from the specified palette
   const positiveColor = "text-emerald-500 dark:text-emerald-400"; // Emerald/Teal for success
   const negativeColor = "text-rose-500 dark:text-rose-400"; // Red/Rose for destructive/warning
+
+  const absRate = Math.abs(rate);
+  const rateLabel =
+    absRate > MAX_DISPLAYED_RATE ? `${MAX_DISPLAYED_RATE}%+` : `${absRate}%`;
 
   // Container classes for layout
   const containerLayout = columnView
@@ -43,20 +49,20 @@ const ChartData = ({
 
             
           `}
-        // Subtle Gradient and Shadow for Emphasis
+          // Subtle Gradient and Shadow for Emphasis
 
-        // bg-slate-50/50 dark:bg-slate-800/50
-        // ring-1 ring-slate-200/50 dark:ring-slate-700
-        // shadow-inner shadow-slate-200/50 dark:shadow-slate-900/50
+          // bg-slate-50/50 dark:bg-slate-800/50
+          // ring-1 ring-slate-200/50 dark:ring-slate-700
+          // shadow-inner shadow-slate-200/50 dark:shadow-slate-900/50
 
-        // Hover effect: Subtle lift and shadow glow
-        // hover:shadow-lg hover:shadow-blue-500/10 dark:hover:shadow-indigo-500/10
-        // hover:-translate-y-[1px]
+          // Hover effect: Subtle lift and shadow glow
+          // hover:shadow-lg hover:shadow-blue-500/10 dark:hover:shadow-indigo-500/10
+          // hover:-translate-y-[1px]
         >
           <span>
             {/* Tooltip logic for long numbers */}
             {formatCurrency(number).length > 20 ||
-              number.toString().length > 20 ? (
+            number.toString().length > 20 ? (
               <span className="text-xl font-bold text-slate-600 dark:text-white xl:text-2xl">
                 <Tooltip>
                   <TooltipTrigger>
@@ -104,7 +110,7 @@ const ChartData = ({
           </div>
 
           {/* Rate value */}
-          <div className="text-xl font-bold">{Math.abs(rate)}%</div>
+          <div className="text-xl font-bold">{rateLabel}</div>
         </div>
       )}
     </div>

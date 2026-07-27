@@ -1,6 +1,7 @@
 "use server";
 import { getStatusPriority } from "@/utils/getStatusPriority";
 import { db } from "./db";
+import { Prisma } from "@prisma/client";
 import moment from "moment-timezone";
 
 const defaultTake = 50;
@@ -42,35 +43,63 @@ export async function estimateTemplateFetchAndTransformData(
             return Number(id);
           }
         })
-        .filter((id) => id !== undefined)
+        .filter((id): id is number => id !== undefined)
     : undefined;
 
   const decodedSearchTerm = decodeURIComponent(searchTerm || "").trim();
 
   const dateFilter =
     convertedStart && convertedEnd
-      ? `AND (i."created_at" BETWEEN '${convertedStart.toISOString()}' AND '${convertedEnd.toISOString()}')`
-      : "";
+      ? Prisma.sql`AND (i."created_at" BETWEEN ${convertedStart} AND ${convertedEnd})`
+      : Prisma.empty;
 
   const statusFilter =
     statusIds && statusIds.length > 0
-      ? `AND i."column_id" IN (${statusIds.join(",")})`
-      : "";
+      ? Prisma.sql`AND i."column_id" IN (${Prisma.join(statusIds)})`
+      : Prisma.empty;
 
-  const searchFilter = decodedSearchTerm
-    ? `
-    AND (
-      i.id::text ILIKE '%${decodedSearchTerm}%'
-      OR i.title::text ILIKE '%${decodedSearchTerm}%'
-    )
-  `
-    : "";
+  const searchPattern = decodedSearchTerm
+    ? `%${decodedSearchTerm.replace(/\s+/g, " ")}%`
+    : null;
+
+  // Match each typed word against the title independently (any order) so
+  // extra whitespace or reordered words still match, not just an exact,
+  // contiguous substring of the title.
+  const titleWords = decodedSearchTerm.split(/\s+/).filter(Boolean);
+  const titleCondition =
+    titleWords.length > 0
+      ? Prisma.sql`(${Prisma.join(
+          titleWords.map((word) => Prisma.sql`i.title ILIKE ${`%${word}%`}`),
+          " AND ",
+        )})`
+      : Prisma.sql`FALSE`;
+
+  const searchFilter = searchPattern
+    ? Prisma.sql`
+      AND (
+        i.id::text ILIKE ${searchPattern}
+        OR ${titleCondition}
+      )
+    `
+    : Prisma.empty;
 
   const paginationClause = decodedSearchTerm
-    ? ""
-    : `LIMIT ${take} OFFSET ${offset}`;
+    ? Prisma.empty
+    : Prisma.sql`LIMIT ${take} OFFSET ${offset}`;
 
-  const query = `
+  const joins = Prisma.sql`
+    FROM "InvoiceTemplate" i
+    LEFT JOIN "Column" col ON i."column_id" = col.id
+  `;
+
+  const baseWhere = Prisma.sql`
+    WHERE i."company_id" = ${companyId}
+      ${dateFilter}
+      ${statusFilter}
+      ${searchFilter}
+  `;
+
+  const query = Prisma.sql`
     SELECT
       i.id,
       i.title,
@@ -79,28 +108,20 @@ export async function estimateTemplateFetchAndTransformData(
       col.title AS status,
       col."textColor",
       col."bgColor"
-    FROM "InvoiceTemplate" i
-    LEFT JOIN "Column" col ON i."column_id" = col.id
-    WHERE i."company_id" = ${companyId}
-      ${dateFilter}
-      ${statusFilter}
-      ${searchFilter}
+    ${joins}
+    ${baseWhere}
     ORDER BY i."created_at" DESC
-    ${paginationClause};
+    ${paginationClause}
   `;
 
-  const countQuery = `
+  const countQuery = Prisma.sql`
     SELECT COUNT(*)::int AS total
-    FROM "InvoiceTemplate" i
-    LEFT JOIN "Column" col ON i."column_id" = col.id
-    WHERE i."company_id" = ${companyId}
-      ${dateFilter}
-      ${statusFilter}
-      ${searchFilter};
+    ${joins}
+    ${baseWhere}
   `;
 
-  const data = await db.$queryRawUnsafe<any>(query);
-  const totalResult = await db.$queryRawUnsafe<{ total: number }[]>(countQuery);
+  const data = await db.$queryRaw<any>(query);
+  const totalResult = await db.$queryRaw<{ total: number }[]>(countQuery);
   const totalEstimate = Number(totalResult[0]?.total || 0);
 
   const sortedData = data.sort(

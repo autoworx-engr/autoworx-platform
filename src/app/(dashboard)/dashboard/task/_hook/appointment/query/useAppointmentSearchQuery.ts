@@ -15,33 +15,37 @@ export type AppointmentSearchItem = Appointment & {
  * so the calendar search dropdown can infinite-scroll against the server.
  */
 export default function useAppointmentSearchQuery(searchTerm: string = "") {
+  // Surrounding whitespace must never reach the `contains` filters — " test"
+  // matches nothing in the DB even when "test" does.
+  const term = searchTerm.trim();
+
   return useInfiniteQuery({
-    queryKey: [appointmentQueryKey.allAppointments, "search", searchTerm],
+    queryKey: [appointmentQueryKey.allAppointments, "search", term],
     initialPageParam: 0,
     queryFn: async ({ pageParam = 0 }) => {
       const response = await getAppointments({
         where: {
           OR: [
-            { title: { contains: searchTerm, mode: "insensitive" } },
+            { title: { contains: term, mode: "insensitive" } },
             {
               client: {
-                firstName: { contains: searchTerm, mode: "insensitive" },
+                firstName: { contains: term, mode: "insensitive" },
               },
             },
             {
               client: {
-                lastName: { contains: searchTerm, mode: "insensitive" },
+                lastName: { contains: term, mode: "insensitive" },
               },
             },
             {
-              vehicle: { make: { contains: searchTerm, mode: "insensitive" } },
+              vehicle: { make: { contains: term, mode: "insensitive" } },
             },
             {
-              vehicle: { model: { contains: searchTerm, mode: "insensitive" } },
+              vehicle: { model: { contains: term, mode: "insensitive" } },
             },
-            ...(isNaN(Number(searchTerm))
-              ? []
-              : [{ vehicle: { year: { equals: parseInt(searchTerm, 10) } } }]),
+            ...(term && !isNaN(Number(term))
+              ? [{ vehicle: { year: { equals: parseInt(term, 10) } } }]
+              : []),
           ],
         },
         include: {
@@ -64,6 +68,6 @@ export default function useAppointmentSearchQuery(searchTerm: string = "") {
       const loaded = lastPage.skip + lastPage.items.length;
       return loaded < lastPage.total ? loaded : undefined;
     },
-    enabled: !!searchTerm.trim(),
+    enabled: !!term,
   });
 }
