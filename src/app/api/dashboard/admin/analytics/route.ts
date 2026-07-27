@@ -462,6 +462,7 @@ export async function GET(req: NextRequest) {
 
     const data = {
       user,
+      leadsConvertedData,
       currentTotalLeads,
       currentConversionRate,
       conversionRateGrowth,

@@ -6,6 +6,7 @@ import FeaturePermission from "../../components/FeaturePermission";
 import { ConfigureCommunicationHub } from "./ConfigureCommunicationHub";
 import { CompanyPlanEditor } from "./CompanyPlanEditor";
 import { PlatformPlanToggle } from "./PlatformPlanToggle";
+import { TestCompanyToggle } from "./TestCompanyToggle";
 import { ArrowLeft, Upload } from "lucide-react";
 import moment from "moment";
 import { CannedUploadModal } from "@/app/(dashboard)/dashboard/estimate/canned/CannedUploadModal";
@@ -84,6 +85,7 @@ const Page = async (props: propsType) => {
           image: true,
           createdAt: true,
           enforcePlatformPlan: true,
+          isTest: true,
           users: { select: { employeeType: true } },
           clients: { select: { id: true } },
         },
@@ -293,11 +295,15 @@ const Page = async (props: propsType) => {
                 <span className={badge.className}>{badge.text}</span>
               </div>
 
-              <div className="mt-4 flex items-center gap-x-4 pt-2">
+              <div className="mt-4 flex flex-wrap items-center gap-4 pt-2">
                 <CompanyPlanEditor companyId={Number(id)} />
                 <PlatformPlanToggle
                   companyId={Number(id)}
                   initialEnabled={!!company?.enforcePlatformPlan}
+                />
+                <TestCompanyToggle
+                  companyId={Number(id)}
+                  initialEnabled={!!company?.isTest}
                 />
               </div>
             </div>
