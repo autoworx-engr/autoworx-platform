@@ -41,7 +41,7 @@ export default function EditVehicle({
     vehicleYear: vehicle.year ? String(vehicle.year) : "",
     vehicleMake: vehicle.make || "",
     vehicleModel: vehicle.model || "",
-    other: "",
+    other: vehicle.other || "",
   });
   const [engineSize, setEngineSize] = useState<string>(
     vehicle?.engineSize || "",
@@ -125,7 +125,7 @@ export default function EditVehicle({
       license,
       vin,
       notes,
-      other: vehicle?.other || "",
+      other: other || "",
       clientId: vehicle.clientId,
       vehicleId: vehicle.id,
     });
@@ -274,6 +274,9 @@ export default function EditVehicle({
           <SlimInput
             name="other"
             required={false}
+            label="Other (Vehicle not listed or non-vehicle job? Enter details here)"
+            value={formData.other}
+            onChange={(e) => handleInputChange("other", e.target.value)}
             rootClassName={`col-span-full ${
               !!formData.vehicleYear &&
               !!formData.vehicleMake &&
