@@ -57,6 +57,7 @@ export async function logCallAndNotify({
     userIds: companyUsers.map((u) => u.id),
     callerName,
     clientId,
+    callId,
   });
 }
 
@@ -64,10 +65,12 @@ async function sendIncomingCallPush({
   userIds,
   callerName,
   clientId,
+  callId,
 }: {
   userIds: number[];
   callerName: string;
   clientId: number;
+  callId: string;
 }) {
   const appId = process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID;
   const apiKey = process.env.ONESIGNAL_AUTHORIZATION_KEY;
@@ -94,6 +97,7 @@ async function sendIncomingCallPush({
         contents: { en: `Call from ${callerName}` },
         headings: { en: "📞 Incoming Call" },
         target_channel: "push",
+        android_group: `incoming-call-${callId}`, // this is for removing notification from the panel after accept, reject or not answered call
         include_aliases: {
           external_id: userIds.map((id) => `user-${id}`),
         },
