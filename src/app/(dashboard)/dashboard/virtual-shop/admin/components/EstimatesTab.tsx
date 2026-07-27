@@ -1,22 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { Pagination } from "antd";
 import FilterByDateRange from "@/app/(dashboard)/dashboard/reporting/components/filter/FilterByDateRange";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Pagination } from "antd";
 import {
-  Search,
-  CheckCircle2,
   AlertCircle,
-  XCircle,
+  CheckCircle2,
   Receipt,
+  Search,
+  XCircle,
 } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import EstimateCard from "./EstimateCard";
-import type {
-  AppointmentStatus,
-  Estimate,
-  FilterStatus,
-} from "./EstimatesTab.types";
+import type { Estimate, FilterStatus } from "./EstimatesTab.types";
 
 const STATUSES: FilterStatus[] = [
   "all",
@@ -155,10 +151,10 @@ export default function EstimatesTab({
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 shadow-sm">
-            <Receipt size={14} className="text-[#6571FF]" />
+            <Receipt size={14} className="text-primary" />
             <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">
               Page Total:{" "}
-              <span className="text-[#6571FF]">
+              <span className="text-primary">
                 ${totalRevenue.toLocaleString()}
               </span>
             </span>
@@ -177,7 +173,7 @@ export default function EstimatesTab({
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all duration-200 ${
                 isActive
                   ? s === "all"
-                    ? "bg-[#6571FF] text-white border-[#6571FF] shadow-md shadow-indigo-200 dark:shadow-indigo-900/30"
+                    ? "bg-primary text-white border-primary shadow-md shadow-indigo-200 dark:shadow-indigo-900/30"
                     : s === "confirmed"
                       ? "bg-emerald-500 text-white border-emerald-500 shadow-md shadow-emerald-200 dark:shadow-emerald-900/30"
                       : s === "pending"
@@ -213,7 +209,7 @@ export default function EstimatesTab({
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search Client, Vehicle or Service..."
-            className="w-full pl-9 pr-4 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30 focus:border-[#6571FF] transition"
+            className="w-full pl-9 pr-4 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
           />
         </div>
         <FilterByDateRange

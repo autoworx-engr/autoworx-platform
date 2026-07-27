@@ -67,7 +67,7 @@ export default function ResponsiveEstimateCard({
             autoOpen={autoOpen}
           />
           {isShopBooking && (
-            <span className="mt-1 block text-center text-[10px] font-bold uppercase tracking-wider text-[#6571FF] bg-[#6571FF]/10 rounded-full px-2 py-0.5 w-fit">
+            <span className="mt-1 block text-center text-[10px] font-bold uppercase tracking-wider text-primary bg-primary/10 rounded-full px-2 py-0.5 w-fit">
               Virtual Shop
             </span>
           )}

@@ -39,7 +39,7 @@ export interface InvoiceData {
 const evenColor = "bg-background";
 const oddColor = "bg-[#F8FAFF]";
 
-const defaultTake = 50;
+const defaultTake = 10;
 
 type TTableProps = {
   estimateData: {
@@ -129,7 +129,7 @@ export default function Table({
   };
 
   return (
-    <div className="relative flex h-[70vh] flex-col overflow-hidden rounded-md bg-background">
+    <div className="relative flex flex-1 h-full flex-col overflow-hidden rounded-md bg-background">
       {/* Scrollable area — only the table/cards scroll here, header stays sticky within it */}
       <div
         className="flex-1 overflow-auto
@@ -150,7 +150,7 @@ export default function Table({
         ) : (
           <>
             {estimateData?.data?.length === 0 ? (
-              <div className="flex min-h-[400px] w-full flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-100 bg-slate-50/30 p-12 text-center">
+              <div className="flex min-h-[calc(100vh-250px)] w-full flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-100 bg-slate-50/30 p-12 text-center">
                 {/* Ghost Icon Illustration */}
                 <div className="relative mb-6 flex h-16 w-16 items-center justify-center rounded-3xl bg-white shadow-sm ring-1 ring-slate-200/50">
                   <Search
@@ -210,7 +210,7 @@ export default function Table({
                           autoOpen={data.id === autoOpenId}
                         />
                         {data.isShopBooking && (
-                          <span className="mt-1 block text-center text-[10px] font-bold uppercase tracking-wider text-[#6571FF] bg-[#6571FF]/10 rounded-full px-2 py-0.5">
+                          <span className="mt-1 block text-center text-[10px] font-bold uppercase tracking-wider text-primary bg-primary/10 rounded-full px-2 py-0.5">
                             Virtual Shop
                           </span>
                         )}
@@ -273,7 +273,7 @@ export default function Table({
                           className="text-2xl text-blue-600"
                           onClick={() => setActionType("edit")}
                         >
-                          <SquarePen size={18} className="text-[#6571FF]" />
+                          <SquarePen size={18} className="text-primary" />
                         </Link>
                       </td>
                     </tr>

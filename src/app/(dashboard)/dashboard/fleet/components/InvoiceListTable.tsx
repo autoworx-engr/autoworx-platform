@@ -111,7 +111,7 @@ const InvoiceListTable = ({
                           onCheckedChange={(checked) =>
                             handlePaymentFilter("Paid", checked)
                           }
-                          className={`${paymentFilters.includes("Paid") ? "bg-gradient-to-r from-[#6571FF] to-[#8088FF] text-white" : ""}`}
+                          className={`${paymentFilters.includes("Paid") ? "bg-gradient-to-r from-primary to-[#8088FF] text-white" : ""}`}
                         >
                           Paid
                         </DropdownMenuCheckboxItem>
@@ -120,7 +120,7 @@ const InvoiceListTable = ({
                           onCheckedChange={(checked) =>
                             handlePaymentFilter("Unpaid", checked)
                           }
-                          className={`${paymentFilters.includes("Unpaid") ? "bg-gradient-to-r from-[#6571FF] to-[#8088FF] text-white" : ""}`}
+                          className={`${paymentFilters.includes("Unpaid") ? "bg-gradient-to-r from-primary to-[#8088FF] text-white" : ""}`}
                         >
                           Unpaid
                         </DropdownMenuCheckboxItem>
@@ -156,7 +156,7 @@ const InvoiceListTable = ({
                             }
                             className={`${
                               statusFilters.includes(status?.status as string)
-                                ? "bg-gradient-to-r from-[#6571FF] to-[#8088FF] text-white"
+                                ? "bg-gradient-to-r from-primary to-[#8088FF] text-white"
                                 : ""
                             }`}
                           >
@@ -180,7 +180,7 @@ const InvoiceListTable = ({
                       index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]/40",
                     )}
                   >
-                    <td className="border-b px-4 py-2 text-left text-[#6571FF]">
+                    <td className="border-b px-4 py-2 text-left text-primary">
                       <InvoiceModal
                         invoiceId={item?.id}
                         buttonChild={<button>{item?.id}</button>}

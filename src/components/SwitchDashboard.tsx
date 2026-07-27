@@ -1,9 +1,9 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { RefreshCw } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { RefreshCw } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 export default function SwitchDashboard() {
   const session = useSession();
@@ -20,7 +20,7 @@ export default function SwitchDashboard() {
     <div className="flex items-center gap-x-5">
       {isUserDashboard && (
         <Link href={"/awx-dashboard"}>
-          <RefreshCw className="h-5 w-5 sm:h-7 sm:w-7 mr-2 text-white sm:text-[#6571FF] cursor-pointer" />
+          <RefreshCw className="h-5 w-5 sm:h-7 sm:w-7 mr-2 text-white sm:text-primary cursor-pointer" />
         </Link>
       )}
       {isAwxDashboard && (
@@ -32,7 +32,7 @@ export default function SwitchDashboard() {
             }, 2000)
           }
         >
-          <RefreshCw className="h-5 w-5 sm:h-7 sm:w-7 mr-2 text-white sm:text-[#6571FF] cursor-pointer" />
+          <RefreshCw className="h-5 w-5 sm:h-7 sm:w-7 mr-2 text-white sm:text-primary cursor-pointer" />
         </Link>
       )}
     </div>

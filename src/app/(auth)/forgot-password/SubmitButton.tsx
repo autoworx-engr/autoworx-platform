@@ -32,7 +32,7 @@ export default function SubmitButton() {
 
   return (
     <Submit
-      className="mx-auto w-full mt-4 rounded-md bg-gradient-to-r from-[#6571FF] to-[#5a66ee] px-10 py-2 text-white min-h-[44px] flex items-center justify-center"
+      className="mx-auto w-full mt-4 rounded-md bg-gradient-to-r from-primary to-[#5a66ee] px-10 py-2 text-white min-h-[44px] flex items-center justify-center"
       formAction={handler}
     >
       Send Reset Link

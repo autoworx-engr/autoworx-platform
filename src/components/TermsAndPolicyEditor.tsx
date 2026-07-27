@@ -1,19 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  getCompanyLeadTermsPolicy,
+  updateLeadTermsPolicy,
+} from "@/actions/settings/updateLeadTermsPolicy";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./Tabs";
 import { FileText } from "lucide-react";
 import dynamic from "next/dynamic";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import "react-quill-new/dist/quill.snow.css";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./Tabs";
 
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
-import {
-  updateLeadTermsPolicy,
-  getCompanyLeadTermsPolicy,
-} from "@/actions/settings/updateLeadTermsPolicy";
-import toast from "react-hot-toast";
 
 export function TermsAndPolicyEditor() {
   const [termsContent, setTermsContent] = useState("");
@@ -113,7 +113,7 @@ export function TermsAndPolicyEditor() {
       <div className="mt-5">
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#6571FF]"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             <span className="ml-2">Loading...</span>
           </div>
         ) : (
@@ -177,7 +177,7 @@ export function TermsAndPolicyEditor() {
               <Button
                 onClick={handleSave}
                 disabled={isSaving}
-                className="rounded-md bg-[#6571FF] px-10 py-1.5 text-white hover:bg-[#5561ef] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="rounded-md bg-primary px-10 py-1.5 text-white hover:bg-[#5561ef] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSaving ? (
                   <>

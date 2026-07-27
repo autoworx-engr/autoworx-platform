@@ -116,7 +116,7 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger className="hidden h-10 items-center gap-2 rounded-xl bg-white px-4 text-sm font-bold text-slate-500 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-50 hover:ring-[#6571FF]/30 active:scale-95 md:flex">
+      <DialogTrigger className="hidden h-10 items-center gap-2 rounded-xl bg-white px-4 text-sm font-bold text-slate-500 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-50 hover:ring-primary/30 active:scale-95 md:flex">
         <Image
           src="/icons/Filter.svg"
           alt="Filter"
@@ -159,7 +159,7 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
                 }}
                 className={cn(
                   slimInputClassName,
-                  "h-10 w-full rounded-lg border-none bg-slate-50 px-3 text-sm ring-1 ring-slate-200 transition-all focus:bg-white focus:ring-2 focus:ring-[#6571FF]/30 outline-none",
+                  "h-10 w-full rounded-lg border-none bg-slate-50 px-3 text-sm ring-1 ring-slate-200 transition-all focus:bg-white focus:ring-2 focus:ring-primary/30 outline-none",
                 )}
               />
               <button
@@ -187,7 +187,7 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
                 min={start}
                 className={cn(
                   slimInputClassName,
-                  "h-10 w-full rounded-lg border-none bg-slate-50 px-3 text-sm ring-1 ring-slate-200 transition-all focus:bg-white focus:ring-2 focus:ring-[#6571FF]/30 outline-none",
+                  "h-10 w-full rounded-lg border-none bg-slate-50 px-3 text-sm ring-1 ring-slate-200 transition-all focus:bg-white focus:ring-2 focus:ring-primary/30 outline-none",
                 )}
               />
               <button
@@ -227,7 +227,7 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
                     }
                     className={cn(
                       slimInputClassName,
-                      "h-9 w-1/2 rounded-lg border-none bg-white ps-9 text-sm ring-1 ring-slate-200 focus:ring-2 focus:ring-[#6571FF]/30 outline-none",
+                      "h-9 w-1/2 rounded-lg border-none bg-white ps-9 text-sm ring-1 ring-slate-200 focus:ring-2 focus:ring-primary/30 outline-none",
                     )}
                   />
                 </div>
@@ -297,7 +297,7 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
             Clear Filters
           </DialogClose>
           <Submit
-            className="w-fit flex h-10 items-center gap-2 rounded-xl bg-[#6571FF] px-8 text-sm font-semibold text-white shadow-lg shadow-[#6571FF]/25 transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-fit flex h-10 items-center gap-2 rounded-xl bg-primary px-8 text-sm font-semibold text-white shadow-lg shadow-primary/25 transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
             formAction={handleFilter}
             disabled={isIncompleteDateRange}
           >

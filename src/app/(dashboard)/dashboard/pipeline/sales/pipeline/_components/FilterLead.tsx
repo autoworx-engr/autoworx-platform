@@ -6,10 +6,9 @@ import {
   SelectGroup,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 import { Filter } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import ResetButton from "./ResetButton";
 
 export default function FilterLead({ searchParams }: { searchParams: any }) {
@@ -31,7 +30,7 @@ export default function FilterLead({ searchParams }: { searchParams: any }) {
       <Select onValueChange={onValueChange} value={currentOrder || ""}>
         <SelectTrigger
           showIcon={false}
-          className="bg-white h-11 hover:border-slate-200 hover:bg-slate-50/30 rounded-xl border-2 border-slate-100 justify-start outline-none focus:border-[#6571FF]/40 focus:bg-white focus:ring-4 focus:ring-[#6571FF]/10"
+          className="bg-white h-11 hover:border-slate-200 hover:bg-slate-50/30 rounded-xl border-2 border-slate-100 justify-start outline-none focus:border-primary/40 focus:bg-white focus:ring-4 focus:ring-primary/10"
         >
           {/* <SelectValue className="flex gap-1 flex-row"> */}
           <Filter />{" "}
@@ -48,7 +47,7 @@ export default function FilterLead({ searchParams }: { searchParams: any }) {
           </SelectGroup>
         </SelectContent>
       </Select>
-      {( searchParams.orderBy) && <ResetButton />}
+      {searchParams.orderBy && <ResetButton />}
     </div>
   );
 }

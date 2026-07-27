@@ -4,15 +4,15 @@ import {
   updateTaxCurrency,
   updateTermsPolicy,
 } from "@/actions/settings/emailTemplates";
+import Selector from "@/components/Selector";
 import { SlimInput } from "@/components/SlimInput";
+import { CURRENCIES } from "@/lib/currencies";
+import { errorToast, successToast } from "@/lib/toast";
+import { cn } from "@/lib/utils";
 import { Skeleton } from "antd";
+import { DollarSign, FileText, Percent } from "lucide-react";
 import { useEffect, useState } from "react";
 import EmailTemplates from "./EmailTemplates";
-import { errorToast, successToast } from "@/lib/toast";
-import { DollarSign, FileText, Percent, Info } from "lucide-react";
-import { cn } from "@/lib/utils";
-import Selector from "@/components/Selector";
-import { CURRENCIES } from "@/lib/currencies";
 
 export default function EstimateAndInvoicePage() {
   const [currency, setCurrency] = useState<string>("USD");
@@ -153,7 +153,7 @@ export default function EstimateAndInvoicePage() {
                     />
                     <Percent
                       size={14}
-                      className="absolute bottom-3 right-3 text-slate-500 transition-colors group-focus-within:text-[#6571FF]"
+                      className="absolute bottom-3 right-3 text-slate-500 transition-colors group-focus-within:text-primary"
                     />
                   </div>
 
@@ -170,7 +170,7 @@ export default function EstimateAndInvoicePage() {
                     />
                     <Percent
                       size={14}
-                      className="absolute bottom-3 right-3 text-slate-500 transition-colors group-focus-within:text-[#6571FF]"
+                      className="absolute bottom-3 right-3 text-slate-500 transition-colors group-focus-within:text-primary"
                     />
                   </div>
 
@@ -215,7 +215,7 @@ export default function EstimateAndInvoicePage() {
                   <button
                     disabled={isSavingFinancials}
                     onClick={handleUpdateCurrency}
-                    className="group relative overflow-hidden rounded-xl bg-[#6571FF] px-6 py-2 font-medium text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="group relative overflow-hidden rounded-xl bg-primary px-6 py-2 font-medium text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <span className="relative z-10">
                       {isSavingFinancials ? "Saving..." : "Save Financials"}
@@ -284,10 +284,10 @@ export default function EstimateAndInvoicePage() {
                   <div className="relative group">
                     <textarea
                       className={cn(
-                        "h-64 w-full resize-none rounded-2xl bg-slate-50/50 p-4 text-sm leading-relaxed text-slate-600 outline-none transition-all thin-scrollbar focus:bg-white focus:ring-4 focus:ring-[#6571FF]/5",
+                        "h-64 w-full resize-none rounded-2xl bg-slate-50/50 p-4 text-sm leading-relaxed text-slate-600 outline-none transition-all thin-scrollbar focus:bg-white focus:ring-4 focus:ring-primary/5",
                         field.len > maxLength
                           ? "border-2 border-red-400"
-                          : "border border-slate-200 focus:border-[#6571FF]/30",
+                          : "border border-slate-200 focus:border-primary/30",
                       )}
                       value={field.val || ""}
                       onChange={(e) =>
@@ -321,7 +321,7 @@ export default function EstimateAndInvoicePage() {
                 "group relative overflow-hidden rounded-xl px-6 py-2 font-medium text-white transition-all",
                 disabled || isLoading || isSavingDocuments
                   ? "bg-slate-200 cursor-not-allowed opacity-50"
-                  : "bg-[#6571FF]",
+                  : "bg-primary",
               )}
             >
               <span className="relative z-10">

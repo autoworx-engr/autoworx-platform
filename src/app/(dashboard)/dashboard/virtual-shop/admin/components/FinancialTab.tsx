@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import toast from "react-hot-toast";
-import { useSession } from "next-auth/react";
 import { Switch } from "@/components/Switch";
 import { Button } from "@/components/ui/button";
-import { useGetVirtualShopConfigureById } from "@/hooks/virtual-shop/configure/useVirtualShopConfigure";
 import {
   useGetShopBookingSettings,
   useUpdateShopBookingSettings,
 } from "@/hooks/virtual-shop/booking-settings/useShopBookingSettings";
+import { useGetVirtualShopConfigureById } from "@/hooks/virtual-shop/configure/useVirtualShopConfigure";
+import { useSession } from "next-auth/react";
+import { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 
 type FinancialTabProps = {
   shopId?: number;
@@ -82,7 +82,7 @@ export default function FinancialTab({ shopId = 0 }: FinancialTabProps) {
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
       <h2 className="text-2xl font-bold text-gray-900">Financial Add-ons</h2>
-      <p className="mt-1 text-sm text-[#6571FF]">
+      <p className="mt-1 text-sm text-primary">
         Enable or disable tax and shop fee for virtual shop bookings.
       </p>
 
@@ -151,7 +151,7 @@ export default function FinancialTab({ shopId = 0 }: FinancialTabProps) {
               type="button"
               onClick={handleSave}
               disabled={isLoading || isSaving || !shopId}
-              className="bg-[#6571FF] hover:bg-[#5a66ee]"
+              className="bg-primary hover:bg-[#5a66ee]"
             >
               {isSaving ? "Saving..." : "Save Financial Settings"}
             </Button>

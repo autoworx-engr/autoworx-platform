@@ -1,8 +1,7 @@
 "use client";
-import React from "react";
 
-import UserRolesTable from "./UserRolesTable";
 import UserComponent from "./UserComponent";
+import UserRolesTable from "./UserRolesTable";
 
 export default function Page() {
   return (
@@ -17,7 +16,7 @@ export default function Page() {
             members.
           </p>
         </div>
-        <span className="inline-flex w-fit items-center rounded-full bg-[#6571FF]/10 px-3 py-1 text-xs font-semibold text-[#6571FF]">
+        <span className="inline-flex w-fit items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
           Security controls
         </span>
       </div>

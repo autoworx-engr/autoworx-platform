@@ -7,18 +7,17 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/Dialog";
 import FormError from "@/components/FormError";
 import { SlimInput } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
 import CouponDateComponent from "./CouponDatePicker";
 
+import { updateCoupon } from "@/actions/coupon/new";
+import { useFormErrorStore } from "@/stores/form-error";
+import { Coupon } from "@prisma/client";
 import { useState } from "react";
 import { CouponCode, DiscountInput } from "./CodeDiscount";
-import { updateCoupon } from "@/actions/coupon/new";
-import { Coupon } from "@prisma/client";
-import { useFormErrorStore } from "@/stores/form-error";
 
 export default function EditCoupon({
   coupon,
@@ -141,7 +140,7 @@ export default function EditCoupon({
             Cancel
           </DialogClose>
           <Submit
-            className="mb-2 rounded-lg border bg-[#6571FF] px-5 py-2 text-white md:mb-0"
+            className="mb-2 rounded-lg border bg-primary px-5 py-2 text-white md:mb-0"
             formAction={handleSubmit}
           >
             Update

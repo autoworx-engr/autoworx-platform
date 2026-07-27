@@ -282,7 +282,7 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
                 className={cn(
                   "flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium shadow-md transition-all md:px-4 md:text-base",
                   canEdit && !editLoading
-                    ? "bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] text-white shadow-indigo-200 hover:scale-[1.02] hover:shadow-lg active:scale-95"
+                    ? "bg-gradient-to-r from-primary from-70% to-[#5a66ee] text-white shadow-indigo-200 hover:scale-[1.02] hover:shadow-lg active:scale-95"
                     : "cursor-not-allowed bg-slate-200 text-slate-500 opacity-60",
                 )}
                 title={
@@ -298,7 +298,7 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
               </button>
 
               <button
-                className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-3 py-2 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:px-4 md:text-base disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary from-70% to-[#5a66ee] px-3 py-2 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:px-4 md:text-base disabled:cursor-not-allowed disabled:opacity-50"
                 onClick={handlePDFPrint}
                 disabled={loading}
               >
@@ -319,7 +319,7 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
                   disabled={loading}
                 >
                   <button
-                    className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-3 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary from-70% to-[#5a66ee] px-3 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
                     disabled={loading}
                   >
                     <Mail className="h-4 w-4" />
@@ -336,7 +336,7 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
                     disabled={loading}
                   >
                     <button
-                      className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-3 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary from-70% to-[#5a66ee] px-3 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
                       disabled={loading}
                     >
                       <MessageCircle className="h-4 w-4" />
@@ -347,7 +347,7 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
               </div>
 
               <button
-                className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-3 py-2 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:px-4 md:text-base disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary from-70% to-[#5a66ee] px-3 py-2 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:px-4 md:text-base disabled:cursor-not-allowed disabled:opacity-50"
                 onClick={handleCopyLink}
                 disabled={loading}
               >
@@ -376,7 +376,7 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
             </div>
 
             <div className="text-right">
-              <h2 className="mb-1.5 text-xs font-black uppercase tracking-[0.2em] text-[#6571FF]">
+              <h2 className="mb-1.5 text-xs font-black uppercase tracking-[0.2em] text-primary">
                 Contact Information
               </h2>
               <p className="text-base font-bold tracking-tight text-slate-700 md:text-lg">
@@ -461,7 +461,7 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
                         <InvoiceModal
                           invoiceId={invoice?.id}
                           buttonChild={<button>{invoice?.id}</button>}
-                          buttonChildClassName="block w-full text-[#6571FF] hover:underline"
+                          buttonChildClassName="block w-full text-primary hover:underline"
                         />
                       </td>
 
@@ -545,7 +545,7 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
 
                     {totals.totalDue > 0 ? (
                       <button
-                        className="w-full rounded-xl border border-[#6571FF]/40 bg-gradient-to-r from-[#6571FF] to-[#5a66ee] px-5 py-2 font-semibold text-white shadow-sm transition-all hover:border-[#6571FF]/70 hover:bg-[#6571FF]/10 active:scale-95 sm:w-auto"
+                        className="w-full rounded-xl border border-primary/40 bg-gradient-to-r from-primary to-[#5a66ee] px-5 py-2 font-semibold text-white shadow-sm transition-all hover:border-primary/70 hover:bg-primary/10 active:scale-95 sm:w-auto"
                         onClick={() => setPaymentModalOpen(true)}
                       >
                         Make Payment

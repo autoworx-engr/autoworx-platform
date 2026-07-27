@@ -1,6 +1,5 @@
 "use client";
 
-import type { JSX } from "react";
 import { addCustomer } from "@/actions/client/add";
 import { CLIENT_LIST_KEY } from "@/app/(dashboard)/dashboard/client/_hook/useClientQuery";
 import {
@@ -23,9 +22,10 @@ import { useListsStore } from "@/stores/lists";
 import { stateStore } from "@/stores/stateStore";
 import { Client, Source, Tag } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { CircleUserRound as UserIcon, SquarePen, X } from "lucide-react";
+import { SquarePen, CircleUserRound as UserIcon, X } from "lucide-react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import type { JSX } from "react";
 import { useEffect, useState, useTransition } from "react";
 import { RotatingLines } from "react-loader-spinner";
 import { deleteSource } from "../../actions/source/deleteSource";
@@ -266,7 +266,7 @@ export default function NewCustomer({
             <button
               className="
                   flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white
-                  bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                  bg-gradient-to-r from-primary to-[#5a66ee]
                   shadow-[0_4px_14px_0_rgba(101,113,255,0.39)]
                   hover:shadow-[0_6px_20px_rgba(101,113,255,0.23)]
                   hover:-translate-y-0.5
@@ -306,7 +306,7 @@ export default function NewCustomer({
                 </div>
                 <label
                   htmlFor="profilePicture"
-                  className="absolute bottom-0 right-0 p-1 bg-[#6571FF] rounded-full shadow-sm cursor-pointer transition-colors"
+                  className="absolute bottom-0 right-0 p-1 bg-primary rounded-full shadow-sm cursor-pointer transition-colors"
                 >
                   <SquarePen className="w-3 h-3 text-white" />
                 </label>
@@ -329,7 +329,7 @@ export default function NewCustomer({
                       rounded-full pl-4 pr-2 py-1.5
                       bg-white dark:bg-slate-800
                       border border-dashed border-slate-300 dark:border-slate-600
-                      hover:border-[#6571FF] hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20
+                      hover:border-primary hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20
                       transition-all duration-300
                   "
                 htmlFor="profilePicture"
@@ -348,11 +348,11 @@ export default function NewCustomer({
                   }}
                 />
                 <div className="flex flex-col items-end">
-                  <span className="text-sm font-semibold text-slate-600 dark:text-slate-300 group-hover:text-[#6571FF] transition-colors">
+                  <span className="text-sm font-semibold text-slate-600 dark:text-slate-300 group-hover:text-primary transition-colors">
                     Upload Photo
                   </span>
                 </div>
-                <div className="p-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 group-hover:text-[#6571FF] group-hover:bg-white transition-colors">
+                <div className="p-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 group-hover:text-primary group-hover:bg-white transition-colors">
                   <UserIcon size={32} strokeWidth={2} />
                 </div>
               </label>
@@ -558,7 +558,7 @@ export default function NewCustomer({
                       type="checkbox"
                       checked={isPremium}
                       onChange={(e) => setIsPremium(e.target.checked)}
-                      className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border-2 border-slate-300 transition-all checked:border-[#6571FF] checked:bg-[#6571FF] hover:border-[#6571FF]"
+                      className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border-2 border-slate-300 transition-all checked:border-primary checked:bg-primary hover:border-primary"
                     />
                     <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 transition-opacity peer-checked:opacity-100">
                       <svg
@@ -575,7 +575,7 @@ export default function NewCustomer({
                       </svg>
                     </div>
                   </div>
-                  <span className="font-medium text-slate-700 dark:text-slate-300 group-hover:text-[#6571FF] transition-colors">
+                  <span className="font-medium text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">
                     Add as a Fleet
                   </span>
                 </label>
@@ -598,7 +598,7 @@ export default function NewCustomer({
               disabled={pending}
               type="button"
               onClick={() => startTransition(handleSubmit)}
-              className="rounded-md bg-gradient-to-r from-[#6571FF] to-[#5a66ee] px-6 py-2 text-sm font-medium text-white shadow transition-all duration-200 hover:shadow-lg hover:shadow-indigo-500/30 disabled:opacity-50"
+              className="rounded-md bg-gradient-to-r from-primary to-[#5a66ee] px-6 py-2 text-sm font-medium text-white shadow transition-all duration-200 hover:shadow-lg hover:shadow-indigo-500/30 disabled:opacity-50"
             >
               {pending ? (
                 <div className="flex flex-col items-center justify-center">
@@ -659,7 +659,7 @@ export default function NewCustomer({
             <button
               type="button"
               onClick={handleVehicleConfirm}
-              className="rounded-md bg-gradient-to-r from-[#6571FF] to-[#5a66ee] px-6 py-2 text-sm font-medium text-white shadow transition-all duration-200 hover:shadow-lg hover:shadow-indigo-500/30 disabled:opacity-50"
+              className="rounded-md bg-gradient-to-r from-primary to-[#5a66ee] px-6 py-2 text-sm font-medium text-white shadow transition-all duration-200 hover:shadow-lg hover:shadow-indigo-500/30 disabled:opacity-50"
             >
               Yes, Add Vehicle
             </button>

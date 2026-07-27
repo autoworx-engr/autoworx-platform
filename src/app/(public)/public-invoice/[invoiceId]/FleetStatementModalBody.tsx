@@ -1,13 +1,13 @@
 "use client";
-import React from "react";
-import { cn } from "@/lib/cn";
-import Image from "next/image";
-import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
-import { formatCurrency } from "@/utils/formatCurrency";
-import { useServerGet } from "@/hooks/useServerGet";
-import { getStripeAccount } from "@/app/(dashboard)/dashboard/settings/payments/stripe";
 import { getPaymentGatewayInfo } from "@/app/(dashboard)/dashboard/settings/payments/getPaymentGatewayInfo";
+import { getStripeAccount } from "@/app/(dashboard)/dashboard/settings/payments/stripe";
 import { StatementPaymentDialog } from "@/components/fleet-statement/StatementPaymentDialog";
+import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
+import { useServerGet } from "@/hooks/useServerGet";
+import { cn } from "@/lib/cn";
+import { formatCurrency } from "@/utils/formatCurrency";
+import Image from "next/image";
+import React from "react";
 
 interface FleetStatementModalBodyProps {
   statementId: string;
@@ -171,11 +171,11 @@ export const FleetStatementModalBody: React.FC<
                       <InvoiceModal
                         invoiceId={invoice?.id}
                         buttonChild={
-                          <button className="text-[#6571FF] hover:text-[#5a66ee] font-semibold hover:underline text-sm">
+                          <button className="text-primary hover:text-[#5a66ee] font-semibold hover:underline text-sm">
                             #{invoice?.id}
                           </button>
                         }
-                        buttonChildClassName="text-[#6571FF]"
+                        buttonChildClassName="text-primary"
                       />
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">

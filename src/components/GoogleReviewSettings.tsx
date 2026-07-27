@@ -98,14 +98,14 @@ export default function GoogleReviewSettings({
           name="googleReviewLink"
           label="Google Review Link"
           placeholder="https://google.drive"
-          className="focus:border-[#6571FF] focus:outline-none focus:ring-2 focus:ring-[#6571FF]"
+          className="focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary"
         />
 
         <div className="flex gap-2">
           <button
             onClick={handleSave}
             disabled={isLoading}
-            className="rounded bg-[#6571FF] px-4 py-2 text-white hover:bg-[#6571FF] disabled:opacity-50"
+            className="rounded bg-primary px-4 py-2 text-white hover:bg-primary disabled:opacity-50"
           >
             {isLoading ? "Saving..." : "Save"}
           </button>

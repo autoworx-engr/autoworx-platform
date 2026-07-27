@@ -1,8 +1,10 @@
-import { createStripePaymentLink } from "@/actions/payment/stripePayment";
 import { createAuthorizeNetPaymentLink } from "@/actions/payment/authorizeNetPayment";
+import { createStripePaymentLink } from "@/actions/payment/stripePayment";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
+import { errorToast, successToast } from "@/lib/toast";
+import { ChevronDown } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -11,15 +13,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../Dialog";
-import { Label } from "../ui/label";
-import { errorToast, successToast } from "@/lib/toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { ChevronDown } from "lucide-react";
+import { Label } from "../ui/label";
 
 interface PaymentGatewayInfo {
   paymentGateway: "STRIPE" | "AUTHORIZE_NET" | "BOTH";
@@ -387,33 +387,33 @@ export function PayNow({
         {mode === "invoice" ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="w-fit ml-auto bg-[#6571ff] text-white font-medium py-1 pb-1.5 px-7 rounded transition-colors duration-200 shadow-sm flex items-center justify-between text-sm">
+              <button className="w-fit ml-auto bg-primary text-white font-medium py-1 pb-1.5 px-7 rounded transition-colors duration-200 shadow-sm flex items-center justify-between text-sm">
                 Pay Now
                 <ChevronDown className="w-4 h-4 ml-1.5" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-full bg-[#6571ff]">
-              <DropdownMenuItem className="w-full text-white bg-[#6571ff] cursor-pointer p-0.5">
+            <DropdownMenuContent className="w-full bg-primary">
+              <DropdownMenuItem className="w-full text-white bg-primary cursor-pointer p-0.5">
                 <DialogTrigger asChild>
                   <button
                     onClick={() => {
                       setPayType("payment");
                       setAmount(due);
                     }}
-                    className="w-full rounded py-1 bg-[#6571ff] text-white"
+                    className="w-full rounded py-1 bg-primary text-white"
                   >
                     Payment
                   </button>
                 </DialogTrigger>
               </DropdownMenuItem>
-              <DropdownMenuItem className="text-white bg-[#6571ff] cursor-pointer p-0.5">
+              <DropdownMenuItem className="text-white bg-primary cursor-pointer p-0.5">
                 <DialogTrigger asChild>
                   <button
                     onClick={() => {
                       setPayType("deposit");
                       setAmount(due);
                     }}
-                    className="w-full rounded py-1 bg-[#6571ff] text-white"
+                    className="w-full rounded py-1 bg-primary text-white"
                   >
                     Deposit
                   </button>
@@ -520,8 +520,8 @@ export function PayNow({
                           }}
                           className={`flex-1 rounded-lg border px-2 py-2 text-sm font-medium transition-colors ${
                             isSelected
-                              ? "bg-[#6571ff] text-white border-[#6571ff]"
-                              : "bg-white text-gray-700 border-gray-300 hover:border-[#6571ff]"
+                              ? "bg-primary text-white border-primary"
+                              : "bg-white text-gray-700 border-gray-300 hover:border-primary"
                           }`}
                         >
                           {percent}% | ${tipVal.toFixed(2)}
@@ -566,7 +566,7 @@ export function PayNow({
           </div>
           <DialogFooter>
             <Button
-              className="bg-[#6571ff] text-white"
+              className="bg-primary text-white"
               type="button"
               disabled={isLoading || !amount || Number(amount) <= 0}
               onClick={handlePayment}
@@ -619,7 +619,7 @@ export function PayNow({
               />
               {isIframeLoading && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/70">
-                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#6571ff] border-t-transparent" />
+                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                   <p className="mt-3 text-sm text-gray-600 text-center px-4">
                     Loading secure payment page...
                   </p>

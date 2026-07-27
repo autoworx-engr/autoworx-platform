@@ -14,6 +14,7 @@ export type IncomingTwiMLInput = {
     firstName: string | null;
     lastName: string | null;
     fallbackName: string;
+    photo: string | null;
   };
 };
 
@@ -53,6 +54,9 @@ export function buildIncomingTwiML(input: IncomingTwiMLInput): string {
         timeout: 30,
         answerOnBridge: true,
         action: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/call-status`,
+        // Play a ringback tone to the original caller while the forwarding
+        // number rings, so they don't hear silence (same fix as outbound PSTN).
+        ringTone: "us",
         ...recordingOptions,
       },
       callForwardingNumber,
@@ -77,6 +81,11 @@ export function buildIncomingTwiML(input: IncomingTwiMLInput): string {
     clientDial.parameter({ name: "ClientName", value: callerName });
     clientDial.parameter({ name: "ClientId", value: caller.id.toString() });
     clientDial.parameter({ name: "ParentCallSid", value: callId });
+    // Only forward a real avatar — the default placeholder path isn't a usable
+    // image on the mobile client, which falls back to a letter avatar instead.
+    if (caller.photo && caller.photo !== "/images/default.png") {
+      clientDial.parameter({ name: "ClientImage", value: caller.photo });
+    }
   }
 
   return voiceResponse.toString();

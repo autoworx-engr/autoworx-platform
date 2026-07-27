@@ -26,7 +26,7 @@ export default function EmployeeLeaveRequestsModal({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button type="button" className="text-xs text-[#6571FF]">
+        <button type="button" className="text-xs text-primary">
           <ExternalLink />
         </button>
       </DialogTrigger>

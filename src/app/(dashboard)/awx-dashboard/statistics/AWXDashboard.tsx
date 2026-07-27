@@ -113,7 +113,7 @@ const AWXDashboard = ({ companies, platformStats }: Props) => {
           <div className="flex items-center gap-2">
             <Link
               href="/awx-dashboard/webhook-events"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 px-4 py-2 text-xs font-bold text-slate-700 transition hover:border-[#6571ff] hover:text-[#6571ff]"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 px-4 py-2 text-xs font-bold text-slate-700 transition hover:border-primary hover:text-primary"
             >
               <History className="h-3.5 w-3.5" />
               Webhook Events
@@ -136,7 +136,7 @@ const AWXDashboard = ({ companies, platformStats }: Props) => {
             {statistics.map((stat, index) => (
               <Card
                 key={index}
-                className="h-[120px] w-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50 transition-all duration-300 hover:shadow-2xl hover:shadow-[#6571FF]/20 dark:hover:shadow-[#6571FF]/10 sm:h-[150px] rounded-2xl ring-1 ring-slate-200 dark:ring-slate-700 hover:z-10 hover:-translate-y-0.5"
+                className="h-[120px] w-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20 dark:hover:shadow-primary/10 sm:h-[150px] rounded-2xl ring-1 ring-slate-200 dark:ring-slate-700 hover:z-10 hover:-translate-y-0.5"
               >
                 <CardContent className="w-full px-4 py-6 sm:p-7">
                   <div className="mb-2 text-base font-semibold text-slate-500 dark:text-slate-400 sm:text-xl">
@@ -165,7 +165,7 @@ const AWXDashboard = ({ companies, platformStats }: Props) => {
                 value={inputValue}
                 onChange={handleSearch}
                 placeholder="Search by Company Name or Admin Email..."
-                className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 p-2.5 pl-10 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#6571FF] focus:border-transparent"
+                className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 p-2.5 pl-10 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               />
             </div>
 
@@ -187,7 +187,7 @@ const AWXDashboard = ({ companies, platformStats }: Props) => {
                         href={`/awx-dashboard/statistics/${company?.id}`}
                         key={index}
                         className={cn(
-                          "flex cursor-pointer flex-col rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/70 p-3 transition-all duration-300 hover:border-[#6571FF] hover:shadow-lg hover:shadow-[#6571FF]/10 dark:hover:shadow-lg dark:hover:shadow-[#6571FF]/20 hover:-translate-y-0.5 sm:p-4 lg:flex-row lg:items-center lg:gap-6 lg:p-6 2xl:gap-8 2xl:p-8",
+                          "flex cursor-pointer flex-col rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/70 p-3 transition-all duration-300 hover:border-primary hover:shadow-lg hover:shadow-primary/10 dark:hover:shadow-lg dark:hover:shadow-primary/20 hover:-translate-y-0.5 sm:p-4 lg:flex-row lg:items-center lg:gap-6 lg:p-6 2xl:gap-8 2xl:p-8",
                         )}
                       >
                         {/* company info */}
@@ -202,7 +202,7 @@ const AWXDashboard = ({ companies, platformStats }: Props) => {
                               width={120}
                               height={120}
                               alt={company?.name}
-                              className="rounded-full ring-2 ring-[#6571FF]/50"
+                              className="rounded-full ring-2 ring-primary/50"
                             />
                           </div>
                           <div className="flex-1 space-y-1 sm:space-y-2 min-w-0">
@@ -241,7 +241,7 @@ const AWXDashboard = ({ companies, platformStats }: Props) => {
                           <p className="pb-2 text-base font-semibold md:text-lg">
                             Subscribed to{" "}
                             <b>
-                              <i className="font-extrabold text-[#6571FF]">
+                              <i className="font-extrabold text-primary">
                                 {company.subscriptionPlanName ??
                                   "No Plan Assigned"}
                               </i>

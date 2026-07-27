@@ -64,14 +64,14 @@ export default function Create() {
               "overflow-hidden rounded-xl border border-slate-300 transition-all duration-200",
               openService === item.id
                 ? "bg-slate-50 shadow-sm"
-                : "bg-white hover:border-[#6571FF]/30",
+                : "bg-white hover:border-primary/30",
             )}
           >
             {/* Header / Summary Row */}
             <div
               className={cn(
                 "flex w-full items-center justify-between px-4 py-3 cursor-pointer select-none",
-                openService === item.id ? "text-[#6571FF]" : "text-slate-600",
+                openService === item.id ? "text-primary" : "text-slate-600",
               )}
               onClick={() =>
                 setOpenService(
@@ -98,7 +98,7 @@ export default function Create() {
                     size={18}
                     className={
                       openService === item.id
-                        ? "text-[#6571FF]"
+                        ? "text-primary"
                         : "text-slate-400"
                     }
                   />

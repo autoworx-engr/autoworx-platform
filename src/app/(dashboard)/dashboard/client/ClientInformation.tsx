@@ -47,14 +47,14 @@ export default function ClientInformation({
       </h3>
 
       {/* Premium Card Container */}
-      <div className="relative rounded-2xl bg-white p-6 shadow-md ring-1 ring-slate-900/5 transition-all duration-300 hover:shadow-2xl hover:shadow-[#6571FF]/10">
+      <div className="relative rounded-2xl bg-white p-6 shadow-md ring-1 ring-slate-900/5 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10">
         {/* Action Buttons (Top Right) */}
         <div className="absolute right-4 top-4">
           <div className="flex items-center gap-2">
             {/* Chat Link */}
             <Link
               href={`/dashboard/communication/client/${client.id}?chat=true`}
-              className="group p-1 text-[#6571FF] transition-all duration-300 hover:scale-[1.1] hover:shadow-lg hover:shadow-[#6571FF]/20 rounded-full"
+              className="group p-1 text-primary transition-all duration-300 hover:scale-[1.1] hover:shadow-lg hover:shadow-primary/20 rounded-full"
               title="Open Chat"
             >
               <MessageCircleMore className="h-4 w-4" />

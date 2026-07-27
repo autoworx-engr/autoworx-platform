@@ -1,11 +1,9 @@
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Dispatch, SetStateAction } from "react";
 import ReportNotFoundCard from "@/app/(dashboard)/awx-dashboard/components/ReportNotFoundCard";
-import { TBugReport } from "@/types/bugReport";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
+import { Dispatch, SetStateAction } from "react";
 
 interface BugReportDropdownCardProps {
   isAdmin?: boolean;
@@ -51,7 +49,7 @@ export const BugReportDropdownCard = ({
           <div className="w-full md:w-auto">
             <button
               onClick={onNew}
-              className="-mt-2 w-full rounded-md bg-[#6571FF] px-4 py-[7px] text-sm font-medium text-white transition hover:bg-blue-600 md:w-auto"
+              className="-mt-2 w-full rounded-md bg-primary px-4 py-[7px] text-sm font-medium text-white transition hover:bg-blue-600 md:w-auto"
             >
               New
             </button>

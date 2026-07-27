@@ -6,7 +6,7 @@ import { errorToast, successToast } from "@/lib/toast";
 import formatDateToReadable from "@/utils/formatDate";
 import { LeaveRequest } from "@prisma/client";
 import Image from "next/image";
-import React, { useTransition } from "react";
+import { useTransition } from "react";
 
 const EmployeeLeaveRequests = ({
   leaveRequests = [],
@@ -96,7 +96,7 @@ const EmployeeLeaveRequest = ({
         )}
         <span
           className={cn("w-full rounded py-1 text-center text-white", {
-            "bg-[#6571FF]": leaveRequest.status === "Approved",
+            "bg-primary": leaveRequest.status === "Approved",
             "bg-yellow-500": leaveRequest.status === "Pending",
             "bg-rose-500": leaveRequest.status === "Rejected",
           })}

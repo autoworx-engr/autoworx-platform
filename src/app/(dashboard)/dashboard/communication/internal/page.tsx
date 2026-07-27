@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 };
 
 export default async function InternalPage(props: {
-  searchParams: Promise<{ id?: string }>;
+  searchParams: Promise<{ id?: string; groupId?: string }>;
 }) {
   const searchParams = await props.searchParams;
-  const { id: selectedUserId } = searchParams;
+  const { id: selectedUserId, groupId } = searchParams;
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new Error("Session ID is required");
@@ -38,6 +38,16 @@ export default async function InternalPage(props: {
       })
     : null;
 
+  const selectedGroup = groupId
+    ? await db.group.findUnique({
+        where: {
+          id: parseInt(groupId),
+          companyId: session?.user?.companyId,
+        },
+        include: { users: true },
+      })
+    : null;
+
   return (
     <div className="flex gap-5 sm:mt-5">
       <Body
@@ -55,6 +65,7 @@ export default async function InternalPage(props: {
               } as User & { unreadCount: number; latestMessage?: any })
             : null
         }
+        selectedGroup={selectedGroup}
       />
     </div>
   );

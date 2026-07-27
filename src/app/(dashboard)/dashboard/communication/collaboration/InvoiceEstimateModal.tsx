@@ -226,7 +226,7 @@ export default function InvoiceEstimateModal({
               value={estimateInfo.notes}
               onChange={handleChange}
               placeholder="Add any extra details…"
-              className="h-[93px] w-full resize-none rounded-lg border border-slate-200 bg-white/80 px-3 py-1.5 text-sm leading-6 text-slate-600 shadow-sm outline-none transition-all duration-300 placeholder:text-slate-400 focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/40 dark:bg-slate-900/50 dark:text-slate-300"
+              className="h-[93px] w-full resize-none rounded-lg border border-slate-200 bg-white/80 px-3 py-1.5 text-sm leading-6 text-slate-600 shadow-sm outline-none transition-all duration-300 placeholder:text-slate-400 focus:border-primary/60 focus:ring-2 focus:ring-primary/40 dark:bg-slate-900/50 dark:text-slate-300"
             />
           </label>
 
@@ -239,7 +239,7 @@ export default function InvoiceEstimateModal({
           <button
             disabled={pending}
             type="submit"
-            className="rounded-lg bg-gradient-to-r from-[#6571FF] to-[#5a66ee] px-5 py-2 font-medium text-white transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-lg bg-gradient-to-r from-primary to-[#5a66ee] px-5 py-2 font-medium text-white transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {pending ? (
               <RotatingLines strokeColor="#fff" width="25" />

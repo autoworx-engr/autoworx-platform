@@ -1,14 +1,10 @@
 "use client";
 
-import { CalendarSettings, EmployeeType } from "@prisma/client";
+import { updateCalendarSettings } from "@/actions/appointment/updateCalendarSettings";
 import { DialogClose, DialogFooter } from "@/components/Dialog";
 import Submit from "@/components/Submit";
-import { updateCalendarSettings } from "@/actions/appointment/updateCalendarSettings";
-import { successToast, errorToast } from "@/lib/toast";
-import { useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { calenderQueryKey } from "../../_constant";
-import ConnectGoogle from "./ConnectGoogle";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -16,8 +12,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { errorToast, successToast } from "@/lib/toast";
+import { CalendarSettings, EmployeeType } from "@prisma/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { calenderQueryKey } from "../../_constant";
+import ConnectGoogle from "./ConnectGoogle";
 
 const WEEK_DAYS = [
   "Saturday",
@@ -151,7 +151,7 @@ export default function General({
               <Select value={weekend1} onValueChange={setWeekend1}>
                 <SelectTrigger
                   size="md"
-                  className="w-full border-[#6571FF] bg-[#EEF0FF] text-[#6571FF] focus:ring-[#6571FF]"
+                  className="w-full border-primary bg-[#EEF0FF] text-primary focus:ring-primary"
                 >
                   <SelectValue />
                 </SelectTrigger>
@@ -167,7 +167,7 @@ export default function General({
               <Select value={weekend2} onValueChange={setWeekend2}>
                 <SelectTrigger
                   size="md"
-                  className="w-full border-[#6571FF] bg-[#EEF0FF] text-[#6571FF] focus:ring-[#6571FF]"
+                  className="w-full border-primary bg-[#EEF0FF] text-primary focus:ring-primary"
                 >
                   <SelectValue />
                 </SelectTrigger>
@@ -201,7 +201,7 @@ export default function General({
               </button>
             </DialogClose>
             <Submit
-              className="rounded-xl bg-gradient-to-r from-[#6571FF] to-[#5a66ee] px-6 py-2.5 text-sm font-medium text-white shadow-lg shadow-indigo-500/30 transition-all duration-200 hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-xl hover:shadow-indigo-500/40 active:translate-y-0 active:scale-100"
+              className="rounded-xl bg-gradient-to-r from-primary to-[#5a66ee] px-6 py-2.5 text-sm font-medium text-white shadow-lg shadow-indigo-500/30 transition-all duration-200 hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-xl hover:shadow-indigo-500/40 active:translate-y-0 active:scale-100"
               formAction={handleSave}
             >
               Save

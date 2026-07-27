@@ -1,21 +1,21 @@
 "use client";
 
 import NewEmployee from "@/components/Lists/NewEmployee";
+import UserListSkeleton from "@/components/ui/UserListSkeleton";
+import { Button } from "@/components/ui/button";
+import { useDebounce } from "@/hooks/useDebounce";
 import { cn } from "@/lib/cn";
 import { useCalendarSidebarStore } from "@/stores/calendarSidebar";
 import { User } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useInView } from "framer-motion";
+import { Search, User as UserIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { userQueryKey } from "../../_constant";
 import useInfinityUsersQuery from "../../_hook/useInfinityUsersQuery";
 import TaskSpinner from "../ui/TaskSpinner";
 import { MinimizeButton } from "./MinimizeButton";
 import UserComponent from "./UserComponent";
-import { useDebounce } from "@/hooks/useDebounce";
-import { Search, User as UserIcon } from "lucide-react";
-import UserListSkeleton from "@/components/ui/UserListSkeleton";
-import { Button } from "@/components/ui/button";
 
 export default function Users() {
   const ref = useRef<HTMLDivElement | null>(null);
@@ -180,7 +180,7 @@ export default function Users() {
             bg-slate-100 dark:bg-slate-700 
             text-slate-700 dark:text-slate-50 
             outline-none transition-all duration-300 ease-in-out 
-            focus:ring-2 focus:ring-[#6571FF] focus:bg-white dark:focus:bg-slate-800
+            focus:ring-2 focus:ring-primary focus:bg-white dark:focus:bg-slate-800
             placeholder:text-slate-500 dark:placeholder:text-slate-500
           "
                 placeholder="Search Users..."

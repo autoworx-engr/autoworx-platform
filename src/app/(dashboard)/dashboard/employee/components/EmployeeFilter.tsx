@@ -55,7 +55,7 @@ export default function EmployeeFilter() {
             hover:ring-slate-300 dark:hover:ring-slate-600
           "
           >
-            <span className="text-slate-400 group-focus-within:text-[#6571FF] transition-colors duration-300">
+            <span className="text-slate-400 group-focus-within:text-primary transition-colors duration-300">
               <Search className="w-5 h-5" />
             </span>
             <input

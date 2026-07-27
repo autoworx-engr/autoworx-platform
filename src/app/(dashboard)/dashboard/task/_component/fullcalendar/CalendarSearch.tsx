@@ -27,7 +27,7 @@ export default function CalendarSearch({ type }: { type: string }) {
       <div className="group relative flex w-full items-center gap-x-3 rounded-lg bg-white dark:bg-slate-900 px-4 py-2 ring-1 ring-slate-200 dark:ring-slate-700 shadow-sm transition-all duration-300 ease-out focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500/50 focus-within:shadow-md focus-within:shadow-indigo-500/5 hover:ring-slate-300 dark:hover:ring-slate-600">
         <Search
           size={20}
-          className="h-5 w-5 text-slate-400 group-focus-within:text-[#6571FF] transition-colors duration-300 flex-shrink-0"
+          className="h-5 w-5 text-slate-400 group-focus-within:text-primary transition-colors duration-300 flex-shrink-0"
         />
         <input
           ref={inputRef}

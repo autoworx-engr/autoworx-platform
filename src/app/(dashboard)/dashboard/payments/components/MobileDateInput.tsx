@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 
 interface MobileDateInputProps {
   name: string;
@@ -48,7 +48,7 @@ export default function MobileDateInput({
         onChange={handleChange}
         min={dateLimit?.min}
         max={dateLimit?.max}
-        className="h-12 rounded-md border border-gray-300 px-3 text-sm focus:border-[#6571FF] focus:outline-none"
+        className="h-12 rounded-md border border-gray-300 px-3 text-sm focus:border-primary focus:outline-none"
       />
     </div>
   );

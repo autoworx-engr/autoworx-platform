@@ -1,5 +1,4 @@
 "use client";
-import { addTechnician, updateTechnician } from "@/service/work-order/api";
 import ComponentsLightbox from "@/components/common/LightBox";
 import {
   Dialog,
@@ -13,6 +12,7 @@ import Selector from "@/components/Selector";
 import { SlimInput } from "@/components/SlimInput";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { queryKeys } from "@/lib/queryKeys";
+import { addTechnician, updateTechnician } from "@/service/work-order/api";
 import {
   handleFileSelection,
   uploadAllAttachments,
@@ -431,7 +431,7 @@ export default function CreateAndEditLabor({
             <p className="text-white">{technician.name}</p>
           </DialogTrigger>
         ) : (
-          <p className="cursor-auto text-[#6571FF]">{technician.name}</p>
+          <p className="cursor-auto text-primary">{technician.name}</p>
         )
       ) : (
         writePermission &&
@@ -439,7 +439,7 @@ export default function CreateAndEditLabor({
           <DialogTrigger asChild>
             <button
               onClick={reset}
-              className="rounded-full border border-[#6571FF] px-3 py-0.5"
+              className="rounded-full border border-primary px-3 py-0.5"
             >
               + Add Labor
             </button>
@@ -559,7 +559,7 @@ export default function CreateAndEditLabor({
               onChange={handleChange}
               value={inputValues.note}
               name="note"
-              className="h-32 w-full resize-none rounded-md border border-slate-300 p-3 text-sm outline-none focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/20 transition-all placeholder:text-slate-400"
+              className="h-32 w-full resize-none rounded-md border border-slate-300 p-3 text-sm outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-slate-400"
               readOnly={isTechnician}
               placeholder="Add a note..."
             />
@@ -600,7 +600,7 @@ export default function CreateAndEditLabor({
                 <textarea
                   value={technicianNote}
                   onChange={(e) => setTechnicianNote(e.target.value)}
-                  className="h-32 w-full resize-none rounded-md border border-slate-300 p-3 text-sm outline-none focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/20 transition-all placeholder:text-slate-400"
+                  className="h-32 w-full resize-none rounded-md border border-slate-300 p-3 text-sm outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-slate-400"
                   placeholder="Add work details, observations, and findings..."
                 />
               ) : isAdminOrManger &&
@@ -632,7 +632,7 @@ export default function CreateAndEditLabor({
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="flex items-center justify-center gap-2 rounded-md border border-[#6571FF] bg-[#6571FF]/5 text-[#6571FF] hover:bg-[#6571FF]/10 cursor-pointer py-2 px-3 text-sm font-medium transition-colors"
+                        className="flex items-center justify-center gap-2 rounded-md border border-primary bg-primary/5 text-primary hover:bg-primary/10 cursor-pointer py-2 px-3 text-sm font-medium transition-colors"
                       >
                         <ImageIcon size={16} />
                         <span>
@@ -724,7 +724,7 @@ export default function CreateAndEditLabor({
           </DialogClose>
           <button
             disabled={loading || pending} // Disable button when loading
-            className="flex items-center justify-center rounded-lg bg-[#6571FF] px-5 py-2 text-sm font-medium text-white hover:bg-[#5A63E6] disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center justify-center rounded-lg bg-primary px-5 py-2 text-sm font-medium text-white hover:bg-[#5A63E6] disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors"
             onClick={() => startTransition(handleSubmit)}
           >
             {loading || pending ? (

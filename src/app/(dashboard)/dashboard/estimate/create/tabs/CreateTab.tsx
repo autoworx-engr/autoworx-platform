@@ -244,7 +244,7 @@ export function CreateTab() {
                                     {j === item.materials.length - 1 ? (
                                       <button
                                         type="button"
-                                        className="absolute flex items-center gap-1 text-sm text-[#6571FF] mt-1"
+                                        className="absolute flex items-center gap-1 text-sm text-primary mt-1"
                                         onClick={() => {
                                           useEstimateCreateStore.setState((x) =>
                                             create(x, (x) => {
@@ -322,7 +322,7 @@ export function CreateTab() {
                                   {j === item.materials.length - 1 ? (
                                     <button
                                       type="button"
-                                      className="absolute -bottom-6 left-0 flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-bold uppercase tracking-wider text-[#6571FF] transition-all hover:bg-[#6571FF]/10 active:scale-95"
+                                      className="absolute -bottom-6 left-0 flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-bold uppercase tracking-wider text-primary transition-all hover:bg-primary/10 active:scale-95"
                                       onClick={() => {
                                         useEstimateCreateStore.setState((x) =>
                                           create(x, (x) => {
@@ -457,7 +457,7 @@ export function CreateTab() {
         <div className="flex py-3 md:gap-52 md:bg-slate-50/80 md:backdrop-blur-sm border-t border-slate-100 px-4 md:px-6">
           <button
             type="button"
-            className="sticky bottom-4 z-10 flex w-full items-center justify-center gap-2 rounded-xl bg-white p-3 text-sm font-semibold tracking-wide text-[#6571FF] shadow-lg shadow-[#6571FF]/10 ring-1 ring-[#6571FF]/20 transition-all hover:bg-[#6571FF] hover:text-white active:scale-95 md:static md:w-auto md:bg-transparent md:p-2 md:shadow-none md:ring-0 md:hover:bg-[#6571FF]/10 md:hover:text-[#6571FF]"
+            className="sticky bottom-4 z-10 flex w-full items-center justify-center gap-2 rounded-xl bg-white p-3 text-sm font-semibold tracking-wide text-primary shadow-lg shadow-primary/10 ring-1 ring-primary/20 transition-all hover:bg-primary hover:text-white active:scale-95 md:static md:w-auto md:bg-transparent md:p-2 md:shadow-none md:ring-0 md:hover:bg-primary/10 md:hover:text-primary"
             onClick={addService}
           >
             <CirclePlus size={20} strokeWidth={2.5} />

@@ -1,5 +1,7 @@
 import { createStripePaymentLink } from "@/actions/payment/stripePayment";
 import { Button } from "@/components/ui/button";
+import { errorToast } from "@/lib/toast";
+import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 import {
   Dialog,
@@ -9,15 +11,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../Dialog";
-import { Label } from "../ui/label";
-import { errorToast } from "@/lib/toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { ChevronDown } from "lucide-react";
+import { Label } from "../ui/label";
 
 export function StripePay({
   due,
@@ -41,35 +41,35 @@ export function StripePay({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
-            className="w-fit ml-auto bg-[#6571ff] text-white font-medium py-1 pb-1.5
+            className="w-fit ml-auto bg-primary text-white font-medium py-1 pb-1.5
             px-7 rounded transition-colors duration-200 shadow-sm flex items-center justify-between text-sm"
           >
             Pay Now
             <ChevronDown className="w-4 h-4 ml-1.5" />
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-full bg-[#6571ff]">
-          <DropdownMenuItem className="w-full text-white bg-[#6571ff] cursor-pointer p-0.5">
+        <DropdownMenuContent className="w-full bg-primary">
+          <DropdownMenuItem className="w-full text-white bg-primary cursor-pointer p-0.5">
             <DialogTrigger asChild>
               <button
                 onClick={() => {
                   setPayType("payment");
                   setAmount(due); // Reset to due amount for payments
                 }}
-                className="w-full rounded py-1 bg-[#6571ff] text-white"
+                className="w-full rounded py-1 bg-primary text-white"
               >
                 Payment
               </button>
             </DialogTrigger>
           </DropdownMenuItem>
-          <DropdownMenuItem className="text-white bg-[#6571ff] cursor-pointer p-0.5">
+          <DropdownMenuItem className="text-white bg-primary cursor-pointer p-0.5">
             <DialogTrigger asChild>
               <button
                 onClick={() => {
                   setPayType("deposit");
                   setAmount(due); // Default deposit amount to full due
                 }}
-                className="w-full rounded py-1 bg-[#6571ff] text-white"
+                className="w-full rounded py-1 bg-primary text-white"
               >
                 Deposit
               </button>
@@ -114,7 +114,7 @@ export function StripePay({
         </div>
         <DialogFooter>
           <Button
-            className="bg-[#6571ff] text-white"
+            className="bg-primary text-white"
             type="button"
             disabled={isLoading || !amount || Number(amount) <= 0}
             onClick={async () => {

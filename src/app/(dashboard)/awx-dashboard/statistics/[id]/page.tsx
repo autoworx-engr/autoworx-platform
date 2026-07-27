@@ -6,6 +6,7 @@ import FeaturePermission from "../../components/FeaturePermission";
 import { ConfigureCommunicationHub } from "./ConfigureCommunicationHub";
 import { CompanyPlanEditor } from "./CompanyPlanEditor";
 import { PlatformPlanToggle } from "./PlatformPlanToggle";
+import { TestCompanyToggle } from "./TestCompanyToggle";
 import { ArrowLeft, Upload } from "lucide-react";
 import moment from "moment";
 import { CannedUploadModal } from "@/app/(dashboard)/dashboard/estimate/canned/CannedUploadModal";
@@ -84,6 +85,7 @@ const Page = async (props: propsType) => {
           image: true,
           createdAt: true,
           enforcePlatformPlan: true,
+          isTest: true,
           users: { select: { employeeType: true } },
           clients: { select: { id: true } },
         },
@@ -160,7 +162,7 @@ const Page = async (props: propsType) => {
                       width={80}
                       height={80}
                       alt={company?.name}
-                      className="rounded-full ring-2 ring-[#6571FF]/50"
+                      className="rounded-full ring-2 ring-primary/50"
                     />
                     <h3 className="text-base font-semibold text-slate-700 dark:text-slate-200 md:text-xl mt-3">
                       {company?.name}
@@ -274,7 +276,7 @@ const Page = async (props: propsType) => {
               <p className="text-sm text-slate-700 dark:text-slate-200">
                 Subscribed to{" "}
                 <b>
-                  <i className="font-extrabold text-[#6571FF] dark:text-[#8b94ff]">
+                  <i className="font-extrabold text-primary dark:text-[#8b94ff]">
                     {subscription?.plan?.name ?? "No Platform Plan Assigned"}
                   </i>
                 </b>
@@ -293,11 +295,15 @@ const Page = async (props: propsType) => {
                 <span className={badge.className}>{badge.text}</span>
               </div>
 
-              <div className="mt-4 flex items-center gap-x-4 pt-2">
+              <div className="mt-4 flex flex-wrap items-center gap-4 pt-2">
                 <CompanyPlanEditor companyId={Number(id)} />
                 <PlatformPlanToggle
                   companyId={Number(id)}
                   initialEnabled={!!company?.enforcePlatformPlan}
+                />
+                <TestCompanyToggle
+                  companyId={Number(id)}
+                  initialEnabled={!!company?.isTest}
                 />
               </div>
             </div>
@@ -307,7 +313,7 @@ const Page = async (props: propsType) => {
                 buttonElement={
                   <Button
                     variant="outline"
-                    className=" bg-[#6571FF] hover:bg-indigo-600 focus:ring-blue-500 text-white hover:text-white"
+                    className=" bg-primary hover:bg-indigo-600 focus:ring-blue-500 text-white hover:text-white"
                   >
                     <Upload size={16} /> <p>Canned Upload</p>
                   </Button>
