@@ -205,6 +205,7 @@ export function CreateTab() {
                                             x.items[i].materials[j] = {
                                               ...material,
                                               quantity: Decimal(0),
+                                              sell: Decimal(0),
                                             };
                                           }),
                                         );
@@ -215,6 +216,7 @@ export function CreateTab() {
                                           material: {
                                             ...material,
                                             quantity: 0,
+                                            sell: 0,
                                           },
                                           materialIndex: j,
                                         });
@@ -288,6 +290,7 @@ export function CreateTab() {
                                           x.items[i].materials[j] = {
                                             ...material,
                                             quantity: Decimal(0),
+                                            sell: Decimal(0),
                                           };
                                         }),
                                       );
@@ -295,7 +298,11 @@ export function CreateTab() {
                                       open("MATERIAL", {
                                         itemId: item.id,
                                         edit: true,
-                                        material: { ...material, quantity: 0 },
+                                        material: {
+                                          ...material,
+                                          quantity: 0,
+                                          sell: 0,
+                                        },
                                         materialIndex: j,
                                       });
                                     }}

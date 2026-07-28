@@ -120,10 +120,10 @@ export default function MaterialCreate() {
       );
       setCost(costValue === 0 ? undefined : costValue);
       const sellValue = Math.min(
-        parseFloat(data.material.sell === 0 ? undefined : data.material.sell),
+        parseFloat(data.material.sell),
         MAX_MONEY_VALUE,
       );
-      setSell(sellValue);
+      setSell(sellValue === 0 ? undefined : sellValue);
       const discountValue = Math.min(
         parseFloat(data.material.discount),
         MAX_MONEY_VALUE,
@@ -144,15 +144,9 @@ export default function MaterialCreate() {
                   tags: data.material.tags,
                   notes: data.material.notes,
                   quantity: quantityValue || 0,
-                  cost: Number(
-                    costValue === 0 ? undefined : costValue || 0,
-                  ) as any,
-                  sell: Number(
-                    sellValue === 0 ? undefined : sellValue || 0,
-                  ) as any,
-                  discount: Number(
-                    discountValue === 0 ? undefined : discountValue || 0,
-                  ) as any,
+                  cost: Number(costValue || 0) as any,
+                  sell: Number(sellValue || 0) as any,
+                  discount: Number(discountValue || 0) as any,
                   addToInventory: data.material.addToInventory,
                 };
               }
