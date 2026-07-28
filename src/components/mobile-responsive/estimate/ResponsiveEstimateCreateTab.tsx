@@ -453,7 +453,7 @@ export default function ResponsiveEstimateCreateTab({}: TProps) {
                   items: x.items.filter((row) => row.id !== item.id),
                 }));
               }}
-              className="bg-none bg-red-50 text-red-500"
+              className="bg-none bg-red-50 text-red-500 hover:bg-red-100"
             >
               Remove
               <CircleX size="1.2em" />
