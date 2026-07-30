@@ -912,6 +912,13 @@ const PDFComponent = function PDF({
           </View>
         )}
 
+        {invoice.customerNotes && (
+          <View style={styles.termsSection}>
+            <Text style={styles.termsTitle}>Notes</Text>
+            <Text style={styles.termsText}>{invoice.customerNotes}</Text>
+          </View>
+        )}
+
         <View style={styles.termsSection}>
           <Text style={styles.termsTitle}>Terms & Conditions</Text>
           <Text style={styles.termsText}>
