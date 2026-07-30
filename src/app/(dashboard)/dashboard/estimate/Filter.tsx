@@ -2,7 +2,6 @@
 
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogFooter,
   DialogHeader,
@@ -111,7 +110,6 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
       ? `${pathname}?${searchParams.toString()}`
       : pathname;
     router.push(newPath);
-    setOpen(false);
   };
 
   return (
@@ -289,13 +287,14 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
         </div>
 
         <DialogFooter className="bg-slate-50/50 p-4 flex items-center justify-end gap-2">
-          <DialogClose
+          <button
+            type="button"
             className="w-fit flex h-10 items-center gap-2 rounded-xl px-8 text-sm font-medium text-red-500 border border-red-100 shadow-sm transition-all active:scale-95"
             onClick={clearFilters}
           >
             <XCircle size={16} />
             Clear Filters
-          </DialogClose>
+          </button>
           <Submit
             className="w-fit flex h-10 items-center gap-2 rounded-xl bg-primary px-8 text-sm font-semibold text-white shadow-lg shadow-primary/25 transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
             formAction={handleFilter}
