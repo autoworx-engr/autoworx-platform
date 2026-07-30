@@ -143,7 +143,7 @@ export async function PATCH(
     }
 
     revalidatePath("/dashboard/settings/sales-agent");
-    revalidatePath("/dashboard/communication/client/${clientId}");
+    revalidatePath(`/dashboard/communication/client/${clientId}`);
     return NextResponse.json({
       message: "Client sales agent permission updated successfully",
     });

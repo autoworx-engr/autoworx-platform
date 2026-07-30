@@ -7,6 +7,7 @@ import GiftCardPurchasesTab, {
   type IssuedGiftCardItem,
   type GiftCardPurchaseSummary,
 } from "../../../components/GiftCardPurchasesTab";
+import { Metadata } from "next";
 
 type PageSearchParams = {
   search?: string | string[];
@@ -43,6 +44,11 @@ const emptySummary: GiftCardPurchaseSummary = {
   totalRemainingBalance: 0,
   totalRedeemedValue: 0,
   statusBreakdown: {},
+};
+
+export const metadata: Metadata = {
+  title: "Gift Card Purchases",
+  description: "View and manage your virtual shop gift card purchases.",
 };
 
 export default async function GiftCardPurchasesPage(props: Props) {

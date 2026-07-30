@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { addAppointment } from "@/actions/appointment/addAppointment";
-import { getCompanyIdFromBearer } from "@/lib/mobileAuth";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 
 /**
  * @swagger
@@ -148,7 +148,7 @@ import { getCompanyIdFromBearer } from "@/lib/mobileAuth";
 
 export async function POST(req: NextRequest) {
   try {
-    const jwtCompanyId = await getCompanyIdFromBearer(req);
+    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
     const body = await req.json();
     const {
       title,

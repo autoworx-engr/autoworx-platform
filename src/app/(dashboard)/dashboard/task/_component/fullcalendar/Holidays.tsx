@@ -61,10 +61,10 @@ export default function Holidays() {
           </div>
           <div className="flex flex-col">
             <p className="text-base font-medium text-gray-800">
-              {moment(holiday.date).format("dddd, MMMM D")}
+              {moment.utc(holiday.date).format("dddd, MMMM D")}
             </p>
             <p className="text-sm text-gray-500">
-              {moment(holiday.date).format("YYYY")}
+              {moment.utc(holiday.date).format("YYYY")}
             </p>
           </div>
         </div>

@@ -8,3 +8,7 @@ export const VehicleDetails = dynamic(() => import("./VehicleDetails"), {
 export const CreateAppointment = dynamic(() => import("./CreateAppointment"), {
   ssr: false,
 });
+
+export const NewEstimateButton = dynamic(() => import("./NewEstimateButton"), {
+  ssr: false,
+});

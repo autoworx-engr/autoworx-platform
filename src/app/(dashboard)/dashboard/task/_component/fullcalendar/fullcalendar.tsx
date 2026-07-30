@@ -122,14 +122,22 @@ export default function Calendar({ type }: { type: CalendarType }) {
           e.extendedProps?.type !== "weekend",
       );
     }
+    if (view === "timeGridWeek") {
+      return events.filter(
+        (e) =>
+          e.extendedProps?.type !== "holiday" &&
+          e.extendedProps?.serviceType !== "Holiday",
+      );
+    }
     return events;
   }, [events, view]);
 
   const loading = isCalendarLoading || isSettingsLoading || isDataLoading;
-  const estRevenue = filteredAppointments.reduce(
-    (acc, apt: any) => acc + (Number(apt.invoiceGrandTotal) || 0),
-    0,
-  );
+  const estRevenue = filteredAppointments.reduce((acc, apt: any) => {
+    const startDay = moment.utc(apt.date).format("YYYY-MM-DD");
+    if (startDay < dateRange.start || startDay > dateRange.end) return acc;
+    return acc + (Number(apt.invoiceGrandTotal) || 0);
+  }, 0);
 
   const eventType = selectedEvent?.extendedProps?.type;
   const originalData = selectedEvent?.extendedProps?.originalData;
@@ -222,7 +230,6 @@ export default function Calendar({ type }: { type: CalendarType }) {
           <TransposedWeekView
             events={displayEvents}
             firstDay={firstDay}
-            weekendDayNames={weekendDays}
             businessStart={settings?.dayStart ?? undefined}
             businessEnd={settings?.dayEnd ?? undefined}
             session={session}

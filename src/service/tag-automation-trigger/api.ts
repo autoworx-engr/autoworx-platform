@@ -1,5 +1,7 @@
+"use server";
+
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
-import axiosInstance from "@/helpers/axios";
+import { serverAxios } from "@/helpers/server-axios";
 
 type TUpdateTagAutomationTrigger = {
   companyId: number;
@@ -14,7 +16,7 @@ export const updateTagAutomationTrigger = async function (
   payload: TUpdateTagAutomationTrigger,
 ) {
   try {
-    const response = await axiosInstance.patch(
+    const response = await serverAxios.patch(
       "/tag-automation-trigger",
       payload,
     );

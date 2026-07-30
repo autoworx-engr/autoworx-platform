@@ -12,9 +12,9 @@ import { errorToast } from "@/lib/toast";
 import MessengerBox from "./MessengerBox";
 import SendMessenger from "./SendMessenger";
 
-type TProps = { clientId: number };
+type TProps = { clientId: number; windowClosed?: boolean };
 
-export default function MessengerContainer({ clientId }: TProps) {
+export default function MessengerContainer({ clientId, windowClosed }: TProps) {
   const queryClient = useQueryClient();
   const user = useGetCurrentUser();
   const setClientConversationTrack = useClientCommunicationStore(
@@ -85,7 +85,16 @@ export default function MessengerContainer({ clientId }: TProps) {
         <MessengerBox key={clientId} clientId={clientId} />
       </div>
       <div className="flex-shrink-0">
-        <SendMessenger clientId={clientId} />
+        {windowClosed ? (
+          <div className="flex items-center justify-center rounded-b-md bg-zinc-100 px-4 py-3 dark:bg-zinc-800/60">
+            <p className="text-center text-xs text-zinc-500">
+              The 24-hour messaging window has closed. You can reply once the
+              client sends another message.
+            </p>
+          </div>
+        ) : (
+          <SendMessenger clientId={clientId} />
+        )}
       </div>
     </div>
   );

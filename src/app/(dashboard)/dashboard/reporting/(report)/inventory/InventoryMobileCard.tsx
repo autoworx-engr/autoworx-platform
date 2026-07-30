@@ -1,11 +1,7 @@
 "use client";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { InventoryProduct, InventoryProductHistory } from "@prisma/client";
 import Link from "next/link";
-import {
-  InventoryProduct,
-  InventoryProductHistory,
-  Prisma,
-} from "@prisma/client";
 
 type TProps = {
   history: TInventoryPurchaseHistory;
@@ -40,7 +36,7 @@ export default function InventoryMobileCard({ history, index }: TProps) {
       className={`rounded-lg border p-4 shadow-md ${index % 2 === 0 ? "bg-background" : "bg-[#F8FAFF]"}`}
     >
       <div className="mb-2 flex items-center justify-between">
-        <Link href={redirectUrl} className="font-semibold text-[#6571FF]">
+        <Link href={redirectUrl} className="font-semibold text-primary">
           {index + 1}
         </Link>
 

@@ -1,5 +1,5 @@
 import { convertInvoice } from "@/actions/estimate/invoice/convert";
-import { getCompanyIdFromBearer } from "@/lib/mobileAuth";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -56,7 +56,7 @@ export async function PATCH(
 ) {
   try {
     const { companyId: companyIdParam, id } = await params;
-    const jwtCompanyId = await getCompanyIdFromBearer(req);
+    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
     if (jwtCompanyId === null) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -65,7 +65,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const converted = await convertInvoice(id);
+    const converted = await convertInvoice(id, jwtCompanyId);
 
     return NextResponse.json({
       success: true,

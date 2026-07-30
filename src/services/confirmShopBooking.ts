@@ -5,6 +5,11 @@ import { addAppointment } from "@/actions/appointment/addAppointment";
 import { customAlphabet } from "nanoid";
 import moment from "moment-timezone";
 import { sendBookingConfirmation } from "@/actions/communication/client/sendBookingConfirmation";
+import { revalidatePath } from "next/cache";
+import {
+  buildInvoiceItemsWithDefaults,
+  mapInvoiceItemsForCreate,
+} from "@/services/shopServiceInvoiceItems";
 
 const roundMoney = (value: number) => Number(value.toFixed(2));
 
@@ -45,7 +50,11 @@ export async function confirmShopBooking(
   const bookingId = Number(shopBookingId);
   const incomingCash = roundMoney(Math.max(0, Number(cashPaid)));
 
-  return await db.$transaction(async (tx: Tx) => {
+  let pendingConfirmation:
+    | Parameters<typeof sendBookingConfirmation>[0]
+    | null = null;
+
+  const result = await db.$transaction(async (tx: Tx) => {
     // 1. Load the booking with all relations
     const booking = await tx.shopBooking.findUnique({
       where: { id: bookingId },
@@ -178,30 +187,28 @@ export async function confirmShopBooking(
       },
     });
 
-    // 3. Build invoice items
-    const allInvoiceItems = selectedServices.flatMap((srv) => srv.invoiceItems);
+    // 3. Build invoice items — every item must reference a valid Service;
+    // shop services without invoice items get a default Service
+    let allInvoiceItems = await buildInvoiceItemsWithDefaults(
+      selectedServices,
+      companyId,
+    );
 
-    const items = allInvoiceItems.map(({ id, ...item }) => ({
-      ...item,
-      materials: item.materials.map((material) => ({
-        ...material,
-        quantity: (Number(material.quantity) || 0) as any,
-        cost: (Number(material.cost) || 0) as any,
-        sell: (Number(material.sell) || 0) as any,
-        discount: (Number(material.discount) || 0) as any,
-        tags: material.tags.map((mt: any) => mt.tag),
-      })),
-      labor: item.labor
-        ? {
-            ...item.labor,
-            hours: (Number(item.labor.hours) || 0) as any,
-            charge: (Number(item.labor.charge) || 0) as any,
-            discount: (Number(item.labor.discount) || 0) as any,
-            tags: item.labor.tags.map((lt: any) => lt.tag),
-          }
-        : null,
-      tags: item.tags.map((it: any) => it.tag),
-    }));
+    // Shop services deleted since booking: fall back to snapshot titles
+    if (allInvoiceItems.length === 0) {
+      allInvoiceItems = await buildInvoiceItemsWithDefaults(
+        booking.services.map((s) => ({ title: s.title, invoiceItems: [] })),
+        companyId,
+      );
+    }
+
+    if (allInvoiceItems.length === 0) {
+      throw new Error(
+        "Cannot create an invoice without at least one service item",
+      );
+    }
+
+    const items = mapInvoiceItemsForCreate(allInvoiceItems);
 
     // 4. Calculate totals from ShopBookingService snapshots
     const vehicleExtraCost = booking.services.reduce(
@@ -413,8 +420,8 @@ export async function confirmShopBooking(
       } as any,
     });
 
-    // 10. Send confirmation
-    await sendBookingConfirmation({
+    // 10. Capture confirmation data — sent after transaction commits
+    pendingConfirmation = {
       client: {
         id: booking.client!.id,
         firstName: booking.client!.firstName,
@@ -438,7 +445,7 @@ export async function confirmShopBooking(
         : null,
       services: booking.services?.map((s) => ({ title: s.title })) || null,
       isDeposit: true,
-    });
+    };
 
     return {
       invoiceId: estimate.id,
@@ -449,4 +456,21 @@ export async function confirmShopBooking(
       remainingGiftCardBalance,
     };
   });
+
+  // Send after transaction commits — failure here must NOT cause a retry
+  if (pendingConfirmation) {
+    sendBookingConfirmation(pendingConfirmation).catch((e) =>
+      console.error("[confirmShopBooking] sendBookingConfirmation failed:", e),
+    );
+  }
+
+  // Revalidate after the transaction so it runs in the outer request context,
+  // not inside the Prisma transaction boundary where Next.js async storage is lost.
+  try {
+    revalidatePath("/estimate");
+  } catch {
+    // no-op: best-effort when called from webhook context
+  }
+
+  return result;
 }

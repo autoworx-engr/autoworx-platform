@@ -2,12 +2,21 @@
 
 import type React from "react";
 
-import { useState, useRef, useEffect } from "react";
-import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import SelectCategory from "./Lists/SelectCategory";
 import { Category } from "@prisma/client";
-import { ChevronDown, Plus, X, Check, AlertCircle, Search } from "lucide-react";
+import { Popconfirm } from "antd";
+import {
+  AlertCircle,
+  Check,
+  ChevronDown,
+  Plus,
+  Search,
+  Trash2,
+  X,
+} from "lucide-react";
+import type { ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
+import SelectCategory from "./Lists/SelectCategory";
 
 export type SelectorWithAddProps = {
   label?: ReactNode;
@@ -28,6 +37,10 @@ export type SelectorWithAddProps = {
   onAddNew?: (newItem: string, category?: Category | null) => void;
   addNewPlaceholder?: string;
   selectCategory?: boolean;
+  allowDelete?: boolean;
+  onDelete?: (id: string | number) => void;
+  deleteConfirmTitle?: string;
+  deleteConfirmDescription?: string;
 };
 
 const sentenceCase = (str: string) => {
@@ -59,12 +72,19 @@ export function SelectorWithAdd({
   onAddNew,
   addNewPlaceholder = "Enter new item",
   selectCategory = false,
+  allowDelete = false,
+  onDelete,
+  deleteConfirmTitle = "Remove this option",
+  deleteConfirmDescription = "Are you sure you want to remove this?",
 }: SelectorWithAddProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedValue, setSelectedValue] = useState(value?.toString() || "");
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [newItemValue, setNewItemValue] = useState("");
+  const [deleteConfirmOpenId, setDeleteConfirmOpenId] = useState<string | null>(
+    null,
+  );
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const addNewInputRef = useRef<HTMLInputElement>(null);
@@ -79,7 +99,13 @@ export function SelectorWithAdd({
   }, [value]);
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: Event) => {
+      const target = event.target as HTMLElement | null;
+      // Ignore clicks inside antd portaled popups (e.g. the delete Popconfirm),
+      // otherwise the dropdown unmounts before the confirm action can run.
+      if (target?.closest?.(".ant-popover, .ant-popconfirm")) {
+        return;
+      }
       if (
         dropdownRef.current &&
         !dropdownRef.current.contains(event.target as Node)
@@ -91,9 +117,9 @@ export function SelectorWithAdd({
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("pointerdown", handleClickOutside);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("pointerdown", handleClickOutside);
     };
   }, []);
 
@@ -125,8 +151,8 @@ export function SelectorWithAdd({
 
   const filteredOptions = searchTerm
     ? normalizedOptions.filter((opt) =>
-      opt.title.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+        opt.title.toLowerCase().includes(searchTerm.toLowerCase()),
+      )
     : normalizedOptions;
 
   const handleSelect = (id: string) => {
@@ -139,7 +165,7 @@ export function SelectorWithAdd({
     setCategoryOpen(false);
     if (onChange) {
       const selectedOption = normalizedOptions.find(
-        (opt) => opt.id.toString() === id
+        (opt) => opt.id.toString() === id,
       );
       onChange(selectedOption || id);
     }
@@ -201,7 +227,7 @@ export function SelectorWithAdd({
     setCategory(newCategory);
   };
   const selectedLabel = normalizedOptions?.find(
-    (opt) => opt?.id?.toString() === selectedValue
+    (opt) => opt?.id?.toString() === selectedValue,
   )?.title;
 
   const hasValue = selectedValue && selectedValue !== "";
@@ -209,54 +235,66 @@ export function SelectorWithAdd({
   return (
     <div className={cn("block group", rootClassName)} ref={dropdownRef}>
       {/* Label Styling */}
-      <div className={cn("mb-1.5 flex items-center gap-1 font-semibold text-slate-600", labelClassName)}>
+      <div
+        className={cn(
+          "mb-1.5 flex items-center gap-1 text-base font-medium",
+          labelClassName,
+        )}
+      >
         {label ?? sentenceCase(name)}
-        {required && <span className="text-rose-500">*</span>}
+        {required && <span className="text-destructive">*</span>}
       </div>
 
       <div className="relative">
         <button
           type="button"
           className={cn(
-            "flex w-full items-center justify-between rounded-lg border-none px-3 py-2 text-left text-sm leading-6 transition-all duration-300 outline-none ring-1",
+            "flex w-full touch-manipulation items-center justify-between rounded-lg border-none px-3 py-2 text-left text-sm leading-6 transition-all duration-300 outline-none ring-1",
             isOpen
-              ? "bg-white ring-[#6571FF] shadow-lg shadow-[#6571FF]/10"
+              ? "bg-white ring-primary shadow-lg shadow-primary/10"
               : "bg-slate-50/50 ring-slate-200 hover:bg-white hover:ring-slate-300 hover:shadow-sm",
             error && "ring-rose-500 focus:ring-rose-500",
-            disabled && "cursor-not-allowed bg-slate-100 opacity-60 ring-slate-200"
+            disabled &&
+              "cursor-not-allowed bg-slate-100 opacity-60 ring-slate-200",
           )}
           onClick={() => !disabled && setIsOpen(!isOpen)}
           id={name}
           disabled={disabled}
         >
-          <span className={cn(
-            "truncate transition-colors",
-            selectedLabel ? "font-medium text-slate-700" : "text-slate-400"
-          )}>
+          <span
+            className={cn(
+              "truncate transition-colors",
+              selectedLabel ? "font-medium text-slate-700" : "text-slate-400",
+            )}
+          >
             {selectedLabel || placeholder}
           </span>
 
           <div className="flex items-center gap-2">
             {hasValue && allowClear && !disabled && (
               <div
-                onClick={(e) => { e.stopPropagation(); handleClear(e); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleClear(e);
+                }}
                 className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-200/50 text-slate-500 transition-all hover:bg-rose-100 hover:text-rose-600"
                 title="Clear selection"
               >
                 <X strokeWidth={3} className="h-2.5 w-2.5" />
               </div>
             )}
-            <ChevronDown className={cn(
-              "h-4 w-4 text-slate-400 transition-transform duration-300",
-              isOpen && "rotate-180 text-[#6571FF]"
-            )} />
+            <ChevronDown
+              className={cn(
+                "h-4 w-4 text-slate-400 transition-transform duration-300",
+                isOpen && "rotate-180 text-primary",
+              )}
+            />
           </div>
         </button>
 
         {/* Dropdown Menu */}
         {isOpen && (
           <div className="absolute z-50 mt-2 w-full overflow-hidden rounded-2xl border-none bg-white/90 shadow-2xl backdrop-blur-xl ring-1 ring-slate-200/60 animate-in fade-in slide-in-from-top-2 duration-200">
-
             {/* Search Input Section */}
             {isSearch && !isAddingNew && (
               <div className="sticky top-0 z-20 border-b border-slate-100 bg-white/50 p-2.5">
@@ -265,13 +303,12 @@ export function SelectorWithAdd({
                   <input
                     ref={searchInputRef}
                     type="text"
-                    className="w-full rounded-lg bg-slate-100/50 py-1.5 pl-8 pr-3 text-sm text-slate-600 outline-none transition-all focus:bg-white focus:ring-2 focus:ring-[#6571FF]/20"
+                    className="w-full rounded-lg bg-slate-100/50 py-1.5 pl-8 pr-3 text-sm text-slate-600 outline-none transition-all focus:bg-white focus:ring-2 focus:ring-primary/20"
                     placeholder="Search..."
                     value={searchTerm}
                     onChange={handleSearchChange}
                     onKeyDown={handleSearchKeyDown}
                     onClick={(e) => e.stopPropagation()}
-                    
                   />
                 </div>
               </div>
@@ -284,7 +321,7 @@ export function SelectorWithAdd({
                   <input
                     ref={addNewInputRef}
                     type="text"
-                    className="w-full rounded-lg border-none bg-white px-3 py-2 text-sm text-slate-600 shadow-sm ring-1 ring-slate-200 outline-none transition-all focus:ring-2 focus:ring-[#6571FF]/40"
+                    className="w-full rounded-lg border-none bg-white px-3 py-2 text-sm text-slate-600 shadow-sm ring-1 ring-slate-200 outline-none transition-all focus:ring-2 focus:ring-primary/40"
                     placeholder={addNewPlaceholder}
                     value={newItemValue}
                     onChange={(e) => setNewItemValue(e.target.value)}
@@ -306,15 +343,17 @@ export function SelectorWithAdd({
 
                   <div className="flex gap-2 pt-1">
                     <button
+                      type="button"
                       onClick={handleAddNewSubmit}
                       disabled={!newItemValue.trim()}
-                      className="flex-1 rounded-lg bg-[#6571FF] py-2 text-xs font-bold text-white shadow-md shadow-[#6571FF]/20 transition-all active:scale-95 disabled:opacity-50"
+                      className="flex-1 touch-manipulation rounded-lg bg-primary py-2 text-xs font-bold text-white shadow-md shadow-primary/20 transition-all active:scale-95 disabled:opacity-50"
                     >
                       Create New
                     </button>
                     <button
+                      type="button"
                       onClick={handleAddNewCancel}
-                      className="rounded-lg bg-white px-3 py-2 text-xs font-semibold text-slate-500 ring-1 ring-slate-200 transition-all hover:bg-slate-50"
+                      className="touch-manipulation rounded-lg bg-white px-3 py-2 text-xs font-semibold text-slate-500 ring-1 ring-slate-200 transition-all hover:bg-slate-50"
                     >
                       Cancel
                     </button>
@@ -327,26 +366,86 @@ export function SelectorWithAdd({
                 <div className="max-h-56 overflow-y-auto p-1.5 thin-scrollbar">
                   {filteredOptions?.length > 0 ? (
                     filteredOptions?.map((opt) => {
-                      const isSelected = selectedValue === opt?.id?.toString();
+                      const optionId = opt?.id?.toString();
+                      const isSelected = selectedValue === optionId;
+                      const isDeleteConfirmOpen =
+                        deleteConfirmOpenId === optionId;
+                      const isDeletable =
+                        allowDelete &&
+                        !!onDelete &&
+                        !String(opt?.id).startsWith("custom_");
                       return (
                         <div
                           key={opt?.id}
                           className={cn(
-                            "group flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-sm transition-all duration-200",
+                            "group/item flex cursor-pointer touch-manipulation items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm transition-all duration-200",
                             isSelected
-                              ? "bg-[#6571FF]/10 text-[#6571FF] font-semibold"
-                              : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                              ? "bg-primary/10 text-primary font-semibold"
+                              : "text-slate-600 hover:bg-slate-50 hover:text-slate-900",
                           )}
-                          onClick={() => handleSelect(opt?.id.toString())}
+                          onClick={(e) => {
+                            const target = e.target as HTMLElement;
+                            if (
+                              target.closest("[data-selector-delete-trigger]")
+                            ) {
+                              return;
+                            }
+
+                            handleSelect(opt?.id?.toString());
+                          }}
                         >
-                          {opt?.title}
-                          {isSelected && <Check className="h-4 w-4" strokeWidth={3} />}
+                          <span className="truncate">{opt?.title}</span>
+                          <div className="flex shrink-0 items-center gap-1.5">
+                            {isSelected && (
+                              <Check className="h-4 w-4" strokeWidth={3} />
+                            )}
+                            {isDeletable && (
+                              <span data-selector-delete-trigger>
+                                <Popconfirm
+                                  title={deleteConfirmTitle}
+                                  description={deleteConfirmDescription}
+                                  okText="Yes"
+                                  cancelText="No"
+                                  onOpenChange={(open) => {
+                                    setDeleteConfirmOpenId(
+                                      open ? optionId : null,
+                                    );
+                                  }}
+                                  onCancel={(e) => {
+                                    e?.stopPropagation();
+                                    setDeleteConfirmOpenId(null);
+                                  }}
+                                  onConfirm={(e) => {
+                                    e?.stopPropagation();
+                                    setDeleteConfirmOpenId(null);
+                                    onDelete?.(opt.id);
+                                  }}
+                                >
+                                  <button
+                                    type="button"
+                                    title="Remove"
+                                    aria-label={`Remove ${opt?.title}`}
+                                    className={cn(
+                                      "flex h-6 w-6 items-center justify-center rounded-md text-slate-300 transition-all hover:bg-rose-50 hover:text-rose-600 group-hover/item:opacity-100",
+                                      isDeleteConfirmOpen
+                                        ? "opacity-100"
+                                        : "opacity-0",
+                                    )}
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </button>
+                                </Popconfirm>
+                              </span>
+                            )}
+                          </div>
                         </div>
                       );
                     })
                   ) : (
                     <div className="px-3 py-6 text-center">
-                      <p className="text-xs font-medium text-slate-400 italic">No matching results found</p>
+                      <p className="text-xs font-medium text-slate-400 italic">
+                        No matching results found
+                      </p>
                     </div>
                   )}
                 </div>
@@ -355,10 +454,11 @@ export function SelectorWithAdd({
                 {allowAddNew && onAddNew && (
                   <div className="border-t border-slate-100 bg-slate-50/30 p-1.5">
                     <button
-                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-[#6571FF] transition-all hover:bg-[#6571FF]/5 active:scale-[0.98]"
+                      type="button"
+                      className="flex w-full touch-manipulation items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-primary transition-all hover:bg-primary/5 active:scale-[0.98]"
                       onClick={handleAddNewClick}
                     >
-                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#6571FF]/10">
+                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10">
                         <Plus className="h-3 w-3" strokeWidth={3} />
                       </div>
                       {addNewLabel}

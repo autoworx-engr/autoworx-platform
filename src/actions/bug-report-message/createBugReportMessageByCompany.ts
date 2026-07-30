@@ -21,7 +21,6 @@ type SuperAdminBugMessagePayload = {
   bugReportId: number;
   content: string;
   attachments?: AttachmentInput[];
-  companyId: number;
 };
 
 export async function createBugReportMessageByCompany(
@@ -31,12 +30,12 @@ export async function createBugReportMessageByCompany(
     const session = await getServerSession(authOptions);
     const user = session?.user;
 
-    if (!user) {
+    if (!user?.companyId) {
       throw new Error("Only valid user are allowed to perform this action.");
     }
 
     const existingReport = await db.bugReport.findUnique({
-      where: { id: data.bugReportId, companyId: data.companyId },
+      where: { id: +data.bugReportId, companyId: +user.companyId },
     });
 
     if (!existingReport) {

@@ -102,15 +102,15 @@ export default function CannedFilterBySelection({
         title={`Filter by ${filterText}`}
       >
         <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4" />
+          <Filter className="w-4 h-4 shrink-0" />
           <span className="truncate">
             {selectedItem ? selectedItem : filterText}
           </span>
         </div>
         {isModalOpen ? (
-          <ChevronUp className="w-4 h-4 text-indigo-600" />
+          <ChevronUp className="w-4 h-4 shrink-0 text-indigo-600" />
         ) : (
-          <ChevronDown className="w-4 h-4 text-gray-500" />
+          <ChevronDown className="w-4 h-4 shrink-0 text-gray-500" />
         )}
       </button>
 

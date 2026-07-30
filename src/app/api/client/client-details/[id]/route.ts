@@ -20,17 +20,219 @@ const updateClientSchema = z.object({
   state: z.string().optional().nullable(),
   zip: z.string().optional().nullable(),
   customerCompany: z.string().optional().nullable(),
+  sourceId: z.number().int().nullable().optional(),
+  tagId: z.number().int().nullable().optional(),
   notes: z.string().optional().nullable(),
   isFleet: z.boolean().optional(),
   isStarred: z.boolean().optional(),
+  photo: z.string().optional(),
 });
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     ClientDetails:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *           example: 12
+ *         firstName:
+ *           type: string
+ *           example: John
+ *         lastName:
+ *           type: string
+ *           nullable: true
+ *           example: Doe
+ *         mobile:
+ *           type: string
+ *           nullable: true
+ *           example: "017XXXXXXXX"
+ *         countryCode:
+ *           type: string
+ *           nullable: true
+ *           example: BD
+ *         email:
+ *           type: string
+ *           nullable: true
+ *           example: john@gmail.com
+ *         address:
+ *           type: string
+ *           nullable: true
+ *           example: 123 Main St
+ *         city:
+ *           type: string
+ *           nullable: true
+ *           example: Dhaka
+ *         state:
+ *           type: string
+ *           nullable: true
+ *           example: Dhaka
+ *         zip:
+ *           type: string
+ *           nullable: true
+ *           example: "1207"
+ *         isFleet:
+ *           type: boolean
+ *           nullable: true
+ *           example: false
+ *         photo:
+ *           type: string
+ *           example: /images/default.png
+ *         sourceId:
+ *           type: integer
+ *           nullable: true
+ *           example: 2
+ *         converted:
+ *           type: boolean
+ *           nullable: true
+ *           example: false
+ *         companyId:
+ *           type: integer
+ *           example: 1
+ *         customerCompany:
+ *           type: string
+ *           nullable: true
+ *           example: ABC Motors
+ *         tagId:
+ *           type: integer
+ *           nullable: true
+ *           example: 4
+ *         notes:
+ *           type: string
+ *           nullable: true
+ *         leadId:
+ *           type: integer
+ *           nullable: true
+ *         isStarred:
+ *           type: boolean
+ *           nullable: true
+ *           example: true
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *         tag:
+ *           type: object
+ *           nullable: true
+ *           properties:
+ *             id:
+ *               type: integer
+ *               example: 4
+ *             name:
+ *               type: string
+ *               example: VIP
+ *             textColor:
+ *               type: string
+ *               example: "#FFFFFF"
+ *             bgColor:
+ *               type: string
+ *               example: "#FF0000"
+ *             type:
+ *               type: string
+ *               example: GENERAL
+ *         source:
+ *           type: object
+ *           nullable: true
+ *           properties:
+ *             id:
+ *               type: integer
+ *               example: 2
+ *             name:
+ *               type: string
+ *               example: Google Ads
+ *             companyId:
+ *               type: integer
+ *               example: 1
+ *         fleet:
+ *           type: object
+ *           nullable: true
+ *           properties:
+ *             id:
+ *               type: integer
+ *               example: 3
+ *             clientId:
+ *               type: integer
+ *               example: 12
+ *             fleetName:
+ *               type: string
+ *               example: John Doe
+ *             contactName:
+ *               type: string
+ *               example: John
+ *             preferredPaymentTerm:
+ *               type: string
+ *               nullable: true
+ *               example: Net 30
+ *         conversationsTrack:
+ *           type: object
+ *           nullable: true
+ *           properties:
+ *             id:
+ *               type: integer
+ *               example: 5
+ *             clientId:
+ *               type: integer
+ *               example: 12
+ *             emailIsRead:
+ *               type: boolean
+ *               example: true
+ *             smsIsRead:
+ *               type: boolean
+ *               example: true
+ *             emailIsUnReadCount:
+ *               type: integer
+ *               example: 0
+ *             smsUnReadCount:
+ *               type: integer
+ *               example: 0
+ *         Vehicle:
+ *           type: array
+ *           description: All vehicles belonging to this client
+ *           items:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: integer
+ *                 example: 42
+ *               year:
+ *                 type: integer
+ *                 nullable: true
+ *                 example: 2020
+ *               make:
+ *                 type: string
+ *                 nullable: true
+ *                 example: Honda
+ *               model:
+ *                 type: string
+ *                 nullable: true
+ *                 example: Civic
+ *               vin:
+ *                 type: string
+ *                 nullable: true
+ *                 example: 1HGCM82633A004352
+ *               license:
+ *                 type: string
+ *                 nullable: true
+ *                 example: ABC-1234
+ *               clientId:
+ *                 type: integer
+ *                 nullable: true
+ *                 example: 12
+ *               companyId:
+ *                 type: integer
+ *                 example: 1
+ */
 
 /**
  * @swagger
  * /api/client/client-details/{id}:
  *   get:
  *     summary: Get client details
- *     description: Retrieve single client details by client ID
+ *     description: Retrieve single client details by client ID, including tag, source, fleet, conversation tracking, and vehicles.
  *     tags: [Clients]
  *     parameters:
  *       - in: path
@@ -43,10 +245,55 @@ const updateClientSchema = z.object({
  *     responses:
  *       200:
  *         description: Client fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/ClientDetails'
+ *       400:
+ *         description: Invalid client ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Invalid client ID
  *       404:
  *         description: Client not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Client not found
  *       500:
  *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Failed to fetch client
  */
 export async function GET(
   req: NextRequest,
@@ -70,6 +317,7 @@ export async function GET(
         source: true,
         fleet: true,
         conversationsTrack: true,
+        Vehicle: true,
       },
     });
 
@@ -149,15 +397,136 @@ export async function GET(
  *               isStarred:
  *                 type: boolean
  *                 example: true
+ *               photo:
+ *                 type: string
+ *                 example: "https://example.com/photo.jpg"
  *     responses:
  *       200:
  *         description: Client updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Client updated successfully
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                       example: 12
+ *                     firstName:
+ *                       type: string
+ *                       example: John
+ *                     lastName:
+ *                       type: string
+ *                       nullable: true
+ *                       example: Doe
+ *                     mobile:
+ *                       type: string
+ *                       nullable: true
+ *                       example: "017XXXXXXXX"
+ *                     countryCode:
+ *                       type: string
+ *                       nullable: true
+ *                       example: BD
+ *                     email:
+ *                       type: string
+ *                       nullable: true
+ *                       example: john@gmail.com
+ *                     address:
+ *                       type: string
+ *                       nullable: true
+ *                     city:
+ *                       type: string
+ *                       nullable: true
+ *                     state:
+ *                       type: string
+ *                       nullable: true
+ *                     zip:
+ *                       type: string
+ *                       nullable: true
+ *                     customerCompany:
+ *                       type: string
+ *                       nullable: true
+ *                       example: ABC Motors
+ *                     notes:
+ *                       type: string
+ *                       nullable: true
+ *                     isFleet:
+ *                       type: boolean
+ *                       nullable: true
+ *                       example: false
+ *                     isStarred:
+ *                       type: boolean
+ *                       nullable: true
+ *                       example: true
+ *                     photo:
+ *                       type: string
+ *                       example: "https://example.com/photo.jpg"
+ *                     sourceId:
+ *                       type: integer
+ *                       nullable: true
+ *                     tagId:
+ *                       type: integer
+ *                       nullable: true
+ *                     companyId:
+ *                       type: integer
+ *                       example: 1
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
+ *                     updatedAt:
+ *                       type: string
+ *                       format: date-time
  *       400:
- *         description: Invalid request data
+ *         description: Invalid client ID or request validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   oneOf:
+ *                     - type: string
+ *                     - type: array
+ *                       items:
+ *                         type: object
+ *                   example: Invalid client ID
  *       404:
  *         description: Client not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Client not found
  *       500:
  *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Failed to update client
  */
 export async function PATCH(
   req: NextRequest,
@@ -233,10 +602,56 @@ export async function PATCH(
  *     responses:
  *       200:
  *         description: Client deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Client deleted successfully
+ *       400:
+ *         description: Invalid client ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Invalid client ID
  *       404:
  *         description: Client not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Client not found
  *       500:
  *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Failed to delete client
  */
 export async function DELETE(
   req: NextRequest,

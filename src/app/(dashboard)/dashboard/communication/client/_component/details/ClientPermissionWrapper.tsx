@@ -22,7 +22,7 @@ export default function ClientPermissionWrapper({
 
   if (loading) return null;
 
-  const enabled =
+  const planEnabled =
     entitlementsRes?.success === true &&
     Boolean(entitlementsRes.data?.awxSalesAgent);
 
@@ -30,7 +30,7 @@ export default function ClientPermissionWrapper({
     <ClientSalesAgentToggle
       clientId={clientId}
       initialValue={initialValue}
-      isRestricted={!enabled}
+      isRestricted={!planEnabled}
     />
   );
 }

@@ -1,17 +1,22 @@
 "use client";
 
-import { ClientSmsAttachments, MailgunEmailAttachment } from "@prisma/client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { isAudio, isImage } from "../../_utils";
 import SaveAttachment from "./SaveAttachment";
 
-type EmailAttachment = MailgunEmailAttachment & { createdAt: Date };
-type Attachment = EmailAttachment | ClientSmsAttachments;
-type TabId = "email" | "sms" | "docs" | "audio";
+type SharedAttachment = {
+  id: number;
+  name: string | null;
+  url: string;
+  createdAt: Date | string;
+};
+type TabId = "email" | "sms" | "messenger" | "instagram" | "docs" | "audio";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "email", label: "Email" },
   { id: "sms", label: "SMS" },
+  { id: "messenger", label: "Msngr" },
+  { id: "instagram", label: "IG" },
   { id: "docs", label: "Docs" },
   { id: "audio", label: "Audio" },
 ];
@@ -77,14 +82,14 @@ function ImageGrid({
   attachments,
   label,
 }: {
-  attachments: Attachment[];
+  attachments: SharedAttachment[];
   label: string;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const images = useMemo(
     () =>
       [...attachments]
-        .filter((a) => isImage(a.name))
+        .filter((a) => isImage(a.name ?? ""))
         .sort((a, b) => b.id - a.id),
     [attachments],
   );
@@ -100,10 +105,7 @@ function ImageGrid({
   }
 
   return (
-    <div
-      ref={scrollRef}
-      className="thin-scrollbar max-h-[280px] overflow-y-auto pr-1"
-    >
+    <div ref={scrollRef} className="thin-scrollbar h-full overflow-y-auto pr-1">
       <div className="space-y-3">
         {groups.map((group) => (
           <div key={group.label}>
@@ -132,7 +134,7 @@ function ChipList({
   attachments,
   emptyText,
 }: {
-  attachments: Attachment[];
+  attachments: SharedAttachment[];
   emptyText: string;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -152,10 +154,7 @@ function ChipList({
   }
 
   return (
-    <div
-      ref={scrollRef}
-      className="thin-scrollbar max-h-[280px] overflow-y-auto pr-1"
-    >
+    <div ref={scrollRef} className="thin-scrollbar h-full overflow-y-auto pr-1">
       <div className="space-y-3">
         {groups.map((group) => (
           <div key={group.label}>
@@ -183,36 +182,64 @@ function ChipList({
 export default function SharedFilesSection({
   emailAttachments,
   smsAttachments,
+  messengerAttachments,
+  instagramAttachments,
 }: {
-  emailAttachments: Attachment[];
-  smsAttachments: Attachment[];
+  emailAttachments: SharedAttachment[];
+  smsAttachments: SharedAttachment[];
+  messengerAttachments: SharedAttachment[];
+  instagramAttachments: SharedAttachment[];
 }) {
   const [activeTab, setActiveTab] = useState<TabId>("email");
 
   const allDocs = useMemo(
     () =>
-      [...emailAttachments, ...smsAttachments].filter(
-        (a) => !isImage(a.name) && !isAudio(a.name),
-      ),
-    [emailAttachments, smsAttachments],
+      [
+        ...emailAttachments,
+        ...smsAttachments,
+        ...messengerAttachments,
+        ...instagramAttachments,
+      ].filter((a) => !isImage(a.name ?? "") && !isAudio(a.name ?? "")),
+    [
+      emailAttachments,
+      smsAttachments,
+      messengerAttachments,
+      instagramAttachments,
+    ],
   );
   const allAudio = useMemo(
     () =>
-      [...emailAttachments, ...smsAttachments].filter((a) => isAudio(a.name)),
-    [emailAttachments, smsAttachments],
+      [
+        ...emailAttachments,
+        ...smsAttachments,
+        ...messengerAttachments,
+        ...instagramAttachments,
+      ].filter((a) => isAudio(a.name ?? "")),
+    [
+      emailAttachments,
+      smsAttachments,
+      messengerAttachments,
+      instagramAttachments,
+    ],
   );
 
-  const totalCount = emailAttachments.length + smsAttachments.length;
+  const totalCount =
+    emailAttachments.length +
+    smsAttachments.length +
+    messengerAttachments.length +
+    instagramAttachments.length;
   const tabCounts: Record<TabId, number> = {
-    email: emailAttachments.filter((a) => isImage(a.name)).length,
-    sms: smsAttachments.filter((a) => isImage(a.name)).length,
+    email: emailAttachments.filter((a) => isImage(a.name ?? "")).length,
+    sms: smsAttachments.filter((a) => isImage(a.name ?? "")).length,
+    messenger: messengerAttachments.filter((a) => isImage(a.name ?? "")).length,
+    instagram: instagramAttachments.filter((a) => isImage(a.name ?? "")).length,
     docs: allDocs.length,
     audio: allAudio.length,
   };
 
   return (
-    <section className="rounded-2xl border border-zinc-200/70 bg-white p-4 shadow-sm transition-colors dark:border-white/10 dark:bg-zinc-900/60">
-      <header className="mb-3 flex items-center justify-between">
+    <section className="flex h-full flex-col rounded-2xl border border-zinc-200/70 bg-white p-4 shadow-sm transition-colors dark:border-white/10 dark:bg-zinc-900/60">
+      <header className="mb-3 flex shrink-0 items-center justify-between">
         <h3 className="text-sm font-semibold tracking-tight text-zinc-800 dark:text-zinc-100">
           Shared Files
         </h3>
@@ -221,12 +248,12 @@ export default function SharedFilesSection({
         </span>
       </header>
 
-      <div className="mb-4 flex gap-0.5 border-b border-zinc-100 dark:border-white/10">
+      <div className="thin-scrollbar mb-4 flex shrink-0 gap-0.5 overflow-x-auto overflow-y-hidden border-b border-zinc-100 dark:border-white/10">
         {TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`-mb-px flex items-center gap-1.5 border-b-2 px-3 py-1.5 text-xs font-medium transition-colors ${
+            className={`-mb-px flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-1.5 text-xs font-medium transition-colors ${
               activeTab === tab.id
                 ? "border-emerald-600 text-emerald-600 dark:border-emerald-500 dark:text-emerald-500"
                 : "border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
@@ -246,18 +273,26 @@ export default function SharedFilesSection({
         ))}
       </div>
 
-      {activeTab === "email" && (
-        <ImageGrid attachments={emailAttachments} label="Email" />
-      )}
-      {activeTab === "sms" && (
-        <ImageGrid attachments={smsAttachments} label="SMS" />
-      )}
-      {activeTab === "docs" && (
-        <ChipList attachments={allDocs} emptyText="No docs shared yet." />
-      )}
-      {activeTab === "audio" && (
-        <ChipList attachments={allAudio} emptyText="No audio shared yet." />
-      )}
+      <div className="min-h-0 flex-1">
+        {activeTab === "email" && (
+          <ImageGrid attachments={emailAttachments} label="Email" />
+        )}
+        {activeTab === "sms" && (
+          <ImageGrid attachments={smsAttachments} label="SMS" />
+        )}
+        {activeTab === "messenger" && (
+          <ImageGrid attachments={messengerAttachments} label="Messenger" />
+        )}
+        {activeTab === "instagram" && (
+          <ImageGrid attachments={instagramAttachments} label="Instagram" />
+        )}
+        {activeTab === "docs" && (
+          <ChipList attachments={allDocs} emptyText="No docs shared yet." />
+        )}
+        {activeTab === "audio" && (
+          <ChipList attachments={allAudio} emptyText="No audio shared yet." />
+        )}
+      </div>
     </section>
   );
 }

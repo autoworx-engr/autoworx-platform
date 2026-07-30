@@ -65,6 +65,7 @@ export function StandardCalendar({
         initialView={view}
         initialDate={initialDate}
         headerToolbar={false}
+        nowIndicator={true}
         firstDay={firstDay}
         navLinks={true}
         navLinkDayClick={onNavLinkDayClick}

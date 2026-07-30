@@ -65,7 +65,6 @@ export async function GET(req: NextRequest) {
     // 4. Save each page + subscribe webhook
     for (const page of pages) {
       const pageAccessToken: string = page.access_token;
-      const pictureUrl: string | undefined = page.picture?.data?.url;
 
       await db.facebookPage.upsert({
         where: { companyId_pageId: { companyId, pageId: page.id } },
@@ -74,14 +73,14 @@ export async function GET(req: NextRequest) {
           pageId: page.id,
           pageName: page.name,
           pageAccessToken,
-          pictureUrl,
+          pictureUrl: "/images/default.png",
           isActive: true,
           webhookSubscribed: false,
         },
         update: {
           pageName: page.name,
           pageAccessToken,
-          pictureUrl,
+          pictureUrl: "/images/default.png",
           isActive: true,
         },
       });

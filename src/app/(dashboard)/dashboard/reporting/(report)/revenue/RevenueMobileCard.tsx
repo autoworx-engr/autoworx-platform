@@ -1,11 +1,11 @@
 "use client";
-import { formatCurrency } from "@/utils/formatCurrency";
-import { TInvoice } from "./page";
-import Link from "next/link";
 import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
+import { formatCurrency } from "@/utils/formatCurrency";
 import { FormatUtcToTimezone } from "@/utils/FormatUtcToTimezone";
 import { Tooltip } from "antd";
 import { ArrowDown } from "lucide-react";
+import Link from "next/link";
+import { TInvoice } from "./page";
 
 type TProps = {
   invoice: TInvoice & {
@@ -87,14 +87,14 @@ export default function RevenueMobileCard({
       <div className="mb-2 flex items-center justify-between">
         {/* <Link
           href={`/dashboard/estimate/view/${invoice.id}`}
-          className="font-semibold text-[#6571FF]"
+          className="font-semibold text-primary"
         >
           {invoice.id}
         </Link> */}
         <InvoiceModal
           invoiceId={invoice.id}
           buttonChild={<button>{invoice.id}</button>}
-          buttonChildClassName="font-semibold text-[#6571FF]"
+          buttonChildClassName="font-semibold text-primary"
         />
         <span className="font-semibold">{formattedDate}</span>
       </div>

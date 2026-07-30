@@ -1,4 +1,4 @@
-import { getCompanyIdFromBearer } from "@/lib/mobileAuth";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
@@ -55,7 +55,7 @@ export async function GET(
 ) {
   try {
     const { companyId: companyIdParam } = await params;
-    const jwtCompanyId = await getCompanyIdFromBearer(req);
+    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
     if (jwtCompanyId === null) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -80,6 +80,7 @@ export async function GET(
       select: {
         id: true,
         name: true,
+        color: true,
       },
     });
 
@@ -88,6 +89,99 @@ export async function GET(
     console.error("ESTIMATE CATEGORIES ERROR:", error);
     return NextResponse.json(
       { success: false, message: "Failed to fetch categories" },
+      { status: 500 },
+    );
+  }
+}
+
+/**
+ * @swagger
+ * /api/estimate/{companyId}/categories:
+ *   post:
+ *     summary: Create a category
+ *     tags:
+ *       - Estimate
+ *     parameters:
+ *       - in: path
+ *         name: companyId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           example: 4
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name]
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "Brakes"
+ *               color:
+ *                 type: string
+ *                 example: "#94A3B8"
+ *     responses:
+ *       201:
+ *         description: Category created successfully
+ *       400:
+ *         description: name is required or already exists
+ *       500:
+ *         description: Internal server error
+ */
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ companyId: string }> },
+) {
+  try {
+    const { companyId: companyIdParam } = await params;
+    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
+    if (jwtCompanyId === null) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const urlCompanyId = parseInt(companyIdParam, 10);
+    if (isNaN(urlCompanyId) || urlCompanyId !== jwtCompanyId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    const companyId = jwtCompanyId;
+
+    const body = await req.json();
+    const { name, color } = body;
+
+    if (!name?.trim()) {
+      return NextResponse.json(
+        { success: false, message: "name is required" },
+        { status: 400 },
+      );
+    }
+
+    const existing = await db.category.findFirst({
+      where: { companyId, name: name.trim() },
+    });
+    if (existing) {
+      return NextResponse.json(
+        { success: false, message: "Category already exists" },
+        { status: 400 },
+      );
+    }
+
+    const category = await db.category.create({
+      data: {
+        companyId,
+        name: name.trim(),
+        ...(color && { color }),
+      },
+    });
+
+    return NextResponse.json(
+      { success: true, data: category },
+      { status: 201 },
+    );
+  } catch (error) {
+    console.error("CREATE CATEGORY ERROR:", error);
+    return NextResponse.json(
+      { success: false, message: "Failed to create category" },
       { status: 500 },
     );
   }

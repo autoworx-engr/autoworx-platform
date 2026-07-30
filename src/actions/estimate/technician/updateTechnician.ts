@@ -38,17 +38,21 @@ export const updateTechnician = async (
     // Ensure the date includes both date and time
 
     // Normalize the assigned date to 00:00:00 like the due date
-    const normalizedDate = payload.date
-      ? new Date(
-          payload.date.getFullYear(),
-          payload.date.getMonth(),
-          payload.date.getDate(),
-          0,
-          0,
-          0,
-          0,
-        )
-      : payload.date;
+    const dateObj = payload.date ? new Date(payload.date) : null;
+    const normalizedDate =
+      dateObj && !isNaN(dateObj.getTime())
+        ? new Date(
+            Date.UTC(
+              dateObj.getUTCFullYear(),
+              dateObj.getUTCMonth(),
+              dateObj.getUTCDate(),
+              0,
+              0,
+              0,
+              0,
+            ),
+          )
+        : payload.date;
 
     await updateTechnicianValidationSchema.parseAsync({
       ...payload,

@@ -3,6 +3,12 @@
 @import "simplebar-react/dist/simplebar.min.css";
 @import "react-date-range/dist/styles.css";
 @import "react-date-range/dist/theme/default.css";
+
+/* Remove italic from Quill editor placeholder */
+.ql-container .ql-editor.ql-blank::before {
+  font-style: normal !important;
+  /* Optional: you can also change the color or font family here */
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -71,19 +77,21 @@ input[type="number"] {
     --card: 0 0% 100%;
     --card-foreground: 0 0% 3.9%;
 
-    --primary: 210 100% 50%;
-    --primary-foreground: 0 0% 98%;
+    /* Brand primary — #6571FF (indigo) */
+    --primary: 234 100% 70%;
+    --primary-foreground: 0 0% 100%;
 
     --secondary: 0 0% 96.1%;
     --secondary-foreground: 0 0% 9%;
 
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
+    /* Subtle brand-tinted hover/accent */
+    --accent: 234 100% 96%;
+    --accent-foreground: 234 60% 40%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    --ring: 0 0% 3.9%;
+    --ring: 234 100% 70%;
 
     --radius: 0.5rem;
 
@@ -105,7 +113,7 @@ input[type="number"] {
     --muted: 0 0% 14.9%;
     --muted-foreground: 0 0% 63.9%;
 
-    --accent: 0 0% 14.9%;
+    --accent: 234 40% 20%;
     --accent-foreground: 0 0% 98%;
 
     --popover: 0 0% 3.9%;
@@ -117,8 +125,9 @@ input[type="number"] {
     --card: 0 0% 3.9%;
     --card-foreground: 0 0% 98%;
 
-    --primary: 210 100% 55%;
-    --primary-foreground: 0 0% 9%;
+    /* Brand primary — #6571FF (indigo) */
+    --primary: 234 100% 70%;
+    --primary-foreground: 0 0% 100%;
 
     --secondary: 0 0% 14.9%;
     --secondary-foreground: 0 0% 98%;
@@ -126,7 +135,7 @@ input[type="number"] {
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
 
-    --ring: 0 0% 83.1%;
+    --ring: 234 100% 70%;
 
     --radius: 0.5rem;
 

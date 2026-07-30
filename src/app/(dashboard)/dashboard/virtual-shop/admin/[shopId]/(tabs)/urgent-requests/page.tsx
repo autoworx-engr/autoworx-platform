@@ -2,10 +2,16 @@ import { authOptions } from "@/authOptions";
 import { getServerSession } from "next-auth";
 import { UrgentRequestsListResponse } from "@/service/virtual-shop/api";
 import UrgentRequestsClient from "./_components/UrgentRequestsClient";
+import { Metadata } from "next";
 
 type PageProps = {
   params: Promise<{ shopId: string }>;
   searchParams?: Promise<{ page?: string; limit?: string; status?: string }>;
+};
+
+export const metadata: Metadata = {
+  title: "Virtual Shop - Urgent Requests",
+  description: "View and manage urgent requests for your virtual shop.",
 };
 
 export default async function ShopUrgentRequestsPage({

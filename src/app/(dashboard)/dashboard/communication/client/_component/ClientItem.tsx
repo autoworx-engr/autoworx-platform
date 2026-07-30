@@ -24,6 +24,8 @@ import { useEffect, useRef, useState } from "react";
 import StarOrUnStarAction from "./StarOrUnStarAction";
 import { useClientCommunicationStore } from "@/stores/client-store";
 import { ChevronDown } from "lucide-react";
+import { useCompanyFeaturePermissionStore } from "@/stores/companyFeaturePermissionStore";
+import { companyPermissionModule } from "@/constants/company-permission";
 
 type TClient = Client & {
   conversationsTrack?: ClientConversationTrack | null;
@@ -49,6 +51,12 @@ export default function ClientItem({
 }: ClientItemProps) {
   const [client, setClient] = useState<TClient | null>(clientFromDB);
   const router = useRouter();
+  const { companyFeaturePermission } = useCompanyFeaturePermissionStore();
+
+  const isMessengerAccess = companyFeaturePermission.find(
+    (permission) =>
+      permission.permission_name === companyPermissionModule?.MESSENGER,
+  );
 
   const buttonRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
@@ -75,6 +83,9 @@ export default function ClientItem({
     try {
       const updatedTrack = await readClientSmsAndEmail(clientId);
       setClientConversationTrack(updatedTrack);
+      if (filter === "Unread") {
+        setClients((prev) => prev.filter((c) => c.id !== clientId));
+      }
     } catch (err: any) {
       const formattedError = errorHandler(err);
       errorToast(formattedError.message);
@@ -98,21 +109,26 @@ export default function ClientItem({
           : prev;
       });
     }
-  }, [conversationTrack]);
+  }, [conversationTrack, client?.id]);
 
   const filter = useDemoClientFilterStore((state) => state.filter);
 
-  const handleRedirect = async () => {
+  const handleRedirect = async (channel?: string) => {
     // await updateLastMailReadId({ clientId: client.id });
+    if (!isMessengerAccess?.enabled && channel == "MESSENGER") {
+      channel = "SMS";
+    }
     if (searchParams) {
       const params = new URLSearchParams(searchParams);
       let pathname = `/dashboard/communication/client/${client?.id}`;
 
       document.querySelector("#client-message-lists")?.classList.add("hidden");
 
-      if (params.has("open")) {
-        params.delete("open");
+      params.delete("open");
+      if (channel && channel !== "SMS") {
+        params.set("open", channel);
       }
+
       params.set("chat", "true");
       pathname = params.toString()
         ? `${pathname}?${params.toString()}`
@@ -153,15 +169,26 @@ export default function ClientItem({
     }
   };
 
+  const conversationsTrack = client?.conversationsTrack as
+    | (NonNullable<typeof client>["conversationsTrack"] & {
+        messengerUnReadCount?: number;
+        messengerLastMessage?: string | null;
+        messengerIsRead?: boolean;
+        messengerLastBy?: string | null;
+      })
+    | undefined;
+
+  const unreadTotal =
+    (conversationsTrack?.emailIsUnReadCount || 0) +
+    (conversationsTrack?.smsUnReadCount || 0) +
+    (conversationsTrack?.messengerUnReadCount || 0);
+
   const isShowConversationIndicator =
-    client?.conversationsTrack &&
-    (!client?.conversationsTrack?.smsIsRead ||
-      !client?.conversationsTrack?.emailIsRead ||
-      !client?.conversationsTrack?.messengerIsRead);
+    !!client?.conversationsTrack && unreadTotal > 0;
   return (
     <div
       ref={buttonRef}
-      onClick={handleRedirect}
+      onClick={() => handleRedirect()}
       className={cn(
         // layout
         "group relative mb-2 flex w-full cursor-pointer items-center gap-3 overflow-hidden rounded-2xl p-3 sm:p-4",
@@ -184,11 +211,9 @@ export default function ClientItem({
     >
       <Image
         src={
-          !client?.photo
-            ? "/images/default.png"
-            : client.photo.includes("/images/default.png")
-              ? "/images/default.png"
-              : client.photo
+          client?.photo?.includes("autoworx-production")
+            ? client.photo
+            : "/images/default.png"
         }
         alt={(client?.firstName || "") + " " + (client?.lastName || "")}
         width={56}
@@ -212,19 +237,6 @@ export default function ClientItem({
           >
             {client?.firstName} {client?.lastName}
           </p>
-
-          {!!client?.isStarred && (
-            <span
-              className={cn(
-                "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium",
-                selected
-                  ? "bg-white/15 text-white"
-                  : "bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300",
-              )}
-            >
-              ★ Favorite
-            </span>
-          )}
         </div>
 
         {client?.customerCompany && (
@@ -242,8 +254,12 @@ export default function ClientItem({
         {/* Email preview */}
         {client?.conversationsTrack?.emailLastMessage && (
           <p
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRedirect("EMAIL");
+            }}
             className={cn(
-              "mt-2 line-clamp-1 text-xs",
+              "mt-2 line-clamp-1 text-xs cursor-pointer",
               selected ? "text-white/95" : "text-zinc-600 dark:text-zinc-300",
               client?.conversationsTrack?.emailIsRead
                 ? "font-normal"
@@ -261,8 +277,12 @@ export default function ClientItem({
         {/* SMS preview */}
         {client?.conversationsTrack?.smsLastMessage && (
           <p
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRedirect("SMS");
+            }}
             className={cn(
-              "mt-1.5 line-clamp-1 text-xs",
+              "mt-1.5 line-clamp-1 text-xs cursor-pointer",
               selected ? "text-white/95" : "text-zinc-600 dark:text-zinc-300",
               client?.conversationsTrack?.smsIsRead
                 ? "font-normal"
@@ -278,21 +298,25 @@ export default function ClientItem({
         )}
 
         {/* Messenger preview */}
-        {client?.conversationsTrack?.messengerLastMessage && (
+        {conversationsTrack?.messengerLastMessage && (
           <p
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRedirect("MESSENGER");
+            }}
             className={cn(
-              "mt-1.5 line-clamp-1 text-xs",
+              "mt-1.5 line-clamp-1 text-xs cursor-pointer",
               selected ? "text-white/95" : "text-zinc-600 dark:text-zinc-300",
-              client?.conversationsTrack?.messengerIsRead
+              conversationsTrack?.messengerIsRead
                 ? "font-normal"
                 : "font-semibold",
             )}
-            title={client?.conversationsTrack?.messengerLastMessage}
+            title={conversationsTrack?.messengerLastMessage}
           >
-            {client?.conversationsTrack?.messengerLastBy === "Company"
+            {conversationsTrack?.messengerLastBy === "Company"
               ? "You (Messenger)"
               : "Client (Messenger)"}{" "}
-            — {client?.conversationsTrack?.messengerLastMessage}
+            — {conversationsTrack?.messengerLastMessage}
           </p>
         )}
       </div>
@@ -303,9 +327,7 @@ export default function ClientItem({
           <div className="relative">
             <span className="absolute -inset-1.5 animate-ping rounded-full bg-rose-400/60"></span>
             <span className="relative flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold leading-none text-white ring-2 ring-white/90 dark:ring-zinc-900">
-              {(client?.conversationsTrack?.emailIsUnReadCount || 0) +
-                (client?.conversationsTrack?.smsUnReadCount || 0) +
-                (client?.conversationsTrack?.messengerUnReadCount || 0)}
+              {unreadTotal > 9 ? "9+" : unreadTotal}
             </span>
           </div>
         </div>

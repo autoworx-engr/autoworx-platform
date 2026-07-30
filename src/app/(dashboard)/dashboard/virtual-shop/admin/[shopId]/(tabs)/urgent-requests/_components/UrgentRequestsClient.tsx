@@ -1,28 +1,9 @@
 "use client";
 
-import { useState, useTransition, useCallback } from "react";
-import Link from "next/link";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import {
-  AlertTriangle,
-  MessageCircle,
-  Eye,
-  Car,
-  Clock,
-  User,
-  ChevronLeft,
-  ChevronRight,
-  Store,
-  Calendar,
-  CheckCircle,
-  XCircle,
-  RefreshCw,
-  Loader2,
-} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
+import { errorToast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import {
   EmergencyRequestStatus,
@@ -31,7 +12,24 @@ import {
   getUrgentRequests,
 } from "@/service/virtual-shop/api";
 import { fToNow } from "@/utils/formatDate";
-import { errorToast } from "@/lib/toast";
+import {
+  AlertTriangle,
+  Calendar,
+  Car,
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Eye,
+  Loader2,
+  MessageCircle,
+  RefreshCw,
+  Store,
+  User,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useCallback, useState, useTransition } from "react";
 
 type Props = {
   initialData: UrgentRequestsListResponse | null;
@@ -63,7 +61,7 @@ const STATUS_STYLES: Record<
   },
   UNDER_REVIEW: {
     label: "Under Review",
-    className: "bg-[#6571FF]/10 text-[#6571FF] border-[#6571FF]/20",
+    className: "bg-primary/10 text-primary border-primary/20",
   },
   APPROVED: {
     label: "Approved",
@@ -71,7 +69,7 @@ const STATUS_STYLES: Record<
   },
   ALTERNATIVE_PROPOSED: {
     label: "Alt. Proposed",
-    className: "bg-[#6571FF]/10 text-[#6571FF] border-[#6571FF]/20",
+    className: "bg-primary/10 text-primary border-primary/20",
   },
   CLIENT_CONFIRMED: {
     label: "Confirmed",
@@ -158,7 +156,7 @@ export default function UrgentRequestsClient({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#6571FF] text-white shadow-lg shadow-[#6571FF]/30">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-white shadow-lg shadow-primary/30">
             <AlertTriangle size={20} />
           </div>
           <div>
@@ -174,7 +172,7 @@ export default function UrgentRequestsClient({
         <Button
           variant="ghost"
           size="icon"
-          className="text-slate-500 hover:text-[#6571FF]"
+          className="text-slate-500 hover:text-primary"
           onClick={() => fetchRequests(page, activeStatus)}
           disabled={isLoading}
         >
@@ -192,7 +190,7 @@ export default function UrgentRequestsClient({
               className={cn(
                 "shrink-0 rounded-xl px-3 py-1.5 text-sm font-medium transition-all duration-200",
                 activeStatus === tab.value
-                  ? "bg-[#6571FF] text-white shadow-md shadow-[#6571FF]/25"
+                  ? "bg-primary text-white shadow-md shadow-primary/25"
                   : "bg-slate-100 text-slate-600 hover:bg-slate-200",
               )}
             >
@@ -205,7 +203,7 @@ export default function UrgentRequestsClient({
       {/* List */}
       {isLoading ? (
         <div className="flex h-64 items-center justify-center">
-          <Loader2 size={32} className="animate-spin text-[#6571FF]" />
+          <Loader2 size={32} className="animate-spin text-primary" />
         </div>
       ) : requests.length === 0 ? (
         <div className="flex h-64 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-slate-200 text-slate-400">
@@ -350,7 +348,7 @@ function UrgentRequestCard({
         <div className="flex shrink-0 flex-col gap-2 sm:items-end">
           <Link
             href={`/dashboard/virtual-shop/admin/${shopId}/urgent-requests/${request.id}`}
-            className="flex items-center gap-1.5 rounded-xl bg-[#6571FF]/10 px-3 py-2 text-sm font-medium text-[#6571FF] transition-colors hover:bg-[#6571FF]/20"
+            className="flex items-center gap-1.5 rounded-xl bg-primary/10 px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
           >
             <Eye size={15} />
             View Details

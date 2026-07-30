@@ -28,4 +28,5 @@ export const companyPermissionModule = {
   WORKFORCE_MANAGEMENT: "workforceManagement",
   SERVICE_ESTIMATOR: "serviceEstimator",
   MESSENGER: "messenger",
+  INSTAGRAM: "instagram",
 } as const;

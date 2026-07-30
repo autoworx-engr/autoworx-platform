@@ -1,6 +1,7 @@
-import { getCompanyIdFromBearer } from "@/lib/mobileAuth";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { buildWordSearchAnd } from "@/lib/wordSearch";
 
 /**
  * @swagger
@@ -89,7 +90,7 @@ export async function GET(
 ) {
   try {
     const { companyId: companyIdParam } = await params;
-    const jwtCompanyId = await getCompanyIdFromBearer(req);
+    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
     if (jwtCompanyId === null) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -117,19 +118,16 @@ export async function GET(
       where.categoryId = categoryId;
     }
 
-    if (search) {
-      where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        { notes: { contains: search, mode: "insensitive" } },
-      ];
+    const searchAnd = buildWordSearchAnd(search, ["name", "notes"]);
+    if (searchAnd) {
+      where.AND = searchAnd;
     }
 
     const [labors, total] = await Promise.all([
       db.labor.findMany({
         where,
-        orderBy: { name: "asc" },
-        skip,
-        take: limit,
+        orderBy: { id: "desc" },
+        ...(search ? {} : { skip, take: limit }),
         include: {
           tags: {
             include: { tag: true },
@@ -148,18 +146,137 @@ export async function GET(
     return NextResponse.json({
       success: true,
       data: laborsWithFlatTags,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasMore: skip + labors.length < total,
-      },
+      pagination: search
+        ? {
+            page: 1,
+            limit: total,
+            total,
+            totalPages: 1,
+            hasMore: false,
+          }
+        : {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+            hasMore: skip + labors.length < total,
+          },
     });
   } catch (error) {
     console.error("ESTIMATE LABORS ERROR:", error);
     return NextResponse.json(
       { success: false, message: "Failed to fetch labors" },
+      { status: 500 },
+    );
+  }
+}
+
+/**
+ * @swagger
+ * /api/estimate/{companyId}/labors:
+ *   post:
+ *     summary: Create a canned labor
+ *     tags:
+ *       - Estimate
+ *     parameters:
+ *       - in: path
+ *         name: companyId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           example: 4
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name]
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "Brake Pad Replacement"
+ *               categoryId:
+ *                 type: integer
+ *                 example: 2
+ *               hours:
+ *                 type: number
+ *                 example: 1.5
+ *               charge:
+ *                 type: number
+ *                 example: 75.00
+ *               discount:
+ *                 type: number
+ *                 example: 0
+ *               notes:
+ *                 type: string
+ *                 example: "Standard brake job"
+ *               tagIds:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *     responses:
+ *       201:
+ *         description: Labor created successfully
+ *       400:
+ *         description: name is required
+ *       500:
+ *         description: Internal server error
+ */
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ companyId: string }> },
+) {
+  try {
+    const { companyId: companyIdParam } = await params;
+    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
+    if (jwtCompanyId === null) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const urlCompanyId = parseInt(companyIdParam, 10);
+    if (isNaN(urlCompanyId) || urlCompanyId !== jwtCompanyId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    const companyId = jwtCompanyId;
+
+    const body = await req.json();
+    const { name, categoryId, hours, charge, discount, notes, tagIds } = body;
+
+    if (!name?.trim()) {
+      return NextResponse.json(
+        { success: false, message: "name is required" },
+        { status: 400 },
+      );
+    }
+
+    const labor = await db.$transaction(async (tx) => {
+      const created = await tx.labor.create({
+        data: {
+          name: name.trim(),
+          companyId,
+          cannedLabor: true,
+          categoryId: categoryId ? Number(categoryId) : undefined,
+          hours: hours != null ? Number(hours) : undefined,
+          charge: charge != null ? Number(charge) : undefined,
+          discount: discount != null ? Number(discount) : undefined,
+          notes: notes?.trim() || undefined,
+        },
+      });
+
+      if (Array.isArray(tagIds) && tagIds.length > 0) {
+        await tx.laborTag.createMany({
+          data: tagIds.map((tagId: number) => ({ laborId: created.id, tagId })),
+        });
+      }
+
+      return created;
+    });
+
+    return NextResponse.json({ success: true, data: labor }, { status: 201 });
+  } catch (error) {
+    console.error("CREATE LABOR ERROR:", error);
+    return NextResponse.json(
+      { success: false, message: "Failed to create labor" },
       { status: 500 },
     );
   }

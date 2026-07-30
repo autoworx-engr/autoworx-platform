@@ -4,7 +4,10 @@ import {
   NotificationType,
 } from "@prisma/client";
 const notificationTypes: { type: NotificationType; roles: EmployeeType[] }[] = [
-  { type: "TASK_ASSIGNED", roles: ["Admin", "Manager", "Technician", "Sales"] },
+  {
+    type: "TASK_ASSIGNED",
+    roles: ["Admin", "Manager", "Technician", "Sales", "Other"],
+  },
   { type: "TASK_FINISHED", roles: ["Admin", "Manager", "Technician", "Sales"] },
   {
     type: "APPOINTMENT_CREATED",
@@ -52,7 +55,7 @@ const notificationTypes: { type: NotificationType; roles: EmployeeType[] }[] = [
   { type: "JOB_ASSIGNED", roles: ["Admin", "Manager", "Technician"] },
   {
     type: "INTERNAL_MESSAGE_ALERT",
-    roles: ["Admin", "Manager", "Sales", "Technician"],
+    roles: ["Admin", "Manager", "Sales", "Technician", "Other"],
   },
   { type: "CLIENT_MESSAGE_ALERT", roles: ["Admin", "Manager", "Sales"] },
   { type: "CLIENT_CALL_ALERT", roles: ["Admin", "Manager", "Sales"] },

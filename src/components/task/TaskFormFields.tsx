@@ -2,16 +2,24 @@
 
 import React from "react";
 import { Check } from "lucide-react";
-import { Select } from "antd";
 import { Priority } from "@prisma/client";
 import { cn } from "@/lib/cn";
-import { SlimInput, slimInputClassName } from "@/components/SlimInput";
+import { DatePickerField } from "@/components/ui/DatePickerField";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { taskPriorityStyles } from "@/lib/taskPriorityStyles";
 import AssignTaskDropDown from "./AssignTaskDropDown";
 import { formatTime12Hour } from "@/utils/formateTime12Hours";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { useFormErrorStore } from "@/stores/form-error";
-
-const { Option } = Select;
 
 interface TaskFormFieldsProps {
   title: string;
@@ -61,42 +69,23 @@ export function TaskFormFields({
     return { value, label };
   });
 
-  const priorityStyles = {
-    Low: {
-      background: "linear-gradient(to right, #f5f3ff, #ede9fe)",
-      borderLeft: "3px solid #6d28d9",
-      color: "#6d28d9",
-      boxShadow: "0 2px 8px rgba(109, 40, 217, 0.15)",
-    },
-    Medium: {
-      background: "linear-gradient(to right, #f0f9ff, #e0f2fe)",
-      borderLeft: "3px solid #0284c7",
-      color: "#0284c7",
-      boxShadow: "0 2px 8px rgba(2, 132, 199, 0.15)",
-    },
-    High: {
-      background: "linear-gradient(to right, #b2f2bb, #d3f9d8)",
-      borderLeft: "3px solid #22a7b8",
-      color: "#22a7b8",
-      boxShadow: "0 2px 8px rgba(34, 167, 184, 0.15)",
-    },
-  };
+  // Shared with the task list / calendar so priority colors match everywhere.
+  const priorityStyles = taskPriorityStyles;
 
   const priorityItems = [{ id: "Low" }, { id: "Medium" }, { id: "High" }];
 
   return (
     <>
-      <div className="mb-4 flex flex-col">
-        <label htmlFor="title" className="font-medium text-slate-600">
-          Title <span className="text-[#E9405F]">*</span>
-        </label>
-        <input
+      <div className="mb-4 flex flex-col gap-1.5">
+        <Label htmlFor="title" className="text-base">
+          Title <span className="text-destructive">*</span>
+        </Label>
+        <Input
+          id="title"
           type="text"
           name="title"
-          className={cn(
-            "mt-2 rounded-md border-2 border-gray-500 p-1",
-            slimInputClassName,
-          )}
+          maxLength={100}
+          placeholder="e.g. Follow up with client"
           value={title}
           onChange={(e) => {
             const value = e.target.value;
@@ -111,104 +100,90 @@ export function TaskFormFields({
         />
       </div>
 
-      <div className="mb-4 flex flex-col">
-        <label htmlFor="description" className="font-medium text-slate-600">
+      <div className="mb-4 flex flex-col gap-1.5">
+        <Label htmlFor="description" className="text-base">
           Description
-        </label>
-        <textarea
+        </Label>
+        <Textarea
+          id="description"
           name="description"
-          className={cn(
-            "mt-2 rounded-md border-2 border-gray-500 p-1",
-            slimInputClassName,
-          )}
+          rows={4}
+          placeholder="Add any details, notes or instructions for this task..."
+          className="min-h-[120px] resize-y"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
       </div>
 
       <div id="timer-parent" className="mb-4 flex flex-col">
-        <div className="flex items-center space-x-2">
-          <div className="flex w-full flex-col space-y-4 lg:flex-row lg:space-x-2 lg:space-y-0">
-            <SlimInput
-              name="date"
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="lg:col-span-2">
+            <DatePickerField
               label="Date"
-              rootClassName="grow"
-              type="date"
-              value={date ?? ""}
               required
-              onChange={(event) => setDate(event.currentTarget.value)}
+              value={date ?? ""}
+              onChange={(value) => setDate(value)}
             />
-            <div className="flex items-end gap-2 mt-2 lg:mt-0">
-              <label className="flex flex-col items-start">
-                <span className="mb-2 font-medium text-slate-600">
-                  Start Time <span className="text-[#E9405F]">*</span>
-                </span>
-                <Select
-                  value={startTime}
-                  onChange={(value) => handleTimeChange(value, "start")}
-                  style={{ width: "100%" }}
-                  className="h-[38px] w-full rounded-lg border-none bg-slate-50/50 ring-1 ring-slate-200 transition-all duration-300 hover:bg-white hover:ring-[#6571FF]/80 hover:scale-[1.01] hover:shadow-sm focus-within:ring-2 focus-within:ring-[#6571FF]/40 focus:outline-none text-slate-600 font-medium thin-scrollbar"
-                  dropdownClassName="rounded-xl border-none shadow-2xl backdrop-blur-md bg-white/90"
-                >
-                  <Option value="" className="text-slate-400 italic">
-                    Start Time
-                  </Option>
-                  {timeOptions
-                    .filter((time) => time.value <= "22:45")
-                    .map((time) => (
-                      <Option
-                        key={time.value}
-                        value={time.value}
-                        className="py-2 px-3 text-slate-600 transition-colors hover:bg-[#6571FF]/10 hover:text-[#6571FF]"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="h-1.5 w-1.5 rounded-full bg-slate-300 group-hover:bg-[#6571FF]" />
-                          {time.label}
-                        </div>
-                      </Option>
-                    ))}
-                </Select>
-              </label>
+          </div>
 
-              <label className="flex flex-col items-start">
-                <span className="mb-2 font-medium text-slate-600">
-                  End Time <span className="text-[#E9405F]">*</span>
-                </span>
-                <Select
-                  value={endTime}
-                  onChange={(value) => handleTimeChange(value, "end")}
-                  style={{ width: "100%" }}
-                  className="h-[38px] w-full rounded-lg border-none bg-slate-50/50 ring-1 ring-slate-200 transition-all duration-300 hover:bg-white hover:ring-[#6571FF]/80 hover:scale-[1.01] hover:shadow-sm focus-within:ring-2 focus-within:ring-[#6571FF]/40 focus:outline-none text-slate-600 font-medium thin-scrollbar"
-                  dropdownClassName="rounded-xl border-none shadow-2xl backdrop-blur-md bg-white/90"
-                >
-                  <Option value="" className="text-slate-400 italic">
-                    End Time
-                  </Option>
-                  {timeOptions.map((time) => (
-                    <Option
-                      key={time.value}
-                      value={time.value}
-                      className="py-2 px-3 text-slate-600 transition-colors hover:bg-[#6571FF]/10 hover:text-[#6571FF]"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="h-1.5 w-1.5 rounded-full bg-slate-300 group-hover:bg-[#6571FF]" />
-                        {time.label}
-                      </div>
-                    </Option>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="startTime" className="text-base">
+              Start Time <span className="text-destructive">*</span>
+            </Label>
+            <Select
+              value={startTime || undefined}
+              onValueChange={(value) => handleTimeChange(value, "start")}
+            >
+              <SelectTrigger
+                id="startTime"
+                size="md"
+                className="w-full rounded-md"
+              >
+                <SelectValue placeholder="Start Time" />
+              </SelectTrigger>
+              <SelectContent className="max-h-60">
+                {timeOptions
+                  .filter((time) => time.value <= "22:45")
+                  .map((time) => (
+                    <SelectItem key={time.value} value={time.value}>
+                      {time.label}
+                    </SelectItem>
                   ))}
-                </Select>
-              </label>
-            </div>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="endTime" className="text-base">
+              End Time <span className="text-destructive">*</span>
+            </Label>
+            <Select
+              value={endTime || undefined}
+              onValueChange={(value) => handleTimeChange(value, "end")}
+            >
+              <SelectTrigger
+                id="endTime"
+                size="md"
+                className="w-full rounded-md"
+              >
+                <SelectValue placeholder="End Time" />
+              </SelectTrigger>
+              <SelectContent className="max-h-60">
+                {timeOptions.map((time) => (
+                  <SelectItem key={time.value} value={time.value}>
+                    {time.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>
 
       {taskData?.client && taskData?.createdBy === "sales_agent" && (
-        <div className="mb-4 flex flex-col">
-          <label className="font-medium text-slate-600">
-            Client Information
-          </label>
-          <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
+        <div className="mb-4 flex flex-col gap-1.5">
+          <Label className="text-base">Client Information</Label>
+          <div className="rounded-lg border bg-muted/40 p-3 space-y-2">
             <div className="flex flex-col">
               <span className="text-xs text-slate-500">Client Name</span>
               <span className="text-sm font-medium text-slate-700">
@@ -239,7 +214,7 @@ export function TaskFormFields({
       />
 
       <div className="mb-6 flex flex-col space-y-3">
-        <label className="font-medium text-slate-600">Priority Level</label>
+        <Label className="text-base">Priority Level</Label>
         <div className="flex items-center gap-3">
           {priorityItems.map((item) => {
             const isActive = priority === item.id;

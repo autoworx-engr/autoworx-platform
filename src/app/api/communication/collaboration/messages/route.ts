@@ -1,7 +1,8 @@
 import { AppError } from "@/error-boundary/error";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
-import { Message } from "@prisma/client";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
+import { Message, Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -57,6 +58,12 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
+    const principal = await getAuthPrincipal(request);
+    if (!principal) {
+      throw new AppError(401, "Unauthorized");
+    }
+    const callerUserId = principal.userId;
+
     const searchParams = request.nextUrl.searchParams;
 
     // 2. Extract specific values using .get()
@@ -100,38 +107,41 @@ export async function GET(request: NextRequest) {
         throw new AppError(400, "Cannot send message to oneself");
       }
 
-      const findToFromUser = await db.user.findFirst({
-        where: {
-          OR: [{ id: toId }, { id: fromId }],
-          companyId: findExistingCompany?.id,
-        },
+      // Caller must be a participant in this conversation
+      if (callerUserId !== toId && callerUserId !== fromId) {
+        throw new AppError(403, "You can only read your own conversations.");
+      }
+
+      const participants = await db.user.findMany({
+        where: { id: { in: [toId, fromId] } },
+        select: { id: true, companyId: true },
       });
 
-      if (!findToFromUser) {
+      if (
+        participants.length !== 2 ||
+        !participants.some((u) => u.companyId === findExistingCompany.id)
+      ) {
         throw new AppError(404, "User not found");
       }
 
-      messages = await db.message.findMany({
-        where: {
-          AND: [{ AND: [{ from: fromId }, { to: toId }] }],
-          section: "collaboration",
-        },
-        include: {
-          attachment: true,
-          requestEstimate: true,
-        },
-        orderBy: {
-          [sortBy ?? "createdAt"]: sortOrder ?? "desc",
-        },
-        skip: (pageNum - 1) * limitNum,
-        take: limitNum,
-      });
-      totalRecords = await db.message.count({
-        where: {
-          AND: [{ AND: [{ from: fromId }, { to: toId }] }],
-          section: "collaboration",
-        },
-      });
+      const conversationWhere: Prisma.MessageWhereInput = {
+        section: "collaboration",
+        OR: [
+          { from: fromId, to: toId },
+          { from: toId, to: fromId },
+        ],
+      };
+
+      [messages, totalRecords] = await Promise.all([
+        db.message.findMany({
+          where: conversationWhere,
+          include: { attachment: true, requestEstimate: true },
+          orderBy: { [sortBy ?? "createdAt"]: sortOrder ?? "desc" },
+          skip: (pageNum - 1) * limitNum,
+          take: limitNum,
+        }),
+        db.message.count({ where: conversationWhere }),
+      ]);
     }
 
     const hasNextPage = pageNum * limitNum < totalRecords;

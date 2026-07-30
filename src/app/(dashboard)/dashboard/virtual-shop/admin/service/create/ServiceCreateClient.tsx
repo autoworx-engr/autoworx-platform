@@ -6,19 +6,17 @@ import {
   TabsList,
   TabsTriggerCreate,
 } from "@/app/(dashboard)/dashboard/estimate/TabsNav";
-import { CreateTab } from "@/app/(dashboard)/dashboard/estimate/create/tabs/CreateTab";
-import TemplateAttachmentTab from "@/app/(dashboard)/dashboard/estimate/templates/TemplateAttachmentTab";
-import TemplateInspectionTab from "@/app/(dashboard)/dashboard/estimate/templates/TemplateInspectionTab";
-import ServiceInfo, { ServiceInfoState } from "./ServiceInfo";
 import Create from "@/app/(dashboard)/dashboard/estimate/create/Create";
-import { useEstimateCreateStore } from "@/stores/estimate-create";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { errorToast } from "@/lib/toast";
+import { CreateTab } from "@/app/(dashboard)/dashboard/estimate/create/tabs/CreateTab";
 import {
   useCreateShopService,
   useUpdateShopService,
 } from "@/hooks/virtual-shop/service/useShopService";
+import { errorToast } from "@/lib/toast";
+import { useEstimateCreateStore } from "@/stores/estimate-create";
 import { useRouter } from "nextjs-toploader/app";
+import { useEffect, useMemo, useRef, useState } from "react";
+import ServiceInfo, { ServiceInfoState } from "./ServiceInfo";
 
 type InitialServiceData = {
   id: number;
@@ -166,7 +164,7 @@ function ServiceBillSummary({
                 <div
                   onClick={() => toggleSetter((prev) => !prev)}
                   className={`relative flex h-5 w-9 cursor-pointer items-center rounded-full px-1 transition-all duration-200 ${
-                    toggleState ? "bg-[#6571FF]" : "bg-slate-200"
+                    toggleState ? "bg-primary" : "bg-slate-200"
                   }`}
                 >
                   <div
@@ -199,7 +197,7 @@ function ServiceBillSummary({
       <div className="mt-4 flex flex-col gap-4 rounded-lg bg-[#006d77] p-5 text-white shadow-xl shadow-[#006d77]/20">
         <button
           type="button"
-          className="w-full rounded-xl bg-white py-3 text-sm font-bold text-[#6571FF] shadow-lg transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+          className="w-full rounded-xl bg-white py-3 text-sm font-bold text-primary shadow-lg transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
           disabled={isSaveDisabled}
           onClick={onSave}
         >

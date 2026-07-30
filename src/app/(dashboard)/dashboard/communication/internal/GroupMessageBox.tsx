@@ -7,15 +7,17 @@ import {
   useRef,
 } from "react";
 import MessageBox from "../MessageBox";
-import { getUserInGroup } from "@/actions/communication/internal/query";
 import { useSession } from "next-auth/react";
 import { pusher } from "@/lib/pusher/client";
 import { Attachment, Group, User } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useInfiniteGroupMessages } from "./_hooks/useInfiniteGroupMessages";
 import { useReverseScrollPagination } from "./_hooks/useReverseScrollPagination";
+import { usePrependToInfiniteCache } from "./_hooks/useMessageCacheMutation";
 import { internalKeys } from "./_utils/queryKey";
 import { Spinner } from "@/components/ui/spinner";
+import { markGroupAsRead } from "@/actions/communication/internal/markGroupAsRead";
+import type { GroupMessageSender } from "@/actions/communication/internal/query";
 
 type TProps = {
   setGroupsList: React.Dispatch<
@@ -33,8 +35,28 @@ export default function GroupMessageBox({
   existingGroups,
 }: TProps) {
   const { data: session } = useSession();
-  const queryClient = useQueryClient();
   const sessionUserId = session?.user?.id ? parseInt(session.user.id) : NaN;
+  const queryClient = useQueryClient();
+  const prependToCache = usePrependToInfiniteCache(
+    internalKeys.groupMessages(group.id),
+  );
+
+  // Mark the group as read whenever this box is mounted (the viewer opened
+  // the chat) and whenever a new message arrives while they're looking at
+  // it. Server upserts `GroupReadState.lastSeenAt = now`; the sidebar
+  // groups query is then invalidated so the unread badge updates.
+  const invalidateGroupsList = useCallback(() => {
+    queryClient.invalidateQueries({
+      predicate: (q) =>
+        Array.isArray(q.queryKey) &&
+        q.queryKey[0] === "internal" &&
+        q.queryKey[1] === "groups",
+    });
+  }, [queryClient]);
+  useEffect(() => {
+    if (!Number.isFinite(sessionUserId)) return;
+    void markGroupAsRead(group.id).then(invalidateGroupsList);
+  }, [group.id, sessionUserId, invalidateGroupsList]);
 
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } =
     useInfiniteGroupMessages({
@@ -54,6 +76,7 @@ export default function GroupMessageBox({
         | "CLIENT",
       attachment: m.attachment,
       createdAt: m.createdAt,
+      senderInfo: (m as { sender?: GroupMessageSender | null }).sender ?? null,
     }));
   }, [data, sessionUserId]);
 
@@ -71,98 +94,53 @@ export default function GroupMessageBox({
       const last = next[next.length - 1];
       if (!last) return;
 
-      queryClient.setQueryData(
-        internalKeys.groupMessages(group.id),
-        (old: any) => {
-          if (!old?.pages?.length) return old;
-          const [firstPage, ...rest] = old.pages;
-          if (last.id && firstPage.data.some((m: any) => m.id === last.id)) {
-            return old;
-          }
-          const newRow = {
-            id: last.id ?? Date.now(),
-            groupId: group.id,
-            from: last.userId ?? sessionUserId,
-            message: last.message,
-            createdAt: last.createdAt ?? new Date(),
-            attachment: Array.isArray(last.attachment)
-              ? last.attachment
-              : last.attachment
-                ? [last.attachment]
-                : [],
-          };
-          return {
-            ...old,
-            pages: [
-              { ...firstPage, data: [newRow, ...firstPage.data] },
-              ...rest,
-            ],
-          };
-        },
-      );
+      prependToCache({
+        id: last.id ?? Date.now(),
+        groupId: group.id,
+        from: last.userId ?? sessionUserId,
+        message: last.message,
+        createdAt: last.createdAt ?? new Date(),
+        attachment: Array.isArray(last.attachment)
+          ? last.attachment
+          : last.attachment
+            ? [last.attachment]
+            : [],
+      });
     },
-    [queryClient, group.id, sessionUserId],
+    [prependToCache, group.id, sessionUserId],
   );
 
-  // Pusher real-time append (only for messages from other users — own
-  // messages already arrive via the optimistic cache mutation in setMessages).
   useEffect(() => {
-    const channel = pusher
-      .subscribe(`group-${group.id}`)
-      .bind(
-        "message",
-        async ({
-          groupId,
-          from,
-          message,
-          attachment,
-        }: {
-          groupId: number;
-          from: number;
-          message: string;
-          attachment: Attachment | null;
-        }) => {
-          const isUserExistInGroup = await getUserInGroup(
-            sessionUserId,
-            groupId,
-          );
-          if (!isUserExistInGroup) {
-            setGroupsList((groupList) =>
-              groupList.filter((g) => g.id !== groupId),
-            );
-            return;
-          }
-          if (from === sessionUserId) return;
-
-          queryClient.setQueryData(
-            internalKeys.groupMessages(group.id),
-            (old: any) => {
-              if (!old?.pages?.length) return old;
-              const [firstPage, ...rest] = old.pages;
-              const newRow = {
-                id: Date.now(),
-                groupId,
-                from,
-                message,
-                createdAt: new Date(),
-                attachment: attachment ? [attachment] : [],
-              };
-              return {
-                ...old,
-                pages: [
-                  { ...firstPage, data: [newRow, ...firstPage.data] },
-                  ...rest,
-                ],
-              };
-            },
-          );
-        },
-      );
-
-    return () => {
-      channel.unbind("message");
+    const channel = pusher.subscribe(`group-${group.id}`);
+    const handler = ({
+      groupId,
+      from,
+      message,
+      attachment,
+    }: {
+      groupId: number;
+      from: number;
+      message: string;
+      attachment: Attachment | null;
+    }) => {
+      if (from === sessionUserId) return;
+      prependToCache({
+        id: Date.now(),
+        groupId,
+        from,
+        message,
+        createdAt: new Date(),
+        attachment: attachment ? [attachment] : [],
+      });
+      // Box is open while the message arrives → keep lastSeenAt fresh so it
+      // never appears as unread on the sidebar.
+      void markGroupAsRead(group.id).then(invalidateGroupsList);
     };
-  }, [queryClient, group.id, sessionUserId, setGroupsList]);
+    channel.bind("message", handler);
+    return () => {
+      channel.unbind("message", handler);
+    };
+  }, [prependToCache, group.id, sessionUserId, invalidateGroupsList]);
 
   // Reverse-pagination wiring.
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -177,10 +155,7 @@ export default function GroupMessageBox({
     isFetchingNextPage,
     isReady,
   });
-  // useLayoutEffect so the scroll correction runs synchronously before paint —
-  // no visible position jump when older messages are prepended. Because
-  // adjustAfterPagesChange now has a stable identity (ref-based, not state),
-  // this effect fires ONLY when pages.length actually changes.
+
   useLayoutEffect(() => {
     adjustAfterPagesChange(data?.pages?.length ?? 0);
   }, [data?.pages?.length, adjustAfterPagesChange]);
@@ -196,6 +171,7 @@ export default function GroupMessageBox({
       setGroupsList={setGroupsList}
       existingGroups={existingGroups}
       isLoadingOlder={isFetchingNextPage}
+      isLoadingInitial={isLoading}
       onScrollContainerRef={setContainer}
       topSlot={
         isFetchingNextPage ? (

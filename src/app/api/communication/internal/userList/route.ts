@@ -1,7 +1,8 @@
 import { AppError } from "@/error-boundary/error";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
-import { jwtVerifyToken } from "@/lib/jwtVerify";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
+import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -50,129 +51,150 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const GET = async (request: NextRequest) => {
   try {
+    const principal = await getAuthPrincipal(request);
+    if (!principal) throw new AppError(401, "Unauthorized");
+
     const searchParams = request.nextUrl.searchParams;
-    const authHeader = request.headers.get("authorization") ?? "";
-    const accessToken = authHeader.startsWith("Bearer")
-      ? authHeader.split(" ")[1]
-      : authHeader;
-
-    const verifyToken = await jwtVerifyToken(accessToken);
-    const userId = verifyToken?.payload?.id ?? "";
-
-    if (!userId) {
-      throw new AppError(401, "Unauthorized");
-    }
-
-    const companyId = searchParams.get("companyId");
-    const search = searchParams.get("search") || "";
+    const search = (searchParams.get("search") || "").trim();
     const pageNum = Math.max(1, parseInt(searchParams.get("page") || "1"));
     const limitNum = Math.max(1, parseInt(searchParams.get("limit") || "20"));
+    const excludeGroupIdRaw = searchParams.get("excludeGroupId");
+    const excludeGroupId = excludeGroupIdRaw
+      ? parseInt(excludeGroupIdRaw, 10)
+      : null;
 
-    const companyIdNum = companyId ? parseInt(companyId) : null;
+    const userIdNum = principal.userId;
+    const skip = (pageNum - 1) * limitNum;
 
-    if (!companyIdNum) {
-      throw new AppError(400, "Company ID is required");
-    }
-
-    const findCompany = await db.company.findUnique({
-      where: { id: companyIdNum },
-    });
-
-    if (!findCompany) {
-      throw new AppError(404, "Company not found");
-    }
-
-    const userIdNum = parseInt(userId as string, 10);
-    const where: any = {
-      NOT: { id: userIdNum },
-      companyId: companyIdNum,
+    const searchTerm = search.trim();
+    const searchWords = searchTerm ? searchTerm.split(/\s+/) : [];
+    const buildSearchWhere = (): Prisma.UserWhereInput => {
+      if (!searchTerm) return {};
+      const conditions: Prisma.UserWhereInput[] = [
+        { firstName: { contains: searchTerm, mode: "insensitive" } },
+        { lastName: { contains: searchTerm, mode: "insensitive" } },
+        { email: { contains: searchTerm, mode: "insensitive" } },
+      ];
+      for (let i = 1; i < searchWords.length; i++) {
+        const firstPart = searchWords.slice(0, i).join(" ");
+        const lastPart = searchWords.slice(i).join(" ");
+        conditions.push({
+          AND: [
+            { firstName: { contains: firstPart, mode: "insensitive" } },
+            { lastName: { contains: lastPart, mode: "insensitive" } },
+          ],
+        });
+      }
+      return { OR: conditions };
     };
 
-    if (search) {
-      const searchWords = search.trim().split(/\s+/);
-      const conditions: any[] = [
-        { firstName: { contains: search, mode: "insensitive" } },
-        { lastName: { contains: search, mode: "insensitive" } },
-        { email: { contains: search, mode: "insensitive" } },
-      ];
+    const excludeMembersWhere: Prisma.UserWhereInput =
+      excludeGroupId != null && !Number.isNaN(excludeGroupId)
+        ? { groups: { none: { id: excludeGroupId } } }
+        : {};
 
-      // Handle full name search (e.g. "Mahmud Hassan Lehri" split across firstName + lastName)
-      if (searchWords.length > 1) {
-        for (let i = 1; i < searchWords.length; i++) {
-          const firstPart = searchWords.slice(0, i).join(" ");
-          const lastPart = searchWords.slice(i).join(" ");
-          conditions.push({
-            AND: [
-              { firstName: { contains: firstPart, mode: "insensitive" } },
-              { lastName: { contains: lastPart, mode: "insensitive" } },
-            ],
-          });
-        }
-      }
+    const where: Prisma.UserWhereInput = {
+      companyId: principal.companyId,
+      NOT: { id: userIdNum },
+      ...excludeMembersWhere,
+      ...buildSearchWhere(),
+    };
 
-      where.OR = conditions;
-    }
+    const userSelect = {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      phone: true,
+      image: true,
+      employeeType: true,
+    } as const;
 
-    // Fetch all users matching filter (optimize if dataset is very large)
-    const allUsers = await db.user.findMany({
-      where,
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        phone: true,
-        image: true,
-        employeeType: true,
-      },
-    });
+    const trackWhere = {
+      section: "internal" as const,
+      OR: [{ senderId: userIdNum }, { receiverId: userIdNum }],
+    };
 
-    // Batch fetch all chatTracks for these users in a single query
-    const userIds = allUsers.map((u) => u.id);
-    const chatTracks = await db.chatTrack.findMany({
-      where: {
-        OR: [{ senderId: { in: userIds } }, { receiverId: { in: userIds } }],
-        section: "internal",
-      },
-    });
+    const [chattedTotal, totalRecords] = await Promise.all([
+      db.chatTrack.count({ where: trackWhere }),
+      db.user.count({ where }),
+    ]);
 
-    // Map latest chatTrack per user
-    const userIdSet = new Set(userIds);
-    const latestChatTrackMap = new Map<number, (typeof chatTracks)[0]>();
+    type ChattedUser = Prisma.UserGetPayload<{ select: typeof userSelect }>;
+    type ChatTrackRow = Prisma.ChatTrackGetPayload<{}>;
 
-    for (const track of chatTracks) {
-      if (track.senderId && userIdSet.has(track.senderId)) {
-        const existing = latestChatTrackMap.get(track.senderId);
-        if (!existing || track.updatedAt > existing.updatedAt) {
-          latestChatTrackMap.set(track.senderId, track);
-        }
-      }
-      if (track.receiverId && userIdSet.has(track.receiverId)) {
-        const existing = latestChatTrackMap.get(track.receiverId);
-        if (!existing || track.updatedAt > existing.updatedAt) {
-          latestChatTrackMap.set(track.receiverId, track);
-        }
-      }
-    }
+    const pageUsers: ChattedUser[] = [];
+    const chatTrackByCounterpart = new Map<number, ChatTrackRow>();
 
-    // Combine and sort by latest chatTrack date
-    const usersWithChatTrack = allUsers
-      .map((user) => ({
-        ...user,
-        chatTrack: latestChatTrackMap.get(user.id) ?? null,
-      }))
-      .sort((a, b) => {
-        const aDate = a.chatTrack?.updatedAt ?? new Date(0);
-        const bDate = b.chatTrack?.updatedAt ?? new Date(0);
-        return bDate.getTime() - aDate.getTime(); // Latest first
+    // ---- Chatted half: DB-paginated chatTrack page ----
+    if (skip < chattedTotal && limitNum > 0) {
+      const chattedTake = Math.min(limitNum, chattedTotal - skip);
+      const tracks = await db.chatTrack.findMany({
+        where: trackWhere,
+        orderBy: { updatedAt: "desc" },
+        skip,
+        take: chattedTake,
       });
 
-    // Apply pagination after sorting
-    const totalRecords = usersWithChatTrack.length;
-    const paginatedUsers = usersWithChatTrack.slice(
-      (pageNum - 1) * limitNum,
-      pageNum * limitNum,
-    );
+      const orderedCounterpartIds = tracks
+        .map((t) => (t.senderId === userIdNum ? t.receiverId : t.senderId))
+        .filter((id): id is number => id != null && id !== userIdNum);
+
+      for (const t of tracks) {
+        const otherId = t.senderId === userIdNum ? t.receiverId : t.senderId;
+        if (otherId != null) chatTrackByCounterpart.set(otherId, t);
+      }
+
+      if (orderedCounterpartIds.length > 0) {
+        // Validate counterparts against the search/company `where` so search
+        // filtering applies to chatted rows too.
+        const chattedMatching = await db.user.findMany({
+          where: { ...where, id: { in: orderedCounterpartIds } },
+          select: userSelect,
+        });
+        const byId = new Map(chattedMatching.map((u) => [u.id, u]));
+        for (const id of orderedCounterpartIds) {
+          const u = byId.get(id);
+          if (u) pageUsers.push(u);
+        }
+      }
+    }
+
+    // ---- Never-chatted half: DB-paginated user.findMany ----
+    const remaining = limitNum - pageUsers.length;
+    if (remaining > 0) {
+      // Full chatted-id set is only needed here, for the NOT IN exclusion.
+      // Pages that stay entirely inside chatted territory never run this.
+      const allTracks = await db.chatTrack.findMany({
+        where: trackWhere,
+        select: { senderId: true, receiverId: true },
+      });
+      const chattedIdSet = new Set<number>();
+      for (const t of allTracks) {
+        const otherId = t.senderId === userIdNum ? t.receiverId : t.senderId;
+        if (otherId != null && otherId !== userIdNum) chattedIdSet.add(otherId);
+      }
+
+      const neverChattedSkip = Math.max(0, skip - chattedTotal);
+      const neverChattedUsers = await db.user.findMany({
+        where: {
+          ...where,
+          ...(chattedIdSet.size > 0
+            ? { NOT: [{ id: userIdNum }, { id: { in: [...chattedIdSet] } }] }
+            : {}),
+        },
+        orderBy: { id: "asc" },
+        skip: neverChattedSkip,
+        take: remaining,
+        select: userSelect,
+      });
+      pageUsers.push(...neverChattedUsers);
+    }
+
+    const paginatedUsers = pageUsers.map((u) => ({
+      ...u,
+      chatTrack: chatTrackByCounterpart.get(u.id) ?? null,
+    }));
 
     const hasNextPage = pageNum * limitNum < totalRecords;
     const hasPrevPage = pageNum > 1;

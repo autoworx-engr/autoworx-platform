@@ -27,7 +27,7 @@ export default async function ShopPipelineBox({
   const ongoingJobsPromise = getOngoingJobs();
 
   const [completedJobsData, totalJobsData, ongoingJobsData] = await Promise.all(
-    [completedJobsPromise, totalJobsPromise, ongoingJobsPromise]
+    [completedJobsPromise, totalJobsPromise, ongoingJobsPromise],
   );
 
   // Clean data extraction and formatting
@@ -35,7 +35,7 @@ export default async function ShopPipelineBox({
   const ongoingJobs = ongoingJobsData?.ongoingJobs || 0;
   const completedJobs = completedJobsData?.completedJobs || 0;
   const completedJobsGrowthRate = parseFloat(
-    (completedJobsData?.growth?.rate ?? 0).toFixed(2)
+    (completedJobsData?.growth?.rate ?? 0).toFixed(2),
   );
   const isCompletedJobsPositive =
     completedJobsData?.growth?.isPositive ?? false;
@@ -58,7 +58,7 @@ export default async function ShopPipelineBox({
           hover:shadow-xl hover:shadow-blue-500/10 dark:hover:shadow-indigo-500/10
 
         `,
-        className
+        className,
       )}
     >
       {/* Title and Link */}
@@ -74,7 +74,7 @@ export default async function ShopPipelineBox({
         <ChartData
           heading="Total Jobs Pending"
           number={totalJobs}
-          subHeading="/workload"
+          subHeading="/monthly workload"
           noRate={true} // No rate needed for current pending count
         />
 
@@ -82,13 +82,14 @@ export default async function ShopPipelineBox({
         <ChartData
           heading="Ongoing Jobs"
           number={ongoingJobs}
-          subHeading="/active"
+          subHeading="/monthly active"
           noRate={true} // No rate needed for current ongoing count
         />
 
         {/* Completed Jobs (Performance Metric) */}
         <ChartData
           heading="Completed Jobs"
+          subHeading="/monthly"
           number={completedJobs}
           // The rate is crucial here to show production health over time
           isPositive={isCompletedJobsPositive}

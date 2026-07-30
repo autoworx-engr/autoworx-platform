@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { getCompanyIdFromBearer } from "@/lib/mobileAuth";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -45,7 +45,7 @@ export async function PUT(
   props: { params: Promise<{ id: string }> },
 ) {
   try {
-    const companyId = await getCompanyIdFromBearer(request);
+    const companyId = (await getAuthPrincipal(request))?.companyId ?? null;
     if (!companyId) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },
@@ -84,6 +84,7 @@ export async function PUT(
     const updatedLead = await db.lead.update({
       where: { id: leadId },
       data: { columnId: parseInt(finalColumnId), columnChangedAt: new Date() },
+      include: { column: true },
     });
 
     return NextResponse.json({ success: true, data: updatedLead });

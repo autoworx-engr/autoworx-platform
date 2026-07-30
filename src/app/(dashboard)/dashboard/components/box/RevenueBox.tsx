@@ -34,7 +34,7 @@ export default async function RevenueBox({ className }: TRevenueBoxProps) {
           ring-1 ring-slate-900/5 dark:ring-white/10
           shadow-lg dark:shadow-2xl dark:shadow-blue-900/20
         `,
-        className
+        className,
       )}
     >
       {/* BoxTitle (Assumed to be clean and simple) */}
@@ -45,6 +45,7 @@ export default async function RevenueBox({ className }: TRevenueBoxProps) {
         {/* Current Revenue - Highlighting growth */}
         <ChartData
           heading="Current Revenue"
+          subHeading="/monthly"
           dollarSign={true}
           number={revenue?.revenue || 0}
           isPositive={revenue?.growth?.isPositive || false}
@@ -57,6 +58,7 @@ export default async function RevenueBox({ className }: TRevenueBoxProps) {
         {/* Expected Revenue - Static metric */}
         <ChartData
           heading="Expected Revenue"
+          subHeading="/monthly"
           dollarSign={true}
           number={expectedRevenue?.revenue || 0}
           noRate

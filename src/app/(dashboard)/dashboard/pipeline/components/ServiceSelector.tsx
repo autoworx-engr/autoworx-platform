@@ -1,16 +1,16 @@
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/Tooltip";
+import {
   AlertCircle,
   CircleAlert,
   CircleCheckBig,
   UserRoundX,
 } from "lucide-react";
 import { useEffect, useRef } from "react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/Tooltip";
 
 interface ServiceSelectorProps {
   services: string[] | string;
@@ -64,12 +64,12 @@ function ServiceSelector({
         {hasServices && (
           <div
             onClick={handleServiceDropdownToggle}
-            className="flex w-[52%] cursor-pointer justify-between rounded-md border border-[#6571FF] px-2 py-1 text-xs"
+            className="flex w-[52%] cursor-pointer justify-between rounded-md border border-primary px-2 py-1 text-xs"
             style={{
               visibility: isServiceDropdownOpen ? "hidden" : "visible",
             }}
           >
-            <span className="inline-flex w-full justify-between text-[#6571FF]">
+            <span className="inline-flex w-full justify-between text-primary">
               <span className="text-left">
                 {services.length > 0
                   ? `Service 1${services.length > 1 ? "..." : ""}`
@@ -130,7 +130,7 @@ function ServiceSelector({
         )}
       </div>
       {isServiceDropdownOpen && (
-        <div className="font-Inter z-10 ml-1 mr-1 rounded-md border border-[#6571FF] text-[#6571FF]">
+        <div className="font-Inter z-10 ml-1 mr-1 rounded-md border border-primary text-primary">
           {/* Completed Services */}
           {completedServices.length > 0 && (
             <>

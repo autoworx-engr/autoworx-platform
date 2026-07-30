@@ -34,11 +34,10 @@ export default async function getTasks(params?: TaskQueryParams) {
 
     const { where, include, select, orderBy, skip, take } = params || {};
 
-    // companyId is always enforced as the outermost AND condition so no
-    // caller-supplied OR can escape the tenant boundary.
     const whereCondition: Prisma.TaskWhereInput = {
       AND: [
         { companyId },
+        { status: "pending" },
         {
           OR: [
             { userId: +userId },
@@ -52,6 +51,7 @@ export default async function getTasks(params?: TaskQueryParams) {
     const countWhere: Prisma.TaskWhereInput = {
       AND: [
         { companyId },
+        { status: "pending" },
         {
           OR: [
             { userId: +userId },

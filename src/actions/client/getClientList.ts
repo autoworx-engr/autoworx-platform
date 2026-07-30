@@ -16,20 +16,22 @@ export default async function getClientList(
       whereConditions.push(params.where as Prisma.ClientWhereInput);
     }
 
-    if (search) {
-      const [first, last] = search.trim().split(" ");
+    const trimmedSearch = search?.trim();
+
+    if (trimmedSearch) {
+      const [first, last] = trimmedSearch.split(" ");
 
       whereConditions.push({
         OR: [
           {
             firstName: {
-              contains: search,
+              contains: trimmedSearch,
               mode: "insensitive",
             },
           },
           {
             lastName: {
-              contains: search,
+              contains: trimmedSearch,
               mode: "insensitive",
             },
           },
@@ -55,11 +57,11 @@ export default async function getClientList(
           },
           {
             email: {
-              contains: search,
+              contains: trimmedSearch,
               mode: "insensitive",
             },
             mobile: {
-              contains: search,
+              contains: trimmedSearch,
               mode: "insensitive",
             },
           },

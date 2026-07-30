@@ -7,6 +7,7 @@ import {
   AppointmentStatus,
   Estimate,
 } from "../../../components/EstimatesTab.types";
+import { Metadata } from "next";
 
 type PageSearchParams = {
   search?: string | string[];
@@ -231,6 +232,11 @@ function toEstimate(item: ShopBookingRow): Estimate {
     total,
   };
 }
+
+export const metadata: Metadata = {
+  title: "Virtual Shop Estimates",
+  description: "View and manage your virtual shop estimates and bookings.",
+};
 
 export default async function VirtualShopEstimatesPage({
   params,

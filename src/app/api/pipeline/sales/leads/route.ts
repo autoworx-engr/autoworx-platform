@@ -1,6 +1,6 @@
+import { createSalesLeadFull } from "@/actions/pipelines/createSalesLeadFull";
 import { getLeadsWithCountOptimized } from "@/actions/pipelines/getLeads";
-import { db } from "@/lib/db";
-import { getCompanyIdFromBearer } from "@/lib/mobileAuth";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -51,6 +51,17 @@ import { NextRequest, NextResponse } from "next/server";
  *           type: string
  *         description: Filter leads by status
  *       - in: query
+ *         name: orderBy
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *         description: Sort direction by createdAt (default desc). Must match the initial load order.
+ *       - in: query
+ *         name: excludeNoStage
+ *         schema:
+ *           type: boolean
+ *         description: When true, exclude leads with no pipeline stage (columnId null) from results and totalCount. Ignored if columnId is set. Default false.
+ *       - in: query
  *         name: startDate
  *         schema:
  *           type: string
@@ -70,6 +81,14 @@ import { NextRequest, NextResponse } from "next/server";
  */
 export async function GET(request: NextRequest) {
   try {
+    const companyId = (await getAuthPrincipal(request))?.companyId ?? null;
+    if (!companyId) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+
     const searchParams = request.nextUrl.searchParams;
 
     const columnIdStr = searchParams.get("columnId");
@@ -86,6 +105,19 @@ export async function GET(request: NextRequest) {
     const source = searchParams.get("source") || undefined;
     const service = searchParams.get("service") || undefined;
     const status = searchParams.get("status") || undefined;
+
+    // Mobile's list view hides no-stage (columnId null) leads client-side;
+    // excluding them here keeps totalCount/page size in sync with what the
+    // list renders so infinite scroll doesn't stall. Opt-in — web still
+    // shows no-stage leads as "Unqualified".
+    const excludeNoStage = searchParams.get("excludeNoStage") === "true";
+
+    // Mobile may send a sort field ("createdAt", "updatedAt", ...); getLeads
+    // expects a direction. Treat any non-direction value as the default "desc"
+    // so paginated "load more" pages keep the same order as the initial load.
+    const orderByParam = searchParams.get("orderBy");
+    const orderBy: "asc" | "desc" =
+      orderByParam === "asc" || orderByParam === "desc" ? orderByParam : "desc";
 
     const startDateStr = searchParams.get("startDate");
     const endDateStr = searchParams.get("endDate");
@@ -109,7 +141,10 @@ export async function GET(request: NextRequest) {
       source,
       service,
       status,
+      orderBy,
       dateRange,
+      companyId,
+      excludeNoStage,
     });
 
     return NextResponse.json({
@@ -173,7 +208,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const companyId = await getCompanyIdFromBearer(request);
+    const companyId = (await getAuthPrincipal(request))?.companyId ?? null;
     if (!companyId) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },
@@ -214,28 +249,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let columnId: number | undefined = bodyColumnId;
-    if (!columnId) {
-      const defaultColumn = await db.column.findFirst({
-        where: { companyId, type: "sales", title: "New Leads" },
-        select: { id: true },
-      });
-      columnId = defaultColumn?.id;
-    }
-
-    const lead = await db.lead.create({
-      data: {
-        clientName,
-        clientEmail: clientEmail ?? null,
-        clientPhone: clientPhone ?? null,
-        countryCode: countryCode ?? "US",
-        vehicleInfo,
-        services,
-        source,
-        comments: comments ?? null,
-        companyId,
-        columnId: columnId ?? null,
-      },
+    const lead = await createSalesLeadFull({
+      companyId,
+      clientName,
+      clientEmail,
+      clientPhone,
+      countryCode,
+      vehicleInfo,
+      services,
+      source,
+      comments,
+      columnId: bodyColumnId,
     });
 
     return NextResponse.json({ success: true, data: lead }, { status: 201 });

@@ -50,19 +50,25 @@ export function SelectAppointmentClient({
 
   // Guard so we only auto-select the initial client once, not on every clientList refetch
   const initialClientSet = useRef(false);
+  const fetchingClientId = useRef<number | null>(null);
 
   useEffect(() => {
     if (initialClientSet.current) return;
     if (fromLead && clientId) {
-      initialClientSet.current = true;
+      if (fetchingClientId.current === clientId) return;
+      fetchingClientId.current = clientId;
       fetch(`/api/client/client-details/${clientId}`)
         .then((res) => res.json())
         .then((data) => {
           if (data.success && data.data) {
+            initialClientSet.current = true;
             setClient(data.data);
           }
         })
-        .catch(() => {});
+        .catch(() => {})
+        .finally(() => {
+          if (!initialClientSet.current) fetchingClientId.current = null;
+        });
       return;
     }
     if (clientId && clientList.length > 0) {

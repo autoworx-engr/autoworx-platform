@@ -282,7 +282,7 @@ export function Reminder({
         </div>
 
         {/* Optional Call to Action to make it feel functional */}
-        <div className="mt-2 h-1 w-12 rounded-full bg-[#6571FF]/20" />
+        <div className="mt-2 h-1 w-12 rounded-full bg-primary/20" />
       </div>
     );
   }
@@ -322,8 +322,8 @@ export function Reminder({
           displayList={(template: EmailTemplate) => (
             <div className="group relative flex items-center justify-between">
               <div className="flex items-center gap-3 text-left outline-none">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-slate-200 group-hover:bg-[#6571FF]/10 group-hover:ring-[#6571FF]/20 transition-colors">
-                  <FileText className="h-4 w-4 text-slate-400 group-hover:text-[#6571FF]" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-slate-200 group-hover:bg-primary/10 group-hover:ring-primary/20 transition-colors">
+                  <FileText className="h-4 w-4 text-slate-400 group-hover:text-primary" />
                 </div>
                 <span className="text-sm font-semibold text-slate-600 transition-colors group-hover:text-slate-900">
                   {template.subject}
@@ -404,8 +404,8 @@ export function Reminder({
           displayList={(template: EmailTemplate) => (
             <div className="group relative flex items-center justify-between">
               <div className="flex items-center gap-3 text-left outline-none">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-slate-200 group-hover:bg-[#6571FF]/10 group-hover:ring-[#6571FF]/20 transition-colors">
-                  <FileText className="h-4 w-4 text-slate-400 group-hover:text-[#6571FF]" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-slate-200 group-hover:bg-primary/10 group-hover:ring-primary/20 transition-colors">
+                  <FileText className="h-4 w-4 text-slate-400 group-hover:text-primary" />
                 </div>
                 <span className="text-sm font-semibold text-slate-600 transition-colors group-hover:text-slate-900">
                   {template.subject}
@@ -463,7 +463,7 @@ export function Reminder({
             </label>
             <input
               type="time"
-              className="w-full h-10 min-h-[40px] appearance-none rounded-lg border-none bg-transparent px-3 text-sm text-slate-600 ring-1 ring-slate-200 transition-all focus:ring-2 focus:ring-[#6571FF]/30 outline-none"
+              className="w-full h-10 min-h-[40px] appearance-none rounded-lg border-none bg-transparent px-3 text-sm text-slate-600 ring-1 ring-slate-200 transition-all focus:ring-2 focus:ring-primary/30 outline-none"
               value={time}
               onChange={(e) => setTime(e.target.value)}
             />
@@ -475,7 +475,7 @@ export function Reminder({
             </label>
             <input
               type="date"
-              className="w-full h-10 min-h-[40px] appearance-none rounded-lg border-none bg-transparent px-3 text-sm text-slate-600 ring-1 ring-slate-200 transition-all focus:ring-2 focus:ring-[#6571FF]/30 outline-none"
+              className="w-full h-10 min-h-[40px] appearance-none rounded-lg border-none bg-transparent px-3 text-sm text-slate-600 ring-1 ring-slate-200 transition-all focus:ring-2 focus:ring-primary/30 outline-none"
               value={dateInput}
               onChange={(e) => setDateInput(e.target.value)}
               min={minDate}
@@ -484,7 +484,7 @@ export function Reminder({
 
           <button
             type="button"
-            className="h-10 rounded-lg bg-[#6571FF] px-6 text-sm font-bold text-white shadow-md shadow-[#6571FF]/20 transition-all hover:scale-[1.02] active:scale-95"
+            className="h-10 rounded-lg bg-primary px-6 text-sm font-bold text-white shadow-md shadow-primary/20 transition-all hover:scale-[1.02] active:scale-95"
             onClick={handleAddReminder}
           >
             Add
@@ -492,7 +492,7 @@ export function Reminder({
         </div>
 
         {/* Reminders List Area */}
-        <div className="no-visible-scrollbar h-[250px] overflow-y-auto bg-white md:h-[320px]">
+        <div className="no-visible-scrollbar h-[220px] overflow-y-auto bg-white">
           {times.length > 0 ? (
             <div className="space-y-1">
               {times.map((timeObj, index) => {
@@ -539,9 +539,9 @@ export function Reminder({
               })}
             </div>
           ) : (
-            <div className="flex h-full flex-col items-center justify-center text-center p-6">
-              <div className="mb-2 rounded-full bg-slate-50 p-3 text-slate-300">
-                <Calendar size={24} />
+            <div className="flex h-full flex-col items-center justify-center p-4 text-center">
+              <div className="mb-1.5 rounded-full bg-slate-50 p-2.5 text-slate-300">
+                <Calendar size={20} />
               </div>
               <p className="text-sm font-medium text-slate-400">
                 No reminders scheduled

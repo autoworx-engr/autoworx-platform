@@ -1,18 +1,18 @@
 "use client";
 
-import React, { useState } from "react";
 import { subscribeToPlatformPlan } from "@/actions/platform-billing/subscribe";
-import { toast } from "react-hot-toast";
 import {
-  Loader2,
+  Calendar,
   CreditCard,
+  Hash,
+  Loader2,
   Lock,
   ShieldCheck,
-  Calendar,
-  Hash,
   User,
 } from "lucide-react";
 import Script from "next/script";
+import React, { useState } from "react";
+import { toast } from "react-hot-toast";
 
 type CheckoutPlan = {
   id: string;
@@ -164,7 +164,7 @@ export function CheckoutForm({
               </h3>
             </div>
             <div className="text-right">
-              <p className="text-2xl font-black text-[#6571FF] tracking-tighter">
+              <p className="text-2xl font-black text-primary tracking-tighter">
                 ${plan.price}
                 <span className="text-xs text-slate-400 font-medium lowercase">
                   {plan.interval === "YEARLY" ? "/yr" : "/mo"}
@@ -185,7 +185,7 @@ export function CheckoutForm({
                 <input
                   type="text"
                   placeholder="John"
-                  className="w-full pl-10 pr-4 py-3 bg-white dark:bg-slate-900 border-none ring-1 ring-slate-200 dark:ring-slate-800 rounded-xl focus:ring-2 focus:ring-[#6571FF] focus:shadow-[0_0_15px_-5px_#6571FF] outline-none transition-all duration-300 text-sm text-slate-600 dark:text-slate-200"
+                  className="w-full pl-10 pr-4 py-3 bg-white dark:bg-slate-900 border-none ring-1 ring-slate-200 dark:ring-slate-800 rounded-xl focus:ring-2 focus:ring-primary focus:shadow-[0_0_15px_-5px_#6571FF] outline-none transition-all duration-300 text-sm text-slate-600 dark:text-slate-200"
                   value={cardData.firstName}
                   onChange={(e) =>
                     setCardData({ ...cardData, firstName: e.target.value })
@@ -194,7 +194,7 @@ export function CheckoutForm({
                 />
                 <User
                   size={16}
-                  className="absolute left-3.5 top-3.5 text-slate-400 group-focus-within:text-[#6571FF] transition-colors"
+                  className="absolute left-3.5 top-3.5 text-slate-400 group-focus-within:text-primary transition-colors"
                 />
               </div>
             </div>
@@ -205,7 +205,7 @@ export function CheckoutForm({
               <input
                 type="text"
                 placeholder="Doe"
-                className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-none ring-1 ring-slate-200 dark:ring-slate-800 rounded-xl focus:ring-2 focus:ring-[#6571FF] outline-none transition-all duration-300 text-sm text-slate-600 dark:text-slate-200"
+                className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-none ring-1 ring-slate-200 dark:ring-slate-800 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all duration-300 text-sm text-slate-600 dark:text-slate-200"
                 value={cardData.lastName}
                 onChange={(e) =>
                   setCardData({ ...cardData, lastName: e.target.value })
@@ -223,7 +223,7 @@ export function CheckoutForm({
               <input
                 type="text"
                 placeholder="••••  ••••  ••••  ••••"
-                className="w-full pl-10 pr-4 py-3 bg-white dark:bg-slate-900 border-none ring-1 ring-slate-200 dark:ring-slate-800 rounded-xl focus:ring-2 focus:ring-[#6571FF] outline-none transition-all duration-300 text-sm tracking-widest text-slate-600 dark:text-slate-200"
+                className="w-full pl-10 pr-4 py-3 bg-white dark:bg-slate-900 border-none ring-1 ring-slate-200 dark:ring-slate-800 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all duration-300 text-sm tracking-widest text-slate-600 dark:text-slate-200"
                 value={cardData.cardNumber}
                 onChange={(e) =>
                   setCardData({ ...cardData, cardNumber: e.target.value })
@@ -232,7 +232,7 @@ export function CheckoutForm({
               />
               <CreditCard
                 size={16}
-                className="absolute left-3.5 top-3.5 text-slate-400 group-focus-within:text-[#6571FF] transition-colors"
+                className="absolute left-3.5 top-3.5 text-slate-400 group-focus-within:text-primary transition-colors"
               />
             </div>
           </div>
@@ -247,7 +247,7 @@ export function CheckoutForm({
                   type="text"
                   placeholder="MM"
                   maxLength={2}
-                  className="w-full pl-9 pr-2 py-3 bg-white dark:bg-slate-900 border-none ring-1 ring-slate-200 dark:ring-slate-800 rounded-xl focus:ring-2 focus:ring-[#6571FF] outline-none text-sm text-slate-600 dark:text-slate-200"
+                  className="w-full pl-9 pr-2 py-3 bg-white dark:bg-slate-900 border-none ring-1 ring-slate-200 dark:ring-slate-800 rounded-xl focus:ring-2 focus:ring-primary outline-none text-sm text-slate-600 dark:text-slate-200"
                   value={cardData.month}
                   onChange={(e) =>
                     setCardData({ ...cardData, month: e.target.value })
@@ -256,7 +256,7 @@ export function CheckoutForm({
                 />
                 <Calendar
                   size={14}
-                  className="absolute left-3 top-4 text-slate-400 group-focus-within:text-[#6571FF]"
+                  className="absolute left-3 top-4 text-slate-400 group-focus-within:text-primary"
                 />
               </div>
             </div>
@@ -268,7 +268,7 @@ export function CheckoutForm({
                 type="text"
                 placeholder="YYYY"
                 maxLength={4}
-                className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-none ring-1 ring-slate-200 dark:ring-slate-800 rounded-xl focus:ring-2 focus:ring-[#6571FF] outline-none text-sm text-slate-600 dark:text-slate-200"
+                className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-none ring-1 ring-slate-200 dark:ring-slate-800 rounded-xl focus:ring-2 focus:ring-primary outline-none text-sm text-slate-600 dark:text-slate-200"
                 value={cardData.year}
                 onChange={(e) =>
                   setCardData({ ...cardData, year: e.target.value })
@@ -285,7 +285,7 @@ export function CheckoutForm({
                   type="text"
                   placeholder="•••"
                   maxLength={4}
-                  className="w-full pl-9 pr-2 py-3 bg-white dark:bg-slate-900 border-none ring-1 ring-slate-200 dark:ring-slate-800 rounded-xl focus:ring-2 focus:ring-[#6571FF] outline-none text-sm text-slate-600 dark:text-slate-200"
+                  className="w-full pl-9 pr-2 py-3 bg-white dark:bg-slate-900 border-none ring-1 ring-slate-200 dark:ring-slate-800 rounded-xl focus:ring-2 focus:ring-primary outline-none text-sm text-slate-600 dark:text-slate-200"
                   value={cardData.cardCode}
                   onChange={(e) =>
                     setCardData({ ...cardData, cardCode: e.target.value })
@@ -294,7 +294,7 @@ export function CheckoutForm({
                 />
                 <Hash
                   size={14}
-                  className="absolute left-3 top-4 text-slate-400 group-focus-within:text-[#6571FF]"
+                  className="absolute left-3 top-4 text-slate-400 group-focus-within:text-primary"
                 />
               </div>
             </div>
@@ -304,7 +304,7 @@ export function CheckoutForm({
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full overflow-hidden bg-[#6571FF] text-white font-bold py-4 rounded-2xl shadow-xl shadow-[#6571FF]/20 hover:shadow-[#6571FF]/40 hover:-translate-y-0.5 transition-all duration-300 active:scale-95 disabled:opacity-50"
+              className="group relative w-full overflow-hidden bg-primary text-white font-bold py-4 rounded-2xl shadow-xl shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all duration-300 active:scale-95 disabled:opacity-50"
             >
               <span className="relative z-10 flex items-center justify-center gap-2">
                 {loading ? (

@@ -232,6 +232,15 @@ export async function updateInventoryOnEstimateConversion({
   companyId,
 }: updateInventoryOnEstimateConversionProps) {
   try {
+    // Collect updated products outside the transaction so lowInventoryNotification
+    // doesn't hold the DB connection open while doing its own getUsersByRole query.
+    const updatedProducts: {
+      lowInventoryAlert: number | null;
+      quantity: unknown;
+      name: string;
+      id: number;
+    }[] = [];
+
     await db.$transaction(async (db) => {
       const findInvoice = await db.invoice.findUnique({
         where: { id: invoiceId },
@@ -299,16 +308,24 @@ export async function updateInventoryOnEstimateConversion({
             },
           });
 
-          await lowInventoryNotification({
-            companyId,
-            lowInventoryAlert: updatedProduct.lowInventoryAlert || 0,
-            currentQuantity: Number(updatedProduct.quantity) || 0,
-            productName: updatedProduct.name,
-            productId: updatedProduct.id,
-          });
+          updatedProducts.push(updatedProduct);
         }),
       );
     });
+
+    // Run low-inventory notifications after the transaction commits so they
+    // don't hold the DB connection open during getUsersByRole queries.
+    await Promise.all(
+      updatedProducts.map((updatedProduct) =>
+        lowInventoryNotification({
+          companyId,
+          lowInventoryAlert: updatedProduct.lowInventoryAlert || 0,
+          currentQuantity: Number(updatedProduct.quantity) || 0,
+          productName: updatedProduct.name,
+          productId: updatedProduct.id,
+        }),
+      ),
+    );
   } catch (err) {
     throw err;
   }

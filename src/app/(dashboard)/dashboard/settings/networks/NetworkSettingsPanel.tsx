@@ -185,7 +185,7 @@ export function NetworkSettingsPanel({
                   <p className="text-xs text-gray-500 mt-0.5">{row.desc}</p>
                 </div>
                 <Switch
-                  className="data-[state=checked]:!bg-[#6571FF]/80"
+                  className="data-[state=checked]:!bg-primary/80"
                   checked={row.checked}
                   setChecked={row.onToggle}
                 />
@@ -196,7 +196,7 @@ export function NetworkSettingsPanel({
                 <p className="text-sm font-medium text-gray-600">
                   Search Radius
                 </p>
-                <span className="text-xs font-mono bg-indigo-50 text-[#6571FF] px-2.5 py-0.5 rounded-full font-medium">
+                <span className="text-xs font-mono bg-indigo-50 text-primary px-2.5 py-0.5 rounded-full font-medium">
                   {range[0]}–{range[1]} mi
                 </span>
               </div>
@@ -238,10 +238,10 @@ export function NetworkSettingsPanel({
           />
           <input
             type="text"
-            placeholder="Search by company name..."
+            placeholder="Search by Company Name..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full h-10 pl-9 pr-4 rounded-xl border border-gray-200 text-sm text-gray-600 focus:border-[#6571FF] focus:ring-1 focus:ring-[#6571FF] focus:outline-none transition"
+            className="w-full h-10 pl-9 pr-4 rounded-xl border border-gray-200 text-sm text-gray-600 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition"
           />
         </div>
         <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden max-h-96 overflow-y-auto thin-scrollbar">
@@ -310,7 +310,7 @@ export function NetworkSettingsPanel({
                   </div>
                   <button
                     onClick={() => onConnect(company.id, company.name)}
-                    className="text-xs font-medium px-3 py-1.5 rounded-lg bg-[#6571FF] hover:bg-[#5864e5] text-white transition shrink-0 ml-3 flex items-center gap-1.5"
+                    className="text-xs font-medium px-3 py-1.5 rounded-lg bg-primary hover:bg-[#5864e5] text-white transition shrink-0 ml-3 flex items-center gap-1.5"
                   >
                     <LinkIcon size={11} />
                     Connect

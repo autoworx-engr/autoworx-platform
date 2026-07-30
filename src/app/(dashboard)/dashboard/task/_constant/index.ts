@@ -2,6 +2,7 @@ export const taskQueryKey = {
   allTasks: "all-tasks",
   allTaskByScroll: ["all-tasks", "scroll"],
   taskById: (taskId: string) => ["task", taskId],
+  userTasks: "user-tasks",
   taskByUserId: (userId: string) => ["user-tasks", userId],
 };
 

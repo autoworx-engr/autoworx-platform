@@ -322,7 +322,7 @@ export function BillSummary({
                   }}
                   className={cn(
                     "relative flex h-5 w-9 cursor-pointer items-center rounded-full px-1 transition-all duration-200",
-                    toggleState ? "bg-[#6571FF]" : "bg-slate-200",
+                    toggleState ? "bg-primary" : "bg-slate-200",
                   )}
                 >
                   <div
@@ -395,7 +395,7 @@ export function BillSummary({
         <div className="pt-2">
           <MakePayment />
           {/* Ensure MakePayment internal button uses:
-       w-full bg-white text-[#6571FF] font-bold rounded-xl py-3 shadow-lg
+       w-full bg-white text-primary font-bold rounded-xl py-3 shadow-lg
    */}
         </div>
       </div>

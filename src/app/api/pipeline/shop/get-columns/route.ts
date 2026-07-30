@@ -1,4 +1,5 @@
 import { getColumnsByType } from "@/actions/pipelines/pipelinesColumn";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -66,6 +67,13 @@ import { NextRequest, NextResponse } from "next/server";
  *                   example: Internal server error
  */
 export async function GET(req: NextRequest) {
+  const principal = await getAuthPrincipal(req);
+  if (!principal) {
+    return NextResponse.json(
+      { success: false, message: "Unauthorized" },
+      { status: 401 },
+    );
+  }
   try {
     const data = await getColumnsByType("shop");
 

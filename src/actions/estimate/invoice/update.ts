@@ -124,46 +124,28 @@ export async function updateInvoice(
 
     const companyId = await getCompanyId();
 
-    //find invoice from database
-    const invoice = await db.invoice.findUnique({
-      where: {
-        id: data.id,
-      },
-      include: {
-        column: {
-          select: {
-            title: true,
-          },
-        },
-      },
-    });
+    // fetch invoice + target column in parallel
+    const [invoice, column] = await Promise.all([
+      db.invoice.findUnique({
+        where: { id: data.id },
+        include: { column: { select: { title: true } } },
+      }),
+      db.column.findUnique({ where: { id: data.columnId } }),
+    ]);
 
     const isChanged = hasInvoiceChanged(invoice, data);
-
-    const column = await db.column.findUnique({
-      where: { id: data.columnId },
-    });
 
     // use prisma transaction for better performance or safely save data in db
     const updatedInvoice = await db.$transaction(
       async (txDb) => {
         // await wait(21000);
 
-        // merge all the same products and sum the quantity
-        let materials: Material[] = [];
-
-        for (const item in data.items) {
-          const itemMaterials = data?.items[item].materials;
-
-          if (itemMaterials) {
-            materials = [
-              ...materials,
-              ...itemMaterials.filter((material) => material !== null),
-            ];
-          }
-        }
-
-        // const productsWithQuantity = getProductWithQuantity(materials);
+        // flatten non-null materials across items
+        const materials: Material[] = data.items.flatMap((item) =>
+          (item.materials ?? []).filter(
+            (m): m is Material & { tags: Tag[] } => m !== null,
+          ),
+        );
 
         if (invoice?.type === "Invoice") {
           await updateInventoryOrCreateHistory({
@@ -297,19 +279,15 @@ export async function updateInvoice(
         });
 
         if (inspectionsToSave.length > 0) {
-          await Promise.all(
-            inspectionsToSave.map(async (inspection) => {
-              return txDb.invoiceInspection.create({
-                data: {
-                  invoiceId: data.id,
-                  title: inspection.title,
-                  driver: inspection.driver,
-                  passenger: inspection.passenger,
-                  notes: inspection.notes,
-                },
-              });
-            }),
-          );
+          await txDb.invoiceInspection.createMany({
+            data: inspectionsToSave.map((inspection) => ({
+              invoiceId: data.id,
+              title: inspection.title,
+              driver: inspection.driver,
+              passenger: inspection.passenger,
+              notes: inspection.notes,
+            })),
+          });
         }
 
         const updatedInvoiceItem = await Promise.all(
@@ -324,59 +302,40 @@ export async function updateInvoice(
             }
 
             if (findExistingItem) {
-              // check if labor exist
-              let findExistingLabor = null;
-              if (Number(item?.labor?.id)) {
-                findExistingLabor = await txDb.labor.findUnique({
-                  where: {
-                    id: item?.labor?.id,
-                    cannedLabor: false,
-                  },
-                });
-              }
-
-              if (!findExistingLabor && item.labor) {
-                //TODO: delete old labor if labor id exist and not canned labor
-                if (item?.labor?.id && !item?.labor?.cannedLabor) {
-                  await txDb.labor.delete({
-                    where: {
-                      id: item.labor?.id,
-                      cannedLabor: false,
-                    },
-                  });
-                }
-                findExistingLabor = await txDb.labor.create({
-                  data: {
-                    name: item?.labor?.name ?? "",
-                    categoryId: item?.labor?.categoryId,
-                    notes: item?.labor?.notes,
-                    hours: item?.labor?.hours ?? 0,
-                    charge: item?.labor?.charge ?? 0,
-                    discount: item?.labor?.discount ?? 0,
-                    companyId,
-                  },
-                });
-              }
-
+              // upsert labor (one write instead of create-then-update)
               let updatedLabor = null;
+              if (item.labor) {
+                const laborData = {
+                  name: item.labor.name ?? "",
+                  categoryId: item.labor.categoryId,
+                  notes: item.labor.notes,
+                  hours: item.labor.hours ?? 0,
+                  charge: item.labor.charge ?? 0,
+                  discount: item.labor.discount ?? 0,
+                  companyId,
+                };
 
-              if (findExistingLabor) {
-                updatedLabor = await txDb.labor.update({
-                  where: {
-                    id: findExistingLabor.id,
-                  },
-                  data: {
-                    name: item?.labor?.name,
-                    categoryId: item?.labor?.categoryId,
-                    notes: item?.labor?.notes,
-                    hours: item?.labor?.hours ?? 0,
-                    charge: item?.labor?.charge ?? 0,
-                    discount: item?.labor?.discount ?? 0,
-                    companyId,
-                  },
-                });
+                const existingLabor = Number(item.labor.id)
+                  ? await txDb.labor.findUnique({
+                      where: { id: item.labor.id, cannedLabor: false },
+                    })
+                  : null;
+
+                if (existingLabor) {
+                  updatedLabor = await txDb.labor.update({
+                    where: { id: existingLabor.id },
+                    data: laborData,
+                  });
+                } else {
+                  // stale id pointing at non-canned row → clear it; deleteMany is no-op safe
+                  if (item.labor.id && !item.labor.cannedLabor) {
+                    await txDb.labor.deleteMany({
+                      where: { id: item.labor.id, cannedLabor: false },
+                    });
+                  }
+                  updatedLabor = await txDb.labor.create({ data: laborData });
+                }
               }
-              console.log({ updatedLabor });
               // update item
               const updatedInvoiceItem = await txDb.invoiceItem.update({
                 where: {
@@ -396,19 +355,22 @@ export async function updateInvoice(
               if (item?.materials?.length > 0) {
                 materials = await Promise.all(
                   item.materials.map(async (material) => {
-                    const hasMaterialInInvoice = await txDb.material.findFirst({
-                      where: {
-                        id: material?.id,
-                        invoiceId: invoice?.id,
-                        invoiceItemId: item?.id,
-                      },
-                    });
                     if (!material || !material.name) return;
                     if (Number(material?.quantity || 0) <= 0) {
                       throw new Error(
                         "Material quantity should be greater than 0",
                       );
                     }
+                    // only check DB when material has an id; new materials wont exist
+                    const hasMaterialInInvoice = material.id
+                      ? await txDb.material.findFirst({
+                          where: {
+                            id: material.id,
+                            invoiceId: invoice?.id,
+                            invoiceItemId: item?.id,
+                          },
+                        })
+                      : null;
                     if (hasMaterialInInvoice) {
                       const updatedMaterial = await txDb.material.update({
                         where: {
@@ -466,35 +428,21 @@ export async function updateInvoice(
                 },
               });
 
-              const tags = item.tags;
-
-              const tagsCreatePromise = tags.map(async (tag) => {
-                let hasTagsExist = await txDb.itemTag.findFirst({
-                  where: {
-                    tagId: tag?.id,
-                    itemId: findExistingItem?.id,
-                  },
+              // sync tags: bulk insert (skip existing via composite PK) + drop removed
+              const tagIds = item.tags.map((tag) => tag.id);
+              if (tagIds.length > 0) {
+                await txDb.itemTag.createMany({
+                  data: tagIds.map((tagId) => ({
+                    itemId: findExistingItem.id,
+                    tagId,
+                  })),
+                  skipDuplicates: true,
                 });
-
-                if (!hasTagsExist) {
-                  hasTagsExist = await txDb.itemTag.create({
-                    data: {
-                      itemId: findExistingItem.id,
-                      tagId: tag.id,
-                    },
-                  });
-                }
-                return hasTagsExist;
-              });
-
-              await Promise.all(tagsCreatePromise);
-              // delete tags which are not in the updated list
+              }
               await txDb.itemTag.deleteMany({
                 where: {
                   itemId: findExistingItem.id,
-                  tagId: {
-                    notIn: tags.map((tag) => tag.id),
-                  },
+                  tagId: { notIn: tagIds },
                 },
               });
               return updatedInvoiceItem;
@@ -553,18 +501,15 @@ export async function updateInvoice(
                   }),
                 ));
 
-              const tags = item.tags;
-
-              const tagsCreatePromise = tags.map(async (tag) => {
-                await txDb.itemTag.create({
-                  data: {
+              if (item.tags.length > 0) {
+                await txDb.itemTag.createMany({
+                  data: item.tags.map((tag) => ({
                     itemId: newInvoiceItem.id,
                     tagId: tag.id,
-                  },
+                  })),
+                  skipDuplicates: true,
                 });
-              });
-
-              await Promise.all(tagsCreatePromise);
+              }
               return newInvoiceItem;
             }
           }),
@@ -662,36 +607,6 @@ export async function updateInvoice(
           },
         });
 
-        if (
-          invoice?.column?.title !== "Delivered" &&
-          column?.title === "Delivered"
-        ) {
-          // send notification when invoice is delivered
-          sendInvoiceDeliveredNotification({
-            companyId: updatedInvoice.companyId,
-            invoiceId: updatedInvoice.id,
-            clientName: `${updatedInvoice.client?.firstName} ${updatedInvoice.client?.lastName}`,
-          });
-        }
-
-        if (invoice?.columnId !== updatedInvoice.columnId) {
-          // if invoice status update invoice automation trigger
-          updateInvoiceAutomationTrigger({
-            companyId: updatedInvoice?.companyId!,
-            invoiceId: updatedInvoice?.id!,
-            columnId: updatedInvoice?.columnId!,
-            type: updatedInvoice?.type!,
-          });
-        }
-
-        if (updatedInvoice.type === "Invoice" && invoice?.type === "Estimate") {
-          updateServiceAutomationTrigger({
-            companyId: updatedInvoice?.companyId,
-            estimateId: updatedInvoice?.id,
-            columnId: updatedInvoice?.columnId!,
-          });
-        }
-
         return updatedInvoice;
       },
       {
@@ -700,6 +615,45 @@ export async function updateInvoice(
         isolationLevel: "Serializable", // Ensure data consistency
       },
     );
+
+    // Fire side effects only after the transaction has committed successfully,
+    // so a later rollback can't leave a notification/automation-trigger sent
+    // for a write that never actually persisted.
+    if (
+      invoice?.column?.title !== "Delivered" &&
+      column?.title === "Delivered"
+    ) {
+      // send notification when invoice is delivered
+      sendInvoiceDeliveredNotification({
+        companyId: updatedInvoice.companyId,
+        invoiceId: updatedInvoice.id,
+        clientName: `${updatedInvoice.client?.firstName} ${updatedInvoice.client?.lastName}`,
+      }).catch((err) =>
+        console.error("sendInvoiceDeliveredNotification failed", err),
+      );
+    }
+
+    if (invoice?.columnId !== updatedInvoice.columnId) {
+      // if invoice status update invoice automation trigger
+      updateInvoiceAutomationTrigger({
+        companyId: updatedInvoice?.companyId!,
+        invoiceId: updatedInvoice?.id!,
+        columnId: updatedInvoice?.columnId!,
+        type: updatedInvoice?.type!,
+      }).catch((err) =>
+        console.error("updateInvoiceAutomationTrigger failed", err),
+      );
+    }
+
+    if (updatedInvoice.type === "Invoice" && invoice?.type === "Estimate") {
+      updateServiceAutomationTrigger({
+        companyId: updatedInvoice?.companyId,
+        estimateId: updatedInvoice?.id,
+        columnId: updatedInvoice?.columnId!,
+      }).catch((err) =>
+        console.error("updateServiceAutomationTrigger failed", err),
+      );
+    }
 
     // task create or update this section
     const invoiceTasks = await Promise.all(
@@ -765,6 +719,7 @@ export async function updateInvoice(
     );
 
     revalidatePath("/dashboard/estimate");
+    console.log("updated invoice", updateInvoice);
     return {
       type: "success",
       data: updatedInvoice,

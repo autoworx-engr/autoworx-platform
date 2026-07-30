@@ -1,6 +1,7 @@
-import { getCompanyIdFromBearer } from "@/lib/mobileAuth";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { buildWordSearchAnd } from "@/lib/wordSearch";
 
 /**
  * @swagger
@@ -83,7 +84,7 @@ export async function GET(
 ) {
   try {
     const { companyId: companyIdParam } = await params;
-    const jwtCompanyId = await getCompanyIdFromBearer(req);
+    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
     if (jwtCompanyId === null) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -111,20 +112,20 @@ export async function GET(
       where.clientId = clientId;
     }
 
-    if (search) {
-      where.OR = [
-        { make: { contains: search, mode: "insensitive" } },
-        { model: { contains: search, mode: "insensitive" } },
-        { licensePlate: { contains: search, mode: "insensitive" } },
-      ];
+    const searchAnd = buildWordSearchAnd(
+      search,
+      ["make", "model", "license"],
+      ["year"],
+    );
+    if (searchAnd) {
+      where.AND = searchAnd;
     }
 
     const [vehicles, total] = await Promise.all([
       db.vehicle.findMany({
         where,
         orderBy: { createdAt: "desc" },
-        skip,
-        take: limit,
+        ...(search ? {} : { skip, take: limit }),
         select: {
           id: true,
           make: true,
@@ -141,13 +142,21 @@ export async function GET(
     return NextResponse.json({
       success: true,
       data: vehicles,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasMore: skip + vehicles.length < total,
-      },
+      pagination: search
+        ? {
+            page: 1,
+            limit: total,
+            total,
+            totalPages: 1,
+            hasMore: false,
+          }
+        : {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+            hasMore: skip + vehicles.length < total,
+          },
     });
   } catch (error) {
     console.error("ESTIMATE VEHICLES ERROR:", error);

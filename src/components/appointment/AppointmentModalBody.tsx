@@ -1,6 +1,5 @@
 "use client";
 
-import { deleteAppointment } from "@/actions/appointment/deleteAppointment";
 import {
   DialogClose,
   DialogContent,
@@ -9,12 +8,11 @@ import {
   DialogTitle,
 } from "@/components/Dialog";
 import { cn } from "@/lib/cn";
-import { errorToast, successToast } from "@/lib/toast";
-import { Bell, Calendar, Trash2 } from "lucide-react";
-import { Popconfirm } from "antd";
+import { errorToast } from "@/lib/toast";
+import { Bell, Calendar } from "lucide-react";
+import AppointmentForm from "./AppointmentForm";
 import { Reminder } from "./Reminder";
 import ScheduleTab from "./ScheduleTab";
-import AppointmentForm from "./AppointmentForm";
 import {
   Tab,
   useAppointmentFormState,
@@ -26,8 +24,6 @@ export default function AppointmentModalBody(props: AppointmentModalBodyProps) {
     fromEdit,
     appointmentId,
     setIsAppointmentModalOpen,
-    onModalClose,
-    onAppointmentDeleted,
     fromLead,
     clientId,
     vehicleId,
@@ -92,15 +88,15 @@ export default function AppointmentModalBody(props: AppointmentModalBodyProps) {
             className={cn(
               "flex items-center justify-center rounded-full px-6 py-2 text-sm font-bold transition-all duration-300 ease-out",
               tab === Tab.Schedule
-                ? "bg-white text-slate-600 shadow-sm ring-1 ring-slate-200"
-                : "text-slate-400 hover:text-slate-600 hover:bg-slate-200/50",
+                ? "bg-white text-primary shadow-sm ring-1 ring-slate-200"
+                : "text-slate-400 hover:bg-slate-200/50 hover:text-slate-600",
             )}
             onClick={() => setTab(Tab.Schedule)}
           >
             <Calendar
               className={cn(
                 "mr-2 transition-colors",
-                tab === Tab.Schedule ? "text-slate-600" : "text-slate-400",
+                tab === Tab.Schedule ? "text-primary" : "text-slate-400",
               )}
               size={18}
               strokeWidth={2.5}
@@ -113,15 +109,15 @@ export default function AppointmentModalBody(props: AppointmentModalBodyProps) {
             className={cn(
               "flex items-center justify-center rounded-full px-6 py-2 text-sm font-bold transition-all duration-300 ease-out",
               tab === Tab.Reminder
-                ? "bg-white text-slate-600 shadow-sm ring-1 ring-slate-200"
-                : "text-slate-400 hover:text-slate-600 hover:bg-slate-200/50",
+                ? "bg-white text-primary shadow-sm ring-1 ring-slate-200"
+                : "text-slate-400 hover:bg-slate-200/50 hover:text-slate-600",
             )}
             onClick={() => setTab(Tab.Reminder)}
           >
             <Bell
               className={cn(
                 "mr-2 transition-colors",
-                tab === Tab.Reminder ? "text-slate-600" : "text-slate-400",
+                tab === Tab.Reminder ? "text-primary" : "text-slate-400",
               )}
               size={18}
               strokeWidth={2.5}
@@ -131,7 +127,7 @@ export default function AppointmentModalBody(props: AppointmentModalBodyProps) {
         </div>
       </DialogHeader>
 
-      <div className="-mx-6 max-h-[66vh] lg:max-h-fit h-full lg:grid gap-px border-solid lg:grid-cols-2 md:border-y">
+      <div className="-mx-6 min-h-0 max-h-[66vh] lg:max-h-none h-full lg:grid gap-px border-solid lg:grid-cols-2 md:border-y lg:overflow-hidden">
         <AppointmentForm
           {...state}
           fromLead={fromLead}
@@ -186,44 +182,12 @@ export default function AppointmentModalBody(props: AppointmentModalBodyProps) {
         </div>
       </div>
 
-      <div
-        className={cn(
-          "flex gap-5 md:gap-0",
-          fromEdit && appointmentId ? "justify-between" : "justify-end",
-        )}
-      >
-        {fromEdit && appointmentId && (
-          <Popconfirm
-            title="Delete the appointment"
-            description="Are you sure to delete this appointment?"
-            okText="Yes"
-            cancelText="No"
-            onConfirm={async () => {
-              try {
-                await deleteAppointment(appointmentId);
-                onAppointmentDeleted && onAppointmentDeleted(appointmentId);
-                onModalClose();
-                successToast("Appointment deleted successfully");
-              } catch (error) {
-                errorToast("Failed to delete appointment");
-              }
-            }}
-          >
-            <Trash2
-              size={20}
-              className="text-red-500 hover:text-red-600 cursor-pointer"
-            />
-          </Popconfirm>
-        )}
-        <DialogFooter className="justify-end">
+      <div className="flex justify-end gap-2">
+        <DialogFooter className="justify-end gap-2">
           <DialogClose asChild>
             <button
               type="button"
-              className="
-                rounded-xl px-5 py-2.5 text-sm font-medium text-slate-500
-                hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
-                transition-colors border
-              "
+              className="rounded-md border px-5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
               onClick={() => resetAll()}
             >
               Cancel
@@ -231,14 +195,12 @@ export default function AppointmentModalBody(props: AppointmentModalBodyProps) {
           </DialogClose>
           <button
             type="button"
-            className={`rounded-xl px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40
-              hover:-translate-y-0.5 hover:scale-[1.02]
-              active:translate-y-0 active:scale-100
-              transition-all duration-200 ${
-                formChanged && !isSubmitting
-                  ? "bg-gradient-to-r from-[#6571FF] to-[#5a66ee] cursor-pointer"
-                  : "cursor-not-allowed bg-gray-400"
-              }`}
+            className={cn(
+              "rounded-md px-6 py-2 text-sm font-medium text-white shadow transition-all duration-200",
+              formChanged && !isSubmitting
+                ? "cursor-pointer bg-gradient-to-r from-primary to-[#5a66ee] hover:shadow-lg hover:shadow-indigo-500/30"
+                : "cursor-not-allowed bg-gray-400",
+            )}
             onClick={handleSubmit}
             disabled={
               !formChanged ||

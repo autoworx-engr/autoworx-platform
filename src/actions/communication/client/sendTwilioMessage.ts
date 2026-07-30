@@ -5,11 +5,11 @@ import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import getUser from "@/lib/getUser";
 import { normalizeUSPhoneNumber } from "@/lib/normalizeUSPhoneNumber";
+import { guardOutboundSms, maskPhone } from "@/lib/sms/outboundSmsGuard";
 import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
 import { revalidatePath } from "next/cache";
 import Twilio from "twilio";
 import { updateNewEmailChatTrack, updateNewSMSChatTrack } from "./chat-track";
-import { sendSMSToAgent } from "@/service/ai-agent/api";
 
 type TTwilioCredentials = {
   companyId?: number;
@@ -126,12 +126,19 @@ export async function sendTwilioMessage({
     let to = normalizeUSPhoneNumber(client?.mobile!);
 
     if (twilioCredentials.phoneNumber && to && clientId) {
-      await twilio.messages.create({
-        body: message ?? "",
-        from: twilioCredentials.phoneNumber,
-        to,
-        mediaUrl: attachments.map((file) => file.url),
-      });
+      const gate = await guardOutboundSms(to, twilioCredentials.companyId);
+      if (gate.allowed) {
+        await twilio.messages.create({
+          body: message ?? "",
+          from: twilioCredentials.phoneNumber,
+          to,
+          mediaUrl: attachments.map((file) => file.url),
+        });
+      } else {
+        console.warn(
+          `[sms] outbound skipped (${gate.reason}); to=${maskPhone(to)}`,
+        );
+      }
 
       const data = await db.$transaction(async (tx) => {
         const created = await tx.clientSMS.create({
@@ -163,7 +170,8 @@ export async function sendTwilioMessage({
           shouldSalesAgentStop &&
           client &&
           client?.isSalesAgent &&
-          !systemCall
+          !systemCall &&
+          process.env.APP_ENV === "production"
         ) {
           await tx.client.update({
             where: { id: clientId },
@@ -203,7 +211,7 @@ export async function sendTwilioMessage({
         }
       } catch (error) {}
 
-      revalidatePath("/dashboard/communication/client/${clientId}");
+      revalidatePath(`/dashboard/communication/client/${clientId}`);
 
       return {
         success: true,

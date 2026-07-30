@@ -1,11 +1,10 @@
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { TBugReportMessage } from '@/types/BugReportMessage';
-import { Attachment } from '@prisma/client';
-import Image from 'next/image';
-import Link from 'next/link';
-import { useState } from 'react';
-import ImageModal from './ImageModal';
-import moment from 'moment';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { TBugReportMessage } from "@/types/BugReportMessage";
+import { Attachment } from "@prisma/client";
+import Image from "next/image";
+import Link from "next/link";
+import { useState } from "react";
+import ImageModal from "./ImageModal";
 
 interface MessageCardProps {
   messages: TBugReportMessage;
@@ -26,18 +25,18 @@ export const MessageCard = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isImageLoading, setIsImageLoading] = useState(false);
-  const isCompany = messages.senderType === 'company';
+  const isCompany = messages.senderType === "company";
   const avatarSrc = isCompany
-    ? selectedContact.company.image || '/placeholder.svg'
-    : '';
-  const displayName = isCompany ? selectedContact.company.name : 'AX';
+    ? selectedContact.company.image || "/placeholder.svg"
+    : "";
+  const displayName = isCompany ? selectedContact.company.name : "AX";
 
-  const formattedDate = new Date(messages.createdAt).toLocaleString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
+  const formattedDate = new Date(messages.createdAt).toLocaleString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
     hour12: true,
-    month: 'short',
-    day: 'numeric',
+    month: "short",
+    day: "numeric",
   });
 
   const isSender = isAdminView ? isCompany : !isCompany;
@@ -46,16 +45,16 @@ export const MessageCard = ({
     <>
       <div
         className={`flex items-start ${
-          isSender ? 'flex-row space-x-2' : 'flex-row-reverse gap-2'
+          isSender ? "flex-row space-x-2" : "flex-row-reverse gap-2"
         }`}
       >
         <Avatar className="mt-1 h-8 w-8">
           <AvatarImage src={avatarSrc} alt={displayName} />
           <AvatarFallback className="text-xs">
             {displayName
-              .split(' ')
+              .split(" ")
               .map((n) => n[0])
-              .join('')}
+              .join("")}
           </AvatarFallback>
         </Avatar>
 
@@ -64,7 +63,7 @@ export const MessageCard = ({
           {messages?.attachment?.length > 0 && (
             <div
               className={`mb-2 flex flex-wrap gap-2 ${
-                isSender ? 'justify-start' : 'justify-end'
+                isSender ? "justify-start" : "justify-end"
               }`}
             >
               {messages.attachment.map(
@@ -79,7 +78,7 @@ export const MessageCard = ({
                       key={attachment.id}
                       // className="relative h-[120px] w-[180px] overflow-hidden rounded-lg border border-gray-300"
                     >
-                      {attachment.fileType.includes('image') ? (
+                      {attachment.fileType.includes("image") ? (
                         <Image
                           src={attachment.fileUrl}
                           alt={attachment.fileName}
@@ -100,7 +99,7 @@ export const MessageCard = ({
                       )}
                     </div>
                   );
-                }
+                },
               )}
             </div>
           )}
@@ -110,8 +109,8 @@ export const MessageCard = ({
             <div
               className={`group relative max-w-full rounded-xl p-3 text-sm shadow-md ${
                 isSender
-                  ? 'me-[20%] bg-white text-gray-800'
-                  : 'ms-[20%] bg-[#006D77] text-white'
+                  ? "me-[20%] bg-white text-gray-800"
+                  : "ms-[20%] bg-[#006D77] text-white"
               }`}
             >
               <p className="whitespace-pre-line break-words">
@@ -123,16 +122,16 @@ export const MessageCard = ({
           {/* Time + Read Status */}
           <div
             className={`mt-1 flex items-center ${
-              isSender ? 'justify-start' : 'justify-end'
+              isSender ? "justify-start" : "justify-end"
             } text-xs opacity-70`}
           >
             <span>{formattedDate}</span>
             {/* Show read status only for messages sent by current viewer */}
             {((isAdminView && !isCompany) || (!isAdminView && isCompany)) && (
               <span
-                className={`ml-2 ${messages.isRead ? 'text-blue-500' : ''}`}
+                className={`ml-2 ${messages.isRead ? "text-blue-500" : ""}`}
               >
-                {messages.isRead ? '✓✓' : '✓'}
+                {messages.isRead ? "✓✓" : "✓"}
               </span>
             )}
           </div>

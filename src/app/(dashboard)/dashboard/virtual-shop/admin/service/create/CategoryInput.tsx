@@ -50,20 +50,20 @@ export default function CategoryInput({ value, onChange }: CategoryInputProps) {
       <div
         className={cn(
           "flex flex-wrap items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50/60 px-2 py-1.5",
-          "focus-within:border-[#6571FF]/50 focus-within:ring-2 focus-within:ring-[#6571FF]/15 focus-within:shadow-sm",
+          "focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/15 focus-within:shadow-sm",
           "transition-all duration-200 hover:border-slate-300",
         )}
       >
         {value.map((category, index) => (
           <span
             key={`${category}-${index}`}
-            className="inline-flex items-center gap-1 rounded-md border border-[#6571FF]/25 bg-[#6571FF]/10 px-2 py-1 text-xs font-semibold text-[#6571FF]"
+            className="inline-flex items-center gap-1 rounded-md border border-primary/25 bg-primary/10 px-2 py-1 text-xs font-semibold text-primary"
           >
             {category}
             <button
               type="button"
               onClick={() => removeAt(index)}
-              className="rounded-full p-0.5 text-[#6571FF]/70 transition-colors hover:bg-[#6571FF]/15 hover:text-[#6571FF]"
+              className="rounded-full p-0.5 text-primary/70 transition-colors hover:bg-primary/15 hover:text-primary"
               aria-label={`Remove ${category}`}
             >
               <X size={12} />

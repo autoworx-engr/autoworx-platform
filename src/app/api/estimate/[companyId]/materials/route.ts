@@ -1,6 +1,7 @@
-import { getCompanyIdFromBearer } from "@/lib/mobileAuth";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { buildWordSearchAnd } from "@/lib/wordSearch";
 
 /**
  * @swagger
@@ -93,13 +94,151 @@ import { db } from "@/lib/db";
  *       500:
  *         description: Internal server error
  */
+/**
+ * @swagger
+ * /api/estimate/{companyId}/materials:
+ *   post:
+ *     summary: Create a material (inventory product of type Product)
+ *     tags:
+ *       - Estimate
+ *     parameters:
+ *       - in: path
+ *         name: companyId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           example: 4
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name]
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "Brake Pad"
+ *               description:
+ *                 type: string
+ *                 example: "High-performance brake pad"
+ *               categoryId:
+ *                 type: integer
+ *                 nullable: true
+ *                 example: 3
+ *               vendorId:
+ *                 type: integer
+ *                 nullable: true
+ *                 example: 1
+ *               price:
+ *                 type: number
+ *                 example: 49.99
+ *               quantity:
+ *                 type: number
+ *                 example: 10
+ *               unit:
+ *                 type: string
+ *                 example: "pc"
+ *               lot:
+ *                 type: string
+ *                 nullable: true
+ *                 example: "LOT-001"
+ *               lowInventoryAlert:
+ *                 type: integer
+ *                 nullable: true
+ *                 example: 2
+ *     responses:
+ *       201:
+ *         description: Material created successfully
+ *       400:
+ *         description: name is required or already exists
+ *       500:
+ *         description: Internal server error
+ */
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ companyId: string }> },
+) {
+  try {
+    const { companyId: companyIdParam } = await params;
+    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
+    if (jwtCompanyId === null) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const urlCompanyId = parseInt(companyIdParam, 10);
+    if (isNaN(urlCompanyId) || urlCompanyId !== jwtCompanyId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    const companyId = jwtCompanyId;
+
+    const body = await req.json();
+    const {
+      name,
+      description,
+      categoryId,
+      vendorId,
+      price,
+      quantity,
+      unit,
+      lot,
+      lowInventoryAlert,
+    } = body;
+
+    if (!name?.trim()) {
+      return NextResponse.json(
+        { success: false, message: "name is required" },
+        { status: 400 },
+      );
+    }
+
+    const existing = await db.inventoryProduct.findFirst({
+      where: { companyId, name: name.trim(), type: "Product" },
+    });
+    if (existing) {
+      return NextResponse.json(
+        { success: false, message: "A material with this name already exists" },
+        { status: 400 },
+      );
+    }
+
+    const material = await db.inventoryProduct.create({
+      data: {
+        name: name.trim(),
+        companyId,
+        type: "Product",
+        description: description?.trim() || undefined,
+        categoryId: categoryId ? Number(categoryId) : undefined,
+        vendorId: vendorId ? Number(vendorId) : undefined,
+        price: price !== undefined ? Number(price) : undefined,
+        quantity: quantity !== undefined ? Number(quantity) : undefined,
+        unit: unit?.trim() || undefined,
+        lot: lot?.trim() || undefined,
+        lowInventoryAlert: lowInventoryAlert
+          ? Number(lowInventoryAlert)
+          : undefined,
+      },
+    });
+
+    return NextResponse.json(
+      { success: true, data: material },
+      { status: 201 },
+    );
+  } catch (error) {
+    console.error("CREATE MATERIAL ERROR:", error);
+    return NextResponse.json(
+      { success: false, message: "Failed to create material" },
+      { status: 500 },
+    );
+  }
+}
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ companyId: string }> },
 ) {
   try {
     const { companyId: companyIdParam } = await params;
-    const jwtCompanyId = await getCompanyIdFromBearer(req);
+    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
     if (jwtCompanyId === null) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -134,19 +273,16 @@ export async function GET(
       where.vendorId = vendorId;
     }
 
-    if (search) {
-      where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        { notes: { contains: search, mode: "insensitive" } },
-      ];
+    const searchAnd = buildWordSearchAnd(search, ["name", "description"]);
+    if (searchAnd) {
+      where.AND = searchAnd;
     }
 
     const [products, total] = await Promise.all([
       db.inventoryProduct.findMany({
         where,
         orderBy: { name: "asc" },
-        skip,
-        take: limit,
+        ...(search ? {} : { skip, take: limit }),
         include: {
           tags: {
             include: { tag: true },
@@ -168,13 +304,21 @@ export async function GET(
     return NextResponse.json({
       success: true,
       data: materials,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasMore: skip + products.length < total,
-      },
+      pagination: search
+        ? {
+            page: 1,
+            limit: total,
+            total,
+            totalPages: 1,
+            hasMore: false,
+          }
+        : {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+            hasMore: skip + products.length < total,
+          },
     });
   } catch (error) {
     console.error("ESTIMATE MATERIALS ERROR:", error);

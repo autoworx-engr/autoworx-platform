@@ -1,4 +1,8 @@
 import { db } from "@/lib/db";
+import {
+  formDataToParams,
+  // verifyTwilioSignature, // TEMP: signature verification disabled for debugging
+} from "@/lib/twilio/verifyTwilioSignature";
 import { twiml } from "twilio";
 
 /**
@@ -13,31 +17,62 @@ import { twiml } from "twilio";
  *         required: true
  *         schema:
  *           type: integer
- *     responses:
- *       200:
- *         description: TwiML whisper response returned
  */
 export async function POST(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const companyIdParam = searchParams.get("companyId");
-
   const voiceResponse = new twiml.VoiceResponse();
 
-  // Look up the company to get its name and whether whisper is enabled
-  if (companyIdParam) {
-    const company = await db.company.findUnique({
-      where: { id: parseInt(companyIdParam) },
-      select: { name: true, callWhisperEnabled: true },
-    });
+  try {
+    const { searchParams } = new URL(request.url);
+    const companyIdParam = searchParams.get("companyId");
+    const companyId = companyIdParam ? parseInt(companyIdParam, 10) : NaN;
 
-    if (company?.callWhisperEnabled) {
-      const companyName = company.name ?? "this company";
-      voiceResponse.say(
-        { voice: "Polly.Joanna", language: "en-US" },
-        `This is a call from ${companyName}. This call may be recorded for quality and training purposes.`,
-      );
+    if (Number.isFinite(companyId)) {
+      const twilioCredentials = await db.twilioCredentials.findFirst({
+        where: { companyId },
+        select: { authToken: true },
+      });
+
+      // The whisper webhook receives form-encoded params; consume them so the
+      // signature validator (which signs URL + sorted params) can match.
+      let params: Record<string, string> = {};
+      try {
+        const formData = await request.formData();
+        params = formDataToParams(formData);
+      } catch {
+        // Some Twilio whisper hits have no body — that's fine for verification
+        // since the signature is computed over an empty param map.
+      }
+
+      // TEMP: signature verification disabled for debugging
+      // const verification = await verifyTwilioSignature(
+      //   request,
+      //   params,
+      //   twilioCredentials?.authToken ?? null,
+      // );
+      // if (!verification.ok) {
+      //   // Return an empty (200) TwiML so the call still bridges even if the
+      //   // signature can't be verified — bridging trumps the whisper message.
+      //   return new Response(voiceResponse.toString(), {
+      //     headers: { "Content-Type": "text/xml" },
+      //   });
+      // }
+
+      const company = await db.company.findUnique({
+        where: { id: companyId },
+        select: { name: true, callWhisperEnabled: true },
+      });
+
+      if (company?.callWhisperEnabled) {
+        const companyName = company.name ?? "this company";
+        voiceResponse.say(
+          { voice: "Polly.Joanna", language: "en-US" },
+          `This is a call from ${companyName}. This call may be recorded for quality and training purposes.`,
+        );
+      }
     }
-    // If disabled, return an empty TwiML response so the call bridges immediately
+  } catch (error) {
+    console.error("[twilio/whisper] error:", error);
+    // Return an empty TwiML so the dial still bridges.
   }
 
   return new Response(voiceResponse.toString(), {

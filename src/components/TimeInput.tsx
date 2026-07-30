@@ -349,7 +349,7 @@ export function TimeInput({
                       className={cn(
                         "w-full rounded px-2 py-1 text-left hover:bg-gray-100",
                         isSelected("hour", hour) &&
-                          "bg-[#6571FF] text-white hover:bg-[#6571FF]",
+                          "bg-primary text-white hover:bg-primary",
                         isDisabled &&
                           "cursor-not-allowed text-gray-300 hover:bg-background",
                       )}
@@ -521,7 +521,7 @@ export function TimeInput({
                           className={cn(
                             "w-full rounded px-2 py-1 text-left hover:bg-gray-100",
                             isSelected("minute", minute) &&
-                              "bg-[#6571FF] text-white hover:bg-[#6571FF]",
+                              "bg-primary text-white hover:bg-primary",
                             "cursor-not-allowed text-gray-300 hover:bg-background",
                           )}
                         >
@@ -556,7 +556,7 @@ export function TimeInput({
                       className={cn(
                         "w-full rounded px-2 py-1 text-left hover:bg-gray-100",
                         isSelected("minute", minute) &&
-                          "bg-[#6571FF] text-white hover:bg-[#6571FF]",
+                          "bg-primary text-white hover:bg-primary",
                         isDisabled &&
                           "cursor-not-allowed text-gray-300 hover:bg-background",
                       )}
@@ -605,7 +605,7 @@ export function TimeInput({
                       className={cn(
                         "w-full rounded px-2 py-1 text-left hover:bg-gray-100",
                         isSelected("period", period) &&
-                          "bg-[#6571FF] text-white hover:bg-[#6571FF]",
+                          "bg-primary text-white hover:bg-primary",
                         isDisabled &&
                           "cursor-not-allowed text-gray-300 hover:bg-background",
                       )}

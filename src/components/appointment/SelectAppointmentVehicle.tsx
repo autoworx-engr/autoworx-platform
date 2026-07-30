@@ -6,11 +6,11 @@ import { queryKeys } from "@/lib/queryKeys";
 import { useListsStore } from "@/stores/lists";
 import { Vehicle } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { Plus } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import NewVehicle from "../Lists/NewVehicle";
 import { SelectProps } from "../Lists/select-props";
-import { usePathname } from "next/navigation";
-import { Plus } from "lucide-react";
 
 export function SelectAppointmentVehicle({
   name = "vehicleId",
@@ -54,24 +54,39 @@ export function SelectAppointmentVehicle({
 
   const queryClient = useQueryClient();
 
+  const prevClientId = useRef<number | null>(null);
+
   useEffect(() => {
+    const numericClientId = isClientIdNumber ? Number(clientId) : null;
+
+    if (!numericClientId) {
+      prevClientId.current = null;
+      return;
+    }
+
+    const clientChanged = prevClientId.current !== numericClientId;
+
+    if (clientChanged && !isEdit) {
+      prevClientId.current = numericClientId;
+      setVehicle(newAddedVehicle ?? clientVehicles?.[0] ?? null);
+      return;
+    }
+    prevClientId.current = numericClientId;
+
     const selectedVehicle = newAddedVehicle ?? clientVehicles?.[0];
-
-    if (clientId) {
-      if (clientVehicles?.length > 0 && !value) {
-        if (isEdit == false) {
-          setVehicle(selectedVehicle);
-          // useListsStore.setState({ vehicle: selectedVehicle });
-        }
-      } else {
-        const matchedVehicle = clientVehicles?.find(
-          (vehicle) => vehicle.id === value?.id,
-        );
-        const finalVehicle = matchedVehicle ?? value ?? selectedVehicle;
-
-        setVehicle(finalVehicle);
-        // useListsStore.setState({ vehicle: finalVehicle });
+    if (clientVehicles?.length > 0 && !value) {
+      if (isEdit == false) {
+        setVehicle(selectedVehicle);
       }
+    } else if (clientVehicles?.length > 0) {
+      const matchedVehicle = clientVehicles?.find(
+        (vehicle) => vehicle.id === value?.id,
+      );
+
+      const finalVehicle = matchedVehicle ?? selectedVehicle;
+      setVehicle(finalVehicle);
+    } else {
+      setVehicle(null);
     }
   }, [newAddedVehicle, clientId, clientVehicles]);
 
@@ -107,7 +122,7 @@ export function SelectAppointmentVehicle({
               newButton={
                 <button
                   type="button"
-                  className="flex w-full items-center justify-center gap-2 rounded-md bg-[#6571FF] px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-[#5A65F0]"
+                  className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-[#5A65F0]"
                 >
                   <Plus className="w-4 h-4" /> New Vehicle
                 </button>

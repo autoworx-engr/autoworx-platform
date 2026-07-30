@@ -1,8 +1,8 @@
-import { SetStateAction, useEffect, useRef, useState } from "react";
-import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
-import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
 import { Employee, ShopPipelineData } from "@/types/invoiceLead";
+import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
+import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { Tag, User } from "@prisma/client";
+import { SetStateAction, useEffect, useRef, useState } from "react";
 import DraggableLead from "./DraggableLead";
 
 type DroppableColumnProps = {
@@ -171,7 +171,7 @@ const DroppableColumn = ({
         padding: "0",
       }}
     >
-      <h2 className="rounded-lg bg-[#6571FF] px-4 py-3 text-center text-white">
+      <h2 className="rounded-lg bg-primary px-4 py-3 text-center text-white">
         <p className="text-base font-bold">
           {item.title || ""}
           <span className="ml-2 rounded-lg bg-[#3F49B9] px-2">

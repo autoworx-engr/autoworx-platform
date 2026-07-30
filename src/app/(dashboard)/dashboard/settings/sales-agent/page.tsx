@@ -8,6 +8,12 @@ import SalesAgentPermissionPanel from "./components/SalesAgentPermissionPanel";
 import { getCompanyId } from "@/lib/companyId";
 import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
 import UpgradePlanBanner from "@/components/UpgradePlanBanner";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Settings - Sales Agent",
+  description: "Configure sales agent settings",
+};
 
 export default async function AiTrainOverview() {
   const companyId = await getCompanyId();

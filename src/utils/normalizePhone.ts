@@ -35,6 +35,10 @@ export function phoneNumberLookupValues(
   const digits = phone.replace(/\D/g, "");
   if (!digits) return [];
 
+  if (digits.length > 11) {
+    return [digits];
+  }
+
   const last10 = digits.length >= 10 ? digits.slice(-10) : digits;
 
   return Array.from(new Set([last10, digits].filter((v) => v.length > 0)));

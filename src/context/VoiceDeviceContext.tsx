@@ -27,6 +27,8 @@ interface VoiceDeviceContextType {
   endCall: () => void;
   provider: VoiceProvider;
   makeCall: (to: string, clientId: number) => Promise<void>;
+  isMuted: boolean;
+  toggleMute: () => void;
 }
 
 const VoiceDeviceContext = createContext<VoiceDeviceContextType | undefined>(
@@ -52,6 +54,7 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
   const [isDeviceReady, setIsDeviceReady] = useState(false);
   const [callStatus, setCallStatus] = useState("");
   const [callDuration, setCallDuration] = useState(0);
+  const [isMuted, setIsMuted] = useState(false);
   const [timer, setTimer] = useState<NodeJS.Timeout | null>(null);
   const [provider, setProvider] = useState<VoiceProvider>("TWILIO");
   const [infobipPhoneNumber, setInfobipPhoneNumber] = useState<string | null>(
@@ -1054,6 +1057,23 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
     }
   }, [currentConnection, provider, timer, companyId, deviceId, currentCallSid]);
 
+  // Toggle mute on the active call. Both Twilio's Call and Infobip's RTC call
+  // expose a .mute(bool) method, so the same call works for either provider.
+  const toggleMute = useCallback(() => {
+    if (!currentConnection) return;
+    const next = !isMuted;
+    try {
+      currentConnection.mute(next);
+      setIsMuted(next);
+    } catch (error) {
+      console.error("❌ [Call] Failed to toggle mute:", error);
+    }
+  }, [currentConnection, isMuted]);
+
+  useEffect(() => {
+    if (!currentConnection) setIsMuted(false);
+  }, [currentConnection]);
+
   return (
     <VoiceDeviceContext.Provider
       value={{
@@ -1069,6 +1089,8 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
         endCall,
         provider,
         makeCall,
+        isMuted,
+        toggleMute,
       }}
     >
       {children}

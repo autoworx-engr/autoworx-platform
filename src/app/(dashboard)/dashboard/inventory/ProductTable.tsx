@@ -9,10 +9,11 @@ import { Pagination, Popconfirm, Tooltip } from "antd"; // Importing the Paginat
 import { Search, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import EditProduct from "./EditProduct";
 
 const evenColor = "bg-background";
-const oddColor = "bg-blue-100";
+const oddColor = "bg-[#F8FAFF]";
 
 export default function ProductTable({
   currentProductId,
@@ -40,7 +41,7 @@ export default function ProductTable({
   const pathname = usePathname();
   const viewTab = search?.get("view");
   const [currentPage, setCurrentPage] = useState(
-    Number(searchParams.page) || 1
+    Number(searchParams.page) || 1,
   );
   const [pageSize, setPageSize] = useState(Number(searchParams.limit) || 50);
   const [showPagination, setShowPagination] = useState(false);
@@ -66,34 +67,57 @@ export default function ProductTable({
     router.push(`${pathname}?${params.toString()}`);
   };
 
+  const itemLabel = viewTab === "products" ? "product" : "supply";
+
+  const handleDelete = async (productId: number) => {
+    const toastId = `delete-inventory-${productId}`;
+    const res = await deleteInventory(productId);
+    if (res?.type === "success") {
+      toast.success(
+        `${itemLabel[0].toUpperCase() + itemLabel.slice(1)} deleted`,
+        {
+          id: toastId,
+        },
+      );
+    } else {
+      toast.error(`Failed to delete ${itemLabel}`, {
+        id: toastId,
+      });
+    }
+    router.push(`/dashboard/inventory?view=${search?.get("view")}`);
+  };
+
   return (
     <>
       {/* card list  */}
       <div className="mt-4 space-y-2 lg:hidden ">
-        {
-          products.length === 0 ? (
-            <div className="flex items-center justify-center gap-2">
-              <Search size={20} /> No {viewTab === "products" ? "products" : "supplies"} found {search?.get("search") && <span>for <mark>{search?.get("search")}</mark></span>}
-            </div>
-          ) :
-            products.map((product, index) => {
-              return (
-                <div key={index}>
-                  <InventoryResponsiveCard
-                    user={user}
-                    viewTab={viewTab!}
-                    search={search!}
-                    product={
-                      {
-                        ...product,
-                        price: product.price?.toString(),
-                      } as ProductCardProps
-                    }
-                    index={index}
-                  />
-                </div>
-              );
-            })}
+        {products.length === 0 ? (
+          <div className="py-8">
+            <InventoryEmptyState
+              viewTab={viewTab}
+              search={search?.get("search")}
+            />
+          </div>
+        ) : (
+          products.map((product, index) => {
+            return (
+              <div key={product.id}>
+                <InventoryResponsiveCard
+                  user={user}
+                  viewTab={viewTab ?? null}
+                  search={search ?? new URLSearchParams()}
+                  product={
+                    {
+                      ...product,
+                      price: product.price?.toString(),
+                    } as ProductCardProps
+                  }
+                  index={index}
+                />
+              </div>
+            );
+          })
+        )}
 
         {/* Mobile Pagination */}
         {showPagination && (
@@ -126,154 +150,158 @@ export default function ProductTable({
               <th className="px-4 text-left 2xl:px-10">Unit</th>
               {(user?.employeeType === "Admin" ||
                 user?.employeeType === "Manager") && (
-                  <th className="px-4 text-left 2xl:px-10">Action</th>
-                )}
+                <th className="px-4 text-left 2xl:px-10">Action</th>
+              )}
             </tr>
           </thead>
 
-          <tbody className="max-h-[40vh] overflow-y-auto">
+          <tbody>
             {products.length === 0 ? (
               <tr>
-                <td colSpan={6} className="text-center p-20">
-                  <span className="flex items-center justify-center gap-2"><Search size={20} /> No {viewTab === "products" ? "products" : "supplies"} found {search?.get("search") && <span>for <mark>{search?.get("search")}</mark></span>}</span>
-                </td>
-              </tr>
-            ) : products.map((product, index) => {
-              const params = new URLSearchParams(search);
-              params.set("productId", product.id.toString());
-              return (
-                <tr
-                  key={product.id}
-                  className={cn(
-                    "h-full cursor-pointer rounded-md py-3",
-                    index % 2 === 0 ? evenColor : oddColor,
-                    currentProductId === product.id &&
-                    "border-2 border-[#6571FF]"
-                  )}
-                  onClick={() =>
-                    router.push(`${pathname}?${params.toString()}`)
+                <td
+                  colSpan={
+                    user?.employeeType === "Admin" ||
+                    user?.employeeType === "Manager"
+                      ? 6
+                      : 5
                   }
                 >
-                  <td className="h-12 px-4 text-left">
-                    <p>{(currentPage - 1) * pageSize + index + 1}</p>
-                  </td>
-                  <td className="max-w-36 px-4 text-left">
-                    <div className="flex items-center gap-2 ">
-                      {Number(product.quantity) === 0 ? (
+                  <InventoryEmptyState
+                    viewTab={viewTab}
+                    search={search?.get("search")}
+                  />
+                </td>
+              </tr>
+            ) : (
+              products.map((product, index) => {
+                const params = new URLSearchParams(search);
+                params.set("productId", product.id.toString());
+                return (
+                  <tr
+                    key={product.id}
+                    className={cn(
+                      "h-full cursor-pointer rounded-md py-3",
+                      index % 2 === 0 ? evenColor : oddColor,
+                      currentProductId === product.id &&
+                        "border-2 border-primary",
+                    )}
+                    onClick={() =>
+                      router.push(`${pathname}?${params.toString()}`)
+                    }
+                  >
+                    <td className="h-12 px-4 text-left">
+                      <p>{(currentPage - 1) * pageSize + index + 1}</p>
+                    </td>
+                    <td className="max-w-36 px-4 text-left">
+                      <div className="flex items-center gap-2 ">
+                        {Number(product.quantity) === 0 ? (
+                          <Tooltip
+                            title="Product is out of stock"
+                            placement="top"
+                          >
+                            <span className="text-red-600 cursor-default">
+                              {product.name.length > 20
+                                ? product.name.slice(0, 20) + "..."
+                                : product.name}
+                            </span>
+                            {product.name.length > 20 && (
+                              <span className="sr-only">{product.name}</span>
+                            )}
+                          </Tooltip>
+                        ) : Number(product.quantity) <=
+                          Number(product.lowInventoryAlert) ? (
+                          <Tooltip
+                            title="Product has low inventory"
+                            placement="top"
+                          >
+                            <span className="text-amber-600 cursor-default">
+                              {product.name.length > 20
+                                ? product.name.slice(0, 20) + "..."
+                                : product.name}
+                            </span>
+                            {product.name.length > 20 && (
+                              <span className="sr-only">{product.name}</span>
+                            )}
+                          </Tooltip>
+                        ) : (
+                          <Tooltip
+                            title={product.name.length > 20 ? product.name : ""}
+                            placement="top"
+                          >
+                            <span className="cursor-default">
+                              {product.name.length > 20
+                                ? product.name.slice(0, 20) + "..."
+                                : product.name}
+                            </span>
+                          </Tooltip>
+                        )}
+                      </div>
+                    </td>
+                    <td className="max-w-36 px-4 text-left truncate">
+                      {product.category?.name ? (
                         <Tooltip
-                          title="Product is out of stock"
-                          placement="top"
-                        >
-                          <span className="text-red-600 cursor-default">
-                            {product.name.length > 20
-                              ? product.name.slice(0, 20) + "..."
-                              : product.name}
-                          </span>
-                          {product.name.length > 20 && (
-                            <span className="sr-only">{product.name}</span>
-                          )}
-                        </Tooltip>
-                      ) : Number(product.quantity) <=
-                        Number(product.lowInventoryAlert) ? (
-                        <Tooltip
-                          title="Product has low inventory"
-                          placement="top"
-                        >
-                          <span className="text-amber-600 cursor-default">
-                            {product.name.length > 20
-                              ? product.name.slice(0, 20) + "..."
-                              : product.name}
-                          </span>
-                          {product.name.length > 20 && (
-                            <span className="sr-only">{product.name}</span>
-                          )}
-                        </Tooltip>
-                      ) : (
-                        <Tooltip
-                          title={product.name.length > 20 ? product.name : ""}
+                          title={
+                            product.category.name.length > 20
+                              ? product.category.name
+                              : undefined
+                          }
                           placement="top"
                         >
                           <span className="cursor-default">
-                            {product.name.length > 20
-                              ? product.name.slice(0, 20) + "..."
-                              : product.name}
+                            {product.category.name.length > 20
+                              ? product.category.name.slice(0, 20) + "..."
+                              : product.category.name}
                           </span>
                         </Tooltip>
+                      ) : (
+                        "-"
                       )}
-                    </div>
-                  </td>
-                  <td className="max-w-36 px-4 text-left truncate">
-                    {product.category?.name ? (
+                    </td>
+
+                    <td className="px-4 text-left 2xl:px-10 truncate">
                       <Tooltip
                         title={
-                          product.category.name.length > 20
-                            ? product.category.name
+                          String(product.quantity).length > 10
+                            ? String(product.quantity)
                             : undefined
                         }
                         placement="top"
                       >
                         <span className="cursor-default">
-                          {product.category.name.length > 20
-                            ? product.category.name.slice(0, 20) + "..."
-                            : product.category.name}
+                          {Number(product.quantity)}
                         </span>
                       </Tooltip>
-                    ) : (
-                      "-"
-                    )}
-                  </td>
+                    </td>
 
-                  <td className="px-4 text-left 2xl:px-10 truncate">
-                    <Tooltip
-                      title={
-                        String(product.quantity).length > 10
-                          ? String(product.quantity)
-                          : undefined
-                      }
-                      placement="top"
-                    >
-                      <span className="cursor-default">
-                        {String(product.quantity).length > 10
-                          ? String(product.quantity).slice(0, 10) + "..."
-                          : Number(product.quantity)}
-                      </span>
-                    </Tooltip>
-                  </td>
+                    <td className="px-4 text-left 2xl:px-10 truncate">
+                      {product.unit ? (
+                        <Tooltip
+                          title={
+                            product.unit.length > 5 ? product.unit : undefined
+                          }
+                          placement="top"
+                        >
+                          <span className="cursor-default">
+                            {product.unit.length > 5
+                              ? product.unit.slice(0, 5) + "..."
+                              : product.unit}
+                          </span>
+                        </Tooltip>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
 
-                  <td className="px-4 text-left 2xl:px-10 truncate">
-                    {product.unit ? (
-                      <Tooltip
-                        title={
-                          product.unit.length > 5 ? product.unit : undefined
-                        }
-                        placement="top"
-                      >
-                        <span className="cursor-default">
-                          {product.unit.length > 5
-                            ? product.unit.slice(0, 5) + "..."
-                            : product.unit}
-                        </span>
-                      </Tooltip>
-                    ) : (
-                      "-"
-                    )}
-                  </td>
-
-                  {(user?.employeeType === "Admin" ||
-                    user?.employeeType === "Manager") && (
+                    {(user?.employeeType === "Admin" ||
+                      user?.employeeType === "Manager") && (
                       <td>
                         <div className="flex h-12 items-center justify-start gap-3 px-4 2xl:px-10">
                           <button className="text-2xl text-blue-600">
                             <EditProduct productData={product} />
                           </button>
                           <Popconfirm
-                            title={`Are you sure you want to delete this ${viewTab === "products" ? "product" : "supply"}?`}
-                            onConfirm={async () => {
-                              await deleteInventory(product.id);
-                              router.push(
-                                `/dashboard/inventory?view=${search?.get("view")}`
-                              );
-                            }}
+                            title={`Are you sure you want to delete this ${itemLabel}?`}
+                            onConfirm={() => handleDelete(product.id)}
                             okText="Yes"
                             cancelText="No"
                           >
@@ -286,9 +314,10 @@ export default function ProductTable({
                         </div>
                       </td>
                     )}
-                </tr>
-              );
-            })}
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </table>
       </div>
@@ -306,5 +335,31 @@ export default function ProductTable({
         </div>
       )}
     </>
+  );
+}
+
+function InventoryEmptyState({
+  viewTab,
+  search,
+}: {
+  viewTab: string | null;
+  search?: string | null;
+}) {
+  const itemType = viewTab === "products" ? "products" : "supplies";
+  return (
+    <div className="flex min-h-[55vh] w-full flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-100 bg-slate-50/30 p-12 text-center">
+      <div className="relative mb-6 flex h-16 w-16 items-center justify-center rounded-3xl bg-white shadow-sm ring-1 ring-slate-200/50">
+        <Search size={24} className="text-slate-300" strokeWidth={1.5} />
+        <div className="absolute inset-0 animate-ping rounded-3xl bg-slate-100 opacity-20" />
+      </div>
+      <h3 className="mb-2 text-lg font-bold text-slate-500">
+        No Results Found
+      </h3>
+      <p className="max-w-[280px] text-sm font-medium leading-relaxed text-slate-400">
+        We couldn&apos;t find any {itemType}{" "}
+        {search ? <span>for &quot;{search}&quot;</span> : ""}. Try adjusting
+        your filters or search terms.
+      </p>
+    </div>
   );
 }

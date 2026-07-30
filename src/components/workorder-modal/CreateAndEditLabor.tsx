@@ -1,7 +1,4 @@
 "use client";
-import { getEmployees } from "@/actions/employee/get";
-import { addTechnician } from "@/actions/estimate/technician/addTechnician";
-import { updateTechnician } from "@/actions/estimate/technician/updateTechnician";
 import ComponentsLightbox from "@/components/common/LightBox";
 import {
   Dialog,
@@ -15,6 +12,7 @@ import Selector from "@/components/Selector";
 import { SlimInput } from "@/components/SlimInput";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { queryKeys } from "@/lib/queryKeys";
+import { addTechnician, updateTechnician } from "@/service/work-order/api";
 import {
   handleFileSelection,
   uploadAllAttachments,
@@ -76,6 +74,17 @@ type TProps = {
 
 type TStatus = "Pending" | "In Progress" | "Complete" | "Cancel";
 
+// Shared label styling so every field label in the grid renders with the
+// same font-size/weight/line-height. Previously "Assign To" used its own
+// inline className while SlimInput fields used labelClassName="text-sm
+// md:text-base", which reverts to text-base (16px) at the md breakpoint —
+// that mismatch was the real source of the row misalignment. The actual
+// height mismatch between Selector and SlimInput/DropdownSelection is now
+// fixed directly in Selector.tsx (h-9 mt-1 -> h-10), so this component no
+// longer needs to work around it with wrapper classes.
+const FIELD_LABEL_CLASS = "block px-1 text-sm font-medium text-slate-600";
+const FIELD_WRAPPER_CLASS = "flex flex-col gap-1.5";
+
 export default function CreateAndEditLabor({
   invoiceItemId,
   invoiceId,
@@ -103,14 +112,14 @@ export default function CreateAndEditLabor({
   const [error, setError] = useState<string | null>(null);
   const [inputValues, setInputValues] = useState({
     date: moment().format("YYYY-MM-DD"),
-    due: "",
+    due: moment().add(1, "day").format("YYYY-MM-DD"),
     amount: "",
     note: "",
     technicianNote: "",
   });
 
   const [technicianNote, setTechnicianNote] = useState(
-    technician?.technicianNote || ""
+    technician?.technicianNote || "",
   );
 
   const [formData, setFormData] = useState<{
@@ -123,19 +132,27 @@ export default function CreateAndEditLabor({
   const [imageUploadIsLoading, setImageUploadIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [lightboxItems, setLightboxItems] = useState<{ src: string }[] | null>(
-    null
+    null,
   );
   const [priority, setPriority] = useState<Priority>("Low");
   const [loading, setLoading] = useState(false); // Loading state
 
   const isAdminOrManger = useIsAdminOrManager();
   const currentUser = useGetCurrentUser();
+  const companyId = currentUser?.companyId;
   const isTechnician = currentUser?.employeeType === "Technician";
 
   useEffect(() => {
     const fetchEmployees = async () => {
-      const employees = await getEmployees({ notType: "Sales" });
-      setEmployeeList(employees);
+      try {
+        const res = await fetch(
+          "/api/pipeline/shop/get-employees?notType=Sales",
+        );
+        const json = await res.json();
+        setEmployeeList(json?.data ?? []);
+      } catch {
+        setEmployeeList([]);
+      }
     };
     fetchEmployees();
   }, []);
@@ -155,8 +172,20 @@ export default function CreateAndEditLabor({
         images,
       } = technician;
 
-      const formattedDate = moment(date).utc().format("YYYY-MM-DD");
-      const formattedDue = moment(due).utc().format("YYYY-MM-DD");
+      // FIX: moment(undefined/null/invalid) silently resolves to the Unix
+      // epoch (01/01/1970) instead of throwing, which is what produced the
+      // bogus "Assigned Date" value. Only format `date` when it's a valid
+      // date; otherwise fall back to today, same as the "new technician"
+      // default used in reset().
+      const formattedDate = moment(date).isValid()
+        ? moment(date).utc().format("YYYY-MM-DD")
+        : moment().utc().format("YYYY-MM-DD");
+
+      const formattedDue =
+        due && moment(due).isValid()
+          ? moment(due).utc().format("YYYY-MM-DD")
+          : moment().add(1, "day").utc().format("YYYY-MM-DD");
+
       setInputValues({
         date: formattedDate,
         due: formattedDue,
@@ -173,7 +202,7 @@ export default function CreateAndEditLabor({
     }
   }, [technician, employeeList]);
   const handleChange = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = event.target;
 
@@ -220,72 +249,74 @@ export default function CreateAndEditLabor({
         // For technicians, only allow updating status, keep other fields from the original technician
         const updatedPayload = isTechnician
           ? {
-            date: new Date(technician.date || new Date()),
-            due: new Date(technician.due || new Date()),
-            amount: Number(technician.amount) || 0,
-            note: technician.note || "",
-            technicianNote: technicianNote || "",
-            userId: technician.userId,
-            status,
-            priority: technician.priority || "Low",
-            invoiceId,
-            serviceId,
-          }
+              date: new Date(technician.date || new Date()),
+              due: technician.due ? new Date(technician.due) : null,
+              amount: Number(technician.amount) || 0,
+              note: technician.note || "",
+              technicianNote: technicianNote || "",
+              userId: technician.userId,
+              status,
+              priority: technician.priority || "Low",
+              invoiceId,
+              serviceId,
+            }
           : {
-            date: new Date(inputValues.date),
-            due: new Date(inputValues.due),
-            amount: Number(inputValues.amount),
-            note: inputValues.note,
-            technicianNote: technicianNote,
-            userId: employee?.id,
-            status,
-            priority,
-            invoiceId,
-            serviceId,
-          };
+              date: new Date(
+                inputValues.date || moment().utc().format("YYYY-MM-DD"),
+              ),
+              due: inputValues.due ? new Date(inputValues.due) : null,
+              amount: Number(inputValues.amount),
+              note: inputValues.note,
+              technicianNote: technicianNote,
+              userId: employee?.id,
+              status,
+              priority,
+              invoiceId,
+              serviceId,
+            };
 
-        const response = await updateTechnician(
+        const updated = await updateTechnician(
+          companyId!,
+          invoiceId,
           technician.id,
-          updatedPayload,
-          isTechnician ? technician.vehicleParts || [] : selectedVehicleParts,
-          finalImageUrls
+          {
+            ...updatedPayload,
+            vehicleParts: isTechnician
+              ? technician.vehicleParts || []
+              : selectedVehicleParts,
+            imageUrls: finalImageUrls,
+          },
         );
 
-        if (response.type === "success") {
-          const newImages: TechnicianImage[] = finalImageUrls.map((url) => {
-            return {
-              fileUrl: url,
-              uploadedAt: new Date(),
-              technicianId: technician.id,
-            } as TechnicianImage;
-          });
+        const newImages: TechnicianImage[] = finalImageUrls.map((url) => {
+          return {
+            fileUrl: url,
+            uploadedAt: new Date(),
+            technicianId: technician.id,
+          } as TechnicianImage;
+        });
 
-          setFormData({ attachments: newImages });
-          setOpen(false);
-          setTechnicians((prev) =>
-            prev.map((tech) =>
-              tech.id === technician.id
-                ? {
-                  ...response.data,
+        setFormData({ attachments: newImages });
+        setOpen(false);
+        setTechnicians((prev) =>
+          prev.map((tech) =>
+            tech.id === technician.id
+              ? {
+                  ...updated,
                   images: newImages,
                   hasPermission: tech.hasPermission,
                   vehicleParts: selectedVehicleParts as Parts[],
                 }
-                : tech
-            )
-          );
-        } else if (response.type === "globalError") {
-          setError(
-            response?.errorSource?.length
-              ? response.errorSource[0].message
-              : response.message
-          );
-        }
+              : tech,
+          ),
+        );
       } else {
         const payload = {
           serviceId: Number(serviceId),
-          date: new Date(inputValues.date),
-          due: new Date(inputValues.due),
+          date: new Date(
+            inputValues.date || moment().utc().format("YYYY-MM-DD"),
+          ),
+          due: inputValues.due ? new Date(inputValues.due) : null,
           amount: Number(inputValues.amount),
           note: inputValues.note,
           userId: employee?.id,
@@ -295,32 +326,27 @@ export default function CreateAndEditLabor({
           invoiceItemId,
           technicianNote: technicianNote,
         };
-        const response = await addTechnician(payload, selectedVehicleParts);
-        if (response.type === "success") {
-          setOpen(false);
-          setTechnicians((prev) => [
-            ...prev,
-            {
-              ...response.data,
-              hasPermission: true,
-              vehicleParts: selectedVehicleParts as Parts[],
-            },
-          ]);
-          setSelectedVehicleParts([]);
-        } else if (response.type === "globalError") {
-          setError(
-            response?.errorSource?.length
-              ? response.errorSource[0].message
-              : response.message
-          );
-        }
+        const created = await addTechnician(companyId!, invoiceId, {
+          ...payload,
+          vehicleParts: selectedVehicleParts,
+        });
+        setOpen(false);
+        setTechnicians((prev) => [
+          ...prev,
+          {
+            ...created,
+            hasPermission: true,
+            vehicleParts: selectedVehicleParts as Parts[],
+          },
+        ]);
+        setSelectedVehicleParts([]);
       }
     } catch (error) {
       const formattedError = errorHandler(error);
       setError(
         formattedError?.errorSource?.length
           ? formattedError.errorSource[0].message
-          : formattedError.message
+          : formattedError.message,
       );
     } finally {
       queryClient.invalidateQueries({
@@ -341,7 +367,7 @@ export default function CreateAndEditLabor({
   const reset = () => {
     setInputValues({
       date: moment().format("YYYY-MM-DD"),
-      due: "",
+      due: moment().add(1, "day").format("YYYY-MM-DD"),
       amount: "",
       note: "",
       technicianNote: "",
@@ -372,13 +398,13 @@ export default function CreateAndEditLabor({
   useEffect(() => {
     return () => {
       // Reset the pending state when the component unmounts
-      startTransition(() => { });
+      startTransition(() => {});
     };
   }, []);
 
   //show only them who are not assigned
   const availableEmployees = employeeList.filter(
-    (emp) => !technicianList?.some((tech) => tech.userId === emp.id)
+    (emp) => !technicianList?.some((tech) => tech.userId === emp.id),
   );
   // parts select handler
   const handleSelectParts = (part: { label: string; value: string }) => {
@@ -393,7 +419,7 @@ export default function CreateAndEditLabor({
   const handleRemoveParts = (part: { label: string; value: string }) => {
     if (isTechnician) return; // Prevent technicians from removing parts
     setSelectedVehicleParts((prev) =>
-      prev.filter((vPart) => vPart.partsName !== part.value)
+      prev.filter((vPart) => vPart.partsName !== part.value),
     );
   };
 
@@ -405,7 +431,7 @@ export default function CreateAndEditLabor({
             <p className="text-white">{technician.name}</p>
           </DialogTrigger>
         ) : (
-          <p className="cursor-auto text-[#6571FF]">{technician.name}</p>
+          <p className="cursor-auto text-primary">{technician.name}</p>
         )
       ) : (
         writePermission &&
@@ -413,7 +439,7 @@ export default function CreateAndEditLabor({
           <DialogTrigger asChild>
             <button
               onClick={reset}
-              className="rounded-full border border-[#6571FF] px-3 py-0.5"
+              className="rounded-full border border-primary px-3 py-0.5"
             >
               + Add Labor
             </button>
@@ -435,10 +461,8 @@ export default function CreateAndEditLabor({
         <div className="grid grid-cols-2 gap-x-4 gap-y-3">
           {" "}
           {/* Assigned by */}
-          <div>
-            <label className="mb-1 px-1 text-sm font-medium text-slate-600">
-              Assign To
-            </label>
+          <div className={FIELD_WRAPPER_CLASS}>
+            <label className={FIELD_LABEL_CLASS}>Assign To</label>
             <div
               className={isTechnician ? "pointer-events-none opacity-50" : ""}
             >
@@ -457,7 +481,7 @@ export default function CreateAndEditLabor({
                   availableEmployees.filter((employee) =>
                     `${employee.firstName} ${employee.lastName}`
                       .toLowerCase()
-                      .includes(search.toLowerCase())
+                      .includes(search.toLowerCase()),
                   )
                 }
                 openState={[employeeOpen, setEmployeeOpen]}
@@ -470,8 +494,8 @@ export default function CreateAndEditLabor({
           <SlimInput
             value={inputValues.date}
             onChange={handleChange}
-            labelClassName="text-sm md:text-base"
-            className="h-10"
+            labelClassName={FIELD_LABEL_CLASS}
+            className="h-10 text-sm font-normal text-slate-700"
             label="Assigned Date"
             name="date"
             type="date"
@@ -480,8 +504,8 @@ export default function CreateAndEditLabor({
           <SlimInput
             onChange={handleChange}
             value={inputValues.due}
-            labelClassName="text-sm md:text-base"
-            className="h-10"
+            labelClassName={FIELD_LABEL_CLASS}
+            className="h-10 text-sm font-normal text-slate-700"
             label="Due Date"
             name="due"
             type="date"
@@ -490,16 +514,14 @@ export default function CreateAndEditLabor({
           <SlimInput
             onChange={handleChange}
             value={inputValues.amount}
-            labelClassName="text-sm md:text-base"
-            className="h-10"
+            labelClassName={FIELD_LABEL_CLASS}
+            className="h-10 text-sm font-normal text-slate-700"
             label="Amount"
             name="amount"
             readOnly={isTechnician}
           />{" "}
-          <div>
-            <label className="mb-1 px-1 text-sm font-medium text-slate-600">
-              Priority
-            </label>
+          <div className={FIELD_WRAPPER_CLASS}>
+            <label className={FIELD_LABEL_CLASS}>Priority</label>
             <div
               className={isTechnician ? "pointer-events-none opacity-50" : ""}
             >
@@ -516,56 +538,54 @@ export default function CreateAndEditLabor({
               />
             </div>
           </div>
-          <div>
-            <label
-              htmlFor="status"
-              className="mb-1 px-1 text-sm font-medium text-slate-600"
-            >
+          <div className={FIELD_WRAPPER_CLASS}>
+            <label htmlFor="status" className={FIELD_LABEL_CLASS}>
               Status
             </label>
             <DropdownSelection
               dropDownValues={["Pending", "In Progress", "Complete", "Cancel"]}
               onValueChange={(value) => setStatus(value as any)}
               changesValue={status}
-              buttonClassName="h-10 cursor-pointer rounded-md border border-slate-300 px-3 py-2 outline-none w-full text-sm font-medium text-slate-700 hover:border-slate-400 transition-colors"
+              buttonClassName="h-10 cursor-pointer rounded-md border border-slate-300 px-3 py-2 outline-none w-full text-sm font-normal text-slate-700 hover:border-slate-400 transition-colors"
             />
           </div>
         </div>{" "}
         {isAdminOrManger && (
-          <div>
-            <label
-              htmlFor="note"
-              className="mb-1 px-1 text-sm font-medium text-slate-600"
-            >
+          <div className={FIELD_WRAPPER_CLASS}>
+            <label htmlFor="note" className={FIELD_LABEL_CLASS}>
               New Note
             </label>
             <textarea
               onChange={handleChange}
               value={inputValues.note}
               name="note"
-              className="h-32 w-full resize-none rounded-md border border-slate-300 p-3 text-sm outline-none focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/20 transition-all placeholder:text-slate-400"
+              className="h-32 w-full resize-none rounded-md border border-slate-300 p-3 text-sm outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-slate-400"
               readOnly={isTechnician}
               placeholder="Add a note..."
             />
           </div>
         )}
         {technician && (
-          <div>
+          <div className={FIELD_WRAPPER_CLASS}>
             <div className="flex justify-between">
-              <p className="text-left text-sm font-semibold text-slate-700">Work Note</p>
+              <p className="text-left text-sm font-semibold text-slate-700">
+                Work Note
+              </p>
             </div>
             <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
               <div className="space-y-1.5">
                 <p className="text-xs text-slate-500">{formattedDate}</p>
-                <p className="text-sm text-slate-700">{technician?.note || "No notes"}</p>
+                <p className="text-sm text-slate-700">
+                  {technician?.note || "No notes"}
+                </p>
               </div>
             </div>
           </div>
         )}
         {isTechnician ||
-          (isAdminOrManger &&
-            ((technicianNote && technicianNote.length > 0) ||
-              formData.attachments.length > 0)) ? (
+        (isAdminOrManger &&
+          ((technicianNote && technicianNote.length > 0) ||
+            formData.attachments.length > 0)) ? (
           <div className="space-y-4 mb-4 pb-4 border-b border-slate-100">
             <h3 className="text-left text-sm font-semibold text-slate-700">
               Technician Work Details
@@ -580,7 +600,7 @@ export default function CreateAndEditLabor({
                 <textarea
                   value={technicianNote}
                   onChange={(e) => setTechnicianNote(e.target.value)}
-                  className="h-32 w-full resize-none rounded-md border border-slate-300 p-3 text-sm outline-none focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/20 transition-all placeholder:text-slate-400"
+                  className="h-32 w-full resize-none rounded-md border border-slate-300 p-3 text-sm outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-slate-400"
                   placeholder="Add work details, observations, and findings..."
                 />
               ) : isAdminOrManger &&
@@ -612,7 +632,7 @@ export default function CreateAndEditLabor({
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="flex items-center justify-center gap-2 rounded-md border border-[#6571FF] bg-[#6571FF]/5 text-[#6571FF] hover:bg-[#6571FF]/10 cursor-pointer py-2 px-3 text-sm font-medium transition-colors"
+                        className="flex items-center justify-center gap-2 rounded-md border border-primary bg-primary/5 text-primary hover:bg-primary/10 cursor-pointer py-2 px-3 text-sm font-medium transition-colors"
                       >
                         <ImageIcon size={16} />
                         <span>
@@ -658,7 +678,7 @@ export default function CreateAndEditLabor({
                             onClick={() => {
                               setFormData((prev) => ({
                                 attachments: prev.attachments.filter(
-                                  (_, i) => i !== idx
+                                  (_, i) => i !== idx,
                                 ),
                               }));
                             }}
@@ -704,7 +724,7 @@ export default function CreateAndEditLabor({
           </DialogClose>
           <button
             disabled={loading || pending} // Disable button when loading
-            className="flex items-center justify-center rounded-lg bg-[#6571FF] px-5 py-2 text-sm font-medium text-white hover:bg-[#5A63E6] disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center justify-center rounded-lg bg-primary px-5 py-2 text-sm font-medium text-white hover:bg-[#5A63E6] disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors"
             onClick={() => startTransition(handleSubmit)}
           >
             {loading || pending ? (

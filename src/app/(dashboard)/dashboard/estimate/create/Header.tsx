@@ -49,7 +49,7 @@ export default function Header({
     title,
     template,
     setTemplate,
-    items,
+    grandTotal,
   } = useEstimateCreateStore();
   const { status: selectedStatus } = useListsStore();
 
@@ -141,7 +141,7 @@ export default function Header({
             className="py-[5px] mx-0.5 rounded-lg"
             required
             value={title}
-            placeholder="Enter a title"
+            placeholder="Enter a Title"
             onChange={(e) => setTitle(e.target.value)}
           />
         ) : (
@@ -169,8 +169,10 @@ export default function Header({
           setOpen={setStatusOpenDropdown}
           isAllServicesCompleted={isAllServicesCompleted}
         />
-        {(!isTemplate && isEstimateCreate) ||
-          (isEstimateEdit && (
+        {!isTemplate &&
+          (isEstimateCreate ||
+            (isEstimateEdit && template) ||
+            (isEstimateEdit && grandTotal === 0)) && (
             <SelectTemplate
               openDropdown={templateOpenDropdown}
               setOpenDropdown={setTemplateOpenDropdown}
@@ -178,7 +180,7 @@ export default function Header({
               value={template || selectedTemplate}
               name="templateId"
             />
-          ))}
+          )}
       </div>
     </div>
   );

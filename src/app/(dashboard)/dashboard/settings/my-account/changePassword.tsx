@@ -1,5 +1,6 @@
 "use client";
 import { changePassword } from "@/actions/settings/myAccount";
+import { changePasswordValidationSchema } from "@/validations/schemas/settings/my-account/account.validation";
 import { SlimInput } from "@/components/SlimInput";
 import { errorToast, successToast } from "@/lib/toast";
 import { Eye, EyeOff } from "lucide-react";
@@ -17,8 +18,15 @@ export const ChangePassword = () => {
   const [isPending, startTransition] = useTransition();
 
   const handleChangePassword = () => {
-    if (newPw !== confirmNewPw) {
-      errorToast("Passwords do not match");
+    const validationResult = changePasswordValidationSchema.safeParse({
+      currentPassword: currentPw,
+      newPassword: newPw,
+      confirmNewPassword: confirmNewPw,
+    });
+
+    if (!validationResult.success) {
+      const errorMsg = validationResult.error.errors[0].message;
+      errorToast(errorMsg);
       return;
     }
     startTransition(async () => {
@@ -50,6 +58,7 @@ export const ChangePassword = () => {
             type={toggleCurrentPassword ? "text" : "password"}
             value={currentPw}
             required={true}
+            autoComplete="new-password"
             onChange={(e) => setCurrentPw(e.target.value)}
           />
           <span
@@ -70,6 +79,7 @@ export const ChangePassword = () => {
             required={true}
             type={toggleNewPassword ? "text" : "password"}
             value={newPw}
+            autoComplete="new-password"
             onChange={(e) => setNewPw(e.target.value)}
           />
           <span
@@ -90,6 +100,7 @@ export const ChangePassword = () => {
             type={toggleConfirmPassword ? "text" : "password"}
             required={true}
             value={confirmNewPw}
+            autoComplete="new-password"
             onChange={(e) => setConfirmNewPw(e.target.value)}
           />
           <span
@@ -107,7 +118,7 @@ export const ChangePassword = () => {
           <button
             onClick={handleChangePassword}
             disabled={isPending || !currentPw || !newPw || !confirmNewPw}
-            className="inline-flex items-center gap-2 rounded-lg bg-[#6571FF] px-6 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#5864e5] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#5864e5] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
           >
             {isPending ? "Saving…" : "Change Password"}
           </button>

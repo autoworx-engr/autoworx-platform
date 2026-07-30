@@ -1,6 +1,5 @@
 "use client";
 
-import { ClientSmsAttachments, MailgunEmailAttachment } from "@prisma/client";
 import {
   ChevronLeft,
   ChevronRight,
@@ -15,7 +14,11 @@ import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { isAudio, isImage } from "../../_utils";
 
-type Attachment = MailgunEmailAttachment | ClientSmsAttachments;
+type Attachment = {
+  id: number;
+  name: string | null;
+  url: string;
+};
 
 type TProps = {
   attachment: Attachment;
@@ -82,7 +85,7 @@ export default function SaveAttachment({
   }, [isOpen]);
 
   const currentAttachment = effectiveList[currentIndex];
-  const isCurrentImage = isImage(currentAttachment?.name);
+  const isCurrentImage = isImage(currentAttachment?.name ?? "");
 
   return (
     <>
@@ -91,7 +94,7 @@ export default function SaveAttachment({
           onClick={openModal}
           className="relative aspect-square w-full overflow-hidden rounded-md bg-zinc-100 dark:bg-zinc-800 cursor-pointer hover:opacity-90 transition-opacity"
         >
-          {isImage(attachment.name) ? (
+          {isImage(attachment.name ?? "") ? (
             <Image
               src={attachment.url}
               alt={attachment.name ?? ""}
@@ -114,15 +117,15 @@ export default function SaveAttachment({
           onClick={openModal}
           className="flex cursor-pointer items-center gap-x-2 rounded-md border border-emerald-600 px-2 py-1 text-sm transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
         >
-          {isAudio(attachment.name) ? (
+          {isAudio(attachment.name ?? "") ? (
             <Mic className="h-5 w-5 shrink-0" />
           ) : (
             <File className="h-5 w-5 shrink-0" />
           )}
           <span>
-            {attachment.name?.length > 15
-              ? attachment.name.slice(0, 15) + "..."
-              : attachment.name}
+            {(attachment.name?.length ?? 0) > 15
+              ? attachment.name!.slice(0, 15) + "..."
+              : (attachment.name ?? "")}
           </span>
         </button>
       )}

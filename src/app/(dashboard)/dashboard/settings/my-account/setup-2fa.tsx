@@ -175,7 +175,7 @@ function Content({
 
         <p className="text-slate-500 text-sm leading-relaxed pl-12">
           Add an extra layer of security. We&apos;ll verify your identity via a
-          code sent to your mobile device.
+          code sent to your email.
         </p>
       </div>
     </div>
@@ -191,7 +191,7 @@ export default function Setup2FA({
   return (
     <div className="w-full">
       <h3 className="mb-4 text-lg font-semibold text-slate-800">
-        Two-Factor Auth
+        Two-Factor Authentication
       </h3>
       <div className="w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <Header />

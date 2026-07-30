@@ -90,24 +90,31 @@ function toShopLead(invoice: any): ShopLead {
 
 function makeSearchCondition(search?: string) {
   if (!search?.trim()) return null;
-  const term = search.trim();
-  return {
-    OR: [
-      {
-        client: {
-          firstName: { contains: term, mode: "insensitive" as const },
-        },
-      },
-      {
-        client: {
-          lastName: { contains: term, mode: "insensitive" as const },
-        },
-      },
-      { vehicle: { make: { contains: term, mode: "insensitive" as const } } },
-      { vehicle: { model: { contains: term, mode: "insensitive" as const } } },
-      { vehicle: { other: { contains: term, mode: "insensitive" as const } } },
-    ],
+
+  const words = search.trim().split(/\s+/);
+
+  const makeWordCondition = (word: string) => {
+    const ci = { contains: word, mode: "insensitive" as const };
+    // Use explicit `is:` wrappers on optional relations so Prisma generates
+    // correct SQL when these filters appear inside an OR clause.
+    const conditions: any[] = [
+      { client: { is: { firstName: ci } } },
+      { client: { is: { lastName: ci } } },
+      { vehicle: { is: { make: ci } } },
+      { vehicle: { is: { model: ci } } },
+      { vehicle: { is: { submodel: ci } } },
+      { vehicle: { is: { other: ci } } },
+    ];
+    // year is Int? — needs equals, not contains
+    const yearInt = parseInt(word, 10);
+    if (!isNaN(yearInt) && String(yearInt) === word) {
+      conditions.push({ vehicle: { is: { year: { equals: yearInt } } } });
+    }
+    return { OR: conditions };
   };
+
+  if (words.length === 1) return makeWordCondition(words[0]);
+  return { AND: words.map(makeWordCondition) };
 }
 
 export async function getWorkOrdersByColumn(
@@ -221,4 +228,96 @@ export async function getWorkOrdersByTechnician(
     total,
     hasMore: skip + take < total,
   };
+}
+
+const TEAM_SEARCH_PAGE_SIZE = 10;
+
+// Single consolidated query for all technicians when a search term is present.
+// Replaces N parallel getWorkOrdersByTechnician calls with one DB round-trip.
+export async function getWorkOrdersForTeamSearch(
+  technicianUserIds: number[],
+  search: string,
+  filterByUserId?: number,
+) {
+  const empty = new Map<
+    number,
+    { leads: ShopLead[]; total: number; hasMore: boolean }
+  >();
+  if (!technicianUserIds.length) return empty;
+
+  const companyId = await getCompanyId();
+  const companyTimezone = await getCompanyTimezone();
+  const timezone = companyTimezone?.timezone;
+
+  const techIdSet = new Set(technicianUserIds);
+
+  const andConditions: any[] = [
+    {
+      invoiceItems: {
+        some: {
+          service: {
+            Technician: { some: { userId: { in: technicianUserIds } } },
+          },
+        },
+      },
+    },
+  ];
+
+  if (filterByUserId) {
+    andConditions.push({
+      invoiceItems: {
+        some: {
+          service: { Technician: { some: { userId: filterByUserId } } },
+        },
+      },
+    });
+  }
+
+  const searchCondition = makeSearchCondition(search);
+  if (searchCondition) andConditions.push(searchCondition);
+
+  const invoices = await db.invoice.findMany({
+    where: {
+      companyId,
+      type: "Invoice" as const,
+      isWorkOrder: true,
+      AND: andConditions,
+    },
+    include: makeInclude(timezone),
+    orderBy: [{ deliveredAt: "desc" }, { createdAt: "desc" }],
+  });
+
+  // Group invoices by technician userId — an invoice can appear in multiple columns
+  const grouped = new Map<number, ShopLead[]>();
+  for (const userId of technicianUserIds) grouped.set(userId, []);
+
+  for (const invoice of invoices) {
+    const lead = toShopLead(invoice);
+    const assignedIds = new Set<number>();
+    for (const item of invoice.invoiceItems) {
+      for (const tech of (item.service?.Technician ?? []) as any[]) {
+        if (
+          tech.userId != null &&
+          tech.invoiceId === invoice.id &&
+          techIdSet.has(tech.userId)
+        ) {
+          assignedIds.add(tech.userId);
+        }
+      }
+    }
+    for (const uid of assignedIds) grouped.get(uid)!.push(lead);
+  }
+
+  const result = new Map<
+    number,
+    { leads: ShopLead[]; total: number; hasMore: boolean }
+  >();
+  for (const [uid, leads] of grouped) {
+    result.set(uid, {
+      leads: leads.slice(0, TEAM_SEARCH_PAGE_SIZE),
+      total: leads.length,
+      hasMore: leads.length > TEAM_SEARCH_PAGE_SIZE,
+    });
+  }
+  return result;
 }

@@ -1,32 +1,28 @@
 "use client";
 
-import {
-  getWorkOrderData,
-  IWorkOrderData,
-} from "@/actions/estimate/invoice/getWorkOrderData";
+import type { IWorkOrderData } from "@/actions/estimate/invoice/getWorkOrderData";
 import {
   Dialog,
-  DialogTrigger,
   DialogContent,
   DialogOverlay,
   DialogPortal,
+  DialogTrigger,
 } from "@/components/Dialog";
 import { ImagesDialogContent } from "@/components/ImagesDialogContent";
-import { useServerGet } from "@/hooks/useServerGet";
 import { cn } from "@/lib/cn";
+import { queryKeys } from "@/lib/queryKeys";
+import { getWorkOrderData } from "@/service/work-order/api";
+import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
+import { useIsAdminOrManager } from "@/utils/useIsAdminOrManager";
+import { useQuery } from "@tanstack/react-query";
+import { Image as LucideImage } from "lucide-react";
 import moment from "moment";
 import Image from "next/image";
-import { Image as LucideImage } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import DueDate from "./DueDateInput";
 import { InvoiceItems } from "./InvoiceItems";
 import SaveWorkOrderBtn from "./SaveWorkOrderBtn";
-import { useQuery } from "@tanstack/react-query";
-import { queryKeys } from "@/lib/queryKeys";
-import { time } from "console";
-import { TechnicianImage } from "@prisma/client";
-import { useIsAdminOrManager } from "@/utils/useIsAdminOrManager";
 
 export interface TechnicianPhoto {
   id: number | string;
@@ -47,11 +43,13 @@ export default function WorkOrderModalBody({
 }) {
   const [dueDate, setDueDate] = useState<string | null>("");
   const isAdminOrManager = useIsAdminOrManager();
+  const currentUser = useGetCurrentUser();
+  const companyId = currentUser?.companyId;
   const [openService, setOpenService] = useState<number | null>(null);
   const { data, error, isLoading, isFetched } = useQuery({
     queryKey: queryKeys.getWorkOrderDataKey(invoiceId),
-    queryFn: () => getWorkOrderData(invoiceId),
-    enabled: !!invoiceId,
+    queryFn: () => getWorkOrderData(companyId!, invoiceId),
+    enabled: !!invoiceId && !!companyId,
   });
 
   useEffect(() => {
@@ -67,7 +65,7 @@ export default function WorkOrderModalBody({
         <DialogContent className="h-full min-w-fit overflow-y-auto sm:max-w-[740px] lg:h-fit">
           <div className="flex h-full w-full items-center justify-center">
             <div className="text-center">
-              <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-[#6571FF] border-t-transparent"></div>
+              <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
               <p>Loading work order data...</p>
             </div>
           </div>
@@ -230,9 +228,9 @@ export default function WorkOrderModalBody({
           <div className="">
             <Dialog>
               <DialogTrigger asChild>
-                <button className="md:bg-[#6571ff] md:text-white px-5 py-0.5 rounded-md">
+                <button className="md:bg-primary md:text-white px-5 py-0.5 rounded-md">
                   <span className="md:hidden">
-                    <LucideImage className="h-5 w-5 text-[#6571ff]" />
+                    <LucideImage className="h-5 w-5 text-primary" />
                   </span>
                   <span className="hidden md:inline">Attachments</span>
                 </button>

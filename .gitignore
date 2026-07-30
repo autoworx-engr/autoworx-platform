@@ -3,6 +3,7 @@
 .vscode/
 .prettierignore
 
+graphify-out
 # dependencies
 /node_modules
 /.pnp
@@ -69,3 +70,4 @@ pnpm-workspace.yaml
 
 
 CLAUDE.md
+.memsearch

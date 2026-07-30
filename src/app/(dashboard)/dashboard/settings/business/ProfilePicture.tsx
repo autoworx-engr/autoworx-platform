@@ -40,7 +40,7 @@ export default function ProfilePicture({
     }
   };
   return (
-   <div className="flex flex-col items-center gap-x-8 sm:flex-row border-b pb-3 mb-3">
+    <div className="flex flex-col items-center gap-x-8 sm:flex-row border-b pb-3 mb-3">
       <div
         onClick={handleProfilePictureChange}
         className="relative mb-4 flex aspect-square h-24 w-24 cursor-pointer items-center justify-center rounded-full bg-gray-100 p-1 shadow-md hover:shadow-lg transition duration-200 group"
@@ -51,8 +51,8 @@ export default function ProfilePicture({
             imageSrc
               ? URL.createObjectURL(imageSrc!)
               : imageUrl
-              ? imageUrl
-              : "/icons/business.png"
+                ? imageUrl
+                : "/icons/business.png"
           }
           alt="Business Profile Picture"
           width={96}
@@ -61,7 +61,7 @@ export default function ProfilePicture({
         <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black bg-opacity-30 opacity-0 group-hover:opacity-100 transition duration-300">
           <Camera className="h-6 w-6 text-white" />
         </div>
-        
+
         {/* Input remains hidden */}
         <input
           accept={isPDFPhoto ? ".jpg,.png,.jpeg" : "image/*"}
@@ -75,8 +75,8 @@ export default function ProfilePicture({
       </div>
       <div className="mb-5 sm:mb-0">
         <p className="font-bold text-lg text-gray-700 flex items-center">
-            <ImageIcon className="h-5 w-5 mr-2 text-[#6571FF]" />
-            Business Logo/Picture
+          <ImageIcon className="h-5 w-5 mr-2 text-primary" />
+          Business Logo/Picture
         </p>
         <p className="text-sm text-gray-500 mt-1">
           Recommended Size: 512x512 px (&lt;2.5 MB)

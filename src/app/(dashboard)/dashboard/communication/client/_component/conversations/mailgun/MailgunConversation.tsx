@@ -165,8 +165,9 @@ export default function MailGunConversation({
                         message?.attachments?.length) && (
                         <div
                           className={cn(
-                            "group relative rounded-2xl px-3 py-2 text-[14px] shadow-sm ring-1 transition",
+                            "group relative w-fit rounded-2xl px-3 py-2 text-[14px] shadow-sm ring-1 transition",
                             "select-text hover:shadow-md",
+                            !isIncoming && "ml-auto",
                             isIncoming
                               ? "bg-zinc-200 text-zinc-900 ring-zinc-300 dark:bg-zinc-800 dark:text-zinc-100 dark:ring-white/10"
                               : "bg-gradient-to-br from-[#0a8a95] to-[#006D77] text-white ring-white/20",

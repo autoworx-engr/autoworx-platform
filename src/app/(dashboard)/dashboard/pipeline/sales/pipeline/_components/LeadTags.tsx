@@ -129,7 +129,7 @@ export default function LeadTags({ leadTags, lead }: TLeadTagsProps) {
       <button
         disabled={false} // pending
         type="button"
-        className="inline-flex h-[20px] items-center justify-center rounded bg-[#6571FF] px-1 py-1 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+        className="inline-flex h-[20px] items-center justify-center rounded bg-primary px-1 py-1 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
         onClick={() => setIsTagDropdownOpen(true)}
       >
         + Add

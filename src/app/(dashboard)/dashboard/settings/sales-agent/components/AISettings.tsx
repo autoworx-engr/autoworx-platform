@@ -1,5 +1,5 @@
 "use client";
-import {  useState } from "react";
+import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -33,8 +33,6 @@ interface FAQ {
   answer: string;
 }
 
-
-
 interface Personality {
   warmth: number;
   humor: number;
@@ -50,20 +48,11 @@ interface ConversationStyle {
   casualLanguage: boolean;
 }
 
-
-
 const AISettings = () => {
   const [isEditingPlaybook, setIsEditingPlaybook] = useState(false);
   const [editingPlaybook, setEditingPlaybook] = useState<
     ServicePlaybook | undefined
   >();
-
-
-
-
-
-
-
 
   return (
     <div>
@@ -112,7 +101,7 @@ const AISettings = () => {
 
         {/* 1. Company Knowledge */}
         <TabsContent value="company" className="space-y-6">
-          <CompanyKnowledgeCard/>
+          <CompanyKnowledgeCard />
         </TabsContent>
 
         {/* 2. Service Playbooks */}
@@ -132,12 +121,12 @@ const AISettings = () => {
 
         {/* 4. SMS Response Delay */}
         <TabsContent value="sms" className="space-y-6">
-          <SmsResponseDelayCard/>
+          <SmsResponseDelayCard />
         </TabsContent>
 
         {/* 4. Overall FAQs */}
         <TabsContent value="faqs" className="space-y-6">
-          <OverAllFaqTab/>
+          <OverAllFaqTab />
         </TabsContent>
 
         {/* 5. Service-Based FAQs */}

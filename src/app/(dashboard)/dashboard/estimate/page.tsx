@@ -9,6 +9,12 @@ import { getServerSession } from "next-auth";
 import Header from "./Header";
 import NavigationTabs from "./NavigationTabs";
 import Table from "./Table";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Invoices - Estimates",
+  description: "View and manage all your estimates.",
+};
 
 export default async function EstimatesPage(
   props: Readonly<{
@@ -70,7 +76,11 @@ export default async function EstimatesPage(
 
       {/* Use the NavigationTabs component with the 'a-estimate' tab as active */}
       <NavigationTabs activeTab="a-estimate">
-        <Table estimateData={estimates} />
+        <Table
+          estimateData={estimates}
+          page={searchParams.page}
+          take={searchParams.take}
+        />
       </NavigationTabs>
     </div>
   );

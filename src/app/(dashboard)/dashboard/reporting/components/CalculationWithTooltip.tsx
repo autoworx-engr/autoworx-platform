@@ -1,12 +1,12 @@
 "use client";
-import { formatCurrency } from "@/utils/formatCurrency";
-import { Info } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/Tooltip";
+import { formatCurrency } from "@/utils/formatCurrency";
+import { Info } from "lucide-react";
 
 type TProps = {
   content: string;
@@ -27,10 +27,10 @@ export default function CalculationWithTooltip({
 }: TProps) {
   const tooltipContent =
     hasDateRange &&
-      startDate &&
-      endDate &&
-      startDate !== "undefined" &&
-      endDate !== "undefined"
+    startDate &&
+    endDate &&
+    startDate !== "undefined" &&
+    endDate !== "undefined"
       ? `${startDate} to ${endDate}`
       : defaultTooltip;
 
@@ -49,7 +49,7 @@ export default function CalculationWithTooltip({
         bg-white/70 dark:bg-slate-800/80 backdrop-blur-sm
         ring-1 ring-slate-200/70 dark:ring-slate-700/50
         shadow-lg
-        hover:-translate-y-1 hover:shadow-xl hover:shadow-[#6571FF]/20 dark:hover:shadow-[#6571FF]/10
+        hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/20 dark:hover:shadow-primary/10
         group"
       >
         {/* Info tooltip (top-left) */}
@@ -86,7 +86,7 @@ export default function CalculationWithTooltip({
         </Tooltip>
 
         {/* Gradient accent */}
-        <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-[#6571FF] to-[#8088FF] rounded-b-2xl opacity-50 group-hover:opacity-100 transition-opacity duration-300 hover:from-[#505aff] hover:to-[#6571FF] hover:shadow-xl rounded-2xl" />
+        <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-primary to-[#8088FF] rounded-b-2xl opacity-50 group-hover:opacity-100 transition-opacity duration-300 hover:from-[#505aff] hover:to-primary hover:shadow-xl rounded-2xl" />
       </div>
     </TooltipProvider>
   );

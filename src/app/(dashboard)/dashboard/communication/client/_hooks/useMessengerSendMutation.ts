@@ -53,23 +53,43 @@ export default function useMessengerSendMutation(clientId: number) {
         },
       );
 
-      return { prev };
+      return { prev, tempId: args.tempId };
     },
 
-    onError: (_err, _args, context) => {
-      errorToast("Failed to send message");
+    onSuccess: (saved, _args, context) => {
+      if (!saved) return;
+      queryClient.setQueryData(
+        messengerQueryKey.allByClientId(clientId),
+        (old: any) => {
+          if (!old?.pages?.length) return old;
+          const pages = old.pages.map((page: any, i: number) => {
+            if (i !== 0) return page;
+            // Remove the temp optimistic entry
+            const withoutTemp = page.data.filter(
+              (m: any) => m.id !== context?.tempId,
+            );
+            // Pusher may have already injected the real message — only add if absent
+            const alreadyPresent = withoutTemp.some(
+              (m: any) => m.id === saved.id,
+            );
+            return {
+              ...page,
+              data: alreadyPresent ? withoutTemp : [saved, ...withoutTemp],
+            };
+          });
+          return { ...old, pages };
+        },
+      );
+    },
+
+    onError: (err: any, _args, context) => {
+      errorToast(err?.message || "Failed to send message");
       if (context?.prev) {
         queryClient.setQueryData(
           messengerQueryKey.allByClientId(clientId),
           context.prev,
         );
       }
-    },
-
-    onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: messengerQueryKey.allByClientId(clientId),
-      });
     },
   });
 }

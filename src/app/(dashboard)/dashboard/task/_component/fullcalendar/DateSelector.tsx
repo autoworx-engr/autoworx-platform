@@ -83,6 +83,10 @@ function DateSelector({ type, weekStart = 1 }: DateSelectorProps) {
     }
   };
 
+  const handleDayStep = (newDate: string) => {
+    setDate(newDate);
+  };
+
   // Handle week selection
   const handleWeekSelection = (newWeek: string) => {
     setWeek(newWeek);
@@ -130,6 +134,7 @@ function DateSelector({ type, weekStart = 1 }: DateSelectorProps) {
         <DayCalendar
           selectedDate={date || moment().format("YYYY-MM-DD")}
           onSelect={handleDaySelection}
+          onStep={handleDayStep}
           weekStart={weekStart}
         />
       );
@@ -153,6 +158,7 @@ function DateSelector({ type, weekStart = 1 }: DateSelectorProps) {
         <DayCalendar
           selectedDate={date || moment().format("YYYY-MM-DD")}
           onSelect={handleDaySelection}
+          onStep={handleDayStep}
           weekStart={weekStart}
         />
       );

@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
-import Avatar from "../Avatar";
-import { EmployeeType, User } from "@prisma/client";
-import useEmployeeQuery from "@/hooks/query-hook/useEmployeeQuery";
-import TaskSpinner from "@/app/(dashboard)/dashboard/task/_component/ui/TaskSpinner";
 import TaskError from "@/app/(dashboard)/dashboard/task/_component/ui/TaskError";
 import TaskNotFound from "@/app/(dashboard)/dashboard/task/_component/ui/TaskNotFound";
+import TaskSpinner from "@/app/(dashboard)/dashboard/task/_component/ui/TaskSpinner";
+import useEmployeeQuery from "@/hooks/query-hook/useEmployeeQuery";
+import { EmployeeType, User } from "@prisma/client";
 import { Search, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import Avatar from "../Avatar";
 
 type TAssignedUser = {
   title: string;
@@ -71,7 +71,7 @@ export default function AssignUsers({
     content = <TaskNotFound message={`No ${employeeType} user found`} />;
   } else if (!isLoading && !isError && employeeList.length > 0) {
     content = (
-      <div className="max-h-[220px] overflow-y-auto thin-scrollbar space-y-1">
+      <div className="thin-scrollbar max-h-[220px] space-y-0.5 overflow-y-auto p-1">
         {employeeList
           .filter((employee) => {
             const fullName =
@@ -81,18 +81,17 @@ export default function AssignUsers({
           .map((employee, index) => (
             <button
               key={`${employee.id}-${index}`}
-              className={`flex w-full cursor-pointer items-center gap-3 rounded-md p-2 hover:bg-gray-100 border-gray-200 text-left transition-all ${index % 2 === 0 ? "bg-white" : "bg-gray-50"} ${employeeList.length - 1 === index ? "" : "border-b"}`}
+              className="flex w-full cursor-pointer items-center gap-3 rounded-md px-2.5 py-2 text-left transition-colors hover:bg-accent"
               onClick={() => doAssignUser(employee)}
               type="button"
             >
               <Avatar
                 photo={employee.image}
-                width={50}
-                height={50}
+                width={32}
+                height={32}
                 alt={`${employee.firstName} ${employee.lastName}`}
               />
-
-              <p className="font-medium">
+              <p className="text-sm font-medium text-slate-700">
                 {employee.firstName} {employee.lastName}
               </p>
             </button>
@@ -105,11 +104,11 @@ export default function AssignUsers({
       {/* Add Employee Trigger */}
       <button
         type="button"
-        className="group relative mb-4 font-medium text-[#6571FF] transition-all duration-300"
+        className="group relative mb-4 font-medium text-primary transition-all duration-300"
         onClick={() => setAddEmployeePersonOpen(true)}
       >
         {title}
-        <span className="absolute -bottom-0.5 left-0 h-0.5 w-0 transition-all duration-300 group-hover:w-full bg-[#6571FF]" />
+        {/* <span className="absolute -bottom-0.5 left-0 h-0.5 w-0 transition-all duration-300 group-hover:w-full bg-primary" /> */}
       </button>
 
       {/* Assigned Users List */}
@@ -119,7 +118,7 @@ export default function AssignUsers({
           return (
             <div
               key={`${user.id}-${index}`}
-              className="group flex items-center gap-x-2 rounded-full bg-slate-100/80 px-3 py-1.5 ring-1 ring-slate-200/60 transition-all duration-300 hover:bg-white hover:ring-[#6571FF]/30 hover:shadow-sm animate-in fade-in zoom-in-95"
+              className="group flex items-center gap-x-2 rounded-full bg-slate-100/80 px-3 py-1.5 ring-1 ring-slate-200/60 transition-all duration-300 hover:bg-white hover:ring-primary/30 hover:shadow-sm animate-in fade-in zoom-in-95"
             >
               <Avatar
                 photo={user.image}
@@ -145,42 +144,46 @@ export default function AssignUsers({
 
         {assignedUsers.length === 0 && (
           <p className="ml-1 text-xs italic text-slate-400">
-            {employeeType === "Sales" ? "No sales person assigned yet." : "No Technician assigned yet."}
+            {employeeType === "Sales"
+              ? "No sales person assigned yet."
+              : "No Technician assigned yet."}
           </p>
         )}
       </div>
 
       {/* Search & Add New Surface */}
       {addEmployeePersonOpen && (
-        <div className="relative mt-4 space-y-4 rounded-2xl bg-slate-50/80 p-4 shadow-inner ring-1 ring-slate-200/60 backdrop-blur-sm animate-in zoom-in-95 duration-200">
-          <div className="flex items-center justify-between gap-4">
-            {/* Modern Search Input */}
+        <div className="relative mt-3 space-y-3 rounded-lg border bg-muted/30 p-3 animate-in zoom-in-95 duration-200">
+          <div className="flex items-center gap-2">
+            {/* Search Input (shadcn Input style) */}
             <div className="relative flex-1">
               <Search
                 size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 transform text-slate-400"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
               />
               <input
                 name="search"
-                className="h-10 w-full rounded-xl border-none bg-white pl-10 pr-4 text-sm text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all focus:ring-2 focus:ring-[#6571FF]/30 outline-none placeholder:text-slate-400"
+                className="h-9 w-full rounded-md border border-input bg-transparent pl-9 pr-3 text-sm shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring"
                 type="text"
-                placeholder="Search employees..."
+                placeholder="Search Employees..."
                 value={assignedEmployeeSearch}
                 onChange={(e) => setAssignedEmployeeSearch(e.target.value)}
+                autoFocus
               />
             </div>
 
             {/* Close Search Button */}
             <button
+              type="button"
               onClick={() => setAddEmployeePersonOpen(false)}
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-slate-400 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-rose-50 hover:text-rose-500 hover:ring-rose-200"
+              className="flex h-9 w-9 items-center justify-center rounded-md border border-input text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
-              <X size={20} strokeWidth={2} />
+              <X size={18} strokeWidth={2} />
             </button>
           </div>
 
           {/* Results Content Area */}
-          <div className="max-h-60 overflow-y-auto rounded-xl bg-white/50 p-0.5 ring-1 ring-slate-200/50">
+          <div className="max-h-60 overflow-y-auto rounded-md border bg-background">
             {content}
           </div>
         </div>

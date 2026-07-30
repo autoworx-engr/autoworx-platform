@@ -28,6 +28,7 @@ export default function DeleteClient({ id }: { id: number }) {
       description="Are you sure to delete this client?"
       okText="Yes"
       cancelText="No"
+      placement="topLeft"
       onConfirm={handleDeleteClient}
     >
       <X cursor={"pointer"} color="#f87171" className="w-6 h-6" />

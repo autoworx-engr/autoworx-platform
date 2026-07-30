@@ -102,13 +102,13 @@ export default async function Analytics({
   return (
     <div className="rounded-lg border p-6">
       <h1 className="py-4 text-4xl font-bold">Analytics</h1>
-      <div className="mx-10 grid grid-cols-2 space-x-20">
+      <div className="mx-5 md:mx-10 grid grid-cols-1 gap-x-10 md:gap-x-20">
         {/* bar chart */}
         <PaymentBarChartContainer paymentData={paymentData} />
         {/* pie chart */}
-        <div className="flex h-full items-center justify-center rounded-lg border border-gray-300 bg-white p-4 shadow">
+        {/* <div className="flex h-full items-center justify-center rounded-lg border border-gray-300 bg-white p-4 shadow">
           <p className="text-xl font-semibold text-gray-500">Coming Soon...</p>
-        </div>
+        </div> */}
         {/* <PaymentPieChartContainer
           totalPayments={totalPayments}
           paymentDue={paymentDue}

@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { sentenceCase } from "change-case";
 import { ChevronDown } from "lucide-react";
+import type { ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export type SelectorProps = {
   label?: ReactNode;
@@ -136,7 +136,7 @@ export function SelectorWithSearch({
           type="button"
           className={cn(
             "flex w-full items-center justify-between rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-left text-sm leading-6 text-slate-700 dark:text-slate-200 outline-none transition-all duration-200",
-            "focus:ring-2 focus:ring-[#6571FF]/30 focus:border-[#6571FF] hover:border-[#6571FF] hover:shadow-md",
+            "focus:ring-2 focus:ring-primary/30 focus:border-primary hover:border-primary hover:shadow-md",
             error && "border-red-500 focus:border-red-500 focus:ring-red-200",
             disabled &&
               "cursor-not-allowed bg-slate-100 text-slate-400 opacity-70 dark:bg-slate-800",
@@ -158,7 +158,7 @@ export function SelectorWithSearch({
                 <input
                   ref={searchInputRef}
                   type="text"
-                  className="w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 outline-none focus:border-[#6571FF] focus:ring-2 focus:ring-[#6571FF]/30"
+                  className="w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
                   placeholder="Search..."
                   value={searchTerm}
                   required={required}
@@ -176,7 +176,7 @@ export function SelectorWithSearch({
                     className={cn(
                       "cursor-pointer px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800",
                       selectedValue === opt?.id.toString() &&
-                        "bg-[#6571FF]/10 text-[#6571FF] dark:text-[#8ea0ff]",
+                        "bg-primary/10 text-primary dark:text-[#8ea0ff]",
                     )}
                     onClick={() => handleSelect(opt?.id.toString())}
                   >
@@ -185,14 +185,16 @@ export function SelectorWithSearch({
                 ))
               ) : searchTerm ? (
                 <div
-                  className="cursor-pointer px-3 py-2 text-sm text-[#6571FF] hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="cursor-pointer px-3 py-2 text-sm text-primary hover:bg-slate-100 dark:hover:bg-slate-800"
                   onClick={() => handleSelect(searchTerm)}
                 >
                   "{searchTerm}"
                 </div>
               ) : (
                 <div className="px-3 py-3 text-sm text-slate-500 dark:text-slate-400">
-                  No matching options
+                  {searchTerm
+                    ? `No matches found for "${searchTerm}". Press Enter to create it.`
+                    : "No matching options found. Type a new value and select it to create."}
                 </div>
               )}
             </div>

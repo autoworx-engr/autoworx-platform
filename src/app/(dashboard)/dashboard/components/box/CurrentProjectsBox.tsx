@@ -1,11 +1,9 @@
 import { getCurrentProjects } from "@/actions/dashboard/data/getTechnicianInfo";
 import WorkOrderModal from "@/components/workorder-modal/WorkOrderModal";
+import { cn } from "@/lib/cn"; // Ensure cn is imported
+import { ExternalLink } from "lucide-react";
 import moment from "moment-timezone";
 import Link from "next/link";
-import React from "react";
-import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
-import { ExternalLink } from "lucide-react";
-import { cn } from "@/lib/cn"; // Ensure cn is imported
 
 type TCurrentProjectsBoxProps = {
   className?: string; // Accept className from parent (DashboardTechnician)
@@ -14,10 +12,7 @@ type TCurrentProjectsBoxProps = {
 export default async function CurrentProjectsBox({
   className,
 }: TCurrentProjectsBoxProps) {
-  const companyTimezone = await getCompanyTimezone();
-  const timezone =
-    companyTimezone?.timezone ||
-    Intl.DateTimeFormat().resolvedOptions().timeZone;
+  Intl.DateTimeFormat().resolvedOptions().timeZone;
   const projects = await getCurrentProjects();
 
   return (
@@ -40,7 +35,7 @@ export default async function CurrentProjectsBox({
 
           overflow-hidden // Important for internal scrolling
         `,
-        className
+        className,
       )}
     >
       {/* Box Title and Link */}
@@ -105,19 +100,13 @@ export default async function CurrentProjectsBox({
                   <p className="text-xs font-medium">
                     Start:{" "}
                     {project.startDate
-                      ? moment
-                          .utc(project.startDate)
-                          .tz(timezone)
-                          .format("MM/DD/YYYY")
+                      ? moment.utc(project.startDate).format("MM/DD/YYYY")
                       : "N/A"}
                   </p>
                   <p className="text-xs font-medium">
                     Due:{" "}
                     {project.dueDate
-                      ? moment
-                          .utc(project.dueDate)
-                          .tz(timezone)
-                          .format("MM/DD/YYYY")
+                      ? moment.utc(project.dueDate).format("MM/DD/YYYY")
                       : "N/A"}
                   </p>
                 </div>

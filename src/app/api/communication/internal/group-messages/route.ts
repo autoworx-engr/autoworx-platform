@@ -1,6 +1,7 @@
 import { AppError } from "@/error-boundary/error";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -51,10 +52,12 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
+    const principal = await getAuthPrincipal(request);
+    if (!principal) throw new AppError(401, "Unauthorized");
+
     const searchParams = request.nextUrl.searchParams;
 
     const groupId = searchParams.get("groupId");
-    const companyId = searchParams.get("companyId");
     const sortBy = searchParams.get("sortBy");
     const sortOrder = searchParams.get("sortOrder");
 
@@ -62,29 +65,20 @@ export async function GET(request: NextRequest) {
     const limitNum = parseInt(searchParams.get("limit") || "20");
 
     const groupIdNum = groupId ? parseInt(groupId) : null;
-    const companyIdNum = companyId ? parseInt(companyId) : null;
-
-    // Validation
-    if (!companyIdNum) {
-      throw new AppError(400, "Company ID is required");
-    }
 
     if (!groupIdNum) {
       throw new AppError(400, "Group ID is required");
     }
 
-    // Verify company exists
-    const findExistingCompany = await db.company.findUnique({
-      where: { id: companyIdNum },
-    });
-
-    if (!findExistingCompany) {
-      throw new AppError(404, "Company not found");
-    }
-
-    // Verify group exists and belongs to the company
-    const findGroup = await db.group.findUnique({
-      where: { id: groupIdNum },
+    // Verify caller is a member. Legacy groups can have companyId = null;
+    // membership filter enforces tenant isolation.
+    const findGroup = await db.group.findFirst({
+      where: {
+        id: groupIdNum,
+        OR: [{ companyId: principal.companyId }, { companyId: null }],
+        users: { some: { id: principal.userId } },
+      },
+      select: { id: true },
     });
 
     if (!findGroup) {
@@ -120,12 +114,13 @@ export async function GET(request: NextRequest) {
     const hasPrevPage = pageNum > 1;
     const totalPages = Math.ceil(totalRecords / limitNum);
 
-    const transformMessage = await Promise.all(
-      messages.map(async (message) => {
-        const { to, from, requestEstimate, requestEstimateId, ...rest } =
-          message;
-        const findUser = await db.user.findUnique({
-          where: { id: from },
+    const senderIds = Array.from(
+      new Set(messages.map((m) => m.from).filter((id): id is number => !!id)),
+    );
+
+    const senders = senderIds.length
+      ? await db.user.findMany({
+          where: { id: { in: senderIds } },
           select: {
             id: true,
             firstName: true,
@@ -134,10 +129,15 @@ export async function GET(request: NextRequest) {
             phone: true,
             image: true,
           },
-        });
-        return { ...rest, sender: findUser };
-      }),
-    );
+        })
+      : [];
+
+    const senderMap = new Map(senders.map((u) => [u.id, u]));
+
+    const transformMessage = messages.map((message) => {
+      const { to, from, requestEstimate, requestEstimateId, ...rest } = message;
+      return { ...rest, sender: from ? (senderMap.get(from) ?? null) : null };
+    });
 
     return NextResponse.json(
       {

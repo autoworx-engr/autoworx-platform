@@ -3,6 +3,12 @@ import AISettings from "../components/AISettings";
 import UpgradePlanBanner from "@/components/UpgradePlanBanner";
 import { getCompanyId } from "@/lib/companyId";
 import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Settings - Sales Agent AI",
+  description: "Configure AI settings for your sales agent",
+};
 
 export default async function AISettingsPage() {
   const companyId = await getCompanyId();

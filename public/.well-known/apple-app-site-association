@@ -21,11 +21,30 @@
             "/": "/reset-password*"
           },
           {
+            "/": "/pipeline/sales*",
+            "comment": "Sales pipeline"
+          },
+          {
+            "/": "/pipeline/shop*",
+            "comment": "Shop pipeline"
+          },
+          {
+            "/": "/dashboard/estimate/*",
+            "comment": "Estimate detail → Invoices screen"
+          },
+          {
+            "/": "/dashboard/invoice/*",
+            "comment": "Invoice detail → Invoices screen"
+          },
+          {
+            "/": "/dashboard/task*",
+            "comment": "Task activity screen"
+          },
+          {
             "/": "/*",
             "exclude": true,
             "comment": "Default: Do not open the app for any other routes"
           }
-          
         ]
       }
     ]

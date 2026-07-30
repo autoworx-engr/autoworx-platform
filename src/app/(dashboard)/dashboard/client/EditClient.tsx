@@ -37,12 +37,12 @@ export default function EditCustomer({
       >
         <DialogTrigger asChild>
           <button
-            className={`${settingIcon ? "text-gray-600" : ""} text-[#6571FF]"`}
+            className={`${settingIcon ? "text-gray-600" : ""} text-primary"`}
           >
             {settingIcon ? (
-              <Edit className="w-4 h-4 text-[#6571FF]" />
+              <Edit className="w-4 h-4 text-primary" />
             ) : (
-              <SquarePen className="w-5 h-5 text-[#6571FF]" />
+              <SquarePen className="w-5 h-5 text-primary" />
             )}
           </button>
         </DialogTrigger>

@@ -1,676 +1,174 @@
-import { getGroupById } from "@/actions/communication/internal/query";
-import Avatar from "@/components/Avatar";
 import { cn } from "@/lib/cn";
-import { pusher } from "@/lib/pusher/client";
 import { useChatTrackStore } from "@/stores/chatTrackStore";
 import { ChatTrack, Group, Message, User } from "@prisma/client";
-import { Search } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import CreateGroupModal from "./CreateGroupModal";
-import UserSelectButton from "./UserSelectButton";
-import InfiniteScroll from "react-infinite-scroll-component";
+import { SidebarChatList } from "./_components/SidebarChatList";
+import { SidebarSearch } from "./_components/SidebarSearch";
+import { TabButton } from "./_components/TabButton";
+import { useInfiniteGroupsList } from "./_hooks/useInfiniteGroupsList";
 import { useInfiniteUsersList } from "./_hooks/useInfiniteUsersList";
+import { useInternalSidebarPusher } from "./_hooks/useInternalSidebarPusher";
+import { useSortedChatList } from "./_hooks/useSortedChatList";
+
+type TUser = User & { unreadCount: number; latestMessage?: Message | null };
+type TGroup = Group & { users: User[] };
 
 type TListProps = {
-  users: (User & { unreadCount: number; latestMessage?: Message | null })[];
-  setUsersList: React.Dispatch<
-    React.SetStateAction<
-      (User & { unreadCount: number; latestMessage?: Message | null })[]
-    >
-  >;
-  setGroupsList: React.Dispatch<
-    React.SetStateAction<(Group & { users: User[] })[] | []>
-  >;
-  groups: (Group & { users: User[] })[] | [];
+  users: TUser[];
+  setUsersList: React.Dispatch<React.SetStateAction<TUser[]>>;
+  setGroupsList: React.Dispatch<React.SetStateAction<TGroup[]>>;
+  groups: TGroup[];
   className?: string;
-  groupsList: (Group & { users: User[] })[];
-  usersList: (User & { unreadCount: number; latestMessage?: Message | null })[];
+  groupsList: TGroup[];
+  usersList: TUser[];
   userChatTrack: (ChatTrack & { message?: Message | null })[];
-  messages?: Message[]; // Add messages array
-  addChatItem?: (item: any, type: "user" | "group") => void; // Add helper function
+  messages?: Message[];
+  addChatItem?: (item: TUser | TGroup, type: "user" | "group") => void;
 };
 
 export default function List({
   users,
   setUsersList,
-  groups,
   setGroupsList,
   groupsList,
   usersList,
   className,
   userChatTrack,
-  messages = [], // Default to empty array
+  messages = [],
   addChatItem,
 }: TListProps) {
   const { data: session } = useSession();
   const companyId = session?.user?.companyId ?? 0;
+  const sessionUserId = session?.user?.id ? parseInt(session.user.id) : null;
 
+  const [tab, setTab] = useState<"users" | "groups">("users");
   const [searchTerm, setSearchTerm] = useState("");
-  const [sideBarGroupsLists, setSideBarGroupLists] = useState(groups);
+  // Both lists start empty; the infinite-query hooks below populate them on
+  // mount, and Pusher updates keep them in sync.
+  const [sideBarGroupsLists, setSideBarGroupLists] = useState<TGroup[]>([]);
+  const [userState, setUserState] = useState<TUser[]>([]);
+  const [chatTrackState, setChatTrackState] =
+    useState<(ChatTrack & { message?: Message | null })[]>(userChatTrack);
+  const [messagesState, setMessagesState] = useState<Message[]>(messages);
 
-  // Paginated users list. Server pre-orders by latest-message activity, so the
-  // flat array we receive is already in display order on a per-page basis.
+  const { lastMessage } = useChatTrackStore();
+  const { sortLists, buildCombinedSortedList } = useSortedChatList(
+    messagesState,
+    lastMessage,
+    sessionUserId,
+  );
+
+  // Paginated users — only active when the Users tab is selected; the
+  // hook still mounts but `enabled: false` skips network until the user
+  // switches tabs. (Switching tabs flips both `enabled` flags atomically.)
+  const usersTabActive = tab === "users";
+  const groupsTabActive = tab === "groups";
+
   const {
     data: usersInfinite,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useInfiniteUsersList({ companyId, search: searchTerm });
+    fetchNextPage: fetchNextUsersPage,
+    hasNextPage: hasNextUsersPage,
+    isFetchingNextPage: isFetchingNextUsersPage,
+    isLoading: isLoadingUsers,
+  } = useInfiniteUsersList({
+    companyId,
+    search: usersTabActive ? searchTerm : "",
+  });
+
+  const {
+    data: groupsInfinite,
+    fetchNextPage: fetchNextGroupsPage,
+    hasNextPage: hasNextGroupsPage,
+    isFetchingNextPage: isFetchingNextGroupsPage,
+    isLoading: isLoadingGroups,
+  } = useInfiniteGroupsList({
+    companyId,
+    search: groupsTabActive ? searchTerm : "",
+  });
 
   const paginatedUsers = useMemo(() => {
     const pages = usersInfinite?.pages ?? [];
-    return pages.flatMap((p) => p.data) as (User & {
-      unreadCount: number;
-      latestMessage?: Message | null;
-    })[];
+    return pages.flatMap((p) => p.data) as TUser[];
   }, [usersInfinite]);
 
-  // userState mirrors the paginated users (so the existing Pusher / sort
-  // useEffects in this file keep working) and is re-seeded whenever react-query
-  // delivers a new page or a search-term re-key.
-  const [userState, setUserState] =
-    useState<
-      (User & { unreadCount: number; latestMessage?: Message | null })[]
-    >(users);
+  const paginatedGroups = useMemo(() => {
+    const pages = groupsInfinite?.pages ?? [];
+    return pages.flatMap((p) => p.data) as TGroup[];
+  }, [groupsInfinite]);
 
   useEffect(() => {
     if (paginatedUsers.length === 0 && !usersInfinite) return;
     setUserState(paginatedUsers);
   }, [paginatedUsers, usersInfinite]);
 
-  const [chatTrackState, setChatTrackState] =
-    useState<(ChatTrack & { message?: Message | null })[]>(userChatTrack);
-  const [messagesState, setMessagesState] = useState<Message[]>(messages);
-
-  const { lastMessage } = useChatTrackStore();
-
-  // Combined sorting function for both users and groups based on latest messages
-  const sortUsersAndGroupsByLatestMessage = useCallback(
-    (
-      usersToSort: (User & {
-        unreadCount: number;
-        latestMessage?: Message | null;
-      })[],
-      groupsToSort: (Group & { users: User[] })[],
-    ) => {
-      // Create a combined array with type indicators
-      const combinedItems = [
-        ...usersToSort.map((user) => ({
-          type: "user" as const,
-          data: user,
-          latestMessage: (() => {
-            const userMessages = messagesState.filter(
-              (message) =>
-                (message.from === user.id &&
-                  message.to === parseInt(session?.user?.id!)) ||
-                (message.from === parseInt(session?.user?.id!) &&
-                  message.to === user.id),
-            );
-            return userMessages.length > 0
-              ? userMessages[0]
-              : user.latestMessage;
-          })(),
-        })),
-        ...groupsToSort.map((group) => ({
-          type: "group" as const,
-          data: group,
-          latestMessage: (() => {
-            const groupMessages = messagesState.filter(
-              (message) => message.groupId === group.id,
-            );
-            return groupMessages.length > 0 ? groupMessages[0] : null;
-          })(),
-        })),
-      ];
-
-      // Sort the combined array by latest message timestamp
-      const sorted = combinedItems.sort((a, b) => {
-        let aTimestamp = a.latestMessage
-          ? new Date(a.latestMessage.updatedAt).getTime()
-          : 0;
-        let bTimestamp = b.latestMessage
-          ? new Date(b.latestMessage.updatedAt).getTime()
-          : 0;
-
-        // Check if lastMessage from store affects these items and use it if it's more recent
-        if (lastMessage && lastMessage.message) {
-          const lastMessageTimestamp = new Date(
-            lastMessage.message.updatedAt,
-          ).getTime();
-
-          if (a.type === "user") {
-            if (
-              (lastMessage.message.from === a.data.id &&
-                lastMessage.message.to === parseInt(session?.user?.id!)) ||
-              (lastMessage.message.from === parseInt(session?.user?.id!) &&
-                lastMessage.message.to === a.data.id)
-            ) {
-              aTimestamp = Math.max(aTimestamp, lastMessageTimestamp);
-            }
-          } else if (
-            a.type === "group" &&
-            lastMessage.message.groupId === a.data.id
-          ) {
-            aTimestamp = Math.max(aTimestamp, lastMessageTimestamp);
-          }
-
-          if (b.type === "user") {
-            if (
-              (lastMessage.message.from === b.data.id &&
-                lastMessage.message.to === parseInt(session?.user?.id!)) ||
-              (lastMessage.message.from === parseInt(session?.user?.id!) &&
-                lastMessage.message.to === b.data.id)
-            ) {
-              bTimestamp = Math.max(bTimestamp, lastMessageTimestamp);
-            }
-          } else if (
-            b.type === "group" &&
-            lastMessage.message.groupId === b.data.id
-          ) {
-            bTimestamp = Math.max(bTimestamp, lastMessageTimestamp);
-          }
-        }
-
-        // Sort in descending order (most recent first)
-        // Items with messages should always come before items without messages
-        if (aTimestamp === 0 && bTimestamp === 0) return 0; // Both have no messages
-        if (aTimestamp === 0) return 1; // A has no messages, B should come first
-        if (bTimestamp === 0) return -1; // B has no messages, A should come first
-
-        return bTimestamp - aTimestamp;
-      });
-
-      // Separate back to users and groups
-      const sortedUsers = sorted
-        .filter((item) => item.type === "user")
-        .map((item) => item.data) as (User & {
-        unreadCount: number;
-        latestMessage?: Message | null;
-      })[];
-      const sortedGroups = sorted
-        .filter((item) => item.type === "group")
-        .map((item) => item.data) as (Group & { users: User[] })[];
-
-      return { sortedUsers, sortedGroups };
-    },
-    [messagesState, lastMessage, session?.user?.id],
-  );
-
-  // Update states when props change and sort immediately
   useEffect(() => {
-    // Sort users and groups together
-    const { sortedUsers, sortedGroups } = sortUsersAndGroupsByLatestMessage(
-      users,
-      groups,
+    if (paginatedGroups.length === 0 && !groupsInfinite) return;
+    setSideBarGroupLists(paginatedGroups);
+  }, [paginatedGroups, groupsInfinite]);
+
+  // Re-sort current state when the inputs to the sort function change
+  // (messages stream, lastMessage from store, chatTrack updates). The two
+  // paginated queries above are the *seed* — this effect just keeps the order
+  // fresh as new realtime data lands.
+  useEffect(() => {
+    if (userState.length === 0 && sideBarGroupsLists.length === 0) return;
+    const { sortedUsers, sortedGroups } = sortLists(
+      userState,
+      sideBarGroupsLists,
     );
     setUserState(sortedUsers);
     setSideBarGroupLists(sortedGroups);
-    setChatTrackState(userChatTrack);
-    setMessagesState(messages);
-  }, [
-    users,
-    userChatTrack,
-    messages,
-    groups,
-    sortUsersAndGroupsByLatestMessage,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messagesState, lastMessage, chatTrackState, sortLists]);
 
-  // Sort users whenever messagesState changes or when a new message arrives
-  useEffect(() => {
-    if (userState.length > 0 || sideBarGroupsLists.length > 0) {
-      const { sortedUsers, sortedGroups } = sortUsersAndGroupsByLatestMessage(
-        userState,
-        sideBarGroupsLists,
-      );
-      setUserState(sortedUsers);
-      setSideBarGroupLists(sortedGroups);
-    }
-  }, [messagesState, lastMessage, sortUsersAndGroupsByLatestMessage]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // (refresh-on-mount full-table fetch removed; useInfiniteUsersList now drives
-  // initial load and re-fetches as the user scrolls or types into search.)
-
-  // Listen for new messages and update user unread counts
-  useEffect(() => {
-    if (!session?.user?.id) return;
-
-    const channel = pusher.subscribe(`track-${session.user.id}`);
-
-    const handleNewMessage = (data: any) => {
-      // Handle messages for any user (sender or receiver)
-      const isMessageInvolvingCurrentUser =
-        data.message &&
-        (data.message.to === parseInt(session.user.id!) ||
-          data.message.from === parseInt(session.user.id!));
-
-      // Handle group messages involving current user
-      const isGroupMessageInvolvingCurrentUser =
-        data.message &&
-        data.message.groupId &&
-        (data.message.from === parseInt(session.user.id!) ||
-          // Check if current user is in the group (we can enhance this later)
-          true); // For now, assume all group messages are relevant
-
-      if (isMessageInvolvingCurrentUser || isGroupMessageInvolvingCurrentUser) {
-        // Add the new message to the messages state
-        setMessagesState((prevMessages) => {
-          const messageExists = prevMessages.some(
-            (msg) => msg.id === data.message.id,
-          );
-          if (messageExists) {
-            return prevMessages;
-          }
-          // Add new message and sort by most recent first
-          return [data.message, ...prevMessages].sort(
-            (a, b) =>
-              new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
-          );
-        });
-
-        // Handle group message sorting - update group order based on new message
-        if (data.message.groupId) {
-          setSideBarGroupLists((prevGroups) => {
-            const { sortedGroups } = sortUsersAndGroupsByLatestMessage(
-              userState,
-              prevGroups,
-            );
-            return sortedGroups;
-          });
-        }
-
-        // Set the unread count to 1 for the sender (only if current user is receiver)
-        if (data.message.to === parseInt(session.user.id!)) {
-          setUserState((prevUsers) =>
-            prevUsers.map((user) => {
-              if (user.id === data.message.from) {
-                return {
-                  ...user,
-                  unreadCount: 1,
-                  latestMessage: data.message,
-                };
-              }
-              return user;
-            }),
-          );
-        } else if (data.message.from === parseInt(session.user.id!)) {
-          // Update the latest message for the receiver even if we sent it
-          setUserState((prevUsers) =>
-            prevUsers.map((user) => {
-              if (user.id === data.message.to) {
-                return {
-                  ...user,
-                  latestMessage: data.message,
-                };
-              }
-              return user;
-            }),
-          );
-        }
-
-        // Update the chat track state with the new message (for compatibility)
-        setChatTrackState((prevChatTracks) => {
-          const existingTrackIndex = prevChatTracks.findIndex(
-            (track) => track.id === data.id,
-          );
-
-          let updatedTracks;
-          if (existingTrackIndex !== -1) {
-            // Update existing track
-            updatedTracks = [...prevChatTracks];
-            updatedTracks[existingTrackIndex] = data;
-          } else {
-            // Add new track
-            updatedTracks = [...prevChatTracks, data];
-          }
-
-          return updatedTracks;
-        });
-      }
-    };
-
-    const handleMessageRead = (data: { senderId: number; userId: number }) => {
-      if (data.userId === parseInt(session.user.id!)) {
-        // Reset unread count for the sender when messages are marked as read
-        setUserState((prevUsers) =>
-          prevUsers.map((user) => {
-            if (user.id === data.senderId) {
-              return { ...user, unreadCount: 0 };
-            }
-            return user;
-          }),
-        );
-
-        // Update chat track state to mark messages as read
-        setChatTrackState((prevChatTracks) =>
-          prevChatTracks.map((track) => {
-            if (
-              track.senderId === data.senderId &&
-              track.receiverId === data.userId
-            ) {
-              return { ...track, isRead: true };
-            }
-            return track;
-          }),
-        );
-      }
-    };
-
-    channel.bind("chat-track", handleNewMessage);
-    channel.bind("chat-track-read", handleMessageRead);
-
-    return () => {
-      channel.unbind("chat-track", handleNewMessage);
-      channel.unbind("chat-track-read", handleMessageRead);
-      pusher.unsubscribe(`track-${session.user.id}`);
-    };
-  }, [session?.user?.id]);
-
-  // create new group for real time update
-  useEffect(() => {
-    let ignore = true;
-    pusher
-      .subscribe("create-group")
-      .bind(
-        "create",
-        ({
-          groupId,
-          usersIds,
-        }: {
-          groupId: number;
-          usersIds: { id: number }[];
-        }) => {
-          getGroupById(groupId, Number(session?.user?.id!)).then(
-            (groupFromDb) => {
-              if (groupFromDb) {
-                if (!ignore) {
-                  setSideBarGroupLists((prevGroups) => {
-                    const isExistInGroup = prevGroups.find(
-                      (g) => g.id === groupId,
-                    );
-                    let updatedGroups;
-                    if (!isExistInGroup) {
-                      updatedGroups = [...prevGroups, groupFromDb];
-                    } else {
-                      updatedGroups = prevGroups;
-                    }
-                    // Sort groups after adding new one
-                    const { sortedGroups } = sortUsersAndGroupsByLatestMessage(
-                      userState,
-                      updatedGroups,
-                    );
-                    return sortedGroups;
-                  });
-                }
-              }
-            },
-          );
-        },
-      );
-    return () => {
-      ignore = false;
-      pusher.unbind("create");
-    };
-  }, []);
-
-  // delete member from group for real time update
-  useEffect(() => {
-    let ignore = true;
-    pusher
-      .subscribe("delete-group")
-      .bind(
-        "delete",
-        ({ groupId, userId }: { groupId: number; userId: number }) => {
-          getGroupById(groupId, Number(session?.user?.id!)).then(
-            (groupFromDb) => {
-              if (groupFromDb) {
-                if (!ignore) {
-                  setSideBarGroupLists((prevGroups) => {
-                    const isAlreadyExistInGroup = prevGroups.find(
-                      (group) => group.id === groupId,
-                    );
-                    let updatedGroups;
-                    if (isAlreadyExistInGroup) {
-                      updatedGroups = prevGroups.map((group) => {
-                        if (group.id === groupId) {
-                          return groupFromDb;
-                        } else {
-                          return group;
-                        }
-                      });
-                    } else {
-                      updatedGroups = prevGroups;
-                    }
-                    // Sort groups after updating
-                    const { sortedGroups } = sortUsersAndGroupsByLatestMessage(
-                      userState,
-                      updatedGroups,
-                    );
-                    return sortedGroups;
-                  });
-                  setGroupsList((groupLists: any) => {
-                    return groupLists.map((group: any) => {
-                      if (group.id === groupId) {
-                        return groupFromDb;
-                      } else {
-                        return group;
-                      }
-                    });
-                  });
-                }
-              } else {
-                setSideBarGroupLists((prevGroups) => {
-                  const isAlreadyExistInGroup = prevGroups.find(
-                    (group) => group.id === groupId,
-                  );
-                  if (isAlreadyExistInGroup) {
-                    return prevGroups.filter((group) => group.id !== groupId);
-                  } else {
-                    return prevGroups;
-                  }
-                });
-                setGroupsList((groupLists: any) => {
-                  return groupLists.filter(
-                    (group: any) => group.id !== groupId,
-                  );
-                });
-              }
-            },
-          );
-        },
-      );
-    return () => {
-      ignore = false;
-      pusher.unbind("delete");
-    };
-  }, []);
-
-  // add new member to group and update sidebar for real time update
-  useEffect(() => {
-    // "add-member-in-group", "add-member"
-    let ignore = true;
-    pusher
-      .subscribe("add-member-in-group")
-      .bind("add-member", ({ groupId }: { groupId: number }) => {
-        getGroupById(groupId, Number(session?.user?.id!)).then(
-          (groupFromDb) => {
-            if (groupFromDb) {
-              if (!ignore) {
-                setSideBarGroupLists((prevGroups) => {
-                  const isAlreadyExistInGroup = prevGroups.find(
-                    (group) => group.id === groupId,
-                  );
-                  let updatedGroups;
-                  if (isAlreadyExistInGroup) {
-                    updatedGroups = prevGroups.map((group) => {
-                      if (group.id === groupId) {
-                        return groupFromDb;
-                      } else {
-                        return group;
-                      }
-                    });
-                  } else {
-                    updatedGroups = [...prevGroups, groupFromDb];
-                  }
-                  // Sort groups after adding/updating member
-                  const { sortedGroups } = sortUsersAndGroupsByLatestMessage(
-                    userState,
-                    updatedGroups,
-                  );
-                  return sortedGroups;
-                });
-                setGroupsList((groupLists: any) => {
-                  return groupLists.map((group: any) => {
-                    if (group.id === groupId) {
-                      return groupFromDb;
-                    } else {
-                      return group;
-                    }
-                  });
-                });
-              }
-            }
-          },
-        );
-      });
-    return () => {
-      ignore = false;
-      pusher.unbind("add-member");
-    };
-  }, []);
-
-  // Sort users whenever chatTrackState changes or when a new message arrives
-  useEffect(() => {
-    if (userState.length > 0 || sideBarGroupsLists.length > 0) {
-      const { sortedUsers, sortedGroups } = sortUsersAndGroupsByLatestMessage(
-        userState,
-        sideBarGroupsLists,
-      );
-      setUserState(sortedUsers);
-      setSideBarGroupLists(sortedGroups);
-    }
-  }, [chatTrackState, lastMessage]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Also sort when users prop changes (initial load or refresh)
-  useEffect(() => {
-    if (users.length > 0 || groups.length > 0) {
-      const { sortedUsers, sortedGroups } = sortUsersAndGroupsByLatestMessage(
-        users,
-        groups,
-      );
-      setUserState(sortedUsers);
-      setSideBarGroupLists(sortedGroups);
-    }
-  }, [users, groups]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Create a combined and sorted list of users and groups for display
-  const getCombinedSortedList = useCallback(() => {
-    // Create combined items with their latest messages
-    const combinedItems = [
-      ...sideBarGroupsLists.map((group) => {
-        const groupMessages = messagesState.filter(
-          (message) => message.groupId === group.id,
-        );
-        const latestMessage =
-          groupMessages.length > 0 ? groupMessages[0] : null;
-
-        return {
-          type: "group" as const,
-          data: group,
-          latestMessage,
-          timestamp: latestMessage
-            ? new Date(latestMessage.updatedAt).getTime()
-            : 0,
-        };
-      }),
-      ...userState.map((user) => {
-        const userMessages = messagesState.filter(
-          (message) =>
-            (message.from === user.id &&
-              message.to === parseInt(session?.user?.id!)) ||
-            (message.from === parseInt(session?.user?.id!) &&
-              message.to === user.id),
-        );
-        const latestMessage =
-          userMessages.length > 0 ? userMessages[0] : user.latestMessage;
-
-        return {
-          type: "user" as const,
-          data: user,
-          latestMessage,
-          timestamp: latestMessage
-            ? new Date(latestMessage.updatedAt).getTime()
-            : 0,
-        };
-      }),
-    ];
-
-    // Check if lastMessage from store affects any items
-    if (lastMessage && lastMessage.message) {
-      const lastMessageTimestamp = new Date(
-        lastMessage.message.updatedAt,
-      ).getTime();
-      const lastMsg = lastMessage.message; // Store reference to avoid repeated null checks
-
-      combinedItems.forEach((item) => {
-        if (item.type === "user") {
-          if (
-            (lastMsg.from === item.data.id &&
-              lastMsg.to === parseInt(session?.user?.id!)) ||
-            (lastMsg.from === parseInt(session?.user?.id!) &&
-              lastMsg.to === item.data.id)
-          ) {
-            item.timestamp = Math.max(item.timestamp, lastMessageTimestamp);
-          }
-        } else if (item.type === "group" && lastMsg.groupId === item.data.id) {
-          item.timestamp = Math.max(item.timestamp, lastMessageTimestamp);
-        }
-      });
-    }
-
-    // Sort by timestamp (most recent first)
-    return combinedItems.sort((a, b) => {
-      if (a.timestamp === 0 && b.timestamp === 0) return 0;
-      if (a.timestamp === 0) return 1; // Items without messages go to bottom
-      if (b.timestamp === 0) return -1; // Items without messages go to bottom
-      return b.timestamp - a.timestamp;
-    });
-  }, [
-    sideBarGroupsLists,
+  useInternalSidebarPusher({
+    sessionUserId,
     userState,
-    messagesState,
-    lastMessage,
-    session?.user?.id,
-  ]);
+    setUserState,
+    setSideBarGroupLists,
+    setGroupsList,
+    setMessagesState,
+    setChatTrackState,
+    sortLists,
+  });
 
-  // Function to update user state (for unread counts and latest messages)
-  const updateUserState = (
-    userId: number,
-    updates: Partial<
-      User & { unreadCount: number; latestMessage?: Message | null }
-    >,
-  ) => {
-    setUserState((prevUsers) =>
-      prevUsers.map((user) => {
-        if (user.id === userId) {
-          return { ...user, ...updates };
-        }
-        return user;
-      }),
+  const updateUserState = (userId: number, updates: Partial<TUser>) => {
+    setUserState((prev) =>
+      prev.map((u) => (u.id === userId ? { ...u, ...updates } : u)),
     );
   };
+
+  // Tab decides whether the sidebar is showing users or groups. Both lists are
+  // server-paginated through their own infinite query, so the search term
+  // participates in the query key for each — no client-side filtering needed.
+  const combined = buildCombinedSortedList(userState, sideBarGroupsLists);
+  const visible = combined.filter(
+    (item) => item.type === (usersTabActive ? "user" : "group"),
+  );
+
+  const activeFetchNextPage = usersTabActive
+    ? fetchNextUsersPage
+    : fetchNextGroupsPage;
+  const activeHasNextPage = usersTabActive
+    ? hasNextUsersPage
+    : hasNextGroupsPage;
+  const activeIsFetchingNextPage = usersTabActive
+    ? isFetchingNextUsersPage
+    : isFetchingNextGroupsPage;
+  const activeIsLoading = usersTabActive ? isLoadingUsers : isLoadingGroups;
 
   return (
     <div
       className={cn(
-        "app-shadow max-h-[92vh] w-full rounded-lg bg-background p-3 sm:block sm:w-[25%]",
+        "app-shadow flex h-[calc(100vh-7rem)] w-full flex-col rounded-lg bg-background p-3 sm:w-80 sm:shrink-0",
         className,
       )}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between w-full">
         <h2 className="font-bold text-[#795252] sm:text-[14px] sm:font-normal">
-          User List
+          {tab === "users" ? "User List" : "Group List"}
         </h2>
         <CreateGroupModal
           users={users}
@@ -679,189 +177,55 @@ export default function List({
           addChatItem={addChatItem}
         />
       </div>
-      {/* Search */}
-      <div className="relative mt-4">
-        <Search
-          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400"
-          size={18}
-        />
-        <input
-          onChange={(e) => setSearchTerm(e.target.value)}
-          type="text"
-          placeholder="Search by name,email or phone"
-          className={cn(
-            "w-full rounded-md border bg-white pl-9 pr-9 py-2 text-sm text-zinc-700 placeholder-zinc-400 outline-none",
-            "border-zinc-300 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20",
-            "dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200",
-          )}
-        />
-      </div>
 
-      <div
-        id="internalSidebarScroll"
-        className="thin-scrollbar mt-2 flex h-[88%] flex-col gap-2 overflow-y-auto max-[2127px]:h-[87%]"
-      >
-        <InfiniteScroll
-          // Keep the parent state count as dataLength so InfiniteScroll knows to
-          // call `next` again when the user scrolls past the loaded set.
-          dataLength={userState.length}
-          next={() => {
-            void fetchNextPage();
+      <div className="mt-3 grid grid-cols-2 rounded-lg bg-zinc-100 p-1 dark:bg-zinc-800">
+        <TabButton
+          active={tab === "users"}
+          onClick={() => {
+            setTab("users");
+            setSearchTerm("");
           }}
-          hasMore={!!hasNextPage}
-          loader={
-            isFetchingNextPage ? (
-              <div className="py-2 text-center text-xs text-zinc-500">
-                Loading more…
-              </div>
-            ) : null
-          }
-          scrollableTarget="internalSidebarScroll"
-          style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
         >
-          {/* Combined list of groups and users sorted by latest message */}
-          {getCombinedSortedList()
-            .filter((item) => {
-              // Users are filtered server-side (the `search` arg participates in
-              // the query key, so changing the box re-fetches a fresh page set).
-              // Groups still need a client-side filter — they aren't paginated
-              // through the same hook.
-              if (item.type === "group") {
-                return item.data.name
-                  .toLowerCase()
-                  .includes(searchTerm.toLowerCase());
-              }
-              return true;
-            })
-            .map((item) => {
-              if (item.type === "group") {
-                const group = item.data;
-                const isSelectedGroup = !!groupsList.find(
-                  (g) => g.id === group.id,
-                );
-
-                return (
-                  <button
-                    key={`group-${group.id}`}
-                    className={cn(
-                      `group relative flex items-center w-full gap-2 rounded-2xl p-3 sm:p-4`,
-                      // base card feel
-                      "border border-transparent shadow-sm transition-all duration-200",
-                      // hover/active polish
-                      "hover:shadow-md active:scale-[0.99]",
-                      isSelectedGroup
-                        ? [
-                            "bg-gradient-to-r from-teal-700 to-teal-600",
-                            "ring-1 ring-teal-500/60",
-                          ].join(" ")
-                        : [
-                            "bg-white dark:bg-zinc-900/60",
-                            "border-zinc-200/70 dark:border-white/10",
-                            "hover:border-zinc-300/80 dark:hover:border-white/20",
-                          ].join(" "),
-                    )}
-                    onClick={() => {
-                      // Use the helper function if available, otherwise fallback to old logic
-                      if (addChatItem) {
-                        addChatItem(group, "group");
-                      } else {
-                        // Fallback logic
-                        setGroupsList((groupList) => {
-                          const existingGroupIndex = groupList.findIndex(
-                            (g) => g?.id === group.id,
-                          );
-
-                          if (existingGroupIndex !== -1) {
-                            return groupList;
-                          } else {
-                            const totalChatBoxes =
-                              groupList.length + usersList.length;
-
-                            if (totalChatBoxes >= 4) {
-                              const newGroupList = [...groupList];
-                              if (newGroupList.length >= 1) {
-                                newGroupList[newGroupList.length - 1] = group;
-                                return newGroupList;
-                              } else {
-                                return [group];
-                              }
-                            } else {
-                              return [...groupList, group];
-                            }
-                          }
-                        });
-                      }
-                    }}
-                  >
-                    <div
-                      className={cn(
-                        "grid items-center",
-                        group.users.length === 1
-                          ? "grid-cols-1"
-                          : "grid-cols-2",
-                      )}
-                    >
-                      {group.users.length > 0 &&
-                        group.users?.slice(0, 4).map((user) => {
-                          return (
-                            <Avatar
-                              photo={user?.image}
-                              width={40}
-                              height={40}
-                              key={user?.id}
-                            />
-                          );
-                        })}
-                    </div>
-                    <div className="flex flex-col">
-                      <p
-                        className={cn(
-                          "text-[14px] font-bold text-[#797979]",
-                          isSelectedGroup && "text-white hover:text-[#797979]",
-                        )}
-                      >
-                        {group?.name}
-                      </p>
-                    </div>
-                  </button>
-                );
-              } else {
-                const user = item.data;
-                const isSelectedUser = !!usersList.find(
-                  (u) => u.id === user.id,
-                );
-
-                // Get the latest chat track for this user (most recent message)
-                const userChatTracks = chatTrackState.filter(
-                  (chat) =>
-                    chat.receiverId === user.id || chat.senderId === user.id,
-                );
-
-                const traceLastMessage =
-                  userChatTracks.length > 0
-                    ? userChatTracks.reduce((latest, current) =>
-                        new Date(current.updatedAt) > new Date(latest.updatedAt)
-                          ? current
-                          : latest,
-                      )
-                    : undefined;
-
-                return (
-                  <UserSelectButton
-                    key={`user-${user.id}`}
-                    groupListLength={groupsList?.length}
-                    isSelectedUser={isSelectedUser}
-                    traceLastMessage={traceLastMessage}
-                    user={user}
-                    setUsersList={setUsersList}
-                    updateUserState={updateUserState}
-                    addChatItem={addChatItem}
-                  />
-                );
-              }
-            })}
-        </InfiniteScroll>
+          Users
+        </TabButton>
+        <TabButton
+          active={tab === "groups"}
+          onClick={() => {
+            setTab("groups");
+            setSearchTerm("");
+          }}
+        >
+          Groups
+        </TabButton>
       </div>
+
+      <SidebarSearch
+        value={searchTerm}
+        onChange={setSearchTerm}
+        placeholder={
+          tab === "users"
+            ? "Search by Name, Email or Phone"
+            : "Search Groups by Name"
+        }
+      />
+
+      <SidebarChatList
+        tab={tab}
+        visible={visible}
+        groupsList={groupsList}
+        usersList={usersList}
+        chatTrackState={chatTrackState}
+        setUsersList={setUsersList}
+        setGroupsList={setGroupsList}
+        updateUserState={updateUserState}
+        addChatItem={addChatItem}
+        hasNextPage={!!activeHasNextPage}
+        isFetchingNextPage={activeIsFetchingNextPage}
+        isLoading={activeIsLoading}
+        fetchNextPage={() => {
+          void activeFetchNextPage();
+        }}
+      />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { getEmployees, getEmployeesForPaginate } from "@/actions/employee/get";
-import { getCompanyId } from "@/lib/companyId";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { EmployeeType } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -110,6 +110,13 @@ import { NextRequest, NextResponse } from "next/server";
  *         description: Internal server error
  */
 export async function GET(req: NextRequest) {
+  const principal = await getAuthPrincipal(req);
+  if (!principal) {
+    return NextResponse.json(
+      { success: false, message: "Unauthorized" },
+      { status: 401 },
+    );
+  }
   try {
     const { searchParams } = req.nextUrl;
 
@@ -125,10 +132,9 @@ export async function GET(req: NextRequest) {
 
     if (take !== undefined && !isNaN(take)) {
       const page = pageParam ? Math.max(1, parseInt(pageParam)) : 1;
-      const companyId = await getCompanyId();
 
       const result = await getEmployeesForPaginate({
-        companyId,
+        companyId: principal.companyId,
         page,
         take,
         filter: {
@@ -154,6 +160,8 @@ export async function GET(req: NextRequest) {
       excludeCurrentUser,
       type: type ?? undefined,
       notType: notType ?? undefined,
+      companyId: principal.companyId,
+      currentUserId: principal.userId,
     });
 
     return NextResponse.json({

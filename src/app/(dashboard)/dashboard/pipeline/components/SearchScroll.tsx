@@ -81,7 +81,7 @@ export default function SearchScroll({
         params.toString() ? `${pathname}?${params.toString()}` : pathname,
       );
     });
-  }, 300);
+  }, 500);
 
   // Handle clicks outside filter dropdown to close it
   useEffect(() => {
@@ -117,19 +117,15 @@ export default function SearchScroll({
         return;
       }
       // Unified search logic for both pipelines
+      const words = searchTerm.toLowerCase().split(/\s+/).filter(Boolean);
+      const matchesAllWords = (haystack: string) =>
+        words.every((w) => haystack.includes(w));
+
       column.leads?.forEach((lead: any, leadIndex: number) => {
-        // Search by client name
-        const nameMatch = (lead.name || lead.clientName || "")
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase());
-        // Search by vehicle information (year, make, model)
-        const vehicleMatch =
-          lead.vehicle &&
-          lead.vehicle.toLowerCase().includes(searchTerm.toLowerCase());
-        const vehicleYearMatch =
-          lead.year &&
-          lead.year.toLowerCase().includes(searchTerm.toLowerCase());
-        if (nameMatch || vehicleMatch || vehicleYearMatch) {
+        const nameStr = (lead.name || lead.clientName || "").toLowerCase();
+        const vehicleStr = (lead.vehicle || "").toLowerCase();
+
+        if (matchesAllWords(nameStr) || matchesAllWords(vehicleStr)) {
           results.push({ columnIndex, leadIndex });
         }
       });
@@ -231,7 +227,7 @@ export default function SearchScroll({
         {
           <Search
             size={18}
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-[#6571FF]"
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-primary"
           />
         }
         <input
@@ -248,7 +244,7 @@ export default function SearchScroll({
             "text-sm font-medium text-slate-700 placeholder:text-slate-400 outline-none",
             "transition-all duration-300 ease-in-out",
             "hover:border-slate-200 hover:bg-slate-50/30",
-            "focus:border-[#6571FF]/40 focus:bg-white focus:ring-4 focus:ring-[#6571FF]/10",
+            "focus:border-primary/40 focus:bg-white focus:ring-4 focus:ring-primary/10",
           )}
         />
         {searchTerm && (
@@ -271,8 +267,8 @@ export default function SearchScroll({
               className={cn(
                 "flex h-12 w-full items-center gap-2 rounded-2xl border-2 px-4 transition-all duration-200 sm:w-auto",
                 "text-sm font-semibold outline-none active:scale-95",
-                selectedColumnId !== null
-                  ? "border-[#6571FF]/40 bg-[#6571FF]/5 text-[#6571FF]"
+                selectedColumnId !== null || showColumnFilter
+                  ? "border-primary/40 bg-primary/5 text-primary ring-4 ring-primary/10"
                   : "border-slate-100 bg-white text-slate-500 hover:border-slate-200 hover:bg-slate-50",
               )}
               aria-label="Filter by column"
@@ -280,8 +276,8 @@ export default function SearchScroll({
               <Funnel
                 size={16}
                 className={
-                  selectedColumnId !== null
-                    ? "text-[#6571FF]"
+                  selectedColumnId !== null || showColumnFilter
+                    ? "text-primary"
                     : "text-slate-400"
                 }
               />
@@ -303,7 +299,7 @@ export default function SearchScroll({
                     className={cn(
                       "flex w-full items-center rounded-xl px-4 py-2.5 text-left text-sm font-semibold transition-colors",
                       selectedColumnId === null
-                        ? "bg-[#6571FF] text-white"
+                        ? "bg-primary text-white"
                         : "text-slate-500 hover:bg-slate-50",
                     )}
                   >
@@ -317,7 +313,7 @@ export default function SearchScroll({
                       className={cn(
                         "flex w-full items-center rounded-xl px-4 py-2.5 text-left text-sm font-semibold transition-colors",
                         selectedColumnId === column.id
-                          ? "bg-[#6571FF] text-white"
+                          ? "bg-primary text-white"
                           : "text-slate-600 hover:bg-slate-50",
                       )}
                     >
@@ -336,7 +332,7 @@ export default function SearchScroll({
                 "flex h-12 w-full items-center gap-2 rounded-2xl border-2 px-4 transition-all duration-200 sm:w-auto",
                 "text-sm font-semibold outline-none active:scale-95",
                 selectedType !== null
-                  ? "border-[#6571FF]/40 bg-[#6571FF]/5 text-[#6571FF]"
+                  ? "border-primary/40 bg-primary/5 text-primary"
                   : "border-slate-100 bg-white text-slate-500 hover:border-slate-200 hover:bg-slate-50",
               )}
               aria-label="Filter by Type"
@@ -344,9 +340,7 @@ export default function SearchScroll({
               <Funnel
                 size={16}
                 className={
-                  selectedType !== undefined
-                    ? "text-[#6571FF]"
-                    : "text-slate-400"
+                  selectedType !== undefined ? "text-primary" : "text-slate-400"
                 }
               />
               <span>
@@ -366,7 +360,7 @@ export default function SearchScroll({
                     className={cn(
                       "flex w-full items-center rounded-xl px-4 py-2.5 text-left text-sm font-semibold transition-colors",
                       selectedType === undefined
-                        ? "bg-[#6571FF] text-white"
+                        ? "bg-primary text-white"
                         : "text-slate-500 hover:bg-slate-50",
                     )}
                   >
@@ -381,7 +375,7 @@ export default function SearchScroll({
                         className={cn(
                           "flex w-full items-center rounded-xl px-4 py-2.5 text-left text-sm font-semibold transition-colors",
                           selectedType === type
-                            ? "bg-[#6571FF] text-white"
+                            ? "bg-primary text-white"
                             : "text-slate-600 hover:bg-slate-50",
                         )}
                       >
@@ -399,7 +393,7 @@ export default function SearchScroll({
         {searchResults.length > 0 && (
           <div className="flex h-12 items-center justify-between gap-1 rounded-2xl border-2 border-slate-100 bg-slate-50/50 px-3 shadow-sm">
             <div className="flex items-center gap-2 border-r border-slate-200 pr-3">
-              <span className="text-xs font-semibold text-[#6571FF]">
+              <span className="text-xs font-semibold text-primary">
                 {currentResultIndex + 1}
               </span>
               <span className="text-xs font-semibold text-slate-500">
@@ -410,14 +404,14 @@ export default function SearchScroll({
             <div className="flex gap-1">
               <button
                 onClick={handlePrevResult}
-                className="flex h-8 w-8 items-center justify-center rounded-xl bg-white text-slate-600 shadow-sm transition-all hover:bg-[#6571FF] hover:text-white active:scale-90"
+                className="flex h-8 w-8 items-center justify-center rounded-xl bg-white text-slate-600 shadow-sm transition-all hover:bg-primary hover:text-white active:scale-90"
                 aria-label="Previous result"
               >
                 <ArrowUp size={14} />
               </button>
               <button
                 onClick={handleNextResult}
-                className="flex h-8 w-8 items-center justify-center rounded-xl bg-white text-slate-600 shadow-sm transition-all hover:bg-[#6571FF] hover:text-white active:scale-90"
+                className="flex h-8 w-8 items-center justify-center rounded-xl bg-white text-slate-600 shadow-sm transition-all hover:bg-primary hover:text-white active:scale-90"
                 aria-label="Next result"
               >
                 <ArrowDown size={14} />

@@ -1,9 +1,12 @@
 "use client";
 
+import deleteCategory from "@/actions/category/deleteCategory";
+import newCategory from "@/actions/category/newCategory";
 import Selector from "@/components/Selector";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 import { useListsStore } from "@/stores/lists";
 import { Category } from "@prisma/client";
-import newCategory from "@/actions/category/newCategory";
+import { Plus } from "lucide-react";
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -46,6 +49,10 @@ export function SelectAppointmentServiceCategory({
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [selectedColor, setSelectedColor] = useState(STATIC_CATEGORY_COLORS[0]);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!serviceCategoryId) {
@@ -110,11 +117,42 @@ export function SelectAppointmentServiceCategory({
       setSearchTerm("");
       setSelectedColor(STATIC_CATEGORY_COLORS[0]);
       setIsOpen(false);
+      toast.success("Category created successfully.");
     } catch (error) {
       console.error(error);
       toast.error("Failed to create category");
     } finally {
       setIsCreating(false);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!categoryToDelete || deletingId) return;
+    const category = categoryToDelete;
+
+    try {
+      setDeletingId(category.id);
+      const res = await deleteCategory({ categoryId: category.id });
+
+      if (res.type !== "success") {
+        toast.error(res.message || "Failed to delete category");
+        return;
+      }
+
+      useListsStore.setState((state) => ({
+        categories: state.categories.filter((c) => c.id !== category.id),
+      }));
+      if (serviceCategoryId === category.id) {
+        setSelectedCategory(null);
+        setServiceCategoryId(null);
+      }
+      toast.success("Category deleted successfully.");
+      setCategoryToDelete(null);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to delete category");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -153,9 +191,10 @@ export function SelectAppointmentServiceCategory({
                 type="button"
                 onClick={handleCreateCategory}
                 disabled={isCreating}
-                className="w-full rounded-lg border border-slate-200 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-[#5A65F0] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isCreating ? "Adding..." : "+ Add Category"}
+                <Plus className="h-4 w-4" />
+                {isCreating ? "Adding..." : "Add Category"}
               </button>
             </div>
           ) : null
@@ -172,22 +211,41 @@ export function SelectAppointmentServiceCategory({
           );
         }}
         displayList={(category: Category) => (
-          <div className="flex items-center gap-2">
-            <span
-              className="h-2.5 w-2.5 rounded-full border border-slate-200"
-              style={{
-                backgroundColor: getCategoryColor((category as any).color),
-              }}
-            />
-            <p className="text-sm font-medium text-slate-700 group-hover:text-[#6571FF] transition-colors">
-              {category.name}
-            </p>
+          <div className="flex w-full items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span
+                className="h-2.5 w-2.5 rounded-full border border-slate-200"
+                style={{
+                  backgroundColor: getCategoryColor((category as any).color),
+                }}
+              />
+              <p className="text-sm font-medium text-slate-700 transition-colors group-hover:text-primary">
+                {category.name}
+              </p>
+            </div>
           </div>
         )}
         onSelect={(category) => {
           setSelectedCategory(category);
           setServiceCategoryId(category.id);
         }}
+      />
+
+      <ConfirmModal
+        open={!!categoryToDelete}
+        onOpenChange={(open) => {
+          if (!open && !deletingId) setCategoryToDelete(null);
+        }}
+        title="Delete category?"
+        description={
+          categoryToDelete
+            ? `"${categoryToDelete.name}" will be removed from any items using it. This action can't be undone.`
+            : undefined
+        }
+        confirmText="Delete"
+        destructive
+        loading={!!deletingId}
+        onConfirm={handleConfirmDelete}
       />
     </>
   );

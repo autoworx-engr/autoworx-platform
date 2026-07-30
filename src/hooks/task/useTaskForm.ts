@@ -26,6 +26,7 @@ export type UseTaskFormProps = {
   onTaskCreated?: (task: Task) => void;
   onTaskUpdated?: (task: Task) => void;
   onTaskDeleted?: (taskId: number) => void;
+  revalidateOnDelete?: boolean;
 };
 
 export function useTaskForm({
@@ -38,6 +39,7 @@ export function useTaskForm({
   onTaskCreated,
   onTaskUpdated,
   onTaskDeleted,
+  revalidateOnDelete = true,
 }: UseTaskFormProps) {
   const queryClient = useQueryClient();
   const { setUpdateVariable } = useCalendarStore();
@@ -147,6 +149,14 @@ export function useTaskForm({
       return;
     }
 
+    if (title.trim().length > 100) {
+      showError({
+        field: "title",
+        message: "Title must be 100 characters or fewer",
+      });
+      return;
+    }
+
     if (date && date.trim() !== "" && (!startTime || !endTime)) {
       showError({
         field: "all",
@@ -244,15 +254,18 @@ export function useTaskForm({
   const handleDeleteTask = async (id: number) => {
     try {
       setIsLoading(true);
-      const result = await deleteTask(id);
+      const result = await deleteTask(id, { revalidate: revalidateOnDelete });
 
       if (result.type === "success") {
         queryClient.invalidateQueries({
           queryKey: taskQueryKey.taskById(id.toString()),
         });
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.dashboardTask,
-        });
+
+        queryClient.setQueriesData(
+          { queryKey: queryKeys.dashboardTask },
+          (old: { id: number }[] | undefined) =>
+            Array.isArray(old) ? old.filter((t) => t.id !== id) : old,
+        );
         setUpdateVariable();
         onTaskDeleted && onTaskDeleted(id);
         successToast("Task deleted successfully.");

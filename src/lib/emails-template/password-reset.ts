@@ -4,7 +4,8 @@ export function generatePasswordResetEmailHtml(
   companyName: string,
 ): string {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
-  const logoUrl = `${appUrl}/icons/autoworx-logo.png`;
+  // const logoUrl = `${appUrl}/images/solution/logo1.png`;
+  const logoUrl = `${appUrl}/images/autoworx-logo.webp`;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -22,7 +23,7 @@ export function generatePasswordResetEmailHtml(
           <!-- Header -->
           <tr>
             <td style="background:linear-gradient(90deg,#26AADF 0%,#03A7A2 100%);padding:36px 40px;text-align:center;">
-              <img src="${logoUrl}" alt="${companyName}" height="40" style="display:inline-block;vertical-align:middle;" />
+              <img src="${logoUrl}" alt="${companyName}" height="60" style="display:inline-block;vertical-align:middle;border-radius:8px;" />
             </td>
           </tr>
 

@@ -13,7 +13,7 @@ export default function SelectCategory({
   categoryOpen,
   setCategoryOpen,
   required = false,
-  className
+  className,
 }: {
   categoryData?: Category | null;
   onCategoryChange: (category: Category) => void;
@@ -97,11 +97,11 @@ export default function SelectCategory({
             <div className="flex gap-2 p-1">
               <input
                 type="text"
-                placeholder="New category..."
+                placeholder="New Category..."
                 value={categoryInput}
                 onChange={(e) => setCategoryInput(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && categoryInput) {
+                  if (e.key === "Enter" && categoryInput) {
                     e.preventDefault();
                     handleNewCategory();
                   }
@@ -109,7 +109,7 @@ export default function SelectCategory({
                 className={cn(
                   "w-full rounded-lg bg-slate-50 px-3 py-1.5 text-sm outline-none transition-all",
                   "ring-1 ring-inset ring-slate-200 placeholder:text-slate-400",
-                  "focus:bg-white focus:ring-2 focus:ring-[#6571FF]/40"
+                  "focus:bg-white focus:ring-2 focus:ring-primary/40",
                 )}
               />
               <button
@@ -119,8 +119,8 @@ export default function SelectCategory({
                 className={cn(
                   "text-nowrap rounded-lg px-4 font-medium text-white transition-all active:scale-95",
                   categoryInput
-                    ? "bg-[#6571FF] shadow-sm shadow-[#6571FF]/20 hover:bg-[#525ee5]"
-                    : "bg-slate-200 cursor-not-allowed text-slate-400"
+                    ? "bg-primary shadow-sm shadow-primary/20 hover:bg-[#525ee5]"
+                    : "bg-slate-200 cursor-not-allowed text-slate-400",
                 )}
               >
                 Add
@@ -129,13 +129,13 @@ export default function SelectCategory({
           }
           items={categories}
           displayList={(category: Category) => (
-            <p className="text-sm font-medium text-slate-700 group-hover:text-[#6571FF] transition-colors">
+            <p className="text-sm font-medium text-slate-700 group-hover:text-primary transition-colors">
               {category.name}
             </p>
           )}
           onSearch={(search: string) =>
             categories.filter((cat) =>
-              cat.name.toLowerCase().includes(search.toLowerCase())
+              cat.name.toLowerCase().includes(search.toLowerCase()),
             )
           }
           openState={[categoryOpen as boolean, setCategoryOpen]}

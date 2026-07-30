@@ -15,9 +15,20 @@ import { useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import CompanyProfileCard from "./collaboration/CompanyProfileCard";
 import InvoiceEstimateModal from "./collaboration/InvoiceEstimateModal";
+import { useInfinityCollaborationMessages } from "./collaboration/hooks/useInfinityCollaborationMessages";
+import JumpToLatestButton from "@/components/JumpToLatestButton";
+import MessageListSkeleton from "./MessageListSkeleton";
 
 type TMessage = {
   id?: number;
@@ -51,10 +62,16 @@ export default function CompanyMessageBox({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLImageElement>(null);
   const pathname = usePathname();
-  const [messages, setMessages] = useState<TMessage[]>([]);
+  const [liveMessages, setLiveMessages] = useState<any[]>([]);
   const [message, setMessage] = useState("");
   const [pending, startTransition] = useTransition();
   const messageBoxRef = useRef<HTMLDivElement>(null);
+  const bottomAnchorRef = useRef<HTMLDivElement>(null);
+  const prevScrollHeightRef = useRef(0);
+  const isLoadingOlderRef = useRef(false);
+  const [isReady, setIsReady] = useState(false);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const [showJump, setShowJump] = useState(false);
   const [multiAttachmentFile, setMultiAttachmentFile] = useState<File[] | null>(
     null,
   );
@@ -66,35 +83,107 @@ export default function CompanyMessageBox({
     "/communication/collaboration",
   );
 
-  // Load messages
+  // Infinite query — 20 messages per page
+  const {
+    data: pagesData,
+    isLoading: messagesLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfinityCollaborationMessages(
+    currentCompanyId,
+    companyId ? Number(companyId) : undefined,
+  );
+
+  // Each page is newest-first; flatten then reverse so display is oldest -> newest.
+  const fetchedMessages = useMemo(() => {
+    const flat = pagesData?.pages?.flatMap((p) => p.data) ?? [];
+    return [...flat].reverse();
+  }, [pagesData]);
+
+  // Pusher-pushed messages are appended only after initial load and reset on chat switch.
+  const messages = useMemo(
+    () => [...fetchedMessages, ...liveMessages],
+    [fetchedMessages, liveMessages],
+  );
+
+  // Reset ready/live state when conversation changes
   useEffect(() => {
-    if (!companyId || !currentCompanyId) return;
-
-    async function fetchMessages() {
-      try {
-        const res = await fetch(
-          `/api/communication/collaboration/messages/v2-messages?companyA=${currentCompanyId}&companyB=${companyId}&viewerCompanyId=${currentCompanyId}`,
-        );
-
-        const data = await res.json();
-
-        if (data.success) {
-          setMessages(data.messages);
-        }
-      } catch (error) {
-        // console.error("Failed to fetch messages", error);
-      }
-    }
-
-    fetchMessages();
+    setIsReady(false);
+    setLiveMessages([]);
+    setShouldAutoScroll(true);
+    setShowJump(false);
   }, [companyId, currentCompanyId]);
 
-  // Auto scroll
-  useEffect(() => {
-    if (messageBoxRef.current) {
-      messageBoxRef.current.scrollTop = messageBoxRef.current.scrollHeight;
+  // Restore scroll position when older messages are prepended
+  useLayoutEffect(() => {
+    if (prevScrollHeightRef.current <= 0) return;
+    const el = messageBoxRef.current;
+    if (!el) {
+      prevScrollHeightRef.current = 0;
+      return;
     }
-  }, [messages]);
+    const scrollDiff = el.scrollHeight - prevScrollHeightRef.current;
+    if (scrollDiff > 0) {
+      el.scrollTop = el.scrollTop + scrollDiff;
+    }
+    prevScrollHeightRef.current = 0;
+  }, [pagesData?.pages?.length]);
+
+  // Initial scroll to bottom
+  useEffect(() => {
+    if (messages.length > 0 && !isReady) {
+      requestAnimationFrame(() => {
+        bottomAnchorRef.current?.scrollIntoView({ block: "end" });
+        setTimeout(() => setIsReady(true), 200);
+      });
+    }
+  }, [messages.length, isReady]);
+
+  // Auto-scroll when a new live message arrives (only if user is near bottom)
+  useEffect(() => {
+    if (!isReady || liveMessages.length === 0) return;
+    if (shouldAutoScroll) {
+      requestAnimationFrame(() => {
+        bottomAnchorRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "end",
+        });
+      });
+    }
+  }, [liveMessages.length, shouldAutoScroll, isReady]);
+
+  const maybeLoadOlderMessages = useCallback(() => {
+    const el = messageBoxRef.current;
+    if (!el) return;
+    if (
+      !isReady ||
+      el.scrollTop > 80 ||
+      !hasNextPage ||
+      isFetchingNextPage ||
+      isLoadingOlderRef.current
+    ) {
+      return;
+    }
+    isLoadingOlderRef.current = true;
+    prevScrollHeightRef.current = el.scrollHeight;
+    void fetchNextPage().finally(() => {
+      isLoadingOlderRef.current = false;
+    });
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage, isReady]);
+
+  useEffect(() => {
+    const el = messageBoxRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      maybeLoadOlderMessages();
+      const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 104;
+      setShouldAutoScroll(atBottom);
+      setShowJump(!atBottom);
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [maybeLoadOlderMessages]);
 
   useEffect(() => {
     if (!currentCompanyId) return;
@@ -128,7 +217,7 @@ export default function CompanyMessageBox({
           isOwnMessage: fromId === currentId,
         };
 
-        setMessages((prev) => [...prev, normalizedMessage]);
+        setLiveMessages((prev) => [...prev, normalizedMessage]);
       }
     });
 
@@ -280,167 +369,218 @@ export default function CompanyMessageBox({
       </div>
 
       {/* 🔹 Messages */}
-      <div ref={messageBoxRef} className="flex-1 overflow-y-auto p-4 space-y-3">
-        {messages.map((msg: any, index: number) => {
-          const messageDate = format(new Date(msg.createdAt), "PPP");
+      <div className="relative flex-1 min-h-0">
+        <div
+          ref={messageBoxRef}
+          className="h-full overflow-y-auto p-4 space-y-3"
+        >
+          {/* Top loader for older messages */}
+          {!messagesLoading && messages.length > 0 && (
+            <div className="flex justify-center py-2 text-[11px] text-gray-400">
+              {isFetchingNextPage
+                ? "Loading older messages..."
+                : hasNextPage
+                  ? "Scroll up to load older messages"
+                  : "• No older messages •"}
+            </div>
+          )}
+          {messagesLoading ? (
+            <MessageListSkeleton />
+          ) : messages.length === 0 ? (
+            <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#006D77]/10">
+                <SendHorizontal className="text-[#006D77]" size={24} />
+              </div>
+              <p className="text-base font-semibold text-gray-700">
+                Start a conversation
+              </p>
+              <p className="text-sm text-gray-500">
+                Send a message to {company.name} to begin collaborating.
+              </p>
+            </div>
+          ) : null}
+          {!messagesLoading &&
+            messages.map((msg: any, index: number) => {
+              const messageDate = format(new Date(msg.createdAt), "PPP");
 
-          const previousMessage = messages[index - 1];
-          const previousDate = previousMessage
-            ? format(new Date(previousMessage.createdAt), "PPP")
-            : null;
+              const previousMessage = messages[index - 1];
+              const previousDate = previousMessage
+                ? format(new Date(previousMessage.createdAt), "PPP")
+                : null;
 
-          const showDateSeparator = messageDate !== previousDate;
+              const showDateSeparator = messageDate !== previousDate;
 
-          const isOwn = msg.isOwnMessage;
+              const isOwn = msg.isOwnMessage;
 
-          return (
-            <div key={msg.id || index} className="mb-4">
-              {showDateSeparator && (
-                <div className="text-center text-xs text-gray-400 my-4">
-                  {messageDate}
-                </div>
-              )}
+              return (
+                <div key={msg.id || index} className="mb-4">
+                  {showDateSeparator && (
+                    <div className="text-center text-xs text-gray-400 my-4">
+                      {messageDate}
+                    </div>
+                  )}
 
-              <div
-                className={cn(
-                  "flex flex-col space-y-2",
-                  isOwn ? "items-end" : "items-start",
-                )}
-              >
-                {/* Attachments */}
-                {msg?.attachments &&
-                  msg?.attachments.length > 0 &&
-                  msg?.attachments.map((attachment: any) => {
-                    return (
-                      <div
-                        key={attachment.fileUrl}
-                        className={cn(
-                          "flex items-center gap-2",
-                          isOwn ? "flex-row-reverse" : "flex-row",
-                        )}
-                      >
-                        {attachment.fileType?.includes("image") ? (
-                          <Image
-                            src={attachment.fileUrl}
-                            alt=""
-                            width={200}
-                            height={200}
-                            className="rounded-md border cursor-pointer"
-                          />
-                        ) : attachment.fileType?.includes("video") ? (
-                          <video
-                            src={attachment.fileUrl}
-                            className="h-40 w-60 rounded-md border cursor-pointer"
-                            controls
+                  <div
+                    className={cn(
+                      "flex flex-col space-y-2",
+                      isOwn ? "items-end" : "items-start",
+                    )}
+                  >
+                    {/* Attachments */}
+                    {msg?.attachments &&
+                      msg?.attachments.length > 0 &&
+                      msg?.attachments.map((attachment: any) => {
+                        return (
+                          <div
+                            key={attachment.fileUrl}
+                            className={cn(
+                              "flex items-center gap-2",
+                              isOwn ? "flex-row-reverse" : "flex-row",
+                            )}
+                          >
+                            {attachment.fileType?.includes("image") ? (
+                              <Image
+                                src={attachment.fileUrl}
+                                alt=""
+                                width={200}
+                                height={200}
+                                className="rounded-md border cursor-pointer"
+                              />
+                            ) : attachment.fileType?.includes("video") ? (
+                              <video
+                                src={attachment.fileUrl}
+                                className="h-40 w-60 rounded-md border cursor-pointer"
+                                controls
+                              />
+                            ) : (
+                              <div className="rounded-md bg-[#006D77] px-4 py-2 text-white">
+                                <p className="text-sm">
+                                  {attachment?.fileName}
+                                </p>
+                                <p className="text-xs">
+                                  {attachment?.fileSize && attachment?.fileSize}
+                                </p>
+                              </div>
+                            )}
+
+                            <button
+                              onClick={() =>
+                                handleDownload(attachment?.fileUrl)
+                              }
+                            >
+                              <CloudDownload
+                                size={22}
+                                className="cursor-pointer text-gray-400"
+                              />
+                            </button>
+                          </div>
+                        );
+                      })}
+
+                    {/* Request Estimate */}
+                    {msg?.requestEstimate && (
+                      <>
+                        {msg?.isOwnMessage ? (
+                          <InvoiceModal
+                            invoiceId={msg?.requestEstimate?.invoiceId}
+                            buttonChild={
+                              <button className="w-full max-w-sm rounded-md bg-[#006D77] p-1">
+                                <div className="flex items-center justify-center gap-x-2 rounded-md border border-white p-5">
+                                  <Image
+                                    src="/icons/navbar/Invoices.svg"
+                                    alt="estimate icon"
+                                    width={20}
+                                    height={20}
+                                  />
+                                  <p className="font-semibold text-white">
+                                    Requested an Estimate
+                                  </p>
+                                </div>
+                              </button>
+                            }
+                            isShowEdit={false}
+                            fromCollaboration={true}
                           />
                         ) : (
-                          <div className="rounded-md bg-[#006D77] px-4 py-2 text-white">
-                            <p className="text-sm">{attachment?.fileName}</p>
-                            <p className="text-xs">
-                              {attachment?.fileSize && attachment?.fileSize}
-                            </p>
-                          </div>
-                        )}
-
-                        <button
-                          onClick={() => handleDownload(attachment?.fileUrl)}
-                        >
-                          <CloudDownload
-                            size={22}
-                            className="cursor-pointer text-gray-400"
-                          />
-                        </button>
-                      </div>
-                    );
-                  })}
-
-                {/* Request Estimate */}
-                {msg?.requestEstimate && (
-                  <>
-                    {msg?.isOwnMessage ? (
-                      <InvoiceModal
-                        invoiceId={msg?.requestEstimate?.invoiceId}
-                        buttonChild={
-                          <button className="w-full max-w-sm rounded-md bg-[#006D77] p-1">
-                            <div className="flex items-center justify-center gap-x-2 rounded-md border border-white p-5">
+                          <Link
+                            href={`/dashboard/estimate/edit/${msg?.requestEstimate.invoiceId}`}
+                            className={cn(
+                              "w-full max-w-sm rounded-md bg-[#006D77] p-1",
+                              !msg?.isOwnMessage && "bg-[#D9D9D9]",
+                            )}
+                          >
+                            <div
+                              className={cn(
+                                "flex items-center justify-center gap-x-2 rounded-md border border-white p-5",
+                                !msg?.isOwnMessage && "border-[#006D77]",
+                              )}
+                            >
                               <Image
                                 src="/icons/navbar/Invoices.svg"
                                 alt="estimate icon"
                                 width={20}
                                 height={20}
                               />
-                              <p className="font-semibold text-white">
+                              <p
+                                className={cn(
+                                  "font-semibold text-white",
+                                  !msg?.isOwnMessage && "text-[#006D77]",
+                                )}
+                              >
                                 Requested an Estimate
                               </p>
                             </div>
-                          </button>
-                        }
-                        isShowEdit={false}
-                      />
-                    ) : (
-                      <Link
-                        href={`/dashboard/estimate/edit/${msg?.requestEstimate.invoiceId}`}
+                          </Link>
+                        )}
+                      </>
+                    )}
+
+                    {/* Message Bubble */}
+                    {msg.message && (
+                      <div
                         className={cn(
-                          "w-full max-w-sm rounded-md bg-[#006D77] p-1",
-                          !msg?.isOwnMessage && "bg-[#D9D9D9]",
+                          "max-w-[75%] rounded-2xl px-4 py-2 text-sm shadow-sm break-words",
+                          isOwn
+                            ? "bg-[#006D77] text-white rounded-br-sm"
+                            : "bg-gray-100 text-gray-800 rounded-bl-sm",
                         )}
                       >
-                        <div
-                          className={cn(
-                            "flex items-center justify-center gap-x-2 rounded-md border border-white p-5",
-                            !msg?.isOwnMessage && "border-[#006D77]",
-                          )}
-                        >
-                          <Image
-                            src="/icons/navbar/Invoices.svg"
-                            alt="estimate icon"
-                            width={20}
-                            height={20}
-                          />
-                          <p
-                            className={cn(
-                              "font-semibold text-white",
-                              !msg?.isOwnMessage && "text-[#006D77]",
-                            )}
-                          >
-                            Requested an Estimate
-                          </p>
-                        </div>
-                      </Link>
+                        {msg.message}
+                      </div>
                     )}
-                  </>
-                )}
 
-                {/* Message Bubble */}
-                {msg.message && (
-                  <div
-                    className={cn(
-                      "max-w-[75%] rounded-2xl px-4 py-2 text-sm shadow-sm break-words",
-                      isOwn
-                        ? "bg-[#006D77] text-white rounded-br-sm"
-                        : "bg-gray-100 text-gray-800 rounded-bl-sm",
-                    )}
-                  >
-                    {msg.message}
+                    {/* Timestamp */}
+                    <p
+                      className={cn(
+                        "text-[11px] mt-1",
+                        isOwn
+                          ? "text-gray-400 text-right"
+                          : "text-gray-500 text-left",
+                      )}
+                    >
+                      {format(new Date(msg?.createdAt), "p")} ·
+                      {msg?.senderUser
+                        ? `${msg.senderUser.firstName} ${msg.senderUser.lastName}`
+                        : "Unknown User"}
+                    </p>
                   </div>
-                )}
-
-                {/* Timestamp */}
-                <p
-                  className={cn(
-                    "text-[11px] mt-1",
-                    isOwn
-                      ? "text-gray-400 text-right"
-                      : "text-gray-500 text-left",
-                  )}
-                >
-                  {format(new Date(msg?.createdAt), "p")} ·
-                  {msg?.senderUser?.firstName + " " + msg?.senderUser?.lastName}
-                </p>
-              </div>
-            </div>
-          );
-        })}
+                </div>
+              );
+            })}
+          <div ref={bottomAnchorRef} className="h-2 w-full" />
+        </div>
+        {showJump && messages.length > 0 && (
+          <JumpToLatestButton
+            onClick={() => {
+              setShouldAutoScroll(true);
+              setShowJump(false);
+              bottomAnchorRef.current?.scrollIntoView({
+                behavior: "smooth",
+                block: "end",
+              });
+            }}
+          />
+        )}
       </div>
 
       {/* 🔹 Input */}
@@ -555,7 +695,7 @@ export default function CompanyMessageBox({
             {isEstimateAttachmentShow && currentCompanyId && (
               <InvoiceEstimateModal
                 setShowAttachment={setShowAttachment}
-                setMessages={setMessages}
+                setMessages={setLiveMessages}
                 receiverCompany={company!}
                 currentCompanyId={currentCompanyId}
               />

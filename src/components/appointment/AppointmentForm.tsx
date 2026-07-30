@@ -1,11 +1,21 @@
 "use client";
 
 import FormError from "@/components/FormError";
-import { SlimInput } from "@/components/SlimInput";
+import { Checkbox } from "@/components/ui/checkbox";
+import { DatePickerField } from "@/components/ui/DatePickerField";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/cn";
+import { errorToast } from "@/lib/toast";
 import type { User } from "@prisma/client";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { Select } from "antd";
 import { Bell, Calendar, ChevronDown, Hash, Plus, Search } from "lucide-react";
 import moment from "moment-timezone";
 import { customAlphabet } from "nanoid";
@@ -89,11 +99,9 @@ export default function AppointmentForm({
   handleDate,
   timezone,
 }: AppointmentFormProps) {
-  const { Option } = Select;
-
   return (
-    <div className="h-full sm:h-full overflow-y-auto thin-scrollbar max-h-[80vh]">
-      <div className="space-y-4 p-6">
+    <div className="h-full sm:h-full overflow-y-auto thin-scrollbar max-h-[80vh] lg:max-h-none">
+      <div className="space-y-2 p-6">
         <FormError />
 
         <AppointmentTitleSelectAndAdd
@@ -101,135 +109,105 @@ export default function AppointmentForm({
           onChange={(value) => setTitle(value)}
         />
 
-        <div className="flex flex-wrap items-end gap-2">
-          <div className="flex items-end gap-2">
-            <SlimInput
-              name="date"
-              label="Start Date"
-              rootClassName="grow"
-              type="date"
-              value={date ?? ""}
-              required
-              onChange={(event) => {
-                const newDate = moment(event.currentTarget.value).format(
-                  "YYYY-MM-DD",
-                );
-                setDate(newDate);
-                if (endDate && newDate && endDate < newDate) {
-                  setEndDate(undefined);
-                }
-              }}
-            />
+        <div className="grid grid-cols-2 items-end gap-3 lg:grid-cols-4">
+          <DatePickerField
+            label="Start Date"
+            required
+            value={date ?? ""}
+            onChange={(value) => {
+              const newDate = value ? moment(value).format("YYYY-MM-DD") : "";
+              setDate(newDate);
+              if (endDate && newDate && endDate < newDate) {
+                setEndDate(undefined);
+              }
+            }}
+          />
 
-            <SlimInput
-              name="endDate"
-              label="End Date (optional)"
-              rootClassName="grow"
-              type="date"
-              value={endDate ?? ""}
-              min={date ?? undefined}
-              onChange={(event) => {
-                const value = event.currentTarget.value;
-                if (!value) {
-                  setEndDate(undefined);
-                  return;
-                }
-                setEndDate(moment(value).format("YYYY-MM-DD"));
-              }}
-            />
+          <DatePickerField
+            label="End Date"
+            clearable
+            value={endDate ?? ""}
+            onChange={(value) => {
+              if (!value) {
+                setEndDate(undefined);
+                return;
+              }
+              const newEnd = moment(value).format("YYYY-MM-DD");
+              // End date cannot be before the start date.
+              if (date && newEnd < date) {
+                errorToast("End date cannot be before the start date.");
+                return;
+              }
+              setEndDate(newEnd);
+            }}
+          />
+
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="apptStartTime" className="text-base">
+              Start Time <span className="text-destructive">*</span>
+            </Label>
+            <Select
+              value={startTime || undefined}
+              onValueChange={(value) =>
+                handleTimeChange({ target: { value } } as any, "start")
+              }
+            >
+              <SelectTrigger
+                id="apptStartTime"
+                size="md"
+                className="w-full rounded-md"
+              >
+                <SelectValue placeholder="Start Time" />
+              </SelectTrigger>
+              <SelectContent className="max-h-60">
+                {timeOptions
+                  .filter((time) => time.value <= "22:45")
+                  .map((time) => (
+                    <SelectItem key={time.value} value={time.value}>
+                      {time.label}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          <div className="flex items-end gap-2">
-            <label className="flex flex-col items-start">
-              <span className="mb-2 font-medium text-slate-600">
-                Start Time <span className="text-[#E9405F]">*</span>
-              </span>
-              <div>
-                <Select
-                  value={startTime}
-                  onChange={(value) =>
-                    handleTimeChange({ target: { value } } as any, "start")
-                  }
-                  style={{ width: "100%" }}
-                  className="
-                    h-[38px] w-full
-                    rounded-lg border-none
-                    bg-slate-50/50
-                    ring-1 ring-slate-200
-                    transition-all duration-300
-                    hover:bg-white hover:ring-[#6571FF]/80 hover:scale-[1.01] hover:shadow-sm
-                    focus-within:ring-2 focus-within:ring-[#6571FF]/40 focus:outline-none
-                    text-slate-600 font-medium thin-scrollbar
-                  "
-                  dropdownClassName="rounded-xl border-none shadow-2xl backdrop-blur-md bg-white/90"
-                >
-                  {timeOptions
-                    .filter((time) => time.value <= "22:45")
-                    .map((time) => (
-                      <Option
-                        key={time.value}
-                        value={time.value}
-                        className="py-2 px-3 text-slate-600 transition-colors hover:bg-[#6571FF]/10 hover:text-[#6571FF]"
-                      >
-                        <p className="text-base text-gray-600">{time.label}</p>
-                      </Option>
-                    ))}
-                </Select>
-              </div>
-            </label>
-
-            <label className="flex flex-col items-start">
-              <span className="mb-2 font-medium text-slate-600">
-                End Time <span className="text-[#E9405F]">*</span>
-              </span>
-              <Select
-                value={endTime}
-                onChange={(value) =>
-                  handleTimeChange({ target: { value } } as any, "end")
-                }
-                style={{ width: "100%" }}
-                className="
-                    h-[38px] w-full
-                    rounded-lg border-none
-                    bg-slate-50/50
-                    ring-1 ring-slate-200
-                    transition-all duration-300
-                    hover:bg-white hover:ring-[#6571FF]/80 hover:scale-[1.01] hover:shadow-sm
-                    focus-within:ring-2 focus-within:ring-[#6571FF]/40 focus:outline-none
-                    text-slate-600 font-medium thin-scrollbar
-                  "
-                dropdownClassName="rounded-xl border-none shadow-2xl backdrop-blur-md bg-white/90"
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="apptEndTime" className="text-base">
+              End Time <span className="text-destructive">*</span>
+            </Label>
+            <Select
+              value={endTime || undefined}
+              onValueChange={(value) =>
+                handleTimeChange({ target: { value } } as any, "end")
+              }
+            >
+              <SelectTrigger
+                id="apptEndTime"
+                size="md"
+                className="w-full rounded-md"
               >
+                <SelectValue placeholder="End Time" />
+              </SelectTrigger>
+              <SelectContent className="max-h-60">
                 {timeOptions.map((time) => (
-                  <Option
-                    key={time.value}
-                    value={time.value}
-                    className="py-2 px-3 text-slate-600 transition-colors hover:bg-[#6571FF]/10 hover:text-[#6571FF]"
-                  >
+                  <SelectItem key={time.value} value={time.value}>
                     {time.label}
-                  </Option>
+                  </SelectItem>
                 ))}
-              </Select>
-            </label>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
-        <div className="flex items-center">
-          <input
-            checked={allDay}
-            onChange={() => setAllDay(!allDay)}
+        <div className="flex items-center gap-2">
+          <Checkbox
             id="all-day"
-            type="checkbox"
-            value="true"
-            className="h-4 w-4 rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600"
-            name="all-day"
+            checked={allDay}
+            onCheckedChange={() => setAllDay(!allDay)}
           />
-          <label
-            htmlFor="all-day"
-            className="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"
-          >
+          <Label htmlFor="all-day" className="text-sm">
             All day
-          </label>
+          </Label>
         </div>
 
         <AssignUsers
@@ -261,8 +239,8 @@ export default function AppointmentForm({
         />
       </div>
 
-      <div className="row-start-2 space-y-4 p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="row-start-2 space-y-3 p-6">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <SelectAppointmentClient
             clientId={clientId}
             fromLead={fromLead}
@@ -298,25 +276,21 @@ export default function AppointmentForm({
                     setDraftOpen(!draftOpen);
                   }}
                   className={cn(
-                    "flex h-11 w-full items-center justify-between rounded-xl px-4 py-2 text-sm transition-all",
-                    "border border-slate-200 bg-white shadow-sm hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900",
-                    "focus:outline-none focus:ring-2 focus:ring-[#6571FF]/40",
-                    draftOpen && "ring-2 ring-[#6571FF]/40 border-[#6571FF]",
+                    "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 text-sm shadow-sm outline-none transition-colors",
+                    draftOpen && "border-ring ring-1 ring-ring",
                   )}
                 >
-                  <div className="flex flex-col items-start overflow-hidden text-left">
+                  <div className="min-w-0 flex-1 overflow-hidden text-left">
                     {selectedDraftOption ? (
-                      <>
-                        <div className="flex items-center gap-1.5 w-full min-w-0">
-                          <span className="truncate text-sm font-semibold text-slate-900 dark:text-white">
-                            {selectedDraftOption.vehicle}
-                          </span>
-                        </div>
-                        <span className="text-xs text-slate-500">
+                      <div className="flex min-w-0 items-baseline gap-1.5">
+                        <span className="truncate text-sm font-semibold text-slate-900 dark:text-white">
+                          {selectedDraftOption.vehicle}
+                        </span>
+                        <span className="shrink-0 text-[11px] text-slate-500">
                           ID: {selectedDraftOption.id} • $
                           {selectedDraftOption.price.toFixed(2)}
                         </span>
-                      </>
+                      </div>
                     ) : (
                       <span className="text-slate-500">
                         Select Invoice/Estimate
@@ -358,7 +332,7 @@ export default function AppointmentForm({
                             setDraft(item.id);
                             setDraftOpen(false);
                           }}
-                          className="group flex cursor-pointer flex-col gap-1 rounded-lg px-3 py-2.5 outline-none hover:bg-slate-50 data-[highlighted]:bg-[#6571FF]/10 dark:hover:bg-slate-800"
+                          className="group flex cursor-pointer flex-col gap-1 rounded-lg px-3 py-2.5 outline-none hover:bg-slate-50 data-[highlighted]:bg-primary/10 dark:hover:bg-slate-800"
                         >
                           <div className="flex items-center justify-between gap-2">
                             <div className="flex items-center gap-2 min-w-0">
@@ -366,7 +340,7 @@ export default function AppointmentForm({
                                 {item.vehicle}
                               </span>
                             </div>
-                            <span className="shrink-0 text-sm font-bold text-[#6571FF]">
+                            <span className="shrink-0 text-sm font-bold text-primary">
                               ${item.price.toFixed(2)}
                             </span>
                           </div>
@@ -402,7 +376,7 @@ export default function AppointmentForm({
                       }}
                       disabled={!client || !vehicle}
                       className={cn(
-                        "flex w-full items-center justify-center gap-2 rounded-lg bg-[#6571FF] py-2.5 text-sm font-semibold text-white transition-opacity",
+                        "flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-sm font-semibold text-white transition-opacity",
                         "hover:opacity-90 active:scale-[0.98]",
                         (!client || !vehicle) &&
                           "cursor-not-allowed opacity-60",
@@ -419,22 +393,16 @@ export default function AppointmentForm({
         </div>
 
         <div className="relative w-full">
-          <textarea
+          <Textarea
             name="notes"
             placeholder="Notes"
-            className={cn(
-              "h-20 w-full rounded-md border border-slate-300 outline-none bg-background px-2 py-0.5 leading-6 transition-all duration-300 thin-scrollbar",
-              "bg-white/80 backdrop-blur-sm",
-              "text-slate-600 placeholder:text-slate-400",
-              "focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/40",
-              "disabled:opacity-50 disabled:cursor-not-allowed",
-            )}
+            className="max-h-[220px] min-h-[96px] resize-y"
             rows={3}
             maxLength={1000}
             value={notes}
             onChange={(event) => setNotes(event.currentTarget.value)}
           />
-          <span className="absolute -bottom-2 right-2 text-xs text-slate-400 pointer-events-none">
+          <span className="pointer-events-none absolute -bottom-5 right-1 text-xs text-muted-foreground">
             {notes.length}/1000
           </span>
         </div>
@@ -448,15 +416,15 @@ export default function AppointmentForm({
             className={cn(
               "flex items-center justify-center rounded-full px-6 py-2 text-sm font-bold transition-all duration-300 ease-out",
               tab === Tab.Schedule
-                ? "bg-white text-slate-600 shadow-sm ring-1 ring-slate-200"
-                : "text-slate-400 hover:text-slate-600 hover:bg-slate-200/50",
+                ? "bg-white text-primary shadow-sm ring-1 ring-slate-200"
+                : "text-slate-400 hover:bg-slate-200/50 hover:text-slate-600",
             )}
             onClick={() => setTab(Tab.Schedule)}
           >
             <Calendar
               className={cn(
                 "mr-2 transition-colors",
-                tab === Tab.Schedule ? "text-slate-600" : "text-slate-400",
+                tab === Tab.Schedule ? "text-primary" : "text-slate-400",
               )}
               size={18}
               strokeWidth={2.5}
@@ -469,15 +437,15 @@ export default function AppointmentForm({
             className={cn(
               "flex items-center justify-center rounded-full px-6 py-2 text-sm font-bold transition-all duration-300 ease-out",
               tab === Tab.Reminder
-                ? "bg-white text-slate-600 shadow-sm ring-1 ring-slate-200"
-                : "text-slate-400 hover:text-slate-600 hover:bg-slate-200/50",
+                ? "bg-white text-primary shadow-sm ring-1 ring-slate-200"
+                : "text-slate-400 hover:bg-slate-200/50 hover:text-slate-600",
             )}
             onClick={() => setTab(Tab.Reminder)}
           >
             <Bell
               className={cn(
                 "mr-2 transition-colors",
-                tab === Tab.Reminder ? "text-slate-600" : "text-slate-400",
+                tab === Tab.Reminder ? "text-primary" : "text-slate-400",
               )}
               size={18}
               strokeWidth={2.5}

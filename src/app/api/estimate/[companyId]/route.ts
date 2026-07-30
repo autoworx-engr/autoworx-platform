@@ -1,15 +1,362 @@
-import { getCompanyIdFromBearer } from "@/lib/mobileAuth";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { InvoiceType } from "@prisma/client";
+import { InvoiceType, Prisma } from "@prisma/client";
 import { customAlphabet } from "nanoid";
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     EstimateClient:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *         firstName:
+ *           type: string
+ *           nullable: true
+ *         lastName:
+ *           type: string
+ *           nullable: true
+ *         email:
+ *           type: string
+ *           nullable: true
+ *         mobile:
+ *           type: string
+ *           nullable: true
+ *
+ *     EstimateVehicle:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *         make:
+ *           type: string
+ *           nullable: true
+ *         model:
+ *           type: string
+ *           nullable: true
+ *         year:
+ *           type: integer
+ *           nullable: true
+ *
+ *     EstimateColumn:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *         title:
+ *           type: string
+ *         bgColor:
+ *           type: string
+ *           nullable: true
+ *         textColor:
+ *           type: string
+ *           nullable: true
+ *
+ *     EstimateTag:
+ *       type: object
+ *       properties:
+ *         tag:
+ *           type: object
+ *           properties:
+ *             id:
+ *               type: integer
+ *             name:
+ *               type: string
+ *
+ *     EstimateListItem:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           example: "1234567890"
+ *         type:
+ *           type: string
+ *           enum: [Estimate, Invoice]
+ *         companyId:
+ *           type: integer
+ *         columnId:
+ *           type: integer
+ *           nullable: true
+ *         subtotal:
+ *           type: number
+ *         discount:
+ *           type: number
+ *         tax:
+ *           type: number
+ *         serviceFee:
+ *           type: number
+ *         grandTotal:
+ *           type: number
+ *         deposit:
+ *           type: number
+ *         due:
+ *           type: number
+ *         profit:
+ *           type: integer
+ *           nullable: true
+ *         internalNotes:
+ *           type: string
+ *           nullable: true
+ *         terms:
+ *           type: string
+ *           nullable: true
+ *         policy:
+ *           type: string
+ *           nullable: true
+ *         customerNotes:
+ *           type: string
+ *           nullable: true
+ *         customerComments:
+ *           type: string
+ *           nullable: true
+ *         damageNotes:
+ *           type: string
+ *           nullable: true
+ *         isWorkOrder:
+ *           type: boolean
+ *           nullable: true
+ *         workOrderCreatedAt:
+ *           type: string
+ *           format: date-time
+ *           nullable: true
+ *         convertedAt:
+ *           type: string
+ *           format: date-time
+ *           nullable: true
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *         client:
+ *           $ref: '#/components/schemas/EstimateClient'
+ *           nullable: true
+ *         vehicle:
+ *           $ref: '#/components/schemas/EstimateVehicle'
+ *           nullable: true
+ *         column:
+ *           $ref: '#/components/schemas/EstimateColumn'
+ *           nullable: true
+ *         tags:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/EstimateTag'
+ *
+ *     EstimatePagination:
+ *       type: object
+ *       properties:
+ *         page:
+ *           type: integer
+ *           example: 1
+ *         limit:
+ *           type: integer
+ *           example: 10
+ *         total:
+ *           type: integer
+ *           example: 42
+ *         totalPages:
+ *           type: integer
+ *           example: 5
+ *         hasMore:
+ *           type: boolean
+ *           example: true
+ *
+ *     CreateEstimateMaterial:
+ *       type: object
+ *       properties:
+ *         name:
+ *           type: string
+ *         vendorId:
+ *           type: integer
+ *           nullable: true
+ *         categoryId:
+ *           type: integer
+ *           nullable: true
+ *         notes:
+ *           type: string
+ *           nullable: true
+ *         quantity:
+ *           type: number
+ *         cost:
+ *           type: number
+ *         sell:
+ *           type: number
+ *         discount:
+ *           type: number
+ *         productId:
+ *           type: integer
+ *           nullable: true
+ *         tagIds:
+ *           type: array
+ *           items:
+ *             type: integer
+ *
+ *     CreateEstimateLabor:
+ *       type: object
+ *       properties:
+ *         name:
+ *           type: string
+ *         categoryId:
+ *           type: integer
+ *           nullable: true
+ *         notes:
+ *           type: string
+ *           nullable: true
+ *         hours:
+ *           type: number
+ *         charge:
+ *           type: number
+ *         discount:
+ *           type: number
+ *         tagIds:
+ *           type: array
+ *           items:
+ *             type: integer
+ *
+ *     CreateEstimateItem:
+ *       type: object
+ *       properties:
+ *         serviceId:
+ *           type: integer
+ *           nullable: true
+ *         serviceDesc:
+ *           type: string
+ *           nullable: true
+ *         labor:
+ *           $ref: '#/components/schemas/CreateEstimateLabor'
+ *         materials:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/CreateEstimateMaterial'
+ *         tagIds:
+ *           type: array
+ *           items:
+ *             type: integer
+ *
+ *     CreateEstimateInspection:
+ *       type: object
+ *       properties:
+ *         title:
+ *           type: string
+ *         driver:
+ *           type: boolean
+ *         passenger:
+ *           type: boolean
+ *         notes:
+ *           type: string
+ *           nullable: true
+ *
+ *     CreateEstimateRequest:
+ *       type: object
+ *       required:
+ *         - type
+ *       properties:
+ *         type:
+ *           type: string
+ *           enum: [Estimate, Invoice]
+ *         clientId:
+ *           type: integer
+ *           nullable: true
+ *         vehicleId:
+ *           type: integer
+ *           nullable: true
+ *         columnId:
+ *           type: integer
+ *           nullable: true
+ *           description: Defaults to the "Pending" (Estimate) or "In Progress" (Invoice) shop column when omitted
+ *         subtotal:
+ *           type: number
+ *           default: 0
+ *         discount:
+ *           type: number
+ *           default: 0
+ *         tax:
+ *           type: number
+ *           default: 0
+ *         serviceFee:
+ *           type: number
+ *           default: 0
+ *         vehicleExtraCost:
+ *           type: number
+ *           default: 0
+ *         grandTotal:
+ *           type: number
+ *           default: 0
+ *         deposit:
+ *           type: number
+ *           default: 0
+ *         due:
+ *           type: number
+ *           default: 0
+ *         internalNotes:
+ *           type: string
+ *           default: ""
+ *         terms:
+ *           type: string
+ *           default: ""
+ *         policy:
+ *           type: string
+ *           default: ""
+ *         customerNotes:
+ *           type: string
+ *           default: ""
+ *         customerComments:
+ *           type: string
+ *           default: ""
+ *         damageNotes:
+ *           type: string
+ *           nullable: true
+ *         items:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/CreateEstimateItem'
+ *         photos:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               photo:
+ *                 type: string
+ *         tasks:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               task:
+ *                 type: string
+ *                 description: "Format: 'title' or 'title:description'"
+ *         inspections:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/CreateEstimateInspection'
+ *
+ *     CreateEstimateResponse:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *           example: true
+ *         message:
+ *           type: string
+ *           example: Estimate created successfully
+ *         data:
+ *           $ref: '#/components/schemas/EstimateListItem'
+ */
 
 /**
  * @swagger
  * /api/estimate/{companyId}:
  *   get:
  *     summary: List estimates/invoices for a company
- *     description: Returns paginated estimates or invoices scoped to the given company, with optional filters
+ *     description: >
+ *       Returns a paginated list of estimates/invoices belonging to the given company.
+ *       When searchTerm is provided, pagination is bypassed and all matches are returned
+ *       as a single page (matched against client name/email/mobile, vehicle make/model/year,
+ *       column title, and invoice ID via raw SQL search).
  *     tags:
  *       - Estimate
  *     parameters:
@@ -19,50 +366,49 @@ import { customAlphabet } from "nanoid";
  *         schema:
  *           type: integer
  *           example: 4
- *         description: Company ID
+ *         description: Company ID (must match the authenticated principal's company)
  *       - in: query
  *         name: type
  *         schema:
  *           type: string
  *           enum: [Estimate, Invoice]
- *           example: Estimate
- *         description: Filter by record type (defaults to both if omitted)
+ *         description: Filter by invoice type
  *       - in: query
  *         name: page
  *         schema:
  *           type: integer
- *           example: 1
- *         description: Page number (default 1)
+ *           default: 1
+ *         description: Page number (ignored when searchTerm is provided)
  *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
- *           example: 10
- *         description: Records per page (default 10)
+ *           default: 10
+ *           minimum: 1
+ *           maximum: 100
+ *         description: Page size (ignored when searchTerm is provided)
  *       - in: query
  *         name: searchTerm
  *         schema:
  *           type: string
- *           example: "John"
- *         description: Search by client name or invoice ID
+ *         description: Free-text search across client, vehicle, column and invoice ID
  *       - in: query
  *         name: startDate
  *         schema:
  *           type: string
- *           example: "2025-01-01"
- *         description: Filter from this date (ISO format)
+ *           format: date
+ *         description: Filter by createdAt >= startDate
  *       - in: query
  *         name: endDate
  *         schema:
  *           type: string
- *           example: "2025-12-31"
- *         description: Filter up to this date (ISO format)
+ *           format: date
+ *         description: Filter by createdAt <= endDate (end of day)
  *       - in: query
  *         name: columnId
  *         schema:
  *           type: integer
- *           example: 3
- *         description: Filter by pipeline column/status ID
+ *         description: Filter by pipeline column ID
  *     responses:
  *       200:
  *         description: Estimates fetched successfully
@@ -77,186 +423,15 @@ import { customAlphabet } from "nanoid";
  *                 data:
  *                   type: array
  *                   items:
- *                     type: object
+ *                     $ref: '#/components/schemas/EstimateListItem'
  *                 pagination:
- *                   type: object
- *                   properties:
- *                     page:
- *                       type: integer
- *                     limit:
- *                       type: integer
- *                     total:
- *                       type: integer
- *                     totalPages:
- *                       type: integer
- *                     hasMore:
- *                       type: boolean
- *       400:
- *         description: Invalid company ID
+ *                   $ref: '#/components/schemas/EstimatePagination'
+ *       401:
+ *         description: Unauthorized - missing or invalid auth principal
+ *       403:
+ *         description: Forbidden - companyId does not match the authenticated principal
  *       500:
- *         description: Internal server error
- *
- *   post:
- *     summary: Create a new estimate or invoice
- *     description: Creates an estimate or invoice with items (services, materials, labor) for the given company
- *     tags:
- *       - Estimate
- *     parameters:
- *       - in: path
- *         name: companyId
- *         required: true
- *         schema:
- *           type: integer
- *           example: 4
- *         description: Company ID
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - type
- *               - subtotal
- *               - grandTotal
- *               - due
- *             properties:
- *               type:
- *                 type: string
- *                 enum: [Estimate, Invoice]
- *                 example: Estimate
- *               clientId:
- *                 type: integer
- *                 nullable: true
- *                 example: 12
- *               vehicleId:
- *                 type: integer
- *                 nullable: true
- *                 example: 5
- *               columnId:
- *                 type: integer
- *                 nullable: true
- *                 example: 2
- *               subtotal:
- *                 type: number
- *                 example: 150.00
- *               discount:
- *                 type: number
- *                 example: 10.00
- *               tax:
- *                 type: number
- *                 example: 12.50
- *               serviceFee:
- *                 type: number
- *                 example: 5.00
- *               grandTotal:
- *                 type: number
- *                 example: 157.50
- *               deposit:
- *                 type: number
- *                 example: 50.00
- *               due:
- *                 type: number
- *                 example: 107.50
- *               internalNotes:
- *                 type: string
- *                 example: "Check engine light issue"
- *               terms:
- *                 type: string
- *                 example: "Payment due on delivery"
- *               policy:
- *                 type: string
- *               customerNotes:
- *                 type: string
- *               customerComments:
- *                 type: string
- *               damageNotes:
- *                 type: string
- *                 nullable: true
- *               items:
- *                 type: array
- *                 items:
- *                   type: object
- *                   properties:
- *                     serviceId:
- *                       type: integer
- *                       nullable: true
- *                       example: 3
- *                     serviceDesc:
- *                       type: string
- *                     labor:
- *                       type: object
- *                       nullable: true
- *                       properties:
- *                         name:
- *                           type: string
- *                         hours:
- *                           type: number
- *                         charge:
- *                           type: number
- *                         discount:
- *                           type: number
- *                         categoryId:
- *                           type: integer
- *                         notes:
- *                           type: string
- *                     materials:
- *                       type: array
- *                       items:
- *                         type: object
- *                         properties:
- *                           name:
- *                             type: string
- *                           quantity:
- *                             type: number
- *                           cost:
- *                             type: number
- *                           sell:
- *                             type: number
- *                           discount:
- *                             type: number
- *                           vendorId:
- *                             type: integer
- *                           categoryId:
- *                             type: integer
- *                           productId:
- *                             type: integer
- *                           notes:
- *                             type: string
- *                     tagIds:
- *                       type: array
- *                       items:
- *                         type: integer
- *               photos:
- *                 type: array
- *                 items:
- *                   type: object
- *                   properties:
- *                     photo:
- *                       type: string
- *               tasks:
- *                 type: array
- *                 items:
- *                   type: object
- *                   properties:
- *                     task:
- *                       type: string
- *               inspections:
- *                 type: array
- *                 items:
- *                   type: object
- *                   properties:
- *                     title:
- *                       type: string
- *                     driver:
- *                       type: boolean
- *                     passenger:
- *                       type: boolean
- *                     notes:
- *                       type: string
- *     responses:
- *       201:
- *         description: Estimate/invoice created successfully
+ *         description: Failed to fetch estimates
  *         content:
  *           application/json:
  *             schema:
@@ -264,25 +439,18 @@ import { customAlphabet } from "nanoid";
  *               properties:
  *                 success:
  *                   type: boolean
- *                   example: true
+ *                   example: false
  *                 message:
  *                   type: string
- *                   example: Estimate created successfully
- *                 data:
- *                   type: object
- *       400:
- *         description: Invalid input or company ID
- *       500:
- *         description: Internal server error
+ *                   example: Failed to fetch estimates
  */
-
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ companyId: string }> },
 ) {
   try {
     const { companyId: companyIdParam } = await params;
-    const jwtCompanyId = await getCompanyIdFromBearer(req);
+    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
     if (jwtCompanyId === null) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -300,7 +468,7 @@ export async function GET(
       Math.max(1, parseInt(searchParams.get("limit") || "10")),
     );
     const skip = (page - 1) * limit;
-    const searchTerm = searchParams.get("searchTerm") || undefined;
+    const searchTerm = searchParams.get("searchTerm")?.trim() || undefined;
     const startDate = searchParams.get("startDate") || undefined;
     const endDate = searchParams.get("endDate") || undefined;
     const columnId = searchParams.get("columnId")
@@ -328,25 +496,54 @@ export async function GET(
     }
 
     if (searchTerm) {
-      where.OR = [
-        {
-          client: {
-            OR: [
-              { firstName: { contains: searchTerm, mode: "insensitive" } },
-              { lastName: { contains: searchTerm, mode: "insensitive" } },
-            ],
-          },
-        },
-        { id: { contains: searchTerm, mode: "insensitive" } },
-      ];
+      // Resolve matching invoice IDs across client, vehicle and column fields
+      // via raw SQL (mirrors src/lib/fetchAndTransformData.ts), since Prisma
+      // can't search the Int year column or concatenated vehicle strings.
+      const searchPattern = `%${searchTerm.trim().replace(/\s+/g, " ")}%`;
+      // Match each typed word against first/last name independently (in either
+      // field, any order) so "ade ekram", "ekram", or extra whitespace in the
+      // stored name all still match "Ekram Ade" - not just an exact,
+      // contiguous "first_name last_name" substring.
+      const nameWords = searchTerm.trim().split(/\s+/).filter(Boolean);
+      const nameCondition =
+        nameWords.length > 0
+          ? Prisma.sql`(${Prisma.join(
+              nameWords.map(
+                (word) =>
+                  Prisma.sql`(c."first_name" ILIKE ${`%${word}%`} OR c."last_name" ILIKE ${`%${word}%`})`,
+              ),
+              " AND ",
+            )})`
+          : Prisma.sql`FALSE`;
+      const matches = await db.$queryRaw<{ id: string }[]>(Prisma.sql`
+        SELECT i.id
+        FROM "Invoice" i
+        LEFT JOIN "Client" c ON i."customer_id" = c.id
+        LEFT JOIN "Vehicle" v ON i."vehicle_id" = v.id
+        LEFT JOIN "Column" col ON i."column_id" = col.id
+        WHERE i."company_id" = ${companyId}
+          AND (
+            i.id::text ILIKE ${searchPattern}
+            OR ${nameCondition}
+            OR c.email ILIKE ${searchPattern}
+            OR c.mobile ILIKE ${searchPattern}
+            OR v.make ILIKE ${searchPattern}
+            OR v.model ILIKE ${searchPattern}
+            OR CAST(v.year AS TEXT) ILIKE ${searchPattern}
+            OR col.title ILIKE ${searchPattern}
+            OR CONCAT(CAST(v.year AS TEXT), ' ', v.make, ' ', v.model) ILIKE ${searchPattern}
+            OR CONCAT(v.make, ' ', CAST(v.year AS TEXT), ' ', v.model) ILIKE ${searchPattern}
+            OR CONCAT(v.model, ' ', CAST(v.year AS TEXT), ' ', v.make) ILIKE ${searchPattern}
+          )
+      `);
+      where.id = { in: matches.map((m) => m.id) };
     }
 
     const [estimates, total] = await Promise.all([
       db.invoice.findMany({
         where,
-        orderBy: { createdAt: "desc" },
-        skip,
-        take: limit,
+        orderBy: { updatedAt: "desc" },
+        ...(searchTerm ? {} : { skip, take: limit }),
         include: {
           client: {
             select: {
@@ -366,7 +563,7 @@ export async function GET(
             },
           },
           column: {
-            select: { id: true, title: true },
+            select: { id: true, title: true, bgColor: true, textColor: true },
           },
           tags: {
             include: { tag: true },
@@ -379,13 +576,21 @@ export async function GET(
     return NextResponse.json({
       success: true,
       data: estimates,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasMore: skip + estimates.length < total,
-      },
+      pagination: searchTerm
+        ? {
+            page: 1,
+            limit: total,
+            total,
+            totalPages: 1,
+            hasMore: false,
+          }
+        : {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+            hasMore: skip + estimates.length < total,
+          },
     });
   } catch (error) {
     console.error("ESTIMATE LIST ERROR:", error);
@@ -396,13 +601,69 @@ export async function GET(
   }
 }
 
+/**
+ * @swagger
+ * /api/estimate/{companyId}:
+ *   post:
+ *     summary: Create an estimate/invoice
+ *     description: >
+ *       Creates a new estimate or invoice for the given company, along with its items
+ *       (labor, materials, tags), photos, tasks and inspections in a single transaction.
+ *       If columnId is omitted, defaults to the company's "Pending" (Estimate) or
+ *       "In Progress" (Invoice) shop column.
+ *     tags:
+ *       - Estimate
+ *     parameters:
+ *       - in: path
+ *         name: companyId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           example: 4
+ *         description: Company ID (must match the authenticated principal's company)
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateEstimateRequest'
+ *     responses:
+ *       201:
+ *         description: Estimate/invoice created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/CreateEstimateResponse'
+ *       400:
+ *         description: >
+ *           Invalid input - missing/invalid type, or a material with quantity <= 0
+ *       401:
+ *         description: Unauthorized - missing or invalid auth principal
+ *       403:
+ *         description: Forbidden - companyId does not match the authenticated principal
+ *       404:
+ *         description: Company not found
+ *       500:
+ *         description: Failed to create estimate
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Failed to create estimate
+ */
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ companyId: string }> },
 ) {
   try {
     const { companyId: companyIdParam } = await params;
-    const jwtCompanyId = await getCompanyIdFromBearer(req);
+    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
     if (jwtCompanyId === null) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -445,6 +706,7 @@ export async function POST(
       photos = [],
       tasks = [],
       inspections = [],
+      id,
     } = body;
 
     if (!type || !["Estimate", "Invoice"].includes(type)) {
@@ -491,7 +753,7 @@ export async function POST(
     const invoice = await db.$transaction(async (tx) => {
       const newInvoice = await tx.invoice.create({
         data: {
-          id: invoiceId,
+          id: customAlphabet("1234567890", 10)(),
           type: type as InvoiceType,
           clientId: clientId ? Number(clientId) : undefined,
           vehicleId: vehicleId ? Number(vehicleId) : undefined,
@@ -516,6 +778,20 @@ export async function POST(
           convertedAt: new Date(),
         },
       });
+
+      // Mark lead as estimate created
+      if (type === "Estimate" && clientId) {
+        const theClient = await tx.client.findFirst({
+          where: { id: Number(clientId) },
+          select: { leadId: true },
+        });
+        if (theClient?.leadId) {
+          await tx.lead.update({
+            where: { id: theClient.leadId },
+            data: { isEstimateCreated: true },
+          });
+        }
+      }
 
       // Photos
       if (photos.length > 0) {
@@ -566,6 +842,14 @@ export async function POST(
             },
           });
           laborId = newLabor.id;
+          if ((item.labor.tagIds ?? []).length > 0) {
+            await tx.laborTag.createMany({
+              data: (item.labor.tagIds as number[]).map((tagId) => ({
+                laborId: newLabor.id,
+                tagId,
+              })),
+            });
+          }
         }
 
         const invoiceItem = await tx.invoiceItem.create({

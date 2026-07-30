@@ -12,6 +12,12 @@ import Analytics from "./Analytics";
 import AnalyticsVisibility from "./AnalyticsVisibility";
 import FilterHeader from "./FilterHeader";
 import RevenueDisplay from "./RevenueDisplay";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Analytics - Revenue",
+  description: "Analyze your shop's revenue and profitability",
+};
 
 type TProps = {
   searchParams: Promise<{
@@ -78,104 +84,72 @@ export default async function RevenueReportPage(props: TProps) {
     timezone: moment.tz.guess(),
   };
 
-  const containsInsensitive = (value: string): Prisma.StringFilter => ({
+  const ci = (value: string): Prisma.StringFilter => ({
     contains: value,
     mode: "insensitive",
   });
 
   const searchTerm = searchParams.search?.trim();
 
+  const buildVehicleCombinations = (
+    term: string,
+  ): Prisma.InvoiceWhereInput[] => {
+    if (!term.includes(" ")) return [];
+    const parts = term.split(/\s+/);
+    const results: Prisma.InvoiceWhereInput[] = [];
+    const yearNum = /^\d{4}$/.test(parts[0]) ? parseInt(parts[0], 10) : null;
+    const rest = yearNum !== null ? parts.slice(1) : parts;
+
+    for (let i = 1; i < rest.length; i++) {
+      const make = rest.slice(0, i).join(" ");
+      const model = rest.slice(i).join(" ");
+      const andClauses =
+        yearNum !== null
+          ? [{ year: yearNum }, { make: ci(make) }, { model: ci(model) }]
+          : [{ make: ci(make) }, { model: ci(model) }];
+      results.push({
+        vehicle: { is: { AND: andClauses } },
+      } as Prisma.InvoiceWhereInput);
+    }
+
+    if (yearNum !== null && rest.length > 0) {
+      const restStr = rest.join(" ");
+      results.push({
+        vehicle: { is: { AND: [{ year: yearNum }, { make: ci(restStr) }] } },
+      } as Prisma.InvoiceWhereInput);
+      results.push({
+        vehicle: { is: { AND: [{ year: yearNum }, { model: ci(restStr) }] } },
+      } as Prisma.InvoiceWhereInput);
+    }
+
+    return results;
+  };
+
+  const buildClientNameFilter = (term: string): Prisma.InvoiceWhereInput[] => {
+    const [first, ...rest] = term.split(/\s+/);
+    const last = rest.join(" ");
+    if (!first || !last) return [];
+    return [
+      {
+        client: {
+          is: { AND: [{ firstName: ci(first) }, { lastName: ci(last) }] },
+        },
+      } as Prisma.InvoiceWhereInput,
+    ];
+  };
+
   const searchFilter: Prisma.InvoiceWhereInput | undefined = searchTerm
     ? {
         OR: [
-          {
-            id: {
-              ...containsInsensitive(searchTerm),
-            },
-          },
-          {
-            client: {
-              is: {
-                firstName: {
-                  ...containsInsensitive(searchTerm),
-                },
-              },
-            },
-          },
-          {
-            client: {
-              is: {
-                lastName: {
-                  ...containsInsensitive(searchTerm),
-                },
-              },
-            },
-          },
-          {
-            vehicle: {
-              is: {
-                make: {
-                  ...containsInsensitive(searchTerm),
-                },
-              },
-            },
-          },
-          {
-            vehicle: {
-              is: {
-                model: {
-                  ...containsInsensitive(searchTerm),
-                },
-              },
-            },
-          },
-          {
-            vehicle: {
-              is: {
-                submodel: {
-                  ...containsInsensitive(searchTerm),
-                },
-              },
-            },
-          },
-          {
-            vehicle: {
-              is: {
-                other: {
-                  ...containsInsensitive(searchTerm),
-                },
-              },
-            },
-          },
-          ...(() => {
-            const [firstNameTerm, ...lastNameParts] = searchTerm.split(/\s+/);
-            const lastNameTerm = lastNameParts.join(" ");
-
-            if (!firstNameTerm || !lastNameTerm) {
-              return [];
-            }
-
-            return [
-              {
-                client: {
-                  is: {
-                    AND: [
-                      {
-                        firstName: {
-                          ...containsInsensitive(firstNameTerm),
-                        },
-                      },
-                      {
-                        lastName: {
-                          ...containsInsensitive(lastNameTerm),
-                        },
-                      },
-                    ],
-                  },
-                },
-              } as Prisma.InvoiceWhereInput,
-            ];
-          })(),
+          { id: ci(searchTerm) },
+          { client: { is: { firstName: ci(searchTerm) } } },
+          { client: { is: { lastName: ci(searchTerm) } } },
+          { vehicle: { is: { make: ci(searchTerm) } } },
+          { vehicle: { is: { model: ci(searchTerm) } } },
+          { vehicle: { is: { submodel: ci(searchTerm) } } },
+          { vehicle: { is: { other: ci(searchTerm) } } },
+          ...buildVehicleCombinations(searchTerm),
+          ...buildClientNameFilter(searchTerm),
         ],
       }
     : undefined;

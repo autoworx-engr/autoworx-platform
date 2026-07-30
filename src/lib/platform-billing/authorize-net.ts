@@ -43,9 +43,12 @@ function getEnvironment() {
     return SDKConstants.endpoint.sandbox;
   }
 
-  return process.env.NODE_ENV === "production"
-    ? SDKConstants.endpoint.production
-    : SDKConstants.endpoint.sandbox;
+  // No explicit override: default to sandbox. We deliberately do NOT fall
+  // back to NODE_ENV — staging deployments on Railway run a production build
+  // (NODE_ENV=production), so keying live billing off NODE_ENV would charge
+  // real cards from non-production environments. Live billing must be opted
+  // into explicitly via PLATFORM_AUTHNET_ENVIRONMENT=production.
+  return SDKConstants.endpoint.sandbox;
 }
 
 function extractNumericIdFromErrorText(errorText: string): string | null {
@@ -371,10 +374,9 @@ export async function validateCustomerPaymentProfile(
   const explicit = (process.env.PLATFORM_AUTHNET_ENVIRONMENT || "")
     .trim()
     .toLowerCase();
-  const isLiveValidation =
-    explicit === "production" ||
-    explicit === "live" ||
-    (!explicit && process.env.NODE_ENV === "production");
+  // Live validation only when explicitly opted in — never via NODE_ENV, which
+  // is "production" on staging too (see getEnvironment above).
+  const isLiveValidation = explicit === "production" || explicit === "live";
 
   const validateRequest =
     new ApiContracts.ValidateCustomerPaymentProfileRequest();

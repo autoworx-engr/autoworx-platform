@@ -5,15 +5,15 @@ import { errorToast, successToast } from "@/lib/toast";
 import { updatePipelineAutomationTrigger } from "@/service/pipeline-automation-trigger/api";
 import { LeadWithSalesUser } from "@/types/invoiceLead";
 import { Appointment } from "@prisma/client";
-import { customAlphabet } from "nanoid";
 import Image from "next/image";
-import { useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import CommunicationsNoti from "../../../components/CommunicationsNoti";
 import PipelineInvoiceModal from "../../../components/PipelineInvoiceModal";
 import AddTaskComponent from "./AddTaskComponent";
 import LeadAssign from "./LeadAssign";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { createLeadDraftEstimate } from "@/actions/pipelines/createLeadDraftEstimate";
+import { useCreateDraftEstimate } from "@/hooks/pipeline/useCreateDraftEstimate";
 import { Calendar, CalendarCheck } from "lucide-react";
 import { updateInvoiceAutomationTrigger } from "@/service/invoice-automation-trigger/api";
 import { useRouter } from "next/navigation";
@@ -32,11 +32,19 @@ type TCreateDraftEstimateParams = {
 };
 
 export default function LeadActions({ lead }: TProps) {
-  const [pending, startTransition] = useTransition();
-
   const dispatch = useColumnDispatch();
   const router = useRouter();
-  const [invoiceId, setInvoiceId] = useState<string | null>(null);
+  const [invoiceId, setInvoiceId] = useState<string | null>(
+    lead.invoiceId ?? null,
+  );
+
+  // Sync local invoiceId state with lead.invoiceId changes (e.g., after creation)
+  useEffect(() => {
+    if (lead.invoiceId) {
+      setInvoiceId(lead.invoiceId);
+    }
+  }, [lead.invoiceId]);
+
   const { permissions } = usePermissionStore();
   const canCreateEstimate = canAccessEstimate(permissions);
   // const handleCreateDraftEstimate = async ({
@@ -140,6 +148,9 @@ export default function LeadActions({ lead }: TProps) {
     ]);
   };
 
+  const { mutateAsync: createDraftEstimate, isPending } =
+    useCreateDraftEstimate();
+
   const handleCreateDraftEstimate = async ({
     columnId,
     leadId,
@@ -153,33 +164,21 @@ export default function LeadActions({ lead }: TProps) {
         return;
       }
 
-      const draftEstimateId = customAlphabet("1234567890", 10)();
-
-      const res = await createLeadDraftEstimate({
-        id: draftEstimateId,
+      const res = await createDraftEstimate({
         leadId,
         clientId,
-        vehicleId,
-        type: "Estimate",
+        vehicleId: vehicleId ?? undefined,
+        companyId: lead.companyId.toString(),
       });
 
       // Handle API error responses first (early return)
-      if (res.type === "globalError") {
-        errorToast(
-          res?.errorSource?.[0]?.message ||
-            res.message ||
-            "Something went wrong",
-        );
-        return;
-      }
-
-      if (res.type === "error") {
+      if (!res.success && res.data?.id) {
         setInvoiceId(res.data.id);
         return;
       }
 
-      if (res.type !== "success") {
-        errorToast("Unexpected response while creating estimate");
+      if (!res.success) {
+        errorToast(res.message || "Something went wrong");
         return;
       }
 
@@ -198,7 +197,7 @@ export default function LeadActions({ lead }: TProps) {
       });
 
       // Run automations in parallel (faster)
-      await triggerAutomations({
+      triggerAutomations({
         columnId,
         companyId,
         invoiceId: id,
@@ -287,18 +286,23 @@ export default function LeadActions({ lead }: TProps) {
           {/* client message notification or redirect to client section component */}
           <CommunicationsNoti lead={lead} />
           <button
-            disabled={pending || !canCreateEstimate}
+            disabled={isPending || !canCreateEstimate}
             type="button"
             onClick={() => {
-              if (lead?.columnId && lead.id && lead?.client) {
-                startTransition(() =>
-                  handleCreateDraftEstimate({
-                    columnId: lead.columnId!,
-                    leadId: lead.id,
-                    clientId: lead.client?.id,
-                    vehicleId: lead?.vehicleId,
-                  }),
-                );
+              if (lead.isEstimateCreated) {
+                if (!invoiceId) {
+                  errorToast(
+                    "Invoice is missing. Please refresh and try again.",
+                  );
+                }
+                return;
+              } else {
+                handleCreateDraftEstimate({
+                  columnId: lead.columnId!,
+                  leadId: lead.id,
+                  clientId: lead.client?.id,
+                  vehicleId: lead?.vehicleId,
+                });
               }
             }}
             className="group relative disabled:cursor-not-allowed disabled:opacity-50"

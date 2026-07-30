@@ -21,6 +21,8 @@ export default function VoiceAutoSetup({
     isDeviceReady,
     currentConnection,
     callDuration,
+    isMuted,
+    toggleMute,
   } = useVoiceDevice();
 
   useEffect(() => {
@@ -41,6 +43,8 @@ export default function VoiceAutoSetup({
       onEndCall={endCall}
       isConnected={!!currentConnection}
       callDuration={callDuration}
+      isMuted={isMuted}
+      onToggleMute={toggleMute}
     />
   );
 }

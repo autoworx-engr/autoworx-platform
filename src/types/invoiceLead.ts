@@ -118,6 +118,9 @@ export interface LeadWithSalesUser extends Lead {
     tag: Tag;
   }[];
   totalMessage: number;
+  invoiceId?: string | null;
+
+  taskCount?: number;
 }
 
 export interface ColumnWithLeads extends Column {

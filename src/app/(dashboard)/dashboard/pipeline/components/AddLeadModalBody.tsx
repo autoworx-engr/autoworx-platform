@@ -5,7 +5,7 @@ import { DialogContent } from "@/components/Dialog";
 
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import PhoneInput from "@/components/PhoneInput";
 import ServiceSelectAndAdd from "@/components/ServiceSelectAndAdd";
@@ -16,10 +16,9 @@ import {
   useGetModelsByYearAndMake,
 } from "@/hooks/useCarData";
 import { cn } from "@/lib/cn";
-import { salesPipelineKeyStr } from "@/utils/enums/query-key-constant";
-import toast from "react-hot-toast";
-import Selector from "../../settings/automation/components/Selector";
 import { errorToast, successToast } from "@/lib/toast";
+import { salesPipelineKeyStr } from "@/utils/enums/query-key-constant";
+import Selector from "../../settings/automation/components/Selector";
 
 const AddLeads = ({ onClose }: { onClose?: () => void }) => {
   const queryClient = useQueryClient();
@@ -98,6 +97,8 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
       clearFieldError("phone");
     }
   }, [phoneNumber, countryCode, isoCode]);
+  const NAME_REGEX = /^[A-Za-z\s\-']+$/;
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
@@ -124,6 +125,15 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
         ...formData,
         [name]: value,
       });
+
+      if (name === "name" && value && !NAME_REGEX.test(value)) {
+        setFieldErrors((prev) => ({
+          ...prev,
+          name: "Name can only contain letters, spaces, hyphens, and apostrophes",
+        }));
+      } else {
+        clearFieldError(name);
+      }
     }
   };
 
@@ -142,6 +152,36 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    if (formData.name && !/^[A-Za-z\s\-']+$/.test(formData.name.trim())) {
+      setFieldErrors((prev) => ({
+        ...prev,
+        name: "Name can only contain letters, spaces, hyphens, and apostrophes",
+      }));
+      return;
+    }
+
+    if (!formData.others) {
+      if (
+        !formData.vehicle_year ||
+        !formData.vehicle_make ||
+        !formData.vehicle_model
+      ) {
+        errorToast("Please select Year, Make, and Model for the vehicle");
+        return;
+      }
+    }
+
+    if (!formData.service) {
+      errorToast("Please select a service");
+      return;
+    }
+
+    if (!formData.source) {
+      errorToast("Please select a lead source");
+      return;
+    }
+
     setIsSubmitting(true);
     setFormStatus({ message: "", type: null });
 
@@ -260,6 +300,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
             value={formData.name}
             onChange={handleChange}
             required
+            error={fieldErrors.name}
           />
           <SlimInput
             name="email"
@@ -288,7 +329,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
             Vehicle Information <span className="text-[#E9405F]">*</span>
           </h3>
           <p className="mt-0.5 text-xs text-slate-400">
-            Select year, make &amp; model — or use the field below for unlisted
+            Select year, make &amp; model or use the field below for unlisted
             vehicles
           </p>
         </div>
@@ -406,7 +447,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
 
         <button
           type="submit"
-          className="w-full rounded-lg bg-gradient-to-r from-[#6571FF] to-[#5a66ee] px-4 py-2 font-medium text-white transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full rounded-lg bg-gradient-to-r from-primary to-[#5a66ee] px-4 py-2 font-medium text-white transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50"
           disabled={isSubmitting || !!fieldErrors.phone}
         >
           {isSubmitting ? "Adding..." : "Add Lead"}

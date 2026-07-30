@@ -53,6 +53,7 @@ interface EstimateCreateStore {
   inspections: InspectionType[];
   damageNotes: string | null;
   template?: InvoiceTemplate | null;
+  templateSnapshot?: Partial<EstimateCreateStore> | null;
   setInvoiceId: (invoiceId: string) => void;
   setType: (type: string) => void;
   setSubtotal: (subtotal: number) => void;
@@ -97,6 +98,7 @@ export const useEstimateCreateStore = create<EstimateCreateStore>((set) => ({
   type: "",
   title: "",
   template: null,
+  templateSnapshot: null,
   subtotal: 0,
   discount: 0,
   tax: 0,
@@ -176,6 +178,7 @@ export const useEstimateCreateStore = create<EstimateCreateStore>((set) => ({
       invoiceId: "",
       title: "",
       template: null,
+      templateSnapshot: null,
       subtotal: 0,
       discount: 0,
       deposit: 0,

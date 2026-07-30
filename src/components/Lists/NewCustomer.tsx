@@ -1,6 +1,5 @@
 "use client";
 
-import type { JSX } from "react";
 import { addCustomer } from "@/actions/client/add";
 import { CLIENT_LIST_KEY } from "@/app/(dashboard)/dashboard/client/_hook/useClientQuery";
 import {
@@ -16,14 +15,17 @@ import FormError from "@/components/FormError";
 import { ClientTagSelector } from "@/components/Lists/ClientTagSelector";
 import SelectClientSource from "@/components/Lists/SelectClientSource";
 import { SlimInput } from "@/components/SlimInput";
+import { Label } from "@/components/ui/label";
 import { useClientFilterStore } from "@/stores/clientFilter";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import { stateStore } from "@/stores/stateStore";
 import { Client, Source, Tag } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { CircleUserRound as UserIcon, X } from "lucide-react";
+import { SquarePen, CircleUserRound as UserIcon, X } from "lucide-react";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
+import type { JSX } from "react";
 import { useEffect, useState, useTransition } from "react";
 import { RotatingLines } from "react-loader-spinner";
 import { deleteSource } from "../../actions/source/deleteSource";
@@ -50,6 +52,8 @@ export default function NewCustomer({
   const [tagOpenDropdown, setTagOpenDropdown] = useState(false);
   const [tag, setTag] = useState<Tag>();
   const [profilePic, setProfilePic] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isPremium, setIsPremium] = useState(false);
   const [clientSources, setClientSources] = useState<Source[]>([]);
   const { showError, clearError } = useFormErrorStore();
   const [mobile, setMobile] = useState("+1");
@@ -74,6 +78,16 @@ export default function NewCustomer({
     zip: "",
     customerCompany: "",
   });
+
+  useEffect(() => {
+    if (!profilePic) {
+      setPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(profilePic);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [profilePic]);
 
   async function getClientSources() {
     const data = await getSources();
@@ -111,6 +125,7 @@ export default function NewCustomer({
     setTagOpenDropdown(false);
     setTag(undefined);
     setCountryIsoCode("");
+    setIsPremium(false);
   }
 
   async function handleSubmit() {
@@ -178,6 +193,7 @@ export default function NewCustomer({
         tagId: tag?.id,
         sourceId: clientSource?.id,
         photo,
+        isPremium,
       },
       pathname,
     );
@@ -250,7 +266,7 @@ export default function NewCustomer({
             <button
               className="
                   flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white
-                  bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                  bg-gradient-to-r from-primary to-[#5a66ee]
                   shadow-[0_4px_14px_0_rgba(101,113,255,0.39)]
                   hover:shadow-[0_6px_20px_rgba(101,113,255,0.23)]
                   hover:-translate-y-0.5
@@ -268,23 +284,44 @@ export default function NewCustomer({
         >
           <div className="mt-8 flex items-center justify-between">
             <div className="px-2">
-              <h1 className="text-2xl font-bold tracking-tight text-slate-600 dark:text-slate-100">
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">
                 Add Client
               </h1>
-              <p className="text-sm text-slate-500 mt-1">
+              <p className="mt-1 text-sm text-muted-foreground">
                 Enter details for the new client
               </p>
             </div>
 
             {profilePic ? (
-              <img
-                src={URL.createObjectURL(profilePic)}
-                alt="profile"
-                className="h-16 w-16 cursor-pointer rounded-full object-cover ring-4 ring-white dark:ring-slate-800 shadow-md transition-transform group-hover:scale-105"
-                onClick={() => {
-                  setProfilePic(null);
-                }}
-              />
+              <div className="relative group">
+                <div className="relative h-16 w-16 rounded-full overflow-hidden ring-4 ring-white dark:ring-slate-800 shadow-md transition-transform group-hover:scale-105">
+                  <Image
+                    src={previewUrl!}
+                    alt="profile"
+                    width={64}
+                    height={64}
+                    unoptimized
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+                <label
+                  htmlFor="profilePicture"
+                  className="absolute bottom-0 right-0 p-1 bg-primary rounded-full shadow-sm cursor-pointer transition-colors"
+                >
+                  <SquarePen className="w-3 h-3 text-white" />
+                </label>
+                <input
+                  type="file"
+                  name="profilePicture"
+                  id="profilePicture"
+                  hidden
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) setProfilePic(file);
+                  }}
+                />
+              </div>
             ) : (
               <label
                 className="
@@ -292,7 +329,7 @@ export default function NewCustomer({
                       rounded-full pl-4 pr-2 py-1.5
                       bg-white dark:bg-slate-800
                       border border-dashed border-slate-300 dark:border-slate-600
-                      hover:border-[#6571FF] hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20
+                      hover:border-primary hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20
                       transition-all duration-300
                   "
                 htmlFor="profilePicture"
@@ -311,11 +348,11 @@ export default function NewCustomer({
                   }}
                 />
                 <div className="flex flex-col items-end">
-                  <span className="text-sm font-semibold text-slate-600 dark:text-slate-300 group-hover:text-[#6571FF] transition-colors">
+                  <span className="text-sm font-semibold text-slate-600 dark:text-slate-300 group-hover:text-primary transition-colors">
                     Upload Photo
                   </span>
                 </div>
-                <div className="p-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 group-hover:text-[#6571FF] group-hover:bg-white transition-colors">
+                <div className="p-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 group-hover:text-primary group-hover:bg-white transition-colors">
                   <UserIcon size={32} strokeWidth={2} />
                 </div>
               </label>
@@ -452,8 +489,8 @@ export default function NewCustomer({
                 }}
               />
 
-              <div className="w-full">
-                <p className="mb-1 font-medium">Client Source</p>
+              <div className="flex w-full flex-col gap-1.5">
+                <Label className="text-base">Client Source</Label>
                 <SelectClientSource
                   clickabled={false}
                   label={(clientSrc) =>
@@ -505,8 +542,8 @@ export default function NewCustomer({
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
-              <div className="w-full">
-                <p className="mb-1 font-medium text-slate-600">Tag</p>
+              <div className="flex w-full flex-col gap-1.5">
+                <Label className="text-base">Tag</Label>
                 <ClientTagSelector
                   value={tag}
                   setValue={setTag}
@@ -514,16 +551,41 @@ export default function NewCustomer({
                   setOpen={setTagOpenDropdown}
                 />
               </div>
+              <div>
+                <label className="flex cursor-pointer select-none items-center gap-3 mt-9 group">
+                  <div className="relative flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={isPremium}
+                      onChange={(e) => setIsPremium(e.target.checked)}
+                      className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border-2 border-slate-300 transition-all checked:border-primary checked:bg-primary hover:border-primary"
+                    />
+                    <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 transition-opacity peer-checked:opacity-100">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-3.5 w-3.5"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                  <span className="font-medium text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">
+                    Add as a Fleet
+                  </span>
+                </label>
+              </div>
             </div>
           </div>
 
           <DialogFooter>
             <DialogClose
-              className="
-                rounded-xl mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500
-                hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
-                transition-colors border
-              "
+              className="mt-2 rounded-md border px-5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground sm:mt-0"
               onClick={() => {
                 clearError();
                 setIsClientOpen(false);
@@ -536,15 +598,7 @@ export default function NewCustomer({
               disabled={pending}
               type="button"
               onClick={() => startTransition(handleSubmit)}
-              className="
-                  rounded-xl px-6 py-2.5 text-sm font-medium text-white
-                  bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
-                  shadow-lg shadow-indigo-500/30
-                  hover:shadow-xl hover:shadow-indigo-500/40
-                  hover:-translate-y-0.5 hover:scale-[1.02]
-                  active:translate-y-0 active:scale-100
-                  transition-all duration-200
-                "
+              className="rounded-md bg-gradient-to-r from-primary to-[#5a66ee] px-6 py-2 text-sm font-medium text-white shadow transition-all duration-200 hover:shadow-lg hover:shadow-indigo-500/30 disabled:opacity-50"
             >
               {pending ? (
                 <div className="flex flex-col items-center justify-center">
@@ -585,7 +639,7 @@ export default function NewCustomer({
           </DialogHeader>
 
           <div className="py-4">
-            <p className="text-lg text-slate-700 dark:text-slate-300">
+            <p className="text-lg text-foreground">
               Would you like to add a vehicle for{" "}
               <span className="font-semibold">
                 {createdClient?.firstName} {createdClient?.lastName}
@@ -597,11 +651,7 @@ export default function NewCustomer({
           <DialogFooter>
             <button
               type="button"
-              className="
-                rounded-xl px-5 py-2.5 text-sm font-medium text-slate-500
-                hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
-                transition-colors border
-              "
+              className="rounded-md border px-5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
               onClick={handleVehicleCancel}
             >
               No, Skip
@@ -609,15 +659,7 @@ export default function NewCustomer({
             <button
               type="button"
               onClick={handleVehicleConfirm}
-              className="
-                rounded-xl px-6 py-2.5 text-sm font-medium text-white
-                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
-                shadow-lg shadow-indigo-500/30
-                hover:shadow-xl hover:shadow-indigo-500/40
-                hover:-translate-y-0.5 hover:scale-[1.02]
-                active:translate-y-0 active:scale-100
-                transition-all duration-200
-              "
+              className="rounded-md bg-gradient-to-r from-primary to-[#5a66ee] px-6 py-2 text-sm font-medium text-white shadow transition-all duration-200 hover:shadow-lg hover:shadow-indigo-500/30 disabled:opacity-50"
             >
               Yes, Add Vehicle
             </button>

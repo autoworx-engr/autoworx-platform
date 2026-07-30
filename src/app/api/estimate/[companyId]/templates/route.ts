@@ -1,6 +1,8 @@
-import { getCompanyIdFromBearer } from "@/lib/mobileAuth";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { customAlphabet } from "nanoid";
+import { buildWordSearchAnd } from "@/lib/wordSearch";
 
 /**
  * @swagger
@@ -306,7 +308,7 @@ export async function GET(
 ) {
   try {
     const { companyId: companyIdParam } = await params;
-    const jwtCompanyId = await getCompanyIdFromBearer(req);
+    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
     if (jwtCompanyId === null) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -323,7 +325,7 @@ export async function GET(
       Math.max(1, parseInt(searchParams.get("limit") || "10")),
     );
     const skip = (page - 1) * limit;
-    const searchTerm = searchParams.get("searchTerm") || undefined;
+    const searchTerm = searchParams.get("searchTerm")?.trim() || undefined;
     const startDate = searchParams.get("startDate") || undefined;
     const endDate = searchParams.get("endDate") || undefined;
     const columnId = searchParams.get("columnId")
@@ -346,16 +348,16 @@ export async function GET(
       }
     }
 
-    if (searchTerm) {
-      where.title = { contains: searchTerm, mode: "insensitive" };
+    const searchAnd = buildWordSearchAnd(searchTerm, ["title"]);
+    if (searchAnd) {
+      where.AND = searchAnd;
     }
 
     const [templates, total] = await Promise.all([
       db.invoiceTemplate.findMany({
         where,
         orderBy: { createdAt: "desc" },
-        skip,
-        take: limit,
+        ...(searchTerm ? {} : { skip, take: limit }),
         select: {
           id: true,
           title: true,
@@ -369,7 +371,7 @@ export async function GET(
           damageNotes: true,
           columnId: true,
           column: {
-            select: { id: true, title: true },
+            select: { id: true, title: true, bgColor: true, textColor: true },
           },
           tags: {
             include: { tag: true },
@@ -390,13 +392,21 @@ export async function GET(
     return NextResponse.json({
       success: true,
       data,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasMore: skip + templates.length < total,
-      },
+      pagination: searchTerm
+        ? {
+            page: 1,
+            limit: total,
+            total,
+            totalPages: 1,
+            hasMore: false,
+          }
+        : {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+            hasMore: skip + templates.length < total,
+          },
     });
   } catch (error) {
     console.error("TEMPLATE LIST ERROR:", error);
@@ -413,7 +423,7 @@ export async function POST(
 ) {
   try {
     const { companyId: companyIdParam } = await params;
-    const jwtCompanyId = await getCompanyIdFromBearer(req);
+    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
     if (jwtCompanyId === null) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -472,6 +482,7 @@ export async function POST(
     const template = await db.$transaction(async (tx) => {
       const newTemplate = await tx.invoiceTemplate.create({
         data: {
+          id: customAlphabet("1234567890", 10)(),
           title: title.trim(),
           companyId,
           columnId: finalColumnId ?? null,

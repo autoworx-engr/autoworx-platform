@@ -40,6 +40,7 @@ interface PaymentData {
   date: Date;
   notes: string;
   amount: number;
+  companyId?: number;
   additionalData:
     | CardPaymentData
     | CheckPaymentData
@@ -55,9 +56,18 @@ export async function newPayment({
   notes,
   amount,
   additionalData,
+  companyId,
 }: PaymentData): Promise<ServerAction | TErrorHandler> {
   try {
-    const companyId = await getCompanyId();
+    let cId = companyId;
+
+    if (cId == null) {
+      cId = await getCompanyId();
+    }
+
+    if (!cId) {
+      throw new Error("Company ID could not be resolved");
+    }
 
     await createPaymentValidationSchema.parseAsync({
       invoiceId,
@@ -91,7 +101,7 @@ export async function newPayment({
           case "CARD":
             newPayment = await tx.payment.create({
               data: {
-                companyId,
+                companyId: cId,
                 invoiceId,
                 date: new Date(date),
                 notes,
@@ -114,7 +124,7 @@ export async function newPayment({
           case "CHECK":
             newPayment = await tx.payment.create({
               data: {
-                companyId,
+                companyId: cId,
                 invoiceId,
                 date: new Date(date),
                 notes,
@@ -137,7 +147,7 @@ export async function newPayment({
           case "CASH":
             newPayment = await tx.payment.create({
               data: {
-                companyId,
+                companyId: cId,
                 invoiceId,
                 date: new Date(date),
                 notes,
@@ -160,7 +170,7 @@ export async function newPayment({
           case "OTHER":
             newPayment = await tx.payment.create({
               data: {
-                companyId,
+                companyId: cId,
                 invoiceId,
                 date: new Date(date),
                 notes,
@@ -189,7 +199,7 @@ export async function newPayment({
             // Update the invoice with the deposit amount, method, and notes
             newPayment = await tx.payment.create({
               data: {
-                companyId,
+                companyId: cId,
                 invoiceId,
                 date: new Date(date),
                 notes,
@@ -248,30 +258,6 @@ export async function newPayment({
           },
         });
 
-        sendPaymentReceivedNotification({
-          companyId,
-          clientName:
-            invoice?.client?.firstName + " " + invoice?.client?.lastName,
-          amount: amount,
-          invoiceId: invoice.id,
-        });
-
-        // invoice automation trigger
-        updateInvoiceAutomationTrigger({
-          companyId: invoice?.companyId!,
-          invoiceId: invoice?.id!,
-          columnId: invoice?.columnId!,
-          type: invoice?.type!,
-        });
-
-        updateTagAutomationTrigger({
-          columnId: invoice?.columnId!,
-          companyId: invoice?.companyId!,
-          pipelineType: "SHOP",
-          conditionType: "post_tag",
-          invoiceId: invoice?.id!,
-        });
-
         return { newPayment, invoice };
       },
       {
@@ -279,6 +265,37 @@ export async function newPayment({
         maxWait: 6000, // 6 seconds
       },
     );
+
+    // Fire side effects only after the transaction has committed successfully,
+    // so a later rollback can't leave a notification/automation-trigger sent
+    // for a payment that never actually persisted.
+    sendPaymentReceivedNotification({
+      companyId: cId,
+      clientName:
+        `${invoice?.client?.firstName} ${invoice?.client?.lastName ?? ""}`.trim(),
+      amount: amount,
+      invoiceId: invoice.id,
+    }).catch((err) =>
+      console.error("sendPaymentReceivedNotification failed", err),
+    );
+
+    // invoice automation trigger
+    updateInvoiceAutomationTrigger({
+      companyId: invoice?.companyId!,
+      invoiceId: invoice?.id!,
+      columnId: invoice?.columnId!,
+      type: invoice?.type!,
+    }).catch((err) =>
+      console.error("updateInvoiceAutomationTrigger failed", err),
+    );
+
+    updateTagAutomationTrigger({
+      columnId: invoice?.columnId!,
+      companyId: invoice?.companyId!,
+      pipelineType: "SHOP",
+      conditionType: "post_tag",
+      invoiceId: invoice?.id!,
+    }).catch((err) => console.error("updateTagAutomationTrigger failed", err));
 
     revalidatePath("/dashboard/estimate/edit");
 

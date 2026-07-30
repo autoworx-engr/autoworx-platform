@@ -1,6 +1,7 @@
 import { AppError } from "@/error-boundary/error";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { InvoiceType, Prisma } from "@prisma/client";
 import { customAlphabet } from "nanoid";
 import { NextRequest, NextResponse } from "next/server";
@@ -14,7 +15,7 @@ import { NextRequest, NextResponse } from "next/server";
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
  *             required:
@@ -28,12 +29,14 @@ import { NextRequest, NextResponse } from "next/server";
  *               - senderId
  *               - senderCompanyId
  *             properties:
- *               file:
+ *               photos:
  *                 type: array
  *                 items:
- *                   type: string
- *                   format: binary
- *                 description: Optional photo files to attach
+ *                   type: object
+ *                   properties:
+ *                     photo:
+ *                       type: string
+ *                 description: Optional photo URLs (already uploaded via /api/upload) to attach
  *               model:
  *                 type: string
  *               year:
@@ -68,21 +71,28 @@ import { NextRequest, NextResponse } from "next/server";
  */
 export async function POST(request: NextRequest) {
   try {
-    const formData = await request.formData();
+    const principal = await getAuthPrincipal(request);
+    if (!principal) {
+      throw new AppError(401, "Unauthorized");
+    }
+    const { companyId: callerCompanyId, userId: callerUserId } = principal;
 
-    // ── Parse & validate required fields ──────────────────────────────────────
-    const model = formData.get("model") as string | null;
-    const make = formData.get("make") as string | null;
-    const serviceRequest = formData.get("serviceRequest") as string | null;
-    const dueDate = formData.get("dueDate") as string | null;
-    const notes = (formData.get("notes") as string | null) ?? "";
-    const messageText = formData.get("messageText") as string | null;
+    const body = await request.json();
 
-    const yearRaw = formData.get("year");
-    const receiverIdRaw = formData.get("receiverId");
-    const receiverCompanyIdRaw = formData.get("receiverCompanyId");
-    const senderIdRaw = formData.get("senderId");
-    const senderCompanyIdRaw = formData.get("senderCompanyId");
+    const {
+      model,
+      make,
+      serviceRequest,
+      dueDate,
+      notes = "",
+      messageText,
+      year: yearRaw,
+      receiverId: receiverIdRaw,
+      receiverCompanyId: receiverCompanyIdRaw,
+      senderId: senderIdRaw,
+      senderCompanyId: senderCompanyIdRaw,
+      photos = [],
+    } = body;
 
     if (
       !model ||
@@ -120,19 +130,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ── Extract photo files ────────────────────────────────────────────────────
-    const photoFormData = new FormData();
-    const files = formData.getAll("file");
-    files.forEach((file) => {
-      if (file instanceof Blob) {
-        photoFormData.append("file", file);
-      }
-    });
+    if (senderCompanyId !== callerCompanyId || senderId !== callerUserId) {
+      throw new AppError(
+        403,
+        "You can only request estimates from your own company.",
+      );
+    }
 
-    // ── Main DB transaction ────────────────────────────────────────────────────
     const { requestEstimateFromDB } = await db.$transaction(async (prisma) => {
-      const origin = request.nextUrl.origin;
-
       const receiverCompanyDataFromDB = await prisma.company.findUnique({
         where: { id: receiverCompanyId },
         select: { name: true },
@@ -151,7 +156,6 @@ export async function POST(request: NextRequest) {
         throw new AppError(404, "Sender company not found");
       }
 
-      // ── Upsert client ────────────────────────────────────────────────────────
       let client = await prisma.client.findFirst({
         where: { fromRequestedCompanyId: senderCompanyId },
       });
@@ -171,7 +175,6 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      // ── Create vehicle ───────────────────────────────────────────────────────
       const vehicle = await prisma.vehicle.create({
         data: {
           model,
@@ -184,7 +187,6 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // ── Resolve default column ───────────────────────────────────────────────
       const defaultColumn = await prisma.column.findFirst({
         where: {
           title: "Pending",
@@ -198,7 +200,6 @@ export async function POST(request: NextRequest) {
         throw new AppError(404, "Default 'Pending' column not found");
       }
 
-      // ── Create estimate (invoice) ────────────────────────────────────────────
       const estimate = await prisma.invoice.create({
         data: {
           id: customAlphabet("1234567890", 10)(),
@@ -214,7 +215,6 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // ── Create service ───────────────────────────────────────────────────────
       const service = await prisma.service.create({
         data: {
           name: serviceRequest,
@@ -224,7 +224,6 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // ── Link service to invoice ──────────────────────────────────────────────
       await prisma.invoiceItem.create({
         data: {
           invoiceId: estimate.id,
@@ -232,7 +231,6 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // ── Create requestEstimate record ────────────────────────────────────────
       const requestEstimateFromDB = await prisma.requestEstimate.create({
         data: {
           invoiceId: estimate.id,
@@ -245,36 +243,18 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // ── Back-link request estimate on invoice ────────────────────────────────
       await prisma.invoice.update({
         where: { id: estimate.id },
         data: { requestEstimateId: requestEstimateFromDB.id },
       });
 
-      // ── Upload photos (only if files were supplied) ──────────────────────────
-      if (files.length > 0) {
-        const uploadRes = await fetch(`${origin}/api/upload`, {
-          method: "POST",
-          body: photoFormData,
+      if (photos.length > 0) {
+        await prisma.invoicePhoto.createMany({
+          data: (photos as any[]).map((p) => ({
+            invoiceId: estimate.id,
+            photo: p.photo ?? "",
+          })),
         });
-
-        if (!uploadRes.ok) {
-          throw new AppError(500, "Failed to upload photos");
-        }
-
-        const uploadJson = await uploadRes.json();
-        const photoPaths: string[] = uploadJson.data ?? [];
-
-        await Promise.all(
-          photoPaths.map((photoPath) =>
-            prisma.invoicePhoto.create({
-              data: {
-                invoiceId: estimate.id,
-                photo: photoPath,
-              },
-            }),
-          ),
-        );
       }
 
       return { requestEstimateFromDB };
@@ -303,7 +283,5 @@ export async function POST(request: NextRequest) {
       { success: false, error: errors?.message || "Internal Server Error" },
       { status: errors?.statusCode || 500 },
     );
-  } finally {
-    await db.$disconnect();
   }
 }

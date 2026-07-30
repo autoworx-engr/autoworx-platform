@@ -11,6 +11,7 @@ import SmsMessage from "./SmsMessage";
 import useInfinitySmsQueryByClientId from "../../../_hooks/useInfinitySmsQuery";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/cn";
+import JumpToLatestButton from "@/components/JumpToLatestButton";
 
 export default function SmsBox({ clientId }: { clientId: number }) {
   // data
@@ -129,7 +130,7 @@ export default function SmsBox({ clientId }: { clientId: number }) {
 
     maybeLoadOlderMessages();
 
-    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 24;
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 104;
 
     setShowJump(!atBottom);
     setShouldAutoScroll(atBottom);
@@ -263,7 +264,7 @@ export default function SmsBox({ clientId }: { clientId: number }) {
 
       {/* jump-to-bottom button */}
       {showJump && (
-        <button
+        <JumpToLatestButton
           onClick={() => {
             setShouldAutoScroll(true);
             bottomAnchorRef.current?.scrollIntoView({
@@ -271,20 +272,7 @@ export default function SmsBox({ clientId }: { clientId: number }) {
               block: "end",
             });
           }}
-          className={cn(
-            "absolute bottom-3 right-3 z-10 inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium",
-            "bg-white/90 text-zinc-700 shadow-md ring-1 ring-zinc-200 backdrop-blur",
-            "hover:bg-white dark:bg-zinc-900/80 dark:text-zinc-200 dark:ring-white/10",
-            "transition-all duration-200 hover:scale-105",
-          )}
-          aria-label="Jump to latest"
-          title="Jump to latest"
-        >
-          Newest
-          <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor">
-            <path d="M10 15a1 1 0 0 1-.7-.29l-5-5a1 1 0 1 1 1.4-1.42L10 12.59l4.3-4.3a1 1 0 0 1 1.4 1.42l-5 5A1 1 0 0 1 10 15Z" />
-          </svg>
-        </button>
+        />
       )}
     </div>
   );

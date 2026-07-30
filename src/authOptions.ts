@@ -65,6 +65,10 @@ const refreshAccessToken = async (token: JWT) => {
 
     const { accessToken, refreshToken } = responseToken;
 
+    if (!accessToken) {
+      throw new Error("No access token returned from refresh endpoint");
+    }
+
     const verifyToken = jwt.verify(
       accessToken,
       process.env.ACCESS_SECRET || "",

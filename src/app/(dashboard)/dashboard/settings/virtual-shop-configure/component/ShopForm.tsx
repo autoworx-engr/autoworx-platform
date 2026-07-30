@@ -1,23 +1,23 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import { debounce } from "@/utils/debounce";
 import { SlimInput } from "@/components/SlimInput";
 import { SlimTextarea } from "@/components/SlimTextarea";
 import CarLoading from "@/components/common/CarLoading";
-import { Loader2, Palette, Store } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Switch } from "@/components/ui/switch";
 import {
   useConfigureShop,
   useGetVirtualShopConfigureById,
   useUpdateShop,
 } from "@/hooks/virtual-shop/configure/useVirtualShopConfigure";
+import { errorToast } from "@/lib/toast";
+import { debounce } from "@/utils/debounce";
+import { Loader2, Palette, Store } from "lucide-react";
+import { useRouter } from "next/navigation";
+import React, { useEffect, useMemo, useState } from "react";
+import { ColorPicker } from "./ColorPicker";
 import { FileUpload } from "./FileUpload";
 import { ImageCropModal } from "./ImageCropModal";
-import { ColorPicker } from "./ColorPicker";
 import { Select } from "./Select";
-import { Switch } from "@/components/ui/switch";
-import { errorToast } from "@/lib/toast";
 
 type ThemeConfig = {
   primaryColor: string;
@@ -279,13 +279,13 @@ export default function ShopForm({
         onClose={() => setCropModal((prev) => ({ ...prev, open: false }))}
         onComplete={handleCropComplete}
       />
-      <div className="mx-auto w-full max-w-6xl space-y-4 px-0 py-4 sm:space-y-6 sm:px-6 sm:py-6">
+      <div className="mx-auto w-full space-y-4 px-0 py-4">
         <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-          <div className="absolute -right-14 -top-14 h-40 w-40 rounded-full bg-[#6571FF]/10 blur-2xl" />
-          <div className="absolute -bottom-16 right-12 h-36 w-36 rounded-full bg-[#6571FF]/10 blur-2xl" />
+          <div className="absolute -right-14 -top-14 h-40 w-40 rounded-full bg-primary/10 blur-2xl" />
+          <div className="absolute -bottom-16 right-12 h-36 w-36 rounded-full bg-primary/10 blur-2xl" />
 
           <div className="relative z-10 flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#6571FF]/10 text-[#6571FF]">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <Store className="h-5 w-5" />
             </div>
             <div>
@@ -482,7 +482,7 @@ export default function ShopForm({
             <SlimTextarea
               value={form.termsConditions}
               name="termsConditions"
-              placeholder="Enter your terms and conditions..."
+              placeholder="Enter your Terms and Conditions..."
               maxLength={1500}
               onChange={(e) => {
                 const value = e.target.value;
@@ -527,7 +527,7 @@ export default function ShopForm({
             <SlimTextarea
               value={form.privacyPolicy}
               name="privacyPolicy"
-              placeholder="Enter your privacy policy..."
+              placeholder="Enter your Privacy Policy..."
               maxLength={1500}
               onChange={(e) => {
                 const value = e.target.value;
@@ -580,7 +580,7 @@ export default function ShopForm({
 
           <Switch
             checked={form.isActive}
-            className="data-[state=checked]:!bg-[#6571FF] data-[state=unchecked]:bg-slate-200"
+            className="data-[state=checked]:!bg-primary data-[state=unchecked]:bg-slate-200"
             disabled={isCreating || isUpdating || isFetching}
             onCheckedChange={(checked) =>
               setForm((p) => ({
@@ -605,7 +605,7 @@ export default function ShopForm({
 
           <Switch
             checked={form.urgentBookingNotificationsEnabled}
-            className="data-[state=checked]:!bg-[#6571FF] data-[state=unchecked]:bg-slate-200"
+            className="data-[state=checked]:!bg-primary data-[state=unchecked]:bg-slate-200"
             disabled={isCreating || isUpdating || isFetching}
             onCheckedChange={(checked) =>
               setForm((p) => ({
@@ -620,7 +620,7 @@ export default function ShopForm({
         <button
           onClick={handleSubmit}
           disabled={isLoading}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#6571FF] py-3 font-medium text-white shadow-sm transition-colors hover:bg-[#6571FF]/90 disabled:cursor-not-allowed disabled:opacity-70"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 font-medium text-white shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-70"
         >
           {isLoading ? (
             <>

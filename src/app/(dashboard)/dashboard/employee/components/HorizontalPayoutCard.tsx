@@ -34,13 +34,15 @@ const HorizontalPayoutCard = ({
       {/* Left Side: Icon & Title */}
       <div className="flex items-center gap-4">
         {/* Icon Container */}
-        <div className={`
+        <div
+          className={`
           flex items-center justify-center w-12 h-12 rounded-xl
           bg-gradient-to-br from-indigo-50 to-white dark:from-slate-800 dark:to-slate-800
           ring-1 ring-indigo-100 dark:ring-slate-700
-          shadow-sm text-[#6571FF]
+          shadow-sm text-primary
           transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3
-        `}>
+        `}
+        >
           {<DollarSign className="w-6 h-6" />}
         </div>
 
@@ -67,9 +69,10 @@ const HorizontalPayoutCard = ({
             className={`
               flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold
               backdrop-blur-sm transition-colors
-              ${increased
-                ? "bg-emerald-100/60 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
-                : "bg-rose-100/60 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400"
+              ${
+                increased
+                  ? "bg-emerald-100/60 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
+                  : "bg-rose-100/60 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400"
               }
             `}
           >
@@ -83,9 +86,7 @@ const HorizontalPayoutCard = ({
         )}
 
         {/* Neutral/Zero State */}
-        {percentage === 0 && (
-          <div className="h-5"></div>
-        )}
+        {percentage === 0 && <div className="h-5"></div>}
       </div>
 
       {/* Decorative Gradient Blur (Only visible on hover) */}

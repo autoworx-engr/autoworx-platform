@@ -22,12 +22,6 @@ export default function ResetPassword({
   const router = useRouter();
   const { showError } = useFormErrorStore();
   const [password, setPassword] = useState("");
-  // const [isStrong, setIsStrong] = useState(false);
-
-  const strongPasswordRegex =
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
-
-  const isStrong = strongPasswordRegex.test(password);
 
   const getStrengthScore = (password: string) => {
     let score = 0;
@@ -86,7 +80,7 @@ export default function ResetPassword({
 
         <div className="mb-8 text-center flex flex-col items-center gap-3">
           <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 shadow-inner dark:bg-slate-800/70 dark:text-slate-100">
-            <span className="h-2 w-2 rounded-full bg-[#6571FF]" />
+            <span className="h-2 w-2 rounded-full bg-primary" />
             {token ? "New password" : "Verify email"}
           </div>
           <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 bg-clip-text text-transparent dark:from-white dark:via-slate-200 dark:to-white">
@@ -117,7 +111,7 @@ export default function ResetPassword({
                   required
                   autoFocus
                   placeholder="000000"
-                  className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 text-slate-900 transition-colors focus:border-[#6571FF]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:focus:border-[#6571FF]"
+                  className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 text-slate-900 transition-colors focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:focus:border-primary"
                 />
               </div>
 
@@ -142,7 +136,7 @@ export default function ResetPassword({
                 disabled={!resendAvailable}
                 className={`block mx-auto font-semibold transition-colors ${
                   resendAvailable
-                    ? "text-[#6571FF] hover:text-[#5059d4]"
+                    ? "text-primary hover:text-[#5059d4]"
                     : "text-slate-400 cursor-not-allowed"
                 }`}
               >
@@ -153,7 +147,7 @@ export default function ResetPassword({
               <button
                 type="button"
                 onClick={() => router.push("/forgot-password")}
-                className="block mx-auto text-slate-600 hover:text-[#6571FF] transition-colors dark:text-slate-400 dark:hover:text-[#6571FF]"
+                className="block mx-auto text-slate-600 hover:text-primary transition-colors dark:text-slate-400 dark:hover:text-primary"
               >
                 Use a different email
               </button>
@@ -177,7 +171,7 @@ export default function ResetPassword({
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-[#6571FF]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:focus:border-[#6571FF]"
+                  className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:focus:border-primary"
                 />
                 <div className="w-full h-2 bg-slate-200 rounded mt-2">
                   <div
@@ -192,13 +186,6 @@ export default function ResetPassword({
                     style={{ width: `${(strength / 5) * 100}%` }}
                   />
                 </div>
-                <p
-                  className={`text-xs mt-2 ${isStrong ? "text-green-500" : "text-red-500"}`}
-                >
-                  {isStrong
-                    ? "Strong password ✓"
-                    : "Must include uppercase, lowercase, number and symbol (min 8 chars)"}
-                </p>
               </div>
 
               {/* <div className="rounded-xl border border-slate-200/70 bg-white/60 px-4 py-3 text-xs text-slate-600 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/60 dark:text-slate-300">

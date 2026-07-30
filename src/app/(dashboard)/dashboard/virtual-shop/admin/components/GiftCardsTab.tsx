@@ -1,12 +1,5 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useSession } from "next-auth/react";
-import toast from "react-hot-toast";
-import { Popconfirm, Tooltip } from "antd";
-import { Switch } from "@/components/Switch";
-import Selector from "@/components/Selector";
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -14,37 +7,44 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/Dialog";
-import {
-  useCreateGiftCardTemplate,
-  useDeleteGiftCardTemplate,
-  useGetGiftCardTemplates,
-  useUpdateGiftCardTemplate,
-} from "@/hooks/virtual-shop/gift-card-templates/useGiftCardTemplates";
-import {
-  useGetGiftCardSettings,
-  useUpdateGiftCardSettings,
-} from "@/hooks/virtual-shop/gift-card-settings/useGiftCardSettings";
+import Selector from "@/components/Selector";
+import { Switch } from "@/components/Switch";
+import { Button } from "@/components/ui/button";
 import {
   useCreateGiftCardPromo,
   useDeleteGiftCardPromo,
   useGetGiftCardPromos,
   useUpdateGiftCardPromo,
 } from "@/hooks/virtual-shop/gift-card-promos/useGiftCardPromos";
-import type { GiftCardPromoData } from "@/service/virtual-shop/api";
 import {
-  Image as ImageIcon,
-  DollarSign,
-  Send,
-  Tag,
-  FileText,
-  ShieldCheck,
-  Plus,
-  Trash2,
-  Loader2,
-  SquarePen,
+  useGetGiftCardSettings,
+  useUpdateGiftCardSettings,
+} from "@/hooks/virtual-shop/gift-card-settings/useGiftCardSettings";
+import {
+  useCreateGiftCardTemplate,
+  useDeleteGiftCardTemplate,
+  useGetGiftCardTemplates,
+  useUpdateGiftCardTemplate,
+} from "@/hooks/virtual-shop/gift-card-templates/useGiftCardTemplates";
+import type { GiftCardPromoData } from "@/service/virtual-shop/api";
+import { Popconfirm, Tooltip } from "antd";
+import {
   Check,
   CircleHelp,
+  DollarSign,
+  FileText,
+  Image as ImageIcon,
+  Loader2,
+  Plus,
+  Send,
+  ShieldCheck,
+  SquarePen,
+  Tag,
+  Trash2,
 } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import GiftCardsTabSkeleton from "./GiftCardsTabSkeleton";
 
 // ── Gift Card Designs ─────────────────────────────────────────────────────────
@@ -158,7 +158,7 @@ function SettingInput({
             onChange(nextValue);
           }
         }}
-        className="w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 outline-none focus:border-[#6571FF] focus:ring-1 focus:ring-[#6571FF]"
+        className="w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 outline-none focus:border-primary focus:ring-1 focus:ring-primary"
         placeholder={placeholder}
       />
     </div>
@@ -184,7 +184,7 @@ function Section({
         <Icon size={20} className="text-gray-700" />
         <h2 className="text-xl font-bold text-gray-900">{title}</h2>
       </div>
-      <p className="mt-1 text-sm text-[#6571FF]">{subtitle}</p>
+      <p className="mt-1 text-sm text-primary">{subtitle}</p>
       <div className="mt-5">{children}</div>
     </div>
   );
@@ -753,7 +753,7 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                   value={newTemplateName}
                   onChange={setNewTemplateName}
                   required
-                  placeholder="Enter template name"
+                  placeholder="Enter Template Name"
                 />
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-semibold text-gray-700">
@@ -767,7 +767,7 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                     onChange={(e) =>
                       setNewTemplateImageFile(e.target.files?.[0] ?? null)
                     }
-                    className="min-h-10 w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm text-gray-700 outline-none file:mr-3 file:rounded-md file:border-0 file:bg-[#6571FF] file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-white hover:file:bg-[#5560ee]"
+                    className="min-h-10 w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm text-gray-700 outline-none file:mr-3 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-white hover:file:bg-[#5560ee]"
                   />
                 </div>
                 <div className="flex items-end">
@@ -780,7 +780,7 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                       !newTemplateName.trim() ||
                       !newTemplateImageFile
                     }
-                    className="flex h-10 w-fit items-center gap-1.5 rounded-md bg-[#6571FF] px-4 text-sm font-medium text-white transition-colors hover:bg-[#5560ee] disabled:opacity-60"
+                    className="flex h-10 w-fit items-center gap-1.5 rounded-md bg-primary px-4 text-sm font-medium text-white transition-colors hover:bg-[#5560ee] disabled:opacity-60"
                   >
                     {isCreatingTemplate || isUploadingTemplateImage ? (
                       <Loader2 size={14} className="animate-spin" />
@@ -832,7 +832,7 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                     {!design.isDefault && design.enabled && (
                       <button
                         onClick={() => setDefaultTemplateInState(design.id)}
-                        className="inline-flex items-center gap-1 rounded-md border border-[#6571FF] px-2.5 py-1 text-xs font-semibold text-[#6571FF] transition-colors hover:bg-[#6571FF] hover:text-white disabled:opacity-60"
+                        className="inline-flex items-center gap-1 rounded-md border border-primary px-2.5 py-1 text-xs font-semibold text-primary transition-colors hover:bg-primary hover:text-white disabled:opacity-60"
                       >
                         <Check size={14} />
                         Set Default
@@ -882,7 +882,7 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                     type="button"
                     onClick={handleSaveTemplates}
                     disabled={isUpdatingTemplate || !accessToken}
-                    className="bg-[#6571FF] hover:bg-[#5560ee]"
+                    className="bg-primary hover:bg-[#5560ee]"
                   >
                     {isUpdatingTemplate ? "Saving..." : "Save Changes"}
                   </Button>
@@ -1014,7 +1014,7 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
               <button
                 type="button"
                 onClick={openCreatePromoDialog}
-                className="flex w-fit items-center gap-1.5 rounded-md bg-[#6571FF] px-4 py-2 text-sm font-medium text-white hover:bg-[#5560ee] transition-colors"
+                className="flex w-fit items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-[#5560ee] transition-colors"
               >
                 <Plus size={15} />
                 Add Code
@@ -1116,7 +1116,7 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                         e.preventDefault();
                       }
                     }}
-                    className="w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 outline-none focus:border-[#6571FF] focus:ring-1 focus:ring-[#6571FF]"
+                    className="w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 outline-none focus:border-primary focus:ring-1 focus:ring-primary"
                   />
                 </div>
 
@@ -1134,7 +1134,7 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                       onChange={(e) =>
                         setPromoType(e.target.value as DiscountCodeType)
                       }
-                      className="w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 outline-none focus:border-[#6571FF] focus:ring-1 focus:ring-[#6571FF]"
+                      className="w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 outline-none focus:border-primary focus:ring-1 focus:ring-primary"
                     >
                       <option value="Percentage">Percentage (%)</option>
                       <option value="Fixed">Fixed ($)</option>
@@ -1173,7 +1173,7 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                   type="button"
                   onClick={handleSubmitPromoCode}
                   disabled={isCreatingPromo || isUpdatingPromo}
-                  className="w-full rounded-md bg-[#6571FF] hover:bg-[#5560ee] px-4 py-2.5 text-sm font-semibold text-white transition-colors disabled:opacity-60"
+                  className="w-full rounded-md bg-primary hover:bg-[#5560ee] px-4 py-2.5 text-sm font-semibold text-white transition-colors disabled:opacity-60"
                 >
                   {isCreatingPromo || isUpdatingPromo
                     ? "Saving..."
@@ -1207,7 +1207,7 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
 
           {/* ── Expiration Policy ── */}
           <Section icon={ShieldCheck} title="Expiration Policy" subtitle="">
-            <div className="flex items-center gap-2 rounded-lg border border-[#6571FF]/20 bg-[#6571FF]/5 px-4 py-3 text-sm text-[#6571FF]">
+            <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-primary">
               <ShieldCheck size={16} className="shrink-0" />
               Gift cards never expire (non-editable policy)
             </div>
@@ -1218,7 +1218,7 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
               type="button"
               onClick={handleSaveSettings}
               disabled={isGiftCardSettingsLoading || isSaving || !accessToken}
-              className="bg-[#6571FF] hover:bg-[#5560ee]"
+              className="bg-primary hover:bg-[#5560ee]"
             >
               {isSaving ? "Saving..." : "Save Settings"}
             </Button>

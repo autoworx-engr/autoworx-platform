@@ -1,13 +1,13 @@
 "use client";
 
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Plus, Store } from "lucide-react";
 import CarLoading from "@/components/common/CarLoading";
-import { useGetVirtualShops } from "@/hooks/virtual-shop/configure/useVirtualShopConfigure";
-import ShopCard from "./ShopCard";
 import EmptyCard from "@/components/common/EmptyCard";
+import { Button } from "@/components/ui/button";
+import { useGetVirtualShops } from "@/hooks/virtual-shop/configure/useVirtualShopConfigure";
+import { Plus, Store } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import ShopCard from "./ShopCard";
 
 export default function ShopListPage({ companyId }: { companyId: number }) {
   const router = useRouter();
@@ -33,7 +33,7 @@ export default function ShopListPage({ companyId }: { companyId: number }) {
             href="/dashboard/settings/virtual-shop-configure/shops/create"
             className="w-full sm:w-auto"
           >
-            <Button className="flex w-full items-center justify-center gap-2 sm:w-auto bg-[#6571FF] hover:bg-[#6571FF]/90 focus-visible:bg-[#6571FF]/90">
+            <Button className="flex w-full items-center justify-center gap-2 sm:w-auto bg-primary hover:bg-primary/90 focus-visible:bg-primary/90">
               <Plus className="h-4 w-4" />
               Configure New Shop
             </Button>

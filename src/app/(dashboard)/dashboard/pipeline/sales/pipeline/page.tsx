@@ -3,6 +3,12 @@ import SearchSection from "./_components/SearchSection";
 import OrderSelect from "./_components/FilterLead";
 import { ColumnProvider } from "@/context/sales-pipeline.context";
 import { serverFetchJson } from "@/lib/server-fetch";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Pipelines - Sales Pipeline",
+  description: "Manage your sales pipeline",
+};
 
 type TProps = {
   searchParams: Promise<{

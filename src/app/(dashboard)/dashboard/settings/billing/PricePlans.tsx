@@ -1,6 +1,6 @@
 "use client";
+import { ArrowRight, Check, Info, Sparkles, X } from "lucide-react";
 import React from "react";
-import { Check, X, Sparkles, Info, ArrowRight } from "lucide-react";
 
 // Helper to format feature keys
 const formatFeatureKey = (key: string) => {
@@ -80,10 +80,11 @@ export function PricePlans({
               return (
                 <div
                   key={plan.id}
-                  className={`group relative flex flex-col rounded-[2rem] p-8 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.01] ${isCurrent
+                  className={`group relative flex flex-col rounded-[2rem] p-8 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.01] ${
+                    isCurrent
                       ? "bg-white dark:bg-slate-900 ring-2 ring-[#00b8b0] shadow-xl shadow-[#00b8b0]/10"
                       : "bg-slate-50/50 dark:bg-slate-900/40 ring-1 ring-slate-200 dark:ring-slate-800 hover:ring-[#00b8b0]/30 hover:shadow-2xl hover:shadow-slate-900/5"
-                    }`}
+                  }`}
                 >
                   {/* Subtle Background Glow on Hover */}
                   <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-[2rem] bg-gradient-to-br from-[#00b8b0]/5 to-transparent" />
@@ -125,10 +126,11 @@ export function PricePlans({
                     <button
                       onClick={() => onPlanSelect(plan)}
                       disabled={isCurrent}
-                      className={`group/btn relative w-full overflow-hidden py-4 rounded-2xl font-bold text-sm transition-all duration-300 active:scale-95 mb-10 ${isCurrent
+                      className={`group/btn relative w-full overflow-hidden py-4 rounded-2xl font-bold text-sm transition-all duration-300 active:scale-95 mb-10 ${
+                        isCurrent
                           ? "bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-default"
                           : "bg-gradient-to-r from-[#00b8b0] to-[#0098da] text-white shadow-lg shadow-[#00b8b0]/25 hover:shadow-[#00b8b0]/40"
-                        }`}
+                      }`}
                     >
                       <span className="relative z-10 flex items-center justify-center gap-2">
                         {isCurrent ? "Running Plan" : "Select Plan"}
@@ -175,10 +177,11 @@ export function PricePlans({
                                 className="group/item flex items-start gap-3"
                               >
                                 <div
-                                  className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-lg flex items-center justify-center transition-all duration-300 ${isEnabled
+                                  className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-lg flex items-center justify-center transition-all duration-300 ${
+                                    isEnabled
                                       ? "bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/20"
                                       : "bg-slate-100 dark:bg-slate-800/50 text-slate-400 ring-1 ring-slate-200 dark:ring-slate-700"
-                                    }`}
+                                  }`}
                                 >
                                   {isEnabled ? (
                                     <Check size={12} strokeWidth={3} />
@@ -189,10 +192,11 @@ export function PricePlans({
 
                                 <div className="flex-1 min-w-0">
                                   <p
-                                    className={`text-[13px] font-medium leading-tight transition-colors ${isEnabled
+                                    className={`text-[13px] font-medium leading-tight transition-colors ${
+                                      isEnabled
                                         ? "text-slate-700 dark:text-slate-200"
                                         : "text-slate-400"
-                                      }`}
+                                    }`}
                                   >
                                     {formatFeatureKey(feature.featureKey)}
                                   </p>
@@ -244,7 +248,7 @@ export function PricePlans({
             Need a custom enterprise solution?{" "}
             <a
               href="mailto:info@autoworx.tech"
-              className="text-[#6571FF] hover:underline"
+              className="text-primary hover:underline"
             >
               Contact Support
             </a>

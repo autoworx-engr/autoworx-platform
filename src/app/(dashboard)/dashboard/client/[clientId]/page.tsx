@@ -6,7 +6,6 @@ import { Vehicle } from "@prisma/client";
 import { ArrowLeft, Search } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import EditClient from "../../client/EditClient";
 import ClientInformation from "../ClientInformation";
 import OrderList from "../OrderList";
 import VehicleList from "../VehicleList";
@@ -60,8 +59,6 @@ const Page = async (props: Props) => {
     },
   });
 
-  console.log("vehicles", vehicles);
-
   return (
     <div className="mb-2 h-fit p-2">
       <div className="">
@@ -82,7 +79,7 @@ const Page = async (props: Props) => {
               <input
                 name="search"
                 type="text"
-                className="w-full border border-slate-300 ring-0 rounded-xl bg-transparent pr-3 pl-10 py-2 text-slate-600 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6571FF] focus:shadow-[0_8px_24px_rgba(101,113,255,0.08)] transition-all duration-300"
+                className="w-full border border-slate-300 ring-0 rounded-xl bg-transparent pr-3 pl-10 py-2 text-slate-600 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:shadow-[0_8px_24px_rgba(101,113,255,0.08)] transition-all duration-300"
                 placeholder="Search"
               />
             </div> */}
@@ -92,9 +89,6 @@ const Page = async (props: Props) => {
 
       <div className="items-start justify-between gap-x-4 lg:flex lg:h-[70vh] 2xl:h-[78vh]">
         <div className="relative lg:hidden">
-          <div className="absolute right-2 top-1">
-            <EditClient client={client} settingIcon />
-          </div>
           <ResponsiveEmployeeCard data={client} index={0} />
         </div>
         <div

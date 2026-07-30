@@ -4,6 +4,11 @@ import { useEffect, useState } from "react";
 import { getCompanyUnreadCounts } from "@/actions/communication/collaboration/getCompanyUnreadCounts";
 import { pusher } from "@/lib/pusher/client";
 
+type ChatEvent = {
+  senderCompanyId: number;
+  receiverCompanyId: number;
+};
+
 export function useCompanyUnreadCounts(
   currentCompanyId: number,
   senderCompanyId: number,
@@ -25,20 +30,19 @@ export function useCompanyUnreadCounts(
 
     const channel = pusher.subscribe(`company-track-${currentCompanyId}`);
 
-    const handleChatTrack = (chatTrack: any) => {
+    const handleChatTrack = (event: ChatEvent) => {
       if (
-        chatTrack.senderCompanyId === senderCompanyId &&
-        chatTrack.receiverCompanyId === currentCompanyId
+        event.senderCompanyId === senderCompanyId &&
+        event.receiverCompanyId === currentCompanyId
       ) {
         setCount((prev) => prev + 1);
       }
     };
 
-    // ✅ NEW: read event
-    const handleChatRead = (data: any) => {
+    const handleChatRead = (event: ChatEvent) => {
       if (
-        data.senderCompanyId === senderCompanyId &&
-        data.receiverCompanyId === currentCompanyId
+        event.senderCompanyId === senderCompanyId &&
+        event.receiverCompanyId === currentCompanyId
       ) {
         setCount(0);
       }

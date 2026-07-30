@@ -1,11 +1,9 @@
-import { sendUserNotifications } from "@/actions/notification/sendUserNotification";
+import { sendNotification } from "@/actions/notification/sendNotification";
+import sendNotificationByEmail from "@/actions/notification/sendNotificationByEmail";
+import { sendPushNotification } from "@/actions/notification/sendPushNotification";
 import { getUsersByRole } from "@/actions/user/getUserByRole";
 import { EmployeeType } from "@prisma/client";
 import { db } from "../db";
-import { sendNotification } from "@/actions/notification/sendNotification";
-import { sendPushNotification } from "@/actions/notification/sendPushNotification";
-import { User } from "lucide-react";
-import sendNotificationByEmail from "@/actions/notification/sendNotificationByEmail";
 
 type TUrgentServiceRequestNotification = {
   companyId: number;
@@ -29,8 +27,6 @@ export const sendUrgentServiceRequestNotification = async ({
       where: { id: shopId },
       select: { urgentBookingNotificationsEnabled: true, storeName: true },
     });
-
-    console.log({ shop });
 
     if (!shop?.urgentBookingNotificationsEnabled) return;
 

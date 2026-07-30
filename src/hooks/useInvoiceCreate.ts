@@ -157,7 +157,9 @@ export function useInvoiceCreate(type: InvoiceType) {
       });
 
       if (res.type === "success") {
-        await updateInventoryWhenInvoiceCreate({
+        // Fire-and-forget: server action runs to completion on the server even without await.
+        // Awaiting it was blocking the toast + redirect by several seconds in production.
+        updateInventoryWhenInvoiceCreate({
           items,
           invoiceType: res.data.type,
           companyId: res.data.companyId,
@@ -168,6 +170,7 @@ export function useInvoiceCreate(type: InvoiceType) {
       }
     }
 
+    console.log("useInvoiceCreate Hook response", res);
     return res;
   }
 

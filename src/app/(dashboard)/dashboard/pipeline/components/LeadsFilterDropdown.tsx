@@ -74,7 +74,7 @@ const LeadsFilterDropdown = React.memo(function LeadsFilterDropdown({
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
         <button
-          className="flex items-center justify-between w-full rounded-xl border px-4 py-2"
+          className="flex items-center justify-between w-full rounded-xl border px-4 py-2 transition-all duration-200 focus:outline-none focus:border-primary/40 focus:bg-white focus:ring-4 focus:ring-primary/10"
           aria-label="Customise options"
         >
           <span>Filter</span>

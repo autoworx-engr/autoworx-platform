@@ -71,9 +71,21 @@ function generateFallbackRequestId(): string {
 
 /**
  * Telegram 5xx alerts run in production by default.
- * In development, set TELEGRAM_ALERTS_IN_DEV=true (or 1) to test without changing NODE_ENV.
+ * Staging/preview deployments on Railway also run a production build
+ * (NODE_ENV=production), so they are suppressed explicitly via APP_ENV to keep
+ * the production alert channel free of non-prod noise. Set APP_ENV=staging
+ * (or development/preview) on those Railway environments.
+ * In local dev, set TELEGRAM_ALERTS_IN_DEV=true (or 1) to test.
  */
 function telegramAlertsEnabledForCurrentEnv(): boolean {
+  const appEnv = (process.env.APP_ENV || "").trim().toLowerCase();
+  if (
+    appEnv === "staging" ||
+    appEnv === "development" ||
+    appEnv === "preview"
+  ) {
+    return false;
+  }
   if (process.env.NODE_ENV === "production") return true;
   const flag = process.env.TELEGRAM_ALERTS_IN_DEV;
   return flag === "true" || flag === "1";

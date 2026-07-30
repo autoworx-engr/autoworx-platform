@@ -6,7 +6,7 @@ import VehicleCard from "@/components/mobile-responsive/client/VehicleCard";
 import { cn } from "@/lib/cn";
 import { Vehicle } from "@prisma/client";
 import { Popconfirm } from "antd";
-import { X } from "lucide-react";
+import { Car, CarFront, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 export default function VehicleList({
@@ -32,7 +32,7 @@ export default function VehicleList({
           <NewVehicle
             clientId={clientId}
             newButton={
-              <button className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] to-[#8088FF] px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-[#6571FF]/40 transition-all duration-300 hover:from-[#505aff] hover:to-[#6571FF] hover:shadow-xl">
+              <button className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary to-[#8088FF] px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-primary/40 transition-all duration-300 hover:from-[#505aff] hover:to-primary hover:shadow-xl">
                 + Add New Vehicle
               </button>
             }
@@ -57,6 +57,21 @@ export default function VehicleList({
             </thead>
 
             <tbody className="border border-gray-200">
+              {vehicles.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="py-16 text-center">
+                    <div className="flex flex-col items-center gap-3 text-slate-400">
+                      <Car size={40} strokeWidth={1.5} />
+                      <p className="text-sm font-medium">
+                        No vehicles found for this client
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        Click &quot;+ Add New Vehicle&quot; to get started
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              )}
               {vehicles.map((vehicle, index) => (
                 <tr
                   key={index}
@@ -65,7 +80,7 @@ export default function VehicleList({
                     index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]",
                     vehicleId &&
                       vehicleId === vehicle?.id &&
-                      "border-2 border-[#6571FF]",
+                      "border-2 border-primary",
                   )}
                   onClick={() => {
                     // use replace to avoid adding a new history entry for each selection

@@ -5,3 +5,7 @@ export const smsQueryKey = {
 export const messengerQueryKey = {
   allByClientId: (clientId: number) => [`messenger`, clientId],
 };
+
+export const instagramQueryKey = {
+  allByClientId: (clientId: number) => [`instagram`, clientId],
+};

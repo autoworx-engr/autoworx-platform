@@ -2,13 +2,15 @@
 
 import { Button } from "@/components/ui/button";
 import { completeTask } from "@/actions/task/completeTask";
+import { deleteTask } from "@/actions/task/deleteTask";
+import { deleteAppointment } from "@/actions/appointment/deleteAppointment";
 import {
   appointmentQueryKey,
   taskQueryKey,
 } from "@/app/(dashboard)/dashboard/task/_constant";
 import { errorToast, successToast } from "@/lib/toast";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { CheckCircle, Edit, MessageSquare } from "lucide-react";
+import { CheckCircle, Edit, MessageSquare, Trash2 } from "lucide-react";
 import { Popconfirm } from "antd";
 import moment from "moment";
 import { useRouter } from "next/navigation";
@@ -142,6 +144,7 @@ export const EventDetailsSheet = ({
       queryKey: [appointmentQueryKey.allAppointments],
     });
     queryClient.invalidateQueries({ queryKey: taskQueryKey.allTaskByScroll });
+    queryClient.invalidateQueries({ queryKey: [taskQueryKey.userTasks] });
   };
 
   const handleTaskComplete = async () => {
@@ -162,13 +165,18 @@ export const EventDetailsSheet = ({
     const taskKeys = queryClient
       .getQueryCache()
       .getAll()
-      .filter((q) => (q.queryKey as unknown[])[0] === taskQueryKey.allTasks)
+      .filter((q) => {
+        const first = (q.queryKey as unknown[])[0];
+        return (
+          first === taskQueryKey.allTasks || first === taskQueryKey.userTasks
+        );
+      })
       .map((q) => q.queryKey as unknown[]);
 
     taskKeys.forEach(removeFromCache);
     onOpenChange(false);
 
-    const result = await completeTask(taskId);
+    const result = await completeTask(taskId, { revalidate: false });
     if (result.type === "success") {
       successToast("Task Completed successfully.");
       invalidateCalendarQueries();
@@ -191,6 +199,33 @@ export const EventDetailsSheet = ({
     router.push(
       `/dashboard/communication/client/${appointmentClientId}?chat=true`,
     );
+  };
+
+  const handleDelete = async () => {
+    if (eventType === "task" && taskId) {
+      onOpenChange(false);
+      const result = await deleteTask(taskId, { revalidate: false });
+      if (result.type === "success") {
+        successToast("Task deleted successfully.");
+        invalidateCalendarQueries();
+      } else {
+        onOpenChange(true);
+        errorToast("Failed to delete task. Please try again.");
+      }
+      return;
+    }
+
+    if (eventType === "appointment" && appointmentId) {
+      onOpenChange(false);
+      try {
+        await deleteAppointment(appointmentId);
+        successToast("Appointment deleted successfully.");
+        invalidateCalendarQueries();
+      } catch {
+        onOpenChange(true);
+        errorToast("Failed to delete appointment. Please try again.");
+      }
+    }
   };
 
   return (
@@ -230,6 +265,7 @@ export const EventDetailsSheet = ({
                     invoiceGrandTotal={originalData?.invoiceGrandTotal}
                     serviceCategoryName={originalData?.serviceCategory?.name}
                     assignedUsers={originalData?.assignedUsers}
+                    reminderTimes={originalData?.times}
                     aptIconClass={aptIconClass}
                     aptIconStyle={aptIconStyle}
                   />
@@ -252,6 +288,37 @@ export const EventDetailsSheet = ({
 
           <div className="p-4 border-t bg-white space-y-3 shrink-0">
             <div className="flex gap-3">
+              {(eventType === "task" || eventType === "appointment") && (
+                <Popconfirm
+                  title={
+                    eventType === "task" ? "Delete Task" : "Delete Appointment"
+                  }
+                  description={`Are you sure you want to delete this ${eventType}?`}
+                  okText="Yes"
+                  cancelText="No"
+                  okButtonProps={{ danger: true }}
+                  trigger="click"
+                  zIndex={9999}
+                  placement="topRight"
+                  getPopupContainer={(triggerNode) =>
+                    triggerNode?.parentElement ?? document.body
+                  }
+                  onConfirm={handleDelete}
+                >
+                  <Button
+                    variant="outline"
+                    aria-label={
+                      eventType === "task"
+                        ? "Delete task"
+                        : "Delete appointment"
+                    }
+                    className="w-fit justify-center shadow-sm border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </Popconfirm>
+              )}
+
               {eventType === "task" && taskId ? (
                 <Button
                   variant="outline"
@@ -282,6 +349,7 @@ export const EventDetailsSheet = ({
                   cancelText="No"
                   trigger="click"
                   zIndex={9999}
+                  placement="topRight"
                   getPopupContainer={(triggerNode) =>
                     triggerNode?.parentElement ?? document.body
                   }

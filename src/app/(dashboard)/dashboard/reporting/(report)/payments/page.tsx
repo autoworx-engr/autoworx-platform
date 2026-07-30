@@ -12,6 +12,12 @@ import FilterHeader from "./FilterHeader";
 import PaymentDisplay from "./PaymentDisplay";
 import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 import { PaymentType, Prisma } from "@prisma/client";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Analytics - Payments",
+  description: "Analyze payment trends and manage overdue invoices",
+};
 
 type TProps = {
   searchParams: Promise<{
@@ -117,6 +123,45 @@ export default async function PaymentReportPage(props: TProps) {
             client: {
               is: {
                 lastName: {
+                  ...containsInsensitive(trimmedSearch),
+                },
+              },
+            },
+          },
+        },
+      },
+      {
+        invoice: {
+          is: {
+            vehicle: {
+              is: {
+                make: {
+                  ...containsInsensitive(trimmedSearch),
+                },
+              },
+            },
+          },
+        },
+      },
+      {
+        invoice: {
+          is: {
+            vehicle: {
+              is: {
+                model: {
+                  ...containsInsensitive(trimmedSearch),
+                },
+              },
+            },
+          },
+        },
+      },
+      {
+        invoice: {
+          is: {
+            vehicle: {
+              is: {
+                vin: {
                   ...containsInsensitive(trimmedSearch),
                 },
               },

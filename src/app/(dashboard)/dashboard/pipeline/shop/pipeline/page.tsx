@@ -2,8 +2,14 @@ import { getWorkOrdersByColumn } from "@/actions/pipelines/getWorkOrdersPaginate
 import { getColumnsByType } from "@/actions/pipelines/pipelinesColumn";
 import { authOptions } from "@/authOptions";
 import { ShopPipelineData } from "@/types/invoiceLead";
+import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import dynamic from "next/dynamic";
+
+export const metadata: Metadata = {
+  title: "Pipelines - Shop Pipeline",
+  description: "Manage your shop pipeline",
+};
 
 const PIPELINE_PAGE_SIZE = 10;
 

@@ -9,7 +9,6 @@ import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-servi
 import { revalidatePath } from "next/cache";
 import { updateNewSMSChatTrack } from "./chat-track";
 import { getInfobipConfigById } from "./createInfobipConfig";
-import { sendSMSToAgent } from "@/service/ai-agent/api";
 
 type TInfobipConfig = {
   companyId?: number;
@@ -335,7 +334,8 @@ export async function sendInfobipMessage({
           shouldSalesAgentStop &&
           client &&
           client?.isSalesAgent &&
-          !systemCall
+          !systemCall &&
+          process.env.APP_ENV === "production"
         ) {
           await tx.client.update({
             where: { id: clientId },
@@ -377,7 +377,7 @@ export async function sendInfobipMessage({
         console.error("Pipeline automation trigger error:", error);
       }
 
-      revalidatePath("/dashboard/communication/client/${clientId}");
+      revalidatePath(`/dashboard/communication/client/${clientId}`);
       return {
         success: true,
         data,

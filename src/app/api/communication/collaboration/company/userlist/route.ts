@@ -1,7 +1,6 @@
-import { getUserPermissions } from "@/actions/settings/teamManagement";
 import { AppError } from "@/error-boundary/error";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
-import { db } from "@/lib/db";
+import { getFilteredConnectedCompanies } from "@/lib/collaboration/getFilteredConnectedCompanies";
 import { jwtVerifyToken } from "@/lib/jwtVerify";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -9,8 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
  * @swagger
  * /api/communication/collaboration/company/userlist:
  *   get:
- *     summary: Retrieve collaborating companies and their users
- *     description: Fetches a paginated list of companies that have an active collaboration status with the authenticated user's company.
+ *     summary: Retrieve collaborating companies (paginated)
  *     tags:
  *       - Collaboration
  *     security:
@@ -18,78 +16,35 @@ import { NextRequest, NextResponse } from "next/server";
  *     parameters:
  *       - in: query
  *         name: search
- *         schema:
- *           type: string
- *         description: Search by company name, user first name, last name, or email.
+ *         schema: { type: string }
  *       - in: query
  *         name: page
- *         schema:
- *           type: integer
- *           minimum: 1
- *           default: 1
- *         description: The page number to retrieve.
+ *         schema: { type: integer, minimum: 1, default: 1 }
  *       - in: query
  *         name: limit
- *         schema:
- *           type: integer
- *           minimum: 1
- *           maximum: 100
- *           default: 20
- *         description: The number of items to return per page.
+ *         schema: { type: integer, minimum: 1, maximum: 50, default: 10 }
  *     responses:
- *       200:
- *         description: Successfully retrieved the list of collaborating companies.
- *       401:
- *         description: Unauthorized. Authentication token is missing, invalid, or does not contain a valid Company ID.
- *       500:
- *         description: Internal Server Error.
+ *       200: { description: Success }
+ *       401: { description: Unauthorized }
+ *       500: { description: Internal Server Error }
  */
-
 export const GET = async (request: NextRequest) => {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const pageNum = parseInt(searchParams.get("page") || "1");
-    const limitNum = parseInt(searchParams.get("limit") || "20");
-    const search = searchParams.get("search") || "";
-    const skip = (pageNum - 1) * limitNum;
+    const pageNum = Math.max(parseInt(searchParams.get("page") || "1"), 1);
+    const limitNum = Math.min(
+      Math.max(parseInt(searchParams.get("limit") || "20"), 1),
+      50,
+    );
+    const search = (searchParams.get("search") || "").trim().toLowerCase();
     const authHeader = request.headers.get("authorization") ?? "";
 
-    const companySearchCondition: any = search
-      ? {
-          OR: [
-            { name: { contains: search, mode: "insensitive" } },
-            {
-              users: {
-                some: {
-                  OR: [
-                    { firstName: { contains: search, mode: "insensitive" } },
-                    { lastName: { contains: search, mode: "insensitive" } },
-                    { email: { contains: search, mode: "insensitive" } },
-                  ],
-                },
-              },
-            },
-          ],
-        }
-      : {};
-
-    const userSearchCondition: any = search
-      ? {
-          OR: [
-            { firstName: { contains: search, mode: "insensitive" } },
-            { lastName: { contains: search, mode: "insensitive" } },
-            { email: { contains: search, mode: "insensitive" } },
-            { company: { name: { contains: search, mode: "insensitive" } } },
-          ],
-        }
-      : {};
     const accessToken = authHeader.startsWith("Bearer")
       ? authHeader.split(" ")[1]
       : authHeader;
 
     const verifyToken = await jwtVerifyToken(accessToken);
-
-    const userCompanyId = verifyToken?.payload?.companyId;
+    const userCompanyId = verifyToken?.payload?.companyId as number | undefined;
 
     if (!userCompanyId) {
       throw new AppError(
@@ -98,186 +53,39 @@ export const GET = async (request: NextRequest) => {
       );
     }
 
-    // Fetch connected companies with pagination
-    const companyDefaultSelect = {
-      id: true,
-      name: true,
-      image: true,
-      email: true,
-      phone: true,
-      isCollaborators: true,
-      timezone: true,
-    };
-    const connectedCompanies = await db.companyJoin.findMany({
-      where: {
-        OR: [
-          {
-            companyOneId: userCompanyId,
-            companyTwo: {
-              isCollaborators: true,
-              ...companySearchCondition,
-            },
-          },
-          {
-            companyTwoId: userCompanyId,
-            companyOne: {
-              isCollaborators: true,
-              ...companySearchCondition,
-            },
-          },
-        ],
-        status: "ACCEPTED",
-      },
-      include: {
-        companyOne: {
-          select: {
-            ...companyDefaultSelect,
-            users: {
-              where: {
-                employeeType: {
-                  in: ["Admin", "Manager", "Sales"],
-                },
-                ...userSearchCondition,
-              },
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                companyId: true,
-                email: true,
-                role: true,
-                image: true,
-                employeeType: true,
-              },
-            },
-          },
-        },
-        companyTwo: {
-          select: {
-            ...companyDefaultSelect,
-            users: {
-              where: {
-                employeeType: {
-                  in: ["Admin", "Manager", "Sales"],
-                },
-                ...userSearchCondition,
-              },
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                companyId: true,
-                email: true,
-                role: true,
-                image: true,
-                employeeType: true,
-              },
-            },
-          },
-        },
-      },
-      skip: skip,
-      take: limitNum,
-    });
+    // `getFilteredConnectedCompanies` filters by permission post-fetch, so
+    // pagination has to happen in memory after that filter is applied.
+    const all = await getFilteredConnectedCompanies(userCompanyId);
 
-    const totalRecords = await db.companyJoin.count({
-      where: {
-        OR: [
-          {
-            companyOneId: userCompanyId,
-            companyTwo: {
-              isCollaborators: true,
-              ...companySearchCondition,
-            },
-          },
-          {
-            companyTwoId: userCompanyId,
-            companyOne: {
-              isCollaborators: true,
-              ...companySearchCondition,
-            },
-          },
-        ],
-        status: "ACCEPTED",
-      },
-    });
+    const filtered = search
+      ? all.filter((c) => c.name.toLowerCase().includes(search))
+      : all;
 
-    const oppositeCompanies = connectedCompanies.map((join) => {
-      if (join.companyOneId === userCompanyId) {
-        return join.companyTwo;
-      } else {
-        return join.companyOne;
-      }
-    });
-
-    // Filter users in oppositeCompanies based on their collaboration permissions
-    const filteredOppositeCompanies = await Promise.all(
-      oppositeCompanies.map(async (company) => {
-        // Filter users who have collaboration permission
-        const filteredUsers = await Promise.all(
-          company.users.map(async (user) => {
-            try {
-              const permissions = await getUserPermissions(
-                user.id,
-                user.employeeType,
-              );
-
-              // Check communicationHubCollaboration permission
-              const hasCollaboration =
-                permissions?.communicationHubCollaboration === true;
-
-              return hasCollaboration ? user : null;
-            } catch (error) {
-              console.error(`  ERROR for user ${user.firstName}:`, error);
-              return null;
-            }
-          }),
-        );
-
-        const filtered = filteredUsers.filter((user) => user !== null);
-
-        return {
-          ...company,
-          users: filtered,
-        };
-      }),
-    );
-
-    // Remove companies that have no users with collaboration permission
-    const finalCompanies = filteredOppositeCompanies.filter(
-      (company) => company.users.length > 0,
-    );
-
-    const hasNextPage = pageNum * limitNum < totalRecords;
-    const hasPrevPage = pageNum > 1;
-    const totalPages = Math.ceil(totalRecords / limitNum);
+    const total = filtered.length;
+    const skip = (pageNum - 1) * limitNum;
+    const paged = filtered.slice(skip, skip + limitNum);
 
     return NextResponse.json(
       {
         success: true,
-        data: finalCompanies,
+        data: paged,
         message: "Collaboration companies fetched successfully",
         meta: {
-          totalRecords,
+          totalRecords: total,
           page: pageNum,
           limit: limitNum,
-          totalPages,
-          hasNextPage,
-          hasPrevPage,
+          totalPages: Math.ceil(total / limitNum),
+          hasNextPage: skip + paged.length < total,
+          hasPrevPage: pageNum > 1,
         },
       },
       { status: 200 },
     );
   } catch (error) {
     const errors = errorHandler(error);
-    const message = errors?.message || "Internal Server Error";
-    const status = errors?.statusCode || 500;
     return NextResponse.json(
-      {
-        success: false,
-        error: message,
-      },
-      { status },
+      { success: false, error: errors?.message || "Internal Server Error" },
+      { status: errors?.statusCode || 500 },
     );
   }
 };

@@ -1,11 +1,10 @@
 "use client";
 
-import { padId } from "@/lib/padId";
-import { Calendar, Mail, MessageCircle, Phone } from "lucide-react";
-import moment from "moment";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import Avatar from "@/components/Avatar";
+import { padId } from "@/lib/padId";
+import { Calendar, Mail, Phone } from "lucide-react";
+import moment from "moment";
+import { useRouter } from "next/navigation";
 
 const ResponsiveEmployeeCard = ({
   data,
@@ -77,7 +76,7 @@ const ResponsiveEmployeeCard = ({
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2">
                 {(data.employeeType || role) && (
                   <span
-                    className={`px-2 py-0.5 text-xs font-medium rounded-full whitespace-nowrap bg-[#6571FF]/10 text-[#6571FF]`}
+                    className={`px-2 py-0.5 text-xs font-medium rounded-full whitespace-nowrap bg-primary/10 text-primary`}
                   >
                     {data.employeeType || role}
                   </span>
@@ -87,7 +86,7 @@ const ResponsiveEmployeeCard = ({
                 </span>
                 <p className="flex items-center text-xs sm:text-sm text-gray-500 truncate">
                   ID:{" "}
-                  <span className="block w-full text-xs font-normal text-[#6571FF] ml-1">
+                  <span className="block w-full text-xs font-normal text-primary ml-1">
                     {padId(id)}
                   </span>
                 </p>
@@ -116,15 +115,6 @@ const ResponsiveEmployeeCard = ({
               </div>
             </div>
           </div>
-
-          {/* Chat Icon */}
-          <Link
-            onClick={(e) => e.stopPropagation()}
-            href={communicationUrl}
-            className="p-2 hover:bg-blue-50 rounded-lg transition-colors flex-shrink-0 ml-2 inline-flex items-center"
-          >
-            <MessageCircle className="w-5 h-5 text-[#6571FF]" />
-          </Link>
         </div>
 
         {/* Footer */}

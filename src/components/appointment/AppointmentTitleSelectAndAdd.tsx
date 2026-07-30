@@ -1,10 +1,17 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import SelectorWithAdd from "../SelectorWithAdd";
 import { useListsStore } from "@/stores/lists";
 import { errorToast, successToast } from "@/lib/toast";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { createAppointmentTitle } from "@/actions/appointment/createAppointmentTitle";
 import { getAppointmentTitles } from "@/actions/appointment/getAppointmentTitles";
+import { deleteAppointmentTitle } from "@/actions/appointment/deleteAppointmentTitle";
 
 export interface Option {
   id: number | string;
@@ -36,6 +43,11 @@ const AppointmentTitleSelectAndAdd = ({
   // Get data from store for authenticated users
   const { appointmentTitles } = useListsStore();
   const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  // Always hold the latest selected value so the delete handler can decide
+  // whether to clear the field without relying on a stale closure.
+  const valueRef = useRef(value);
+  valueRef.current = value;
 
   // Memoize options to prevent unnecessary re-renders
   const options = useMemo<Option[]>(() => {
@@ -76,6 +88,44 @@ const AppointmentTitleSelectAndAdd = ({
       }
     },
     [onChange],
+  );
+
+  // Delete an existing appointment title (persisted, numeric id only)
+  const handleDelete = useCallback(
+    async (id: string | number) => {
+      const numericId = Number(id);
+      if (!numericId || Number.isNaN(numericId)) return;
+
+      const removedTitle = appointmentTitles.find((t) => t.id === numericId);
+
+      try {
+        const res = await deleteAppointmentTitle({ id: numericId });
+
+        if (res.type === "success") {
+          // Remove from store state
+          useListsStore.setState((state) => ({
+            appointmentTitles: state.appointmentTitles.filter(
+              (t) => t.id !== numericId,
+            ),
+          }));
+
+          // Clear the field if the deleted title was the selected one,
+          // otherwise it gets re-added as a "custom" option and looks selected.
+          const deletedName = removedTitle?.name ?? res.data?.name;
+          if (deletedName && deletedName === valueRef.current) {
+            onChange("");
+          }
+
+          successToast("Appointment Title Removed");
+        } else {
+          errorToast(res.message || "Failed to remove appointment title");
+        }
+      } catch (error) {
+        errorHandler(error);
+        errorToast("Failed to remove appointment title");
+      }
+    },
+    [appointmentTitles, onChange],
   );
 
   // Fetch data for authenticated users
@@ -179,7 +229,7 @@ const AppointmentTitleSelectAndAdd = ({
 
   return (
     <SelectorWithAdd
-      label="Appointment Title"
+      label={isLoading ? "Appointment Title (loading…)" : "Appointment Title"}
       name="appointmentTitle"
       options={enhancedOptions}
       value={selectorValue}
@@ -188,11 +238,15 @@ const AppointmentTitleSelectAndAdd = ({
       allowClear={true}
       allowAddNew={true}
       onAddNew={handleAddNew}
+      allowDelete={true}
+      onDelete={handleDelete}
+      deleteConfirmTitle="Remove appointment title"
+      deleteConfirmDescription="Are you sure you want to remove this appointment title?"
       addNewLabel="Add new appointment title"
       addNewPlaceholder="Enter appointment title"
       selectCategory={false}
       placeholder="Free Consultation, Design Consultation..."
-      disabled={disabled || isLoading}
+      disabled={disabled}
       required={true}
     />
   );

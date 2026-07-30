@@ -1,13 +1,11 @@
 "use server";
 
-import { authOptions } from "@/authOptions";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
 import { sendEstimateCreateNotification } from "@/lib/notification/invoice-notify";
 import { ServerAction } from "@/types/action";
 import { TErrorHandler } from "@/types/globalError";
 import { TCreateDraftEstimateValidationSchema } from "@/validations/schemas/pipeline/draftEstimate.validation";
-import { getServerSession } from "next-auth";
 
 type PrismaTx = Omit<
   typeof db,
@@ -56,39 +54,51 @@ export const createLeadDraftEstimate = async function (
   draftEstimate: TCreateDraftEstimateValidationSchema,
 ): Promise<ServerAction | TErrorHandler> {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session)
-      throw new Error("Session is required to create a draft estimate.");
+    const {
+      leadId,
+      userId,
+      companyId,
+      clientId,
+      vehicleId,
+      id: estimateId,
+    } = draftEstimate;
 
-    const { leadId, clientId, vehicleId, id: estimateId } = draftEstimate;
-
-    if (!leadId || !clientId) {
-      throw new Error(
-        "Lead ID and Client ID are required to create an estimate.",
-      );
+    if (!clientId) {
+      throw new Error("Client ID is required to create an estimate.");
     }
 
     const response = await db.$transaction(async (tx) => {
-      const client = await getClientByLead(tx, leadId);
+      if (leadId) {
+        const lead = await tx.lead.findUnique({
+          where: { id: leadId },
+          select: { id: true, isEstimateCreated: true },
+        });
 
-      const existingEstimate = await tx.invoice.findFirst({
-        where: { clientId: client.id },
-      });
+        if (!lead) {
+          throw new Error("Lead not found. Please check the lead ID.");
+        }
 
-      if (existingEstimate) {
-        return {
-          type: "error",
-          message: "A draft estimate already exists for this client.",
-          data: existingEstimate,
-        } satisfies ServerAction;
+        if (lead.isEstimateCreated) {
+          const client = await getClientByLead(tx, leadId);
+
+          const existingEstimate = await tx.invoice.findFirst({
+            where: { clientId: client.id },
+            orderBy: { createdAt: "desc" },
+          });
+          return {
+            type: "error",
+            message: "A draft estimate already exists for this client.",
+            data: existingEstimate,
+          } satisfies ServerAction;
+        }
+
+        await tx.lead.update({
+          where: { id: leadId },
+          data: { isEstimateCreated: true },
+        });
       }
 
-      const pendingColumn = await getPendingColumn(tx, session.user.companyId);
-
-      await tx.lead.update({
-        where: { id: leadId },
-        data: { isEstimateCreated: true },
-      });
+      const pendingColumn = await getPendingColumn(tx, userId);
 
       const newEstimate = await tx.invoice.create({
         data: {
@@ -96,22 +106,14 @@ export const createLeadDraftEstimate = async function (
           type: "Estimate",
           clientId,
           vehicleId,
-          userId: Number(session.user.id),
-          companyId: session.user.companyId,
+          userId: Number(userId),
+          companyId: companyId,
           columnId: pendingColumn.id,
         },
         include: {
           client: { select: { firstName: true, lastName: true } },
         },
       });
-
-      // await sendEstimateCreateNotification({
-      //   companyId: newEstimate?.companyId,
-      //   invoiceId: newEstimate.id,
-      //   invoiceType: newEstimate.type,
-      //   clientName:
-      //     `${newEstimate.client?.firstName ?? ""} ${newEstimate.client?.lastName ?? ""}`.trim(),
-      // });
 
       return {
         type: "success",
@@ -122,12 +124,14 @@ export const createLeadDraftEstimate = async function (
 
     if (response?.type === "success") {
       sendEstimateCreateNotification({
-        companyId: session.user.companyId,
+        companyId: companyId,
         invoiceId: response?.data.id,
         invoiceType: response?.data.type,
         clientName:
           `${response?.data.client?.firstName ?? ""} ${response?.data.client?.lastName ?? ""}`.trim(),
-      });
+      }).catch((err) =>
+        console.error("sendEstimateCreateNotification failed", err),
+      );
     }
 
     return response;

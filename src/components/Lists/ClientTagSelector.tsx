@@ -1,8 +1,15 @@
 "use client";
 
+import {
+  createClientTag,
+  deleteClientTag,
+  getClientTags,
+} from "@/actions/client/clientTag";
+import { cn } from "@/lib/cn";
 import { INVOICE_COLORS } from "@/lib/consts";
 import { useFormErrorStore } from "@/stores/form-error";
 import { Tag } from "@prisma/client";
+import { ChevronDown, ChevronUp, Palette, Search, X } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import {
   DropdownMenu,
@@ -11,13 +18,6 @@ import {
 } from "../DropdownMenu";
 import FormError from "../FormError";
 import Submit from "../Submit";
-import {
-  getClientTags,
-  createClientTag,
-  deleteClientTag,
-} from "@/actions/client/clientTag";
-import { ChevronDown, ChevronUp, Palette, Search, X } from "lucide-react";
-import { cn } from "@/lib/cn";
 
 type SelectedColor = { textColor: string; bgColor: string } | null;
 
@@ -55,8 +55,8 @@ export function ClientTagSelector({
     if (search) {
       setFilteredTagList(
         tags.filter((tag) =>
-          tag.name.toLowerCase().includes(search.toLowerCase())
-        )
+          tag.name.toLowerCase().includes(search.toLowerCase()),
+        ),
       );
     } else {
       setFilteredTagList(tags);
@@ -103,14 +103,11 @@ export function ClientTagSelector({
   return (
     <>
       <input type="hidden" name={name} value={tag?.id ?? ""} />
-      <DropdownMenu
-        open={open}
-        onOpenChange={(open) => setOpen?.(open)}
-      >
+      <DropdownMenu open={open} onOpenChange={(open) => setOpen?.(open)}>
         <DropdownMenuTrigger
           className={cn(
             "flex w-full h-10 items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 shadow-sm transition-all hover:shadow-md",
-            customStyles
+            customStyles,
           )}
           style={{
             backgroundColor: tag?.bgColor,
@@ -127,7 +124,7 @@ export function ClientTagSelector({
             className={cn(
               "shrink-0 transition-transform duration-200",
               open ? "rotate-180" : "rotate-0",
-              tag ? "" : "text-slate-400"
+              tag ? "" : "text-slate-400",
             )}
           />
         </DropdownMenuTrigger>
@@ -150,7 +147,7 @@ export function ClientTagSelector({
             <input
               type="text"
               placeholder="Search client tags"
-              className="h-9 w-full rounded-lg bg-white pl-9 pr-10 text-sm font-medium ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30"
+              className="h-9 w-full rounded-lg bg-white pl-9 pr-10 text-sm font-medium ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/30"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -228,8 +225,8 @@ export function ClientTagSelector({
                     className={cn(
                       "flex h-8 items-center justify-center rounded-lg text-xs font-bold transition-all hover:scale-105",
                       selectedColor?.textColor === color.textColor
-                        ? "ring-2 ring-[#6571FF] ring-offset-1"
-                        : "ring-1 ring-transparent"
+                        ? "ring-2 ring-primary ring-offset-1"
+                        : "ring-1 ring-transparent",
                     )}
                   >
                     Aa
@@ -277,8 +274,8 @@ function QuickAddClientTagForm({
           name="name"
           type="text"
           required
-          placeholder="New tag name..."
-          className="h-10 w-full rounded-lg bg-white px-2 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30 placeholder:text-slate-400"
+          placeholder="New Tag Name..."
+          className="h-10 w-full rounded-lg bg-white px-2 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-slate-400"
           onKeyDown={(e) => e.stopPropagation()}
         />
       </div>
@@ -293,7 +290,7 @@ function QuickAddClientTagForm({
       </button>
 
       <Submit
-        className="h-10 shrink-0 rounded-lg bg-[#6571FF] px-3 text-[11px] font-bold uppercase tracking-wider text-white shadow-sm shadow-[#6571FF]/30 transition-all hover:bg-[#525ceb] active:scale-95"
+        className="h-10 shrink-0 rounded-lg bg-primary px-3 text-[11px] font-bold uppercase tracking-wider text-white shadow-sm shadow-primary/30 transition-all hover:bg-[#525ceb] active:scale-95"
         formAction={handleSubmit}
       >
         Quick Add

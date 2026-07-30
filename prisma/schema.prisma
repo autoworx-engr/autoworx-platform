@@ -3,8 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  // directUrl   = env("DIRECT_URL")
+  provider  = "postgresql"
 }
 
 // Appointment for a company.
@@ -553,7 +552,13 @@ model Client {
   facebookProfiles  FacebookClientProfile[]
   messengerMessages MessengerMessage[]
 
+  // Instagram DM
+  instagramProfiles InstagramClientProfile[]
+  instagramMessages InstagramMessage[]
+
   @@index([companyId], name: "fk_customers_company")
+  @@index([firstName])
+  @@index([lastName])
   @@map("Client")
 }
 
@@ -615,6 +620,10 @@ model ClientConversationTrack {
   messengerUnReadCount Int       @default(0) @map("messenger_unread_count")
   messengerLastMessage String?   @map("messenger_last_message") @db.Text
   messengerLastBy      String?   @map("messenger_last_by")
+  instagramIsRead      Boolean   @default(true)  @map("instagram_is_read")
+  instagramUnReadCount Int       @default(0)     @map("instagram_unread_count")
+  instagramLastMessage String?   @map("instagram_last_message") @db.Text
+  instagramLastBy      String?   @map("instagram_last_by")
   createdAt            DateTime  @default(now()) @map("created_at")
   updatedAt            DateTime  @default(now()) @updatedAt @map("updated_at")
   client               Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
@@ -655,6 +664,7 @@ model Company {
   googleRefreshToken               String?                            @map("google_refresh_token")
   googleCalendarToken              String?                            @map("google_calendar_token")
   isSalesAgent                     Boolean                            @default(true)
+  isTest                           Boolean                            @default(false) @map("is_test")
   createdAt                        DateTime                           @default(now()) @map("created_at")
   updatedAt                        DateTime                           @default(now()) @updatedAt @map("updated_at")
   companyLatitude                  Float?
@@ -715,11 +725,13 @@ model Company {
   stripeAccountId                  String?
   authorizeNetApiLoginId           String?                            @map("authorize_net_api_login_id")
   authorizeNetTransactionKey       String?                            @map("authorize_net_transaction_key")
+  authorizeNetSignatureKey         String?                            @map("authorize_net_signature_key")
   paymentGateway                   PaymentGateway                     @default(STRIPE)
   tipEnabled                       Boolean                            @default(true) @map("tip_enabled")
   timezone                         String?
   stripePayment                    StripePayment[]
   authorizeNetPayment              AuthorizeNetPayment[]
+  webhookEvents                    WebhookEvent[]
   leadLink                         LeadLink[]
   PipelineAutomationRule           PipelineAutomationRule[]
   ServiceMaintenanceAutomationRule ServiceMaintenanceAutomationRule[]
@@ -760,6 +772,10 @@ model Company {
   // Meta / Facebook Messenger
   facebookPages     FacebookPage[]
   messengerMessages MessengerMessage[]
+
+  // Instagram DM
+  instagramAccounts InstagramAccount[]
+  instagramMessages InstagramMessage[]
 }
 
 model Reviews {
@@ -1515,6 +1531,10 @@ model Invoice {
 
   @@index([companyId], name: "fk_invoices_company")
   @@index([companyId, type])
+  @@index([clientId])
+  @@index([vehicleId])
+  @@index([isWorkOrder])
+  @@index([columnId])
 }
 
 model InvoiceTemplate {
@@ -1640,6 +1660,9 @@ model Technician {
   company        Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
   InvoiceRedo    InvoiceRedo[]
   invoiceItem    InvoiceItem       @relation(fields: [invoiceItemId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([invoiceId])
 }
 
 model TechnicianImage {
@@ -1778,15 +1801,35 @@ model Attachment {
 }
 
 model Group {
-  id        Int       @id @default(autoincrement())
-  name      String
-  type      String    @default("Group")
-  companyId Int?      @map("company_id")
-  company   Company?  @relation(fields: [companyId], references: [id])
-  users     User[]    @relation("UserGroups")
-  messages  Message[]
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
+  id         Int              @id @default(autoincrement())
+  name       String
+  type       String           @default("Group")
+  companyId  Int?             @map("company_id")
+  company    Company?         @relation(fields: [companyId], references: [id])
+  users      User[]           @relation("UserGroups")
+  messages   Message[]
+  readStates GroupReadState[]
+  createdAt  DateTime         @default(now()) @map("created_at")
+  updatedAt  DateTime         @default(now()) @updatedAt @map("updated_at")
+}
+
+/// Per-user, per-group "last seen" pointer. When the viewer opens a group
+/// the row is upserted with `lastSeenAt = now()`; group unread count =
+/// messages in the group with createdAt > lastSeenAt AND from != viewer.
+model GroupReadState {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @map("user_id")
+  groupId    Int      @map("group_id")
+  lastSeenAt DateTime @default(now()) @map("last_seen_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at")
+  user       User     @relation(fields: [userId], references: [id])
+  group      Group    @relation(fields: [groupId], references: [id])
+
+  @@unique([userId, groupId])
+  @@index([userId])
+  @@index([groupId])
+  @@map("group_read_states")
 }
 
 model BugReport {
@@ -1856,6 +1899,7 @@ enum NotificationType {
   INVOICE_AUTHORIZED
   PAYMENT_RECEIVED
   PAYMENT_DUE
+  PAYMENT_FAILED
   DEPOSIT
   WORK_ORDER_CREATED
   WORK_ORDER_COMPLETED
@@ -2039,6 +2083,25 @@ model AuthorizeNetPayment {
   @@map("authorize_net_payments")
 }
 
+model WebhookEvent {
+  id          Int       @id @default(autoincrement())
+  eventId     String    @unique @map("event_id")
+  gateway     String
+  companyId   Int?      @map("company_id")
+  payload     Json
+  status      String    @default("PENDING")
+  attempts    Int       @default(0)
+  lastError   String?   @map("last_error")
+  receivedAt  DateTime  @default(now()) @map("received_at")
+  processedAt DateTime? @map("processed_at")
+  company     Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([gateway])
+  @@index([companyId])
+  @@map("webhook_events")
+}
+
 model PaymentMethod {
   id        Int            @id @default(autoincrement())
   name      String
@@ -2061,6 +2124,7 @@ enum CardType {
   MASTERCARD
   VISA
   AMEX
+  DISCOVER
   OTHER
 }
 
@@ -2167,9 +2231,16 @@ model Task {
   invoiceTemplate   InvoiceTemplate?                 @relation(fields: [invoiceTemplateId], references: [id])
   invoiceTemplateId String?
   createdBy         TaskAndAppointmentCreatedByEnum? @default(user)
+  status            TaskStatus                       @default(pending)
+  completedAt       DateTime?                        @map("completed_at")
 
   @@index([userId])
   @@index([companyId])
+}
+
+enum TaskStatus {
+  pending
+  completed
 }
 
 // Assigned user for a task.
@@ -2250,6 +2321,7 @@ model User {
   company                        Company                         @relation(fields: [companyId], references: [id], onDelete: Cascade)
   twoFactorToken                 TwoFactorToken?
   groups                         Group[]                         @relation("UserGroups")
+  groupReadStates                GroupReadState[]
   tasks                          Task[]
   taskUsers                      TaskUser[]
   appointments                   Appointment[]
@@ -2285,7 +2357,8 @@ model User {
   auditLogs                      AuditLog[]
   reviewedEmergencyRequests      EmergencyBookingRequest[] @relation("EmergencyReviewer")
   messengerMessages              MessengerMessage[]
-
+  instagramMessages              InstagramMessage[]
+  reviewedEmergencyRequests      EmergencyBookingRequest[]       @relation("EmergencyReviewer")
 
   @@index([companyId], name: "fk_users_company")
 }
@@ -2330,13 +2403,14 @@ model TwoFactorConfirmation {
 }
 
 model PasswordResetToken {
-  id        String   @id @default(uuid())
-  token     String   @unique
-  otp       String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    Int      @unique @map("user_id")
-  expiresAt DateTime @map("expires_at")
-  createdAt DateTime @default(now()) @map("created_at")
+  id          String   @id @default(uuid())
+  token       String   @unique
+  otp         String
+  otpVerified Boolean  @default(false) @map("otp_verified")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      Int      @unique @map("user_id")
+  expiresAt   DateTime @map("expires_at")
+  createdAt   DateTime @default(now()) @map("created_at")
 }
 
 // OAuth token for user.
@@ -2520,12 +2594,13 @@ model ClientSMS {
   clientId    Int                    @map("client_id")
   attachments ClientSmsAttachments[]
 
-  client       Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  user         User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  company      Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  isSalesAgent Boolean? @default(false)
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+  client           Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  user             User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company          Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  isSalesAgent     Boolean?  @default(false)
+  agentProcessedAt DateTime? @map("agent_processed_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at")
 }
 
 model ClientCall {
@@ -2601,6 +2676,8 @@ model Vehicle {
   emergencyBookingRequests EmergencyBookingRequest[]
 
   @@index([companyId], name: "fk_vehicles_company")
+  @@index([make])
+  @@index([model])
 }
 
 model VehicleColor {
@@ -3627,15 +3704,96 @@ enum EmergencyRequestStatus {
   CANCELLED // Client cancelled the request
 }
 
-// One row per client per debounce window.
-// Inserted once when the first SMS of a window arrives (ON CONFLICT DO NOTHING).
-// Deleted atomically by the worker when it claims the job for processing.
-model SmsAgentDebounce {
-  clientId    Int      @id @map("client_id")
-  companyId   Int      @map("company_id")
-  sendFrom    String   @map("send_from")
-  sendTo      String   @map("send_to")
-  windowStart DateTime @map("window_start")
+// ── Instagram DM ──────────────────────────────────────────────────────────────
 
-  @@map("sms_agent_debounce")
+model InstagramAccount {
+  id                Int                      @id @default(autoincrement())
+  companyId         Int                      @map("company_id")
+  igUserId          String                   @map("ig_user_id")
+  username          String?
+  pageAccessToken   String                   @map("page_access_token")
+  facebookPageId    String?                  @map("facebook_page_id")
+  pictureUrl        String?                  @map("picture_url")
+  isActive          Boolean                  @default(true)  @map("is_active")
+  webhookSubscribed Boolean                  @default(false) @map("webhook_subscribed")
+  createdAt         DateTime                 @default(now()) @map("created_at")
+  updatedAt         DateTime                 @default(now()) @updatedAt @map("updated_at")
+  company           Company                  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  clientProfiles    InstagramClientProfile[]
+  messages          InstagramMessage[]
+
+  @@unique([companyId, igUserId], name: "companyId_igUserId")
+  @@map("instagram_accounts")
+}
+
+model InstagramClientProfile {
+  id          Int              @id @default(autoincrement())
+  igAccountId Int              @map("ig_account_id")
+  igsid       String
+  clientId    Int              @map("client_id")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @default(now()) @updatedAt @map("updated_at")
+  igAccount   InstagramAccount @relation(fields: [igAccountId], references: [id], onDelete: Cascade)
+  client      Client           @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([igAccountId, igsid], name: "igAccountId_igsid")
+  @@map("instagram_client_profiles")
+}
+
+model InstagramMessage {
+  id          Int                          @id @default(autoincrement())
+  companyId   Int                          @map("company_id")
+  clientId    Int                          @map("client_id")
+  igAccountId Int                          @map("ig_account_id")
+  mid         String?                      @unique
+  message     String?                      @db.Text
+  sentBy      String                       @map("sent_by")
+  isRead      Boolean                      @default(false) @map("is_read")
+  userId      Int?                         @map("user_id")
+  createdAt   DateTime                     @default(now()) @map("created_at")
+  updatedAt   DateTime                     @default(now()) @updatedAt @map("updated_at")
+  company     Company                      @relation(fields: [companyId], references: [id])
+  client      Client                       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  igAccount   InstagramAccount             @relation(fields: [igAccountId], references: [id])
+  user        User?                        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  attachments InstagramMessageAttachment[]
+
+  @@index([companyId, clientId])
+  @@map("instagram_messages")
+}
+
+model InstagramMessageAttachment {
+  id             Int              @id @default(autoincrement())
+  messageId      Int              @map("message_id")
+  url            String
+  name           String?
+  attachmentType String           @map("attachment_type")
+  message        InstagramMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@map("instagram_message_attachments")
+}
+
+// Mobile app version management — controls soft/force update behavior
+model AppVersion {
+  id                  Int      @id @default(autoincrement())
+  latestVersion       String   @map("latest_version")
+  minSupportedVersion String   @map("min_supported_version")
+  forceUpdate         Boolean  @default(false) @map("force_update")
+  message             String?
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("app_versions")
+}
+
+/// Global SMS test settings (single row). `allowlist` is a comma-separated
+/// string of test-safe recipient numbers. While an SMS send is restricted
+/// (non-production runtime, or a Company.isTest account in prod), only numbers
+/// in this string are actually delivered. See outboundSmsGuard.ts.
+model SmsTestConfig {
+  id        Int      @id @default(autoincrement())
+  allowlist String   @default("+18788797134,+16783739090,+14702560094") @db.Text
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("sms_test_config")
 }

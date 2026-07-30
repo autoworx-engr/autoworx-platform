@@ -79,7 +79,7 @@ export default function SalesAgentPermissionPanel({ companyId }: Props) {
 
           {/* Search */}
           <Input
-            placeholder="Search clients..."
+            placeholder="Search Clients..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -103,9 +103,9 @@ export default function SalesAgentPermissionPanel({ companyId }: Props) {
                     <p className="text-sm font-medium">
                       {client.firstName} {client.lastName || ""}
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    {/* <p className="text-xs text-muted-foreground">
                       {client.email || client.mobile || "No contact info"}
-                    </p>
+                    </p> */}
                   </div>
 
                   <Switch

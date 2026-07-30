@@ -1,9 +1,15 @@
 import SchedulingTab from "../../../components/SchedulingTab";
+import { Metadata } from "next";
 
 type VirtualShopSchedulingPageProps = {
   params: Promise<{
     shopId: string;
   }>;
+};
+
+export const metadata: Metadata = {
+  title: "Virtual Shop Scheduling",
+  description: "View and manage your virtual shop scheduling and availability.",
 };
 
 export default async function VirtualShopSchedulingPage({

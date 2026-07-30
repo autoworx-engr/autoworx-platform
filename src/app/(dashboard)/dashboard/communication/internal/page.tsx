@@ -7,60 +7,28 @@ import Body from "./Body";
 
 export const metadata: Metadata = {
   title: "Communication Hub - Internal",
+  description: "Manage client and supplier collaboration",
 };
 
 export default async function InternalPage(props: {
-  searchParams: Promise<{ id?: string }>;
+  searchParams: Promise<{ id?: string; groupId?: string }>;
 }) {
   const searchParams = await props.searchParams;
-  const { id: selectedUserId } = searchParams;
+  const { id: selectedUserId, groupId } = searchParams;
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new Error("Session ID is required");
   }
 
-  // The sidebar users list is now driven by `useInfiniteUsersList` on the
-  // client (via react-query), so we no longer eagerly fetch every user +
-  // every message on the server. Pass an empty initial set; the hook picks up
-  // page 1 on mount.
+  // Both sidebar lists (users + groups) and per-pair chatTrack rows are now
+  // driven by paginated react-query hooks on the client
+  // (`useInfiniteUsersList` / `useInfiniteGroupsList` + the `userList` API
+  // route hydrates `chatTrack`). Server-side eager fetches removed.
   const usersWithLatestMessages: any[] = [];
   const messages: any[] = [];
+  const groups: any[] = [];
+  const userChatTrack: any[] = [];
 
-  // Fetch groups (this is still needed)
-  const groups = await db.group.findMany({
-    where: { users: { some: { id: parseInt(session?.user?.id!) } } },
-    include: {
-      users: true,
-    },
-    orderBy: { updatedAt: "desc" },
-  });
-
-  // Fetch userChatTrack for compatibility
-  const userChatTrack = await db.chatTrack.findMany({
-    where: {
-      OR: [
-        { senderId: parseInt(session?.user?.id!) },
-        { receiverId: parseInt(session?.user?.id!) },
-      ],
-    },
-    include: {
-      message: true,
-    },
-  });
-
-  // const usersWithUnreadCounts = users.map((user) => {
-  //   const unreadCount = userChatTrack.filter(
-  //     (chat) =>
-  //       chat.receiverId === parseInt(session?.user?.id!) &&
-  //       chat.senderId === user.id &&
-  //       !chat.isRead
-  //   ).length;
-
-  //   return {
-  //     ...user,
-  //     unreadCount,
-  //   };
-  // });
   const selectedUser = selectedUserId
     ? await db.user.findUnique({
         where: {
@@ -70,8 +38,18 @@ export default async function InternalPage(props: {
       })
     : null;
 
+  const selectedGroup = groupId
+    ? await db.group.findUnique({
+        where: {
+          id: parseInt(groupId),
+          companyId: session?.user?.companyId,
+        },
+        include: { users: true },
+      })
+    : null;
+
   return (
-    <div className="flex max-h-[95%] gap-5 sm:mt-5">
+    <div className="flex gap-5 sm:mt-5">
       <Body
         users={usersWithLatestMessages}
         currentUser={session.user}
@@ -87,6 +65,7 @@ export default async function InternalPage(props: {
               } as User & { unreadCount: number; latestMessage?: any })
             : null
         }
+        selectedGroup={selectedGroup}
       />
     </div>
   );

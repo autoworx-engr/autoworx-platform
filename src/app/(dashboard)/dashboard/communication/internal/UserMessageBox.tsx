@@ -10,9 +10,9 @@ import MessageBox from "../MessageBox";
 import { useSession } from "next-auth/react";
 import { Attachment, RequestEstimate } from "@prisma/client";
 import { pusher } from "@/lib/pusher/client";
-import { useQueryClient } from "@tanstack/react-query";
 import { useInfiniteUserMessages } from "./_hooks/useInfiniteUserMessages";
 import { useReverseScrollPagination } from "./_hooks/useReverseScrollPagination";
+import { usePrependToInfiniteCache } from "./_hooks/useMessageCacheMutation";
 import { internalKeys } from "./_utils/queryKey";
 import { Spinner } from "@/components/ui/spinner";
 import type { PaginatedMessagesPage } from "@/actions/communication/internal/query";
@@ -29,14 +29,17 @@ export default function UserMessageBox({
   totalMessageBoxLength,
 }: TProps) {
   const { data: session } = useSession();
-  const queryClient = useQueryClient();
   const sessionUserId = session?.user?.id ? parseInt(session.user.id) : NaN;
+  const otherUserId: number = user?.id ?? NaN;
+  const prependToCache = usePrependToInfiniteCache(
+    internalKeys.userMessages(sessionUserId, otherUserId),
+  );
 
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } =
     useInfiniteUserMessages({
       currentUserId: sessionUserId,
-      otherUserId: user?.id,
-      enabled: Number.isFinite(sessionUserId) && Number.isFinite(user?.id),
+      otherUserId,
+      enabled: Number.isFinite(sessionUserId) && Number.isFinite(otherUserId),
     });
 
   // Pages come back newest-first; flatten then reverse so the rendered list is
@@ -72,47 +75,28 @@ export default function UserMessageBox({
       const last = next[next.length - 1];
       if (!last) return;
 
-      // Prepend to the newest page (page 0 in newest-first order). De-dupe by id
-      // when present so a real Pusher echo doesn't double-render.
-      queryClient.setQueryData(
-        internalKeys.userMessages(sessionUserId, user.id),
-        (old: any) => {
-          if (!old?.pages?.length) return old;
-          const [firstPage, ...rest] = old.pages;
-          if (last.id && firstPage.data.some((m: any) => m.id === last.id)) {
-            return old;
-          }
-          const newRow = {
-            id: last.id ?? Date.now(),
-            message: last.message,
-            from: sessionUserId,
-            to: user.id,
-            createdAt: last.createdAt ?? new Date(),
-            updatedAt: last.createdAt ?? new Date(),
-            attachment: Array.isArray(last.attachment)
-              ? last.attachment
-              : last.attachment
-                ? [last.attachment]
-                : [],
-            requestEstimate: last.requestEstimate ?? null,
-          };
-          return {
-            ...old,
-            pages: [
-              { ...firstPage, data: [newRow, ...firstPage.data] },
-              ...rest,
-            ],
-          };
-        },
-      );
+      prependToCache({
+        id: last.id ?? Date.now(),
+        message: last.message,
+        from: sessionUserId,
+        to: otherUserId,
+        createdAt: last.createdAt ?? new Date(),
+        updatedAt: last.createdAt ?? new Date(),
+        attachment: Array.isArray(last.attachment)
+          ? last.attachment
+          : last.attachment
+            ? [last.attachment]
+            : [],
+        requestEstimate: last.requestEstimate ?? null,
+      });
     },
-    [queryClient, sessionUserId, user?.id],
+    [prependToCache, sessionUserId, otherUserId],
   );
 
   // Pusher real-time append. Mutates the same cache instead of local state.
   useEffect(() => {
     const channel = pusher
-      .subscribe(`user-${user?.id}`)
+      .subscribe(`user-${otherUserId}`)
       .bind(
         "message",
         ({
@@ -130,49 +114,29 @@ export default function UserMessageBox({
           attachment: Partial<Attachment> | Partial<Attachment>[];
           requestEstimate: RequestEstimate | null;
         }) => {
-          if (to === sessionUserId || (from === sessionUserId && !groupId)) {
-            queryClient.setQueryData(
-              internalKeys.userMessages(sessionUserId, user.id),
-              (old: any) => {
-                if (!old?.pages?.length) return old;
-                const [firstPage, ...rest] = old.pages;
-                const newRow = {
-                  id: (attachment as any)?.messageId ?? Date.now(),
-                  message,
-                  from,
-                  to,
-                  createdAt: new Date(),
-                  updatedAt: new Date(),
-                  attachment: Array.isArray(attachment)
-                    ? attachment
-                    : attachment
-                      ? [attachment]
-                      : [],
-                  requestEstimate: requestEstimate ?? null,
-                };
-                // best-effort de-dupe by id when the server echoed the same row
-                if (
-                  newRow.id &&
-                  firstPage.data.some((m: any) => m.id === newRow.id)
-                ) {
-                  return old;
-                }
-                return {
-                  ...old,
-                  pages: [
-                    { ...firstPage, data: [newRow, ...firstPage.data] },
-                    ...rest,
-                  ],
-                };
-              },
-            );
+          if (to !== sessionUserId && !(from === sessionUserId && !groupId)) {
+            return;
           }
+          prependToCache({
+            id: (attachment as any)?.messageId ?? Date.now(),
+            message,
+            from,
+            to,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            attachment: Array.isArray(attachment)
+              ? attachment
+              : attachment
+                ? [attachment]
+                : [],
+            requestEstimate: requestEstimate ?? null,
+          });
         },
       );
     return () => {
       channel.unbind("message");
     };
-  }, [queryClient, sessionUserId, user?.id]);
+  }, [prependToCache, sessionUserId, otherUserId]);
 
   // Reverse-pagination scroll glue.
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -204,6 +168,7 @@ export default function UserMessageBox({
       setMessages={setMessages}
       totalMessageBox={totalMessageBoxLength}
       isLoadingOlder={isFetchingNextPage}
+      isLoadingInitial={isLoading}
       onScrollContainerRef={setContainer}
       topSlot={
         isFetchingNextPage ? (

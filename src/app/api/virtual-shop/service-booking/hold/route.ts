@@ -195,10 +195,29 @@ export async function POST(req: Request) {
         .utc(`${date} ${startTime}`, "YYYY-MM-DD HH:mm")
         .add(duration, "minutes");
 
-      // Check existing appointments overlap
+      // Check existing appointments overlap (includes multi-day via endDate)
+      const startOfSelectedDay = new Date(`${date}T00:00:00.000Z`);
+      const startOfNextDay = new Date(
+        startOfSelectedDay.getTime() + 24 * 60 * 60 * 1000,
+      );
+
       const existingAppointments = await tx.appointment.findMany({
-        where: { companyId: shop.companyId, date: new Date(date) },
-        select: { startTime: true, endTime: true },
+        where: {
+          companyId: shop.companyId,
+          AND: [
+            { date: { lt: startOfNextDay } },
+            {
+              OR: [
+                { endDate: { gte: startOfSelectedDay } },
+                {
+                  endDate: null,
+                  date: { gte: startOfSelectedDay },
+                },
+              ],
+            },
+          ],
+        },
+        select: { date: true, endDate: true, startTime: true, endTime: true },
       });
 
       // Check existing active holds overlap
@@ -214,13 +233,17 @@ export async function POST(req: Request) {
       );
 
       const overlappingAppointments = existingAppointments.filter((app) => {
-        if (!app.startTime || !app.endTime) return false;
+        if (!app.startTime || !app.endTime || !app.date) return false;
+        const startDateStr = moment.utc(app.date).format("YYYY-MM-DD");
+        const endAnchorDate = app.endDate ?? app.date;
+        const endDateStr = moment.utc(endAnchorDate).format("YYYY-MM-DD");
+
         const appStartMoment = moment.utc(
-          `${date} ${app.startTime}`,
+          `${startDateStr} ${app.startTime}`,
           "YYYY-MM-DD HH:mm",
         );
         const appEndMoment = moment.utc(
-          `${date} ${app.endTime}`,
+          `${endDateStr} ${app.endTime}`,
           "YYYY-MM-DD HH:mm",
         );
         return (

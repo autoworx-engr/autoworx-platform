@@ -2,6 +2,7 @@ import { authOptions } from "@/authOptions";
 import { ShopData, ShopServicesResponse } from "@/service/virtual-shop/api";
 import { getServerSession } from "next-auth";
 import ServicesTab from "../../../components/ServicesTab";
+import { Metadata } from "next";
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 10;
@@ -35,6 +36,11 @@ function parsePositiveInt(
 
   return parsed;
 }
+
+export const metadata: Metadata = {
+  title: "Virtual Shop Services",
+  description: "View and manage your virtual shop services.",
+};
 
 export default async function VirtualShopServicesPage({
   params,

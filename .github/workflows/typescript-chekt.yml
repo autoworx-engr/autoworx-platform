@@ -28,9 +28,11 @@ jobs:
         run: yarn prisma generate
         env:
           DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/postgres"
+          DIRECT_URL: "postgresql://postgres:postgres@localhost:5432/postgres"
 
       - name: TypeScript check
         run: yarn tsc --noEmit
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"
           DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/postgres"
+          DIRECT_URL: "postgresql://postgres:postgres@localhost:5432/postgres"

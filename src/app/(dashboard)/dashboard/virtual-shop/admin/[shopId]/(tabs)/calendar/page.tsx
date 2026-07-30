@@ -6,6 +6,7 @@ import type {
 } from "@/service/virtual-shop/api";
 import { getServerSession } from "next-auth";
 import CalendarTab from "../../../components/CalendarTab";
+import { Metadata } from "next";
 
 type PageSearchParams = {
   mode?: string | string[];
@@ -117,6 +118,11 @@ async function fetchServiceBookings({
     return null;
   }
 }
+
+export const metadata: Metadata = {
+  title: "Shop Booking Calendar",
+  description: "View and manage your virtual shop bookings and appointments.",
+};
 
 export default async function VirtualShopCalendarPage({
   params,

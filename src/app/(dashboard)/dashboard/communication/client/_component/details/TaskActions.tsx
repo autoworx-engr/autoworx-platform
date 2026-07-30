@@ -12,9 +12,10 @@ type TaskWithAssignedUsers = Task & {
 
 type TProps = {
   task: TaskWithAssignedUsers;
+  color?: string;
 };
 
-export default function TaskActions({ task }: TProps) {
+export default function TaskActions({ task, color }: TProps) {
   const [pending, startTransaction] = useTransition();
 
   return (
@@ -22,7 +23,12 @@ export default function TaskActions({ task }: TProps) {
       <TaskCreateOrEdit
         fromEdit
         taskId={task.id}
-        triggerIcon={<SquarePen className="w-4 h-4" />}
+        triggerIcon={
+          <SquarePen
+            className="w-4 h-4 opacity-70 hover:opacity-100 cursor-pointer"
+            style={color ? { color } : undefined}
+          />
+        }
       />
 
       <button
@@ -34,7 +40,10 @@ export default function TaskActions({ task }: TProps) {
           })
         }
       >
-        <CircleCheckBig className="cursor-pointer w-4 h-4" />
+        <CircleCheckBig
+          className="cursor-pointer w-4 h-4 opacity-70 hover:opacity-100"
+          style={color ? { color } : undefined}
+        />
       </button>
     </span>
   );

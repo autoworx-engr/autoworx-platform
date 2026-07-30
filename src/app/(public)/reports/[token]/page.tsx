@@ -22,6 +22,7 @@ import { useRouter } from "next/navigation";
 import { getSession } from "next-auth/react";
 import { useCompanyQuery } from "@/hooks/useCompanyQuery";
 import CarLoading from "@/components/common/CarLoading";
+import { inlineImagesForCapture } from "@/lib/inlineImagesForCapture";
 
 interface ReportPageProps {
   params: Promise<{
@@ -73,11 +74,12 @@ export default function ReportPage(props: ReportPageProps) {
 
   const frequency = (decodedParams?.frequency || "DAILY").toLowerCase();
 
-  const servicesFormatted = useMemo(() => {
-    if (!reportData?.servicesPerformance)
-      return { services: [], categories: [] };
+  const servicesPerformance = reportData?.servicesPerformance;
 
-    const services = reportData.servicesPerformance.map((s) => ({
+  const servicesFormatted = useMemo(() => {
+    if (!servicesPerformance) return { services: [], categories: [] };
+
+    const services = servicesPerformance.map((s) => ({
       name: s.serviceName,
       revenue: s.revenue,
       jobs: s.jobCount,
@@ -85,7 +87,7 @@ export default function ReportPage(props: ReportPageProps) {
     }));
 
     const catMap: Record<string, number> = {};
-    reportData.servicesPerformance.forEach((s) => {
+    servicesPerformance.forEach((s) => {
       catMap[s.categoryName] = (catMap[s.categoryName] || 0) + s.revenue;
     });
 
@@ -95,11 +97,10 @@ export default function ReportPage(props: ReportPageProps) {
     }));
 
     return { services, categories };
-  }, [reportData?.servicesPerformance]);
+  }, [servicesPerformance]);
 
   const teamFormatted = useMemo(() => {
     if (!reportData?.teamPerformance) return [];
-
     return reportData.teamPerformance.map((t) => ({
       name: t.name,
       type: "Staff",
@@ -107,7 +108,7 @@ export default function ReportPage(props: ReportPageProps) {
       revenue: t.revenue,
       pay: 0,
     }));
-  }, [reportData?.teamPerformance]);
+  }, [reportData]);
 
   const reportDateRange = useMemo(() => {
     if (!decodedParams?.startDate || !decodedParams?.endDate) return "";
@@ -165,19 +166,30 @@ export default function ReportPage(props: ReportPageProps) {
       return;
     }
 
+    let restoreImages: (() => void) | null = null;
+
     try {
       setIsGenerating(true);
       document.body.classList.add("is-generating-pdf");
       toast.loading("Preparing your PDF report...");
 
-      const canvas = await html2canvas(reportElement, {
-        scale: 1.5, // Slightly reduced scale for better performance
+      // Inline all images (e.g. S3 company logo) as base64 BEFORE capture so
+      // html2canvas never re-fetches them — cross-origin fetches stall capture.
+      restoreImages = await inlineImagesForCapture(reportElement);
+
+      const isSafari = /^((?!chrome|android).)*safari/i.test(
+        navigator.userAgent,
+      );
+
+      const html2canvasOptions = {
+        scale: 1.5,
         useCORS: true,
-        logging: true, // Enable logging for debugging
+        allowTaint: isSafari,
+        logging: false,
         backgroundColor: "#ffffff",
         windowWidth: reportElement.scrollWidth,
         windowHeight: reportElement.scrollHeight,
-        ignoreElements: (element) => {
+        ignoreElements: (element: Element) => {
           return (
             element.classList.contains("xl:col-span-1") ||
             element.tagName === "BUTTON" ||
@@ -185,7 +197,16 @@ export default function ReportPage(props: ReportPageProps) {
               element.classList.contains("grayscale"))
           );
         },
-      });
+      };
+
+      const timeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("PDF generation timed out")), 30000),
+      );
+
+      const canvas = await Promise.race([
+        html2canvas(reportElement, html2canvasOptions),
+        timeout,
+      ]);
 
       const imgData = canvas.toDataURL("image/jpeg", 0.8); // Use JPEG with 0.8 quality
       const pdf = new jsPDF({
@@ -213,6 +234,7 @@ export default function ReportPage(props: ReportPageProps) {
       toast.dismiss();
       errorToast("Failed to generate PDF. Please try again.");
     } finally {
+      restoreImages?.();
       setIsGenerating(false);
       document.body.classList.remove("is-generating-pdf");
     }

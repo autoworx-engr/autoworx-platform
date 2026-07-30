@@ -1,6 +1,7 @@
-import { getCompanyIdFromBearer } from "@/lib/mobileAuth";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { buildWordSearchAnd } from "@/lib/wordSearch";
 
 /**
  * @swagger
@@ -75,7 +76,7 @@ export async function GET(
 ) {
   try {
     const { companyId: companyIdParam } = await params;
-    const jwtCompanyId = await getCompanyIdFromBearer(req);
+    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
     if (jwtCompanyId === null) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -96,20 +97,20 @@ export async function GET(
 
     const where: Record<string, any> = { companyId };
 
-    if (search) {
-      where.OR = [
-        { firstName: { contains: search, mode: "insensitive" } },
-        { lastName: { contains: search, mode: "insensitive" } },
-        { email: { contains: search, mode: "insensitive" } },
-      ];
+    const searchAnd = buildWordSearchAnd(search, [
+      "firstName",
+      "lastName",
+      "email",
+    ]);
+    if (searchAnd) {
+      where.AND = searchAnd;
     }
 
     const [clients, total] = await Promise.all([
       db.client.findMany({
         where,
-        orderBy: { firstName: "asc" },
-        skip,
-        take: limit,
+        orderBy: { createdAt: "desc" },
+        ...(search ? {} : { skip, take: limit }),
         select: {
           id: true,
           firstName: true,
@@ -125,13 +126,21 @@ export async function GET(
     return NextResponse.json({
       success: true,
       data: clients,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasMore: skip + clients.length < total,
-      },
+      pagination: search
+        ? {
+            page: 1,
+            limit: total,
+            total,
+            totalPages: 1,
+            hasMore: false,
+          }
+        : {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+            hasMore: skip + clients.length < total,
+          },
     });
   } catch (error) {
     console.error("ESTIMATE CLIENTS ERROR:", error);

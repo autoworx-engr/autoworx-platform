@@ -1,4 +1,4 @@
-import { getCompanyIdFromBearer } from "@/lib/mobileAuth";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
@@ -287,7 +287,7 @@ export async function GET(
 ) {
   try {
     const { companyId: companyIdParam, id } = await params;
-    const jwtCompanyId = await getCompanyIdFromBearer(req);
+    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
     if (jwtCompanyId === null) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -403,7 +403,7 @@ export async function PATCH(
 ) {
   try {
     const { companyId: companyIdParam, id } = await params;
-    const jwtCompanyId = await getCompanyIdFromBearer(req);
+    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
     if (jwtCompanyId === null) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -817,7 +817,7 @@ export async function DELETE(
 ) {
   try {
     const { companyId: companyIdParam, id } = await params;
-    const jwtCompanyId = await getCompanyIdFromBearer(req);
+    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
     if (jwtCompanyId === null) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -838,7 +838,17 @@ export async function DELETE(
       );
     }
 
-    await db.invoiceTemplate.delete({ where: { id } });
+    await db.$transaction(async (tx) => {
+      await tx.templatePhoto.deleteMany({ where: { invoiceTemplateId: id } });
+      await tx.invoiceInspection.deleteMany({
+        where: { invoiceTemplateId: id },
+      });
+      await tx.invoiceTags.deleteMany({ where: { invoiceTemplateId: id } });
+      await tx.task.deleteMany({ where: { invoiceTemplateId: id } });
+      await tx.material.deleteMany({ where: { invoiceTemplateId: id } });
+      await tx.invoiceItem.deleteMany({ where: { invoiceTemplateId: id } });
+      await tx.invoiceTemplate.delete({ where: { id } });
+    });
 
     return NextResponse.json({
       success: true,

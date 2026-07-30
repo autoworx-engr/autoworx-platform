@@ -211,36 +211,30 @@ export default function PhoneInput({
   };
 
   return (
-    <div className="w-full">
+    <div className="flex w-full flex-col gap-1.5">
       {label && (
-        <label
-          className={cn(
-            "flex items-center gap-1 text-base font-medium text-slate-700 dark:text-slate-200 transition-colors duration-300",
-          )}
-        >
+        <label className="flex items-center gap-1 text-base font-medium">
           {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
+          {required && <span className="text-destructive">*</span>}
         </label>
       )}
 
-      <div className="relative mt-1.5" ref={dropdownRef}>
+      <div className="relative" ref={dropdownRef}>
         <div
-          className={`flex items-center rounded-lg border transition-all ${
+          className={cn(
+            "flex h-9 items-center rounded-md border bg-transparent shadow-sm transition-colors",
             error
-              ? "border-rose-400 focus-within:border-rose-500 focus-within:ring-2 focus-within:ring-rose-500/40"
-              : "border-slate-300 dark:border-slate-700 focus-within:border-[#6571FF]/60 dark:focus-within:border-[#6571FF]/60 focus-within:ring-2 focus-within:ring-[#6571FF]/40"
-          } ${
-            disabled
-              ? "opacity-50 cursor-not-allowed bg-slate-100 dark:bg-slate-800"
-              : "bg-white dark:bg-slate-900"
-          }`}
+              ? "border-destructive focus-within:ring-1 focus-within:ring-destructive/30"
+              : "border-input focus-within:ring-1 focus-within:ring-ring",
+            disabled && "cursor-not-allowed bg-muted opacity-50",
+          )}
         >
           {/* Country Code Button */}
           <button
             type="button"
             onClick={() => !disabled && setIsOpen(!isOpen)}
             disabled={disabled || isLoading}
-            className="flex items-center gap-1.5 px-3 py-2 border-r border-slate-200 dark:border-slate-700 hover:bg-slate-50 hover:rounded-lg dark:hover:bg-slate-800 transition-colors disabled:cursor-not-allowed disabled:hover:bg-transparent"
+            className="flex h-full items-center gap-1.5 rounded-l-md border-r border-input px-3 transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:hover:bg-transparent"
           >
             {selectedCountry?.flagUrl ? (
               <img
@@ -267,7 +261,7 @@ export default function PhoneInput({
               onChange={handlePhoneChange}
               placeholder={placeholder}
               disabled={disabled}
-              className="w-full px-4 pr-10 py-[2px] bg-transparent text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none disabled:cursor-not-allowed"
+              className="h-full w-full bg-transparent px-3 pr-10 text-base placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed md:text-sm"
             />
 
             {phoneNumber && (
@@ -290,7 +284,7 @@ export default function PhoneInput({
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder="Search country..."
+                placeholder="Search Country..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full px-3 py-2 text-sm rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"

@@ -1,22 +1,7 @@
 "use client";
 
-import FullCalendar from "@fullcalendar/react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import moment from "moment";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { RefObject } from "react";
 import { updatePipelineAutomationTrigger } from "@/actions/automation/pipeline/triggerPipelineAutomation";
 import { getCalenderSettings } from "@/actions/task/getCalendarSettings";
-import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
-import { errorHandler } from "@/error-boundary/globalErrorHandler";
-import { useCalendarStore } from "@/stores/calendarStore";
-import { CalendarType } from "@/types/calendar";
-import { Appointment, Lead } from "@prisma/client";
-import CalendarSearch from "./CalendarSearch";
-import DateSelector from "./DateSelector";
-import DisplayDate from "./DisplayDate";
-import Settings from "./Settings";
 import {
   appointmentQueryKey,
   calenderQueryKey,
@@ -24,6 +9,13 @@ import {
 import { useDate } from "@/app/(dashboard)/dashboard/task/_hook/lib/useDate";
 import useMonth from "@/app/(dashboard)/dashboard/task/_hook/lib/useMonth";
 import useWeekStartEndDays from "@/app/(dashboard)/dashboard/task/_hook/lib/useWeekStartEndDays";
+import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { useCalendarStore } from "@/stores/calendarStore";
+import { CalendarType } from "@/types/calendar";
+import FullCalendar from "@fullcalendar/react";
+import { Appointment, Lead } from "@prisma/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CalendarDays,
   ChevronLeft,
@@ -31,6 +23,10 @@ import {
   ClipboardList,
   DollarSign,
 } from "lucide-react";
+import moment from "moment";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { RefObject } from "react";
 import { Button } from "../../../../../../components/ui/button";
 import {
   Select,
@@ -40,6 +36,11 @@ import {
   SelectValue,
 } from "../../../../../../components/ui/select";
 import { CalendarFilterDropdown } from "./CalendarFilterDropdown";
+import CalendarSearch from "./CalendarSearch";
+import DateSelector from "./DateSelector";
+import DisplayDate from "./DisplayDate";
+import MonthYearPicker from "./MonthYearPicker";
+import Settings from "./Settings";
 
 const ALLOWED_ROLES_FOR_NEW_APPOINTMENT = ["Admin", "Manager", "Sales"];
 
@@ -106,14 +107,22 @@ export function CalendarHeader({
     calendarRef.current?.getApi().today();
   };
 
-  const handlePrev = () => calendarRef.current?.getApi().prev();
-  const handleNext = () => calendarRef.current?.getApi().next();
+  const step = (delta: number) => {
+    const unit: moment.unitOfTime.DurationConstructor =
+      type === "week" ? "week" : type === "month" ? "month" : "day";
+    const next = date.clone().add(delta, unit);
+    setDate(next.format("YYYY-MM-DD"));
+    setMonth(next.format("YYYY-MM"));
+    setWeek(next.format("YYYY-[W]WW"));
+  };
+  const handlePrev = () => step(-1);
+  const handleNext = () => step(1);
 
   const handleViewChange = (value: string) => {
     router.push(`/dashboard/task/${value}`);
     const fcView =
       VIEW_OPTIONS.find((v) => v.value === value)?.fcView ?? "timeGridDay";
-    const targetDate = moment().utc().format("YYYY-MM-DD");
+    const targetDate = moment().format("YYYY-MM-DD");
 
     calendarRef.current?.getApi().changeView(fcView, targetDate);
   };
@@ -195,7 +204,7 @@ export function CalendarHeader({
               onClick={() => handleViewChange(value)}
               className={`px-3 py-1 text-sm font-medium capitalize rounded transition-colors ${
                 type === value
-                  ? "bg-gradient-to-r from-[#6571FF] to-[#5a66ee] text-white"
+                  ? "bg-gradient-to-r from-primary to-[#5a66ee] text-white"
                   : "bg-white text-slate-600 hover:bg-slate-50"
               }`}
             >
@@ -242,7 +251,7 @@ export function CalendarHeader({
         <div className="flex-1" />
 
         {/* Search — hidden on mobile, shown md+ */}
-        <div className="hidden md:block w-48 lg:w-64">
+        <div className="hidden md:block w-56 lg:w-80 xl:w-96">
           <CalendarSearch type={type} />
         </div>
 
@@ -258,9 +267,10 @@ export function CalendarHeader({
 
       {/* ── Row 2: Date title + Stats ─────────────────── */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t px-3 py-2 sm:px-4">
-        {/* Date */}
+        {/* Date — month view gets clickable month + year pickers; other views
+            keep the descriptive title (day/week selection is via DateSelector). */}
         <h2 className="mr-auto text-base font-semibold text-slate-900 sm:text-lg">
-          <DisplayDate type={type} />
+          {type === "month" ? <MonthYearPicker /> : <DisplayDate type={type} />}
         </h2>
 
         {/* Stats */}

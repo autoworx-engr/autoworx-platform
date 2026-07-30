@@ -33,10 +33,39 @@ type TGetLeadsWithCount = {
   source?: string;
   service?: string;
   status?: string;
+  orderBy?: "asc" | "desc";
   // YYYY-MM-DD strings so the action can parse them directly in the company
   // timezone — avoids off-by-one-day errors when browser tz ≠ company tz.
   dateRange?: [string | null, string | null];
+  // Explicit company override for callers without a next-auth session (mobile /
+  // external Bearer-token requests) where getCompanyId() would return undefined.
+  companyId?: number;
+  // Exclude leads removed from the pipeline (columnId === null) so paginated
+  // totalCount/take match what mobile's list actually renders. Opt-in: the web
+  // Sales Leads table still shows no-stage leads as "Unqualified".
+  excludeNoStage?: boolean;
 };
+
+function makeLeadSearchCondition(searchTerm?: string) {
+  if (!searchTerm?.trim()) return null;
+  const words = searchTerm.trim().split(/\s+/);
+  const makeWordCondition = (word: string) => {
+    const ci = { contains: word, mode: "insensitive" as const };
+    return {
+      OR: [
+        { clientName: ci },
+        { vehicleInfo: ci },
+        { services: ci },
+        { source: ci },
+        { Client: { some: { firstName: ci } } },
+        { Client: { some: { lastName: ci } } },
+      ],
+    };
+  };
+  return words.length === 1
+    ? makeWordCondition(words[0])
+    : { AND: words.map(makeWordCondition) };
+}
 
 export const getLeads = async ({
   columnId,
@@ -51,17 +80,11 @@ export const getLeads = async ({
   const timezone = companyTimezone?.timezone;
 
   try {
+    const searchCond = makeLeadSearchCondition(searchTerm);
     const query: Prisma.LeadWhereInput = {
       companyId,
       ...(columnId && { columnId }),
-      ...(searchTerm && {
-        OR: [
-          { clientName: { contains: searchTerm, mode: "insensitive" } },
-          { vehicleInfo: { contains: searchTerm, mode: "insensitive" } },
-          { services: { contains: searchTerm, mode: "insensitive" } },
-          { source: { contains: searchTerm, mode: "insensitive" } },
-        ],
-      }),
+      ...(searchCond ?? {}),
     };
 
     const upcomingApptFilter = buildUpcomingAppointmentFilter(timezone);
@@ -108,6 +131,12 @@ export const getLeads = async ({
                 smsIsRead: true,
                 emailIsRead: true,
               },
+            },
+            Invoice: {
+              where: { type: "Estimate" },
+              select: { id: true },
+              orderBy: { createdAt: "asc" },
+              take: 1,
             },
           },
         },
@@ -159,6 +188,12 @@ export const getLeads = async ({
                   emailIsRead: true,
                 },
               },
+              Invoice: {
+                where: { type: "Estimate" },
+                select: { id: true },
+                orderBy: { createdAt: "asc" },
+                take: 1,
+              },
             },
           }))!;
         }
@@ -199,6 +234,7 @@ export const getLeads = async ({
           client: clientData,
           column,
           totalMessage: isShowConversationIndicator ? 1 : 0,
+          invoiceId: client?.Invoice?.[0]?.id ?? null,
         };
       }),
     );
@@ -218,6 +254,7 @@ export const getLeadsWithCount = async ({
   source,
   service,
   status,
+  orderBy,
   dateRange,
 }: TGetLeadsWithCount): Promise<{
   leads: LeadWithSalesUser[];
@@ -227,17 +264,11 @@ export const getLeadsWithCount = async ({
   const companyTimezone = await getCompanyTimezone();
   const timezone = companyTimezone?.timezone;
   try {
+    const searchCond = makeLeadSearchCondition(searchTerm);
     const query: Prisma.LeadWhereInput = {
       companyId,
       ...(columnId && { columnId }),
-      ...(searchTerm && {
-        OR: [
-          { clientName: { contains: searchTerm, mode: "insensitive" } },
-          { vehicleInfo: { contains: searchTerm, mode: "insensitive" } },
-          { services: { contains: searchTerm, mode: "insensitive" } },
-          { source: { contains: searchTerm, mode: "insensitive" } },
-        ],
-      }),
+      ...(searchCond ?? {}),
       ...(assignedTo && { assignedSalesUserId: parseInt(assignedTo) }),
       ...(source && { source }),
       ...(service && { services: service }),
@@ -288,7 +319,7 @@ export const getLeadsWithCount = async ({
         take,
         skip,
         orderBy: {
-          createdAt: "desc",
+          createdAt: orderBy ?? "desc",
         },
         include: {
           salesUser: {
@@ -324,6 +355,12 @@ export const getLeadsWithCount = async ({
                   smsIsRead: true,
                   emailIsRead: true,
                 },
+              },
+              Invoice: {
+                where: { type: "Estimate" },
+                select: { id: true },
+                orderBy: { createdAt: "asc" },
+                take: 1,
               },
             },
           },
@@ -375,6 +412,12 @@ export const getLeadsWithCount = async ({
                   emailIsRead: true,
                 },
               },
+              Invoice: {
+                where: { type: "Estimate" },
+                select: { id: true },
+                orderBy: { createdAt: "desc" },
+                take: 1,
+              },
             },
           }))!;
         }
@@ -414,6 +457,7 @@ export const getLeadsWithCount = async ({
           client: clientData,
           column,
           totalMessage: isShowConversationIndicator ? 1 : 0,
+          invoiceId: client?.Invoice?.[0]?.id ?? null,
         };
       }),
     );
@@ -434,27 +478,31 @@ export const getLeadsWithCountOptimized = async ({
   source,
   service,
   status,
+  orderBy,
   dateRange,
+  companyId: companyIdOverride,
+  excludeNoStage,
 }: TGetLeadsWithCount): Promise<{
   leads: LeadWithSalesUser[];
   totalCount: number;
 }> => {
-  const companyId = await getCompanyId();
-  const companyTimezone = await getCompanyTimezone();
+  const companyId = companyIdOverride ?? (await getCompanyId());
+  const companyTimezone = await getCompanyTimezone(companyId);
   const timezone = companyTimezone?.timezone;
 
   try {
+    const searchCond = makeLeadSearchCondition(searchTerm);
+    let columnIdFilter: Prisma.LeadWhereInput = {};
+    if (columnId) {
+      columnIdFilter = { columnId };
+    } else if (excludeNoStage) {
+      columnIdFilter = { columnId: { not: null } };
+    }
+
     const query: Prisma.LeadWhereInput = {
       companyId,
-      ...(columnId && { columnId }),
-      ...(searchTerm && {
-        OR: [
-          { clientName: { contains: searchTerm, mode: "insensitive" } },
-          { vehicleInfo: { contains: searchTerm, mode: "insensitive" } },
-          { services: { contains: searchTerm, mode: "insensitive" } },
-          { source: { contains: searchTerm, mode: "insensitive" } },
-        ],
-      }),
+      ...columnIdFilter,
+      ...(searchCond ?? {}),
       ...(assignedTo && { assignedSalesUserId: parseInt(assignedTo) }),
       ...(source && { source }),
       ...(service && { services: service }),
@@ -506,7 +554,7 @@ export const getLeadsWithCountOptimized = async ({
         take,
         skip,
         orderBy: {
-          createdAt: "desc",
+          createdAt: orderBy ?? "desc",
         },
         include: {
           salesUser: {
@@ -516,8 +564,9 @@ export const getLeadsWithCountOptimized = async ({
               lastName: true,
             },
           },
-          tasks: {
-            take: 5, // Limit tasks to reduce payload
+          tasks: true,
+          _count: {
+            select: { tasks: true },
           },
           column: true,
           leadTags: {
@@ -544,6 +593,12 @@ export const getLeadsWithCountOptimized = async ({
                   smsIsRead: true,
                   emailIsRead: true,
                 },
+              },
+              Invoice: {
+                where: { type: "Estimate" },
+                select: { id: true },
+                orderBy: { createdAt: "asc" },
+                take: 1,
               },
             },
           },
@@ -608,6 +663,8 @@ export const getLeadsWithCountOptimized = async ({
         client: clientData,
         column,
         totalMessage: isShowConversationIndicator ? 1 : 0,
+        invoiceId: client?.Invoice?.[0]?.id ?? null,
+        taskCount: lead._count?.tasks ?? 0,
       } as LeadWithSalesUser;
     });
 
@@ -712,18 +769,12 @@ export async function getLeadsCountByColumnId(
   searchTerm?: string,
 ) {
   try {
+    const searchCond = makeLeadSearchCondition(searchTerm);
     const totalLeadCount = await db.lead.count({
       where: {
         columnId: columnId,
         companyId: companyId,
-        ...(searchTerm && {
-          OR: [
-            { clientName: { contains: searchTerm, mode: "insensitive" } },
-            { vehicleInfo: { contains: searchTerm, mode: "insensitive" } },
-            { services: { contains: searchTerm, mode: "insensitive" } },
-            { source: { contains: searchTerm, mode: "insensitive" } },
-          ],
-        }),
+        ...(searchCond ?? {}),
       },
     });
     return totalLeadCount;

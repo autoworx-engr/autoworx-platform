@@ -582,6 +582,15 @@ export default function TeamPipelines({
 
       {loading || isLoading ? (
         <PipelineLoadingSkeleton />
+      ) : filteredPipelineData.length === 0 ? (
+        <div className="flex h-64 w-full flex-col items-center justify-center gap-2 text-center">
+          <p className="text-lg font-semibold text-gray-500">
+            No results found
+          </p>
+          <p className="text-sm text-gray-400">
+            There are no team members assigned to this role yet.
+          </p>
+        </div>
       ) : (
         <div className="h-full w-full overflow-hidden px-2">
           <div

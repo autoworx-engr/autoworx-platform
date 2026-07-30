@@ -321,9 +321,6 @@ export default function SideNavbar({ navList, permissions }: TProps) {
             width={40}
             height={40}
           />
-          <div className="py-0.1 let absolute right-4 top-12 rotate-12 transform gap-2 rounded-md border border-white bg-gradient-to-r from-[#00b8b0] to-[#0098da] px-1 text-[8px] font-bold tracking-wider text-black shadow-lg">
-            Beta
-          </div>
         </Link>
 
         {/* Links */}

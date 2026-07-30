@@ -32,7 +32,7 @@ export default function SalesPerformanceTable() {
   };
 
   const averageSalesCycleLength = dayHours(
-    data?.averageConversionTime as number
+    data?.averageConversionTime as number,
   );
 
   const metricData: MetricData[] = data
@@ -87,14 +87,14 @@ export default function SalesPerformanceTable() {
   return (
     <div className="mb-4 flex h-full w-full flex-col">
       <h2 className="mb-2 text-xl font-bold">Performance</h2>
-      <div className="flex gap-8">
+      <div className="flex flex-col gap-8 lg:flex-row lg:items-stretch">
         {/* First Half */}
-        <div className="flex flex-col gap-6 lg:w-[30%]">
-          <div className="flex flex-col gap-4">
+        <div className="flex w-full flex-col gap-6 lg:w-[30%]">
+          <div className="flex h-full flex-col gap-4">
             {metricData.map((metric, index) => (
               <div
                 key={index}
-                className="relative flex items-center justify-center gap-4 rounded-lg border border-gray-300 bg-background p-4"
+                className="relative flex flex-1 items-center justify-center gap-4 rounded-lg border border-gray-300 bg-background p-4"
               >
                 <button
                   onClick={() =>
@@ -154,8 +154,10 @@ export default function SalesPerformanceTable() {
         </div>
         {/* Second Half */}
 
-        <div className="hidden lg:flex">
-          <ConvertedDataGraph data={data?.convertedLeadsPerMonth || []} />
+        <div className="relative flex w-full flex-col rounded-lg border border-gray-300 bg-background min-h-[350px] lg:flex-1">
+          <div className="absolute inset-0 py-4">
+            <ConvertedDataGraph data={data?.convertedLeadsPerMonth || []} />
+          </div>
         </div>
 
         {/* <div className="hidden lg:flex">

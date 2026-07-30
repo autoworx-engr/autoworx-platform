@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Plus, Search } from "lucide-react";
-import ServiceCard, { type Service } from "./ServiceCard";
-import { useRouter } from "nextjs-toploader/app";
-import { Pagination } from "antd";
-import { usePathname, useSearchParams } from "next/navigation";
-import { ShopData, ShopServicesResponse } from "@/service/virtual-shop/api";
 import { useDeleteShopService } from "@/hooks/virtual-shop/service/useShopService";
+import { ShopData, ShopServicesResponse } from "@/service/virtual-shop/api";
+import { Pagination } from "antd";
+import { Plus, Search } from "lucide-react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useRouter } from "nextjs-toploader/app";
+import { useEffect, useMemo, useState } from "react";
+import ServiceCard, { type Service } from "./ServiceCard";
 
 type ServicesTabProps = {
   shopConfig?: ShopData | null;
@@ -123,7 +123,7 @@ export default function ServicesTab({
             hover:ring-slate-300
           "
         >
-          <span className="text-slate-400 transition-colors duration-300 group-focus-within:text-[#6571FF]">
+          <span className="text-slate-400 transition-colors duration-300 group-focus-within:text-primary">
             <Search className="h-5 w-5" />
           </span>
           <input
@@ -131,7 +131,7 @@ export default function ServicesTab({
             type="text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search services..."
+            placeholder="Search Services..."
             className="w-full bg-transparent text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none"
           />
         </div>
@@ -140,7 +140,7 @@ export default function ServicesTab({
           onClick={handleAddService}
           className="
             flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white
-            bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+            bg-gradient-to-r from-primary to-[#5a66ee]
             shadow-[0_4px_14px_0_rgba(101,113,255,0.39)]
             hover:shadow-[0_6px_20px_rgba(101,113,255,0.23)]
             hover:-translate-y-0.5
@@ -165,7 +165,7 @@ export default function ServicesTab({
                 href="/dashboard/settings/virtual-shop-configure"
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-[#6571FF] to-[#5a66ee] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_4px_14px_0_rgba(101,113,255,0.39)] transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(101,113,255,0.23)]"
+                className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-primary to-[#5a66ee] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_4px_14px_0_rgba(101,113,255,0.39)] transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(101,113,255,0.23)]"
               >
                 Go to shop configure
               </a>

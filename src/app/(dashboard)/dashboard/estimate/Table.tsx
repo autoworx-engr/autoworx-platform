@@ -15,7 +15,7 @@ import { Search, SquarePen } from "lucide-react";
 import moment from "moment-timezone";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMediaQuery } from "react-responsive";
 import ConvertTo from "./ConvertTo";
 
@@ -39,7 +39,7 @@ export interface InvoiceData {
 const evenColor = "bg-background";
 const oddColor = "bg-[#F8FAFF]";
 
-const defaultTake = 50;
+const defaultTake = 10;
 
 type TTableProps = {
   estimateData: {
@@ -63,7 +63,6 @@ export default function Table({
   const [pageSize, setPageSize] = useState(
     parseInt(take ?? "", 10) || defaultTake,
   );
-  // const [showPagination, setShowPagination] = useState(false);
   const allStatusesFromStore = useListsStore((x) => x.statuses);
 
   const pathname = usePathname();
@@ -72,32 +71,22 @@ export default function Table({
 
   const isMax640 = useMediaQuery({ query: "(max-width: 640px)" });
 
-  // useEffect(() => {
-  //   if (estimateData.totalEstimate > defaultTake) {
-  //     setShowPagination(true);
-  //   } else {
-  //     setShowPagination(false);
-  //   }
-  // }, [estimateData.totalEstimate]);
+  const [autoOpenId] = useState(() => params.get("openEstimateId"));
+
+  useEffect(() => {
+    if (autoOpenId && typeof window !== "undefined") {
+      const searchParams = new URLSearchParams(window.location.search);
+      searchParams.delete("openEstimateId");
+      const queryString = searchParams.toString();
+      const newUrl = queryString ? pathname + "?" + queryString : pathname;
+      window.history.replaceState(null, "", newUrl);
+    }
+  }, [autoOpenId, pathname]);
 
   // optimize calculation with useMemo
   const showPagination = useMemo(() => {
     return estimateData.totalEstimate > defaultTake;
   }, [estimateData.totalEstimate]);
-
-  // const handlePageChange = (page: number, pageSize?: number) => {
-  //   const searchParams = new URLSearchParams(params.toString());
-  //   searchParams.set("page", page.toString());
-  //   if (pageSize) {
-  //     setPageSize(pageSize);
-  //     searchParams.set("take", pageSize.toString());
-  //   } else {
-  //     searchParams.delete("take");
-  //   }
-  //   setCurrentPage(page);
-  //   const newPath = `${pathname}?${searchParams.toString()}`;
-  //   router.push(newPath);
-  // };
 
   // for preventing unnecessary re-renders
   const handlePageChange = useCallback(
@@ -140,12 +129,12 @@ export default function Table({
   };
 
   return (
-    <div
-      // className="min-h-[65vh] overflow-x-scroll rounded-md bg-background xl:overflow-auto xl:overflow-y-hidden flex flex-col "
-      className="relative max-h-[70vh] overflow-auto rounded-md bg-background flex flex-col 
-    [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-    >
-      <div className="flex-grow ">
+    <div className="relative flex flex-1 h-full flex-col overflow-hidden rounded-md bg-background">
+      {/* Scrollable area — only the table/cards scroll here, header stays sticky within it */}
+      <div
+        className="flex-1 overflow-auto
+        [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
         {isMax640 ? (
           <div className="flex  w-full flex-col items-center justify-center gap-y-4">
             {estimateData?.data?.map((data, index) => (
@@ -154,13 +143,14 @@ export default function Table({
                 invoiceEstimate={data}
                 key={data.id}
                 index={index}
+                autoOpen={data.id === autoOpenId}
               />
             ))}
           </div>
         ) : (
           <>
             {estimateData?.data?.length === 0 ? (
-              <div className="flex min-h-[400px] w-full flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-100 bg-slate-50/30 p-12 text-center">
+              <div className="flex min-h-[calc(100vh-250px)] w-full flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-100 bg-slate-50/30 p-12 text-center">
                 {/* Ghost Icon Illustration */}
                 <div className="relative mb-6 flex h-16 w-16 items-center justify-center rounded-3xl bg-white shadow-sm ring-1 ring-slate-200/50">
                   <Search
@@ -182,15 +172,9 @@ export default function Table({
                 </p>
               </div>
             ) : (
-              <table
-                // className="w-full"
-                className="w-full border-separate border-spacing-0"
-              >
+              <table className="w-full border-separate border-spacing-0">
                 {/* Estimate Header */}
-                <thead
-                  // className="sticky top-0  bg-background"
-                  className="sticky top-0 z-10 bg-white shadow-sm"
-                >
+                <thead className="sticky top-0 z-10 bg-white shadow-sm">
                   <tr className="h-10 border-b">
                     <th className="px-4 py-2 text-left">Invoice ID</th>
                     <th className="px-4 py-2 text-left">Client</th>
@@ -223,9 +207,10 @@ export default function Table({
                           invoiceId={data.id}
                           buttonChild={<button>{data.id}</button>}
                           buttonChildClassName="block w-full text-blue-600"
+                          autoOpen={data.id === autoOpenId}
                         />
                         {data.isShopBooking && (
-                          <span className="mt-1 block text-center text-[10px] font-bold uppercase tracking-wider text-[#6571FF] bg-[#6571FF]/10 rounded-full px-2 py-0.5">
+                          <span className="mt-1 block text-center text-[10px] font-bold uppercase tracking-wider text-primary bg-primary/10 rounded-full px-2 py-0.5">
                             Virtual Shop
                           </span>
                         )}
@@ -288,7 +273,7 @@ export default function Table({
                           className="text-2xl text-blue-600"
                           onClick={() => setActionType("edit")}
                         >
-                          <SquarePen size={18} className="text-[#6571FF]" />
+                          <SquarePen size={18} className="text-primary" />
                         </Link>
                       </td>
                     </tr>
@@ -298,24 +283,24 @@ export default function Table({
             )}
           </>
         )}
-        <div className="mt-auto">
-          {showPagination && (
-            <div className="mt-4 flex justify-end ">
-              <Pagination
-                className="custom-pagination"
-                current={currentPage}
-                pageSize={pageSize}
-                total={estimateData.totalEstimate}
-                onChange={handlePageChange}
-                showSizeChanger={true}
-                onShowSizeChange={handlePageChange}
-                size={isMax640 ? "small" : "default"} // Use smaller size on mobile
-                responsive={true}
-              />
-            </div>
-          )}
-        </div>
       </div>
+
+      {/* Fixed footer — outside the scroll area, always pinned to the bottom of the box */}
+      {showPagination && (
+        <div className="flex shrink-0 justify-end bg-white px-4 py-2 shadow-[0_-1px_2px_rgba(0,0,0,0.04)]">
+          <Pagination
+            className="custom-pagination"
+            current={currentPage}
+            pageSize={pageSize}
+            total={estimateData.totalEstimate}
+            onChange={handlePageChange}
+            showSizeChanger={true}
+            onShowSizeChange={handlePageChange}
+            size={isMax640 ? "small" : "default"} // Use smaller size on mobile
+            responsive={true}
+          />
+        </div>
+      )}
     </div>
   );
 }

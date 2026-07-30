@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { Prisma } from "@prisma/client";
+import moment from "moment-timezone";
+import {
+  buildUpcomingAppointmentFilter,
+  upcomingAppointmentOrderBy,
+} from "@/actions/pipelines/_upcomingAppointmentFilter";
 
 /**
  * @swagger
@@ -92,14 +98,25 @@ export async function GET(
     );
     const skip = (page - 1) * limit;
 
+    const client = await db.client.findUnique({
+      where: { id: clientId },
+      select: { company: { select: { timezone: true } } },
+    });
+    const timezone = client?.company?.timezone ?? moment.tz.guess();
+
+    const where: Prisma.AppointmentWhereInput = {
+      clientId,
+      ...buildUpcomingAppointmentFilter(timezone),
+    };
+
     const [appointments, total] = await Promise.all([
       db.appointment.findMany({
-        where: { clientId },
-        orderBy: { createdAt: "desc" },
+        where,
+        orderBy: upcomingAppointmentOrderBy,
         skip,
         take: limit,
       }),
-      db.appointment.count({ where: { clientId } }),
+      db.appointment.count({ where }),
     ]);
 
     return NextResponse.json({

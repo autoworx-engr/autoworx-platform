@@ -24,7 +24,7 @@ export async function convertInvoice(
       cId = await getCompanyId();
     }
 
-    const updatedInvoiceData = await db.$transaction(async (db) => {
+    const txResult = await db.$transaction(async (db) => {
       const invoice = await db.invoice.findUnique({
         where: { id },
         include: {
@@ -33,7 +33,7 @@ export async function convertInvoice(
       });
 
       if (!invoice) {
-        return { type: "error", message: "Invoice not found" };
+        return { type: "error" as const, message: "Invoice not found" };
       }
 
       if (invoice.type === "Estimate" && !invoice.columnId) {
@@ -98,21 +98,13 @@ export async function convertInvoice(
         }
       }
 
-      // If estimate/invoice convert to invoice/estimate, invoice automation trigger
-      updateInvoiceAutomationTrigger({
-        companyId: updatedInvoiceData?.companyId!,
-        invoiceId: updatedInvoiceData?.id!,
-        columnId: updatedInvoiceData?.columnId!,
-        type: updatedInvoiceData?.type!,
-      });
-
-      updateTagAutomationTrigger({
-        columnId: updatedInvoiceData?.columnId!,
-        companyId: updatedInvoiceData?.companyId!,
-        pipelineType: "SHOP",
-        conditionType: "post_tag",
-        invoiceId: updatedInvoiceData?.id!,
-      });
+      const inventoryNotifications: {
+        companyId: number | undefined;
+        lowInventoryAlert: number;
+        currentQuantity: number;
+        productName: string;
+        productId: number;
+      }[] = [];
 
       await Promise.all(
         productsWithQuantity.map(async (product) => {
@@ -178,8 +170,8 @@ export async function convertInvoice(
             },
           });
 
-          // low inventory send notification to all admins and managers
-          await lowInventoryNotification({
+          // queue low inventory notification to send after the transaction commits
+          inventoryNotifications.push({
             companyId: cId,
             lowInventoryAlert: updatedInventoryProduct.lowInventoryAlert || 0,
             currentQuantity: Number(updatedInventoryProduct.quantity) || 0,
@@ -193,22 +185,69 @@ export async function convertInvoice(
 
       const clientName = invoice.client?.firstName || "Client";
 
-      if (updatedInvoiceData.type == "Invoice") {
-        // send invoice converted notification to all admins and managers or sales
-        sendInvoiceConvertedNotification({
-          clientName,
-          companyId: cId,
-          invoiceId: updatedInvoiceData.id,
-          invoiceType: updatedInvoiceData.type,
-        });
-      }
-
-      return updatedInvoiceData;
+      return {
+        type: "success" as const,
+        invoice: updatedInvoiceData,
+        clientName,
+        inventoryNotifications,
+      };
     });
 
-    revalidatePath("/estimate");
-    revalidatePath("/dashboard/estimate");
-    revalidatePath(`/dashboard/estimate/view/${id}`);
+    if (txResult.type === "error") {
+      return txResult;
+    }
+
+    const {
+      invoice: updatedInvoiceData,
+      clientName,
+      inventoryNotifications,
+    } = txResult;
+
+    // Fire side effects only after the transaction has committed successfully,
+    // so a later rollback can't leave a notification/automation-trigger sent
+    // for a conversion that never actually persisted.
+    updateInvoiceAutomationTrigger({
+      companyId: updatedInvoiceData?.companyId!,
+      invoiceId: updatedInvoiceData?.id!,
+      columnId: updatedInvoiceData?.columnId!,
+      type: updatedInvoiceData?.type!,
+    }).catch((err) =>
+      console.error("updateInvoiceAutomationTrigger failed", err),
+    );
+
+    updateTagAutomationTrigger({
+      columnId: updatedInvoiceData?.columnId!,
+      companyId: updatedInvoiceData?.companyId!,
+      pipelineType: "SHOP",
+      conditionType: "post_tag",
+      invoiceId: updatedInvoiceData?.id!,
+    }).catch((err) => console.error("updateTagAutomationTrigger failed", err));
+
+    for (const payload of inventoryNotifications) {
+      lowInventoryNotification(payload).catch((err) =>
+        console.error("lowInventoryNotification failed", err),
+      );
+    }
+
+    if (updatedInvoiceData.type == "Invoice") {
+      // send invoice converted notification to all admins and managers or sales
+      sendInvoiceConvertedNotification({
+        clientName,
+        companyId: cId,
+        invoiceId: updatedInvoiceData.id,
+        invoiceType: updatedInvoiceData.type,
+      }).catch((err) =>
+        console.error("sendInvoiceConvertedNotification failed", err),
+      );
+    }
+
+    try {
+      revalidatePath("/estimate");
+      revalidatePath("/dashboard/estimate");
+      revalidatePath(`/dashboard/estimate/view/${id}`);
+    } catch {
+      // no-op: best-effort when called from worker context
+    }
 
     return {
       type: "success",

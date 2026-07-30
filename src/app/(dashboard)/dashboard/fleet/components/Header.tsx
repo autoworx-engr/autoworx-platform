@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import NewFleet from "./NewFleet";
 import { Search } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -12,15 +12,19 @@ type TProps = {
 
 export default function Header({ initialSearch = "" }: TProps) {
   const [searchTerm, setSearchTerm] = React.useState(initialSearch);
+  const isTypingRef = useRef(false);
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
 
   useEffect(() => {
-    setSearchTerm(initialSearch);
+    if (!isTypingRef.current) {
+      setSearchTerm(initialSearch);
+    }
   }, [initialSearch]);
 
   const handleSearchChange = useDebounce((value: string) => {
+    isTypingRef.current = false;
     const searchParams = new URLSearchParams(params.toString());
 
     if (value.trim()) {
@@ -51,7 +55,7 @@ export default function Header({ initialSearch = "" }: TProps) {
             hover:ring-slate-300 dark:hover:ring-slate-600
           "
         >
-          <span className="text-slate-400 group-focus-within:text-[#6571FF] transition-colors duration-300">
+          <span className="text-slate-400 group-focus-within:text-primary transition-colors duration-300">
             <Search className="w-5 h-5" />
           </span>
           <input
@@ -61,10 +65,11 @@ export default function Header({ initialSearch = "" }: TProps) {
                 w-full bg-transparent text-sm font-medium text-slate-700 dark:text-slate-200 
                 placeholder:text-slate-400 focus:outline-none
               "
-            placeholder="Search by fleet ID, name, email or phone..."
+            placeholder="Search by Fleet ID, Name, Email or Phone..."
             value={searchTerm}
             onChange={(event) => {
               const value = event.target.value;
+              isTypingRef.current = true;
               handleSearchChange(value);
               setSearchTerm(value);
             }}
@@ -79,7 +84,7 @@ export default function Header({ initialSearch = "" }: TProps) {
           <button
             className="
             flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white
-            bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+            bg-gradient-to-r from-primary to-[#5a66ee]
             shadow-[0_4px_14px_0_rgba(101,113,255,0.39)]
             hover:shadow-[0_6px_20px_rgba(101,113,255,0.23)]
             hover:-translate-y-0.5

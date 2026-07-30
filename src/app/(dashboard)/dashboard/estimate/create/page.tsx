@@ -19,6 +19,12 @@ import { CreateTab } from "./tabs/CreateTab";
 import PaymentTab from "./tabs/PaymentTab";
 import EstimateInspectionsTab from "./tabs/EstimateInspectionsTab";
 import DynamicTemplateLoader from "../DynamicTemplateLoader";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Invoices - Create Estimates",
+  description: "Create new estimate",
+};
 
 export default async function Page(props: {
   searchParams: Promise<{ clientId?: string; templateId?: string }>;
@@ -104,8 +110,8 @@ export default async function Page(props: {
   );
 
   return (
-    <div className="gap-3 space-y-4 overflow-clip py-2 md:-my-2 md:min-h-[93vh] xl:flex xl:space-y-0">
-      <div className="w-full xl:min-w-[68%] flex flex-col gap-4">
+    <div className="gap-3 space-y-4 overflow-clip py-2 md:-my-2 md:min-h-[93vh] xl:h-full xl:min-h-0 xl:flex xl:space-y-0">
+      <div className="w-full xl:min-w-[68%] flex flex-col gap-4 xl:min-h-0">
         <Title>Estimate</Title>
 
         <SyncLists
@@ -128,7 +134,7 @@ export default async function Page(props: {
 
         <Tabs
           defaultValue="create"
-          className="col-start-1 flex min-h-[40vh] lg:min-h-[69vh] flex-col overflow-clip flex-1"
+          className="col-start-1 flex min-h-[40vh] lg:min-h-[69vh] xl:min-h-0 flex-col overflow-clip flex-1"
         >
           <TabsList className="grid grid-cols-4 md:inline-flex -ml-4 rounded-bl-none p-0">
             <TabsTriggerCreate value="payments" className="order-4 md:order-1">
@@ -153,27 +159,27 @@ export default async function Page(props: {
 
           <TabsContent
             value="create"
-            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2"
+            className="flex-1 rounded-tl-none w-full overflow-y-auto thin-scrollbar p-2"
           >
             <CreateTab />
           </TabsContent>
 
           <TabsContent
             value="attachment"
-            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2"
+            className="flex-1 rounded-tl-none w-full overflow-y-auto thin-scrollbar p-2"
           >
             <AttachmentTab />
           </TabsContent>
 
           <TabsContent
             value="inspections"
-            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2"
+            className="flex-1 rounded-tl-none w-full overflow-y-auto thin-scrollbar p-2"
           >
             <EstimateInspectionsTab />
           </TabsContent>
           <TabsContent
             value="payments"
-            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2"
+            className="flex-1 rounded-tl-none w-full overflow-y-auto thin-scrollbar p-2"
           >
             <PaymentTab
               clientId={

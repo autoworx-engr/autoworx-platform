@@ -1,5 +1,4 @@
 "use client";
-import type { JSX } from "react";
 import { addFleet } from "@/actions/fleet/add";
 import { editFleet } from "@/actions/fleet/edit";
 import {
@@ -18,6 +17,7 @@ import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import { Client, Fleet, Tag } from "@prisma/client";
 import { CircleUserRound, SquarePen } from "lucide-react";
+import type { JSX } from "react";
 import { useEffect, useState, useTransition } from "react";
 import { RotatingLines } from "react-loader-spinner";
 import SelectComponent from "./Select";
@@ -231,9 +231,9 @@ export default function NewFleet({
     >
       <DialogTrigger asChild>
         {buttonElement ? (
-          <span className="text-[#6571FF]">{buttonElement}</span>
+          <span className="text-primary">{buttonElement}</span>
         ) : (
-          <button className="text-xs text-[#6571FF]">+ Add New Fleet</button>
+          <button className="text-xs text-primary">+ Add New Fleet</button>
         )}
       </DialogTrigger>
       <DialogContent
@@ -266,7 +266,7 @@ export default function NewFleet({
               </div>
               <label
                 htmlFor="profilePicture"
-                className="absolute bottom-0 right-0 p-1 bg-[#6571FF] rounded-full shadow-sm cursor-pointer transition-colors"
+                className="absolute bottom-0 right-0 p-1 bg-primary rounded-full shadow-sm cursor-pointer transition-colors"
               >
                 <SquarePen className="w-3 h-3 text-white" />
               </label>
@@ -291,7 +291,7 @@ export default function NewFleet({
                     rounded-full pl-4 pr-2 py-1.5
                     bg-white dark:bg-slate-800
                     border border-dashed border-slate-300 dark:border-slate-600
-                    hover:border-[#6571FF] hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20
+                    hover:border-primary hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20
                     transition-all duration-300
                 "
               htmlFor="profilePicture"
@@ -310,11 +310,11 @@ export default function NewFleet({
                 }}
               />
               <div className="flex flex-col items-end">
-                <span className="text-sm font-semibold text-slate-600 dark:text-slate-300 group-hover:text-[#6571FF] transition-colors">
+                <span className="text-sm font-semibold text-slate-600 dark:text-slate-300 group-hover:text-primary transition-colors">
                   Upload Photo
                 </span>
               </div>
-              <div className="p-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 group-hover:text-[#6571FF] group-hover:bg-white transition-colors">
+              <div className="p-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 group-hover:text-primary group-hover:bg-white transition-colors">
                 <CircleUserRound size={32} strokeWidth={2} />
               </div>
             </label>
@@ -346,7 +346,7 @@ export default function NewFleet({
               name="contactName"
               value={contactName}
               onChange={(e) => setContactName(e.target.value)}
-              label="Name of contact"
+              label="Name of Contact"
               required={true}
             />
           </div>
@@ -429,7 +429,9 @@ export default function NewFleet({
             </div>
 
             <div className="w-full">
-              <p className="mb-1 font-medium">Tag</p>
+              <p className="mb-1 font-medium text-slate-600 dark:text-slate-200 transition-colors duration-300">
+                Tag
+              </p>
               <SelectClientTags
                 value={tag}
                 setValue={setTag}
@@ -458,7 +460,7 @@ export default function NewFleet({
             onClick={() => startTransition(handleSubmit)}
             className="
               rounded-xl px-6 py-2.5 text-sm font-medium text-white
-              bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+              bg-gradient-to-r from-primary to-[#5a66ee]
               shadow-lg shadow-indigo-500/30
               hover:shadow-xl hover:shadow-indigo-500/40
               hover:-translate-y-0.5 hover:scale-[1.02]

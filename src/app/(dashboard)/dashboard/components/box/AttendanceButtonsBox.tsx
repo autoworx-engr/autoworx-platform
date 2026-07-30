@@ -241,7 +241,7 @@ export default function AttendanceButtonsBox({
             </div>
             <span className="text-xs font-light mt-1 block opacity-80">
               {/* Display break start time */}
-              Break started @{" "}
+              Break started{" "}
               {formatToTimeString(
                 new Date(
                   lastClockInOut!.ClockBreak[

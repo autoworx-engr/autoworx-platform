@@ -70,7 +70,14 @@ const InvoiceList = ({
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="w-full sm:max-w-md">
-          <FilterBySearchBox searchText={searchParams?.search as string} />
+          <FilterBySearchBox
+            searchText={searchParams?.search as string}
+            placeholder={
+              type === "Statement"
+                ? "Search by Statement"
+                : "Search by Invoice, Year, Make"
+            }
+          />
         </div>
 
         {/* Only show CreateStatementModal for Invoice type and when fleetId is available */}

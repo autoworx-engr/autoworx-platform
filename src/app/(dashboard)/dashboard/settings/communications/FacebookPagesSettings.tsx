@@ -29,7 +29,7 @@ export default async function FacebookPagesSettings({
 
         <Link
           href="/api/meta/auth"
-          className="inline-flex items-center gap-1.5 rounded-md bg-[#0866FF] px-4 py-1.5 text-sm font-medium text-white transition hover:bg-[#0057d9]"
+          className="inline-flex items-center gap-1.5 rounded-md bg-[#6470FF] px-4 py-1.5 text-sm font-medium text-white transition hover:bg-[#4f5ce6]"
         >
           <Link2 className="h-3.5 w-3.5" />
           {pages.length === 0 ? "Connect Facebook Page" : "Add Another Page"}
@@ -74,7 +74,7 @@ export default async function FacebookPagesSettings({
               {/* Left: avatar + info */}
               <div className="flex min-w-0 items-center gap-3">
                 <Image
-                  src={page.pictureUrl ?? "/images/default.png"}
+                  src={"/images/default.png"}
                   alt={page.pageName}
                   width={40}
                   height={40}

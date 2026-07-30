@@ -45,11 +45,11 @@ function TabTrigger({
         "group relative flex items-center justify-center gap-2.5 rounded-xl px-3 py-2 text-base font-medium transition-all duration-300 ease-out",
         isActive
           ? "text-white shadow-md shadow-indigo-500/25 ring-1 ring-black/5 translate-y-[-1px]"
-          : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200 [&>svg]:text-slate-400 [&>svg]:group-hover:text-[#6571FF]",
+          : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200 [&>svg]:text-slate-400 [&>svg]:group-hover:text-primary",
       )}
     >
       {isActive && (
-        <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#6571FF] to-[#5a66ee] -z-10" />
+        <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary to-[#5a66ee] -z-10" />
       )}
       {children}
     </Tabs.Trigger>
@@ -351,7 +351,7 @@ export default function MakePayment() {
                   height="24"
                   width="24"
                   xmlns="http://www.w3.org/2000/svg"
-                  className={tab === "CARD" ? "text-white" : "text-[#6571FF]"}
+                  className={tab === "CARD" ? "text-white" : "text-primary"}
                 >
                   <path
                     fillRule="evenodd"
@@ -784,7 +784,9 @@ export default function MakePayment() {
                   type="text"
                   label="Deposit Method"
                   value={depositMethod}
-                  onChange={(e) => setDepositMethod(e.target.value)}
+                  onChange={(e) =>
+                    setDepositMethod(e.target.value.replace(/[^a-zA-Z ]/g, ""))
+                  }
                   required={true}
                 />
               </div>
@@ -820,7 +822,7 @@ export default function MakePayment() {
               </button>
               <button
                 className="rounded-xl px-6 py-2.5 text-sm font-medium text-white
-                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                bg-gradient-to-r from-primary to-[#5a66ee]
                 shadow-lg shadow-indigo-500/30
                 hover:shadow-xl hover:shadow-indigo-500/40
                 hover:-translate-y-0.5 hover:scale-[1.02]

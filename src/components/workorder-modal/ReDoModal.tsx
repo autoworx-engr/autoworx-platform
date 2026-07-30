@@ -1,14 +1,14 @@
 "use client";
-import { DialogContent, DialogFooter } from "@/components/Dialog";
-import { Dialog } from "@/components/Dialog";
+import { Dialog, DialogContent, DialogFooter } from "@/components/Dialog";
+import { queryKeys } from "@/lib/queryKeys";
+import { createRedo } from "@/service/work-order/api";
+import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import { InvoiceRedo, Technician } from "@prisma/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { useState, useTransition } from "react";
-import RedoTechnician from "./RedoTechnician";
 import toast from "react-hot-toast";
 import { RotatingLines } from "react-loader-spinner";
-import { createInvoiceRedo } from "@/actions/estimate/labor/createInvoiceRedo";
-import { useQueryClient } from "@tanstack/react-query";
-import { queryKeys } from "@/lib/queryKeys";
+import RedoTechnician from "./RedoTechnician";
 
 type TProps = {
   invoiceId: string;
@@ -40,6 +40,7 @@ export default function ReDoModal({
   );
   const [pending, startTransition] = useTransition();
   const queryClient = useQueryClient();
+  const currentUser = useGetCurrentUser();
 
   const isInvoiceDelivered = invoiceStatus === "Delivered";
   const hasExistingRedo = existingRedos.length > 0;
@@ -84,16 +85,23 @@ export default function ReDoModal({
       toast.error("Please select at least one technician");
       return;
     }
+    if (!currentUser?.companyId) return;
     try {
-      const response = await createInvoiceRedo(redoTechnicians);
-      if (response.status === 200) {
-        setRedoTechnicians([]);
-        setOpen(false);
-        toast.success("Redo saved successfully");
-        await queryClient.invalidateQueries({
-          queryKey: queryKeys.getWorkOrderDataKey(parentInvoiceId),
-        });
-      }
+      await createRedo(
+        currentUser.companyId,
+        invoiceId,
+        redoTechnicians.map(({ serviceId, technicianId, notes }) => ({
+          serviceId,
+          technicianId,
+          notes,
+        })),
+      );
+      setRedoTechnicians([]);
+      setOpen(false);
+      toast.success("Redo saved successfully");
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.getWorkOrderDataKey(parentInvoiceId),
+      });
     } catch (err) {
       toast.error("Failed to save redo technicians");
     }
@@ -108,7 +116,7 @@ export default function ReDoModal({
             e.stopPropagation();
             setOpen(true);
           }}
-          className="flex items-center gap-1 rounded-full bg-[#6571FF] px-2 py-0.5 text-white"
+          className="flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-white"
         >
           Re-Do
         </button>
@@ -147,7 +155,7 @@ export default function ReDoModal({
               <button
                 disabled={pending}
                 onClick={() => startTransition(handleSaveInvoiceRedo)}
-                className="mx-auto rounded bg-[#6571FF] px-8 py-2 text-white"
+                className="mx-auto rounded bg-primary px-8 py-2 text-white"
               >
                 {pending ? (
                   <RotatingLines

@@ -20,6 +20,7 @@ export async function makeFleetStatementPayment(data: {
   creditCard?: string;
   cardType?: CardType;
   paymentMethodId?: number;
+  receivedCash?: string;
 }): Promise<ServerAction | TErrorHandler> {
   try {
     // Validate input
@@ -158,7 +159,10 @@ export async function makeFleetStatementPayment(data: {
                     amount: paymentAmount,
                     companyId: companyId,
                     cash: {
-                      create: { receivedCash: paymentAmount.toString() },
+                      create: {
+                        receivedCash:
+                          data.receivedCash ?? paymentAmount.toString(),
+                      },
                     },
                   },
                   include: { cash: true },

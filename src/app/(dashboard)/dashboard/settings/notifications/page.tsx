@@ -2,6 +2,12 @@ import { db } from "@/lib/db";
 import getUser from "@/lib/getUser";
 import NotificationContainer from "./NotificationContainer";
 import NotificationPermissionAlert from "./NotificationPermissionAlert";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Settings - Notifications",
+  description: "Manage your notifications",
+};
 
 const NotificationSettingPage = async () => {
   const user = await getUser();
@@ -17,7 +23,6 @@ const NotificationSettingPage = async () => {
   const uniqueSections = Array.from(
     new Set(notificationSections.map((section) => section.section)),
   );
-
 
   return (
     <div className="flex w-full flex-col">

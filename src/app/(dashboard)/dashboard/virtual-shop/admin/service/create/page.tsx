@@ -3,8 +3,14 @@ import Title from "@/components/Title";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import { Material, Tag } from "@prisma/client";
+import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import ServiceCreateClient from "./ServiceCreateClient";
+
+export const metadata = {
+  title: "Virtual Shop - Create Service",
+  description: "Create or edit a virtual shop service",
+};
 
 type InitialServiceData = {
   id: number;

@@ -1,13 +1,13 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import { Switch, Checkbox } from "antd";
-import { permissionModuleForAdminManager } from "@/lib/permissionModule";
 import {
   getPermissionsForRole,
   updatePermissionForRole,
 } from "@/actions/settings/teamManagement";
-import { successToast, errorToast } from "@/lib/toast";
+import { permissionModuleForAdminManager } from "@/lib/permissionModule";
+import { errorToast, successToast } from "@/lib/toast";
 import { useTeamManagementStore } from "@/stores/teamManagementStore";
+import { Checkbox, Switch } from "antd";
+import { useEffect, useState } from "react";
 
 interface PermissionWithIndexSignature {
   [key: string]: boolean;
@@ -141,7 +141,7 @@ export default function UserRolesTable() {
             <table className="w-full min-w-[720px] border-collapse text-sm">
               <thead>
                 <tr className="bg-slate-50/90">
-                  <th className="sticky left-0 z-20 border-b border-slate-200 bg-slate-50 px-4 py-3 text-left font-semibold text-slate-600">
+                  <th className="sticky left-0 z-20 w-[200px] min-w-[200px] max-w-[200px] border-b border-slate-200 bg-slate-50 px-4 py-3 text-left font-semibold text-slate-600">
                     Modules
                   </th>
                   {roles.map((role) => (
@@ -159,10 +159,10 @@ export default function UserRolesTable() {
                   Array.from({ length: 8 }).map((_, index) => (
                     <tr
                       key={`skeleton-${index + 1}`}
-                      className="border-b border-slate-100 last:border-b-0 even:bg-slate-50/30"
+                      className="border-b border-slate-100 bg-white last:border-b-0 even:bg-slate-50"
                     >
-                      <td className="sticky left-0 z-10 bg-inherit px-4 py-3">
-                        <div className="h-4 w-52 animate-pulse rounded bg-slate-200" />
+                      <td className="sticky left-0 z-10 w-[200px] min-w-[200px] max-w-[200px] bg-inherit px-4 py-3">
+                        <div className="h-4 w-40 animate-pulse rounded bg-slate-200" />
                       </td>
                       {roles.map((role) => (
                         <td key={role} className="px-5 py-3 text-center">
@@ -176,9 +176,9 @@ export default function UserRolesTable() {
                   permissionModuleForAdminManager.map((module, index) => (
                     <tr
                       key={index + 1}
-                      className="border-b border-slate-100 last:border-b-0 even:bg-slate-50/30"
+                      className="border-b border-slate-100 bg-white last:border-b-0 even:bg-slate-50"
                     >
-                      <td className="sticky left-0 z-10 bg-inherit px-4 py-3 font-medium text-slate-600">
+                      <td className="sticky left-0 z-10 w-[200px] min-w-[200px] max-w-[200px] whitespace-normal break-words bg-inherit px-4 py-3 font-medium text-slate-600">
                         {module.label}
                       </td>
                       {roles.map((role) => {
@@ -197,7 +197,7 @@ export default function UserRolesTable() {
                               <div className="flex items-center justify-center">
                                 <Switch
                                   checked={permission}
-                                  className="max-w-2 !bg-slate-200 shadow-sm [&.ant-switch-checked]:!bg-[#6571FF]/80 [&.ant-switch-checked]:!border-[#6571FF]"
+                                  className="max-w-2 !bg-slate-200 shadow-sm [&.ant-switch-checked]:!bg-primary/80 [&.ant-switch-checked]:!border-primary"
                                   onChange={(checked) =>
                                     handleToggle(role, module.key, checked)
                                   }
@@ -209,7 +209,7 @@ export default function UserRolesTable() {
                             {canViewOnly && (
                               <div className="mt-1 flex items-center justify-center gap-1 text-[11px] text-slate-500">
                                 <Checkbox
-                                  className="[&_.ant-checkbox-checked_.ant-checkbox-inner]:!border-[#6571FF] [&_.ant-checkbox-checked_.ant-checkbox-inner]:!bg-[#6571FF]/80"
+                                  className="[&_.ant-checkbox-checked_.ant-checkbox-inner]:!border-primary [&_.ant-checkbox-checked_.ant-checkbox-inner]:!bg-primary/80"
                                   checked={isViewOnly}
                                   onChange={(e) =>
                                     handleToggle(

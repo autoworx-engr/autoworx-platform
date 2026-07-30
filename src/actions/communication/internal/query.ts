@@ -18,32 +18,6 @@ export const getGroupById = async (groupId: number, userId: number) => {
 };
 
 /**
- * Legacy: returns the full nested group with all messages. Kept for any
- * caller that still relies on the old shape. New code (and the internal
- * group chat box) should use {@link getGroupMessagesPaginated}.
- */
-export const getGroupMessagesById = async (groupId: number) => {
-  const groupMessage = await db.group.findUnique({
-    where: {
-      id: groupId,
-    },
-    select: {
-      id: true,
-      messages: {
-        select: {
-          groupId: true,
-          from: true,
-          message: true,
-          createdAt: true,
-          attachment: true,
-        },
-      },
-    },
-  });
-  return groupMessage;
-};
-
-/**
  * Legacy: returns every message where the given user is sender or recipient.
  * Callers (currently collaboration) filter the result client-side. New code
  * should call {@link getUserMessagesByPair} which scopes both ends in SQL and
@@ -100,12 +74,6 @@ type PaginatedArgs = {
   take?: number;
 };
 
-/**
- * Direct-message thread between exactly two users, newest first, paginated.
- * Tightens the where clause from `(from = me OR to = me)` (which the legacy
- * helper used and forced JS-side filtering) to `((from=me AND to=other) OR
- * (from=other AND to=me))` so the DB returns only the relevant pair.
- */
 export const getUserMessagesByPair = async (
   currentUserId: number,
   otherUserId: number,
@@ -144,11 +112,13 @@ export const getUserMessagesByPair = async (
   };
 };
 
-/**
- * Paginated group thread, newest first. Group existence + membership is
- * still verified by the existing `getUserInGroup` helper from the caller —
- * not folded in here so this function stays a pure data fetch.
- */
+export type GroupMessageSender = {
+  id: number;
+  firstName: string | null;
+  lastName: string | null;
+  image: string | null;
+};
+
 export const getGroupMessagesPaginated = async (
   groupId: number,
   { pageParam = 1, take = DEFAULT_MESSAGE_TAKE }: PaginatedArgs = {},
@@ -156,7 +126,7 @@ export const getGroupMessagesPaginated = async (
   const skip = Math.max(0, (pageParam - 1) * take);
   const where = { groupId };
 
-  const [data, total] = await Promise.all([
+  const [rows, total] = await Promise.all([
     db.message.findMany({
       where,
       select: {
@@ -173,6 +143,22 @@ export const getGroupMessagesPaginated = async (
     }),
     db.message.count({ where }),
   ]);
+
+  const senderIds = Array.from(
+    new Set(rows.map((m) => m.from).filter((id): id is number => id != null)),
+  );
+  const senders = senderIds.length
+    ? await db.user.findMany({
+        where: { id: { in: senderIds } },
+        select: { id: true, firstName: true, lastName: true, image: true },
+      })
+    : [];
+  const senderById = new Map(senders.map((u) => [u.id, u]));
+
+  const data = rows.map((m) => ({
+    ...m,
+    sender: m.from != null ? (senderById.get(m.from) ?? null) : null,
+  }));
 
   const hasMore = skip + data.length < total;
   return {

@@ -9,6 +9,10 @@ export const internalKeys = {
   users: (companyId: number, search: string = "") =>
     ["internal", "users", companyId, search] as const,
 
+  /** Sidebar groups list. Same shape as `users` — search resets pagination. */
+  groups: (companyId: number, search: string = "") =>
+    ["internal", "groups", companyId, search] as const,
+
   /** Direct-message thread between two specific users. */
   userMessages: (currentUserId: number, otherUserId: number) =>
     ["internal", "user-messages", currentUserId, otherUserId] as const,

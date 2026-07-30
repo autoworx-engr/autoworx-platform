@@ -11,6 +11,8 @@ interface CalendarSearchDropdownProps {
   isAppointmentError: boolean;
   searchTerm: string;
   searchResults: SearchResult[];
+  hasMore: boolean;
+  loadMore: () => void;
   handleResultClick: (result: SearchResult) => void;
   dropdownRef: React.RefObject<HTMLDivElement | null>;
 }
@@ -22,6 +24,8 @@ export function CalendarSearchDropdown({
   isAppointmentError,
   searchTerm,
   searchResults,
+  hasMore,
+  loadMore,
   handleResultClick,
   dropdownRef,
 }: CalendarSearchDropdownProps) {
@@ -70,7 +74,7 @@ export function CalendarSearchDropdown({
       >
         <div className="px-4 py-8 flex items-center justify-center">
           <div className="flex items-center justify-center gap-2">
-            <div className="flex-1 h-4 w-4 animate-spin rounded-full border-2 border-[#6571FF] border-t-transparent"></div>
+            <div className="flex-1 h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
             <span className="flex-1 w-fit text-sm text-slate-500 dark:text-slate-400 font-medium">
               Searching...
             </span>
@@ -86,7 +90,17 @@ export function CalendarSearchDropdown({
         ref={dropdownRef}
         className="absolute z-50 mt-2 w-full lg:w-80 xl:w-80 overflow-hidden rounded-xl ring-1 ring-slate-900/5 dark:ring-slate-700/50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm shadow-xl"
       >
-        <div className="max-h-80 overflow-y-auto thin-scrollbar">
+        <div
+          className="max-h-80 overflow-y-auto thin-scrollbar"
+          onScroll={(e) => {
+            if (!hasMore) return;
+            const el = e.currentTarget;
+            // Load the next window when scrolled near the bottom.
+            if (el.scrollHeight - el.scrollTop - el.clientHeight < 80) {
+              loadMore();
+            }
+          }}
+        >
           {searchResults.map((result, index) => (
             <div key={`${result.type}-${result.id}`}>
               <div
@@ -100,7 +114,7 @@ export function CalendarSearchDropdown({
                     </h3>
                     <span
                       className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold border 
-                                  bg-[#6571FF]/10 text-[#6571FF] dark:text-cyan-400 border-[#6571FF]/50 flex-shrink-0 absolute top-3 right-4`}
+                                  bg-primary/10 text-primary dark:text-cyan-400 border-primary/50 flex-shrink-0 absolute top-3 right-4`}
                       style={{ color: "#6571FF", borderColor: "#6571FF" }}
                     >
                       {result.type}

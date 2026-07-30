@@ -5,6 +5,7 @@ import { Switch } from "@/components/Switch";
 import { useRouter } from "nextjs-toploader/app";
 import { useUpdateShopServiceStatus } from "@/hooks/virtual-shop/service/useShopService";
 import { formatDuration } from "@/lib/formatDuration";
+import { useState } from "react";
 
 export type Service = {
   id: number;
@@ -31,6 +32,7 @@ export default function ServiceCard({
   onDelete,
 }: ServiceCardProps) {
   const router = useRouter();
+  const [imageFailed, setImageFailed] = useState(false);
   const {
     mutateAsync: updateServiceStatus,
     isPending: isUpdatingStatus,
@@ -63,12 +65,13 @@ export default function ServiceCard({
     <div className="group flex flex-col lg:flex-row lg:justify-between rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition-all hover:border-slate-300 hover:shadow-md sm:px-4 sm:py-3">
       <div className="flex items-start gap-3 sm:items-center sm:gap-4">
         <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-100 sm:h-16 sm:w-16">
-          {service.imageUrl ? (
+          {service.imageUrl && !imageFailed ? (
             <Image
               src={service.imageUrl}
               alt={service.name}
               fill
               className="object-cover"
+              onError={() => setImageFailed(true)}
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-slate-100 text-slate-300">

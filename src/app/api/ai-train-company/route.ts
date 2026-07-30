@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * @swagger
- * /api/sales-agent-company:
+ * /api/ai-train-company:
  *   get:
  *     summary: Get all AI training data for a specific company
  *     tags: [AI Training]

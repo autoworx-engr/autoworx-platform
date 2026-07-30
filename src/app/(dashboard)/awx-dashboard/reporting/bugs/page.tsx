@@ -1,8 +1,16 @@
+import { authOptions } from "@/authOptions";
 import { db } from "@/lib/db";
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
 import React from "react";
 import ReportingStatisticsCard from "../../components/ReportingStatisticsCard";
 
 export default async function Bugs() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.isSuperAdmin) {
+    redirect("/dashboard");
+  }
+
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
@@ -11,7 +19,7 @@ export default async function Bugs() {
     db.bugReport.count({ where: { createdAt: { gte: startOfMonth } } }),
   ]);
 
-  const bugsLastMonthCount = totalBugs - bugsThisMonth;
+  const olderBugsCount = totalBugs - bugsThisMonth;
 
   return (
     <div className="min-h-screen">
@@ -26,7 +34,7 @@ export default async function Bugs() {
         />
         <ReportingStatisticsCard
           title="Older Reports"
-          statistic={bugsLastMonthCount}
+          statistic={olderBugsCount}
         />
       </div>
     </div>

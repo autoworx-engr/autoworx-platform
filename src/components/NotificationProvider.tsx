@@ -1,28 +1,25 @@
-import React, { useCallback, useEffect, useState, useTransition } from "react";
-import Link from "next/link";
-import Image from "next/image";
+import { cn } from "@/lib/utils";
 import {
   Bell,
   CheckCheck,
-  Clock,
-  Settings,
-  Circle,
-  Layers,
-  Check,
   CheckCircle,
+  Clock,
+  Layers,
   Store,
 } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import React, { useEffect, useState, useTransition } from "react";
 import { fToNow } from "src/utils/formatDate";
-import { cn } from "@/lib/utils";
 
 // Shadcn UI Components
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 
@@ -112,12 +109,12 @@ export function NotificationsPopover() {
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        <button className="relative h-9 w-9 rounded-full hover:bg-slate-100 p-1">
+        <button className="relative h-9 w-9 rounded-full p-1">
           <svg
             viewBox="-1.28 -1.28 18.56 18.56"
             xmlns="http://www.w3.org/2000/svg"
             fill="currentColor"
-            className="h-5 w-5 sm:h-7 sm:w-7 text-white sm:text-[#6571FF]"
+            className="h-5 w-5 sm:h-7 sm:w-7 text-white sm:text-primary"
             stroke="currentColor"
             strokeWidth="0.41600000000000004"
           >
@@ -133,7 +130,7 @@ export function NotificationsPopover() {
             </g>
           </svg>
           {totalUnRead > 0 && (
-            <Badge className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-red-500 p-0 text-[10px] font-bold text-white">
+            <Badge className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-red-500 hover:bg-red-600 p-0 text-[10px] font-bold text-white">
               {totalUnRead > 99 ? "99+" : totalUnRead}
             </Badge>
           )}
@@ -159,7 +156,7 @@ export function NotificationsPopover() {
             <Button
               variant="ghost"
               size="icon"
-              className="text-[#6571FF]"
+              className="text-primary"
               onClick={handleMarkAllAsRead}
             >
               <CheckCheck size={18} />
@@ -192,7 +189,7 @@ export function NotificationsPopover() {
         {!isViewAll && notifications.length > 0 && (
           <div className="p-3 bg-slate-50/50 hover:bg-slate-100 border-t border-slate-200">
             <button
-              className="w-full font-semibold text-[#6571FF]"
+              className="w-full font-semibold text-primary"
               onClick={() => {
                 setLimit(maxLimit);
                 setIsViewAll(true);
@@ -222,21 +219,21 @@ function NotificationItem({ notification, setIsOpen, onMarkRead }: any) {
     <div
       className={cn(
         "group relative flex items-start gap-4 p-4 transition-all hover:bg-slate-50",
-        notification.isUnRead && "bg-[#6571FF]/[0.02]",
+        notification.isUnRead && "bg-primary/[0.02]",
       )}
     >
       <div
         className={cn(
           "mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl",
           notification.isUnRead
-            ? "bg-[#6571FF] text-white shadow-lg shadow-[#6571FF]/30"
-            : "bg-[#6571FF]/20 text-[#6571FF]",
+            ? "bg-primary text-white shadow-lg shadow-primary/30"
+            : "bg-primary/20 text-primary",
         )}
       >
         {avatarUrl}
       </div>
 
-      <div className="flex flex-1 flex-col gap-1">
+      <div className="flex flex-1 min-w-0 flex-col gap-1">
         <Link
           href={notification.redirectUrl || "#"}
           onClick={() => {
@@ -257,7 +254,7 @@ function NotificationItem({ notification, setIsOpen, onMarkRead }: any) {
         <Button
           variant="ghost"
           size="icon"
-          className="h-6 w-6 text-[#6571FF] hover:text-[#6571FF]/80"
+          className="h-6 w-6 text-primary hover:text-primary/80"
           onClick={handleAction}
           disabled={isPending}
         >

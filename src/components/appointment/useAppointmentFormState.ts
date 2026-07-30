@@ -9,13 +9,12 @@ import useEstimatesQueryByClient from "@/hooks/query-hook/useEstimatesQueryByCli
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { queryKeys } from "@/lib/queryKeys";
 import { errorToast, successToast } from "@/lib/toast";
-import { useFormErrorStore } from "@/stores/form-error";
 import { useCalendarStore } from "@/stores/calendarStore";
+import { useFormErrorStore } from "@/stores/form-error";
 import { formatTime12Hour } from "@/utils/formateTime12Hours";
 import { normalizeTime } from "@/utils/normalizeTime";
 import { formatTime } from "@/utils/taskAndActivity";
 import { addOneHour } from "@/utils/time";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   Appointment,
   Client,
@@ -24,6 +23,7 @@ import type {
   User,
   Vehicle,
 } from "@prisma/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import moment from "moment-timezone";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -102,7 +102,7 @@ export function useAppointmentFormState({
   });
 
   const timezone = useCompanyTimezone();
-  const today = moment.tz(timezone).format("YYYY-MM-DD");
+  const today = moment().format("YYYY-MM-DD");
 
   const [tab, setTab] = useState(Tab.Reminder);
   const [date, setDate] = useState<string | undefined>(
@@ -124,8 +124,8 @@ export function useAppointmentFormState({
     }
   }, [title]);
   const [notes, setNotes] = useState("");
-  const [startTime, setStartTime] = useState("00:00");
-  const [endTime, setEndTime] = useState("00:00");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
   const [allDay, setAllDay] = useState(false);
   const [vehicle, setVehicle] = useState<Partial<Vehicle> | null>(null);
   const [serviceCategoryId, setServiceCategoryId] = useState<number | null>(
@@ -190,8 +190,8 @@ export function useAppointmentFormState({
     setTitle("");
     setDate(today);
     setEndDate(undefined);
-    setStartTime("00:00");
-    setEndTime("00:00");
+    setStartTime("");
+    setEndTime("");
     setClient(null);
     setVehicle(null);
     setServiceCategoryId(null);
@@ -337,6 +337,8 @@ export function useAppointmentFormState({
   }, [fromEdit, today, draftEstimateId]);
 
   useEffect(() => {
+    if (fromEdit) return;
+
     if (selectedStartTime) {
       if (
         typeof selectedStartTime === "string" &&
@@ -368,7 +370,7 @@ export function useAppointmentFormState({
         }
       }
     }
-  }, [selectedDate, selectedStartTime]);
+  }, [selectedDate, selectedStartTime, fromEdit]);
 
   useEffect(() => {
     if (!fromEdit && !selectedDate) {
@@ -383,9 +385,14 @@ export function useAppointmentFormState({
   }, [resetAll]);
 
   useEffect(() => {
-    if (allDay && settings) {
-      setStartTime(settings.dayStart);
-      setEndTime(settings.dayEnd);
+    const calendarSettings = (settings as any)?.data ?? settings;
+    if (allDay && calendarSettings?.dayStart && calendarSettings?.dayEnd) {
+      const toHm = (t: string) => {
+        const m = moment(t, ["HH:mm:ss", "HH:mm", "h:mm A"], true);
+        return m.isValid() ? m.format("HH:mm") : t;
+      };
+      setStartTime(toHm(calendarSettings.dayStart));
+      setEndTime(toHm(calendarSettings.dayEnd));
     } else if (settings) {
       if (fromEdit && appointment) {
         setTitle(appointment?.title || "");
@@ -407,25 +414,11 @@ export function useAppointmentFormState({
             setEndTime(parsed.format("HH:mm"));
           }
         }
-      } else {
-        let now = moment.tz(timezone);
-        const roundedMinutes = Math.ceil(now.minute() / 15) * 15;
-        now.minute(roundedMinutes).second(0).millisecond(0);
-        setStartTime(now.format("HH:mm"));
-        const end = now.clone().add(1, "hours");
-        setEndTime(end.format("HH:mm"));
       }
+      // On create (not edit, not all-day) leave the times empty so the user
+      // picks them — mirrors the task form. No auto "now" default.
     }
-  }, [allDay, settings, date, fromEdit, appointment, timezone]);
-
-  useEffect(() => {
-    let now = moment.tz(timezone);
-    const roundedMinutes = Math.ceil(now.minute() / 15) * 15;
-    now.minute(roundedMinutes).second(0).millisecond(0);
-    setStartTime(now.format("HH:mm"));
-    const end = now.clone().add(1, "hours");
-    setEndTime(end.format("HH:mm"));
-  }, [timezone]);
+  }, [allDay, settings, date, fromEdit, appointment]);
 
   useEffect(() => {
     setFormChanged(
@@ -738,6 +731,22 @@ export function useAppointmentFormState({
     const label = formatTime12Hour(hour, minute, timezone);
     return { value, label };
   });
+
+  // Business hours can be off the 15-minute grid (e.g. "10:40"). Inject the exact
+  // dayStart/dayEnd as options so the "all day" value matches one and renders with
+  // a proper 12-hour label instead of falling back to the raw "HH:mm" string.
+  const calendarSettings = (settings as any)?.data ?? settings;
+  [calendarSettings?.dayStart, calendarSettings?.dayEnd].forEach((t) => {
+    const m = t ? moment(t, ["HH:mm:ss", "HH:mm", "h:mm A"], true) : null;
+    if (!m || !m.isValid()) return;
+    const value = m.format("HH:mm");
+    if (timeOptions.some((o) => o.value === value)) return;
+    timeOptions.push({
+      value,
+      label: formatTime12Hour(m.hour(), m.minute(), timezone),
+    });
+  });
+  timeOptions.sort((a, b) => a.value.localeCompare(b.value));
 
   // Scroll schedule to settings day start
   useEffect(() => {

@@ -114,7 +114,7 @@ export default function SelectCategory({
           category
             ? category.name || `Category ${category.id}`
             : required
-              ? "Select Category*"
+              ? "Select Category"
               : "Category"
         }
         newButton={
@@ -137,7 +137,7 @@ export default function SelectCategory({
                   className={cn(
                     "w-full rounded-lg bg-slate-50 px-3 py-2 text-sm font-medium outline-none transition-all",
                     "ring-1 ring-inset ring-slate-200 placeholder:text-slate-400",
-                    "focus:bg-white focus:ring-2 focus:ring-[#6571FF]/40",
+                    "focus:bg-white focus:ring-2 focus:ring-primary/40",
                     error && "ring-red-200 focus:ring-red-400",
                   )}
                 />
@@ -150,7 +150,7 @@ export default function SelectCategory({
                 className={cn(
                   "rounded-lg px-4 text-xs font-bold uppercase tracking-wider text-white transition-all active:scale-95",
                   categoryInput && !error
-                    ? "bg-[#6571FF] shadow-lg shadow-[#6571FF]/20 hover:bg-[#525ee5]"
+                    ? "bg-primary shadow-lg shadow-primary/20 hover:bg-[#525ee5]"
                     : "bg-slate-300 cursor-not-allowed",
                 )}
               >
@@ -167,10 +167,10 @@ export default function SelectCategory({
         items={categories}
         displayList={(category: Category) => (
           <div className="flex items-center justify-between group py-0.5">
-            <p className="text-sm font-medium text-slate-700 group-hover:text-[#6571FF] transition-colors">
+            <p className="text-sm font-medium text-slate-700 group-hover:text-primary transition-colors">
               {category.name}
             </p>
-            
+
             <div onClick={(e) => e.stopPropagation()}>
               <Popconfirm
                 title="Delete Category"

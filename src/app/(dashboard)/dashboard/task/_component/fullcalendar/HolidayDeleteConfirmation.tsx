@@ -28,10 +28,6 @@ export default function HolidayDeleteConfirmation({
     try {
       const response = await deleteHoliday(holidayId);
       if (response?.status === 200) {
-        const removedHoliday = moment(response.data.date).format(
-          "MMMM DD, YYYY",
-        );
-        console.log("removedHoliday", removedHoliday);
         queryClient.setQueryData(
           [calenderQueryKey.holidays],
           (oldData: Holiday[]) => {
@@ -43,10 +39,13 @@ export default function HolidayDeleteConfirmation({
         queryClient.invalidateQueries({
           queryKey: [calenderQueryKey.holidays, selectedMonth, selectedYear],
         });
-        toast.success(`${removedHoliday} - Holiday removed successfully!`);
+        const removedHoliday = response.data?.date
+          ? moment.utc(response.data.date).format("MMMM DD, YYYY")
+          : "Holiday";
+        toast.success(`${removedHoliday} removed successfully!`);
         setOpen(false);
       } else {
-        throw new Error("Failed to remove holiday");
+        throw new Error(response?.error || "Failed to remove holiday");
       }
     } catch (err: any) {
       toast.error(err.message);
@@ -63,17 +62,35 @@ export default function HolidayDeleteConfirmation({
           className={`cursor-pointer size-3 sm:size-4 ${!isMonthly ? "text-red-500" : "text-orange-500"} `}
         />
       </button>
-      <DialogContent>
-        <h2 className="mt-5 text-center text-xl font-semibold">
-          Are you sure you want to remove this holiday?
-        </h2>
-        <DialogFooter className="py-4">
+      <DialogContent className="max-w-sm rounded-xl">
+        <div className="flex flex-col items-center text-center">
+          <div className="flex size-12 items-center justify-center rounded-full bg-red-100">
+            <Trash2 className="size-6 text-red-500" />
+          </div>
+          <h2 className="mt-4 text-lg font-semibold text-gray-900">
+            Remove holiday?
+          </h2>
+          <p className="mt-1 text-sm text-gray-500">
+            This holiday will be permanently removed from the calendar. This
+            action can&apos;t be undone.
+          </p>
+        </div>
+        <DialogFooter className="mt-5 flex-nowrap justify-stretch gap-3">
           <button
+            type="button"
+            disabled={pending}
+            onClick={() => setOpen(false)}
+            className="flex-1 rounded-lg border border-gray-200 px-4 py-2 font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
             disabled={pending}
             onClick={() => startTransition(handleRemoveHoliday)}
-            className="mx-auto rounded bg-[#6571FF] px-8 py-2 text-white"
+            className="flex-1 rounded-lg bg-red-500 px-4 py-2 font-medium text-white transition-colors hover:bg-red-600 disabled:opacity-50"
           >
-            Confirm Remove
+            {pending ? "Removing..." : "Remove"}
           </button>
         </DialogFooter>
       </DialogContent>

@@ -39,6 +39,18 @@ export interface CurrentProject {
   totalPayout: number;
   dueDate: Date | null;
   startDate: Date | null;
+  status: {
+    id: number;
+    name: string;
+    textColor: string;
+    bgColor: string;
+  } | null;
+  column: {
+    id: number;
+    title: string;
+    textColor: string | null;
+    bgColor: string | null;
+  } | null;
 }
 export async function getCurrentProjects(
   currentUserId?: number,
@@ -77,6 +89,8 @@ export async function getCurrentProjects(
         },
       },
       vehicle: true,
+      status: true,
+      column: true,
     },
   });
 
@@ -122,6 +136,22 @@ export async function getCurrentProjects(
       totalPayout,
       dueDate: earliestDueDate, // Now using technician due date instead of invoice due date
       startDate: earliestStartDate,
+      status: invoice.status
+        ? {
+            id: invoice.status.id,
+            name: invoice.status.name,
+            textColor: invoice.status.textColor,
+            bgColor: invoice.status.bgColor,
+          }
+        : null,
+      column: invoice.column
+        ? {
+            id: invoice.column.id,
+            title: invoice.column.title,
+            textColor: invoice.column.textColor,
+            bgColor: invoice.column.bgColor,
+          }
+        : null,
     };
   });
 

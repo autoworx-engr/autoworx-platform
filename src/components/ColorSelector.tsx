@@ -11,11 +11,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/Dialog";
-import FormError from "@/components/FormError";
 import { SlimInput } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
 import { errorToast } from "@/lib/toast";
-import { useFormErrorStore } from "@/stores/form-error";
 import { VehicleColor } from "@prisma/client";
 import { ChevronDown, ChevronUp, Search } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -59,7 +57,7 @@ export default function ColorSelector({
       setFilteredColors(colors);
     } else {
       const filtered = colors.filter((color) =>
-        color.name.toLowerCase().includes(query)
+        color.name.toLowerCase().includes(query),
       );
       setFilteredColors(filtered);
     }
@@ -92,7 +90,7 @@ export default function ColorSelector({
             mt-1 flex w-full items-center justify-between rounded-lg border border-slate-300 dark:border-slate-700
             bg-white dark:bg-slate-900 px-3 py-2 text-left text-sm font-medium text-slate-600 dark:text-slate-200
             transition-all duration-200
-            hover:border-[#6571FF] hover:shadow-md focus:ring-2 focus:ring-[#6571FF]/30 focus:border-[#6571FF]
+            hover:border-primary hover:shadow-md focus:ring-2 focus:ring-primary/30 focus:border-primary
           `}
           onClick={() => setColorOpen(!colorOpen)}
         >
@@ -115,10 +113,10 @@ export default function ColorSelector({
               />
               <input
                 type="text"
-                placeholder="Search colors"
+                placeholder="Search Colors"
                 value={searchQuery}
                 onChange={handleSearchChange}
-                className="w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-9 py-2 text-sm text-slate-700 dark:text-slate-200 outline-none focus:border-[#6571FF] focus:ring-2 focus:ring-[#6571FF]/30"
+                className="w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-9 py-2 text-sm text-slate-700 dark:text-slate-200 outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
               />
             </div>
             <div className="thin-scrollbar max-h-48 overflow-y-auto">
@@ -126,10 +124,9 @@ export default function ColorSelector({
                 <button
                   key={color.id}
                   type="button"
-                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="flex w-full items-center gap-2 px-3 py-2 border-b border-slate-200 rounded-sm dark:border-slate-800 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
                   onClick={() => handleSelectColor(color)}
                 >
-                  <span className="h-3.5 w-3.5 rounded-full bg-slate-300" aria-hidden />
                   <span>{color.name}</span>
                 </button>
               ))}
@@ -200,7 +197,7 @@ export function NewVehicleColor({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button type="button" className="text-xs text-[#6571FF]">
+        <button type="button" className="text-xs text-primary">
           + New Color
         </button>
       </DialogTrigger>
@@ -229,7 +226,7 @@ export function NewVehicleColor({
             <Submit
               className="
                 rounded-xl px-6 py-2.5 text-sm font-medium text-white
-                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                bg-gradient-to-r from-primary to-[#5a66ee]
                 shadow-lg shadow-indigo-500/30
                 hover:shadow-xl hover:shadow-indigo-500/40
                 hover:-translate-y-0.5 hover:scale-[1.02]

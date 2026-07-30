@@ -1,4 +1,4 @@
-import { getCompanyIdFromBearer } from "@/lib/mobileAuth";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 import { fetchAndTransformData } from "@/lib/fetchAndTransformData";
 import { InvoiceType } from "@prisma/client";
@@ -62,7 +62,7 @@ import { InvoiceType } from "@prisma/client";
 
 export async function GET(req: NextRequest) {
   try {
-    const jwtCompanyId = await getCompanyIdFromBearer(req);
+    const jwtCompanyId = (await getAuthPrincipal(req))?.companyId ?? null;
     if (jwtCompanyId === null) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

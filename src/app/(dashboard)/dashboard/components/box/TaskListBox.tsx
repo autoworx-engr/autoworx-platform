@@ -2,7 +2,7 @@
 import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
 import useTasksQueryForDashboard from "@/hooks/query-hook/useTasksQueryForDashboard";
 import BoxTitle from "./BoxTitle";
-import Task from "./Task";
+import TaskListItem from "@/components/task/TaskListItem";
 import { queryKeys } from "@/lib/queryKeys";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePermissionStore } from "@/stores/permissionStore";
@@ -29,10 +29,11 @@ export default function TaskListBox() {
   };
 
   const handleTaskDeleted = (taskId: number) => {
-    // Immediately update the UI by invalidating queries
-    queryClient.invalidateQueries({
-      queryKey: queryKeys.dashboardTask,
-    });
+    queryClient.setQueriesData(
+      { queryKey: queryKeys.dashboardTask },
+      (old: { id: number }[] | undefined) =>
+        Array.isArray(old) ? old.filter((t) => t.id !== taskId) : old,
+    );
   };
 
   let content = null;
@@ -100,8 +101,7 @@ export default function TaskListBox() {
     );
   } else if (tasks && tasks.length > 0) {
     content = tasks.map((task, idx) => (
-      // Note: Task component needs its own styling update for premium look
-      <Task key={idx} task={task} onTaskDeleted={handleTaskDeleted} />
+      <TaskListItem key={idx} task={task} onTaskRemoved={handleTaskDeleted} />
     ));
   }
 
@@ -146,14 +146,14 @@ export default function TaskListBox() {
                     flex w-full min-w-36 items-center justify-center gap-1 rounded-xl px-6 py-2.5 text-base font-bold text-white transition-all duration-300 ease-in-out
 
                     // Gradient Background (Blue to Indigo)
-                    bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                    bg-gradient-to-r from-primary to-[#5a66ee]
 
                     // Subtle Lift and Shadow Glow on Hover
-                    shadow-md shadow-[#6571FF]/40 
+                    shadow-md shadow-primary/40 
                     hover:-translate-y-0.5
                     hover:scale-[1.01]
-                    hover:shadow-lg hover:shadow-[#6571FF]/60
-                    dark:shadow-[#6571FF]/50 dark:hover:shadow-[#6571FF]/60
+                    hover:shadow-lg hover:shadow-primary/60
+                    dark:shadow-primary/50 dark:hover:shadow-primary/60
                   `}
                   aria-label="Add new task"
                 >

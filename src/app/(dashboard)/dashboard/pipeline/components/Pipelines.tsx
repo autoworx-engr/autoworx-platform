@@ -595,54 +595,61 @@ export default function PipelinesCopy({
             ref={dragDropContextRef}
             className="thin-scrollbar flex touch-pan-x snap-x snap-mandatory flex-nowrap justify-between gap-2 overflow-x-auto"
           >
-            {filteredPipelineData.map((item, categoryIndex) => (
-              <DroppableColumn
-                key={categoryIndex}
-                setColumnRef={(el) => {
-                  columnRefs.current[categoryIndex] = el;
-                }}
-                categoryIndex={categoryIndex}
-                item={item}
-                openDropdownIndex={openDropdownIndex}
-                tagDropdownStates={tagDropdownStates}
-                openServiceDropdown={openServiceDropdown}
-                screenWidth={screenWidth}
-                leadRefs={leadRefs}
-                handleColumnDropdownToggle={handleColumnDropdownToggle}
-                pipelineType={pipelineType}
-                handleDropdownToggle={handleDropdownToggle}
-                createEmployeeSelectHandler={createEmployeeSelectHandler}
-                companyUsers={companyUsers}
-                setOpenDropdownIndex={setOpenDropdownIndex}
-                showColumnSelect={showColumnSelect}
-                pipelineData={pipelineData}
-                handleColumnChange={handleColumnChange}
-                setShowColumnSelect={setShowColumnSelect}
-                setColumnDropdownOpen={setColumnDropdownOpen}
-                columnDropdownOpen={columnDropdownOpen}
-                handleTagRemove={handleTagRemove}
-                handleTagDropdownToggle={handleTagDropdownToggle}
-                handleTagSelect={handleTagSelect}
-                handleServiceDropdownToggle={handleServiceDropdownToggle}
-                isTechnician={isTechnician}
-                setSelectedClientId={setSelectedClientId}
-                setSelectedVehicleId={setSelectedVehicleId}
-                setSelectedAppointmentId={setSelectedAppointmentId}
-                setIsAppointmentModalOpen={setIsAppointmentModalOpen}
-                searchTerm={searchTerm}
-                hasMore={
-                  item.id !== null
-                    ? (columnMeta[item.id]?.hasMore ?? false)
-                    : false
-                }
-                isLoadingMore={
-                  item.id !== null
-                    ? (columnMeta[item.id]?.isLoading ?? false)
-                    : false
-                }
-                onLoadMore={() => loadMoreForColumn(categoryIndex)}
-              />
-            ))}
+            {filteredPipelineData.map((item, categoryIndex) => {
+              if (
+                selectedSearchColumnId !== null &&
+                item.id !== selectedSearchColumnId
+              )
+                return null;
+              return (
+                <DroppableColumn
+                  key={categoryIndex}
+                  setColumnRef={(el) => {
+                    columnRefs.current[categoryIndex] = el;
+                  }}
+                  categoryIndex={categoryIndex}
+                  item={item}
+                  openDropdownIndex={openDropdownIndex}
+                  tagDropdownStates={tagDropdownStates}
+                  openServiceDropdown={openServiceDropdown}
+                  screenWidth={screenWidth}
+                  leadRefs={leadRefs}
+                  handleColumnDropdownToggle={handleColumnDropdownToggle}
+                  pipelineType={pipelineType}
+                  handleDropdownToggle={handleDropdownToggle}
+                  createEmployeeSelectHandler={createEmployeeSelectHandler}
+                  companyUsers={companyUsers}
+                  setOpenDropdownIndex={setOpenDropdownIndex}
+                  showColumnSelect={showColumnSelect}
+                  pipelineData={pipelineData}
+                  handleColumnChange={handleColumnChange}
+                  setShowColumnSelect={setShowColumnSelect}
+                  setColumnDropdownOpen={setColumnDropdownOpen}
+                  columnDropdownOpen={columnDropdownOpen}
+                  handleTagRemove={handleTagRemove}
+                  handleTagDropdownToggle={handleTagDropdownToggle}
+                  handleTagSelect={handleTagSelect}
+                  handleServiceDropdownToggle={handleServiceDropdownToggle}
+                  isTechnician={isTechnician}
+                  setSelectedClientId={setSelectedClientId}
+                  setSelectedVehicleId={setSelectedVehicleId}
+                  setSelectedAppointmentId={setSelectedAppointmentId}
+                  setIsAppointmentModalOpen={setIsAppointmentModalOpen}
+                  searchTerm={searchTerm}
+                  hasMore={
+                    item.id !== null
+                      ? (columnMeta[item.id]?.hasMore ?? false)
+                      : false
+                  }
+                  isLoadingMore={
+                    item.id !== null
+                      ? (columnMeta[item.id]?.isLoading ?? false)
+                      : false
+                  }
+                  onLoadMore={() => loadMoreForColumn(categoryIndex)}
+                />
+              );
+            })}
           </div>
         </div>
       )}

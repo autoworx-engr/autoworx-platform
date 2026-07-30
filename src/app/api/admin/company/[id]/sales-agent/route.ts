@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -97,25 +98,19 @@ export async function PATCH(
       );
     }
 
-    // If turning OFF → disable all clients
-    if (isSalesAgent === false) {
-      await db.$transaction([
-        db.company.update({
-          where: { id: companyId },
-          data: { isSalesAgent: false },
-        }),
-        db.client.updateMany({
-          where: { companyId },
-          data: { isSalesAgent: false },
-        }),
-      ]);
-    } else {
-      await db.company.update({
+    // Cascade to all clients in both directions
+    await db.$transaction([
+      db.company.update({
         where: { id: companyId },
-        data: { isSalesAgent: true },
-      });
-    }
+        data: { isSalesAgent },
+      }),
+      db.client.updateMany({
+        where: { companyId },
+        data: { isSalesAgent },
+      }),
+    ]);
 
+    revalidatePath("/dashboard/settings/sales-agent");
     return NextResponse.json({
       message: "Company sales agent permission updated successfully",
     });

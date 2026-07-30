@@ -139,7 +139,15 @@ export async function POST(req: Request) {
       },
       include: {
         requestEstimate: true,
-        senderUser: true,
+        // Slim sender payload — full user record can blow past Pusher's 10KB cap
+        senderUser: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            image: true,
+          },
+        },
         attachment: true,
       },
     });
@@ -204,27 +212,34 @@ export async function POST(req: Request) {
       isOwnMessage: false,
     };
 
-    // Send to receiver company channel
+    // Trigger Pusher events. Failures here are non-fatal — the message has
+    // already been persisted; clients will see it on next fetch.
+    const triggers: Array<[string, string, unknown]> = [
+      [`company-${fromCompanyId}`, "message", payloadFrom],
+      [`company-${toCompanyId}`, "message", payloadTo],
+    ];
+    if (chatTrack) {
+      triggers.push(
+        [`company-track-${fromCompanyId}`, "chat-track", chatTrack],
+        [`company-track-${toCompanyId}`, "chat-track", chatTrack],
+      );
+    }
 
-    await pusher.trigger(`company-${fromCompanyId}`, "message", payloadFrom);
-
-    await pusher.trigger(`company-${toCompanyId}`, "message", payloadTo);
-
-    await pusher.trigger(
-      `company-track-${fromCompanyId}`,
-      "chat-track",
-      chatTrack,
-    );
-
-    await pusher.trigger(
-      `company-track-${toCompanyId}`,
-      "chat-track",
-      chatTrack,
+    await Promise.all(
+      triggers.map(async ([channel, event, data]) => {
+        try {
+          await pusher.trigger(channel, event, data);
+        } catch {
+          // Non-fatal: persistence already succeeded
+        }
+      }),
     );
 
     if (toCompanyId) {
+      // Pass the sender id explicitly — mobile app requests have no web session.
       sendCollaborationMessageNotification({
         companyId: toCompanyId,
+        senderUserId,
       });
     }
 

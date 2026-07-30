@@ -1,13 +1,15 @@
 import { fetchMailsMailgun } from "@/actions/communication/client/fetchMailgunMails";
 import getSms from "@/actions/communication/client/getSms";
 import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
-import { cn } from "@/lib/cn";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
-import { Client, Vehicle } from "@prisma/client";
+import { Client } from "@prisma/client";
 import ClientEstimates from "./ClientEstimates";
 import SharedFilesSection from "./SharedFilesSection";
 import TaskActions from "./TaskActions";
+import ClientDetailsTabs from "./ClientDetailsTabs";
+import { VehicleDetails } from "./ClientHeadingDynamics";
+import type { ClientVehicle } from "./VehicleDetails";
 import {
   AppointmentListClient,
   ClientNotes,
@@ -15,7 +17,7 @@ import {
 
 type TProps = {
   client?: Client | null;
-  vehicles?: Partial<Vehicle>[];
+  vehicles?: ClientVehicle[];
 };
 
 export default async function ClientDescription({ client, vehicles }: TProps) {
@@ -29,6 +31,12 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
       id: true,
       type: true,
     },
+    take: 5,
+    orderBy: { createdAt: "desc" },
+  });
+
+  const estimatesCountPromise = db.invoice.count({
+    where: { clientId: client?.id },
   });
 
   const tasksPromise = db.task.findMany({
@@ -67,20 +75,62 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
 
   const smsPromise = getSms(client?.id);
 
+  const messengerPromise = db.messengerMessage.findMany({
+    where: { clientId: client.id },
+    select: {
+      attachments: {
+        select: { id: true, name: true, url: true, createdAt: true },
+      },
+    },
+  });
+
+  const instagramPromise = db.instagramMessage.findMany({
+    where: { clientId: client.id },
+    select: {
+      createdAt: true,
+      attachments: { select: { id: true, name: true, url: true } },
+    },
+  });
+
+  const leadPromise = client.leadId
+    ? db.lead.findUnique({
+        where: { id: client.leadId },
+        select: { isLead: true, services: true },
+      })
+    : Promise.resolve(null);
+
+  const vehicleInvoicesPromise = db.invoice.findMany({
+    where: { clientId: client.id },
+    include: {
+      invoiceItems: { include: { service: true } },
+      vehicle: true,
+    },
+  });
+
   const [
     conversationsData,
     estimates,
+    estimatesCount,
     tasksData,
     companyUsers,
     smsData,
     appointmentData,
+    messengerData,
+    instagramData,
+    lead,
+    vehicleInvoices,
   ] = await Promise.all([
     conversationsPromise,
     estimatesPromise,
+    estimatesCountPromise,
     tasksPromise,
     companyUsersPromise,
     smsPromise,
     appointmentsPromise,
+    messengerPromise,
+    instagramPromise,
+    leadPromise,
+    vehicleInvoicesPromise,
   ]);
 
   // Transform tasks to include assignedUsers in the correct format
@@ -98,80 +148,150 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
 
   const allSmsAttachments = smsData?.flatMap((s) => s.attachments) ?? [];
 
-  return (
-    <div className="thin-scrollbar h-[60%] 2xl:h-[60%] overflow-y-auto px-4 space-y-6">
-      {/* Client notes */}
-      <section className="rounded-2xl border border-zinc-200/70 bg-white p-4 shadow-sm transition-colors dark:border-white/10 dark:bg-zinc-900/60 mt-2">
-        <ClientNotes clientId={client.id} clientNotes={client?.notes || ""} />
-      </section>
+  const allMessengerAttachments = messengerData.flatMap((m) => m.attachments);
+  const allInstagramAttachments = instagramData.flatMap((m) =>
+    m.attachments.map((a) => ({ ...a, createdAt: m.createdAt })),
+  );
 
-      <SharedFilesSection
-        emailAttachments={allEmailAttachments}
-        smsAttachments={allSmsAttachments}
+  const priorityStyles: Record<
+    string,
+    { background: string; borderLeft: string; color: string; boxShadow: string }
+  > = {
+    Low: {
+      background: "linear-gradient(to right, #f5f3ff, #ede9fe)",
+      borderLeft: "3px solid #6d28d9",
+      color: "#6d28d9",
+      boxShadow: "0 2px 8px rgba(109, 40, 217, 0.15)",
+    },
+    Medium: {
+      background: "linear-gradient(to right, #f0f9ff, #e0f2fe)",
+      borderLeft: "3px solid #0284c7",
+      color: "#0284c7",
+      boxShadow: "0 2px 8px rgba(2, 132, 199, 0.15)",
+    },
+    High: {
+      background: "linear-gradient(to right, #b2f2bb, #d3f9d8)",
+      borderLeft: "3px solid #22a7b8",
+      color: "#22a7b8",
+      boxShadow: "0 2px 8px rgba(34, 167, 184, 0.15)",
+    },
+  };
+
+  const vehicleNode = (
+    <VehicleDetails
+      isLeadClient={!!lead?.isLead}
+      vehicles={vehicles ?? []}
+      invoices={vehicleInvoices}
+      singleService={lead?.services ?? ""}
+    />
+  );
+
+  const notesNode = (
+    <section className="rounded-2xl border border-zinc-200/70 bg-white p-4 shadow-sm transition-colors dark:border-white/10 dark:bg-zinc-900/60">
+      <ClientNotes clientId={client.id} clientNotes={client?.notes || ""} />
+    </section>
+  );
+
+  const filesNode = (
+    <SharedFilesSection
+      emailAttachments={allEmailAttachments}
+      smsAttachments={allSmsAttachments}
+      messengerAttachments={allMessengerAttachments}
+      instagramAttachments={allInstagramAttachments}
+    />
+  );
+
+  const estimatesNode = (
+    <section className="rounded-2xl border border-zinc-200/70 bg-white p-4 shadow-sm transition-colors dark:border-white/10 dark:bg-zinc-900/60">
+      <header className="mb-3 flex items-center justify-between">
+        <h3 className="text-sm font-semibold tracking-tight text-zinc-800 dark:text-zinc-100">
+          Estimates & Invoices
+        </h3>
+      </header>
+      <ClientEstimates
+        clientId={client.id}
+        estimates={estimates}
+        vehicles={vehicles}
+        totalCount={estimatesCount}
       />
+    </section>
+  );
 
-      {/* Estimates & Invoices */}
-      <section className="rounded-2xl border border-zinc-200/70 bg-white p-4 shadow-sm transition-colors dark:border-white/10 dark:bg-zinc-900/60">
-        <header className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-semibold tracking-tight text-zinc-800 dark:text-zinc-100">
-            Estimates & Invoices
-          </h3>
-        </header>
-        <ClientEstimates
-          clientId={client.id}
-          estimates={estimates}
-          vehicles={vehicles}
-        />
-      </section>
+  const tasksNode = (
+    <section className="rounded-2xl border border-zinc-200/70 bg-white p-4 shadow-sm transition-colors dark:border-white/10 dark:bg-zinc-900/60">
+      <header className="mb-3 flex items-center justify-between">
+        <h3 className="text-sm font-semibold tracking-tight text-zinc-800 dark:text-zinc-100">
+          Task List
+        </h3>
+        <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-600 dark:bg-white/10 dark:text-zinc-300">
+          {tasks?.length || 0}
+        </span>
+      </header>
 
-      {/* Task list */}
-      <section className="rounded-2xl border border-zinc-200/70 bg-white p-4 shadow-sm transition-colors dark:border-white/10 dark:bg-zinc-900/60">
-        <header className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-semibold tracking-tight text-zinc-800 dark:text-zinc-100">
-            Task List
-          </h3>
-          <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-600 dark:bg-white/10 dark:text-zinc-300">
-            {tasks?.length || 0}
-          </span>
-        </header>
-
-        <div className="flex flex-wrap items-center gap-2">
-          {tasks?.length ? (
-            tasks.map((task) => (
+      <div className="flex flex-wrap items-center gap-2">
+        {tasks?.length ? (
+          tasks.map((task) => {
+            const style =
+              priorityStyles[task.priority ?? "Low"] ?? priorityStyles.Low;
+            return (
               <div
                 key={task.id}
-                className={cn(
-                  "group flex items-center gap-2 rounded-full border border-transparent  px-3 py-1.5 text-xs font-medium text-white shadow-sm transition-colors",
-                  {
-                    "bg-[#6571FF]": task.priority === "Low",
-                    "bg-[#25AADD]": task.priority === "Medium",
-                    "bg-[#006d77]": task.priority === "High",
-                  },
-                )}
+                className="group flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all"
+                style={style}
                 title={task.title}
               >
-                <span className="truncate max-w-[12rem]">
+                <span
+                  className="truncate max-w-[12rem]"
+                  style={{ color: style.color }}
+                >
                   {task.title.length > 40
                     ? task.title.slice(0, 40) + "…"
                     : task.title}
                 </span>
-                <TaskActions task={task} />
+                <TaskActions task={task} color={style.color} />
               </div>
-            ))
-          ) : (
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              No tasks yet — add one below.
-            </p>
-          )}
+            );
+          })
+        ) : (
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            No tasks yet — add one below.
+          </p>
+        )}
 
-          <div className="ml-auto">
-            <TaskCreateOrEdit isClientTask={true} clientId={client.id} />
-          </div>
+        <div className="ml-auto">
+          <TaskCreateOrEdit isClientTask={true} clientId={client.id} />
         </div>
-      </section>
+      </div>
+    </section>
+  );
 
-      {/* Appointments */}
-      <AppointmentListClient appointments={appointmentData} />
-    </div>
+  const appointmentsNode = (
+    <AppointmentListClient
+      appointments={appointmentData}
+      companyId={companyId}
+      clientId={client.id}
+    />
+  );
+
+  return (
+    <ClientDetailsTabs
+      vehicle={vehicleNode}
+      notes={notesNode}
+      files={filesNode}
+      estimates={estimatesNode}
+      tasks={tasksNode}
+      appointments={appointmentsNode}
+      counts={{
+        vehicle: vehicles?.length ?? 0,
+        files:
+          allEmailAttachments.length +
+          allSmsAttachments.length +
+          allMessengerAttachments.length +
+          allInstagramAttachments.length,
+        estimates: estimatesCount,
+        tasks: tasks?.length || 0,
+        appointments: appointmentData?.length || 0,
+      }}
+    />
   );
 }

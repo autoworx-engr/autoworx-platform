@@ -55,7 +55,7 @@ export async function GET(
 
     const [tasks, total] = await Promise.all([
       db.task.findMany({
-        where: { clientId },
+        where: { clientId, status: "pending" },
         include: {
           taskUser: {
             include: {
@@ -73,7 +73,7 @@ export async function GET(
         skip,
         take: limit,
       }),
-      db.task.count({ where: { clientId } }),
+      db.task.count({ where: { clientId, status: "pending" } }),
     ]);
 
     return NextResponse.json({

@@ -18,8 +18,8 @@
     "prisma:merge": "cat prisma/schema/*.prisma > prisma/schema.prisma",
     "db:sync-sequences": "ts-node prisma/syncSequences.ts",
     "prepare": "husky",
-    "worker": "tsx -r dotenv/config src/workers/start.ts",
-    "worker:dev": "tsx watch -r dotenv/config src/workers/start.ts"
+    "generate:search": "tsx scripts/generate-search-registry.ts",
+    "prebuild": "yarn generate:search"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.1",
@@ -115,6 +115,7 @@
     "next-auth": "^4.24.14",
     "nextjs-toploader": "^3.9.17",
     "nprogress": "^0.2.0",
+    "pg-boss": "^12.18.2",
     "prisma": "^7.5.0",
     "pusher": "^5.2.0",
     "pusher-js": "^8.4.0-rc2",

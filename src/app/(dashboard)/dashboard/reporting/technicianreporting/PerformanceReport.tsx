@@ -20,10 +20,9 @@ const arrayOfPerformanceWord = ["Average", "Return"];
 export default function PerformanceReport() {
   const { data: currentUser } = useSession();
 
-  console.log("getPerformanceInfo ==>", getPerformanceInfo);
   const { data } = useServerGet(
     getPerformanceInfo,
-    Number(currentUser?.user?.id)
+    Number(currentUser?.user?.id),
   );
   const {
     averageJobTime,
@@ -34,7 +33,7 @@ export default function PerformanceReport() {
     totalJobsCompletedLate,
     totalJobs,
   } = data || {};
-  console.log("avarageJobTime ==>", averageJobTime);
+
   const [infoIndex, setInfoIndex] = useState<number | null>(null);
 
   const getPerformanceContent = (label: string): string | undefined => {
@@ -117,10 +116,10 @@ export default function PerformanceReport() {
                 <div
                   className={cn(
                     "font-inter text-xl font-semibold",
-                    metric.percentage ? "text-green-500" : "text-red-500"
+                    metric.isPositive ? "text-green-500" : "text-red-500",
                   )}
                 >
-                  {metric.percentage}%
+                  {(metric.percentage ?? 0).toFixed(2)}%
                 </div>
               )}
               {metric.isZeroGrowth && (

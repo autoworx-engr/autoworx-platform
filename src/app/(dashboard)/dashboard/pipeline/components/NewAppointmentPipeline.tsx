@@ -1,5 +1,6 @@
 "use client";
 
+import AppointmentTitleSelectAndAdd from "@/components/appointment/AppointmentTitleSelectAndAdd";
 import {
   Dialog,
   DialogClose,
@@ -11,7 +12,6 @@ import {
 } from "@/components/Dialog";
 import FormError from "@/components/FormError";
 import { formatTime } from "@/utils/taskAndActivity";
-import AppointmentTitleSelectAndAdd from "@/components/appointment/AppointmentTitleSelectAndAdd";
 
 import { SelectClient } from "@/components/Lists/SelectClient";
 import { SelectVehicle } from "@/components/Lists/SelectVehicle";
@@ -19,17 +19,16 @@ import Selector from "@/components/Selector";
 import { SlimInput, slimInputClassName } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
 import { cn } from "@/lib/cn";
-import { Select } from "antd";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import type {
   Appointment,
   Client,
-  Column,
   EmailTemplate,
   User,
   Vehicle,
 } from "@prisma/client";
+import { Select } from "antd";
 import moment from "moment-timezone";
 import { customAlphabet } from "nanoid";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -37,16 +36,16 @@ import { useCallback, useEffect, useRef, useState } from "react";
 // @ts-ignore
 import { addAppointment } from "@/actions/appointment/addAppointment";
 import getDataForNewAppointment from "@/actions/pipelines/getDataForNewAppointment";
+import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 import { Reminder } from "@/app/(dashboard)/dashboard/task-v1/[type]/components/appointment/Reminder";
 import Avatar from "@/components/Avatar";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { useServerGet } from "@/hooks/useServerGet";
 import { errorToast } from "@/lib/toast";
-import { addOneHour, formatDateToToday, getCurrentTime } from "@/utils/time";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
-import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { formatTime12Hour } from "@/utils/formateTime12Hours";
+import { addOneHour, formatDateToToday, getCurrentTime } from "@/utils/time";
 import { Calendar1, ChevronLeft, ChevronRight, Search, X } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 enum Tab {
   Schedule = 0,
@@ -966,7 +965,7 @@ export function NewAppointmentPipeline({
               openState={[draftOpen, setDraftOpen]}
               newButton={
                 <button
-                  className="text-[#6571FF] disabled:text-zinc-400"
+                  className="text-primary disabled:text-zinc-400"
                   onClick={() => {
                     setDraft(customAlphabet("1234567890", 10)());
                     setDraftOpen(false);
@@ -980,7 +979,7 @@ export function NewAppointmentPipeline({
               items={draftEstimates}
               selectedItem={draft}
               setSelectedItem={setDraft}
-              displayList={(item) => <p className="text-[#6571FF]">{item}</p>}
+              displayList={(item) => <p className="text-primary">{item}</p>}
               onSearch={(search) => {
                 return draftEstimates.filter((draft) =>
                   draft.toLowerCase().includes(search.toLowerCase()),
@@ -1085,7 +1084,7 @@ export function NewAppointmentPipeline({
             </button>
           </DialogClose>
           <Submit
-            className="rounded-md border bg-[#6571FF] px-4 py-1 text-white"
+            className="rounded-md border bg-primary px-4 py-1 text-white"
             formAction={handleSubmit}
           >
             Save

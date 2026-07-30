@@ -1,5 +1,6 @@
 "use client";
 import { createDraftEstimate } from "@/actions/estimate/invoice/createDraft";
+import { fetchClientEstimates } from "@/actions/estimate/invoice/fetchClientEstimates";
 import { useClientCommunicationStore } from "@/stores/client-store";
 import { Invoice, Vehicle } from "@prisma/client";
 import { Popconfirm } from "antd";
@@ -12,19 +13,22 @@ type TProps = {
   estimates?: Partial<Invoice>[] | null;
   vehicles?: Partial<Vehicle>[];
   clientId: number;
+  totalCount?: number;
 };
 
 export default function ClientEstimates({
   estimates: initialEstimates = [],
   vehicles = [],
   clientId,
+  totalCount = 0,
 }: TProps) {
   const [estimates, setEstimates] = useState(initialEstimates);
+  const [loadingMore, setLoadingMore] = useState(false);
   const selectedVehicleIndex = useClientCommunicationStore(
-    (state) => state.selectedVehicleIndex
+    (state) => state.selectedVehicleIndex,
   );
   const [pending, startTransition] = React.useTransition();
-  // estimate create handler
+
   const handleCreateEstimate = async () => {
     const newId = customAlphabet("1234567890", 10)();
     let estimateData: { id: string; clientId: number; vehicleId?: number } = {
@@ -35,14 +39,22 @@ export default function ClientEstimates({
       estimateData.vehicleId = vehicles[selectedVehicleIndex].id;
     }
     const res = await createDraftEstimate(estimateData);
-
     if (res.type === "success") {
       setEstimates((prev: any) => [...prev, res.data]);
     }
   };
+
+  const handleLoadMore = async () => {
+    setLoadingMore(true);
+    const rest = await fetchClientEstimates(clientId, estimates?.length ?? 5);
+    setEstimates((prev: any) => [...(prev ?? []), ...rest]);
+    setLoadingMore(false);
+  };
+
+  const hasMore = totalCount > (estimates?.length ?? 0);
+
   return (
     <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
-      {/* existing estimates / invoices */}
       {estimates?.length ? (
         estimates.map((estimate) => (
           <Link
@@ -60,6 +72,18 @@ export default function ClientEstimates({
         <p className="text-xs text-zinc-500 dark:text-zinc-400">
           No estimates or invoices yet.
         </p>
+      )}
+
+      {hasMore && (
+        <button
+          onClick={handleLoadMore}
+          disabled={loadingMore}
+          className="text-xs text-zinc-500 hover:text-emerald-600 dark:text-zinc-400 dark:hover:text-emerald-400 transition-colors disabled:opacity-50"
+        >
+          {loadingMore
+            ? "Loading..."
+            : `+${totalCount - (estimates?.length ?? 0)} more`}
+        </button>
       )}
 
       {/* add new estimate */}

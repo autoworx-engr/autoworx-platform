@@ -11,6 +11,15 @@ export const sendCRMDemoNotification = async ({
   clientName,
 }: TCRMDemoNotification) => {
   try {
+    const company = await db.company.findUnique({
+      where: {
+        id: companyId,
+      },
+    });
+
+    if (!company) {
+      throw new Error("Company not found");
+    }
     // update technician status to complete
     // get all company admins and managers
     const user = await db.user.findFirst({

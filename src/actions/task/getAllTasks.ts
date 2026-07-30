@@ -19,10 +19,8 @@ export default async function getAllTasks(params?: TaskQueryParams) {
 
     const { where, include, select, orderBy, skip, take } = params || {};
 
-    // companyId is always enforced as the outermost AND condition so no
-    // caller-supplied OR can escape the tenant boundary.
     const whereCondition: Prisma.TaskWhereInput = {
-      AND: [{ companyId }, ...(where ? [where] : [])],
+      AND: [{ companyId }, { status: "pending" }, ...(where ? [where] : [])],
     };
 
     const [tasks, totalTasks] = await Promise.all([
@@ -34,7 +32,7 @@ export default async function getAllTasks(params?: TaskQueryParams) {
         ...(skip !== undefined ? { skip } : {}),
         ...(take !== undefined ? { take } : {}),
       }) as Promise<Task[]>,
-      db.task.count({ where: { companyId } }),
+      db.task.count({ where: { companyId, status: "pending" } }),
     ]);
 
     return {

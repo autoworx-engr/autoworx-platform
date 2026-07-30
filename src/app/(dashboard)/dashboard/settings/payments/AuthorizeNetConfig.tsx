@@ -1,36 +1,47 @@
 "use client";
 
-import { useState } from "react";
-import { CircleCheckBig, CircleAlert } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+import { errorToast, successToast } from "@/lib/toast";
+import { CircleAlert, CircleCheckBig } from "lucide-react";
 import Image from "next/image";
+import { useState } from "react";
 import {
-  saveAuthorizeNetCredentials,
   removeAuthorizeNetCredentials,
+  saveAuthorizeNetCredentials,
 } from "./authorize-net";
-import { successToast, errorToast } from "@/lib/toast";
 
 interface AuthorizeNetConfigProps {
   isConfigured: boolean;
   hasApiLoginId: boolean;
+  hasSignatureKey: boolean;
+  initialApiLoginId?: string;
+  initialTransactionKey?: string;
+  initialSignatureKey?: string;
   onUpdate: () => void;
 }
 
 export default function AuthorizeNetConfig({
   isConfigured,
   hasApiLoginId,
+  hasSignatureKey,
+  initialApiLoginId = "",
+  initialTransactionKey = "",
+  initialSignatureKey = "",
   onUpdate,
 }: AuthorizeNetConfigProps) {
-  const [apiLoginId, setApiLoginId] = useState("");
-  const [transactionKey, setTransactionKey] = useState("");
+  const [apiLoginId, setApiLoginId] = useState(initialApiLoginId);
+  const [transactionKey, setTransactionKey] = useState(initialTransactionKey);
+  const [signatureKey, setSignatureKey] = useState(initialSignatureKey);
   const [isLoading, setIsLoading] = useState(false);
   const [showForm, setShowForm] = useState(!isConfigured);
 
   const handleSave = async () => {
-    if (!apiLoginId || !transactionKey) {
-      errorToast("Please enter both API Login ID and Transaction Key");
+    if (!apiLoginId || !transactionKey || !signatureKey) {
+      errorToast(
+        "Please enter API Login ID, Transaction Key, and Signature Key",
+      );
       return;
     }
 
@@ -39,13 +50,12 @@ export default function AuthorizeNetConfig({
       const result = await saveAuthorizeNetCredentials(
         apiLoginId,
         transactionKey,
+        signatureKey,
       );
 
       if (result.success) {
         successToast("Authorize.Net credentials saved successfully!");
         setShowForm(false);
-        setApiLoginId("");
-        setTransactionKey("");
         onUpdate();
       } else {
         errorToast(result.message || "Failed to save credentials");
@@ -123,7 +133,7 @@ export default function AuthorizeNetConfig({
             <div className="flex items-center gap-3">
               <Button
                 onClick={() => setShowForm(true)}
-                className="rounded-lg bg-[#6571ff] px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#5561ef] hover:shadow-md"
+                className="rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#5561ef] hover:shadow-md"
               >
                 Update Credentials
               </Button>
@@ -153,7 +163,7 @@ export default function AuthorizeNetConfig({
                 value={apiLoginId}
                 onChange={(e) => setApiLoginId(e.target.value)}
                 disabled={isLoading}
-                className="rounded-lg border-gray-200 transition-colors focus:border-[#6571ff] focus:ring-[#6571ff]/20"
+                className="rounded-lg border-gray-200 transition-colors focus:border-primary focus:ring-primary/20"
               />
             </div>
 
@@ -171,7 +181,25 @@ export default function AuthorizeNetConfig({
                 value={transactionKey}
                 onChange={(e) => setTransactionKey(e.target.value)}
                 disabled={isLoading}
-                className="rounded-lg border-gray-200 transition-colors focus:border-[#6571ff] focus:ring-[#6571ff]/20"
+                className="rounded-lg border-gray-200 transition-colors focus:border-primary focus:ring-primary/20"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label
+                htmlFor="signatureKey"
+                className="text-sm font-medium text-gray-700"
+              >
+                Signature Key
+              </Label>
+              <Input
+                id="signatureKey"
+                type="password"
+                placeholder="Enter your Webhook Signature Key"
+                value={signatureKey}
+                onChange={(e) => setSignatureKey(e.target.value)}
+                disabled={isLoading}
+                className="rounded-lg border-gray-200 transition-colors focus:border-primary focus:ring-primary/20"
               />
             </div>
 
@@ -191,9 +219,9 @@ export default function AuthorizeNetConfig({
                   <span className="font-semibold">Transaction Key</span>
                 </li>
                 <li>
-                  Generate a{" "}
-                  <span className="font-semibold">Signature Key</span> for
-                  webhooks
+                  Go to{" "}
+                  <span className="font-semibold">Account → Webhooks</span> and
+                  copy your <span className="font-semibold">Signature Key</span>
                 </li>
               </ol>
             </div>
@@ -201,8 +229,10 @@ export default function AuthorizeNetConfig({
             <div className="flex justify-center gap-3 pt-2">
               <Button
                 onClick={handleSave}
-                disabled={isLoading || !apiLoginId || !transactionKey}
-                className="rounded-lg bg-[#6571ff] px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#5561ef] hover:shadow-md disabled:opacity-50"
+                disabled={
+                  isLoading || !apiLoginId || !transactionKey || !signatureKey
+                }
+                className="rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#5561ef] hover:shadow-md disabled:opacity-50"
               >
                 {isLoading ? "Saving..." : "Save Credentials"}
               </Button>
@@ -210,8 +240,9 @@ export default function AuthorizeNetConfig({
                 <Button
                   onClick={() => {
                     setShowForm(false);
-                    setApiLoginId("");
-                    setTransactionKey("");
+                    setApiLoginId(initialApiLoginId);
+                    setTransactionKey(initialTransactionKey);
+                    setSignatureKey(initialSignatureKey);
                   }}
                   variant="outline"
                   disabled={isLoading}

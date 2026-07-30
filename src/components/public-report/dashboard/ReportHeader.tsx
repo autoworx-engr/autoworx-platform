@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import {  Download, Loader2, Building2 } from "lucide-react";
+import { Download, Loader2, Building2 } from "lucide-react";
 import Image from "next/image";
 
 interface ReportHeaderProps {
@@ -19,16 +19,24 @@ export const ReportHeader = ({
   companyName,
   companyLogo,
 }: ReportHeaderProps) => {
+  // Route external (S3) logos through a same-origin proxy so html2canvas can
+  // load them with crossOrigin in non-Safari browsers during PDF capture.
+  const logoSrc =
+    companyLogo && /^https?:\/\//.test(companyLogo)
+      ? `/api/proxy-image?url=${encodeURIComponent(companyLogo)}`
+      : companyLogo;
+
   return (
     <div className="flex flex-col md:flex-row items-center justify-between w-full gap-6">
       <div className="flex items-center gap-4">
         {companyLogo ? (
           <div className="relative w-16 h-16 rounded-xl overflow-hidden border border-border/50 shadow-sm bg-white">
             <Image
-              src={companyLogo}
+              src={logoSrc as string}
               alt={companyName || "Company Logo"}
               fill
               className="object-contain p-2"
+              crossOrigin="anonymous"
             />
           </div>
         ) : (

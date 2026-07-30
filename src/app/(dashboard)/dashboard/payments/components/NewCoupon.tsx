@@ -14,11 +14,11 @@ import { SlimInput } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
 import CouponDateComponent from "./CouponDatePicker";
 
+import { newCoupon } from "@/actions/coupon/new";
+import { useFormErrorStore } from "@/stores/form-error";
+import { Coupon } from "@prisma/client";
 import { useState } from "react";
 import { CouponCode, DiscountInput } from "./CodeDiscount";
-import { newCoupon } from "@/actions/coupon/new";
-import { Coupon } from "@prisma/client";
-import { useFormErrorStore } from "@/stores/form-error";
 
 export default function NewCoupon({
   setCoupons,
@@ -69,7 +69,7 @@ export default function NewCoupon({
     <>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <button className="rounded-md bg-[#6571FF] p-2 px-5 text-white">
+          <button className="rounded-md bg-primary p-2 px-5 text-white">
             New +
           </button>
         </DialogTrigger>
@@ -115,7 +115,7 @@ export default function NewCoupon({
               Cancel
             </DialogClose>
             <Submit
-              className="mb-2 rounded-lg border bg-[#6571FF] px-5 py-2 text-white md:mb-0"
+              className="mb-2 rounded-lg border bg-primary px-5 py-2 text-white md:mb-0"
               formAction={handleSubmit}
             >
               Create

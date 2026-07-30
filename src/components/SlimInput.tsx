@@ -3,6 +3,9 @@ import { sentenceCase } from "change-case";
 import { cn } from "@/lib/cn";
 import { Tooltip } from "antd";
 import { InfoCircleOutlined } from "@ant-design/icons";
+import { CalendarDays } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export type SlimInputProps = {
   label?: ReactNode;
@@ -15,21 +18,9 @@ export type SlimInputProps = {
 };
 
 export const slimInputClassName = cn(
-  "w-full rounded-md border border-slate-300 px-3 py-1.5 text-base font-medium leading-6 outline-none transition-all duration-300",
-  "bg-white/80 backdrop-blur-sm dark:bg-slate-900/50", // Subtle glass texture
-  "text-slate-600 dark:text-slate-300 placeholder:text-slate-400",
-  "focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/40", // Brand focus state
-  "disabled:opacity-50 disabled:cursor-not-allowed",
-  // Preserve styling on autofill using webkit-specific properties
-  "autofill:[-webkit-text-fill-color:rgb(71,85,105)] dark:autofill:[-webkit-text-fill-color:rgb(203,213,225)]",
-  "autofill:shadow-[inset_0_0_0px_1000px_rgb(255,255,255,0.8)] dark:autofill:shadow-[inset_0_0_0px_1000px_rgb(15,23,42,0.5)]",
-  "autofill:transition-[background-color] autofill:duration-[5000s]",
-  // Preserve styling on autofill hover
-  "autofill:hover:[-webkit-text-fill-color:rgb(71,85,105)] dark:autofill:hover:[-webkit-text-fill-color:rgb(203,213,225)]",
-  "autofill:hover:shadow-[inset_0_0_0px_1000px_rgb(255,255,255,0.8)] dark:autofill:hover:shadow-[inset_0_0_0px_1000px_rgb(15,23,42,0.5)]",
-  // Preserve styling on autofill focus
-  "autofill:focus:[-webkit-text-fill-color:rgb(71,85,105)] dark:autofill:focus:[-webkit-text-fill-color:rgb(203,213,225)]",
-  "autofill:focus:shadow-[inset_0_0_0px_1000px_rgb(255,255,255,0.8)] dark:autofill:focus:shadow-[inset_0_0_0px_1000px_rgb(15,23,42,0.5)]",
+  "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors",
+  "placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+  "disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
 );
 
 export function SlimInput({
@@ -45,45 +36,91 @@ export function SlimInput({
   // Generate a unique ID if not provided, for accessibility
   const inputId = props.id ?? props.name;
   const IconComponent = InfoCircleOutlined;
+
+  const isDateLike =
+    props.type === "date" ||
+    props.type === "time" ||
+    props.type === "datetime-local" ||
+    props.type === "month";
+  const isEmptyDate =
+    isDateLike &&
+    (props.value === undefined || props.value === null || props.value === "") &&
+    (props.defaultValue === undefined ||
+      props.defaultValue === null ||
+      props.defaultValue === "");
+  const datePlaceholder =
+    typeof props.placeholder === "string" && props.placeholder.length > 0
+      ? props.placeholder
+      : props.type === "time"
+        ? "Select time"
+        : "Select date";
+
   return (
     <div className={cn("group flex flex-col gap-1.5", rootClassName)}>
-      <label
+      <Label
         htmlFor={inputId}
-        className={cn(
-          "flex items-center gap-1 text-base font-medium text-slate-600 dark:text-slate-200 transition-colors duration-300",
-          labelClassName,
-        )}
+        className={cn("flex items-center gap-1 text-base", labelClassName)}
       >
         {label ?? sentenceCase(props.name)}
-        {required && <span className="text-rose-500 font-bold">*</span>}
+        {required && <span className="font-bold text-destructive">*</span>}
         {tooltipText && (
           <Tooltip title={tooltipText} placement="top">
-            <IconComponent className="text-gray-400 hover:text-gray-600 cursor-help text-xs" />
+            <IconComponent className="cursor-help text-xs text-muted-foreground hover:text-foreground" />
           </Tooltip>
         )}
-      </label>
+      </Label>
 
       <div className="relative">
-        <input
+        <Input
           id={inputId}
           required={required}
+          data-empty={isEmptyDate || undefined}
           className={cn(
-            slimInputClassName,
+            // Normalize native date/time inputs so they don't balloon on mobile
+            isDateLike &&
+              cn(
+                "h-[38px] appearance-none",
+                // FIX (font): the native date/time value (rendered by the
+                // browser via this pseudo-element, not by our own text
+                // node) doesn't inherit `font-medium`/`text-base` from
+                // `slimInputClassName` the way a plain text value does.
+                // Left unset, that made date fields (e.g. "Assigned Date")
+                // render visibly lighter/differently-sized than sibling
+                // text fields like "Amount", even though both use the same
+                // input classes. Pin the weight and size explicitly so the
+                // rendered value matches.
+                "[&::-webkit-date-and-time-value]:font-medium [&::-webkit-date-and-time-value]:text-base [&::-webkit-date-and-time-value]:text-left [&::-webkit-date-and-time-value]:m-0",
+                "[&::-webkit-calendar-picker-indicator]:opacity-60",
+                "data-[empty]:[&::-webkit-datetime-edit]:opacity-0",
+                "data-[empty]:[&::-webkit-calendar-picker-indicator]:absolute",
+                "data-[empty]:[&::-webkit-calendar-picker-indicator]:inset-0",
+                "data-[empty]:[&::-webkit-calendar-picker-indicator]:m-0",
+                "data-[empty]:[&::-webkit-calendar-picker-indicator]:h-full",
+                "data-[empty]:[&::-webkit-calendar-picker-indicator]:w-full",
+                "data-[empty]:[&::-webkit-calendar-picker-indicator]:cursor-pointer",
+                "data-[empty]:[&::-webkit-calendar-picker-indicator]:opacity-0",
+              ),
             // Error state styling overrides
             error &&
-              "border-rose-400 focus:border-rose-500 focus:ring-rose-500/10 text-rose-600",
+              "border-destructive text-destructive focus-visible:ring-destructive/30",
             className,
           )}
           {...props}
         />
+        {isEmptyDate && (
+          <span className="pointer-events-none absolute inset-y-0 left-3 right-3 flex items-center justify-between text-md text-muted-foreground">
+            <span>{datePlaceholder}</span>
+            <CalendarDays className="h-4 w-4 opacity-60" />
+          </span>
+        )}
       </div>
 
       {/* Error Message with subtle slide-in animation logic */}
       {error && (
         <div className="animate-in slide-in-from-top-1 fade-in duration-200 mt-1 flex items-center gap-1.5 px-1">
           {/* Semantic error dot */}
-          <div className="h-1.5 w-1.5 rounded-full bg-rose-500" />
-          <span className="text-xs font-medium text-rose-500">{error}</span>
+          <div className="h-1.5 w-1.5 rounded-full bg-destructive" />
+          <span className="text-xs font-medium text-destructive">{error}</span>
         </div>
       )}
     </div>

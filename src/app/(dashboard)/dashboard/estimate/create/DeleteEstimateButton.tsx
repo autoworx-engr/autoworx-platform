@@ -14,7 +14,7 @@ import { useState } from "react";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { deleteInvoice } from "@/actions/estimate/invoice/delete";
 import { Checkbox } from "antd";
-import { errorToast } from "@/lib/toast";
+import { errorToast, successToast } from "@/lib/toast";
 import { InvoiceType } from "@prisma/client";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
 import { Trash2 } from "lucide-react";
@@ -40,6 +40,9 @@ export default function DeleteEstimateButton() {
           res.data.type === InvoiceType.Invoice
             ? "/dashboard/estimate/invoices"
             : "/dashboard/estimate";
+        successToast(
+          `${invoiceType === InvoiceType.Invoice ? "Invoice" : "Estimate"} deleted successfully!`,
+        );
         router.push(redirectPath);
       } else if (res.type === "globalError") {
         errorToast(res.message);
@@ -63,10 +66,16 @@ export default function DeleteEstimateButton() {
         form
       >
         <DialogHeader>
-          <DialogTitle>Delete Estimate</DialogTitle>
+          <DialogTitle>
+            Delete{" "}
+            {invoiceType === InvoiceType.Invoice ? "Invoice" : "Estimate"}
+          </DialogTitle>
         </DialogHeader>
 
-        <p>Are you sure you want to delete this estimate?</p>
+        <p>
+          Are you sure you want to delete this{" "}
+          {invoiceType === InvoiceType.Invoice ? "invoice" : "estimate"}?
+        </p>
         {invoiceType === InvoiceType.Invoice && (
           <div className="flex items-start space-x-2">
             <Checkbox

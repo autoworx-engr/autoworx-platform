@@ -18,8 +18,19 @@ export default function SubmitButton() {
     const lastName = formData.get("lastName") as string;
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
+    const confirmPassword = formData.get("confirmPassword") as string;
     const company = formData.get("company") as string;
     const accessCode = formData.get("access") as string;
+
+    if (password !== confirmPassword) {
+      showError({
+        success: false,
+        statusCode: 400,
+        errorSource: [],
+        message: "Passwords do not match",
+      });
+      return;
+    }
 
     try {
       const userInfo = await createUserValidation.parseAsync({
@@ -70,7 +81,7 @@ export default function SubmitButton() {
 
   return (
     <Submit
-      className="mx-auto w-full mt-4 rounded-md bg-gradient-to-r from-[#6571FF] to-[#5a66ee] px-10 py-2 text-white"
+      className="mx-auto w-full mt-4 rounded-md bg-gradient-to-r from-primary to-[#5a66ee] px-10 py-2 text-white"
       formAction={handler}
     >
       Submit

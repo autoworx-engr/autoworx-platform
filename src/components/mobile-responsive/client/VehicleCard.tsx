@@ -23,10 +23,10 @@ export default function VehicleCard({
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 py-3">
             <CardTitle
-              className="cursor-pointer text-2xl font-bold text-[#6571FF]"
+              className="cursor-pointer text-2xl font-bold text-primary"
               onClick={() => {
                 router.push(
-                  `/dashboard/client/${Number(vehicle.clientId)}?vehicleId=${vehicle.id}`
+                  `/dashboard/client/${Number(vehicle.clientId)}?vehicleId=${vehicle.id}`,
                 );
               }}
             >
@@ -50,7 +50,7 @@ export default function VehicleCard({
             className="cursor-pointer px-4"
             onClick={() => {
               router.push(
-                `/dashboard/client/${Number(vehicle.clientId)}?vehicleId=${vehicle.id}`
+                `/dashboard/client/${Number(vehicle.clientId)}?vehicleId=${vehicle.id}`,
               );
             }}
           >

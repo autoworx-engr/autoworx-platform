@@ -5,7 +5,14 @@ import { getTwilioCredentials } from "@/actions/communication/client/sendTwilioM
 import { useServerGet } from "@/hooks/useServerGet";
 import { errorToast, successToast } from "@/lib/toast";
 import { useSession } from "next-auth/react";
-import React, { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import React, {
+  ChangeEvent,
+  FormEvent,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 type FormData = {
   companyId: number;
@@ -20,11 +27,17 @@ type FormData = {
 
 const SmsGetwayForm: React.FC = () => {
   const { data: session } = useSession();
-  const companyId = session?.user?.companyId ?? 0;
+  const params = useParams<{ id?: string }>();
+  const routeCompanyId = params?.id ? Number(params.id) : NaN;
+  const companyId = Number.isFinite(routeCompanyId)
+    ? routeCompanyId
+    : (session?.user?.companyId ?? 0);
 
-  const { data: twilioCredentials } = useServerGet(getTwilioCredentials, {
-    companyId,
-  });
+  const twilioArg = useMemo(() => ({ companyId }), [companyId]);
+  const { data: twilioCredentials } = useServerGet(
+    getTwilioCredentials,
+    twilioArg,
+  );
 
   const [formData, setFormData] = useState<FormData>({
     companyId,
@@ -290,7 +303,7 @@ const SmsGetwayForm: React.FC = () => {
           <button
             disabled={isSubmitDisabled}
             type="submit"
-            className={`CO rounded-md px-10 py-1.5 text-white focus:outline-none focus:ring-2 focus:ring-offset-2 ${isSubmitDisabled ? "cursor-not-allowed bg-gray-400" : "bg-[#6571FF] hover:bg-indigo-600 focus:ring-blue-500"} `}
+            className={`CO rounded-md px-10 py-1.5 text-white focus:outline-none focus:ring-2 focus:ring-offset-2 ${isSubmitDisabled ? "cursor-not-allowed bg-gray-400" : "bg-primary hover:bg-indigo-600 focus:ring-blue-500"} `}
           >
             Save
           </button>

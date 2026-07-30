@@ -1,20 +1,20 @@
 "use client";
 import { updateCompany } from "@/actions/settings/updateCompany";
 import PhoneInput from "@/components/PhoneInput";
+import Selector from "@/components/Selector";
 import { SlimInput } from "@/components/SlimInput";
+import { SlimTextarea } from "@/components/SlimTextarea";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { queryKeys } from "@/lib/queryKeys";
 import { errorToast, successToast } from "@/lib/toast";
+import { InfoCircleOutlined } from "@ant-design/icons";
 import { Company } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { Tooltip } from "antd";
 import { Briefcase, Mail, MapPin, Save } from "lucide-react";
 import React, { useState, useTransition } from "react";
 import ProfilePicture from "./ProfilePicture";
 import Timezone from "./Timezone";
-import { SlimTextarea } from "@/components/SlimTextarea";
-import Selector from "@/components/Selector";
-import { Tooltip } from "antd";
-import { InfoCircleOutlined } from "@ant-design/icons";
 
 type TProps = {
   company: Company | null;
@@ -402,6 +402,7 @@ export default function BusinessForm({ company }: TProps) {
               onChange={handleChange}
               label="Legal Business Name"
               name="legalBusinessName"
+              placeholder="e.g. Acme Auto Works LLC"
               required
               error={validationErrors.legalBusinessName}
             />
@@ -411,6 +412,7 @@ export default function BusinessForm({ company }: TProps) {
               onChange={handleChange}
               label="Business Registration ID Number"
               name="businessRegistrationIDNumber"
+              placeholder="e.g. 12-3456789"
               error={validationErrors.businessRegistrationIDNumber}
             />
             <SlimTextarea
@@ -419,6 +421,9 @@ export default function BusinessForm({ company }: TProps) {
               // onChange={(e)}
               label="About"
               name="about"
+              placeholder="Briefly describe your business and what you offer"
+              rows={3}
+              className="max-h-18 resize-none overflow-y-auto thin-scrollbar"
               onChange={(e) =>
                 setBusinessSettings({
                   ...businessSettings,
@@ -433,6 +438,7 @@ export default function BusinessForm({ company }: TProps) {
               onChange={handleChange}
               label="Business Type"
               name="businessType"
+              placeholder="e.g. Auto Detailing, Body Shop"
               error={validationErrors.businessType}
             />
             <div className="flex flex-col gap-1.5 w-full">
@@ -491,6 +497,7 @@ export default function BusinessForm({ company }: TProps) {
               onChange={handleChange}
               label="Industry/Specialization (Optional)"
               name="industrySpecialization"
+              placeholder="e.g. Ceramic Coating, Vinyl Wrap"
               error={validationErrors.industrySpecialization}
               tooltipText="This will appear on your Collaboration Profile. Example: Dry Install PPF, Wet Install PPF, Vinyl Wrap, Ceramic Coating."
             />
@@ -527,6 +534,7 @@ export default function BusinessForm({ company }: TProps) {
               onChange={handleChange}
               label="Business Email"
               name="businessEmail"
+              placeholder="e.g. contact@yourbusiness.com"
               error={validationErrors.businessEmail}
             />
           </div>
@@ -537,6 +545,7 @@ export default function BusinessForm({ company }: TProps) {
               onChange={handleChange}
               label="Business Website (Optional)"
               name="businessWebsite"
+              placeholder="e.g. https://www.yourbusiness.com"
               error={validationErrors.businessWebsite}
             />
           </div>
@@ -569,6 +578,7 @@ export default function BusinessForm({ company }: TProps) {
                 onChange={handleChange}
                 label="Company Address"
                 name="companyAddress"
+                placeholder="e.g. 123 Main Street"
                 error={validationErrors.companyAddress}
               />
             </div>
@@ -578,6 +588,7 @@ export default function BusinessForm({ company }: TProps) {
                 onChange={handleChange}
                 label="City"
                 name="city"
+                placeholder="e.g. New York"
                 error={validationErrors.city}
               />
               <SlimInput
@@ -585,6 +596,7 @@ export default function BusinessForm({ company }: TProps) {
                 onChange={handleChange}
                 label="State"
                 name="state"
+                placeholder="e.g. NY"
                 error={validationErrors.state}
               />
               <SlimInput
@@ -592,6 +604,7 @@ export default function BusinessForm({ company }: TProps) {
                 onChange={handleChange}
                 label="Zip"
                 name="zip"
+                placeholder="e.g. 10001"
                 error={validationErrors.zip}
               />
             </div>
@@ -611,7 +624,7 @@ export default function BusinessForm({ company }: TProps) {
           <button
             disabled={isPending || !hasChanges()}
             type="submit"
-            className="rounded-xl bg-[#6571FF] px-6 py-2.5 text-white text-base font-semibold transition duration-150 hover:bg-[#5a64e8] disabled:bg-slate-300 disabled:cursor-not-allowed shadow-lg flex items-center justify-center"
+            className="rounded-xl bg-primary px-6 py-2.5 text-white text-base font-semibold transition duration-150 hover:bg-[#5a64e8] disabled:bg-slate-300 disabled:cursor-not-allowed shadow-lg flex items-center justify-center"
           >
             {isPending ? (
               <>Saving...</>

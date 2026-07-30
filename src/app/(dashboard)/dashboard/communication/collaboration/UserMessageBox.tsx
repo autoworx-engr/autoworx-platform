@@ -29,7 +29,7 @@ export default function UserMessageBox({
       ([entry]) => {
         setIsVisible(entry.isIntersecting);
       },
-      { threshold: 0.1 } // Trigger when 10% of the component is visible
+      { threshold: 0.1 }, // Trigger when 10% of the component is visible
     );
 
     if (messageBoxRef.current) {
@@ -47,10 +47,10 @@ export default function UserMessageBox({
   useEffect(() => {
     const fetchMessages = async function () {
       const findUserMessage = await getUserMessagesById(
-        parseInt(session?.user?.id!)
+        parseInt(session?.user?.id!),
       );
       const userMessages = findUserMessage.filter(
-        (m) => m.from === user.id || m.to === user.id
+        (m) => m.from === user.id || m.to === user.id,
       );
 
       setMessages(
@@ -63,7 +63,7 @@ export default function UserMessageBox({
             requestEstimate: m.requestEstimate,
             createdAt: m.createdAt,
           };
-        })
+        }),
       );
     };
     fetchMessages();
@@ -75,7 +75,7 @@ export default function UserMessageBox({
       if (session?.user?.id && user.id) {
         await updateCollaborationUnreadMessageToRead(
           parseInt(session.user.id),
-          user.id
+          user.id,
         );
       }
     };
@@ -88,7 +88,7 @@ export default function UserMessageBox({
       if (isVisible && session?.user?.id && user.id) {
         await updateCollaborationUnreadMessageToRead(
           parseInt(session.user.id),
-          user.id
+          user.id,
         );
       }
     };
@@ -133,11 +133,11 @@ export default function UserMessageBox({
             if (isVisible && session?.user?.id && from === user.id) {
               await updateCollaborationUnreadMessageToRead(
                 parseInt(session.user.id),
-                from
+                from,
               );
             }
           }
-        }
+        },
       );
     return () => {
       channel.unbind("message");

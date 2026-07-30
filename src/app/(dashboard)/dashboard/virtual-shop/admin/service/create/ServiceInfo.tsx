@@ -4,8 +4,8 @@ import { slimInputClassName } from "@/components/SlimInput";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/Tooltip";
 import { cn } from "@/lib/utils";
 import { Info, UploadCloud, X } from "lucide-react";
-import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
+import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
 import "react-quill-new/dist/quill.snow.css";
 import CategoryInput from "./CategoryInput";
 
@@ -140,6 +140,17 @@ export default function ServiceInfo({
     toCounterInputValue(initialCounter.minutes),
   );
   const [isDragOver, setIsDragOver] = useState(false);
+  const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null);
+
+  // Revoke the object URL when it changes or the component unmounts.
+  useEffect(() => {
+    if (!localPreviewUrl) return;
+    return () => URL.revokeObjectURL(localPreviewUrl);
+  }, [localPreviewUrl]);
+
+  const setPreviewFromFile = (file: File | null) => {
+    setLocalPreviewUrl(file ? URL.createObjectURL(file) : null);
+  };
 
   useEffect(() => {
     const incomingDuration = Number.parseInt(customDuration, 10);
@@ -200,6 +211,7 @@ export default function ServiceInfo({
       ...prev,
       imageName: file?.name || "",
     }));
+    setPreviewFromFile(file);
     onImageSelect(file);
   };
 
@@ -209,12 +221,14 @@ export default function ServiceInfo({
     const file = event.dataTransfer.files?.[0] || null;
     if (file && ["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
       onChange((prev) => ({ ...prev, imageName: file.name || "" }));
+      setPreviewFromFile(file);
       onImageSelect(file);
     }
   };
 
   const handleClearImage = () => {
     onChange((prev) => ({ ...prev, imageName: "", imageUrl: "" }));
+    setPreviewFromFile(null);
     onImageSelect(null);
   };
 
@@ -306,7 +320,7 @@ export default function ServiceInfo({
             className={cn(
               "w-full rounded-lg border px-3.5 py-2.5 text-sm font-medium text-slate-700 outline-none transition-all duration-200",
               "placeholder:text-slate-400",
-              "focus:border-[#6571FF]/50 focus:ring-2 focus:ring-[#6571FF]/15 focus:shadow-sm",
+              "focus:border-primary/50 focus:ring-2 focus:ring-primary/15 focus:shadow-sm",
               errors?.serviceTitle
                 ? "border-rose-400 bg-rose-50/40 focus:border-rose-400 focus:ring-rose-400/15"
                 : "border-slate-200 bg-slate-50/60 hover:border-slate-300",
@@ -329,7 +343,7 @@ export default function ServiceInfo({
               <TooltipTrigger asChild>
                 <button
                   type="button"
-                  className="inline-flex items-center text-slate-400 transition-colors hover:text-[#6571FF]"
+                  className="inline-flex items-center text-slate-400 transition-colors hover:text-primary"
                   aria-label="Duration information"
                 >
                   <Info size={12} />
@@ -366,7 +380,7 @@ export default function ServiceInfo({
                 placeholder="00"
                 className={cn(
                   "w-full rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-2.5 text-center text-sm font-bold text-slate-700 outline-none transition-all duration-200",
-                  "hover:border-slate-300 focus:border-[#6571FF]/50 focus:ring-2 focus:ring-[#6571FF]/15",
+                  "hover:border-slate-300 focus:border-primary/50 focus:ring-2 focus:ring-primary/15",
                   slimInputClassName,
                 )}
               />
@@ -375,7 +389,7 @@ export default function ServiceInfo({
               </span>
             </div>
 
-            <span className="text-xl font-bold text-[#6571FF]">:</span>
+            <span className="text-xl font-bold text-primary">:</span>
 
             {/* Hours */}
             <div className="relative flex-1">
@@ -401,7 +415,7 @@ export default function ServiceInfo({
                 placeholder="00"
                 className={cn(
                   "w-full rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-2.5 text-center text-sm font-bold text-slate-700 outline-none transition-all duration-200",
-                  "hover:border-slate-300 focus:border-[#6571FF]/50 focus:ring-2 focus:ring-[#6571FF]/15",
+                  "hover:border-slate-300 focus:border-primary/50 focus:ring-2 focus:ring-primary/15",
                   slimInputClassName,
                 )}
               />
@@ -410,7 +424,7 @@ export default function ServiceInfo({
               </span>
             </div>
 
-            <span className="text-xl font-bold text-[#6571FF]">:</span>
+            <span className="text-xl font-bold text-primary">:</span>
 
             {/* Minutes */}
             <div className="relative flex-1">
@@ -436,7 +450,7 @@ export default function ServiceInfo({
                 placeholder="00"
                 className={cn(
                   "w-full rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-2.5 text-center text-sm font-bold text-slate-700 outline-none transition-all duration-200",
-                  "hover:border-slate-300 focus:border-[#6571FF]/50 focus:ring-2 focus:ring-[#6571FF]/15",
+                  "hover:border-slate-300 focus:border-primary/50 focus:ring-2 focus:ring-primary/15",
                   slimInputClassName,
                 )}
               />
@@ -467,7 +481,7 @@ export default function ServiceInfo({
           className={cn(
             "w-full rounded-lg border px-3.5 py-2.5 text-sm font-medium text-slate-700 outline-none transition-all duration-200",
             "placeholder:text-slate-400",
-            "focus:border-[#6571FF]/50 focus:ring-2 focus:ring-[#6571FF]/15 focus:shadow-sm",
+            "focus:border-primary/50 focus:ring-2 focus:ring-primary/15 focus:shadow-sm",
             errors?.shortDescription
               ? "border-rose-400 bg-rose-50/40 focus:border-rose-400 focus:ring-rose-400/15"
               : "border-slate-200 bg-slate-50/60 hover:border-slate-300",
@@ -530,9 +544,15 @@ export default function ServiceInfo({
         </label>
 
         {hasImage ? (
-          <div className="flex items-center gap-3 rounded-lg border border-[#6571FF]/25 bg-[#6571FF]/5 px-4 py-3">
+          <div className="flex items-center gap-3 rounded-lg border border-primary/25 bg-primary/5 px-4 py-3">
             <div className="flex-shrink-0 overflow-hidden rounded-lg border border-slate-200 shadow-sm">
-              {shouldShowExistingImage ? (
+              {localPreviewUrl ? (
+                <img
+                  src={localPreviewUrl}
+                  alt={displayImageName || "Selected service image"}
+                  className="h-24 w-28 object-cover"
+                />
+              ) : shouldShowExistingImage ? (
                 <img
                   src={imageUrl}
                   alt="Current service image"
@@ -556,7 +576,7 @@ export default function ServiceInfo({
             {/* Actions */}
             <div className="flex items-center gap-2">
               <label
-                className="cursor-pointer rounded-md border border-[#6571FF]/30 bg-white px-3 py-1.5 text-xs font-semibold text-[#6571FF] transition-all hover:bg-[#6571FF]/5 hover:border-[#6571FF]/50"
+                className="cursor-pointer rounded-md border border-primary/30 bg-white px-3 py-1.5 text-xs font-semibold text-primary transition-all hover:bg-primary/5 hover:border-primary/50"
                 title="Change image"
               >
                 Change
@@ -582,8 +602,8 @@ export default function ServiceInfo({
             className={cn(
               "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-6 py-8 text-center transition-all duration-200",
               isDragOver
-                ? "border-[#6571FF] bg-[#6571FF]/8 scale-[0.995]"
-                : "border-slate-200 bg-slate-50/60 hover:border-[#6571FF]/40 hover:bg-[#6571FF]/3",
+                ? "border-primary bg-primary/8 scale-[0.995]"
+                : "border-slate-200 bg-slate-50/60 hover:border-primary/40 hover:bg-primary/3",
             )}
             onDragOver={(e) => {
               e.preventDefault();
@@ -596,7 +616,7 @@ export default function ServiceInfo({
               className={cn(
                 "flex h-10 w-10 items-center justify-center rounded-full transition-colors duration-200",
                 isDragOver
-                  ? "bg-[#6571FF]/15 text-[#6571FF]"
+                  ? "bg-primary/15 text-primary"
                   : "bg-slate-100 text-slate-400",
               )}
             >
@@ -641,9 +661,9 @@ export default function ServiceInfo({
                 key={vehicleType.key}
                 className={cn(
                   "group relative overflow-hidden rounded-xl border bg-white transition-all duration-200",
-                  "hover:border-[#6571FF]/30 hover:shadow-sm",
+                  "hover:border-primary/30 hover:shadow-sm",
                   !isEmpty
-                    ? "border-[#6571FF]/25 shadow-sm ring-1 ring-[#6571FF]/10"
+                    ? "border-primary/25 shadow-sm ring-1 ring-primary/10"
                     : "border-slate-200",
                 )}
               >
@@ -660,7 +680,7 @@ export default function ServiceInfo({
                     <span
                       className={cn(
                         "absolute left-2.5 top-1/2 -translate-y-1/2 text-sm font-bold transition-colors",
-                        !isEmpty ? "text-[#6571FF]" : "text-slate-400",
+                        !isEmpty ? "text-primary" : "text-slate-400",
                       )}
                     >
                       $
@@ -693,8 +713,8 @@ export default function ServiceInfo({
                         "w-full rounded-lg border py-1.5 pl-7 pr-3 text-sm font-bold outline-none transition-all duration-200",
                         "placeholder:font-normal placeholder:text-slate-300",
                         !isEmpty
-                          ? "border-[#6571FF]/25 bg-[#6571FF]/5 text-[#6571FF] focus:border-[#6571FF]/50 focus:ring-2 focus:ring-[#6571FF]/15"
-                          : "border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300 focus:border-[#6571FF]/40 focus:ring-2 focus:ring-[#6571FF]/10",
+                          ? "border-primary/25 bg-primary/5 text-primary focus:border-primary/50 focus:ring-2 focus:ring-primary/15"
+                          : "border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300 focus:border-primary/40 focus:ring-2 focus:ring-primary/10",
                         slimInputClassName,
                       )}
                     />

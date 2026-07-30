@@ -1,6 +1,7 @@
 "use server";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
+import { getOrCreatePendingColumn } from "@/lib/ensureShopColumns";
 import { ServerAction } from "@/types/action";
 import { TErrorHandler } from "@/types/globalError";
 import {
@@ -48,7 +49,7 @@ export async function addAppointment(
       !appointment.forceUserId || !appointment.forceCompanyId
         ? await getServerSession(authOptions)
         : null;
-    const sessionUserId = session?.user.id;
+    const sessionUserId = (session as any)?.user?.id as string | undefined;
 
     let userId = appointment.forceUserId ?? sessionUserId;
 
@@ -56,7 +57,7 @@ export async function addAppointment(
       return { type: "error", message: "User not found", field: "user" };
     }
     if (!companyId) {
-      companyId = session?.user?.companyId;
+      companyId = (session as any)?.user?.companyId;
       if (!companyId) {
         throw new Error("Company ID is required to create an appointment.");
       }
@@ -111,12 +112,34 @@ export async function addAppointment(
       });
     }
 
-    if (appointment.draftEstimate && appointment.clientId) {
-      await createDraftEstimate({
-        id: appointment.draftEstimate,
-        clientId: appointment.clientId,
-        vehicleId: appointment.vehicleId,
+    // TODO: use `createDraftEstimate` action
+    if (appointment.draftEstimate) {
+      const draftEstimate = await db.invoice.findFirst({
+        where: { id: appointment.draftEstimate },
       });
+
+      if (!draftEstimate) {
+        const pendingColumn = await getOrCreatePendingColumn(companyId);
+
+        await db.invoice.create({
+          data: {
+            id: appointment.draftEstimate,
+            type: "Estimate",
+            clientId: appointment.clientId,
+            vehicleId: appointment.vehicleId,
+            userId: Number(userId),
+            companyId,
+            columnId: pendingColumn.id,
+          },
+        });
+
+        if (client?.Lead?.id) {
+          await db.lead.update({
+            where: { id: client.Lead.id },
+            data: { isEstimateCreated: true },
+          });
+        }
+      }
     }
 
     const [vehicle, company, confirmationEmailTemplate] = await Promise.all([
@@ -191,7 +214,11 @@ export async function addAppointment(
       console.log("🚀 ~ addAppointment ~ error:", error);
     }
 
-    revalidatePath("/dashboard/communication/client/${clientId}");
+    try {
+      revalidatePath("/dashboard/communication/client/${clientId}");
+    } catch {
+      // no-op: best-effort when called from worker context
+    }
 
     return { type: "success", data: newAppointment };
   } catch (error) {
