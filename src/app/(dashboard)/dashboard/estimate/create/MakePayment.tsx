@@ -515,7 +515,7 @@ export default function MakePayment() {
                     name="notes"
                     id="notes"
                     className={cn(
-                      "h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none",
+                      "h-20 max-h-28 w-full rounded-md border-2 border-slate-400 p-2 outline-none",
                       slimInputClassName,
                     )}
                     value={notes}
