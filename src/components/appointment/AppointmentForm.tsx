@@ -396,7 +396,7 @@ export default function AppointmentForm({
           <Textarea
             name="notes"
             placeholder="Notes"
-            className="max-h-[220px] min-h-[96px] resize-y"
+            className="max-h-[220px] min-h-[96px] resize-y thin-scrollbar"
             rows={3}
             maxLength={1000}
             value={notes}
