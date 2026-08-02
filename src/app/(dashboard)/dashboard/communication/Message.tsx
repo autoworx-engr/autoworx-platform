@@ -164,19 +164,6 @@ export default function Message({
               )}
               <p className="whitespace-pre-wrap break-words text-sm leading-snug">
                 {message.message}
-                {/* Inline time at the end so short messages keep it on the
-                    same line; long/wrapped messages let it sit on its own
-                    line, right-aligned. */}
-              </p>
-              <p
-                className={cn(
-                  "select-none whitespace-nowrap text-[10px] leading-none justify-end flex",
-                  message.sender === "CLIENT"
-                    ? "text-zinc-500 dark:text-zinc-400"
-                    : "text-white/70",
-                )}
-              >
-                {messageTime}
               </p>
             </div>
           )}
@@ -235,20 +222,14 @@ export default function Message({
               )}
             </>
           )}
-          {/* External timestamp only for attachment-only / estimate-only rows;
-              text bubbles render their own inline time. */}
-          {!message.message &&
-            (message?.requestEstimate ||
-              (message.attachment && message.attachment.length > 0)) && (
-              <p
-                className={cn(
-                  "mt-1 text-[10px] text-gray-400",
-                  message.sender === "CLIENT" ? "text-left" : "text-right",
-                )}
-              >
-                {messageTime}
-              </p>
+          <p
+            className={cn(
+              "mt-1 text-[10px] text-gray-400",
+              message.sender === "CLIENT" ? "text-left" : "text-right",
             )}
+          >
+            {messageTime}
+          </p>
         </div>
       </div>
     </div>
