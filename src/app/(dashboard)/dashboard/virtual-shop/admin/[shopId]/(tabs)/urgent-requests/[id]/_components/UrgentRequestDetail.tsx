@@ -277,7 +277,7 @@ export default function UrgentRequestDetail({
 
         {request.client?.id && (
           <Link
-            href={`/dashboard/communication/client/${request.client.id}`}
+            href={`/dashboard/communication/client/${request.client.id}?chat=true`}
             className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white shadow-md shadow-primary/25 transition-opacity hover:opacity-90"
           >
             <MessageCircle size={16} />
