@@ -17,6 +17,8 @@ import { Plus } from "lucide-react";
 import { slimInputClassName } from "@/components/SlimInput";
 import { cn } from "@/lib/cn";
 
+const MAX_MONEY_VALUE = 99999999;
+
 export type EstimateMaterial = {
   id: number;
   name: string;
@@ -112,13 +114,20 @@ export default function MaterialCreate() {
       const quantityValue =
         data.material.quantity === 0 ? undefined : data.material.quantity;
       setQuantity(quantityValue);
-      const costValue = parseFloat(data.material.cost);
-      setCost(costValue === 0 ? undefined : costValue);
-      const sellValue = parseFloat(
-        data.material.sell === 0 ? undefined : data.material.sell,
+      const costValue = Math.min(
+        parseFloat(data.material.cost),
+        MAX_MONEY_VALUE,
       );
-      setSell(sellValue);
-      const discountValue = parseFloat(data.material.discount);
+      setCost(costValue === 0 ? undefined : costValue);
+      const sellValue = Math.min(
+        parseFloat(data.material.sell),
+        MAX_MONEY_VALUE,
+      );
+      setSell(sellValue === 0 ? undefined : sellValue);
+      const discountValue = Math.min(
+        parseFloat(data.material.discount),
+        MAX_MONEY_VALUE,
+      );
       setDiscount(discountValue === 0 ? undefined : discountValue);
       setAddToInventory(data.material.addToInventory || false);
       // @ts-ignore
@@ -135,15 +144,9 @@ export default function MaterialCreate() {
                   tags: data.material.tags,
                   notes: data.material.notes,
                   quantity: quantityValue || 0,
-                  cost: Number(
-                    costValue === 0 ? undefined : costValue || 0,
-                  ) as any,
-                  sell: Number(
-                    sellValue === 0 ? undefined : sellValue || 0,
-                  ) as any,
-                  discount: Number(
-                    discountValue === 0 ? undefined : discountValue || 0,
-                  ) as any,
+                  cost: Number(costValue || 0) as any,
+                  sell: Number(sellValue || 0) as any,
+                  discount: Number(discountValue || 0) as any,
                   addToInventory: data.material.addToInventory,
                 };
               }
@@ -575,6 +578,7 @@ export default function MaterialCreate() {
           placeholder: "0.00",
           type: "number",
           disabled: data.edit,
+          max: MAX_MONEY_VALUE,
         },
         {
           id: "sell",
@@ -583,6 +587,7 @@ export default function MaterialCreate() {
           set: setSell,
           placeholder: "0.00",
           type: "number",
+          max: MAX_MONEY_VALUE,
         },
         {
           id: "discount",
@@ -591,6 +596,7 @@ export default function MaterialCreate() {
           set: setDiscount,
           placeholder: "0",
           type: "number",
+          max: MAX_MONEY_VALUE,
         },
       ].map((field) => (
         <div key={field.id} className="mb-0.5">
@@ -607,12 +613,16 @@ export default function MaterialCreate() {
               value={field.val ?? ""}
               disabled={field.disabled}
               min="0"
+              max={field.max}
               onChange={(e) => {
                 if (e.target.value === "") {
                   field.set(undefined);
                 } else {
                   const parsed = parseFloat(e.target.value);
-                  field.set(parsed < 0 ? 0 : parsed);
+                  const clamped = parsed < 0 ? 0 : parsed;
+                  field.set(
+                    field.max && clamped > field.max ? field.max : clamped,
+                  );
                 }
               }}
               onKeyDown={(e) => {

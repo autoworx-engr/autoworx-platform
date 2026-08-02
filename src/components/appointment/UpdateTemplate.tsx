@@ -11,6 +11,7 @@ import {
 import FormError from "@/components/FormError";
 import { AppointmentTemplateVariable } from "@/components/Lists/NewTemplate";
 import { SlimInput, slimInputClassName } from "@/components/SlimInput";
+import { cn } from "@/lib/cn";
 import Submit from "@/components/Submit";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
@@ -94,7 +95,10 @@ export default function UpdateTemplate({
             <textarea
               name="message"
               rows={10}
-              className={slimInputClassName}
+              className={cn(
+                slimInputClassName,
+                "min-h-16 resize-y thin-scrollbar",
+              )}
               value={messageInput}
               onChange={(e) => setMessageInput(e.target.value)}
             />

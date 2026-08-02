@@ -194,10 +194,10 @@ function ServiceBillSummary({
         })}
       </div>
 
-      <div className="mt-4 flex flex-col gap-4 rounded-lg bg-[#006d77] p-5 text-white shadow-xl shadow-[#006d77]/20">
+      <div className="mt-4 mb-1 mx-1.5 flex flex-col gap-4 rounded-lg bg-[#006d77] p-5 text-white shadow-xl shadow-[#006d77]/20">
         <button
           type="button"
-          className="w-full rounded-xl bg-white py-3 text-sm font-bold text-primary shadow-lg transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+          className="w-full rounded-xl bg-white !text-[#006d77] py-3 text-sm font-bold text-primary shadow-lg transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
           disabled={isSaveDisabled}
           onClick={onSave}
         >
@@ -575,11 +575,11 @@ export default function ServiceCreateClient({
   };
 
   return (
-    <div className="gap-3 space-y-4 overflow-clip py-2 md:-my-2 md:min-h-[83vh] xl:flex xl:space-y-0 xl:pt-20">
-      <div className="flex w-full flex-col gap-3 xl:min-w-[68%]">
+    <div className="flex flex-1 flex-col gap-4 overflow-clip py-2 md:-my-2 md:min-h-[83vh] md:flex-none xl:flex-row xl:gap-3 xl:pt-20">
+      <div className="flex w-full flex-col gap-3 xl:min-w-[68%] xl:self-stretch">
         <Tabs
           defaultValue="service-info"
-          className="col-start-1 flex min-h-[40vh] flex-col overflow-clip lg:min-h-[72vh]"
+          className="col-start-1 flex flex-1 flex-col overflow-clip md:min-h-[40vh] lg:min-h-[72vh]"
         >
           <TabsList className="w-[90%] grid grid-cols-2 rounded-bl-none md:-ml-4 md:inline-flex md:w-auto">
             <TabsTriggerCreate
@@ -617,8 +617,8 @@ export default function ServiceCreateClient({
         </Tabs>
       </div>
 
-      <div className="flex-grow w-full xl:max-w-[32%] xl:self-stretch app-shadow grid grid-rows-[1fr,auto,auto] divide-y rounded-md bg-slate-50 overflow-y-auto thin-scrollbar">
-        <div>
+      <div className="flex-grow w-full min-h-0 xl:max-w-[32%] xl:self-stretch app-shadow grid grid-rows-[minmax(0,1fr),auto,auto] divide-y rounded-md bg-slate-50 overflow-hidden">
+        <div className="min-h-0 overflow-y-auto thin-scrollbar">
           <Create />
         </div>
 

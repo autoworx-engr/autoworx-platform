@@ -710,12 +710,12 @@ export default function ServiceInfo({
                         }
                       }}
                       className={cn(
+                        slimInputClassName,
                         "w-full rounded-lg border py-1.5 pl-7 pr-3 text-sm font-bold outline-none transition-all duration-200",
                         "placeholder:font-normal placeholder:text-slate-300",
                         !isEmpty
                           ? "border-primary/25 bg-primary/5 text-primary focus:border-primary/50 focus:ring-2 focus:ring-primary/15"
                           : "border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300 focus:border-primary/40 focus:ring-2 focus:ring-primary/10",
-                        slimInputClassName,
                       )}
                     />
                   </div>

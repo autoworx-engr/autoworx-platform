@@ -3,6 +3,7 @@ import { emailTemplateQueryKey } from "@/app/(dashboard)/dashboard/task/_constan
 import NewTemplate from "@/components/Lists/NewTemplate";
 import Selector from "@/components/Selector";
 import { Switch } from "@/components/Switch";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 import useTemplatesQuery from "@/hooks/query-hook/useTemplatesQuery";
 import { useFormErrorStore } from "@/stores/form-error";
 import type { Client, EmailTemplate, Vehicle } from "@prisma/client";
@@ -83,6 +84,13 @@ export function Reminder({
     () => templates.filter((t: EmailTemplate) => t.type === "Reminder"),
     [templates],
   );
+
+  const [templateToDelete, setTemplateToDelete] = useState<{
+    id: number;
+    type: "Confirmation" | "Reminder";
+    subject: string;
+  } | null>(null);
+  const [isDeletingTemplate, setIsDeletingTemplate] = useState(false);
 
   const queryClient = useQueryClient();
   const { showError, clearError, error } = useFormErrorStore();
@@ -204,6 +212,18 @@ export function Reminder({
     queryClient.invalidateQueries({
       queryKey: [emailTemplateQueryKey.templates],
     });
+  }
+
+  async function handleConfirmDeleteTemplate() {
+    if (!templateToDelete || isDeletingTemplate) return;
+
+    try {
+      setIsDeletingTemplate(true);
+      await handleDelete(templateToDelete);
+      setTemplateToDelete(null);
+    } finally {
+      setIsDeletingTemplate(false);
+    }
   }
 
   const handleAddReminder = () => {
@@ -348,7 +368,11 @@ export function Reminder({
                     className="flex h-7 w-7 items-center justify-center rounded-md transition-all bg-rose-50 text-rose-500"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDelete({ id: template.id, type: "Confirmation" });
+                      setTemplateToDelete({
+                        id: template.id,
+                        type: "Confirmation",
+                        subject: template.subject,
+                      });
                     }}
                   >
                     <X size={16} strokeWidth={2.5} />
@@ -430,7 +454,11 @@ export function Reminder({
                     className="flex h-7 w-7 items-center justify-center rounded-md transition-all bg-rose-50 text-rose-500"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDelete({ id: template.id, type: "Reminder" });
+                      setTemplateToDelete({
+                        id: template.id,
+                        type: "Reminder",
+                        subject: template.subject,
+                      });
                     }}
                   >
                     <X size={16} strokeWidth={2.5} />
@@ -564,6 +592,23 @@ export function Reminder({
           </p>
         </div>
       </div>
+
+      <ConfirmModal
+        open={!!templateToDelete}
+        onOpenChange={(open) => {
+          if (!open && !isDeletingTemplate) setTemplateToDelete(null);
+        }}
+        title="Delete template?"
+        description={
+          templateToDelete
+            ? `"${templateToDelete.subject}" will be permanently deleted and can no longer be used as a ${templateToDelete.type.toLowerCase()} template on any appointment.`
+            : undefined
+        }
+        confirmText="Delete"
+        destructive
+        loading={isDeletingTemplate}
+        onConfirm={handleConfirmDeleteTemplate}
+      />
     </>
   );
 }
