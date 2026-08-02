@@ -77,25 +77,18 @@ export const createLeadDraftEstimate = async function (
         if (!lead) {
           throw new Error("Lead not found. Please check the lead ID.");
         }
+        const existingEstimate = await tx.invoice.findFirst({
+          where: { clientId: clientId, type: "Estimate" },
+          orderBy: { createdAt: "desc" },
+        });
 
-        if (lead.isEstimateCreated) {
-          const client = await getClientByLead(tx, leadId);
-
-          const existingEstimate = await tx.invoice.findFirst({
-            where: { clientId: client.id },
-            orderBy: { createdAt: "desc" },
-          });
+        if (lead.isEstimateCreated && existingEstimate) {
           return {
             type: "error",
             message: "A draft estimate already exists for this client.",
             data: existingEstimate,
           } satisfies ServerAction;
         }
-
-        await tx.lead.update({
-          where: { id: leadId },
-          data: { isEstimateCreated: true },
-        });
       }
 
       const pendingColumn = await getPendingColumn(tx, userId);
@@ -113,6 +106,11 @@ export const createLeadDraftEstimate = async function (
         include: {
           client: { select: { firstName: true, lastName: true } },
         },
+      });
+
+      await tx.lead.update({
+        where: { id: Number(leadId) },
+        data: { isEstimateCreated: true },
       });
 
       return {

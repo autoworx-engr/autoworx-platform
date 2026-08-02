@@ -3,9 +3,13 @@ import {
   generatedRegistry,
   type SearchItem,
 } from "@/lib/search-registry.generated";
-import { canAccessRoute } from "@/lib/routeAccess";
+import {
+  canAccessWithFeatureKey,
+  canAccessWithPermissionKey,
+} from "@/lib/routeAccess";
 import { useGetPermissions } from "@/hooks/permissions/useGetPermissions";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
+import { useCompanyFeaturePermissionStore } from "@/stores/companyFeaturePermissionStore";
 
 const MAX_RESULTS = 20;
 
@@ -45,16 +49,21 @@ export function useSearch() {
     user?.companyId,
     user?.id ? Number(user.id) : undefined,
   );
+  const { companyFeaturePermission } = useCompanyFeaturePermissionStore();
 
-  // Company permission takes priority, and both the company AND the user
-  // must be allowed (mirrors the real route-access check) - so an item only
-  // shows here if navigating to it wouldn't be blocked either.
+  // Mirrors PrivateRoute so an item only shows here if navigating to it wouldn't
+  // be blocked: the company feature must be entitled, and for user permissions
+  // the company permission takes priority with both company AND user allowed.
+  // Both keys are resolved from the route maps when the registry is generated,
+  // so this filter needs no route lookup at runtime.
   const accessibleRegistry = useMemo(
     () =>
-      generatedRegistry.filter((item) =>
-        canAccessRoute(item.href, permissions ?? null),
+      generatedRegistry.filter(
+        (item) =>
+          canAccessWithFeatureKey(item.featureKey, companyFeaturePermission) &&
+          canAccessWithPermissionKey(item.permissionKey, permissions ?? null),
       ),
-    [permissions],
+    [permissions, companyFeaturePermission],
   );
 
   const results = useMemo(() => {
