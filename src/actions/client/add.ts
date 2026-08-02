@@ -5,7 +5,10 @@ import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
 import { ServerAction } from "@/types/action";
 import { TErrorHandler } from "@/types/globalError";
-import { normalizePhoneForStorage } from "@/utils/normalizePhone";
+import {
+  normalizePhoneForStorage,
+  phoneLookupWhereClause,
+} from "@/utils/normalizePhone";
 import { createClientValidationSchema } from "@/validations/schemas/client/client.validation";
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
@@ -46,10 +49,15 @@ export async function addCustomer(
     const normalizedMobile = data.mobile
       ? normalizePhoneForStorage(data.mobile)
       : data.mobile;
+    const phoneLookup = phoneLookupWhereClause(data.mobile);
 
     if (data.email) {
       const existingCustomer = await db.client.findFirst({
-        where: { email: data.email, companyId, mobile: normalizedMobile },
+        where: {
+          email: data.email,
+          companyId,
+          ...(phoneLookup ? { OR: phoneLookup } : {}),
+        },
       });
 
       if (existingCustomer) {
@@ -60,9 +68,9 @@ export async function addCustomer(
       }
     }
 
-    if (normalizedMobile) {
+    if (phoneLookup) {
       const existingCustomerByMobile = await db.client.findFirst({
-        where: { companyId, mobile: normalizedMobile },
+        where: { companyId, OR: phoneLookup },
       });
 
       if (existingCustomerByMobile) {
