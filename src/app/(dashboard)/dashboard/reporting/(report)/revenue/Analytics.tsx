@@ -1,7 +1,7 @@
 import { authOptions } from "@/authOptions";
 import { db } from "@/lib/db";
 import { Prisma } from "@prisma/client";
-import moment, { Moment } from "moment";
+import moment, { Moment } from "moment-timezone";
 import { getServerSession } from "next-auth";
 import RevenueBarChartContainer from "./chart/RevenueBarChartContainer";
 import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
