@@ -83,6 +83,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   );
   const [openPaymentMethod, setOpenPaymentMethod] = useState(false);
   const [paymentMethodInput, setPaymentMethodInput] = useState("");
+  const [depositMethod, setDepositMethod] = useState("");
+  const [depositNotes, setDepositNotes] = useState("");
 
   const formatAmount = (value: number | string): number => {
     const num = typeof value === "string" ? parseFloat(value) : value;
@@ -99,6 +101,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     setCash("");
     setAmount(totalDue);
     setPaymentMethod(null);
+    setDepositMethod("");
+    setDepositNotes("");
   }
 
   // Reset form when modal opens
@@ -123,6 +127,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         return;
       }
 
+      if (tab === "DEPOSIT" && !depositMethod) {
+        errorToast("Deposit method is required");
+        return;
+      }
+
       setLoading(true);
 
       const paymentData = {
@@ -143,6 +152,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         }),
         ...(tab === "CASH" && {
           receivedCash: cash,
+        }),
+        ...(tab === "DEPOSIT" && {
+          depositMethod,
+          depositNotes,
         }),
       };
 
@@ -191,7 +204,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           </DialogHeader>
 
           <Tabs.Root className="mt-5" value={tab} onValueChange={setTab as any}>
-            <Tabs.List className="grid grid-cols-4 gap-1.5 rounded-2xl border border-slate-200 bg-white/50 p-1.5 shadow-sm md:flex">
+            <Tabs.List className="grid grid-cols-5 gap-1.5 rounded-2xl border border-slate-200 bg-white/50 p-1.5 shadow-sm md:flex">
               <TabTrigger value="CARD" tab={tab}>
                 <svg
                   viewBox="0 0 24 24"
@@ -246,6 +259,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
               <TabTrigger value="OTHER" tab={tab}>
                 Other
+              </TabTrigger>
+
+              <TabTrigger value="DEPOSIT" tab={tab}>
+                Deposit
               </TabTrigger>
             </Tabs.List>
 
@@ -587,6 +604,69 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   className="h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
+                />
+              </div>
+            </Tabs.Content>
+
+            <Tabs.Content value="DEPOSIT">
+              <div className="mt-5 flex justify-between gap-3">
+                <div className="w-40 md:w-[40%]">
+                  <SlimInput
+                    labelClassName="text-sm md:text-base"
+                    name="date"
+                    type="date"
+                    value={date ? moment(date).format("YYYY-MM-DD") : ""}
+                    onChange={(e) => {
+                      const localDate = moment.tz(
+                        e.target.value,
+                        "YYYY-MM-DD",
+                        timezone,
+                      );
+                      setDate(localDate.toDate());
+                    }}
+                  />
+                </div>
+
+                <div className="w-[60%]">
+                  <SlimInput
+                    labelClassName="text-sm md:text-base"
+                    name="amount"
+                    type="text"
+                    label="Deposit Amount"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    onBlur={(e) => setAmount(formatAmount(e.target.value))}
+                  />
+                </div>
+              </div>
+
+              <div className="mt-5">
+                <SlimInput
+                  labelClassName="text-sm md:text-base"
+                  name="depositMethod"
+                  type="text"
+                  label="Deposit Method"
+                  value={depositMethod}
+                  onChange={(e) =>
+                    setDepositMethod(e.target.value.replace(/[^a-zA-Z ]/g, ""))
+                  }
+                  required={true}
+                />
+              </div>
+
+              <div className="mt-5">
+                <label
+                  className="mb-1 px-2 text-sm font-medium md:text-base"
+                  htmlFor="depositNotes"
+                >
+                  Deposit Notes
+                </label>
+                <textarea
+                  name="depositNotes"
+                  id="depositNotes"
+                  className="h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none"
+                  value={depositNotes}
+                  onChange={(e) => setDepositNotes(e.target.value)}
                 />
               </div>
             </Tabs.Content>
