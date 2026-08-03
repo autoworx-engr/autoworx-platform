@@ -158,8 +158,18 @@ export default function LeadActions({ lead }: TProps) {
   }: TCreateDraftEstimateParams) => {
     try {
       // Basic validation
-      if (!clientId || !leadId || !columnId) {
-        errorToast("Missing required data to create estimate");
+      if (!clientId) {
+        errorToast("Add a client to this lead first.");
+        return;
+      }
+
+      if (!leadId) {
+        errorToast("Lead not found. Please refresh and try again.");
+        return;
+      }
+
+      if (!columnId) {
+        errorToast("Pipeline stage missing. Please refresh and try again.");
         return;
       }
 
@@ -234,6 +244,7 @@ export default function LeadActions({ lead }: TProps) {
       // Navigate at the end
       router.push(`/dashboard/estimate/edit/${id}?clientId=${resClientId}`);
     } catch (err) {
+      console.log("err", err);
       errorHandler(err);
       errorToast("Failed to create draft estimate. Please try again.");
     }
