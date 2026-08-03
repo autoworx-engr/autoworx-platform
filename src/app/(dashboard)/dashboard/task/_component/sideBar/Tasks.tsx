@@ -11,7 +11,7 @@ import { useDate } from "../../_hook/lib/useDate";
 import useWeekStartEndDays from "../../_hook/lib/useWeekStartEndDays";
 import useInfinityTaskQuery from "../../_hook/task/query/useInfinityTask";
 import TaskError from "../ui/TaskError";
-import TaskNotFound from "../ui/TaskNotFound";
+import EmptyMsg from "../../../../../../components/common/EmptyMsg";
 import TaskSpinner from "../ui/TaskSpinner";
 import { MinimizeButton } from "./MinimizeButton";
 import TaskListItem from "@/components/task/TaskListItem";
@@ -95,7 +95,7 @@ export default function Tasks() {
   } else if (!isLoading && isError) {
     content = <TaskError message="Failed to load task" />;
   } else if (!isLoading && !isError && tasks && tasks?.length === 0) {
-    content = <TaskNotFound message={"No Task found"} />;
+    content = <EmptyMsg message={"No Task found"} />;
   } else if (!isLoading && !isError && tasks && tasks?.length > 0) {
     content = (
       <div className="flex flex-col gap-2">

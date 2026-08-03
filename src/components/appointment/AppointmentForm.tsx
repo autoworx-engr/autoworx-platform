@@ -249,8 +249,15 @@ export default function AppointmentForm({
                     setDraftOpen(!draftOpen);
                   }}
                   className={cn(
-                    "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 text-sm shadow-sm outline-none transition-colors",
-                    draftOpen && "border-ring ring-1 ring-ring",
+                    // Mirrors the Selector trigger (h-10 / rounded-lg / px-4 /
+                    // ring-1) used by the Client, Vehicle and Service Category
+                    // fields so all four controls in this grid match height.
+                    "group flex h-10 w-full items-center justify-between rounded-lg px-4 text-sm outline-none transition-all duration-300",
+                    "bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm hover:shadow-md",
+                    "ring-1 ring-slate-200 dark:ring-slate-800",
+                    draftOpen
+                      ? "ring-2 ring-primary/60 border-transparent"
+                      : "hover:ring-slate-300",
                   )}
                 >
                   <div className="min-w-0 flex-1 overflow-hidden text-left">
