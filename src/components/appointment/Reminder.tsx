@@ -103,11 +103,15 @@ export function Reminder({
   const [minDate, setMinDate] = useState<string>("");
 
   useEffect(() => {
-    setOpenConfirmation(false);
+    if (openReminder) {
+      setOpenConfirmation(false);
+    }
   }, [openReminder, setOpenConfirmation]);
 
   useEffect(() => {
-    setOpenReminder(false);
+    if (openConfirmation) {
+      setOpenReminder(false);
+    }
   }, [openConfirmation, setOpenReminder]);
 
   useEffect(() => {
@@ -392,7 +396,7 @@ export function Reminder({
               template.subject.toLowerCase().includes(search.toLowerCase()),
             )
           }
-          // openState={[openConfirmation, setOpenConfirmation]}
+          openState={[openConfirmation, setOpenConfirmation]}
         />
       </div>
       <div className="min-w-[350px] space-y-4 p-2 md:w-full">
@@ -478,7 +482,7 @@ export function Reminder({
               template.subject.toLowerCase().includes(search.toLowerCase()),
             )
           }
-          // openState={[openReminder, setOpenReminder]}
+          openState={[openReminder, setOpenReminder]}
         />
       </div>
 
