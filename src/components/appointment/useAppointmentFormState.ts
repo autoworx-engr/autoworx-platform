@@ -84,14 +84,17 @@ export function useAppointmentFormState({
     }
   > | null>(null);
 
-  const { data: estimates = [], isFetched: estimateIsFetched } =
-    useEstimatesQueryByClient(
-      client?.id!,
-      { id: true, clientId: true, grandTotal: true, vehicle: true },
-      { enabled: !!client?.id },
-    );
+  const {
+    data: estimates = [],
+    isFetched: estimateIsFetched,
+    isLoading: estimatesLoading,
+  } = useEstimatesQueryByClient(
+    client?.id!,
+    { id: true, clientId: true, grandTotal: true, vehicle: true },
+    { enabled: !!client?.id },
+  );
 
-  const { data: invoices = [] } = useQuery({
+  const { data: invoices = [], isLoading: invoicesLoading } = useQuery({
     queryKey: queryKeys.invoicesByClientId(client?.id!),
     queryFn: () =>
       getClientEstimate(client?.id!, {
@@ -100,6 +103,12 @@ export function useAppointmentFormState({
       }),
     enabled: !!client?.id,
   });
+
+  // A prefilled draft id renders immediately, but its vehicle label and total
+  // only arrive with these queries — surface that wait instead of showing a
+  // placeholder "$0.00" that silently corrects itself.
+  const draftOptionsLoading =
+    !!client?.id && (estimatesLoading || invoicesLoading);
 
   const timezone = useCompanyTimezone();
   const today = moment().format("YYYY-MM-DD");
@@ -829,6 +838,7 @@ export function useAppointmentFormState({
     // computed
     filteredDraftEstimateOptions,
     selectedDraftOption,
+    draftOptionsLoading,
     timeOptions,
     rows,
     // refs
