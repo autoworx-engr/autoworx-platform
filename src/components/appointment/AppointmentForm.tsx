@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { TimeScrollPicker } from "@/components/ui/TimeScrollPicker";
 import { cn } from "@/lib/cn";
 import { errorToast } from "@/lib/toast";
 import type { User } from "@prisma/client";
@@ -142,61 +143,33 @@ export default function AppointmentForm({
             }}
           />
 
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="apptStartTime" className="text-base">
-              Start Time <span className="text-destructive">*</span>
-            </Label>
-            <Select
-              value={startTime || undefined}
-              onValueChange={(value) =>
-                handleTimeChange({ target: { value } } as any, "start")
-              }
-            >
-              <SelectTrigger
-                id="apptStartTime"
-                size="md"
-                className="w-full rounded-md"
-              >
-                <SelectValue placeholder="Start Time" />
-              </SelectTrigger>
-              <SelectContent className="max-h-60">
-                {timeOptions
-                  .filter((time) => time.value <= "22:45")
-                  .map((time) => (
-                    <SelectItem key={time.value} value={time.value}>
-                      {time.label}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <TimeScrollPicker
+            id="apptStartTime"
+            label="Start Time"
+            required
+            value={startTime || ""}
+            maxTime="22:45"
+            onChange={(value) =>
+              handleTimeChange({ target: { value } } as any, "start")
+            }
+          />
 
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="apptEndTime" className="text-base">
-              End Time <span className="text-destructive">*</span>
-            </Label>
-            <Select
-              value={endTime || undefined}
-              onValueChange={(value) =>
-                handleTimeChange({ target: { value } } as any, "end")
-              }
-            >
-              <SelectTrigger
-                id="apptEndTime"
-                size="md"
-                className="w-full rounded-md"
-              >
-                <SelectValue placeholder="End Time" />
-              </SelectTrigger>
-              <SelectContent className="max-h-60">
-                {timeOptions.map((time) => (
-                  <SelectItem key={time.value} value={time.value}>
-                    {time.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <TimeScrollPicker
+            id="apptEndTime"
+            label="End Time"
+            required
+            value={endTime || ""}
+            // Same-day appointments must end after they start; for multi-day the
+            // end time sits on a later date, so no lower bound applies.
+            minTime={
+              endDate && date && endDate > date
+                ? undefined
+                : startTime || undefined
+            }
+            onChange={(value) =>
+              handleTimeChange({ target: { value } } as any, "end")
+            }
+          />
         </div>
 
         <div className="flex items-center gap-2">
