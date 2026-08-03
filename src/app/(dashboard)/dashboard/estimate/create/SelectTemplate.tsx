@@ -6,6 +6,7 @@ import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
 import useTemplateListInfiniteQuery from "@/hooks/query-hook/useTemplateListInfiniteQuery";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
+import { useListsStore } from "@/stores/lists";
 
 interface SelectTemplateProps {
   name?: string;
@@ -49,10 +50,12 @@ export default function SelectTemplate({
     // remove everything the template added, restoring whatever was there before it was applied
     const { templateSnapshot } = useEstimateCreateStore.getState();
     if (templateSnapshot) {
+      const { status, ...rest } = templateSnapshot;
       useEstimateCreateStore.setState({
-        ...templateSnapshot,
+        ...rest,
         templateSnapshot: null,
       });
+      useListsStore.setState({ status: status ?? null });
     } else {
       useEstimateCreateStore.setState({
         items: [],
@@ -81,6 +84,7 @@ export default function SelectTemplate({
           notes: "",
         })),
       });
+      useListsStore.setState({ status: null });
     }
 
     const params = new URLSearchParams(searchParams?.toString());

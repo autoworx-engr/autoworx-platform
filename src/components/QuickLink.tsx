@@ -207,7 +207,7 @@ const QuickLink = () => {
                         <NewCustomer
                           onClientCreated={handleClientCreated} // PASS THE NEW HANDLER
                           buttonElement={
-                            <div className="flex cursor-pointer items-center space-x-3 rounded-lg border border-gray-200 bg-white p-3 transition hover:bg-[#F4F6FF]">
+                            <div className="flex cursor-pointer items-center space-x-3 rounded-lg border border-gray-200 bg-white p-3 transition text-center hover:bg-[#F4F6FF]">
                               <action.icon className="h-5 w-5 text-primary" />
                               <span className="text-sm font-medium text-gray-700">
                                 {action.label}

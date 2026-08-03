@@ -4,6 +4,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/Tooltip";
+import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/cn";
 import {
   DropdownMenu,
@@ -169,7 +170,8 @@ export default function Selector<T>({
         className="flex max-h-48 flex-col overflow-y-auto py-1 thin-scrollbar"
       >
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-6 px-4">
+          <div className="flex items-center justify-center gap-2 py-6 px-4">
+            <Spinner className="size-4 text-primary" />
             <p className="text-sm text-slate-400">Loading...</p>
           </div>
         ) : filteredItems?.length === 0 ? (
@@ -304,7 +306,11 @@ export default function Selector<T>({
             <Tooltip>
               <TooltipTrigger asChild>
                 <span className="text-sm font-medium text-slate-600 dark:text-slate-300 truncate pr-2">
-                  {selected ? label(selected) : label(null)}
+                  {isLoading && !selected
+                    ? "Loading..."
+                    : selected
+                      ? label(selected)
+                      : label(null)}
                 </span>
               </TooltipTrigger>
               {selected && label(selected).length > 25 && (
@@ -315,14 +321,18 @@ export default function Selector<T>({
             </Tooltip>
           </TooltipProvider>
 
-          {!disabledDropdown && (
-            <ChevronDown
-              size={16}
-              className={cn(
-                "text-muted-foreground transition-transform duration-200",
-                isOpen && "rotate-180 text-ring",
-              )}
-            />
+          {isLoading ? (
+            <Spinner className="size-4 shrink-0 text-primary" />
+          ) : (
+            !disabledDropdown && (
+              <ChevronDown
+                size={16}
+                className={cn(
+                  "text-muted-foreground transition-transform duration-200",
+                  isOpen && "rotate-180 text-ring",
+                )}
+              />
+            )
           )}
         </DropdownMenuTrigger>
 

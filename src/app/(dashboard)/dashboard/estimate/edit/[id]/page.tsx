@@ -253,7 +253,7 @@ export default async function Page(props: {
   const pageType = invoice?.type === "Invoice" ? "Invoice" : "Estimate";
 
   return (
-    <div className="gap-3 space-y-4 overflow-clip py-2 md:-my-2 md:min-h-[93vh] xl:flex xl:space-y-0">
+    <div className="gap-3 space-y-4 overflow-clip py-2 md:-my-2 md:min-h-[93vh] xl:flex xl:space-y-0 px-1">
       <div className="w-full xl:min-w-[68%] flex flex-col gap-4">
         <Title>{pageType}</Title>
 
