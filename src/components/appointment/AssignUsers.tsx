@@ -185,7 +185,6 @@ export default function AssignUsers({
                 placeholder="Search Employees..."
                 value={assignedEmployeeSearch}
                 onChange={(e) => setAssignedEmployeeSearch(e.target.value)}
-                autoFocus
               />
             </div>
 
