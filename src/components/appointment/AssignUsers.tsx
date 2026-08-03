@@ -119,7 +119,10 @@ export default function AssignUsers({
       <button
         type="button"
         className="group relative mb-4 font-medium text-primary transition-all duration-300"
-        onClick={() => setAddEmployeePersonOpen(true)}
+        onClick={() => {
+          setAssignedEmployeeSearch("");
+          setAddEmployeePersonOpen(true);
+        }}
       >
         {title}
         {/* <span className="absolute -bottom-0.5 left-0 h-0.5 w-0 transition-all duration-300 group-hover:w-full bg-primary" /> */}
@@ -189,7 +192,10 @@ export default function AssignUsers({
             {/* Close Search Button */}
             <button
               type="button"
-              onClick={() => setAddEmployeePersonOpen(false)}
+              onClick={() => {
+                setAssignedEmployeeSearch("");
+                setAddEmployeePersonOpen(false);
+              }}
               className="flex h-9 w-9 items-center justify-center rounded-md border border-input text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
               <X size={18} strokeWidth={2} />
