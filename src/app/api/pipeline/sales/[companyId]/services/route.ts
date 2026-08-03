@@ -103,7 +103,7 @@ export async function GET(
     }
 
     const { searchParams } = new URL(req.url);
-    const search = searchParams.get("search") || undefined;
+    const search = searchParams.get("search")?.trim() || undefined;
     const categoryId = searchParams.get("categoryId")
       ? Number(searchParams.get("categoryId"))
       : undefined;

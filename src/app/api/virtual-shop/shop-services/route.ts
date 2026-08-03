@@ -217,7 +217,7 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const shopId = searchParams.get("shopId");
     const category = searchParams.get("category");
-    const search = searchParams.get("search");
+    const search = searchParams.get("search")?.trim() || null;
     const includeInactive = searchParams.get("includeInactive") === "true";
     // Default to 'desc' if not provided, strongly type the allowed values
     const sortOrder = (

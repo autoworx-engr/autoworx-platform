@@ -117,7 +117,7 @@ export async function GET(req: NextRequest) {
       | "asc"
       | "desc";
     const columnIdParam = searchParams.get("columnId");
-    const search = searchParams.get("search") ?? undefined;
+    const search = searchParams.get("search")?.trim() || undefined;
 
     const page = pageParam ? Math.max(1, parseInt(pageParam)) : 1;
     const take = takeParam ? parseInt(takeParam) : undefined;

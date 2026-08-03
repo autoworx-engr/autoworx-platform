@@ -66,7 +66,7 @@ export async function GET(
     const companyId = jwtCompanyId;
 
     const { searchParams } = new URL(req.url);
-    const search = searchParams.get("search") || undefined;
+    const search = searchParams.get("search")?.trim() || undefined;
 
     const where: Record<string, any> = { companyId };
 

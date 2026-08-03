@@ -60,7 +60,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
 
     const userIdParam = searchParams.get("userId");
-    const search = searchParams.get("search") || "";
+    const search = searchParams.get("search")?.trim() || "";
 
     if (!userIdParam) {
       return NextResponse.json(

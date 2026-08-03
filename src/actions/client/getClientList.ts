@@ -19,7 +19,8 @@ export default async function getClientList(
     const trimmedSearch = search?.trim();
 
     if (trimmedSearch) {
-      const [first, last] = trimmedSearch.split(" ");
+      // Split on whitespace runs so "John  Doe" doesn't yield an empty token.
+      const [first, last] = trimmedSearch.split(/\s+/);
 
       whereConditions.push({
         OR: [
