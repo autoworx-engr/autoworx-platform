@@ -244,22 +244,41 @@ function buildWhereInput(
 
     const searchTerms = normalizedSearch.split(/\s+/).filter(Boolean);
     if (searchTerms.length > 1) {
-      const [firstNameTerm, ...lastNameParts] = searchTerms;
-      const lastNameTerm = lastNameParts.join(" ");
-
       searchConditions.push({
         invoice: {
           is: {
             client: {
               is: {
-                AND: [
-                  {
-                    firstName: containsInsensitive(firstNameTerm),
-                  },
-                  {
-                    lastName: containsInsensitive(lastNameTerm),
-                  },
-                ],
+                AND: searchTerms.map((term) => ({
+                  OR: [
+                    { firstName: containsInsensitive(term) },
+                    { lastName: containsInsensitive(term) },
+                  ],
+                })),
+              },
+            },
+          },
+        },
+      });
+
+      searchConditions.push({
+        invoice: {
+          is: {
+            vehicle: {
+              is: {
+                AND: searchTerms.map((term) => {
+                  const termAsYear = Number(term);
+                  return {
+                    OR: [
+                      { make: containsInsensitive(term) },
+                      { model: containsInsensitive(term) },
+                      { other: containsInsensitive(term) },
+                      ...(Number.isInteger(termAsYear)
+                        ? [{ year: termAsYear }]
+                        : []),
+                    ],
+                  };
+                }),
               },
             },
           },
