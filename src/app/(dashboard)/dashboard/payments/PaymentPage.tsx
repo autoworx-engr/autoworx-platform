@@ -22,7 +22,7 @@ export default function Page() {
   // }, [couponsData]);
 
   return (
-    <div>
+    <div className="p-2 md:p-0">
       <Title>Payments</Title>
 
       {/* Header */}

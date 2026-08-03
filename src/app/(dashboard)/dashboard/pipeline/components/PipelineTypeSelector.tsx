@@ -72,7 +72,7 @@ export default function PipelineTypeSelector({
     <div className="relative mr-4" ref={ref}>
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1 text-[26px] font-bold text-[#66738C] hover:text-[#5a66ee] transition-colors"
+        className="flex items-center gap-1 text-[26px] font-bold text-slate-600 hover:text-[#5a66ee] transition-colors"
       >
         {current?.label}
         <ChevronDown
