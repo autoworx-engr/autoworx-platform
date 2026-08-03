@@ -4,6 +4,9 @@ describe("normalizeCalendarDateParam", () => {
   it.each([
     ["2026-08-21", "2026-08-21"],
     ["08-21-2026", "2026-08-21"],
+    ["08/21/2026", "2026-08-21"],
+    ["August 21, 2026", "2026-08-21"],
+    // Legacy day-first form from older notification links.
     ["21 August 2026", "2026-08-21"],
   ])("normalizes notification date %s", (value, expected) => {
     expect(normalizeCalendarDateParam(value)).toBe(expected);

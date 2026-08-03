@@ -293,7 +293,8 @@ export function ConversationExamplesTab() {
                 />
 
                 <p className="text-xs text-muted-foreground mt-2">
-                  Added {new Date(example.createdAt).toLocaleDateString()}
+                  Added{" "}
+                  {new Date(example.createdAt).toLocaleDateString("en-US")}
                 </p>
               </div>
             </div>

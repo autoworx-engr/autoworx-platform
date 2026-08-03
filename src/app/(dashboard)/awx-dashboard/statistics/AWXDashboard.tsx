@@ -250,7 +250,7 @@ const AWXDashboard = ({ companies, platformStats }: Props) => {
                           <p className="text-base md:text-lg italic">
                             Activated On :{" "}
                             <i className="font-semibold text-slate-700 dark:text-slate-200">
-                              {moment(company.createdAt).format("D MMMM, YYYY")}
+                              {moment(company.createdAt).format("MMMM D, YYYY")}
                             </i>
                           </p>
                           <div className="pt-2 flex items-center gap-3">

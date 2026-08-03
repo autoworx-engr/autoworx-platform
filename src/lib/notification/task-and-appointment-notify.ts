@@ -284,7 +284,7 @@ export const sendNewTaskAssignNotification = async ({
   try {
     // update technician status to complete
     // get all company admins and managers
-    const formattedDate = moment(taskDate).format("DD MMMM YYYY");
+    const formattedDate = moment(taskDate).format("MMMM DD, YYYY");
 
     if (!assignTaskUser.id) {
       return;
