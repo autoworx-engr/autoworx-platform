@@ -54,6 +54,8 @@ type Props = {
   required?: boolean;
   placeholder?: string;
   className?: string;
+  /** Overrides the label's default `text-base` to match surrounding labels. */
+  labelClassName?: string;
 };
 
 /**
@@ -75,6 +77,7 @@ export function TimeScrollPicker({
   required = false,
   placeholder = label,
   className,
+  labelClassName,
 }: Props) {
   const [open, setOpen] = useState(false);
   const hourColumnRef = useRef<HTMLDivElement>(null);
@@ -162,7 +165,7 @@ export function TimeScrollPicker({
 
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
-      <Label htmlFor={id} className="text-base">
+      <Label htmlFor={id} className={cn("text-base", labelClassName)}>
         {label}
         {required && <span className="text-destructive"> *</span>}
       </Label>
