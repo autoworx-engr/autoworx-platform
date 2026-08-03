@@ -1,9 +1,11 @@
 /**
  * AUTO-GENERATED — do not edit manually.
  * Run: yarn generate:search
- * Generated: 2026-07-27T16:46:39.329Z
+ * Generated: 2026-08-03T05:35:09.313Z
  * Source: src/app
  */
+import type { RoutePermissionKey } from "./routePermissionKeys";
+import type { RouteFeatureKey } from "./routeFeatureKeys";
 
 export type SearchItemType = "page" | "form" | "settings" | "section";
 
@@ -14,6 +16,10 @@ export interface SearchItem {
   href: string;
   type: SearchItemType;
   keywords: string[];
+  /** User-permission key(s) guarding this route, resolved from ROUTE_PERMISSIONS_MAP at generation time. */
+  permissionKey?: RoutePermissionKey;
+  /** Company feature key(s) guarding this route, resolved from FEATURE_PERMISSIONS_MAP at generation time. */
+  featureKey?: RouteFeatureKey;
 }
 
 export const generatedRegistry: SearchItem[] = [
@@ -32,6 +38,7 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "client", "directory"],
     description: "Manage your clients",
+    featureKey: "clientDirectory",
   },
   {
     id: "dashboard-communication-client",
@@ -40,6 +47,8 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "communication", "client", "hub"],
     description: "Manage client and supplier collaboration",
+    permissionKey: "communicationHubClients",
+    featureKey: "communicationHubClients",
   },
   {
     id: "dashboard-communication-collaboration",
@@ -48,6 +57,8 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "communication", "collaboration", "hub"],
     description: "Manage client and supplier collaboration",
+    permissionKey: "communicationHubCollaboration",
+    featureKey: "communicationHubCollaboration",
   },
   {
     id: "dashboard-communication-internal",
@@ -56,6 +67,8 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "communication", "internal", "hub"],
     description: "Manage client and supplier collaboration",
+    permissionKey: "communicationHubInternal",
+    featureKey: "communicationHubInternal",
   },
   {
     id: "dashboard-employee",
@@ -64,6 +77,7 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "employee", "directory"],
     description: "Manage your employees",
+    featureKey: "employeeDirectory",
   },
   {
     id: "dashboard-estimate",
@@ -72,6 +86,8 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "estimate", "invoices", "estimates"],
     description: "View and manage all your estimates.",
+    permissionKey: "estimatesInvoices",
+    featureKey: "estimateInvoices",
   },
   {
     id: "dashboard-estimate-canned",
@@ -80,6 +96,8 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "estimate", "canned", "invoices"],
     description: "Manage your canned estimates",
+    permissionKey: "estimatesInvoices",
+    featureKey: "estimateInvoices",
   },
   {
     id: "dashboard-estimate-create",
@@ -88,6 +106,8 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "estimate", "create", "invoices", "estimates"],
     description: "Create new estimate",
+    permissionKey: "estimatesInvoices",
+    featureKey: "estimateInvoices",
   },
   {
     id: "dashboard-estimate-invoices",
@@ -96,6 +116,8 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "estimate", "invoices"],
     description: "View and manage all your invoices.",
+    permissionKey: "estimatesInvoices",
+    featureKey: "estimateInvoices",
   },
   {
     id: "dashboard-estimate-templates",
@@ -104,6 +126,8 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "estimate", "templates", "invoices"],
     description: "Manage and customize your invoice templates.",
+    permissionKey: "estimatesInvoices",
+    featureKey: "estimateInvoices",
   },
   {
     id: "dashboard-estimate-templates-create",
@@ -119,6 +143,8 @@ export const generatedRegistry: SearchItem[] = [
       "template",
     ],
     description: "Create a new template",
+    permissionKey: "estimatesInvoices",
+    featureKey: "estimateInvoices",
   },
   {
     id: "dashboard-fleet",
@@ -127,6 +153,7 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "fleet", "directory"],
     description: "Manage your fleets",
+    featureKey: "fleetDirectory",
   },
   {
     id: "dashboard-inventory",
@@ -135,6 +162,8 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "inventory"],
     description: "Manage your inventory, products, and supplies",
+    permissionKey: ["inventoryAllViewOnly", "inventoryAll"],
+    featureKey: "inventory",
   },
   {
     id: "dashboard-inventory-camera",
@@ -143,6 +172,8 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "inventory", "camera", "scanner"],
     description: "Scan QR codes to quickly find and manage inventory items",
+    permissionKey: "inventoryAll",
+    featureKey: "inventory",
   },
   {
     id: "dashboard-inventory-vendor",
@@ -151,6 +182,8 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "inventory", "vendor"],
     description: "Manage your vendors",
+    permissionKey: "inventoryAll",
+    featureKey: "inventory",
   },
   {
     id: "dashboard-payments",
@@ -159,6 +192,8 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "payments"],
     description: "View and manage all your payments.",
+    permissionKey: "payments",
+    featureKey: "payments",
   },
   {
     id: "dashboard-pipeline-sales-lead",
@@ -167,6 +202,8 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "pipeline", "sales", "lead", "leads"],
     description: "View and manage your sales leads",
+    permissionKey: "salesPipeline",
+    featureKey: "salesPipeline",
   },
   {
     id: "dashboard-pipeline-sales-pipeline",
@@ -175,6 +212,8 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "pipeline", "sales", "pipelines"],
     description: "Manage your sales pipeline",
+    permissionKey: "salesPipeline",
+    featureKey: "salesPipeline",
   },
   {
     id: "dashboard-pipeline-shop-pipeline",
@@ -183,6 +222,8 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "pipeline", "shop", "pipelines"],
     description: "Manage your shop pipeline",
+    permissionKey: "shopPipeline",
+    featureKey: "shopPipeline",
   },
   {
     id: "dashboard-pipeline-shop-workorder",
@@ -191,6 +232,8 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "pipeline", "shop", "workorder", "work", "orders"],
     description: "View and manage your work orders",
+    permissionKey: "shopPipeline",
+    featureKey: "shopPipeline",
   },
   {
     id: "dashboard-pipeline-team-pipeline",
@@ -239,6 +282,8 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "reporting", "revenue", "analytics"],
     description: "Analyze your shop",
+    permissionKey: ["reporting", "reportingViewOnly"],
+    featureKey: "reporting",
   },
   {
     id: "dashboard-reporting-salesreporting",
@@ -392,6 +437,8 @@ export const generatedRegistry: SearchItem[] = [
     type: "settings",
     keywords: ["dashboard", "settings", "automation"],
     description: "Configure automation settings",
+    permissionKey: "businessSettings",
+    featureKey: "automation",
   },
   {
     id: "dashboard-settings-billing",
@@ -400,6 +447,8 @@ export const generatedRegistry: SearchItem[] = [
     type: "settings",
     keywords: ["dashboard", "settings", "billing"],
     description: "Manage your billing settings",
+    permissionKey: "businessSettings",
+    featureKey: "businessSettings",
   },
   {
     id: "dashboard-settings-business",
@@ -408,6 +457,8 @@ export const generatedRegistry: SearchItem[] = [
     type: "settings",
     keywords: ["dashboard", "settings", "business"],
     description: "Manage your business",
+    permissionKey: "businessSettings",
+    featureKey: "businessSettings",
   },
   {
     id: "dashboard-settings-calendar",
@@ -416,6 +467,8 @@ export const generatedRegistry: SearchItem[] = [
     type: "settings",
     keywords: ["dashboard", "settings", "calendar"],
     description: "Configure calendar settings",
+    permissionKey: "businessSettings",
+    featureKey: "businessSettings",
   },
   {
     id: "dashboard-settings-communications",
@@ -424,6 +477,8 @@ export const generatedRegistry: SearchItem[] = [
     type: "settings",
     keywords: ["dashboard", "settings", "communications"],
     description: "Configure communications settings",
+    permissionKey: "businessSettings",
+    featureKey: "businessSettings",
   },
   {
     id: "dashboard-settings-estimates",
@@ -432,6 +487,8 @@ export const generatedRegistry: SearchItem[] = [
     type: "settings",
     keywords: ["dashboard", "settings", "estimates"],
     description: "Configure estimates and invoices",
+    permissionKey: "businessSettings",
+    featureKey: "businessSettings",
   },
   {
     id: "dashboard-settings-leadgeneration",
@@ -440,6 +497,8 @@ export const generatedRegistry: SearchItem[] = [
     type: "settings",
     keywords: ["dashboard", "settings", "leadgeneration", "lead", "generation"],
     description: "Configure lead generation settings",
+    permissionKey: "businessSettings",
+    featureKey: "businessSettings",
   },
   {
     id: "dashboard-settings-my-account",
@@ -456,6 +515,8 @@ export const generatedRegistry: SearchItem[] = [
     type: "settings",
     keywords: ["dashboard", "settings", "networks"],
     description: "Manage your networks",
+    permissionKey: "businessSettings",
+    featureKey: "businessSettings",
   },
   {
     id: "dashboard-settings-notifications",
@@ -472,6 +533,8 @@ export const generatedRegistry: SearchItem[] = [
     type: "settings",
     keywords: ["dashboard", "settings", "payments"],
     description: "Configure payment gateways and integrations",
+    permissionKey: "businessSettings",
+    featureKey: "businessSettings",
   },
   {
     id: "dashboard-settings-payments-webhook-events",
@@ -494,6 +557,7 @@ export const generatedRegistry: SearchItem[] = [
     type: "settings",
     keywords: ["dashboard", "settings", "sales agent", "sales", "agent"],
     description: "Configure sales agent settings",
+    permissionKey: "businessSettings",
   },
   {
     id: "dashboard-settings-sales-agent-ai-settings",
@@ -517,6 +581,8 @@ export const generatedRegistry: SearchItem[] = [
     type: "settings",
     keywords: ["dashboard", "settings", "security"],
     description: "Configure security settings",
+    permissionKey: "businessSettings",
+    featureKey: "businessSettings",
   },
   {
     id: "dashboard-settings-team-management",
@@ -531,6 +597,8 @@ export const generatedRegistry: SearchItem[] = [
       "management",
     ],
     description: "Manage your team and employees",
+    permissionKey: "businessSettings",
+    featureKey: "businessSettings",
   },
   {
     id: "dashboard-settings-virtual-shop-configure",
@@ -546,6 +614,7 @@ export const generatedRegistry: SearchItem[] = [
       "configure",
     ],
     description: "Configure virtual shop settings",
+    featureKey: "virtual-shop",
   },
   {
     id: "dashboard-settings-virtual-shop-configure-shops-create",
@@ -593,6 +662,7 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "visualization"],
     description: "Visualize car wraps",
+    permissionKey: "visualization",
   },
   {
     id: "dashboard-zap",

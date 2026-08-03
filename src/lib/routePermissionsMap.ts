@@ -1,126 +1,19 @@
 import { superAdminNavList } from "@/app/(dashboard)/awx-dashboard/_utils/superAdminNavList";
 
-type PermissionKeys =
-  | "communicationHubInternal"
-  | "communicationHubClients"
-  | "communicationHubCollaboration"
-  | "estimatesInvoices"
-  | "calendarTask"
-  | "payments"
-  | "workforceManagement"
-  | "reporting"
-  | "inventoryAll"
-  | "integrations"
-  | "salesPipeline"
-  | "shopPipeline"
-  | "businessSettings"
-  | "workforceManagementViewOnly"
-  | "reportingViewOnly"
-  | "inventoryAllViewOnly"
-  | "visualization";
+// Route → user-permission keys and route → company feature keys live in
+// dependency-free modules so build-time scripts can import them; re-exported
+// here to keep existing import sites working.
+export {
+  ROUTE_PERMISSIONS_MAP,
+  resolveRoutePermissionKey,
+} from "./routePermissionKeys";
+export type { PermissionKey, RoutePermissionKey } from "./routePermissionKeys";
 
-export const ROUTE_PERMISSIONS_MAP: Record<
-  string,
-  PermissionKeys | PermissionKeys[] | undefined
-> = {
-  "/dashboard/communication/client": "communicationHubClients",
-  "/dashboard/communication/collaboration": "communicationHubCollaboration",
-  "/dashboard/communication/internal": "communicationHubInternal",
-  "/dashboard/inventory": ["inventoryAllViewOnly", "inventoryAll"],
-  "/dashboard/inventory/vendor": "inventoryAll",
-  "/dashboard/inventory/camera": "inventoryAll",
-  "/dashboard/estimate": "estimatesInvoices",
-  "/dashboard/payments": "payments",
-  "/dashboard/task/day": "calendarTask",
-  "/dashboard/workforce": "workforceManagement",
-  "/dashboard/reporting/revenue": ["reporting", "reportingViewOnly"],
-  "/dashboard/reporting/workforce": "workforceManagementViewOnly",
-  "/dashboard/integrations": "integrations",
-  "/dashboard/pipeline/sales/pipeline": "salesPipeline",
-  "/dashboard/pipeline/sales/lead": "salesPipeline",
-  "/dashboard/pipeline/shop/pipeline": "shopPipeline",
-  "/dashboard/pipeline/shop/workorder": "shopPipeline",
-  "/dashboard/visualization": "visualization",
-  "/dashboard/settings": "businessSettings",
-  "/dashboard/settings/team-management": "businessSettings",
-  "/dashboard/settings/payments": "businessSettings",
-  "/dashboard/settings/estimates": "businessSettings",
-  "/dashboard/settings/communications": "businessSettings",
-  "/dashboard/settings/security": "businessSettings",
-  "/dashboard/settings/business": "businessSettings",
-  "/dashboard/settings/networks": "businessSettings",
-  "/dashboard/settings/billing": "businessSettings",
-  "/dashboard/settings/leadgeneration": "businessSettings",
-  "/dashboard/settings/automation": "businessSettings",
-  "/dashboard/settings/calendar": "businessSettings",
-  "/dashboard/settings/sales-agent": "businessSettings",
-};
-
-type CompanyFeaturePermissionKeys =
-  | "communicationHubInternal"
-  | "communicationHubClients"
-  | "communicationHubCollaboration"
-  | "callingAccess"
-  | "estimateInvoices"
-  | "calendar"
-  | "payments"
-  | "invoicing"
-  | "clientDirectory"
-  | "employeeDirectory"
-  | "fleetDirectory"
-  | "reporting"
-  | "inventory"
-  | "integrations"
-  | "shopPipeline"
-  | "salesPipeline"
-  | "businessSettings"
-  | "workforceManagement"
-  | "serviceEstimator"
-  | "automation"
-  | "visualization"
-  | "sales-agent"
-  | "virtual-shop";
-
-export const FEATURE_PERMISSIONS_MAP: Record<
-  string,
-  CompanyFeaturePermissionKeys | CompanyFeaturePermissionKeys[] | undefined
-> = {
-  "/dashboard/communication/client": "communicationHubClients",
-  "/dashboard/communication/collaboration": "communicationHubCollaboration",
-  "/dashboard/communication/internal": "communicationHubInternal",
-  "/dashboard/inventory": "inventory",
-  "/dashboard/inventory/vendor": "inventory",
-  "/dashboard/inventory/camera": "inventory",
-  "/dashboard/estimate": "estimateInvoices",
-  "/dashboard/payments": "payments",
-  "/dashboard/task/day": "calendar",
-  "/dashboard/workforce": "workforceManagement",
-  "/dashboard/reporting/revenue": "reporting",
-  "/dashboard/reporting/workforce": "workforceManagement",
-  "/dashboard/integrations": "integrations",
-  "/dashboard/pipeline/sales/pipeline": "salesPipeline",
-  "/dashboard/pipeline/sales/lead": "salesPipeline",
-  "/dashboard/pipeline/shop/pipeline": "shopPipeline",
-  "/dashboard/visualization": "visualization",
-  "/dashboard/pipeline/shop/workorder": "shopPipeline",
-  "/dashboard/settings": "businessSettings",
-  "/dashboard/settings/team-management": "businessSettings",
-  "/dashboard/settings/automation": "automation",
-  "/dashboard/settings/virtual-shop-configure": "virtual-shop",
-  "/dashboard/settings/sales-agent": "sales-agent",
-  "/dashboard/settings/payments": "businessSettings",
-  "/dashboard/settings/estimates": "businessSettings",
-  "/dashboard/settings/communications": "businessSettings",
-  "/dashboard/settings/security": "businessSettings",
-  "/dashboard/settings/business": "businessSettings",
-  "/dashboard/settings/networks": "businessSettings",
-  "/dashboard/settings/billing": "businessSettings",
-  "/dashboard/settings/leadgeneration": "businessSettings",
-  "/dashboard/settings/calendar": "businessSettings",
-  "/dashboard/client": "clientDirectory",
-  "/dashboard/employee": "employeeDirectory",
-  "/dashboard/fleet": "fleetDirectory",
-};
+export {
+  FEATURE_PERMISSIONS_MAP,
+  resolveRouteFeatureKey,
+} from "./routeFeatureKeys";
+export type { CompanyFeatureKey, RouteFeatureKey } from "./routeFeatureKeys";
 
 function getSuperAdminPermissionMap() {
   const superAdminPermissionMap = {} as Record<string, "superAdmin">;

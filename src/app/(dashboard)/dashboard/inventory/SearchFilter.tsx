@@ -43,7 +43,7 @@ export default function SearchFilter({ searchParams }: TSearchFilterProps) {
   const handleCategoryChange = (value: string) => {
     setFilter({ category: value === "All Categories" ? "" : value });
     const searchParam = new URLSearchParams(params);
-    if (value === "All Categories" && searchParam.has("category")) {
+    if (value === "All Categories") {
       searchParam.delete("category");
     } else {
       searchParam.set("category", value);

@@ -403,6 +403,10 @@ export default function CompanyMessageBox({
             messages.map((msg: any, index: number) => {
               const messageDate = format(new Date(msg.createdAt), "PPP");
 
+              const allImageUrls = msg?.attachments
+                ?.filter((att: any) => att.fileType?.includes("image"))
+                .map((att: any) => att.fileUrl);
+
               const previousMessage = messages[index - 1];
               const previousDate = previousMessage
                 ? format(new Date(previousMessage.createdAt), "PPP")
@@ -430,6 +434,9 @@ export default function CompanyMessageBox({
                     {msg?.attachments &&
                       msg?.attachments.length > 0 &&
                       msg?.attachments.map((attachment: any) => {
+                        const currentImageIndex = allImageUrls?.indexOf(
+                          attachment.fileUrl,
+                        );
                         return (
                           <div
                             key={attachment.fileUrl}
@@ -439,13 +446,19 @@ export default function CompanyMessageBox({
                             )}
                           >
                             {attachment.fileType?.includes("image") ? (
-                              <Image
-                                src={attachment.fileUrl}
-                                alt=""
-                                width={200}
-                                height={200}
-                                className="rounded-md border cursor-pointer"
-                              />
+                              <Link
+                                href={`/dashboard/communication/photo?urls=${encodeURIComponent(
+                                  JSON.stringify(allImageUrls),
+                                )}&index=${currentImageIndex}`}
+                              >
+                                <Image
+                                  src={attachment.fileUrl}
+                                  alt=""
+                                  width={200}
+                                  height={200}
+                                  className="rounded-md border cursor-pointer"
+                                />
+                              </Link>
                             ) : attachment.fileType?.includes("video") ? (
                               <video
                                 src={attachment.fileUrl}

@@ -62,11 +62,15 @@ export function Reminder({
   // const [minStartTime, setMinStartTime] = useState<string>("");
 
   useEffect(() => {
-    setOpenConfirmation(false);
+    if (openReminder) {
+      setOpenConfirmation(false);
+    }
   }, [openReminder]);
 
   useEffect(() => {
-    setOpenReminder(false);
+    if (openConfirmation) {
+      setOpenReminder(false);
+    }
   }, [openConfirmation]);
 
   // Set minimum date to today

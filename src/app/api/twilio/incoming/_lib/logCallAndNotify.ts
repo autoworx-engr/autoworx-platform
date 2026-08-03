@@ -97,7 +97,7 @@ async function sendIncomingCallPush({
         contents: { en: `Call from ${callerName}` },
         headings: { en: "📞 Incoming Call" },
         target_channel: "push",
-        android_group: `incoming-call-${callId}`, // this is for removing notification from the panel after accept, reject or not answered call
+
         include_aliases: {
           external_id: userIds.map((id) => `user-${id}`),
         },
