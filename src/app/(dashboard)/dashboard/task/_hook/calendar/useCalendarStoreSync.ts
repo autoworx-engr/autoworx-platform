@@ -2,12 +2,23 @@ import { useCalendarStore } from "@/stores/calendarStore";
 import FullCalendar from "@fullcalendar/react";
 import moment from "moment";
 import { RefObject, useEffect, useRef } from "react";
+import { useSearchParams } from "next/navigation";
+import { normalizeCalendarDateParam } from "../../_utils/calendarDateParam";
 
 export function useCalendarStoreSync(
   calendarRef: RefObject<FullCalendar | null>,
 ) {
   const { date, setDate, setWeek, setMonth } = useCalendarStore();
   const isNavigatingFromCalendar = useRef(false);
+  const searchParams = useSearchParams();
+  const requestedDate = searchParams.get("date");
+
+  useEffect(() => {
+    const normalizedDate = normalizeCalendarDateParam(requestedDate);
+    if (normalizedDate && normalizedDate !== date) {
+      setDate(normalizedDate);
+    }
+  }, [date, requestedDate, setDate]);
 
   useEffect(() => {
     if (!calendarRef.current || !date) return;
