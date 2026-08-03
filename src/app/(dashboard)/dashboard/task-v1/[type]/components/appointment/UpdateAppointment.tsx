@@ -221,6 +221,19 @@ export function UpdateAppointment() {
       return errorToast("No reminder template is selected");
     }
 
+    // An enabled reminder with no scheduled times would silently send nothing,
+    // so require at least one time/date pair to be added.
+    if (
+      client &&
+      reminderTemplateStatus &&
+      reminderTemplate &&
+      !times?.length
+    ) {
+      return errorToast(
+        "Add at least one reminder time and date, or turn the reminder off.",
+      );
+    }
+
     if (
       client &&
       reminderTemplateStatus &&
