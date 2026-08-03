@@ -53,7 +53,9 @@ interface EstimateCreateStore {
   inspections: InspectionType[];
   damageNotes: string | null;
   template?: InvoiceTemplate | null;
-  templateSnapshot?: Partial<EstimateCreateStore> | null;
+  templateSnapshot?:
+    | (Partial<EstimateCreateStore> & { status?: Column | null })
+    | null;
   setInvoiceId: (invoiceId: string) => void;
   setType: (type: string) => void;
   setSubtotal: (subtotal: number) => void;
