@@ -2,6 +2,7 @@
 
 import { authOptions } from "@/authOptions";
 import { db } from "@/lib/db";
+import { getOrCreatePendingColumn } from "@/lib/ensureShopColumns";
 import { sendEstimateCreateNotification } from "@/lib/notification/invoice-notify";
 import { updateInvoiceAutomationTrigger } from "@/service/invoice-automation-trigger/api";
 import { Invoice, ModifierType } from "@prisma/client";
@@ -50,19 +51,10 @@ export async function createDraftEstimate({
   });
 
   if (!draftEstimate) {
-    // Get the "Pending" column id
-    const columnId = await db.column.findFirst({
-      where: {
-        title: "Pending",
-        companyId,
-        type: "shop",
-      },
-    });
-
-    if (!columnId) {
-      // This should never happen
-      throw new Error("Column not found");
-    }
+    // Get (or provision) the "Pending" shop column — companies created
+    // before shop columns were seeded, or that had columns removed, can
+    // lack it otherwise.
+    const columnId = await getOrCreatePendingColumn(companyId);
 
     let itemsToCreateData: any[] = [];
 
