@@ -4,9 +4,13 @@ import { useDeleteShopService } from "@/hooks/virtual-shop/service/useShopServic
 import { ShopData, ShopServicesResponse } from "@/service/virtual-shop/api";
 import { Pagination } from "antd";
 import { Plus, Search } from "lucide-react";
-import { usePathname, useSearchParams } from "next/navigation";
+import {
+  usePathname,
+  useRouter as useNextNavigationRouter,
+  useSearchParams,
+} from "next/navigation";
 import { useRouter } from "nextjs-toploader/app";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import ServiceCard, { type Service } from "./ServiceCard";
 
 type ServicesTabProps = {
@@ -21,6 +25,7 @@ export default function ServicesTab({
   currentSearch = "",
 }: ServicesTabProps) {
   const router = useRouter();
+  const searchRouter = useNextNavigationRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [searchInput, setSearchInput] = useState(currentSearch);
@@ -32,14 +37,27 @@ export default function ServicesTab({
     setSearchInput(currentSearch);
   }, [currentSearch]);
 
+  const currentSearchRef = useRef(currentSearch);
+  const searchParamsRef = useRef(searchParams);
+  const pathnameRef = useRef(pathname);
+  const searchRouterRef = useRef(searchRouter);
+  useEffect(() => {
+    currentSearchRef.current = currentSearch;
+    searchParamsRef.current = searchParams;
+    pathnameRef.current = pathname;
+    searchRouterRef.current = searchRouter;
+  });
+
   useEffect(() => {
     const timeout = setTimeout(() => {
       const nextSearch = searchInput.trim();
-      if (nextSearch === currentSearch) {
+      if (nextSearch === currentSearchRef.current) {
         return;
       }
 
-      const params = new URLSearchParams(searchParams?.toString() ?? "");
+      const params = new URLSearchParams(
+        searchParamsRef.current?.toString() ?? "",
+      );
 
       if (nextSearch) {
         params.set("search", nextSearch);
@@ -50,11 +68,13 @@ export default function ServicesTab({
       params.set("page", "1");
 
       const nextQuery = params.toString();
-      router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname);
-    }, 400);
+      searchRouterRef.current.replace(
+        nextQuery ? `${pathnameRef.current}?${nextQuery}` : pathnameRef.current,
+      );
+    }, 500);
 
     return () => clearTimeout(timeout);
-  }, [currentSearch, pathname, router, searchInput, searchParams]);
+  }, [searchInput]);
 
   const { mutateAsync: deleteService } = useDeleteShopService();
 
