@@ -138,7 +138,7 @@ export default function PaymentTable() {
         <div className="relative flex flex-1 h-full flex-col overflow-hidden rounded-md bg-background">
           <div className="flex-1 overflow-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {/* Mobile View */}
-            <div className="lg:hidden p-4 space-y-4">
+            <div className="lg:hidden px-2 py-4 space-y-4">
               {loading ? (
                 <div className="flex min-h-[calc(100vh-250px)] w-full flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-100 bg-slate-50/30 p-12 text-center">
                   <h3 className="mb-2 text-lg font-bold text-slate-500">
