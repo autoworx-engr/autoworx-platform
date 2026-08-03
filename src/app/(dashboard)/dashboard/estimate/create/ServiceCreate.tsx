@@ -16,19 +16,23 @@ export default function ServiceCreate() {
   const itemId = data?.itemId;
   const edit = data?.edit as boolean | undefined;
 
-  const { categories } = useListsStore();
-
   const [name, setName] = useState("");
   const [category, setCategory] = useState<Category | null>(null);
   const [description, setDescription] = useState("");
   const [categoryOpen, setCategoryOpen] = useState(false);
 
+  // Seed the form from the popup payload. Deliberately keyed on `data` alone:
+  // this effect resets the form, so subscribing to `categories` would wipe the
+  // user's input every time a category is added from the dropdown. The category
+  // list is read as a one-off snapshot instead of a reactive dependency.
   useEffect(() => {
     if (data?.service && data.edit) {
       setName(data.service.name);
 
       setCategory(
-        categories.find((cat) => cat.id === data.service.categoryId) || null,
+        useListsStore
+          .getState()
+          .categories.find((cat) => cat.id === data.service.categoryId) || null,
       );
 
       setDescription(data?.serviceDesc || data?.service?.description);
@@ -37,7 +41,7 @@ export default function ServiceCreate() {
       setCategory(null);
       setDescription("");
     }
-  }, [data, categories]);
+  }, [data]);
 
   async function handleSubmit() {
     if (!category?.id) {
