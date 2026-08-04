@@ -513,7 +513,7 @@ const styles = StyleSheet.create({
   },
 });
 
-type PDFComponentProps = {
+export type PDFComponentProps = {
   id: string;
   client: Client;
   invoice: Invoice & {
