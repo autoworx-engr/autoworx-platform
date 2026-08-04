@@ -100,7 +100,7 @@ const getInventoryItem = cache(
             User: type === "Supply" ? true : false,
           },
           ...(search ? {} : { skip: (page - 1) * limit, take: limit }),
-          orderBy: { name: "asc" },
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         }),
         db.inventoryProduct.count({ where: whereClause }),
       ]);
