@@ -3,6 +3,7 @@
 import type { ReturnPayment } from "@/actions/payment/getPayments";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
+import { excludeUnchargedGiftCardPayments } from "@/lib/paymentFilters";
 import { Prisma, PaymentType } from "@prisma/client";
 
 export type PaymentMethodFilter =
@@ -118,7 +119,10 @@ function buildWhereInput(
   companyId: number,
   input: GetPaymentsPaginatedInput,
 ): Prisma.PaymentWhereInput {
-  const where: Prisma.PaymentWhereInput = { companyId };
+  const where: Prisma.PaymentWhereInput = {
+    companyId,
+    ...excludeUnchargedGiftCardPayments,
+  };
 
   if (input.startDate || input.endDate) {
     where.date = {
