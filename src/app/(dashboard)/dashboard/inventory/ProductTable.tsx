@@ -47,6 +47,11 @@ export default function ProductTable({
   const [showPagination, setShowPagination] = useState(false);
 
   useEffect(() => {
+    setCurrentPage(Number(searchParams.page) || 1);
+    setPageSize(Number(searchParams.limit) || 50);
+  }, [searchParams.page, searchParams.limit]);
+
+  useEffect(() => {
     if (totalItems > 10) {
       setShowPagination(true);
     } else {
