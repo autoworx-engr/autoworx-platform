@@ -1,6 +1,8 @@
 import { convertInvoice } from "@/actions/estimate/invoice/convert";
 import { db } from "@/lib/db";
 import { sendPaymentReceivedNotification } from "@/lib/notification/payment-notify";
+import { findPendingGiftCardPurchasePayment } from "@/services/giftCardPurchasePaymentLink";
+import { settleGiftCardPurchasePayment } from "@/services/giftCardPurchaseSettlementService";
 import { settleGiftCardReloadPayment } from "@/services/giftCardReloadSettlementService";
 import { confirmShopBooking } from "@/services/confirmShopBooking";
 import { markWebhookPoison } from "@/workers/recordWebhookFailure";
@@ -173,6 +175,55 @@ export async function processStripePayment(eventId: string) {
       return;
     }
 
+    // Purchase sessions persist their payload at initiate time — link the
+    // charge to that row and issue here, so the browser is never load-bearing.
+    if (giftCardSource === "virtual_shop_gift_card") {
+      const pending = await findPendingGiftCardPurchasePayment(
+        paymentRef,
+        companyId,
+      );
+
+      if (pending) {
+        const gatewayAmount = Number(paymentData.amount);
+
+        await db.$transaction(async (tx) => {
+          await tx.stripePayment.create({
+            data: {
+              stripePaymentIntentId: paymentIntent.id,
+              companyId,
+              paymentId: pending.id,
+              invoiceId: null,
+            },
+          });
+
+          await tx.payment.update({
+            where: { id: pending.id },
+            data: {
+              gateway: "STRIPE",
+              date: new Date(),
+              ...(Number.isFinite(gatewayAmount) && gatewayAmount > 0
+                ? { amount: gatewayAmount }
+                : {}),
+            },
+          });
+
+          await tx.webhookEvent.update({
+            where: { eventId },
+            data: { status: "PROCESSED", processedAt: new Date() },
+          });
+        });
+
+        const settlement = await settleGiftCardPurchasePayment(pending.id);
+        console.log("[stripe-worker][gift-card] settled:", {
+          paymentId: pending.id,
+          status: settlement.status,
+          giftCardId: settlement.giftCardId,
+        });
+
+        return;
+      }
+    }
+
     const paymentMethodName =
       giftCardSource === "virtual_shop_gift_card_reload"
         ? "Virtual Shop Gift Card Reload"
@@ -242,6 +293,11 @@ export async function processStripePayment(eventId: string) {
 
     if (giftCardSource === "virtual_shop_gift_card_reload") {
       await settleGiftCardReloadPayment(createdPaymentId!);
+    } else {
+      console.error(
+        "[stripe-worker][gift-card] legacy session with no stored payload — card NOT issued for paymentId:",
+        createdPaymentId!,
+      );
     }
 
     return;

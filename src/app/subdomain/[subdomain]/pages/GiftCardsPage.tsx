@@ -77,6 +77,12 @@ interface PendingGiftCardCheckout {
 
 const PENDING_CHECKOUT_STORAGE_KEY = "virtualShopGiftCardPendingCheckout";
 
+// Gateway webhooks can land well after the browser returns from checkout, so
+// poll long enough (~60s) to cover that lag. The return params stay in the URL
+// until the card is issued, so a refresh can resume polling if this runs out.
+const CONFIRMATION_POLL_ATTEMPTS = 20;
+const CONFIRMATION_POLL_INTERVAL_MS = 3000;
+
 const toApiPurchaseType = (
   purchaseType: GiftCardPurchaseData["purchaseType"],
 ): ApiPurchaseType => {
@@ -142,6 +148,30 @@ const GiftCardsPage = ({
   const clearPendingCheckout = () => {
     setPendingCheckout(null);
     persistPendingCheckout(null);
+  };
+
+  // Drops the post-checkout return params. Only called once the purchase has
+  // reached a terminal state — while they remain, refreshing the page retries
+  // confirmation instead of stranding a paid-but-unissued purchase.
+  const clearPurchaseReturnParams = () => {
+    if (typeof window === "undefined") return;
+
+    const url = new URL(window.location.href);
+    [
+      "success",
+      "cancel",
+      "session_id",
+      "paymentRef",
+      "paymentId",
+      "giftCardFlow",
+    ].forEach((param) => url.searchParams.delete(param));
+
+    const search = url.searchParams.toString();
+    window.history.replaceState(
+      {},
+      "",
+      `${url.pathname}${search ? `?${search}` : ""}${url.hash}`,
+    );
   };
 
   const updateReturnContext = (tab: GiftCardTab, flow?: "purchase") => {
@@ -254,6 +284,7 @@ const GiftCardsPage = ({
           });
           setBuyStep("confirmation");
           clearPendingCheckout();
+          clearPurchaseReturnParams();
           setShowPayNowModal(false);
           successToast("Gift card purchase complete.");
           return;
@@ -328,7 +359,7 @@ const GiftCardsPage = ({
   ) => {
     setIsProcessingPayment(true);
     try {
-      for (let attempt = 0; attempt < 8; attempt++) {
+      for (let attempt = 0; attempt < CONFIRMATION_POLL_ATTEMPTS; attempt++) {
         const response = await axios.post(
           "/api/virtual-shop/gift-card-payment/confirmation",
           {
@@ -360,6 +391,7 @@ const GiftCardsPage = ({
           }));
           setBuyStep("confirmation");
           clearPendingCheckout();
+          clearPurchaseReturnParams();
           setShowPayNowModal(false);
           successToast("Gift card purchase complete.");
           return;
@@ -375,13 +407,15 @@ const GiftCardsPage = ({
           return;
         }
 
-        if (confirmation?.status === "pending_payment" && attempt < 7) {
-          await wait(1500);
+        const isLastAttempt = attempt >= CONFIRMATION_POLL_ATTEMPTS - 1;
+
+        if (confirmation?.status === "pending_payment" && !isLastAttempt) {
+          await wait(CONFIRMATION_POLL_INTERVAL_MS);
           continue;
         }
 
-        if (confirmation?.status === "processing" && attempt < 7) {
-          await wait(1500);
+        if (confirmation?.status === "processing" && !isLastAttempt) {
+          await wait(CONFIRMATION_POLL_INTERVAL_MS);
           continue;
         }
 
@@ -484,19 +518,11 @@ const GiftCardsPage = ({
       setIsResolvingPurchaseReturn(true);
     }
 
-    currentUrl.searchParams.delete("success");
-    currentUrl.searchParams.delete("cancel");
-    currentUrl.searchParams.delete("session_id");
-    currentUrl.searchParams.delete("paymentRef");
-    currentUrl.searchParams.delete("paymentId");
-    currentUrl.searchParams.delete("giftCardFlow");
-
-    const nextUrl = `${currentUrl.pathname}${
-      currentUrl.searchParams.toString()
-        ? `?${currentUrl.searchParams.toString()}`
-        : ""
-    }${currentUrl.hash}`;
-    window.history.replaceState({}, "", nextUrl);
+    // On cancel there is nothing to recover, so clear immediately. On success
+    // the params are kept until the card is issued (see clearPurchaseReturnParams).
+    if (isCancelled) {
+      clearPurchaseReturnParams();
+    }
 
     const storedCheckout = sessionStorage.getItem(PENDING_CHECKOUT_STORAGE_KEY);
     if (!storedCheckout) {
@@ -555,6 +581,7 @@ const GiftCardsPage = ({
     setConfirmationData(null);
     setShowPayNowModal(false);
     clearPendingCheckout();
+    clearPurchaseReturnParams();
   };
 
   const stepOrder: BuyStep[] = [
