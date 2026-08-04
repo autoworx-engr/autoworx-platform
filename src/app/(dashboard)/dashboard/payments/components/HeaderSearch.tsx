@@ -58,7 +58,7 @@ export default function HeaderSearch({ activeTab }: HeaderSearchProps) {
 
       <div className="flex shrink-0">
         <Link
-          href="/dashboard/reporting/payments"
+          href="/dashboard/reporting/payments?view=payments"
           className="
             group relative flex items-center gap-3 pl-3 pr-4 py-2 rounded-xl
             bg-gradient-to-b from-white to-slate-50 dark:from-slate-800 dark:to-slate-900
