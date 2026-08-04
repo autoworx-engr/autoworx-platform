@@ -238,7 +238,7 @@ export default function UrgentRequestDetail({
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       {/* Back */}
       <Link
         href={`/dashboard/virtual-shop/admin/${shopId}/urgent-requests`}
@@ -550,7 +550,7 @@ export default function UrgentRequestDetail({
                         setProposedDate(e.target.value);
                         if (!e.target.value) setProposedTime("");
                       }}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 pr-8 text-sm text-slate-700 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 pr-8 text-sm text-slate-700 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-clear-button]:hidden"
                     />
                     {proposedDate && (
                       <button
@@ -576,7 +576,7 @@ export default function UrgentRequestDetail({
                       value={proposedTime}
                       onChange={(e) => setProposedTime(e.target.value)}
                       disabled={!proposedDate}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 pr-8 text-sm text-slate-700 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 pr-8 text-sm text-slate-700 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-clear-button]:hidden"
                     />
                     {proposedTime && (
                       <button

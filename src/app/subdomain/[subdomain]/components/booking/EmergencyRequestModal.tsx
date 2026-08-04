@@ -102,7 +102,9 @@ export const EmergencyRequestModal = ({
               <SectionLabel>Contact Information</SectionLabel>
 
               <div className="space-y-1">
-                <label className="text-sm font-medium">Phone Number *</label>
+                <label className="text-sm font-medium">
+                  Phone Number <span className="text-destructive">*</span>
+                </label>
                 <div className="relative">
                   <input
                     type="tel"
@@ -124,7 +126,9 @@ export const EmergencyRequestModal = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-sm font-medium">Full Name *</label>
+                  <label className="text-sm font-medium">
+                    Full Name <span className="text-destructive">*</span>
+                  </label>
                   <input
                     type="text"
                     value={form.contactName}
@@ -135,7 +139,9 @@ export const EmergencyRequestModal = ({
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-sm font-medium">Email *</label>
+                  <label className="text-sm font-medium">
+                    Email <span className="text-destructive">*</span>
+                  </label>
                   <input
                     type="email"
                     value={form.contactEmail}
@@ -150,7 +156,9 @@ export const EmergencyRequestModal = ({
 
             {/* Description */}
             <section className="space-y-2">
-              <SectionLabel>Notes *</SectionLabel>
+              <SectionLabel>
+                Notes <span className="text-destructive">*</span>
+              </SectionLabel>
               <textarea
                 value={form.description}
                 onChange={(e) => set("description", e.target.value)}
