@@ -34,7 +34,10 @@ const parseNotes = (notes: string | null) => {
 export async function settleGiftCardPurchasePayment(
   paymentId: number,
 ): Promise<PurchaseSettlementResult> {
+  console.log("[gift-card][settlement] called for paymentId:", paymentId);
+
   if (!Number.isInteger(paymentId) || paymentId <= 0) {
+    console.log("[gift-card][settlement] invalid paymentId:", paymentId);
     return { status: "payment_not_found" };
   }
 
@@ -56,6 +59,7 @@ export async function settleGiftCardPurchasePayment(
     });
 
     if (!payment) {
+      console.log("[gift-card][settlement] payment row not found:", paymentId);
       return { status: "payment_not_found" };
     }
 
@@ -64,6 +68,10 @@ export async function settleGiftCardPurchasePayment(
       paymentNotes?.source !== "virtual_shop_gift_card" &&
       paymentNotes?.source !== "virtual_shop_gift_card_purchase"
     ) {
+      console.log(
+        "[gift-card][settlement] not a gift-card-purchase payment, source:",
+        paymentNotes?.source,
+      );
       return { status: "not_purchase_source" };
     }
 
@@ -71,6 +79,10 @@ export async function settleGiftCardPurchasePayment(
       payment.stripePayment || payment.authorizeNetPayment,
     );
     if (!isPaid) {
+      console.log(
+        "[gift-card][settlement] payment not yet linked to a gateway charge (pending):",
+        paymentId,
+      );
       return { status: "pending_payment" };
     }
 
@@ -88,6 +100,10 @@ export async function settleGiftCardPurchasePayment(
     });
 
     if (existingIssue) {
+      console.log(
+        "[gift-card][settlement] already issued, giftCardId:",
+        existingIssue.giftCardId,
+      );
       if (!paymentNotes?.giftCardId) {
         await tx.payment.update({
           where: { id: payment.id },
@@ -109,12 +125,20 @@ export async function settleGiftCardPurchasePayment(
 
     const purchaseDataRaw = paymentNotes?.purchaseData;
     if (!purchaseDataRaw) {
+      console.log(
+        "[gift-card][settlement] missing purchaseData in payment notes:",
+        paymentId,
+      );
       return { status: "missing_purchase_data" };
     }
 
     const parsedPurchaseInput =
       giftCardPurchaseSchema.safeParse(purchaseDataRaw);
     if (!parsedPurchaseInput.success) {
+      console.log(
+        "[gift-card][settlement] invalid purchaseData:",
+        parsedPurchaseInput.error.errors,
+      );
       return { status: "invalid_purchase_data" };
     }
 
@@ -122,11 +146,19 @@ export async function settleGiftCardPurchasePayment(
     const context = await buildGiftCardPurchaseContext(tx, purchaseInput);
 
     if (context.shop.companyId !== payment.companyId) {
+      console.log("[gift-card][settlement] company mismatch:", {
+        paymentCompanyId: payment.companyId,
+        shopCompanyId: context.shop.companyId,
+      });
       return { status: "payment_company_mismatch" };
     }
 
     const paidAmount = Number(payment.amount || 0);
     if (paidAmount + 0.01 < context.finalAmount) {
+      console.log("[gift-card][settlement] insufficient paid amount:", {
+        paidAmount,
+        finalAmount: context.finalAmount,
+      });
       return { status: "insufficient_paid_amount" };
     }
 
@@ -138,6 +170,12 @@ export async function settleGiftCardPurchasePayment(
         referenceId,
       },
     );
+
+    console.log("[gift-card][settlement] issued:", {
+      paymentId,
+      giftCardId: issuedGiftCard.giftCardId,
+      amount: issuedGiftCard.amount,
+    });
 
     return {
       status: "issued",
