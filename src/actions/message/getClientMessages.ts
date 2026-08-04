@@ -43,10 +43,12 @@ export async function getClientMessages(
     companyId: user.companyId,
   };
 
-  if (search) {
+  const trimmedSearch = search?.trim();
+
+  if (trimmedSearch) {
     where.OR = [
-      { firstName: { contains: search, mode: "insensitive" } },
-      { lastName: { contains: search, mode: "insensitive" } },
+      { firstName: { contains: trimmedSearch, mode: "insensitive" } },
+      { lastName: { contains: trimmedSearch, mode: "insensitive" } },
     ];
   }
 

@@ -201,7 +201,7 @@ export default async function Page({
   }));
 
   return (
-    <div className="w-full flex flex-col gap-3">
+    <div className="flex w-full min-h-[calc(100vh-56px)] flex-col gap-3 md:min-h-0">
       <Title>{initialServiceData ? "Edit Service" : "Service"}</Title>
 
       <SyncLists

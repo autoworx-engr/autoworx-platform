@@ -99,32 +99,6 @@ export default function MakePayment() {
 
   const isDueZero = due === 0 ? true : false;
 
-  // useEffect(() => {
-  //   if (payment) {
-  //     setTab(payment.type);
-  //     setDate(payment.date || new Date());
-  //     setNotes(payment.notes || "");
-
-  //     switch (payment.type) {
-  //       case "CARD":
-  //         setCard(payment.card?.creditCard || "");
-  //         setCardType(payment.card?.cardType || "MASTERCARD");
-  //         break;
-  //       case "CHECK":
-  //         setCheck(payment.check?.checkNumber || "");
-  //         break;
-  //       case "CASH":
-  //         setCash(payment.cash?.receivedCash || "");
-  //         break;
-  //       case "OTHER":
-  //         setPaymentMethod(payment.other?.paymentMethod || null);
-  //         break;
-  //     }
-  //   }
-  // }, [payment]);
-
-  // useEffect(() => setAmount(due), [due]);
-
   const formatAmount = (value: number | string): number => {
     const num = typeof value === "string" ? parseFloat(value) : value;
     return Math.round(num * 100) / 100;
@@ -156,9 +130,18 @@ export default function MakePayment() {
       return;
     }
 
-    if (tab === "DEPOSIT" && formatAmount(deposit) > due) {
-      errorToast("Deposit amount cannot be greater than due amount");
-      return;
+    if (tab === "DEPOSIT") {
+      const roundedDeposit = formatAmount(deposit);
+
+      if (!roundedDeposit || roundedDeposit <= 0) {
+        errorToast("Deposit amount must be greater than 0");
+        return;
+      }
+
+      if (roundedDeposit > roundedDue) {
+        errorToast("Deposit amount cannot be greater than due amount");
+        return;
+      }
     }
 
     try {
@@ -515,7 +498,7 @@ export default function MakePayment() {
                     name="notes"
                     id="notes"
                     className={cn(
-                      "h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none",
+                      "h-20 max-h-28 w-full rounded-md border-2 border-slate-400 p-2 outline-none",
                       slimInputClassName,
                     )}
                     value={notes}

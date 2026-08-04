@@ -82,6 +82,11 @@ export function StandardCalendar({
           minute: "2-digit",
           hour12: true,
         }}
+        eventTimeFormat={{
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        }}
         businessHours={businessHours}
         slotLaneClassNames={nonBusinessSlotClassNames}
         events={events}

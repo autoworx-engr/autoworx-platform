@@ -5,6 +5,7 @@ import {
   Item,
   useEstimateCreateStore,
 } from "@/stores/estimate-create";
+import { useListsStore } from "@/stores/lists";
 import { FullPayment } from "@/types/db";
 import { Invoice, InvoicePhoto, InvoiceTemplate, Task } from "@prisma/client";
 import { useEffect } from "react";
@@ -66,6 +67,7 @@ export default function SyncEstimate({
           damageNotes: current.damageNotes,
           inspections: current.inspections,
           title: current.title,
+          status: useListsStore.getState().status,
         },
       });
     }

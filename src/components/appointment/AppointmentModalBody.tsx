@@ -157,27 +157,31 @@ export default function AppointmentModalBody(props: AppointmentModalBodyProps) {
               />
             </div>
           ) : tab === Tab.Reminder ? (
-            <Reminder
-              client={client}
-              vehicle={vehicle}
-              startTime={startTime!}
-              date={date!}
-              timezone={state.timezone}
-              times={times}
-              setTimes={setTimes}
-              confirmationTemplate={confirmationTemplate}
-              setConfirmationTemplate={setConfirmationTemplate}
-              reminderTemplate={reminderTemplate}
-              setReminderTemplate={setReminderTemplate}
-              confirmationTemplateStatus={confirmationTemplateStatus}
-              setConfirmationTemplateStatus={setConfirmationTemplateStatus}
-              reminderTemplateStatus={reminderTemplateStatus}
-              setReminderTemplateStatus={setReminderTemplateStatus}
-              openConfirmation={openConfirmation}
-              openReminder={openReminder}
-              setOpenReminder={setOpenReminder}
-              setOpenConfirmation={setOpenConfirmation}
-            />
+            // px-4 replaces the horizontal padding removed from Reminder's own
+            // wrappers, which now only pad vertically.
+            <div className="px-4">
+              <Reminder
+                client={client}
+                vehicle={vehicle}
+                startTime={startTime!}
+                date={date!}
+                timezone={state.timezone}
+                times={times}
+                setTimes={setTimes}
+                confirmationTemplate={confirmationTemplate}
+                setConfirmationTemplate={setConfirmationTemplate}
+                reminderTemplate={reminderTemplate}
+                setReminderTemplate={setReminderTemplate}
+                confirmationTemplateStatus={confirmationTemplateStatus}
+                setConfirmationTemplateStatus={setConfirmationTemplateStatus}
+                reminderTemplateStatus={reminderTemplateStatus}
+                setReminderTemplateStatus={setReminderTemplateStatus}
+                openConfirmation={openConfirmation}
+                openReminder={openReminder}
+                setOpenReminder={setOpenReminder}
+                setOpenConfirmation={setOpenConfirmation}
+              />
+            </div>
           ) : null}
         </div>
       </div>

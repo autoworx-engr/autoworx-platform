@@ -143,7 +143,7 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
                   </span>
                 </td>
                 <td className={`${tDataCommonClasses}`}>
-                  {moment(statement.createdAt).format("DD MMMM YYYY hh:mmA")}
+                  {moment(statement.createdAt).format("MMMM DD, YYYY hh:mmA")}
                 </td>
                 <td className={`${tDataCommonClasses}`}>
                   {statement.invoice?.length || 0}
@@ -252,7 +252,7 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">Date Created:</span>
                     <span className="text-sm font-medium">
-                      {moment(statement.createdAt).format("DD MMM YYYY")}
+                      {moment(statement.createdAt).format("MMM DD, YYYY")}
                     </span>
                   </div>
                   <div className="flex justify-between">

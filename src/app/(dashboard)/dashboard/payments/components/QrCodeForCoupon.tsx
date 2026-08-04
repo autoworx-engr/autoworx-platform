@@ -49,9 +49,9 @@ const CouponQRCode = ({ showQr, coupon }: CouponQRCodeProps) => {
           {discountSign}
         </div>
         <div>
-          Start Date: {moment.utc(coupon.startDate).format("DD/MM/YYYY")}
+          Start Date: {moment.utc(coupon.startDate).format("MM/DD/YYYY")}
         </div>
-        <div>End Date: {moment.utc(coupon.endDate).format("DD/MM/YYYY")}</div>
+        <div>End Date: {moment.utc(coupon.endDate).format("MM/DD/YYYY")}</div>
         <div>Numer of Times Activated: {coupon.redemptions}</div>
       </div>
     </div>

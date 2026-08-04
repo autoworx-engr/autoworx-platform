@@ -180,7 +180,7 @@ export default async function Page(props: {
 
       <header className="flex justify-between p-3 md:p-0">
         <div className="flex items-center">
-          <Title className="text-[20px] md:text-2xl">Inventory</Title>
+          <Title>Inventory</Title>
         </div>
 
         {(user?.employeeType === "Admin" ||

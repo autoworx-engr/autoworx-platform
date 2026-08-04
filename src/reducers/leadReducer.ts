@@ -339,11 +339,13 @@ export function leadReducer<T>(
     }
 
     case actionTypes.CREATE_INVOICE: {
-      const { columnId, leadId, isInvoiceCreated } = action.payload as {
-        columnId: number;
-        leadId: number;
-        isInvoiceCreated: boolean;
-      };
+      const { columnId, leadId, isInvoiceCreated, invoiceId } =
+        action.payload as {
+          columnId: number;
+          leadId: number;
+          isInvoiceCreated: boolean;
+          invoiceId?: string | null;
+        };
       return state.map((column) => {
         if (column.id === columnId) {
           return {
@@ -353,6 +355,7 @@ export function leadReducer<T>(
                 return {
                   ...lead,
                   isEstimateCreated: isInvoiceCreated,
+                  invoiceId: invoiceId ?? lead.invoiceId ?? null,
                 };
               }
               return lead;

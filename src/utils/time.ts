@@ -9,6 +9,16 @@ export const addOneHour = (time: string) => {
     .padStart(2, "0")}`;
 };
 
+// ✅ Adds N minutes in 24-hour format, clamping at 23:59 instead of wrapping
+// past midnight (a same-day end time must never land before its start).
+export const addMinutes = (time: string, minutesToAdd: number) => {
+  const [hours, minutes] = time.split(":").map(Number);
+  const total = Math.min(hours * 60 + minutes + minutesToAdd, 23 * 60 + 59);
+  return `${Math.floor(total / 60)
+    .toString()
+    .padStart(2, "0")}:${(total % 60).toString().padStart(2, "0")}`;
+};
+
 // ✅ Get current time in company timezone
 export const getCurrentTime = (timezone?: string) => {
   const now = moment.tz(timezone || moment.tz.guess());

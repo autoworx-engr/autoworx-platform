@@ -3,7 +3,6 @@
 import { updateCalendarSettings } from "@/actions/appointment/updateCalendarSettings";
 import { DialogClose, DialogFooter } from "@/components/Dialog";
 import Submit from "@/components/Submit";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -12,7 +11,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { TimeScrollPicker } from "@/components/ui/TimeScrollPicker";
 import { errorToast, successToast } from "@/lib/toast";
+import { addMinutes } from "@/utils/time";
 import { CalendarSettings, EmployeeType } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -47,13 +48,14 @@ export default function General({
   const [weekStart, setWeekStart] = useState(settings?.weekStart ?? "Monday");
   const [weekend1, setWeekend1] = useState(settings?.weekend1 ?? "Saturday");
   const [weekend2, setWeekend2] = useState(settings?.weekend2 ?? "Sunday");
+  // Held in state rather than read from FormData: TimeScrollPicker is a
+  // popover button, not a form input, so it submits nothing.
+  const [dayStart, setDayStart] = useState(settings?.dayStart ?? "10:00");
+  const [dayEnd, setDayEnd] = useState(settings?.dayEnd ?? "18:00");
 
   const queryClient = useQueryClient();
 
-  async function handleSave(data: FormData) {
-    const dayStart = data.get("day-start") as string;
-    const dayEnd = data.get("day-end") as string;
-
+  async function handleSave() {
     if (!dayStart || !dayEnd) {
       setError("Start time and end time are required");
       return;
@@ -100,16 +102,34 @@ export default function General({
 
       {isAdmin || isManager ? (
         <form className="flex flex-col gap-6">
-          {/* Row 1: Week Starts · Day starts · Day ends */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {/* Row 1: Week Starts · Day starts · Day ends.
+              items-end keeps all three input boxes on one baseline even if a
+              label wraps to a different height than its neighbours. */}
+          <div className="grid grid-cols-1 items-end gap-4 sm:grid-cols-3">
             {/* Week Starts */}
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="week-start">Week Starts</Label>
+            <div className="flex min-w-0 flex-col gap-1.5">
+              {/* text-base matches the TimeScrollPicker labels beside it, so
+                  all three columns share the same label height and the inputs
+                  land on one baseline. */}
+              <Label htmlFor="week-start" className="text-base">
+                Week Starts
+              </Label>
               <Select value={weekStart} onValueChange={setWeekStart}>
-                <SelectTrigger size="md" id="week-start" className="w-full">
+                {/* Matches the TimeScrollPicker triggers beside it: the
+                    size="md" default is rounded-lg, px-2.5 and shadowless.
+                    `!w-full` beats the base `w-fit`, which otherwise lets the
+                    trigger shrink to its content ("Tuesday") and read narrower
+                    than the time fields. */}
+                <SelectTrigger
+                  size="md"
+                  id="week-start"
+                  className="h-9 !w-full rounded-md px-3 shadow-sm"
+                >
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                {/* align/sideOffset match TimeScrollPicker so this dropdown
+                    opens below the trigger instead of centered over it. */}
+                <SelectContent align="start" sideOffset={4}>
                   {WEEK_DAYS.map((day) => (
                     <SelectItem key={day} value={day}>
                       {day}
@@ -120,42 +140,39 @@ export default function General({
             </div>
 
             {/* Day starts */}
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="day-start">Day starts</Label>
-              <Input
-                type="time"
-                id="day-start"
-                name="day-start"
-                defaultValue={settings?.dayStart ?? "10:00"}
-                className="w-full"
-              />
-            </div>
+            <TimeScrollPicker
+              id="day-start"
+              label="Day starts"
+              value={dayStart}
+              onChange={setDayStart}
+            />
 
             {/* Day ends */}
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="day-end">Day ends</Label>
-              <Input
-                type="time"
-                id="day-end"
-                name="day-end"
-                defaultValue={settings?.dayEnd ?? "18:00"}
-                className="w-full"
-              />
-            </div>
+            <TimeScrollPicker
+              id="day-end"
+              label="Day ends"
+              value={dayEnd}
+              // The day must end after it starts; validated again on save.
+              minTime={dayStart ? addMinutes(dayStart, 15) : undefined}
+              onChange={setDayEnd}
+            />
           </div>
 
           {/* Row 2: Show Weekends */}
           <div className="flex flex-col gap-1.5">
-            <Label>Show Weekends</Label>
+            <Label htmlFor="weekend-1" className="text-base">
+              Show Weekends
+            </Label>
             <div className="grid grid-cols-2 gap-3">
               <Select value={weekend1} onValueChange={setWeekend1}>
                 <SelectTrigger
                   size="md"
-                  className="w-full border-primary bg-[#EEF0FF] text-primary focus:ring-primary"
+                  id="weekend-1"
+                  className="h-9 !w-full rounded-md px-3 shadow-sm border-primary bg-[#EEF0FF] text-primary focus:ring-primary"
                 >
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent align="start" sideOffset={4}>
                   {WEEK_DAYS.map((day) => (
                     <SelectItem key={day} value={day}>
                       {day}
@@ -167,11 +184,13 @@ export default function General({
               <Select value={weekend2} onValueChange={setWeekend2}>
                 <SelectTrigger
                   size="md"
-                  className="w-full border-primary bg-[#EEF0FF] text-primary focus:ring-primary"
+                  id="weekend-2"
+                  aria-label="Second weekend day"
+                  className="h-9 !w-full rounded-md px-3 shadow-sm border-primary bg-[#EEF0FF] text-primary focus:ring-primary"
                 >
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent align="start" sideOffset={4}>
                   {WEEK_DAYS.map((day) => (
                     <SelectItem key={day} value={day}>
                       {day}

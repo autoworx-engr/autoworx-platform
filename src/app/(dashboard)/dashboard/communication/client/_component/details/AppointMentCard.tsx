@@ -27,7 +27,7 @@ const AppointMentCard = ({
                 {appt.title}
               </div>
               <div className="text-xs text-zinc-500">
-                {moment.utc(appt.date).format("LL")} ·{" "}
+                {moment.utc(appt.date).format("MMMM D, YYYY")} ·{" "}
                 {moment(appt.startTime, "HH:mm").format("hh:mm A")} -{" "}
                 {moment(appt.endTime, "HH:mm").format("hh:mm A")}
               </div>

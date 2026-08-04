@@ -479,7 +479,7 @@ export async function GET(req: Request) {
     }
 
     const { searchParams } = new URL(req.url);
-    const search = searchParams.get("search") ?? undefined;
+    const search = searchParams.get("search")?.trim() || undefined;
     const date = searchParams.get("date") ?? undefined;
     const month = searchParams.get("month") ?? undefined;
     const year = searchParams.get("year") ?? undefined;

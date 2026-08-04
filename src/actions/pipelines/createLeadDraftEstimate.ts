@@ -2,10 +2,12 @@
 
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
+import { defaultShopColumn } from "@/lib/defaultColumns";
 import { sendEstimateCreateNotification } from "@/lib/notification/invoice-notify";
 import { ServerAction } from "@/types/action";
 import { TErrorHandler } from "@/types/globalError";
 import { TCreateDraftEstimateValidationSchema } from "@/validations/schemas/pipeline/draftEstimate.validation";
+import { Column } from "@prisma/client";
 
 type PrismaTx = Omit<
   typeof db,
@@ -32,7 +34,8 @@ async function getClientByLead(tx: PrismaTx, leadId: number) {
 }
 
 async function getPendingColumn(tx: PrismaTx, companyId: number) {
-  const column = await tx.column.findFirst({
+  let column: Column | null = null;
+  column = await tx.column.findFirst({
     where: {
       companyId,
       title: "Pending",
@@ -41,9 +44,13 @@ async function getPendingColumn(tx: PrismaTx, companyId: number) {
   });
 
   if (!column) {
-    throw new Error(
-      "Pending column not found. Please configure your pipeline columns properly.",
-    );
+    const pendingDefault = defaultShopColumn.find(
+      (c) => c.title === "Pending",
+    )!;
+
+    column = await tx.column.create({
+      data: { ...pendingDefault, companyId },
+    });
   }
 
   return column;
@@ -77,28 +84,21 @@ export const createLeadDraftEstimate = async function (
         if (!lead) {
           throw new Error("Lead not found. Please check the lead ID.");
         }
+        const existingEstimate = await tx.invoice.findFirst({
+          where: { clientId: clientId, type: "Estimate" },
+          orderBy: { createdAt: "desc" },
+        });
 
-        if (lead.isEstimateCreated) {
-          const client = await getClientByLead(tx, leadId);
-
-          const existingEstimate = await tx.invoice.findFirst({
-            where: { clientId: client.id },
-            orderBy: { createdAt: "desc" },
-          });
+        if (lead.isEstimateCreated && existingEstimate) {
           return {
             type: "error",
             message: "A draft estimate already exists for this client.",
             data: existingEstimate,
           } satisfies ServerAction;
         }
-
-        await tx.lead.update({
-          where: { id: leadId },
-          data: { isEstimateCreated: true },
-        });
       }
 
-      const pendingColumn = await getPendingColumn(tx, userId);
+      const pendingColumn = await getPendingColumn(tx, companyId);
 
       const newEstimate = await tx.invoice.create({
         data: {
@@ -113,6 +113,11 @@ export const createLeadDraftEstimate = async function (
         include: {
           client: { select: { firstName: true, lastName: true } },
         },
+      });
+
+      await tx.lead.update({
+        where: { id: Number(leadId) },
+        data: { isEstimateCreated: true },
       });
 
       return {

@@ -31,7 +31,7 @@ type DatePickerFieldProps = {
 
 const FORMAT = "yyyy-MM-dd";
 // User-facing display format.
-const DISPLAY_FORMAT = "dd/MM/yyyy";
+const DISPLAY_FORMAT = "MM/dd/yyyy";
 
 export function DatePickerField({
   value,

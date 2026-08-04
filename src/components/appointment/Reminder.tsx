@@ -3,6 +3,7 @@ import { emailTemplateQueryKey } from "@/app/(dashboard)/dashboard/task/_constan
 import NewTemplate from "@/components/Lists/NewTemplate";
 import Selector from "@/components/Selector";
 import { Switch } from "@/components/Switch";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 import useTemplatesQuery from "@/hooks/query-hook/useTemplatesQuery";
 import { useFormErrorStore } from "@/stores/form-error";
 import type { Client, EmailTemplate, Vehicle } from "@prisma/client";
@@ -84,6 +85,13 @@ export function Reminder({
     [templates],
   );
 
+  const [templateToDelete, setTemplateToDelete] = useState<{
+    id: number;
+    type: "Confirmation" | "Reminder";
+    subject: string;
+  } | null>(null);
+  const [isDeletingTemplate, setIsDeletingTemplate] = useState(false);
+
   const queryClient = useQueryClient();
   const { showError, clearError, error } = useFormErrorStore();
 
@@ -95,11 +103,15 @@ export function Reminder({
   const [minDate, setMinDate] = useState<string>("");
 
   useEffect(() => {
-    setOpenConfirmation(false);
+    if (openReminder) {
+      setOpenConfirmation(false);
+    }
   }, [openReminder, setOpenConfirmation]);
 
   useEffect(() => {
-    setOpenReminder(false);
+    if (openConfirmation) {
+      setOpenReminder(false);
+    }
   }, [openConfirmation, setOpenReminder]);
 
   useEffect(() => {
@@ -206,6 +218,18 @@ export function Reminder({
     });
   }
 
+  async function handleConfirmDeleteTemplate() {
+    if (!templateToDelete || isDeletingTemplate) return;
+
+    try {
+      setIsDeletingTemplate(true);
+      await handleDelete(templateToDelete);
+      setTemplateToDelete(null);
+    } finally {
+      setIsDeletingTemplate(false);
+    }
+  }
+
   const handleAddReminder = () => {
     // Validate that time is selected
     if (!time) {
@@ -289,7 +313,9 @@ export function Reminder({
 
   return (
     <>
-      <div className="min-w-[350px] space-y-4 p-2 md:w-full">
+      {/* No min-width: 350px overflowed narrow phones. Vertical-only padding
+          so the parent controls horizontal alignment. */}
+      <div className="w-full space-y-4 py-2">
         <div className="flex items-center">
           <h2 className="text-lg font-semibold text-slate-600">Confirmation</h2>
           <Switch
@@ -348,7 +374,11 @@ export function Reminder({
                     className="flex h-7 w-7 items-center justify-center rounded-md transition-all bg-rose-50 text-rose-500"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDelete({ id: template.id, type: "Confirmation" });
+                      setTemplateToDelete({
+                        id: template.id,
+                        type: "Confirmation",
+                        subject: template.subject,
+                      });
                     }}
                   >
                     <X size={16} strokeWidth={2.5} />
@@ -368,10 +398,12 @@ export function Reminder({
               template.subject.toLowerCase().includes(search.toLowerCase()),
             )
           }
-          // openState={[openConfirmation, setOpenConfirmation]}
+          openState={[openConfirmation, setOpenConfirmation]}
         />
       </div>
-      <div className="min-w-[350px] space-y-4 p-2 md:w-full">
+      {/* No min-width: 350px overflowed narrow phones. Vertical-only padding
+          so the parent controls horizontal alignment. */}
+      <div className="w-full space-y-4 py-2">
         <div className="flex items-center">
           <h2 className="text-lg font-semibold text-slate-600">Reminder</h2>
           <Switch
@@ -430,7 +462,11 @@ export function Reminder({
                     className="flex h-7 w-7 items-center justify-center rounded-md transition-all bg-rose-50 text-rose-500"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDelete({ id: template.id, type: "Reminder" });
+                      setTemplateToDelete({
+                        id: template.id,
+                        type: "Reminder",
+                        subject: template.subject,
+                      });
                     }}
                   >
                     <X size={16} strokeWidth={2.5} />
@@ -450,7 +486,7 @@ export function Reminder({
               template.subject.toLowerCase().includes(search.toLowerCase()),
             )
           }
-          // openState={[openReminder, setOpenReminder]}
+          openState={[openReminder, setOpenReminder]}
         />
       </div>
 
@@ -554,7 +590,7 @@ export function Reminder({
         </div>
       </div>
 
-      <div className="flex items-start gap-2 p-2 text-sm text-yellow-800">
+      <div className="flex items-start gap-2 py-2 text-sm text-yellow-800">
         <CircleAlert className="mt-1 h-5 w-5 flex-shrink-0 text-yellow-600" />
         <div className="flex-1 min-w-0">
           <p className="leading-relaxed break-words">
@@ -564,6 +600,23 @@ export function Reminder({
           </p>
         </div>
       </div>
+
+      <ConfirmModal
+        open={!!templateToDelete}
+        onOpenChange={(open) => {
+          if (!open && !isDeletingTemplate) setTemplateToDelete(null);
+        }}
+        title="Delete template?"
+        description={
+          templateToDelete
+            ? `"${templateToDelete.subject}" will be permanently deleted and can no longer be used as a ${templateToDelete.type.toLowerCase()} template on any appointment.`
+            : undefined
+        }
+        confirmText="Delete"
+        destructive
+        loading={isDeletingTemplate}
+        onConfirm={handleConfirmDeleteTemplate}
+      />
     </>
   );
 }

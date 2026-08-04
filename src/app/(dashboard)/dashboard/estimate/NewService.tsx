@@ -28,7 +28,6 @@ export default function NewService({
   const { close, data } = useEstimatePopupStore();
   const itemId = data?.itemId;
   const edit = data?.edit as boolean | undefined;
-  const { categories } = useListsStore();
 
   const { showError, clearError } = useFormErrorStore();
 
@@ -43,19 +42,6 @@ export default function NewService({
   const descriptionLength = description.length;
   const maxDescriptionLength = 1500;
   // Reset form when dialog opens or closes
-  useEffect(() => {
-    if (open) {
-      if (data?.service && data.edit) {
-        setName(data.service.name);
-        setCategory(
-          categories.find((cat) => cat.id === data.service.categoryId) || null,
-        );
-        setDescription(data.service.description);
-      } else {
-        resetForm();
-      }
-    }
-  }, [open, data]);
 
   // Reset form function
   const resetForm = () => {
@@ -66,6 +52,23 @@ export default function NewService({
     setCategoryError("");
     clearError();
   };
+
+  useEffect(() => {
+    if (!open) return;
+
+    if (data?.service && data.edit) {
+      setName(data.service.name);
+      setCategory(
+        useListsStore
+          .getState()
+          .categories.find((cat) => cat.id === data.service.categoryId) || null,
+      );
+      setDescription(data.service.description);
+    } else {
+      resetForm();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, data]);
 
   // Validation function
   const validateName = (value: string) => {

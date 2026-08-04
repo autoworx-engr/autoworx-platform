@@ -61,12 +61,12 @@ export const getEmployeesForPaginate = cache(
       whereClause.employeeType = filter.type;
     }
 
-    if (filter?.searchParams) {
-      const trimmed = filter?.searchParams.trim();
+    if (filter?.searchParams?.trim()) {
+      const trimmed = filter.searchParams.trim();
       const idCondition = getPaddedIdSearchCondition(trimmed);
 
-      whereClause.OR = filter.searchParams
-        .split(" ")
+      whereClause.OR = trimmed
+        .split(/\s+/)
         .flatMap((searchText) => [
           { firstName: { contains: searchText, mode: "insensitive" } },
           { lastName: { contains: searchText, mode: "insensitive" } },

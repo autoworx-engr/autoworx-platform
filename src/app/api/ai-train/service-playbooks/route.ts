@@ -47,7 +47,7 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const companyId = Number(searchParams.get("companyId"));
-    const search = searchParams.get("search") || "";
+    const search = searchParams.get("search")?.trim() || "";
     const categoryId = searchParams.get("categoryId");
     const isActive = searchParams.get("isActive");
     const page = Number(searchParams.get("page")) || 1;

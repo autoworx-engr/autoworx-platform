@@ -110,7 +110,7 @@ export default async function Page(props: {
   );
 
   return (
-    <div className="gap-3 space-y-4 overflow-clip py-2 md:-my-2 md:min-h-[93vh] xl:h-full xl:min-h-0 xl:flex xl:space-y-0">
+    <div className="gap-3 space-y-4 overflow-clip py-2 md:-my-2 md:min-h-[93vh] xl:h-full xl:min-h-0 xl:flex xl:space-y-0 px-1">
       <div className="w-full xl:min-w-[68%] flex flex-col gap-4 xl:min-h-0">
         <Title>Estimate</Title>
 

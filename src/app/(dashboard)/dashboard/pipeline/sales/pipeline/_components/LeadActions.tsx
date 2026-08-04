@@ -158,8 +158,18 @@ export default function LeadActions({ lead }: TProps) {
   }: TCreateDraftEstimateParams) => {
     try {
       // Basic validation
-      if (!clientId || !leadId || !columnId) {
-        errorToast("Missing required data to create estimate");
+      if (!clientId) {
+        errorToast("Add a client to this lead first.");
+        return;
+      }
+
+      if (!leadId) {
+        errorToast("Lead not found. Please refresh and try again.");
+        return;
+      }
+
+      if (!columnId) {
+        errorToast("Pipeline stage missing. Please refresh and try again.");
         return;
       }
 
@@ -173,6 +183,16 @@ export default function LeadActions({ lead }: TProps) {
       // Handle API error responses first (early return)
       if (!res.success && res.data?.id) {
         setInvoiceId(res.data.id);
+        // Estimate already exists — reflect it on the card right away
+        dispatch({
+          type: actionTypes.CREATE_INVOICE,
+          payload: {
+            columnId,
+            leadId,
+            isInvoiceCreated: true,
+            invoiceId: res.data.id,
+          },
+        });
         return;
       }
 
@@ -185,6 +205,9 @@ export default function LeadActions({ lead }: TProps) {
 
       successToast(res.message || "Draft estimate created");
 
+      // Reflect the new estimate on the card immediately
+      setInvoiceId(id);
+
       // Update pipeline state
       dispatch({
         type: actionTypes.CREATE_INVOICE,
@@ -192,6 +215,7 @@ export default function LeadActions({ lead }: TProps) {
           columnId,
           leadId,
           isInvoiceCreated: true,
+          invoiceId: id,
         },
       });
 
@@ -220,6 +244,7 @@ export default function LeadActions({ lead }: TProps) {
       // Navigate at the end
       router.push(`/dashboard/estimate/edit/${id}?clientId=${resClientId}`);
     } catch (err) {
+      console.log("err", err);
       errorHandler(err);
       errorToast("Failed to create draft estimate. Please try again.");
     }
@@ -278,6 +303,7 @@ export default function LeadActions({ lead }: TProps) {
   const fromEdit = !!appointment?.id;
   const vehicleId = lead?.vehicleId;
   const clientId = lead?.client?.id ?? lead?.clientId ?? undefined;
+  const hasDraftEstimate = !!lead.isEstimateCreated && !!invoiceId;
   return (
     <>
       <div className="flex justify-between">
@@ -306,7 +332,7 @@ export default function LeadActions({ lead }: TProps) {
             }}
             className="group relative disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {lead.isEstimateCreated ? (
+            {hasDraftEstimate ? (
               <PipelineInvoiceModal invoiceId={invoiceId} />
             ) : (
               <Image

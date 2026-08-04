@@ -38,7 +38,7 @@ export const getCurrentWeekInfo = (weekStart = 1) => {
     weekYear,
     startDate: startOfWeek.format("YYYY-MM-DD"),
     endDate: endOfWeek.format("YYYY-MM-DD"),
-    displayRange: `${startOfWeek.format("DD MMM")} - ${endOfWeek.format("DD MMM YYYY")}`,
+    displayRange: `${startOfWeek.format("MMM DD")} - ${endOfWeek.format("MMM DD, YYYY")}`,
   };
 };
 
@@ -67,7 +67,7 @@ export const getWeekInfoFromWeekStr = (
     weekYear: year,
     startDate: startOfWeek.format("YYYY-MM-DD"),
     endDate: endOfWeek.format("YYYY-MM-DD"),
-    displayRange: `${startOfWeek.format("DD MMM")} - ${endOfWeek.format("DD MMM YYYY")}`,
+    displayRange: `${startOfWeek.format("MMM DD")} - ${endOfWeek.format("MMM DD, YYYY")}`,
   };
 };
 

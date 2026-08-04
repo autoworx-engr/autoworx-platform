@@ -5,7 +5,7 @@ import moment from "moment";
 import { useSession } from "next-auth/react";
 import { calenderQueryKey } from "../../_constant";
 import TaskError from "../ui/TaskError";
-import TaskNotFound from "../ui/TaskNotFound";
+import EmptyMsg from "../../../../../../components/common/EmptyMsg";
 import TaskSpinner from "../ui/TaskSpinner";
 import HolidayCalendar from "./HolidayCalendar";
 import HolidayDeleteConfirmation from "./HolidayDeleteConfirmation";
@@ -35,7 +35,7 @@ export default function Holidays() {
   } else if (!isLoading && isError) {
     content = <TaskError message="Failed to load holidays" />;
   } else if (!isLoading && !isError && holidays && holidays.length === 0) {
-    content = <TaskNotFound message="No holidays found" />;
+    content = <EmptyMsg message="No holidays found" />;
   } else if (!isLoading && !isError && holidays && holidays.length > 0) {
     content = holidays.map((holiday, index) => (
       <div
