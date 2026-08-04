@@ -30,7 +30,10 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  console.log("[stripe/webhook] received event:", event.id, event.type);
+
   if (event.type !== "payment_intent.succeeded") {
+    console.log("[stripe/webhook] ignoring event type:", event.type);
     return NextResponse.json(
       { message: "Event type ignored" },
       { status: 200 },
@@ -74,6 +77,12 @@ export async function POST(req: NextRequest) {
 
     const boss = getBoss();
     await boss.send(QUEUE_STRIPE, { eventId: event.id });
+    console.log(
+      "[stripe/webhook] enqueued eventId:",
+      event.id,
+      "companyId:",
+      companyId,
+    );
   } catch (err) {
     console.error(
       "[stripe/webhook] Failed to persist/enqueue eventId:",

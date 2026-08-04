@@ -49,6 +49,10 @@ export async function POST(req: Request) {
     const parsed = giftCardPurchaseSchema.safeParse(body);
 
     if (!parsed.success) {
+      console.error(
+        "[gift-card][initiate] validation failed:",
+        parsed.error.errors[0].message,
+      );
       throw new AppError(400, parsed.error.errors[0].message);
     }
 
@@ -63,8 +67,20 @@ export async function POST(req: Request) {
       );
 
       if (!hasStripe && !hasAuthorizeNet) {
+        console.error(
+          "[gift-card][initiate] no gateway configured for companyId:",
+          context.shop.companyId,
+        );
         throw new AppError(400, "No payment gateway configured for this shop");
       }
+
+      console.log("[gift-card][initiate] session created:", {
+        paymentRef,
+        companyId: context.shop.companyId,
+        amount: context.finalAmount,
+        hasStripe,
+        hasAuthorizeNet,
+      });
 
       return NextResponse.json(
         {
@@ -86,6 +102,11 @@ export async function POST(req: Request) {
     });
   } catch (error: any) {
     const formattedError = errorHandler(error);
+    console.error(
+      "[gift-card][initiate] failed:",
+      formattedError.statusCode,
+      formattedError.message,
+    );
     return NextResponse.json(
       {
         success: false,
