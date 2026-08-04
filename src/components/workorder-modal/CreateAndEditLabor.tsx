@@ -465,7 +465,9 @@ export default function CreateAndEditLabor({
             {" "}
             {/* Assigned by */}
             <div className={FIELD_WRAPPER_CLASS}>
-              <label className={FIELD_LABEL_CLASS}>Assign To</label>
+              <label className={FIELD_LABEL_CLASS}>
+                Assign To <span className="text-red-500">*</span>
+              </label>
               <div
                 className={isTechnician ? "pointer-events-none opacity-50" : ""}
               >
