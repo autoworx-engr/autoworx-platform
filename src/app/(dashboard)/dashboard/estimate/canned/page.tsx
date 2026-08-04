@@ -170,7 +170,10 @@ export default async function CannedPage(props: TProps) {
       skip: (servicePage - 1) * serviceTake,
       take: serviceTake,
     }),
-    db.category.findMany({ where: { companyId } }),
+    db.category.findMany({
+      where: { companyId },
+      orderBy: { createdAt: "asc" },
+    }),
     db.tag.findMany({ where: { companyId, type: "GENERAL" } }),
     db.column.findMany({ where: { companyId } }),
   ]);
