@@ -11,7 +11,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/Dialog";
-import useOutsideClick from "@/hooks/useOutsideClick";
 import { cn } from "@/lib/cn";
 import { INVOICE_COLORS } from "@/lib/consts";
 import { errorToast } from "@/lib/toast";
@@ -50,6 +49,11 @@ export function SelectStatus({
   const [selectedColor, setSelectedColor] = useState<SelectedColor>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [statusToDelete, setStatusToDelete] = useState<number | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  useEffect(() => {
+    if (!open) setSearchTerm("");
+  }, [open]);
 
   useEffect(() => {
     if (value) {
@@ -71,7 +75,9 @@ export function SelectStatus({
     }
   }, [statusList]);
   const filteredShopStatus = statusList.filter(
-    (status) => status.type === "shop",
+    (status) =>
+      status.type === "shop" &&
+      status.title.toLowerCase().includes(searchTerm.trim().toLowerCase()),
   );
   async function handleDelete(event: React.MouseEvent<HTMLButtonElement>) {
     event.stopPropagation();
@@ -88,10 +94,6 @@ export function SelectStatus({
       setDeleteConfirmOpen(false);
     }
   }
-  useOutsideClick(() => {
-    // alert("outside click");
-    setOpen && setOpen(false);
-  });
   const restrictedColumns = [
     "Pending",
     "In Progress",
@@ -105,18 +107,13 @@ export function SelectStatus({
       <input type="hidden" name={name} value={status?.title ?? ""} />
       <DropdownMenu
         open={open}
-        onOpenChange={(open) => {
-          /* Logic remains untouched */
-        }}
+        onOpenChange={(next) => setOpen && setOpen(next)}
       >
         <DropdownMenuTrigger
           className="flex h-9 items-center gap-2 rounded-lg px-4 py-1 text-sm font-semibold transition-all hover:brightness-95 disabled:opacity-50 ring-1 ring-inset ring-black/5 shadow-sm"
           style={{
             backgroundColor: status?.bgColor || "#FFF",
             color: status?.textColor || "#64748B",
-          }}
-          onClick={() => {
-            setOpen && setOpen(!open);
           }}
           disabled={isDelivered}
         >
@@ -137,11 +134,13 @@ export function SelectStatus({
               <input
                 type="text"
                 placeholder="Search statuses..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="h-9 w-full rounded-xl border-none bg-white pl-9 pr-8 text-xs font-medium ring-1 ring-slate-200 transition-all focus:ring-2 focus:ring-primary/30 outline-none"
               />
               <button
                 className="absolute right-2 flex h-6 w-6 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100"
-                onClick={() => setOpen && setOpen(!open)}
+                onClick={() => setOpen && setOpen(false)}
               >
                 <ChevronUp size={14} />
               </button>

@@ -164,6 +164,7 @@ export default function Header({
         )}
 
         <SelectStatus
+          key={template ? template.id : "no-template"}
           value={status || selectedStatus}
           open={statusOpenDropdown}
           setOpen={setStatusOpenDropdown}

@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { TimeScrollPicker } from "@/components/ui/TimeScrollPicker";
 import { cn } from "@/lib/cn";
@@ -77,6 +78,7 @@ export default function AppointmentForm({
   setDraftSearch,
   filteredDraftEstimateOptions,
   selectedDraftOption,
+  draftOptionsLoading,
   assignedUsers,
   setAssignedUsers,
   times,
@@ -277,13 +279,17 @@ export default function AppointmentForm({
                       </span>
                     )}
                   </div>
-                  <ChevronDown
-                    size={18}
-                    className={cn(
-                      "text-slate-400 transition-transform",
-                      draftOpen && "rotate-180",
-                    )}
-                  />
+                  {draftOptionsLoading ? (
+                    <Spinner className="size-4 shrink-0 text-primary" />
+                  ) : (
+                    <ChevronDown
+                      size={18}
+                      className={cn(
+                        "text-slate-400 transition-transform",
+                        draftOpen && "rotate-180",
+                      )}
+                    />
+                  )}
                 </button>
               </DropdownMenu.Trigger>
 

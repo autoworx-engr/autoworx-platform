@@ -34,12 +34,10 @@ export function SelectAppointmentVehicle({
 
   const isClientIdNumber = !isNaN(Number(clientId)) && clientId !== null;
 
-  const { data: clientVehicles = [] } = useVehicleByClientIdQuery(
-    Number(clientId),
-    {
+  const { data: clientVehicles = [], isLoading: isLoadingVehicles } =
+    useVehicleByClientIdQuery(Number(clientId), {
       enabled: isClientIdNumber,
-    },
-  );
+    });
 
   useEffect(() => {
     if (vehicleId && clientVehicles.length > 0) {
@@ -66,14 +64,21 @@ export function SelectAppointmentVehicle({
 
     const clientChanged = prevClientId.current !== numericClientId;
 
+    const requestedVehicle = vehicleId
+      ? clientVehicles?.find((v) => v.id === vehicleId)
+      : undefined;
+
     if (clientChanged && !isEdit) {
       prevClientId.current = numericClientId;
-      setVehicle(newAddedVehicle ?? clientVehicles?.[0] ?? null);
+      setVehicle(
+        requestedVehicle ?? newAddedVehicle ?? clientVehicles?.[0] ?? null,
+      );
       return;
     }
     prevClientId.current = numericClientId;
 
-    const selectedVehicle = newAddedVehicle ?? clientVehicles?.[0];
+    const selectedVehicle =
+      requestedVehicle ?? newAddedVehicle ?? clientVehicles?.[0];
     if (clientVehicles?.length > 0 && !value) {
       if (isEdit == false) {
         setVehicle(selectedVehicle);
@@ -88,7 +93,7 @@ export function SelectAppointmentVehicle({
     } else {
       setVehicle(null);
     }
-  }, [newAddedVehicle, clientId, clientVehicles]);
+  }, [newAddedVehicle, clientId, clientVehicles, vehicleId]);
 
   useEffect(() => {
     return () => {
@@ -150,6 +155,7 @@ export function SelectAppointmentVehicle({
             />
           }
           items={clientVehicles}
+          isLoading={isLoadingVehicles}
           onSearch={(search: string) =>
             clientVehicles.filter(
               (vehicle) =>

@@ -51,33 +51,39 @@ export function SelectAppointmentClient({
   // Guard so we only auto-select the initial client once, not on every clientList refetch
   const initialClientSet = useRef(false);
   const fetchingClientId = useRef<number | null>(null);
+  // Drives the spinner while the prefilled client is still being resolved.
+  const [isResolvingClient, setIsResolvingClient] = useState(false);
 
   useEffect(() => {
     if (initialClientSet.current) return;
-    if (fromLead && clientId) {
-      if (fetchingClientId.current === clientId) return;
-      fetchingClientId.current = clientId;
-      fetch(`/api/client/client-details/${clientId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success && data.data) {
-            initialClientSet.current = true;
-            setClient(data.data);
-          }
-        })
-        .catch(() => {})
-        .finally(() => {
-          if (!initialClientSet.current) fetchingClientId.current = null;
-        });
-      return;
-    }
-    if (clientId && clientList.length > 0) {
+    if (!clientId) return;
+
+    if (!fromLead) {
       const matchedClient = clientList.find((c) => c.id === clientId);
       if (matchedClient) {
         initialClientSet.current = true;
         setClient(matchedClient);
+        return;
       }
     }
+
+    if (fetchingClientId.current === clientId) return;
+    fetchingClientId.current = clientId;
+    setIsResolvingClient(true);
+    fetch(`/api/client/client-details/${clientId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data) {
+          initialClientSet.current = true;
+          setClient(data.data);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        // Cleared on failure too, so a bad response can't spin forever.
+        setIsResolvingClient(false);
+        if (!initialClientSet.current) fetchingClientId.current = null;
+      });
   }, [fromLead, clientId, clientList]);
 
   useEffect(() => {
@@ -142,6 +148,7 @@ export function SelectAppointmentClient({
           </div>
         )}
         items={clientList}
+        isLoading={isResolvingClient}
         onSearch={(search: string) => {
           setSearchTerm(search);
           return clientList;

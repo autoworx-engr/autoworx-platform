@@ -19,8 +19,10 @@ export default async function getClientList(
     const trimmedSearch = search?.trim();
 
     if (trimmedSearch) {
-      // Split on whitespace runs so "John  Doe" doesn't yield an empty token.
-      const [first, last] = trimmedSearch.split(/\s+/);
+      // Every word of the search must appear in firstName or lastName (in either
+      // order/field), so a full "First Last" search still matches when the name
+      // is split across the two fields differently than the search words are.
+      const words = trimmedSearch.split(/\s+/).filter(Boolean);
 
       whereConditions.push({
         OR: [
@@ -37,30 +39,20 @@ export default async function getClientList(
             },
           },
           {
-            AND: [
-              first
-                ? {
-                    firstName: {
-                      contains: first,
-                      mode: "insensitive",
-                    },
-                  }
-                : {},
-              last
-                ? {
-                    lastName: {
-                      contains: last,
-                      mode: "insensitive",
-                    },
-                  }
-                : {},
-            ],
+            AND: words.map((word) => ({
+              OR: [
+                { firstName: { contains: word, mode: "insensitive" } },
+                { lastName: { contains: word, mode: "insensitive" } },
+              ],
+            })),
           },
           {
             email: {
               contains: trimmedSearch,
               mode: "insensitive",
             },
+          },
+          {
             mobile: {
               contains: trimmedSearch,
               mode: "insensitive",
