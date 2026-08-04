@@ -28,11 +28,6 @@ export async function POST(req: Request) {
     const paymentRef =
       typeof body?.paymentRef === "string" ? body.paymentRef.trim() : "";
 
-    console.log("[gift-card][confirmation] request:", {
-      paymentId,
-      paymentRef,
-    });
-
     if ((!Number.isInteger(paymentId) || paymentId <= 0) && !paymentRef) {
       return NextResponse.json(
         {
@@ -63,10 +58,6 @@ export async function POST(req: Request) {
       });
 
       if (!candidatePayment) {
-        console.log(
-          "[gift-card][confirmation] no payment found yet for paymentRef:",
-          paymentRef,
-        );
         return NextResponse.json(
           {
             success: true,
@@ -107,11 +98,6 @@ export async function POST(req: Request) {
     }
 
     const settlement = await settleGiftCardPurchasePayment(resolvedPaymentId);
-    console.log("[gift-card][confirmation] settlement result:", {
-      resolvedPaymentId,
-      status: settlement.status,
-      giftCardId: settlement.giftCardId,
-    });
     const referenceId = `PAYMENT-${resolvedPaymentId}`;
 
     const issued = await db.giftCardTransaction.findFirst({

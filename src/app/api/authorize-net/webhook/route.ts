@@ -111,10 +111,7 @@ export async function POST(req: NextRequest) {
   const eventType = body.eventType;
   const transactionId = body.payload?.id as string | undefined;
 
-  console.log("[authorize-net/webhook] received:", eventType, transactionId);
-
   if (!HANDLED_EVENTS.has(eventType)) {
-    console.log("[authorize-net/webhook] ignoring event type:", eventType);
     return NextResponse.json(
       { message: "Event type ignored" },
       { status: 200 },
@@ -122,7 +119,6 @@ export async function POST(req: NextRequest) {
   }
 
   if (!transactionId) {
-    console.log("[authorize-net/webhook] no transactionId in payload");
     return NextResponse.json({ message: "No transactionId" }, { status: 200 });
   }
 
@@ -162,7 +158,6 @@ export async function POST(req: NextRequest) {
   });
 
   if (existing?.status === "PROCESSED") {
-    console.log("[authorize-net/webhook] already processed:", transactionId);
     return NextResponse.json({ message: "Already processed" }, { status: 200 });
   }
 

@@ -43,14 +43,6 @@ export async function processStripePayment(eventId: string) {
     return;
   }
 
-  console.log("[stripe-worker] processing payment intent:", {
-    eventId,
-    paymentIntentId: paymentIntent.id,
-    payType: paymentData.payType,
-    companyId: paymentData.companyId,
-    paymentRef: paymentData.paymentRef,
-  });
-
   // Secondary idempotency guard
   const alreadyProcessed = await db.stripePayment.findFirst({
     where: {
@@ -124,14 +116,7 @@ export async function processStripePayment(eventId: string) {
     ).trim();
     const companyId = Number(paymentData.companyId);
 
-    console.log("[stripe-worker][gift-card] branch entered:", {
-      paymentRef,
-      companyId,
-      giftCardSource: paymentData.giftCardSource,
-    });
-
     if (!paymentRef) {
-      console.log("[stripe-worker][gift-card] no paymentRef, skipping");
       await db.webhookEvent.update({
         where: { eventId },
         data: { status: "PROCESSED", processedAt: new Date() },
@@ -228,13 +213,8 @@ export async function processStripePayment(eventId: string) {
           });
         });
 
-        console.log(
-          "[stripe-worker][gift-card] linked charge to pending purchase payment:",
-          pending.id,
-        );
-
         const settlement = await settleGiftCardPurchasePayment(pending.id);
-        console.log("[stripe-worker][gift-card] settlement:", {
+        console.log("[stripe-worker][gift-card] settled:", {
           paymentId: pending.id,
           status: settlement.status,
           giftCardId: settlement.giftCardId,
@@ -311,17 +291,11 @@ export async function processStripePayment(eventId: string) {
       createdPaymentId = createdPayment.id;
     });
 
-    console.log("[stripe-worker][gift-card] payment recorded:", {
-      paymentId: createdPaymentId!,
-      paymentRef,
-      giftCardSource,
-    });
-
     if (giftCardSource === "virtual_shop_gift_card_reload") {
       await settleGiftCardReloadPayment(createdPaymentId!);
     } else {
-      console.log(
-        "[stripe-worker][gift-card] purchase recorded but NOT issued here — waiting for browser to call /confirmation for paymentId:",
+      console.error(
+        "[stripe-worker][gift-card] legacy session with no stored payload — card NOT issued for paymentId:",
         createdPaymentId!,
       );
     }
