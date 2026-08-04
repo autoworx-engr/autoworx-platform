@@ -21,6 +21,7 @@ import { Category, Labor } from "@prisma/client";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { Popconfirm } from "antd";
 import { SquarePen, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export const CannedLaborItem = ({
@@ -46,6 +47,7 @@ export const CannedLaborItem = ({
   const { categories } = useListsStore();
   const { currentSelectedCategoryId } = useEstimateCreateStore();
   const [isPending, setIsPending] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     if (currentSelectedCategoryId && !category) {
@@ -77,9 +79,9 @@ export const CannedLaborItem = ({
 
     if (res.success) {
       successToast("Labor updated successfully");
-      // Reload the page to refresh the labor list
-      window.location.reload();
       handleDialogClose();
+      // Re-fetch the server data in place instead of reloading the whole page
+      router.refresh();
     } else {
       errorToast(res?.message || "Failed to update labor");
     }

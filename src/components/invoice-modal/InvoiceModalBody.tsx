@@ -704,7 +704,7 @@ export default function InvoiceModalBody({
                   <p className="flex items-center gap-1.5 font-bold text-slate-500 dark:text-slate-300">
                     {company?.phone}
                   </p>
-                  <p className="max-w-[200px] break-words italic text-slate-500 dark:text-slate-500">
+                  <p className="whitespace-nowrap text-slate-500 dark:text-slate-500">
                     {company?.email}
                   </p>
                 </div>

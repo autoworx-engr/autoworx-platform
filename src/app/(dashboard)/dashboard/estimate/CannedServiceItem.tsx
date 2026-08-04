@@ -20,6 +20,7 @@ import { useListsStore } from "@/stores/lists";
 import { Category, Service } from "@prisma/client";
 import { Popconfirm } from "antd";
 import { SquarePen, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export const CannedServiceItem = ({
@@ -43,6 +44,7 @@ export const CannedServiceItem = ({
   const { categories } = useListsStore();
   const { currentSelectedCategoryId } = useEstimateCreateStore();
   const [isPending, setIsPending] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     if (currentSelectedCategoryId && !category) {
@@ -76,6 +78,8 @@ export const CannedServiceItem = ({
     if (res && "type" in res && res.type === "success") {
       successToast("Service updated successfully!");
       handleDialogClose();
+      // Re-fetch the server data in place instead of reloading the whole page
+      router.refresh();
     } else {
       errorToast(res?.message ?? "Update failed. Please try again.");
     }

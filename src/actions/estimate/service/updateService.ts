@@ -49,7 +49,7 @@ export async function updateService({
       },
     });
 
-    revalidatePath("/estimate/canned");
+    revalidatePath("/dashboard/estimate", "layout");
 
     return {
       type: "success",

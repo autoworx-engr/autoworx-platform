@@ -78,7 +78,7 @@ export async function updateLabor({
       },
     });
 
-    revalidatePath("/estimate");
+    revalidatePath("/dashboard/estimate", "layout");
 
     return {
       success: true,
