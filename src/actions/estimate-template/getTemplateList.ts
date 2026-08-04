@@ -9,10 +9,12 @@ export default async function getTemplateList(search?: string) {
   try {
     const whereConditions: Prisma.InvoiceTemplateWhereInput[] = [{ companyId }];
 
-    if (search) {
+    const trimmedSearch = search?.trim();
+
+    if (trimmedSearch) {
       whereConditions.push({
         title: {
-          contains: search,
+          contains: trimmedSearch,
           mode: "insensitive",
         },
       });

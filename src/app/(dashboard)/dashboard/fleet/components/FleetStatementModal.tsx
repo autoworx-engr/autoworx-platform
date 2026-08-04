@@ -191,7 +191,7 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
         fleetName={fleet?.fleetName || "Fleet"}
         contactName={fleet?.contactName || "Contact"}
         totalAmount={`$${totals.totalAmount.toFixed(2)}`}
-        date={new Date().toLocaleDateString()}
+        date={new Date().toLocaleDateString("en-US")}
         authorizedName="Manager"
         paymentLink="https://yourcompany.com/pay"
         terms="Please pay within 7 days."
@@ -415,7 +415,7 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
               </h1>
               <p className="font-semibold">
                 {statement?.createdAt
-                  ? new Date(statement.createdAt).toLocaleDateString()
+                  ? new Date(statement.createdAt).toLocaleDateString("en-US")
                   : ""}
               </p>
             </div>

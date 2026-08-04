@@ -8,17 +8,10 @@ import { DatePickerField } from "@/components/ui/DatePickerField";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { TimeScrollPicker } from "@/components/ui/TimeScrollPicker";
+import { addMinutes } from "@/utils/time";
 import { taskPriorityStyles } from "@/lib/taskPriorityStyles";
 import AssignTaskDropDown from "./AssignTaskDropDown";
-import { formatTime12Hour } from "@/utils/formateTime12Hours";
-import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { useFormErrorStore } from "@/stores/form-error";
 
 interface TaskFormFieldsProps {
@@ -58,16 +51,7 @@ export function TaskFormFields({
   fromEdit = false,
   taskData,
 }: TaskFormFieldsProps) {
-  const timezone = useCompanyTimezone();
   const { showError, clearError } = useFormErrorStore();
-
-  const timeOptions = Array.from({ length: 24 * 4 }, (_, i) => {
-    const hour = Math.floor(i / 4);
-    const minute = (i % 4) * 15;
-    const value = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
-    const label = formatTime12Hour(hour, minute, timezone);
-    return { value, label };
-  });
 
   // Shared with the task list / calendar so priority colors match everywhere.
   const priorityStyles = taskPriorityStyles;
@@ -126,57 +110,25 @@ export function TaskFormFields({
             />
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="startTime" className="text-base">
-              Start Time <span className="text-destructive">*</span>
-            </Label>
-            <Select
-              value={startTime || undefined}
-              onValueChange={(value) => handleTimeChange(value, "start")}
-            >
-              <SelectTrigger
-                id="startTime"
-                size="md"
-                className="w-full rounded-md"
-              >
-                <SelectValue placeholder="Start Time" />
-              </SelectTrigger>
-              <SelectContent className="max-h-60">
-                {timeOptions
-                  .filter((time) => time.value <= "22:45")
-                  .map((time) => (
-                    <SelectItem key={time.value} value={time.value}>
-                      {time.label}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <TimeScrollPicker
+            id="startTime"
+            label="Start Time"
+            required
+            value={startTime || ""}
+            maxTime="22:45"
+            onChange={(value) => handleTimeChange(value, "start")}
+          />
 
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="endTime" className="text-base">
-              End Time <span className="text-destructive">*</span>
-            </Label>
-            <Select
-              value={endTime || undefined}
-              onValueChange={(value) => handleTimeChange(value, "end")}
-            >
-              <SelectTrigger
-                id="endTime"
-                size="md"
-                className="w-full rounded-md"
-              >
-                <SelectValue placeholder="End Time" />
-              </SelectTrigger>
-              <SelectContent className="max-h-60">
-                {timeOptions.map((time) => (
-                  <SelectItem key={time.value} value={time.value}>
-                    {time.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <TimeScrollPicker
+            id="endTime"
+            label="End Time"
+            required
+            value={endTime || ""}
+            // A task ends on its start date, and an equal end time is rejected,
+            // so the earliest valid end is one step after the start.
+            minTime={startTime ? addMinutes(startTime, 15) : undefined}
+            onChange={(value) => handleTimeChange(value, "end")}
+          />
         </div>
       </div>
 

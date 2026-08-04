@@ -368,8 +368,6 @@ export function SelectorWithAdd({
                     filteredOptions?.map((opt) => {
                       const optionId = opt?.id?.toString();
                       const isSelected = selectedValue === optionId;
-                      const isDeleteConfirmOpen =
-                        deleteConfirmOpenId === optionId;
                       const isDeletable =
                         allowDelete &&
                         !!onDelete &&
@@ -425,12 +423,10 @@ export function SelectorWithAdd({
                                     type="button"
                                     title="Remove"
                                     aria-label={`Remove ${opt?.title}`}
-                                    className={cn(
-                                      "flex h-6 w-6 items-center justify-center rounded-md text-slate-300 transition-all hover:bg-rose-50 hover:text-rose-600 group-hover/item:opacity-100",
-                                      isDeleteConfirmOpen
-                                        ? "opacity-100"
-                                        : "opacity-0",
-                                    )}
+                                    // Always visible: hiding it behind hover
+                                    // made it undiscoverable on touch devices
+                                    // and unreachable by keyboard.
+                                    className="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 transition-all hover:bg-rose-50 hover:text-rose-600"
                                   >
                                     <Trash2 className="h-3.5 w-3.5" />
                                   </button>

@@ -376,7 +376,7 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
 
   const formatPromoExpireDate = (value?: string | null) => {
     if (!value) return "No expiry";
-    return new Date(value).toLocaleDateString();
+    return new Date(value).toLocaleDateString("en-US");
   };
 
   const handleDeletePromoCode = async (id: number) => {

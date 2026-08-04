@@ -51,7 +51,7 @@ const ReportCard = ({ report }: ReportCardProps) => {
 
           {/* Date */}
           <div className="mb-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
-            {moment(report?.createdAt).format("DD MMMM YYYY")}
+            {moment(report?.createdAt).format("MMMM DD, YYYY")}
           </div>
           {/* Content Snippet */}
           <div className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">

@@ -16,7 +16,7 @@ import { useEffect, useRef, useState } from "react";
 import useInfinityTaskQuery from "../../_hook/task/query/useInfinityTask";
 import { taskQueryKey } from "../../_constant";
 import TaskError from "../ui/TaskError";
-import TaskNotFound from "../ui/TaskNotFound";
+import EmptyMsg from "../../../../../../components/common/EmptyMsg";
 import TaskSpinner from "../ui/TaskSpinner";
 
 export default function AssignTask() {
@@ -109,7 +109,7 @@ export default function AssignTask() {
   } else if (!isLoading && isError) {
     content = <TaskError message="Fail to load tasks" />;
   } else if (!isLoading && !isError && tasks.length === 0) {
-    content = <TaskNotFound message="No Tasks found" />;
+    content = <EmptyMsg message="No Tasks found" />;
   } else if (!isLoading && !isError && tasks.length > 0) {
     const taskMap = new Map(tasks.map((t) => [t.id, t]));
     content = taskDataInput.map((task) => {

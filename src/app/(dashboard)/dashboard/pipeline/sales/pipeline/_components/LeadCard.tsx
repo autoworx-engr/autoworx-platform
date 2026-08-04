@@ -222,7 +222,7 @@ export default memo(function LeadCard({
       <p className="text-xs text-blue-500">{leadData.services}</p>
       <p className="text-xs">{leadData.source}</p>
       <p className="mb-2 text-xs">
-        {new Date(leadData.createdAt).toLocaleDateString()}
+        {new Date(leadData.createdAt).toLocaleDateString("en-US")}
       </p>
 
       <LeadActions lead={leadData} />

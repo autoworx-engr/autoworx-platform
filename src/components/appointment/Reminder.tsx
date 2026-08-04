@@ -313,7 +313,9 @@ export function Reminder({
 
   return (
     <>
-      <div className="min-w-[350px] space-y-4 p-2 md:w-full">
+      {/* No min-width: 350px overflowed narrow phones. Vertical-only padding
+          so the parent controls horizontal alignment. */}
+      <div className="w-full space-y-4 py-2">
         <div className="flex items-center">
           <h2 className="text-lg font-semibold text-slate-600">Confirmation</h2>
           <Switch
@@ -399,7 +401,9 @@ export function Reminder({
           openState={[openConfirmation, setOpenConfirmation]}
         />
       </div>
-      <div className="min-w-[350px] space-y-4 p-2 md:w-full">
+      {/* No min-width: 350px overflowed narrow phones. Vertical-only padding
+          so the parent controls horizontal alignment. */}
+      <div className="w-full space-y-4 py-2">
         <div className="flex items-center">
           <h2 className="text-lg font-semibold text-slate-600">Reminder</h2>
           <Switch
@@ -586,7 +590,7 @@ export function Reminder({
         </div>
       </div>
 
-      <div className="flex items-start gap-2 p-2 text-sm text-yellow-800">
+      <div className="flex items-start gap-2 py-2 text-sm text-yellow-800">
         <CircleAlert className="mt-1 h-5 w-5 flex-shrink-0 text-yellow-600" />
         <div className="flex-1 min-w-0">
           <p className="leading-relaxed break-words">

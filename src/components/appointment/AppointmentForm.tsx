@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
+import { TimeScrollPicker } from "@/components/ui/TimeScrollPicker";
 import { cn } from "@/lib/cn";
 import { errorToast } from "@/lib/toast";
 import type { User } from "@prisma/client";
@@ -103,7 +104,7 @@ export default function AppointmentForm({
 }: AppointmentFormProps) {
   return (
     <div className="h-full sm:h-full overflow-y-auto thin-scrollbar max-h-[80vh] lg:max-h-none">
-      <div className="space-y-2 p-6">
+      <div className="space-y-2 p-4 sm:p-6">
         <FormError />
 
         <AppointmentTitleSelectAndAdd
@@ -144,61 +145,33 @@ export default function AppointmentForm({
             }}
           />
 
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="apptStartTime" className="text-base">
-              Start Time <span className="text-destructive">*</span>
-            </Label>
-            <Select
-              value={startTime || undefined}
-              onValueChange={(value) =>
-                handleTimeChange({ target: { value } } as any, "start")
-              }
-            >
-              <SelectTrigger
-                id="apptStartTime"
-                size="md"
-                className="w-full rounded-md"
-              >
-                <SelectValue placeholder="Start Time" />
-              </SelectTrigger>
-              <SelectContent className="max-h-60">
-                {timeOptions
-                  .filter((time) => time.value <= "22:45")
-                  .map((time) => (
-                    <SelectItem key={time.value} value={time.value}>
-                      {time.label}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <TimeScrollPicker
+            id="apptStartTime"
+            label="Start Time"
+            required
+            value={startTime || ""}
+            maxTime="22:45"
+            onChange={(value) =>
+              handleTimeChange({ target: { value } } as any, "start")
+            }
+          />
 
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="apptEndTime" className="text-base">
-              End Time <span className="text-destructive">*</span>
-            </Label>
-            <Select
-              value={endTime || undefined}
-              onValueChange={(value) =>
-                handleTimeChange({ target: { value } } as any, "end")
-              }
-            >
-              <SelectTrigger
-                id="apptEndTime"
-                size="md"
-                className="w-full rounded-md"
-              >
-                <SelectValue placeholder="End Time" />
-              </SelectTrigger>
-              <SelectContent className="max-h-60">
-                {timeOptions.map((time) => (
-                  <SelectItem key={time.value} value={time.value}>
-                    {time.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <TimeScrollPicker
+            id="apptEndTime"
+            label="End Time"
+            required
+            value={endTime || ""}
+            // Same-day appointments must end after they start; for multi-day the
+            // end time sits on a later date, so no lower bound applies.
+            minTime={
+              endDate && date && endDate > date
+                ? undefined
+                : startTime || undefined
+            }
+            onChange={(value) =>
+              handleTimeChange({ target: { value } } as any, "end")
+            }
+          />
         </div>
 
         <div className="flex items-center gap-2">
@@ -241,7 +214,7 @@ export default function AppointmentForm({
         />
       </div>
 
-      <div className="row-start-2 space-y-3 p-6">
+      <div className="row-start-2 space-y-3 p-4 sm:p-6">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <SelectAppointmentClient
             clientId={clientId}
@@ -278,8 +251,15 @@ export default function AppointmentForm({
                     setDraftOpen(!draftOpen);
                   }}
                   className={cn(
-                    "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 text-sm shadow-sm outline-none transition-colors",
-                    draftOpen && "border-ring ring-1 ring-ring",
+                    // Mirrors the Selector trigger (h-10 / rounded-lg / px-4 /
+                    // ring-1) used by the Client, Vehicle and Service Category
+                    // fields so all four controls in this grid match height.
+                    "group flex h-10 w-full items-center justify-between rounded-lg px-4 text-sm outline-none transition-all duration-300",
+                    "bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm hover:shadow-md",
+                    "ring-1 ring-slate-200 dark:ring-slate-800",
+                    draftOpen
+                      ? "ring-2 ring-primary/60 border-transparent"
+                      : "hover:ring-slate-300",
                   )}
                 >
                   <div className="min-w-0 flex-1 overflow-hidden text-left">
@@ -415,7 +395,7 @@ export default function AppointmentForm({
       </div>
 
       {/* Mobile tab switcher */}
-      <div className="sticky top-0 z-40 bg-white w-full pb-2">
+      <div className="sticky top-0 z-40 bg-white w-full px-4 pb-2 sm:px-6">
         <div className="flex lg:hidden items-center justify-self-center rounded-full bg-slate-100 p-1.5 shadow-inner ring-1 ring-slate-200/50">
           <button
             type="button"
@@ -461,8 +441,9 @@ export default function AppointmentForm({
         </div>
       </div>
 
-      {/* Mobile right panel */}
-      <div className="relative lg:hidden h-full row-span-2 thin-scrollbar divide-y bg-background">
+      {/* Mobile right panel — horizontal padding lines its content up with the
+          form sections above; Reminder's own wrappers pad vertically only. */}
+      <div className="relative lg:hidden h-full row-span-2 thin-scrollbar divide-y bg-background px-4 pb-6 sm:px-6">
         {tab === Tab.Schedule ? (
           <div
             ref={containerRef}

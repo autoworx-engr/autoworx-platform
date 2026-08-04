@@ -173,7 +173,7 @@ const CannedLeadForm = ({ companyId }: { companyId: number }) => {
                             <Link className="h-5 w-5 mr-2 text-[#00b8b0] flex-shrink-0" />
                             {source} Ad -{" "}
                             <span className="ml-1 text-sm font-normal text-gray-500">
-                              {moment(entry.createdAt).format("DD MMM YYYY")}
+                              {moment(entry.createdAt).format("MMM DD, YYYY")}
                             </span>
                           </div>
 

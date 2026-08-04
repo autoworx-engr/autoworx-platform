@@ -617,6 +617,23 @@ export function useAppointmentFormState({
         return;
       }
 
+      // An enabled reminder with no scheduled times would silently send
+      // nothing, so require at least one time/date pair to be added.
+      if (
+        client &&
+        reminderTemplateStatus &&
+        reminderTemplate &&
+        times.length === 0
+      ) {
+        setIsSubmitting(false);
+        showError({
+          field: "all",
+          message:
+            "Add at least one reminder time and date, or turn the reminder off.",
+        });
+        return;
+      }
+
       if (client && reminderTemplateStatus && reminderTemplate && !timezone) {
         setIsSubmitting(false);
         showError({
