@@ -9,11 +9,6 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 export async function POST(req: NextRequest) {
   const signature = req.headers.get("stripe-signature");
 
-  console.log(
-    "[stripe/webhook] request received, has signature:",
-    Boolean(signature),
-  );
-
   if (!signature) {
     console.error("[stripe/webhook] rejected: no stripe-signature header");
     return NextResponse.json({ error: "No signature found" }, { status: 400 });
@@ -42,10 +37,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  console.log("[stripe/webhook] received event:", event.id, event.type);
-
   if (event.type !== "payment_intent.succeeded") {
-    console.log("[stripe/webhook] ignoring event type:", event.type);
     return NextResponse.json(
       { message: "Event type ignored" },
       { status: 200 },

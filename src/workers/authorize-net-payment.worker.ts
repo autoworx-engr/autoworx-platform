@@ -104,13 +104,6 @@ export async function processAuthorizeNetPayment(eventId: string) {
   }
   const invoiceNumber = payload.invoiceNumber as string | undefined;
 
-  console.log("[authnet-worker] processing transaction:", {
-    eventId,
-    transactionId,
-    authAmount,
-    invoiceNumber,
-  });
-
   // Secondary idempotency guard
   const alreadyProcessed = await db.authorizeNetPayment.findFirst({
     where: { transactionId },
@@ -246,14 +239,7 @@ export async function processAuthorizeNetPayment(eventId: string) {
     const paymentRef = String(targetId || "").trim();
     const customFields = extractAuthorizeNetCustomFields(payload);
 
-    console.log("[authnet-worker][gift-card] branch entered:", {
-      paymentRef,
-      sourceType,
-      transactionId,
-    });
-
     if (!paymentRef) {
-      console.log("[authnet-worker][gift-card] no paymentRef, skipping");
       await db.webhookEvent.update({
         where: { eventId },
         data: { status: "PROCESSED", processedAt: new Date() },
@@ -362,13 +348,8 @@ export async function processAuthorizeNetPayment(eventId: string) {
           });
         });
 
-        console.log(
-          "[authnet-worker][gift-card] linked charge to pending purchase payment:",
-          pending.id,
-        );
-
         const settlement = await settleGiftCardPurchasePayment(pending.id);
-        console.log("[authnet-worker][gift-card] settlement:", {
+        console.log("[authnet-worker][gift-card] settled:", {
           paymentId: pending.id,
           status: settlement.status,
           giftCardId: settlement.giftCardId,
@@ -443,17 +424,11 @@ export async function processAuthorizeNetPayment(eventId: string) {
       createdPaymentId = createdPayment.id;
     });
 
-    console.log("[authnet-worker][gift-card] payment recorded:", {
-      paymentId: createdPaymentId!,
-      paymentRef,
-      sourceType,
-    });
-
     if (sourceType === "virtual_shop_gift_card_reload") {
       await settleGiftCardReloadPayment(createdPaymentId!);
     } else {
-      console.log(
-        "[authnet-worker][gift-card] purchase recorded but NOT issued here — waiting for browser to call /confirmation for paymentId:",
+      console.error(
+        "[authnet-worker][gift-card] legacy session with no stored payload — card NOT issued for paymentId:",
         createdPaymentId!,
       );
     }
