@@ -96,15 +96,6 @@ export default function AddNewProduct({
       hasError = true;
     }
 
-    // Category validation
-    if (!isDatabase && !category) {
-      showError({
-        field: "category",
-        message: "Category is required.",
-      });
-      hasError = true;
-    }
-
     // Vendor validation
     if (!vendor) {
       showError({
@@ -407,7 +398,7 @@ export default function AddNewProduct({
                 }}
                 categoryOpen={categoryOpen}
                 setCategoryOpen={setCategoryOpen}
-                required={true}
+                required={false}
               />
             )}
 

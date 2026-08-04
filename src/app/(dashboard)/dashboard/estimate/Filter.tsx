@@ -223,6 +223,7 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
                     onChange={(event) =>
                       setStatusSearch(event.currentTarget.value)
                     }
+                    placeholder="Search Status"
                     className={cn(
                       slimInputClassName,
                       "h-9 w-1/2 rounded-lg border-none bg-white ps-9 text-sm ring-1 ring-slate-200 focus:ring-2 focus:ring-primary/30 outline-none",

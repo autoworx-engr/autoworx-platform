@@ -118,7 +118,7 @@ export default function EditProduct({ productData }: TProps) {
     const name = product.productName as string;
     const description = product.description as string;
     const price = Number(product.price) as number;
-    const categoryId = category?.id as number;
+    const categoryId = category?.id ?? null;
     const unit = product.unit as string;
     const lot = product.lot as string;
     const type = product.type as InventoryProductType;
@@ -132,15 +132,6 @@ export default function EditProduct({ productData }: TProps) {
       showError({
         field: "productName",
         message: "Product Name is required.",
-      });
-      hasError = true;
-    }
-
-    // Category validation
-    if (!category) {
-      showError({
-        field: "category",
-        message: "Category is required.",
       });
       hasError = true;
     }
@@ -281,7 +272,7 @@ export default function EditProduct({ productData }: TProps) {
                 }}
                 categoryOpen={categoryOpen}
                 setCategoryOpen={setCategoryOpen}
-                required={true}
+                required={false}
               />
 
               {/* radio buttons for product type */}
