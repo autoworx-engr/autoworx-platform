@@ -102,7 +102,7 @@ export default function AppointmentForm({
 }: AppointmentFormProps) {
   return (
     <div className="h-full sm:h-full overflow-y-auto thin-scrollbar max-h-[80vh] lg:max-h-none">
-      <div className="space-y-2 p-6">
+      <div className="space-y-2 p-4 sm:p-6">
         <FormError />
 
         <AppointmentTitleSelectAndAdd
@@ -212,7 +212,7 @@ export default function AppointmentForm({
         />
       </div>
 
-      <div className="row-start-2 space-y-3 p-6">
+      <div className="row-start-2 space-y-3 p-4 sm:p-6">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <SelectAppointmentClient
             clientId={clientId}
@@ -389,7 +389,7 @@ export default function AppointmentForm({
       </div>
 
       {/* Mobile tab switcher */}
-      <div className="sticky top-0 z-40 bg-white w-full pb-2">
+      <div className="sticky top-0 z-40 bg-white w-full px-4 pb-2 sm:px-6">
         <div className="flex lg:hidden items-center justify-self-center rounded-full bg-slate-100 p-1.5 shadow-inner ring-1 ring-slate-200/50">
           <button
             type="button"
@@ -435,8 +435,9 @@ export default function AppointmentForm({
         </div>
       </div>
 
-      {/* Mobile right panel */}
-      <div className="relative lg:hidden h-full row-span-2 thin-scrollbar divide-y bg-background">
+      {/* Mobile right panel — horizontal padding lines its content up with the
+          form sections above; Reminder's own wrappers pad vertically only. */}
+      <div className="relative lg:hidden h-full row-span-2 thin-scrollbar divide-y bg-background px-4 pb-6 sm:px-6">
         {tab === Tab.Schedule ? (
           <div
             ref={containerRef}
