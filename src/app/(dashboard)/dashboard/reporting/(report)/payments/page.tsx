@@ -11,6 +11,7 @@ import AnalyticsVisibility from "./AnalyticsVisibility";
 import FilterHeader from "./FilterHeader";
 import PaymentDisplay from "./PaymentDisplay";
 import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
+import { excludeUnchargedGiftCardPayments } from "@/lib/paymentFilters";
 import { PaymentType, Prisma } from "@prisma/client";
 import { Metadata } from "next";
 
@@ -86,6 +87,7 @@ export default async function PaymentReportPage(props: TProps) {
 
   const filteredWhere: Prisma.PaymentWhereInput = {
     companyId,
+    ...excludeUnchargedGiftCardPayments,
   };
 
   const containsInsensitive = (value: string): Prisma.StringFilter => ({
@@ -273,6 +275,7 @@ export default async function PaymentReportPage(props: TProps) {
     db.payment.aggregate({
       where: {
         companyId,
+        ...excludeUnchargedGiftCardPayments,
       },
       _sum: {
         amount: true,

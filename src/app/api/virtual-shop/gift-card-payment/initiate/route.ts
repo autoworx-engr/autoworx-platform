@@ -74,8 +74,38 @@ export async function POST(req: Request) {
         throw new AppError(400, "No payment gateway configured for this shop");
       }
 
+      // Persist the purchase payload server-side up front, keyed by paymentRef.
+      // The payment worker links the gateway charge to this row and settles it,
+      // so issuance no longer depends on the browser returning from checkout.
+      const paymentMethodName = "Virtual Shop Gift Card";
+      let paymentMethod = await tx.paymentMethod.findFirst({
+        where: { companyId: context.shop.companyId, name: paymentMethodName },
+      });
+
+      if (!paymentMethod) {
+        paymentMethod = await tx.paymentMethod.create({
+          data: { companyId: context.shop.companyId, name: paymentMethodName },
+        });
+      }
+
+      const pendingPayment = await tx.payment.create({
+        data: {
+          companyId: context.shop.companyId,
+          amount: context.finalAmount,
+          type: "OTHER",
+          date: new Date(),
+          notes: JSON.stringify({
+            source: "virtual_shop_gift_card",
+            paymentRef,
+            purchaseData: parsed.data,
+          }),
+          other: { create: { paymentMethodId: paymentMethod.id } },
+        },
+      });
+
       console.log("[gift-card][initiate] session created:", {
         paymentRef,
+        paymentId: pendingPayment.id,
         companyId: context.shop.companyId,
         amount: context.finalAmount,
         hasStripe,
@@ -87,6 +117,7 @@ export async function POST(req: Request) {
           success: true,
           data: {
             paymentRef,
+            paymentId: pendingPayment.id,
             companyId: context.shop.companyId,
             amount: context.finalAmount,
             gatewayInfo: {
