@@ -134,7 +134,7 @@ export function BillSummary({
 
       items.forEach((item) => {
         const { materials, labor } = item;
-        if (!item.service && !item.labor) return;
+        if (!item.service && !item.labor && !materials?.length) return;
 
         const materialCost = materials.reduce((acc, material) => {
           return (

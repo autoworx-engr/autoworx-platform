@@ -73,8 +73,24 @@ export default function Selector<T>({
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  function getFilteredItems(query: string, itemsList: T[]): T[] {
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) return itemsList;
+    if (onSearch) return onSearch(trimmedQuery);
+    return itemsList.filter(
+      (item: any) =>
+        item.clientName?.toLowerCase().includes(trimmedQuery.toLowerCase()) ||
+        item.id?.toString().toLowerCase().includes(trimmedQuery.toLowerCase()),
+    );
+  }
+
+  // Re-apply whatever the user has currently typed whenever the underlying
+  // `items` list changes (e.g. an item was deleted/added elsewhere) - so the
+  // list shown stays in sync with the search box instead of silently
+  // reverting to "show everything" while the search text stays stale.
   useEffect(() => {
-    setFilteredItems(items);
+    setFilteredItems(getFilteredItems(searchTerm, items));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items]);
   // useEffect(() => {
   //   setSelected(selectedItem);
@@ -113,25 +129,8 @@ export default function Selector<T>({
 
   function handleSearchChange(e: ChangeEvent<HTMLInputElement>) {
     const searchQuery = e.target.value;
-    const trimmedQuery = searchQuery.trim();
     setSearchTerm(searchQuery);
-    if (onSearch) {
-      setFilteredItems(onSearch(trimmedQuery));
-    } else {
-      const searchedItems = trimmedQuery
-        ? items.filter(
-            (item: any) =>
-              item.clientName
-                ?.toLowerCase()
-                .includes(trimmedQuery.toLowerCase()) ||
-              item.id
-                ?.toString()
-                .toLowerCase()
-                .includes(trimmedQuery.toLowerCase()),
-          )
-        : items;
-      setFilteredItems(searchedItems);
-    }
+    setFilteredItems(getFilteredItems(searchQuery, items));
   }
 
   function handleSelectItem(item: T) {

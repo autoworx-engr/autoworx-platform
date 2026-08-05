@@ -24,7 +24,7 @@ export function InvoiceItems({ items, isPrinting = false }: InvoiceItemsProps) {
   const [openService, setOpenService] = useState<number | null>(null);
 
   return items.map((item) => {
-    if (!item.service && !item.labor) return null;
+    if (!item.service && !item.labor && !item.materials?.length) return null;
 
     const materialCost = item.materials.reduce((acc, material) => {
       return (
@@ -64,7 +64,7 @@ export function InvoiceItems({ items, isPrinting = false }: InvoiceItemsProps) {
             }
             className="flex w-full cursor-pointer justify-between text-primary"
           >
-            <p>{item.labor?.name ?? "Labor"}</p>
+            <p>{item.labor?.name ?? "Materials"}</p>
             <button
               type="button"
               onClick={() =>
@@ -96,15 +96,17 @@ export function InvoiceItems({ items, isPrinting = false }: InvoiceItemsProps) {
                   );
                 })}
               </div>
-              <div className="mt-2">
-                <div className="flex justify-between text-primary">
-                  <p>Labor Cost</p>
-                  <p>{formatCurrency(laborCost)}</p>
+              {item.labor && (
+                <div className="mt-2">
+                  <div className="flex justify-between text-primary">
+                    <p>Labor Cost</p>
+                    <p>{formatCurrency(laborCost)}</p>
+                  </div>
+                  {item.labor.notes && (
+                    <p className="text-sm text-slate-500">{item.labor.notes}</p>
+                  )}
                 </div>
-                {item.labor?.notes && (
-                  <p className="text-sm text-slate-500">{item.labor.notes}</p>
-                )}
-              </div>
+              )}
               {totalDiscount > 0 && (
                 <div>
                   <div className="flex justify-between text-primary">
