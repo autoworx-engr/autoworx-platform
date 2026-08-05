@@ -52,8 +52,8 @@ export default function EditClientModalBody({
   const { data: queryClientSources = [] } = useClientSourcesQuery();
 
   const resolvedClient = clientData ?? client;
-  console.log("Resolved client data:", resolvedClient); // Debug log to check client data
-  console.log("Client: ", client); // Debug log to check initial client prop
+  // console.log("Resolved client data:", resolvedClient); // Debug log to check client data
+  // console.log("Client: ", client); // Debug log to check initial client prop
   const [clientSource, setClientSource] = useState<Source | null>(
     resolvedClient.source,
   );
