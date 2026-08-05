@@ -16,10 +16,7 @@ import { ClientTagSelector } from "@/components/Lists/ClientTagSelector";
 import SelectClientSource from "@/components/Lists/SelectClientSource";
 import { SlimInput } from "@/components/SlimInput";
 import { Label } from "@/components/ui/label";
-import {
-  DEFAULT_CLIENT_SOURCE_NAMES,
-  isDefaultClientSourceName,
-} from "@/lib/consts";
+import { isDefaultClientSourceName } from "@/lib/consts";
 import { useClientFilterStore } from "@/stores/clientFilter";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
@@ -30,14 +27,14 @@ import { SquarePen, CircleUserRound as UserIcon, X } from "lucide-react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import type { JSX } from "react";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { RotatingLines } from "react-loader-spinner";
 import { deleteSource } from "../../actions/source/deleteSource";
 import { getSources } from "../../actions/source/getSources";
-import { newSource } from "../../actions/source/newSource";
 import PhoneInput from "../PhoneInput";
 import NewClientSource from "./NewClientSource";
 import NewVehicle from "./NewVehicle";
+import { useClientSourcePicker } from "./useClientSourcePicker";
 
 export default function NewCustomer({
   buttonElement,
@@ -60,7 +57,6 @@ export default function NewCustomer({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isPremium, setIsPremium] = useState(false);
   const [clientSources, setClientSources] = useState<Source[]>([]);
-  const [isCreatingSource, setIsCreatingSource] = useState(false);
   const { showError, clearError } = useFormErrorStore();
   const [mobile, setMobile] = useState("+1");
   const pathname = usePathname();
@@ -112,45 +108,16 @@ export default function NewCustomer({
     }
   }
 
-  // Default sources (from the Lead form) not yet saved for this company are
-  // shown as suggestions with a negative id; picking one persists it for real.
-  const displaySources = useMemo(() => {
-    const existingNames = new Set(clientSources.map((source) => source.name));
-    const defaults = DEFAULT_CLIENT_SOURCE_NAMES.filter(
-      (name) => !existingNames.has(name),
-    ).map(
-      (name, index) =>
-        ({
-          id: -(index + 1),
-          name,
-        }) as Source,
-    );
-
-    return [...clientSources, ...defaults];
-  }, [clientSources]);
-
-  async function selectClientSource(source: Source) {
-    if (source.id >= 0) {
-      setClientSource(source);
-      return;
-    }
-
-    if (isCreatingSource) return;
-    setIsCreatingSource(true);
-    try {
-      const res = await newSource(source.name);
-      if (res.type === "success") {
-        setClientSources((prev) => [...prev, res.data]);
-        setClientSource(res.data);
-      } else {
-        showError({
-          message: res.message || "Failed to add client source.",
-        });
-      }
-    } finally {
-      setIsCreatingSource(false);
-    }
-  }
+  const {
+    displaySources,
+    isCreatingSource,
+    selectClientSource,
+    resetCreatingSource,
+  } = useClientSourcePicker({
+    sources: clientSources,
+    setSources: setClientSources,
+    setClientSource,
+  });
 
   function resetForm() {
     setClientInfo({
@@ -167,7 +134,7 @@ export default function NewCustomer({
     setMobile("+1");
     setClientSources([]);
     setClientSource(null);
-    setIsCreatingSource(false);
+    resetCreatingSource();
     setProfilePic(null);
     setTagOpenDropdown(false);
     setTag(undefined);

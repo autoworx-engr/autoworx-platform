@@ -10,11 +10,7 @@ import SelectClientSource from "@/components/Lists/SelectClientSource";
 import { SelectClientTags } from "@/components/Lists/SelectClientTags";
 import PhoneInput from "@/components/PhoneInput";
 import { SlimInput } from "@/components/SlimInput";
-import {
-  DEFAULT_CLIENT_SOURCE_NAMES,
-  DEFAULT_IMAGE_URL,
-  isDefaultClientSourceName,
-} from "@/lib/consts";
+import { DEFAULT_IMAGE_URL, isDefaultClientSourceName } from "@/lib/consts";
 import { successToast } from "@/lib/toast";
 import { useClientFilterStore } from "@/stores/clientFilter";
 import { useFormErrorStore } from "@/stores/form-error";
@@ -22,9 +18,9 @@ import { Client, Source, Tag } from "@prisma/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { SquarePen, CircleUserRound as UserIcon, X } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { RotatingLines } from "react-loader-spinner";
-import { newSource } from "@/actions/source/newSource";
+import { useClientSourcePicker } from "@/components/Lists/useClientSourcePicker";
 import { CLIENT_LIST_KEY } from "./_hook/useClientQuery";
 import useClientByIdQuery, {
   CLIENT_DETAIL_KEY,
@@ -77,7 +73,6 @@ export default function EditClientModalBody({
   const { search, currentPage, pageSize } = useClientFilterStore();
 
   const [openClientSource, setOpenClientSource] = useState(false);
-  const [isCreatingSource, setIsCreatingSource] = useState(false);
   const [tagOpenDropdown, setTagOpenDropdown] = useState(false);
   const [tag, setTag] = useState<Tag | undefined>(
     resolvedClient.tag ?? undefined,
@@ -109,50 +104,15 @@ export default function EditClientModalBody({
     }
   }
 
-  // Default sources (from the Lead form) not yet saved for this company are
-  // shown as suggestions with a negative id; picking one persists it for real.
-  const displaySources = useMemo(() => {
-    const existingNames = new Set(
-      queryClientSources.map((source) => source.name),
-    );
-    const defaults = DEFAULT_CLIENT_SOURCE_NAMES.filter(
-      (name) => !existingNames.has(name),
-    ).map(
-      (name, index) =>
-        ({
-          id: -(index + 1),
-          name,
-        }) as Source,
-    );
-
-    return [...queryClientSources, ...defaults];
-  }, [queryClientSources]);
-
-  async function selectClientSource(source: Source) {
-    if (source.id >= 0) {
-      setClientSource(source);
-      return;
-    }
-
-    if (isCreatingSource) return;
-    setIsCreatingSource(true);
-    try {
-      const res = await newSource(source.name);
-      if (res.type === "success") {
-        queryClient.setQueryData<Source[]>(
-          [CLIENT_SOURCES_KEY],
-          (prev = []) => [...prev, res.data],
-        );
-        setClientSource(res.data);
-      } else {
-        showError({
-          message: res.message || "Failed to add client source.",
-        });
-      }
-    } finally {
-      setIsCreatingSource(false);
-    }
-  }
+  const { displaySources, isCreatingSource, selectClientSource } =
+    useClientSourcePicker({
+      sources: queryClientSources,
+      setSources: (updater) =>
+        queryClient.setQueryData<Source[]>([CLIENT_SOURCES_KEY], (prev = []) =>
+          updater(prev),
+        ),
+      setClientSource,
+    });
 
   async function handleSubmit() {
     clearError();
