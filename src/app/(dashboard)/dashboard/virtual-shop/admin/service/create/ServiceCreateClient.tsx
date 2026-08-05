@@ -84,9 +84,7 @@ function ServiceBillSummary({
     let newServicesTotal = 0;
 
     items.forEach((item) => {
-      const { service, materials, labor } = item;
-
-      if (!service) return;
+      const { materials, labor } = item;
 
       const materialCost = materials.reduce((acc, material) => {
         return (
