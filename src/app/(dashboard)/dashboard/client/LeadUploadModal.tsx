@@ -44,6 +44,20 @@ export function LeadUploadModal({ buttonElement }: FileUploadModalProps) {
     );
   };
 
+  const acceptFile = (candidate: File) => {
+    if (!isValidFile(candidate)) {
+      errorToast("Invalid file format. Please upload a CSV or Excel file.");
+      return;
+    }
+
+    if (candidate.size === 0) {
+      errorToast("The file is empty");
+      return;
+    }
+
+    setFile(candidate);
+  };
+
   const handleDragEnter = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -68,29 +82,24 @@ export function LeadUploadModal({ buttonElement }: FileUploadModalProps) {
 
     const files = e.dataTransfer.files;
     if (files.length > 0) {
-      const droppedFile = files[0];
-      if (isValidFile(droppedFile)) {
-        setFile(droppedFile);
-      } else {
-        errorToast("Invalid file format. Please upload a CSV or Excel file.");
-      }
+      acceptFile(files[0]);
     }
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      const selectedFile = files[0];
-      if (isValidFile(selectedFile)) {
-        setFile(selectedFile);
-      } else {
-        errorToast("Invalid file format. Please upload a CSV or Excel file.");
-      }
+      acceptFile(files[0]);
     }
   };
 
   const handleUpload = async () => {
     if (!file) return;
+
+    if (file.size === 0) {
+      errorToast("The file is empty");
+      return;
+    }
 
     setIsLoading(true);
     const formData = new FormData();
