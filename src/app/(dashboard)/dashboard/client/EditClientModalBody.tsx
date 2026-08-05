@@ -10,7 +10,11 @@ import SelectClientSource from "@/components/Lists/SelectClientSource";
 import { SelectClientTags } from "@/components/Lists/SelectClientTags";
 import PhoneInput from "@/components/PhoneInput";
 import { SlimInput } from "@/components/SlimInput";
-import { DEFAULT_IMAGE_URL } from "@/lib/consts";
+import {
+  DEFAULT_CLIENT_SOURCE_NAMES,
+  DEFAULT_IMAGE_URL,
+  isDefaultClientSourceName,
+} from "@/lib/consts";
 import { successToast } from "@/lib/toast";
 import { useClientFilterStore } from "@/stores/clientFilter";
 import { useFormErrorStore } from "@/stores/form-error";
@@ -18,8 +22,9 @@ import { Client, Source, Tag } from "@prisma/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { SquarePen, CircleUserRound as UserIcon, X } from "lucide-react";
 import Image from "next/image";
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { RotatingLines } from "react-loader-spinner";
+import { newSource } from "@/actions/source/newSource";
 import { CLIENT_LIST_KEY } from "./_hook/useClientQuery";
 import useClientByIdQuery, {
   CLIENT_DETAIL_KEY,
@@ -57,12 +62,22 @@ export default function EditClientModalBody({
   const [clientSource, setClientSource] = useState<Source | null>(
     resolvedClient.source,
   );
+
+  // resolvedClient.source is only correct once clientData has loaded
+  // (the list-row client prop doesn't include the source relation).
+  useEffect(() => {
+    if (clientData) {
+      setClientSource(clientData.source ?? null);
+    }
+  }, [clientData]);
+
   const [pending, startTransition] = useTransition();
 
   const queryClient = useQueryClient();
   const { search, currentPage, pageSize } = useClientFilterStore();
 
   const [openClientSource, setOpenClientSource] = useState(false);
+  const [isCreatingSource, setIsCreatingSource] = useState(false);
   const [tagOpenDropdown, setTagOpenDropdown] = useState(false);
   const [tag, setTag] = useState<Tag | undefined>(
     resolvedClient.tag ?? undefined,
@@ -91,6 +106,51 @@ export default function EditClientModalBody({
     );
     if (clientSource?.id === id) {
       setClientSource(null);
+    }
+  }
+
+  // Default sources (from the Lead form) not yet saved for this company are
+  // shown as suggestions with a negative id; picking one persists it for real.
+  const displaySources = useMemo(() => {
+    const existingNames = new Set(
+      queryClientSources.map((source) => source.name),
+    );
+    const defaults = DEFAULT_CLIENT_SOURCE_NAMES.filter(
+      (name) => !existingNames.has(name),
+    ).map(
+      (name, index) =>
+        ({
+          id: -(index + 1),
+          name,
+        }) as Source,
+    );
+
+    return [...queryClientSources, ...defaults];
+  }, [queryClientSources]);
+
+  async function selectClientSource(source: Source) {
+    if (source.id >= 0) {
+      setClientSource(source);
+      return;
+    }
+
+    if (isCreatingSource) return;
+    setIsCreatingSource(true);
+    try {
+      const res = await newSource(source.name);
+      if (res.type === "success") {
+        queryClient.setQueryData<Source[]>(
+          [CLIENT_SOURCES_KEY],
+          (prev = []) => [...prev, res.data],
+        );
+        setClientSource(res.data);
+      } else {
+        showError({
+          message: res.message || "Failed to add client source.",
+        });
+      }
+    } finally {
+      setIsCreatingSource(false);
     }
   }
 
@@ -428,33 +488,36 @@ export default function EditClientModalBody({
                   setOpenClientSource={setOpenClientSource}
                 />
               }
-              items={queryClientSources}
+              items={displaySources}
               displayList={(clientSource: Source) => (
                 <div className="flex">
                   <button
                     className="w-full text-left text-sm font-bold"
                     onClick={() => {
-                      setClientSource(clientSource);
+                      selectClientSource(clientSource);
                       setOpenClientSource(false);
                     }}
                     type="button"
                   >
                     {clientSource.name}
                   </button>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => deleteClientSource(clientSource.id)}
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  </div>
+                  {clientSource.id >= 0 &&
+                    !isDefaultClientSourceName(clientSource.name) && (
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => deleteClientSource(clientSource.id)}
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
+                      </div>
+                    )}
                 </div>
               )}
               selectedItem={clientSource}
               setSelectedItem={setClientSource}
               onSearch={(search: string) =>
-                queryClientSources.filter((s: Source) =>
+                displaySources.filter((s: Source) =>
                   s.name.toLowerCase().includes(search.toLowerCase()),
                 )
               }
@@ -520,7 +583,7 @@ export default function EditClientModalBody({
           Cancel
         </DialogClose>
         <button
-          disabled={pending || isLoading}
+          disabled={pending || isLoading || isCreatingSource}
           type="button"
           onClick={() => startTransition(handleSubmit)}
           className="

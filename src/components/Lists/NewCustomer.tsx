@@ -16,6 +16,10 @@ import { ClientTagSelector } from "@/components/Lists/ClientTagSelector";
 import SelectClientSource from "@/components/Lists/SelectClientSource";
 import { SlimInput } from "@/components/SlimInput";
 import { Label } from "@/components/ui/label";
+import {
+  DEFAULT_CLIENT_SOURCE_NAMES,
+  isDefaultClientSourceName,
+} from "@/lib/consts";
 import { useClientFilterStore } from "@/stores/clientFilter";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
@@ -26,10 +30,11 @@ import { SquarePen, CircleUserRound as UserIcon, X } from "lucide-react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import type { JSX } from "react";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { RotatingLines } from "react-loader-spinner";
 import { deleteSource } from "../../actions/source/deleteSource";
 import { getSources } from "../../actions/source/getSources";
+import { newSource } from "../../actions/source/newSource";
 import PhoneInput from "../PhoneInput";
 import NewClientSource from "./NewClientSource";
 import NewVehicle from "./NewVehicle";
@@ -55,6 +60,7 @@ export default function NewCustomer({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isPremium, setIsPremium] = useState(false);
   const [clientSources, setClientSources] = useState<Source[]>([]);
+  const [isCreatingSource, setIsCreatingSource] = useState(false);
   const { showError, clearError } = useFormErrorStore();
   const [mobile, setMobile] = useState("+1");
   const pathname = usePathname();
@@ -106,6 +112,46 @@ export default function NewCustomer({
     }
   }
 
+  // Default sources (from the Lead form) not yet saved for this company are
+  // shown as suggestions with a negative id; picking one persists it for real.
+  const displaySources = useMemo(() => {
+    const existingNames = new Set(clientSources.map((source) => source.name));
+    const defaults = DEFAULT_CLIENT_SOURCE_NAMES.filter(
+      (name) => !existingNames.has(name),
+    ).map(
+      (name, index) =>
+        ({
+          id: -(index + 1),
+          name,
+        }) as Source,
+    );
+
+    return [...clientSources, ...defaults];
+  }, [clientSources]);
+
+  async function selectClientSource(source: Source) {
+    if (source.id >= 0) {
+      setClientSource(source);
+      return;
+    }
+
+    if (isCreatingSource) return;
+    setIsCreatingSource(true);
+    try {
+      const res = await newSource(source.name);
+      if (res.type === "success") {
+        setClientSources((prev) => [...prev, res.data]);
+        setClientSource(res.data);
+      } else {
+        showError({
+          message: res.message || "Failed to add client source.",
+        });
+      }
+    } finally {
+      setIsCreatingSource(false);
+    }
+  }
+
   function resetForm() {
     setClientInfo({
       firstName: "",
@@ -121,6 +167,7 @@ export default function NewCustomer({
     setMobile("+1");
     setClientSources([]);
     setClientSource(null);
+    setIsCreatingSource(false);
     setProfilePic(null);
     setTagOpenDropdown(false);
     setTag(undefined);
@@ -503,35 +550,38 @@ export default function NewCustomer({
                       setOpenClientSource={setOpenClientSource}
                     />
                   }
-                  items={clientSources}
+                  items={displaySources}
                   displayList={(clientSource: Source) => (
                     <div className="flex">
                       <button
                         className="w-full text-left text-sm font-bold"
                         onClick={() => {
-                          setClientSource(clientSource);
+                          selectClientSource(clientSource);
                           setOpenClientSource(false);
                         }}
                         type="button"
                       >
                         {clientSource.name}
                       </button>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            deleteClientSource(clientSource.id);
-                          }}
-                        >
-                          <X size={20} />
-                        </button>
-                      </div>
+                      {clientSource.id >= 0 &&
+                        !isDefaultClientSourceName(clientSource.name) && (
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                deleteClientSource(clientSource.id);
+                              }}
+                            >
+                              <X size={20} />
+                            </button>
+                          </div>
+                        )}
                     </div>
                   )}
                   selectedItem={clientSource}
                   setSelectedItem={setClientSource}
                   onSearch={(search: string) => {
-                    return clientSources.filter((clientSource: Source) =>
+                    return displaySources.filter((clientSource: Source) =>
                       clientSource.name
                         .toLowerCase()
                         .includes(search.toLowerCase()),
@@ -595,7 +645,7 @@ export default function NewCustomer({
               Cancel
             </DialogClose>
             <button
-              disabled={pending}
+              disabled={pending || isCreatingSource}
               type="button"
               onClick={() => startTransition(handleSubmit)}
               className="rounded-md bg-gradient-to-r from-primary to-[#5a66ee] px-6 py-2 text-sm font-medium text-white shadow transition-all duration-200 hover:shadow-lg hover:shadow-indigo-500/30 disabled:opacity-50"

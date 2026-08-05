@@ -83,6 +83,7 @@ export default function ClientInformation({
           {/* Details Grid */}
           <div className="w-full divide-y divide-slate-100 lg:w-3/5">
             <DataField label="Name" value={fullName} />
+            <DataField label="Company" value={client.customerCompany || ""} />
             <DataField label="Email" value={client.email || ""} />
             <DataField label="Phone" value={client.mobile || ""} />
             <DataField label="Address" value={client.address || ""} />
