@@ -13,6 +13,7 @@ import { errorToast, successToast } from "@/lib/toast";
 import { useFleetInvoiceStore } from "@/stores/fleetInvoiceStore";
 import { useTwilioStore } from "@/stores/useTwilioStore";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import { pdf } from "@react-pdf/renderer";
 import { Popconfirm } from "antd";
 import { Mail, SquarePen, FileDown, MessageCircle, Copy } from "lucide-react";
@@ -42,6 +43,7 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
   const [editLoading, setEditLoading] = useState(false);
   const { credentials, fetchCredentials } = useTwilioStore();
   const { setAllInvoices } = useFleetInvoiceStore();
+  const currentUser = useGetCurrentUser();
 
   const componentRef = useRef(null);
 
@@ -185,8 +187,7 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
           mobile: client?.mobile || "0000000000",
         }}
         user={{
-          firstName: "Admin",
-          lastName: "User",
+          name: currentUser?.name || "Admin",
         }}
         fleetName={fleet?.fleetName || "Fleet"}
         contactName={fleet?.contactName || "Contact"}
@@ -519,7 +520,7 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
                 <p className="font-semibold text-gray-800">
                   {company?.name || "Company Name"}
                 </p>
-                <p>{fleet?.fleetName || "Fleet Name"}</p>
+                <p>{currentUser?.name || "Admin"}</p>
                 <div className="mt-2 flex gap-4 text-xs">
                   <span>
                     Total: <strong>{formatCurrency(totals.totalAmount)}</strong>
