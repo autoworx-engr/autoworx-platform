@@ -12,6 +12,7 @@ import {
 } from "@/validations/schemas/employee/employee.validation";
 import { revalidatePath } from "next/cache";
 import { SalaryType } from "@prisma/client";
+import { getCompany } from "../settings/getCompany";
 
 export async function updateEmployee({
   id,
@@ -23,7 +24,6 @@ export async function updateEmployee({
   city,
   state,
   zip,
-  companyName,
   commission,
   date,
   type,
@@ -37,6 +37,8 @@ export async function updateEmployee({
   salaryAmount?: number | null;
 }): Promise<ServerAction | TErrorHandler> {
   try {
+    const company = await getCompany();
+
     await updateEmployeeValidationSchema.parseAsync({
       id,
       firstName,
@@ -49,7 +51,7 @@ export async function updateEmployee({
       city,
       state,
       zip,
-      companyName,
+      companyName: company?.name,
       commission,
       date,
       type,
@@ -78,7 +80,7 @@ export async function updateEmployee({
       city,
       state,
       zip,
-      companyName,
+      companyName: company?.name,
       commission,
       joinDate: new Date(date || Date.now()),
       employeeType: type,

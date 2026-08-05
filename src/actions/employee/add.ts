@@ -9,6 +9,7 @@ import { createEmployeeValidationSchema } from "@/validations/schemas/employee/e
 import { EmployeeType, SalaryType } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
+import { getCompany } from "../settings/getCompany";
 import { uploadNotificationSettings } from "../settings/updateNotification";
 
 interface EmployeeData {
@@ -20,7 +21,6 @@ interface EmployeeData {
   city?: string;
   state?: string;
   zip?: string;
-  companyName?: string;
   commission?: number;
   date?: string;
   type?: EmployeeType;
@@ -41,7 +41,6 @@ export async function addEmployee({
   city,
   state,
   zip,
-  companyName,
   commission,
   date,
   type,
@@ -54,6 +53,7 @@ export async function addEmployee({
 }: EmployeeData): Promise<ServerAction | TErrorHandler> {
   try {
     const companyId = await getCompanyId();
+    const company = await getCompany();
 
     const employeeInfo = await createEmployeeValidationSchema.parseAsync({
       firstName,
@@ -64,7 +64,7 @@ export async function addEmployee({
       city,
       state,
       zip,
-      companyName,
+      companyName: company?.name,
       commission,
       joinDate: new Date(date || Date.now()),
       employeeType: type,
