@@ -47,13 +47,17 @@ export async function POST(req: NextRequest) {
     return new NextResponse("OK", { status: 200 });
   }
 
-  const existing = await db.webhookEvent.findUnique({
-    where: { eventId },
-    select: { status: true },
-  });
+  try {
+    const existing = await db.webhookEvent.findUnique({
+      where: { eventId },
+      select: { status: true },
+    });
 
-  if (existing?.status === "PROCESSED") {
-    return new NextResponse("OK", { status: 200 });
+    if (existing?.status === "PROCESSED") {
+      return new NextResponse("OK", { status: 200 });
+    }
+  } catch (err) {
+    console.error("[platform/webhook] idempotency check failed:", eventId, err);
   }
 
   try {
