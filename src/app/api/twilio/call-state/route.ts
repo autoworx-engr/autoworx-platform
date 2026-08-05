@@ -1,10 +1,8 @@
-import { updateNewSMSChatTrack } from "@/actions/communication/client/chat-track";
+import { updateCallChatTrack } from "@/actions/communication/client/chat-track/callTrack";
 import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { db } from "@/lib/db";
 import { getPusherInstance } from "@/lib/pusher/server";
 import { NextRequest, NextResponse } from "next/server";
-
-const MISSED_CALL_SMS = "You missed a call from this number. Call to respond.";
 
 type CallStateAction = "accepted" | "rejected" | "ended";
 
@@ -65,52 +63,27 @@ export async function POST(request: NextRequest) {
   let dbError = false;
 
   try {
-    if (action === "rejected") {
-      // Use a transaction so the SMS log + chat track are consistent with the
-      // status flip and only run when there really is a matching call.
-      const result = await db.$transaction(async (tx) => {
-        const update = await tx.clientCall.updateMany({
-          where: { callSid, companyId },
-          data: { status },
-        });
-        if (update.count === 0) return { count: 0, call: null as null };
+    const update = await db.clientCall.updateMany({
+      where: { callSid, companyId },
+      data: { status },
+    });
+    recordsUpdated = update.count;
 
-        const call = await tx.clientCall.findFirst({
-          where: { callSid, companyId },
-          select: { id: true, clientId: true, from: true, to: true },
-        });
-        if (!call) return { count: update.count, call: null };
-
-        await tx.clientSMS.create({
-          data: {
-            from: call.from,
-            to: call.to,
-            message: MISSED_CALL_SMS,
-            sentBy: "Client",
-            clientId: call.clientId,
-            companyId,
-          },
-        });
-
-        return { count: update.count, call };
+    if (recordsUpdated > 0) {
+      const call = await db.clientCall.findFirst({
+        where: { callSid, companyId },
+        select: { clientId: true, direction: true },
       });
 
-      recordsUpdated = result.count;
-
-      if (result.call?.clientId) {
-        await updateNewSMSChatTrack({
-          clientId: result.call.clientId,
-          smsLastMessage: MISSED_CALL_SMS,
-          lastMessageBy: "Client",
-          attachments: [],
+      // Every state change bumps the thread so the client floats to the top of
+      // the communication hub; a rejected call also marks it unread.
+      if (call?.clientId) {
+        await updateCallChatTrack({
+          clientId: call.clientId,
+          status,
+          direction: call.direction === "outbound" ? "outbound" : "inbound",
         });
       }
-    } else {
-      const update = await db.clientCall.updateMany({
-        where: { callSid, companyId },
-        data: { status },
-      });
-      recordsUpdated = update.count;
     }
   } catch (err) {
     console.error("[call-state] Database update error:", err);

@@ -1,3 +1,4 @@
+import { updateCallChatTrack } from "@/actions/communication/client/chat-track/callTrack";
 import { sendInfobipMessage } from "@/actions/communication/client/sendInfobipMessage";
 import { sendTwilioMessage } from "@/actions/communication/client/sendTwilioMessage";
 import { db } from "@/lib/db";
@@ -42,6 +43,7 @@ export async function POST(request: Request) {
       select: {
         id: true,
         status: true,
+        direction: true,
         clientId: true,
         companyId: true,
         client: { select: { firstName: true, lastName: true } },
@@ -74,6 +76,7 @@ export async function POST(request: Request) {
     await processCallStatus({
       callId: call.id,
       currentStatus: call.status,
+      direction: call.direction === "outbound" ? "outbound" : "inbound",
       companyId: call.companyId,
       clientId: call.clientId,
       clientName: [call.client?.firstName, call.client?.lastName]
@@ -100,6 +103,7 @@ export async function POST(request: Request) {
 type ProcessInput = {
   callId: number;
   currentStatus: string | null;
+  direction: "inbound" | "outbound";
   companyId: number;
   clientId: number;
   clientName: string;
@@ -110,6 +114,7 @@ type ProcessInput = {
 async function processCallStatus({
   callId,
   currentStatus,
+  direction,
   companyId,
   clientId,
   clientName,
@@ -183,5 +188,6 @@ async function processCallStatus({
       where: { id: callId },
       data: { status: newStatus },
     });
+    await updateCallChatTrack({ clientId, status: newStatus, direction });
   }
 }

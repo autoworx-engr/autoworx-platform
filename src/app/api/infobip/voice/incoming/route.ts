@@ -1,3 +1,4 @@
+import { updateCallChatTrack } from "@/actions/communication/client/chat-track/callTrack";
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
@@ -92,6 +93,13 @@ export async function POST(request: Request) {
         companyId: infobipConfig.companyId,
         clientId: client.id,
       },
+    });
+
+    // Bump the client to the top of the communication hub, same as an SMS.
+    await updateCallChatTrack({
+      clientId: client.id,
+      status: "ringing",
+      direction: "inbound",
     });
 
     return NextResponse.json({
