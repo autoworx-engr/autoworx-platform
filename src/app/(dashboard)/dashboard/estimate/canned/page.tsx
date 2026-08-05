@@ -172,7 +172,7 @@ export default async function CannedPage(props: TProps) {
     }),
     db.category.findMany({
       where: { companyId },
-      orderBy: { createdAt: "asc" },
+      orderBy: { name: "asc" },
     }),
     db.tag.findMany({ where: { companyId, type: "GENERAL" } }),
     db.column.findMany({ where: { companyId } }),
