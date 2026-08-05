@@ -27,10 +27,11 @@ export default function NewClientSource({
   setOpenClientSource: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const [open, setOpen] = useState(false);
-  const { showError } = useFormErrorStore();
+  const { showError, clearError } = useFormErrorStore();
   const [source, setSource] = useState("");
 
   const handleSubmit = async (data: FormData) => {
+    clearError();
     const res = await newSource(source);
 
     if (res.type === "success") {
@@ -39,6 +40,8 @@ export default function NewClientSource({
       setOpen(false);
       setOpenClientSource(false);
       setClientSource(res.data);
+    } else {
+      showError({ message: res.message || "Failed to add source" });
     }
   };
   return (
