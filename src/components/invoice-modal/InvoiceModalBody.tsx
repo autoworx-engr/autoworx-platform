@@ -989,7 +989,8 @@ export default function InvoiceModalBody({
                           {Number(value)}%
                           {Number(value) !== 0 && (
                             <span>
-                              |
+                              {" "}
+                              |{" "}
                               {formatCurrency(
                                 (Number(
                                   key === "tax"
