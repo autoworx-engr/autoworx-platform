@@ -153,11 +153,6 @@ export function LeadUploadModal({ buttonElement }: FileUploadModalProps) {
     }
   };
 
-  const handleClose = () => {
-    handleClear();
-    setIsUploadLeadOpen(false);
-  };
-
   const handleDownloadSample = async () => {
     const fileUrl = "/lead-sample.xlsx";
     const fileName = "lead-sample.xlsx";
@@ -184,7 +179,13 @@ export function LeadUploadModal({ buttonElement }: FileUploadModalProps) {
   };
 
   return (
-    <Dialog open={isUploadLeadOpen} onOpenChange={setIsUploadLeadOpen}>
+    <Dialog
+      open={isUploadLeadOpen}
+      onOpenChange={(open) => {
+        if (!open) handleClear();
+        setIsUploadLeadOpen(open);
+      }}
+    >
       <DialogTrigger asChild>
         {buttonElement ? (
           buttonElement
@@ -301,10 +302,9 @@ export function LeadUploadModal({ buttonElement }: FileUploadModalProps) {
         <DialogFooter className="gap-3 sm:gap-3">
           <DialogClose
             className="
-                flex-1 px-4 py-2 text-gray-700 border border-gray-300 rounded-lg 
+                flex-1 px-4 py-2 text-gray-700 border border-gray-300 rounded-lg
                 hover:bg-gray-50 font-semibold transition-colors
               "
-            onClick={handleClose}
           >
             Cancel
           </DialogClose>
