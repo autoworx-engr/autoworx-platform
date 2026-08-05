@@ -30,7 +30,7 @@ import { buildWordSearchAnd } from "@/lib/wordSearch";
  *         schema:
  *           type: string
  *           example: "Toyota"
- *         description: Search by make, model or license plate
+ *         description: Search by make, model, license plate or year. Partial matches are supported, including year digits (e.g. "20" matches 2020 and 2026).
  *       - in: query
  *         name: page
  *         schema:
@@ -112,10 +112,26 @@ export async function GET(
       where.clientId = clientId;
     }
 
+    // `year` is an Int, so it cannot be matched with `contains`. Collect the
+    // years present in this scope and let the search match their digits.
+    const yearValues =
+      search && /\d/.test(search)
+        ? (
+            await db.vehicle.findMany({
+              where,
+              select: { year: true },
+              distinct: ["year"],
+            })
+          )
+            .map((v) => v.year)
+            .filter((y): y is number => y !== null)
+        : [];
+
     const searchAnd = buildWordSearchAnd(
       search,
-      ["make", "model", "license"],
+      ["make", "model", "other", "license"],
       ["year"],
+      yearValues,
     );
     if (searchAnd) {
       where.AND = searchAnd;
@@ -133,6 +149,7 @@ export async function GET(
           year: true,
           color: true,
           vin: true,
+          other: true,
           clientId: true,
         },
       }),

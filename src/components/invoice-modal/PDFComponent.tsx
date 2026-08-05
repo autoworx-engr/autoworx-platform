@@ -987,7 +987,7 @@ const PDFInvoiceItems = ({
   })[];
 }) => {
   return items.map((item) => {
-    if (!item.service && !item.labor) return null;
+    if (!item.service && !item.labor && !item.materials?.length) return null;
 
     const materialCost = item.materials.reduce((acc, material) => {
       return (
@@ -1019,7 +1019,9 @@ const PDFInvoiceItems = ({
       return (
         <View key={item.id} style={styles.itemCard}>
           <View style={styles.itemHeader}>
-            <Text style={styles.itemName}>{item.labor?.name ?? "Labor"}</Text>
+            <Text style={styles.itemName}>
+              {item.labor?.name ?? "Materials"}
+            </Text>
             <Text style={styles.itemPrice}>{formatCurrency(serviceTotal)}</Text>
           </View>
           {item.labor?.notes && (
@@ -1046,10 +1048,14 @@ const PDFInvoiceItems = ({
               })}
             </View>
           )}
-          <View style={styles.lineItem}>
-            <Text style={styles.lineItemText}>Labor Cost</Text>
-            <Text style={styles.lineItemText}>{formatCurrency(laborCost)}</Text>
-          </View>
+          {item.labor && (
+            <View style={styles.lineItem}>
+              <Text style={styles.lineItemText}>Labor Cost</Text>
+              <Text style={styles.lineItemText}>
+                {formatCurrency(laborCost)}
+              </Text>
+            </View>
+          )}
           {totalDiscount > 0 && (
             <View style={[styles.lineItem, { marginTop: 4 }]}>
               <Text style={styles.lineItemText}>Discount</Text>
