@@ -1,10 +1,9 @@
+import BackButton from "@/components/BackButton";
 import ResponsiveEmployeeCard from "@/components/mobile-responsive/employee/ResponsiveEmployeeCard";
 import Title from "@/components/Title";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import { Vehicle } from "@prisma/client";
-import { ArrowLeft, Search } from "lucide-react";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import ClientInformation from "../ClientInformation";
 import OrderList from "../OrderList";
@@ -63,12 +62,7 @@ const Page = async (props: Props) => {
     <div className="mb-2 h-fit p-2">
       <div className="">
         <div className="flex items-center gap-5 w-fit ">
-          <Link
-            href="/dashboard/client"
-            className="rounded border p-1.5 md:hidden"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
+          <BackButton href="/dashboard/client" />
           <Title>Client</Title>
         </div>
 

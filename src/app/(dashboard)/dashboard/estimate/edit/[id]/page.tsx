@@ -7,6 +7,7 @@ import {
   TabsTrigger,
 } from "@/app/(dashboard)/dashboard/estimate/TabsNav";
 import { authOptions } from "@/authOptions";
+import BackButton from "@/components/BackButton";
 import { SyncLists } from "@/components/SyncLists";
 import Title from "@/components/Title";
 import { getCompanyId } from "@/lib/companyId";
@@ -255,7 +256,10 @@ export default async function Page(props: {
   return (
     <div className="gap-3 space-y-4 overflow-clip py-2 md:-my-2 md:min-h-[93vh] xl:flex xl:space-y-0 px-1">
       <div className="w-full xl:min-w-[68%] flex flex-col gap-4">
-        <Title>{pageType}</Title>
+        <div className="flex items-center gap-3">
+          <BackButton href="/dashboard/estimate" />
+          <Title>{pageType}</Title>
+        </div>
 
         <SyncLists
           customers={customers}
