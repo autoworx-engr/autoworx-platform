@@ -21,6 +21,7 @@ import { Category, Labor } from "@prisma/client";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { Popconfirm } from "antd";
 import { SquarePen, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export const CannedLaborItem = ({
@@ -46,6 +47,7 @@ export const CannedLaborItem = ({
   const { categories } = useListsStore();
   const { currentSelectedCategoryId } = useEstimateCreateStore();
   const [isPending, setIsPending] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     if (currentSelectedCategoryId && !category) {
@@ -71,15 +73,15 @@ export const CannedLaborItem = ({
       id: labor.id,
       name,
       charge: parseFloat(charge) || 0,
-      categoryId: category?.id || undefined,
+      categoryId: category?.id ?? null,
       notes: notes.trim() || undefined,
     });
 
     if (res.success) {
       successToast("Labor updated successfully");
-      // Reload the page to refresh the labor list
-      window.location.reload();
       handleDialogClose();
+      // Re-fetch the server data in place instead of reloading the whole page
+      router.refresh();
     } else {
       errorToast(res?.message || "Failed to update labor");
     }
@@ -159,7 +161,7 @@ export const CannedLaborItem = ({
                     </div>
                     <div>
                       <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Category<span className="text-red-500">*</span>
+                        Category
                       </label>
 
                       <SelectCategory
@@ -219,11 +221,9 @@ export const CannedLaborItem = ({
         <CardContent className="p-4 pt-0">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="mb-1 text-sm font-medium text-gray-500">
-                Category <span className="text-red-500">*</span>
-              </p>
+              <p className="mb-1 text-sm font-medium text-gray-500">Category</p>
               <p className="line-clamp-1 text-lg font-semibold text-indigo-600">
-                {labor.category?.name}
+                {labor.category?.name || "-"}
               </p>
             </div>
             <div>
@@ -249,7 +249,7 @@ export const CannedLaborItem = ({
         <span className="font-medium text-gray-800">{labor.name}</span>
       </TableCell>
       <TableCell className="py-3">
-        <span className="text-gray-600">{labor.category?.name}</span>
+        <span className="text-gray-600">{labor.category?.name || "-"}</span>
       </TableCell>
       <TableCell className="py-3">
         <span className="text-gray-700 font-semibold">
@@ -300,7 +300,7 @@ export const CannedLaborItem = ({
               </div>
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-700">
-                  Category <span className="text-red-500">*</span>
+                  Category
                 </label>
                 <SelectCategory
                   onCategoryChange={setCategory}

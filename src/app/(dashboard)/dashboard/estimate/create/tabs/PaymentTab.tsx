@@ -424,7 +424,6 @@ export default async function PaymentTab({
                 <th className="px-10 text-left">Date</th>
                 <th className="text-nowrap px-10 text-left">Due</th>
                 <th className="text-nowrap px-10 text-left">Status</th>
-                <th className="px-10 text-left">Notes</th>
                 <th className="px-10 text-left">Actions</th>
               </tr>
             </thead>
@@ -483,7 +482,6 @@ export default async function PaymentTab({
                       {formatCurrency(Number(data.due))}
                     </td>
                     <td className="px-10 text-left">{data.column?.title}</td>
-                    <td className="px-10 text-left">{data.notes}</td>
                     <td className="px-10 text-left">
                       <EditPaymentModal
                         invoiceGrandTotal={Number(data.grandTotal)}
@@ -582,12 +580,12 @@ export default async function PaymentTab({
                     <p className="text-sm text-[#66738C]">Status</p>
                     <p className="text-sm font-medium">{data.column?.title}</p>
                   </div>
-                  {data.notes && (
+                  {/* {data.notes && (
                     <div className="pt-2">
                       <p className="text-sm text-[#66738C]">Notes</p>
                       <p className="text-sm font-medium">{data.notes}</p>
                     </div>
-                  )}
+                  )} */}
                 </div>
               </div>
             );
@@ -657,7 +655,7 @@ export default async function PaymentTab({
                     {moment(transaction.date).format("MM.DD.YYYY")}
                   </td>
                   <td className="px-10 text-left">{transaction.method}</td>
-                  <td className="px-10 text-left">{transaction.notes}</td>
+                  {/* <td className="px-10 text-left">{transaction.notes}</td> */}
                 </tr>
               ))}
             </tbody>
@@ -731,12 +729,12 @@ export default async function PaymentTab({
                       : "N/A"}
                   </p>
                 </div>
-                {transaction.notes && (
+                {/* {transaction.notes && (
                   <div className="pt-2">
                     <p className="text-sm text-[#66738C]">Notes</p>
                     <p className="text-sm font-medium">{transaction.notes}</p>
                   </div>
-                )}
+                )} */}
               </div>
             </div>
           ))}

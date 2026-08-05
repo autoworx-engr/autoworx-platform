@@ -184,6 +184,7 @@ export async function POST(req: Request) {
       { status: 200 },
     );
   } catch (error: any) {
+    console.error("[gift-card][confirmation] failed:", error?.message, error);
     return NextResponse.json(
       {
         success: false,

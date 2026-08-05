@@ -26,7 +26,8 @@ export default function Create() {
   return (
     <div className="w-full space-y-3 overflow-y-auto p-3">
       {items.map((item) => {
-        if (!item.service && !item.labor) return null;
+        if (!item.service && !item.labor && !item.materials?.length)
+          return null;
 
         const materialCost = item.materials.reduce((acc, material) => {
           return (
@@ -81,7 +82,7 @@ export default function Create() {
             >
               <p className="font-semibold tracking-tight">
                 {isLaborOnly
-                  ? (item.labor?.name ?? "Labor")
+                  ? (item.labor?.name ?? "Materials")
                   : item.service!.name}
               </p>
               <div className="flex items-center gap-3">
@@ -135,15 +136,17 @@ export default function Create() {
                           </div>
                         );
                       })}
-                      <div className="flex justify-between text-sm text-slate-500 font-medium">
-                        <p className="flex items-center gap-1.5">
-                          <span className="h-1 w-1 rounded-full bg-slate-300" />
-                          Labor Cost
-                        </p>
-                        <p className="text-slate-700 text-base font-medium">
-                          {formatCurrency(laborCost)}
-                        </p>
-                      </div>
+                      {item.labor && (
+                        <div className="flex justify-between text-sm text-slate-500 font-medium">
+                          <p className="flex items-center gap-1.5">
+                            <span className="h-1 w-1 rounded-full bg-slate-300" />
+                            Labor Cost
+                          </p>
+                          <p className="text-slate-700 text-base font-medium">
+                            {formatCurrency(laborCost)}
+                          </p>
+                        </div>
+                      )}
                     </>
                   ) : (
                     <>

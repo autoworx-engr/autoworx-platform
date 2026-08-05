@@ -79,7 +79,9 @@ export default function NewLabor({
   useEffect(() => {
     if (data?.labor && data.edit && !fromCanned) {
       setName(data.labor.name);
-      setCategory(categories.find((cat) => cat.id === data.labor.categoryId)!);
+      setCategory(
+        categories.find((cat) => cat.id === data.labor.categoryId) ?? null,
+      );
       setTags(data.labor.tags);
       setNotes(data.labor.notes);
       setHours(data.labor.hours?.toString() || "");
@@ -143,7 +145,7 @@ export default function NewLabor({
 
     const res = await newLabor({
       name,
-      categoryId: category?.id!,
+      categoryId: category?.id ?? null,
       tags,
       notes,
       hours: parseFloat(hours) || 1,
@@ -258,7 +260,9 @@ export default function NewLabor({
       >
         <DialogHeader className="border-b border-slate-200 pb-2">
           <DialogTitle className="text-xl font-semibold text-slate-900">
-            {data?.edit && !fromCanned ? "Edit Labor" : "Add New Labor"}
+            {data?.edit && !fromCanned
+              ? "Edit Canned Labor"
+              : "Add Canned Labor"}
           </DialogTitle>
         </DialogHeader>
 
@@ -293,7 +297,7 @@ export default function NewLabor({
             {/* Category */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-slate-700">
-                Category <span className="text-red-500">*</span>
+                Category
               </label>
               <SelectCategory
                 onCategoryChange={setCategory}

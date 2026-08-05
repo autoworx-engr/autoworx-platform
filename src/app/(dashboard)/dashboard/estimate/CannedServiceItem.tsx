@@ -20,6 +20,7 @@ import { useListsStore } from "@/stores/lists";
 import { Category, Service } from "@prisma/client";
 import { Popconfirm } from "antd";
 import { SquarePen, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export const CannedServiceItem = ({
@@ -43,6 +44,7 @@ export const CannedServiceItem = ({
   const { categories } = useListsStore();
   const { currentSelectedCategoryId } = useEstimateCreateStore();
   const [isPending, setIsPending] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     if (currentSelectedCategoryId && !category) {
@@ -69,13 +71,15 @@ export const CannedServiceItem = ({
       id: service.id,
       name: name,
       description: description || "",
-      categoryId: category?.id || undefined,
+      categoryId: category?.id ?? null,
       canned: true,
     });
 
     if (res && "type" in res && res.type === "success") {
       successToast("Service updated successfully!");
       handleDialogClose();
+      // Re-fetch the server data in place instead of reloading the whole page
+      router.refresh();
     } else {
       errorToast(res?.message ?? "Update failed. Please try again.");
     }
@@ -138,7 +142,7 @@ export const CannedServiceItem = ({
                     </div>
                     <div>
                       <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Category<span className="text-red-500">*</span>
+                        Category
                       </label>
                       <SelectCategory
                         onCategoryChange={setCategory}
@@ -214,11 +218,9 @@ export const CannedServiceItem = ({
         <CardContent className="p-4 pt-0">
           <div className="space-y-4">
             <div>
-              <p className="mb-1 text-sm font-medium text-gray-500">
-                Category <span className="text-red-500">*</span>
-              </p>
+              <p className="mb-1 text-sm font-medium text-gray-500">Category</p>
               <p className="line-clamp-1 text-lg font-semibold text-indigo-600">
-                {service.category?.name}
+                {service.category?.name || "-"}
               </p>
             </div>
             <div>
@@ -246,7 +248,7 @@ export const CannedServiceItem = ({
         <span className="font-medium text-gray-800">{service.name}</span>
       </TableCell>
       <TableCell className="py-3">
-        <span className="text-gray-600">{service.category?.name}</span>
+        <span className="text-gray-600">{service.category?.name || "-"}</span>
       </TableCell>
       <TableCell className="py-3">
         <span className="line-clamp-2 max-w-[250px] whitespace-pre-wrap break-all text-gray-700">
@@ -296,7 +298,7 @@ export const CannedServiceItem = ({
               </div>
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-700">
-                  Category<span className="text-red-500">*</span>
+                  Category
                 </label>
                 <SelectCategory
                   onCategoryChange={setCategory}

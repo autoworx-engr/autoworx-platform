@@ -18,7 +18,7 @@ export async function updateLabor({
 }: {
   id: number;
   name: string;
-  categoryId?: number;
+  categoryId?: number | null;
   tags?: Tag[];
   notes?: string;
   hours?: number;
@@ -78,7 +78,7 @@ export async function updateLabor({
       },
     });
 
-    revalidatePath("/estimate");
+    revalidatePath("/dashboard/estimate", "layout");
 
     return {
       success: true,

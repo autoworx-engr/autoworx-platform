@@ -51,7 +51,7 @@ export default function NavigationTabs({
   };
 
   return (
-    <Tabs defaultValue={activeTab} className="mt-5 md:overflow-hidden">
+    <Tabs value={activeTab} className="mt-5 md:overflow-hidden">
       {/* Mobile tab bar*/}
       <div className="flex gap-2 px-2 md:hidden overflow-x-auto thin-scrollbar">
         <MobileTabButton

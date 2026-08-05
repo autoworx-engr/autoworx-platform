@@ -11,7 +11,7 @@ import { Copy, Search, SquarePen, Trash2 } from "lucide-react";
 import moment from "moment-timezone";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useMediaQuery } from "react-responsive";
 import ResponsiveTemplateCard from "./ResponsiveTemplateCard";
@@ -29,7 +29,9 @@ export interface TemplateData {
 const evenColor = "bg-background";
 const oddColor = "bg-[#F8FAFF]";
 
-const defaultTake = 10;
+const defaultTake = 50;
+
+const pageSizeOptions = [10, 20, 50, 100];
 
 type TTableProps = {
   data: {
@@ -54,27 +56,31 @@ export default function TemplateTable({ take, page, data }: TTableProps) {
 
   const isMax640 = useMediaQuery({ query: "(max-width: 640px)" });
 
+  // Keep the control in sync with the URL, which filters/search also rewrite
+  useEffect(() => {
+    setCurrentPage(parseInt(page ?? "", 10) || 1);
+    setPageSize(parseInt(take ?? "", 10) || defaultTake);
+  }, [page, take]);
+
   // optimize calculation with useMemo
   const showPagination = useMemo(() => {
-    return data?.totalEstimate > defaultTake;
-  }, [data?.totalEstimate]);
+    return data?.totalEstimate > pageSize;
+  }, [data?.totalEstimate, pageSize]);
 
   // for preventing unnecessary re-renders
   const handlePageChange = useCallback(
-    (page: number, pageSize?: number) => {
+    (page: number, nextPageSize?: number) => {
       const searchParams = new URLSearchParams(params.toString());
       searchParams.set("page", page.toString());
-      if (pageSize) {
-        setPageSize(pageSize);
-        searchParams.set("take", pageSize.toString());
-      } else {
-        searchParams.delete("take");
-      }
+
+      const effectivePageSize = nextPageSize ?? pageSize;
+      setPageSize(effectivePageSize);
+      searchParams.set("take", effectivePageSize.toString());
       setCurrentPage(page);
       const newPath = `${pathname}?${searchParams.toString()}`;
       router.push(newPath);
     },
-    [params, pathname, router],
+    [pageSize, params, pathname, router],
   );
 
   async function handleDeleteTemplate(id: string) {
@@ -236,6 +242,7 @@ export default function TemplateTable({ take, page, data }: TTableProps) {
             total={data?.totalEstimate}
             onChange={handlePageChange}
             showSizeChanger={true}
+            pageSizeOptions={pageSizeOptions}
             onShowSizeChange={handlePageChange}
             size={isMax640 ? "small" : "default"}
             responsive={true}

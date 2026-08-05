@@ -79,6 +79,10 @@ const DownloadPDF = dynamic(() => import("./DownloadInvoice"), {
   ssr: false,
 });
 
+const InvoicePdfActions = dynamic(() => import("./InvoicePdfActions"), {
+  ssr: false,
+});
+
 type InvoiceData = Invoice & {
   column: Column | null;
   company: Company & { TwilioCredentials: TwilioCredentials };
@@ -492,34 +496,34 @@ export default function InvoiceModalBody({
                   >
                     <div className="overflow-hidden">
                       <div className="flex items-center gap-1 pl-1">
-                        <button
-                          className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-primary from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95"
-                          onClick={handlePrint}
-                        >
-                          <Printer className="h-4 w-4" />
-                          <span className="hidden md:inline">Print</span>
-                        </button>
-
-                        {client && (
-                          <button className="flex items-center justify-center whitespace-nowrap rounded-xl bg-gradient-to-r from-primary from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95">
-                            <DownloadPDF
-                              id={invoice.id}
-                              invoice={invoice}
-                              client={client}
-                              vehicle={vehicle}
-                              companyDetails={company}
-                              authorizedName={authorizedName}
-                              signImageUrl={signImage ?? undefined}
-                              isStripe={
-                                (gatewayInfo?.success &&
-                                  (gatewayInfo?.hasStripe ||
-                                    gatewayInfo?.hasAuthorizeNet) &&
-                                  parseFloat(
-                                    Number(invoice?.due ?? 0).toFixed(2),
-                                  ) > 0) ??
-                                false
-                              }
-                            />
+                        {client ? (
+                          // Print and PDF share one generated document, so
+                          // printing outputs the same file the PDF button saves.
+                          <InvoicePdfActions
+                            id={invoice.id}
+                            invoice={invoice}
+                            client={client}
+                            vehicle={vehicle}
+                            companyDetails={company}
+                            authorizedName={authorizedName}
+                            signImageUrl={signImage ?? undefined}
+                            isStripe={
+                              (gatewayInfo?.success &&
+                                (gatewayInfo?.hasStripe ||
+                                  gatewayInfo?.hasAuthorizeNet) &&
+                                parseFloat(
+                                  Number(invoice?.due ?? 0).toFixed(2),
+                                ) > 0) ??
+                              false
+                            }
+                          />
+                        ) : (
+                          <button
+                            className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-primary from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95"
+                            onClick={handlePrint}
+                          >
+                            <Printer className="h-4 w-4" />
+                            <span className="hidden md:inline">Print</span>
                           </button>
                         )}
                       </div>
@@ -704,7 +708,7 @@ export default function InvoiceModalBody({
                   <p className="flex items-center gap-1.5 font-bold text-slate-500 dark:text-slate-300">
                     {company?.phone}
                   </p>
-                  <p className="max-w-[200px] break-words italic text-slate-500 dark:text-slate-500">
+                  <p className="whitespace-nowrap text-slate-500 dark:text-slate-500">
                     {company?.email}
                   </p>
                 </div>
@@ -985,7 +989,8 @@ export default function InvoiceModalBody({
                           {Number(value)}%
                           {Number(value) !== 0 && (
                             <span>
-                              |
+                              {" "}
+                              |{" "}
                               {formatCurrency(
                                 (Number(
                                   key === "tax"

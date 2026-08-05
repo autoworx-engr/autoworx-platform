@@ -143,6 +143,11 @@ export async function POST(req: NextRequest) {
     !signatureKey ||
     !verifySignature(rawBody, signatureHeader, signatureKey)
   ) {
+    console.error("[authorize-net/webhook] signature rejected:", {
+      transactionId,
+      companyId,
+      hasSignatureKey: Boolean(signatureKey),
+    });
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
@@ -174,6 +179,12 @@ export async function POST(req: NextRequest) {
 
     const boss = getBoss();
     await boss.send(QUEUE_AUTHORIZE_NET, { eventId: transactionId });
+    console.log(
+      "[authorize-net/webhook] enqueued transactionId:",
+      transactionId,
+      "companyId:",
+      companyId,
+    );
   } catch (err) {
     console.error(
       "[authorize-net/webhook] Failed to persist/enqueue transactionId:",

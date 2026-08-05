@@ -1,6 +1,8 @@
 import { db } from "@/lib/db";
 import { convertInvoice } from "@/actions/estimate/invoice/convert";
 import { sendPaymentReceivedNotification } from "@/lib/notification/payment-notify";
+import { findPendingGiftCardPurchasePayment } from "@/services/giftCardPurchasePaymentLink";
+import { settleGiftCardPurchasePayment } from "@/services/giftCardPurchaseSettlementService";
 import { settleGiftCardReloadPayment } from "@/services/giftCardReloadSettlementService";
 import { confirmShopBooking } from "@/services/confirmShopBooking";
 import { markWebhookPoison } from "@/workers/recordWebhookFailure";
@@ -310,6 +312,53 @@ export async function processAuthorizeNetPayment(eventId: string) {
       return;
     }
 
+    // Purchase sessions persist their payload at initiate time — link the
+    // charge to that row and issue here, so the browser is never load-bearing.
+    if (sourceType === "virtual_shop_gift_card_purchase") {
+      const pending = await findPendingGiftCardPurchasePayment(
+        parsedRef?.paymentRef || paymentRef,
+        companyIdFromRef,
+      );
+
+      if (pending) {
+        await db.$transaction(async (tx) => {
+          await tx.authorizeNetPayment.create({
+            data: {
+              transactionId,
+              companyId: companyIdFromRef,
+              paymentId: pending.id,
+              invoiceId: null,
+            },
+          });
+
+          await tx.payment.update({
+            where: { id: pending.id },
+            data: {
+              gateway: "AUTHORIZE_NET",
+              date: new Date(),
+              ...(Number.isFinite(authAmount) && authAmount > 0
+                ? { amount: authAmount }
+                : {}),
+            },
+          });
+
+          await tx.webhookEvent.update({
+            where: { eventId },
+            data: { status: "PROCESSED", processedAt: new Date() },
+          });
+        });
+
+        const settlement = await settleGiftCardPurchasePayment(pending.id);
+        console.log("[authnet-worker][gift-card] settled:", {
+          paymentId: pending.id,
+          status: settlement.status,
+          giftCardId: settlement.giftCardId,
+        });
+
+        return;
+      }
+    }
+
     const reloadGiftCardId =
       parsedRef?.giftCardId ||
       (Number.isInteger(fallbackGiftCardId) && fallbackGiftCardId > 0
@@ -377,6 +426,11 @@ export async function processAuthorizeNetPayment(eventId: string) {
 
     if (sourceType === "virtual_shop_gift_card_reload") {
       await settleGiftCardReloadPayment(createdPaymentId!);
+    } else {
+      console.error(
+        "[authnet-worker][gift-card] legacy session with no stored payload — card NOT issued for paymentId:",
+        createdPaymentId!,
+      );
     }
 
     return;

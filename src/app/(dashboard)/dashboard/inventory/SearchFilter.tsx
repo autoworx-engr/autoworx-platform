@@ -30,8 +30,14 @@ export default function SearchFilter({ searchParams }: TSearchFilterProps) {
     });
   }, [searchParams.search, searchParams.category]);
 
-  const handleSearchChange = useDebounce((value: string) => {
+  const buildParams = () => {
     const searchParam = new URLSearchParams(params);
+    searchParam.delete("page");
+    return searchParam;
+  };
+
+  const handleSearchChange = useDebounce((value: string) => {
+    const searchParam = buildParams();
     // console.log({ value });
     searchParam.set("search", value);
     if (value === "" && searchParam.has("search")) {
@@ -42,7 +48,7 @@ export default function SearchFilter({ searchParams }: TSearchFilterProps) {
 
   const handleCategoryChange = (value: string) => {
     setFilter({ category: value === "All Categories" ? "" : value });
-    const searchParam = new URLSearchParams(params);
+    const searchParam = buildParams();
     if (value === "All Categories") {
       searchParam.delete("category");
     } else {
@@ -53,7 +59,7 @@ export default function SearchFilter({ searchParams }: TSearchFilterProps) {
 
   const handleClearCategory = () => {
     setFilter({ category: "" });
-    const searchParam = new URLSearchParams(params);
+    const searchParam = buildParams();
     if (searchParam.has("category")) {
       searchParam.delete("category");
     }

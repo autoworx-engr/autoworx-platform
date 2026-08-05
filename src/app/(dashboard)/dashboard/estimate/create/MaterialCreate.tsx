@@ -477,7 +477,7 @@ export default function MaterialCreate() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           className="h-10 w-full sm:flex-1 rounded-[10px] bg-white px-4 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-primary/30"
-          placeholder="e.g. Brake Pads"
+          placeholder="Material Name"
         />
       </div>
 

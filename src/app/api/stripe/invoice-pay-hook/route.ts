@@ -10,6 +10,7 @@ export async function POST(req: NextRequest) {
   const signature = req.headers.get("stripe-signature");
 
   if (!signature) {
+    console.error("[stripe/webhook] rejected: no stripe-signature header");
     return NextResponse.json({ error: "No signature found" }, { status: 400 });
   }
 
@@ -24,6 +25,12 @@ export async function POST(req: NextRequest) {
       process.env.STRIPE_WEBHOOK_SECRET as string,
     );
   } catch (error: any) {
+    console.error(
+      "[stripe/webhook] signature verification failed:",
+      error?.message,
+      "hasWebhookSecret:",
+      Boolean(process.env.STRIPE_WEBHOOK_SECRET),
+    );
     return NextResponse.json(
       { error: `Signature verification failed: ${error?.message}` },
       { status: 400 },
@@ -74,6 +81,12 @@ export async function POST(req: NextRequest) {
 
     const boss = getBoss();
     await boss.send(QUEUE_STRIPE, { eventId: event.id });
+    console.log(
+      "[stripe/webhook] enqueued eventId:",
+      event.id,
+      "companyId:",
+      companyId,
+    );
   } catch (err) {
     console.error(
       "[stripe/webhook] Failed to persist/enqueue eventId:",

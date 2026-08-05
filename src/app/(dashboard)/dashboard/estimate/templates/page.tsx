@@ -75,7 +75,11 @@ async function TemplatesPage(
       />
 
       <NavigationTabs activeTab="d-template">
-        <TemplateTable data={templates} />
+        <TemplateTable
+          data={templates}
+          page={searchParams.page}
+          take={searchParams.take}
+        />
       </NavigationTabs>
     </div>
   );

@@ -15,7 +15,7 @@ export async function updateService({
 }: {
   id: number;
   name: string;
-  categoryId?: number;
+  categoryId?: number | null;
   description?: string;
   canned?: boolean;
 }) {
@@ -49,7 +49,7 @@ export async function updateService({
       },
     });
 
-    revalidatePath("/estimate/canned");
+    revalidatePath("/dashboard/estimate", "layout");
 
     return {
       type: "success",
