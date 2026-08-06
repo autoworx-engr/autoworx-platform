@@ -16,8 +16,7 @@ import { useCreateDraftEstimate } from "@/hooks/pipeline/useCreateDraftEstimate"
 import { Calendar, CalendarCheck } from "lucide-react";
 import { updateInvoiceAutomationTrigger } from "@/service/invoice-automation-trigger/api";
 import { useRouter } from "next/navigation";
-import { canAccessEstimate } from "@/utils/permissions";
-import { usePermissionStore } from "@/stores/permissionStore";
+import { useCanAccessRoute } from "@/hooks/useCanAccessRoute";
 
 type TProps = {
   lead: LeadWithSalesUser;
@@ -44,8 +43,7 @@ export default function LeadActions({ lead }: TProps) {
     }
   }, [lead.invoiceId]);
 
-  const { permissions } = usePermissionStore();
-  const canCreateEstimate = canAccessEstimate(permissions);
+  const canCreateEstimate = useCanAccessRoute("/dashboard/estimate/create");
   // const handleCreateDraftEstimate = async ({
   //   columnId,
   //   leadId,

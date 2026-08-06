@@ -24,13 +24,37 @@ export type PermissionKey =
   | "integrations"
   | "salesPipeline"
   | "shopPipeline"
+  | "teamPipeline"
   | "businessSettings"
   | "workforceManagementViewOnly"
   | "reportingViewOnly"
   | "inventoryAllViewOnly"
-  | "visualization";
+  | "clientDirectory"
+  | "employeeDirectory"
+  | "fleetDirectory"
+  | "visualization"
+  | "virtualShop"
+  | "automation"
+  | "salesAgent";
 
-export type RoutePermissionKey = PermissionKey | PermissionKey[] | undefined;
+/**
+ * An array means "any of these keys grants access". `{ all: [...] }` means
+ * every key is required — used for settings pages that sit behind Business
+ * Settings *and* their own module toggle.
+ */
+export type PermissionKeyGroup = { all: PermissionKey[] };
+
+export type RoutePermissionKey =
+  | PermissionKey
+  | PermissionKey[]
+  | PermissionKeyGroup
+  | undefined;
+
+export function isPermissionKeyGroup(
+  key: RoutePermissionKey,
+): key is PermissionKeyGroup {
+  return typeof key === "object" && key !== null && !Array.isArray(key);
+}
 
 export const ROUTE_PERMISSIONS_MAP: Record<string, RoutePermissionKey> = {
   "/dashboard/communication/client": "communicationHubClients",
@@ -44,13 +68,22 @@ export const ROUTE_PERMISSIONS_MAP: Record<string, RoutePermissionKey> = {
   "/dashboard/task/day": "calendarTask",
   "/dashboard/workforce": "workforceManagement",
   "/dashboard/reporting/revenue": ["reporting", "reportingViewOnly"],
-  "/dashboard/reporting/workforce": "workforceManagementViewOnly",
+  "/dashboard/reporting/workforce": [
+    "workforceManagement",
+    "workforceManagementViewOnly",
+  ],
   "/dashboard/integrations": "integrations",
   "/dashboard/pipeline/sales/pipeline": "salesPipeline",
   "/dashboard/pipeline/sales/lead": "salesPipeline",
   "/dashboard/pipeline/shop/pipeline": "shopPipeline",
   "/dashboard/pipeline/shop/workorder": "shopPipeline",
+  "/dashboard/pipeline/team/pipeline": "teamPipeline",
+  "/dashboard/pipeline/team/workorder": "teamPipeline",
   "/dashboard/visualization": "visualization",
+  "/dashboard/client": "clientDirectory",
+  "/dashboard/employee": "employeeDirectory",
+  "/dashboard/fleet": "fleetDirectory",
+  "/dashboard/virtual-shop": "virtualShop",
   "/dashboard/settings": "businessSettings",
   "/dashboard/settings/team-management": "businessSettings",
   "/dashboard/settings/payments": "businessSettings",
@@ -61,9 +94,16 @@ export const ROUTE_PERMISSIONS_MAP: Record<string, RoutePermissionKey> = {
   "/dashboard/settings/networks": "businessSettings",
   "/dashboard/settings/billing": "businessSettings",
   "/dashboard/settings/leadgeneration": "businessSettings",
-  "/dashboard/settings/automation": "businessSettings",
   "/dashboard/settings/calendar": "businessSettings",
-  "/dashboard/settings/sales-agent": "businessSettings",
+  "/dashboard/settings/automation": {
+    all: ["businessSettings", "automation"],
+  },
+  "/dashboard/settings/sales-agent": {
+    all: ["businessSettings", "salesAgent"],
+  },
+  "/dashboard/settings/virtual-shop-configure": {
+    all: ["businessSettings", "virtualShop"],
+  },
 };
 
 /**
@@ -72,10 +112,38 @@ export const ROUTE_PERMISSIONS_MAP: Record<string, RoutePermissionKey> = {
  * Opt-in per subtree rather than a blanket "nearest mapped ancestor" fallback:
  * without this, /dashboard/estimate is guarded by `estimatesInvoices` while
  * /dashboard/estimate/invoices, /create, /canned and /templates stay reachable
- * by anyone. A route with its own ROUTE_PERMISSIONS_MAP entry always wins.
+ * by anyone. A route with its own ROUTE_PERMISSIONS_MAP entry always wins, and
+ * the first matching prefix wins, so keep the more specific ones first.
  */
 const ROUTE_PERMISSION_PREFIXES: [string, RoutePermissionKey][] = [
+  [
+    "/dashboard/settings/virtual-shop-configure",
+    { all: ["businessSettings", "virtualShop"] },
+  ],
+  [
+    "/dashboard/settings/sales-agent",
+    { all: ["businessSettings", "salesAgent"] },
+  ],
+  [
+    "/dashboard/settings/automation",
+    { all: ["businessSettings", "automation"] },
+  ],
+  ["/dashboard/settings/payments", "businessSettings"],
   ["/dashboard/estimate", "estimatesInvoices"],
+  ["/dashboard/communication/client", "communicationHubClients"],
+  ["/dashboard/communication/internal", "communicationHubInternal"],
+  ["/dashboard/communication/collaboration", "communicationHubCollaboration"],
+  ["/dashboard/task", "calendarTask"],
+  ["/dashboard/reporting", ["reporting", "reportingViewOnly"]],
+  ["/dashboard/pipeline/sales", "salesPipeline"],
+  ["/dashboard/pipeline/shop", "shopPipeline"],
+  ["/dashboard/pipeline/team", "teamPipeline"],
+  ["/dashboard/pipeline", ["salesPipeline", "shopPipeline", "teamPipeline"]],
+  ["/dashboard/inventory", ["inventoryAll", "inventoryAllViewOnly"]],
+  ["/dashboard/client", "clientDirectory"],
+  ["/dashboard/employee", "employeeDirectory"],
+  ["/dashboard/fleet", "fleetDirectory"],
+  ["/dashboard/virtual-shop", "virtualShop"],
 ];
 
 /**

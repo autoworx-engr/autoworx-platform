@@ -3,10 +3,14 @@ import {
   getPermissionsForRole,
   updatePermissionForRole,
 } from "@/actions/settings/teamManagement";
-import { permissionModuleForAdminManager } from "@/lib/permissionModule";
+import {
+  getModuleLabel,
+  getRoleModule,
+  permissionModuleRows,
+} from "@/lib/permissionModule";
 import { errorToast, successToast } from "@/lib/toast";
 import { useTeamManagementStore } from "@/stores/teamManagementStore";
-import { Checkbox, Switch } from "antd";
+import { Switch } from "antd";
 import { useEffect, useState } from "react";
 
 interface PermissionWithIndexSignature {
@@ -20,20 +24,13 @@ interface Permissions {
   otherPermissions: PermissionWithIndexSignature | null;
 }
 
-export default function UserRolesTable() {
-  const [permissions, setPermissions] = useState<Permissions | null>(null); // To trigger re-render when serviceStore changes
-  const roles = ["Manager", "Sales", "Technician", "Other"];
-  const viewOnlyModules = new Set([
-    "Sales:workforceManagement",
-    "Sales:reporting",
-    "Sales:inventoryAll",
-    "Technician:workforceManagement",
-    "Technician:reporting",
-  ]);
+const roles = ["Manager", "Sales", "Technician", "Other"];
 
-  const getModuleLabel = (moduleKey: string) =>
-    permissionModuleForAdminManager.find((module) => module.key === moduleKey)
-      ?.label ?? moduleKey;
+const rolePermissionsKey = (role: string) =>
+  `${role.toLowerCase()}Permissions` as keyof Permissions;
+
+export default function UserRolesTable() {
+  const [permissions, setPermissions] = useState<Permissions | null>(null);
 
   useEffect(() => {
     const fetchPermissions = async () => {
@@ -51,19 +48,17 @@ export default function UserRolesTable() {
     fetchPermissions();
   }, []);
 
-  // Handle toggle for both switch (permission) and checkbox (viewOnly)
   const handleToggle = async (
     role: string,
     moduleKey: string,
     value: boolean,
-    isViewOnly = false,
+    isViewOnly: boolean,
   ) => {
     if (!permissions) return;
 
     try {
       const updatedPermissions = { ...permissions };
-      const roleKey =
-        `${role.toLowerCase()}Permissions` as keyof typeof permissions;
+      const roleKey = rolePermissionsKey(role);
       const fieldKey = isViewOnly ? `${moduleKey}ViewOnly` : moduleKey;
 
       if (updatedPermissions[roleKey]) {
@@ -72,9 +67,10 @@ export default function UserRolesTable() {
         await updatePermissionForRole({ role, moduleKey, value, isViewOnly }); // Update the database
         const refetch = useTeamManagementStore.getState().refetch;
         useTeamManagementStore.setState({ refetch: !refetch });
-        const moduleLabel = getModuleLabel(moduleKey);
         successToast(
-          `Updated ${role} - ${moduleLabel}${isViewOnly ? " (view only)" : ""}`,
+          `Updated ${role} - ${getModuleLabel(moduleKey)}${
+            isViewOnly ? " (view only)" : ""
+          }`,
         );
       }
     } catch (_error) {
@@ -82,44 +78,20 @@ export default function UserRolesTable() {
     }
   };
 
-  const getPermissionForRole = (
-    role: string,
-    moduleKey: string,
-  ): boolean | null => {
-    if (!permissions) return null;
+  /**
+   * A module only applies to a role when that role's Prisma model has the
+   * column — `getRoleModule` resolves which column (full access or the
+   * view-only variant), and `null` means "not applicable to this role".
+   */
+  const resolveCell = (role: string, moduleKey: string) => {
+    const roleModule = getRoleModule(role, moduleKey);
+    const rolePermissions = permissions?.[rolePermissionsKey(role)];
+    if (!roleModule || !rolePermissions) return null;
 
-    switch (role) {
-      case "Manager":
-        return permissions.managerPermissions?.[moduleKey] ?? null;
+    const isViewOnly = Boolean(roleModule.viewOnly);
+    const field = roleModule.viewOnly ?? roleModule.key;
 
-      case "Sales":
-        return permissions.salesPermissions?.[moduleKey] ?? null;
-      case "Technician":
-        return permissions.technicianPermissions?.[moduleKey] ?? null;
-      case "Other":
-        return permissions.otherPermissions?.[moduleKey] ?? null;
-      default:
-        return null;
-    }
-  };
-
-  const isViewOnlyForRole = (role: string, moduleKey: string): boolean => {
-    if (!permissions) return false;
-
-    const viewOnlyKey = `${moduleKey}ViewOnly`;
-
-    switch (role) {
-      case "Manager":
-        return permissions.managerPermissions?.[viewOnlyKey] ?? false;
-      case "Sales":
-        return permissions.salesPermissions?.[viewOnlyKey] ?? false;
-      case "Technician":
-        return permissions.technicianPermissions?.[viewOnlyKey] ?? false;
-      case "Other":
-        return permissions.otherPermissions?.[viewOnlyKey] ?? false;
-      default:
-        return false;
-    }
+    return { isViewOnly, checked: rolePermissions[field] ?? false };
   };
 
   return (
@@ -173,60 +145,52 @@ export default function UserRolesTable() {
                   ))}
 
                 {permissions &&
-                  permissionModuleForAdminManager.map((module, index) => (
+                  permissionModuleRows.map((module) => (
                     <tr
-                      key={index + 1}
+                      key={module.key}
                       className="border-b border-slate-100 bg-white last:border-b-0 even:bg-slate-50"
                     >
                       <td className="sticky left-0 z-10 w-[200px] min-w-[200px] max-w-[200px] whitespace-normal break-words bg-inherit px-4 py-3 font-medium text-slate-600">
                         {module.label}
                       </td>
                       {roles.map((role) => {
-                        const permission = getPermissionForRole(
-                          role,
-                          module.key,
-                        );
-                        const isViewOnly = isViewOnlyForRole(role, module.key);
-                        const canViewOnly = viewOnlyModules.has(
-                          `${role}:${module.key}`,
-                        );
+                        const cell = resolveCell(role, module.key);
+
+                        if (!cell) {
+                          return (
+                            <td
+                              key={role}
+                              className="px-5 py-3 text-center text-slate-400"
+                            >
+                              -
+                            </td>
+                          );
+                        }
 
                         return (
                           <td key={role} className="px-5 py-3 text-center">
-                            {permission !== null && (
-                              <div className="flex items-center justify-center">
-                                <Switch
-                                  checked={permission}
-                                  className="max-w-2 !bg-slate-200 shadow-sm [&.ant-switch-checked]:!bg-primary/80 [&.ant-switch-checked]:!border-primary"
-                                  onChange={(checked) =>
-                                    handleToggle(role, module.key, checked)
-                                  }
-                                  aria-label={`${role} permission for ${module.label}`}
-                                />
-                              </div>
-                            )}
-
-                            {canViewOnly && (
-                              <div className="mt-1 flex items-center justify-center gap-1 text-[11px] text-slate-500">
-                                <Checkbox
-                                  className="[&_.ant-checkbox-checked_.ant-checkbox-inner]:!border-primary [&_.ant-checkbox-checked_.ant-checkbox-inner]:!bg-primary/80"
-                                  checked={isViewOnly}
-                                  onChange={(e) =>
-                                    handleToggle(
-                                      role,
-                                      module.key,
-                                      e.target.checked,
-                                      true,
-                                    )
-                                  }
-                                  aria-label={`${role} view-only for ${module.label}`}
-                                />
-                              </div>
-                            )}
-
-                            {permission === null && !canViewOnly && (
-                              <span className="text-slate-400">-</span>
-                            )}
+                            <div className="flex flex-col items-center justify-center gap-1">
+                              <Switch
+                                checked={cell.checked}
+                                className="max-w-2 !bg-slate-200 shadow-sm [&.ant-switch-checked]:!bg-primary/80 [&.ant-switch-checked]:!border-primary"
+                                onChange={(checked) =>
+                                  handleToggle(
+                                    role,
+                                    module.key,
+                                    checked,
+                                    cell.isViewOnly,
+                                  )
+                                }
+                                aria-label={`${role} ${
+                                  cell.isViewOnly ? "view-only " : ""
+                                }permission for ${module.label}`}
+                              />
+                              {cell.isViewOnly && (
+                                <span className="text-[11px] text-slate-500">
+                                  View only
+                                </span>
+                              )}
+                            </div>
                           </td>
                         );
                       })}
@@ -238,7 +202,7 @@ export default function UserRolesTable() {
         </div>
         <p className="px-1 pt-2 text-xs text-slate-500">
           Tip: Scroll horizontally on smaller screens to review all role
-          columns.
+          columns. A dash means the module does not apply to that role.
         </p>
       </div>
     </div>

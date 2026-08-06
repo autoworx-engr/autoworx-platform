@@ -29,9 +29,21 @@ export const staticPermissions = [
   { title: "Calendar & Task", permission_name: "calendar", status: false },
   { title: "Payments", permission_name: "payments", status: false },
   { title: "Directory", permission_name: "directory", status: false },
-  { title: "Client", permission_name: "clientDirectory", status: false },
-  { title: "Employee", permission_name: "employeeDirectory", status: false },
-  { title: "Fleet", permission_name: "fleetDirectory", status: false },
+  {
+    title: "Directory (Client)",
+    permission_name: "clientDirectory",
+    status: false,
+  },
+  {
+    title: "Directory (Employee)",
+    permission_name: "employeeDirectory",
+    status: false,
+  },
+  {
+    title: "Directory (Fleet)",
+    permission_name: "fleetDirectory",
+    status: false,
+  },
   {
     title: "Reporting & Analytics",
     permission_name: "reporting",
@@ -42,6 +54,7 @@ export const staticPermissions = [
   { title: "All Automation", permission_name: "automation", status: false },
   { title: "Sales Pipeline", permission_name: "salesPipeline", status: false },
   { title: "Shop Pipeline", permission_name: "shopPipeline", status: false },
+  { title: "Team Pipeline", permission_name: "teamPipeline", status: false },
   {
     title: "Business Settings",
     permission_name: "businessSettings",

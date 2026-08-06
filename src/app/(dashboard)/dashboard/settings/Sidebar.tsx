@@ -1,6 +1,10 @@
 "use client";
 import { cn } from "@/lib/cn";
-import { FEATURE_PERMISSIONS_MAP } from "@/lib/routePermissionsMap";
+import { canAccessWithPermissionKey } from "@/lib/routeAccess";
+import {
+  FEATURE_PERMISSIONS_MAP,
+  resolveRoutePermissionKey,
+} from "@/lib/routePermissionsMap";
 import { useCompanyFeaturePermissionStore } from "@/stores/companyFeaturePermissionStore";
 import { usePermissionStore } from "@/stores/permissionStore";
 import {
@@ -169,6 +173,13 @@ const Sidebar = ({ isLegacy = false }: Props) => {
     (setting) =>
       canAccessCompanyFeatureRoute(setting.link) &&
       canAccessBusinessSettings() &&
+      // Automation / Sales Agent / Virtual Shop Configure each have their own
+      // module permission on top of businessSettings — same key the route guard
+      // uses, so the link never leads to a 404.
+      canAccessWithPermissionKey(
+        resolveRoutePermissionKey(setting.link),
+        permissions,
+      ) &&
       !(isLegacy && setting.link === "/dashboard/settings/billing"),
   );
 
