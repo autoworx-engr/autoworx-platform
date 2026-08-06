@@ -115,6 +115,23 @@ export default function AssignTaskDropDown({
       .filter(Boolean) as Partial<User>[];
   }, [assignedUsers, usersById]);
 
+  /**
+   * `availableUsers.length === 0` on its own is ambiguous — it's equally true
+   * while the first page loads, when a search matches nothing, and when every
+   * teammate really is assigned. Each needs its own message, so distinguish
+   * them by *why* the list is empty.
+   */
+  const isSearching = debouncedSearchTerm.trim().length > 0;
+  const hasAssignableUsers = userForAssign.length > 0;
+
+  const triggerLabel = () => {
+    if (availableUsers.length > 0) return "Select user";
+    // Mid-search the trigger shouldn't claim anything about the roster.
+    if (isLoading || isSearching) return "Select user";
+    if (hasAssignableUsers) return "All users assigned";
+    return "No users available";
+  };
+
   const handleAssignUser = (user: Partial<User>) => {
     if (user.id) {
       if (onlyOneUser) {
@@ -203,16 +220,16 @@ export default function AssignTaskDropDown({
       <div className="w-full">
         <Selector
           className="max-w-full"
-          label={() =>
-            availableUsers.length === 0 ? "No users available" : "Select user"
-          }
+          label={triggerLabel}
           items={availableUsers}
-          newButton={
-            <div className="text-center text-sm text-gray-500 p-2">
-              {availableUsers.length === 0
+          // No footer: Selector already renders its own empty state, so a
+          // second message here only ever duplicated or contradicted it.
+          emptyMessage={
+            isSearching
+              ? `No users match "${debouncedSearchTerm.trim()}"`
+              : hasAssignableUsers
                 ? "All users are already assigned"
-                : "Select a user from the list"}
-            </div>
+                : "No users available to assign"
           }
           displayList={(user: Partial<User>) => (
             <div className="flex items-center gap-3 py-2 px-3 hover:bg-gray-50">

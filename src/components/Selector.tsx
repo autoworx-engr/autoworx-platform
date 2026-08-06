@@ -38,6 +38,8 @@ interface SelectorProps<T> {
   showSearch?: boolean;
   usePortal?: boolean;
   isLoading?: boolean;
+  /** Empty-state text. Override when "No results found" is too vague to explain why the list is empty. */
+  emptyMessage?: string;
 }
 
 export default function Selector<T>({
@@ -62,6 +64,7 @@ export default function Selector<T>({
   showSearch = true,
   usePortal = false,
   isLoading = false,
+  emptyMessage = "No results found",
 }: SelectorProps<T>): JSX.Element {
   const [searchTerm, setSearchTerm] = useState("");
   const [localOpen, setLocalOpen] = useState(false);
@@ -172,7 +175,7 @@ export default function Selector<T>({
         ) : filteredItems?.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-6 px-4">
             <Search size={18} className="text-slate-300 mb-1.5" />
-            <p className="text-sm text-slate-400">No results found</p>
+            <p className="text-center text-sm text-slate-400">{emptyMessage}</p>
           </div>
         ) : (
           filteredItems?.map((item, index) => {
