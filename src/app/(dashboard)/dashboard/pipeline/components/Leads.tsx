@@ -34,6 +34,7 @@ import { LeadsMobileSkeleton } from "./LeadsMobileSkeleton";
 import LeadsSearch from "./LeadsSearch";
 import { LeadsTableSkeleton } from "./LeadsTableSkeleton";
 import { NewAppointmentPipeline } from "./NewAppointmentPipeline";
+import PipelineInvoiceModal from "./PipelineInvoiceModal";
 import TaskForm from "./TaskForm";
 import useCompanyUsersQuery from "@/hooks/query-hook/useCompanyUsersQuery";
 
@@ -619,29 +620,29 @@ const Leads = ({ salesColumn }: TProps) => {
                                         </span>
                                       </span>
                                     )}
-                                    <button
-                                      onClick={() =>
-                                        handleCreateDraftEstimate({
-                                          leadId: lead.id,
-                                          clientId: Number(lead?.clientId),
-                                          vehicleId: lead?.client?.vehicle?.id,
-                                        })
-                                      }
-                                      disabled={isPending}
-                                      className="group relative"
-                                    >
-                                      {lead.isEstimateCreated ? (
-                                        <div className="relative h-6 w-4">
-                                          <Image
-                                            alt="draftEstimateDone"
-                                            src="/icons/estimateDone.png"
-                                            fill
-                                            className="object-contain"
-                                            loading="lazy"
-                                            sizes="24px"
-                                          />
-                                        </div>
-                                      ) : (
+                                    {lead.isEstimateCreated &&
+                                    lead.invoiceId ? (
+                                      <span className="group relative">
+                                        <PipelineInvoiceModal
+                                          invoiceId={lead.invoiceId}
+                                        />
+                                        <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                                          Draft estimate
+                                        </span>
+                                      </span>
+                                    ) : (
+                                      <button
+                                        onClick={() =>
+                                          handleCreateDraftEstimate({
+                                            leadId: lead.id,
+                                            clientId: Number(lead?.clientId),
+                                            vehicleId:
+                                              lead?.client?.vehicle?.id,
+                                          })
+                                        }
+                                        disabled={isPending}
+                                        className="group relative"
+                                      >
                                         <div className="relative h-4 w-4">
                                           <Image
                                             src="/icons/draftEstimate.png"
@@ -652,11 +653,11 @@ const Leads = ({ salesColumn }: TProps) => {
                                             loading="lazy"
                                           />
                                         </div>
-                                      )}
-                                      <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-                                        Draft estimate
-                                      </span>
-                                    </button>
+                                        <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                                          Draft estimate
+                                        </span>
+                                      </button>
+                                    )}
                                     {(() => {
                                       const appointment =
                                         lead?.latestAppointment ??

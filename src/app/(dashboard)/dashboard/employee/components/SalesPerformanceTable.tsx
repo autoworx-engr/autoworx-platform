@@ -45,7 +45,7 @@ export default function SalesPerformanceTable() {
         },
         {
           label: "Average Deal Size",
-          value: `${data.averageDealSize === 0 ? "0" : data.averageDealSize.toFixed(2)} $`,
+          value: `$${data.averageDealSize === 0 ? "0" : data.averageDealSize.toFixed(2)}`,
           percentage: data.growthRates.averageDealSizeGR.rate,
           isPositive: data.growthRates.averageDealSizeGR.isPositive,
         },
