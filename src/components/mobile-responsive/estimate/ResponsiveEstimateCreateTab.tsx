@@ -124,7 +124,10 @@ export default function ResponsiveEstimateCreateTab({}: TProps) {
   return (
     <div className="relative flex h-full w-full flex-col items-center justify-center gap-y-2">
       {items.map((item, i) => (
-        <Card key={item.id} className="w-[330px]">
+        <Card
+          key={item.id}
+          className={cn("w-[330px]", i === items.length - 1 && "mb-20")}
+        >
           <CardContent className="m-2 flex flex-col gap-y-3 p-3">
             {["service", "materials", "labor", "tags"].map((itemKey, j) => {
               switch (itemKey) {

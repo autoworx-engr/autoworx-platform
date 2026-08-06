@@ -1,3 +1,4 @@
+import { updateCallChatTrack } from "@/actions/communication/client/chat-track/callTrack";
 import { db } from "@/lib/db";
 import "server-only";
 
@@ -29,6 +30,14 @@ export async function logCallAndNotify({
       companyId,
       clientId,
     },
+  });
+
+  // Bump the client to the top of the communication hub the moment the phone
+  // rings, the same way an inbound SMS does.
+  await updateCallChatTrack({
+    clientId,
+    status: "ringing",
+    direction: "inbound",
   });
 
   // Re-fetch one extra row so we can detect — and log — when the company has

@@ -1,7 +1,6 @@
 import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { buildWordSearchAnd } from "@/lib/wordSearch";
 
 /**
  * @swagger
@@ -97,13 +96,28 @@ export async function GET(
 
     const where: Record<string, any> = { companyId };
 
-    const searchAnd = buildWordSearchAnd(search, [
-      "firstName",
-      "lastName",
-      "email",
-    ]);
-    if (searchAnd) {
-      where.AND = searchAnd;
+    if (search) {
+      // Every word of the search must appear in firstName or lastName (in
+      // either order/field), so a full "First Last" search still matches
+      // when the name is split across the two fields differently than the
+      // search words are. Falls back to a plain substring match on the full
+      // search term against name, email and mobile.
+      const words = search.split(/\s+/).filter(Boolean);
+
+      where.OR = [
+        { firstName: { contains: search, mode: "insensitive" } },
+        { lastName: { contains: search, mode: "insensitive" } },
+        {
+          AND: words.map((word) => ({
+            OR: [
+              { firstName: { contains: word, mode: "insensitive" } },
+              { lastName: { contains: word, mode: "insensitive" } },
+            ],
+          })),
+        },
+        { email: { contains: search, mode: "insensitive" } },
+        { mobile: { contains: search, mode: "insensitive" } },
+      ];
     }
 
     const [clients, total] = await Promise.all([
