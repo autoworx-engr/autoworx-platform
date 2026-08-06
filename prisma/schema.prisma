@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
+  provider = "postgresql"
 }
 
 // Appointment for a company.
@@ -620,8 +620,8 @@ model ClientConversationTrack {
   messengerUnReadCount Int       @default(0) @map("messenger_unread_count")
   messengerLastMessage String?   @map("messenger_last_message") @db.Text
   messengerLastBy      String?   @map("messenger_last_by")
-  instagramIsRead      Boolean   @default(true)  @map("instagram_is_read")
-  instagramUnReadCount Int       @default(0)     @map("instagram_unread_count")
+  instagramIsRead      Boolean   @default(true) @map("instagram_is_read")
+  instagramUnReadCount Int       @default(0) @map("instagram_unread_count")
   instagramLastMessage String?   @map("instagram_last_message") @db.Text
   instagramLastBy      String?   @map("instagram_last_by")
   createdAt            DateTime  @default(now()) @map("created_at")
@@ -2459,7 +2459,13 @@ model PermissionForManager {
   integrations                  Boolean @default(false)
   salesPipeline                 Boolean @default(true) @map("sales_pipeline")
   shopPipeline                  Boolean @default(true) @map("shop_pipeline")
+  teamPipeline                  Boolean @default(true) @map("team_pipeline")
   businessSettings              Boolean @default(false) @map("business_settings")
+  clientDirectory               Boolean @default(true) @map("client_directory")
+  employeeDirectory             Boolean @default(true) @map("employee_directory")
+  fleetDirectory                Boolean @default(true) @map("fleet_directory")
+
+  visualization Boolean @default(false)
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 }
@@ -2474,11 +2480,18 @@ model PermissionForSales {
   calendarTask                  Boolean @default(true) @map("calendar_task")
   payments                      Boolean @default(false)
   salesPipeline                 Boolean @default(true) @map("sales_pipeline")
+  teamPipeline                  Boolean @default(false) @map("team_pipeline")
 
   //view only
   workforceManagementViewOnly Boolean @default(true) @map("workforce_management")
   reportingViewOnly           Boolean @default(true)
   inventoryAllViewOnly        Boolean @default(true)
+
+  clientDirectory   Boolean @default(true) @map("client_directory")
+  employeeDirectory Boolean @default(false) @map("employee_directory")
+  fleetDirectory    Boolean @default(false) @map("fleet_directory")
+
+  visualization Boolean @default(false)
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 }
@@ -2489,10 +2502,17 @@ model PermissionForTechnician {
   communicationHubInternal Boolean @default(true) @map("communication_hub_internal")
   calendarTask             Boolean @default(true) @map("calendar_task")
   shopPipeline             Boolean @default(true) @map("shop_pipeline")
+  teamPipeline             Boolean @default(false) @map("team_pipeline")
 
   //view only
   workforceManagementViewOnly Boolean @default(true) @map("workforce_management")
   reportingViewOnly           Boolean @default(true)
+
+  clientDirectory   Boolean @default(false) @map("client_directory")
+  employeeDirectory Boolean @default(false) @map("employee_directory")
+  fleetDirectory    Boolean @default(false) @map("fleet_directory")
+
+  visualization Boolean @default(false)
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 }
@@ -2512,7 +2532,14 @@ model PermissionForOther {
   integrations                  Boolean @default(false)
   salesPipeline                 Boolean @default(false) @map("sales_pipeline")
   shopPipeline                  Boolean @default(false) @map("shop_pipeline")
+  teamPipeline                  Boolean @default(false) @map("team_pipeline")
   businessSettings              Boolean @default(false) @map("business_settings")
+
+  clientDirectory   Boolean @default(false) @map("client_directory")
+  employeeDirectory Boolean @default(false) @map("employee_directory")
+  fleetDirectory    Boolean @default(false) @map("fleet_directory")
+
+  visualization Boolean @default(false)
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 }
@@ -2533,7 +2560,14 @@ model Permission {
   integrations                  Boolean @default(false)
   salesPipeline                 Boolean @default(false) @map("sales_pipeline")
   shopPipeline                  Boolean @default(false) @map("shop_pipeline")
+  teamPipeline                  Boolean @default(false) @map("team_pipeline")
   businessSettings              Boolean @default(false) @map("business_settings")
+
+  clientDirectory   Boolean @default(false) @map("client_directory")
+  employeeDirectory Boolean @default(false) @map("employee_directory")
+  fleetDirectory    Boolean @default(false) @map("fleet_directory")
+
+  visualization Boolean @default(false)
 
   // View-only fields
   workforceManagementViewOnly Boolean @default(false) @map("workforce_management_view_only")
@@ -3621,7 +3655,7 @@ model InstagramAccount {
   pageAccessToken   String                   @map("page_access_token")
   facebookPageId    String?                  @map("facebook_page_id")
   pictureUrl        String?                  @map("picture_url")
-  isActive          Boolean                  @default(true)  @map("is_active")
+  isActive          Boolean                  @default(true) @map("is_active")
   webhookSubscribed Boolean                  @default(false) @map("webhook_subscribed")
   createdAt         DateTime                 @default(now()) @map("created_at")
   updatedAt         DateTime                 @default(now()) @updatedAt @map("updated_at")

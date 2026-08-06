@@ -5,9 +5,9 @@ import fetchUnreadInternalMessageCount from "@/actions/communication/internal/fe
 import { useServerGet } from "@/hooks/useServerGet";
 import { cn } from "@/lib/cn";
 import { PermissionsResult } from "@/lib/getPermissions";
-import { FEATURE_PERMISSIONS_MAP } from "@/lib/routePermissionsMap";
 import { useCompanyFeaturePermissionStore } from "@/stores/companyFeaturePermissionStore";
 import { pusher } from "@/lib/pusher/client";
+
 import { useClientCommunicationStore } from "@/stores/client-store";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import { ClientConversationTrack } from "@prisma/client";
@@ -154,61 +154,17 @@ export default function SideNavbar({ navList, permissions }: TProps) {
         companyUserPermissions?.communicationHubCollaboration);
   const [visibleTooltip, setVisibleTooltip] = useState<number | null>(null);
   const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
-  // Helper: Check if company feature permission allows access to this route
-  function canAccessCompanyFeatureRoute(route: string): boolean {
-    if (!companyFeaturePermission || companyFeaturePermission.length === 0)
-      return true;
-    const routeWithoutQuery = route.split("?")[0];
 
-    // Visualization visibility is controlled at route/page level (entitlements),
-    // not by company feature-permission filtering in nav.
-    if (routeWithoutQuery === "/dashboard/visualization") return true;
-
-    // Sales Agent route is controlled by plan entitlements at page/API level.
-    if (routeWithoutQuery.startsWith("/dashboard/settings/sales-agent")) {
-      return true;
-    }
-
-    const featureKey = FEATURE_PERMISSIONS_MAP[routeWithoutQuery];
-    if (!featureKey) return true;
-    if (Array.isArray(featureKey)) {
-      return featureKey.some((key) =>
-        companyFeaturePermission.some(
-          (perm) => perm.permission_name === key && perm.enabled,
-        ),
-      );
-    }
-    return companyFeaturePermission.some(
-      (perm) => perm.permission_name === featureKey && perm.enabled,
-    );
-  }
-
-  const buildFilteredNavList = (list: TProps["navList"]) => {
-    const permissionFiltered = filterNavList(list, permissions);
-
-    return permissionFiltered
-      .filter((item) => !item.link || canAccessCompanyFeatureRoute(item.link))
-      .map((item) => {
-        if (!item.subnav) return item;
-
-        const filteredSubnav = item.subnav.filter((sub) =>
-          canAccessCompanyFeatureRoute(sub.link),
-        );
-
-        return {
-          ...item,
-          subnav: filteredSubnav.length > 0 ? filteredSubnav : null,
-        };
-      });
-  };
-
-  // First filter by permissions, then by company feature permission
+  // Route → key resolution (including subtree prefixes and the entitlement
+  // carve-outs) lives in filterNavList so nav and route guards can't drift.
   const [filteredNavList, setFilteredNavList] = useState(() =>
-    buildFilteredNavList(navList),
+    filterNavList(navList, permissions, companyFeaturePermission),
   );
 
   useEffect(() => {
-    setFilteredNavList(buildFilteredNavList(navList));
+    setFilteredNavList(
+      filterNavList(navList, permissions, companyFeaturePermission),
+    );
   }, [companyFeaturePermission, navList, permissions]);
 
   const unReadClientCount = clientConversations?.length || 0;

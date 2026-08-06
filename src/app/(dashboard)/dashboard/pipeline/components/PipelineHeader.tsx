@@ -73,10 +73,7 @@ export default function PipelineHeader({
   return (
     <header className="flex items-center justify-between p-4">
       <div className="flex w-full items-center justify-between lg:justify-start">
-        <PipelineTypeSelector
-          currentType={type as "sales" | "shop" | "team"}
-          employeeType={currentUser?.employeeType}
-        />
+        <PipelineTypeSelector currentType={type as "sales" | "shop" | "team"} />
 
         {type !== "team" && (
           <nav className="lg:hidden">

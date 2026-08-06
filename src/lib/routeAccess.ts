@@ -1,11 +1,11 @@
 // canAccessRoute.ts
 import { PermissionsResult } from "@/lib/getPermissions";
 import {
-  dynamicSuperAdminRoutes,
+  isSuperAdminOnlyRoute,
   resolveRoutePermissionKey,
-  SUPER_ADMIN_ROUTES_PERMISSIONS_MAP,
 } from "./routePermissionsMap";
 import type { RoutePermissionKey } from "./routePermissionKeys";
+import { isAdminOnlyRoute } from "./routePermissionKeys";
 import type { RouteFeatureKey } from "./routeFeatureKeys";
 import type { CompanyFeaturePermission } from "@/stores/companyFeaturePermissionStore";
 
@@ -59,7 +59,10 @@ export function canAccessWithPermissionKey(
  */
 export function canAccessWithFeatureKey(
   featureKey: RouteFeatureKey,
-  companyFeaturePermission: CompanyFeaturePermission[] | null | undefined,
+  companyFeaturePermission:
+    | Pick<CompanyFeaturePermission, "permission_name" | "enabled">[]
+    | null
+    | undefined,
 ): boolean {
   if (!companyFeaturePermission || companyFeaturePermission.length === 0) {
     return true;
@@ -84,28 +87,28 @@ export function canAccessRoute(
 ): boolean {
   const routeWithoutQuery = route.split("?")[0];
   if (!permissions) return true;
-  const superAdmin = permissions.isSuperAdmin ? "superAdmin" : "";
-  const isSuperAdminRoute =
-    SUPER_ADMIN_ROUTES_PERMISSIONS_MAP[routeWithoutQuery] ??
-    dynamicSuperAdminRoutes(routeWithoutQuery);
 
-  // Only allow if both are 'superAdmin'
-  if (isSuperAdminRoute === "superAdmin" && superAdmin === "superAdmin") {
-    return true;
+  // The whole /awx-dashboard area is platform super-admin only, including
+  // pages that are not in superAdminNavList (plans, webhook events, …).
+  if (isSuperAdminOnlyRoute(routeWithoutQuery)) {
+    return Boolean(permissions.isSuperAdmin);
   }
-  if (permissions.role === "Admin" && isSuperAdminRoute !== "superAdmin") {
-    return true;
-  }
-  //stripe the query string
-  const permissionKey = resolveRoutePermissionKey(routeWithoutQuery);
 
-  // If not found in the map, default to allow or block:
-  if (!permissionKey && !isSuperAdminRoute) return true;
+  // Admin-only subtrees (Virtual Shop) are role-gated, so this must run before
+  // the permission-key lookup — those routes have no key to fall back on.
+  if (isAdminOnlyRoute(routeWithoutQuery)) {
+    return permissions.role === "Admin" || Boolean(permissions.isSuperAdmin);
+  }
+
+  if (permissions.role === "Admin") return true;
 
   if (route === "/") return true;
 
-  // A super-admin-only route reached here means the user is not a super admin
-  if (isSuperAdminRoute === "superAdmin") return false;
+  //stripe the query string
+  const permissionKey = resolveRoutePermissionKey(routeWithoutQuery);
+
+  // If not found in the map, default to allow
+  if (!permissionKey) return true;
 
   return canAccessWithPermissionKey(permissionKey, permissions);
 }

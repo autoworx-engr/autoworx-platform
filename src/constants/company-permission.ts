@@ -23,6 +23,7 @@ export const companyPermissionModule = {
   TAG_AUTOMATION: "tagAutomation",
   REPORTING_AUTOMATION: "reportingAutomation",
   SALES_PIPELINE: "salesPipeline",
+  TEAM_PIPELINE: "teamPipeline",
   BUSINESS_SETTINGS: "businessSettings",
   COMMUNICATION: "communication",
   WORKFORCE_MANAGEMENT: "workforceManagement",

@@ -45,11 +45,13 @@ const InvoiceList = ({
   // Filtering logic
   const filteredInvoices = invoiceData?.filter((item: any) => {
     const matchSearch = search
-      ? item?.id?.toLowerCase().includes(search.toLowerCase()) ||
-        item?.vehicle?.vin?.toLowerCase().includes(search.toLowerCase()) ||
+      ? item?.vehicle?.year?.toString().includes(search) ||
         item?.vehicle?.make?.toLowerCase().includes(search.toLowerCase()) ||
-        item?.vehicle?.year?.toString().includes(search) ||
-        item?.vehicle?.other?.toLowerCase().includes(search)
+        item?.vehicle?.model?.toLowerCase().includes(search.toLowerCase()) ||
+        item?.grandTotal
+          ?.toString()
+          .toLowerCase()
+          .includes(search.toLowerCase())
       : true;
 
     return matchSearch;
@@ -75,7 +77,7 @@ const InvoiceList = ({
             placeholder={
               type === "Statement"
                 ? "Search by Statement"
-                : "Search by Invoice, Year, Make"
+                : "Search by Year, Make, Model, Price"
             }
           />
         </div>

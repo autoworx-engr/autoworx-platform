@@ -1,5 +1,6 @@
 "use client";
 
+import { useCanAccessRoute } from "@/hooks/useCanAccessRoute";
 import { cn } from "@/lib/utils";
 import { ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -26,27 +27,27 @@ const ALL_OPTIONS: { type: PipelineType; label: string; href: string }[] = [
   },
 ];
 
-function getOptions(employeeType?: string) {
-  if (employeeType === "Technician")
-    return ALL_OPTIONS.filter((o) => o.type === "shop");
-  if (employeeType === "Sales")
-    return ALL_OPTIONS.filter((o) => o.type === "sales");
-  return ALL_OPTIONS;
-}
-
 interface PipelineTypeSelectorProps {
   currentType: PipelineType;
-  employeeType?: string;
 }
 
 export default function PipelineTypeSelector({
   currentType,
-  employeeType,
 }: PipelineTypeSelectorProps) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const ref = useRef<HTMLDivElement>(null);
-  const options = getOptions(employeeType);
+
+  // Each pipeline has its own permission + feature key, so the switcher offers
+  // exactly the ones this user can actually open. Hooks stay in a fixed order
+  // because ALL_OPTIONS is a module-level constant.
+  const allowed: Record<PipelineType, boolean> = {
+    sales: useCanAccessRoute("/dashboard/pipeline/sales/pipeline"),
+    shop: useCanAccessRoute("/dashboard/pipeline/shop/pipeline"),
+    team: useCanAccessRoute("/dashboard/pipeline/team/pipeline"),
+  };
+
+  const options = ALL_OPTIONS.filter((option) => allowed[option.type]);
   const current = ALL_OPTIONS.find((o) => o.type === currentType);
 
   useEffect(() => {
