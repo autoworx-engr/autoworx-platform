@@ -6,6 +6,8 @@ import AppointmentDetails from "./AppointmentDetails";
 import BoxTitle from "./BoxTitle";
 import { cn } from "@/lib/cn"; // Ensure cn utility is imported
 import { CalendarCheck } from "lucide-react"; // Icon for the empty state
+import { hasRouteAccess } from "@/lib/serverRouteGuard";
+import BoxRestricted from "./BoxRestricted";
 
 const fetchWithAppointment = {
   include: {
@@ -36,6 +38,18 @@ const fetchWithAppointment = {
 };
 
 export default async function AppointmentListBox() {
+  if (!(await hasRouteAccess("/dashboard/task/day"))) {
+    return (
+      <div className="h-full flex-1 rounded-xl shadow-lg transition-all duration-300">
+        <BoxRestricted
+          title="Appointments"
+          what="appointment access"
+          className="h-full"
+        />
+      </div>
+    );
+  }
+
   const user = await getUser();
   const { timezone } = await getCompanyTimezone();
 
@@ -109,7 +123,7 @@ export default async function AppointmentListBox() {
           hover:shadow-xl hover:shadow-blue-500/10 dark:hover:shadow-indigo-500/10
 
           overflow-hidden // Crucial for containing the scrollable list
-        `
+        `,
         )}
       >
         <div className="flex-1 flex flex-col h-full">

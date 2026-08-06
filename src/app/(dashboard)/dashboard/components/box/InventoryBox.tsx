@@ -4,12 +4,22 @@ import { getInventory } from "@/actions/dashboard/data/getAdminInfo";
 import BoxTitle from "./BoxTitle";
 import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 import { cn } from "@/lib/cn";
+import { hasRouteAccess } from "@/lib/serverRouteGuard";
+import BoxRestricted from "./BoxRestricted";
 
 type TInventoryBoxProps = {
   className?: string;
 };
 
 export default async function InventoryBox({ className }: TInventoryBoxProps) {
+  // Inventory module gates this widget — checked before fetching so a user
+  // without it never runs the stock queries.
+  if (!(await hasRouteAccess("/dashboard/inventory"))) {
+    return (
+      <BoxRestricted title="Inventory" what="inventory" className={className} />
+    );
+  }
+
   const companyTimezone = await getCompanyTimezone();
   const timezone =
     companyTimezone?.timezone ||
@@ -21,7 +31,7 @@ export default async function InventoryBox({ className }: TInventoryBoxProps) {
   const totalValue = inventory?.totalValue || 0;
   const currentMonthTotal = inventory?.currentMonthTotal || 0;
   const inventoryGrowthRate = parseFloat(
-    (inventory?.growth?.rate ?? 0).toFixed(2)
+    (inventory?.growth?.rate ?? 0).toFixed(2),
   );
   const isInventoryPositive = inventory?.growth?.isPositive ?? false;
 
@@ -43,7 +53,7 @@ export default async function InventoryBox({ className }: TInventoryBoxProps) {
           hover:shadow-xl hover:shadow-blue-500/10 dark:hover:shadow-indigo-500/10
 
         `,
-        className
+        className,
       )}
     >
       {/* Title and Link */}

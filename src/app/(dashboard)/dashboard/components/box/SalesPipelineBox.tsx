@@ -8,6 +8,8 @@ import {
 import BoxTitle from "./BoxTitle";
 import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 import { cn } from "@/lib/cn";
+import { hasRouteAccess } from "@/lib/serverRouteGuard";
+import BoxRestricted from "./BoxRestricted";
 
 type TSalesPipelineBoxProps = {
   className?: string;
@@ -16,6 +18,16 @@ type TSalesPipelineBoxProps = {
 export default async function SalesPipelineBox({
   className,
 }: TSalesPipelineBoxProps) {
+  if (!(await hasRouteAccess("/dashboard/reporting/revenue"))) {
+    return (
+      <BoxRestricted
+        title="Sales Pipeline"
+        what="sales pipeline analytics"
+        className={className}
+      />
+    );
+  }
+
   const company = await getCompanyTimezone();
   const timezone =
     company?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
