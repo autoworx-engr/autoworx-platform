@@ -63,20 +63,12 @@ export const FEATURE_PERMISSIONS_MAP: Record<string, RouteFeatureKey> = {
   "/dashboard/pipeline/shop/workorder": "shopPipeline",
   "/dashboard/pipeline/team/pipeline": "teamPipeline",
   "/dashboard/pipeline/team/workorder": "teamPipeline",
-  "/dashboard/settings": "businessSettings",
-  "/dashboard/settings/team-management": "businessSettings",
-  "/dashboard/settings/automation": "automation",
+  // These three settings pages are shown/hidden by their own product
+  // entitlement — Virtual Shop, the Automation group and AI Sales Agent. Every
+  // other settings page falls to the "/dashboard/settings" prefix below.
   "/dashboard/settings/virtual-shop-configure": "virtual-shop",
+  "/dashboard/settings/automation": "automation",
   "/dashboard/settings/sales-agent": "sales-agent",
-  "/dashboard/settings/payments": "businessSettings",
-  "/dashboard/settings/estimates": "businessSettings",
-  "/dashboard/settings/communications": "businessSettings",
-  "/dashboard/settings/security": "businessSettings",
-  "/dashboard/settings/business": "businessSettings",
-  "/dashboard/settings/networks": "businessSettings",
-  "/dashboard/settings/billing": "businessSettings",
-  "/dashboard/settings/leadgeneration": "businessSettings",
-  "/dashboard/settings/calendar": "businessSettings",
   "/dashboard/client": "clientDirectory",
   "/dashboard/employee": "employeeDirectory",
   "/dashboard/fleet": "fleetDirectory",
@@ -91,7 +83,10 @@ export const FEATURE_PERMISSIONS_MAP: Record<string, RouteFeatureKey> = {
 function isEntitlementGatedRoute(routeWithoutQuery: string): boolean {
   return (
     routeWithoutQuery === "/dashboard/visualization" ||
-    routeWithoutQuery.startsWith("/dashboard/settings/sales-agent")
+    // Personal account screens — must stay reachable no matter what the
+    // company has enabled. Mirrors ALWAYS_OPEN_ROUTE_PREFIXES.
+    routeWithoutQuery.startsWith("/dashboard/settings/my-account") ||
+    routeWithoutQuery.startsWith("/dashboard/settings/notifications")
   );
 }
 
@@ -104,7 +99,8 @@ function isEntitlementGatedRoute(routeWithoutQuery: string): boolean {
 const ROUTE_FEATURE_PREFIXES: [string, RouteFeatureKey][] = [
   ["/dashboard/settings/virtual-shop-configure", "virtual-shop"],
   ["/dashboard/settings/automation", "automation"],
-  ["/dashboard/settings/payments", "businessSettings"],
+  ["/dashboard/settings/sales-agent", "sales-agent"],
+  ["/dashboard/settings", "businessSettings"],
   ["/dashboard/estimate", "estimateInvoices"],
   ["/dashboard/communication/client", "communicationHubClients"],
   ["/dashboard/communication/internal", "communicationHubInternal"],

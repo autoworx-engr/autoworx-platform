@@ -1,6 +1,7 @@
 "use client";
 import { cn } from "@/lib/cn";
 import { PermissionsResult } from "@/lib/getPermissions";
+import { useCanAccessRoute } from "@/hooks/useCanAccessRoute";
 import { filterNavList } from "@/lib/navListAuthorization";
 import { useCompanyFeaturePermissionStore } from "@/stores/companyFeaturePermissionStore";
 import { isIosPwa } from "@/utils/isIosPwa";
@@ -41,6 +42,9 @@ export default function MobileNav({ navList, permissions }: TProps) {
   const [openNav, setOpenNav] = useState(false);
   const currentUser = useGetCurrentUser();
   const { companyFeaturePermission } = useCompanyFeaturePermissionStore();
+
+  // Matches TopNavbar: the shop switcher links into /dashboard/virtual-shop.
+  const canAccessVirtualShop = useCanAccessRoute("/dashboard/virtual-shop");
 
   // Route → key resolution (including subtree prefixes and the entitlement
   // carve-outs) lives in filterNavList so nav and route guards can't drift.
@@ -94,7 +98,9 @@ export default function MobileNav({ navList, permissions }: TProps) {
             </Link>
           </div>
           <div className="flex items-center gap-1 px-3">
-            <ShopList iconOnly className="mr-0 w-auto" />
+            {canAccessVirtualShop && (
+              <ShopList iconOnly className="mr-0 w-auto" />
+            )}
             <button className="" onClick={() => window.location.reload()}>
               <RotateCw className="size-5 text-white" />
             </button>

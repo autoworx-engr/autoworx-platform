@@ -1,7 +1,7 @@
 /**
  * AUTO-GENERATED — do not edit manually.
  * Run: yarn generate:search
- * Generated: 2026-08-06T02:27:13.834Z
+ * Generated: 2026-08-06T08:46:17.574Z
  * Source: src/app
  */
 import type { RoutePermissionKey } from "./routePermissionKeys";
@@ -456,9 +456,7 @@ export const generatedRegistry: SearchItem[] = [
     type: "settings",
     keywords: ["dashboard", "settings", "automation"],
     description: "Configure automation settings",
-    permissionKey: {
-      all: ["businessSettings", "automation"],
-    },
+    permissionKey: "businessSettings",
     featureKey: "automation",
   },
   {
@@ -580,9 +578,8 @@ export const generatedRegistry: SearchItem[] = [
     type: "settings",
     keywords: ["dashboard", "settings", "sales agent", "sales", "agent"],
     description: "Configure sales agent settings",
-    permissionKey: {
-      all: ["businessSettings", "salesAgent"],
-    },
+    permissionKey: "businessSettings",
+    featureKey: "sales-agent",
   },
   {
     id: "dashboard-settings-sales-agent-ai-settings",
@@ -598,9 +595,8 @@ export const generatedRegistry: SearchItem[] = [
       "agent",
     ],
     description: "Configure AI settings for your sales agent",
-    permissionKey: {
-      all: ["businessSettings", "salesAgent"],
-    },
+    permissionKey: "businessSettings",
+    featureKey: "sales-agent",
   },
   {
     id: "dashboard-settings-security",
@@ -642,9 +638,7 @@ export const generatedRegistry: SearchItem[] = [
       "configure",
     ],
     description: "Configure virtual shop settings",
-    permissionKey: {
-      all: ["businessSettings", "virtualShop"],
-    },
+    permissionKey: "businessSettings",
     featureKey: "virtual-shop",
   },
   {
@@ -661,9 +655,7 @@ export const generatedRegistry: SearchItem[] = [
       "shop",
     ],
     description: "Set up and configure your virtual shop.",
-    permissionKey: {
-      all: ["businessSettings", "virtualShop"],
-    },
+    permissionKey: "businessSettings",
     featureKey: "virtual-shop",
   },
   {
@@ -673,7 +665,6 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "virtual shop", "admin", "virtual", "shop"],
     description: "Virtual shop admin",
-    permissionKey: "virtualShop",
     featureKey: "virtual-shop",
   },
   {
@@ -691,7 +682,6 @@ export const generatedRegistry: SearchItem[] = [
       "shop",
     ],
     description: "Create or edit a virtual shop service",
-    permissionKey: "virtualShop",
     featureKey: "virtual-shop",
   },
   {

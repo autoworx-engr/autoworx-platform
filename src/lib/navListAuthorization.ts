@@ -1,12 +1,8 @@
 import { PermissionsResult } from "@/lib/getPermissions";
 import type { CompanyFeaturePermission } from "@/stores/companyFeaturePermissionStore";
 import type { NavItem } from "./navItem";
-import {
-  canAccessWithFeatureKey,
-  canAccessWithPermissionKey,
-} from "./routeAccess";
+import { canAccessRoute, canAccessWithFeatureKey } from "./routeAccess";
 import { resolveRouteFeatureKey } from "./routeFeatureKeys";
-import { resolveRoutePermissionKey } from "./routePermissionKeys";
 
 /**
  * Role-specific landing pages. These are routing conveniences, not permissions:
@@ -48,11 +44,9 @@ export function filterNavList(
 ): NavItem[] {
   const canAccess = (link?: string | null) => {
     if (!link) return true;
-    if (
-      !canAccessWithPermissionKey(resolveRoutePermissionKey(link), permissions)
-    ) {
-      return false;
-    }
+    // `canAccessRoute` rather than the key check alone, so nav also honours the
+    // role-gated subtrees (super-admin area, Virtual Shop).
+    if (!canAccessRoute(link, permissions)) return false;
     if (companyFeaturePermission === undefined) return true;
     return canAccessWithFeatureKey(
       resolveRouteFeatureKey(link),

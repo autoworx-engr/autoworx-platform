@@ -1,10 +1,7 @@
 "use client";
 import { cn } from "@/lib/cn";
-import { canAccessWithPermissionKey } from "@/lib/routeAccess";
-import {
-  FEATURE_PERMISSIONS_MAP,
-  resolveRoutePermissionKey,
-} from "@/lib/routePermissionsMap";
+import { canAccessRoute, canAccessWithFeatureKey } from "@/lib/routeAccess";
+import { resolveRouteFeatureKey } from "@/lib/routePermissionsMap";
 import { useCompanyFeaturePermissionStore } from "@/stores/companyFeaturePermissionStore";
 import { usePermissionStore } from "@/stores/permissionStore";
 import {
@@ -107,34 +104,17 @@ const Sidebar = ({ isLegacy = false }: Props) => {
   const { permissions } = usePermissionStore();
   const { companyFeaturePermission } = useCompanyFeaturePermissionStore();
 
-  function canAccessCompanyFeatureRoute(route: string): boolean {
-    if (!companyFeaturePermission || companyFeaturePermission.length === 0)
-      return true;
-    const routeWithoutQuery = route.split("?")[0];
-
-    // In platform-plan mode, Sales Agent availability is controlled via
-    // plan entitlements at page/API level. In legacy mode, keep using
-    // feature-permission filtering.
-    if (
-      !isLegacy &&
-      routeWithoutQuery.startsWith("/dashboard/settings/sales-agent")
-    ) {
-      return true;
-    }
-
-    const featureKey = FEATURE_PERMISSIONS_MAP[routeWithoutQuery];
-    if (!featureKey) return true;
-    if (Array.isArray(featureKey)) {
-      return featureKey.some((key) =>
-        companyFeaturePermission.some(
-          (perm) => perm.permission_name === key && perm.enabled,
-        ),
-      );
-    }
-    return companyFeaturePermission.some(
-      (perm) => perm.permission_name === featureKey && perm.enabled,
+  /**
+   * Company product entitlements. Virtual Shop Configure, Automation and Sales
+   * Agent each resolve to their own feature key (`virtual-shop`, `automation`,
+   * `sales-agent`); the rest of the settings area resolves to
+   * `businessSettings`, and My Account / Notifications to nothing at all.
+   */
+  const canAccessCompanyFeatureRoute = (route: string) =>
+    canAccessWithFeatureKey(
+      resolveRouteFeatureKey(route),
+      companyFeaturePermission,
     );
-  }
 
   const filteredAccountSettings = accountSettings.filter((setting) =>
     canAccessCompanyFeatureRoute(setting.link),
@@ -154,10 +134,7 @@ const Sidebar = ({ isLegacy = false }: Props) => {
     (setting) =>
       Boolean(permissions) &&
       canAccessCompanyFeatureRoute(setting.link) &&
-      canAccessWithPermissionKey(
-        resolveRoutePermissionKey(setting.link),
-        permissions,
-      ) &&
+      canAccessRoute(setting.link, permissions) &&
       !(isLegacy && setting.link === "/dashboard/settings/billing"),
   );
 

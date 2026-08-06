@@ -5,7 +5,7 @@ import {
   resolveRoutePermissionKey,
 } from "./routePermissionsMap";
 import type { RoutePermissionKey } from "./routePermissionKeys";
-import { isPermissionKeyGroup } from "./routePermissionKeys";
+import { isAdminOnlyRoute } from "./routePermissionKeys";
 import type { RouteFeatureKey } from "./routeFeatureKeys";
 import type { CompanyFeaturePermission } from "@/stores/companyFeaturePermissionStore";
 
@@ -44,11 +44,6 @@ export function canAccessWithPermissionKey(
 
   // Unguarded route
   if (!permissionKey) return true;
-
-  // `{ all: [...] }` requires every key (e.g. Business Settings + the module)
-  if (isPermissionKeyGroup(permissionKey)) {
-    return permissionKey.all.every((key) => hasPermissionKey(key, permissions));
-  }
 
   // If the map defines multiple possible keys, any of them grants access
   if (Array.isArray(permissionKey)) {
@@ -97,6 +92,12 @@ export function canAccessRoute(
   // pages that are not in superAdminNavList (plans, webhook events, …).
   if (isSuperAdminOnlyRoute(routeWithoutQuery)) {
     return Boolean(permissions.isSuperAdmin);
+  }
+
+  // Admin-only subtrees (Virtual Shop) are role-gated, so this must run before
+  // the permission-key lookup — those routes have no key to fall back on.
+  if (isAdminOnlyRoute(routeWithoutQuery)) {
+    return permissions.role === "Admin" || Boolean(permissions.isSuperAdmin);
   }
 
   if (permissions.role === "Admin") return true;
