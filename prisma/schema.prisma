@@ -2466,9 +2466,6 @@ model PermissionForManager {
   fleetDirectory                Boolean @default(true) @map("fleet_directory")
 
   visualization Boolean @default(false)
-  virtualShop   Boolean @default(false) @map("virtual_shop")
-  automation    Boolean @default(false)
-  salesAgent    Boolean @default(false) @map("sales_agent")
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 }
@@ -2495,9 +2492,6 @@ model PermissionForSales {
   fleetDirectory    Boolean @default(false) @map("fleet_directory")
 
   visualization Boolean @default(false)
-  virtualShop   Boolean @default(false) @map("virtual_shop")
-  automation    Boolean @default(false)
-  salesAgent    Boolean @default(false) @map("sales_agent")
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 }
@@ -2519,9 +2513,6 @@ model PermissionForTechnician {
   fleetDirectory    Boolean @default(false) @map("fleet_directory")
 
   visualization Boolean @default(false)
-  virtualShop   Boolean @default(false) @map("virtual_shop")
-  automation    Boolean @default(false)
-  salesAgent    Boolean @default(false) @map("sales_agent")
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 }
@@ -2549,9 +2540,6 @@ model PermissionForOther {
   fleetDirectory    Boolean @default(false) @map("fleet_directory")
 
   visualization Boolean @default(false)
-  virtualShop   Boolean @default(false) @map("virtual_shop")
-  automation    Boolean @default(false)
-  salesAgent    Boolean @default(false) @map("sales_agent")
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 }
@@ -2580,9 +2568,6 @@ model Permission {
   fleetDirectory    Boolean @default(false) @map("fleet_directory")
 
   visualization Boolean @default(false)
-  virtualShop   Boolean @default(false) @map("virtual_shop")
-  automation    Boolean @default(false)
-  salesAgent    Boolean @default(false) @map("sales_agent")
 
   // View-only fields
   workforceManagementViewOnly Boolean @default(false) @map("workforce_management_view_only")

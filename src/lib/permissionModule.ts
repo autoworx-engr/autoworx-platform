@@ -18,6 +18,12 @@ export interface PermissionModule {
 
 export type PermissionRole = "Manager" | "Sales" | "Technician" | "Other";
 
+// Deliberately absent, with their columns left dormant in the schema:
+//   * Virtual Shop  — /dashboard/virtual-shop is Admin / super-admin only
+//     (ADMIN_ONLY_ROUTE_PREFIXES) plus the `virtual-shop` company feature.
+//   * Automation / AI Sales Agent — their settings pages are covered by
+//     Business Settings like every other /dashboard/settings page.
+
 export const permissionModuleForAdminManager: PermissionModule[] = [
   { label: "Communications Hub: Internal", key: "communicationHubInternal" },
   { label: "Communications Hub: Clients", key: "communicationHubClients" },
@@ -39,9 +45,6 @@ export const permissionModuleForAdminManager: PermissionModule[] = [
   { label: "Shop Pipeline", key: "shopPipeline" },
   { label: "Team Pipeline", key: "teamPipeline" },
   { label: "Visualization", key: "visualization" },
-  { label: "Virtual Shop", key: "virtualShop" },
-  { label: "Automation", key: "automation" },
-  { label: "AI Sales Agent", key: "salesAgent" },
   { label: "Business Settings", key: "businessSettings" },
 ];
 
@@ -116,9 +119,6 @@ export const permissionModuleForOther: PermissionModule[] = [
   { label: "Shop Pipeline", key: "shopPipeline" },
   { label: "Team Pipeline", key: "teamPipeline" },
   { label: "Visualization", key: "visualization" },
-  { label: "Virtual Shop", key: "virtualShop" },
-  { label: "Automation", key: "automation" },
-  { label: "AI Sales Agent", key: "salesAgent" },
   { label: "Business Settings", key: "businessSettings" },
 ];
 

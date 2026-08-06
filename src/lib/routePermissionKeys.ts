@@ -32,28 +32,36 @@ export type PermissionKey =
   | "clientDirectory"
   | "employeeDirectory"
   | "fleetDirectory"
-  | "visualization"
-  | "virtualShop"
-  | "automation"
-  | "salesAgent";
+  | "visualization";
+
+/** An array means "any of these keys grants access". */
+export type RoutePermissionKey = PermissionKey | PermissionKey[] | undefined;
 
 /**
- * An array means "any of these keys grants access". `{ all: [...] }` means
- * every key is required — used for settings pages that sit behind Business
- * Settings *and* their own module toggle.
+ * Subtrees reserved for company Admins (and platform super admins), gated by
+ * role rather than by a togglable module permission — there is deliberately no
+ * team-management switch for these. The company feature entitlement still
+ * applies on top, so Virtual Shop needs `virtual-shop` enabled as well.
  */
-export type PermissionKeyGroup = { all: PermissionKey[] };
+const ADMIN_ONLY_ROUTE_PREFIXES = ["/dashboard/virtual-shop"];
 
-export type RoutePermissionKey =
-  | PermissionKey
-  | PermissionKey[]
-  | PermissionKeyGroup
-  | undefined;
+/**
+ * Personal settings pages. Every /dashboard/settings route is gated by
+ * `businessSettings`, except these — they are each user's own account screens.
+ */
+const ALWAYS_OPEN_ROUTE_PREFIXES = [
+  "/dashboard/settings/my-account",
+  "/dashboard/settings/notifications",
+];
 
-export function isPermissionKeyGroup(
-  key: RoutePermissionKey,
-): key is PermissionKeyGroup {
-  return typeof key === "object" && key !== null && !Array.isArray(key);
+function matchesPrefix(route: string, prefixes: string[]): boolean {
+  return prefixes.some(
+    (prefix) => route === prefix || route.startsWith(`${prefix}/`),
+  );
+}
+
+export function isAdminOnlyRoute(route: string): boolean {
+  return matchesPrefix(route.split("?")[0], ADMIN_ONLY_ROUTE_PREFIXES);
 }
 
 export const ROUTE_PERMISSIONS_MAP: Record<string, RoutePermissionKey> = {
@@ -83,27 +91,8 @@ export const ROUTE_PERMISSIONS_MAP: Record<string, RoutePermissionKey> = {
   "/dashboard/client": "clientDirectory",
   "/dashboard/employee": "employeeDirectory",
   "/dashboard/fleet": "fleetDirectory",
-  "/dashboard/virtual-shop": "virtualShop",
-  "/dashboard/settings": "businessSettings",
-  "/dashboard/settings/team-management": "businessSettings",
-  "/dashboard/settings/payments": "businessSettings",
-  "/dashboard/settings/estimates": "businessSettings",
-  "/dashboard/settings/communications": "businessSettings",
-  "/dashboard/settings/security": "businessSettings",
-  "/dashboard/settings/business": "businessSettings",
-  "/dashboard/settings/networks": "businessSettings",
-  "/dashboard/settings/billing": "businessSettings",
-  "/dashboard/settings/leadgeneration": "businessSettings",
-  "/dashboard/settings/calendar": "businessSettings",
-  "/dashboard/settings/automation": {
-    all: ["businessSettings", "automation"],
-  },
-  "/dashboard/settings/sales-agent": {
-    all: ["businessSettings", "salesAgent"],
-  },
-  "/dashboard/settings/virtual-shop-configure": {
-    all: ["businessSettings", "virtualShop"],
-  },
+  // Every /dashboard/settings page is covered by the ROUTE_PERMISSION_PREFIXES
+  // entry below — Business Settings gates the lot.
 };
 
 /**
@@ -116,19 +105,9 @@ export const ROUTE_PERMISSIONS_MAP: Record<string, RoutePermissionKey> = {
  * the first matching prefix wins, so keep the more specific ones first.
  */
 const ROUTE_PERMISSION_PREFIXES: [string, RoutePermissionKey][] = [
-  [
-    "/dashboard/settings/virtual-shop-configure",
-    { all: ["businessSettings", "virtualShop"] },
-  ],
-  [
-    "/dashboard/settings/sales-agent",
-    { all: ["businessSettings", "salesAgent"] },
-  ],
-  [
-    "/dashboard/settings/automation",
-    { all: ["businessSettings", "automation"] },
-  ],
-  ["/dashboard/settings/payments", "businessSettings"],
+  // Whole settings area, minus ALWAYS_OPEN_ROUTE_PREFIXES. A new settings page
+  // is therefore gated by default rather than open by default.
+  ["/dashboard/settings", "businessSettings"],
   ["/dashboard/estimate", "estimatesInvoices"],
   ["/dashboard/communication/client", "communicationHubClients"],
   ["/dashboard/communication/internal", "communicationHubInternal"],
@@ -143,7 +122,6 @@ const ROUTE_PERMISSION_PREFIXES: [string, RoutePermissionKey][] = [
   ["/dashboard/client", "clientDirectory"],
   ["/dashboard/employee", "employeeDirectory"],
   ["/dashboard/fleet", "fleetDirectory"],
-  ["/dashboard/virtual-shop", "virtualShop"],
 ];
 
 /**
@@ -153,6 +131,10 @@ const ROUTE_PERMISSION_PREFIXES: [string, RoutePermissionKey][] = [
  */
 export function resolveRoutePermissionKey(route: string): RoutePermissionKey {
   const routeWithoutQuery = route.split("?")[0];
+
+  if (matchesPrefix(routeWithoutQuery, ALWAYS_OPEN_ROUTE_PREFIXES)) {
+    return undefined;
+  }
 
   const exactKey = ROUTE_PERMISSIONS_MAP[routeWithoutQuery];
   if (exactKey) return exactKey;
