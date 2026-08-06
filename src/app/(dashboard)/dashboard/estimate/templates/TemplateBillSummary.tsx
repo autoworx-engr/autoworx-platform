@@ -114,7 +114,7 @@ export function TemplateBillSummary({
     items.forEach((item) => {
       const { service, materials, labor } = item;
 
-      if (!service) return;
+      if (!service && !labor && !materials?.length) return;
 
       const materialCost = materials.reduce((acc, material) => {
         return (

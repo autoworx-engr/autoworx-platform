@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { TimeScrollPicker } from "@/components/ui/TimeScrollPicker";
 import { cn } from "@/lib/cn";
 import { errorToast } from "@/lib/toast";
+import { addMinutes } from "@/utils/time";
 import type { User } from "@prisma/client";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Bell, Calendar, ChevronDown, Hash, Plus, Search } from "lucide-react";
@@ -166,7 +167,9 @@ export default function AppointmentForm({
             minTime={
               endDate && date && endDate > date
                 ? undefined
-                : startTime || undefined
+                : startTime
+                  ? addMinutes(startTime, 15)
+                  : undefined
             }
             onChange={(value) =>
               handleTimeChange({ target: { value } } as any, "end")
@@ -395,7 +398,7 @@ export default function AppointmentForm({
       </div>
 
       {/* Mobile tab switcher */}
-      <div className="sticky top-0 z-40 bg-white w-full px-4 pb-2 sm:px-6">
+      <div className="sticky top-0 z-40 w-full bg-white px-4 pb-2 pt-3 sm:px-6">
         <div className="flex lg:hidden items-center justify-self-center rounded-full bg-slate-100 p-1.5 shadow-inner ring-1 ring-slate-200/50">
           <button
             type="button"

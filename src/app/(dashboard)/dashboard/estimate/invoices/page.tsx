@@ -60,7 +60,12 @@ export default async function InvoicesPage(
 
       <NavigationTabs activeTab="b-invoice">
         {invoices ? (
-          <Table estimateData={invoices} isInvoice />
+          <Table
+            estimateData={invoices}
+            page={searchParams.page}
+            take={searchParams.take}
+            isInvoice
+          />
         ) : (
           <div>Loading...</div>
         )}

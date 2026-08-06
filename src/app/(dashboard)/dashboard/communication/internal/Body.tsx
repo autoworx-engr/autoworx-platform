@@ -66,7 +66,6 @@ export default function Body({
   const setUsersList: React.Dispatch<React.SetStateAction<TUser[]>> = (
     updater,
   ) => {
-    if (typeof updater !== "function") return;
     setChatList((currentList) => {
       const currentUsers = currentList
         .filter(
@@ -74,7 +73,10 @@ export default function Body({
             c.type === "user",
         )
         .map((c) => c.data);
-      const newUsers = (updater as (prev: TUser[]) => TUser[])(currentUsers);
+      const newUsers =
+        typeof updater === "function"
+          ? (updater as (prev: TUser[]) => TUser[])(currentUsers)
+          : updater;
       const userChats: ChatListItem[] = newUsers.map((user, index) => ({
         id: `user-${user.id}`,
         type: "user",
@@ -91,7 +93,6 @@ export default function Body({
   const setGroupsList: React.Dispatch<React.SetStateAction<TGroup[]>> = (
     updater,
   ) => {
-    if (typeof updater !== "function") return;
     setChatList((currentList) => {
       const currentGroups = currentList
         .filter(
@@ -99,9 +100,10 @@ export default function Body({
             c.type === "group",
         )
         .map((c) => c.data);
-      const newGroups = (updater as (prev: TGroup[]) => TGroup[])(
-        currentGroups,
-      );
+      const newGroups =
+        typeof updater === "function"
+          ? (updater as (prev: TGroup[]) => TGroup[])(currentGroups)
+          : updater;
       const groupChats: ChatListItem[] = newGroups.map((group, index) => ({
         id: `group-${group.id}`,
         type: "group",

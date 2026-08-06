@@ -8,6 +8,8 @@ import { Search } from "lucide-react";
 import useClientQuery from "./_hook/useClientQuery";
 import ClientListTable from "./ClientListTable";
 import { ClientCardSkeleton, ClientTableSkeleton } from "./ClientTableSkeleton";
+import DeleteClient from "./DeleteClient";
+import EditClient from "./EditClient";
 
 export default function ClientList({
   clients = [],
@@ -69,6 +71,12 @@ export default function ClientList({
                     key={index}
                     data={employee}
                     index={index}
+                    actions={
+                      <>
+                        <EditClient client={employee as any} />
+                        <DeleteClient id={employee.id} />
+                      </>
+                    }
                   />
                 ))
               )}

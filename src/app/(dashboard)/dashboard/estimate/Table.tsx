@@ -39,7 +39,9 @@ export interface InvoiceData {
 const evenColor = "bg-background";
 const oddColor = "bg-[#F8FAFF]";
 
-const defaultTake = 10;
+const defaultTake = 50;
+
+const pageSizeOptions = [10, 20, 50, 100];
 
 type TTableProps = {
   estimateData: {
@@ -83,27 +85,32 @@ export default function Table({
     }
   }, [autoOpenId, pathname]);
 
+  // Keep the control in sync with the URL, which filters/search also rewrite
+  useEffect(() => {
+    setCurrentPage(parseInt(page ?? "", 10) || 1);
+    setPageSize(parseInt(take ?? "", 10) || defaultTake);
+  }, [page, take]);
+
   // optimize calculation with useMemo
   const showPagination = useMemo(() => {
-    return estimateData.totalEstimate > defaultTake;
-  }, [estimateData.totalEstimate]);
+    return estimateData.totalEstimate > pageSize;
+  }, [estimateData.totalEstimate, pageSize]);
 
   // for preventing unnecessary re-renders
   const handlePageChange = useCallback(
-    (page: number, pageSize?: number) => {
+    (page: number, nextPageSize?: number) => {
       const searchParams = new URLSearchParams(params.toString());
       searchParams.set("page", page.toString());
-      if (pageSize) {
-        setPageSize(pageSize);
-        searchParams.set("take", pageSize.toString());
-      } else {
-        searchParams.delete("take");
-      }
+      // Carry the active page size across page changes — dropping it here made
+      // every navigation fall back to the default size.
+      const effectivePageSize = nextPageSize ?? pageSize;
+      setPageSize(effectivePageSize);
+      searchParams.set("take", effectivePageSize.toString());
       setCurrentPage(page);
       const newPath = `${pathname}?${searchParams.toString()}`;
       router.push(newPath);
     },
-    [params, pathname, router],
+    [pageSize, params, pathname, router],
   );
 
   // Handler for converting an invoice to an estimate or invoice
@@ -295,6 +302,7 @@ export default function Table({
             total={estimateData.totalEstimate}
             onChange={handlePageChange}
             showSizeChanger={true}
+            pageSizeOptions={pageSizeOptions}
             onShowSizeChange={handlePageChange}
             size={isMax640 ? "small" : "default"} // Use smaller size on mobile
             responsive={true}

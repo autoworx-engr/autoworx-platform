@@ -209,7 +209,7 @@ export default function LaborCreate() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           className="h-10 flex-1 appearance-none rounded-xl bg-white px-4 text-sm font-medium border border-slate-200 transition-all focus:outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/30"
-          placeholder="e.g. Oil Change"
+          placeholder="Labor Name"
         />
       </div>
 

@@ -5,15 +5,18 @@ import { padId } from "@/lib/padId";
 import { Calendar, Mail, Phone } from "lucide-react";
 import moment from "moment";
 import { useRouter } from "next/navigation";
+import { ReactNode } from "react";
 
 const ResponsiveEmployeeCard = ({
   data,
   index,
   isFleet = false,
+  actions,
 }: {
   data: any;
   index: number;
   isFleet?: boolean;
+  actions?: ReactNode;
 }) => {
   const id = data.id;
   const clientName = (data.firstName ?? "") + " " + (data.lastName ?? "");
@@ -118,11 +121,19 @@ const ResponsiveEmployeeCard = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center pt-3 sm:pt-4 border-t border-gray-100">
+        <div className="flex items-center justify-between pt-3 sm:pt-4 border-t border-gray-100">
           <div className="flex items-center space-x-2 text-sm font-medium">
             <Calendar className="w-4 h-4 flex-shrink-0 text-gray-400" />
             <span className="truncate">Date Joined: {joinDate}</span>
           </div>
+          {actions && (
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center gap-4"
+            >
+              {actions}
+            </div>
+          )}
         </div>
       </div>
     </div>

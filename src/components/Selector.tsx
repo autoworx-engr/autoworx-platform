@@ -73,8 +73,20 @@ export default function Selector<T>({
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  function applySearch(query: string) {
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) return items;
+    if (onSearch) return onSearch(trimmedQuery);
+
+    return items.filter(
+      (item: any) =>
+        item.clientName?.toLowerCase().includes(trimmedQuery.toLowerCase()) ||
+        item.id?.toString().toLowerCase().includes(trimmedQuery.toLowerCase()),
+    );
+  }
+
   useEffect(() => {
-    setFilteredItems(items);
+    setFilteredItems(applySearch(searchTerm));
   }, [items]);
   // useEffect(() => {
   //   setSelected(selectedItem);
@@ -113,25 +125,8 @@ export default function Selector<T>({
 
   function handleSearchChange(e: ChangeEvent<HTMLInputElement>) {
     const searchQuery = e.target.value;
-    const trimmedQuery = searchQuery.trim();
     setSearchTerm(searchQuery);
-    if (onSearch) {
-      setFilteredItems(onSearch(trimmedQuery));
-    } else {
-      const searchedItems = trimmedQuery
-        ? items.filter(
-            (item: any) =>
-              item.clientName
-                ?.toLowerCase()
-                .includes(trimmedQuery.toLowerCase()) ||
-              item.id
-                ?.toString()
-                .toLowerCase()
-                .includes(trimmedQuery.toLowerCase()),
-          )
-        : items;
-      setFilteredItems(searchedItems);
-    }
+    setFilteredItems(applySearch(searchQuery));
   }
 
   function handleSelectItem(item: T) {
