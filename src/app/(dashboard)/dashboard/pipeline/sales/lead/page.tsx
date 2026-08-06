@@ -21,7 +21,6 @@ export default async function Page() {
   const columns = await getColumnsByType("sales");
   return (
     <div className="h-full w-full space-y-4 px-2">
-      <Title>Sales Leads</Title>
       <Suspense fallback={<LoadingLeads />}>
         <Leads salesColumn={columns} />
       </Suspense>
