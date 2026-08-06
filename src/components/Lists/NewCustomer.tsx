@@ -16,6 +16,7 @@ import { ClientTagSelector } from "@/components/Lists/ClientTagSelector";
 import SelectClientSource from "@/components/Lists/SelectClientSource";
 import { SlimInput } from "@/components/SlimInput";
 import { Label } from "@/components/ui/label";
+import { isDefaultClientSourceName } from "@/lib/consts";
 import { useClientFilterStore } from "@/stores/clientFilter";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
@@ -33,6 +34,7 @@ import { getSources } from "../../actions/source/getSources";
 import PhoneInput from "../PhoneInput";
 import NewClientSource from "./NewClientSource";
 import NewVehicle from "./NewVehicle";
+import { useClientSourcePicker } from "./useClientSourcePicker";
 
 export default function NewCustomer({
   buttonElement,
@@ -106,6 +108,17 @@ export default function NewCustomer({
     }
   }
 
+  const {
+    displaySources,
+    isCreatingSource,
+    selectClientSource,
+    resetCreatingSource,
+  } = useClientSourcePicker({
+    sources: clientSources,
+    setSources: setClientSources,
+    setClientSource,
+  });
+
   function resetForm() {
     setClientInfo({
       firstName: "",
@@ -121,6 +134,7 @@ export default function NewCustomer({
     setMobile("+1");
     setClientSources([]);
     setClientSource(null);
+    resetCreatingSource();
     setProfilePic(null);
     setTagOpenDropdown(false);
     setTag(undefined);
@@ -503,35 +517,38 @@ export default function NewCustomer({
                       setOpenClientSource={setOpenClientSource}
                     />
                   }
-                  items={clientSources}
+                  items={displaySources}
                   displayList={(clientSource: Source) => (
                     <div className="flex">
                       <button
                         className="w-full text-left text-sm font-bold"
                         onClick={() => {
-                          setClientSource(clientSource);
+                          selectClientSource(clientSource);
                           setOpenClientSource(false);
                         }}
                         type="button"
                       >
                         {clientSource.name}
                       </button>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            deleteClientSource(clientSource.id);
-                          }}
-                        >
-                          <X size={20} />
-                        </button>
-                      </div>
+                      {clientSource.id >= 0 &&
+                        !isDefaultClientSourceName(clientSource.name) && (
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                deleteClientSource(clientSource.id);
+                              }}
+                            >
+                              <X size={20} />
+                            </button>
+                          </div>
+                        )}
                     </div>
                   )}
                   selectedItem={clientSource}
                   setSelectedItem={setClientSource}
                   onSearch={(search: string) => {
-                    return clientSources.filter((clientSource: Source) =>
+                    return displaySources.filter((clientSource: Source) =>
                       clientSource.name
                         .toLowerCase()
                         .includes(search.toLowerCase()),
@@ -595,7 +612,7 @@ export default function NewCustomer({
               Cancel
             </DialogClose>
             <button
-              disabled={pending}
+              disabled={pending || isCreatingSource}
               type="button"
               onClick={() => startTransition(handleSubmit)}
               className="rounded-md bg-gradient-to-r from-primary to-[#5a66ee] px-6 py-2 text-sm font-medium text-white shadow transition-all duration-200 hover:shadow-lg hover:shadow-indigo-500/30 disabled:opacity-50"

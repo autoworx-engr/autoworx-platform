@@ -10,7 +10,7 @@ import SelectClientSource from "@/components/Lists/SelectClientSource";
 import { SelectClientTags } from "@/components/Lists/SelectClientTags";
 import PhoneInput from "@/components/PhoneInput";
 import { SlimInput } from "@/components/SlimInput";
-import { DEFAULT_IMAGE_URL } from "@/lib/consts";
+import { DEFAULT_IMAGE_URL, isDefaultClientSourceName } from "@/lib/consts";
 import { successToast } from "@/lib/toast";
 import { useClientFilterStore } from "@/stores/clientFilter";
 import { useFormErrorStore } from "@/stores/form-error";
@@ -18,8 +18,9 @@ import { Client, Source, Tag } from "@prisma/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { SquarePen, CircleUserRound as UserIcon, X } from "lucide-react";
 import Image from "next/image";
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { RotatingLines } from "react-loader-spinner";
+import { useClientSourcePicker } from "@/components/Lists/useClientSourcePicker";
 import { CLIENT_LIST_KEY } from "./_hook/useClientQuery";
 import useClientByIdQuery, {
   CLIENT_DETAIL_KEY,
@@ -57,6 +58,15 @@ export default function EditClientModalBody({
   const [clientSource, setClientSource] = useState<Source | null>(
     resolvedClient.source,
   );
+
+  // resolvedClient.source is only correct once clientData has loaded
+  // (the list-row client prop doesn't include the source relation).
+  useEffect(() => {
+    if (clientData) {
+      setClientSource(clientData.source ?? null);
+    }
+  }, [clientData]);
+
   const [pending, startTransition] = useTransition();
 
   const queryClient = useQueryClient();
@@ -93,6 +103,16 @@ export default function EditClientModalBody({
       setClientSource(null);
     }
   }
+
+  const { displaySources, isCreatingSource, selectClientSource } =
+    useClientSourcePicker({
+      sources: queryClientSources,
+      setSources: (updater) =>
+        queryClient.setQueryData<Source[]>([CLIENT_SOURCES_KEY], (prev = []) =>
+          updater(prev),
+        ),
+      setClientSource,
+    });
 
   async function handleSubmit() {
     clearError();
@@ -428,33 +448,36 @@ export default function EditClientModalBody({
                   setOpenClientSource={setOpenClientSource}
                 />
               }
-              items={queryClientSources}
+              items={displaySources}
               displayList={(clientSource: Source) => (
                 <div className="flex">
                   <button
                     className="w-full text-left text-sm font-bold"
                     onClick={() => {
-                      setClientSource(clientSource);
+                      selectClientSource(clientSource);
                       setOpenClientSource(false);
                     }}
                     type="button"
                   >
                     {clientSource.name}
                   </button>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => deleteClientSource(clientSource.id)}
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  </div>
+                  {clientSource.id >= 0 &&
+                    !isDefaultClientSourceName(clientSource.name) && (
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => deleteClientSource(clientSource.id)}
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
+                      </div>
+                    )}
                 </div>
               )}
               selectedItem={clientSource}
               setSelectedItem={setClientSource}
               onSearch={(search: string) =>
-                queryClientSources.filter((s: Source) =>
+                displaySources.filter((s: Source) =>
                   s.name.toLowerCase().includes(search.toLowerCase()),
                 )
               }
@@ -520,7 +543,7 @@ export default function EditClientModalBody({
           Cancel
         </DialogClose>
         <button
-          disabled={pending || isLoading}
+          disabled={pending || isLoading || isCreatingSource}
           type="button"
           onClick={() => startTransition(handleSubmit)}
           className="

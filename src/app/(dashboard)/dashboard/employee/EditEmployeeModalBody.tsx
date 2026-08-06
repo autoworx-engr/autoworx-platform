@@ -5,11 +5,9 @@ import Submit from "@/components/Submit";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { updateEmployee } from "@/actions/employee/update";
-import { getCompany } from "@/actions/settings/getCompany";
 import SlimSalaryManagement from "@/components/employee/SlimSalaryManagement";
 import Password from "@/components/Password";
 import PhoneInput from "@/components/PhoneInput";
-import { useServerGet } from "@/hooks/useServerGet";
 import { DEFAULT_IMAGE_URL } from "@/lib/consts";
 import { successToast } from "@/lib/toast";
 import { useEmployeeFilterStore } from "@/stores/employeeFilter";
@@ -42,7 +40,6 @@ export default function EditClientModalBody({
     employee.image !== DEFAULT_IMAGE_URL ? employee.image : null,
   );
   const [newProfilePic, setNewProfilePic] = useState<File | null>(null);
-  const { data: companyName } = useServerGet(getCompany);
   const [openChangePassword, setOpenChangePassword] = useState(false);
   const { showError, clearError } = useFormErrorStore();
   // Controlled zip state — blocks non-digit input
@@ -200,7 +197,6 @@ export default function EditClientModalBody({
         city,
         state,
         zip,
-        companyName: companyName?.name,
         commission: Number(commission),
         date: new Date(date),
         type: type as EmployeeType,
@@ -237,7 +233,6 @@ export default function EditClientModalBody({
       }
     },
     [
-      companyName?.name,
       currentPage,
       dateRange,
       employee?.id,
@@ -471,13 +466,9 @@ export default function EditClientModalBody({
             }}
           />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="flex items-center justify-between">
           <SlimInput
-            name="companyName"
-            defaultValue={employee.companyName!}
-            required={false}
-          />
-          <SlimInput
+            rootClassName="flex-1"
             name="commission"
             defaultValue={Number(employee.commission!)}
             required={false}
