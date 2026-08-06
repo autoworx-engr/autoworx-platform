@@ -1,4 +1,5 @@
 import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
+import BackButton from "@/components/BackButton";
 import EditVendor from "@/components/Lists/EditVendor";
 import Title from "@/components/Title";
 import {
@@ -12,7 +13,6 @@ import { cn } from "@/lib/cn";
 import { db } from "@/lib/db";
 import { formatCurrency } from "@/utils/formatCurrency";
 import {
-  ArrowLeft,
   Building2,
   DollarSign,
   Edit,
@@ -132,15 +132,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
       <Title
         className={`flex items-center gap-2 ${BASE_TEXT_COLOR} text-xl lg:text-2xl font-bold mb-4 mt-2`}
       >
-        <Link
-          href={`/dashboard/inventory/vendor?vendorId=${id}`}
-          className="flex items-center"
-        >
-          <ArrowLeft
-            size={20}
-            className="text-slate-600 dark:text-white rounded-full p-1 hover:bg-slate-100 dark:hover:bg-slate-700/50 active:scale-[0.95] transition-all"
-          />
-        </Link>
+        <BackButton href={`/dashboard/inventory/vendor?vendorId=${id}`} />
         Purchase History for {vendor?.name}
       </Title>
       <div className="mt-2 flex h-full flex-col-reverse gap-8 lg:flex-row">

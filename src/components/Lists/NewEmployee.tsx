@@ -1,7 +1,6 @@
 "use client";
 
 import { addEmployee } from "@/actions/employee/add";
-import { getCompany } from "@/actions/settings/getCompany";
 import SelectEmployeeType from "@/app/(dashboard)/dashboard/employee/SelectEmployeeType";
 import {
   Dialog,
@@ -16,7 +15,6 @@ import Password from "@/components/Password";
 import { SlimInput } from "@/components/SlimInput";
 import { DatePickerField } from "@/components/ui/DatePickerField";
 import { Label } from "@/components/ui/label";
-import { useServerGet } from "@/hooks/useServerGet";
 import { errorToast } from "@/lib/toast";
 import { useFormErrorStore } from "@/stores/form-error";
 import { EmployeeType, SalaryType, User } from "@prisma/client";
@@ -49,7 +47,6 @@ export default function AddNewEmployee({
     salaryAmount: number;
   } | null>(null);
 
-  const { data: companyName } = useServerGet(getCompany);
   const { showError, clearError } = useFormErrorStore();
   const { mobile, country, countryIsoCode } = phoneDataRef.current;
 
@@ -214,7 +211,6 @@ export default function AddNewEmployee({
         city,
         state,
         zip,
-        companyName: companyName?.name,
         commission: commission ? Number(commission) : undefined,
         date,
         type: type as EmployeeType,
@@ -482,13 +478,9 @@ export default function AddNewEmployee({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="flex items-center justify-between">
             <SlimInput
-              name="companyName"
-              placeholder="Enter company name"
-              defaultValue={companyName?.name}
-            />
-            <SlimInput
+              rootClassName="flex-1"
               name="commission"
               label="Commission %"
               placeholder="commission"
