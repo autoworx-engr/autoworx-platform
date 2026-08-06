@@ -189,106 +189,106 @@ export function TimeScrollPicker({
           </Button>
         </Popover.Trigger>
 
-        {/* Rendered inline rather than in a portal: this picker is used inside
-            Radix Dialogs, whose pointer-event trap would otherwise swallow
-            wheel scrolling in the columns below. */}
-        <Popover.Content
-          align="start"
-          sideOffset={4}
-          className="z-50 w-[260px] rounded-md border border-gray-200 bg-background shadow-lg"
-          onWheel={(event) => event.stopPropagation()}
-        >
-          <div className="grid grid-cols-3 divide-x divide-gray-200 border-b border-gray-200 text-center text-sm font-medium">
-            <div className="py-2">Hour</div>
-            <div className="py-2">Minute</div>
-            <div className="py-2">AM/PM</div>
-          </div>
-
-          <div className="grid grid-cols-3 divide-x divide-gray-200">
-            <div className={columnClass} ref={hourColumnRef}>
-              {HOURS.map((hour) => {
-                const disabled = !isHourSelectable(hour);
-                const active = selected?.hour === hour;
-                return (
-                  <button
-                    key={hour}
-                    type="button"
-                    data-selected={active}
-                    disabled={disabled}
-                    className={cn(
-                      cellClass,
-                      active && activeClass,
-                      disabled && disabledClass,
-                    )}
-                    onClick={() => commit(hour, draft.minute, draft.period)}
-                  >
-                    {hour}
-                  </button>
-                );
-              })}
+        <Popover.Portal>
+          <Popover.Content
+            align="start"
+            side="bottom"
+            sideOffset={4}
+            // Flip above / slide sideways instead of overflowing the viewport.
+            avoidCollisions
+            collisionPadding={8}
+            className="z-[100] w-[260px] rounded-md border border-gray-200 bg-background shadow-lg"
+            onWheel={(event) => event.stopPropagation()}
+          >
+            <div className="grid grid-cols-3 divide-x divide-gray-200 border-b border-gray-200 text-center text-sm font-medium">
+              <div className="py-2">Hour</div>
+              <div className="py-2">Minute</div>
+              <div className="py-2">AM/PM</div>
             </div>
 
-            <div className={columnClass}>
-              {minutes.map((minute) => {
-                // Once a period is committed, honour it strictly; while still
-                // previewing, allow any minute valid in either period so the
-                // preview can't hide otherwise-reachable times.
-                const disabled = selected
-                  ? isOutOfRange(to24Hour(draft.hour, minute, draft.period))
-                  : !PERIODS.some(
-                      (period) =>
-                        !isOutOfRange(to24Hour(draft.hour, minute, period)),
-                    );
-                const active = selected?.minute === minute;
-                return (
-                  <button
-                    key={minute}
-                    type="button"
-                    disabled={disabled}
-                    className={cn(
-                      cellClass,
-                      active && activeClass,
-                      disabled && disabledClass,
-                    )}
-                    onClick={() => commit(draft.hour, minute, draft.period)}
-                  >
-                    {String(minute).padStart(2, "0")}
-                  </button>
-                );
-              })}
+            <div className="grid grid-cols-3 divide-x divide-gray-200">
+              <div className={columnClass} ref={hourColumnRef}>
+                {HOURS.map((hour) => {
+                  const disabled = !isHourSelectable(hour);
+                  const active = selected?.hour === hour;
+                  return (
+                    <button
+                      key={hour}
+                      type="button"
+                      data-selected={active}
+                      disabled={disabled}
+                      className={cn(
+                        cellClass,
+                        active && activeClass,
+                        disabled && disabledClass,
+                      )}
+                      onClick={() => commit(hour, draft.minute, draft.period)}
+                    >
+                      {hour}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className={columnClass}>
+                {minutes.map((minute) => {
+                  const disabled = selected
+                    ? isOutOfRange(to24Hour(draft.hour, minute, draft.period))
+                    : !PERIODS.some(
+                        (period) =>
+                          !isOutOfRange(to24Hour(draft.hour, minute, period)),
+                      );
+                  const active = selected?.minute === minute;
+                  return (
+                    <button
+                      key={minute}
+                      type="button"
+                      disabled={disabled}
+                      className={cn(
+                        cellClass,
+                        active && activeClass,
+                        disabled && disabledClass,
+                      )}
+                      onClick={() => commit(draft.hour, minute, draft.period)}
+                    >
+                      {String(minute).padStart(2, "0")}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className={cn(columnClass, "flex flex-col gap-1 pt-3")}>
+                {PERIODS.map((period) => {
+                  const disabled = !hasSelectableMinute(draft.hour, period);
+                  const active = selected?.period === period;
+                  return (
+                    <button
+                      key={period}
+                      type="button"
+                      disabled={disabled}
+                      className={cn(
+                        cellClass,
+                        "py-2",
+                        active && activeClass,
+                        disabled && disabledClass,
+                      )}
+                      onClick={() => commit(draft.hour, draft.minute, period)}
+                    >
+                      {period}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
-            <div className={cn(columnClass, "flex flex-col gap-1 pt-3")}>
-              {PERIODS.map((period) => {
-                const disabled = !hasSelectableMinute(draft.hour, period);
-                const active = selected?.period === period;
-                return (
-                  <button
-                    key={period}
-                    type="button"
-                    disabled={disabled}
-                    className={cn(
-                      cellClass,
-                      "py-2",
-                      active && activeClass,
-                      disabled && disabledClass,
-                    )}
-                    onClick={() => commit(draft.hour, draft.minute, period)}
-                  >
-                    {period}
-                  </button>
-                );
-              })}
+            <div className="border-t border-gray-200 px-3 py-2 text-sm">
+              Selected:{" "}
+              <span className="font-medium">
+                {selected ? formatLabel(value) : "--:-- --"}
+              </span>
             </div>
-          </div>
-
-          <div className="border-t border-gray-200 px-3 py-2 text-sm">
-            Selected:{" "}
-            <span className="font-medium">
-              {selected ? formatLabel(value) : "--:-- --"}
-            </span>
-          </div>
-        </Popover.Content>
+          </Popover.Content>
+        </Popover.Portal>
       </Popover.Root>
     </div>
   );
