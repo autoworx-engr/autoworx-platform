@@ -38,7 +38,7 @@ export default function TaskListBox() {
 
   // --- Content Loading/State Logic (Enhanced for premium look) ---
   if (!hasTaskPermission) {
-    content = <BoxRestrictedNotice what="task access" />;
+    content = <BoxRestrictedNotice what="calendar & task" />;
   } else if (isLoading) {
     // Enhanced loading state with pulse and improved visual
     content = (

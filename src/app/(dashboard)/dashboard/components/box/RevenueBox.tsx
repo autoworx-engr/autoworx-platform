@@ -16,7 +16,11 @@ type TRevenueBoxProps = {
 export default async function RevenueBox({ className }: TRevenueBoxProps) {
   if (!(await hasRouteAccess("/dashboard/reporting/revenue"))) {
     return (
-      <BoxRestricted title="Revenue" what="revenue" className={className} />
+      <BoxRestricted
+        title="Revenue"
+        what="reporting & analytics"
+        className={className}
+      />
     );
   }
 

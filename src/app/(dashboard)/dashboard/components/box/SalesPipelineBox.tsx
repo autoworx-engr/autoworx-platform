@@ -22,7 +22,7 @@ export default async function SalesPipelineBox({
     return (
       <BoxRestricted
         title="Sales Pipeline"
-        what="sales pipeline analytics"
+        what="reporting & analytics"
         className={className}
       />
     );

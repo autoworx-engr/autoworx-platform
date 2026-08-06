@@ -20,7 +20,7 @@ export default async function EmployeePayoutBox({
     return (
       <BoxRestricted
         title="Employee Payout"
-        what="employee payout"
+        what="reporting & analytics"
         className={className}
       />
     );
