@@ -22,6 +22,7 @@ import { Spin } from "antd";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { addVehicle } from "../../actions/vehicle/addVehicle";
+import { extractVinFields, useVinDecode } from "../vin-decoder/useVinDecode";
 import VINInputCamera from "../vin-decoder/vin-input";
 import SelectorWithSearch from "./SelectorWithSearch";
 
@@ -56,6 +57,20 @@ export default function NewVehicle({
     other: "",
   });
   const [isOtherPopulated, setIsOtherPopulated] = useState(false);
+  const { decodeVin } = useVinDecode();
+
+  const handleVinBlur = async (vin: string) => {
+    const result = await decodeVin(vin);
+    if (!result) return;
+    const { year, make, model, displacement_cc } = extractVinFields(result);
+    setFormData((prev) => ({
+      ...prev,
+      vehicleYear: year ?? prev.vehicleYear,
+      vehicleMake: make ?? prev.vehicleMake,
+      vehicleModel: model ?? prev.vehicleModel,
+    }));
+    if (displacement_cc) setEngineSize(displacement_cc);
+  };
 
   // Use external open state if provided, otherwise use internal
   const isControlled =
@@ -303,6 +318,7 @@ export default function NewVehicle({
                   placeholder="Enter VIN"
                   value={vinCode}
                   onChange={(e) => setVinCOde(e.target.value)}
+                  onBlur={(e) => handleVinBlur(e.target.value)}
                 />
               </div>
 
