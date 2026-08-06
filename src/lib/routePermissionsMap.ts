@@ -15,11 +15,19 @@ export {
 } from "./routeFeatureKeys";
 export type { CompanyFeatureKey, RouteFeatureKey } from "./routeFeatureKeys";
 
+/** Root of the platform super-admin area. */
+export const SUPER_ADMIN_ROUTE_PREFIX = "/awx-dashboard";
+
 function getSuperAdminPermissionMap() {
   const superAdminPermissionMap = {} as Record<string, "superAdmin">;
   superAdminNavList.forEach((superAdminNav) => {
     if (superAdminNav.path) {
       superAdminPermissionMap[superAdminNav.path] = "superAdmin";
+    }
+    // `link` can differ from `path` (e.g. path /awx-dashboard/reporting but
+    // link /awx-dashboard/reporting/revenue) — register both.
+    if (superAdminNav.link) {
+      superAdminPermissionMap[superAdminNav.link] = "superAdmin";
     }
     if (superAdminNav.subnav) {
       superAdminNav.subnav.forEach((subNav) => {
@@ -33,37 +41,16 @@ function getSuperAdminPermissionMap() {
 export const SUPER_ADMIN_ROUTES_PERMISSIONS_MAP: Record<string, "superAdmin"> =
   getSuperAdminPermissionMap();
 
-export const dynamicSuperAdminRoutes = function (route: string) {
-  const dynamicRoute = ["/awx-dashboard/statistics/:id"];
-  const formattedDynamicRoute = dynamicRoute.reduce((acc, pattern) => {
-    const params = extractPathParams(pattern, route);
-    if (params) {
-      acc = "superAdmin";
-    }
-    return acc;
-  }, "" as string);
-  return formattedDynamicRoute;
-};
-
-function extractPathParams(pattern: string, path: string) {
-  const patternParts = pattern.split("/").filter(Boolean);
-  const pathParts = path.split("/").filter(Boolean);
-
-  if (patternParts.length !== pathParts.length) return null;
-
-  const params: Record<string, string> = {};
-
-  for (let i = 0; i < patternParts.length; i++) {
-    const routePart = patternParts[i];
-    const pathPart = pathParts[i];
-
-    if (routePart.startsWith(":")) {
-      const paramName = routePart.slice(1);
-      params[paramName] = pathPart;
-    } else if (routePart !== pathPart) {
-      return null; // not a match
-    }
-  }
-
-  return params;
+/**
+ * Every route under /awx-dashboard is super-admin only. Matching on the prefix
+ * rather than on superAdminNavList entries keeps pages that are not in the nav
+ * (plans, webhook events, bug/churn reports, /statistics/:id) closed to company
+ * Admins instead of falling through to the "Admin can do anything" branch.
+ */
+export function isSuperAdminOnlyRoute(route: string): boolean {
+  const routeWithoutQuery = route.split("?")[0];
+  return (
+    routeWithoutQuery === SUPER_ADMIN_ROUTE_PREFIX ||
+    routeWithoutQuery.startsWith(`${SUPER_ADMIN_ROUTE_PREFIX}/`)
+  );
 }

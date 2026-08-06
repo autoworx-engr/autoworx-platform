@@ -15,11 +15,10 @@ import {
 import { useServerGet } from "@/hooks/useServerGet";
 import { queryKeys } from "@/lib/queryKeys";
 import { errorToast, successToast } from "@/lib/toast";
-import { usePermissionStore } from "@/stores/permissionStore";
 import { calculateDue } from "@/utils/calculateDue";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { getFileFromCanvas } from "@/utils/getFileFromCanvas";
-import { canAccessEstimate } from "@/utils/permissions";
+import { useCanAccessRoute } from "@/hooks/useCanAccessRoute";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import {
   CardPayment,
@@ -159,8 +158,7 @@ export default function InvoiceModalBody({
   const isExportOpen = openGroup === "export";
   const isShareOpen = openGroup === "share";
 
-  const { permissions } = usePermissionStore();
-  const canEdit = canAccessEstimate(permissions);
+  const canEdit = useCanAccessRoute("/dashboard/estimate");
 
   // Detect if we're coming from an intercepted route
   const fromInterceptedRoute =

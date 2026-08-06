@@ -1,7 +1,7 @@
 /**
  * AUTO-GENERATED — do not edit manually.
  * Run: yarn generate:search
- * Generated: 2026-08-03T05:35:09.313Z
+ * Generated: 2026-08-06T02:27:13.834Z
  * Source: src/app
  */
 import type { RoutePermissionKey } from "./routePermissionKeys";
@@ -38,6 +38,7 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "client", "directory"],
     description: "Manage your clients",
+    permissionKey: "clientDirectory",
     featureKey: "clientDirectory",
   },
   {
@@ -77,6 +78,7 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "employee", "directory"],
     description: "Manage your employees",
+    permissionKey: "employeeDirectory",
     featureKey: "employeeDirectory",
   },
   {
@@ -153,6 +155,7 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "fleet", "directory"],
     description: "Manage your fleets",
+    permissionKey: "fleetDirectory",
     featureKey: "fleetDirectory",
   },
   {
@@ -242,6 +245,8 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "pipeline", "team", "pipelines"],
     description: "Manage your team pipeline",
+    permissionKey: "teamPipeline",
+    featureKey: "teamPipeline",
   },
   {
     id: "dashboard-pipeline-team-workorder",
@@ -250,6 +255,8 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "pipeline", "team", "workorder", "work", "orders"],
     description: "View and manage your team work orders",
+    permissionKey: "teamPipeline",
+    featureKey: "teamPipeline",
   },
   {
     id: "dashboard-reporting-inventory",
@@ -258,6 +265,8 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "reporting", "inventory", "analytics"],
     description: "Analyze inventory performance and profitability",
+    permissionKey: ["reporting", "reportingViewOnly"],
+    featureKey: "reporting",
   },
   {
     id: "dashboard-reporting-leads",
@@ -266,6 +275,8 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "reporting", "leads", "analytics"],
     description: "Analyze lead generation and conversion performance",
+    permissionKey: ["reporting", "reportingViewOnly"],
+    featureKey: "reporting",
   },
   {
     id: "dashboard-reporting-payments",
@@ -274,6 +285,8 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "reporting", "payments", "analytics"],
     description: "Analyze payment trends and manage overdue invoices",
+    permissionKey: ["reporting", "reportingViewOnly"],
+    featureKey: "reporting",
   },
   {
     id: "dashboard-reporting-revenue",
@@ -292,6 +305,8 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "reporting", "salesreporting", "sales"],
     description: "View and analyze your sales reports and performance.",
+    permissionKey: ["reporting", "reportingViewOnly"],
+    featureKey: "reporting",
   },
   {
     id: "dashboard-reporting-teams",
@@ -300,6 +315,8 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "reporting", "teams", "analytics"],
     description: "Manage employee performance and payouts",
+    permissionKey: ["reporting", "reportingViewOnly"],
+    featureKey: "reporting",
   },
   {
     id: "dashboard-reporting-technicianreporting",
@@ -308,6 +325,8 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "reporting", "technicianreporting", "technician"],
     description: "View and analyze technician performance and reports.",
+    permissionKey: ["reporting", "reportingViewOnly"],
+    featureKey: "reporting",
   },
   {
     id: "dashboard-resources",
@@ -437,7 +456,9 @@ export const generatedRegistry: SearchItem[] = [
     type: "settings",
     keywords: ["dashboard", "settings", "automation"],
     description: "Configure automation settings",
-    permissionKey: "businessSettings",
+    permissionKey: {
+      all: ["businessSettings", "automation"],
+    },
     featureKey: "automation",
   },
   {
@@ -549,6 +570,8 @@ export const generatedRegistry: SearchItem[] = [
       "webhook",
       "events",
     ],
+    permissionKey: "businessSettings",
+    featureKey: "businessSettings",
   },
   {
     id: "dashboard-settings-sales-agent",
@@ -557,7 +580,9 @@ export const generatedRegistry: SearchItem[] = [
     type: "settings",
     keywords: ["dashboard", "settings", "sales agent", "sales", "agent"],
     description: "Configure sales agent settings",
-    permissionKey: "businessSettings",
+    permissionKey: {
+      all: ["businessSettings", "salesAgent"],
+    },
   },
   {
     id: "dashboard-settings-sales-agent-ai-settings",
@@ -573,6 +598,9 @@ export const generatedRegistry: SearchItem[] = [
       "agent",
     ],
     description: "Configure AI settings for your sales agent",
+    permissionKey: {
+      all: ["businessSettings", "salesAgent"],
+    },
   },
   {
     id: "dashboard-settings-security",
@@ -614,6 +642,9 @@ export const generatedRegistry: SearchItem[] = [
       "configure",
     ],
     description: "Configure virtual shop settings",
+    permissionKey: {
+      all: ["businessSettings", "virtualShop"],
+    },
     featureKey: "virtual-shop",
   },
   {
@@ -630,6 +661,10 @@ export const generatedRegistry: SearchItem[] = [
       "shop",
     ],
     description: "Set up and configure your virtual shop.",
+    permissionKey: {
+      all: ["businessSettings", "virtualShop"],
+    },
+    featureKey: "virtual-shop",
   },
   {
     id: "dashboard-virtual-shop-admin",
@@ -638,6 +673,8 @@ export const generatedRegistry: SearchItem[] = [
     type: "page",
     keywords: ["dashboard", "virtual shop", "admin", "virtual", "shop"],
     description: "Virtual shop admin",
+    permissionKey: "virtualShop",
+    featureKey: "virtual-shop",
   },
   {
     id: "dashboard-virtual-shop-admin-service-create",
@@ -654,6 +691,8 @@ export const generatedRegistry: SearchItem[] = [
       "shop",
     ],
     description: "Create or edit a virtual shop service",
+    permissionKey: "virtualShop",
+    featureKey: "virtual-shop",
   },
   {
     id: "dashboard-visualization",
