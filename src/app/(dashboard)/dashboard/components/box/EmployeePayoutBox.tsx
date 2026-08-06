@@ -3,6 +3,8 @@ import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 import ChartData from "../ChartData";
 import BoxTitle from "./BoxTitle";
 import { cn } from "@/lib/cn";
+import { hasRouteAccess } from "@/lib/serverRouteGuard";
+import BoxRestricted from "./BoxRestricted";
 
 type TEmployeePayoutBoxProps = {
   className?: string;
@@ -11,6 +13,19 @@ type TEmployeePayoutBoxProps = {
 export default async function EmployeePayoutBox({
   className,
 }: TEmployeePayoutBoxProps) {
+  // Gated on the route this box links to (/dashboard/reporting/teams resolves
+  // to Reporting & Analytics), checked before fetching so a user without it
+  // never runs the payout query.
+  if (!(await hasRouteAccess("/dashboard/reporting/teams"))) {
+    return (
+      <BoxRestricted
+        title="Employee Payout"
+        what="employee payout"
+        className={className}
+      />
+    );
+  }
+
   const companyTimezone = await getCompanyTimezone();
   const timezone =
     companyTimezone?.timezone ??
