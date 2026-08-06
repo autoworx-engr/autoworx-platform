@@ -39,8 +39,8 @@ export default function DatabaseFilterHeader({ categories = [] }: TProps) {
   }, [categoryName]);
 
   return (
-    <div className="m-3 flex w-full flex-col gap-4 md:flex-row md:items-center md:justify-between md:gap-x-3">
-      <div className="flex flex-col items-end gap-2 md:flex-row md:items-center md:space-x-4">
+    <div className="my-3 flex w-full flex-col gap-4 md:flex-row md:items-center md:justify-between md:gap-x-3">
+      <div className="flex w-full flex-col gap-3 md:flex-row md:items-center md:space-x-4">
         <div className="relative w-full md:min-w-[300px] md:max-w-[693px]">
           <DatabaseSearchBox />
         </div>
@@ -50,7 +50,7 @@ export default function DatabaseFilterHeader({ categories = [] }: TProps) {
             onValueChange={handleCategoryChange}
             changesValue={selectedCategory || "All Categories"}
             defaultValue="All Categories"
-            buttonClassName="md:w-[200px]"
+            buttonClassName="md:w-[200px] py-2.5 px-4 text-sm"
             showClearButton
             clearLabel="Clear filter"
             onClear={handleClearCategory}
