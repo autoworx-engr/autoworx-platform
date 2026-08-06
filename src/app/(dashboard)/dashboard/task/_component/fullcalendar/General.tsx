@@ -144,6 +144,7 @@ export default function General({
               id="day-start"
               label="Day starts"
               value={dayStart}
+              maxTime="23:30"
               onChange={setDayStart}
             />
 

@@ -90,7 +90,14 @@ export function SelectTags({
                   }}
                   className="ml-1.5 transition-transform hover:scale-110"
                 >
-                  <div className="rounded-full bg-white/20 p-0.5 hover:bg-white/40">
+                  <div
+                    className={cn(
+                      "rounded-full p-0.5",
+                      tag.bgColor
+                        ? "bg-white/20 hover:bg-white/40"
+                        : "border border-slate-200 hover:bg-slate-100",
+                    )}
+                  >
                     <X size={10} strokeWidth={4} />
                   </div>
                 </button>

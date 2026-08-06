@@ -71,7 +71,13 @@ const LeadsFilterDropdown = React.memo(function LeadsFilterDropdown({
   );
 
   return (
-    <DropdownMenu.Root>
+    <DropdownMenu.Root
+      onOpenChange={(open) => {
+        if (open) {
+          window.dispatchEvent(new CustomEvent("close-date-range"));
+        }
+      }}
+    >
       <DropdownMenu.Trigger asChild>
         <button
           className="flex items-center justify-between w-full rounded-xl border px-4 py-2 transition-all duration-200 focus:outline-none focus:border-primary/40 focus:bg-white focus:ring-4 focus:ring-primary/10"

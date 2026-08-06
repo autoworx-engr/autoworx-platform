@@ -293,7 +293,6 @@ export function CalendarHeader({
               Est. Revenue
             </span>
             <span className="font-semibold text-slate-900">
-              $
               {estRevenue.toLocaleString(undefined, {
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 2,

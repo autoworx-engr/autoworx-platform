@@ -15,6 +15,7 @@ import { INVOICE_COLORS } from "@/lib/consts";
 import getUser from "@/lib/getUser";
 import { useFormErrorStore } from "@/stores/form-error";
 import { Tag, User } from "@prisma/client";
+import { Popconfirm } from "antd";
 import { ChevronUp, Palette, Search, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -153,18 +154,46 @@ export function EmployeeTagSelector({
                   >
                     {tagItem.name}
                   </button>
-                  <button
-                    disabled={disable}
-                    onClick={() => handleDeleteTag(tagItem.id)}
-                    className={cn(
-                      "ml-1.5 transition-transform hover:scale-110",
-                      isRestrictedUser ? "hidden" : "",
-                    )}
-                  >
-                    <div className="rounded-full bg-white/20 p-0.5 hover:bg-white/40">
-                      <X size={16} strokeWidth={2.5} />
-                    </div>
-                  </button>
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <Popconfirm
+                      title="Delete Tag"
+                      description="Are you sure you want to remove this tag?"
+                      okText="Delete"
+                      cancelText="Cancel"
+                      onConfirm={() => handleDeleteTag(tagItem.id)}
+                      onPopupClick={(e) => e.stopPropagation()}
+                      overlayClassName="[&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800"
+                      okButtonProps={{
+                        className:
+                          "!rounded-lg !border-none !bg-[#6571ff] !font-semibold !shadow-sm !shadow-[#6571ff]/30 hover:!bg-[#525ceb]",
+                      }}
+                      cancelButtonProps={{
+                        className:
+                          "!rounded-lg !border-slate-200 !font-medium !text-slate-600 hover:!border-slate-300 hover:!bg-slate-50 hover:!text-slate-700",
+                      }}
+                    >
+                      <button
+                        type="button"
+                        disabled={disable}
+                        onClick={(e) => e.stopPropagation()}
+                        className={cn(
+                          "ml-1.5 transition-transform hover:scale-110",
+                          isRestrictedUser ? "hidden" : "",
+                        )}
+                      >
+                        <div
+                          className={cn(
+                            "rounded-full p-0.5",
+                            tagItem.bgColor
+                              ? "bg-white/20 hover:bg-white/40"
+                              : "border border-slate-300 hover:bg-slate-100",
+                          )}
+                        >
+                          <X size={16} strokeWidth={2.5} />
+                        </div>
+                      </button>
+                    </Popconfirm>
+                  </div>
                 </div>
               ))}
           </div>

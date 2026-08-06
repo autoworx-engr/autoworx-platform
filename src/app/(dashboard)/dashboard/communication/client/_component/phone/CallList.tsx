@@ -5,10 +5,23 @@ import { useEffect, useRef } from "react";
 export type CallListItem = {
   id: number;
   direction: string | null;
+  status: string | null;
+  duration: number | null;
   from: string;
   to: string;
   createdAt: string | Date;
   playableUrl: string | null;
+};
+
+// Twilio statuses that mean the call never connected. Mirrors MISSED_STATUSES
+// in src/app/api/twilio/call-status/route.ts.
+const MISSED_STATUSES = new Set(["no-answer", "busy", "failed", "canceled"]);
+
+const MISSED_LABELS: Record<string, string> = {
+  "no-answer": "Missed call",
+  busy: "Missed call — line busy",
+  failed: "Call failed",
+  canceled: "Call canceled",
 };
 
 export const CallList = ({ data }: { data: CallListItem[] }) => {
@@ -25,6 +38,12 @@ export const CallList = ({ data }: { data: CallListItem[] }) => {
     return d.toLocaleString(); // e.g., "5/13/2025, 2:45:10 PM"
   };
 
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${String(secs).padStart(2, "0")}`;
+  };
+
   return (
     <div
       ref={scrollRef}
@@ -32,6 +51,15 @@ export const CallList = ({ data }: { data: CallListItem[] }) => {
     >
       {data.map((call) => {
         const isSentByMe = call.direction === "outbound";
+        const status = call.status ?? "";
+        const isMissed = MISSED_STATUSES.has(status);
+        // An inbound call we never picked up reads as "missed"; an outbound one
+        // the client never picked up reads as "no answer".
+        const missedLabel =
+          status === "no-answer" && isSentByMe
+            ? "No answer"
+            : (MISSED_LABELS[status] ?? "Missed call");
+        const isInProgress = status === "in-progress" || status === "ringing";
 
         return (
           <div
@@ -105,16 +133,8 @@ export const CallList = ({ data }: { data: CallListItem[] }) => {
                 {formatDateTime(call.createdAt)}
               </p>
 
-              {call.playableUrl ? (
-                <div className="overflow-hidden rounded-lg bg-gradient-to-br from-slate-50 to-slate-100/50 p-2 ring-1 ring-slate-900/5 transition-all duration-300 group-hover:ring-slate-900/10">
-                  <audio
-                    controls
-                    src={call.playableUrl}
-                    className="w-full h-8"
-                  />
-                </div>
-              ) : (
-                <div className="flex items-center gap-1.5 text-xs text-rose-600 bg-rose-50 rounded-lg px-2 py-1.5 ring-1 ring-rose-200">
+              {isMissed ? (
+                <div className="flex items-center gap-1.5 rounded-lg bg-rose-50 px-2 py-1.5 text-xs font-medium text-rose-600 ring-1 ring-rose-200">
                   <svg
                     className="h-3.5 w-3.5"
                     fill="none"
@@ -125,10 +145,42 @@ export const CallList = ({ data }: { data: CallListItem[] }) => {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
+                      d="M16 8l4-4m0 0h-4m4 0v4M3 5a2 2 0 012-2h1.6a1 1 0 01.98.8l.7 3.4a1 1 0 01-.27.92l-1.2 1.2a12 12 0 005.87 5.87l1.2-1.2a1 1 0 01.92-.27l3.4.7a1 1 0 01.8.98V17a2 2 0 01-2 2h-1A13 13 0 013 6V5z"
                     />
                   </svg>
-                  No recording available
+                  {missedLabel}
+                </div>
+              ) : call.playableUrl ? (
+                <div className="overflow-hidden rounded-lg bg-gradient-to-br from-slate-50 to-slate-100/50 p-2 ring-1 ring-slate-900/5 transition-all duration-300 group-hover:ring-slate-900/10">
+                  <audio
+                    controls
+                    src={call.playableUrl}
+                    className="w-full h-8"
+                  />
+                </div>
+              ) : isInProgress ? (
+                <div className="flex items-center gap-1.5 rounded-lg bg-amber-50 px-2 py-1.5 text-xs font-medium text-amber-700 ring-1 ring-amber-200">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-500" />
+                  {status === "ringing" ? "Ringing…" : "In progress…"}
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5 rounded-lg bg-slate-50 px-2 py-1.5 text-xs text-slate-500 ring-1 ring-slate-200">
+                  <svg
+                    className="h-3.5 w-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  {call.duration
+                    ? `Completed — ${formatDuration(call.duration)}`
+                    : "No recording available"}
                 </div>
               )}
             </div>

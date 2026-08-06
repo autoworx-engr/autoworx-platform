@@ -530,6 +530,19 @@ export function useAppointmentFormState({
     if (!draftOpen) setDraftSearch("");
   }, [draftOpen]);
 
+  const prevDraftClientId = useRef<number | null | undefined>(undefined);
+  useEffect(() => {
+    if (fromEdit && !appointment) return;
+    const currentClientId = client?.id ?? null;
+    if (prevDraftClientId.current === undefined) {
+      prevDraftClientId.current = currentClientId;
+      return;
+    }
+    if (prevDraftClientId.current === currentClientId) return;
+    prevDraftClientId.current = currentClientId;
+    setDraft(null);
+  }, [client?.id, fromEdit, appointment]);
+
   const handleDate = (operator: "+" | "-") => {
     const delta = operator === "+" ? 1 : -1;
     const base = date ? moment(date, "YYYY-MM-DD") : moment();
@@ -559,8 +572,8 @@ export function useAppointmentFormState({
       // be numerically earlier than the start time. Only enforce ordering
       // when start and end fall on the same calendar day.
       const isMultiDay = !!(endDate && date && endDate > date);
-      if (!isMultiDay && startTime && timeValue < startTime) {
-        errorToast("End time cannot be before start time!");
+      if (!isMultiDay && startTime && timeValue <= startTime) {
+        errorToast("End time must be after start time!");
         return;
       }
       setEndTime(timeValue);
