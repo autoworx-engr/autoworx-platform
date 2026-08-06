@@ -206,7 +206,12 @@ export default function MessageContainer({
               endMessage={
                 hasMessages && !hasMore ? (
                   <p className="text-center text-sm text-slate-400 dark:text-slate-500 py-4">
-                    <b>All messages loaded</b>
+                    {user?.employeeType === "Sales" &&
+                    clientMessages.length === 0 ? (
+                      <b>Client Not Found</b>
+                    ) : (
+                      <b>All messages loaded</b>
+                    )}
                   </p>
                 ) : null
               }
