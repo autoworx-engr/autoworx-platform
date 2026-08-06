@@ -461,10 +461,10 @@ export function CreateTab() {
         )}
       </div>
       {!(isMax640 && popupType) && (
-        <div className="flex py-3 md:gap-52 md:bg-slate-50/80 md:backdrop-blur-sm border-t border-slate-100 px-4 md:px-6">
+        <div className="flex py-1.5 md:gap-52 md:bg-slate-50/80 md:backdrop-blur-sm border-t border-slate-100 px-1.5 md:px-6">
           <button
             type="button"
-            className="sticky bottom-4 z-10 flex w-full items-center justify-center gap-2 rounded-xl bg-white p-3 text-sm font-semibold tracking-wide text-primary shadow-lg shadow-primary/10 ring-1 ring-primary/20 transition-all hover:bg-primary hover:text-white active:scale-95 md:static md:w-auto md:bg-transparent md:p-2 md:shadow-none md:ring-0 md:hover:bg-primary/10 md:hover:text-primary"
+            className="sticky bottom-4 z-10 flex w-full items-center justify-center gap-2 rounded-xl bg-white p-2.5 text-sm font-semibold tracking-wide text-primary shadow-lg shadow-primary/10 ring-1 ring-primary/20 transition-all hover:bg-primary hover:text-white active:scale-95 md:static md:w-auto md:bg-transparent md:p-2 md:shadow-none md:ring-0 md:hover:bg-primary/10 md:hover:text-primary"
             onClick={addService}
           >
             <CirclePlus size={20} strokeWidth={2.5} />
