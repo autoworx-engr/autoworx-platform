@@ -107,7 +107,6 @@ const Sidebar = ({ isLegacy = false }: Props) => {
   const { permissions } = usePermissionStore();
   const { companyFeaturePermission } = useCompanyFeaturePermissionStore();
 
-  // Helper functions (canAccessCompanyFeatureRoute, canAccessBusinessSettings) remain unchanged
   function canAccessCompanyFeatureRoute(route: string): boolean {
     if (!companyFeaturePermission || companyFeaturePermission.length === 0)
       return true;
@@ -137,45 +136,24 @@ const Sidebar = ({ isLegacy = false }: Props) => {
     );
   }
 
-  function canAccessBusinessSettings(): boolean {
-    if (!permissions) return false;
-
-    // Admin always has access
-    if (permissions.role === "Admin") return true;
-
-    // For managers, check if they have businessSettings permission
-    if (permissions.role === "Manager") {
-      // Check company permission first
-      //@ts-ignore
-      const hasCompanyPermission = Boolean(
-        permissions.companyPermissions?.businessSettings,
-      );
-      if (!hasCompanyPermission) return false;
-
-      // If company allows it, check user permission
-      if (permissions.userPermissions) {
-        //@ts-ignore
-        return Boolean(permissions.userPermissions?.businessSettings);
-      }
-
-      // If no user permissions defined, assume company permission is enough
-      return hasCompanyPermission;
-    }
-
-    // Other roles don't have access
-    return false;
-  }
-
   const filteredAccountSettings = accountSettings.filter((setting) =>
     canAccessCompanyFeatureRoute(setting.link),
   );
+
+  /**
+   * Every link is gated by the same route → key lookup the route guard uses,
+   * so the sidebar can't disagree with it.
+   *
+   * This replaced a `canAccessBusinessSettings()` helper that hardcoded
+   * "Admin or Manager only" and ignored the permission for everyone else — so
+   * granting Business Settings to the Other role hid the links while the URL
+   * still worked. Sales and Technician remain excluded automatically: their
+   * Prisma models have no `businessSettings` column, so the key reads false.
+   */
   const filteredBusinessSettings = businessSettings.filter(
     (setting) =>
+      Boolean(permissions) &&
       canAccessCompanyFeatureRoute(setting.link) &&
-      canAccessBusinessSettings() &&
-      // Automation / Sales Agent / Virtual Shop Configure each have their own
-      // module permission on top of businessSettings — same key the route guard
-      // uses, so the link never leads to a 404.
       canAccessWithPermissionKey(
         resolveRoutePermissionKey(setting.link),
         permissions,
@@ -247,7 +225,7 @@ const Sidebar = ({ isLegacy = false }: Props) => {
       </div>
 
       {/* Business Settings Section */}
-      {canAccessBusinessSettings() && filteredBusinessSettings.length > 0 && (
+      {filteredBusinessSettings.length > 0 && (
         <div className="space-y-4">
           <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-gray-500">
             Business Settings
