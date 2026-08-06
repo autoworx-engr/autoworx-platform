@@ -43,7 +43,7 @@ export default async function AppointmentListBox() {
       <div className="h-full flex-1 rounded-xl shadow-lg transition-all duration-300">
         <BoxRestricted
           title="Appointments"
-          what="appointment access"
+          what="calendar & task"
           className="h-full"
         />
       </div>

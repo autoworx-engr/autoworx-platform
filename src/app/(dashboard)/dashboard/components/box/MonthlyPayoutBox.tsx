@@ -7,6 +7,8 @@ import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 import moment from "moment-timezone";
 import { cn } from "@/lib/cn"; // Ensure cn is imported
 import { Calendar, AlertTriangle } from "lucide-react"; // Import necessary icons
+import { hasRouteAccess } from "@/lib/serverRouteGuard";
+import BoxRestricted from "./BoxRestricted";
 
 type TMonthlyPayoutBoxProps = {
   className?: string; // Accepts optional classes for layout (e.g., flex-1)
@@ -15,6 +17,19 @@ type TMonthlyPayoutBoxProps = {
 export default async function MonthlyPayoutBox({
   className,
 }: TMonthlyPayoutBoxProps) {
+  // Gated on the route this box links to — Reporting & Analytics, which for the
+  // Sales / Technician roles is the view-only column. Checked before fetching so
+  // a user without it never runs the payout queries.
+  if (!(await hasRouteAccess("/dashboard/reporting/teams"))) {
+    return (
+      <BoxRestricted
+        title="Monthly Payout"
+        what="reporting & analytics"
+        className={className}
+      />
+    );
+  }
+
   const companyTimezone = await getCompanyTimezone();
   const timezone =
     companyTimezone?.timezone ||
@@ -61,7 +76,7 @@ export default async function MonthlyPayoutBox({
           hover:shadow-xl hover:shadow-blue-500/10 dark:hover:shadow-indigo-500/10
           ${isStretched ? "flex-1" : ""}
         `,
-        className
+        className,
       )}
     >
       <BoxTitle
