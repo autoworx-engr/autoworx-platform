@@ -45,13 +45,20 @@ export async function POST(req: NextRequest) {
   }
 
   // Idempotency — skip if already fully processed
-  const existing = await db.webhookEvent.findUnique({
-    where: { eventId: event.id },
-    select: { status: true },
-  });
+  try {
+    const existing = await db.webhookEvent.findUnique({
+      where: { eventId: event.id },
+      select: { status: true },
+    });
 
-  if (existing?.status === "PROCESSED") {
-    return NextResponse.json({ message: "Already processed" }, { status: 200 });
+    if (existing?.status === "PROCESSED") {
+      return NextResponse.json(
+        { message: "Already processed" },
+        { status: 200 },
+      );
+    }
+  } catch (err) {
+    console.error("[stripe/webhook] idempotency check failed:", event.id, err);
   }
 
   // Extract companyId from metadata for per-company filtering
