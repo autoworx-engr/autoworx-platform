@@ -223,7 +223,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-full max-w-xl">
-        <form>
+        <form noValidate>
           <DialogHeader>
             <DialogTitle>Make Payment</DialogTitle>
             <DialogClose />

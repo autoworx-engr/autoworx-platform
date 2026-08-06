@@ -325,7 +325,7 @@ export default function MakePayment() {
       </DialogTrigger>
 
       <DialogContent className="w-full max-w-xl">
-        <form>
+        <form noValidate>
           <DialogHeader>
             <DialogTitle>Make Payment</DialogTitle>
             <DialogClose />

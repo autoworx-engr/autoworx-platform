@@ -36,13 +36,18 @@ export function useAmountField(
     [value],
   );
 
-  const error = useMemo(
-    () =>
-      isNaN(numericValue) || numericValue <= 0
-        ? `${label} must be a number greater than 0`
-        : undefined,
-    [numericValue, label],
-  );
+  const error = useMemo(() => {
+    if (value === "" || value === null || value === undefined) {
+      return `${label} is required`;
+    }
+    if (isNaN(numericValue)) {
+      return `${label} must be a valid number`;
+    }
+    if (numericValue <= 0) {
+      return `${label} must be greater than 0`;
+    }
+    return undefined;
+  }, [value, numericValue, label]);
 
   const reset = useCallback(
     (next: number | string = initialValue) => setValue(next),
@@ -53,6 +58,7 @@ export function useAmountField(
     () => ({
       type: "number" as const,
       inputMode: "decimal" as const,
+      required: true,
       min: 0,
       step: "0.01",
       value,
