@@ -40,6 +40,7 @@ interface FleetData {
   vin: string;
   price: string;
   status: string;
+  paymentStatus: string;
   other?: string;
 }
 
@@ -162,37 +163,42 @@ const styles = StyleSheet.create({
 
   // Table cells
   cellInvoice: {
-    width: "15%",
+    width: "13%",
     paddingHorizontal: 4,
     fontSize: 9,
   },
   cellYear: {
-    width: "10%",
+    width: "8%",
     paddingHorizontal: 4,
     fontSize: 9,
   },
   cellMake: {
-    width: "15%",
+    width: "13%",
     paddingHorizontal: 4,
     fontSize: 9,
   },
   cellModel: {
-    width: "15%",
+    width: "13%",
     paddingHorizontal: 4,
     fontSize: 9,
   },
   cellVin: {
-    width: "15%",
+    width: "13%",
     paddingHorizontal: 4,
     fontSize: 9,
   },
   cellPrice: {
-    width: "15%",
+    width: "13%",
     paddingHorizontal: 4,
     fontSize: 9,
   },
   cellStatus: {
-    width: "15%",
+    width: "13%",
+    paddingHorizontal: 4,
+    fontSize: 9,
+  },
+  cellPaymentStatus: {
+    width: "14%",
     paddingHorizontal: 4,
     fontSize: 9,
   },
@@ -370,10 +376,13 @@ export const PDFFleetStatement = ({
             <Text style={styles.headerText}>VIN</Text>
           </View>
           <View style={styles.cellPrice}>
-            <Text style={styles.headerText}>Price</Text>
+            <Text style={styles.headerText}>Amount</Text>
           </View>
           <View style={styles.cellStatus}>
             <Text style={styles.headerText}>Status</Text>
+          </View>
+          <View style={styles.cellPaymentStatus}>
+            <Text style={styles.headerText}>Payment</Text>
           </View>
         </View>
 
@@ -398,7 +407,7 @@ export const PDFFleetStatement = ({
             <View style={styles.cellModel}>
               <Text style={styles.dataText}>{vehicle.model}</Text>
             </View>
-            {vehicle.other && (
+            {vehicle.other !== "N/A" && (
               <View style={styles.cellModel}>
                 <Text style={styles.dataText}>{vehicle.other}</Text>
               </View>
@@ -411,6 +420,9 @@ export const PDFFleetStatement = ({
             </View>
             <View style={styles.cellStatus}>
               <Text style={styles.dataText}>{vehicle.status}</Text>
+            </View>
+            <View style={styles.cellPaymentStatus}>
+              <Text style={styles.dataText}>{vehicle.paymentStatus}</Text>
             </View>
           </View>
         ))}
