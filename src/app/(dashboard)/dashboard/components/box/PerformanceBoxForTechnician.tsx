@@ -4,6 +4,8 @@ import ChartData from "../ChartData";
 import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 import { getPerformance } from "@/actions/dashboard/data/getTechnicianInfo";
 import { cn } from "@/lib/cn"; // Assuming cn utility is used for merging classes
+import { hasRouteAccess } from "@/lib/serverRouteGuard";
+import BoxRestricted from "./BoxRestricted";
 
 type TPerformanceBoxProps = {
   className?: string; // Accepts optional classes for layout (e.g., flex-1)
@@ -12,6 +14,19 @@ type TPerformanceBoxProps = {
 export default async function PerformanceBoxForTechnician({
   className,
 }: TPerformanceBoxProps) {
+  // Gated on the route this box links to — Reporting & Analytics, which for the
+  // Technician role is the view-only column. Checked before fetching so a user
+  // without it never runs the performance query.
+  if (!(await hasRouteAccess("/dashboard/reporting/technicianreporting"))) {
+    return (
+      <BoxRestricted
+        title="Performance"
+        what="reporting & analytics"
+        className={className}
+      />
+    );
+  }
+
   const companyTimezone = await getCompanyTimezone();
   const timezone =
     companyTimezone?.timezone ||

@@ -80,7 +80,7 @@ import { NextRequest, NextResponse } from "next/server";
  *                 message:
  *                   type: string
  *       404:
- *         description: Company not found
+ *         description: Sales agent is not configured for this company
  *         content:
  *           application/json:
  *             schema:
@@ -91,7 +91,7 @@ import { NextRequest, NextResponse } from "next/server";
  *                   example: false
  *                 message:
  *                   type: string
- *                   example: Company not found
+ *                   example: Your sales agent isn't set up yet. Please configure it from Settings to start using AI training.
  *       500:
  *         description: Internal server error
  *         content:
@@ -138,10 +138,14 @@ export async function GET(req: NextRequest) {
       where: { companyId },
     });
 
-    // Check if company exists
+    // Company info is created when the sales agent is set up
     if (!companyInfo) {
       return NextResponse.json(
-        { success: false, message: "Company not found" },
+        {
+          success: false,
+          message:
+            "Your sales agent isn't set up yet. Please configure it from Settings to start using sales agent.",
+        },
         { status: 404 },
       );
     }

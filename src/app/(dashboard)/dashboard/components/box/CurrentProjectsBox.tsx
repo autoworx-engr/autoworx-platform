@@ -1,9 +1,11 @@
 import { getCurrentProjects } from "@/actions/dashboard/data/getTechnicianInfo";
 import WorkOrderModal from "@/components/workorder-modal/WorkOrderModal";
 import { cn } from "@/lib/cn"; // Ensure cn is imported
+import { hasRouteAccess } from "@/lib/serverRouteGuard";
 import { ExternalLink } from "lucide-react";
 import moment from "moment-timezone";
 import Link from "next/link";
+import BoxRestricted from "./BoxRestricted";
 
 type TCurrentProjectsBoxProps = {
   className?: string; // Accept className from parent (DashboardTechnician)
@@ -12,6 +14,16 @@ type TCurrentProjectsBoxProps = {
 export default async function CurrentProjectsBox({
   className,
 }: TCurrentProjectsBoxProps) {
+  if (!(await hasRouteAccess("/dashboard/pipeline/shop/pipeline"))) {
+    return (
+      <BoxRestricted
+        title="Current Projects"
+        what="shop pipeline"
+        className={className}
+      />
+    );
+  }
+
   Intl.DateTimeFormat().resolvedOptions().timeZone;
   const projects = await getCurrentProjects();
 
