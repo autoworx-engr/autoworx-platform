@@ -6,7 +6,7 @@ import { useInventoryFilterStore } from "@/stores/inventoryFilter";
 import { useListsStore } from "@/stores/lists";
 import { Search } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 type TSearchFilterProps = {
   searchParams: {
@@ -16,19 +16,20 @@ type TSearchFilterProps = {
 };
 
 export default function SearchFilter({ searchParams }: TSearchFilterProps) {
-  const { search, category, setFilter } = useInventoryFilterStore();
+  const { category, setFilter } = useInventoryFilterStore();
   const { categories } = useListsStore();
   const params = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
 
-  // reset the filter when the search changes
+  // Local state so a late-resolving (out-of-order) navigation from an
+  // earlier keystroke can't overwrite text the user has since typed/deleted.
+  const [search, setSearch] = useState(searchParams.search ?? "");
+
+  // reset the category filter when the url category changes
   useEffect(() => {
-    setFilter({
-      search: searchParams.search ?? "",
-      category: searchParams.category ?? "",
-    });
-  }, [searchParams.search, searchParams.category]);
+    setFilter({ category: searchParams.category ?? "" });
+  }, [searchParams.category]);
 
   const buildParams = () => {
     const searchParam = new URLSearchParams(params);
@@ -80,7 +81,7 @@ export default function SearchFilter({ searchParams }: TSearchFilterProps) {
             value={search}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               const value = e.target.value;
-              setFilter({ search: value });
+              setSearch(value);
               handleSearchChange(value);
             }}
           />

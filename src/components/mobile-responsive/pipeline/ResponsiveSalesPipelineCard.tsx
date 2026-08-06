@@ -1,4 +1,5 @@
 "use client";
+import PipelineInvoiceModal from "@/app/(dashboard)/dashboard/pipeline/components/PipelineInvoiceModal";
 import TaskForm from "@/app/(dashboard)/dashboard/pipeline/components/TaskForm";
 import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
 import {
@@ -157,29 +158,20 @@ const ResponsiveSalesPipelineCard = ({
             />
           </Link>
 
-          {onCreateDraftEstimate && (
-            <button
-              onClick={() =>
-                onCreateDraftEstimate({
-                  leadId: lead.id,
-                  clientId: Number(lead?.clientId),
-                  vehicleId: lead?.client?.vehicle?.id,
-                })
-              }
-              className="group relative"
-            >
-              {lead.isEstimateCreated ? (
-                <div className="relative h-6 w-4">
-                  <Image
-                    alt="draftEstimateDone"
-                    src="/icons/estimateDone.png"
-                    fill
-                    className="object-contain"
-                    loading="lazy"
-                    sizes="24px"
-                  />
-                </div>
-              ) : (
+          {onCreateDraftEstimate &&
+            (lead.isEstimateCreated && lead.invoiceId ? (
+              <PipelineInvoiceModal invoiceId={lead.invoiceId} />
+            ) : (
+              <button
+                onClick={() =>
+                  onCreateDraftEstimate({
+                    leadId: lead.id,
+                    clientId: Number(lead?.clientId),
+                    vehicleId: lead?.client?.vehicle?.id,
+                  })
+                }
+                className="group relative"
+              >
                 <div className="relative h-4 w-4">
                   <Image
                     src="/icons/draftEstimate.png"
@@ -190,9 +182,8 @@ const ResponsiveSalesPipelineCard = ({
                     loading="lazy"
                   />
                 </div>
-              )}
-            </button>
-          )}
+              </button>
+            ))}
 
           {onUpdateAppointment && (
             <AppointmentCreateOrEdit
