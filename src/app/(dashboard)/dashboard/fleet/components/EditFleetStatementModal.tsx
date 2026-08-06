@@ -36,10 +36,14 @@ const EditFleetStatementModal = ({
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const { allInvoices } = useFleetInvoiceStore();
 
+  const isUnpaid = (invoice: any) => Number(invoice?.due || 0) > 0;
+
   // Initialize selected items with current invoices
   useEffect(() => {
     if (isOpen) {
-      setSelectedItems(currentInvoices.map((invoice) => invoice.id));
+      setSelectedItems(
+        currentInvoices.filter(isUnpaid).map((invoice) => invoice.id),
+      );
     }
   }, [isOpen, currentInvoices]);
 
@@ -48,7 +52,7 @@ const EditFleetStatementModal = ({
     ...allInvoices.filter(
       (inv) => !currentInvoices.some((curr) => curr.id === inv.id),
     ),
-  ];
+  ].filter(isUnpaid);
 
   const handleSelectItem = (itemId: string, checked: boolean) => {
     if (checked) {
