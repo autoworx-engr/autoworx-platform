@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/cn";
 import { sentenceCase } from "change-case";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Plus } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 
@@ -185,10 +185,11 @@ export function SelectorWithSearch({
                 ))
               ) : searchTerm ? (
                 <div
-                  className="cursor-pointer px-3 py-2 text-sm text-primary hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="flex cursor-pointer items-center gap-1.5 px-3 py-2 text-sm font-medium text-primary hover:bg-slate-100 dark:hover:bg-slate-800"
                   onClick={() => handleSelect(searchTerm)}
                 >
-                  "{searchTerm}"
+                  <Plus size={14} strokeWidth={2.5} />
+                  Add "{searchTerm}"
                 </div>
               ) : (
                 <div className="px-3 py-3 text-sm text-slate-500 dark:text-slate-400">

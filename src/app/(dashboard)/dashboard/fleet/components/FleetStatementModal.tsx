@@ -455,7 +455,9 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
                     <th className={`${tHeadingCommonClasses}`}>Amount</th>
                     <th className={`${tHeadingCommonClasses}`}>Paid</th>
                     <th className={`${tHeadingCommonClasses}`}>Due</th>
-                    <th className={`${tHeadingCommonClasses}`}>Status</th>
+                    <th className={`${tHeadingCommonClasses}`}>
+                      Invoice Status
+                    </th>
                   </tr>
                 </thead>
                 <tbody>

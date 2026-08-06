@@ -31,6 +31,8 @@ Font.register({
   fontWeight: 500,
 });
 
+Font.registerHyphenationCallback((word) => [word]);
+
 // Dummy props interface – customize as needed
 interface FleetData {
   id: string;
@@ -163,42 +165,42 @@ const styles = StyleSheet.create({
 
   // Table cells
   cellInvoice: {
-    width: "13%",
+    width: "12%",
     paddingHorizontal: 4,
     fontSize: 9,
   },
   cellYear: {
-    width: "8%",
+    width: "7%",
     paddingHorizontal: 4,
     fontSize: 9,
   },
   cellMake: {
-    width: "13%",
+    width: "11%",
     paddingHorizontal: 4,
     fontSize: 9,
   },
   cellModel: {
-    width: "13%",
+    width: "11%",
     paddingHorizontal: 4,
     fontSize: 9,
   },
   cellVin: {
-    width: "13%",
+    width: "11%",
     paddingHorizontal: 4,
     fontSize: 9,
   },
   cellPrice: {
-    width: "13%",
+    width: "12%",
     paddingHorizontal: 4,
     fontSize: 9,
   },
   cellStatus: {
-    width: "13%",
+    width: "18%",
     paddingHorizontal: 4,
     fontSize: 9,
   },
   cellPaymentStatus: {
-    width: "14%",
+    width: "18%",
     paddingHorizontal: 4,
     fontSize: 9,
   },
@@ -379,7 +381,7 @@ export const PDFFleetStatement = ({
             <Text style={styles.headerText}>Amount</Text>
           </View>
           <View style={styles.cellStatus}>
-            <Text style={styles.headerText}>Status</Text>
+            <Text style={styles.headerText}>Invoice Status</Text>
           </View>
           <View style={styles.cellPaymentStatus}>
             <Text style={styles.headerText}>Payment</Text>
