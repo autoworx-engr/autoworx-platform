@@ -11,7 +11,6 @@ import {
 } from "@/components/Dialog";
 import FormError from "@/components/FormError";
 import SelectCategory from "@/components/Lists/SelectCategory";
-import { SelectTags } from "@/components/Lists/SelectTags";
 import { successToast } from "@/lib/toast";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
 import { useEstimatePopupStore } from "@/stores/estimate-popup";
@@ -45,7 +44,6 @@ export default function NewLabor({
   const { close, data } = useEstimatePopupStore();
   const itemId = data?.itemId;
 
-  const [tagsOpen, setTagsOpen] = useState(false);
   const [categoryOpen, setCategoryOpen] = useState(false);
 
   // Reset form function to avoid code duplication
@@ -67,14 +65,6 @@ export default function NewLabor({
       );
     }
   }, [currentSelectedCategoryId]);
-
-  useEffect(() => {
-    setTagsOpen(false);
-  }, [categoryOpen]);
-
-  useEffect(() => {
-    setCategoryOpen(false);
-  }, [tagsOpen]);
 
   useEffect(() => {
     if (data?.labor && data.edit && !fromCanned) {
@@ -306,18 +296,6 @@ export default function NewLabor({
                 categoryOpen={categoryOpen}
                 setCategoryOpen={setCategoryOpen}
                 allowEdit={true}
-              />
-            </div>
-
-            {/* Tags */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-700">
-                Tags
-              </label>
-              <SelectTags
-                value={tags}
-                setValue={setTags}
-                openStates={[tagsOpen, setTagsOpen]}
               />
             </div>
 
