@@ -5,7 +5,10 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
   DialogTrigger,
 } from "@/components/Dialog";
 import FormError from "@/components/FormError";
@@ -213,16 +216,12 @@ export default function NewVehicle({
         className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]"
         form
       >
-        <div className="mt-8 flex items-center justify-between px-2 md:px-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              Add Vehicle
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Enter vehicle details for the client
-            </p>
-          </div>
-        </div>
+        <DialogHeader>
+          <DialogTitle>Add Vehicle</DialogTitle>
+          <DialogDescription>
+            Enter vehicle details for the client
+          </DialogDescription>
+        </DialogHeader>
 
         <FormError />
 
@@ -309,33 +308,46 @@ export default function NewVehicle({
               label="License Plate"
               placeholder="Enter license plate"
             />
-            <div className="flex items-end gap-2">
-              <div className="flex-1">
-                <SlimInput
-                  name="vin"
-                  label="Vin"
-                  required={false}
-                  placeholder="Enter VIN"
-                  value={vinCode}
-                  onChange={(e) => setVinCOde(e.target.value)}
-                  onBlur={(e) => handleVinBlur(e.target.value)}
+            <div>
+              <div className="flex items-end gap-2">
+                <div className="flex-1">
+                  <SlimInput
+                    name="vin"
+                    label="Vin"
+                    required={false}
+                    placeholder="Enter VIN"
+                    value={vinCode}
+                    onChange={(e) => setVinCOde(e.target.value)}
+                    onBlur={(e) => handleVinBlur(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleVinBlur(vinCode);
+                      }
+                    }}
+                  />
+                </div>
+
+                <VINInputCamera
+                  onVehicleInfo={(value) => {
+                    const { make, model, year, specs } =
+                      value?.data?.data || {};
+                    const { displacement_cc } = specs || {};
+                    setFormData({
+                      vehicleYear: year,
+                      vehicleMake: make,
+                      vehicleModel: model,
+                      other: "",
+                    });
+                    setEngineSize(displacement_cc || "");
+                    setVinCOde(value?.vin || "");
+                  }}
                 />
               </div>
-
-              <VINInputCamera
-                onVehicleInfo={(value) => {
-                  const { make, model, year, specs } = value?.data?.data || {};
-                  const { displacement_cc } = specs || {};
-                  setFormData({
-                    vehicleYear: year,
-                    vehicleMake: make,
-                    vehicleModel: model,
-                    other: "",
-                  });
-                  setEngineSize(displacement_cc || "");
-                  setVinCOde(value?.vin || "");
-                }}
-              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Press Enter or click away after typing to auto-fill vehicle
+                details
+              </p>
             </div>
             <SlimInput
               name="other"
