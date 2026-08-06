@@ -624,6 +624,11 @@ model ClientConversationTrack {
   instagramUnReadCount Int       @default(0)     @map("instagram_unread_count")
   instagramLastMessage String?   @map("instagram_last_message") @db.Text
   instagramLastBy      String?   @map("instagram_last_by")
+  // Call fields. Calls reuse `smsLastMessage` for their preview line, so these
+  // let the client list tell a live call from a finished one and collapse the
+  // row down to just the call while it is ringing or connected.
+  callStatus           String?   @map("call_status")
+  callUpdatedAt        DateTime? @map("call_updated_at")
   createdAt            DateTime  @default(now()) @map("created_at")
   updatedAt            DateTime  @default(now()) @updatedAt @map("updated_at")
   client               Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
@@ -2595,6 +2600,9 @@ model ClientSMS {
   company          Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   isSalesAgent     Boolean?  @default(false)
   agentProcessedAt DateTime? @map("agent_processed_at")
+  // "SMS" for a real text; "MISSED_CALL" for the system marker the thread shows
+  // so a missed call is visible in the conversation, not just the phone tab.
+  messageType      String?   @default("SMS") @map("message_type")
   createdAt        DateTime  @default(now()) @map("created_at")
   updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at")
 }

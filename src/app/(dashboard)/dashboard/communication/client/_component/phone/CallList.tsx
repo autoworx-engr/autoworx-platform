@@ -1,6 +1,8 @@
 "use client";
 
+import { MISSED_STATUSES, isCallStale } from "@/lib/twilio/callDisplay";
 import { useEffect, useRef } from "react";
+import { useCallListRefresh } from "./useCallListRefresh";
 
 export type CallListItem = {
   id: number;
@@ -13,10 +15,6 @@ export type CallListItem = {
   playableUrl: string | null;
 };
 
-// Twilio statuses that mean the call never connected. Mirrors MISSED_STATUSES
-// in src/app/api/twilio/call-status/route.ts.
-const MISSED_STATUSES = new Set(["no-answer", "busy", "failed", "canceled"]);
-
 const MISSED_LABELS: Record<string, string> = {
   "no-answer": "Missed call",
   busy: "Missed call — line busy",
@@ -24,8 +22,15 @@ const MISSED_LABELS: Record<string, string> = {
   canceled: "Call canceled",
 };
 
-export const CallList = ({ data }: { data: CallListItem[] }) => {
+export const CallList = ({
+  data,
+  clientId,
+}: {
+  data: CallListItem[];
+  clientId: number;
+}) => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  useCallListRefresh(clientId);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -52,14 +57,19 @@ export const CallList = ({ data }: { data: CallListItem[] }) => {
       {data.map((call) => {
         const isSentByMe = call.direction === "outbound";
         const status = call.status ?? "";
-        const isMissed = MISSED_STATUSES.has(status);
+        // A row still marked ringing/in-progress long after it was created
+        // never received its final Twilio callback — treat it as missed rather
+        // than leaving it animating as a live call forever.
+        const isStale = isCallStale(status, call.createdAt);
+        const isMissed = MISSED_STATUSES.has(status) || isStale;
         // An inbound call we never picked up reads as "missed"; an outbound one
         // the client never picked up reads as "no answer".
         const missedLabel =
           status === "no-answer" && isSentByMe
             ? "No answer"
             : (MISSED_LABELS[status] ?? "Missed call");
-        const isInProgress = status === "in-progress" || status === "ringing";
+        const isInProgress =
+          !isStale && (status === "in-progress" || status === "ringing");
 
         return (
           <div
