@@ -13,7 +13,8 @@ export const addVehicleParts = async (
           data: {
             partsName: part.partsName as string,
             invoiceId: part.invoiceId as string,
-            serviceId: part.serviceId as number,
+
+            serviceId: part.serviceId ?? null,
             technicianId: technicianId,
           },
         });

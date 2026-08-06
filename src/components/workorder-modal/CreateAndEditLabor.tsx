@@ -51,7 +51,7 @@ type LocalAttachment = {
 type TProps = {
   invoiceItemId: number;
   invoiceId: string;
-  serviceId: number;
+  serviceId: number | null;
   technician?: Technician & {
     name: string;
     hasPermission: boolean;
@@ -312,7 +312,8 @@ export default function CreateAndEditLabor({
         );
       } else {
         const payload = {
-          serviceId: Number(serviceId),
+          // Number(null) is 0, which the API rejects — keep it null instead.
+          serviceId: serviceId ?? null,
           date: new Date(
             inputValues.date || moment().utc().format("YYYY-MM-DD"),
           ),

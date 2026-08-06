@@ -1651,7 +1651,9 @@ model Technician {
   status         String?
   note           String?           @map("new_note") @db.VarChar(1500)
   technicianNote String?           @map("technician_note") @db.VarChar(1500)
-  serviceId      Int               @map("service_id")
+  // Nullable: an invoice item may be labor-only or material-only (InvoiceItem.serviceId
+  // is optional too), and those rows still need technician assignments.
+  serviceId      Int?              @map("service_id")
   invoiceId      String            @map("invoice_id")
   companyId      Int               @map("company_id")
   invoiceItemId  Int               @map("invoice_item_id")
