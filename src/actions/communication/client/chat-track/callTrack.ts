@@ -1,5 +1,3 @@
-"use server";
-
 import { db } from "@/lib/db";
 import { initialCreateClientChatTrack } from ".";
 
@@ -12,9 +10,9 @@ const LIVE_STATUSES = new Set(["ringing", "in-progress"]);
 
 // Prefix every call preview carries. The client list keys off it to tell a call
 // line apart from a real SMS, since both share the `smsLastMessage` column.
-export const CALL_PREVIEW_PREFIX = "📞 ";
+const CALL_PREVIEW_PREFIX = "📞 ";
 
-export type CallTrackDirection = "inbound" | "outbound";
+type CallTrackDirection = "inbound" | "outbound";
 
 type TUpdateCallChatTrack = {
   clientId: number;
