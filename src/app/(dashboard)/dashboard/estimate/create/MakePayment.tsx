@@ -104,6 +104,30 @@ export default function MakePayment() {
     return Math.round(num * 100) / 100;
   };
 
+  const sanitizeAmountInput = (value: string): string =>
+    value.replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1");
+
+  const handleAmountChange = (value: string) => {
+    setAmount(sanitizeAmountInput(value));
+  };
+
+  const amountValue = typeof amount === "string" ? parseFloat(amount) : amount;
+  const amountError =
+    isNaN(amountValue) || amountValue <= 0
+      ? "Amount must be a number greater than 0"
+      : undefined;
+
+  const handleDepositChange = (value: string) => {
+    setDeposit(sanitizeAmountInput(value));
+  };
+
+  const depositValue =
+    typeof deposit === "string" ? parseFloat(deposit) : deposit;
+  const depositError =
+    isNaN(depositValue) || depositValue <= 0
+      ? "Deposit must be a number greater than 0"
+      : undefined;
+
   function reset() {
     setTab("CARD");
     setDate(new Date());
@@ -416,8 +440,9 @@ export default function MakePayment() {
                       name="amount"
                       type="text"
                       value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
+                      onChange={(e) => handleAmountChange(e.target.value)}
                       onBlur={(e) => setAmount(formatAmount(e.target.value))}
+                      error={amountError}
                     />
                   </div>
 
@@ -545,8 +570,9 @@ export default function MakePayment() {
                   name="amount"
                   type="text"
                   value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  onChange={(e) => handleAmountChange(e.target.value)}
                   onBlur={(e) => setAmount(formatAmount(e.target.value))}
+                  error={amountError}
                 />
               </div>
 
@@ -607,7 +633,8 @@ export default function MakePayment() {
                   name="amount"
                   type="text"
                   value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  onChange={(e) => handleAmountChange(e.target.value)}
+                  error={amountError}
                 />
               </div>
 
@@ -705,7 +732,8 @@ export default function MakePayment() {
                     name="amount"
                     type="text"
                     value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
+                    onChange={(e) => handleAmountChange(e.target.value)}
+                    error={amountError}
                   />
                 </div>
               </div>
@@ -755,7 +783,8 @@ export default function MakePayment() {
                     type="text"
                     label="Deposit Amount"
                     value={deposit}
-                    onChange={(e) => setDeposit(e.target.value)}
+                    onChange={(e) => handleDepositChange(e.target.value)}
+                    error={depositError}
                   />
                 </div>
               </div>

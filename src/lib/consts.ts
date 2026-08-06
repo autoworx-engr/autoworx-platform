@@ -1,4 +1,27 @@
 export const MIN_PASSWORD_LENGTH = 6;
+
+// Same default options offered as Lead Source on the Add Lead form,
+// kept in sync so clients and leads share a consistent source list.
+export const DEFAULT_CLIENT_SOURCE_NAMES = [
+  "Referrals",
+  "Meta",
+  "Instagram",
+  "TikTok",
+  "Yelp",
+  "Google",
+  "Website",
+  "Trade show",
+  "LinkedIn",
+  "Walk-in",
+  "Phone Call",
+];
+
+export function isDefaultClientSourceName(name: string) {
+  return DEFAULT_CLIENT_SOURCE_NAMES.some(
+    (defaultName) => defaultName === name.trim(),
+  );
+}
+
 export const DEFAULT_IMAGE_URL = "/images/default.png";
 export const ASANA_BASE_URL = "https://app.asana.com/api/1.0";
 export const USER_FEEDBACK_EMAILS = ["krshanto2005@gmail.com"];

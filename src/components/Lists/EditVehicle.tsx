@@ -23,6 +23,7 @@ import { useFormErrorStore } from "@/stores/form-error";
 import { Vehicle, VehicleColor } from "@prisma/client";
 import { SquarePen } from "lucide-react";
 import { useState } from "react";
+import { extractVinFields, useVinDecode } from "../vin-decoder/useVinDecode";
 import VINInputCamera from "../vin-decoder/vin-input";
 import SelectorWithSearch from "./SelectorWithSearch";
 
@@ -47,6 +48,20 @@ export default function EditVehicle({
     vehicle?.engineSize || "",
   );
   const [vinValue, setVinValue] = useState<string>(vehicle?.vin || "");
+  const { decodeVin } = useVinDecode();
+
+  const handleVinBlur = async (vin: string) => {
+    const result = await decodeVin(vin);
+    if (!result) return;
+    const { year, make, model, displacement_cc } = extractVinFields(result);
+    setFormData((prev) => ({
+      ...prev,
+      vehicleYear: year ? String(year) : prev.vehicleYear,
+      vehicleMake: make || prev.vehicleMake,
+      vehicleModel: model || prev.vehicleModel,
+    }));
+    if (displacement_cc) setEngineSize(displacement_cc);
+  };
 
   const { data: years, isError: isYearFetchError }: any = useGetAllYears();
   const { data: makes, isError: isMakeFetchError }: any = useGetMake();
@@ -251,6 +266,7 @@ export default function EditVehicle({
               name="vin"
               value={vinValue}
               onChange={(e) => setVinValue(e.target.value)}
+              onBlur={(e) => handleVinBlur(e.target.value)}
               required={false}
             />
             <VINInputCamera

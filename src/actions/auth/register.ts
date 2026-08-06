@@ -127,17 +127,17 @@ export async function register({
             { title: "Payments", permission_name: "payments", enabled: true },
             { title: "Directory", permission_name: "directory", enabled: true },
             {
-              title: "Client",
+              title: "Directory (Client)",
               permission_name: "clientDirectory",
               enabled: true,
             },
             {
-              title: "Employee",
+              title: "Directory (Employee)",
               permission_name: "employeeDirectory",
               enabled: true,
             },
             {
-              title: "Fleet",
+              title: "Directory (Fleet)",
               permission_name: "fleetDirectory",
               enabled: true,
             },
@@ -165,6 +165,11 @@ export async function register({
             {
               title: "Sales Pipeline",
               permission_name: "salesPipeline",
+              enabled: true,
+            },
+            {
+              title: "Team Pipeline",
+              permission_name: "teamPipeline",
               enabled: true,
             },
             {

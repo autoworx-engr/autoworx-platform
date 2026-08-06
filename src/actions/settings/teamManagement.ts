@@ -2,6 +2,7 @@
 
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
+import { permissionFieldsForRole } from "@/lib/permissionModule";
 import { EmployeeType, Role } from "@prisma/client";
 
 const prisma = db;
@@ -82,9 +83,16 @@ export const updatePermissionForRole = async ({
   if (!role || !moduleKey || typeof value !== "boolean")
     throw new Error("Invalid arguments for permission update");
 
+  const moduleField = isViewOnly ? `${moduleKey}ViewOnly` : moduleKey;
+
+  // The field name is interpolated straight into the Prisma `data` object, so
+  // only columns the module catalogue declares for this role may be written.
+  if (!permissionFieldsForRole(role).has(moduleField)) {
+    throw new Error(`Unknown module "${moduleField}" for role "${role}"`);
+  }
+
   try {
     const companyId = await getCompanyId();
-    const moduleField = isViewOnly ? `${moduleKey}ViewOnly` : moduleKey;
 
     switch (role) {
       case "Manager":
@@ -250,19 +258,29 @@ export const savePermissions = async (
 
     const targetUser = await prisma.user.findFirst({
       where: { id: userId, companyId },
-      select: { id: true },
+      select: { id: true, employeeType: true },
     });
 
     if (!targetUser) {
       throw new Error("User not found in your company");
     }
 
+    // Drop anything the role's module catalogue does not declare — the caller
+    // sends a merged permission object, which also carries id/userId/companyId.
+    const allowedFields = permissionFieldsForRole(targetUser.employeeType);
+    const data = Object.fromEntries(
+      Object.entries(newPermissions).filter(
+        ([field, value]) =>
+          allowedFields.has(field) && typeof value === "boolean",
+      ),
+    );
+
     await prisma.permission.upsert({
       where: {
         userId_companyId: { userId, companyId },
       },
-      create: { userId, companyId, ...newPermissions },
-      update: { ...newPermissions },
+      create: { userId, companyId, ...data },
+      update: data,
     });
 
     return true;

@@ -4,6 +4,7 @@ import { cn } from "@/lib/cn";
 import { padId } from "@/lib/padId";
 import { useClientFilterStore } from "@/stores/clientFilter";
 import { Client, Source, Tag } from "@prisma/client";
+import moment from "moment";
 import Link from "next/link";
 import DeleteClient from "./DeleteClient";
 import EditClient from "./EditClient";
@@ -29,6 +30,7 @@ const ClientListTable = ({
           <th className="px-4 py-2 text-left">Email</th>
           <th className="px-4 py-2 text-left">Phone</th>
           {needCompanyName && <th className="px-4 py-2 text-left">Company</th>}
+          <th className="px-4 py-2 text-left">Date Joined</th>
           <th className="px-4 py-2 text-center">Edit</th>
         </tr>
       </thead>
@@ -81,6 +83,16 @@ const ClientListTable = ({
                 </Link>
               </td>
             )}
+            <td className="px-4 py-2 text-left">
+              <Link
+                className="block h-full w-full text-slate-500"
+                href={`/dashboard/client/${client.id}`}
+              >
+                {moment(
+                  client?.joinDate ? client.joinDate : client.createdAt,
+                ).format("MM/DD/YYYY")}
+              </Link>
+            </td>
             <td className="px-4 py-2 text-center">
               <div className="flex items-center justify-center gap-2">
                 <EditClient client={client} />

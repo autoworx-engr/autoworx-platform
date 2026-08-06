@@ -64,8 +64,7 @@ interface FleetCustomer {
 }
 
 interface User {
-  firstName: string;
-  lastName: string;
+  name: string;
 }
 
 interface PDFFleetStatementProps {
@@ -441,9 +440,7 @@ export const PDFFleetStatement = ({
           >
             {companyDetails?.name}
           </Text>
-          <Text style={styles.fontSize10}>
-            {user?.firstName} {user?.lastName}
-          </Text>
+          <Text style={styles.fontSize10}>{user?.name}</Text>
         </View>
 
         {/* {authorizedName && (

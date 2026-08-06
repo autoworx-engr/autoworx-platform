@@ -91,6 +91,21 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     return Math.round(num * 100) / 100;
   };
 
+  // Keep only digits and a single decimal point, so the amount field can
+  // never hold anything but a number as the user types.
+  const sanitizeAmountInput = (value: string): string =>
+    value.replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1");
+
+  const handleAmountChange = (value: string) => {
+    setAmount(sanitizeAmountInput(value));
+  };
+
+  const amountValue = typeof amount === "string" ? parseFloat(amount) : amount;
+  const amountError =
+    isNaN(amountValue) || amountValue <= 0
+      ? "Amount must be a number greater than 0"
+      : undefined;
+
   function reset() {
     setTab("CARD");
     setDate(new Date());
@@ -304,8 +319,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       name="amount"
                       type="text"
                       value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
+                      onChange={(e) => handleAmountChange(e.target.value)}
                       onBlur={(e) => setAmount(formatAmount(e.target.value))}
+                      error={amountError}
                     />
                   </div>
 
@@ -430,8 +446,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   name="amount"
                   type="text"
                   value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  onChange={(e) => handleAmountChange(e.target.value)}
                   onBlur={(e) => setAmount(formatAmount(e.target.value))}
+                  error={amountError}
                 />
               </div>
 
@@ -489,8 +506,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   name="amount"
                   type="text"
                   value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  onChange={(e) => handleAmountChange(e.target.value)}
                   onBlur={(e) => setAmount(formatAmount(e.target.value))}
+                  error={amountError}
                 />
               </div>
 
@@ -585,8 +603,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     name="amount"
                     type="text"
                     value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
+                    onChange={(e) => handleAmountChange(e.target.value)}
                     onBlur={(e) => setAmount(formatAmount(e.target.value))}
+                    error={amountError}
                   />
                 </div>
               </div>
@@ -634,8 +653,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     type="text"
                     label="Deposit Amount"
                     value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
+                    onChange={(e) => handleAmountChange(e.target.value)}
                     onBlur={(e) => setAmount(formatAmount(e.target.value))}
+                    error={amountError}
                   />
                 </div>
               </div>

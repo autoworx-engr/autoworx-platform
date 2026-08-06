@@ -1,11 +1,10 @@
-import Link from "next/link";
 import React from "react";
 import FleetDetails from "../components/FleetDetails";
 import InvoiceAndStatementList from "../components/InvoiceAndStatementList";
 import NewFleet from "@/app/(dashboard)/dashboard/fleet/components/NewFleet";
+import BackButton from "@/components/BackButton";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
-import { ArrowLeft } from "lucide-react";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 
@@ -52,10 +51,8 @@ const page = async (props: PropsType) => {
 
   return (
     <div className="p-2">
-      <div className="w-fit rounded border p-1.5 md:hidden">
-        <Link href="/dashboard/fleet">
-          <ArrowLeft size={18} />
-        </Link>
+      <div className="w-fit">
+        <BackButton href="/dashboard/fleet" />
       </div>
       <div className="flex items-center justify-between mb-1">
         <h1 className="mr-4 mt-1 text-xl font-bold text-slate-600 sm:text-2xl">

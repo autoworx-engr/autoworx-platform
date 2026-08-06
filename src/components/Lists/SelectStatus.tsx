@@ -110,7 +110,13 @@ export function SelectStatus({
         onOpenChange={(next) => setOpen && setOpen(next)}
       >
         <DropdownMenuTrigger
-          className="flex h-9 items-center gap-2 rounded-lg px-4 py-1 text-sm font-semibold transition-all hover:brightness-95 disabled:opacity-50 ring-1 ring-inset ring-black/5 shadow-sm"
+          className={cn(
+            "flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-semibold transition-all duration-300 disabled:opacity-50 shadow-sm hover:shadow-md outline-none",
+            "ring-1 ring-slate-200 dark:ring-slate-800",
+            open
+              ? "ring-2 ring-primary/60 border-transparent"
+              : "hover:ring-slate-300",
+          )}
           style={{
             backgroundColor: status?.bgColor || "#FFF",
             color: status?.textColor || "#64748B",

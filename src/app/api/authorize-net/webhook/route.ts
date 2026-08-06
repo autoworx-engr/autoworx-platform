@@ -123,7 +123,18 @@ export async function POST(req: NextRequest) {
   }
 
   // Fetch per-company signature key and validate
-  const companyId = await extractCompanyId(body.payload);
+  let companyId: number | null;
+  try {
+    companyId = await extractCompanyId(body.payload);
+  } catch (err) {
+    console.error(
+      "[authorize-net/webhook] extractCompanyId threw for transactionId:",
+      transactionId,
+      err,
+    );
+    return NextResponse.json({ message: "Acknowledged" }, { status: 200 });
+  }
+
   if (!companyId) {
     console.error(
       "[authorize-net/webhook] Cannot identify company for transactionId:",
@@ -133,12 +144,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: "Acknowledged" }, { status: 200 });
   }
 
-  const company = await db.company.findUnique({
-    where: { id: companyId },
-    select: { authorizeNetSignatureKey: true },
-  });
+  let signatureKey: string | null | undefined;
+  try {
+    const company = await db.company.findUnique({
+      where: { id: companyId },
+      select: { authorizeNetSignatureKey: true },
+    });
+    signatureKey = company?.authorizeNetSignatureKey;
+  } catch (err) {
+    console.error(
+      "[authorize-net/webhook] company lookup failed for transactionId:",
+      transactionId,
+      companyId,
+      err,
+    );
+    return NextResponse.json({ message: "Acknowledged" }, { status: 200 });
+  }
 
-  const signatureKey = company?.authorizeNetSignatureKey;
   if (
     !signatureKey ||
     !verifySignature(rawBody, signatureHeader, signatureKey)
@@ -152,13 +174,24 @@ export async function POST(req: NextRequest) {
   }
 
   // Idempotency — skip if already fully processed
-  const existing = await db.webhookEvent.findUnique({
-    where: { eventId: transactionId },
-    select: { status: true },
-  });
+  try {
+    const existing = await db.webhookEvent.findUnique({
+      where: { eventId: transactionId },
+      select: { status: true },
+    });
 
-  if (existing?.status === "PROCESSED") {
-    return NextResponse.json({ message: "Already processed" }, { status: 200 });
+    if (existing?.status === "PROCESSED") {
+      return NextResponse.json(
+        { message: "Already processed" },
+        { status: 200 },
+      );
+    }
+  } catch (err) {
+    console.error(
+      "[authorize-net/webhook] idempotency check failed:",
+      transactionId,
+      err,
+    );
   }
 
   // Persist raw event before enqueuing — never lose the payload
