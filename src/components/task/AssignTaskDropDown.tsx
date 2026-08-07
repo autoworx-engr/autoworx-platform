@@ -115,12 +115,6 @@ export default function AssignTaskDropDown({
       .filter(Boolean) as Partial<User>[];
   }, [assignedUsers, usersById]);
 
-  /**
-   * `availableUsers.length === 0` on its own is ambiguous — it's equally true
-   * while the first page loads, when a search matches nothing, and when every
-   * teammate really is assigned. Each needs its own message, so distinguish
-   * them by *why* the list is empty.
-   */
   const isSearching = debouncedSearchTerm.trim().length > 0;
   const hasAssignableUsers = userForAssign.length > 0;
 

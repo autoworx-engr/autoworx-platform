@@ -58,6 +58,9 @@ export function TaskFormFields({
 
   const priorityItems = [{ id: "Low" }, { id: "Medium" }, { id: "High" }];
 
+  // Picking a date is what makes the times mandatory — mirrors the submit check.
+  const hasDate = !!date?.trim();
+
   return (
     <>
       <div className="mb-4 flex flex-col gap-1.5">
@@ -100,11 +103,12 @@ export function TaskFormFields({
       </div>
 
       <div id="timer-parent" className="mb-4 flex flex-col">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="flex flex-col *:flex-1 gap-3 sm:flex-row">
           <div className="lg:col-span-2">
             <DatePickerField
               label="Date"
-              required
+              placeholder="Select date"
+              clearable
               value={date ?? ""}
               onChange={(value) => setDate(value)}
             />
@@ -113,7 +117,7 @@ export function TaskFormFields({
           <TimeScrollPicker
             id="startTime"
             label="Start Time"
-            required
+            required={hasDate}
             value={startTime || ""}
             maxTime="22:45"
             onChange={(value) => handleTimeChange(value, "start")}
@@ -122,10 +126,8 @@ export function TaskFormFields({
           <TimeScrollPicker
             id="endTime"
             label="End Time"
-            required
+            required={hasDate}
             value={endTime || ""}
-            // A task ends on its start date, and an equal end time is rejected,
-            // so the earliest valid end is one step after the start.
             minTime={startTime ? addMinutes(startTime, 15) : undefined}
             onChange={(value) => handleTimeChange(value, "end")}
           />
