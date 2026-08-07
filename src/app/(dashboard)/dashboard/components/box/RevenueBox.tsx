@@ -6,12 +6,24 @@ import {
   getRevenue,
 } from "@/actions/dashboard/data/getAdminInfo";
 import { cn } from "@/lib/cn";
+import { hasRouteAccess } from "@/lib/serverRouteGuard";
+import BoxRestricted from "./BoxRestricted";
 
 type TRevenueBoxProps = {
   className?: string;
 };
 
 export default async function RevenueBox({ className }: TRevenueBoxProps) {
+  if (!(await hasRouteAccess("/dashboard/reporting/revenue"))) {
+    return (
+      <BoxRestricted
+        title="Revenue"
+        what="reporting & analytics"
+        className={className}
+      />
+    );
+  }
+
   const companyTimezone = await getCompanyTimezone();
   const timezone =
     companyTimezone?.timezone ||

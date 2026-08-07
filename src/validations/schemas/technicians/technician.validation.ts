@@ -19,11 +19,11 @@ export const createTechnicianValidationSchema = z
   .object({
     serviceId: z
       .number({
-        required_error: "Service ID is required",
         invalid_type_error: "Service ID must be a number",
       })
       .int("Service ID must be an integer")
-      .positive("Service ID must be positive"),
+      .positive("Service ID must be positive")
+      .nullish(),
     due: z
       .date({
         required_error: "Due date is required",

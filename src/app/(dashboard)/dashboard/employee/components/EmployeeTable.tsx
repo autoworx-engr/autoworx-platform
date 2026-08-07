@@ -278,7 +278,7 @@ function DesktopTable({
                   {employee.employeeType}
                 </Link>
               </td>
-              <td className="px-4 py-2 text-center">
+              <td className="px-4 py-2 flex items-center justify-center">
                 <div className="flex items-center justify-start gap-2 flex-shrink-0">
                   {canEdit && <EditEmployee employee={employee} />}
                   {canDelete && <DeleteEmployee employee={employee} />}

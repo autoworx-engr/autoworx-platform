@@ -167,6 +167,12 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
           vin: invoice.vehicle?.vin || "N/A",
           price: `$${invoice.grandTotal || 0}`,
           status: invoice.column?.title || "N/A",
+          paymentStatus:
+            Number(invoice.due || 0) <= 0
+              ? "Paid"
+              : Number(invoice.totalPayment || 0) > 0
+                ? "Partially Paid"
+                : "Unpaid",
         }))}
         companyDetails={{
           name: company?.name || "Your Company",
@@ -449,7 +455,9 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
                     <th className={`${tHeadingCommonClasses}`}>Amount</th>
                     <th className={`${tHeadingCommonClasses}`}>Paid</th>
                     <th className={`${tHeadingCommonClasses}`}>Due</th>
-                    <th className={`${tHeadingCommonClasses}`}>Status</th>
+                    <th className={`${tHeadingCommonClasses}`}>
+                      Invoice Status
+                    </th>
                   </tr>
                 </thead>
                 <tbody>

@@ -19,7 +19,7 @@ type TechnicianInput = {
   status: string;
   note: string;
   userId: number;
-  serviceId: number;
+  serviceId: number | null;
   invoiceId: string;
   technicianNote: string;
 };
