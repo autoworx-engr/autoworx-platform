@@ -257,7 +257,13 @@ export default async function Page(props: {
     <div className="gap-3 space-y-4 overflow-clip py-2 md:-my-2 md:min-h-[93vh] xl:flex xl:space-y-0 px-1">
       <div className="w-full xl:min-w-[68%] flex flex-col gap-4">
         <div className="flex items-center gap-3">
-          <BackButton href="/dashboard/estimate" />
+          <BackButton
+            href={
+              pageType === "Invoice"
+                ? "/dashboard/estimate/invoices"
+                : "/dashboard/estimate"
+            }
+          />
           <Title>{pageType}</Title>
         </div>
 
