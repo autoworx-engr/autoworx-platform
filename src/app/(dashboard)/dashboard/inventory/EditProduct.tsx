@@ -26,7 +26,7 @@ import {
   InventoryProductType,
   Vendor,
 } from "@prisma/client";
-import { SquarePen } from "lucide-react";
+import { PencilLineIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { editProduct } from "../../../../actions/inventory/edit";
 import { ProductFormFields } from "./ProductFormFields";
@@ -246,7 +246,7 @@ export default function EditProduct({ productData }: TProps) {
       >
         <div>
           <DialogTrigger asChild>
-            <SquarePen className="w-5 h-5" />
+            <PencilLineIcon className="w-5 h-5" />
           </DialogTrigger>
         </div>
         {/* <div className="block md:hidden">

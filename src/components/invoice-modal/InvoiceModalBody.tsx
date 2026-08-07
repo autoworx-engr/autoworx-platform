@@ -12,13 +12,13 @@ import {
   DialogOverlay,
   DialogPortal,
 } from "@/components/Dialog";
+import { useCanAccessRoute } from "@/hooks/useCanAccessRoute";
 import { useServerGet } from "@/hooks/useServerGet";
 import { queryKeys } from "@/lib/queryKeys";
 import { errorToast, successToast } from "@/lib/toast";
 import { calculateDue } from "@/utils/calculateDue";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { getFileFromCanvas } from "@/utils/getFileFromCanvas";
-import { useCanAccessRoute } from "@/hooks/useCanAccessRoute";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import {
   CardPayment,
@@ -55,8 +55,8 @@ import {
   Mail,
   MessageCircle,
   MessageCircleMore,
+  PencilLineIcon,
   Printer,
-  SquarePen,
   X,
 } from "lucide-react";
 import moment from "moment";
@@ -450,7 +450,7 @@ export default function InvoiceModalBody({
                         tabIndex={!canEdit ? -1 : undefined}
                         style={!canEdit ? { pointerEvents: "none" } : undefined}
                       >
-                        <SquarePen className="h-4 w-4 md:h-5 md:w-5" />
+                        <PencilLineIcon className="h-4 w-4 md:h-5 md:w-5" />
                         {/* <span className="hidden md:inline">Edit</span> */}
                       </Link>
                     </span>

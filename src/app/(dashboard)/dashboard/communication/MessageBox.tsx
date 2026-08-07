@@ -2,27 +2,27 @@ import { deleteUserFromGroup } from "@/actions/communication/internal/deleteUser
 import { getUserInGroup } from "@/actions/communication/internal/query";
 import { renameGroup } from "@/actions/communication/internal/renameGroup";
 import { updateChatTrack } from "@/actions/communication/internal/updateChatTrack";
-import {
-  GROUP_NAME_MAX_LENGTH,
-  normalizeGroupName,
-} from "@/lib/utils/groupName";
 import Avatar from "@/components/Avatar";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { cn } from "@/lib/cn";
 import { successToast } from "@/lib/toast";
+import {
+  GROUP_NAME_MAX_LENGTH,
+  normalizeGroupName,
+} from "@/lib/utils/groupName";
 import { useChatTrackStore } from "@/stores/chatTrackStore";
 import { sendType } from "@/types/Chat";
-import { useQueryClient } from "@tanstack/react-query";
 import { Attachment, Group, User } from "@prisma/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { Popconfirm } from "antd";
 import { format } from "date-fns";
 import {
   ArrowLeft,
   CircleCheckBig,
   CircleX,
+  PencilLineIcon,
   SendHorizontal,
   Settings,
-  SquarePen,
   X,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -449,7 +449,7 @@ export default function MessageBox({
                     </>
                   ) : (
                     <>
-                      <SquarePen
+                      <PencilLineIcon
                         className="ml-3 size-6 cursor-pointer"
                         onClick={() => setIsGroupNameEdited(true)}
                       />

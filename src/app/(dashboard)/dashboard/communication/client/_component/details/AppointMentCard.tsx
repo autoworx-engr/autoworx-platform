@@ -1,5 +1,5 @@
 import { Appointment } from "@prisma/client";
-import { SquarePen } from "lucide-react";
+import { PencilLineIcon } from "lucide-react";
 import moment from "moment";
 
 const AppointMentCard = ({
@@ -38,7 +38,7 @@ const AppointMentCard = ({
                 onClick={() => openEditor(appt.id)}
                 className="text-xs rounded-full bg-[#e8e8e8] px-3 py-1 font-medium hover:bg-[#e0e0e0]"
               >
-                <SquarePen className="w-4 h-4" />
+                <PencilLineIcon className="w-4 h-4" />
               </button>
             </div>
           </div>

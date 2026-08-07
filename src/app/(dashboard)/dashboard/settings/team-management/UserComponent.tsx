@@ -4,7 +4,7 @@ import Search from "@/app/(dashboard)/dashboard/employee/components/Search";
 import { errorToast } from "@/lib/toast";
 import { useEmployeeWorkFilterStore } from "@/stores/employeeWorkFilter";
 import { EmployeeType, Role } from "@prisma/client";
-import { SquarePen } from "lucide-react";
+import { PencilLineIcon } from "lucide-react";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import CustomizeUserRole from "./CustomizeUserRole";
@@ -147,7 +147,7 @@ const UserList: React.FC = () => {
                             title={`Edit ${user.firstName}'s permissions`}
                             aria-label={`Edit ${name} permissions`}
                           >
-                            <SquarePen className="h-4 w-4" />
+                            <PencilLineIcon className="h-4 w-4" />
                             Edit
                           </button>
                         </div>

@@ -16,7 +16,7 @@ import { SlimInput } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
 import { useFormErrorStore } from "@/stores/form-error";
 import { Vendor } from "@prisma/client";
-import { SquarePen } from "lucide-react";
+import { PencilLineIcon } from "lucide-react";
 import { useState } from "react";
 
 export default function EditHistory({
@@ -83,7 +83,7 @@ export default function EditHistory({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button className="text-primary">
-          <SquarePen size={20} />
+          <PencilLineIcon size={20} />
         </button>
       </DialogTrigger>
 

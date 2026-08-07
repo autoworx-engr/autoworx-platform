@@ -16,7 +16,7 @@ import { successToast } from "@/lib/toast";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import { Client, Fleet, Tag } from "@prisma/client";
-import { CircleUserRound, SquarePen } from "lucide-react";
+import { CircleUserRound, PencilLineIcon } from "lucide-react";
 import type { JSX } from "react";
 import { useEffect, useState, useTransition } from "react";
 import { RotatingLines } from "react-loader-spinner";
@@ -268,7 +268,7 @@ export default function NewFleet({
                 htmlFor="profilePicture"
                 className="absolute bottom-0 right-0 p-1 bg-primary rounded-full shadow-sm cursor-pointer transition-colors"
               >
-                <SquarePen className="w-3 h-3 text-white" />
+                <PencilLineIcon className="w-3 h-3 text-white" />
               </label>
               <input
                 type="file"

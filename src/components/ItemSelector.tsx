@@ -5,9 +5,9 @@ import { DropdownMenuContent } from "@radix-ui/react-dropdown-menu";
 import {
   ChevronDown,
   ChevronUp,
+  PencilLineIcon,
   Plus,
   Search,
-  SquarePen,
   X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -188,7 +188,7 @@ export default function ItemSelector<T>({
                   }}
                 >
                   <div className="rounded-lg bg-primary p-1.5 text-white shadow-sm shadow-primary/30">
-                    <SquarePen size={12} strokeWidth={2.5} />
+                    <PencilLineIcon size={12} strokeWidth={2.5} />
                   </div>
                 </button>
 

@@ -20,7 +20,7 @@ import { useListsStore } from "@/stores/lists";
 import { Category, Labor } from "@prisma/client";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { Popconfirm } from "antd";
-import { SquarePen, Trash2 } from "lucide-react";
+import { PencilLineIcon, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -127,7 +127,7 @@ export const CannedLaborItem = ({
                     className="text-2xl text-indigo-500 hover:text-indigo-600 transition-colors"
                     title="Edit"
                   >
-                    <SquarePen className="w-5 h-5" />
+                    <PencilLineIcon className="w-5 h-5" />
                   </button>
                 </DialogTrigger>
                 <DialogContent onOpenAutoFocus={(e) => e.preventDefault()}>
@@ -263,7 +263,7 @@ export const CannedLaborItem = ({
               className="text-xl text-indigo-500 hover:text-indigo-600 transition-colors"
               title="Edit"
             >
-              <SquarePen className="w-5 h-5" />
+              <PencilLineIcon className="w-5 h-5" />
             </button>
           </DialogTrigger>
           <DialogContent

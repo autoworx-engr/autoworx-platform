@@ -5,7 +5,7 @@ import { cn } from "@/lib/cn";
 import { errorToast, successToast } from "@/lib/toast";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { Popconfirm } from "antd";
-import { SquarePen, Trash2 } from "lucide-react";
+import { PencilLineIcon, Trash2 } from "lucide-react";
 import moment from "moment";
 import React, { useEffect, useState } from "react";
 import EditFleetStatementModal from "./EditFleetStatementModal"; // Add this import
@@ -208,7 +208,7 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
                       }}
                       className="text-blue-600 hover:text-blue-800 transition-colors"
                     >
-                      <SquarePen size={20} />
+                      <PencilLineIcon size={20} />
                     </button>
                   </div>
                 </td>
@@ -289,7 +289,7 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
                     }}
                     className="text-blue-600 hover:text-blue-800 transition-colors"
                   >
-                    <SquarePen size={18} />
+                    <PencilLineIcon size={18} />
                   </button>
                 </div>
               </CardContent>

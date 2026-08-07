@@ -3,7 +3,7 @@
 import NewFleet from "@/app/(dashboard)/dashboard/fleet/components/NewFleet";
 import { cn } from "@/lib/cn";
 import { padId } from "@/lib/padId";
-import { SquarePen } from "lucide-react";
+import { PencilLineIcon } from "lucide-react";
 import Link from "next/link";
 import DeleteFleet from "./DeleteFleet";
 
@@ -82,7 +82,7 @@ const FleetListTable = ({ fleets }: TFleetListTableProps) => {
                   fleet={client}
                   isEdit={true}
                   buttonElement={
-                    <SquarePen className="w-5 h-5 cursor-pointer text-primary" />
+                    <PencilLineIcon className="w-5 h-5 cursor-pointer text-primary" />
                   }
                 />
                 <DeleteFleet id={client.fleet?.clientId} />
