@@ -71,6 +71,30 @@ export const getWeekInfoFromWeekStr = (
   };
 };
 
+/**
+ * Week range for the week *containing* `date`, anchored on `weekStart`.
+ */
+export const getWeekInfoFromDate = (
+  date: string | null | undefined,
+  weekStart: number | string = 1,
+) => {
+  const dow = getWeekStartNumber(weekStart);
+  // Fall back to the current week when the store has no date yet.
+  const anchor = date ? moment(date, "YYYY-MM-DD") : moment();
+  const base = anchor.isValid() ? anchor : moment();
+
+  const startOfWeek = base.clone().day(dow);
+  if (startOfWeek.isAfter(base, "day")) startOfWeek.subtract(7, "day");
+  const endOfWeek = startOfWeek.clone().add(6, "day");
+
+  return {
+    weekStr: `${startOfWeek.weekYear()}-W${String(startOfWeek.week()).padStart(2, "0")}`,
+    startDate: startOfWeek.format("YYYY-MM-DD"),
+    endDate: endOfWeek.format("YYYY-MM-DD"),
+    displayRange: `${startOfWeek.format("MMM DD")} - ${endOfWeek.format("MMM DD, YYYY")}`,
+  };
+};
+
 export function getDayNumber(dayName: string) {
   const dayNumber = moment().day(dayName).day(); // `day()` accepts the day name
   return isNaN(dayNumber) ? -1 : dayNumber;

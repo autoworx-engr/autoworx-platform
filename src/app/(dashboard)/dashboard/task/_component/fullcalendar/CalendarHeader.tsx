@@ -266,8 +266,6 @@ export function CalendarHeader({
 
       {/* ── Row 2: Date title + Stats ─────────────────── */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t px-3 py-2 sm:px-4">
-        {/* Date — a plain title in every view. Month/year navigation lives in
-            the DateSelector and the arrows, so the header stays read-only. */}
         <h2 className="mr-auto text-base font-semibold text-slate-900 sm:text-lg">
           <DisplayDate type={type} />
         </h2>

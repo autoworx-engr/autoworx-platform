@@ -3,15 +3,14 @@ import { CalendarType } from "@/types/calendar";
 import moment from "moment";
 
 export default function DisplayDate({ type }: { type: CalendarType }) {
-  const { date, week, month } = useCalendarStore();
+  const { date } = useCalendarStore();
 
-  const param =
-    type === "day" || type === "list" ? date : type === "week" ? week : month;
+  const param = date;
 
   const longFormat =
-    type === "day" || type === "list" ? "dddd, D MMMM YYYY" : "MMMM YYYY";
+    type === "day" || type === "list" ? "dddd, MMMM D, YYYY" : "MMMM YYYY";
   const shortFormat =
-    type === "day" || type === "list" ? "ddd, D MMM YY" : "MMM YY";
+    type === "day" || type === "list" ? "ddd, MMM D, YY" : "MMM YY";
 
   const formattedDateLong = moment(param).isValid()
     ? moment(param).format(longFormat)
