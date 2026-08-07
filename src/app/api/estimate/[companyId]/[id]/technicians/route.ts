@@ -50,10 +50,10 @@ import { errorHandler } from "@/error-boundary/globalErrorHandler";
  *         application/json:
  *           schema:
  *             type: object
- *             required: [userId, serviceId, invoiceItemId]
+ *             required: [userId, invoiceItemId]
  *             properties:
  *               userId: { type: integer }
- *               serviceId: { type: integer }
+ *               serviceId: { type: integer, nullable: true, description: "Omit/null for labor-only or material-only invoice items" }
  *               invoiceItemId: { type: integer }
  *               date: { type: string, example: "2026-07-01" }
  *               due: { type: string, example: "2026-07-05" }
@@ -143,7 +143,8 @@ export async function POST(
         date: new Date(rest.date),
         due: rest.due ? new Date(rest.due) : null,
         amount: Number(rest.amount),
-        serviceId: Number(rest.serviceId),
+        // labor-only / material-only items have no service
+        serviceId: rest.serviceId ? Number(rest.serviceId) : null,
         invoiceItemId: Number(rest.invoiceItemId),
         userId: Number(rest.userId),
       },

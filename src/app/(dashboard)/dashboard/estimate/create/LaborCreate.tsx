@@ -1,6 +1,4 @@
-// import SelectCategory from "@/components/Lists/SelectCategory";
 import SelectCategory from "@/components/Lists/CreateEstimateCategory";
-import { SelectTags } from "@/components/Lists/SelectTags";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
 import { useEstimatePopupStore } from "@/stores/estimate-popup";
 import { useListsStore } from "@/stores/lists";
@@ -12,6 +10,13 @@ import { errorToast } from "@/lib/toast";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { laborCreateValidationSchema } from "@/validations/schemas/estimate/labor/labor.validation";
 import { cn } from "@/lib/cn";
+import {
+  validateLabor,
+  type LaborField,
+  type LaborFieldErrors,
+} from "./laborValidation";
+
+const MAX_LABOR_VALUE = 99999999;
 
 export default function LaborCreate() {
   const { categories } = useListsStore();
@@ -24,12 +29,39 @@ export default function LaborCreate() {
   const [charge, setCharge] = useState<number>();
   const [discount, setDiscount] = useState<number>();
   const [addToCannedLabor, setAddToCannedLabor] = useState<boolean>(false);
+  const [errors, setErrors] = useState<LaborFieldErrors>({});
 
   const { close, data } = useEstimatePopupStore();
   const itemId = data?.itemId;
 
-  const [tagsOpen, setTagsOpen] = useState(false);
   const [categoryOpen, setCategoryOpen] = useState(false);
+
+  // Drop a field's error as soon as the user edits it, so the form stops
+  // shouting about something that's already been fixed.
+  const clearFieldError = (field: LaborField) =>
+    setErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+
+  /**
+   * Returns false when the form is invalid. The offending fields get a red
+   * border, and the first problem is surfaced as a toast — validateLabor
+   * returns its errors in field order, so the toast follows the visual order.
+   */
+  const validateForm = () => {
+    const nextErrors = validateLabor({ name, hours, charge }, MAX_LABOR_VALUE);
+    setErrors(nextErrors);
+
+    const [firstError] = Object.values(nextErrors);
+    if (firstError) {
+      errorToast(firstError, { id: "labor-validation" });
+      return false;
+    }
+    return true;
+  };
 
   useEffect(() => {
     if (currentSelectedCategoryId) {
@@ -40,13 +72,10 @@ export default function LaborCreate() {
   }, [currentSelectedCategoryId]);
 
   useEffect(() => {
-    setTagsOpen(false);
-  }, [categoryOpen]);
-  useEffect(() => {
-    setCategoryOpen(false);
-  }, [tagsOpen]);
+    // Opening the popup for a different labor row must not inherit the
+    // previous one's validation errors.
+    setErrors({});
 
-  useEffect(() => {
     if (data?.labor && data.edit) {
       setName(data.labor.name);
       setCategory(categories.find((cat) => cat.id === data.labor.categoryId)!);
@@ -73,10 +102,7 @@ export default function LaborCreate() {
   }, [data]);
 
   async function handleSubmit() {
-    // if (!name) {
-    //   alert("Labor name is required");
-    //   return;
-    // }
+    if (!validateForm()) return;
 
     try {
       const validatedLaborData = await laborCreateValidationSchema.parseAsync({
@@ -157,10 +183,7 @@ export default function LaborCreate() {
   // }
 
   async function handleEdit() {
-    if (!name) {
-      alert("Labor name is required");
-      return;
-    }
+    if (!validateForm()) return;
 
     // Change the service where itemId is the same
     // @ts-ignore
@@ -196,21 +219,32 @@ export default function LaborCreate() {
       </h3>
 
       {/* Labor Name */}
-      <div className="flex items-center gap-3">
-        <label
-          htmlFor="name"
-          className="w-28 text-sm font-semibold tracking-wider text-slate-500"
-        >
-          Labor Name
-        </label>
-        <input
-          type="text"
-          id="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="h-10 flex-1 appearance-none rounded-xl bg-white px-4 text-sm font-medium border border-slate-200 transition-all focus:outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/30"
-          placeholder="Labor Name"
-        />
+      <div>
+        <div className="flex items-center gap-3">
+          <label
+            htmlFor="name"
+            className="w-28 text-sm font-semibold tracking-wider text-slate-500"
+          >
+            Labor Name <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            id="name"
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value);
+              clearFieldError("name");
+            }}
+            aria-invalid={!!errors.name}
+            className={cn(
+              "h-10 flex-1 appearance-none rounded-xl bg-white px-4 text-sm font-medium border transition-all focus:outline-none focus:ring-2",
+              errors.name
+                ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+                : "border-slate-200 focus:border-primary/30 focus:ring-primary/30",
+            )}
+            placeholder="Labor Name"
+          />
+        </div>
       </div>
 
       {/* Category */}
@@ -230,100 +264,92 @@ export default function LaborCreate() {
         </div>
       </div>
 
-      {/* Tags */}
-      <div className="flex items-center gap-3">
-        <label
-          htmlFor="tags"
-          className="w-28 text-sm font-semibold tracking-wider text-slate-500"
-        >
-          Tags
-        </label>
-        <div className="flex-1">
-          <SelectTags
-            value={tags}
-            setValue={setTags}
-            openStates={[tagsOpen, setTagsOpen]}
+      {/* Hours */}
+      <div>
+        <div className="flex items-center gap-3">
+          <label
+            htmlFor="hours"
+            className="w-28 text-sm font-semibold tracking-wider text-slate-500"
+          >
+            No. of Hours <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="number"
+            id="hours"
+            min="0"
+            value={hours ?? ""}
+            onChange={(e) => {
+              clearFieldError("hours");
+              const inputValue = e.target.value;
+              if (
+                inputValue === "" ||
+                inputValue === "-" ||
+                inputValue === "0"
+              ) {
+                setHours(undefined);
+                return;
+              }
+              const value = parseFloat(inputValue);
+              if (isNaN(value) || value <= 0) {
+                setHours(undefined);
+              } else {
+                setHours(value);
+              }
+            }}
+            aria-invalid={!!errors.hours}
+            className={cn(
+              "h-10 flex-1 appearance-none rounded-xl bg-white px-4 text-sm font-medium border transition-all focus:outline-none focus:ring-2",
+              errors.hours
+                ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+                : "border-slate-200 focus:border-primary/30 focus:ring-primary/30",
+            )}
+            placeholder="0"
           />
         </div>
       </div>
 
-      {/* Notes */}
-      <div className="flex items-start gap-3">
-        <label
-          htmlFor="notes"
-          className="mt-2 w-28 text-sm font-semibold tracking-wider text-slate-500"
-        >
-          Notes
-        </label>
-        <textarea
-          id="notes"
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          className="h-24 flex-1 appearance-none rounded-xl bg-white p-3 text-sm font-medium border border-slate-200 transition-all focus:outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/30 resize-none"
-          placeholder="Additional details..."
-        />
-      </div>
-
-      {/* Hours */}
-      <div className="flex items-center gap-3">
-        <label
-          htmlFor="hours"
-          className="w-28 text-sm font-semibold tracking-wider text-slate-500"
-        >
-          No. of Hours
-        </label>
-        <input
-          type="number"
-          id="hours"
-          min="0"
-          value={hours ?? ""}
-          onChange={(e) => {
-            const inputValue = e.target.value;
-            if (inputValue === "" || inputValue === "-" || inputValue === "0") {
-              setHours(undefined);
-              return;
-            }
-            const value = parseFloat(inputValue);
-            if (isNaN(value) || value <= 0) {
-              setHours(undefined);
-            } else {
-              setHours(value);
-            }
-          }}
-          className="h-10 flex-1 appearance-none rounded-xl bg-white px-4 text-sm font-medium border border-slate-200 transition-all focus:outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/30"
-          placeholder="0"
-        />
-      </div>
-
       {/* Charge ($/hr) */}
-      <div className="flex items-center gap-3">
-        <label
-          htmlFor="perhour"
-          className="w-28 text-sm font-semibold tracking-wider text-slate-500"
-        >
-          $/hr
-        </label>
-        <input
-          type="number"
-          id="perhour"
-          min="0"
-          value={charge ?? ""}
-          onChange={(e) => {
-            const inputValue = e.target.value;
-            if (inputValue === "" || inputValue === "-" || inputValue === "0") {
-              setCharge(undefined);
-              return;
-            }
-            const value = parseFloat(inputValue);
-            if (isNaN(value) || value <= 0) {
-              setCharge(undefined);
-            } else {
-              setCharge(value);
-            }
-          }}
-          className="h-10 flex-1 appearance-none rounded-xl bg-white px-4 text-sm font-medium border border-slate-200 transition-all focus:outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/30"
-          placeholder="0.00"
-        />
+      <div>
+        <div className="flex items-center gap-3">
+          <label
+            htmlFor="perhour"
+            className="w-28 text-sm font-semibold tracking-wider text-slate-500"
+          >
+            $/hr <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="number"
+            id="perhour"
+            min="0"
+            value={charge ?? ""}
+            onChange={(e) => {
+              clearFieldError("charge");
+              const inputValue = e.target.value;
+              if (
+                inputValue === "" ||
+                inputValue === "-" ||
+                inputValue === "0"
+              ) {
+                setCharge(undefined);
+                return;
+              }
+              const value = parseFloat(inputValue);
+              if (isNaN(value) || value <= 0) {
+                setCharge(undefined);
+              } else {
+                setCharge(value);
+              }
+            }}
+            aria-invalid={!!errors.charge}
+            className={cn(
+              "h-10 flex-1 appearance-none rounded-xl bg-white px-4 text-sm font-medium border transition-all focus:outline-none focus:ring-2",
+              errors.charge
+                ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+                : "border-slate-200 focus:border-primary/30 focus:ring-primary/30",
+            )}
+            placeholder="0.00"
+          />
+        </div>
       </div>
 
       {/* Discount */}
@@ -354,6 +380,23 @@ export default function LaborCreate() {
           }}
           className="h-10 flex-1 appearance-none rounded-xl bg-white px-4 text-sm font-medium border border-slate-200 transition-all focus:outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/30"
           placeholder="0"
+        />
+      </div>
+
+      {/* Notes */}
+      <div className="flex items-start gap-3">
+        <label
+          htmlFor="notes"
+          className="mt-2 w-28 text-sm font-semibold tracking-wider text-slate-500"
+        >
+          Notes
+        </label>
+        <textarea
+          id="notes"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          className="h-24 flex-1 appearance-none rounded-xl bg-white p-3 text-sm font-medium border border-slate-200 transition-all focus:outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/30 resize-none"
+          placeholder="Additional details..."
         />
       </div>
 

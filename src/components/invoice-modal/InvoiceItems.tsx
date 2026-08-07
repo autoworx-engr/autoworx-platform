@@ -2,6 +2,7 @@
 
 import type { db } from "@/lib/db";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { getInvoiceItemTitle } from "@/utils/invoiceItemTitle";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 
@@ -64,7 +65,7 @@ export function InvoiceItems({ items, isPrinting = false }: InvoiceItemsProps) {
             }
             className="flex w-full cursor-pointer justify-between text-primary"
           >
-            <p>{item.labor?.name ?? "Materials"}</p>
+            <p>{getInvoiceItemTitle(item)}</p>
             <button
               type="button"
               onClick={() =>

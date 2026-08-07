@@ -38,6 +38,7 @@ const nextConfig = {
   reactStrictMode: false,
   productionBrowserSourceMaps: process.env.NODE_ENV === "development",
   allowedDevOrigins: [
+    "192.168.0.101",
     "*.ngrok-free.app",
     "localhost:3000",
     "*.trycloudflare.com",

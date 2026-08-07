@@ -624,6 +624,11 @@ model ClientConversationTrack {
   instagramUnReadCount Int       @default(0) @map("instagram_unread_count")
   instagramLastMessage String?   @map("instagram_last_message") @db.Text
   instagramLastBy      String?   @map("instagram_last_by")
+  // Call fields. Calls reuse `smsLastMessage` for their preview line, so these
+  // let the client list tell a live call from a finished one and collapse the
+  // row down to just the call while it is ringing or connected.
+  callStatus           String?   @map("call_status")
+  callUpdatedAt        DateTime? @map("call_updated_at")
   createdAt            DateTime  @default(now()) @map("created_at")
   updatedAt            DateTime  @default(now()) @updatedAt @map("updated_at")
   client               Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
@@ -1646,7 +1651,9 @@ model Technician {
   status         String?
   note           String?           @map("new_note") @db.VarChar(1500)
   technicianNote String?           @map("technician_note") @db.VarChar(1500)
-  serviceId      Int               @map("service_id")
+  // Nullable: an invoice item may be labor-only or material-only (InvoiceItem.serviceId
+  // is optional too), and those rows still need technician assignments.
+  serviceId      Int?              @map("service_id")
   invoiceId      String            @map("invoice_id")
   companyId      Int               @map("company_id")
   invoiceItemId  Int               @map("invoice_item_id")
@@ -2629,6 +2636,9 @@ model ClientSMS {
   company          Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   isSalesAgent     Boolean?  @default(false)
   agentProcessedAt DateTime? @map("agent_processed_at")
+  // "SMS" for a real text; "MISSED_CALL" for the system marker the thread shows
+  // so a missed call is visible in the conversation, not just the phone tab.
+  messageType      String?   @default("SMS") @map("message_type")
   createdAt        DateTime  @default(now()) @map("created_at")
   updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at")
 }

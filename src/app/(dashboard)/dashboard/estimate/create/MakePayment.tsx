@@ -13,6 +13,7 @@ import {
 import Selector from "@/components/Selector";
 import { SlimInput, slimInputClassName } from "@/components/SlimInput";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { formatAmount, useAmountField } from "@/hooks/useAmountField";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { useInvoiceCreate } from "@/hooks/useInvoiceCreate";
 import { cn } from "@/lib/cn";
@@ -86,47 +87,30 @@ export default function MakePayment() {
   const [cardType, setCardType] = useState("MASTERCARD");
   const [check, setCheck] = useState("");
   const [cash, setCash] = useState<string>("");
-  const [amount, setAmount] = useState<number | string>(0);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(
     null,
   );
 
   const [openPaymentMethod, setOpenPaymentMethod] = useState(false);
 
-  const [deposit, setDeposit] = useState<number | string>(0);
   const [depositMethod, setDepositMethod] = useState<string>("");
   const [depositNotes, setDepositNotes] = useState<string>("");
 
   const isDueZero = due === 0 ? true : false;
 
-  const formatAmount = (value: number | string): number => {
-    const num = typeof value === "string" ? parseFloat(value) : value;
-    return Math.round(num * 100) / 100;
-  };
+  const {
+    value: amount,
+    setValue: setAmount,
+    error: amountError,
+    inputProps: amountInputProps,
+  } = useAmountField(0, "Amount");
 
-  const sanitizeAmountInput = (value: string): string =>
-    value.replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1");
-
-  const handleAmountChange = (value: string) => {
-    setAmount(sanitizeAmountInput(value));
-  };
-
-  const amountValue = typeof amount === "string" ? parseFloat(amount) : amount;
-  const amountError =
-    isNaN(amountValue) || amountValue <= 0
-      ? "Amount must be a number greater than 0"
-      : undefined;
-
-  const handleDepositChange = (value: string) => {
-    setDeposit(sanitizeAmountInput(value));
-  };
-
-  const depositValue =
-    typeof deposit === "string" ? parseFloat(deposit) : deposit;
-  const depositError =
-    isNaN(depositValue) || depositValue <= 0
-      ? "Deposit must be a number greater than 0"
-      : undefined;
+  const {
+    value: deposit,
+    setValue: setDeposit,
+    error: depositError,
+    inputProps: depositInputProps,
+  } = useAmountField(0, "Deposit amount");
 
   function reset() {
     setTab("CARD");
@@ -137,36 +121,41 @@ export default function MakePayment() {
     setCheck("");
     setCash("");
     setAmount(0);
+    setDeposit(0);
     setDepositNotes("");
   }
 
   async function handleSubmit() {
-    const roundedAmount = formatAmount(amount);
     const roundedDue = formatAmount(due);
 
-    if (!roundedAmount || roundedAmount <= 0) {
-      errorToast("Payment amount must be greater than 0");
-      return;
-    }
-
-    if (Number(roundedAmount) > roundedDue) {
-      errorToast(`amount exceeds the due of $${roundedDue}  `);
-      return;
-    }
-
     if (tab === "DEPOSIT") {
-      const roundedDeposit = formatAmount(deposit);
-
-      if (!roundedDeposit || roundedDeposit <= 0) {
-        errorToast("Deposit amount must be greater than 0");
+      if (depositError) {
+        errorToast(depositError);
         return;
       }
 
-      if (roundedDeposit > roundedDue) {
+      if (formatAmount(deposit) > roundedDue) {
         errorToast("Deposit amount cannot be greater than due amount");
         return;
       }
+
+      if (depositMethod === "") {
+        errorToast("Deposit method is required");
+        return;
+      }
+    } else {
+      if (amountError) {
+        errorToast(amountError);
+        return;
+      }
+
+      if (formatAmount(amount) > roundedDue) {
+        errorToast(`amount exceeds the due of $${roundedDue}`);
+        return;
+      }
     }
+
+    const roundedAmount = formatAmount(amount);
 
     try {
       await additionalDataValidation.parseAsync({
@@ -219,16 +208,6 @@ export default function MakePayment() {
         }
         // Add deposit
         if (tab === "DEPOSIT") {
-          console.log(
-            "🚀 ~ handleSubmit ~ formatAmount(deposit) :",
-            formatAmount(deposit),
-          );
-          console.log("🚀 ~ handleSubmit ~ due:", due);
-
-          if (depositMethod === "") {
-            errorToast("Deposit method is required");
-            return;
-          }
           res3 = await newPayment({
             invoiceId: invoiceId,
             type: "DEPOSIT" as PaymentType,
@@ -322,7 +301,9 @@ export default function MakePayment() {
           break;
       }
     }
-    setAmount(formatAmount(due));
+    const dueAmount = formatAmount(due);
+    setAmount(isNaN(dueAmount) ? "" : dueAmount);
+    setDeposit(isNaN(dueAmount) ? "" : dueAmount);
   };
 
   return (
@@ -344,7 +325,7 @@ export default function MakePayment() {
       </DialogTrigger>
 
       <DialogContent className="w-full max-w-xl">
-        <form>
+        <form noValidate>
           <DialogHeader>
             <DialogTitle>Make Payment</DialogTitle>
             <DialogClose />
@@ -438,11 +419,7 @@ export default function MakePayment() {
                     <SlimInput
                       labelClassName="text-sm md:text-base"
                       name="amount"
-                      type="text"
-                      value={amount}
-                      onChange={(e) => handleAmountChange(e.target.value)}
-                      onBlur={(e) => setAmount(formatAmount(e.target.value))}
-                      error={amountError}
+                      {...amountInputProps}
                     />
                   </div>
 
@@ -568,11 +545,7 @@ export default function MakePayment() {
                 <SlimInput
                   labelClassName="text-sm md:text-base"
                   name="amount"
-                  type="text"
-                  value={amount}
-                  onChange={(e) => handleAmountChange(e.target.value)}
-                  onBlur={(e) => setAmount(formatAmount(e.target.value))}
-                  error={amountError}
+                  {...amountInputProps}
                 />
               </div>
 
@@ -631,10 +604,7 @@ export default function MakePayment() {
                 <SlimInput
                   labelClassName="text-sm md:text-base"
                   name="amount"
-                  type="text"
-                  value={amount}
-                  onChange={(e) => handleAmountChange(e.target.value)}
-                  error={amountError}
+                  {...amountInputProps}
                 />
               </div>
 
@@ -730,10 +700,7 @@ export default function MakePayment() {
                   <SlimInput
                     labelClassName="text-sm md:text-base"
                     name="amount"
-                    type="text"
-                    value={amount}
-                    onChange={(e) => handleAmountChange(e.target.value)}
-                    error={amountError}
+                    {...amountInputProps}
                   />
                 </div>
               </div>
@@ -780,11 +747,8 @@ export default function MakePayment() {
                   <SlimInput
                     labelClassName="text-sm md:text-base"
                     name="deposit"
-                    type="text"
                     label="Deposit Amount"
-                    value={deposit}
-                    onChange={(e) => handleDepositChange(e.target.value)}
-                    error={depositError}
+                    {...depositInputProps}
                   />
                 </div>
               </div>

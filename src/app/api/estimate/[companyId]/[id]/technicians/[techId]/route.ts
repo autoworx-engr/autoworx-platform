@@ -133,7 +133,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Params }) {
         date: new Date(rest.date),
         due: rest.due ? new Date(rest.due) : null,
         amount: Number(rest.amount),
-        serviceId: Number(rest.serviceId),
+        serviceId: rest.serviceId ? Number(rest.serviceId) : null,
         userId: Number(rest.userId),
       },
       vehicleParts,

@@ -23,7 +23,7 @@ import type {
 
 export function SyncLists({
   customers = [],
-  vehicles = [],
+  vehicles,
   employees = [],
   templates = [],
   categories = [],
@@ -62,10 +62,11 @@ export function SyncLists({
     if (hasInitialized.current) return;
 
     const categoriesFromState = useListsStore.getState().categories;
+    const vehiclesFromState = useListsStore.getState().vehicles;
 
     useListsStore.setState({
       customers,
-      vehicles,
+      vehicles: vehicles ?? vehiclesFromState,
       employees,
       templates,
       categories:
@@ -85,6 +86,13 @@ export function SyncLists({
   }, []);
 
   useEffect(() => {
+    // `vehicles` is only passed by callers that actually manage the vehicle
+    // list for the current page (e.g. estimate create/edit). Instances like
+    // the dashboard layout's <SyncLists categories={categories} /> don't
+    // pass it at all, and must not clobber the real list with an empty one
+    // on every re-render (this ran on every dynamic re-render of the
+    // layout, wiping the vehicle dropdown on the estimate edit page).
+    if (vehicles === undefined) return;
     useListsStore.setState({ vehicles });
   }, [vehicles]);
 
