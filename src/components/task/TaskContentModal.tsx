@@ -87,7 +87,7 @@ export default function TaskContentModal({
     <DialogContent
       className={cn(
         isLoading ? "block" : "flex flex-col",
-        "min-h-[500px] overflow-y-auto",
+        "min-h-[500px] overflow-y-auto overflow-x-hidden",
       )}
       onClick={(e) => {
         e.stopPropagation();
