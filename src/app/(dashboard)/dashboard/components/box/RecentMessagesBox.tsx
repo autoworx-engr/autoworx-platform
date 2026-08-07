@@ -1,73 +1,55 @@
 import { fetchRecentMessages } from "@/actions/dashboard/technician/recentMessages";
-import { db } from "@/lib/db";
 import getUser from "@/lib/getUser";
-import getPermissions from "@/lib/getPermissions";
 import BoxTitle from "./BoxTitle";
 import MessageContainer from "./MessageContainer";
 import { cn } from "@/lib/cn"; // Ensure cn utility is imported
 import { getClientMessages } from "@/actions/message/getClientMessages";
+import { hasRouteAccess } from "@/lib/serverRouteGuard";
+import BoxRestricted from "./BoxRestricted";
+
+/** Employee types this box appears for, and which message lists each may see. */
+const CLIENT_MESSAGE_ROLES = ["Sales"];
+const INTERNAL_MESSAGE_ROLES = ["Sales", "Technician", "Other"];
 
 export default async function RecentMessagesBox() {
   const user = await getUser();
 
-  // Get permissions to check communicationHubInternal
-  const permissions = await getPermissions();
-  const companyPermissions = permissions?.companyPermissions;
-  const userPermissions = permissions?.userPermissions;
+  // Each list is gated by its own Communications Hub module — the same keys the
+  // /dashboard/communication routes use, so the box agrees with the pages it
+  // links to. Checked before fetching, so a blocked list is never queried.
+  const canSeeClientMessages =
+    CLIENT_MESSAGE_ROLES.includes(user.employeeType) &&
+    (await hasRouteAccess("/dashboard/communication/client"));
 
-  // Priority-based permission check: userPermission first, then companyPermission
-  const hasMessagePermission =
-    permissions?.role === "Admin" ||
-    (userPermissions?.communicationHubInternal !== undefined
-      ? userPermissions.communicationHubInternal
-      : companyPermissions?.communicationHubInternal !== false);
+  const canSeeInternalMessages =
+    INTERNAL_MESSAGE_ROLES.includes(user.employeeType) &&
+    (await hasRouteAccess("/dashboard/communication/internal"));
 
-  // Hide redirect link if company permission is false (regardless of user permission)
-  const shouldHideRedirectLink =
-    permissions?.role !== "Admin" &&
-    companyPermissions?.communicationHubInternal === false;
+  if (!canSeeClientMessages && !canSeeInternalMessages) {
+    return (
+      <BoxRestricted
+        title="Recent Messages"
+        what={
+          CLIENT_MESSAGE_ROLES.includes(user.employeeType)
+            ? "client & internal messages"
+            : "internal messages"
+        }
+      />
+    );
+  }
 
-  const clients = await db.client.findMany({
-    where: { companyId: user.companyId },
-    include: {
-      MailgunEmail: {
-        orderBy: {
-          createdAt: "desc", // Assuming createdAt is the timestamp for the email
-        },
-        take: 1,
-        include: {
-          client: true,
-        }, // Get only the latest email for each client
-      },
-    },
-  });
+  const clientData = canSeeClientMessages
+    ? await getClientMessages(1)
+    : { messages: [], total: 0, hasMore: false };
 
-  // Now, sort clients manually based on the latest MailgunEmail
-  const sortedClients = clients.sort((a, b) => {
-    const aLastEmailDate =
-      a.MailgunEmail.length > 0
-        ? new Date(
-            a.MailgunEmail[a.MailgunEmail.length - 1].createdAt,
-          ).getTime()
-        : new Date("1970-01-01").getTime();
+  const internalMessages = canSeeInternalMessages
+    ? await fetchRecentMessages(100)
+    : [];
 
-    const bLastEmailDate =
-      b.MailgunEmail.length > 0
-        ? new Date(
-            b.MailgunEmail[b.MailgunEmail.length - 1].createdAt,
-          ).getTime()
-        : new Date("1970-01-01").getTime();
-
-    return bLastEmailDate - aLastEmailDate;
-  });
-
-  const clientData =
-    user.employeeType === "Sales"
-      ? await getClientMessages(1)
-      : { messages: [], total: 0, hasMore: false };
-  const defaultTake = 100; // Default number of messages to fetch
-
-  const internalMessages = await fetchRecentMessages(defaultTake);
+  // Point the header link at a list the user can actually open.
+  const redirectLink = canSeeInternalMessages
+    ? "/dashboard/communication/internal"
+    : "/dashboard/communication/client";
 
   return (
     // Outer Container: Apply full Glassmorphism style and ensure flex-1 stretching
@@ -95,29 +77,16 @@ export default async function RecentMessagesBox() {
         <BoxTitle
           className="mb-4 md:mb-6 flex-shrink-0" // Add margin and ensure title doesn't scroll
           title="Recent Messages"
-          redirectLink={
-            !shouldHideRedirectLink
-              ? "/dashboard/communication/internal"
-              : undefined
-          }
+          redirectLink={redirectLink}
         />
 
         {/* Message Container: Must fill remaining space and handle its own scrolling */}
         <div className="flex-1 min-h-0 custom-scrollbar overflow-y-auto">
           <MessageContainer
             user={user}
-            hasMessagePermission={hasMessagePermission}
-            // Only Sales gets client emails on the dashboard (as per existing logic)
-            // clientMessages={user.employeeType === "Sales" ? sortedClients : []}
-            initialClientMessages={clientData.messages} // Already sorted
-            // Technicians get internal messages
-            internalMessages={
-              user.employeeType === "Technician" ||
-              user.employeeType === "Sales" ||
-              user.employeeType === "Other"
-                ? internalMessages
-                : []
-            }
+            initialClientMessages={clientData.messages}
+            internalMessages={internalMessages}
+            canSeeClientMessages={canSeeClientMessages}
           />
         </div>
       </div>
