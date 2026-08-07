@@ -42,10 +42,5 @@ export const useCreateDraftEstimate = () => {
     CreateDraftEstimatePayload
   >({
     mutationFn: createDraftEstimate,
-    onSuccess: (data) => {
-      if (!data.success) {
-        throw new Error(data?.message || "Failed to create draft estimate");
-      }
-    },
   });
 };

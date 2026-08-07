@@ -270,7 +270,7 @@ const InvoiceListTable = ({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
-                Status
+                Invoice Status
                 <ChevronDown className="h-4 w-4" />
               </button>
             </DropdownMenuTrigger>

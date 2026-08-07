@@ -2,6 +2,7 @@
 import { getInspections } from "@/actions/estimate/invoice/getInspections";
 import { calculateDue } from "@/utils/calculateDue";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { getInvoiceItemTitle } from "@/utils/invoiceItemTitle";
 import {
   Client,
   Column,
@@ -1019,9 +1020,7 @@ const PDFInvoiceItems = ({
       return (
         <View key={item.id} style={styles.itemCard}>
           <View style={styles.itemHeader}>
-            <Text style={styles.itemName}>
-              {item.labor?.name ?? "Materials"}
-            </Text>
+            <Text style={styles.itemName}>{getInvoiceItemTitle(item)}</Text>
             <Text style={styles.itemPrice}>{formatCurrency(serviceTotal)}</Text>
           </View>
           {item.labor?.notes && (

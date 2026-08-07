@@ -26,6 +26,7 @@ import { useClientCommunicationStore } from "@/stores/client-store";
 import { ChevronDown } from "lucide-react";
 import { useCompanyFeaturePermissionStore } from "@/stores/companyFeaturePermissionStore";
 import { companyPermissionModule } from "@/constants/company-permission";
+import { isCallLive } from "@/lib/twilio/callDisplay";
 
 type TClient = Client & {
   conversationsTrack?: ClientConversationTrack | null;
@@ -185,6 +186,25 @@ export default function ClientItem({
 
   const isShowConversationIndicator =
     !!client?.conversationsTrack && unreadTotal > 0;
+
+  // While a call is ringing or connected the row collapses to just the call —
+  // the email and SMS previews would only bury the thing that needs attention
+  // right now. They come back the moment the call settles.
+  const callTrack = conversationsTrack as
+    | (typeof conversationsTrack & {
+        callStatus?: string | null;
+        callUpdatedAt?: Date | string | null;
+      })
+    | undefined;
+  const isLiveCall = isCallLive(
+    callTrack?.callStatus,
+    callTrack?.callUpdatedAt,
+  );
+  const callPreview =
+    isLiveCall && conversationsTrack?.smsLastMessage
+      ? conversationsTrack.smsLastMessage
+      : null;
+
   return (
     <div
       ref={buttonRef}
@@ -202,11 +222,19 @@ export default function ClientItem({
               "bg-gradient-to-r from-teal-700 to-teal-600",
               "ring-1 ring-teal-500/60",
             ].join(" ")
-          : [
-              "bg-white dark:bg-zinc-900/60",
-              "border-zinc-200/70 dark:border-white/10",
-              "hover:border-zinc-300/80 dark:hover:border-white/20",
-            ].join(" "),
+          : isLiveCall
+            ? // A call happening right now outranks the normal resting style so
+              // the row is impossible to miss while the phone is ringing.
+              [
+                "bg-emerald-50 dark:bg-emerald-950/40",
+                "border-emerald-300 dark:border-emerald-700",
+                "ring-1 ring-emerald-400/50",
+              ].join(" ")
+            : [
+                "bg-white dark:bg-zinc-900/60",
+                "border-zinc-200/70 dark:border-white/10",
+                "hover:border-zinc-300/80 dark:hover:border-white/20",
+              ].join(" "),
       )}
     >
       <Image
@@ -251,8 +279,26 @@ export default function ClientItem({
           </p>
         )}
 
+        {/* Live call — replaces the message previews for as long as it lasts */}
+        {callPreview && (
+          <p
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRedirect("PHONE");
+            }}
+            className={cn(
+              "mt-2 line-clamp-1 cursor-pointer text-xs font-semibold",
+              selected ? "text-white" : "text-emerald-600",
+            )}
+            title={callPreview}
+          >
+            <span className="mr-1.5 inline-block size-1.5 animate-pulse rounded-full bg-emerald-500 align-middle" />
+            {callPreview}
+          </p>
+        )}
+
         {/* Email preview */}
-        {client?.conversationsTrack?.emailLastMessage && (
+        {!callPreview && client?.conversationsTrack?.emailLastMessage && (
           <p
             onClick={(e) => {
               e.stopPropagation();
@@ -275,7 +321,7 @@ export default function ClientItem({
         )}
 
         {/* SMS preview */}
-        {client?.conversationsTrack?.smsLastMessage && (
+        {!callPreview && client?.conversationsTrack?.smsLastMessage && (
           <p
             onClick={(e) => {
               e.stopPropagation();
@@ -298,7 +344,7 @@ export default function ClientItem({
         )}
 
         {/* Messenger preview */}
-        {conversationsTrack?.messengerLastMessage && (
+        {!callPreview && conversationsTrack?.messengerLastMessage && (
           <p
             onClick={(e) => {
               e.stopPropagation();

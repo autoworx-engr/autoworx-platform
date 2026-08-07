@@ -12,6 +12,7 @@ import {
 } from "@/components/Dialog";
 import Selector from "@/components/Selector";
 import { SlimInput } from "@/components/SlimInput";
+import { formatAmount, useAmountField } from "@/hooks/useAmountField";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { cn } from "@/lib/cn";
 import { errorToast, successToast } from "@/lib/toast";
@@ -78,7 +79,6 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [cardType, setCardType] = useState("MASTERCARD");
   const [check, setCheck] = useState("");
   const [cash, setCash] = useState<string>("");
-  const [amount, setAmount] = useState<number | string>(totalDue);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(
     null,
   );
@@ -87,25 +87,19 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [depositMethod, setDepositMethod] = useState("");
   const [depositNotes, setDepositNotes] = useState("");
 
-  const formatAmount = (value: number | string): number => {
-    const num = typeof value === "string" ? parseFloat(value) : value;
-    return Math.round(num * 100) / 100;
-  };
+  const {
+    value: amount,
+    setValue: setAmount,
+    error: amountError,
+    inputProps: amountInputProps,
+  } = useAmountField(totalDue, "Amount");
 
-  // Keep only digits and a single decimal point, so the amount field can
-  // never hold anything but a number as the user types.
-  const sanitizeAmountInput = (value: string): string =>
-    value.replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1");
-
-  const handleAmountChange = (value: string) => {
-    setAmount(sanitizeAmountInput(value));
-  };
-
-  const amountValue = typeof amount === "string" ? parseFloat(amount) : amount;
-  const amountError =
-    isNaN(amountValue) || amountValue <= 0
-      ? "Amount must be a number greater than 0"
-      : undefined;
+  const {
+    value: deposit,
+    setValue: setDeposit,
+    error: depositError,
+    inputProps: depositInputProps,
+  } = useAmountField(totalDue, "Deposit amount");
 
   function reset() {
     setTab("CARD");
@@ -116,6 +110,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     setCheck("");
     setCash("");
     setAmount(totalDue);
+    setDeposit(totalDue);
     setPaymentMethod(null);
     setDepositMethod("");
     setDepositNotes("");
@@ -130,23 +125,39 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
   const handleSubmit = async () => {
     try {
-      const roundedAmount = formatAmount(amount);
       const roundedTotalDue = formatAmount(totalDue);
+      const isDeposit = tab === "DEPOSIT";
 
-      if (Number(roundedAmount) > Number(roundedTotalDue)) {
-        errorToast("Payment amount exceeds the due amount");
-        return;
+      if (isDeposit) {
+        if (depositError) {
+          errorToast(depositError);
+          return;
+        }
+
+        if (formatAmount(deposit) > roundedTotalDue) {
+          errorToast("Deposit amount cannot be greater than due amount");
+          return;
+        }
+
+        if (!depositMethod) {
+          errorToast("Deposit method is required");
+          return;
+        }
+      } else {
+        if (amountError) {
+          errorToast(amountError);
+          return;
+        }
+
+        if (formatAmount(amount) > roundedTotalDue) {
+          errorToast("Payment amount exceeds the due amount");
+          return;
+        }
       }
 
-      if (Number(roundedAmount) <= 0) {
-        errorToast("Payment amount must be greater than 0");
-        return;
-      }
-
-      if (tab === "DEPOSIT" && !depositMethod) {
-        errorToast("Deposit method is required");
-        return;
-      }
+      const roundedAmount = isDeposit
+        ? formatAmount(deposit)
+        : formatAmount(amount);
 
       setLoading(true);
 
@@ -225,7 +236,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-full max-w-xl">
-        <form>
+        <form noValidate>
           <DialogHeader>
             <DialogTitle>Make Payment</DialogTitle>
             <DialogClose />
@@ -330,11 +341,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     <SlimInput
                       labelClassName="text-sm md:text-base"
                       name="amount"
-                      type="text"
-                      value={amount}
-                      onChange={(e) => handleAmountChange(e.target.value)}
-                      onBlur={(e) => setAmount(formatAmount(e.target.value))}
-                      error={amountError}
+                      {...amountInputProps}
                     />
                   </div>
 
@@ -457,11 +464,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 <SlimInput
                   labelClassName="text-sm md:text-base"
                   name="amount"
-                  type="text"
-                  value={amount}
-                  onChange={(e) => handleAmountChange(e.target.value)}
-                  onBlur={(e) => setAmount(formatAmount(e.target.value))}
-                  error={amountError}
+                  {...amountInputProps}
                 />
               </div>
 
@@ -517,11 +520,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 <SlimInput
                   labelClassName="text-sm md:text-base"
                   name="amount"
-                  type="text"
-                  value={amount}
-                  onChange={(e) => handleAmountChange(e.target.value)}
-                  onBlur={(e) => setAmount(formatAmount(e.target.value))}
-                  error={amountError}
+                  {...amountInputProps}
                 />
               </div>
 
@@ -614,11 +613,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   <SlimInput
                     labelClassName="text-sm md:text-base"
                     name="amount"
-                    type="text"
-                    value={amount}
-                    onChange={(e) => handleAmountChange(e.target.value)}
-                    onBlur={(e) => setAmount(formatAmount(e.target.value))}
-                    error={amountError}
+                    {...amountInputProps}
                   />
                 </div>
               </div>
@@ -662,13 +657,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 <div className="w-[60%]">
                   <SlimInput
                     labelClassName="text-sm md:text-base"
-                    name="amount"
-                    type="text"
+                    name="deposit"
                     label="Deposit Amount"
-                    value={amount}
-                    onChange={(e) => handleAmountChange(e.target.value)}
-                    onBlur={(e) => setAmount(formatAmount(e.target.value))}
-                    error={amountError}
+                    {...depositInputProps}
                   />
                 </div>
               </div>

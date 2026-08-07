@@ -20,6 +20,7 @@ export const updateBusinessAccountValidationSchema = z.object({
     })
     .nullable()
     .optional(), // Optional nullable URL
+  image: z.string().nullable().optional(), // Nullable string for the uploaded business logo URL
   address: z.string().nullable().optional(), // Nullable string for address
   city: z.string().nullable().optional(), // Nullable string for city
   state: z.string().nullable().optional(), // Nullable string for state

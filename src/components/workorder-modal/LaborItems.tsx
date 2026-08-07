@@ -19,7 +19,7 @@ export default function LaborItems({
 }: {
   invoiceItemId: number;
   invoiceId: string;
-  serviceId: number;
+  serviceId: number | null;
   writePermission: boolean;
   technicianList: (Technician & {
     name: string;

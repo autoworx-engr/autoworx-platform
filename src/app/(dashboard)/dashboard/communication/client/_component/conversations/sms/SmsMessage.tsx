@@ -3,6 +3,7 @@ import { makeLinksClickable } from "@/components/MakeLinkClickable";
 import { cn } from "@/lib/cn";
 import { ClientSMS, ClientSmsAttachments } from "@prisma/client";
 import Image from "next/image";
+import MissedCallDivider from "./MissedCallDivider";
 import SMSAttachment from "./SMSAttachment";
 
 export default function SmsMessage({
@@ -14,8 +15,13 @@ export default function SmsMessage({
       lastName: string | null;
     } | null;
     attachments: ClientSmsAttachments[];
+    messageType?: string | null;
   };
 }) {
+  if (message.messageType === "MISSED_CALL") {
+    return <MissedCallDivider at={message.createdAt} />;
+  }
+
   const isIncoming = message.sentBy !== "Company";
   const text = (message.message ?? "").trim();
   const hasAttachments = (message.attachments?.length ?? 0) > 0;
