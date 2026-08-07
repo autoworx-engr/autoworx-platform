@@ -39,7 +39,6 @@ import { CalendarFilterDropdown } from "./CalendarFilterDropdown";
 import CalendarSearch from "./CalendarSearch";
 import DateSelector from "./DateSelector";
 import DisplayDate from "./DisplayDate";
-import MonthYearPicker from "./MonthYearPicker";
 import Settings from "./Settings";
 
 const ALLOWED_ROLES_FOR_NEW_APPOINTMENT = ["Admin", "Manager", "Sales"];
@@ -267,10 +266,10 @@ export function CalendarHeader({
 
       {/* ── Row 2: Date title + Stats ─────────────────── */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t px-3 py-2 sm:px-4">
-        {/* Date — month view gets clickable month + year pickers; other views
-            keep the descriptive title (day/week selection is via DateSelector). */}
+        {/* Date — a plain title in every view. Month/year navigation lives in
+            the DateSelector and the arrows, so the header stays read-only. */}
         <h2 className="mr-auto text-base font-semibold text-slate-900 sm:text-lg">
-          {type === "month" ? <MonthYearPicker /> : <DisplayDate type={type} />}
+          <DisplayDate type={type} />
         </h2>
 
         {/* Stats */}
