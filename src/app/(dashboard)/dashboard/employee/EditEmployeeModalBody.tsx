@@ -3,7 +3,6 @@ import FormError from "@/components/FormError";
 import { SlimInput } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-
 import { updateEmployee } from "@/actions/employee/update";
 import SlimSalaryManagement from "@/components/employee/SlimSalaryManagement";
 import Password from "@/components/Password";
@@ -14,7 +13,7 @@ import { useEmployeeFilterStore } from "@/stores/employeeFilter";
 import { useFormErrorStore } from "@/stores/form-error";
 import { EmployeeType, SalaryType, User } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { SquarePen, CircleUserRound as UserIcon, X } from "lucide-react";
+import { PencilLineIcon, CircleUserRound as UserIcon, X } from "lucide-react";
 import moment from "moment";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
@@ -235,8 +234,7 @@ export default function EditClientModalBody({
     [
       currentPage,
       dateRange,
-      employee?.id,
-      employee.image,
+      employee,
       employeeType,
       newProfilePic,
       onClose,
@@ -287,7 +285,7 @@ export default function EditClientModalBody({
               htmlFor="profilePicture"
               className="absolute bottom-0 right-0 p-1 bg-primary rounded-full shadow-sm cursor-pointer transition-colors"
             >
-              <SquarePen className="w-3 h-3 text-white" />
+              <PencilLineIcon className="w-3 h-3 text-white" />
             </label>
             <input
               type="file"
