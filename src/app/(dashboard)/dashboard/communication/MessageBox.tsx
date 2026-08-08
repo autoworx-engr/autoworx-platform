@@ -223,9 +223,20 @@ export default function MessageBox({
         setMessages((messages) => [...messages, newMessage]);
         setMessage("");
         setMultiAttachmentFile(null);
-        setLastMessage(json.chatTrack);
-        queryClient.invalidateQueries({ queryKey: ["internal", "users"] });
-        queryClient.invalidateQueries({ queryKey: ["internal", "groups"] });
+        if (json.chatTrack) {
+          setLastMessage(json.chatTrack);
+        } else if (json.newMessage) {
+          setLastMessage({ message: json.newMessage } as Parameters<
+            typeof setLastMessage
+          >[0]);
+        }
+        // Keys carry companyId + search, so match by prefix rather than
+        // guessing the exact tuple.
+        queryClient.invalidateQueries({
+          predicate: (query) =>
+            query.queryKey[0] === "internal" &&
+            (query.queryKey[1] === "users" || query.queryKey[1] === "groups"),
+        });
         router.refresh();
       } else {
         toast.error(json.message);
