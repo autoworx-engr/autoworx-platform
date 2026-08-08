@@ -81,7 +81,7 @@ const FilterforPayment = () => {
                   "All",
                   "Cash",
                   "Card",
-                  "Cheque",
+                  "Check",
                   "Deposit",
                   "Other",
                   "Refund",
