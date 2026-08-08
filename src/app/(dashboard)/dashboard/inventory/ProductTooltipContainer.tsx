@@ -6,7 +6,6 @@ import {
   TooltipTrigger,
 } from "@/components/Tooltip";
 import { cn } from "@/lib/cn";
-import { formatCurrency } from "@/utils/formatCurrency";
 import { InventoryProduct } from "@prisma/client";
 import React from "react";
 
@@ -15,28 +14,28 @@ const ProductTooltipContainer = ({
 }: {
   product: InventoryProduct;
 }) => {
+  const quantity = Number(product?.quantity || 0);
+  const displayValue = quantity.toString();
+
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
           <span
             className={cn(
-              "text-4xl font-bold tracking-tight",
-              Number(product?.quantity) === 0
+              "block truncate text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight cursor-default flex-1 min-w-0",
+              quantity === 0
                 ? "text-red-500"
-                : "text-slate-900 dark:text-white"
+                : "text-slate-900 dark:text-white",
             )}
+            title={displayValue}
           >
-            {String(product?.quantity).length > 4
-              ? String(product?.quantity).slice(0, 4) + ".."
-              : Number(product?.quantity)}
+            {displayValue}
           </span>
         </TooltipTrigger>
-        {String(product?.quantity).length > 4 && (
-          <TooltipContent>
-            <p>{Number(product?.quantity)}</p>
-          </TooltipContent>
-        )}
+        <TooltipContent>
+          <p>{quantity}</p>
+        </TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );
