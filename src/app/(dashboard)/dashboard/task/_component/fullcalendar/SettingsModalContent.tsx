@@ -22,7 +22,7 @@ export default function SettingsModalContent({
   const { data: session } = useSession();
   const authUser = session;
 
-  const isAdmin = authUser?.user.employeeType === EmployeeType?.Admin;
+  const isAdmin = authUser?.user?.employeeType === EmployeeType?.Admin;
 
   useEffect(() => {
     return () => {

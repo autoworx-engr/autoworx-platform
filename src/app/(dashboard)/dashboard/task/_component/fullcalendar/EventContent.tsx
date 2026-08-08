@@ -21,7 +21,7 @@ export const EventContent = ({
     serviceType,
     serviceType === "Appointment" ? categoryColor : undefined,
   );
-  const isAdmin = session?.user.employeeType === EmployeeType.Admin;
+  const isAdmin = session?.user?.employeeType === EmployeeType.Admin;
   // console.log("Rendering event:", {
   //   event: event.extendedProps.originalData,
   // });

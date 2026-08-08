@@ -41,8 +41,8 @@ export default function General({
   onClose,
   authUser,
 }: TGeneralProps) {
-  const isAdmin = authUser?.user.employeeType === EmployeeType?.Admin;
-  const isManager = authUser?.user.employeeType === EmployeeType?.Manager;
+  const isAdmin = authUser?.user?.employeeType === EmployeeType?.Admin;
+  const isManager = authUser?.user?.employeeType === EmployeeType?.Manager;
 
   const [error, setError] = useState<string | null>(null);
   const [weekStart, setWeekStart] = useState(settings?.weekStart ?? "Monday");
