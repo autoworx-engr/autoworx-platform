@@ -71,6 +71,20 @@
   display: none !important;
 }
 
+/* Rows tagged by markRepeatedListTime share the time slot of the row above.
+   Hide the duplicate label and drop the divider so consecutive same-time
+   items read as one row with the time shown once. */
+.calendarScope :global(tr.fc-list-event[data-repeated-time]) > td {
+  border-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+.calendarScope
+  :global(tr.fc-list-event[data-repeated-time])
+  :global(.fc-list-event-time) {
+  visibility: hidden !important;
+}
+
 .calendarScope :global(.fc-list-event td) {
   padding-top: 4px !important;
   padding-bottom: 4px !important;
