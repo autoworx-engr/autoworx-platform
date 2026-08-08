@@ -179,13 +179,11 @@ export default function ClientItem({
       })
     | undefined;
 
-  const unreadTotal =
-    (conversationsTrack?.emailIsUnReadCount || 0) +
-    (conversationsTrack?.smsUnReadCount || 0) +
-    (conversationsTrack?.messengerUnReadCount || 0);
-
   const isShowConversationIndicator =
-    !!client?.conversationsTrack && unreadTotal > 0;
+    !!conversationsTrack &&
+    (!conversationsTrack.emailIsRead ||
+      !conversationsTrack.smsIsRead ||
+      conversationsTrack.messengerIsRead === false);
 
   // While a call is ringing or connected the row collapses to just the call —
   // the email and SMS previews would only bury the thing that needs attention
@@ -369,14 +367,11 @@ export default function ClientItem({
 
       {/* notification indicator */}
       {isShowConversationIndicator && (
-        <div className="absolute right-3 top-3 z-10">
-          <div className="relative">
-            <span className="absolute -inset-1.5 animate-ping rounded-full bg-rose-400/60"></span>
-            <span className="relative flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold leading-none text-white ring-2 ring-white/90 dark:ring-zinc-900">
-              {unreadTotal > 9 ? "9+" : unreadTotal}
-            </span>
-          </div>
-        </div>
+        <span
+          role="status"
+          aria-label="Unread conversation"
+          className="absolute right-3 top-3 z-10 size-2.5 rounded-full bg-rose-500 ring-2 ring-white dark:ring-zinc-900"
+        />
       )}
 
       <div className="relative ml-auto flex items-center gap-1.5">

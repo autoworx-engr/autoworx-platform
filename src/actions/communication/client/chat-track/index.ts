@@ -1,5 +1,6 @@
 "use server";
 import { db } from "@/lib/db";
+import { getManualUnreadChannels } from "./manualUnread";
 
 type AttachmentSummary = { name?: string; url?: string };
 
@@ -268,9 +269,8 @@ export async function unreadClientSmsAndEmail(clientId: number) {
       return initialCreateClientChatTrack(clientId);
     }
 
-    // Atomic conditional unread updates via updateMany so we don't throw when
-    // the row is already in the desired state (e.g. concurrent reader).
-    if (findClientChatTrack.lastMessageBy === "Client") {
+    const channels = getManualUnreadChannels(findClientChatTrack);
+    if (channels.sms) {
       await db.clientConversationTrack.updateMany({
         where: { clientId, smsIsRead: true },
         data: {
@@ -280,7 +280,7 @@ export async function unreadClientSmsAndEmail(clientId: number) {
       });
     }
 
-    if (findClientChatTrack.lastEmailBy === "Client") {
+    if (channels.email) {
       await db.clientConversationTrack.updateMany({
         where: { clientId, emailIsRead: true },
         data: {
