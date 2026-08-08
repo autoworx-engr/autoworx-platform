@@ -20,7 +20,7 @@ export async function updateLabor({
   name: string;
   categoryId?: number | null;
   tags?: Tag[];
-  notes?: string;
+  notes?: string | null;
   hours?: number;
   charge?: number;
   discount?: number;
@@ -45,6 +45,9 @@ export async function updateLabor({
         name,
         categoryId,
         charge,
+        notes,
+        hours,
+        discount,
       },
     });
 
