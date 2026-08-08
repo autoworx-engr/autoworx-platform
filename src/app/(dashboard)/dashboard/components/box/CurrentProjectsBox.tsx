@@ -70,12 +70,12 @@ export default async function CurrentProjectsBox({
             // Individual Project Item Redesign
             <div
               key={idx}
-              className="flex flex-col md:flex-row items-start justify-between rounded-xl p-4 transition-all duration-200
+              className="flex flex-row items-start justify-between rounded-xl p-4 transition-all duration-200
                 bg-slate-100/70 dark:bg-slate-800/70
                 hover:bg-slate-200/70 dark:hover:bg-slate-700/70 shadow-sm border border-slate-200/50 dark:border-slate-800"
             >
               {/* Left Side: Vehicle Info & Services */}
-              <div className="flex flex-col gap-1 mb-3 md:mb-0 md:w-1/2">
+              <div className="flex flex-col gap-1 w-1/2">
                 <p className="font-extrabold text-base text-slate-900 dark:text-white">
                   {project.yearMakeModel || "N/A"}
                 </p>
@@ -89,13 +89,13 @@ export default async function CurrentProjectsBox({
               </div>
 
               {/* Right Side: Actions & Payout/Dates */}
-              <div className="flex flex-col gap-3 text-right text-sm md:w-1/2 md:pl-4">
+              <div className="flex flex-col gap-3 text-right text-sm w-1/2 pl-2 md:pl-4">
                 {/* View Work Order Button (Top Right) */}
                 <div className="w-full self-end">
                   <WorkOrderModal
                     invoiceId={project.id}
                     buttonChild={
-                      <button className="rounded-lg bg-indigo-600 hover:bg-indigo-700 px-4 py-2 font-semibold text-white transition-colors w-full md:w-auto">
+                      <button className="rounded-lg bg-indigo-600 hover:bg-indigo-700 px-3 py-2 md:px-4 md:py-2 font-semibold text-white transition-colors w-full md:w-auto text-xs md:text-sm">
                         View Work Order
                       </button>
                     }

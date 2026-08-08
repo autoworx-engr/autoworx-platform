@@ -1,6 +1,7 @@
 "use client";
 
 import { makeFleetStatementPayment } from "@/actions/fleet/statement";
+import { newPaymentMethod } from "@/actions/payment/newPaymentMethod";
 import {
   Dialog,
   DialogClose,
@@ -212,9 +213,21 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
   async function handleNewPaymentMethod() {
     try {
-      // For now, we'll skip the new payment method creation
-      // since it's not implemented in the fleet context
-      errorToast("New payment method creation not available in fleet payments");
+      const res = await newPaymentMethod(paymentMethodInput);
+
+      if (res.type === "success") {
+        setPaymentMethodInput("");
+        setPaymentMethod(res.data);
+        setOpenPaymentMethod(false);
+
+        useListsStore.setState({
+          paymentMethods: [...paymentMethods, res.data],
+        });
+      } else if (res.type === "globalError") {
+        errorToast(
+          res?.errorSource?.length ? res.errorSource[0].message : res.message,
+        );
+      }
     } catch (error) {
       errorToast("Failed to create payment method");
     }
