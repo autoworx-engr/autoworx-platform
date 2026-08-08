@@ -379,6 +379,19 @@ export default function InvoiceModalBody({
 
       if (response?.type === "success") {
         successToast("Invoice Authorized");
+
+        setSignImage(data[0]);
+        setAuthorizedName(authorizedNameInput);
+        setInvoice((prev) =>
+          prev
+            ? {
+                ...prev,
+                signatureImage: data[0],
+                authorizedName: authorizedNameInput,
+                wasAuthorized: true,
+              }
+            : prev,
+        );
       } else {
         errorToast("Signature upload failed");
         console.error("Signature upload failed:");

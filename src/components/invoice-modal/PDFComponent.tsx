@@ -420,6 +420,20 @@ const styles = StyleSheet.create({
     color: "#DC2626",
     marginTop: 1,
   },
+  // Attachments
+  attachmentsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  attachmentImage: {
+    width: 110,
+    height: 90,
+    objectFit: "cover",
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
   // Inspections
   inspectionCard: {
     backgroundColor: colors.bgSection,
@@ -558,6 +572,9 @@ const PDFComponent = function PDF({
     "There is no damage notes",
   );
   const [inspectionData, setInspectionData] = useState<InvoiceInspection[]>([]);
+  const [photoDataUrls, setPhotoDataUrls] = useState<Record<number, string>>(
+    {},
+  );
 
   useEffect(() => {
     // Fetch inspection data and damage notes from the backend
@@ -571,6 +588,51 @@ const PDFComponent = function PDF({
     };
 
     fetchInspectionData();
+  }, [id]);
+
+  useEffect(() => {
+    // react-pdf fetches <Image> sources itself, and remote S3 images without
+    // CORS headers are unreliable there when multiple are rendered at once
+    // (only the first tends to resolve). Route each through the same-origin
+    // proxy and inline it as a data URI before handing it to <Image>.
+    if (invoice.photos.length === 0) return;
+    let cancelled = false;
+
+    const loadPhotos = async () => {
+      const entries = await Promise.all(
+        invoice.photos.map(async (photo) => {
+          try {
+            const res = await fetch(
+              `/api/proxy-image?url=${encodeURIComponent(photo.photo)}`,
+            );
+            if (!res.ok) return null;
+            const blob = await res.blob();
+            const dataUrl = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result as string);
+              reader.onerror = () => reject(reader.error);
+              reader.readAsDataURL(blob);
+            });
+            return [photo.id, dataUrl] as const;
+          } catch {
+            return null;
+          }
+        }),
+      );
+
+      if (cancelled) return;
+      setPhotoDataUrls(
+        Object.fromEntries(
+          entries.filter((entry): entry is [number, string] => entry !== null),
+        ),
+      );
+    };
+
+    loadPhotos();
+
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   useEffect(() => {
@@ -898,6 +960,22 @@ const PDFComponent = function PDF({
           </View>
         )}
 
+        {invoice.photos.length > 0 && (
+          <View style={[styles.termsSection, { marginTop: 20 }]}>
+            <Text style={styles.sectionTitle}>Attachments</Text>
+            <View style={styles.attachmentsGrid}>
+              {invoice.photos.map((photo) => (
+                /* eslint-disable-next-line jsx-a11y/alt-text */
+                <Image
+                  key={photo.id}
+                  src={photoDataUrls[photo.id] ?? photo.photo}
+                  style={styles.attachmentImage}
+                />
+              ))}
+            </View>
+          </View>
+        )}
+
         {(inspectionData.length > 0 || damageNotes) && (
           <View style={[styles.termsSection, { marginTop: 20 }]}>
             <Text style={styles.sectionTitle}>Inspections</Text>
@@ -934,7 +1012,7 @@ const PDFComponent = function PDF({
           </Text>
         </View>
 
-        <View style={styles.footer}>
+        <View style={styles.footer} wrap={false}>
           <View style={styles.footerBlock}>
             <Text style={styles.footerLabel}>Prepared by</Text>
             <Text style={styles.footerValue}>{invoice.company.name}</Text>

@@ -49,12 +49,20 @@ export default function ClientDetailsTabs({
   const upcomingAppointmentCount = useClientCommunicationStore(
     (state) => state.upcomingAppointmentCount,
   );
+  const pendingTaskCount = useClientCommunicationStore(
+    (state) => state.pendingTaskCount,
+  );
+  const appointmentsCount = upcomingAppointmentCount ?? counts.appointments;
+  const tasksCount = pendingTaskCount ?? counts.tasks;
 
   const tabs: {
     id: TabId;
     label: string;
     icon: React.ElementType;
     count?: number;
+    // Flags a tab red when it needs attention — pending tasks or any
+    // upcoming/current appointment — regardless of which tab is active.
+    highlight?: boolean;
   }[] = [
     { id: "vehicle", label: "Vehicle", icon: Car, count: counts.vehicle },
     { id: "notes", label: "Notes", icon: FileText },
@@ -65,12 +73,19 @@ export default function ClientDetailsTabs({
       icon: Receipt,
       count: counts.estimates,
     },
-    { id: "tasks", label: "Tasks", icon: ListChecks, count: counts.tasks },
+    {
+      id: "tasks",
+      label: "Tasks",
+      icon: ListChecks,
+      count: tasksCount,
+      highlight: tasksCount > 0,
+    },
     {
       id: "appointments",
       label: "Appointments",
       icon: CalendarClock,
-      count: upcomingAppointmentCount ?? counts.appointments,
+      count: appointmentsCount,
+      highlight: appointmentsCount > 0,
     },
   ];
 
@@ -95,7 +110,7 @@ export default function ClientDetailsTabs({
               key={tab.id}
               type="button"
               onClick={() => setActive(tab.id)}
-              aria-selected={isActive}
+              // aria-selected={isActive}
               className={cn(
                 "-mb-px flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2 text-xs font-medium transition-colors",
                 isActive
@@ -106,15 +121,22 @@ export default function ClientDetailsTabs({
               <Icon className="h-4 w-4" />
               {tab.label}
               {typeof tab.count === "number" && (
-                <span
-                  className={cn(
-                    "rounded-full px-1.5 py-0.5 text-[9px] font-medium",
-                    isActive
-                      ? "bg-[#006D77]/10 text-[#006D77] dark:bg-emerald-900/20 dark:text-emerald-500"
-                      : "bg-zinc-100 text-zinc-500 dark:bg-white/10 dark:text-zinc-400",
+                <span className="relative inline-flex">
+                  {tab.highlight && (
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75 dark:bg-red-500" />
                   )}
-                >
-                  {tab.count}
+                  <span
+                    className={cn(
+                      "relative rounded-full px-2 py-0.5 text-[9px] font-bold",
+                      tab.highlight
+                        ? "bg-red-500 text-white shadow-sm shadow-red-500/40 dark:bg-red-600"
+                        : isActive
+                          ? "bg-[#006D77]/10 text-[#006D77] dark:bg-emerald-900/20 dark:text-emerald-500"
+                          : "bg-zinc-100 text-zinc-500 dark:bg-white/10 dark:text-zinc-400",
+                    )}
+                  >
+                    {tab.count}
+                  </span>
                 </span>
               )}
             </button>
