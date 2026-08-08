@@ -95,7 +95,7 @@ export default async function CurrentProjectsBox({
                   <WorkOrderModal
                     invoiceId={project.id}
                     buttonChild={
-                      <button className="rounded-lg bg-indigo-600 hover:bg-indigo-700 px-3 py-2 md:px-4 md:py-2 font-semibold text-white transition-colors w-full md:w-auto text-xs md:text-sm">
+                      <button className="rounded-lg bg-primary hover:bg-primary/90 px-3 py-2 md:px-4 md:py-2 font-semibold text-white transition-colors w-full md:w-auto text-xs md:text-sm">
                         View Work Order
                       </button>
                     }
