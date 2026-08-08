@@ -166,6 +166,7 @@ export default function CannedLaborEditDialog({
               setCategoryOpen={setCategoryOpen}
               allowEdit={true}
               className="min-w-full"
+              isClear
             />
           </div>
 
