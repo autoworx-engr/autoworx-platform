@@ -1,6 +1,5 @@
 "use client";
 
-import FormError from "@/components/FormError";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DatePickerField } from "@/components/ui/DatePickerField";
 import { Label } from "@/components/ui/label";
@@ -50,6 +49,7 @@ export default function AppointmentForm({
   setTab,
   title,
   setTitle,
+  fieldErrors,
   date,
   setDate,
   endDate,
@@ -106,11 +106,10 @@ export default function AppointmentForm({
   return (
     <div className="h-full sm:h-full overflow-y-auto thin-scrollbar max-h-[80vh] lg:max-h-none">
       <div className="space-y-2 p-4 sm:p-6">
-        <FormError />
-
         <AppointmentTitleSelectAndAdd
           value={title}
           onChange={(value) => setTitle(value)}
+          error={fieldErrors?.title}
         />
 
         <div className="grid grid-cols-2 items-end gap-3 lg:grid-cols-4">

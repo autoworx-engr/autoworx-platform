@@ -8,7 +8,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/Dialog";
-import FormError from "@/components/FormError";
 import Submit from "@/components/Submit";
 import { useTaskForm } from "@/hooks/task/useTaskForm";
 import { cn } from "@/lib/cn";
@@ -67,6 +66,7 @@ export default function TaskContentModal({
     isError,
     isFetched,
     taskData,
+    fieldErrors,
   } = state;
 
   const {
@@ -77,6 +77,7 @@ export default function TaskContentModal({
     setDate,
     handleTimeChange,
     handleSubmit,
+    clearFieldError,
   } = actions;
 
   if (fromEdit && isError) {
@@ -96,7 +97,6 @@ export default function TaskContentModal({
       <DialogHeader>
         <DialogTitle>{fromEdit ? "Update Task" : "Add Task"}</DialogTitle>
       </DialogHeader>
-      <FormError />
       {isLoading ? (
         <div className="flex min-h-[500px] my-auto items-center justify-center py-10 text-center">
           <TaskSpinner />
@@ -120,6 +120,8 @@ export default function TaskContentModal({
             onlyOneUser={onlyOneUser}
             fromEdit={fromEdit}
             taskData={taskData}
+            titleError={fieldErrors.title}
+            clearTitleError={() => clearFieldError("title")}
           />
 
           <DialogFooter className="mt-4 flex flex-row justify-end gap-2">
@@ -134,7 +136,12 @@ export default function TaskContentModal({
             <Submit
               className="rounded-md bg-gradient-to-r from-primary to-[#5a66ee] px-6 py-2 text-sm font-medium text-white shadow transition-all duration-200 hover:shadow-lg hover:shadow-indigo-500/30 disabled:opacity-50"
               formAction={handleSubmit}
-              disabled={isLoading || (fromEdit && !isFetched)}
+              disabled={
+                isLoading ||
+                (fromEdit && !isFetched) ||
+                !title.trim() ||
+                (!!date.trim() && (!startTime || !endTime))
+              }
             >
               Save
             </Submit>

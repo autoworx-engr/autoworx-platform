@@ -12,7 +12,6 @@ import { TimeScrollPicker } from "@/components/ui/TimeScrollPicker";
 import { addMinutes } from "@/utils/time";
 import { taskPriorityStyles } from "@/lib/taskPriorityStyles";
 import AssignTaskDropDown from "./AssignTaskDropDown";
-import { useFormErrorStore } from "@/stores/form-error";
 
 interface TaskFormFieldsProps {
   title: string;
@@ -31,6 +30,8 @@ interface TaskFormFieldsProps {
   onlyOneUser?: boolean;
   fromEdit?: boolean;
   taskData?: any;
+  titleError?: string;
+  clearTitleError?: () => void;
 }
 
 export function TaskFormFields({
@@ -50,9 +51,9 @@ export function TaskFormFields({
   onlyOneUser = false,
   fromEdit = false,
   taskData,
+  titleError,
+  clearTitleError,
 }: TaskFormFieldsProps) {
-  const { showError, clearError } = useFormErrorStore();
-
   // Shared with the task list / calendar so priority colors match everywhere.
   const priorityStyles = taskPriorityStyles;
 
@@ -75,16 +76,15 @@ export function TaskFormFields({
           placeholder="e.g. Follow up with client"
           value={title}
           onChange={(e) => {
-            const value = e.target.value;
-            setTitle(value);
-            if (!value.trim()) {
-              showError({ field: "title", message: "Task title is required." });
-            } else {
-              clearError();
-            }
+            setTitle(e.target.value);
+            clearTitleError?.();
           }}
+          aria-invalid={!!titleError}
           autoFocus={false}
         />
+        {titleError && (
+          <p className="text-sm font-medium text-destructive">{titleError}</p>
+        )}
       </div>
 
       <div className="mb-4 flex flex-col gap-1.5">

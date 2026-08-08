@@ -10,7 +10,6 @@ import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { queryKeys } from "@/lib/queryKeys";
 import { errorToast, successToast } from "@/lib/toast";
 import { useCalendarStore } from "@/stores/calendarStore";
-import { useFormErrorStore } from "@/stores/form-error";
 import { formatTime12Hour } from "@/utils/formateTime12Hours";
 import { normalizeTime } from "@/utils/normalizeTime";
 import { formatTime } from "@/utils/taskAndActivity";
@@ -75,7 +74,28 @@ export function useAppointmentFormState({
   const { data: settings, isFetched: settingsIsFetched } = useSettingsQuery();
 
   const queryClient = useQueryClient();
-  const { showError, clearError } = useFormErrorStore();
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const showError = useCallback(
+    ({ field, message }: { field: string; message: string }) => {
+      if (field === "title") {
+        setFieldErrors((prev) => ({ ...prev, title: message }));
+      } else {
+        errorToast(message);
+      }
+    },
+    [],
+  );
+  const clearError = useCallback(() => setFieldErrors({}), []);
+  const clearFieldError = useCallback(
+    (field: string) =>
+      setFieldErrors((prev) => {
+        if (!(field in prev)) return prev;
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      }),
+    [],
+  );
   const { setUpdateVariable } = useCalendarStore();
 
   const [client, setClient] = useState<Partial<
@@ -129,7 +149,7 @@ export function useAppointmentFormState({
   // Clear the "title required" error as soon as the user picks a title
   useEffect(() => {
     if (title && title.trim()) {
-      clearError();
+      clearFieldError("title");
     }
   }, [title]);
   const [notes, setNotes] = useState("");
@@ -820,6 +840,8 @@ export function useAppointmentFormState({
     // form fields
     title,
     setTitle,
+    fieldErrors,
+    clearFieldError,
     date,
     setDate,
     endDate,

@@ -73,6 +73,18 @@ export default function AppointmentModalBody(props: AppointmentModalBodyProps) {
     errorToast("Failed to fetch appointment data");
   }
 
+  const isSaveDisabled =
+    !formChanged ||
+    isSubmitting ||
+    (fromEdit && !appointmentIsFetch) ||
+    (fromEdit && !settingsIsFetched) ||
+    (fromEdit && !!client?.id && !estimateIsFetched) ||
+    !title.trim() ||
+    !date ||
+    !startTime ||
+    !endTime ||
+    (!!endDate && !!date && endDate < date);
+
   return (
     <DialogContent
       onOpenAutoFocus={(e) => e.preventDefault()}
@@ -201,18 +213,12 @@ export default function AppointmentModalBody(props: AppointmentModalBodyProps) {
             type="button"
             className={cn(
               "rounded-md px-6 py-2 text-sm font-medium text-white shadow transition-all duration-200",
-              formChanged && !isSubmitting
+              !isSaveDisabled
                 ? "cursor-pointer bg-gradient-to-r from-primary to-[#5a66ee] hover:shadow-lg hover:shadow-indigo-500/30"
                 : "cursor-not-allowed bg-gray-400",
             )}
             onClick={handleSubmit}
-            disabled={
-              !formChanged ||
-              isSubmitting ||
-              (fromEdit && !appointmentIsFetch) ||
-              (fromEdit && !settingsIsFetched) ||
-              (fromEdit && !!client?.id && !estimateIsFetched)
-            }
+            disabled={isSaveDisabled}
           >
             {isSubmitting ? "Saving..." : "Save"}
           </button>
