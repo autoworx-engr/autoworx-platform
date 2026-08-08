@@ -27,6 +27,10 @@ type DatePickerFieldProps = {
   triggerClassName?: string;
   /** Show a clear (X) button when a date is selected. */
   clearable?: boolean;
+  /** Earliest selectable date; earlier days are disabled in the calendar. */
+  minDate?: Date;
+  /** Latest selectable date; later days are disabled in the calendar. */
+  maxDate?: Date;
 };
 
 const FORMAT = "yyyy-MM-dd";
@@ -46,6 +50,8 @@ export function DatePickerField({
   rootClassName,
   triggerClassName,
   clearable = false,
+  minDate,
+  maxDate,
 }: DatePickerFieldProps) {
   const [open, setOpen] = useState(false);
 
@@ -114,6 +120,14 @@ export function DatePickerField({
               handleSelect(date ? format(date, FORMAT) : "");
               setOpen(false);
             }}
+            disabled={
+              minDate || maxDate
+                ? [
+                    ...(minDate ? [{ before: minDate }] : []),
+                    ...(maxDate ? [{ after: maxDate }] : []),
+                  ]
+                : undefined
+            }
             // Month + year dropdowns for quick navigation (like the native input).
             captionLayout="dropdown"
             startMonth={new Date(1950, 0)}

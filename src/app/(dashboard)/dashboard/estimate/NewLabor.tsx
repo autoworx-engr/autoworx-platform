@@ -11,7 +11,6 @@ import {
 } from "@/components/Dialog";
 import FormError from "@/components/FormError";
 import SelectCategory from "@/components/Lists/SelectCategory";
-import { SelectTags } from "@/components/Lists/SelectTags";
 import { successToast } from "@/lib/toast";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
 import { useEstimatePopupStore } from "@/stores/estimate-popup";
@@ -19,6 +18,7 @@ import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import { Category, Tag } from "@prisma/client";
 import { useEffect, useState } from "react";
+import { LABOR_NAME_MAX_LENGTH } from "./create/laborValidation";
 
 export default function NewLabor({
   newButton,
@@ -45,7 +45,6 @@ export default function NewLabor({
   const { close, data } = useEstimatePopupStore();
   const itemId = data?.itemId;
 
-  const [tagsOpen, setTagsOpen] = useState(false);
   const [categoryOpen, setCategoryOpen] = useState(false);
 
   // Reset form function to avoid code duplication
@@ -67,14 +66,6 @@ export default function NewLabor({
       );
     }
   }, [currentSelectedCategoryId]);
-
-  useEffect(() => {
-    setTagsOpen(false);
-  }, [categoryOpen]);
-
-  useEffect(() => {
-    setCategoryOpen(false);
-  }, [tagsOpen]);
 
   useEffect(() => {
     if (data?.labor && data.edit && !fromCanned) {
@@ -109,6 +100,14 @@ export default function NewLabor({
       return false;
     }
 
+    if (name.trim().length > LABOR_NAME_MAX_LENGTH) {
+      showError({
+        field: "serviceName",
+        message: `Labor name cannot exceed ${LABOR_NAME_MAX_LENGTH} characters`,
+      });
+      return false;
+    }
+
     if (!hours.trim()) {
       showError({
         field: "hours",
@@ -124,11 +123,11 @@ export default function NewLabor({
       return false;
     }
 
-    const subtotal = (parseFloat(hours) || 0) * (parseFloat(charge) || 0);
-    if (discount.trim() && parseFloat(discount) > subtotal) {
+    const laborCost = (parseFloat(hours) || 0) * (parseFloat(charge) || 0);
+    if (discount.trim() && parseFloat(discount) > laborCost) {
       showError({
         field: "discount",
-        message: "Discount cannot be greater than the subtotal",
+        message: "Discount cannot be greater than the labor cost",
       });
       return false;
     }
@@ -136,9 +135,11 @@ export default function NewLabor({
     return true;
   };
 
-  const subtotal = (parseFloat(hours) || 0) * (parseFloat(charge) || 0);
-  const discountExceedsSubtotal =
-    !!discount.trim() && parseFloat(discount) > subtotal;
+  const laborCost = (parseFloat(hours) || 0) * (parseFloat(charge) || 0);
+  const discountAmount = parseFloat(discount) || 0;
+  const subtotal = laborCost - discountAmount;
+  const discountExceedsLaborCost =
+    !!discount.trim() && discountAmount > laborCost;
 
   async function handleSubmit() {
     if (!validateForm()) return;
@@ -289,9 +290,13 @@ export default function NewLabor({
                     clearError();
                   }
                 }}
+                maxLength={LABOR_NAME_MAX_LENGTH}
                 className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg outline-none transition-all placeholder:text-slate-400 focus:border-blue-500"
                 placeholder="Enter labor Name"
               />
+              <p className="text-right text-xs text-slate-400">
+                {name.length}/{LABOR_NAME_MAX_LENGTH}
+              </p>
             </div>
 
             {/* Category */}
@@ -306,18 +311,7 @@ export default function NewLabor({
                 categoryOpen={categoryOpen}
                 setCategoryOpen={setCategoryOpen}
                 allowEdit={true}
-              />
-            </div>
-
-            {/* Tags */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-700">
-                Tags
-              </label>
-              <SelectTags
-                value={tags}
-                setValue={setTags}
-                openStates={[tagsOpen, setTagsOpen]}
+                isClear
               />
             </div>
 
@@ -412,16 +406,17 @@ export default function NewLabor({
                     }}
                     step="0.01"
                     className={`w-full pl-8 pr-4 py-2.5 text-sm border rounded-lg outline-none transition-all placeholder:text-slate-400 focus:border-blue-500 ${
-                      discountExceedsSubtotal
+                      discountExceedsLaborCost
                         ? "border-red-400"
                         : "border-slate-300"
                     }`}
                     placeholder="0.00"
                   />
                 </div>
-                {discountExceedsSubtotal && (
+                {discountExceedsLaborCost && (
                   <p className="text-xs text-red-500">
-                    Discount cannot exceed the subtotal (${subtotal.toFixed(2)})
+                    Discount cannot exceed the labor cost ($
+                    {laborCost.toFixed(2)})
                   </p>
                 )}
               </div>
@@ -430,35 +425,36 @@ export default function NewLabor({
               {hours && charge && (
                 <div className="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-slate-600">Subtotal:</span>
+                    <span className="text-slate-600">
+                      Labor Cost ({hours} hrs × ${parseFloat(charge).toFixed(2)}
+                      ):
+                    </span>
                     <span className="font-medium text-slate-900">
+                      ${laborCost.toFixed(2)}
+                    </span>
+                  </div>
+                  {discountAmount > 0 && (
+                    <div className="flex justify-between items-center text-sm mt-2">
+                      <span className="text-slate-600">Discount:</span>
+                      <span className="font-medium text-red-600">
+                        -${discountAmount.toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                  <div className="border-t border-slate-300 mt-2 pt-2 flex justify-between items-center">
+                    <span className="font-semibold text-slate-900">
+                      Subtotal:
+                    </span>
+                    <span
+                      className={`font-bold text-lg ${
+                        discountExceedsLaborCost
+                          ? "text-red-600"
+                          : "text-slate-900"
+                      }`}
+                    >
                       ${subtotal.toFixed(2)}
                     </span>
                   </div>
-                  {discount && parseFloat(discount) > 0 && (
-                    <>
-                      <div className="flex justify-between items-center text-sm mt-2">
-                        <span className="text-slate-600">Discount:</span>
-                        <span className="font-medium text-red-600">
-                          -${parseFloat(discount).toFixed(2)}
-                        </span>
-                      </div>
-                      <div className="border-t border-slate-300 mt-2 pt-2 flex justify-between items-center">
-                        <span className="font-semibold text-slate-900">
-                          Total:
-                        </span>
-                        <span
-                          className={`font-bold text-lg ${
-                            discountExceedsSubtotal
-                              ? "text-red-600"
-                              : "text-slate-900"
-                          }`}
-                        >
-                          ${(subtotal - parseFloat(discount)).toFixed(2)}
-                        </span>
-                      </div>
-                    </>
-                  )}
                 </div>
               )}
             </div>
@@ -493,7 +489,7 @@ export default function NewLabor({
           <button
             className="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={data?.edit && !fromCanned ? handleEdit : handleSubmit}
-            disabled={discountExceedsSubtotal}
+            disabled={discountExceedsLaborCost}
             type="button"
           >
             {data?.edit && !fromCanned ? "Update Labor" : "Add Labor"}

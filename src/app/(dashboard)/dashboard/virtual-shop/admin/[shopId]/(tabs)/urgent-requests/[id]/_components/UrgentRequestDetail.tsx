@@ -3,7 +3,9 @@
 import { createDraftEstimate } from "@/actions/estimate/invoice/createDraft";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DatePickerField } from "@/components/ui/DatePickerField";
 import { Separator } from "@/components/ui/separator";
+import { TimeScrollPicker } from "@/components/ui/TimeScrollPicker";
 import { errorToast, successToast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import {
@@ -27,7 +29,6 @@ import {
   Receipt,
   Store,
   User,
-  X,
 } from "lucide-react";
 import { customAlphabet } from "nanoid";
 import Link from "next/link";
@@ -548,52 +549,30 @@ export default function UrgentRequestDetail({
                   <label className="mb-1 block text-xs font-medium text-slate-500">
                     Date
                   </label>
-                  <div className="relative">
-                    <input
-                      type="date"
-                      value={proposedDate}
-                      onChange={(e) => {
-                        setProposedDate(e.target.value);
-                        if (!e.target.value) setProposedTime("");
-                      }}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 pr-8 text-sm text-slate-700 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-clear-button]:hidden"
-                    />
-                    {proposedDate && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setProposedDate("");
-                          setProposedTime("");
-                        }}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                      >
-                        <X size={13} />
-                      </button>
-                    )}
-                  </div>
+                  <DatePickerField
+                    value={proposedDate}
+                    onChange={(value) => {
+                      setProposedDate(value);
+                      if (!value) setProposedTime("");
+                    }}
+                    clearable
+                    placeholder="Select date"
+                    triggerClassName="rounded-xl border-slate-200 bg-slate-50 text-slate-700"
+                  />
                 </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-slate-500">
-                    Time
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="time"
-                      value={proposedTime}
-                      onChange={(e) => setProposedTime(e.target.value)}
-                      disabled={!proposedDate}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 pr-8 text-sm text-slate-700 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-clear-button]:hidden"
-                    />
-                    {proposedTime && (
-                      <button
-                        type="button"
-                        onClick={() => setProposedTime("")}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                      >
-                        <X size={13} />
-                      </button>
-                    )}
-                  </div>
+                <div
+                  className={cn(
+                    !proposedDate && "pointer-events-none opacity-50",
+                  )}
+                >
+                  <TimeScrollPicker
+                    id="proposedTime"
+                    label="Time"
+                    labelClassName="text-xs font-medium text-slate-500"
+                    value={proposedTime}
+                    onChange={setProposedTime}
+                    className="gap-1"
+                  />
                 </div>
               </div>
 

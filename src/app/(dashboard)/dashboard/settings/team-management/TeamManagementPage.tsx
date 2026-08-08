@@ -5,7 +5,7 @@ import UserRolesTable from "./UserRolesTable";
 
 export default function Page() {
   return (
-    <div className="space-y-6 rounded-2xl border border-slate-200/80 bg-gradient-to-br from-slate-50 via-white to-sky-50/40 p-4 sm:p-6">
+    <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-600 sm:text-3xl">

@@ -43,6 +43,7 @@ const UserBugReport = () => {
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const portalRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [reportMessage, setReportMessage] = useState<string>("");
@@ -78,10 +79,10 @@ const UserBugReport = () => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+      const target = event.target as Node;
+      const clickedTrigger = dropdownRef.current?.contains(target);
+      const clickedPortal = portalRef.current?.contains(target);
+      if (!clickedTrigger && !clickedPortal) {
         setIsDropdownOpen(false);
         // setIsNewBugOpen(false);
       }
@@ -304,6 +305,7 @@ const UserBugReport = () => {
         {/* Dropdown */}
         {isDropdownOpen && (
           <BugReportDropdownCard
+            ref={portalRef}
             isAdmin={false}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}

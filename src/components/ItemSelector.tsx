@@ -170,15 +170,15 @@ export default function ItemSelector<T>({
           ) : (
             <div
               className={cn(
-                "relative flex min-h-11 w-full max-w-[320px] items-center justify-between rounded-xl bg-slate-50/50 py-2 px-4 ring-1 ring-inset ring-primary/20",
+                "relative flex min-h-11 w-full items-center justify-between gap-2 rounded-lg bg-gray-100/40 px-4 shadow-sm shadow-black/20 ring-1 ring-inset ring-slate-200",
               )}
             >
-              <p className="text-sm font-semibold text-slate-700">
+              <p className="truncate text-sm font-semibold text-slate-700">
                 {/* @ts-ignore */}
                 {selected[display]}
               </p>
 
-              <div className="flex items-center gap-1">
+              <div className="flex shrink-0 items-center gap-1">
                 {/* Edit button */}
                 <button
                   className="transition-transform hover:scale-110"

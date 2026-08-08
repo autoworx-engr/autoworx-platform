@@ -2,7 +2,10 @@ import { addCustomer } from "@/actions/client/add";
 import { sendInfobipMessage } from "@/actions/communication/client/sendInfobipMessage";
 import { sendTwilioMessage } from "@/actions/communication/client/sendTwilioMessage";
 import { sendInfobipEmail } from "@/actions/estimate/invoice/sendInfobipEmail";
-import { generateGiftCardEmailHtml } from "@/lib/emails-template/gift-card";
+import {
+  generateGiftCardEmailHtml,
+  generateGiftCardPurchaseReceiptEmailHtml,
+} from "@/lib/emails-template/gift-card";
 import { AppError } from "@/error-boundary/error";
 import {
   DeliveryMethod,
@@ -605,6 +608,62 @@ export async function issueGiftCardFromContext(
   await sendGiftCardNotifications(tx, input, context, code);
 
   const maskedCode = `${code.split("-")[0]}-****-${code.split("-")[2]}`;
+
+  // Recipient notifications above cover the "here's your gift card" case.
+  // When gifting to someone else, the purchaser is charged but otherwise
+  // gets no record of the transaction unless they stay on the confirmation
+  // screen — send them a receipt too (email always, SMS if they gave a
+  // phone number), mirroring how the recipient notification covers both.
+  if (!input.isSendToMyself && purchaserClient?.id) {
+    const shopDisplayName = context.shop.company.name || "our shop";
+
+    try {
+      await sendInfobipEmail({
+        clientId: purchaserClient.id,
+        subject: `Your gift card purchase at ${shopDisplayName} is confirmed`,
+        text: `Purchase Complete!\nConfirmation #: ${orderNumber}\nGift Card: ${maskedCode}\nAmount: $${input.amount}\nRecipient: ${context.finalRecipientName}\nDelivery: ${input.deliveryMethod}`,
+        html: generateGiftCardPurchaseReceiptEmailHtml({
+          confirmationNumber: orderNumber,
+          maskedCode,
+          amount: input.amount,
+          shopName: shopDisplayName,
+          recipientName: context.finalRecipientName,
+          deliveryMethod: input.deliveryMethod,
+        }),
+      });
+    } catch (receiptError) {
+      // eslint-disable-next-line no-console
+      console.error(
+        "Failed to send gift card purchase receipt email:",
+        receiptError,
+      );
+    }
+
+    const purchaserPhone = input.purchaserPhone?.trim();
+    if (purchaserPhone) {
+      try {
+        const smsPayload = {
+          companyId: context.shop.companyId,
+          clientId: purchaserClient.id,
+          message: `Purchase Complete! Your $${input.amount} gift card for ${context.finalRecipientName} at ${shopDisplayName} is confirmed.\nConfirmation #: ${orderNumber}\nCard: ${maskedCode}`,
+          attachments: [],
+          systemCall: true,
+        };
+
+        if (context.shop.company.smsGateway === "TWILIO") {
+          await sendTwilioMessage(smsPayload);
+        } else if (context.shop.company.smsGateway === "INFOBIP") {
+          await sendInfobipMessage(smsPayload);
+        }
+      } catch (receiptSmsError) {
+        // eslint-disable-next-line no-console
+        console.error(
+          "Failed to send gift card purchase receipt SMS:",
+          receiptSmsError,
+        );
+      }
+    }
+  }
 
   return {
     giftCardId: giftCard.id,

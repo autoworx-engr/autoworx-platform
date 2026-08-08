@@ -17,6 +17,10 @@ import Avatar from "../Avatar";
 import NewCustomer from "./NewCustomer";
 import { SelectProps } from "./select-props";
 import useClientListInfiniteQuery from "@/hooks/query-hook/useClientListInfiniteQuery";
+import { Popconfirm } from "antd";
+
+const clientName = (client: Client | null) =>
+  client ? `${client.firstName} ${client.lastName ?? ""}`.trim() : "";
 
 export function SelectClient({
   name = "clientId",
@@ -25,6 +29,7 @@ export function SelectClient({
   openDropdown,
   setOpenDropdown,
   invoice,
+  confirmOnChange = false,
 }: SelectProps<Client | null>) {
   const state = useState(value);
   const [client, setClient] = setValue ? [value, setValue] : state;
@@ -57,6 +62,9 @@ export function SelectClient({
 
   const clientId = params.get("clientId");
   const initialClientSet = useRef(false);
+
+  const [pendingClient, setPendingClient] = useState<Client | null>(null);
+  const [selectorKey, setSelectorKey] = useState(0);
 
   useEffect(() => {
     if (newAddedCustomer && setOpenDropdown) {
@@ -99,57 +107,99 @@ export function SelectClient({
     client && useListsStore.setState({ client });
   };
 
+  const applyClient = (next: Client) => {
+    setClient(next);
+    handleSetParams(next);
+  };
+
+  const handleSelect = (next: Client) => {
+    if (confirmOnChange && client && client.id !== next.id) {
+      setPendingClient(next);
+      return;
+    }
+    applyClient(next);
+  };
+
+  const cancelClientChange = () => {
+    setPendingClient(null);
+    setSelectorKey((key) => key + 1);
+  };
+
   return (
     <>
       <input type="hidden" name={name} value={client?.id ?? ""} />
 
-      <Selector
-        className="max-w-[300px]"
-        label={(client: Client | null) =>
-          client ? `${client.firstName} ${client.lastName ?? ""}` : "Client"
-        }
-        // disabledDropdown={client?.fromRequest!}
-        newButton={
-          <NewCustomer
-            // @ts-ignore
-            setClient={(client: Client) => {
-              setClient(client);
-              client && handleSetParams(client);
-            }}
-          />
-        }
-        displayList={(client: Client) => (
-          <div onClick={() => handleSetParams(client)} className="flex gap-3">
-            <Avatar photo={client.photo} width={50} height={50} />
-            <div>
-              <h3 className="font-bold">
-                {`${client.firstName} ${client.lastName ?? ""}`}{" "}
-                {client?.isFleet && (
-                  <span className="ml-2 inline-flex items-center rounded-full border border-blue-200 bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
-                    Fleet
-                  </span>
-                )}
-              </h3>
-              <p>{client.mobile}</p>
-            </div>
-          </div>
-        )}
-        items={clientList}
-        onSearch={(search: string) => {
-          setSearchTerm(search);
-          return clientList;
+      <Popconfirm
+        // Driven entirely by `pendingClient` — it opens when a different
+        // client is picked in the dropdown, not on hover/click of the trigger.
+        open={!!pendingClient}
+        title="Change client?"
+        description={`Switching to ${clientName(
+          pendingClient,
+        )} will also replace the selected vehicle with one of theirs.`}
+        okText="Yes, change"
+        cancelText="Cancel"
+        placement="bottomLeft"
+        onConfirm={() => {
+          applyClient(pendingClient!);
+          setPendingClient(null);
         }}
-        openState={[
-          openDropdown as boolean,
-          setOpenDropdown as Dispatch<SetStateAction<boolean>>,
-        ]}
-        selectedItem={client}
-        setSelectedItem={setClient}
-        useInfiniteScroll={true}
-        hasNextPage={hasNextPage}
-        fetchNextPage={fetchNextPage}
-        isFetchingNextPage={isFetchingNextPage}
-      />
+        onCancel={cancelClientChange}
+      >
+        {/* Popconfirm anchors its popup by putting a ref on its child, and
+            Selector is a plain function component — without this wrapper there
+            is nothing to attach to and the popup never appears. */}
+        <div className="max-w-[300px]">
+          <Selector
+            key={selectorKey}
+            className="max-w-[300px]"
+            label={(client: Client | null) =>
+              client ? `${client.firstName} ${client.lastName ?? ""}` : "Client"
+            }
+            // disabledDropdown={client?.fromRequest!}
+            newButton={
+              <NewCustomer
+                // @ts-ignore
+                setClient={(client: Client) => {
+                  setClient(client);
+                  client && handleSetParams(client);
+                }}
+              />
+            }
+            displayList={(client: Client) => (
+              <div className="flex gap-3">
+                <Avatar photo={client.photo} width={50} height={50} />
+                <div>
+                  <h3 className="font-bold">
+                    {`${client.firstName} ${client.lastName ?? ""}`}{" "}
+                    {client?.isFleet && (
+                      <span className="ml-2 inline-flex items-center rounded-full border border-blue-200 bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
+                        Fleet
+                      </span>
+                    )}
+                  </h3>
+                  <p>{client.mobile}</p>
+                </div>
+              </div>
+            )}
+            items={clientList}
+            onSearch={(search: string) => {
+              setSearchTerm(search);
+              return clientList;
+            }}
+            openState={[
+              openDropdown as boolean,
+              setOpenDropdown as Dispatch<SetStateAction<boolean>>,
+            ]}
+            selectedItem={client}
+            onSelect={handleSelect}
+            useInfiniteScroll={true}
+            hasNextPage={hasNextPage}
+            fetchNextPage={fetchNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+          />
+        </div>
+      </Popconfirm>
     </>
   );
 }

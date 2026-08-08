@@ -63,8 +63,8 @@ const UserList: React.FC = () => {
   };
 
   return (
-    <div className="w-full p-6">
-      <div className="mb-6 flex items-start justify-between gap-3">
+    <div className="w-full p-4 sm:p-6">
+      <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-xl font-bold text-slate-600 sm:text-2xl">
             User Roles (Custom)
@@ -75,16 +75,16 @@ const UserList: React.FC = () => {
         </div>
       </div>
 
-      <div className="h-full">
+      <>
         {selectedUser ? (
           <CustomizeUserRole user={selectedUser} onBack={handleBackClick} />
         ) : (
           <>
-            <div className="mb-4">
+            <div className="my-3">
               <Search />
             </div>
 
-            <div className="thin-scrollbar max-h-[72vh] overflow-y-auto pr-1">
+            <div className="thin-scrollbar max-h-[100vh] overflow-y-auto pr-1 2xl:max-h-[calc(100vh-450px)]">
               {isLoading && (
                 <ul className="space-y-3">
                   {Array.from({ length: 6 }).map((_, index) => (
@@ -159,7 +159,7 @@ const UserList: React.FC = () => {
             </div>
           </>
         )}
-      </div>
+      </>
     </div>
   );
 };

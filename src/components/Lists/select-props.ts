@@ -18,6 +18,7 @@ export type SelectProps<T> = {
   invoice?: Invoice | null;
   isClear?: boolean;
   isEdit?: boolean;
+  confirmOnChange?: boolean;
   setIsAppointmentModalOpen?: React.Dispatch<React.SetStateAction<boolean>>;
 } & (
   | { value?: T; setValue?: undefined }

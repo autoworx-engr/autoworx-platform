@@ -10,6 +10,7 @@ import {
 import Selector from "@/components/Selector";
 import { Switch } from "@/components/Switch";
 import { Button } from "@/components/ui/button";
+import { DatePickerField } from "@/components/ui/DatePickerField";
 import {
   useCreateGiftCardPromo,
   useDeleteGiftCardPromo,
@@ -1151,12 +1152,17 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                 </div>
 
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <SettingInput
-                    label="Expiry Date"
-                    value={promoExpireDate}
-                    onChange={setPromoExpireDate}
-                    type="date"
-                  />
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-semibold text-gray-700">
+                      Expiry Date
+                    </label>
+                    <DatePickerField
+                      value={promoExpireDate}
+                      onChange={setPromoExpireDate}
+                      minDate={new Date()}
+                      placeholder="Select date"
+                    />
+                  </div>
 
                   <SettingInput
                     label="Usage Limit"

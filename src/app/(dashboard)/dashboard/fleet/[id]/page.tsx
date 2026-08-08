@@ -51,13 +51,13 @@ const page = async (props: PropsType) => {
 
   return (
     <div className="p-2">
-      <div className="w-fit">
-        <BackButton href="/dashboard/fleet" />
-      </div>
       <div className="flex items-center justify-between mb-1">
-        <h1 className="mr-4 mt-1 text-xl font-bold text-slate-600 sm:text-2xl">
-          Fleet Details
-        </h1>
+        <div className="flex items-center gap-2">
+          <BackButton href="/dashboard/fleet" />
+          <h1 className="mr-4 mt-1 text-xl font-bold text-slate-600 sm:text-2xl">
+            Fleet Details
+          </h1>
+        </div>
 
         {/* <NewFleet
           buttonElement={

@@ -151,6 +151,7 @@ export default function Header({
               openDropdown={clientOpenDropdown}
               setOpenDropdown={setClientOpenDropdown}
               invoice={invoice}
+              confirmOnChange={isEdit}
             />
             <SelectVehicle
               value={vehicle}

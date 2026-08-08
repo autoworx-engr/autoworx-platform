@@ -6,6 +6,7 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -174,6 +175,9 @@ export default function EditVehicle({
       >
         <DialogHeader>
           <DialogTitle>Edit Vehicle</DialogTitle>
+          <DialogDescription>
+            Update vehicle details for the client
+          </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-2 overflow-y-auto sm:grid-cols-2">
@@ -261,31 +265,45 @@ export default function EditVehicle({
             required={false}
             label="License Plate"
           />
-          <div className="flex items-end gap-2">
-            <SlimInput
-              name="vin"
-              value={vinValue}
-              onChange={(e) => setVinValue(e.target.value)}
-              onBlur={(e) => handleVinBlur(e.target.value)}
-              required={false}
-            />
-            <VINInputCamera
-              onVehicleInfo={(value) => {
-                const { make, model, year, specs, vin } =
-                  value?.data?.data || {};
-                const { displacement_cc } = specs || {};
+          <div>
+            <div className="flex items-end gap-2">
+              <div className="flex-1">
+                <SlimInput
+                  name="vin"
+                  value={vinValue}
+                  onChange={(e) => setVinValue(e.target.value)}
+                  onBlur={(e) => handleVinBlur(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleVinBlur(vinValue);
+                    }
+                  }}
+                  required={false}
+                />
+              </div>
+              <VINInputCamera
+                onVehicleInfo={(value) => {
+                  const { make, model, year, specs, vin } =
+                    value?.data?.data || {};
+                  const { displacement_cc } = specs || {};
 
-                setFormData((prev) => ({
-                  ...prev,
-                  vehicleYear: year ? String(year) : prev.vehicleYear,
-                  vehicleMake: make || prev.vehicleMake,
-                  vehicleModel: model || prev.vehicleModel,
-                }));
+                  setFormData((prev) => ({
+                    ...prev,
+                    vehicleYear: year ? String(year) : prev.vehicleYear,
+                    vehicleMake: make || prev.vehicleMake,
+                    vehicleModel: model || prev.vehicleModel,
+                  }));
 
-                if (displacement_cc) setEngineSize(displacement_cc);
-                if (vin) setVinValue(vin);
-              }}
-            />
+                  if (displacement_cc) setEngineSize(displacement_cc);
+                  if (vin) setVinValue(vin);
+                }}
+              />
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Press Enter or click away after typing to auto-fill vehicle
+              details
+            </p>
           </div>
           <SlimInput
             name="other"

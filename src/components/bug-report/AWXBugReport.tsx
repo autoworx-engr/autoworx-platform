@@ -33,6 +33,7 @@ const AWXBugReport = () => {
   const [message, setMessage] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const portalRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [reportMessage, setReportMessage] = useState<string>("");
@@ -69,10 +70,10 @@ const AWXBugReport = () => {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       event.stopPropagation();
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+      const target = event.target as Node;
+      const clickedTrigger = dropdownRef.current?.contains(target);
+      const clickedPortal = portalRef.current?.contains(target);
+      if (!clickedTrigger && !clickedPortal) {
         setIsDropdownOpen(false);
       }
     };
@@ -230,6 +231,7 @@ const AWXBugReport = () => {
         {/* Dropdown */}
         {isDropdownOpen && (
           <BugReportDropdownCard
+            ref={portalRef}
             isAdmin={true}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
