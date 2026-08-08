@@ -21,17 +21,22 @@ const ProductTooltipContainer = ({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <span
-            className={cn(
-              "block truncate text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight cursor-default flex-1 min-w-0",
-              quantity === 0
-                ? "text-red-500"
-                : "text-slate-900 dark:text-white",
-            )}
-            title={displayValue}
-          >
-            {displayValue}
-          </span>
+          <div className="flex items-baseline justify-center gap-0 w-full min-w-0">
+            <span
+              className={cn(
+                "truncate text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight cursor-default min-w-0",
+                quantity === 0
+                  ? "text-red-500"
+                  : "text-slate-900 dark:text-white",
+              )}
+              title={displayValue}
+            >
+              {displayValue}
+            </span>
+            <span className="text-xs sm:text-sm font-medium text-slate-400 flex-shrink-0 ml-0.5">
+              / {product?.unit}
+            </span>
+          </div>
         </TooltipTrigger>
         <TooltipContent>
           <p>{quantity}</p>

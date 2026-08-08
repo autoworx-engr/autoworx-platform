@@ -8,6 +8,12 @@ import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import getUser from "@/lib/getUser";
 import { formatCurrency } from "@/utils/formatCurrency";
+
+// Remove .00 from currency unless there's a decimal value
+const formatCurrencyClean = (value: number): string => {
+  const formatted = formatCurrency(value);
+  return formatted.replace(/\.00(?=\s|$)/g, "");
+};
 import { CircleAlert } from "lucide-react";
 import { unstable_cache } from "next/cache";
 import Image from "next/image";
@@ -96,7 +102,7 @@ export default async function Sidebar({
                               parseFloat(product.quantity?.toString() || "0"),
                           )}
                         >
-                          {formatCurrency(
+                          {formatCurrencyClean(
                             parseFloat(product.price?.toString() || "0") *
                               parseFloat(product.quantity?.toString() || "0"),
                           )}
@@ -125,8 +131,8 @@ export default async function Sidebar({
               <h3 className="text-xs sm:text-sm font-medium uppercase tracking-wider text-slate-500 flex-shrink-0">
                 Unit Price
               </h3>
-              <div className="flex items-baseline gap-1 w-full min-w-0">
-                <span className="min-w-0 flex-1">
+              <div className="flex items-baseline justify-center gap-0.5 w-full min-w-0">
+                <span className="min-w-0">
                   {product && (
                     <TooltipProvider>
                       <Tooltip>
@@ -137,7 +143,7 @@ export default async function Sidebar({
                               parseFloat(product.price?.toString() || "0"),
                             )}
                           >
-                            {formatCurrency(
+                            {formatCurrencyClean(
                               parseFloat(product.price?.toString() || "0"),
                             )}
                           </span>
@@ -311,11 +317,8 @@ export default async function Sidebar({
                     Stock Level
                   </div>
 
-                  <div className="mt-1 flex items-center justify-center gap-1 w-full min-w-0">
+                  <div className="mt-1 flex items-center justify-center w-full min-w-0">
                     <ProductTooltipContainer product={product} />
-                    <span className="text-xs sm:text-sm font-medium text-slate-400 flex-shrink-0">
-                      / {product?.unit}
-                    </span>
                   </div>
                 </div>
 
