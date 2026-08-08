@@ -2,6 +2,7 @@
 import { SendHorizontal } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import useInstagramSendMutation from "../../../_hooks/useInstagramSendMutation";
+import { useMessageDraft } from "../../../../_hooks/useMessageDraft";
 import { useClientCommunicationStore } from "@/stores/client-store";
 import { errorToast } from "@/lib/toast";
 
@@ -12,7 +13,15 @@ export default function SendInstagram({ clientId }: TProps) {
   const { clientConversationTrack, setClientConversationTrack } =
     useClientCommunicationStore();
 
-  const [messageInput, setMessageInput] = useState("");
+  const {
+    draftText: messageInput,
+    setDraftText: setMessageInput,
+    clearDraft,
+  } = useMessageDraft({
+    section: "client",
+    channel: "instagram",
+    targetId: clientId,
+  });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const adjustHeight = () => {
@@ -42,7 +51,7 @@ export default function SendInstagram({ clientId }: TProps) {
       } as any);
     }
 
-    setMessageInput("");
+    clearDraft();
     setTimeout(adjustHeight, 0);
 
     mutate({

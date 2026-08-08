@@ -2329,6 +2329,7 @@ model User {
   twoFactorToken                 TwoFactorToken?
   groups                         Group[]                         @relation("UserGroups")
   groupReadStates                GroupReadState[]
+  messageDrafts                  MessageDraft[]
   tasks                          Task[]
   taskUsers                      TaskUser[]
   appointments                   Appointment[]
@@ -3747,4 +3748,18 @@ model SmsTestConfig {
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
   @@map("sms_test_config")
+}
+
+model MessageDraft {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  section   String // "client" | "internal" | "collaboration"
+  channel   String? // "sms" | "email" | "messenger" | "instagram" - client only
+  targetId  Int      @map("target_id") // clientId, other user's id, or companyId depending on section
+  message   String   @db.Text
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, section, channel, targetId])
+  @@map("message_drafts")
 }
