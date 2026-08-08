@@ -1,3 +1,4 @@
+import ClearSelectionButton from "@/components/Lists/ClearSelectionButton";
 import NewVendor from "@/components/Lists/NewVendor";
 // import SelectCategory from "@/components/Lists/SelectCategory";
 import SelectCategory from "@/components/Lists/CreateEstimateCategory";
@@ -182,8 +183,8 @@ export default function MaterialCreate() {
                 return {
                   ...material,
                   name: data.material.name,
-                  categoryId: category?.id,
-                  vendorId: vendor?.id,
+                  categoryId: category?.id ?? null,
+                  vendorId: vendor?.id ?? null,
                   tags: data.material.tags,
                   notes: data.material.notes,
                   quantity: quantityValue || 0,
@@ -237,8 +238,8 @@ export default function MaterialCreate() {
       try {
         const res = await newMaterial({
           name,
-          categoryId: category?.id,
-          vendorId: vendor?.id,
+          categoryId: category?.id ?? undefined,
+          vendorId: vendor?.id ?? undefined,
           tags,
           notes,
           quantity: quantity || 0,
@@ -437,8 +438,8 @@ export default function MaterialCreate() {
               return {
                 ...material,
                 name,
-                categoryId: category?.id,
-                vendorId: vendor?.id,
+                categoryId: category?.id ?? null,
+                vendorId: vendor?.id ?? null,
                 tags,
                 notes,
                 quantity: quantity || 0,
@@ -517,6 +518,7 @@ export default function MaterialCreate() {
             categoryOpen={categoryOpen}
             setCategoryOpen={setCategoryOpen}
             className="max-w-full"
+            isClear
           />
         </div>
       </div>
@@ -565,6 +567,17 @@ export default function MaterialCreate() {
             selectedItem={vendor}
             setSelectedItem={setVendor}
             className="max-w-full"
+            footer={
+              vendor ? (
+                <ClearSelectionButton
+                  label="Clear Vendor"
+                  onClear={() => {
+                    setVendor(null);
+                    setVendorOpen(false);
+                  }}
+                />
+              ) : null
+            }
           />
         </div>
       </div>

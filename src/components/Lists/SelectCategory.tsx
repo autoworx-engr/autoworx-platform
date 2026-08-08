@@ -9,6 +9,7 @@ import { X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import ClearSelectionButton from "./ClearSelectionButton";
 
 export default function SelectCategory({
   categoryData = null,
@@ -20,6 +21,7 @@ export default function SelectCategory({
   onBlur,
   className,
   allowEdit = false,
+  isClear = false,
 }: {
   categoryData?: Category | null;
   onCategoryChange: (category: Category | null) => void;
@@ -30,6 +32,8 @@ export default function SelectCategory({
   onBlur?: () => void;
   className?: string;
   allowEdit?: boolean;
+  /** Show a "Clear Category" action so the selection can be removed. */
+  isClear?: boolean;
 }) {
   const { categories } = useListsStore();
   const [error, setError] = useState<string | null>();
@@ -216,6 +220,17 @@ export default function SelectCategory({
         selectedItem={category}
         setSelectedItem={setCategory}
         className={className}
+        footer={
+          isClear && category ? (
+            <ClearSelectionButton
+              label="Clear Category"
+              onClear={() => {
+                setCategory(null);
+                setCategoryOpen && setCategoryOpen(false);
+              }}
+            />
+          ) : null
+        }
         disabledDropdown={
           !allowEdit && !!category && pathname.includes("/estimate/")
         }

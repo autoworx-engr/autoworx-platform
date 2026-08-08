@@ -1044,7 +1044,7 @@ export default function InvoiceModalBody({
 
             {paymentEntries.length === 0 && (
               <div className="rounded-md border border-dashed p-3 text-xs text-slate-500">
-                No payment info available for this invoice.
+                Make a payment to see info
               </div>
             )}
 

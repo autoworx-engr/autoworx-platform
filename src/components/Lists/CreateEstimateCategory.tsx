@@ -5,6 +5,7 @@ import { useListsStore } from "@/stores/lists";
 import { Category } from "@prisma/client";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import ClearSelectionButton from "./ClearSelectionButton";
 
 export default function SelectCategory({
   categoryData = null,
@@ -14,14 +15,17 @@ export default function SelectCategory({
   setCategoryOpen,
   required = false,
   className,
+  isClear = false,
 }: {
   categoryData?: Category | null;
-  onCategoryChange: (category: Category) => void;
+  onCategoryChange: (category: Category | null) => void;
   labelPosition?: "top" | "left" | "none";
   categoryOpen?: boolean;
   setCategoryOpen?: any;
   required?: boolean;
   className?: string;
+  /** Show a "Clear Category" action so the selection can be removed. */
+  isClear?: boolean;
 }) {
   const { categories } = useListsStore();
   const [category, setCategory] = useState<Category | null>(categoryData);
@@ -53,9 +57,9 @@ export default function SelectCategory({
   }
 
   useEffect(() => {
-    if (category) {
-      onCategoryChange(category);
-    }
+    // Report `null` too — otherwise clearing the category never reaches the
+    // parent form and the old value is still what gets saved.
+    onCategoryChange(category);
   }, [category]);
 
   return (
@@ -142,6 +146,17 @@ export default function SelectCategory({
           selectedItem={category}
           setSelectedItem={setCategory}
           className={className}
+          footer={
+            isClear && category ? (
+              <ClearSelectionButton
+                label="Clear Category"
+                onClear={() => {
+                  setCategory(null);
+                  setCategoryOpen && setCategoryOpen(false);
+                }}
+              />
+            ) : null
+          }
         />
       </div>
     </div>
