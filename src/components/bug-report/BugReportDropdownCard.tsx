@@ -3,7 +3,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, forwardRef } from "react";
+import { createPortal } from "react-dom";
 
 interface BugReportDropdownCardProps {
   isAdmin?: boolean;
@@ -16,18 +17,27 @@ interface BugReportDropdownCardProps {
   onContactSelect: (contact: any) => void;
 }
 
-export const BugReportDropdownCard = ({
-  isAdmin = false,
-  isLoading = false,
-  bugReports = [],
-  searchQuery,
-  setSearchQuery,
-  onNew,
-  showNewButton = false,
-  onContactSelect,
-}: BugReportDropdownCardProps) => {
-  return (
-    <Card className="custom-scrollbar absolute top-0 right-10 md:right-32 z-30 w-72 sm:w-80 max-h-80 overflow-y-auto shadow-xl">
+export const BugReportDropdownCard = forwardRef<
+  HTMLDivElement,
+  BugReportDropdownCardProps
+>(function BugReportDropdownCard(
+  {
+    isAdmin = false,
+    isLoading = false,
+    bugReports = [],
+    searchQuery,
+    setSearchQuery,
+    onNew,
+    showNewButton = false,
+    onContactSelect,
+  },
+  ref,
+) {
+  return createPortal(
+    <Card
+      ref={ref}
+      className="custom-scrollbar fixed top-14 right-10 sm:top-16 md:right-32 z-30 w-72 sm:w-80 max-h-80 overflow-y-auto shadow-xl"
+    >
       {/* Header */}
       <CardHeader
         className={`pb-2 ${!isAdmin ? "flex flex-col gap-2 md:flex-row md:items-center md:justify-between" : ""}`}
@@ -109,6 +119,7 @@ export const BugReportDropdownCard = ({
           <ReportNotFoundCard />
         </div>
       )}
-    </Card>
+    </Card>,
+    document.body,
   );
-};
+});

@@ -7,7 +7,8 @@ export const laborCreateValidationSchema = z
         required_error: "Labor name must be required",
         invalid_type_error: "Labor name must be string",
       })
-      .nonempty("Labor name is required"),
+      .nonempty("Labor name is required")
+      .max(50, "Labor name must be at most 50 characters"),
     categoryId: z
       .number({
         required_error: "Category is required",

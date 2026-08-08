@@ -18,6 +18,8 @@ export type LaborField = keyof LaborFormValues;
 
 export type LaborFieldErrors = Partial<Record<LaborField, string>>;
 
+export const LABOR_NAME_MAX_LENGTH = 50;
+
 const NUMERIC_FIELDS = [
   { key: "hours", label: "No. of Hours" },
   { key: "charge", label: "$/hr" },
@@ -31,6 +33,8 @@ export function validateLabor(
 
   if (!values.name.trim()) {
     errors.name = "Labor Name is required";
+  } else if (values.name.trim().length > LABOR_NAME_MAX_LENGTH) {
+    errors.name = `Labor Name cannot exceed ${LABOR_NAME_MAX_LENGTH} characters`;
   }
 
   for (const { key, label } of NUMERIC_FIELDS) {

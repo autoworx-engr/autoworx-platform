@@ -30,7 +30,7 @@ export default function PaymentMethodFilter({
     "All",
     "Cash",
     "Card",
-    "Cheque",
+    "Check",
     "Deposit",
     "Refund",
     "Other",

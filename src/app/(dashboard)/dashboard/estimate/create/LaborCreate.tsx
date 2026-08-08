@@ -11,6 +11,7 @@ import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { laborCreateValidationSchema } from "@/validations/schemas/estimate/labor/labor.validation";
 import { cn } from "@/lib/cn";
 import {
+  LABOR_NAME_MAX_LENGTH,
   validateLabor,
   type LaborField,
   type LaborFieldErrors,
@@ -236,6 +237,7 @@ export default function LaborCreate() {
               clearFieldError("name");
             }}
             aria-invalid={!!errors.name}
+            maxLength={LABOR_NAME_MAX_LENGTH}
             className={cn(
               "h-10 flex-1 appearance-none rounded-xl bg-white px-4 text-sm font-medium border transition-all focus:outline-none focus:ring-2",
               errors.name

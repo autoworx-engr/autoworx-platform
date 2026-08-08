@@ -305,7 +305,7 @@ export default function AppointmentForm({
                     <Search className="absolute left-4 h-4 w-4 text-slate-400" />
                     <input
                       className="w-full rounded-lg bg-slate-50 py-2 pl-9 pr-3 text-sm outline-none dark:bg-slate-800"
-                      placeholder="Search ID or Vehicle..."
+                      placeholder="Search by ID or Vehicle..."
                       value={draftSearch}
                       onChange={(e) => setDraftSearch(e.target.value)}
                       autoFocus

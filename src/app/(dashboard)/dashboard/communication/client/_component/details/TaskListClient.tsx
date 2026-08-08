@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
 import { taskPriorityStyles } from "@/lib/taskPriorityStyles";
 import { Task, User } from "@prisma/client";
+import { useClientCommunicationStore } from "@/stores/client-store";
 import TaskActions from "./TaskActions";
 
 type TaskWithAssignedUsers = Task & { assignedUsers: User[] };
@@ -16,10 +17,19 @@ export default function TaskListClient({
   clientId: number;
 }) {
   const [tasks, setTasks] = useState(initialTasks);
+  const setPendingTaskCount = useClientCommunicationStore(
+    (state) => state.setPendingTaskCount,
+  );
 
   useEffect(() => {
     setTasks(initialTasks);
   }, [initialTasks]);
+
+  // Publish the live pending-task count so the tab badge updates the moment
+  // a task is completed here, instead of waiting on the server-passed count.
+  useEffect(() => {
+    setPendingTaskCount(tasks.length);
+  }, [tasks.length, setPendingTaskCount]);
 
   const removeTask = (id: number) => {
     setTasks((prev) => prev.filter((t) => t.id !== id));

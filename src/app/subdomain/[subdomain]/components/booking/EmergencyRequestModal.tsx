@@ -3,6 +3,9 @@
 import { useEffect, useMemo } from "react";
 import { AlertTriangle, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DatePickerField } from "@/components/ui/DatePickerField";
+import { TimeScrollPicker } from "@/components/ui/TimeScrollPicker";
+import { cn } from "@/lib/cn";
 import { useShopInfo } from "@/hooks/virtual-shop/useShopInfo";
 import { CheckoutVehicleSection } from "./CheckoutVehicleSection";
 import { useEmergencyRequest } from "./emergency/useEmergencyRequest";
@@ -219,21 +222,28 @@ export const EmergencyRequestModal = ({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-sm font-medium">Date</label>
-                  <input
-                    type="date"
+                  <DatePickerField
                     value={form.requestedDate}
-                    onChange={(e) => set("requestedDate", e.target.value)}
-                    min={new Date().toISOString().split("T")[0]}
-                    className={INPUT_CLASS}
+                    onChange={(value) => {
+                      set("requestedDate", value);
+                      if (!value) set("requestedTime", "");
+                    }}
+                    minDate={new Date()}
+                    clearable
+                    placeholder="Select date"
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-medium">Time</label>
-                  <input
-                    type="time"
+                <div
+                  className={cn(
+                    !form.requestedDate && "pointer-events-none opacity-50",
+                  )}
+                >
+                  <TimeScrollPicker
+                    id="requestedTime"
+                    label="Time"
+                    labelClassName="text-sm font-medium"
                     value={form.requestedTime}
-                    onChange={(e) => set("requestedTime", e.target.value)}
-                    className={INPUT_CLASS}
+                    onChange={(value) => set("requestedTime", value)}
                   />
                 </div>
               </div>

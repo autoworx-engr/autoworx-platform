@@ -379,6 +379,19 @@ export default function InvoiceModalBody({
 
       if (response?.type === "success") {
         successToast("Invoice Authorized");
+
+        setSignImage(data[0]);
+        setAuthorizedName(authorizedNameInput);
+        setInvoice((prev) =>
+          prev
+            ? {
+                ...prev,
+                signatureImage: data[0],
+                authorizedName: authorizedNameInput,
+                wasAuthorized: true,
+              }
+            : prev,
+        );
       } else {
         errorToast("Signature upload failed");
         console.error("Signature upload failed:");
@@ -1031,7 +1044,7 @@ export default function InvoiceModalBody({
 
             {paymentEntries.length === 0 && (
               <div className="rounded-md border border-dashed p-3 text-xs text-slate-500">
-                No payment info available for this invoice.
+                Make a payment to see info
               </div>
             )}
 
