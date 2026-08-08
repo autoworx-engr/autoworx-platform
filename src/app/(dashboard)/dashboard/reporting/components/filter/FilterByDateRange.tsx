@@ -122,7 +122,6 @@ export default function FilterDateRange({
 
     setState({ selection: resetSelection });
     setTempRange(resetSelection);
-    closeModal(modalName);
     setIsRangeSelected(false);
   };
   return (

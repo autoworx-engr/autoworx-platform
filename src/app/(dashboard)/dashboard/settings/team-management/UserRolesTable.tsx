@@ -109,17 +109,17 @@ export default function UserRolesTable() {
 
       <div className="px-4 pb-4">
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-          <div className="overflow-x-auto">
+          <div className="thin-scrollbar h-full overflow-auto 2xl:max-h-[calc(100vh-450px)]">
             <table className="w-full min-w-[720px] border-collapse text-sm">
               <thead>
                 <tr className="bg-slate-50/90">
-                  <th className="sticky left-0 z-20 w-[200px] min-w-[200px] max-w-[200px] border-b border-slate-200 bg-slate-50 px-4 py-3 text-left font-semibold text-slate-600">
+                  <th className="sticky left-0 top-0 z-30 w-[200px] min-w-[200px] max-w-[200px] border-b border-slate-200 bg-slate-50 px-4 py-3 text-left font-semibold text-slate-600">
                     Modules
                   </th>
                   {roles.map((role) => (
                     <th
                       key={role}
-                      className="border-b border-slate-200 px-5 py-3 text-center font-semibold text-slate-600"
+                      className="sticky top-0 z-20 border-b border-slate-200 bg-slate-50 px-5 py-3 text-center font-semibold text-slate-600"
                     >
                       {role}
                     </th>
