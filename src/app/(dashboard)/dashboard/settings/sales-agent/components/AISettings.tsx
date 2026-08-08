@@ -64,7 +64,7 @@ const AISettings = () => {
       </div>
 
       <Tabs defaultValue="company" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8">
+        <TabsList className="grid h-auto w-full grid-cols-4 gap-1 lg:h-9 lg:grid-cols-8 lg:gap-0">
           <TabsTrigger value="company" className="text-xs lg:text-sm">
             <Building2 className="h-4 w-4 mr-1 lg:mr-2" />
             <span className="hidden sm:inline">Company</span>
