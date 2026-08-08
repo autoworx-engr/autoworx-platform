@@ -1,22 +1,22 @@
 import { assignTask } from "@/actions/task/assignTask";
-import { errorToast, successToast } from "@/lib/toast";
 import FormError from "@/components/FormError";
+import Popup from "@/components/Popup";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import Popup from "@/components/Popup";
+import { errorToast, successToast } from "@/lib/toast";
 import { usePopupStore } from "@/stores/popup";
 import { Task, User } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useInView } from "framer-motion";
-import { ListChecks, Loader2, UserCog, X } from "lucide-react";
+import { ListCheck, Loader2, UserCog, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import useInfinityTaskQuery from "../../_hook/task/query/useInfinityTask";
-import { taskQueryKey } from "../../_constant";
-import TaskError from "../ui/TaskError";
 import EmptyMsg from "../../../../../../components/common/EmptyMsg";
+import { taskQueryKey } from "../../_constant";
+import useInfinityTaskQuery from "../../_hook/task/query/useInfinityTask";
+import TaskError from "../ui/TaskError";
 import TaskSpinner from "../ui/TaskSpinner";
 
 export default function AssignTask() {
@@ -149,12 +149,12 @@ export default function AssignTask() {
           </h2>
         </div>
 
-        <Separator className="my-4" />
+        <Separator className="my-2" />
 
         <FormError />
 
         {/* User card */}
-        <div className="flex items-center gap-3 rounded-xl border bg-muted/40 p-3">
+        <div className="flex items-center gap-3 rounded-full border bg-muted/40 p-3 w-fit">
           <Avatar className="h-12 w-12">
             <AvatarImage
               src={user.image ?? undefined}
@@ -178,7 +178,7 @@ export default function AssignTask() {
 
         {/* Task selection */}
         <div className="mb-2 mt-6 flex items-center gap-2">
-          <ListChecks className="h-5 w-5 text-primary" />
+          <ListCheck className="h-5 w-5 text-primary" />
           <h3 className="text-base font-semibold text-foreground">
             Select Tasks
           </h3>
@@ -205,12 +205,11 @@ export default function AssignTask() {
         {/* Actions */}
         <div className="mt-6 flex justify-end gap-3">
           <Button variant="outline" onClick={close} disabled={isSubmitting}>
-            <X className="h-4 w-4" />
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-            Assign
+            Save
           </Button>
         </div>
       </div>

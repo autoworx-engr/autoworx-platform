@@ -6,7 +6,7 @@ import { taskPriorityStyles } from "@/lib/taskPriorityStyles";
 import { errorToast, successToast } from "@/lib/toast";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { Task } from "@prisma/client";
-import { Popconfirm, Tooltip } from "antd";
+import { Popconfirm } from "antd";
 import { CircleCheckBig, Clock, PencilLineIcon } from "lucide-react";
 import moment from "moment-timezone";
 import { useRouter } from "next/navigation";
@@ -41,10 +41,6 @@ const TaskListItem = ({
     ? moment.utc(task.startTime, "HH:mm").format("h:mmA")
     : null;
   const datePart = task.date ? moment.utc(task.date).format("MMM DD") : null;
-
-  const tooltipLabel = datePart
-    ? `${task.title} — Due ${datePart}${timePart ? `, ${timePart}` : ""}`
-    : task.title;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -115,30 +111,21 @@ const TaskListItem = ({
     >
       {/* Task Title + Date/Time */}
       <div className="min-w-0 flex-1">
-        <Tooltip title={tooltipLabel} placement="topLeft">
-          <div
-            style={{ color: priorityStyle.color }}
-            className="truncate text-left text-xs font-semibold leading-tight md:text-sm"
-          >
-            {task.title}
-          </div>
-        </Tooltip>
+        <div
+          style={{ color: priorityStyle.color }}
+          className="truncate text-left text-xs font-semibold leading-tight md:text-sm"
+        >
+          {task.title}
+        </div>
 
         {(datePart || timePart) && (
-          <Tooltip
-            title={
-              timePart ? `Due: ${datePart} at ${timePart}` : `Due: ${datePart}`
-            }
-            placement="top"
-          >
-            <div className="mt-0.5 flex items-center gap-1 text-[11px] font-medium opacity-80 transition-opacity hover:opacity-100">
-              <Clock className="h-3 w-3 flex-shrink-0" />
-              <span>
-                {datePart}
-                {timePart && `, ${timePart}`}
-              </span>
-            </div>
-          </Tooltip>
+          <div className="mt-0.5 flex items-center gap-1 text-[11px] font-medium opacity-80 transition-opacity hover:opacity-100">
+            <Clock className="h-3 w-3 flex-shrink-0" />
+            <span>
+              {datePart}
+              {timePart && `, ${timePart}`}
+            </span>
+          </div>
         )}
       </div>
 
