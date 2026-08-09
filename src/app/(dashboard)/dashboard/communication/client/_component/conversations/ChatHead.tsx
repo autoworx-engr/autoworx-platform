@@ -167,11 +167,17 @@ export default function ChatHead({
         {clientConversationTrack && !clientConversationTrack?.smsIsRead && (
           <span className="absolute -top-1 -right-1 z-10">
             <span className="absolute -inset-0.5 animate-ping rounded-full bg-rose-400/70" />
-            <span className="relative flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold leading-none text-white ring-2 ring-white/80">
-              {clientConversationTrack.smsUnReadCount > 9
-                ? "9+"
-                : clientConversationTrack.smsUnReadCount || 1}
-            </span>
+            {/* A count of 0 means the thread was marked unread by hand rather
+                than by an incoming message, so show a bare dot. */}
+            {clientConversationTrack.smsUnReadCount > 0 ? (
+              <span className="relative flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold leading-none text-white ring-2 ring-white/80">
+                {clientConversationTrack.smsUnReadCount > 9
+                  ? "9+"
+                  : clientConversationTrack.smsUnReadCount}
+              </span>
+            ) : (
+              <span className="relative flex h-3 w-3 rounded-full bg-rose-500 ring-2 ring-white/80" />
+            )}
           </span>
         )}
         <svg

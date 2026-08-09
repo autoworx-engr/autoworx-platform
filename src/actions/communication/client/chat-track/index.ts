@@ -271,11 +271,14 @@ export async function unreadClientSmsAndEmail(clientId: number) {
 
     const channels = getManualUnreadChannels(findClientChatTrack);
     if (channels.sms) {
+      // Marking a thread unread by hand means "remind me", not "a new message
+      // arrived" — so leave the count alone. A count of 0 on an unread SMS
+      // channel is what tells the badge to show a plain dot instead of a
+      // number, and it keeps a real inbound count from being inflated.
       await db.clientConversationTrack.updateMany({
         where: { clientId, smsIsRead: true },
         data: {
           smsIsRead: false,
-          smsUnReadCount: { increment: 1 },
         },
       });
     }
