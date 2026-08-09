@@ -140,7 +140,7 @@ export const sendClientCallMissedNotification = async ({
       phone: true,
     });
 
-    const redirectUrl = `/dashboard/communication/client/${clientId}?open=PHONE`;
+    const redirectUrl = `/dashboard/communication/client/${clientId}?open=PHONE&chat=true`;
     const description = `Missed call from ${clientName || "a client"}. Call to respond.`;
     const title = "Missed Call";
 

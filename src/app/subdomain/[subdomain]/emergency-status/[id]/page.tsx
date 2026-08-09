@@ -1,6 +1,8 @@
 import { db } from "@/lib/db";
+import { FormatUtcToTimezone } from "@/utils/FormatUtcToTimezone";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
+import moment from "moment-timezone";
 import {
   CheckCircle2,
   Clock,
@@ -73,12 +75,10 @@ const STATUS_CONFIG: Record<
 
 function formatDate(value: string | null | undefined) {
   if (!value) return null;
-  return new Date(value).toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  // requestedDate/proposedDate are plain "YYYY-MM-DD" strings with no time or
+  // timezone component — parse and format them literally so the displayed
+  // date never shifts by a day depending on the server's runtime timezone.
+  return moment(value, "YYYY-MM-DD").format("dddd, MMMM D, YYYY");
 }
 
 function formatTime(value: string | null | undefined) {
@@ -150,6 +150,7 @@ export default async function EmergencyStatusPage(props: Props) {
             select: {
               phone: true,
               phoneVisibility: true,
+              timezone: true,
             },
           },
         },
@@ -161,6 +162,7 @@ export default async function EmergencyStatusPage(props: Props) {
 
   const cfg = STATUS_CONFIG[request.status];
   const StatusIcon = cfg.icon;
+  const timezone = request.shop.company.timezone || moment.tz.guess();
   const defaultBanner =
     "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&q=80&w=2000";
 
@@ -220,10 +222,11 @@ export default async function EmergencyStatusPage(props: Props) {
           </div>
           <p className="text-xs text-gray-500 pt-1">
             Submitted{" "}
-            {new Date(request.createdAt).toLocaleString("en-US", {
-              dateStyle: "medium",
-              timeStyle: "short",
-            })}
+            {FormatUtcToTimezone(
+              request.createdAt,
+              timezone,
+              "MMM D, YYYY h:mm A",
+            )}
           </p>
         </div>
 
@@ -356,19 +359,21 @@ export default async function EmergencyStatusPage(props: Props) {
           new Date(request.expiresAt) > new Date() && (
             <p className="text-xs text-center text-gray-400">
               Request expires{" "}
-              {new Date(request.expiresAt).toLocaleString("en-US", {
-                dateStyle: "medium",
-                timeStyle: "short",
-              })}
+              {FormatUtcToTimezone(
+                request.expiresAt,
+                timezone,
+                "MMM D, YYYY h:mm A",
+              )}
             </p>
           )}
 
         <p className="text-xs text-center text-gray-400">
           Last updated{" "}
-          {new Date(request.updatedAt).toLocaleString("en-US", {
-            dateStyle: "medium",
-            timeStyle: "short",
-          })}
+          {FormatUtcToTimezone(
+            request.updatedAt,
+            timezone,
+            "MMM D, YYYY h:mm A",
+          )}
         </p>
       </main>
     </div>
