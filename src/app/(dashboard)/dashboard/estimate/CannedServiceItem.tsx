@@ -99,10 +99,10 @@ export const CannedServiceItem = ({
       >
         <CardHeader className="p-4">
           <div className="flex items-start justify-between">
-            <h3 className="line-clamp-2 text-xl font-extrabold text-gray-800">
+            <h3 className="line-clamp-2 min-w-0 flex-1 text-xl font-extrabold text-gray-800">
               {service.name}
             </h3>
-            <div className="flex items-center gap-3 ml-4">
+            <div className="flex shrink-0 items-center gap-3 ml-4">
               <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
                   <button

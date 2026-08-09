@@ -42,6 +42,7 @@ const nextConfig = {
     "*.ngrok-free.app",
     "localhost:3000",
     "*.trycloudflare.com",
+    'bs-local.com'
   ],
 };
 

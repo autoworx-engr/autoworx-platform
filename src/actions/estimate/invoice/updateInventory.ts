@@ -140,7 +140,7 @@ export async function updateInventoryOrCreateHistory({
           }
 
           //  low inventory check
-          if (updatedQuantity < 0) {
+          if (updatedQuantity <= 0) {
             throw new Error(
               `The quantity of "${product.name}" is not enough in the inventory`,
             );
