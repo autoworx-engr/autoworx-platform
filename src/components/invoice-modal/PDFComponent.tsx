@@ -912,9 +912,7 @@ const PDFComponent = function PDF({
           </View>
         </View>
 
-        <Text style={[styles.sectionTitle, { marginTop: 4 }]}>
-          Services & Line Items
-        </Text>
+        <Text style={[styles.sectionTitle, { marginTop: 4 }]}>Services</Text>
         <PDFInvoiceItems items={invoice.invoiceItems} />
 
         {/* payment info  */}
