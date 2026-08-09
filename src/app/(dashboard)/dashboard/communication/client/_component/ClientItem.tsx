@@ -69,11 +69,26 @@ export default function ClientItem({
     (state) => state.setClientConversationTrack,
   );
 
+  // The store holds the track for the conversation that's currently open, and
+  // ChatHead reads it to draw its badges. Writing another row's track into it
+  // would make the open conversation adopt that row's unread state, so only
+  // the selected row may publish. Rows keep their own state via `setClient`.
+  const publishTrack = (
+    updatedTrack: ClientConversationTrack | null | undefined,
+  ) => {
+    setClient((prev) =>
+      prev ? { ...prev, conversationsTrack: updatedTrack } : prev,
+    );
+    if (selected) {
+      setClientConversationTrack(updatedTrack);
+    }
+  };
+
   const markClientMessagesAsUnseen = async (clientId: number) => {
     try {
       const updatedTrack = await unreadClientSmsAndEmail(clientId);
 
-      setClientConversationTrack(updatedTrack);
+      publishTrack(updatedTrack);
     } catch (err: any) {
       const formattedError = errorHandler(err);
       errorToast(formattedError.message);
@@ -83,7 +98,7 @@ export default function ClientItem({
   const markClientMessagesAsSeen = async (clientId: number) => {
     try {
       const updatedTrack = await readClientSmsAndEmail(clientId);
-      setClientConversationTrack(updatedTrack);
+      publishTrack(updatedTrack);
       if (filter === "Unread") {
         setClients((prev) => prev.filter((c) => c.id !== clientId));
       }
