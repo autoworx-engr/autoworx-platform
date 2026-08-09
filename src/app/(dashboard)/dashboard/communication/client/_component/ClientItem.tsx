@@ -68,6 +68,9 @@ export default function ClientItem({
   const setClientConversationTrack = useClientCommunicationStore(
     (state) => state.setClientConversationTrack,
   );
+  const setClientTrackUpdate = useClientCommunicationStore(
+    (state) => state.setClientTrackUpdate,
+  );
 
   // The store holds the track for the conversation that's currently open, and
   // ChatHead reads it to draw its badges. Writing another row's track into it
@@ -79,6 +82,8 @@ export default function ClientItem({
     setClient((prev) =>
       prev ? { ...prev, conversationsTrack: updatedTrack } : prev,
     );
+    // The nav badge counts every unread client, so it hears about all rows.
+    setClientTrackUpdate(updatedTrack);
     if (selected) {
       setClientConversationTrack(updatedTrack);
     }

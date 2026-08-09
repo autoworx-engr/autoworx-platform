@@ -220,15 +220,18 @@ export async function readClientSMS(clientId: number) {
     if (!findClientChatTrack) {
       return initialCreateClientChatTrack(clientId);
     }
-    const updatedData = findClientChatTrack?.smsUnReadCount
-      ? await db.clientConversationTrack.update({
-          where: { clientId },
-          data: {
-            smsIsRead: true,
-            smsUnReadCount: 0,
-          },
-        })
-      : findClientChatTrack;
+    // A thread marked unread by hand has no count to clear, so gate on the
+    // read flag as well — otherwise opening it would never mark it read.
+    const updatedData =
+      findClientChatTrack.smsUnReadCount || !findClientChatTrack.smsIsRead
+        ? await db.clientConversationTrack.update({
+            where: { clientId },
+            data: {
+              smsIsRead: true,
+              smsUnReadCount: 0,
+            },
+          })
+        : findClientChatTrack;
     return updatedData;
   } catch (err) {
     throw err;
@@ -244,15 +247,16 @@ export async function readClientEmail(clientId: number) {
     if (!findClientChatTrack) {
       return initialCreateClientChatTrack(clientId);
     }
-    const updatedData = findClientChatTrack?.emailIsUnReadCount
-      ? await db.clientConversationTrack.update({
-          where: { clientId },
-          data: {
-            emailIsRead: true,
-            emailIsUnReadCount: 0,
-          },
-        })
-      : findClientChatTrack;
+    const updatedData =
+      findClientChatTrack.emailIsUnReadCount || !findClientChatTrack.emailIsRead
+        ? await db.clientConversationTrack.update({
+            where: { clientId },
+            data: {
+              emailIsRead: true,
+              emailIsUnReadCount: 0,
+            },
+          })
+        : findClientChatTrack;
     return updatedData;
   } catch (err) {
     throw err;
@@ -269,12 +273,12 @@ export async function unreadClientSmsAndEmail(clientId: number) {
       return initialCreateClientChatTrack(clientId);
     }
 
+    // Marking a thread unread by hand means "remind me", not "a new message
+    // arrived" — so leave the counts alone. A count of 0 on an unread channel
+    // is what tells the badge to show a plain dot instead of a number, and it
+    // keeps a real inbound count from being inflated.
     const channels = getManualUnreadChannels(findClientChatTrack);
     if (channels.sms) {
-      // Marking a thread unread by hand means "remind me", not "a new message
-      // arrived" — so leave the count alone. A count of 0 on an unread SMS
-      // channel is what tells the badge to show a plain dot instead of a
-      // number, and it keeps a real inbound count from being inflated.
       await db.clientConversationTrack.updateMany({
         where: { clientId, smsIsRead: true },
         data: {
@@ -288,7 +292,6 @@ export async function unreadClientSmsAndEmail(clientId: number) {
         where: { clientId, emailIsRead: true },
         data: {
           emailIsRead: false,
-          emailIsUnReadCount: { increment: 1 },
         },
       });
     }
@@ -355,7 +358,7 @@ export async function readClientMessenger(clientId: number) {
       where: { clientId },
     });
     if (!track) return initialCreateClientChatTrack(clientId);
-    if (!track.messengerUnReadCount) return track;
+    if (!track.messengerUnReadCount && track.messengerIsRead) return track;
     return db.clientConversationTrack.update({
       where: { clientId },
       data: { messengerIsRead: true, messengerUnReadCount: 0 },
@@ -413,7 +416,7 @@ export async function readClientInstagram(clientId: number) {
       where: { clientId },
     });
     if (!track) return initialCreateClientChatTrack(clientId);
-    if (!track.instagramUnReadCount) return track;
+    if (!track.instagramUnReadCount && track.instagramIsRead) return track;
     return db.clientConversationTrack.update({
       where: { clientId },
       data: { instagramIsRead: true, instagramUnReadCount: 0 },
