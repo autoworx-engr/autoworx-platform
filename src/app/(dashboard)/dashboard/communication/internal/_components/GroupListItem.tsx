@@ -3,7 +3,15 @@ import { cn } from "@/lib/cn";
 import { Group, User } from "@prisma/client";
 import { Users } from "lucide-react";
 
-type TGroup = Group & { users: User[]; unreadCount?: number };
+type TGroup = Group & {
+  users: User[];
+  unreadCount?: number;
+  latestMessage?: {
+    message: string;
+    senderName: string | null;
+    updatedAt: Date;
+  } | null;
+};
 
 const MAX_VISIBLE_AVATARS = 1;
 
@@ -23,6 +31,7 @@ export function GroupListItem({
   const showBadge = unreadCount > 0;
   const unreadLabel = unreadCount > 9 ? "9+" : String(unreadCount);
   const isUnread = unreadCount > 0 && !isSelectedGroup;
+  const latestMessage = group.latestMessage;
 
   return (
     <button
@@ -105,13 +114,23 @@ export function GroupListItem({
         </p>
         <p
           className={cn(
-            "mt-0.5 text-xs",
+            "mt-0.5 line-clamp-1 text-xs",
             isSelectedGroup
               ? "text-white/80"
-              : "text-zinc-500 dark:text-zinc-400",
+              : isUnread
+                ? "font-semibold text-zinc-700 dark:text-zinc-200"
+                : "text-zinc-500 dark:text-zinc-400",
           )}
         >
-          {memberCount} {memberCount === 1 ? "member" : "members"}
+          {latestMessage ? (
+            <>
+              {latestMessage.senderName ?? "You"}: {latestMessage.message}
+            </>
+          ) : (
+            // Nothing said yet — the member count is more useful than a
+            // blank line.
+            `${memberCount} ${memberCount === 1 ? "member" : "members"}`
+          )}
         </p>
       </div>
     </button>
