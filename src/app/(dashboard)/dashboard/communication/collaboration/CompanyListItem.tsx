@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Company, User } from "@prisma/client";
 import { cn } from "@/lib/cn";
 import { useCompanyUnreadCounts } from "./hooks/useCompanyUnreadCounts";
+import { useDraftPreview } from "../_hooks/useDraftPreview";
 
 type Props = {
   company: Company & { users: User[] };
@@ -21,6 +22,7 @@ export default function CompanyListItem({
   const unread = useCompanyUnreadCounts(currentCompanyId, company.id);
   const isSelected = selectedCompanyId === company.id;
   const unreadLabel = unread > 9 ? "9+" : String(unread);
+  const draftText = useDraftPreview("collaboration", "", company.id);
 
   return (
     <button
@@ -68,15 +70,20 @@ export default function CompanyListItem({
         >
           {company.name}
         </p>
-        {company.users?.length > 0 && (
+        {(draftText || company.users?.length > 0) && (
           <p
             className={cn(
-              "mt-0.5 text-xs",
-              isSelected ? "text-white/80" : "text-zinc-500 dark:text-zinc-400",
+              "mt-0.5 line-clamp-1 text-xs",
+              draftText
+                ? "italic text-amber-600 dark:text-amber-500"
+                : isSelected
+                  ? "text-white/80"
+                  : "text-zinc-500 dark:text-zinc-400",
             )}
           >
-            {company.users.length}{" "}
-            {company.users.length === 1 ? "member" : "members"}
+            {draftText
+              ? `Draft: ${draftText}`
+              : `${company.users.length} ${company.users.length === 1 ? "member" : "members"}`}
           </p>
         )}
       </div>
