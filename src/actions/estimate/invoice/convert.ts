@@ -16,6 +16,7 @@ import { revalidatePath } from "next/cache";
 export async function convertInvoice(
   id: string,
   companyId?: number,
+  allowInsufficientInventory: boolean = false,
 ): Promise<ServerAction | TErrorHandler> {
   try {
     let cId = companyId;
@@ -120,7 +121,8 @@ export async function convertInvoice(
 
           if (
             updatedInvoiceData.type === InvoiceType.Invoice &&
-            product.quantity > Number(findInventoryProduct.quantity || 0)
+            product.quantity > Number(findInventoryProduct.quantity || 0) &&
+            !allowInsufficientInventory
           ) {
             throw new Error(
               `The quantity of "${product.name}" is not enough in the inventory, You need ${product.quantity} but only have ${findInventoryProduct.quantity} quantity`,

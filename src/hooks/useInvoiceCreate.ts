@@ -38,6 +38,7 @@ export function useInvoiceCreate(type: InvoiceType) {
 
   async function handleSubmit(
     fromPayment?: boolean,
+    allowInsufficientInventory: boolean = false,
   ): Promise<ServerAction | TErrorHandler> {
     const clientId = client?.id;
     const vehicleId = vehicle?.id;
@@ -101,6 +102,8 @@ export function useInvoiceCreate(type: InvoiceType) {
           damageNotes,
         },
         fromPayment,
+        0,
+        allowInsufficientInventory,
       );
 
       if (res.type === "success") {
@@ -154,6 +157,7 @@ export function useInvoiceCreate(type: InvoiceType) {
         coupon,
         inspections,
         damageNotes,
+        allowInsufficientInventory,
       });
 
       if (res.type === "success") {
@@ -164,6 +168,7 @@ export function useInvoiceCreate(type: InvoiceType) {
           invoiceType: res.data.type,
           companyId: res.data.companyId,
           invoiceId,
+          allowInsufficientInventory,
         });
 
         successToast(`${type} Create successfully`);
