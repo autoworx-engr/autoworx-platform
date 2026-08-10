@@ -1,3 +1,4 @@
+import { errorToast } from "@/lib/toast";
 import { Client, ClientConversationTrack } from "@prisma/client";
 
 export const isImage = (fileName: string = "") => {
@@ -39,6 +40,112 @@ export const isAudio = (fileName: string = "") => {
   const ext = fileName?.split(".")?.pop()?.toLowerCase();
 
   return audioExtensions.includes(ext ?? "");
+};
+
+// Formats users can actually receive/open through SMS, Email, and Messenger —
+// deliberately excludes executables/scripts since these get sent straight to
+// clients. The S3 upload pipeline itself caps every file at 50MB
+// (src/actions/s3/signedURL.ts), so this stays well under that.
+export const MAX_ATTACHMENT_SIZE_MB = 25;
+
+const ALLOWED_ATTACHMENT_EXTENSIONS = [
+  // images
+  "jpg",
+  "jpeg",
+  "png",
+  "gif",
+  "bmp",
+  "webp",
+  "svg",
+  "tiff",
+  "heic",
+  // documents
+  "pdf",
+  "doc",
+  "docx",
+  "xls",
+  "xlsx",
+  "csv",
+  "txt",
+  // audio (incl. voice notes)
+  "mp3",
+  "wav",
+  "ogg",
+  "oga",
+  "opus",
+  "m4a",
+  "aac",
+  "amr",
+  "flac",
+  // video
+  "mp4",
+  "mov",
+  "webm",
+  "3gp",
+];
+
+// For the file inputs' `accept` attribute — a first line of defense only;
+// it doesn't affect drag-and-drop, so getAttachmentValidationError below is
+// the actual enforcement.
+export const ATTACHMENT_ACCEPT = ALLOWED_ATTACHMENT_EXTENSIONS.map(
+  (ext) => `.${ext}`,
+).join(",");
+
+export const isAllowedAttachment = (file: File) => {
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+  return ALLOWED_ATTACHMENT_EXTENSIONS.includes(ext);
+};
+
+/** Returns a user-facing error message if the file can't be attached, or null if it's fine. */
+export const getAttachmentValidationError = (file: File): string | null => {
+  if (!isAllowedAttachment(file)) {
+    return `"${file.name}" is not a supported file type`;
+  }
+  if (file.size > MAX_ATTACHMENT_SIZE_MB * 1024 * 1024) {
+    return `"${file.name}" exceeds the ${MAX_ATTACHMENT_SIZE_MB}MB limit`;
+  }
+  return null;
+};
+
+/**
+ * Dedupes newly picked/dropped files against what's already staged and drops
+ * anything that fails attachment validation, toasting once per rejection
+ * reason. Shared by every channel composer (SMS, Email, Messenger) so the
+ * file-select and drag-drop handlers stay a one-liner.
+ */
+export const mergeNewAttachments = (prev: File[], picked: File[]): File[] => {
+  const duplicates: string[] = [];
+  const invalid: string[] = [];
+
+  const validNewFiles = picked.filter((file) => {
+    const isDuplicate = prev.some(
+      (f) =>
+        f.name === file.name &&
+        f.size === file.size &&
+        f.lastModified === file.lastModified,
+    );
+    if (isDuplicate) {
+      duplicates.push(file.name);
+      return false;
+    }
+
+    const validationError = getAttachmentValidationError(file);
+    if (validationError) {
+      invalid.push(validationError);
+      return false;
+    }
+
+    return true;
+  });
+
+  if (duplicates.length) {
+    errorToast(`Already uploaded: ${duplicates.join(", ")}`);
+  }
+  if (invalid.length) {
+    errorToast(invalid.join(". "));
+  }
+
+  return [...prev, ...validNewFiles];
 };
 
 export const clientSortByUpdatedMessage = (

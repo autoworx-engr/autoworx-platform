@@ -12,8 +12,8 @@ import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import AttachmentInput from "../AttachmentInput";
 import SmartReplyBar from "../sms/SmartReply";
-import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { ATTACHMENT_ACCEPT, mergeNewAttachments } from "../../../_utils";
 
 // Helper function to format attachment message
 const formatAttachmentMessage = (files: File[]) => {
@@ -190,41 +190,23 @@ export default function SendMail({
         onDrop={(e) => {
           e.preventDefault();
           const dropped = Array.from(e.dataTransfer.files || []);
-          if (dropped.length) setFiles((prev) => [...prev, ...dropped]);
+          if (dropped.length) {
+            setFiles((prev) => mergeNewAttachments(prev, dropped));
+          }
         }}
       >
         {/* hidden file input */}
         <input
           onChange={(e) => {
             const picked = Array.from(e?.target?.files || []);
-
             if (picked.length) {
-              setFiles((prev) => {
-                const duplicates: string[] = [];
-                const newFiles = picked.filter((file) => {
-                  const exists = prev.some(
-                    (f) =>
-                      f.name === file.name &&
-                      f.size === file.size &&
-                      f.lastModified === file.lastModified,
-                  );
-
-                  if (exists) duplicates.push(file.name);
-                  return !exists;
-                });
-
-                if (duplicates.length) {
-                  toast.error(`Already uploaded: ${duplicates.join(", ")}`);
-                }
-
-                return [...prev, ...newFiles];
-              });
+              setFiles((prev) => mergeNewAttachments(prev, picked));
             }
-
             e.currentTarget.value = "";
           }}
           multiple
           type="file"
+          accept={ATTACHMENT_ACCEPT}
           className="hidden"
           ref={fileRef}
           aria-hidden
