@@ -44,18 +44,18 @@ export default function Create() {
             Number(item.labor?.hours)
           : 0;
 
-        const totalDiscount =
-          item.materials.reduce((acc, material) => {
-            return (
-              acc +
-              (material && material.discount
-                ? parseFloat(material.discount.toString())
-                : 0)
-            );
-          }, 0) +
-          (item.labor?.discount
-            ? parseFloat(item.labor?.discount.toString())
-            : 0);
+        const materialDiscount = item.materials.reduce((acc, material) => {
+          return (
+            acc +
+            (material && material.discount
+              ? parseFloat(material.discount.toString())
+              : 0)
+          );
+        }, 0);
+        const laborDiscount = item.labor?.discount
+          ? parseFloat(item.labor?.discount.toString())
+          : 0;
+        const totalDiscount = materialDiscount + laborDiscount;
         const serviceTotal = materialCost + laborCost - totalDiscount;
         const isLaborOnly = !item.service;
         return (
@@ -189,9 +189,23 @@ export default function Create() {
 
                   {/* Discount Section */}
                   {totalDiscount > 0 && (
-                    <div className="mt-2 flex justify-between border-t border-slate-100 pt-2 text-xs font-bold text-emerald-600">
-                      <p>Discount</p>
-                      <p>- {formatCurrency(totalDiscount)}</p>
+                    <div className="mt-2 space-y-1 border-t border-slate-100 pt-2">
+                      {materialDiscount > 0 && (
+                        <div className="flex justify-between text-xs font-medium text-slate-400">
+                          <p>Material Discount</p>
+                          <p>- {formatCurrency(materialDiscount)}</p>
+                        </div>
+                      )}
+                      {laborDiscount > 0 && (
+                        <div className="flex justify-between text-xs font-medium text-slate-400">
+                          <p>Labor Discount</p>
+                          <p>- {formatCurrency(laborDiscount)}</p>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-xs font-bold text-emerald-600">
+                        <p>Total Discount</p>
+                        <p>- {formatCurrency(totalDiscount)}</p>
+                      </div>
                     </div>
                   )}
                 </div>

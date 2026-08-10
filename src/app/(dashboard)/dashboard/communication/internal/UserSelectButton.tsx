@@ -5,6 +5,7 @@ import { useChatTrackStore } from "@/stores/chatTrackStore";
 import { ChatTrack, Message, User } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import { useMemo } from "react";
+import { useDraftPreview } from "../_hooks/useDraftPreview";
 
 type TUser = User & { unreadCount: number; latestMessage?: Message | null };
 type TTraceMessage = ChatTrack & { message?: Message | null };
@@ -111,6 +112,7 @@ export default function UserSelectButton({
     lastMessageHistory?.lastMessage || user.latestMessage?.message;
   const previewPrefix = participants === "sender" ? "You" : user.firstName;
   const isUnreadPreview = unreadCount > 0 && !isSelectedUser;
+  const draftText = useDraftPreview("internal", "dm", user.id);
 
   return (
     <button
@@ -156,18 +158,22 @@ export default function UserSelectButton({
         >
           {user.firstName} {user.lastName}
         </p>
-        {messageText && (
+        {(draftText || messageText) && (
           <p
             className={cn(
               "mt-0.5 line-clamp-1 text-xs",
-              isSelectedUser
-                ? "text-white/80"
-                : isUnreadPreview
-                  ? "font-semibold text-zinc-700 dark:text-zinc-200"
-                  : "text-zinc-500 dark:text-zinc-400",
+              draftText
+                ? "italic text-amber-600 dark:text-amber-500"
+                : isSelectedUser
+                  ? "text-white/80"
+                  : isUnreadPreview
+                    ? "font-semibold text-zinc-700 dark:text-zinc-200"
+                    : "text-zinc-500 dark:text-zinc-400",
             )}
           >
-            {previewPrefix}: {messageText}
+            {draftText
+              ? `Draft: ${draftText}`
+              : `${previewPrefix}: ${messageText}`}
           </p>
         )}
       </div>

@@ -13,6 +13,7 @@ import {
 import FormError from "@/components/FormError";
 import { SlimInput, slimInputClassName } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
+import { cn } from "@/lib/cn";
 import useTemplatesQuery from "@/hooks/query-hook/useTemplatesQuery";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
@@ -123,9 +124,11 @@ export default function NewTemplate({
               name="message"
               rows={5}
               maxLength={160} // ✅ Enforce SMS strictness
-              className={`${slimInputClassName} ${
-                message.length > 160 ? "border-red-500" : ""
-              }`}
+              className={cn(
+                slimInputClassName,
+                "h-auto min-h-[100px]",
+                message.length > 160 && "border-red-500",
+              )}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
             />

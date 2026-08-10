@@ -1,3 +1,7 @@
+import {
+  checkInventoryForPayment,
+  type InventoryCheckResult,
+} from "@/actions/estimate/invoice/checkInventoryForPayment";
 import { paymentLeadsConvertion } from "@/actions/estimate/invoice/paymentLeadsConvertion";
 import { newPayment } from "@/actions/payment/newPayment";
 import { newPaymentMethod } from "@/actions/payment/newPaymentMethod";
@@ -70,6 +74,7 @@ export default function MakePayment() {
     setDeposit: setDEPOSIT,
     setTotalPayment,
     totalPayment: currentTotalPayment,
+    items,
   } = useEstimateCreateStore();
   const createInvoice = useInvoiceCreate("Invoice");
   const router = useRouter();
@@ -165,16 +170,32 @@ export default function MakePayment() {
         receivedCash: cash,
         paymentMethodId: paymentMethod?.id,
       });
-      const fromPayment = true;
-      const res1: any = await createInvoice(fromPayment);
+      // Taking a payment normally converts the estimate to an invoice, saves
+      // the invoice and draws its materials out of the inventory. When there
+      // isn't enough stock the server rejects that whole save, which used to
+      // block the payment too — so check first and, if stock is short, record
+      // the payment alone and leave the estimate untouched.
+      const inventory: InventoryCheckResult = isEditPage
+        ? await checkInventoryForPayment({
+            invoiceId,
+            materials: items.flatMap((item) => item.materials ?? []),
+          })
+        : { sufficient: true, shortages: [] };
 
-      if (res1 && res1.type === "globalError") {
-        errorToast(
-          res1?.errorSource?.length
-            ? res1.errorSource[0].message
-            : res1.message,
-        );
-        return;
+      const fromPayment = true;
+      let res1: any = { type: "success" };
+
+      if (inventory.sufficient) {
+        res1 = await createInvoice(fromPayment);
+
+        if (res1 && res1.type === "globalError") {
+          errorToast(
+            res1?.errorSource?.length
+              ? res1.errorSource[0].message
+              : res1.message,
+          );
+          return;
+        }
       }
       let res2;
       let res3;
@@ -194,6 +215,7 @@ export default function MakePayment() {
               receivedCash: cash,
               paymentMethodId: paymentMethod?.id,
             },
+            convertToInvoice: inventory.sufficient,
           });
           if (res2?.type === "success") {
             setDue(due - roundedAmount);
@@ -218,6 +240,7 @@ export default function MakePayment() {
               depositMethod: depositMethod,
               depositNotes: depositNotes,
             },
+            convertToInvoice: inventory.sufficient,
           });
           if (res3?.type === "success") {
             setDue(due - Number(deposit));
@@ -230,10 +253,20 @@ export default function MakePayment() {
         await paymentLeadsConvertion(invoiceId);
         setOpen(false);
         successToast("Payment recorded successfully");
+        if (!inventory.sufficient) {
+          errorToast(
+            `Payment only — not enough inventory for ${inventory.shortages
+              .map(
+                (item) =>
+                  `${item.name} (need ${item.required}, ${item.available} in stock)`,
+              )
+              .join(
+                ", ",
+              )}. The estimate was not converted and the inventory was not updated.`,
+            { id: "inventory-shortage" },
+          );
+        }
         reset();
-
-        // Redirect to the estimate/invoice list page after first payment
-        router.push("/dashboard/estimate/invoices");
       } else if (res2?.type === "globalError") {
         errorToast(
           res2?.errorSource?.length

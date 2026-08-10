@@ -2,6 +2,7 @@ import Avatar from "@/components/Avatar";
 import { cn } from "@/lib/cn";
 import { Group, User } from "@prisma/client";
 import { Users } from "lucide-react";
+import { useDraftPreview } from "../../_hooks/useDraftPreview";
 
 type TGroup = Group & { users: User[]; unreadCount?: number };
 
@@ -23,6 +24,7 @@ export function GroupListItem({
   const showBadge = unreadCount > 0;
   const unreadLabel = unreadCount > 9 ? "9+" : String(unreadCount);
   const isUnread = unreadCount > 0 && !isSelectedGroup;
+  const draftText = useDraftPreview("internal", "group", group.id);
 
   return (
     <button
@@ -105,13 +107,17 @@ export function GroupListItem({
         </p>
         <p
           className={cn(
-            "mt-0.5 text-xs",
-            isSelectedGroup
-              ? "text-white/80"
-              : "text-zinc-500 dark:text-zinc-400",
+            "mt-0.5 line-clamp-1 text-xs",
+            draftText
+              ? "italic text-amber-600 dark:text-amber-500"
+              : isSelectedGroup
+                ? "text-white/80"
+                : "text-zinc-500 dark:text-zinc-400",
           )}
         >
-          {memberCount} {memberCount === 1 ? "member" : "members"}
+          {draftText
+            ? `Draft: ${draftText}`
+            : `${memberCount} ${memberCount === 1 ? "member" : "members"}`}
         </p>
       </div>
     </button>

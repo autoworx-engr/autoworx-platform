@@ -16,6 +16,9 @@ export default function LaborItems({
   serviceId,
   writePermission,
   technicianList,
+  onAddTechnician,
+  onUpdateTechnician,
+  onDeleteTechnician,
 }: {
   invoiceItemId: number;
   invoiceId: string;
@@ -26,58 +29,26 @@ export default function LaborItems({
     hasPermission: boolean;
     vehicleParts: VehicleParts[];
     images: TechnicianImage[];
+    isDraft?: boolean;
   })[];
+  onAddTechnician: (
+    invoiceItemId: number,
+    serviceId: number | null,
+    payload: any,
+    employeeName: string,
+  ) => void;
+  onUpdateTechnician: (
+    invoiceItemId: number,
+    techId: number | string,
+    payload: any,
+  ) => void;
+  onDeleteTechnician: (invoiceItemId: number, techId: number | string) => void;
 }) {
-  const [technicians, setTechnicians] = useState(technicianList);
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
 
-  const queryClient = useQueryClient();
-  const currentUser = useGetCurrentUser();
-  const companyId = currentUser?.companyId;
-
-  useEffect(() => {
-    const fetchTechnicians = async () => {
-      if (!companyId) return;
-      try {
-        const technicians = await getTechnicians(
-          companyId,
-          invoiceId,
-          invoiceItemId,
-        );
-        setTechnicians(technicians);
-      } catch (err: any) {
-        setError(err.message);
-      }
-    };
-    fetchTechnicians();
-  }, [companyId]);
-
-  const handleTechnicianDelete = async (technicianId: number) => {
-    if (!companyId) return;
-    try {
-      await deleteTechnician(companyId, invoiceId, technicianId);
-
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.getInvoiceModalDataKey(invoiceId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.getWorkOrderDataKey(invoiceId),
-      });
-
-      const updatedTechnicians = technicians.filter(
-        (technician) => technician.id !== technicianId,
-      );
-      setTechnicians(updatedTechnicians);
-      setError("");
-      // Dispatch custom event to notify InvoiceModalBody
-      const event = new CustomEvent("invoice-updated", {
-        detail: { invoiceId: invoiceId },
-      });
-      window.dispatchEvent(event);
-    } catch (err: any) {
-      setError(err.message);
-    }
+  const handleTechnicianDelete = async (technicianId: number | string) => {
+    onDeleteTechnician(invoiceItemId, technicianId);
   };
 
   return (
@@ -89,12 +60,13 @@ export default function LaborItems({
           invoiceItemId={invoiceItemId}
           invoiceId={invoiceId}
           serviceId={serviceId}
-          setTechnicians={setTechnicians}
-          technicianList={technicians}
+          technicianList={technicianList}
           writePermission={writePermission}
+          onAddTechnician={onAddTechnician}
+          onUpdateTechnician={onUpdateTechnician}
         />
 
-        {technicians.map((technician) => (
+        {technicianList.map((technician) => (
           <button
             key={technician.id}
             className={cn(
@@ -107,9 +79,10 @@ export default function LaborItems({
               invoiceItemId={invoiceItemId}
               invoiceId={invoiceId}
               serviceId={serviceId}
-              technician={technician}
-              setTechnicians={setTechnicians}
+              technician={technician as any}
               writePermission={writePermission}
+              onUpdateTechnician={onUpdateTechnician}
+              onAddTechnician={onAddTechnician}
             />
             <Popconfirm
               title={`Are you sure you want to delete this technician?`}

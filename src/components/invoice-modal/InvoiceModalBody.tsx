@@ -971,7 +971,7 @@ export default function InvoiceModalBody({
               {(
                 [
                   ["subtotal", invoice.subtotal],
-                  ["discount", invoice.discount],
+                  ["total discount", invoice.discount],
                   ["tax", invoice.tax],
                   // ["vehicle extra cost", invoice.vehicleExtraCost],
                   ["shop supplies", invoice?.serviceFee],

@@ -24,6 +24,17 @@ import DueDate from "./DueDateInput";
 import { InvoiceItems } from "./InvoiceItems";
 import SaveWorkOrderBtn from "./SaveWorkOrderBtn";
 
+export type DraftOperation =
+  | {
+      type: "add";
+      invoiceItemId: number;
+      serviceId: number | null;
+      payload: any;
+      tempId: string;
+    }
+  | { type: "update"; techId: number; payload: any; invoiceItemId: number }
+  | { type: "delete"; techId: number; invoiceItemId: number };
+
 export interface TechnicianPhoto {
   id: number | string;
   photo: string;
@@ -36,10 +47,12 @@ export default function WorkOrderModalBody({
   invoiceId,
   setOpen,
   onWorkOrderCreated,
+  open,
 }: {
   invoiceId: string;
   setOpen: (open: boolean) => void;
   onWorkOrderCreated?: () => void;
+  open?: boolean;
 }) {
   const [dueDate, setDueDate] = useState<string | null>("");
   const isAdminOrManager = useIsAdminOrManager();
@@ -52,11 +65,129 @@ export default function WorkOrderModalBody({
     enabled: !!invoiceId && !!companyId,
   });
 
+  const [localTechniciansPerItem, setLocalTechniciansPerItem] = useState<any>(
+    {},
+  );
+  const [draftOperations, setDraftOperations] = useState<DraftOperation[]>([]);
+
   useEffect(() => {
     if (isFetched && (data as IWorkOrderData)?.invoice?.dueDate) {
       setDueDate((data as IWorkOrderData)?.invoice?.dueDate ?? "");
     }
-  }, [data]);
+  }, [data, isFetched]);
+
+  useEffect(() => {
+    if (!open) {
+      // Reset state when the modal closes
+      setDraftOperations([]);
+      if ((data as IWorkOrderData)?.techniciansPerItem) {
+        setLocalTechniciansPerItem((data as IWorkOrderData).techniciansPerItem);
+      }
+    } else {
+      // Only set local data when opening if it isn't set yet (or just resync on open)
+      if ((data as IWorkOrderData)?.techniciansPerItem) {
+        setLocalTechniciansPerItem((data as IWorkOrderData).techniciansPerItem);
+      }
+    }
+  }, [open, data]);
+
+  const onAddTechnician = (
+    invoiceItemId: number,
+    serviceId: number | null,
+    payload: any,
+    employeeName: string,
+  ) => {
+    const tempId = `temp_${Date.now()}`;
+    const newTech = {
+      ...payload,
+      id: tempId,
+      isDraft: true,
+      name: employeeName,
+      hasPermission: true,
+      images: payload.imageUrls
+        ? payload.imageUrls.map((url: string) => ({ fileUrl: url }))
+        : [],
+    };
+
+    setLocalTechniciansPerItem((prev: any) => ({
+      ...prev,
+      [invoiceItemId]: [...(prev[invoiceItemId] || []), newTech],
+    }));
+
+    setDraftOperations((prev) => [
+      ...prev,
+      { type: "add", invoiceItemId, serviceId, payload, tempId },
+    ]);
+  };
+
+  const onUpdateTechnician = (
+    invoiceItemId: number,
+    techId: number | string,
+    payload: any,
+  ) => {
+    setLocalTechniciansPerItem((prev: any) => ({
+      ...prev,
+      [invoiceItemId]:
+        prev[invoiceItemId]?.map((t: any) =>
+          t.id === techId
+            ? {
+                ...t,
+                ...payload,
+                images: payload.imageUrls
+                  ? payload.imageUrls.map((url: string) => ({ fileUrl: url }))
+                  : t.images,
+              }
+            : t,
+        ) || [],
+    }));
+
+    if (typeof techId === "string" && techId.startsWith("temp_")) {
+      setDraftOperations((prev) =>
+        prev.map((op) =>
+          op.type === "add" && op.tempId === techId
+            ? { ...op, payload: { ...op.payload, ...payload } }
+            : op,
+        ),
+      );
+    } else {
+      setDraftOperations((prev) => {
+        const filtered = prev.filter(
+          (op) => !(op.type === "update" && op.techId === techId),
+        );
+        return [
+          ...filtered,
+          { type: "update", techId: techId as number, invoiceItemId, payload },
+        ];
+      });
+    }
+  };
+
+  const onDeleteTechnician = (
+    invoiceItemId: number,
+    techId: number | string,
+  ) => {
+    setLocalTechniciansPerItem((prev: any) => ({
+      ...prev,
+      [invoiceItemId]:
+        prev[invoiceItemId]?.filter((t: any) => t.id !== techId) || [],
+    }));
+
+    if (typeof techId === "string" && techId.startsWith("temp_")) {
+      setDraftOperations((prev) =>
+        prev.filter((op) => !(op.type === "add" && op.tempId === techId)),
+      );
+    } else {
+      setDraftOperations((prev) => {
+        const filtered = prev.filter(
+          (op) => !(op.type === "update" && op.techId === techId),
+        );
+        return [
+          ...filtered,
+          { type: "delete", techId: techId as number, invoiceItemId },
+        ];
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -216,11 +347,14 @@ export default function WorkOrderModalBody({
           invoiceTechnicians={invoiceTechnicians}
           invoiceStatus={invoice?.column?.title}
           writePermission={writePermission}
-          techniciansPerItem={techniciansPerItem}
+          techniciansPerItem={localTechniciansPerItem}
           redoPerService={redoPerService}
           openService={openService}
           setOpenService={setOpenService}
           invoiceId={invoice?.id}
+          onAddTechnician={onAddTechnician}
+          onUpdateTechnician={onUpdateTechnician}
+          onDeleteTechnician={onDeleteTechnician}
         />
 
         {/* see images dialog trigger (uses its own internal state) */}
@@ -256,6 +390,8 @@ export default function WorkOrderModalBody({
               dueDate={dueDate}
               setOpen={setOpen}
               onWorkOrderCreated={onWorkOrderCreated}
+              draftOperations={draftOperations}
+              companyId={companyId}
             />
           </div>
           <div>

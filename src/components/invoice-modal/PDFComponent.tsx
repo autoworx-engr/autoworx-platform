@@ -357,6 +357,23 @@ const styles = StyleSheet.create({
     fontSize: 9,
     color: colors.text,
   },
+  discountSubText: {
+    fontSize: 8,
+    color: colors.textLight,
+  },
+  noteBox: {
+    marginTop: 2,
+    marginBottom: 2,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.bgSection,
+    borderRadius: 6,
+    padding: 6,
+  },
+  noteText: {
+    fontSize: 8,
+    color: colors.textMuted,
+  },
   // Payments
   paymentTable: {
     borderWidth: 1,
@@ -669,7 +686,7 @@ const PDFComponent = function PDF({
 
   const totals = [
     ["subtotal", invoice.subtotal],
-    ["discount", invoice.discount],
+    ["total discount", invoice.discount],
     ["tax", invoice.tax],
     // ["vehicle extra cost", invoice.vehicleExtraCost],
     ["shop supplies", invoice?.serviceFee],
@@ -693,7 +710,7 @@ const PDFComponent = function PDF({
 
   const leftFields = [
     "subtotal",
-    "discount",
+    "total discount",
     "tax",
     "vehicle extra cost",
     "shop supplies",
@@ -895,9 +912,7 @@ const PDFComponent = function PDF({
           </View>
         </View>
 
-        <Text style={[styles.sectionTitle, { marginTop: 4 }]}>
-          Services & Line Items
-        </Text>
+        <Text style={[styles.sectionTitle, { marginTop: 4 }]}>Services</Text>
         <PDFInvoiceItems items={invoice.invoiceItems} />
 
         {/* payment info  */}
@@ -1081,16 +1096,18 @@ const PDFInvoiceItems = ({
     const laborCost = item.labor?.charge
       ? parseFloat(item.labor?.charge.toString()) * Number(item.labor?.hours)
       : 0;
-    const totalDiscount =
-      item.materials.reduce((acc, material) => {
-        return (
-          acc +
-          (material && material.discount
-            ? parseFloat(material.discount.toString())
-            : 0)
-        );
-      }, 0) +
-      (item.labor?.discount ? parseFloat(item.labor?.discount.toString()) : 0);
+    const materialDiscount = item.materials.reduce((acc, material) => {
+      return (
+        acc +
+        (material && material.discount
+          ? parseFloat(material.discount.toString())
+          : 0)
+      );
+    }, 0);
+    const laborDiscount = item.labor?.discount
+      ? parseFloat(item.labor?.discount.toString())
+      : 0;
+    const totalDiscount = materialDiscount + laborDiscount;
     const serviceTotal = materialCost + laborCost - totalDiscount;
     const isLaborOnly = !item.service;
 
@@ -1101,9 +1118,6 @@ const PDFInvoiceItems = ({
             <Text style={styles.itemName}>{getInvoiceItemTitle(item)}</Text>
             <Text style={styles.itemPrice}>{formatCurrency(serviceTotal)}</Text>
           </View>
-          {item.labor?.notes && (
-            <Text style={styles.itemDesc}>{item.labor.notes}</Text>
-          )}
           {item.materials.filter(Boolean).length > 0 && (
             <View style={{ marginBottom: 6 }}>
               {item.materials.map((material, index) => {
@@ -1112,33 +1126,66 @@ const PDFInvoiceItems = ({
                   ? parseFloat(material.sell.toString()) *
                     Number(material.quantity ?? 0)
                   : 0;
+                const lineDiscount = material.discount
+                  ? parseFloat(material.discount.toString())
+                  : 0;
                 return (
-                  <View key={index} style={styles.lineItem}>
-                    <Text style={styles.lineItemText}>
-                      Material - {material.name}
-                    </Text>
-                    <Text style={styles.lineItemText}>
-                      {formatCurrency(lineTotal)}
-                    </Text>
+                  <View key={index} style={{ marginTop: index > 0 ? 4 : 0 }}>
+                    <View style={styles.lineItem}>
+                      <Text style={styles.lineItemText}>
+                        Material - {material.name}
+                      </Text>
+                      <Text style={styles.lineItemText}>
+                        {formatCurrency(lineTotal)}
+                      </Text>
+                    </View>
+                    {material.notes && (
+                      <View style={styles.noteBox}>
+                        <Text style={styles.noteText}>{material.notes}</Text>
+                      </View>
+                    )}
+                    {lineDiscount > 0 && (
+                      <View style={styles.lineItem}>
+                        <Text
+                          style={[styles.lineItemText, styles.discountSubText]}
+                        >
+                          Discount
+                        </Text>
+                        <Text
+                          style={[styles.lineItemText, styles.discountSubText]}
+                        >
+                          -{formatCurrency(lineDiscount)}
+                        </Text>
+                      </View>
+                    )}
                   </View>
                 );
               })}
             </View>
           )}
           {item.labor && (
-            <View style={styles.lineItem}>
-              <Text style={styles.lineItemText}>Labor Cost</Text>
-              <Text style={styles.lineItemText}>
-                {formatCurrency(laborCost)}
-              </Text>
-            </View>
-          )}
-          {totalDiscount > 0 && (
-            <View style={[styles.lineItem, { marginTop: 4 }]}>
-              <Text style={styles.lineItemText}>Discount</Text>
-              <Text style={styles.lineItemText}>
-                -{formatCurrency(totalDiscount)}
-              </Text>
+            <View>
+              <View style={styles.lineItem}>
+                <Text style={styles.lineItemText}>Labor Cost</Text>
+                <Text style={styles.lineItemText}>
+                  {formatCurrency(laborCost)}
+                </Text>
+              </View>
+              {item.labor.notes && (
+                <View style={styles.noteBox}>
+                  <Text style={styles.noteText}>{item.labor.notes}</Text>
+                </View>
+              )}
+              {laborDiscount > 0 && (
+                <View style={styles.lineItem}>
+                  <Text style={[styles.lineItemText, styles.discountSubText]}>
+                    Discount
+                  </Text>
+                  <Text style={[styles.lineItemText, styles.discountSubText]}>
+                    -{formatCurrency(laborDiscount)}
+                  </Text>
+                </View>
+              )}
             </View>
           )}
         </View>
@@ -1166,39 +1213,67 @@ const PDFInvoiceItems = ({
                 ? parseFloat(material.sell.toString()) *
                   Number(material.quantity ?? 0)
                 : 0;
+              const lineDiscount = material.discount
+                ? parseFloat(material.discount.toString())
+                : 0;
               return (
-                <View key={index} style={styles.lineItem}>
-                  <Text style={styles.lineItemText}>
-                    Material - {material.name}
-                  </Text>
-                  <Text style={styles.lineItemText}>
-                    {formatCurrency(lineTotal)}
-                  </Text>
+                <View key={index} style={{ marginTop: index > 0 ? 4 : 0 }}>
+                  <View style={styles.lineItem}>
+                    <Text style={styles.lineItemText}>
+                      Material - {material.name}
+                    </Text>
+                    <Text style={styles.lineItemText}>
+                      {formatCurrency(lineTotal)}
+                    </Text>
+                  </View>
+                  {material.notes && (
+                    <View style={styles.noteBox}>
+                      <Text style={styles.noteText}>{material.notes}</Text>
+                    </View>
+                  )}
+                  {lineDiscount > 0 && (
+                    <View style={styles.lineItem}>
+                      <Text
+                        style={[styles.lineItemText, styles.discountSubText]}
+                      >
+                        Discount
+                      </Text>
+                      <Text
+                        style={[styles.lineItemText, styles.discountSubText]}
+                      >
+                        -{formatCurrency(lineDiscount)}
+                      </Text>
+                    </View>
+                  )}
                 </View>
               );
             })}
           </View>
         )}
 
-        <View style={styles.lineItem}>
-          <Text style={styles.lineItemText}>
-            Labor {item.labor ? `-` + item.labor.name : ""}
-          </Text>
-          <Text style={styles.lineItemText}>{formatCurrency(laborCost)}</Text>
-        </View>
-        {item.labor?.notes && (
-          <Text style={[styles.inspectionNote, { marginTop: 2 }]}>
-            Description - {item.labor.notes}
-          </Text>
-        )}
-        {totalDiscount > 0 && (
-          <View style={[styles.lineItem, { marginTop: 4 }]}>
-            <Text style={styles.lineItemText}>Discount</Text>
+        <View>
+          <View style={styles.lineItem}>
             <Text style={styles.lineItemText}>
-              -{formatCurrency(totalDiscount)}
+              Labor {item.labor ? `-` + item.labor.name : ""}
             </Text>
+            <Text style={styles.lineItemText}>{formatCurrency(laborCost)}</Text>
           </View>
-        )}
+          {item.labor?.notes && (
+            <View style={styles.noteBox}>
+              <Text style={styles.noteText}>{item.labor.notes}</Text>
+            </View>
+          )}
+          {laborDiscount > 0 && (
+            <View style={styles.lineItem}>
+              <Text style={[styles.lineItemText, styles.discountSubText]}>
+                Discount
+              </Text>
+              <Text style={[styles.lineItemText, styles.discountSubText]}>
+                -{formatCurrency(laborDiscount)}
+              </Text>
+            </View>
+          )}
+        </View>
       </View>
     );
   });

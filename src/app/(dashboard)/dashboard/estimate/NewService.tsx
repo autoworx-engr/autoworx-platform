@@ -305,6 +305,7 @@ export default function NewService({
                 setCategoryOpen={setCategoryOpen}
                 required={false}
                 allowEdit={true}
+                isClear
               />
             </div>
 

@@ -122,7 +122,7 @@ export default function EstimateAndInvoicePage() {
           <div className="space-y-4">
             {isLoading ? (
               <div className="space-y-6">
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-1 2xl:grid-cols-2">
                   {Array.from({ length: 3 }).map((_, index) => (
                     <div
                       key={`financial-skeleton-${index + 1}`}
@@ -139,7 +139,7 @@ export default function EstimateAndInvoicePage() {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-1 2xl:grid-cols-2">
                   <div className="relative">
                     <SlimInput
                       name="taxAmount"
@@ -174,7 +174,7 @@ export default function EstimateAndInvoicePage() {
                     />
                   </div>
 
-                  <div className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-1 sm:col-span-2 md:col-span-1 2xl:col-span-2">
                     <label className="px-1 font-medium text-slate-600">
                       Currency
                     </label>
@@ -245,7 +245,7 @@ export default function EstimateAndInvoicePage() {
           </div>
 
           {isLoading ? (
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-1 2xl:grid-cols-2">
               {Array.from({ length: 2 }).map((_, index) => (
                 <div key={`legal-skeleton-${index + 1}`} className="space-y-3">
                   <Skeleton.Input active className="!h-4 !w-32" />
@@ -254,13 +254,13 @@ export default function EstimateAndInvoicePage() {
                     className="!h-64 !w-full !rounded-2xl"
                   />
                   <div className="flex justify-end">
-                    <Skeleton.Input active className="!h-4 !w-16" />
+                    <Skeleton.Input active className="!h-4" />
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-1 2xl:grid-cols-2">
               {[
                 {
                   label: "Terms & Conditions",
@@ -284,7 +284,7 @@ export default function EstimateAndInvoicePage() {
                   <div className="relative group">
                     <textarea
                       className={cn(
-                        "h-64 w-full resize-none rounded-2xl bg-slate-50/50 p-4 text-sm leading-relaxed text-slate-600 outline-none transition-all thin-scrollbar focus:bg-white focus:ring-4 focus:ring-primary/5",
+                        "h-48 2xl:h-64 w-full resize-none rounded-2xl bg-slate-50/50 p-4 text-sm leading-relaxed text-slate-600 outline-none transition-all thin-scrollbar focus:bg-white focus:ring-4 focus:ring-primary/5",
                         field.len > maxLength
                           ? "border-2 border-red-400"
                           : "border border-slate-200 focus:border-primary/30",
