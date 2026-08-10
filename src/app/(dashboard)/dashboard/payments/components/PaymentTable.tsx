@@ -135,8 +135,8 @@ export default function PaymentTable() {
           </h3>
         </div>
 
-        <div className="relative flex flex-1 h-full flex-col overflow-hidden rounded-md bg-background">
-          <div className="flex-1 overflow-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="relative flex flex-1 h-full flex-col overflow-hidden rounded-md bg-background transform-gpu">
+          <div className="flex-1 overflow-auto no-visible-scrollbar transform-gpu">
             {/* Mobile View */}
             <div className="lg:hidden px-2 py-4 space-y-4">
               {loading ? (
@@ -167,7 +167,7 @@ export default function PaymentTable() {
                 rows.map((item, index) => (
                   <div
                     key={item.id}
-                    className={`w-full rounded-lg border border-gray-100 p-6 shadow-md transition-all duration-200 ${
+                    className={`w-full rounded-lg border border-gray-100 p-6 shadow-md ${
                       index % 2 !== 0
                         ? "bg-blue-50/80 dark:bg-slate-900"
                         : "bg-white dark:bg-slate-900"

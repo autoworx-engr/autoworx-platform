@@ -12,6 +12,8 @@ import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import AttachmentInput from "../AttachmentInput";
 import SmartReplyBar from "../sms/SmartReply";
+import { useMessageDraft } from "../../../../_hooks/useMessageDraft";
+import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { ATTACHMENT_ACCEPT, mergeNewAttachments } from "../../../_utils";
 
@@ -60,7 +62,15 @@ export default function SendMail({
     useClientCommunicationStore();
   const { data: entitlements } = useServerGet(getEntitlements, companyId);
   const [pending, startTransition] = React.useTransition();
-  const [messageInput, setMessageInput] = useState("");
+  const {
+    draftText: messageInput,
+    setDraftText: setMessageInput,
+    clearDraft,
+  } = useMessageDraft({
+    section: "client",
+    channel: "email",
+    targetId: clientId,
+  });
 
   const [files, setFiles] = useState<File[]>([]);
   const router = useRouter();
@@ -136,7 +146,7 @@ export default function SendMail({
         if (!prev) return [result.data];
         return [...prev, result.data];
       });
-      setMessageInput("");
+      clearDraft();
       setFiles([]);
 
       setTimeout(() => adjustTextareaHeight(), 0);

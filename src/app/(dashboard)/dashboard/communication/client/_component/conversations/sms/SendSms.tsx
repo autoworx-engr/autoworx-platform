@@ -12,6 +12,7 @@ import { CirclePause, Mic, MicOff, SendHorizontal } from "lucide-react";
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import useSmsSendMutation from "../../../_hooks/useSmsSendMutation";
+import { useMessageDraft } from "../../../../_hooks/useMessageDraft";
 import AttachmentInput from "../AttachmentInput";
 import SmartReplyBar from "./SmartReply";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
@@ -58,7 +59,15 @@ export default function SendSms({
   const { data: entitlements } = useServerGet(getEntitlements, companyId);
   const currentUser = useGetCurrentUser();
   const [files, setFiles] = useState<File[]>([]);
-  const [messageInput, setMessageInput] = useState("");
+  const {
+    draftText: messageInput,
+    setDraftText: setMessageInput,
+    clearDraft,
+  } = useMessageDraft({
+    section: "client",
+    channel: "sms",
+    targetId: clientId,
+  });
   const fileRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -189,7 +198,7 @@ export default function SendSms({
       });
     }
 
-    setMessageInput("");
+    clearDraft();
     setFiles([]);
     setTimeout(() => adjustTextareaHeight(), 0);
 

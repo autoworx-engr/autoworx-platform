@@ -29,6 +29,7 @@ import InvoiceEstimateModal from "./collaboration/InvoiceEstimateModal";
 import { useInfinityCollaborationMessages } from "./collaboration/hooks/useInfinityCollaborationMessages";
 import JumpToLatestButton from "@/components/JumpToLatestButton";
 import MessageListSkeleton from "./MessageListSkeleton";
+import { useMessageDraft } from "./_hooks/useMessageDraft";
 
 type TMessage = {
   id?: number;
@@ -63,7 +64,6 @@ export default function CompanyMessageBox({
   const toggleRef = useRef<HTMLImageElement>(null);
   const pathname = usePathname();
   const [liveMessages, setLiveMessages] = useState<any[]>([]);
-  const [message, setMessage] = useState("");
   const [pending, startTransition] = useTransition();
   const messageBoxRef = useRef<HTMLDivElement>(null);
   const bottomAnchorRef = useRef<HTMLDivElement>(null);
@@ -77,6 +77,15 @@ export default function CompanyMessageBox({
   );
   const searchParams = useSearchParams();
   const companyId = searchParams.get("companyId");
+  const {
+    draftText: message,
+    setDraftText: setMessage,
+    clearDraft,
+  } = useMessageDraft({
+    section: "collaboration",
+    channel: "",
+    targetId: companyId ? Number(companyId) : undefined,
+  });
   const [showAttachment, setShowAttachment] = useState(false);
   const currentCompanyId = session?.user?.companyId;
   const isEstimateAttachmentShow = pathname?.includes(
@@ -254,7 +263,7 @@ export default function CompanyMessageBox({
 
     const trimmedMessage = message.trim();
     if (!trimmedMessage && !multiAttachmentFile) return;
-    setMessage("");
+    clearDraft();
 
     try {
       let uploadedFiles = null;
@@ -307,7 +316,6 @@ export default function CompanyMessageBox({
         // console.error("Failed to send", data);
       }
       if (data.success) {
-        setMessage("");
         setMultiAttachmentFile(null);
       }
     } catch (err) {

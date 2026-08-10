@@ -152,6 +152,8 @@ export default function ServiceCreate() {
           categoryOpen={categoryOpen}
           setCategoryOpen={setCategoryOpen}
           className="max-w-full"
+          allowEdit={true}
+          isClear
         />
       </div>
 

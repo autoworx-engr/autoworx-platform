@@ -42,6 +42,7 @@ import AddUsersInGroupModal from "./internal/AddUsersInGroupModal";
 import { Message as TMessage } from "./internal/UsersArea";
 import Message from "./Message";
 import MessageListSkeleton from "./MessageListSkeleton";
+import { useMessageDraft } from "./_hooks/useMessageDraft";
 
 type TSection = "collaboration" | "internal";
 
@@ -81,7 +82,18 @@ export default function MessageBox({
   const { data: session } = useSession();
   const attachmentRef = useRef<HTMLInputElement>(null);
   const [pending, startTransition] = useTransition();
-  const [message, setMessage] = useState("");
+  const draftTargetId = fromGroup ? group?.id : receiverUser?.id;
+  const draftChannel =
+    section === "internal" ? (fromGroup ? "group" : "dm") : "";
+  const {
+    draftText: message,
+    setDraftText: setMessage,
+    clearDraft,
+  } = useMessageDraft({
+    section,
+    channel: draftChannel,
+    targetId: draftTargetId,
+  });
   const messageBoxRef = useRef<HTMLDivElement>(null);
   const [openSettings, setOpenSettings] = useState(false);
   const [multiAttachmentFile, setMultiAttachmentFile] = useState<File[] | null>(
@@ -221,7 +233,7 @@ export default function MessageBox({
           createdAt: new Date(),
         };
         setMessages((messages) => [...messages, newMessage]);
-        setMessage("");
+        clearDraft();
         setMultiAttachmentFile(null);
         setLastMessage(json.chatTrack);
         queryClient.invalidateQueries({ queryKey: ["internal", "users"] });

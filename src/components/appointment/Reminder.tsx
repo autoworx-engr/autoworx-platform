@@ -490,8 +490,9 @@ export function Reminder({
         />
       </div>
 
+      {/* Custom/ad-hoc reminder scheduling — disabled for now. Only the
+          automated 24h/2h-before-appointment reminders are active.
       <div className="mx-auto my-4 w-full max-w-[500px] overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200 shadow-sm">
-        {/* Input Header Area */}
         <div className="flex flex-col gap-3 bg-slate-50/50 p-4 border-b border-slate-100 md:flex-row md:items-end">
           <div className="flex-1 space-y-1.5">
             <label className="text-base font-medium text-slate-600 ml-1">
@@ -527,7 +528,6 @@ export function Reminder({
           </button>
         </div>
 
-        {/* Reminders List Area */}
         <div className="no-visible-scrollbar h-[220px] overflow-y-auto bg-white">
           {times.length > 0 ? (
             <div className="space-y-1">
@@ -589,6 +589,7 @@ export function Reminder({
           )}
         </div>
       </div>
+      */}
 
       <div className="flex items-start gap-2 py-2 text-sm text-yellow-800">
         <CircleAlert className="mt-1 h-5 w-5 flex-shrink-0 text-yellow-600" />
