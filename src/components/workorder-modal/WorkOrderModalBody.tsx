@@ -384,7 +384,7 @@ export default function WorkOrderModalBody({
 
       {writePermission && (
         <div>
-          <div className="flex">
+          <div className="flex mb-4">
             <SaveWorkOrderBtn
               invoiceId={invoice?.id}
               dueDate={dueDate}

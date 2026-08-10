@@ -156,7 +156,7 @@ export function InspectionItems({
                   Damage Assessment
                 </h4>
               </div>
-              <p className="text-sm italic leading-relaxed text-slate-600 dark:text-slate-400 whitespace-pre-wrap">
+              <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400 whitespace-pre-wrap">
                 {damageNotes}
               </p>
             </div>

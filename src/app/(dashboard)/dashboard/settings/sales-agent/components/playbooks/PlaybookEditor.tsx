@@ -267,8 +267,8 @@ export function PlaybookEditor({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <h2 className="text-2xl font-bold text-foreground">
             {playbook ? "Edit Playbook" : "Create New Playbook"}
           </h2>
@@ -285,11 +285,15 @@ export function PlaybookEditor({
             )}
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={onCancel}>
+          <Button
+            variant="outline"
+            onClick={onCancel}
+            className="flex-1 sm:flex-none"
+          >
             <X className="mr-2 h-4 w-4" />
             Cancel
           </Button>
-          <Button onClick={handleSave}>
+          <Button onClick={handleSave} className="flex-1 sm:flex-none">
             <Save className="mr-2 h-4 w-4" />
             Save Playbook
           </Button>

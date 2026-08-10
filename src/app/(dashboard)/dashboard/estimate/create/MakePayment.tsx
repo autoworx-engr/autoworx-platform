@@ -5,6 +5,7 @@ import {
 import { paymentLeadsConvertion } from "@/actions/estimate/invoice/paymentLeadsConvertion";
 import { newPayment } from "@/actions/payment/newPayment";
 import { newPaymentMethod } from "@/actions/payment/newPaymentMethod";
+import { deletePaymentMethod } from "@/actions/payment/deletePaymentMethod";
 import {
   Dialog,
   DialogClose,
@@ -296,6 +297,35 @@ export default function MakePayment() {
         useListsStore.setState({
           paymentMethods: [...paymentMethods, res.data],
         });
+      } else if (res.type === "globalError") {
+        errorToast(
+          res?.errorSource?.length ? res.errorSource[0].message : res.message,
+        );
+      }
+    } catch (err) {
+      const formattedError = errorHandler(err);
+      errorToast(
+        formattedError?.errorSource?.length
+          ? formattedError.errorSource[0].message
+          : formattedError.message,
+      );
+    }
+  }
+
+  async function handleRemovePaymentMethod(
+    item: PaymentMethod,
+    e: React.MouseEvent,
+  ) {
+    try {
+      const res = await deletePaymentMethod(item.id);
+      if (res.type === "success") {
+        useListsStore.setState((state) => ({
+          paymentMethods: state.paymentMethods.filter((m) => m.id !== item.id),
+        }));
+        if (paymentMethod?.id === item.id) {
+          setPaymentMethod(null);
+        }
+        successToast("Payment method deleted");
       } else if (res.type === "globalError") {
         errorToast(
           res?.errorSource?.length ? res.errorSource[0].message : res.message,
@@ -708,6 +738,7 @@ export default function MakePayment() {
                   openState={[openPaymentMethod, setOpenPaymentMethod]}
                   selectedItem={paymentMethod}
                   setSelectedItem={setPaymentMethod}
+                  onRemoveItem={handleRemovePaymentMethod}
                 />
               </div>
 
