@@ -74,7 +74,7 @@ export default function Page(props: TProps) {
 
   if (!data) {
     return (
-      <div className="flex items-center justify-center">
+      <div className="flex h-[90vh] items-center justify-center">
         <CarLoading />
       </div>
     );
