@@ -22,7 +22,7 @@ export default function SMSAttachment({ message, handleDownload }: TProps) {
 
   return (
     <div
-      className={`flex w-full flex-col gap-1 ${isOutgoing ? "items-end" : "items-start"}`}
+      className={`flex w-full flex-wrap gap-1.5 ${isOutgoing ? "justify-end" : "justify-start"}`}
     >
       {message?.attachments?.map((attachment: any, index: number) => {
         if (isImage(attachment.name)) {
@@ -31,20 +31,21 @@ export default function SMSAttachment({ message, handleDownload }: TProps) {
           return (
             <Link
               href={`/dashboard/communication/photo?urls=${urlsParam}&index=${currentImageIndex}`}
-              className="mx-1 mt-1 cursor-pointer rounded-md border border-gray-200 px-2 py-1"
+              className="block cursor-pointer overflow-hidden rounded-lg ring-1 ring-black/10 transition hover:ring-black/20 dark:ring-white/15 dark:hover:ring-white/30"
               key={index}
             >
               <Image
                 src={attachment.url}
-                alt="message"
-                width={70}
-                height={100}
+                alt="message attachment"
+                width={96}
+                height={96}
+                className="h-24 w-24 object-cover"
               />
             </Link>
           );
         } else if (attachment.isVoiceNote || isAudio(attachment.name)) {
           return (
-            <div key={index} className="mt-1">
+            <div key={index} className="w-full">
               <VoiceNotePlayer src={attachment.url} isOutgoing={isOutgoing} />
             </div>
           );
@@ -52,7 +53,7 @@ export default function SMSAttachment({ message, handleDownload }: TProps) {
           return (
             <button
               key={index}
-              className="mx-1 mt-1 flex items-center gap-2 cursor-pointer rounded-md border border-gray-200 px-2 py-1"
+              className="flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 dark:border-white/10"
               onClick={() => handleDownload(attachment?.url, attachment?.name)}
             >
               <File className="w-5 h-5 flex-shrink-0" />
