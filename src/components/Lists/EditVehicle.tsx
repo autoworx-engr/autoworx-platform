@@ -93,10 +93,11 @@ export default function EditVehicle({
   };
 
   async function handleSubmit(data: FormData) {
+    const other = data.get("other") as string;
+
     if (
-      !formData.vehicleYear ||
-      !formData.vehicleMake ||
-      !formData.vehicleModel
+      !other &&
+      (!formData.vehicleYear || !formData.vehicleMake || !formData.vehicleModel)
     ) {
       showError({
         field: !formData.vehicleYear
@@ -124,11 +125,9 @@ export default function EditVehicle({
     const license = data.get("license") as string;
     const vin = data.get("vin") as string;
     const notes = data.get("notes") as string;
-    const other = data.get("other") as string;
 
     if (!vehicle?.clientId) return;
 
-    console.log("other", other);
     const res = await editVehicle({
       year,
       make,
@@ -146,7 +145,6 @@ export default function EditVehicle({
       vehicleId: vehicle.id,
     });
 
-    console.log("response", res);
     if (res.type === "globalError") {
       showError({
         field: res.field,
