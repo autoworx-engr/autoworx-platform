@@ -38,6 +38,7 @@ interface SelectorProps<T> {
   showSearch?: boolean;
   usePortal?: boolean;
   isLoading?: boolean;
+  onRemoveItem?: (item: T, e: React.MouseEvent) => void;
 }
 
 export default function Selector<T>({
@@ -62,6 +63,7 @@ export default function Selector<T>({
   showSearch = true,
   usePortal = false,
   isLoading = false,
+  onRemoveItem,
 }: SelectorProps<T>): JSX.Element {
   const [searchTerm, setSearchTerm] = useState("");
   const [localOpen, setLocalOpen] = useState(false);
@@ -188,9 +190,16 @@ export default function Selector<T>({
 
             if (clickabled) {
               return (
-                <button
+                <div
                   onClick={() => handleSelectItem(item)}
-                  type="button"
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleSelectItem(item);
+                    }
+                  }}
                   key={key}
                   className={cn(
                     "flex w-full items-center gap-2 px-2.5 py-2 text-left text-sm transition-colors duration-100",
@@ -201,16 +210,44 @@ export default function Selector<T>({
                   )}
                 >
                   <div className="flex-1 min-w-0">{displayList(item)}</div>
-                  <span className="flex w-4 shrink-0 items-center justify-center">
-                    {isSelected && (
-                      <Check
-                        size={14}
-                        strokeWidth={3}
-                        className="text-primary"
-                      />
+                  <div className="flex shrink-0 items-center gap-1">
+                    {onRemoveItem && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onRemoveItem(item, e);
+                        }}
+                        className="p-1 text-slate-400 hover:text-red-500 rounded-md hover:bg-red-50/50 transition-colors"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M3 6h18" />
+                          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                        </svg>
+                      </button>
                     )}
-                  </span>
-                </button>
+                    <span className="flex w-4 shrink-0 items-center justify-center">
+                      {isSelected && (
+                        <Check
+                          size={14}
+                          strokeWidth={3}
+                          className="text-primary"
+                        />
+                      )}
+                    </span>
+                  </div>
+                </div>
               );
             } else {
               return (
