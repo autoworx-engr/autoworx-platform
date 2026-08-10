@@ -630,22 +630,24 @@ export function useAppointmentFormState({
         return;
       }
 
-      // An enabled reminder with no scheduled times would silently send
-      // nothing, so require at least one time/date pair to be added.
-      if (
-        client &&
-        reminderTemplateStatus &&
-        reminderTemplate &&
-        times.length === 0
-      ) {
-        setIsSubmitting(false);
-        showError({
-          field: "all",
-          message:
-            "Add at least one reminder time and date, or turn the reminder off.",
-        });
-        return;
-      }
+      // Custom/ad-hoc reminder scheduling (the times[] UI) is disabled for
+      // now — see src/components/appointment/Reminder.tsx. That means
+      // `times` is always empty, so this check would permanently block
+      // submission. Disabled alongside it; re-enable together.
+      // if (
+      //   client &&
+      //   reminderTemplateStatus &&
+      //   reminderTemplate &&
+      //   times.length === 0
+      // ) {
+      //   setIsSubmitting(false);
+      //   showError({
+      //     field: "all",
+      //     message:
+      //       "Add at least one reminder time and date, or turn the reminder off.",
+      //   });
+      //   return;
+      // }
 
       if (client && reminderTemplateStatus && reminderTemplate && !timezone) {
         setIsSubmitting(false);
