@@ -151,6 +151,7 @@ export const CannedServiceItem = ({
                         categoryOpen={categoryOpen}
                         setCategoryOpen={setCategoryOpen}
                         allowEdit={true}
+                        isClear
                       />
                     </div>
                     <div>
@@ -307,6 +308,7 @@ export const CannedServiceItem = ({
                   categoryOpen={categoryOpen}
                   setCategoryOpen={setCategoryOpen}
                   allowEdit={true}
+                  isClear
                 />
               </div>
               <div>
