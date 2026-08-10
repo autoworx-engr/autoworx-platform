@@ -58,18 +58,19 @@ type TProps = {
     vehicleParts: Parts[];
     images: TechnicianImage[];
   };
-  setTechnicians: Dispatch<
-    SetStateAction<
-      (Technician & {
-        name: string;
-        hasPermission: boolean;
-        vehicleParts: Parts[];
-        images: TechnicianImage[];
-      })[]
-    >
-  >;
   technicianList?: Technician[];
   writePermission: boolean;
+  onAddTechnician: (
+    invoiceItemId: number,
+    serviceId: number | null,
+    payload: any,
+    employeeName: string,
+  ) => void;
+  onUpdateTechnician: (
+    invoiceItemId: number,
+    techId: number | string,
+    payload: any,
+  ) => void;
 };
 
 type TStatus = "Pending" | "In Progress" | "Complete" | "Cancel";
@@ -90,9 +91,10 @@ export default function CreateAndEditLabor({
   invoiceId,
   serviceId,
   technician,
-  setTechnicians,
   technicianList,
   writePermission,
+  onAddTechnician,
+  onUpdateTechnician,
 }: TProps) {
   const [open, setOpen] = useState(false);
   const [priorityOpen, setPriorityOpen] = useState(false);
@@ -275,19 +277,6 @@ export default function CreateAndEditLabor({
               serviceId,
             };
 
-        const updated = await updateTechnician(
-          companyId!,
-          invoiceId,
-          technician.id,
-          {
-            ...updatedPayload,
-            vehicleParts: isTechnician
-              ? technician.vehicleParts || []
-              : selectedVehicleParts,
-            imageUrls: finalImageUrls,
-          },
-        );
-
         const newImages: TechnicianImage[] = finalImageUrls.map((url) => {
           return {
             fileUrl: url,
@@ -296,20 +285,16 @@ export default function CreateAndEditLabor({
           } as TechnicianImage;
         });
 
+        onUpdateTechnician(invoiceItemId, technician.id, {
+          ...updatedPayload,
+          vehicleParts: isTechnician
+            ? technician.vehicleParts || []
+            : selectedVehicleParts,
+          imageUrls: finalImageUrls,
+        });
+
         setFormData({ attachments: newImages });
         setOpen(false);
-        setTechnicians((prev) =>
-          prev.map((tech) =>
-            tech.id === technician.id
-              ? {
-                  ...updated,
-                  images: newImages,
-                  hasPermission: tech.hasPermission,
-                  vehicleParts: selectedVehicleParts as Parts[],
-                }
-              : tech,
-          ),
-        );
       } else {
         const payload = {
           // Number(null) is 0, which the API rejects — keep it null instead.
@@ -327,19 +312,18 @@ export default function CreateAndEditLabor({
           invoiceItemId,
           technicianNote: technicianNote,
         };
-        const created = await addTechnician(companyId!, invoiceId, {
-          ...payload,
-          vehicleParts: selectedVehicleParts,
-        });
-        setOpen(false);
-        setTechnicians((prev) => [
-          ...prev,
+
+        onAddTechnician(
+          invoiceItemId,
+          serviceId ?? null,
           {
-            ...created,
-            hasPermission: true,
-            vehicleParts: selectedVehicleParts as Parts[],
+            ...payload,
+            vehicleParts: selectedVehicleParts,
           },
-        ]);
+          `${employee?.firstName} ${employee?.lastName}`,
+        );
+
+        setOpen(false);
         setSelectedVehicleParts([]);
       }
     } catch (error) {
@@ -350,12 +334,6 @@ export default function CreateAndEditLabor({
           : formattedError.message,
       );
     } finally {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.getInvoiceModalDataKey(invoiceId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.getWorkOrderDataKey(invoiceId),
-      });
       setLoading(false); // Hide spinner
       setImageUploadIsLoading(false);
     }

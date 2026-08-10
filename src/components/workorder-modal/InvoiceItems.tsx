@@ -42,6 +42,18 @@ type TProps = {
     })[]
   >;
   redoPerService: Record<number, InvoiceRedo[]>;
+  onAddTechnician: (
+    invoiceItemId: number,
+    serviceId: number | null,
+    payload: any,
+    employeeName: string,
+  ) => void;
+  onUpdateTechnician: (
+    invoiceItemId: number,
+    techId: number | string,
+    payload: any,
+  ) => void;
+  onDeleteTechnician: (invoiceItemId: number, techId: number | string) => void;
 };
 
 export function InvoiceItems({
@@ -54,6 +66,9 @@ export function InvoiceItems({
   redoPerService,
   openService,
   setOpenService,
+  onAddTechnician,
+  onUpdateTechnician,
+  onDeleteTechnician,
 }: TProps) {
   // const [openService, setOpenService] = useState<number | null>(null);
   return items?.map((item) => {
@@ -134,6 +149,9 @@ export function InvoiceItems({
               serviceId={item?.serviceId ?? null}
               writePermission={writePermission}
               technicianList={(techniciansPerItem[item.id] || []) as any}
+              onAddTechnician={onAddTechnician}
+              onUpdateTechnician={onUpdateTechnician}
+              onDeleteTechnician={onDeleteTechnician}
             />
           </div>
         )}
