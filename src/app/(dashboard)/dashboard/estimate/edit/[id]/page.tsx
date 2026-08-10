@@ -174,9 +174,12 @@ export default async function Page(props: {
   const photos = await db.invoicePhoto.findMany({ where: { invoiceId: id } });
   const tasks = await db.task.findMany({ where: { invoiceId: id } });
 
-  const clientId = searchParams.clientId
+  const clientIdFromParams = searchParams.clientId
     ? parseInt(searchParams.clientId)
-    : invoice.clientId;
+    : NaN;
+  const clientId = Number.isNaN(clientIdFromParams)
+    ? invoice.clientId
+    : clientIdFromParams;
 
   const customers = await db.client.findMany({ where: { companyId } });
   const vehicles = await db.vehicle.findMany({
@@ -352,13 +355,7 @@ export default async function Page(props: {
             value="payments"
             className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2"
           >
-            <PaymentTab
-              clientId={
-                searchParams.clientId
-                  ? parseInt(searchParams.clientId)
-                  : (invoice?.clientId ?? undefined)
-              }
-            />
+            <PaymentTab clientId={clientId ?? undefined} />
           </TabsContent>
         </Tabs>
       </div>

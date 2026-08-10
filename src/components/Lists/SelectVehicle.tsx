@@ -45,7 +45,7 @@ export function SelectVehicle({
   const awaitingClientRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!clientId) return;
+    if (!clientId || Number.isNaN(+clientId)) return;
 
     const applyVehicle = (next: Vehicle | null) => {
       setVehicle(next);
