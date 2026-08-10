@@ -1,88 +1,29 @@
 import { errorToast } from "@/lib/toast";
 import { Client, ClientConversationTrack } from "@prisma/client";
+import {
+  ALLOWED_ATTACHMENT_EXTENSIONS,
+  AUDIO_EXTENSIONS,
+  IMAGE_EXTENSIONS,
+  MAX_ATTACHMENT_SIZE_MB,
+} from "./attachmentExtensions";
+
+export { MAX_ATTACHMENT_SIZE_MB };
 
 export const isImage = (fileName: string = "") => {
   if (!fileName) return false;
 
-  const imageExtensions = [
-    "jpg",
-    "jpeg",
-    "png",
-    "gif",
-    "bmp",
-    "webp",
-    "svg",
-    "tiff",
-    "ico",
-    "avif",
-  ];
   const ext = fileName?.split(".")?.pop()?.toLowerCase();
 
-  return imageExtensions.includes(ext ?? "");
+  return IMAGE_EXTENSIONS.includes(ext ?? "");
 };
 
 export const isAudio = (fileName: string = "") => {
   if (!fileName) return false;
 
-  const audioExtensions = [
-    "mp3",
-    "wav",
-    "ogg",
-    "oga",
-    "opus",
-    "m4a",
-    "webm",
-    "aac",
-    "amr",
-    "3gp",
-    "flac",
-  ];
   const ext = fileName?.split(".")?.pop()?.toLowerCase();
 
-  return audioExtensions.includes(ext ?? "");
+  return AUDIO_EXTENSIONS.includes(ext ?? "");
 };
-
-// Formats users can actually receive/open through SMS, Email, and Messenger —
-// deliberately excludes executables/scripts since these get sent straight to
-// clients. The S3 upload pipeline itself caps every file at 50MB
-// (src/actions/s3/signedURL.ts), so this stays well under that.
-export const MAX_ATTACHMENT_SIZE_MB = 25;
-
-const ALLOWED_ATTACHMENT_EXTENSIONS = [
-  // images
-  "jpg",
-  "jpeg",
-  "png",
-  "gif",
-  "bmp",
-  "webp",
-  "svg",
-  "tiff",
-  "heic",
-  // documents
-  "pdf",
-  "doc",
-  "docx",
-  "xls",
-  "xlsx",
-  "csv",
-  "txt",
-  // audio (incl. voice notes)
-  "mp3",
-  "wav",
-  "ogg",
-  "oga",
-  "opus",
-  "m4a",
-  "aac",
-  "amr",
-  "flac",
-  // video
-  "mp4",
-  "mov",
-  "webm",
-  "3gp",
-];
 
 // For the file inputs' `accept` attribute — a first line of defense only;
 // it doesn't affect drag-and-drop, so getAttachmentValidationError below is
