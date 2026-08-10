@@ -1,9 +1,15 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/Tabs";
-import { User } from "@prisma/client";
+import { Category, InventoryProduct, User, Vendor } from "@prisma/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
+
+type InventoryProductWithRelations = InventoryProduct & {
+  category: Category | null;
+  vendor: Vendor | null;
+  User?: User | null;
+};
 import ProductTable from "./ProductTable";
 import SearchFilter from "./SearchFilter";
 
@@ -22,14 +28,16 @@ export default function InventoryList({
   searchParams,
   totalProducts,
   totalSupplies,
+  isLoading,
 }: {
-  products: any;
-  supplies: any;
+  products: InventoryProductWithRelations[];
+  supplies: InventoryProductWithRelations[];
   productId: number;
   user: User;
   isFullWidth?: boolean;
   databaseContent: any[];
   totalDatabaseItems: number;
+  isLoading?: boolean;
   categories: any[];
   onPageChange: (page: number) => void;
   onLimitChange: (limit: number) => void;
@@ -57,7 +65,7 @@ export default function InventoryList({
   return (
     <Tabs
       value={view}
-      className={`col-start-1 mt-3 flex min-h-0 w-full flex-col overflow-clip text-xs lg:h-[83vh] 2xl:text-base ${isFullWidth ? "md:w-full" : "md:w-1/2"} `}
+      className={`col-start-1 mt-3 flex min-h-0 w-full flex-col overflow-y-auto overflow-x-hidden text-xs lg:h-[83vh] lg:overflow-clip 2xl:text-base ${isFullWidth ? "md:w-full" : "lg:w-1/2"} `}
     >
       <TabsList>
         <TabsTrigger
@@ -88,7 +96,7 @@ export default function InventoryList({
       {view === "products" && (
         <TabsContent
           value="products"
-          className={`mx-2 flex min-h-0 overflow-y-hidden flex-col md:visible md:static md:opacity-100 ${productId ? "invisible absolute opacity-0" : "visible static opacity-100"}`}
+          className={`mx-2 my-0 py-0 flex min-h-0 flex-col overflow-y-auto lg:overflow-hidden md:visible md:static md:opacity-100 ${productId ? "invisible absolute opacity-0" : "visible static opacity-100"}`}
         >
           <div className="relative flex h-full w-full flex-col">
             <div className="sticky top-0 z-50 bg-white pb-2 pt-2">
@@ -113,7 +121,7 @@ export default function InventoryList({
       {view === "supplies" && (
         <TabsContent
           value="supplies"
-          className={`mx-2 flex min-h-0 overflow-y-hidden flex-col md:visible md:static md:opacity-100 ${productId ? "invisible absolute opacity-0" : "visible static opacity-100"}`}
+          className={`mx-2 my-0 py-0 flex min-h-0 flex-col overflow-y-auto lg:overflow-hidden md:visible md:static md:opacity-100 ${productId ? "invisible absolute opacity-0" : "visible static opacity-100"}`}
         >
           <div className="relative flex h-full w-full flex-col">
             <div className="sticky top-0 z-50 bg-white pb-2 pt-2">
@@ -138,7 +146,7 @@ export default function InventoryList({
       {view === "database" && (
         <TabsContent
           value="database"
-          className={`mx-2 flex min-h-0 flex-col md:visible md:static md:opacity-100`}
+          className={`mx-2 flex min-h-0 flex-col p-0 md:visible md:static md:opacity-100`}
         >
           <div className="relative flex h-full w-full flex-col">
             {/* Fixed filter header */}
@@ -151,6 +159,7 @@ export default function InventoryList({
               <DatabaseTable
                 totalItems={totalDatabaseItems}
                 data={databaseContent}
+                isLoading={isLoading}
               />
             </div>
           </div>

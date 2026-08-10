@@ -22,6 +22,7 @@ export default function ConvertButton({
 }) {
   const router = useRouter();
   const createInvoice = useInvoiceCreate(type);
+  const invoiceId = useEstimateCreateStore((state) => state.invoiceId);
   const resetEstimateCreate = useEstimateCreateStore((state) => state.reset);
 
   const resetLists = useListsStore((state) => state.reset);
@@ -29,16 +30,19 @@ export default function ConvertButton({
   async function handleSubmit() {
     const res = await createInvoice();
     if (res.type === "success") {
+      // Carry the just-saved id so the table view auto-opens its modal.
+      const savedId = res.data?.id ?? invoiceId;
+      const openParam = savedId ? `?openEstimateId=${savedId}` : "";
       if (type === "Estimate") {
-        router.push("/dashboard/estimate");
+        router.replace(`/dashboard/estimate${openParam}`);
       } else {
-        router.push("/dashboard/estimate/invoices");
+        router.replace(`/dashboard/estimate/invoices${openParam}`);
       }
-      resetEstimateCreate();
-      resetLists();
+      // resetEstimateCreate();
+      // resetLists();
     } else if (res.type === "globalError") {
       errorToast(
-        res.errorSource?.length ? res.errorSource[0].message : res.message
+        res.errorSource?.length ? res.errorSource[0].message : res.message,
       );
       return;
     }
@@ -49,8 +53,9 @@ export default function ConvertButton({
       <Submit
         className={cn(
           "flex w-full items-center justify-center gap-2 text-nowrap rounded-lg px-4 py-2 text-center text-sm font-semibold tracking-wide transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:grayscale-[0.5]",
-          !className?.includes('bg-') && "bg-slate-800 text-white shadow-lg shadow-slate-200 ring-1 ring-slate-900/5 hover:bg-slate-900",
-          className
+          !className?.includes("bg-") &&
+            "bg-slate-800 text-white shadow-lg shadow-slate-200 ring-1 ring-slate-900/5 hover:bg-slate-900",
+          className,
         )}
         formAction={handleSubmit}
       >

@@ -4,14 +4,16 @@ import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import { ServerAction } from "@/types/action";
 
-export async function getTags(tagType?: string): Promise<ServerAction> {
-  const companyId = await getCompanyId();
+export async function getTags(
+  tagType?: string,
+  companyId?: number,
+): Promise<ServerAction> {
+  const resolvedCompanyId = companyId ?? (await getCompanyId());
 
   const whereClause: any = {
-    companyId,
+    companyId: resolvedCompanyId,
   };
 
-  // Add type filter if provided
   if (tagType) {
     whereClause.type = tagType;
   }

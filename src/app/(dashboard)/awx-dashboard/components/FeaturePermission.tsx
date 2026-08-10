@@ -24,10 +24,31 @@ import getMissing, {
   mergePermissions,
 } from "@/utils/formatPermission";
 import { Switch } from "antd";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MissingPermissionItemComponent } from "./MissingPermissionItemComponent";
 import { PermissionItemComponent } from "./PermissionItemComponent";
 import CarLoading from "@/components/common/CarLoading";
+
+// ─── helpers ────────────────────────────────────────────────────────────────
+
+/** Shared sort comparator: orders items by their position in staticPermissions. */
+const sortByStaticOrder = (
+  a: { permission_name: string },
+  b: { permission_name: string },
+) => {
+  const ai = staticPermissions.findIndex(
+    (sp) => sp.permission_name === a.permission_name,
+  );
+  const bi = staticPermissions.findIndex(
+    (sp) => sp.permission_name === b.permission_name,
+  );
+  if (ai !== -1 && bi !== -1) return ai - bi;
+  if (ai !== -1) return -1;
+  if (bi !== -1) return 1;
+  return 0;
+};
+
+// ─── component ───────────────────────────────────────────────────────────────
 
 export default function FeaturePermission({
   companyId,
@@ -37,7 +58,7 @@ export default function FeaturePermission({
   const [permissions, setPermissions] = useState<PermissionItem[]>();
 
   const [expandedItems, setExpandedItems] = useState<Set<string>>(
-    new Set([""])
+    new Set([""]),
   );
   const { data, isLoading } = useGetCompanyPermissions(companyId);
 
@@ -48,159 +69,120 @@ export default function FeaturePermission({
     useBulkUpdatePermissions();
 
   useEffect(() => {
-    if (data) {
-      // Sort permissions based on the order in staticPermissions
-      const sortedPermissions = data.data.sort(
-        (a: PermissionItem, b: PermissionItem) => {
-          const aIndex = staticPermissions.findIndex(
-            (sp) => sp.permission_name === a.permission_name
-          );
-          const bIndex = staticPermissions.findIndex(
-            (sp) => sp.permission_name === b.permission_name
-          );
+    if (!data) return;
 
-          // If both permissions are found in staticPermissions, sort by their index
-          if (aIndex !== -1 && bIndex !== -1) {
-            return aIndex - bIndex;
-          }
+    const sortedPermissions = [...data.data].sort(sortByStaticOrder);
+    setPermissions(sortedPermissions);
 
-          // If only one is found, prioritize the one in staticPermissions
-          if (aIndex !== -1) return -1;
-          if (bIndex !== -1) return 1;
+    // Auto-create Communication Hub if missing and should be enabled by default
+    const communicationHubExists = sortedPermissions.some(
+      (p: PermissionItem) => p.permission_name === "communicationHub",
+    );
+    const communicationHubStatic = staticPermissions.find(
+      (sp) => sp.permission_name === "communicationHub",
+    );
 
-          // If neither is found, maintain original order
-          return 0;
-        }
-      );
-
-      setPermissions(sortedPermissions);
-
-      // Auto-create Communication Hub if it doesn't exist and should be enabled by default
-      const communicationHubExists = sortedPermissions.some(
-        (p: PermissionItem) => p.permission_name === "communicationHub"
-      );
-
-      const communicationHubStatic = staticPermissions.find(
-        (sp) => sp.permission_name === "communicationHub"
-      );
-
-      // If Communication Hub doesn't exist, create it
-      if (!communicationHubExists && communicationHubStatic?.status === true) {
-        const permissionsToCreate: PermissionCreate[] = [
-          {
-            companyId,
-            permission_name: "communicationHub",
-            title: communicationHubStatic.title,
-            enabled: true,
-          },
-        ];
-
-        try {
-          createPermissionMutation(permissionsToCreate);
-        } catch (error) {
-          console.error("Failed to auto-create Communication Hub:", error);
-        }
-      }
+    if (!communicationHubExists && communicationHubStatic?.status === true) {
+      const permissionsToCreate: PermissionCreate[] = [
+        {
+          companyId,
+          permission_name: "communicationHub",
+          title: communicationHubStatic.title,
+          enabled: true,
+        },
+      ];
+      createPermissionMutation(permissionsToCreate, {
+        onError: (error) => {
+          errorHandler(error);
+        },
+      });
     }
   }, [data, companyId, createPermissionMutation]);
 
-  const formatted = formatPermissions(permissions as any);
-
-  // Sort the formatted permissions based on staticPermissions order
-  const sortedFormatted = formatted?.sort(
-    (a: PermissionItem, b: PermissionItem) => {
-      const aIndex = staticPermissions.findIndex(
-        (sp) => sp.permission_name === a.permission_name
-      );
-      const bIndex = staticPermissions.findIndex(
-        (sp) => sp.permission_name === b.permission_name
-      );
-
-      // If both permissions are found in staticPermissions, sort by their index
-      if (aIndex !== -1 && bIndex !== -1) {
-        return aIndex - bIndex;
-      }
-
-      // If only one is found, prioritize the one in staticPermissions
-      if (aIndex !== -1) return -1;
-      if (bIndex !== -1) return 1;
-
-      // If neither is found, maintain original order
-      return 0;
-    }
+  const sortedFormatted = useMemo(
+    () => formatPermissions(permissions as any)?.sort(sortByStaticOrder) ?? [],
+    [permissions],
   );
-  // console.log("sortedFormatted", sortedFormatted);
-  // Sort the missing permissions based on staticPermissions order
-  const finalMissingPermissions = getMissing(
-    staticPermissions,
-    permissions || []
-  ).sort((a: StaticPermissionItem, b: StaticPermissionItem) => {
-    const aIndex = staticPermissions.findIndex(
-      (sp) => sp.permission_name === a.permission_name
-    );
-    const bIndex = staticPermissions.findIndex(
-      (sp) => sp.permission_name === b.permission_name
-    );
-    return aIndex - bIndex;
-  });
-  // console.log("finalMissingPermissions", finalMissingPermissions);
-  // const staticFormatted = formatPermissions(missionPermissions as any);
-  // const finalMissingPermissions = missionPermissions;
 
-  const combinedPermissions = mergePermissions(
-    sortedFormatted,
-    finalMissingPermissions
+  const finalMissingPermissions = useMemo(
+    () =>
+      getMissing(staticPermissions, permissions || []).sort(sortByStaticOrder),
+    [permissions],
   );
+
+  const combinedPermissions = useMemo(
+    () => mergePermissions(sortedFormatted, finalMissingPermissions),
+    [sortedFormatted, finalMissingPermissions],
+  );
+
+  const allPermissionsEnabled = useMemo(() => {
+    const countEnabled = (items: PermissionItem[], isExisting = true): number =>
+      items?.reduce((acc, item) => {
+        const self = isExisting ? item.enabled : (item as any).status;
+        return (
+          acc +
+          (self ? 1 : 0) +
+          (item.children ? countEnabled(item.children, isExisting) : 0)
+        );
+      }, 0) ?? 0;
+
+    const countTotal = (
+      items: PermissionItem[] | StaticPermissionItem[],
+    ): number =>
+      items?.reduce(
+        (acc, item) =>
+          acc + 1 + (item.children ? countTotal(item.children) : 0),
+        0,
+      ) ?? 0;
+
+    const enabledCount =
+      countEnabled(sortedFormatted) +
+      countEnabled(finalMissingPermissions as any, false);
+    const totalCount =
+      countTotal(sortedFormatted) + countTotal(finalMissingPermissions);
+
+    return totalCount > 0 && enabledCount === totalCount;
+  }, [sortedFormatted, finalMissingPermissions]);
+
+  // ─── state helpers ─────────────────────────────────────────────────────────
 
   const toggleExpanded = (title: string) => {
     setExpandedItems((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(title)) {
-        newSet.delete(title);
-      } else {
-        newSet.add(title);
-      }
-      return newSet;
+      const next = new Set(prev);
+      if (next.has(title)) next.delete(title);
+      else next.add(title);
+      return next;
     });
   };
 
   const updatePermissionInState = (
-    updates: { permission_name: string; enabled: boolean }[]
+    updates: { permission_name: string; enabled: boolean }[],
   ) => {
-    const updatePermissionRecursive = (
-      items: PermissionItem[]
-    ): PermissionItem[] => {
-      return items?.map((item) => {
-        const foundUpdate = updates.find(
-          (u) => u.permission_name === item.permission_name
+    const updateRecursive = (items: PermissionItem[]): PermissionItem[] =>
+      items?.map((item) => {
+        const found = updates.find(
+          (u) => u.permission_name === item.permission_name,
         );
         const updatedChildren = item.children
-          ? updatePermissionRecursive(item.children)
+          ? updateRecursive(item.children)
           : undefined;
-
-        if (foundUpdate) {
-          return {
-            ...item,
-            enabled: foundUpdate.enabled,
-            children: updatedChildren,
-          };
-        }
-
         return {
           ...item,
+          ...(found ? { enabled: found.enabled } : {}),
           children: updatedChildren,
         };
       });
-    };
 
-    setPermissions((prev) => updatePermissionRecursive(prev!));
+    setPermissions((prev) => updateRecursive(prev!));
   };
+
+  // ─── toggle handler ────────────────────────────────────────────────────────
 
   const handleToggle = (
     permission_name: string,
     currentEnabled: boolean,
     title: string,
-    children?: any[]
+    children?: any[],
   ) => {
     const prevPermissions = permissions;
     const newEnabled = currentEnabled;
@@ -208,7 +190,7 @@ export default function FeaturePermission({
       { permission_name, enabled: newEnabled },
     ];
 
-    // Rule 1: directory → update children
+    // Rule 1: parent → cascade to children
     if (permission_name === "directory") {
       updates = [
         { permission_name: "directory", enabled: newEnabled },
@@ -237,91 +219,66 @@ export default function FeaturePermission({
       ];
     }
 
-    // Rule 2: child → update directory if necessary
-    if (CHILD_PERMISSIONS.includes(permission_name)) {
-      // Need access to current permission state
+    // Rule 2: child → update parent accordingly
+    const bubbleParent = (group: string[], parentName: string) => {
+      if (!group.includes(permission_name)) return;
       const otherChildrenEnabled = permissions?.some(
         (p) =>
           p.permission_name !== permission_name &&
-          CHILD_PERMISSIONS.includes(p.permission_name) &&
-          p.enabled
+          group.includes(p.permission_name) &&
+          p.enabled,
       );
-
-      const shouldEnableDirectory = newEnabled || otherChildrenEnabled;
       updates.push({
-        permission_name: "directory",
-        enabled: shouldEnableDirectory!,
+        permission_name: parentName,
+        enabled: !!(newEnabled || otherChildrenEnabled),
       });
-    }
-    if (AUTOMATION_CHILD_PERMISSIONS.includes(permission_name)) {
-      // Need access to current permission state
-      const otherChildrenEnabled = permissions?.some(
-        (p) =>
-          p.permission_name !== permission_name &&
-          AUTOMATION_CHILD_PERMISSIONS.includes(p.permission_name) &&
-          p.enabled
-      );
+    };
+    bubbleParent(CHILD_PERMISSIONS, "directory");
+    bubbleParent(AUTOMATION_CHILD_PERMISSIONS, "automation");
+    bubbleParent(COMMUNICATION_HUB_CHILD_PERMISSIONS, "communicationHub");
 
-      const shouldEnableAutomation = newEnabled || otherChildrenEnabled;
-      updates.push({
-        permission_name: "automation",
-        enabled: shouldEnableAutomation!,
-      });
-    }
-
-    if (COMMUNICATION_HUB_CHILD_PERMISSIONS.includes(permission_name)) {
-      // Need access to current permission state
-      const otherChildrenEnabled = permissions?.some(
-        (p) =>
-          p.permission_name !== permission_name &&
-          COMMUNICATION_HUB_CHILD_PERMISSIONS.includes(p.permission_name) &&
-          p.enabled
-      );
-
-      const shouldEnableCommunicationHub = newEnabled || otherChildrenEnabled;
-      updates.push({
-        permission_name: "communicationHub",
-        enabled: shouldEnableCommunicationHub!,
-      });
-    }
-
-    // Optimistic update in state
     updatePermissionInState(updates);
 
     const permissionsToUpdate: PermissionUpdate[] = [];
 
-    updates.forEach((permission) => {
-      const isInBackendPermission = data.data.some(
-        (p: PermissionItem) => p.permission_name === permission.permission_name
+    updates.forEach((update) => {
+      const isInBackend = data.data.some(
+        (p: PermissionItem) => p.permission_name === update.permission_name,
       );
 
-      if (isInBackendPermission) {
+      if (isInBackend) {
         permissionsToUpdate.push({
           companyId,
-          permission_name: permission.permission_name,
-          enabled: permission.enabled,
+          permission_name: update.permission_name,
+          enabled: update.enabled,
         });
       } else {
-        const item = {
-          permission_name,
-          title,
-          children: children || [],
-          status: currentEnabled || true,
-        };
-        handleCreateToggle(item, currentEnabled);
+        // BUG FIX: use update.permission_name (current iteration), not outer closure
+        const staticItem = staticPermissions.find(
+          (sp) => sp.permission_name === update.permission_name,
+        );
+        handleCreateToggle(
+          {
+            permission_name: update.permission_name,
+            title: staticItem?.title ?? update.permission_name,
+            status: update.enabled,
+          },
+          update.enabled,
+        );
       }
     });
 
-    // Call mutation **once** for all updates
     if (permissionsToUpdate.length > 0) {
-      try {
-        updatePermission(permissionsToUpdate);
-      } catch (error) {
-        setPermissions(prevPermissions); // rollback if not update
-        errorHandler(error);
-      }
+      updatePermission(permissionsToUpdate, {
+        onError: (error) => {
+          setPermissions(prevPermissions);
+          errorHandler(error);
+        },
+      });
     }
   };
+
+  // ─── create handler ────────────────────────────────────────────────────────
 
   const handleCreateToggle = (item: StaticPermissionItem, checked: boolean) => {
     const permissionsToCreate: PermissionCreate[] = [];
@@ -329,7 +286,7 @@ export default function FeaturePermission({
     const createPermissionObj = (
       name: string,
       enabled: boolean,
-      fallbackTitle?: string
+      fallbackTitle?: string,
     ) => {
       const found = staticPermissions.find((p) => p.permission_name === name);
       return {
@@ -340,26 +297,23 @@ export default function FeaturePermission({
       };
     };
 
-    // Utility to handle group permission creation
     const handleGroupPermissions = (
       group: string[],
       parentName: string,
       itemName: string,
-      checked: boolean
+      checked: boolean,
     ) => {
       if (group.includes(itemName)) {
         permissionsToCreate.push(createPermissionObj(itemName, checked));
-
         group
           .filter((p) => p !== itemName)
           .forEach((child) => {
             permissionsToCreate.push(createPermissionObj(child, true));
           });
       }
-
       if (itemName === parentName) {
         group.forEach((child) =>
-          permissionsToCreate.push(createPermissionObj(child, checked))
+          permissionsToCreate.push(createPermissionObj(child, checked)),
         );
       }
     };
@@ -370,81 +324,73 @@ export default function FeaturePermission({
       !COMMUNICATION_HUB_CHILD_PERMISSIONS.includes(item.permission_name)
     ) {
       permissionsToCreate.push(
-        createPermissionObj(item.permission_name, checked)
+        createPermissionObj(item.permission_name, checked),
       );
     }
 
-    // Rule 1: Parent permissions → create children
     handleGroupPermissions(
       CHILD_PERMISSIONS,
       "directory",
       item.permission_name,
-      checked
+      checked,
     );
     handleGroupPermissions(
       AUTOMATION_CHILD_PERMISSIONS,
       "automation",
       item.permission_name,
-      checked
+      checked,
     );
     handleGroupPermissions(
       COMMUNICATION_HUB_CHILD_PERMISSIONS,
       "communicationHub",
       item.permission_name,
-      checked
+      checked,
     );
 
-    // Rule 2: Child permissions → create parent if needed
     const ensureParentPermission = (
       group: string[],
       parentName: string,
-      fallbackTitle: string
+      fallbackTitle: string,
     ) => {
       if (
         group.includes(item.permission_name) ||
         item.permission_name === parentName
       ) {
         const exists = permissions?.some(
-          (p) => p.permission_name === parentName
+          (p) => p.permission_name === parentName,
         );
         if (!exists) {
           permissionsToCreate.push(
-            createPermissionObj(parentName, true, fallbackTitle)
+            createPermissionObj(parentName, true, fallbackTitle),
           );
         }
       }
     };
-
     ensureParentPermission(CHILD_PERMISSIONS, "directory", "Directory");
     ensureParentPermission(
       AUTOMATION_CHILD_PERMISSIONS,
       "automation",
-      "All Automation"
+      "All Automation",
     );
     ensureParentPermission(
       COMMUNICATION_HUB_CHILD_PERMISSIONS,
       "communicationHub",
-      "Communication Hub"
+      "Communication Hub",
     );
 
     if (permissionsToCreate.length > 0) {
-      try {
-        createPermissionMutation(permissionsToCreate);
-      } catch (error) {
-        errorHandler(error);
-      }
+      createPermissionMutation(permissionsToCreate, {
+        onError: (error) => errorHandler(error),
+      });
     }
   };
 
-  // Master Toggle functionality
+  // ─── master toggle ─────────────────────────────────────────────────────────
+
   const handleMasterToggle = (enabled: boolean) => {
-    // Recursive function to get all permission
     const getAllPermissionNames = (
-      items: PermissionItem[] | StaticPermissionItem[]
-    ): Array<{
-      permission_name: string;
-      title: string;
-    }> => {
+      items: PermissionItem[] | StaticPermissionItem[],
+    ): Array<{ permission_name: string; title: string }> => {
       const result: Array<{ permission_name: string; title: string }> = [];
       items?.forEach((item) => {
         result.push({
@@ -458,108 +404,51 @@ export default function FeaturePermission({
       return result;
     };
 
-    // Get permissions from existing and missing separately
     const existingPermissions = getAllPermissionNames(sortedFormatted || []);
     const missingPermissions = getAllPermissionNames(
-      finalMissingPermissions || []
+      finalMissingPermissions || [],
     );
 
-    // Update state optimistically for all permissions
-    const allUpdates = [
+    updatePermissionInState([
       ...existingPermissions.map((p) => ({
         permission_name: p.permission_name,
-        enabled: enabled,
+        enabled,
       })),
       ...missingPermissions.map((p) => ({
         permission_name: p.permission_name,
-        enabled: enabled,
+        enabled,
       })),
-    ];
-    updatePermissionInState(allUpdates);
+    ]);
 
-    // Handle existing permissions - use BULK UPDATE API
     if (existingPermissions.length > 0) {
-      const permissionsToUpdate = existingPermissions.map((p) => ({
-        permission_name: p.permission_name,
-        enabled: enabled,
-      }));
-
-      try {
-        bulkUpdatePermissions({
+      bulkUpdatePermissions(
+        {
           companyId,
-          permissions: permissionsToUpdate,
-        });
-      } catch (error) {
-        errorHandler(error);
-      }
+          permissions: existingPermissions.map((p) => ({
+            permission_name: p.permission_name,
+            enabled,
+          })),
+        },
+        { onError: (error) => errorHandler(error) },
+      );
     }
 
-    // Handle missing permissions
     if (missingPermissions.length > 0) {
       const permissionsToCreate: PermissionCreate[] = missingPermissions.map(
         (p) => ({
           companyId,
           permission_name: p.permission_name,
           title: p.title,
-          enabled: enabled,
-        })
+          enabled,
+        }),
       );
-
-      try {
-        createPermissionMutation(permissionsToCreate);
-      } catch (error) {
-        errorHandler(error);
-      }
+      createPermissionMutation(permissionsToCreate, {
+        onError: (error) => errorHandler(error),
+      });
     }
   };
 
-  // Calculate if all permissions are enabled for master toggle state
-  const allPermissionsEnabled = () => {
-    // Recursive function to count enabled permissions including children
-    const countEnabledPermissions = (
-      items: PermissionItem[],
-      isExisting = true
-    ): number => {
-      let count = 0;
-      items?.forEach((item) => {
-        if (isExisting ? item.enabled : (item as any).status) {
-          count++;
-        }
-        if (item.children && item.children.length > 0) {
-          count += countEnabledPermissions(item.children, isExisting);
-        }
-      });
-      return count;
-    };
-
-    // Recursive function to count total permissions including children
-    const countTotalPermissions = (
-      items: PermissionItem[] | StaticPermissionItem[]
-    ): number => {
-      let count = 0;
-      items?.forEach((item) => {
-        count++;
-        if (item.children && item.children.length > 0) {
-          count += countTotalPermissions(item.children);
-        }
-      });
-      return count;
-    };
-
-    const enabledExistingCount = countEnabledPermissions(sortedFormatted || []);
-    const enabledMissingCount = countEnabledPermissions(
-      finalMissingPermissions || ([] as any),
-      false
-    );
-    const totalExistingCount = countTotalPermissions(sortedFormatted || []);
-    const totalMissingCount = countTotalPermissions(
-      finalMissingPermissions || []
-    );
-    const totalCount = totalExistingCount + totalMissingCount;
-    const totalEnabledCount = enabledExistingCount + enabledMissingCount;
-
-    return totalEnabledCount === totalCount && totalCount > 0;
-  };
+  // ─── render ────────────────────────────────────────────────────────────────
 
   if (isLoading) {
     return (
@@ -570,7 +459,7 @@ export default function FeaturePermission({
   }
 
   return (
-    <div className="mx-auto min-w-full rounded-lg border border-gray-200 bg-white px-2 py-4 shadow-sm lg:p-8">
+    <div className="h-full lg:h-[82vh] overflow-y-auto thin-scrollbar mx-auto min-w-full rounded-lg border border-gray-200 bg-white px-2 py-4 shadow-sm lg:p-8">
       <div className="space-y-1 px-4">
         {/* Header with Master Toggle */}
         <div className="flex items-center justify-between border-b-2 border-[#66738C] pb-3">
@@ -581,13 +470,12 @@ export default function FeaturePermission({
                 Toggle:
               </span>
               <Switch
-                checked={allPermissionsEnabled()}
+                checked={allPermissionsEnabled}
                 disabled={isPending || isCreatePending || isBulkPending}
                 onChange={(checked) => handleMasterToggle(checked)}
                 className="shadow-md"
               />
             </div>
-            {/* <span className="text-xl font-semibold text-[#66738C]">Toggle</span> */}
           </div>
         </div>
 
@@ -601,16 +489,6 @@ export default function FeaturePermission({
             isPending={isPending}
           />
         ))}
-        {/* {finalMissingPermissions?.map((missingItem: StaticPermissionItem) => (
-          <MissingPermissionItemComponent
-            key={missingItem.title}
-            item={missingItem}
-            expandedItems={expandedItems}
-            toggleExpanded={toggleExpanded}
-            handleCreateToggle={handleCreateToggle}
-            isCreatePending={isCreatePending}
-          />
-        ))} */}
       </div>
     </div>
   );

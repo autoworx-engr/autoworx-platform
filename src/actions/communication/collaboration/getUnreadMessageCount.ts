@@ -1,47 +1,31 @@
 "use server";
+
 import { db } from "@/lib/db";
 
-export default async function getUnreadCollaborationMessageCount(userId: number) {
+export default async function getUnreadCollaborationMessageCount(
+  userId: number,
+) {
   try {
-    const unreadMessages = await db.chatTrack.findMany({
+    const grouped = await db.chatTrack.groupBy({
+      by: ["senderId"],
       where: {
-        AND: [
-          {
-            receiverId: userId,
-          },
-          {
-            isRead: false,
-          },
-          {
-            section: "collaboration",
-          },
-        ],
+        receiverId: userId,
+        isRead: false,
+        section: "collaboration",
       },
+      _count: { _all: true },
+      _max: { lastMessage: true, createdAt: true },
     });
 
-    // Group by sender to get unread count per user/company
-    const unreadBySender = unreadMessages.reduce((acc, track) => {
-      const senderId = track.senderId || 0;
-      if (!acc[senderId]) {
-        acc[senderId] = {
-          count: 0,
-          lastMessage: track.lastMessage,
-          createdAt: track.createdAt,
-          senderId,
-        };
-      }
-      acc[senderId].count += 1;
-      // Keep the most recent message
-      if (track.createdAt > acc[senderId].createdAt) {
-        acc[senderId].lastMessage = track.lastMessage;
-        acc[senderId].createdAt = track.createdAt;
-      }
-      return acc;
-    }, {} as Record<number, { count: number; lastMessage: string; createdAt: Date; senderId: number }>);
-
-    return Object.values(unreadBySender);
-  } catch (err) {
-    console.error('Error fetching unread collaboration message count:', err);
+    return grouped
+      .filter((g) => g.senderId !== null)
+      .map((g) => ({
+        senderId: g.senderId as number,
+        count: g._count._all,
+        lastMessage: g._max.lastMessage ?? "",
+        createdAt: g._max.createdAt ?? new Date(0),
+      }));
+  } catch {
     return [];
   }
 }

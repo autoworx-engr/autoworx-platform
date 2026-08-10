@@ -10,12 +10,12 @@ interface LoginStore {
   clearStore: () => void;
 }
 
-export const useLoginStore = create<LoginStore>(set => ({
+export const useLoginStore = create<LoginStore>((set) => ({
   showTwoFactor: false,
   email: "",
   password: "",
-  setShowTwoFactor: showTwoFactor => set({ showTwoFactor }),
-  setEmail: email => set({ email }),
-  setPassword: password => set({ password }),
+  setShowTwoFactor: (showTwoFactor) => set({ showTwoFactor }),
+  setEmail: (email) => set({ email }),
+  setPassword: (password) => set({ password }),
   clearStore: () => set({ showTwoFactor: false, email: "", password: "" }),
 }));

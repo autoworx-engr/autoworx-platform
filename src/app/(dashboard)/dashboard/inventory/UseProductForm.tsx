@@ -109,6 +109,7 @@ export default function UseProductForm({
 
       <DialogContent
         className="max-h-[80%] w-[96%] max-w-xl grid-rows-[auto,1fr,auto] thin-scrollbar"
+        onOpenAutoFocus={(e) => e.preventDefault()}
         form
       >
         <DialogHeader>
@@ -125,6 +126,10 @@ export default function UseProductForm({
               name="date"
               type="date"
               label="Date"
+              onFocus={(e) => {
+                // Prevent the default focus behavior to avoid opening the calendar popup
+                e.preventDefault();
+              }}
               defaultValue={todayInCompanyTz}
             />
             <SlimInput name="quantity" label="Quantity" required />
@@ -144,7 +149,7 @@ export default function UseProductForm({
                 <label className="font-medium text-slate-600">Invoice</label>
                 <Selector
                   label={(
-                    invoice: { id: string; clientName: string } | null
+                    invoice: { id: string; clientName: string } | null,
                   ) =>
                     invoice
                       ? `${invoice.id} - ${invoice.clientName}`
@@ -178,8 +183,8 @@ export default function UseProductForm({
                 "h-24 w-full rounded-md border border-slate-300 outline-none bg-background px-3 py-2 leading-6 transition-all duration-300 thin-scrollbar",
                 "bg-white/80 backdrop-blur-sm dark:bg-slate-900/50",
                 "text-slate-600 dark:text-slate-300 placeholder:text-slate-400",
-                "focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/40",
-                "disabled:opacity-50 disabled:cursor-not-allowed"
+                "focus:border-primary/60 focus:ring-2 focus:ring-primary/40",
+                "disabled:opacity-50 disabled:cursor-not-allowed",
               )}
             />
           </div>
@@ -198,7 +203,7 @@ export default function UseProductForm({
           <Submit
             className="
                 rounded-xl px-6 py-2.5 text-sm font-medium text-white
-                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                bg-gradient-to-r from-primary to-[#5a66ee]
                 shadow-lg shadow-indigo-500/30
                 hover:shadow-xl hover:shadow-indigo-500/40
                 hover:-translate-y-0.5 hover:scale-[1.02]

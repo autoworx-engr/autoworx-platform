@@ -8,12 +8,16 @@ interface ClientCommunicationState {
   selectedConversation: TConversationType;
   selectedVehicleIndex: number;
   clientConversationTrack: ClientConversationTrack | null;
+  upcomingAppointmentCount: number | null;
+  pendingTaskCount: number | null;
   setClientConversationTrack: (
     clientConversationTrack?: ClientConversationTrack | null,
   ) => void;
   setClient: (client: Client | null) => void;
   setSelectedConversation: (selectedConversation: TConversationType) => void;
   setVehicleIndex(selectedVehicleIndex: number): void;
+  setUpcomingAppointmentCount: (count: number | null) => void;
+  setPendingTaskCount: (count: number | null) => void;
   resetClientData: () => void;
 }
 
@@ -23,6 +27,8 @@ export const useClientCommunicationStore = create<ClientCommunicationState>(
     selectedConversation: "SMS",
     clientConversationTrack: null,
     selectedVehicleIndex: 0,
+    upcomingAppointmentCount: null,
+    pendingTaskCount: null,
     setClientConversationTrack: (clientConversationTrack) =>
       set({ clientConversationTrack }),
     setClient: (client) => set({ client }),
@@ -33,12 +39,17 @@ export const useClientCommunicationStore = create<ClientCommunicationState>(
         selectedVehicleIndex:
           selectedVehicleIndex ?? state.selectedVehicleIndex,
       })),
+    setUpcomingAppointmentCount: (upcomingAppointmentCount) =>
+      set({ upcomingAppointmentCount }),
+    setPendingTaskCount: (pendingTaskCount) => set({ pendingTaskCount }),
     resetClientData: () =>
       set({
         client: null,
         selectedConversation: "SMS",
         selectedVehicleIndex: 0,
         clientConversationTrack: null,
+        upcomingAppointmentCount: null,
+        pendingTaskCount: null,
       }),
   }),
 );

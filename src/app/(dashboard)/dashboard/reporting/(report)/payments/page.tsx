@@ -11,11 +11,17 @@ import AnalyticsVisibility from "./AnalyticsVisibility";
 import FilterHeader from "./FilterHeader";
 import PaymentDisplay from "./PaymentDisplay";
 import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
-import { Payment } from "@prisma/client";
-import { normalizeSearch } from "@/utils/normalizeSearch";
+import { excludeUnchargedGiftCardPayments } from "@/lib/paymentFilters";
+import { PaymentType, Prisma } from "@prisma/client";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Analytics - Payments",
+  description: "Analyze payment trends and manage overdue invoices",
+};
 
 type TProps = {
-  searchParams: {
+  searchParams: Promise<{
     category?: string;
     startDate?: string;
     endDate?: string;
@@ -24,7 +30,7 @@ type TProps = {
     page?: string;
     take?: string;
     paymentMethod: string;
-  };
+  }>;
 };
 
 type TSliderData = {
@@ -55,192 +61,318 @@ const filterMultipleSliders: TSliderData[] = [
     max: 500,
   },
 ];
-export default async function PaymentReportPage({ searchParams }: TProps) {
-  const filterOR = [];
+export default async function PaymentReportPage(props: TProps) {
+  const searchParams = await props.searchParams;
   const session = await getServerSession(authOptions);
-  const { timezone } = (await getCompanyTimezone()) || {};
+  const { timezone = moment.tz.guess() } = (await getCompanyTimezone()) || {};
+  const companyId = session?.user?.companyId;
+
+  if (!companyId) {
+    throw new Error("Company ID is required for payment reporting.");
+  }
 
   const defaultTake = 50;
-  const page = searchParams.page ? parseInt(searchParams.page, 10) : 1;
-  const take = searchParams.take
-    ? parseInt(searchParams.take, 10)
-    : defaultTake;
+  const pageFromSearch = Number.parseInt(searchParams.page || "1", 10);
+  const takeFromSearch = Number.parseInt(
+    searchParams.take || String(defaultTake),
+    10,
+  );
 
-  const paymentInfo = await db.payment.findMany({
-    where: {
-      companyId: session?.user?.companyId,
-    },
-    include: {
-      other: {
-        include: {
-          paymentMethod: true,
+  const page =
+    Number.isNaN(pageFromSearch) || pageFromSearch < 1 ? 1 : pageFromSearch;
+  const take =
+    Number.isNaN(takeFromSearch) || takeFromSearch < 1
+      ? defaultTake
+      : takeFromSearch;
+
+  const filteredWhere: Prisma.PaymentWhereInput = {
+    companyId,
+    ...excludeUnchargedGiftCardPayments,
+  };
+
+  const containsInsensitive = (value: string): Prisma.StringFilter => ({
+    contains: value,
+    mode: "insensitive",
+  });
+
+  const trimmedSearch = searchParams.search?.trim();
+  if (trimmedSearch) {
+    const [firstNameTerm, ...lastNameParts] = trimmedSearch.split(/\s+/);
+    const lastNameTerm = lastNameParts.join(" ");
+
+    filteredWhere.OR = [
+      {
+        invoiceId: {
+          ...containsInsensitive(trimmedSearch),
         },
       },
-      deposit: true,
-      cash: true,
-      invoice: {
-        select: {
-          Refund: true,
-          due: true,
-          vehicle: true,
-          client: {
-            select: {
-              firstName: true,
-              lastName: true,
+      {
+        invoice: {
+          is: {
+            client: {
+              is: {
+                firstName: {
+                  ...containsInsensitive(trimmedSearch),
+                },
+              },
             },
           },
         },
       },
-    },
-    orderBy: {
-      date: "desc",
-    },
-  });
-
-  let filteredPayments =
-    searchParams?.search && paymentInfo
-      ? paymentInfo.filter((payment: any) => {
-        if (!payment.invoice?.client && !payment.invoiceId) {
-          return false;
-        }
-        const fullName = `${payment.invoice?.client?.firstName || ""} ${payment.invoice?.client?.lastName || ""}`;
-        const invoiceId = payment.invoiceId ? String(payment.invoiceId) : "";
-        return (
-          normalizeSearch(fullName)?.includes(
-            normalizeSearch(searchParams?.search || "")
-          ) ||
-          normalizeSearch(invoiceId)?.includes(
-            normalizeSearch(searchParams?.search || "")
-          )
-        );
-      })
-      : paymentInfo;
+      {
+        invoice: {
+          is: {
+            client: {
+              is: {
+                lastName: {
+                  ...containsInsensitive(trimmedSearch),
+                },
+              },
+            },
+          },
+        },
+      },
+      {
+        invoice: {
+          is: {
+            vehicle: {
+              is: {
+                make: {
+                  ...containsInsensitive(trimmedSearch),
+                },
+              },
+            },
+          },
+        },
+      },
+      {
+        invoice: {
+          is: {
+            vehicle: {
+              is: {
+                model: {
+                  ...containsInsensitive(trimmedSearch),
+                },
+              },
+            },
+          },
+        },
+      },
+      {
+        invoice: {
+          is: {
+            vehicle: {
+              is: {
+                vin: {
+                  ...containsInsensitive(trimmedSearch),
+                },
+              },
+            },
+          },
+        },
+      },
+      ...(firstNameTerm && lastNameTerm
+        ? [
+            {
+              invoice: {
+                is: {
+                  client: {
+                    is: {
+                      AND: [
+                        {
+                          firstName: {
+                            ...containsInsensitive(firstNameTerm),
+                          },
+                        },
+                        {
+                          lastName: {
+                            ...containsInsensitive(lastNameTerm),
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            },
+          ]
+        : []),
+    ];
+  }
 
   if (searchParams.startDate && searchParams.endDate) {
-    const formattedStartDate = searchParams.startDate
-      ? decodeURIComponent(searchParams.startDate!) // e.g. "05/01/2025"
-      : null;
+    const formattedStartDate = decodeURIComponent(searchParams.startDate);
+    const formattedEndDate = decodeURIComponent(searchParams.endDate);
 
-    const formattedEndDate = searchParams.endDate
-      ? decodeURIComponent(searchParams.endDate!)
-      : null;
-
-    const convertedStart = formattedStartDate
-      ? moment.tz(formattedStartDate!, "MM/DD/YYYY", timezone).startOf("day")
-      : null;
-
-    const convertedEnd = formattedEndDate
-      ? moment.tz(formattedEndDate!, "MM/DD/YYYY", timezone).endOf("day")
-      : null;
-
-    filteredPayments = filteredPayments.filter((payment) => {
-      if (!payment?.date) {
-        return false;
-      }
-
-      const paymentDate = payment.date ? moment.utc(payment.date) : null;
-      return (
-        paymentDate &&
-        paymentDate.isBetween(convertedStart, convertedEnd, null, "[]")
-      );
-    });
+    filteredWhere.date = {
+      gte: moment
+        .tz(formattedStartDate, "MM/DD/YYYY", timezone)
+        .startOf("day")
+        .utc()
+        .toDate(),
+      lte: moment
+        .tz(formattedEndDate, "MM/DD/YYYY", timezone)
+        .endOf("day")
+        .utc()
+        .toDate(),
+    };
   }
 
   if (searchParams.paymentMethod && searchParams.paymentMethod !== "All") {
-    // Convert to uppercase for case-insensitive comparison
     const methodToFilter = searchParams.paymentMethod.toUpperCase();
 
-    filteredPayments = filteredPayments.filter((payment) => {
-      // Check if the payment type matches the selected method
-      // Handle different naming conventions (Card/CARD, Cash/CASH, etc.)
-      const paymentType = payment.type.toUpperCase();
+    if (methodToFilter === "REFUND") {
+      filteredWhere.refundedAmount = {
+        gt: 0,
+      };
+    } else {
+      const paymentTypeMap: Record<string, PaymentType> = {
+        CARD: PaymentType.CARD,
+        CASH: PaymentType.CASH,
+        CHECK: PaymentType.CHECK,
+        CHEQUE: PaymentType.CHECK,
+        OTHER: PaymentType.OTHER,
+        DEPOSIT: PaymentType.DEPOSIT,
+      };
 
-      if (methodToFilter === "CHEQUE" && paymentType === "CHECK") {
-        return true;
-      } else if (
-        methodToFilter === "REFUND" &&
-        Number(payment?.refundedAmount) > 0
-      ) {
-        return true;
+      const mappedType = paymentTypeMap[methodToFilter];
+      if (mappedType) {
+        filteredWhere.type = mappedType;
       }
-
-      return paymentType === methodToFilter;
-    });
+    }
   }
 
-  const outStandingPayment = await db.payment.findMany({
-    where: { companyId: session?.user?.companyId },
-    include: {
-      invoice: {
-        select: {
-          due: true,
+  const listInclude = {
+    other: {
+      include: {
+        paymentMethod: true,
+      },
+    },
+    deposit: true,
+    cash: true,
+    invoice: {
+      select: {
+        Refund: true,
+        due: true,
+        vehicle: true,
+        client: {
+          select: {
+            firstName: true,
+            lastName: true,
+          },
         },
       },
     },
-  });
+  } as const;
 
-  function calculateTotal(payments: any[]) {
-    return payments.reduce((acc, payment) => {
-      const amount = Number(payment.amount || 0);
-      const refunded = Number(payment.refundedAmount || 0);
-      return acc + (amount - refunded);
-    }, 0);
-  }
+  const [
+    allAggregate,
+    filteredAggregate,
+    filteredTotalCount,
+    filteredPayments,
+    outStandingPayment,
+  ] = await Promise.all([
+    db.payment.aggregate({
+      where: {
+        companyId,
+        ...excludeUnchargedGiftCardPayments,
+      },
+      _sum: {
+        amount: true,
+        refundedAmount: true,
+      },
+      _count: {
+        _all: true,
+      },
+    }),
+    db.payment.aggregate({
+      where: filteredWhere,
+      _sum: {
+        amount: true,
+        refundedAmount: true,
+      },
+    }),
+    db.payment.count({
+      where: filteredWhere,
+    }),
+    db.payment.findMany({
+      where: filteredWhere,
+      include: listInclude,
+      orderBy: {
+        date: "desc",
+      },
+      skip: (page - 1) * take,
+      take,
+    }),
+    db.payment.findMany({
+      where: {
+        companyId,
+        invoiceId: {
+          not: null,
+        },
+      },
+      distinct: ["invoiceId"],
+      select: {
+        invoiceId: true,
+        invoice: {
+          select: {
+            due: true,
+          },
+        },
+      },
+    }),
+  ]);
 
-  const totalAmount = calculateTotal(paymentInfo);
-  const filteredTotalAmount = calculateTotal(filteredPayments);
+  const allAmount = Number(allAggregate._sum.amount || 0);
+  const allRefunded = Number(allAggregate._sum.refundedAmount || 0);
+
+  const totalAmount = allAmount - allRefunded;
+  const filteredTotalAmount =
+    Number(filteredAggregate._sum.amount || 0) -
+    Number(filteredAggregate._sum.refundedAmount || 0);
 
   const averageValue =
-    totalAmount && paymentInfo.length ? totalAmount / paymentInfo.length : 0;
+    totalAmount && allAggregate._count._all
+      ? totalAmount / allAggregate._count._all
+      : 0;
 
-  const totalRefunded = paymentInfo.reduce(
-    (acc, payment) => acc + Number(payment.refundedAmount || 0),
-    0
-  );
+  const totalRefunded = allRefunded;
 
   const refundRate =
     totalAmount + totalRefunded > 0
       ? (totalRefunded / (totalAmount + totalRefunded)) * 100
       : 0;
 
-  const uniqueInvoices = new Map();
-
-  outStandingPayment.forEach((payment) => {
-    const invoiceId = payment.invoiceId;
-    if (!uniqueInvoices.has(invoiceId)) {
-      uniqueInvoices.set(invoiceId, payment.invoice?.due || 0);
-    }
-  });
-
-  const totalDue = Array.from(uniqueInvoices.values()).reduce(
-    (acc, due) => acc + Math.abs(Number(due)),
-    0
+  const totalDue = outStandingPayment.reduce(
+    (acc, payment) => acc + Math.abs(Number(payment.invoice?.due || 0)),
+    0,
   );
 
   return (
     <div className="space-y-5">
       {/* filter section */}
-      <FilterHeader
-        filterMultipleSliders={filterMultipleSliders}
-        searchParams={searchParams}
-      />
-      <div className="my-7 grid grid-cols-1 md:grid-cols-2 gap-4 xl:grid-cols-5">
+      <div className="mb-4 mt-1.5 grid grid-cols-1 md:grid-cols-2 gap-4 xl:grid-cols-5">
         <Calculation content="AVERAGE VALUE" amount={averageValue} />
         <Calculation content="OUTSTANDING PAYMENT" amount={totalDue} />
         <Calculation content="TOTAL PAYMENT" amount={totalAmount} />
         <Calculation
           content="TOTAL PAYMENT (Filtered)"
           amount={
-            searchParams?.paymentMethod === "Refund"
+            searchParams?.paymentMethod?.toUpperCase() === "REFUND"
               ? totalRefunded
               : filteredTotalAmount
           }
         />
         <Calculation content="REFUND RATE" amount={refundRate} isRate={true} />
       </div>
+      <FilterHeader
+        filterMultipleSliders={filterMultipleSliders}
+        searchParams={searchParams}
+      />
       {/* Replace the existing table and mobile card sections with: */}
       <PaymentDisplay
         paymentInfo={filteredPayments}
+        total={filteredTotalCount}
         timezone={timezone}
         page={page}
         take={take}

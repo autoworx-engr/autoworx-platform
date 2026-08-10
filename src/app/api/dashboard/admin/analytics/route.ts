@@ -13,7 +13,7 @@ import {
   getTotalLeadsPerMonth,
 } from "@/actions/dashboard/data/getAdminInfo";
 import moment from "moment-timezone";
-import { Task } from "@prisma/client";
+import { Task, TaskStatus } from "@prisma/client";
 
 /**
  * @swagger
@@ -235,9 +235,19 @@ export async function GET(req: NextRequest) {
       company?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     //sales pipeline
-    const totalLeadsPerMonthPromise = getTotalLeadsPerMonth(timezone);
-    const leadsConvertedDataPromise = getConvertedLeadsPerMonth(timezone);
-    const conversionRateDataPromise = getConversionRateWithGrowth(timezone);
+
+    const totalLeadsPerMonthPromise = getTotalLeadsPerMonth(
+      timezone,
+      companyId,
+    );
+    const leadsConvertedDataPromise = getConvertedLeadsPerMonth(
+      timezone,
+      companyId,
+    );
+    const conversionRateDataPromise = getConversionRateWithGrowth(
+      timezone,
+      companyId,
+    );
 
     const [totalLeadsPerMonth, leadsConvertedData, conversionRateData] =
       await Promise.all([
@@ -252,9 +262,9 @@ export async function GET(req: NextRequest) {
     const conversionRateGrowth = conversionRateData.conversionRateGrowth;
 
     //shop pipeline
-    const completedJobsPromise = getCompletedJobs(timezone);
-    const totalJobsPromise = getTotalJobs();
-    const ongoingJobsPromise = getOngoingJobs();
+    const completedJobsPromise = getCompletedJobs(timezone, companyId);
+    const totalJobsPromise = getTotalJobs(companyId);
+    const ongoingJobsPromise = getOngoingJobs(companyId);
 
     const [completedJobsData, totalJobsData, ongoingJobsData] =
       await Promise.all([
@@ -274,11 +284,11 @@ export async function GET(req: NextRequest) {
       completedJobsData?.growth?.isPositive ?? false;
 
     //revenue
-    const revenue = await getRevenue(timezone);
-    const expectedRevenue = await getExpectedRevenue();
+    const revenue = await getRevenue(timezone, companyId);
+    const expectedRevenue = await getExpectedRevenue(companyId);
 
     //inventory
-    const inventory = await getInventory(timezone);
+    const inventory = await getInventory(timezone, companyId);
 
     // Clean data extraction and parsing
     const totalValue = inventory?.totalValue || 0;
@@ -289,7 +299,7 @@ export async function GET(req: NextRequest) {
     const isInventoryPositive = inventory?.growth?.isPositive ?? false;
 
     //employee box
-    const employeePayout = await getEmployeePayout(timezone);
+    const employeePayout = await getEmployeePayout(timezone, companyId);
 
     // Data Extraction and Formatting
     const currentMonthTotalPayout = employeePayout?.currentMonthTotal || 0;
@@ -360,6 +370,7 @@ export async function GET(req: NextRequest) {
           date: "asc",
         },
         ...fetchWithAppointment,
+        take: 20,
       });
     } else {
       // Logic for Technician or Other role
@@ -386,6 +397,7 @@ export async function GET(req: NextRequest) {
           date: "asc",
         },
         ...fetchWithAppointment,
+        take: 20,
       });
     }
 
@@ -397,27 +409,60 @@ export async function GET(req: NextRequest) {
       throw new Error("User ID is required to fetch tasks.");
     }
 
-    // Get tasks created by user OR assigned to user
+    // Get pending tasks created by user OR assigned to user, upcoming only
+    const nowTz = moment.tz(timezone);
+    const todayLocalDate = nowTz.format("YYYY-MM-DD");
+    const todayStart = moment.utc(todayLocalDate).toDate();
+    const tomorrowStart = moment.utc(todayLocalDate).add(1, "day").toDate();
+    const currentTime = nowTz.format("HH:mm");
+
     const whereCondition = {
-      companyId,
-      OR: [
-        { userId: +userId }, // Tasks created by the user
-        { taskUser: { some: { userId: +userId } } }, // Tasks assigned to the user
+      AND: [
+        { companyId },
+        { status: TaskStatus.pending },
+        {
+          OR: [
+            { userId: +userId }, // Tasks created by the user
+            { taskUser: { some: { userId: +userId } } }, // Tasks assigned to the user
+          ],
+        },
+        {
+          OR: [
+            // Any task after today should be shown.
+            { date: { gte: tomorrowStart } },
+            // Today's tasks should only show if they are upcoming or all-day.
+            {
+              AND: [
+                { date: { gte: todayStart } },
+                { date: { lt: tomorrowStart } },
+                {
+                  OR: [
+                    { startTime: null },
+                    { startTime: "" },
+                    { startTime: { gte: currentTime } },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
       ],
     };
 
-    tasks = await db.task.findMany({
-      where: whereCondition,
-    });
-
-    totalTasks = await db.task.count({
-      where: {
-        companyId,
-        OR: [{ userId: +userId }, { taskUser: { some: { userId: +userId } } }],
-      },
-    });
+    [tasks, totalTasks] = await Promise.all([
+      db.task.findMany({
+        where: whereCondition,
+        orderBy: { createdAt: "desc" },
+        take: 20,
+      }),
+      db.task.count({
+        where: whereCondition,
+      }),
+    ]);
 
     const data = {
+      user,
+      leadsConvertedData,
       currentTotalLeads,
       currentConversionRate,
       conversionRateGrowth,

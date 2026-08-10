@@ -41,5 +41,5 @@ export const useEmployeeWorkFilterStore = create<EmployeeWorkFilterState>(
         category: category !== undefined ? category : state.category,
         status: status !== undefined ? status : state.status,
       })),
-  })
+  }),
 );

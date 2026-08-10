@@ -28,7 +28,7 @@ const SelectComponent = ({
 
   return (
     <div className="w-full">
-      <label className="mb-1 block w-full font-medium text-slate-500">
+      <label className="mb-1 block w-full font-medium text-slate-600 dark:text-slate-200 transition-colors duration-300">
         {label} {required && <span className="text-red-600">*</span>}
       </label>
 
@@ -39,7 +39,7 @@ const SelectComponent = ({
         displayList={(item) => <p>{item.label}</p>}
         onSearch={(search) =>
           items.filter((item) =>
-            item.label.toLowerCase().includes(search.toLowerCase())
+            item.label.toLowerCase().includes(search.toLowerCase()),
           )
         }
         openState={[isOpen, setIsOpen]}

@@ -1,5 +1,6 @@
 import { getColumnsByType } from "@/actions/pipelines/pipelinesColumn";
-import { NextResponse } from "next/server";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
+import { NextRequest, NextResponse } from "next/server";
 
 /**
  * @swagger
@@ -22,8 +23,13 @@ import { NextResponse } from "next/server";
  *       200:
  *         description: Columns list
  */
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  const companyId = (await getAuthPrincipal(req))?.companyId ?? null;
+  if (!companyId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { type } = await req.json();
-  const columns = await getColumnsByType(type);
+  const columns = await getColumnsByType(type, companyId);
   return NextResponse.json(columns);
 }

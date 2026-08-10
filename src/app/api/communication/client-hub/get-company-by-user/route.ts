@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
     if (!companyId) {
       return NextResponse.json(
         { success: false, message: "companyId is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -64,7 +64,7 @@ export async function GET(req: NextRequest) {
         success: false,
         message: error.message || "Failed to retrieve company",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -34,7 +34,7 @@ function generateShortCode(length: number = 6): string {
     "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
   return nanoid(length).replace(
     /[^a-zA-Z0-9]/g,
-    () => alphabet[Math.floor(Math.random() * alphabet.length)]
+    () => alphabet[Math.floor(Math.random() * alphabet.length)],
   );
 }
 
@@ -86,7 +86,7 @@ export async function findExistingShortLink(originalUrl: string): Promise<{
  * Creates a new short link or returns existing one
  */
 export async function createShortLink(
-  options: CreateShortLinkOptions
+  options: CreateShortLinkOptions,
 ): Promise<{
   success: boolean;
   shortCode?: string;
@@ -309,7 +309,7 @@ export async function updateShortLink(
     description?: string;
     isActive?: boolean;
     expiresAt?: Date | null;
-  }
+  },
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await prisma.shortLink.update({
@@ -328,7 +328,7 @@ export async function updateShortLink(
  * Delete short link
  */
 export async function deleteShortLink(
-  shortCode: string
+  shortCode: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await prisma.shortLink.delete({
@@ -349,7 +349,7 @@ export async function getOrCreateInvoiceShortLink(
   invoiceId: string,
   clientName?: string,
   createdBy?: number,
-  companyId?: number
+  companyId?: number,
 ): Promise<{
   success: boolean;
   shortCode?: string;
@@ -389,7 +389,7 @@ export async function getOrCreateFleetShortLink(
   statementId: string,
   clientName?: string,
   createdBy?: number,
-  companyId?: number
+  companyId?: number,
 ): Promise<{
   success: boolean;
   shortCode?: string;

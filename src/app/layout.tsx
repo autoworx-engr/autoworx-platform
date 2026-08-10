@@ -1,34 +1,33 @@
-import { authOptions } from '@/authOptions';
-import { AuthSessionProvider } from '@/components/AuthSessionProvider';
-import Layout from '@/components/Layout';
-import QueryProvider from '@/components/QueryProvider';
-import { TooltipProvider } from '@/components/Tooltip';
-import type { Metadata, Viewport } from 'next';
-import { getServerSession } from 'next-auth';
-import { env, PublicEnvScript } from 'next-runtime-env';
-import { Inter } from 'next/font/google';
-import { Toaster } from 'react-hot-toast';
-import TopLoader from '../components/TopLoader';
-import './globals.css';
-import Script from 'next/script';
+import { authOptions } from "@/authOptions";
+import { AuthSessionProvider } from "@/components/AuthSessionProvider";
+import Layout from "@/components/Layout";
+import QueryProvider from "@/components/QueryProvider";
+import { TooltipProvider } from "@/components/Tooltip";
+import type { Metadata, Viewport } from "next";
+import { getServerSession } from "next-auth";
+import { Inter } from "next/font/google";
+import { Toaster } from "react-hot-toast";
+import TopLoader from "../components/TopLoader";
+import "./globals.css";
+import Script from "next/script";
 
 // import { ThemeProvider } from "@/components/theme-provider";
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: {
     template: `%s | AutoWorx`,
-    default: 'AutoWorx',
+    default: "AutoWorx",
   },
   openGraph: {
-    url: env('NEXT_PUBLIC_SITE_URL'),
+    url: process.env.NEXT_PUBLIC_SITE_URL,
     description:
-      'Autoworx makes running your shop easier than ever! From hassle-free client management to streamlining garage operations...',
+      "Autoworx makes running your shop easier than ever! From hassle-free client management to streamlining garage operations...",
     images: [
       {
-        url: `${env('NEXT_PUBLIC_SITE_URL')}/icons/autoworx-logo.webp`,
-        alt: 'AutoWorx Logo',
+        url: `${process.env.NEXT_PUBLIC_SITE_URL}/icons/autoworx-logo.webp`,
+        alt: "AutoWorx Logo",
       },
     ],
   },
@@ -36,31 +35,31 @@ export const metadata: Metadata = {
   // for PWA specific behavior
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'default',
-    title: 'AutoWorx',
+    statusBarStyle: "default",
+    title: "AutoWorx",
     startupImage: [
       {
-        url: `${env('NEXT_PUBLIC_SITE_URL')}/icons/pwa/icon-512x512.png`,
-        media: '(device-width: 768px) and (device-height: 1024px)',
+        url: `${process.env.NEXT_PUBLIC_SITE_URL}/icons/pwa/icon-512x512.png`,
+        media: "(device-width: 768px) and (device-height: 1024px)",
       },
     ],
   },
 
   // for better touch behavior
   other: {
-    'apple-mobile-web-app-capable': 'yes',
-    'format-detection': 'telephone=no',
-    'mobile-web-app-capable': 'yes',
+    "apple-mobile-web-app-capable": "yes",
+    "format-detection": "telephone=no",
+    "mobile-web-app-capable": "yes",
     // "apple-touch-icon": `${env("NEXT_PUBLIC_SITE_URL")}/icons/autoworx-logo-180x180.png`,
   },
 };
 
 export const viewport: Viewport = {
-  width: 'device-width',
+  width: "device-width",
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  viewportFit: 'cover',
+  viewportFit: "cover",
 };
 
 export default async function RootLayout({
@@ -68,13 +67,22 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await getServerSession(authOptions);
+  let session = null;
+  try {
+    session = await getServerSession(authOptions);
+  } catch {
+    // auth failure must not crash public pages
+  }
+  const employeeType = session?.user?.employeeType;
+  const canReceiveCalls = ["Admin", "Manager", "Sales"].includes(
+    employeeType as string,
+  );
 
   // if (!session) {
   //   redirect("/login");
   // }
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
         <Script
           defer
@@ -82,8 +90,6 @@ export default async function RootLayout({
           data-website-id="2123305e-6384-415f-adf6-79271e62313f"
           strategy="afterInteractive"
         />
-        <PublicEnvScript />
-
         {/* <link
           rel="apple-touch-icon"
           sizes="512x512"
@@ -117,7 +123,7 @@ export default async function RootLayout({
 
         {/* <link rel="manifest" href="/manifest.json"/> */}
       </head>
-      <body className={inter.className}>
+      <body className={inter.className} suppressHydrationWarning>
         <TopLoader />
         <Toaster
           position="top-right"
@@ -125,12 +131,12 @@ export default async function RootLayout({
           toastOptions={{
             success: {
               style: {
-                border: '1px solid rgba(0, 255, 0, 0.5)',
+                border: "1px solid rgba(0, 255, 0, 0.5)",
               },
             },
             error: {
               style: {
-                border: '1px solid rgba(255, 0, 0, 0.5)',
+                border: "1px solid rgba(255, 0, 0, 0.5)",
               },
             },
           }}
@@ -138,7 +144,9 @@ export default async function RootLayout({
         <QueryProvider>
           <AuthSessionProvider>
             <TooltipProvider delayDuration={150}>
-              <Layout session={session}>{children}</Layout>
+              <Layout session={session} canReceiveCalls={canReceiveCalls}>
+                {children}
+              </Layout>
             </TooltipProvider>
           </AuthSessionProvider>
         </QueryProvider>

@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { InfobipConfig } from "@prisma/client";
 
 export const getSmsGateway = async (
-  companyId?: number
+  companyId?: number,
 ): Promise<string | null> => {
   try {
     const cId = companyId || (await getCompanyId());
@@ -25,7 +25,7 @@ export const getSmsGateway = async (
 };
 
 export const getInfobipConfig = async (
-  companyId?: number
+  companyId?: number,
 ): Promise<{
   success: boolean;
   data?: InfobipConfig | null;

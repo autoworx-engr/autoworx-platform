@@ -67,7 +67,31 @@ export default async function getAppointments(
         ...restParams,
       });
     }
-    return { data: appointments, totalAppointments };
+
+    // Fetch associated invoice grand totals for matching draft estimates
+    const draftEstimateIds = appointments
+      .map((a) => a.draftEstimate)
+      .filter(Boolean) as string[];
+
+    let invoiceMap = new Map<string, number>();
+    if (draftEstimateIds.length > 0) {
+      const invoices = await db.invoice.findMany({
+        where: { id: { in: draftEstimateIds } },
+        select: { id: true, grandTotal: true },
+      });
+      invoiceMap = new Map(
+        invoices.map((i) => [i.id, Number(i.grandTotal) || 0]),
+      );
+    }
+
+    const enrichedAppointments = appointments.map((a) => ({
+      ...a,
+      invoiceGrandTotal: a.draftEstimate
+        ? invoiceMap.get(a.draftEstimate) || 0
+        : 0,
+    }));
+
+    return { data: enrichedAppointments as any, totalAppointments };
   } catch (error) {
     console.error(`Error fetching tasks`, error);
     throw new Error(`Failed to get tasks`);

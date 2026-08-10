@@ -32,16 +32,24 @@ export const updateChatTrack = async (
     const pusher = getPusherInstance();
     if (updatedChatInfo.senderId && updatedChatInfo.receiverId) {
       // Notify both users involved in the conversation
-      await pusher.trigger(`track-${updatedChatInfo.senderId}`, "chat-track-read", {
-        senderId: updatedChatInfo.senderId,
-        userId: updatedChatInfo.receiverId,
-        section: "internal"
-      });
-      await pusher.trigger(`track-${updatedChatInfo.receiverId}`, "chat-track-read", {
-        senderId: updatedChatInfo.senderId,
-        userId: updatedChatInfo.receiverId,
-        section: "internal"
-      });
+      await pusher.trigger(
+        `track-${updatedChatInfo.senderId}`,
+        "chat-track-read",
+        {
+          senderId: updatedChatInfo.senderId,
+          userId: updatedChatInfo.receiverId,
+          section: "internal",
+        },
+      );
+      await pusher.trigger(
+        `track-${updatedChatInfo.receiverId}`,
+        "chat-track-read",
+        {
+          senderId: updatedChatInfo.senderId,
+          userId: updatedChatInfo.receiverId,
+          section: "internal",
+        },
+      );
     }
 
     revalidatePath("/communication/internal");

@@ -3,24 +3,18 @@ import { getClients } from "../_actions/getClients";
 import ClientFilter from "./ClientFilter";
 import ClientInfinityScroll from "./ClientInfinityScroll";
 
-type TProps = {
-  searchParams?: {
-    filter: string;
-    search: string;
-  };
-};
-
 const defaultTakeData = 20;
 
-export default async function ClientLists({ searchParams }: TProps) {
+export default async function ClientLists() {
   const companyId = await getCompanyId();
-
-  const clients = await getClients({
+  const clientsFromApi = await getClients({
     companyId,
-    search: searchParams?.search,
-    filter: searchParams?.filter,
+    // Don't pass search/filter from URL - ClientFilter manages filter state via Zustand store
+    // The ClientInfinityScroll component handles fetching filtered data based on store state
     take: defaultTakeData,
   });
+
+  const clients = [...clientsFromApi];
 
   return (
     <div

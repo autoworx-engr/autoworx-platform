@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Selector from "./Selector";
 import MultiSelect from "./MultiSelect";
 import { SlimInput } from "@/components/SlimInput";
@@ -31,7 +31,6 @@ export type Rule = {
   timeDelay?: number | string | null;
   targetColumnId: number | null;
   companyId: number | null;
-  // createdBy: string | null;
 };
 
 type PipelineRuleFormProps = {
@@ -50,12 +49,12 @@ const PipelineRuleForm = ({
   companyId,
   user,
 }: PipelineRuleFormProps) => {
-  // const [loading, setLoading] = useState(false);
   const {
     data: allPipelineRules,
     isLoading: pipelineIsLoading,
     isFetching: pipelineIsFetching,
   } = useAllPipelineAutomationRules(companyId);
+  const [initialFormData, setInitialFormData] = useState<Rule | null>(null);
   const [formData, setFormData] = useState<Rule>({
     title: "",
     stageIds: [],
@@ -63,12 +62,11 @@ const PipelineRuleForm = ({
     timeDelay: null,
     targetColumnId: null,
     companyId: companyId,
-    // createdBy: null,
   });
 
   const [showGuide, setShowGuide] = useState(true);
   const [showDelayField, setShowDelayField] = useState(
-    formData.conditionType === "Time Delay"
+    formData.conditionType === "Time Delay",
   );
   const {
     stages,
@@ -81,43 +79,50 @@ const PipelineRuleForm = ({
   const { mutate: updateRule, isPending: isUpdatePending } =
     useUpdatePipelineAutomationRule();
   const { data, isLoading, isFetching } = useFindOnePipelineAutomationRule(
-    Number(id)
+    Number(id),
   );
   const [error, setError] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetchStages("sales");
-  }, []);
+  }, [fetchStages]);
 
   useEffect(() => {
     const loadData = async () => {
-      if (isEdit && id) {
-        const timeDelay = parseSecondsToTimeDelay(data?.data?.timeDelay);
-        setFormData({
+      if (isEdit && id && data?.data) {
+        const condType = data?.data?.conditionType || "";
+        const timeDelay =
+          condType === "TIME_DELAY"
+            ? parseSecondsToTimeDelay(data?.data?.timeDelay)
+            : null;
+
+        const payload: Rule = {
           id: data?.data?.id,
           companyId: data?.data?.companyId,
-          conditionType: data?.data?.conditionType,
-          stageIds: data?.data?.stages?.map((stage: any) => stage.columnId),
-          targetColumnId: data?.data?.targetColumnId.toString(),
-          title: data?.data?.title,
+          conditionType: condType,
+          stageIds:
+            data?.data?.stages?.map((stage: any) => stage.columnId) || [],
+          targetColumnId: data?.data?.targetColumnId?.toString() || null,
+          title: data?.data?.title || "",
           timeDelay: timeDelay,
-          // createdBy: data?.data?.createdBy,
-        });
-        // setLoading(false);
+        };
+        setFormData(payload);
+        setInitialFormData(payload);
       } else {
-        setFormData({
+        const payload: Rule = {
           title: "",
           stageIds: [],
           conditionType: "",
           timeDelay: null,
           targetColumnId: null,
           companyId: companyId,
-          // createdBy: null,
-        });
+        };
+        setFormData(payload);
+        setInitialFormData(payload);
       }
     };
     loadData();
-  }, [isEdit, id, data, mode]);
+  }, [isEdit, id, data, mode, companyId]);
 
   useEffect(() => {
     setShowDelayField(formData?.conditionType === "TIME_DELAY");
@@ -140,6 +145,11 @@ const PipelineRuleForm = ({
       });
     }
   };
+
+  const isFormUnchanged = useMemo(() => {
+    if (!initialFormData) return false;
+    return JSON.stringify(formData) === JSON.stringify(initialFormData);
+  }, [formData, initialFormData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -178,22 +188,23 @@ const PipelineRuleForm = ({
     }
 
     try {
+      const payload = {
+        ...formData,
+        timeDelay:
+          formData.timeDelay != null
+            ? parseTimeDelayToSeconds(formData.timeDelay)
+            : null,
+        targetColumnId:
+          formData.targetColumnId != null
+            ? Number(formData.targetColumnId)
+            : null,
+      };
+
       if (isEdit && id) {
-        if (formData.timeDelay != null) {
-          const seconds = parseTimeDelayToSeconds(formData.timeDelay!);
-          formData.timeDelay = seconds;
-        }
-        formData.targetColumnId = Number(formData.targetColumnId);
-        updateRule({ id, data: formData });
-        // setLoading(true);
+        updateRule({ id, data: payload });
       } else {
-        if (formData.timeDelay != null) {
-          const seconds = parseTimeDelayToSeconds(formData.timeDelay!);
-          formData.timeDelay = seconds;
-        }
-        formData.targetColumnId = Number(formData.targetColumnId);
-        // formData.createdBy = user.firstName + " " + user.lastName;
-        createRule(formData);
+        createRule(payload);
+
         setFormData({
           title: "",
           stageIds: [],
@@ -201,7 +212,6 @@ const PipelineRuleForm = ({
           timeDelay: null,
           targetColumnId: null,
           companyId: companyId,
-          // createdBy: null,
         });
       }
     } catch (error) {
@@ -210,7 +220,7 @@ const PipelineRuleForm = ({
   };
 
   const rule = allPipelineRules?.data?.find(
-    (r: any) => r?.conditionType === formData?.conditionType
+    (r: any) => r?.conditionType === formData?.conditionType,
   );
   const ruleColumnIds = (
     rule?.stages?.map((s: any) => s?.columnId) || []
@@ -220,7 +230,7 @@ const PipelineRuleForm = ({
     (stage) =>
       !ruleColumnIds?.includes(stage?.id) &&
       !formData?.stageIds?.includes(stage?.id) &&
-      formData.targetColumnId !== stage.id
+      formData.targetColumnId !== stage.id,
   );
 
   try {
@@ -232,7 +242,7 @@ const PipelineRuleForm = ({
 
     if (selectedTargetId && stages && Array.isArray(stages)) {
       const alreadyPresent = actionOptions?.some(
-        (s) => s.id === selectedTargetId
+        (s) => s.id === selectedTargetId,
       );
       if (!alreadyPresent) {
         const selectedStage = stages.find((s) => s.id === selectedTargetId);
@@ -248,7 +258,7 @@ const PipelineRuleForm = ({
   const conditionHelpContent = getPipelineConditionHelp(formData.conditionType);
 
   const selectedActionStage = stages?.find(
-    (s) => s.id === Number(formData.targetColumnId)
+    (s) => s.id === Number(formData.targetColumnId),
   );
   if (
     stagesLoading ||
@@ -302,14 +312,12 @@ const PipelineRuleForm = ({
             />
             <MultiSelect
               options={stages}
-              // value={formData?.stageIds}
               value={
                 Array.isArray(formData?.stageIds)
                   ? formData?.stageIds
                   : formData?.stageIds
               }
               onChange={(value) => handleInputChange("stageIds", value)}
-              // label="Stage"
               placeholder="Select options"
               required
               error={error.stageIds}
@@ -384,7 +392,6 @@ const PipelineRuleForm = ({
             />
             <Selector
               name="action"
-              // label="Action"
               options={actionOptions}
               value={formData?.targetColumnId!}
               onChange={(value) => handleInputChange("targetColumnId", value)}
@@ -412,9 +419,9 @@ const PipelineRuleForm = ({
           <div className="flex justify-end pt-4">
             <button
               type="submit"
-              disabled={isUpdatePending || isCreatePending}
+              disabled={isUpdatePending || isCreatePending || isFormUnchanged}
               className={`rounded-md px-4 py-2 text-sm font-medium text-white ${
-                isUpdatePending || isCreatePending
+                isUpdatePending || isCreatePending || isFormUnchanged
                   ? "cursor-not-allowed bg-indigo-300"
                   : "bg-indigo-500 hover:bg-indigo-600"
               }`}

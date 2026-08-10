@@ -3,7 +3,7 @@ import { z } from "zod";
 
 export const cardPaymentValidation = z.object({
   creditCard: z.string().nonempty("credit card number must be required"),
-  cardType: z.enum(["AMEX", "MASTERCARD", "VISA", "OTHER"] as [
+  cardType: z.enum(["AMEX", "MASTERCARD", "VISA", "DISCOVER", "OTHER"] as [
     string,
     ...CardType[],
   ]),

@@ -8,19 +8,26 @@ import { getServerSession } from "next-auth";
 import Header from "../Header";
 import NavigationTabs from "../NavigationTabs";
 import TemplateTable from "./TemplateTable";
+import { Metadata } from "next";
 
-async function TemplatesPage({
-  searchParams,
-}: Readonly<{
-  searchParams: {
-    startDate?: string;
-    endDate?: string;
-    status?: string;
-    searchTerm?: string;
-    page?: string;
-    take?: string;
-  };
-}>) {
+export const metadata: Metadata = {
+  title: "Invoices - Templates",
+  description: "Manage and customize your invoice templates.",
+};
+
+async function TemplatesPage(
+  props: Readonly<{
+    searchParams: Promise<{
+      startDate?: string;
+      endDate?: string;
+      status?: string;
+      searchTerm?: string;
+      page?: string;
+      take?: string;
+    }>;
+  }>,
+) {
+  const searchParams = await props.searchParams;
   const session = await getServerSession(authOptions);
   const companyId = session?.user.companyId;
   const { timezone } = await getCompanyTimezone();
@@ -32,7 +39,7 @@ async function TemplatesPage({
   const estimateTemplatesPromise = estimateTemplateFetchAndTransformData(
     companyId,
     searchParams,
-    timezone
+    timezone,
   );
   if (!companyId) {
     throw new Error("Company ID is required to create an email template.");
@@ -68,7 +75,11 @@ async function TemplatesPage({
       />
 
       <NavigationTabs activeTab="d-template">
-        <TemplateTable data={templates} />
+        <TemplateTable
+          data={templates}
+          page={searchParams.page}
+          take={searchParams.take}
+        />
       </NavigationTabs>
     </div>
   );

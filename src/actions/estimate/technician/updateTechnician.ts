@@ -19,7 +19,7 @@ type TechnicianInput = {
   status: string;
   note: string;
   userId: number;
-  serviceId: number;
+  serviceId: number | null;
   invoiceId: string;
   technicianNote: string;
 };
@@ -28,7 +28,7 @@ export const updateTechnician = async (
   technicianId: number,
   payload: TechnicianInput,
   vehicleParts: Partial<VehicleParts>[],
-  imageUrls: string[]
+  imageUrls: string[],
 ): Promise<ServerAction | TErrorHandler> => {
   try {
     // if (!payload) {
@@ -38,23 +38,26 @@ export const updateTechnician = async (
     // Ensure the date includes both date and time
 
     // Normalize the assigned date to 00:00:00 like the due date
-    const normalizedDate = payload.date
-      ? new Date(
-          payload.date.getFullYear(),
-          payload.date.getMonth(),
-          payload.date.getDate(),
-          0,
-          0,
-          0,
-          0
-        )
-      : payload.date;
+    const dateObj = payload.date ? new Date(payload.date) : null;
+    const normalizedDate =
+      dateObj && !isNaN(dateObj.getTime())
+        ? new Date(
+            Date.UTC(
+              dateObj.getUTCFullYear(),
+              dateObj.getUTCMonth(),
+              dateObj.getUTCDate(),
+              0,
+              0,
+              0,
+              0,
+            ),
+          )
+        : payload.date;
 
     await updateTechnicianValidationSchema.parseAsync({
       ...payload,
       date: normalizedDate,
     });
-
 
     const existingTechnician = await db.technician.findUnique({
       where: { id: technicianId },
@@ -65,7 +68,7 @@ export const updateTechnician = async (
     });
 
     if (!existingTechnician) {
-      return {success: false, message:"Technician not exist in database"}
+      return { success: false, message: "Technician not exist in database" };
     }
 
     const existingUrls = existingTechnician.images.map((img) => img.fileUrl);

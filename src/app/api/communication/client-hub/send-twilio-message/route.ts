@@ -45,25 +45,42 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
+    if (!body.companyId) {
+      return NextResponse.json(
+        { success: false, message: "Company id is required!" },
+        { status: 400 },
+      );
+    }
+
     const companyInfo = await db.company.findFirst({
-      where: { id: body?.companyId },
+      where: { id: body.companyId },
     });
 
     let data: any = null;
+
+    const attachments = (body.attachments ?? []).map((a: any) => ({
+      url: a.url,
+      name: a.name,
+      isVoiceNote: a.isVoiceNote ?? false,
+    }));
 
     if (companyInfo?.smsGateway === "TWILIO") {
       data = await sendTwilioMessage({
         companyId: body.companyId,
         clientId: body.clientId,
         message: body.message,
-        attachments: body.attachments ?? [],
+        attachments,
+        isSalesAgent: body.isSalesAgent,
+        userId: body.userId,
       });
     } else {
       data = await sendInfobipMessage({
         companyId: body.companyId,
         clientId: body.clientId,
         message: body.message,
-        attachments: body.attachments ?? [],
+        attachments,
+        isSalesAgent: body.isSalesAgent,
+        userId: body.userId,
       });
     }
 

@@ -3,6 +3,7 @@
 import { authOptions } from "@/authOptions";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
+import { calcStatementTotals } from "@/lib/fleet/calcStatementTotals";
 import { ServerAction } from "@/types/action";
 import { TErrorHandler } from "@/types/globalError";
 import { getServerSession } from "next-auth";
@@ -52,36 +53,15 @@ export async function getFleetStatement(
       throw new Error("Fleet statement not found");
     }
 
-    // Calculate totals
-    const totalAmount = statement.invoice.reduce(
-      (sum, invoice) => sum + Number(invoice.grandTotal || 0),
-      0,
-    );
-
-    const totalPaid = statement.invoice.reduce(
-      (sum, invoice) => sum + Number(invoice.totalPayment || 0),
-      0,
-    );
-
-    const totalDue = statement.invoice.reduce(
-      (sum, invoice) => sum + Number(invoice.due || 0),
-      0,
-    );
-
     return {
       type: "success",
       message: "Fleet statement retrieved successfully",
       data: {
         ...statement,
-        totals: {
-          totalAmount,
-          totalPaid,
-          totalDue,
-        },
+        totals: calcStatementTotals(statement.invoice),
       },
     };
-  } catch (error: any) {
-    console.error("Error getting fleet statement:", error);
+  } catch (error: unknown) {
     return errorHandler(error);
   }
 }

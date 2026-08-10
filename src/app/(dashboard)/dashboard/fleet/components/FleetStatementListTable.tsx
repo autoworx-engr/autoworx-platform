@@ -23,7 +23,7 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
   onRefresh,
 }) => {
   const [selectedStatementId, setSelectedStatementId] = useState<string | null>(
-    null
+    null,
   );
 
   // Add state for edit modal
@@ -90,7 +90,7 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-8">
+      <div className="flex min-h-[500px] items-center justify-center py-8">
         <div className="text-gray-500">Loading statements...</div>
       </div>
     );
@@ -98,7 +98,7 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
 
   if (!localStatements || localStatements.length === 0) {
     return (
-      <div className="flex items-center justify-center py-8">
+      <div className="flex min-h-[500px] items-center justify-center py-8">
         <div className="text-gray-500">No fleet statements found</div>
       </div>
     );
@@ -106,12 +106,12 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
 
   // Get current statement being edited
   const currentEditStatement = localStatements.find(
-    (s) => s.id === editStatementId
+    (s) => s.id === editStatementId,
   );
 
   return (
-    <div className="mt-5 rounded-md bg-background p-4 shadow-md">
-      <div className="overflow-x-auto hidden md:block">
+    <div className="mt-5 min-h-[500px] rounded-md bg-background p-4 shadow-md">
+      <div className="hidden overflow-x-auto md:block">
         <table className="w-full">
           <thead className="sticky top-0 z-10 bg-background">
             <tr className="bg-background">
@@ -133,7 +133,7 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
                 key={statement.id}
                 className={cn(
                   "cursor-pointer rounded-md border py-3 hover:bg-gray-50 transition-colors",
-                  index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]"
+                  index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]",
                 )}
                 onClick={() => handleViewStatement(statement.id)}
               >
@@ -143,19 +143,19 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
                   </span>
                 </td>
                 <td className={`${tDataCommonClasses}`}>
-                  {moment(statement.createdAt).format("DD MMMM YYYY hh:mmA")}
+                  {moment(statement.createdAt).format("MMMM DD, YYYY hh:mmA")}
                 </td>
                 <td className={`${tDataCommonClasses}`}>
                   {statement.invoice?.length || 0}
                 </td>
                 <td className={`${tDataCommonClasses}`}>
                   {formatCurrency(
-                    statement.totals?.totalAmount?.toFixed(2) || "0.00"
+                    statement.totals?.totalAmount?.toFixed(2) || "0.00",
                   )}
                 </td>
                 <td className={`${tDataCommonClasses}`}>
                   {formatCurrency(
-                    statement.totals?.totalPaid?.toFixed(2) || "0.00"
+                    statement.totals?.totalPaid?.toFixed(2) || "0.00",
                   )}
                 </td>
                 <td className={`${tDataCommonClasses}`}>
@@ -167,7 +167,7 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
                     }
                   >
                     {formatCurrency(
-                      statement.totals?.totalDue?.toFixed(2) || "0.00"
+                      statement.totals?.totalDue?.toFixed(2) || "0.00",
                     )}
                   </span>
                 </td>
@@ -226,7 +226,7 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
               key={statement.id}
               className={cn(
                 "cursor-pointer border hover:shadow-md transition-shadow",
-                index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]"
+                index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]",
               )}
               onClick={() => handleViewStatement(statement.id)}
             >
@@ -252,7 +252,7 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">Date Created:</span>
                     <span className="text-sm font-medium">
-                      {moment(statement.createdAt).format("DD MMM YYYY")}
+                      {moment(statement.createdAt).format("MMM DD, YYYY")}
                     </span>
                   </div>
                   <div className="flex justify-between">

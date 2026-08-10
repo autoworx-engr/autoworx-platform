@@ -3,6 +3,7 @@ import { makeLinksClickable } from "@/components/MakeLinkClickable";
 import { cn } from "@/lib/cn";
 import { ClientSMS, ClientSmsAttachments } from "@prisma/client";
 import Image from "next/image";
+import MissedCallDivider from "./MissedCallDivider";
 import SMSAttachment from "./SMSAttachment";
 
 export default function SmsMessage({
@@ -14,14 +15,22 @@ export default function SmsMessage({
       lastName: string | null;
     } | null;
     attachments: ClientSmsAttachments[];
+    messageType?: string | null;
   };
 }) {
+  if (message.messageType === "MISSED_CALL") {
+    return <MissedCallDivider at={message.createdAt} />;
+  }
+
   const isIncoming = message.sentBy !== "Company";
   const text = (message.message ?? "").trim();
+  const hasAttachments = (message.attachments?.length ?? 0) > 0;
 
-   const senderName = message.sentBy === "Company" 
-                ? message.user && `${message.user.firstName} ${message.user.lastName || ''}`.trim()
-: null;
+  const senderName =
+    message.sentBy === "Company"
+      ? message.user &&
+        `${message.user.firstName} ${message.user.lastName || ""}`.trim()
+      : null;
   const handleDownload = (fileUrl: string) => {
     window.open(fileUrl, "_blank", "noopener,noreferrer");
   };
@@ -41,7 +50,7 @@ export default function SmsMessage({
     <div
       className={cn(
         "flex w-full items-start gap-2 px-2 py-1",
-        isIncoming ? "justify-start" : "justify-end"
+        isIncoming ? "justify-start" : "justify-end",
       )}
     >
       {/* Avatar (incoming only) */}
@@ -58,24 +67,23 @@ export default function SmsMessage({
       <div
         className={cn("max-w-[85%] sm:max-w-[70%]", !isIncoming && "ml-auto")}
       >
-        {/* Bubble */}
-        {(!!text || !!message) && (
+        {/* Bubble — only render when there's text or attachments. Attachment-only
+            messages skip the colored bubble entirely so the images float on
+            their own instead of sitting inside a solid background. */}
+        {(!!text || hasAttachments) && (
           <div
             className={cn(
-              "group relative rounded-2xl px-3 py-2 text-[14px] shadow-sm ring-1 transition",
-              "select-text hover:shadow-md",
-              isIncoming
-                ? "bg-zinc-200 text-zinc-900 ring-zinc-300 dark:bg-zinc-800 dark:text-zinc-100 dark:ring-white/10"
-                : "bg-gradient-to-br from-[#0a8a95] to-[#006D77] text-white ring-white/20"
+              "group relative w-fit text-[14px] transition select-text",
+              !isIncoming && "ml-auto",
+              text &&
+                cn(
+                  "rounded-2xl px-3 py-2 shadow-sm ring-1 hover:shadow-md",
+                  isIncoming
+                    ? "bg-zinc-200 text-zinc-900 ring-zinc-300 dark:bg-zinc-800 dark:text-zinc-100 dark:ring-white/10"
+                    : "bg-gradient-to-br from-[#0a8a95] to-[#006D77] text-white ring-white/20",
+                ),
             )}
           >
-            {/* Bubble tails
-            // {isIncoming ? (
-            //   <span className="pointer-events-none absolute -left-1 bottom-2 h-3 w-3 rotate-45 rounded-[2px] bg-zinc-200 ring-1 ring-zinc-300 dark:bg-zinc-800 dark:ring-white/10" />
-            // ) : (
-            //   <span className="pointer-events-none absolute -right-1 bottom-2 h-3 w-3 rotate-45 rounded-[2px] bg-[#006D77] ring-1 ring-white/20" />
-            // )} */}
-
             {/* Text */}
             {text && (
               <div className="break-words whitespace-pre-wrap">
@@ -83,32 +91,36 @@ export default function SmsMessage({
               </div>
             )}
 
-            {/* Attachments (kept inside bubble) */}
-            <SMSAttachment message={message} handleDownload={handleDownload} />
+            {/* Attachments */}
+            {hasAttachments && (
+              <SMSAttachment
+                message={message}
+                handleDownload={handleDownload}
+              />
+            )}
           </div>
         )}
 
         {/* Timestamp */}
-       <div className={cn(
-                                 "mt-1 flex flex-col gap-0 text-zinc-500",
-                                 !isIncoming && "items-end"
-                               )}>
-
-                                {senderName && (
-                          <div className="text-[9px] italic text-zinc-500">
-                            {senderName}
-                          </div>
-                        )}
-         <div
+        <div
           className={cn(
-            "mt-1  text-[10px] leading-4 text-zinc-500",
-            !isIncoming && "text-right"
+            "mt-1 flex flex-col gap-0 text-zinc-500",
+            !isIncoming && "items-end",
           )}
-          title={new Date(message.createdAt).toLocaleString()}
         >
-          {formatTime(message.createdAt)}
+          {senderName && (
+            <div className="text-[9px] italic text-zinc-500">{senderName}</div>
+          )}
+          <div
+            className={cn(
+              "mt-1  text-[10px] leading-4 text-zinc-500",
+              !isIncoming && "text-right",
+            )}
+            title={new Date(message.createdAt).toLocaleString()}
+          >
+            {formatTime(message.createdAt)}
+          </div>
         </div>
-       </div>
       </div>
     </div>
   );

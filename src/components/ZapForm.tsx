@@ -63,6 +63,7 @@ const ZapForm = ({ company }: ZapFormProps) => {
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [phoneResetKey, setPhoneResetKey] = useState(0);
   const [formStatus, setFormStatus] = useState<{
     message: string;
     type: "success" | "error" | null;
@@ -119,6 +120,8 @@ const ZapForm = ({ company }: ZapFormProps) => {
     }
   }, []);
 
+  const NAME_REGEX = /^[A-Za-z\s\-']+$/;
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
@@ -128,6 +131,13 @@ const ZapForm = ({ company }: ZapFormProps) => {
     });
 
     clearFieldError(name);
+
+    if (name === "name" && value && !NAME_REGEX.test(value)) {
+      setFieldErrors((prev) => ({
+        ...prev,
+        name: "Name can only contain letters, spaces, hyphens, and apostrophes",
+      }));
+    }
   };
 
   const clearFieldError = (field: string) => {
@@ -160,11 +170,42 @@ const ZapForm = ({ company }: ZapFormProps) => {
     e.preventDefault();
     setIsSubmitting(true);
     setFormStatus({ message: "", type: null });
+
+    const requiredFieldErrors: { [key: string]: string } = {};
+
+    if (!formData.name.trim()) {
+      requiredFieldErrors.name = "Full name is required";
+    } else if (!/^[A-Za-z\s\-']+$/.test(formData.name.trim())) {
+      requiredFieldErrors.name =
+        "Name can only contain letters, spaces, hyphens, and apostrophes";
+    }
+
+    if (!formData.others) {
+      if (!formData.vehicle_year) {
+        requiredFieldErrors.vehicle_year = "Year is required";
+      }
+
+      if (!formData.vehicle_make) {
+        requiredFieldErrors.vehicle_make = "Make is required";
+      }
+
+      if (!formData.vehicle_model) {
+        requiredFieldErrors.vehicle_model = "Model is required";
+      }
+    }
+
+    if (Object.keys(requiredFieldErrors).length > 0) {
+      setFieldErrors((prev) => ({ ...prev, ...requiredFieldErrors }));
+      setIsSubmitting(false);
+      return;
+    }
+
     if (!formData.phone || formData.phone.length < 10) {
       setFieldErrors({
         ...fieldErrors,
         phone: "Please enter a valid phone number",
       });
+      setIsSubmitting(false);
       return;
     }
     try {
@@ -224,6 +265,9 @@ const ZapForm = ({ company }: ZapFormProps) => {
           multiServices: [],
           countryCode: "US",
         });
+
+        // Force PhoneInput to remount so its internal state clears
+        setPhoneResetKey((prev) => prev + 1);
       } else {
         setFormStatus({
           message: "Failed to create lead. Please try again.",
@@ -331,7 +375,7 @@ const ZapForm = ({ company }: ZapFormProps) => {
                 htmlFor="name"
                 className="block text-sm font-medium text-gray-700"
               >
-                Full Name*
+                Full Name<span className="text-red-500">*</span>
               </label>
               <input
                 id="name"
@@ -343,6 +387,9 @@ const ZapForm = ({ company }: ZapFormProps) => {
                 required
                 className="w-full rounded-md border-2 border-gray-300 px-4 py-2 placeholder:text-gray-500 focus:border-[#00b8b0] focus:outline-none focus:ring-2 focus:ring-[#00b8b0]"
               />
+              {fieldErrors.name && (
+                <p className="text-sm text-red-600">{fieldErrors.name}</p>
+              )}
             </div>
             <div className="space-y-2">
               <label
@@ -363,6 +410,7 @@ const ZapForm = ({ company }: ZapFormProps) => {
             </div>
             <div className="space-y-2">
               <PhoneInput
+                key={phoneResetKey}
                 label="Phone Number"
                 // value={formData.phone}
                 onChange={(num, code, isoCode) =>
@@ -389,52 +437,61 @@ const ZapForm = ({ company }: ZapFormProps) => {
             {/* Vehicle Information Section */}
             <div className="border-t border-gray-200 pb-1 pt-2">
               <h3 className="text-md font-medium text-gray-700">
-                Vehicle Information*
+                Vehicle Information
               </h3>
             </div>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
               <Selector
                 name="vehicle_year"
                 label="Year"
+                required
                 placeholder="Select year"
                 options={years?.data}
                 value={formData.vehicle_year || ""}
-                onChange={(value) =>
-                  setFormData((prev) => ({ ...prev, vehicle_year: value }))
-                }
+                onChange={(value) => {
+                  setFormData((prev) => ({ ...prev, vehicle_year: value }));
+                  clearFieldError("vehicle_year");
+                }}
                 isSearch={true}
                 isClear={true}
                 disabled={formData.others !== ""}
+                error={fieldErrors.vehicle_year}
                 // error={isYearFetchError ? "Failed to fetch years" : undefined}
               />
               <Selector
                 name="vehicle_make"
                 label="Make"
+                required
                 placeholder="Select make"
                 options={vehicleOptions || []}
                 value={formData.vehicle_make || ""}
-                onChange={(value) =>
-                  setFormData((prev) => ({ ...prev, vehicle_make: value }))
-                }
+                onChange={(value) => {
+                  setFormData((prev) => ({ ...prev, vehicle_make: value }));
+                  clearFieldError("vehicle_make");
+                }}
                 isSearch={true}
                 isClear={true}
                 disabled={formData.others !== ""}
+                error={fieldErrors.vehicle_make}
                 // error={isMakeFetchError ? "Failed to fetch Makes" : undefined}
               />
 
               <Selector
                 name="vehicle_model"
                 label="Model"
+                required
                 placeholder="Select model"
                 options={vehicleModelOptions || []}
                 // rootClassName="w-1/3"
                 value={formData.vehicle_model || ""}
-                onChange={(value) =>
-                  setFormData((prev) => ({ ...prev, vehicle_model: value }))
-                }
+                onChange={(value) => {
+                  setFormData((prev) => ({ ...prev, vehicle_model: value }));
+                  clearFieldError("vehicle_model");
+                }}
                 isSearch={true}
                 isClear={true}
                 disabled={formData.others !== ""}
+                error={fieldErrors.vehicle_model}
                 // error={
                 //   isModelsFetchError ? "Failed to fetch Models" : undefined
                 // }
@@ -483,6 +540,7 @@ const ZapForm = ({ company }: ZapFormProps) => {
                 isSubmitting ||
                 !consent ||
                 !!fieldErrors.phone ||
+                !formData.name.trim() ||
                 (!formData.others &&
                   (!formData.vehicle_year ||
                     !formData.vehicle_make ||

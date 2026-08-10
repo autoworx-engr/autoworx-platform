@@ -1,15 +1,14 @@
-import Selector from "@/components/Selector";
-import { Switch } from "@/components/Switch";
-import { useListsStore } from "@/stores/lists";
-import type { Client, EmailTemplate, Vehicle } from "@prisma/client";
-import moment from "moment";
-import { useEffect, useState } from "react";
 import { deleteTemplate } from "@/actions/appointment/deleteTemplate";
 import NewTemplate from "@/components/Lists/NewTemplate";
-import UpdateTemplate from "./UpdateTemplateComponent";
-import { TimeInput } from "@/components/TimeInput";
+import Selector from "@/components/Selector";
+import { Switch } from "@/components/Switch";
 import { errorToast } from "@/lib/toast";
+import { useListsStore } from "@/stores/lists";
+import type { Client, EmailTemplate, Vehicle } from "@prisma/client";
 import { Trash2, UserRoundX, X } from "lucide-react";
+import moment from "moment";
+import { useEffect, useState } from "react";
+import UpdateTemplate from "./UpdateTemplateComponent";
 
 export function Reminder({
   client,
@@ -63,11 +62,15 @@ export function Reminder({
   // const [minStartTime, setMinStartTime] = useState<string>("");
 
   useEffect(() => {
-    setOpenConfirmation(false);
+    if (openReminder) {
+      setOpenConfirmation(false);
+    }
   }, [openReminder]);
 
   useEffect(() => {
-    setOpenReminder(false);
+    if (openConfirmation) {
+      setOpenReminder(false);
+    }
   }, [openConfirmation]);
 
   // Set minimum date to today
@@ -138,7 +141,7 @@ export function Reminder({
     // Check if reminder is before the appointment
     const appointmentDateTime = moment(
       `${date} ${startTime}`,
-      "YYYY-MM-DD HH:mm"
+      "YYYY-MM-DD HH:mm",
     );
     const reminderDateTime = moment(`${dateInput} ${time}`, "YYYY-MM-DD HH:mm");
 
@@ -191,7 +194,7 @@ export function Reminder({
             />
           }
           items={templates.filter(
-            (template: EmailTemplate) => template.type === "Confirmation"
+            (template: EmailTemplate) => template.type === "Confirmation",
           )}
           displayList={(template: EmailTemplate) => (
             <div className="flex">
@@ -226,7 +229,7 @@ export function Reminder({
           setSelectedItem={setConfirmationTemplate}
           onSearch={(search: string) =>
             templates.filter((template) =>
-              template.subject.toLowerCase().includes(search.toLowerCase())
+              template.subject.toLowerCase().includes(search.toLowerCase()),
             )
           }
           openState={[openConfirmation, setOpenConfirmation]}
@@ -261,7 +264,7 @@ export function Reminder({
             />
           }
           items={templates.filter(
-            (template: EmailTemplate) => template.type === "Reminder"
+            (template: EmailTemplate) => template.type === "Reminder",
           )}
           displayList={(template: EmailTemplate) => (
             <div className="flex">
@@ -296,7 +299,7 @@ export function Reminder({
           setSelectedItem={setReminderTemplate}
           onSearch={(search: string) =>
             templates.filter((template) =>
-              template.subject.toLowerCase().includes(search.toLowerCase())
+              template.subject.toLowerCase().includes(search.toLowerCase()),
             )
           }
           openState={[openReminder, setOpenReminder]}
@@ -330,7 +333,7 @@ export function Reminder({
           />
           <button
             type="button"
-            className="rounded-lg bg-[#6571FF] p-2 px-4 text-white"
+            className="rounded-lg bg-primary p-2 px-4 text-white"
             onClick={handleAddReminder}
           >
             Add
@@ -350,11 +353,11 @@ export function Reminder({
 
             const timeObjMoment = moment(
               `${timeObj.date} ${timeObj.time}`,
-              "YYYY-MM-DD HH:mm"
+              "YYYY-MM-DD HH:mm",
             );
 
             const formattedTime = moment(timeObjMoment).format(
-              "MMMM Do YYYY, h:mm A"
+              "MMMM Do YYYY, h:mm A",
             );
 
             // const diff = moment.duration(appointmentTime.diff(timeObjMoment));

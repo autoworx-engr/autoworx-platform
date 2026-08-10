@@ -14,6 +14,7 @@ export async function enabled2fa() {
     }
     const user = await db.user.findUnique({
       where: { id: userId },
+      select: { id: true, twoFactorEnabled: true, emailVerified: true },
     });
     if (!user) {
       return { type: "fail", message: "User not found" };
@@ -49,6 +50,7 @@ export async function disabled2fa() {
     }
     const user = await db.user.findUnique({
       where: { id: userId },
+      select: { id: true, twoFactorEnabled: true },
     });
     if (!user) {
       return { type: "fail", message: "User not found" };

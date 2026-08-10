@@ -1,10 +1,12 @@
 "use server";
 import { db } from "@/lib/db";
 
+type AttachmentSummary = { name?: string; url?: string };
+
 // Helper function to create descriptive attachment message
 function createAttachmentMessage(
-  attachments: any[],
-  textMessage?: string
+  attachments: AttachmentSummary[],
+  textMessage?: string,
 ): string {
   if (!attachments || attachments.length === 0) {
     return textMessage || "";
@@ -14,12 +16,12 @@ function createAttachmentMessage(
   const images = attachments.filter(
     (att) =>
       att.name?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i) ||
-      att.url?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i)
+      att.url?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i),
   );
   const otherFiles = attachments.filter(
     (att) =>
       !att.name?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i) &&
-      !att.url?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i)
+      !att.url?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i),
   );
 
   const parts = [];
@@ -30,7 +32,7 @@ function createAttachmentMessage(
 
   if (otherFiles.length > 0) {
     parts.push(
-      otherFiles.length === 1 ? "1 file" : `${otherFiles.length} files`
+      otherFiles.length === 1 ? "1 file" : `${otherFiles.length} files`,
     );
   }
 
@@ -77,7 +79,7 @@ export async function initialCreateClientChatTrack(clientId: number) {
 
 export async function CreateClientChatTrack(
   clientId: number,
-  data: TCreateChatTrack
+  data: TCreateChatTrack,
 ) {
   try {
     const findClientChatTrack = await db.clientConversationTrack.findUnique({
@@ -108,7 +110,7 @@ type TUpdateClientEmailChatTrack = {
   clientId: number;
   emailLastMessage: string;
   lastEmailBy: string; // Who sent the email (Company or Client)
-  attachments?: any[]; // Array of attachments to create descriptive message
+  attachments?: AttachmentSummary[]; // Array of attachments to create descriptive message
 };
 
 // update client email conversation track
@@ -161,7 +163,7 @@ type TUpdateClientSMSChatTrack = {
   clientId: number;
   smsLastMessage: string;
   lastMessageBy: string;
-  attachments?: any[]; // Array of attachments to create descriptive message
+  attachments?: AttachmentSummary[]; // Array of attachments to create descriptive message
 };
 
 export async function updateNewSMSChatTrack({
@@ -266,29 +268,153 @@ export async function unreadClientSmsAndEmail(clientId: number) {
       return initialCreateClientChatTrack(clientId);
     }
 
-    let updatedData = findClientChatTrack;
-
-    if (updatedData?.lastMessageBy === "Client") {
-      updatedData = await db.clientConversationTrack.update({
-        where: { clientId },
+    // Atomic conditional unread updates via updateMany so we don't throw when
+    // the row is already in the desired state (e.g. concurrent reader).
+    if (findClientChatTrack.lastMessageBy === "Client") {
+      await db.clientConversationTrack.updateMany({
+        where: { clientId, smsIsRead: true },
         data: {
           smsIsRead: false,
-          smsUnReadCount: { increment: 1 }, // or set to specific number
+          smsUnReadCount: { increment: 1 },
         },
       });
     }
 
-    if (updatedData?.lastEmailBy === "Client") {
-      updatedData = await db.clientConversationTrack.update({
-        where: { clientId },
+    if (findClientChatTrack.lastEmailBy === "Client") {
+      await db.clientConversationTrack.updateMany({
+        where: { clientId, emailIsRead: true },
         data: {
           emailIsRead: false,
-          emailIsUnReadCount: { increment: 1 }, // or set to specific number
+          emailIsUnReadCount: { increment: 1 },
         },
       });
     }
 
-    return updatedData;
+    return db.clientConversationTrack.findUnique({ where: { clientId } });
+  } catch (err) {
+    throw err;
+  }
+}
+
+export async function updateNewMessengerChatTrack({
+  clientId,
+  message,
+  sentBy,
+}: {
+  clientId: number;
+  message: string;
+  sentBy: string;
+}) {
+  try {
+    const track = await db.clientConversationTrack.findUnique({
+      where: { clientId },
+    });
+
+    const data = {
+      messengerIsRead: sentBy === "Company",
+      messengerUnReadCount: sentBy === "Company" ? 0 : undefined,
+      messengerLastMessage: message,
+      messengerLastBy: sentBy,
+      sendAt: new Date(),
+    };
+
+    if (!track) {
+      return db.clientConversationTrack.create({
+        data: {
+          clientId,
+          messengerIsRead: sentBy === "Company",
+          messengerUnReadCount: sentBy === "Company" ? 0 : 1,
+          messengerLastMessage: message,
+          messengerLastBy: sentBy,
+          sendAt: new Date(),
+        },
+      });
+    }
+
+    return db.clientConversationTrack.update({
+      where: { clientId },
+      data: {
+        messengerIsRead: sentBy === "Company",
+        messengerUnReadCount: { increment: sentBy === "Company" ? 0 : 1 },
+        messengerLastMessage: message,
+        messengerLastBy: sentBy,
+        sendAt: new Date(),
+      },
+    });
+  } catch (err) {
+    throw err;
+  }
+}
+
+export async function readClientMessenger(clientId: number) {
+  try {
+    const track = await db.clientConversationTrack.findUnique({
+      where: { clientId },
+    });
+    if (!track) return initialCreateClientChatTrack(clientId);
+    if (!track.messengerUnReadCount) return track;
+    return db.clientConversationTrack.update({
+      where: { clientId },
+      data: { messengerIsRead: true, messengerUnReadCount: 0 },
+    });
+  } catch (err) {
+    throw err;
+  }
+}
+
+export async function updateNewInstagramChatTrack({
+  clientId,
+  message,
+  sentBy,
+}: {
+  clientId: number;
+  message: string;
+  sentBy: string;
+}) {
+  try {
+    const track = await db.clientConversationTrack.findUnique({
+      where: { clientId },
+    });
+
+    if (!track) {
+      return db.clientConversationTrack.create({
+        data: {
+          clientId,
+          instagramIsRead: sentBy === "Company",
+          instagramUnReadCount: sentBy === "Company" ? 0 : 1,
+          instagramLastMessage: message,
+          instagramLastBy: sentBy,
+          sendAt: new Date(),
+        },
+      });
+    }
+
+    return db.clientConversationTrack.update({
+      where: { clientId },
+      data: {
+        instagramIsRead: sentBy === "Company",
+        instagramUnReadCount: { increment: sentBy === "Company" ? 0 : 1 },
+        instagramLastMessage: message,
+        instagramLastBy: sentBy,
+        sendAt: new Date(),
+      },
+    });
+  } catch (err) {
+    throw err;
+  }
+}
+
+export async function readClientInstagram(clientId: number) {
+  try {
+    const track = await db.clientConversationTrack.findUnique({
+      where: { clientId },
+    });
+    if (!track) return initialCreateClientChatTrack(clientId);
+    if (!track.instagramUnReadCount) return track;
+    return db.clientConversationTrack.update({
+      where: { clientId },
+      data: { instagramIsRead: true, instagramUnReadCount: 0 },
+    });
   } catch (err) {
     throw err;
   }

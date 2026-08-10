@@ -9,19 +9,26 @@ import { getServerSession } from "next-auth";
 import Header from "../Header";
 import NavigationTabs from "../NavigationTabs";
 import Table from "../Table";
+import { Metadata } from "next";
 
-export default async function InvoicesPage({
-  searchParams,
-}: Readonly<{
-  searchParams: {
-    startDate?: string;
-    endDate?: string;
-    status?: string;
-    searchTerm?: string;
-    page?: string;
-    take?: string;
-  };
-}>) {
+export const metadata: Metadata = {
+  title: "Invoices",
+  description: "View and manage all your invoices.",
+};
+
+export default async function InvoicesPage(
+  props: Readonly<{
+    searchParams: Promise<{
+      startDate?: string;
+      endDate?: string;
+      status?: string;
+      searchTerm?: string;
+      page?: string;
+      take?: string;
+    }>;
+  }>,
+) {
+  const searchParams = await props.searchParams;
   const session = await getServerSession(authOptions);
   const companyId = session?.user.companyId;
   const { timezone } = await getCompanyTimezone();
@@ -32,7 +39,7 @@ export default async function InvoicesPage({
     InvoiceType.Invoice,
     companyId,
     searchParams,
-    timezone
+    timezone,
   );
 
   const categories = await db.category.findMany({ where: { companyId } });
@@ -53,7 +60,12 @@ export default async function InvoicesPage({
 
       <NavigationTabs activeTab="b-invoice">
         {invoices ? (
-          <Table estimateData={invoices} isInvoice />
+          <Table
+            estimateData={invoices}
+            page={searchParams.page}
+            take={searchParams.take}
+            isInvoice
+          />
         ) : (
           <div>Loading...</div>
         )}

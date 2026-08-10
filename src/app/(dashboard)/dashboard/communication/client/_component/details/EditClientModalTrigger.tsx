@@ -7,7 +7,7 @@ import { useState } from "react";
 import { Edit } from "lucide-react";
 
 type TProps = {
-  client: Client
+  client: Client;
 };
 
 export default function EditClientModalTrigger({ client }: TProps) {
@@ -28,7 +28,11 @@ export default function EditClientModalTrigger({ client }: TProps) {
     <Dialog open={open} onOpenChange={(val) => setOpen(val)}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       {open && (
-        <EditClientModalBody client={client as any} onClose={() => setOpen(false)} />
+        <EditClientModalBody
+          key={client.id}
+          client={client as any}
+          onClose={() => setOpen(false)}
+        />
       )}
     </Dialog>
   );

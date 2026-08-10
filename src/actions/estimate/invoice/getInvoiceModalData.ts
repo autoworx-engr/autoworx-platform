@@ -26,6 +26,23 @@ export async function getInvoiceModalData(id: string) {
         client: true,
         vehicle: true,
         Refund: true,
+        payments: {
+          include: {
+            card: true,
+            check: true,
+            cash: true,
+            other: {
+              include: {
+                paymentMethod: true,
+              },
+            },
+            deposit: true,
+            Refund: true,
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
       },
     });
 
@@ -48,6 +65,7 @@ export async function getInvoiceModalData(id: string) {
       twilioCredentials,
     };
   } catch (error) {
-    throw new Error("Failed to fetch invoice data");
+    console.error("[getInvoiceModalData] Failed to fetch invoice data:", error);
+    throw error;
   }
 }

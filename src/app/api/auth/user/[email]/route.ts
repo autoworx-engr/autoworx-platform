@@ -22,10 +22,10 @@ import { NextRequest, NextResponse } from "next/server";
  *         description: Server error
  */
 export async function GET(
-  request: NextRequest,
-  searchParams: { params: { email: string } }
+  _request: NextRequest,
+  searchParams: { params: Promise<{ email: string }> },
 ) {
-  const email = searchParams?.params?.email;
+  const email = (await searchParams?.params)?.email;
 
   if (!email) {
     return NextResponse.json({

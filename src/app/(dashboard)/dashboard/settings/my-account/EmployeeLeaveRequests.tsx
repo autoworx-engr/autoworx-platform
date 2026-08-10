@@ -1,11 +1,12 @@
- 
+"use client";
+
 import { deleteLeaveRequest } from "@/actions/settings/my-account/leave-requests/deleteLeaveRequest";
 import { cn } from "@/lib/cn";
 import { errorToast, successToast } from "@/lib/toast";
 import formatDateToReadable from "@/utils/formatDate";
 import { LeaveRequest } from "@prisma/client";
 import Image from "next/image";
-import React from "react";
+import { useTransition } from "react";
 
 const EmployeeLeaveRequests = ({
   leaveRequests = [],
@@ -24,8 +25,11 @@ const EmployeeLeaveRequests = ({
         <span className="text-2xl font-bold">Leave Requests</span>{" "}
       </div>
       <div className="custom-scrollbar flex flex-1 flex-col space-y-4 md:pb-2">
-        {leaveRequests.map((leaveRequest, idx) => (
-          <EmployeeLeaveRequest key={idx} leaveRequest={leaveRequest} />
+        {leaveRequests.map((leaveRequest) => (
+          <EmployeeLeaveRequest
+            key={leaveRequest.id}
+            leaveRequest={leaveRequest}
+          />
         ))}
         {leaveRequests.length === 0 && (
           <div className="flex flex-1 items-center justify-center self-center text-center">
@@ -42,12 +46,24 @@ const EmployeeLeaveRequest = ({
 }: {
   leaveRequest: LeaveRequest;
 }) => {
+  const [isPending, startTransition] = useTransition();
+
+  const handleDelete = () => {
+    startTransition(async () => {
+      const res = await deleteLeaveRequest(leaveRequest);
+      if (res.success) {
+        successToast(res.message);
+      } else {
+        errorToast(res.message);
+      }
+    });
+  };
+
   return (
     <div className="flex flex-col gap-y-2 rounded-md border border-gray-400 px-4 py-4 text-xs 2xl:flex-row 2xl:items-start 2xl:justify-between">
       <div className="flex h-full flex-col justify-between 2xl:w-[35%]">
         <div>
           <p className="font-semibold text-lg">{leaveRequest.title}</p>
-          {/* <p>Employee : John Doe</p> */}
         </div>
         <div>
           <p className="mt-4 font-semibold">
@@ -65,15 +81,10 @@ const EmployeeLeaveRequest = ({
       <div className="relative flex h-full flex-col items-center justify-between gap-y-3 text-xs 2xl:w-[15%]">
         {leaveRequest.status === "Pending" && (
           <button
-            onClick={async () => {
-              const res = await deleteLeaveRequest(leaveRequest);
-              if (res.success) {
-                successToast(res.message);
-              } else {
-                errorToast(res.message);
-              }
-            }}
-            className="flex items-center justify-center self-end"
+            onClick={handleDelete}
+            disabled={isPending}
+            aria-label="Delete leave request"
+            className="flex items-center justify-center self-end disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Image
               src="/icons/delete.png"
@@ -85,7 +96,7 @@ const EmployeeLeaveRequest = ({
         )}
         <span
           className={cn("w-full rounded py-1 text-center text-white", {
-            "bg-[#6571FF]": leaveRequest.status === "Approved",
+            "bg-primary": leaveRequest.status === "Approved",
             "bg-yellow-500": leaveRequest.status === "Pending",
             "bg-rose-500": leaveRequest.status === "Rejected",
           })}

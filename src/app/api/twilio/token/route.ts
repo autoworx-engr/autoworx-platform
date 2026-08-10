@@ -1,4 +1,6 @@
 import { getTwilioCredentials } from "@/actions/communication/client/sendTwilioMessage";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
+import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
 import { NextRequest, NextResponse } from "next/server";
 import twilio from "twilio";
 
@@ -19,59 +21,103 @@ import twilio from "twilio";
  *             properties:
  *               identity:
  *                 type: string
+ *               platform:
+ *                 type: string
  *     responses:
  *       200:
  *         description: Access token generated
  *       400:
- *         description: Credentials not found
- *       500:
- *         description: Server error
+ *         description: Voice not provisioned for this company
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Voice calling not enabled for this plan
  */
 export async function POST(request: NextRequest) {
-  const { identity, companyId, platform } = await request.json();
+  const principal = await getAuthPrincipal(request);
+  if (!principal) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const body = (await request.json().catch(() => ({}))) as {
+    identity?: unknown;
+    platform?: unknown;
+  };
+
+  const rawIdentity = typeof body.identity === "string" ? body.identity : "";
+  if (rawIdentity.length === 0) {
+    return NextResponse.json(
+      { error: "Missing required field: identity" },
+      { status: 400 },
+    );
+  }
+
+  const platform =
+    body.platform === "ios" || body.platform === "android"
+      ? body.platform
+      : undefined;
+
+  // Twilio Client identity cannot contain '+' or other special chars — normalize.
+  const identity = rawIdentity.replace(/[^a-zA-Z0-9_\-.~]/g, "");
+
+  const entitlements = await getCompanyEntitlements(principal.companyId);
+  if (!entitlements.canUseVoice) {
+    return NextResponse.json(
+      { error: "Voice calling is not enabled for this plan." },
+      { status: 403 },
+    );
+  }
+
+  const twilioCredentials = await getTwilioCredentials({
+    companyId: principal.companyId,
+  });
+
+  if (!twilioCredentials) {
+    return NextResponse.json(
+      { error: "Twilio credentials not found" },
+      { status: 400 },
+    );
+  }
+
+  if (!twilioCredentials.twimlAppSid) {
+    return NextResponse.json(
+      { error: "Voice not provisioned for this company" },
+      { status: 400 },
+    );
+  }
 
   try {
     const AccessToken = twilio.jwt.AccessToken;
     const VoiceGrant = AccessToken.VoiceGrant;
 
-    let twilioCredentials = await getTwilioCredentials({ companyId });
-
-    if (!twilioCredentials) {
-      return NextResponse.json(
-        { error: "Twilio credentials not found" },
-        { status: 400 }
-      );
-    }
-
     const token = new AccessToken(
       twilioCredentials.accountSid,
       twilioCredentials.apiKeySid,
       twilioCredentials.apiKeySecret,
-      { identity }
+      { identity },
     );
 
-    let pushCredentialSid;
+    const pushCredentialSid =
+      platform === "ios"
+        ? (twilioCredentials.apnPushCredentialSid ?? undefined)
+        : platform === "android"
+          ? (twilioCredentials.fcmPushCredentialSid ?? undefined)
+          : undefined;
 
-    if (platform === "ios") {
-      pushCredentialSid = process.env.TWILIO_PUSH_CREDENTIAL_SID_APN;
-    } else if (platform === "android") {
-      pushCredentialSid = process.env.TWILIO_PUSH_CREDENTIAL_SID_FCM;
-    }
-
-    if (twilioCredentials.twimlAppSid) {
-      const voiceGrant = new VoiceGrant({
+    token.addGrant(
+      new VoiceGrant({
         outgoingApplicationSid: twilioCredentials.twimlAppSid,
         incomingAllow: true,
         pushCredentialSid,
-      });
+      }),
+    );
 
-      token.addGrant(voiceGrant);
-
-      return NextResponse.json({ token: token.toJwt() });
-    } else {
-      throw new Error("Twiml app sid not found");
-    }
-  } catch (error: any) {
-    return NextResponse.json({ error: error?.message }, { status: 500 });
+    return NextResponse.json({ token: token.toJwt() });
+  } catch (error) {
+    console.error("[twilio/token] Token generation error:", error);
+    return NextResponse.json(
+      { error: "Failed to generate token" },
+      { status: 500 },
+    );
   }
 }

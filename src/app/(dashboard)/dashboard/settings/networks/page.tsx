@@ -3,6 +3,12 @@ import { db } from "@/lib/db";
 import React from "react";
 import NetworksPage from "./NetworksPage";
 import { planObject } from "@/utils/planObject";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Settings - Networks",
+  description: "Manage your networks",
+};
 
 type Props = {};
 
@@ -28,7 +34,7 @@ const page = async (props: Props) => {
   const collaborationDates = connectedCompanyIds.map((join) => join.createdAt);
 
   const connectedIds = connectedCompanyIds.flatMap((join) =>
-    [join.companyOneId, join.companyTwoId].filter((id) => id !== userCompanyId)
+    [join.companyOneId, join.companyTwoId].filter((id) => id !== userCompanyId),
   );
 
   const connectedCompanies = await db.company.findMany({

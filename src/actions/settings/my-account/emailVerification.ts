@@ -14,6 +14,7 @@ export async function emailVerification(token: string) {
     }
     const user = await db.user.findUnique({
       where: { id: userId, email },
+      select: { id: true, emailVerified: true },
     });
     if (!user) {
       return { type: "fail", message: "User not found" };

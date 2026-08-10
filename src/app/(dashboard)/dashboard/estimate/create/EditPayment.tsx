@@ -2,6 +2,7 @@
 
 import { newPaymentMethod } from "@/actions/payment/newPaymentMethod";
 import { updatePayment } from "@/actions/payment/updatePayment";
+import { deletePaymentMethod } from "@/actions/payment/deletePaymentMethod";
 import {
   Dialog,
   DialogClose,
@@ -81,24 +82,24 @@ export default function EditPaymentModal({
         mergedPaymentData.otherPaymentMethodId
       ) {
         const pm = paymentMethods.find(
-          (p) => p.id === mergedPaymentData.otherPaymentMethodId
+          (p) => p.id === mergedPaymentData.otherPaymentMethodId,
         );
         return pm || null;
       }
       return null;
-    }
+    },
   );
   const [card, setCard] = useState(mergedPaymentData?.card?.creditCard || "");
   const [cardType, setCardType] = useState(
-    mergedPaymentData?.card?.cardType || "MASTERCARD"
+    mergedPaymentData?.card?.cardType || "MASTERCARD",
   );
   const [check, setCheck] = useState(mergedPaymentData.checkNumber || "");
   const [cash, setCash] = useState(mergedPaymentData.cashReceived || "");
   const [depositMethod, setDepositMethod] = useState(
-    mergedPaymentData.depositMethod || ""
+    mergedPaymentData.depositMethod || "",
   );
   const [depositNotes, setDepositNotes] = useState(
-    mergedPaymentData.depositNotes || ""
+    mergedPaymentData.depositNotes || "",
   );
 
   const [openPaymentMethod, setOpenPaymentMethod] = useState(false);
@@ -126,7 +127,7 @@ export default function EditPaymentModal({
 
       if (methodType === "OTHER" && mergedPaymentData.otherPaymentMethodId) {
         const pm = paymentMethods.find(
-          (p) => p.id === mergedPaymentData.otherPaymentMethodId
+          (p) => p.id === mergedPaymentData.otherPaymentMethodId,
         );
         setPaymentMethod(pm || null);
       } else {
@@ -147,7 +148,7 @@ export default function EditPaymentModal({
         });
       } else if (res.type === "globalError") {
         errorToast(
-          res?.errorSource?.length ? res.errorSource[0].message : res.message
+          res?.errorSource?.length ? res.errorSource[0].message : res.message,
         );
       }
     } catch (err) {
@@ -155,7 +156,36 @@ export default function EditPaymentModal({
       errorToast(
         formattedError?.errorSource?.length
           ? formattedError.errorSource[0].message
-          : formattedError.message
+          : formattedError.message,
+      );
+    }
+  }
+
+  async function handleRemovePaymentMethod(
+    item: PaymentMethod,
+    e: React.MouseEvent,
+  ) {
+    try {
+      const res = await deletePaymentMethod(item.id);
+      if (res.type === "success") {
+        useListsStore.setState((state) => ({
+          paymentMethods: state.paymentMethods.filter((m) => m.id !== item.id),
+        }));
+        if (paymentMethod?.id === item.id) {
+          setPaymentMethod(null);
+        }
+        successToast("Payment method deleted");
+      } else if (res.type === "globalError") {
+        errorToast(
+          res?.errorSource?.length ? res.errorSource[0].message : res.message,
+        );
+      }
+    } catch (err) {
+      const formattedError = errorHandler(err);
+      errorToast(
+        formattedError?.errorSource?.length
+          ? formattedError.errorSource[0].message
+          : formattedError.message,
       );
     }
   }
@@ -213,7 +243,7 @@ export default function EditPaymentModal({
         if (newTotalNetPayments > invoiceGrandTotal) {
           const maxAllowedNet = invoiceGrandTotal - otherPaymentsNetTotal;
           errorToast(
-            `Net payment amount cannot exceed remaining invoice balance. Maximum allowed: ${formatCurrency(maxAllowedNet)}`
+            `Net payment amount cannot exceed remaining invoice balance. Maximum allowed: ${formatCurrency(maxAllowedNet)}`,
           );
           return;
         }
@@ -301,7 +331,7 @@ export default function EditPaymentModal({
     <Dialog open={open} onOpenChange={setOpen}>
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-1 text-[#6571FF] underline"
+        className="flex items-center gap-1 text-primary underline"
       >
         <SquarePen className="h-5 w-5" />
       </button>
@@ -323,8 +353,8 @@ export default function EditPaymentModal({
                 className={cn(
                   "rounded-md px-4 py-2 text-sm font-medium transition-all",
                   method === t
-                    ? "bg-[#6571FF] text-white"
-                    : "border border-[#6571FF] text-[#6571FF] hover:bg-[#6571FF]/10"
+                    ? "bg-primary text-white"
+                    : "border border-primary text-primary hover:bg-primary/10",
                 )}
               >
                 {t}
@@ -413,7 +443,7 @@ export default function EditPaymentModal({
                     onClick={handleNewPaymentMethod}
                     className={cn(
                       "text-nowrap rounded-md px-2 text-white",
-                      paymentMethodInput ? "bg-slate-700" : "bg-slate-400"
+                      paymentMethodInput ? "bg-slate-700" : "bg-slate-400",
                     )}
                     type="button"
                     disabled={!paymentMethodInput}
@@ -424,7 +454,7 @@ export default function EditPaymentModal({
               }
               onSearch={(search: string) =>
                 paymentMethods.filter((method) =>
-                  method.name.toLowerCase().includes(search.toLowerCase())
+                  method.name.toLowerCase().includes(search.toLowerCase()),
                 )
               }
               items={paymentMethods}
@@ -432,6 +462,7 @@ export default function EditPaymentModal({
               setSelectedItem={setPaymentMethod}
               displayList={(pm) => <p>{pm.name}</p>}
               openState={[openPaymentMethod, setOpenPaymentMethod]}
+              onRemoveItem={handleRemovePaymentMethod}
             />
           )}
 
@@ -478,7 +509,7 @@ export default function EditPaymentModal({
               type="button"
               disabled={pending}
               onClick={handleSave}
-              className="rounded-md bg-[#6571FF] px-5 py-2 text-white disabled:bg-gray-400"
+              className="rounded-md bg-primary px-5 py-2 text-white disabled:bg-gray-400"
             >
               {pending ? "Saving..." : "Save Changes"}
             </button>

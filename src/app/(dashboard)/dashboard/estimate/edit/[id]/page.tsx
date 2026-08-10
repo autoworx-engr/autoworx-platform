@@ -1,4 +1,5 @@
-import InspectionsTab from "@/app/(dashboard)/dashboard/estimate/create/tabs/InspectionsTab";
+export const dynamic = "force-dynamic";
+
 import {
   Tabs,
   TabsContent,
@@ -6,10 +7,12 @@ import {
   TabsTrigger,
 } from "@/app/(dashboard)/dashboard/estimate/TabsNav";
 import { authOptions } from "@/authOptions";
+import BackButton from "@/components/BackButton";
 import { SyncLists } from "@/components/SyncLists";
 import Title from "@/components/Title";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
+import { Save } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
 import { BillSummary } from "../../create/BillSummary";
@@ -19,18 +22,22 @@ import Header from "../../create/Header";
 import SyncEstimate from "../../create/SyncEstimate";
 import { AttachmentTab } from "../../create/tabs/AttachmentTab";
 import { CreateTab } from "../../create/tabs/CreateTab";
-import PaymentTab from "../../create/tabs/PaymentTab";
-import { Save } from "lucide-react";
 import EstimateInspectionsTab from "../../create/tabs/EstimateInspectionsTab";
+import PaymentTab from "../../create/tabs/PaymentTab";
 import DynamicTemplateLoader from "../../DynamicTemplateLoader";
+import { Metadata } from "next";
 
-export default async function Page({
-  params,
-  searchParams,
-}: {
-  params: { id: string };
-  searchParams: { clientId?: string; templateId?: string };
+export const metadata: Metadata = {
+  title: "Edit Estimate",
+  description: "Edit and manage your estimate details.",
+};
+
+export default async function Page(props: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ clientId?: string; templateId?: string }>;
 }) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const session = await getServerSession(authOptions);
   const templateId = searchParams.templateId ? searchParams.templateId : null;
 
@@ -40,6 +47,9 @@ export default async function Page({
   const { id } = params;
   // const searchParams = useSearchParams();
   const companyId = await getCompanyId();
+  const template = templateId
+    ? await db.invoiceTemplate.findUnique({ where: { id: templateId } })
+    : null;
   const invoice = await db.invoice.findUnique({
     where: { id, companyId },
     include: {
@@ -103,10 +113,10 @@ export default async function Page({
     // @ts-ignore
     item.labor = item.labor
       ? {
-        ...item.labor,
-        // @ts-ignore
-        tags: item.labor?.tags?.map((tag) => tag.tag),
-      }
+          ...item.labor,
+          // @ts-ignore
+          tags: item.labor?.tags?.map((tag) => tag.tag),
+        }
       : null;
 
     //
@@ -116,17 +126,17 @@ export default async function Page({
 
     const technicians =
       item.service?.Technician?.filter(
-        (tech) => tech.invoiceId === invoice.id
+        (tech) => tech.invoiceId === invoice.id,
       ) || [];
 
     if (technicians.length) {
       if (Array.isArray(technicians) && technicians.length > 0) {
         const statuses = technicians.map((tech) =>
-          tech.status?.toLowerCase().trim()
+          tech.status?.toLowerCase().trim(),
         );
 
         const isServiceComplete = statuses.every(
-          (status) => status === "complete"
+          (status) => status === "complete",
         );
 
         if (isServiceComplete) {
@@ -164,9 +174,12 @@ export default async function Page({
   const photos = await db.invoicePhoto.findMany({ where: { invoiceId: id } });
   const tasks = await db.task.findMany({ where: { invoiceId: id } });
 
-  const clientId = searchParams.clientId
+  const clientIdFromParams = searchParams.clientId
     ? parseInt(searchParams.clientId)
-    : invoice.clientId;
+    : NaN;
+  const clientId = Number.isNaN(clientIdFromParams)
+    ? invoice.clientId
+    : clientIdFromParams;
 
   const customers = await db.client.findMany({ where: { companyId } });
   const vehicles = await db.vehicle.findMany({
@@ -200,7 +213,7 @@ export default async function Page({
       cost: product.price,
       tags: product.tags.map((tag) => tag.tag),
       productId: product.id,
-    }))
+    })),
   );
 
   labors.forEach((labor) => {
@@ -241,11 +254,21 @@ export default async function Page({
       notes: true,
     },
   });
+  const pageType = invoice?.type === "Invoice" ? "Invoice" : "Estimate";
 
   return (
-    <div className="gap-3 space-y-4 overflow-clip py-2 md:-my-2 md:min-h-[93vh] xl:flex xl:space-y-0">
+    <div className="gap-3 space-y-4 overflow-clip py-2 md:-my-2 md:min-h-[93vh] xl:flex xl:space-y-0 px-1">
       <div className="w-full xl:min-w-[68%] flex flex-col gap-4">
-        <Title>Estimate</Title>
+        <div className="flex items-center gap-3">
+          <BackButton
+            href={
+              pageType === "Invoice"
+                ? "/dashboard/estimate/invoices"
+                : "/dashboard/estimate"
+            }
+          />
+          <Title>{pageType}</Title>
+        </div>
 
         <SyncLists
           customers={customers}
@@ -280,6 +303,7 @@ export default async function Page({
           invoice={invoice}
           isAllServicesCompleted={incompleteServices.length === 0}
           isEdit={true}
+          requestEstimate={invoice?.requestEstimate}
         />
 
         <Tabs
@@ -314,27 +338,24 @@ export default async function Page({
             <CreateTab />
           </TabsContent>
 
-          <TabsContent value="attachment"
+          <TabsContent
+            value="attachment"
             className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2"
           >
             <AttachmentTab />
           </TabsContent>
 
-          <TabsContent value="inspections"
+          <TabsContent
+            value="inspections"
             className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2"
           >
             <EstimateInspectionsTab />
           </TabsContent>
-          <TabsContent value="payments"
+          <TabsContent
+            value="payments"
             className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2"
           >
-            <PaymentTab
-              clientId={
-                searchParams.clientId
-                  ? parseInt(searchParams.clientId)
-                  : (invoice?.clientId ?? undefined)
-              }
-            />
+            <PaymentTab clientId={clientId ?? undefined} />
           </TabsContent>
         </Tabs>
       </div>
@@ -344,16 +365,27 @@ export default async function Page({
           <ConvertButton
             type={invoice.type}
             text={`Update ${invoice.type}`}
+            // text={`Update ${pageType}`
             icon={<Save size={18} />}
-            className="border-none bg-[#6571FF] px-8 text-white"
+            className="border-none bg-primary px-8 text-white"
           />
           {/* <ConvertTo invoice={invoice} /> */}
 
           <Create />
         </div>
         <BillSummary
-          isEstimateServiceFee={Number(invoice.serviceFee) > 0}
-          isEstimateTax={Number(invoice.tax) > 0}
+          isEstimateServiceFee={
+            template
+              ? Number(template?.serviceFee) > 0
+              : Number(invoice.serviceFee) > 0
+          }
+          isEstimateTax={
+            template ? Number(template?.tax) > 0 : Number(invoice.tax) > 0
+          }
+          storedTax={template ? Number(template.tax) : Number(invoice.tax)}
+          storedServiceFee={
+            template ? Number(template.serviceFee) : Number(invoice.serviceFee)
+          }
         />
       </div>
     </div>

@@ -4,7 +4,7 @@ import { JWT } from "next-auth/jwt";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { db } from "./lib/db";
-import { env } from "next-runtime-env";
+
 import nextAxios from "./helpers/next-axios";
 import { getUserByEmail } from "./actions/user/getUserById";
 import { getTwoFactorConfirmationByUserId } from "./app/(auth)/login/actions/getTwoFactorConfirmationByUserId";
@@ -64,6 +64,10 @@ const refreshAccessToken = async (token: JWT) => {
 
     const { accessToken, refreshToken } = responseToken;
 
+    if (!accessToken) {
+      throw new Error("No access token returned from refresh endpoint");
+    }
+
     const verifyToken = jwt.verify(
       accessToken,
       process.env.ACCESS_SECRET || "",
@@ -94,7 +98,7 @@ export const authOptions: NextAuthOptions = {
     signIn: "/login",
     error: "/auth/error",
   },
-  secret: env("NEXTAUTH_SECRET"),
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     CredentialsProvider({
       id: "credentials",
@@ -103,7 +107,7 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      authorize: async credentials => {
+      authorize: async (credentials) => {
         console.log("credentials", credentials);
         if (!credentials?.email || !credentials?.password) return null;
         const { data: existingUser } = await getUserByEmail(credentials.email);
@@ -131,8 +135,8 @@ export const authOptions: NextAuthOptions = {
       },
     }),
     GoogleProvider({
-      clientId: env("GOOGLE_CLIENT_ID") ?? "",
-      clientSecret: env("GOOGLE_CLIENT_SECRET") ?? "",
+      clientId: process.env.GOOGLE_CLIENT_ID ?? "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
     }),
   ],
   callbacks: {

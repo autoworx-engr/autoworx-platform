@@ -1,103 +1,127 @@
 import { getTwilioCredentials } from "@/actions/communication/client/sendTwilioMessage";
+import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
 import { NextRequest, NextResponse } from "next/server";
 import Twilio from "twilio";
 
+const NOTIFY_BINDING_PAGE_SIZE = 50;
+const NOTIFY_BINDING_LIMIT = 500;
+const DELETE_CONCURRENCY = 5;
+
+async function deleteWithConcurrency<T>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<unknown>,
+) {
+  let i = 0;
+  const workers = Array.from(
+    { length: Math.min(limit, items.length) },
+    async () => {
+      while (i < items.length) {
+        const item = items[i++];
+        await fn(item).catch((err) =>
+          console.warn("[register-voip] binding delete failed:", err),
+        );
+      }
+    },
+  );
+  await Promise.all(workers);
+}
+
 export async function POST(request: NextRequest) {
+  const principal = await getAuthPrincipal(request);
+  if (!principal) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const body = (await request.json().catch(() => ({}))) as {
+    identity?: unknown;
+    deviceToken?: unknown;
+    platform?: unknown;
+  };
+
+  const identity =
+    typeof body.identity === "string"
+      ? body.identity.replace(/[^a-zA-Z0-9_\-.~]/g, "")
+      : "";
+  const deviceToken =
+    typeof body.deviceToken === "string" ? body.deviceToken.trim() : "";
+  const platform = typeof body.platform === "string" ? body.platform : "ios";
+
+  if (!identity || !deviceToken) {
+    return NextResponse.json(
+      { error: "identity and deviceToken are required" },
+      { status: 400 },
+    );
+  }
+
+  if (platform !== "ios") {
+    return NextResponse.json(
+      { error: "VoIP registration is only supported for iOS" },
+      { status: 400 },
+    );
+  }
+
+  const normalizedToken = deviceToken.toLowerCase();
+
+  const twilioCredentials = await getTwilioCredentials({
+    companyId: principal.companyId,
+  });
+
+  if (!twilioCredentials) {
+    return NextResponse.json(
+      { error: "Twilio credentials not found" },
+      { status: 400 },
+    );
+  }
+
+  const notifyServiceSid = process.env.TWILIO_VOIP_NOTIFY_SERVICE_SID;
+  const credentialSid =
+    twilioCredentials.apnPushCredentialSid ??
+    process.env.TWILIO_VOIP_PUSH_CREDENTIAL_SID;
+
+  if (!notifyServiceSid || !credentialSid) {
+    return NextResponse.json(
+      { error: "Twilio Notify or Push Credential SID missing" },
+      { status: 500 },
+    );
+  }
+
   try {
-    const {
-      identity,
-      deviceToken,
-      companyId,
-      platform = "ios",
-    } = await request.json();
-
-    if (!identity || !deviceToken) {
-      return NextResponse.json(
-        { error: "identity and deviceToken are required" },
-        { status: 400 }
-      );
-    }
-
-    if (platform !== "ios") {
-      return NextResponse.json(
-        { error: "VoIP registration is only supported for iOS" },
-        { status: 400 }
-      );
-    }
-
-    const normalizedToken = deviceToken.trim().toLowerCase();
-
-    const twilioCredentials = await getTwilioCredentials({ companyId });
-
-    if (!twilioCredentials) {
-      return NextResponse.json(
-        { error: "Twilio credentials not found" },
-        { status: 400 }
-      );
-    }
-
-    const notifyServiceSid =
-      (twilioCredentials as any).notifyServiceSid ??
-      process.env.TWILIO_VOIP_NOTIFY_SERVICE_SID;
-
-    const credentialSid =
-      (twilioCredentials as any).voipPushCredentialSid ??
-      process.env.TWILIO_VOIP_PUSH_CREDENTIAL_SID;
-
-    if (!notifyServiceSid || !credentialSid) {
-      return NextResponse.json(
-        { error: "Twilio Notify or Push Credential SID missing" },
-        { status: 500 }
-      );
-    }
-
     const client = Twilio(
       twilioCredentials.apiKeySid,
       twilioCredentials.apiKeySecret,
-      { accountSid: twilioCredentials.accountSid }
+      { accountSid: twilioCredentials.accountSid },
     );
 
-    // Fetch ALL bindings for identity (safe pagination)
-    const bindings = await client.notify.v1
+    const rawBindings = await client.notify.v1
       .services(notifyServiceSid)
-      .bindings.list({ identity });
+      .bindings.list({
+        identity: [identity],
+        pageSize: NOTIFY_BINDING_PAGE_SIZE,
+        limit: NOTIFY_BINDING_LIMIT,
+      });
 
-    const apnBindings = bindings.filter(
-      (b) => b.bindingType === "apn" && !!b.address
-    );
+    const apnBindings = rawBindings
+      .filter((b) => b.bindingType === "apn" && !!b.address)
+      .map((b) => ({ sid: b.sid, address: b.address! }));
 
     const matching = apnBindings.filter(
-      (b) => b.address?.toLowerCase() === normalizedToken
+      (b) => b.address.toLowerCase() === normalizedToken,
+    );
+    const stale = apnBindings.filter(
+      (b) => b.address.toLowerCase() !== normalizedToken,
     );
 
-    // Remove stale bindings (enforce single-device policy)
-    const staleBindings = apnBindings.filter(
-      (b) => b.address?.toLowerCase() !== normalizedToken
-    );
+    const toRemove = stale.concat(matching.slice(1));
 
-    await Promise.all(
-      staleBindings.map((b) =>
-        client.notify.v1.services(notifyServiceSid).bindings(b.sid).remove()
-      )
+    await deleteWithConcurrency(toRemove, DELETE_CONCURRENCY, (b) =>
+      client.notify.v1.services(notifyServiceSid).bindings(b.sid).remove(),
     );
 
     if (matching.length > 0) {
-      // Remove duplicates beyond the first
-      const [, ...duplicates] = matching;
-
-      await Promise.all(
-        duplicates.map((b) =>
-          client.notify.v1.services(notifyServiceSid).bindings(b.sid).remove()
-        )
-      );
-
-      return NextResponse.json({
-        success: true,
-        status: "already_registered",
-      });
+      return NextResponse.json({ success: true, status: "already_registered" });
     }
 
-    // Create binding
     const binding = await client.notify.v1
       .services(notifyServiceSid)
       .bindings.create({
@@ -113,11 +137,11 @@ export async function POST(request: NextRequest) {
       status: "created",
       bindingSid: binding.sid,
     });
-  } catch (error: any) {
-    console.error("VoIP registration error:", error);
+  } catch (error) {
+    console.error("[register-voip] error:", error);
     return NextResponse.json(
-      { error: error?.message ?? "Internal server error" },
-      { status: 500 }
+      { error: "Failed to register VoIP device" },
+      { status: 500 },
     );
   }
 }

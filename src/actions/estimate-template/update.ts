@@ -38,7 +38,7 @@ interface UpdateEstimateTemplateInput {
 
 export async function updateEstimateTemplate(
   data: UpdateEstimateTemplateInput,
-  retryCount: number = 0
+  retryCount: number = 0,
 ): Promise<ServerAction | TErrorHandler> {
   const MAX_RETRIES = 2;
   try {
@@ -125,7 +125,7 @@ export async function updateEstimateTemplate(
               });
             }
             return photo;
-          })
+          }),
         );
 
         // delete photos which are removed
@@ -169,7 +169,7 @@ export async function updateEstimateTemplate(
                   notes: inspection.notes,
                 },
               });
-            })
+            }),
           );
         }
 
@@ -267,7 +267,7 @@ export async function updateEstimateTemplate(
                     if (!material || !material.name) return;
                     if (Number(material?.quantity || 0) <= 0) {
                       throw new Error(
-                        "Material quantity should be greater than 0"
+                        "Material quantity should be greater than 0",
                       );
                     }
                     if (hasMaterialInInvoice) {
@@ -310,7 +310,7 @@ export async function updateEstimateTemplate(
                       });
                       return newMaterial;
                     }
-                  })
+                  }),
                 );
               }
 
@@ -392,7 +392,7 @@ export async function updateEstimateTemplate(
                     if (!material || !material.name) return;
                     if (Number(material?.quantity || 0) <= 0) {
                       throw new Error(
-                        "Material quantity should be greater than 0"
+                        "Material quantity should be greater than 0",
                       );
                     }
                     await txDb.material.create({
@@ -411,7 +411,7 @@ export async function updateEstimateTemplate(
                         productId: material.productId,
                       },
                     });
-                  })
+                  }),
                 ));
 
               const tags = item.tags;
@@ -428,7 +428,7 @@ export async function updateEstimateTemplate(
               await Promise.all(tagsCreatePromise);
               return newEstimateTemplateItem;
             }
-          })
+          }),
         );
 
         // delete removed items
@@ -465,7 +465,7 @@ export async function updateEstimateTemplate(
               updatedEstimateTemplateItem
                 .map((item) => item?.id)
                 .filter(Boolean)
-                .sort((a, b) => a - b)
+                .sort((a, b) => a - b),
             ),
           },
           include: {
@@ -502,7 +502,7 @@ export async function updateEstimateTemplate(
         maxWait: 20000, // 20 seconds
         timeout: 20000, // 20 seconds
         isolationLevel: "Serializable", // Ensure data consistency
-      }
+      },
     );
 
     // task create or update this section
@@ -518,6 +518,7 @@ export async function updateEstimateTemplate(
             invoiceTemplateId: data.id,
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
             clientId: null,
+            createdBy: "user",
           });
 
           if (response.type === "success") {
@@ -535,7 +536,7 @@ export async function updateEstimateTemplate(
             },
           });
         }
-      })
+      }),
     );
 
     // delete tasks which are removed from the invoice
@@ -590,12 +591,12 @@ export async function updateEstimateTemplate(
           retryCount < MAX_RETRIES
         ) {
           console.log(
-            `Retrying estimate template update due to timeout. Attempt ${retryCount + 1}/${MAX_RETRIES}`
+            `Retrying estimate template update due to timeout. Attempt ${retryCount + 1}/${MAX_RETRIES}`,
           );
 
           // Wait before retry (exponential backoff)
           await new Promise((resolve) =>
-            setTimeout(resolve, Math.pow(2, retryCount) * 1000)
+            setTimeout(resolve, Math.pow(2, retryCount) * 1000),
           );
 
           return updateEstimateTemplate(data);

@@ -5,6 +5,7 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -24,8 +25,9 @@ import { Spin } from "antd";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { addVehicle } from "../../actions/vehicle/addVehicle";
-import SelectorWithSearch from "./SelectorWithSearch";
+import { extractVinFields, useVinDecode } from "../vin-decoder/useVinDecode";
 import VINInputCamera from "../vin-decoder/vin-input";
+import SelectorWithSearch from "./SelectorWithSearch";
 
 type TProps = {
   newButton?: React.ReactNode;
@@ -50,6 +52,7 @@ export default function NewVehicle({
   const { showError, clearError } = useFormErrorStore();
   const [selectedColor, setSelectedColor] = useState<VehicleColor | null>(null);
   const [engineSize, setEngineSize] = useState<string>("");
+  const [vinCode, setVinCOde] = useState<string>("");
   const [formData, setFormData] = useState({
     vehicleYear: null,
     vehicleMake: null,
@@ -57,6 +60,20 @@ export default function NewVehicle({
     other: "",
   });
   const [isOtherPopulated, setIsOtherPopulated] = useState(false);
+  const { decodeVin } = useVinDecode();
+
+  const handleVinBlur = async (vin: string) => {
+    const result = await decodeVin(vin);
+    if (!result) return;
+    const { year, make, model, displacement_cc } = extractVinFields(result);
+    setFormData((prev) => ({
+      ...prev,
+      vehicleYear: year ?? prev.vehicleYear,
+      vehicleMake: make ?? prev.vehicleMake,
+      vehicleModel: model ?? prev.vehicleModel,
+    }));
+    if (displacement_cc) setEngineSize(displacement_cc);
+  };
 
   // Use external open state if provided, otherwise use internal
   const isControlled =
@@ -74,6 +91,8 @@ export default function NewVehicle({
       });
       setIsOtherPopulated(false);
       setSelectedColor(null);
+      setEngineSize("");
+      setVinCOde("");
     }
   }, [open]);
 
@@ -85,21 +104,21 @@ export default function NewVehicle({
   const vehicleOptions =
     makes?.data && makes.data.length > 0
       ? makes?.data?.map((vehicle: any) => ({
-        title: vehicle.name ?? "Unknown",
-        id: vehicle.name,
-      }))
+          title: vehicle.name ?? "Unknown",
+          id: vehicle.name,
+        }))
       : [];
 
   const vehicleModelOptions =
     models?.data && models.data.length > 0
       ? models?.data?.map((vehicle: any) => ({
-        title: vehicle.name ?? "Unknown",
-        id: vehicle.name,
-      }))
+          title: vehicle.name ?? "Unknown",
+          id: vehicle.name,
+        }))
       : [];
 
   const handleInputChange = (name: string, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
@@ -154,7 +173,7 @@ export default function NewVehicle({
         other,
         clientId,
       },
-      pathname
+      pathname,
     );
 
     if (res?.type === "globalError") {
@@ -183,7 +202,10 @@ export default function NewVehicle({
           ) : newButton ? (
             newButton
           ) : (
-            <button type="button" className="text-xs text-[#6571FF]">
+            <button
+              type="button"
+              className="text-xs font-medium text-primary transition-colors hover:text-[#5a66ee]"
+            >
               + New Vehicle
             </button>
           )}
@@ -194,18 +216,16 @@ export default function NewVehicle({
         className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]"
         form
       >
-        <div className="mt-8 flex items-center justify-between px-2 md:px-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-600 dark:text-slate-100">
-              Add Vehicle
-            </h1>
-            <p className="text-sm text-slate-500 mt-1">Enter vehicle details for the client</p>
-          </div>
-        </div>
+        <DialogHeader>
+          <DialogTitle>Add Vehicle</DialogTitle>
+          <DialogDescription>
+            Enter vehicle details for the client
+          </DialogDescription>
+        </DialogHeader>
 
         <FormError />
 
-        <div className="space-y-4 overflow-y-auto py-2 px-2 md:px-4 thin-scrollbar scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent">
+        <div className="thin-scrollbar scrollbar-track-transparent scrollbar-thumb-muted space-y-4 overflow-y-auto px-2 py-2 md:px-4">
           <div className="grid gap-4 sm:grid-cols-2">
             {/* Year */}
             <SelectorWithSearch
@@ -256,8 +276,13 @@ export default function NewVehicle({
               error={isModelsFetchError ? "Failed to fetch Models" : undefined}
             />
 
-            <SlimInput name="submodel" required={false} label="Sub Model" />
-            <SlimInput name="type" required={false} />
+            <SlimInput
+              name="submodel"
+              required={false}
+              label="Sub Model"
+              placeholder="Enter sub model"
+            />
+            <SlimInput name="type" required={false} placeholder="Enter type" />
 
             {/* Use the reusable ColorSelector component */}
             <ColorSelector
@@ -265,41 +290,77 @@ export default function NewVehicle({
               onSelect={setSelectedColor}
             />
 
-            <SlimInput name="transmission" required={false} />
+            <SlimInput
+              name="transmission"
+              required={false}
+              placeholder="Enter transmission"
+            />
             <SlimInput
               name="engineSize"
               required={false}
+              placeholder="Enter engine size"
               value={engineSize}
-              onChange={e => setEngineSize(e.target.value)}
+              onChange={(e) => setEngineSize(e.target.value)}
             />
-            <SlimInput name="license" required={false} label="License Plate" />
-            <div className="flex items-end gap-2">
-              <SlimInput name="vin" required={false} />
+            <SlimInput
+              name="license"
+              required={false}
+              label="License Plate"
+              placeholder="Enter license plate"
+            />
+            <div>
+              <div className="flex items-end gap-2">
+                <div className="flex-1">
+                  <SlimInput
+                    name="vin"
+                    label="Vin"
+                    required={false}
+                    placeholder="Enter VIN"
+                    value={vinCode}
+                    onChange={(e) => setVinCOde(e.target.value)}
+                    onBlur={(e) => handleVinBlur(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleVinBlur(vinCode);
+                      }
+                    }}
+                  />
+                </div>
 
-              <VINInputCamera
-                onVehicleInfo={value => {
-                  const { make, model, year, specs } = value?.data?.data || {};
-                  const { displacement_cc } = specs || {};
-                  setFormData({
-                    vehicleYear: year,
-                    vehicleMake: make,
-                    vehicleModel: model,
-                    other: "",
-                  });
-                  setEngineSize(displacement_cc || "");
-                }}
-              />
+                <VINInputCamera
+                  onVehicleInfo={(value) => {
+                    const { make, model, year, specs } =
+                      value?.data?.data || {};
+                    const { displacement_cc } = specs || {};
+                    setFormData({
+                      vehicleYear: year,
+                      vehicleMake: make,
+                      vehicleModel: model,
+                      other: "",
+                    });
+                    setEngineSize(displacement_cc || "");
+                    setVinCOde(value?.vin || "");
+                  }}
+                />
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Press Enter or click away after typing to auto-fill vehicle
+                details
+              </p>
             </div>
             <SlimInput
               name="other"
               label="Other (Vehicle not listed or non-vehicle job? Enter details here)"
               required={false}
-              rootClassName={`col-span-full ${!!formData.vehicleYear &&
+              placeholder="Enter vehicle details"
+              rootClassName={`col-span-full ${
+                !!formData.vehicleYear &&
                 !!formData.vehicleMake &&
                 !!formData.vehicleModel &&
-                "cursor-not-allowed bg-gray-100 opacity-50"
-                }`}
-              onChange={e => {
+                "cursor-not-allowed bg-muted opacity-50"
+              }`}
+              onChange={(e) => {
                 let value = e.target.value;
                 setIsOtherPopulated(value?.length > 0);
               }}
@@ -312,31 +373,18 @@ export default function NewVehicle({
             <SlimInput
               name="notes"
               required={false}
+              placeholder="Enter notes"
               rootClassName="col-span-full"
             />
           </div>
         </div>
 
         <DialogFooter>
-          <DialogClose
-            className="
-              rounded-xl mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500
-              hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
-              transition-colors border
-            "
-          >
+          <DialogClose className="mt-2 rounded-md border px-5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground sm:mt-0">
             Cancel
           </DialogClose>
           <Submit
-            className="
-              rounded-xl px-6 py-2.5 text-sm font-medium text-white
-              bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
-              shadow-lg shadow-indigo-500/30
-              hover:shadow-xl hover:shadow-indigo-500/40
-              hover:-translate-y-0.5 hover:scale-[1.02]
-              active:translate-y-0 active:scale-100
-              transition-all duration-200
-            "
+            className="rounded-md bg-gradient-to-r from-primary to-[#5a66ee] px-6 py-2 text-sm font-medium text-white shadow transition-all duration-200 hover:shadow-lg hover:shadow-indigo-500/30 disabled:opacity-50"
             formAction={handleSubmit}
             disabled={loading}
           >

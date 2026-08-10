@@ -5,6 +5,8 @@ import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import getUser from "@/lib/getUser";
 import { normalizeUSPhoneNumber } from "@/lib/normalizeUSPhoneNumber";
+import { guardOutboundSms, maskPhone } from "@/lib/sms/outboundSmsGuard";
+import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
 import { revalidatePath } from "next/cache";
 import Twilio from "twilio";
 import { updateNewEmailChatTrack, updateNewSMSChatTrack } from "./chat-track";
@@ -28,6 +30,9 @@ export async function getTwilioCredentialsById(companyId: number) {
     where: {
       companyId,
     },
+    include: {
+      Company: true,
+    },
   });
 }
 
@@ -36,13 +41,33 @@ export async function sendTwilioMessage({
   message,
   clientId,
   attachments,
+  isSalesAgent = false,
+  userId,
+  systemCall = false,
+  shouldSalesAgentStop = true,
 }: {
   companyId?: number;
   message: string;
   clientId: number;
-  attachments: { url: string; name: string }[];
+  attachments: { url: string; name: string; isVoiceNote?: boolean }[];
+  userId?: number;
+  isSalesAgent?: boolean;
+  /** Pass true when calling from a webhook/system context with no user session. */
+  systemCall?: boolean;
+  /** When true (default), disables isSalesAgent on the client after sending. */
+  shouldSalesAgentStop?: boolean;
 }) {
   try {
+    const resolvedCompanyId = companyId ?? (await getCompanyId());
+    const entitlements = await getCompanyEntitlements(resolvedCompanyId);
+    if (!entitlements.canUseSms) {
+      return {
+        success: false,
+        error: "SMS is not enabled for this plan",
+      };
+    }
+
+    console.log("companyId", companyId);
     let twilioCredentials = companyId
       ? await getTwilioCredentialsById(companyId)
       : await getTwilioCredentials();
@@ -62,15 +87,28 @@ export async function sendTwilioMessage({
       },
     );
 
+    const company = await db.company.findUnique({
+      where: { id: twilioCredentials?.companyId },
+    });
+    console.log("userId", userId);
     let user: Awaited<ReturnType<typeof getUser>> | null = null;
-    try {
+    // try {
+    //   user = await getUser();
+    // } catch (error) {
+    //   console.log(
+    //     "sendTwilioMessage: getUser failed, continuing without user context",
+    //     error,
+    //   );
+    // }
+
+    if (userId) {
+      user = await db.user.findFirst({
+        where: { id: userId },
+      });
+    } else if (!systemCall) {
       user = await getUser();
-    } catch (error) {
-      console.log(
-        "sendTwilioMessage: getUser failed, continuing without user context",
-        error,
-      );
     }
+
     const client = await db.client.findFirst({
       where: {
         id: clientId,
@@ -88,40 +126,70 @@ export async function sendTwilioMessage({
     let to = normalizeUSPhoneNumber(client?.mobile!);
 
     if (twilioCredentials.phoneNumber && to && clientId) {
-      await twilio.messages.create({
-        body: message ?? "",
-        from: twilioCredentials.phoneNumber,
-        to,
-        mediaUrl: attachments.map((file) => file.url),
-      });
-
-      let dbMessage = await db.clientSMS.create({
-        data: {
+      const gate = await guardOutboundSms(to, twilioCredentials.companyId);
+      if (gate.allowed) {
+        await twilio.messages.create({
+          body: message ?? "",
           from: twilioCredentials.phoneNumber,
           to,
-          message: message ?? "",
-          sentBy: "Company",
-          userId: user?.id,
-          isRead: true,
-          clientId,
-          companyId: twilioCredentials.companyId,
-        },
-      });
+          mediaUrl: attachments.map((file) => file.url),
+        });
+      } else {
+        console.warn(
+          `[sms] outbound skipped (${gate.reason}); to=${maskPhone(to)}`,
+        );
+      }
 
-      const processedAttachments = [];
-      for (const file of attachments) {
-        let atc = await db.clientSmsAttachments.create({
+      const data = await db.$transaction(async (tx) => {
+        const created = await tx.clientSMS.create({
           data: {
-            name: file.name,
-            url: file.url,
-            clientSMSId: dbMessage.id,
+            from: twilioCredentials!.phoneNumber,
+            to,
+            message: message ?? "",
+            sentBy: "Company",
+            userId: user?.id,
+            isRead: true,
+            clientId,
+            companyId: twilioCredentials!.companyId,
+            isSalesAgent,
           },
         });
-        processedAttachments.push({
-          name: file.name,
-          url: file.url,
+
+        if (attachments && attachments.length > 0) {
+          await tx.clientSmsAttachments.createMany({
+            data: attachments.map((file) => ({
+              name: file.name,
+              url: file.url,
+              isVoiceNote: file.isVoiceNote ?? false,
+              clientSMSId: created.id,
+            })),
+          });
+        }
+
+        if (
+          shouldSalesAgentStop &&
+          client &&
+          client?.isSalesAgent &&
+          !systemCall &&
+          process.env.APP_ENV === "production"
+        ) {
+          await tx.client.update({
+            where: { id: clientId },
+            data: { isSalesAgent: false },
+          });
+        }
+
+        return tx.clientSMS.findFirst({
+          where: { id: created.id },
+          include: { attachments: true },
         });
-      }
+      });
+
+      const processedAttachments = (attachments ?? []).map((file) => ({
+        name: file.name,
+        url: file.url,
+        isVoiceNote: file.isVoiceNote ?? false,
+      }));
 
       await updateNewSMSChatTrack({
         clientId,
@@ -130,18 +198,9 @@ export async function sendTwilioMessage({
         attachments: processedAttachments,
       });
 
-      let data = await db.clientSMS.findFirst({
-        where: {
-          id: dbMessage.id,
-        },
-        include: {
-          attachments: true,
-        },
-      });
-
       try {
         if (client?.Lead?.id && client?.Lead?.columnId) {
-          if (data?.sentBy == "Company") {
+          if (data?.sentBy === "Company") {
             await updatePipelineAutomationTrigger({
               companyId: client.companyId,
               condition: "MESSAGE_SENT_CLIENT",
@@ -152,7 +211,8 @@ export async function sendTwilioMessage({
         }
       } catch (error) {}
 
-      revalidatePath("/dashboard/communication/client");
+      revalidatePath(`/dashboard/communication/client/${clientId}`);
+
       return {
         success: true,
         data,

@@ -15,10 +15,14 @@ export async function makeFleetStatementPayment(data: {
   amount: number;
   paymentMethod: PaymentType;
   notes?: string;
+  date?: Date;
   checkNumber?: string;
   creditCard?: string;
   cardType?: CardType;
   paymentMethodId?: number;
+  receivedCash?: string;
+  depositMethod?: string;
+  depositNotes?: string;
 }): Promise<ServerAction | TErrorHandler> {
   try {
     // Validate input
@@ -69,32 +73,38 @@ export async function makeFleetStatementPayment(data: {
       throw new Error("No unpaid invoices found in this statement");
     }
 
-    // Calculate total due amount
-    const totalDue = statement.invoice.reduce(
-      (sum, invoice) => sum + Number(invoice.due || 0),
-      0
-    );
+    const paymentDate = data.date ?? new Date();
 
-    if (data.amount > totalDue) {
+    // Use integer cents throughout to avoid float precision errors
+    const toInt = (v: number | null | undefined) =>
+      Math.round(Number(v ?? 0) * 100);
+
+    const totalDueCents = statement.invoice.reduce(
+      (sum, invoice) => sum + toInt(Number(invoice.due)),
+      0,
+    );
+    const paymentAmountCents = toInt(data.amount);
+
+    if (paymentAmountCents > totalDueCents) {
       throw new Error(
-        `Payment amount ($${data.amount}) exceeds total due amount ($${totalDue})`
+        `Payment amount ($${data.amount}) exceeds total due amount ($${totalDueCents / 100})`,
       );
     }
 
     // Process payment by distributing amount across invoices
     const result = await db.$transaction(
-      async tx => {
-        let remainingAmount = data.amount;
+      async (tx) => {
+        let remainingCents = paymentAmountCents;
         const paymentsCreated = [];
 
         for (const invoice of statement.invoice) {
-          if (remainingAmount <= 0) break;
+          if (remainingCents <= 0) break;
 
-          const invoiceDue = Number(invoice.due || 0);
-          const paymentAmount = Math.min(remainingAmount, invoiceDue);
+          const invoiceDueCents = toInt(Number(invoice.due));
+          const paymentCents = Math.min(remainingCents, invoiceDueCents);
+          const paymentAmount = paymentCents / 100;
 
-          if (paymentAmount > 0) {
-            // Create payment record based on payment method
+          if (paymentCents > 0) {
             let payment;
 
             switch (data.paymentMethod) {
@@ -103,7 +113,7 @@ export async function makeFleetStatementPayment(data: {
                   data: {
                     invoiceId: invoice.id,
                     type: "CARD",
-                    date: new Date(),
+                    date: paymentDate,
                     notes:
                       data.notes || `Fleet statement payment - ${statement.id}`,
                     amount: paymentAmount,
@@ -118,9 +128,7 @@ export async function makeFleetStatementPayment(data: {
                           }
                         : undefined,
                   },
-                  include: {
-                    card: true,
-                  },
+                  include: { card: true },
                 });
                 break;
 
@@ -129,22 +137,16 @@ export async function makeFleetStatementPayment(data: {
                   data: {
                     invoiceId: invoice.id,
                     type: "CHECK",
-                    date: new Date(),
+                    date: paymentDate,
                     notes:
                       data.notes || `Fleet statement payment - ${statement.id}`,
                     amount: paymentAmount,
                     companyId: companyId,
                     check: data.checkNumber
-                      ? {
-                          create: {
-                            checkNumber: data.checkNumber,
-                          },
-                        }
+                      ? { create: { checkNumber: data.checkNumber } }
                       : undefined,
                   },
-                  include: {
-                    check: true,
-                  },
+                  include: { check: true },
                 });
                 break;
 
@@ -153,20 +155,19 @@ export async function makeFleetStatementPayment(data: {
                   data: {
                     invoiceId: invoice.id,
                     type: "CASH",
-                    date: new Date(),
+                    date: paymentDate,
                     notes:
                       data.notes || `Fleet statement payment - ${statement.id}`,
                     amount: paymentAmount,
                     companyId: companyId,
                     cash: {
                       create: {
-                        receivedCash: paymentAmount.toString(),
+                        receivedCash:
+                          data.receivedCash ?? paymentAmount.toString(),
                       },
                     },
                   },
-                  include: {
-                    cash: true,
-                  },
+                  include: { cash: true },
                 });
                 break;
 
@@ -175,22 +176,39 @@ export async function makeFleetStatementPayment(data: {
                   data: {
                     invoiceId: invoice.id,
                     type: "OTHER",
-                    date: new Date(),
+                    date: paymentDate,
                     notes:
                       data.notes || `Fleet statement payment - ${statement.id}`,
                     amount: paymentAmount,
                     companyId: companyId,
                     other: data.paymentMethodId
-                      ? {
-                          create: {
-                            paymentMethodId: data.paymentMethodId,
-                          },
-                        }
+                      ? { create: { paymentMethodId: data.paymentMethodId } }
                       : undefined,
                   },
-                  include: {
-                    other: true,
+                  include: { other: true },
+                });
+                break;
+
+              case "DEPOSIT":
+                payment = await tx.payment.create({
+                  data: {
+                    invoiceId: invoice.id,
+                    type: "DEPOSIT",
+                    date: paymentDate,
+                    notes:
+                      data.depositNotes ||
+                      data.notes ||
+                      `Fleet statement payment - ${statement.id}`,
+                    amount: paymentAmount,
+                    companyId: companyId,
+                    deposit: {
+                      create: {
+                        depositMethod: data.depositMethod,
+                        depositNotes: data.depositNotes,
+                      },
+                    },
                   },
+                  include: { deposit: true },
                 });
                 break;
 
@@ -198,17 +216,28 @@ export async function makeFleetStatementPayment(data: {
                 throw new Error("Invalid payment method");
             }
 
-            // Update invoice totals
-            const newTotalPayment =
-              Number(invoice.totalPayment || 0) + paymentAmount;
-            const newDue = Number(invoice.grandTotal || 0) - newTotalPayment;
+            // Compute updated totals in integer cents to avoid float drift.
+            // A DEPOSIT doesn't count toward totalPayment (mirrors newPayment.ts) —
+            // it's tracked in invoice.deposit instead, so due = grandTotal - (totalPayment + deposit)
+            const isDeposit = data.paymentMethod === "DEPOSIT";
+            const currentDepositCents = toInt(Number(invoice.deposit));
+            const newTotalPaymentCents = isDeposit
+              ? toInt(Number(invoice.totalPayment))
+              : toInt(Number(invoice.totalPayment)) + paymentCents;
+            const newDepositCents = isDeposit
+              ? currentDepositCents + paymentCents
+              : currentDepositCents;
+            const newDueCents =
+              toInt(Number(invoice.grandTotal)) -
+              (newTotalPaymentCents + newDepositCents);
 
             await tx.invoice.update({
               where: { id: invoice.id },
               data: {
-                totalPayment: newTotalPayment,
-                due: Math.max(0, newDue), // Ensure due doesn't go negative
-                type: "Invoice", // Ensure invoice is converted to Invoice type when payment is made
+                totalPayment: newTotalPaymentCents / 100,
+                deposit: newDepositCents / 100,
+                due: Math.max(0, newDueCents / 100),
+                type: "Invoice",
                 convertedAt:
                   invoice.type === "Estimate"
                     ? new Date()
@@ -217,20 +246,20 @@ export async function makeFleetStatementPayment(data: {
             });
 
             paymentsCreated.push(payment);
-            remainingAmount -= paymentAmount;
+            remainingCents -= paymentCents;
           }
         }
 
         return {
           paymentsCreated,
           totalPaid: data.amount,
-          remainingAmount,
+          remainingAmount: remainingCents / 100,
         };
       },
       {
         timeout: 15000, // 15 seconds
         maxWait: 6000, // 6 seconds
-      }
+      },
     );
 
     revalidatePath("/dashboard/fleet");
@@ -240,8 +269,7 @@ export async function makeFleetStatementPayment(data: {
       message: `Payment of $${data.amount} processed successfully across ${result.paymentsCreated.length} invoice(s)`,
       data: result,
     };
-  } catch (error: any) {
-    console.error("Error processing fleet statement payment:", error);
+  } catch (error: unknown) {
     return errorHandler(error);
   }
 }

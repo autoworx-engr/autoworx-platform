@@ -1,14 +1,14 @@
-import { Category, Service } from '@prisma/client';
-import SelectorWithAdd from './SelectorWithAdd';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Category, Service } from "@prisma/client";
+import SelectorWithAdd from "./SelectorWithAdd";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   getCategories,
   getServices,
-} from '@/app/(dashboard)/dashboard/pipeline/components/getServices-Categories';
-import { useListsStore } from '@/stores/lists';
-import { errorToast, successToast } from '@/lib/toast';
-import newService from '@/actions/estimate/service/newService';
-import { errorHandler } from '@/error-boundary/globalErrorHandler';
+} from "@/app/(dashboard)/dashboard/pipeline/components/getServices-Categories";
+import { useListsStore } from "@/stores/lists";
+import { errorToast, successToast } from "@/lib/toast";
+import newService from "@/actions/estimate/service/newService";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
 
 export interface Option {
   id: number;
@@ -39,9 +39,9 @@ const ServiceSelectAndAdd = ({
   }, [services]);
   // Optimize handleAddNew with useCallback to prevent re-renders
   const handleAddNew = useCallback(
-    async (newItem: string, category?: Category) => {
+    async (newItem: string, category?: Category | null) => {
       if (!category?.id) {
-        errorToast('Service Category is required!');
+        errorToast("Service Category is required!");
         return;
       }
 
@@ -52,13 +52,13 @@ const ServiceSelectAndAdd = ({
           categoryId: category.id,
         });
 
-        if (res.type === 'success') {
+        if (res.type === "success") {
           // Update store state for authenticated access
           useListsStore.setState((state) => ({
             services: [...state.services, res.data],
           }));
 
-          successToast('New Service Created');
+          successToast("New Service Created");
 
           // Update form data immediately
           onChange({
@@ -66,14 +66,14 @@ const ServiceSelectAndAdd = ({
             title: res.data.name,
           });
         } else {
-          errorToast(res.message || 'Failed to create new service');
+          errorToast(res.message || "Failed to create new service");
         }
       } catch (error) {
         errorHandler(error);
-        errorToast('Failed to create new service');
+        errorToast("Failed to create new service");
       }
     },
-    [onChange]
+    [onChange],
   );
   // Fetch data for authenticated users
   useEffect(() => {
@@ -118,8 +118,8 @@ const ServiceSelectAndAdd = ({
           }),
         }));
       } catch (err) {
-        console.error('Failed to fetch data:', err);
-        errorToast('Failed to load services and categories');
+        console.error("Failed to fetch data:", err);
+        errorToast("Failed to load services and categories");
       } finally {
         setIsLoading(false);
       }

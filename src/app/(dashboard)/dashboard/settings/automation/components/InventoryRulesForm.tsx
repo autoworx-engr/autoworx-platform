@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Selector from "./Selector";
 import { Paper } from "@mui/material";
 import { SlimInput } from "@/components/SlimInput";
@@ -42,7 +42,6 @@ export type Rule = {
   day: string;
   condition: string;
   action: string;
-  // vendor: string;
   teamMemberUserIds: number[];
 };
 
@@ -55,7 +54,9 @@ const InventoryRuleForm: React.FC<RuleFormProps> = ({
   user,
   companyId,
 }) => {
-  const [loading, setLoading] = useState(false);
+  const [initialFormData, setInitialFormData] = useState<Rule | null>(
+    initialData || null,
+  );
   // Default empty rule
   const [formData, setFormData] = useState<Rule>(
     initialData || {
@@ -65,9 +66,8 @@ const InventoryRuleForm: React.FC<RuleFormProps> = ({
       condition: "",
       action: "",
       day: "",
-      // vendor: "",
       teamMemberUserIds: [],
-    }
+    },
   );
 
   const { mutate: createRule, isPending: isCreatePending } =
@@ -75,14 +75,14 @@ const InventoryRuleForm: React.FC<RuleFormProps> = ({
   const { mutate: updateRule, isPending: isUpdatePending } =
     useUpdateInventoryAutomationRule();
   const { data, isLoading, isFetching } = useFindOneInventoryAutomationRule(
-    Number(id)
+    Number(id),
   );
   const [error, setError] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const loadData = async () => {
       if (isEdit && id) {
-        setFormData({
+        const payload: Rule = {
           companyId: data?.data.companyId,
           title: data?.data.title,
           frequency: data?.data.frequency,
@@ -90,11 +90,13 @@ const InventoryRuleForm: React.FC<RuleFormProps> = ({
           action: data?.data.action,
           day: data?.data.day,
           teamMemberUserIds: data?.data?.teamMembers?.map(
-            (item: any) => item.userId
+            (item: any) => item.userId,
           ),
-        });
+        };
+        setFormData(payload);
+        setInitialFormData(payload);
       } else {
-        setFormData({
+        const payload: Rule = {
           companyId: null,
           title: "",
           frequency: "",
@@ -102,7 +104,9 @@ const InventoryRuleForm: React.FC<RuleFormProps> = ({
           action: "",
           day: "",
           teamMemberUserIds: [],
-        });
+        };
+        setFormData(payload);
+        setInitialFormData(payload);
       }
     };
 
@@ -113,8 +117,14 @@ const InventoryRuleForm: React.FC<RuleFormProps> = ({
   useEffect(() => {
     if (initialData) {
       setFormData(initialData);
+      setInitialFormData(initialData);
     }
   }, [initialData]);
+
+  const isFormUnchanged = useMemo(() => {
+    if (!initialFormData) return false;
+    return JSON.stringify(formData) === JSON.stringify(initialFormData);
+  }, [formData, initialFormData]);
 
   const teamMembersOptions = employees?.map((item: User) => ({
     id: item.id,
@@ -199,7 +209,7 @@ const InventoryRuleForm: React.FC<RuleFormProps> = ({
   const actionHelpContent = getInventoryActionHelp(formData?.action || "");
   return (
     <>
-      {loading || isLoading || isFetching ? (
+      {isLoading || isFetching ? (
         <div className="flex h-[800px] w-full animate-pulse items-center justify-center rounded-md bg-gray-200 p-4 shadow-sm md:p-6">
           <CarLoading />
         </div>
@@ -249,7 +259,6 @@ const InventoryRuleForm: React.FC<RuleFormProps> = ({
 
                   <Selector
                     name="frequency"
-                    // label="Frequency"
                     options={Frequency}
                     value={formData.frequency!}
                     onChange={(value) => handleChange("frequency", value)}
@@ -301,7 +310,6 @@ const InventoryRuleForm: React.FC<RuleFormProps> = ({
                   />
                   <Selector
                     name="condition"
-                    // label="Condition"
                     options={InventoryConditions}
                     value={formData.condition}
                     onChange={(value) => handleChange("condition", value)}
@@ -331,7 +339,6 @@ const InventoryRuleForm: React.FC<RuleFormProps> = ({
                   />
                   <Selector
                     name="action"
-                    // label="Action"
                     options={InventoryActions}
                     value={formData.action}
                     onChange={(value) => handleChange("action", value)}
@@ -389,7 +396,6 @@ const InventoryRuleForm: React.FC<RuleFormProps> = ({
                     onChange={(value) =>
                       handleChange("teamMemberUserIds", value)
                     }
-                    // label="Send to Team"
                     placeholder="Select options"
                     required={false}
                     disabled={!employees}
@@ -402,9 +408,11 @@ const InventoryRuleForm: React.FC<RuleFormProps> = ({
                 <div className="flex justify-end pt-4">
                   <button
                     type="submit"
-                    disabled={isCreatePending || isUpdatePending}
+                    disabled={
+                      isCreatePending || isUpdatePending || isFormUnchanged
+                    }
                     className={`rounded-md px-4 py-2 text-sm font-medium text-white ${
-                      isUpdatePending || isCreatePending
+                      isUpdatePending || isCreatePending || isFormUnchanged
                         ? "cursor-not-allowed bg-indigo-300"
                         : "bg-indigo-500 hover:bg-indigo-600"
                     }`}

@@ -78,7 +78,7 @@ export default function InventoryDisplay({
     const purchaseHistory = product.InventoryProductHistory.filter(
       (history) => {
         return history.type === "Purchase";
-      }
+      },
     );
     const stockQuantity = product.quantity ?? 0;
     const { totalSalesPrice, quantitySold } = salesHistory.reduce(
@@ -91,26 +91,26 @@ export default function InventoryDisplay({
       {
         totalSalesPrice: 0,
         quantitySold: 0,
-      }
+      },
     );
 
     const averageSales = Math.round(
-      totalSalesPrice / (quantitySold || 1)
+      totalSalesPrice / (quantitySold || 1),
     ) as number;
 
     const totalPurchaseQuantity = purchaseHistory.reduce(
       (acc, history) => acc + Number(history.quantity),
-      0
+      0,
     );
 
     const totalPurchasePrice = purchaseHistory.reduce(
       (acc, history) => acc + Number(history.price) * Number(history.quantity),
-      0
+      0,
     );
 
     const averageCost =
       totalPurchaseQuantity > 0
-        ?totalPurchasePrice / totalPurchaseQuantity
+        ? totalPurchasePrice / totalPurchaseQuantity
         : 0;
 
     const ReturnAndInvestment =
@@ -129,7 +129,7 @@ export default function InventoryDisplay({
           stockQuantity: Number(stockQuantity),
         },
         productInfo: productInfo,
-      }))
+      })),
     );
     return acc;
   }, [] as TInventoryPurchaseHistory);
@@ -163,69 +163,65 @@ export default function InventoryDisplay({
     : sortedInventoryHistory.slice(startIndex, endIndex);
   if (isDesktop) {
     return (
-      <div className="thin-scrollbar hidden scroll-smooth md:block">
-        {" "}
-        <div className="">
-          {inventoryToRender.length === 0 ? (
-            <div className="flex min-h-[200px] w-full flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-100 bg-slate-50/30 p-12 text-center">
-              {/* Ghost Icon Illustration */}
-              <div className="relative mb-6 flex h-16 w-16 items-center justify-center rounded-3xl bg-white shadow-sm ring-1 ring-slate-200/50">
-                <Search
-                  size={24}
-                  className="text-slate-300"
-                  strokeWidth={1.5}
-                />
-                {/* Decorative ripple effect */}
-                <div className="absolute inset-0 animate-ping rounded-3xl bg-slate-100 opacity-20" />
-              </div>
-
-              {/* Text Content */}
-              <h3 className="mb-2 text-lg font-bold text-slate-500">
-                No Results Found
-              </h3>
-              <p className="max-w-[280px] text-sm font-medium leading-relaxed text-slate-400">
-                We couldn't find what you're looking for. Try adjusting your
-                filters or search terms.
-              </p>
-            </div>
-          ) : (
-            <table className="max-h-[600px] w-full overflow-y-auto shadow-md">
-              <thead className="sticky top-0 bg-background">
-                <tr className="h-10 border-b">
-                  <th className="border-b px-4 py-2 text-left">Product #</th>
-                  <th className="border-b px-4 py-2 text-left">Name </th>
-                  <th className="border-b px-4 py-2 text-left">Average Cost</th>
-                  <th className="border-b px-4 py-2 text-left">Average Sell</th>
-                  <th className="border-b px-4 py-2 text-left">Stock Qty.</th>
-                  <th className="border-b px-4 py-2 text-left">Qty. Sold</th>
-                  <th className="border-b px-4 py-2 text-left">Type</th>
-                  <th className="border-b px-4 py-2 text-left">ROI Average</th>
-                  <th className="border-b px-4 py-2 text-left">
-                    Purchase Date
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {inventoryToRender?.map((history, index) => (
-                  <InventoryTableRow
-                    key={history.id}
-                    history={history}
-                    // index={
-                    //   currentPage > 1 ? index + 10 * (currentPage - 1) : index
-                    // }
-                    index={
-                      currentPage > 1
-                        ? index + pageSize * (currentPage - 1)
-                        : index
-                    }
-                    timezone={timezone}
+      <div className="thin-scrollbar hidden scroll-smooth md:block pt-2">
+        <div className="relative flex flex-col overflow-hidden rounded-xl bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-slate-800 shadow-sm">
+          <div className="max-h-[60vh] overflow-auto custom-scrollbar">
+            {inventoryToRender.length === 0 ? (
+              <div className="flex min-h-[200px] w-full flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-100 bg-slate-50/30 p-12 text-center">
+                {/* Ghost Icon Illustration */}
+                <div className="relative mb-6 flex h-16 w-16 items-center justify-center rounded-3xl bg-white shadow-sm ring-1 ring-slate-200/50">
+                  <Search
+                    size={24}
+                    className="text-slate-300"
+                    strokeWidth={1.5}
                   />
-                ))}
-              </tbody>
-            </table>
-          )}
+                  {/* Decorative ripple effect */}
+                  <div className="absolute inset-0 animate-ping rounded-3xl bg-slate-100 opacity-20" />
+                </div>
+
+                {/* Text Content */}
+                <h3 className="mb-2 text-lg font-bold text-slate-500">
+                  No Results Found
+                </h3>
+                <p className="max-w-[280px] text-sm font-medium leading-relaxed text-slate-400">
+                  We couldn't find what you're looking for. Try adjusting your
+                  filters or search terms.
+                </p>
+              </div>
+            ) : (
+              <table className="w-full min-w-[980px] border-separate border-spacing-0">
+                <thead className="sticky top-0 z-10 bg-white shadow-sm">
+                  <tr className="h-10 border-b">
+                    <th className="px-4 py-2 text-left">Product #</th>
+                    <th className="px-4 py-2 text-left">Name </th>
+                    <th className="px-4 py-2 text-left">Average Cost</th>
+                    <th className="px-4 py-2 text-left">Average Sell</th>
+                    <th className="px-4 py-2 text-left">Stock Qty.</th>
+                    <th className="px-4 py-2 text-left">Qty. Sold</th>
+                    <th className="px-4 py-2 text-left">Type</th>
+                    <th className="px-4 py-2 text-left">ROI Average</th>
+                    <th className="px-4 py-2 text-left">Purchase Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {inventoryToRender?.map((history, index) => (
+                    <InventoryTableRow
+                      key={history.id}
+                      history={history}
+                      index={
+                        currentPage > 1
+                          ? index + pageSize * (currentPage - 1)
+                          : index
+                      }
+                      timezone={timezone}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
           {showPagination && (
-            <div className="mt-4 flex justify-end">
+            <div className="mt-auto flex shrink-0 justify-end bg-white px-4 py-2 shadow-[0_-1px_2px_rgba(0,0,0,0.04)]">
               <Pagination
                 className="custom-pagination"
                 current={currentPage}

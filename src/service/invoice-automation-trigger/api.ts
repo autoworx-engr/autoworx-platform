@@ -10,16 +10,16 @@ type TUpdateInvoiceAutomationTrigger = {
   type: InvoiceType;
 };
 export const updateInvoiceAutomationTrigger = async function (
-  payload: TUpdateInvoiceAutomationTrigger
+  payload: TUpdateInvoiceAutomationTrigger,
 ) {
   try {
     const response = await serverAxios.patch(
       "/invoice-automation-trigger",
-      payload
+      payload,
     );
     return response.data;
   } catch (error) {
     const err = errorHandler(error);
-    // throw err;
+    throw err;
   }
 };

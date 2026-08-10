@@ -61,7 +61,7 @@ export default async function EmployeeInformation({
               {employee.firstName} {employee.lastName}
             </h2>
             <div className="mt-2 flex items-center justify-center gap-2">
-              <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-[#6571FF] dark:bg-indigo-500/10 dark:text-indigo-300">
+              <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-primary dark:bg-indigo-500/10 dark:text-indigo-300">
                 {employee.employeeType}
               </span>
             </div>
@@ -79,7 +79,7 @@ export default async function EmployeeInformation({
                 Manage contact info and primary details.
               </p>
             </div>
-            {canEdit && <EditEmployee employee={employee} settingIcon />}
+            {canEdit && <EditEmployee employee={employee} />}
           </div>
 
           <div className="grid flex-1 grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
@@ -89,7 +89,7 @@ export default async function EmployeeInformation({
                 <Mail size={16} /> Email Address
               </label>
               <div
-                className="truncate text-base ml-1 font-medium text-slate-600 dark:text-slate-300 group-hover:text-[#6571FF] transition-colors cursor-default"
+                className="truncate text-base ml-1 font-medium text-slate-600 dark:text-slate-300 group-hover:text-primary transition-colors cursor-default"
                 title={employee.email}
               >
                 {employee.email}
@@ -101,7 +101,7 @@ export default async function EmployeeInformation({
               <label className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-slate-500">
                 <Phone size={16} /> Phone Number
               </label>
-              <div className="text-base font-medium text-slate-600 dark:text-slate-300 group-hover:text-[#6571FF] transition-colors cursor-default ml-1">
+              <div className="text-base font-medium text-slate-600 dark:text-slate-300 group-hover:text-primary transition-colors cursor-default ml-1">
                 {employee.phone || "Not Provided"}
               </div>
             </div>
@@ -111,7 +111,7 @@ export default async function EmployeeInformation({
               <label className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-slate-500">
                 <MapPin size={16} /> Address
               </label>
-              <div className="truncate text-base font-medium text-slate-600 dark:text-slate-300 group-hover:text-[#6571FF] transition-colors cursor-default ml-1">
+              <div className="truncate text-base font-medium text-slate-600 dark:text-slate-300 group-hover:text-primary transition-colors cursor-default ml-1">
                 {employee.address || "No Address Listed"}
               </div>
             </div>
@@ -132,7 +132,7 @@ export default async function EmployeeInformation({
       {/* --- MOBILE VIEW --- */}
       <div className="relative md:hidden">
         <div className="absolute right-2 top-2 z-10">
-          {canEdit && <EditEmployee employee={employee} settingIcon />}
+          {canEdit && <EditEmployee employee={employee} />}
         </div>
         <ResponsiveEmployeeCard data={employee} index={0} />
       </div>

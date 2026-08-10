@@ -1,40 +1,49 @@
+import NewVendor from "@/components/Lists/NewVendor";
+import Title from "@/components/Title";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
-import React from "react";
-import Table from "./Table";
+import { Metadata } from "next";
+import VendorHeader from "../VendorHeader";
 import Details from "./Details";
-import Title from "@/components/Title";
-import NewVendor from "@/components/Lists/NewVendor";
+import Table from "./Table";
 import TopVendors from "./TopVendors";
 import VendorCard from "./VendorCard";
-import VendorHeader from "../VendorHeader";
 
-export default async function Page({
-  searchParams: { vendorId },
-}: {
-  searchParams: { vendorId: string };
+export const metadata: Metadata = {
+  title: "Inventory - Vendor",
+  description: "Manage your vendors",
+};
+
+export default async function Page(props: {
+  searchParams: Promise<{ vendorId: string }>;
 }) {
+  const searchParams = await props.searchParams;
+
+  const { vendorId } = searchParams;
+
   const companyId = await getCompanyId();
   const vendors = await db.vendor.findMany({
     where: { companyId },
   });
 
   return (
-    <div className="h-full w-full overflow-y-hidden p-2">
+    <div className="h-full w-full overflow-y-auto p-2 lg:overflow-y-hidden">
       <div className="flex items-center justify-between">
         <Title>Vendor List</Title>
 
         <NewVendor
           button={
-            <button className="
+            <button
+              className="
                 flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white
-                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                bg-gradient-to-r from-primary to-[#5a66ee]
                 shadow-[0_4px_14px_0_rgba(101,113,255,0.39)]
                 hover:shadow-[0_6px_20px_rgba(101,113,255,0.23)]
                 hover:-translate-y-0.5
                 active:translate-y-0 active:scale-100
                 transition-all duration-300 ease-in-out
-            ">
+            "
+            >
               Add New Vendor
             </button>
           }

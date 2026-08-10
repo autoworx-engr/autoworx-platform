@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
     if (!data.success) {
       return NextResponse.json(
         { success: false, message: "Failed to get unread message count" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
   } catch (error: any) {
     return NextResponse.json(
       { success: false, message: error.message },
-      { status: 400 }
+      { status: 400 },
     );
   }
 }

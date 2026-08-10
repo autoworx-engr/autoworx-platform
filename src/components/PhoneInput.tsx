@@ -1,11 +1,11 @@
 "use client";
 
+import { cn } from "@/lib/cn";
+import countriesData from "@/utils/allcountries.json";
+import { useQuery } from "@tanstack/react-query";
+import { ChevronDown, X } from "lucide-react";
 import type React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import countriesData from "@/utils/allcountries.json";
-import { ChevronDown, X } from "lucide-react";
-import { cn } from "@/lib/cn";
 
 type CountryOption = {
   id: string;
@@ -44,7 +44,7 @@ async function fetchCountries(): Promise<CountryOption[]> {
   }
 
   return Array.from(map.values()).sort((a, b) =>
-    a.title.localeCompare(b.title)
+    a.title.localeCompare(b.title),
   );
 }
 
@@ -53,7 +53,7 @@ type PhoneInputProps = {
   onChange?: (
     phoneNumber: string,
     callingCode: string,
-    countryCode: string
+    countryCode: string,
   ) => void;
   label?: string;
   placeholder?: string;
@@ -77,18 +77,24 @@ export default function PhoneInput({
 }: PhoneInputProps) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [selectedCountry, setSelectedCountry] = useState<CountryOption | null>(
-    null
+    null,
   );
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const isInitializedRef = useRef(false);
+
   const { data: countries = [], isLoading } = useQuery({
     queryKey: ["countries"],
     queryFn: fetchCountries,
     staleTime: 1000 * 60 * 60 * 24,
   });
+
+  // Reset initialization when defaultValue or defaultIsoCode changes
+  useEffect(() => {
+    isInitializedRef.current = false;
+  }, [defaultValue, defaultIsoCode]);
 
   // Initialize component with default values
   useEffect(() => {
@@ -97,13 +103,13 @@ export default function PhoneInput({
     let countryToSet: CountryOption | null = null;
     let phoneToSet = "";
 
-    // Step 1: Find country by ISO code (priority)
+    // Find country by ISO code (priority)
     if (defaultIsoCode) {
       const iso = defaultIsoCode.toUpperCase();
       countryToSet = countries.find((c) => c.isoCode === iso) || null;
     }
 
-    // Step 2: If no ISO code, try to parse from defaultValue
+    //  If no ISO code, try to parse from defaultValue
     if (!countryToSet && defaultValue && defaultValue.startsWith("+")) {
       const cleaned = defaultValue.replace(/\s+/g, "");
       const match = cleaned.match(/^(\+\d{1,4})(\d*)$/);
@@ -115,20 +121,20 @@ export default function PhoneInput({
       }
     }
 
-    // Step 3: Set phone number
-    // If we found country by ISO, extract phone without country code
+    //  Set phone number — strip dial code digits from the full number
     if (countryToSet && defaultValue) {
-      // Remove country code from defaultValue if present
-      phoneToSet = defaultValue
-        .replace(countryToSet.code || "", "")
-        .replace(/^\+/, "")
-        .replace(/\D/g, "");
+      const digitsOnly = defaultValue.replace(/\D/g, ""); // e.g. "11236547856"
+      const dialDigits = (countryToSet.code || "").replace(/\D/g, ""); // e.g. "1"
+      // Slice off the dial code prefix once
+      phoneToSet = digitsOnly.startsWith(dialDigits)
+        ? digitsOnly.slice(dialDigits.length)
+        : digitsOnly;
     } else if (defaultValue && !phoneToSet) {
-      // Use defaultValue as-is
+      // No country matched — use raw digits
       phoneToSet = defaultValue.replace(/\D/g, "");
     }
 
-    // Step 4: Default to US if no country found
+    // Default to US if no country found
     if (!countryToSet) {
       countryToSet =
         countries.find((c) => c.isoCode === "US") ||
@@ -167,18 +173,18 @@ export default function PhoneInput({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    if (isOpen && searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
-  }, [isOpen]);
+  // useEffect(() => {
+  //   if (isOpen && searchInputRef.current) {
+  //     searchInputRef.current.focus();
+  //   }
+  // }, [isOpen]);
 
   const filteredCountries = useMemo(() => {
     if (!searchTerm) return countries;
     const lower = searchTerm.toLowerCase();
     return countries.filter(
       (c) =>
-        c.title.toLowerCase().includes(lower) || c.code?.includes(searchTerm)
+        c.title.toLowerCase().includes(lower) || c.code?.includes(searchTerm),
     );
   }, [countries, searchTerm]);
 
@@ -195,7 +201,7 @@ export default function PhoneInput({
     onChange?.(
       num,
       selectedCountry?.code || "",
-      selectedCountry?.isoCode || ""
+      selectedCountry?.isoCode || "",
     );
   };
 
@@ -205,29 +211,30 @@ export default function PhoneInput({
   };
 
   return (
-    <div className="w-full">
+    <div className="flex w-full flex-col gap-1.5">
       {label && (
-        <label className={cn(
-          "flex items-center gap-1 text-base font-medium text-slate-700 dark:text-slate-200 transition-colors duration-300",
-        )}>
+        <label className="flex items-center gap-1 text-base font-medium">
           {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
+          {required && <span className="text-destructive">*</span>}
         </label>
       )}
 
-      <div className="relative mt-1.5" ref={dropdownRef}>
+      <div className="relative" ref={dropdownRef}>
         <div
-          className={`flex items-center rounded-lg border transition-all ${error
-            ? "border-rose-400 focus-within:border-rose-500 focus-within:ring-2 focus-within:ring-rose-500/40"
-            : "border-slate-300 dark:border-slate-700 focus-within:border-[#6571FF]/60 dark:focus-within:border-[#6571FF]/60 focus-within:ring-2 focus-within:ring-[#6571FF]/40"
-            } ${disabled ? "opacity-50 cursor-not-allowed bg-slate-100 dark:bg-slate-800" : "bg-white dark:bg-slate-900"}`}
+          className={cn(
+            "flex h-9 items-center rounded-md border bg-transparent shadow-sm transition-colors",
+            error
+              ? "border-destructive focus-within:ring-1 focus-within:ring-destructive/30"
+              : "border-input focus-within:ring-1 focus-within:ring-ring",
+            disabled && "cursor-not-allowed bg-muted opacity-50",
+          )}
         >
           {/* Country Code Button */}
           <button
             type="button"
             onClick={() => !disabled && setIsOpen(!isOpen)}
             disabled={disabled || isLoading}
-            className="flex items-center gap-1.5 px-3 py-2 border-r border-slate-200 dark:border-slate-700 hover:bg-slate-50 hover:rounded-lg dark:hover:bg-slate-800 transition-colors disabled:cursor-not-allowed disabled:hover:bg-transparent"
+            className="flex h-full items-center gap-1.5 rounded-l-md border-r border-input px-3 transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:hover:bg-transparent"
           >
             {selectedCountry?.flagUrl ? (
               <img
@@ -246,7 +253,7 @@ export default function PhoneInput({
             <ChevronDown size={14} className="text-slate-500" />
           </button>
 
-          {/* Phone Number Input (with clear button inside) */}
+          {/* Phone Number Input */}
           <div className="relative flex-1">
             <input
               type="tel"
@@ -254,10 +261,9 @@ export default function PhoneInput({
               onChange={handlePhoneChange}
               placeholder={placeholder}
               disabled={disabled}
-              className="w-full px-4 pr-10 py-[2px] bg-transparent text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none disabled:cursor-not-allowed"
+              className="h-full w-full bg-transparent px-3 pr-10 text-base placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed md:text-sm"
             />
 
-            {/* Clear Button positioned inside the input */}
             {phoneNumber && (
               <button
                 type="button"
@@ -272,13 +278,13 @@ export default function PhoneInput({
         </div>
 
         {isOpen && (
-          <div className="absolute top-full left-0 mt-2 w-full  bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-50 overflow-hidden">
+          <div className="absolute top-full left-0 mt-2 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-50 overflow-hidden">
             {/* Search Input */}
             <div className="p-2 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder="Search country..."
+                placeholder="Search Country..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full px-3 py-2 text-sm rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
@@ -293,10 +299,11 @@ export default function PhoneInput({
                     key={country.id}
                     type="button"
                     onClick={() => handleCountrySelect(country)}
-                    className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors ${selectedCountry?.id === country.id
-                      ? "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium"
-                      : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-                      }`}
+                    className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors ${
+                      selectedCountry?.id === country.id
+                        ? "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium"
+                        : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    }`}
                   >
                     {country.flagUrl && (
                       <img

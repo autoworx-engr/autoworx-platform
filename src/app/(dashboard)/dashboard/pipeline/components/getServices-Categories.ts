@@ -1,4 +1,3 @@
-
 "use server";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
@@ -16,9 +15,9 @@ export const getServices = async () => {
   }
 };
 
-export const getCategories = async()=>{
-    const companyId = await getCompanyId()
- try {
+export const getCategories = async () => {
+  const companyId = await getCompanyId();
+  try {
     const categories = await db.category.findMany({
       where: { companyId },
     });
@@ -27,5 +26,4 @@ export const getCategories = async()=>{
     console.error(error);
     throw error;
   }
-    
-}
+};

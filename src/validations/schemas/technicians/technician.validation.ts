@@ -19,11 +19,11 @@ export const createTechnicianValidationSchema = z
   .object({
     serviceId: z
       .number({
-        required_error: "Service ID is required",
         invalid_type_error: "Service ID must be a number",
       })
       .int("Service ID must be an integer")
-      .positive("Service ID must be positive"),
+      .positive("Service ID must be positive")
+      .nullish(),
     due: z
       .date({
         required_error: "Due date is required",
@@ -78,7 +78,7 @@ export const createTechnicianValidationSchema = z
       {
         required_error: "Priority is required",
         invalid_type_error: "Invalid priority value",
-      }
+      },
     ),
 
     status: z.enum(
@@ -91,7 +91,7 @@ export const createTechnicianValidationSchema = z
       {
         required_error: "Status is required",
         invalid_type_error: "Invalid status value",
-      }
+      },
     ),
 
     invoiceId: z
@@ -120,7 +120,7 @@ export const createTechnicianValidationSchema = z
     {
       message: "Assigned date cannot be after due date",
       path: ["date"],
-    }
+    },
   );
 
 // update a technician validation schema with more detailed validations
@@ -159,7 +159,7 @@ export const updateTechnicianValidationSchema = z
       .optional()
       .nullish(),
 
-       technicianNote: z
+    technicianNote: z
       .string({
         invalid_type_error: "Note must be a string",
       })
@@ -180,7 +180,7 @@ export const updateTechnicianValidationSchema = z
       {
         required_error: "Priority is required",
         invalid_type_error: "Invalid priority value",
-      }
+      },
     ),
 
     status: z
@@ -194,7 +194,7 @@ export const updateTechnicianValidationSchema = z
         {
           required_error: "Status is required",
           invalid_type_error: "Invalid status value",
-        }
+        },
       )
       .optional(),
 
@@ -216,7 +216,7 @@ export const updateTechnicianValidationSchema = z
     {
       message: "Assigned date cannot be after due date",
       path: ["date"],
-    }
+    },
   );
 
 // Create a type from the schema

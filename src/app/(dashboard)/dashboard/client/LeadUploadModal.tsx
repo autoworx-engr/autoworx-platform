@@ -1,5 +1,6 @@
 "use client";
 
+import type { JSX } from "react";
 import React, { useState, useRef } from "react";
 import { Upload, X, File as FileIcon, Download } from "lucide-react";
 import {
@@ -27,7 +28,9 @@ export function LeadUploadModal({ buttonElement }: FileUploadModalProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isParsing, setIsParsing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const acceptRequestIdRef = useRef(0);
 
   const acceptedFormats = [".csv", ".xlsx", ".xls"];
   const acceptedMimeTypes = [
@@ -41,6 +44,54 @@ export function LeadUploadModal({ buttonElement }: FileUploadModalProps) {
     return (
       acceptedFormats.includes(ext) || acceptedMimeTypes.includes(file.type)
     );
+  };
+
+  const hasDataRows = async (candidate: File) => {
+    const XLSX = await import("xlsx");
+    const buffer = await candidate.arrayBuffer();
+    const workbook = XLSX.read(buffer, { type: "array" });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, {
+      header: 1,
+      blankrows: false,
+    });
+    return rows.length > 1;
+  };
+
+  const acceptFile = async (candidate: File) => {
+    if (!isValidFile(candidate)) {
+      errorToast("Invalid file format. Please upload a CSV or Excel file.");
+      return;
+    }
+
+    if (candidate.size === 0) {
+      errorToast("The file is empty");
+      return;
+    }
+
+    const requestId = ++acceptRequestIdRef.current;
+    setIsParsing(true);
+    try {
+      const fileHasData = await hasDataRows(candidate);
+      if (requestId !== acceptRequestIdRef.current) return;
+
+      if (!fileHasData) {
+        errorToast(
+          "The file has no data rows. Please add at least one row below the header.",
+        );
+        return;
+      }
+
+      setFile(candidate);
+    } catch (error) {
+      if (requestId !== acceptRequestIdRef.current) return;
+      console.error("Failed to read file:", error);
+      errorToast(
+        "Could not read the file. Please make sure it's a valid CSV or Excel file.",
+      );
+    } finally {
+      if (requestId === acceptRequestIdRef.current) setIsParsing(false);
+    }
   };
 
   const handleDragEnter = (e: React.DragEvent) => {
@@ -67,29 +118,24 @@ export function LeadUploadModal({ buttonElement }: FileUploadModalProps) {
 
     const files = e.dataTransfer.files;
     if (files.length > 0) {
-      const droppedFile = files[0];
-      if (isValidFile(droppedFile)) {
-        setFile(droppedFile);
-      } else {
-        errorToast("Invalid file format. Please upload a CSV or Excel file.");
-      }
+      acceptFile(files[0]);
     }
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      const selectedFile = files[0];
-      if (isValidFile(selectedFile)) {
-        setFile(selectedFile);
-      } else {
-        errorToast("Invalid file format. Please upload a CSV or Excel file.");
-      }
+      acceptFile(files[0]);
     }
   };
 
   const handleUpload = async () => {
     if (!file) return;
+
+    if (file.size === 0) {
+      errorToast("The file is empty");
+      return;
+    }
 
     setIsLoading(true);
     const formData = new FormData();
@@ -99,13 +145,13 @@ export function LeadUploadModal({ buttonElement }: FileUploadModalProps) {
 
     try {
       const response = await axiosInstance.post(
-        `/bulk-lead-upload/upload`,
+        `/bulk-client-upload/upload`,
         formData,
         {
           headers: {
             "Content-Type": "multipart/form-data",
           },
-        }
+        },
       );
 
       if (response?.data.statusCode === 200) {
@@ -124,8 +170,15 @@ export function LeadUploadModal({ buttonElement }: FileUploadModalProps) {
         errorToast(String(errMsg));
       }
     } catch (err: any) {
+      const data = err?.response?.data;
+      const errorsMsg = Array.isArray(data?.errors)
+        ? data.errors.join("; ")
+        : data?.errors;
       const backendMsg =
-        err?.data?.errors ||
+        (typeof data === "string"
+          ? data
+          : data?.message || data?.error || errorsMsg) ||
+        err?.message ||
         "An error occurred during upload. Please try again.";
       errorToast(String(backendMsg));
 
@@ -136,16 +189,13 @@ export function LeadUploadModal({ buttonElement }: FileUploadModalProps) {
   };
 
   const handleClear = () => {
+    acceptRequestIdRef.current++;
+    setIsParsing(false);
     setFile(null);
 
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
-  };
-
-  const handleClose = () => {
-    handleClear();
-    setIsUploadLeadOpen(false);
   };
 
   const handleDownloadSample = async () => {
@@ -174,7 +224,13 @@ export function LeadUploadModal({ buttonElement }: FileUploadModalProps) {
   };
 
   return (
-    <Dialog open={isUploadLeadOpen} onOpenChange={setIsUploadLeadOpen}>
+    <Dialog
+      open={isUploadLeadOpen}
+      onOpenChange={(open) => {
+        if (!open) handleClear();
+        setIsUploadLeadOpen(open);
+      }}
+    >
       <DialogTrigger asChild>
         {buttonElement ? (
           buttonElement
@@ -182,7 +238,7 @@ export function LeadUploadModal({ buttonElement }: FileUploadModalProps) {
           <button
             className="
             flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white
-            bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+            bg-gradient-to-r from-primary to-[#5a66ee]
             shadow-[0_4px_14px_0_rgba(101,113,255,0.39)]
             hover:shadow-[0_6px_20px_rgba(101,113,255,0.23)]
             hover:-translate-y-0.5
@@ -211,18 +267,22 @@ export function LeadUploadModal({ buttonElement }: FileUploadModalProps) {
             onDragLeave={handleDragLeave}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
-            className={`border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${isDragging
-              ? "border-blue-500 bg-blue-50 scale-105"
-              : "border-gray-300 bg-gray-50 hover:border-gray-400"
-              }`}
-            onClick={() => fileInputRef.current?.click()}
+            className={`border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${
+              isParsing ? "opacity-60 pointer-events-none" : ""
+            } ${
+              isDragging
+                ? "border-blue-500 bg-blue-50 scale-105"
+                : "border-gray-300 bg-gray-50 hover:border-gray-400"
+            }`}
+            onClick={() => !isParsing && fileInputRef.current?.click()}
           >
             <Upload
-              className={`w-12 h-12 mx-auto mb-3 transition-colors ${isDragging ? "text-blue-500" : "text-gray-400"
-                }`}
+              className={`w-12 h-12 mx-auto mb-3 transition-colors ${
+                isDragging ? "text-blue-500" : "text-gray-400"
+              }`}
             />
             <p className="text-sm font-semibold text-gray-900 mb-1">
-              Drag and drop your file here
+              {isParsing ? "Reading file..." : "Drag and drop your file here"}
             </p>
             <p className="text-xs text-gray-500 mb-4">or click to browse</p>
             <input
@@ -233,12 +293,11 @@ export function LeadUploadModal({ buttonElement }: FileUploadModalProps) {
               onClick={(e) => {
                 (e.target as HTMLInputElement).value = "";
               }}
+              disabled={isParsing}
               className="hidden"
               aria-label="File upload input"
             />
-            <button
-              className="text-sm text-blue-600 hover:text-blue-700 font-semibold transition-colors"
-            >
+            <button className="text-sm text-blue-600 hover:text-blue-700 font-semibold transition-colors">
               Browse Files
             </button>
           </div>
@@ -291,17 +350,16 @@ export function LeadUploadModal({ buttonElement }: FileUploadModalProps) {
         <DialogFooter className="gap-3 sm:gap-3">
           <DialogClose
             className="
-                flex-1 px-4 py-2 text-gray-700 border border-gray-300 rounded-lg 
+                flex-1 px-4 py-2 text-gray-700 border border-gray-300 rounded-lg
                 hover:bg-gray-50 font-semibold transition-colors
               "
-            onClick={handleClose}
           >
             Cancel
           </DialogClose>
           <button
             onClick={handleUpload}
             disabled={!file || isLoading}
-            className="flex-1 px-4 py-2 text-white  bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+            className="flex-1 px-4 py-2 text-white  bg-gradient-to-r from-primary to-[#5a66ee]
                 shadow-lg shadow-indigo-500/30
                 hover:shadow-xl hover:shadow-indigo-500/40
                 hover:-translate-y-0.5 hover:scale-[1.02]

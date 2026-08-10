@@ -23,17 +23,20 @@ export default function RedoTechnician({
   return (
     <div key={technician.id} className="flex items-center">
       <label
-        htmlFor="john"
+        htmlFor={technician.name}
         className="flex min-w-[150px] items-center justify-start space-x-3"
       >
         <input
-          className="size-4 shrink-0 accent-[#6571FF]"
+          className="size-4 shrink-0 accent-primary"
           type="checkbox"
-          name="john"
-          id="john"
+          name={technician.name}
+          id={technician.name}
           onChange={(event) => onRedoTechnician(event, technician?.id, notes)}
         />
-        <p id="john" className="cursor-pointer text-center">
+        <p
+          id={technician.name}
+          className="cursor-pointer text-center select-none"
+        >
           {technician.name}
         </p>
       </label>

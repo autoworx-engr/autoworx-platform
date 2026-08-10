@@ -2,6 +2,7 @@ import { sendUserNotifications } from "@/actions/notification/sendUserNotificati
 import { getUsersByRole } from "@/actions/user/getUserByRole";
 import { EmployeeType } from "@prisma/client";
 import getUser from "../getUser";
+import { db } from "../db";
 
 // send Notification for when new client send a email
 type TClientEmailNotification = {
@@ -45,16 +46,20 @@ export const sendClientEmailNotification = async ({
       });
     }
   } catch (err) {
-    console.log("client email error", err);
-    throw err;
+    // Notification failure must not fail the caller (webhook/API routes)
+    console.error("client email notification error", err);
   }
 };
 
 // send notification for when client message
+const MESSAGE_PREVIEW_MAX_LENGTH = 100;
+
 type TClientMessageNotification = {
   companyId: number;
   clientName?: string;
   clientId: number;
+  message?: string;
+  hasMedia?: boolean;
   sendRoles?: EmployeeType[];
 };
 
@@ -62,11 +67,11 @@ export const sendClientMessageNotification = async ({
   companyId,
   clientId,
   clientName,
+  message,
+  hasMedia,
   sendRoles = ["Admin", "Manager", "Sales"],
 }: TClientMessageNotification) => {
   try {
-    // update technician status to complete
-    // get all company admins and managers
     const getUsers = await getUsersByRole(companyId, sendRoles, {
       id: true,
       firstName: true,
@@ -77,7 +82,20 @@ export const sendClientMessageNotification = async ({
 
     const redirectUrl = `/dashboard/communication/client/${clientId}`;
 
-    const description = `Message from ${clientName} received. View and respond in Autoworx`;
+    const trimmedMessage = message?.trim();
+    let preview: string;
+    if (trimmedMessage) {
+      const truncated =
+        trimmedMessage.length > MESSAGE_PREVIEW_MAX_LENGTH
+          ? trimmedMessage.slice(0, MESSAGE_PREVIEW_MAX_LENGTH) + "..."
+          : trimmedMessage;
+      preview = `"${truncated}"`;
+    } else if (hasMedia) {
+      preview = "Sent a photo";
+    } else {
+      preview = "Sent you a message";
+    }
+    const description = `${clientName}: ${preview}`;
     const title = "New Client Message";
 
     for (const user of getUsers) {
@@ -95,28 +113,76 @@ export const sendClientMessageNotification = async ({
       });
     }
   } catch (err) {
-    console.error(err);
-    throw err;
+    console.error("client message notification error", err);
+  }
+};
+
+// send notification for when client misses a call
+type TClientCallMissedNotification = {
+  companyId: number;
+  clientName?: string;
+  clientId: number;
+  sendRoles?: EmployeeType[];
+};
+
+export const sendClientCallMissedNotification = async ({
+  companyId,
+  clientId,
+  clientName,
+  sendRoles = ["Admin", "Manager", "Sales"],
+}: TClientCallMissedNotification) => {
+  try {
+    const getUsers = await getUsersByRole(companyId, sendRoles, {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      phone: true,
+    });
+
+    const redirectUrl = `/dashboard/communication/client/${clientId}?open=PHONE&chat=true`;
+    const description = `Missed call from ${clientName || "a client"}. Call to respond.`;
+    const title = "Missed Call";
+
+    for (const user of getUsers) {
+      sendUserNotifications({
+        userId: user.id,
+        userName: `${user.firstName} ${user.lastName}`,
+        userEmail: user.email || "",
+        userPhoneNo: user.phone || "",
+        companyId,
+        iconType: "communication",
+        title,
+        description,
+        type: "CLIENT_CALL_ALERT",
+        redirectUrl,
+      });
+    }
+  } catch (err) {
+    console.error("client call missed notification error", err);
   }
 };
 
 type TInternalMessageNotification = {
   companyId?: number;
   toUserId: number;
-  message: number;
+  fromUserId?: number;
+  message?: string;
 };
 
 // COMMUNICATION NOTIFICATION FOR INTERNAL MESSAGES
 export const sendInternalMessageNotification = async ({
   toUserId,
-  message,
+  fromUserId,
 }: TInternalMessageNotification) => {
   try {
-    const sessionUser = await getUser();
+    // Pass fromUserId from API routes (mobile app has no web session);
+    // getUser() without an id falls back to the web session.
+    const sender = await getUser(fromUserId);
     const toUser = await getUser(toUserId);
-    const redirectUrl = `/dashboard/communication/internal`;
-    const sessionUserFullName = `${sessionUser.firstName} ${sessionUser.lastName}`;
-    const description = `New internal message from ${sessionUserFullName}. View it in Autoworx`;
+    const redirectUrl = `/dashboard/communication/internal?id=${sender?.id}`;
+    const senderFullName = `${sender.firstName} ${sender.lastName}`;
+    const description = `New internal message from ${senderFullName}. View it in Autoworx`;
     const title = "New Internal Message";
     sendUserNotifications({
       userId: toUserId,
@@ -131,42 +197,58 @@ export const sendInternalMessageNotification = async ({
       redirectUrl,
     });
   } catch (err) {
-    console.error(err);
-    throw err;
+    console.error("internal message notification error", err);
   }
 };
 
-
 type TCollaborationMessageNotification = {
-  companyName?: string;
-  toUserId: number;
+  companyId: number;
+  senderUserId?: number;
+  sendRoles?: EmployeeType[];
 };
 // COMMUNICATION NOTIFICATION FOR COLLABORATION MESSAGES
 export const sendCollaborationMessageNotification = async ({
-  toUserId,
-  companyName,
+  companyId,
+  senderUserId,
+  sendRoles = ["Admin", "Manager", "Sales"],
 }: TCollaborationMessageNotification) => {
   try {
-    const sessionUser = await getUser();
-    const toUser = await getUser(toUserId);
-    const redirectUrl = `/dashboard/communication/collaboration`;
-    const sessionUserFullName = `${sessionUser.firstName} ${sessionUser.lastName}`;
-    const description = `New collaboration message from ${sessionUserFullName} in ${companyName}. View it in Autoworx`;
-    const title = "New Collaboration Message";
-    sendUserNotifications({
-      userId: toUserId,
-      userName: `${toUser.firstName} ${toUser.lastName}`,
-      userEmail: toUser.email || "",
-      userPhoneNo: toUser.phone || "",
-      companyId: toUser.companyId,
-      iconType: "message",
-      title,
-      description,
-      type: "COLLABORATION_MESSAGE_ALERT",
-      redirectUrl,
+    const company = await db.company.findUniqueOrThrow({
+      where: { id: companyId },
     });
+
+    const getUsers = await getUsersByRole(companyId, sendRoles, {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      phone: true,
+      companyId: true,
+    });
+
+    // Pass senderUserId from API routes (mobile app has no web session);
+    // getUser() without an id falls back to the web session.
+    const sender = await getUser(senderUserId);
+    const redirectUrl = `/dashboard/communication/collaboration?companyId=${sender.companyId}`;
+    const senderFullName = `${sender.firstName} ${sender.lastName}`;
+    const description = `New collaboration message from ${senderFullName} in ${company?.name}. View it in Autoworx`;
+    const title = "New Collaboration Message";
+
+    for (const user of getUsers) {
+      sendUserNotifications({
+        userId: user?.id,
+        userName: `${user.firstName} ${user.lastName}`,
+        userEmail: user.email || "",
+        userPhoneNo: user.phone || "",
+        companyId: user.companyId,
+        iconType: "message",
+        title,
+        description,
+        type: "COLLABORATION_MESSAGE_ALERT",
+        redirectUrl,
+      });
+    }
   } catch (err) {
-    console.error(err);
-    throw err;
+    console.error("collaboration message notification error", err);
   }
 };

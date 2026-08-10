@@ -1,10 +1,10 @@
-import { authOptions } from '@/authOptions';
-import { db } from '@/lib/db';
-import { Prisma } from '@prisma/client';
-import moment, { Moment } from 'moment';
-import { getServerSession } from 'next-auth';
-import RevenueBarChartContainer from './chart/RevenueBarChartContainer';
-import { getCompanyTimezone } from '@/actions/settings/getCompanyTimezone';
+import { authOptions } from "@/authOptions";
+import { db } from "@/lib/db";
+import { Prisma } from "@prisma/client";
+import moment, { Moment } from "moment-timezone";
+import { getServerSession } from "next-auth";
+import RevenueBarChartContainer from "./chart/RevenueBarChartContainer";
+import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 
 type AnalyticsProps = {
   startDate?: string;
@@ -19,6 +19,8 @@ export default async function Analytics({
     timezone: moment.tz.guess(),
   };
   const session = await getServerSession(authOptions);
+  const companyId = session?.user?.companyId;
+  if (!companyId) return null;
 
   // Use provided dates or default to last 30 days
   let formattedStartDate: Moment | undefined;
@@ -28,8 +30,8 @@ export default async function Analytics({
     const decodedStartDate = decodeURIComponent(startDate);
     const decodedEndDate = decodeURIComponent(endDate);
     formattedStartDate = moment
-      .tz(decodedStartDate, 'MM/DD/YYYY', timezone)
-      .startOf('day');
+      .tz(decodedStartDate, "MM/DD/YYYY", timezone)
+      .startOf("day");
     // formattedStartDate = moment(
     //   decodeURIComponent(startDate),
     //   'MM-DD-YYYY'
@@ -38,25 +40,25 @@ export default async function Analytics({
     //   'YYYY-MM-DD'
     // );
     formattedEndDate = moment
-      .tz(decodedEndDate, 'MM/DD/YYYY', timezone)
-      .endOf('day');
+      .tz(decodedEndDate, "MM/DD/YYYY", timezone)
+      .endOf("day");
   } else {
-    const last30Days = moment.tz(timezone).subtract(30, 'days');
+    const last30Days = moment.tz(timezone).subtract(30, "days");
     const today = moment.tz(timezone);
-    formattedStartDate = last30Days.startOf('day');
-    formattedEndDate = today.endOf('day');
+    formattedStartDate = last30Days.startOf("day");
+    formattedEndDate = today.endOf("day");
   }
   const column = await db.column.findFirst({
     where: {
-      companyId: session?.user.companyId,
-      title: 'Delivered',
+      companyId,
+      title: "Delivered",
     },
   });
 
   const deliveredInvoices = await db.invoice.findMany({
     where: {
-      companyId: session?.user.companyId,
-      type: 'Invoice',
+      companyId,
+      type: "Invoice",
       columnId: column?.id,
       AND:
         formattedStartDate && formattedEndDate
@@ -98,20 +100,20 @@ export default async function Analytics({
   const serviceCategory = Array.from(
     new Set(
       deliveredInvoices
-        .flatMap(invoice => {
-          return invoice.invoiceItems.map(item => {
+        .flatMap((invoice) => {
+          return invoice.invoiceItems.map((item) => {
             return item?.service?.category?.name;
           });
         })
-        .filter(service => service !== undefined)
-    )
+        .filter((service) => service !== undefined),
+    ),
   );
 
   const lastMonthServiceCategoryRevenue = serviceCategory.reduce(
     (acc, category) => {
       const totalServiceCost = deliveredInvoices.reduce((acc, invoice) => {
         const invoiceItems = invoice.invoiceItems.filter(
-          item => item?.service?.category?.name === category
+          (item) => item?.service?.category?.name === category,
         );
 
         const serviceProfit = invoiceItems.reduce(
@@ -131,7 +133,7 @@ export default async function Analytics({
                 };
                 labor: true;
               };
-            }>
+            }>,
           ) => {
             const materialSellPrice = item.materials.reduce((acc, cur) => {
               const priceBeforeDiscount =
@@ -150,7 +152,7 @@ export default async function Analytics({
             acc += totalCost;
             return acc;
           },
-          0
+          0,
         );
         acc += serviceProfit;
         return acc;
@@ -161,13 +163,13 @@ export default async function Analytics({
       });
       return acc;
     },
-    [] as { categoryName: string; salePrice: number }[]
+    [] as { categoryName: string; salePrice: number }[],
   );
 
   return (
     <div className="rounded-lg border p-6">
       <h1 className="py-4 text-4xl font-bold">Analytics</h1>
-      <div className="min-w-2xl mx-10">
+      <div className="mx-5 md:mx-10 grid grid-cols-1 gap-x-10 md:gap-x-20">
         <RevenueBarChartContainer data={lastMonthServiceCategoryRevenue} />
       </div>
     </div>

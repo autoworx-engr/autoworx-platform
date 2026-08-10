@@ -88,7 +88,7 @@ export async function connectWithCompany({
     const title = "New Collaboration Invitation";
 
     await Promise.all(
-      targetUsers.map(user =>
+      targetUsers.map((user) =>
         sendUserNotifications({
           userId: user.id,
           userName: `${user.firstName} ${user.lastName}`,
@@ -186,7 +186,7 @@ export async function togglePhoneVisibility(): Promise<{
       message: `Phone visibility is now ${updatedCompany.phoneVisibility ? "enabled" : "disabled"}.`,
     };
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return {
       success: false,
       message: "Failed to toggle phone visibility.",
@@ -225,7 +225,7 @@ export async function toggleAddressVisibility(): Promise<{
       message: `Address visibility is now ${updatedCompany.addressVisibility ? "enabled" : "disabled"}.`,
     };
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return {
       success: false,
       message: "Failed to toggle address visibility.",
@@ -254,7 +254,7 @@ export async function setLatLong(
       message: "Successfully updated location.",
     };
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return {
       success: false,
       message: "Failed to update location.",
@@ -311,42 +311,61 @@ export async function findNearbyCompanies(
     });
 
     // Extract connected company IDs
-    const connectedIds = connectedCompanyIds.flatMap(join =>
-      [join.companyOneId, join.companyTwoId].filter(id => id !== userCompanyId),
+    const connectedIds = connectedCompanyIds.flatMap((join) =>
+      [join.companyOneId, join.companyTwoId].filter(
+        (id) => id !== userCompanyId,
+      ),
     );
 
-    // Step 2: Get all unconnected companies (excluding connected companies and your own company)
+    // Compute bounding box (~100 mi at equator) to filter in DB before JS Haversine
+    const maxRangeMi = range[1];
+    const latDelta = maxRangeMi / 69.0;
+    const cosLat = Math.max(Math.cos((latitude * Math.PI) / 180), 1e-10);
+    const lonDelta = maxRangeMi / (69.0 * cosLat);
+
+    // Step 2: Get nearby unconnected companies (bounding box pre-filter)
     const unconnectedCompanies = await db.company.findMany({
       where: {
         id: {
-          notIn: connectedIds, // Exclude connected companies
-          not: userCompanyId, // Exclude the user's own company
+          notIn: connectedIds,
+          not: userCompanyId,
         },
-        companyLatitude: { not: null },
-        companyLongitude: { not: null },
+        companyLatitude: {
+          not: null,
+          gte: latitude - latDelta,
+          lte: latitude + latDelta,
+        },
+        companyLongitude: {
+          not: null,
+          gte: longitude - lonDelta,
+          lte: longitude + lonDelta,
+        },
       },
+      take: 200,
     });
 
     // Step 3: Filter unconnected companies by distance
-    const nearbyUnconnectedCompanies = unconnectedCompanies.filter(company => {
-      if (company.companyLatitude && company.companyLongitude) {
-        const distance = getDistanceFromLatLonInMiles(
-          latitude,
-          longitude,
-          company.companyLatitude,
-          company.companyLongitude,
-        );
-        return distance <= range[1] && distance >= range[0]; // Filter based on the distance range
-      }
-      return false;
-    });
+    const nearbyUnconnectedCompanies = unconnectedCompanies.filter(
+      (company) => {
+        if (company.companyLatitude && company.companyLongitude) {
+          const distance = getDistanceFromLatLonInMiles(
+            latitude,
+            longitude,
+            company.companyLatitude,
+            company.companyLongitude,
+          );
+          return distance <= range[1] && distance >= range[0]; // Filter based on the distance range
+        }
+        return false;
+      },
+    );
 
     return {
       success: true,
       data: nearbyUnconnectedCompanies,
     };
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return {
       success: false,
       data: [],

@@ -11,7 +11,6 @@ import {
 } from "@/components/Dialog";
 import FormError from "@/components/FormError";
 import SelectCategory from "@/components/Lists/SelectCategory";
-import { SelectTags } from "@/components/Lists/SelectTags";
 import { successToast } from "@/lib/toast";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
 import { useEstimatePopupStore } from "@/stores/estimate-popup";
@@ -19,6 +18,7 @@ import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import { Category, Tag } from "@prisma/client";
 import { useEffect, useState } from "react";
+import { LABOR_NAME_MAX_LENGTH } from "./create/laborValidation";
 
 export default function NewLabor({
   newButton,
@@ -45,7 +45,6 @@ export default function NewLabor({
   const { close, data } = useEstimatePopupStore();
   const itemId = data?.itemId;
 
-  const [tagsOpen, setTagsOpen] = useState(false);
   const [categoryOpen, setCategoryOpen] = useState(false);
 
   // Reset form function to avoid code duplication
@@ -63,23 +62,17 @@ export default function NewLabor({
   useEffect(() => {
     if (currentSelectedCategoryId) {
       setCategory(
-        categories.find((cat) => cat.id === currentSelectedCategoryId)!
+        categories.find((cat) => cat.id === currentSelectedCategoryId)!,
       );
     }
   }, [currentSelectedCategoryId]);
 
   useEffect(() => {
-    setTagsOpen(false);
-  }, [categoryOpen]);
-
-  useEffect(() => {
-    setCategoryOpen(false);
-  }, [tagsOpen]);
-
-  useEffect(() => {
     if (data?.labor && data.edit && !fromCanned) {
       setName(data.labor.name);
-      setCategory(categories.find((cat) => cat.id === data.labor.categoryId)!);
+      setCategory(
+        categories.find((cat) => cat.id === data.labor.categoryId) ?? null,
+      );
       setTags(data.labor.tags);
       setNotes(data.labor.notes);
       setHours(data.labor.hours?.toString() || "");
@@ -107,6 +100,14 @@ export default function NewLabor({
       return false;
     }
 
+    if (name.trim().length > LABOR_NAME_MAX_LENGTH) {
+      showError({
+        field: "serviceName",
+        message: `Labor name cannot exceed ${LABOR_NAME_MAX_LENGTH} characters`,
+      });
+      return false;
+    }
+
     if (!hours.trim()) {
       showError({
         field: "hours",
@@ -122,15 +123,30 @@ export default function NewLabor({
       return false;
     }
 
+    const laborCost = (parseFloat(hours) || 0) * (parseFloat(charge) || 0);
+    if (discount.trim() && parseFloat(discount) > laborCost) {
+      showError({
+        field: "discount",
+        message: "Discount cannot be greater than the labor cost",
+      });
+      return false;
+    }
+
     return true;
   };
+
+  const laborCost = (parseFloat(hours) || 0) * (parseFloat(charge) || 0);
+  const discountAmount = parseFloat(discount) || 0;
+  const subtotal = laborCost - discountAmount;
+  const discountExceedsLaborCost =
+    !!discount.trim() && discountAmount > laborCost;
 
   async function handleSubmit() {
     if (!validateForm()) return;
 
     const res = await newLabor({
       name,
-      categoryId: category?.id!,
+      categoryId: category?.id ?? null,
       tags,
       notes,
       hours: parseFloat(hours) || 1,
@@ -240,11 +256,14 @@ export default function NewLabor({
 
       <DialogContent
         className="max-h-[94vh] max-w-md grid-rows-[auto,1fr,auto]"
+        onOpenAutoFocus={(e) => e.preventDefault()}
         form
       >
         <DialogHeader className="border-b border-slate-200 pb-2">
           <DialogTitle className="text-xl font-semibold text-slate-900">
-            {data?.edit && !fromCanned ? "Edit Labor" : "Add New Labor"}
+            {data?.edit && !fromCanned
+              ? "Edit Canned Labor"
+              : "Add Canned Labor"}
           </DialogTitle>
         </DialogHeader>
 
@@ -271,15 +290,19 @@ export default function NewLabor({
                     clearError();
                   }
                 }}
-                className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400"
-                placeholder="Enter labor name"
+                maxLength={LABOR_NAME_MAX_LENGTH}
+                className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg outline-none transition-all placeholder:text-slate-400 focus:border-blue-500"
+                placeholder="Enter labor Name"
               />
+              <p className="text-right text-xs text-slate-400">
+                {name.length}/{LABOR_NAME_MAX_LENGTH}
+              </p>
             </div>
 
             {/* Category */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-slate-700">
-                Category <span className="text-red-500">*</span>
+                Category
               </label>
               <SelectCategory
                 onCategoryChange={setCategory}
@@ -288,18 +311,7 @@ export default function NewLabor({
                 categoryOpen={categoryOpen}
                 setCategoryOpen={setCategoryOpen}
                 allowEdit={true}
-              />
-            </div>
-
-            {/* Tags */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-700">
-                Tags
-              </label>
-              <SelectTags
-                value={tags}
-                setValue={setTags}
-                openStates={[tagsOpen, setTagsOpen]}
+                isClear
               />
             </div>
 
@@ -330,7 +342,7 @@ export default function NewLabor({
                         }
                       }}
                       step="0.01"
-                      className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400"
+                      className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg outline-none transition-all placeholder:text-slate-400 focus:border-blue-500"
                       placeholder="0.00"
                       required
                     />
@@ -364,7 +376,7 @@ export default function NewLabor({
                         }
                       }}
                       step="0.01"
-                      className="w-full pl-8 pr-4 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400"
+                      className="w-full pl-8 pr-4 py-2.5 text-sm border border-slate-300 rounded-lg outline-none transition-all placeholder:text-slate-400 focus:border-blue-500"
                       placeholder="0.00"
                       required
                     />
@@ -388,45 +400,61 @@ export default function NewLabor({
                     type="number"
                     id="discount"
                     value={discount}
-                    onChange={(e) => setDiscount(e.target.value)}
+                    onChange={(e) => {
+                      setDiscount(e.target.value);
+                      clearError();
+                    }}
                     step="0.01"
-                    className="w-full pl-8 pr-4 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400"
+                    className={`w-full pl-8 pr-4 py-2.5 text-sm border rounded-lg outline-none transition-all placeholder:text-slate-400 focus:border-blue-500 ${
+                      discountExceedsLaborCost
+                        ? "border-red-400"
+                        : "border-slate-300"
+                    }`}
                     placeholder="0.00"
                   />
                 </div>
+                {discountExceedsLaborCost && (
+                  <p className="text-xs text-red-500">
+                    Discount cannot exceed the labor cost ($
+                    {laborCost.toFixed(2)})
+                  </p>
+                )}
               </div>
 
               {/* Total Calculation Display */}
               {hours && charge && (
                 <div className="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-slate-600">Subtotal:</span>
+                    <span className="text-slate-600">
+                      Labor Cost ({hours} hrs × ${parseFloat(charge).toFixed(2)}
+                      ):
+                    </span>
                     <span className="font-medium text-slate-900">
-                      ${(parseFloat(hours) * parseFloat(charge)).toFixed(2)}
+                      ${laborCost.toFixed(2)}
                     </span>
                   </div>
-                  {discount && parseFloat(discount) > 0 && (
-                    <>
-                      <div className="flex justify-between items-center text-sm mt-2">
-                        <span className="text-slate-600">Discount:</span>
-                        <span className="font-medium text-red-600">
-                          -${parseFloat(discount).toFixed(2)}
-                        </span>
-                      </div>
-                      <div className="border-t border-slate-300 mt-2 pt-2 flex justify-between items-center">
-                        <span className="font-semibold text-slate-900">
-                          Total:
-                        </span>
-                        <span className="font-bold text-lg text-slate-900">
-                          $
-                          {(
-                            parseFloat(hours) * parseFloat(charge) -
-                            parseFloat(discount)
-                          ).toFixed(2)}
-                        </span>
-                      </div>
-                    </>
+                  {discountAmount > 0 && (
+                    <div className="flex justify-between items-center text-sm mt-2">
+                      <span className="text-slate-600">Discount:</span>
+                      <span className="font-medium text-red-600">
+                        -${discountAmount.toFixed(2)}
+                      </span>
+                    </div>
                   )}
+                  <div className="border-t border-slate-300 mt-2 pt-2 flex justify-between items-center">
+                    <span className="font-semibold text-slate-900">
+                      Subtotal:
+                    </span>
+                    <span
+                      className={`font-bold text-lg ${
+                        discountExceedsLaborCost
+                          ? "text-red-600"
+                          : "text-slate-900"
+                      }`}
+                    >
+                      ${subtotal.toFixed(2)}
+                    </span>
+                  </div>
                 </div>
               )}
             </div>
@@ -444,7 +472,7 @@ export default function NewLabor({
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={3}
-                className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400 resize-none"
+                className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg outline-none transition-all placeholder:text-slate-400 focus:border-blue-500"
                 placeholder="Add any additional notes or details..."
               />
             </div>
@@ -461,6 +489,7 @@ export default function NewLabor({
           <button
             className="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={data?.edit && !fromCanned ? handleEdit : handleSubmit}
+            disabled={discountExceedsLaborCost}
             type="button"
           >
             {data?.edit && !fromCanned ? "Update Labor" : "Add Labor"}

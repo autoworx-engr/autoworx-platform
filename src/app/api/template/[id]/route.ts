@@ -23,9 +23,12 @@ import { db } from "@/lib/db";
  *       404:
  *         description: Template not found
  */
-export async function GET(req: Request, context: { params: { id: string } }) {
+export async function GET(
+  req: Request,
+  context: { params: Promise<{ id: string }> },
+) {
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
 
     // Fetch main template
     const estimateTemplate = await db.invoiceTemplate.findUnique({
@@ -36,7 +39,7 @@ export async function GET(req: Request, context: { params: { id: string } }) {
     if (!estimateTemplate) {
       return NextResponse.json(
         { message: "Template not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -94,16 +97,16 @@ export async function GET(req: Request, context: { params: { id: string } }) {
       // Technician status checking
       const technicians =
         item.service?.Technician?.filter(
-          (tech: any) => tech.invoiceId === estimateTemplate.id
+          (tech: any) => tech.invoiceId === estimateTemplate.id,
         ) || [];
 
       if (technicians.length) {
         const statuses = technicians.map((t: any) =>
-          t.status?.toLowerCase().trim()
+          t.status?.toLowerCase().trim(),
         );
 
         const isServiceComplete = statuses.every(
-          (s: string) => s === "complete"
+          (s: string) => s === "complete",
         );
 
         if (isServiceComplete) {
@@ -165,7 +168,7 @@ export async function GET(req: Request, context: { params: { id: string } }) {
     console.error("[TEMPLATE_API_ERROR]", error);
     return NextResponse.json(
       { message: "Server error", error: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

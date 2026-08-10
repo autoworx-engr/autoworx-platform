@@ -91,7 +91,7 @@ export const createSalesTag = async (data: {
     });
 
     if (isExistingTag) {
-      return { type: "error", message: "This tag is already exists" };
+      return { type: "error", message: "This tag is already exist" };
     }
 
     const newTag = await db.tag.create({
@@ -121,8 +121,8 @@ export const deleteSalesTag = async (tagId: number) => {
       throw new Error("Company ID is required");
     }
 
-    // Check if tag belongs to current company and is a sales tag
-    const tag = await db.tag.findFirst({
+    // Single atomic delete scoped to company and type — eliminates TOCTOU race
+    const result = await db.tag.deleteMany({
       where: {
         id: tagId,
         companyId: companyId,
@@ -130,15 +130,9 @@ export const deleteSalesTag = async (tagId: number) => {
       },
     });
 
-    if (!tag) {
+    if (result.count === 0) {
       throw new Error("Tag not found or not authorized");
     }
-
-    await db.tag.delete({
-      where: {
-        id: tagId,
-      },
-    });
 
     revalidatePath("/dashboard/pipeline/sales/pipeline");
     return { type: "success", message: "Sales tag deleted successfully" };

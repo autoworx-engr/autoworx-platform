@@ -2,6 +2,12 @@ import CannedLeadForm from "@/components/CannedLeadForm";
 import SourceForm from "@/components/sourceForm";
 import { getCompanyId } from "@/lib/companyId";
 import React from "react";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Settings - Lead Generation",
+  description: "Configure lead generation settings",
+};
 
 export default async function page() {
   const companyId = await getCompanyId();

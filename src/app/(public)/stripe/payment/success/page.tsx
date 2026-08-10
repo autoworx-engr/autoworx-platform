@@ -1,6 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { CircleCheckBig } from "lucide-react";
 import Link from "next/link";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Payment Successful",
+  description: "Your payment has been received. Thank you for your purchase.",
+};
 
 export default async function SuccessPage() {
   return (

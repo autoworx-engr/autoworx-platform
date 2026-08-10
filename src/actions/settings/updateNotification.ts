@@ -2,14 +2,15 @@
 import { db } from "@/lib/db";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { getDefaultNotificationSettings } from "@/app/(dashboard)/dashboard/settings/notifications/utils/notification-v2";
+import getUser from "@/lib/getUser";
 import {
   EmployeeType,
   NotificationSection,
   NotificationType,
+  Prisma,
 } from "@prisma/client";
 
 type TUpdateNotification = {
-  userId: number;
   section?: NotificationSection;
   notificationType?: NotificationType;
   switchKey: "email_enabled" | "push_enabled" | "text_enabled";
@@ -17,16 +18,16 @@ type TUpdateNotification = {
 };
 
 export const updateNotification = async ({
-  userId,
   section,
   notificationType,
   switchKey,
   value,
 }: TUpdateNotification) => {
   try {
+    const user = await getUser();
     const findNotificationSettings = await db.notificationSettingsV2.findFirst({
       where: {
-        userId,
+        userId: user.id,
         section,
         notification_type: notificationType,
       },
@@ -35,15 +36,9 @@ export const updateNotification = async ({
       throw new Error("Notification settings not found");
     }
     const updatedNotificationSettings = await db.notificationSettingsV2.update({
-      where: {
-        id: findNotificationSettings.id,
-      },
-      data: {
-        [switchKey]: value,
-      },
+      where: { id: findNotificationSettings.id },
+      data: { [switchKey]: value },
     });
-    // return { type: "success", data: updatedNotificationSettings };
-    // TODO: Implement the logic to update the notification settings. Skip for now.
     return { type: "success", data: updatedNotificationSettings };
   } catch (err: any) {
     throw new Error(err);
@@ -54,9 +49,11 @@ export const uploadNotificationSettings = async (
   userId: number,
   userRole: EmployeeType,
   companyId: number,
+  tx?: Prisma.TransactionClient,
 ) => {
+  const client = tx ?? db;
   try {
-    const findNotificationCount = await db.notificationSettingsV2.count({
+    const findNotificationCount = await client.notificationSettingsV2.count({
       where: {
         userId,
         companyId,
@@ -68,7 +65,7 @@ export const uploadNotificationSettings = async (
     if (findNotificationCount === notificationSettings?.length) {
       return;
     } else if (findNotificationCount > notificationSettings?.length) {
-      await db.notificationSettingsV2.deleteMany({
+      await client.notificationSettingsV2.deleteMany({
         where: {
           userId,
           companyId,
@@ -82,33 +79,28 @@ export const uploadNotificationSettings = async (
       return;
     }
 
-    await Promise.all(
-      notificationSettings.map(async (notification) => {
-        const findNotificationSetting =
-          await db.notificationSettingsV2.findFirst({
-            where: {
-              userId,
-              section: notification.section,
-              notification_type: notification.notification_type,
-            },
-          });
-
-        if (findNotificationSetting) {
-          return;
-        }
-
-        await db.notificationSettingsV2.create({
-          data: {
-            userId,
-            section: notification.section,
-            notification_type: notification.notification_type,
-            companyId,
-            email_enabled: notification.email_enabled,
-            push_enabled: notification.push_enabled,
-          },
-        });
-      }),
+    const existingSettings = await client.notificationSettingsV2.findMany({
+      where: { userId, companyId },
+      select: { notification_type: true },
+    });
+    const existingTypes = new Set(
+      existingSettings.map((s) => s.notification_type),
     );
+    const missing = notificationSettings.filter(
+      (n) => !existingTypes.has(n.notification_type),
+    );
+    if (missing.length > 0) {
+      await client.notificationSettingsV2.createMany({
+        data: missing.map((notification) => ({
+          userId,
+          section: notification.section,
+          notification_type: notification.notification_type,
+          companyId,
+          email_enabled: notification.email_enabled,
+          push_enabled: notification.push_enabled,
+        })),
+      });
+    }
   } catch (err) {
     return errorHandler(err);
   }

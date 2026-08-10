@@ -23,7 +23,7 @@ type TAppointmentDataResponse = Appointment & {
 
 export default function useAppointmentQueryById(
   appointmentId: number,
-  options: { enabled?: boolean }
+  options: { enabled?: boolean },
 ) {
   return useQuery({
     queryKey: queryKeys.appointmentById(appointmentId),
@@ -77,7 +77,7 @@ export default function useAppointmentQueryById(
       return {
         ...rest,
         assignUsers: appointment.appointmentUsers.map(
-          (appointmentUser) => appointmentUser.user
+          (appointmentUser) => appointmentUser.user,
         ),
       };
     },

@@ -39,10 +39,12 @@ export async function editHistory({
     const product = await db.inventoryProduct.findUnique({
       where: { id: productId },
     });
+    if (!product) throw new Error("Product not found");
 
     const history = await db.inventoryProductHistory.findUnique({
       where: { id: historyId },
     });
+    if (!history) throw new Error("History record not found");
 
     const vendor = vendorId
       ? await db.vendor.findUnique({
@@ -64,9 +66,7 @@ export async function editHistory({
 
     // update product quantity
     const newQuantity =
-      Number(product!.quantity!) +
-      Number(quantity) -
-      Number(history!.quantity!);
+      Number(product.quantity) + Number(quantity) - Number(history.quantity);
 
     const updatedProduct = await db.inventoryProduct.update({
       where: { id: productId },

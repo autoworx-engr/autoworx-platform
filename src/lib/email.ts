@@ -1,5 +1,4 @@
 import { google } from "googleapis";
-import { env } from "next-runtime-env";
 import "server-only";
 import { getCompanyId } from "./companyId";
 import { db } from "./db";
@@ -24,7 +23,7 @@ export async function sendEmail({ to, subject, text, html }: EmailProps) {
     const oAuth2Client = new google.auth.OAuth2(
       process.env.GMAIL_CLIENT_ID,
       process.env.GMAIL_CLIENT_SECRET,
-      `${env("NEXT_PUBLIC_APP_URL")}/dashboard/communication/client/auth`,
+      `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/communication/client/auth`,
     );
 
     const company = await db.company.findFirst({
@@ -79,7 +78,7 @@ export async function sendEmailReminder({
     const oAuth2Client = new google.auth.OAuth2(
       process.env.GMAIL_CLIENT_ID,
       process.env.GMAIL_CLIENT_SECRET,
-      `${env("NEXT_PUBLIC_APP_URL")}/dashboard/communication/client/auth`,
+      `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/communication/client/auth`,
     );
 
     const company = await db.company.findFirst({

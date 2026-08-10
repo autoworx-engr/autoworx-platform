@@ -31,6 +31,8 @@ Font.register({
   fontWeight: 500,
 });
 
+Font.registerHyphenationCallback((word) => [word]);
+
 // Dummy props interface – customize as needed
 interface FleetData {
   id: string;
@@ -40,6 +42,7 @@ interface FleetData {
   vin: string;
   price: string;
   status: string;
+  paymentStatus: string;
   other?: string;
 }
 
@@ -64,8 +67,7 @@ interface FleetCustomer {
 }
 
 interface User {
-  firstName: string;
-  lastName: string;
+  name: string;
 }
 
 interface PDFFleetStatementProps {
@@ -163,37 +165,42 @@ const styles = StyleSheet.create({
 
   // Table cells
   cellInvoice: {
-    width: "15%",
+    width: "12%",
     paddingHorizontal: 4,
     fontSize: 9,
   },
   cellYear: {
-    width: "10%",
+    width: "7%",
     paddingHorizontal: 4,
     fontSize: 9,
   },
   cellMake: {
-    width: "15%",
+    width: "11%",
     paddingHorizontal: 4,
     fontSize: 9,
   },
   cellModel: {
-    width: "15%",
+    width: "11%",
     paddingHorizontal: 4,
     fontSize: 9,
   },
   cellVin: {
-    width: "15%",
+    width: "11%",
     paddingHorizontal: 4,
     fontSize: 9,
   },
   cellPrice: {
-    width: "15%",
+    width: "12%",
     paddingHorizontal: 4,
     fontSize: 9,
   },
   cellStatus: {
-    width: "15%",
+    width: "18%",
+    paddingHorizontal: 4,
+    fontSize: 9,
+  },
+  cellPaymentStatus: {
+    width: "18%",
     paddingHorizontal: 4,
     fontSize: 9,
   },
@@ -371,10 +378,13 @@ export const PDFFleetStatement = ({
             <Text style={styles.headerText}>VIN</Text>
           </View>
           <View style={styles.cellPrice}>
-            <Text style={styles.headerText}>Price</Text>
+            <Text style={styles.headerText}>Amount</Text>
           </View>
           <View style={styles.cellStatus}>
-            <Text style={styles.headerText}>Status</Text>
+            <Text style={styles.headerText}>Invoice Status</Text>
+          </View>
+          <View style={styles.cellPaymentStatus}>
+            <Text style={styles.headerText}>Payment</Text>
           </View>
         </View>
 
@@ -399,7 +409,7 @@ export const PDFFleetStatement = ({
             <View style={styles.cellModel}>
               <Text style={styles.dataText}>{vehicle.model}</Text>
             </View>
-            {vehicle.other && (
+            {vehicle.other !== "N/A" && (
               <View style={styles.cellModel}>
                 <Text style={styles.dataText}>{vehicle.other}</Text>
               </View>
@@ -412,6 +422,9 @@ export const PDFFleetStatement = ({
             </View>
             <View style={styles.cellStatus}>
               <Text style={styles.dataText}>{vehicle.status}</Text>
+            </View>
+            <View style={styles.cellPaymentStatus}>
+              <Text style={styles.dataText}>{vehicle.paymentStatus}</Text>
             </View>
           </View>
         ))}
@@ -441,9 +454,7 @@ export const PDFFleetStatement = ({
           >
             {companyDetails?.name}
           </Text>
-          <Text style={styles.fontSize10}>
-            {user?.firstName} {user?.lastName}
-          </Text>
+          <Text style={styles.fontSize10}>{user?.name}</Text>
         </View>
 
         {/* {authorizedName && (

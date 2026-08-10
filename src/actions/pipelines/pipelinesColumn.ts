@@ -2,12 +2,16 @@
 import { authOptions } from "@/authOptions";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
+import { EmployeeType } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
 
 // Fetch all columns by type
-export const getColumnsByType = async (type: string) => {
-  const companyId = await getCompanyId();
+export const getColumnsByType = async (
+  type: string,
+  companyIdOverride?: number,
+) => {
+  const companyId = companyIdOverride ?? (await getCompanyId());
   let columns = await db.column.findMany({
     where: { type, companyId: companyId },
     include: {
@@ -31,16 +35,33 @@ export const getColumnsByType = async (type: string) => {
   return columns;
 };
 
+export const getEmployeeColumnByCompany = async (
+  employeeType?: EmployeeType,
+) => {
+  const companyId = await getCompanyId();
+  return db.user.findMany({
+    where: {
+      companyId,
+      ...(employeeType && { employeeType }),
+    },
+    orderBy: { createdAt: "asc" },
+  });
+};
+
 export const createColumn = async (
   title: string,
   type: string,
   textColor?: string,
   bgColor?: string,
+  companyId?: number,
 ) => {
-  const session = await getServerSession(authOptions);
-  const companyId = session?.user.companyId;
+  let resolvedCompanyId = companyId;
+  if (!resolvedCompanyId) {
+    const session = await getServerSession(authOptions);
+    resolvedCompanyId = session?.user.companyId;
+  }
 
-  if (!companyId) {
+  if (!resolvedCompanyId) {
     throw new Error("Company ID is required to create an email template.");
   }
   const maxOrder = await db.column.findFirst({
@@ -56,7 +77,7 @@ export const createColumn = async (
       title,
       type,
       order: newOrder,
-      companyId,
+      companyId: resolvedCompanyId,
       textColor: textColor ?? undefined,
       bgColor: bgColor ?? undefined,
     },

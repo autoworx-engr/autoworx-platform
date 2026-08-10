@@ -1,7 +1,7 @@
 "use client";
 
 import { useFormErrorStore } from "@/stores/form-error";
-import { useState, useRef } from "react";
+import { useState } from "react";
 
 export default function Input({
   name,
@@ -31,7 +31,6 @@ export default function Input({
   const [inputValue, setInputValue] = useState(defaultValue || "");
   const { error } = useFormErrorStore();
 
-
   return (
     <>
       <input
@@ -50,9 +49,9 @@ export default function Input({
         max={max}
       />
 
-      {error && error.field === name && (
+      {/* {error && error.field === name && (
         <p className="text-red-500">{error.message}</p>
-      )}
+      )} */}
     </>
   );
 }

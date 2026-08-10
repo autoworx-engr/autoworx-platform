@@ -29,6 +29,10 @@ const VendorCard = ({
   const { isActive, setActive } = VendorListStore();
 
   useEffect(() => {
+    setActive(!!vendorId);
+  }, [vendorId, setActive]);
+
+  useEffect(() => {
     setMounted(true);
   }, []);
 
@@ -36,9 +40,8 @@ const VendorCard = ({
     return null;
   }
 
+  const term = searchTerm.trim().toLowerCase();
   const filterVendor = vendors?.filter((vendor) => {
-    const term = searchTerm.toLowerCase();
-
     return (
       vendor.name?.toLowerCase().includes(term) ||
       vendor.companyName?.toLowerCase().includes(term) ||
@@ -57,27 +60,29 @@ const VendorCard = ({
         >
           <CardContent className="pt-4 px-5">
             <div className="grid gap-4">
-
               {/* 1. Header: Name, Company, and Actions */}
               <div className="flex items-start justify-between">
-
                 {/* Left: Vendor Info (Clickable area) */}
                 <div
                   // Use group/hover styles to indicate clickability
                   onClick={() => {
                     router.push(
-                      `/dashboard/inventory/vendor?vendorId=${vendor.id}`
+                      `/dashboard/inventory/vendor?vendorId=${vendor.id}`,
                     );
                     setActive(true);
                   }}
                   className="group cursor-pointer pr-3"
                 >
                   {/* Vendor Name: Primary Color, Bold, Hover effect */}
-                  <p className={`text-xl font-extrabold text-[${ACCENT_COLOR}] group-hover:text-blue-500 transition-colors duration-200`}>
+                  <p
+                    className={`text-xl font-extrabold text-[${ACCENT_COLOR}] group-hover:text-blue-500 transition-colors duration-200`}
+                  >
                     {vendor.name}
                   </p>
                   {/* Company Name: Secondary detail */}
-                  <p className={`text-sm ${INFO_TEXT_COLOR} flex items-center gap-1 mt-0.5`}>
+                  <p
+                    className={`text-sm ${INFO_TEXT_COLOR} flex items-center gap-1 mt-0.5`}
+                  >
                     <Building2 size={14} className="text-slate-500" />
                     {vendor.companyName}
                   </p>
@@ -85,7 +90,6 @@ const VendorCard = ({
 
                 {/* Right: Action Buttons (Edit & Delete) */}
                 <div className="flex gap-2 flex-shrink-0">
-
                   {/* Edit Button: Encased in a soft, clickable container */}
                   <EditVendor
                     vendor={vendor}
@@ -118,7 +122,11 @@ const VendorCard = ({
                       // Soft background on hover for delete button
                       className="rounded-full transition-all duration-200 hover:bg-red-500/10 group"
                     >
-                      <X size={24} strokeWidth={2.2} className="text-red-500 group-hover:scale-[1.05] transition-transform" />
+                      <X
+                        size={24}
+                        strokeWidth={2.2}
+                        className="text-red-500 group-hover:scale-[1.05] transition-transform"
+                      />
                     </button>
                   </Popconfirm>
                 </div>
@@ -126,14 +134,24 @@ const VendorCard = ({
 
               {/* 2. Details: Website, Phone, Join Date (Iconified) */}
               <div className="grid gap-2 text-sm pt-3 border-t border-slate-200 dark:border-slate-700">
-
                 {/* Website Link */}
                 <div className="flex items-center gap-3">
-                  <Link size={16} className={`text-slate-500 dark:text-slate-400 min-w-[16px]`} />
-                  <span className={`font-medium min-w-[80px] ${INFO_TEXT_COLOR}`}>Website:</span>
+                  <Link
+                    size={16}
+                    className={`text-slate-500 dark:text-slate-400 min-w-[16px]`}
+                  />
+                  <span
+                    className={`font-medium min-w-[80px] ${INFO_TEXT_COLOR}`}
+                  >
+                    Website:
+                  </span>
                   {vendor.website ? (
                     <a
-                      href={vendor.website.startsWith('http') ? vendor.website : `http://${vendor.website}`}
+                      href={
+                        vendor.website.startsWith("http")
+                          ? vendor.website
+                          : `http://${vendor.website}`
+                      }
                       target="_blank"
                       rel="noopener noreferrer"
                       className={`text-blue-500 hover:text-blue-400 font-normal truncate`}
@@ -147,8 +165,15 @@ const VendorCard = ({
 
                 {/* Phone Number */}
                 <div className="flex items-center gap-3">
-                  <Phone size={16} className={`text-slate-500 dark:text-slate-400 min-w-[16px]`} />
-                  <span className={`font-medium min-w-[80px] ${INFO_TEXT_COLOR}`}>Phone:</span>
+                  <Phone
+                    size={16}
+                    className={`text-slate-500 dark:text-slate-400 min-w-[16px]`}
+                  />
+                  <span
+                    className={`font-medium min-w-[80px] ${INFO_TEXT_COLOR}`}
+                  >
+                    Phone:
+                  </span>
                   {vendor.phone ? (
                     <a
                       href={`tel:${vendor.phone}`}
@@ -163,8 +188,15 @@ const VendorCard = ({
 
                 {/* Join Date */}
                 <div className="flex items-center gap-3">
-                  <Calendar size={16} className={`text-slate-500 dark:text-slate-400 min-w-[16px]`} />
-                  <span className={`font-medium min-w-[80px] ${INFO_TEXT_COLOR}`}>Join Date:</span>
+                  <Calendar
+                    size={16}
+                    className={`text-slate-500 dark:text-slate-400 min-w-[16px]`}
+                  />
+                  <span
+                    className={`font-medium min-w-[80px] ${INFO_TEXT_COLOR}`}
+                  >
+                    Join Date:
+                  </span>
                   <span className={`font-normal ${BASE_TEXT_COLOR}`}>
                     {moment.utc(vendor.createdAt).format("MM/DD/YYYY")}
                   </span>

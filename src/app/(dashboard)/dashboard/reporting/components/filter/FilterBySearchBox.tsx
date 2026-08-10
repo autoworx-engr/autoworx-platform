@@ -5,9 +5,14 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 type TProps = {
   searchText: string;
-  paramKey?: string; // 👈 unique key: "serviceSearch" or "laborSearch"
+  paramKey?: string;
+  placeholder?: string;
 };
-export default function FilterBySearchBox({ searchText, paramKey }: TProps) {
+export default function FilterBySearchBox({
+  searchText,
+  paramKey,
+  placeholder,
+}: TProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const router = useRouter();
   const pathname = usePathname();
@@ -33,13 +38,26 @@ export default function FilterBySearchBox({ searchText, paramKey }: TProps) {
         searchParams.set("search", searchTerm);
       }
     }
+
+    // Reset pagination to the first page whenever the search term changes,
+    // so matches on earlier pages aren't hidden behind the current page.
+    if (paramKey === "laborSearch") {
+      searchParams.set("laborPage", "1");
+    } else if (paramKey === "serviceSearch") {
+      searchParams.set("servicePage", "1");
+    } else {
+      searchParams.set("page", "1");
+    }
+
     const newPath = `${pathname}?${searchParams.toString()}`;
     router.replace(newPath);
   };
   const handleSearchChange = useDebounce(handleInputChange, 500);
 
   const getPlaceholderForPath = () => {
-    if (pathname.includes("revenue")) {
+    if (placeholder) {
+      return placeholder;
+    } else if (pathname.includes("revenue")) {
       return "Search by Invoice, Customer or Vehicle";
     } else if (pathname.includes("inventory")) {
       return "Search by Name";
@@ -48,7 +66,7 @@ export default function FilterBySearchBox({ searchText, paramKey }: TProps) {
     } else if (pathname.includes("teams")) {
       return "Search by Employee Name";
     } else if (paramKey === "laborSearch") {
-      return "Search by Labour Name or Category";
+      return "Search by Labor Name or Category";
     } else if (paramKey === "serviceSearch") {
       return "Search by Service Name or Category";
     } else {
@@ -57,7 +75,7 @@ export default function FilterBySearchBox({ searchText, paramKey }: TProps) {
   };
 
   return (
-    <div className="relative w-full min-w-[300] max-w-[693px]">
+    <div className="relative w-full sm:min-w-[300px] max-w-[693px]">
       <Search size={20} className="absolute left-[10px] top-[10px]" />
       <input
         onChange={(e) => {
@@ -65,7 +83,7 @@ export default function FilterBySearchBox({ searchText, paramKey }: TProps) {
           setSearchTerm(e.target.value);
         }}
         value={searchTerm}
-        className="w-full border border-slate-300 ring-0 rounded-xl bg-transparent pr-3 pl-10 py-2 text-slate-600 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6571FF] focus:shadow-[0_8px_24px_rgba(101,113,255,0.08)] transition-all duration-300"
+        className="w-full truncate border border-slate-300 ring-0 rounded-xl bg-transparent pr-3 pl-10 py-2 text-sm sm:text-base text-slate-600 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:shadow-[0_8px_24px_rgba(101,113,255,0.08)] transition-all duration-300"
         type="text"
         placeholder={getPlaceholderForPath()}
       />

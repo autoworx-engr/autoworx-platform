@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import Groq from "groq-sdk";
 import crypto from "crypto";
+import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY! });
 
@@ -102,6 +103,11 @@ export async function getSmartReplies({
   draft?: string;
   context?: "sms" | "email";
 }): Promise<SmartSuggestion[]> {
+  const entitlements = await getCompanyEntitlements(companyId);
+  if (!entitlements.aiSmartReplies) {
+    return [];
+  }
+
   // 1) Fetch context in parallel
   const client = await db.client.findUnique({
     where: { id: clientId },
@@ -167,7 +173,7 @@ export async function getSmartReplies({
           .reverse()
           .map(
             (m: any) =>
-              `${m.emailBy === "CLIENT" ? "Client" : "Shop"}: ${m.subject ? `[${m.subject}] ` : ""}${m.text.trim().slice(0, 500)}` // Limit text length
+              `${m.emailBy === "CLIENT" ? "Client" : "Shop"}: ${m.subject ? `[${m.subject}] ` : ""}${m.text.trim().slice(0, 500)}`, // Limit text length
           )
           .join("\n")
       : (recentMessages as any[])
@@ -175,7 +181,7 @@ export async function getSmartReplies({
           .reverse()
           .map(
             (m: any) =>
-              `${m.sentBy === "Client" ? "Client" : "Shop"}: ${m.message.trim().slice(0, 320)}` // Limit message length
+              `${m.sentBy === "Client" ? "Client" : "Shop"}: ${m.message.trim().slice(0, 320)}`, // Limit message length
           )
           .join("\n");
 
@@ -347,7 +353,7 @@ Each suggestion should be a complete, ready-to-send reply that makes sense as th
     parsed = JSON.parse(cleaned);
     console.log(
       "[AI Reply] Parsed successfully, suggestions count:",
-      parsed?.suggestions?.length
+      parsed?.suggestions?.length,
     );
   } catch (error) {
     console.log("[AI Reply] Initial parse failed:", (error as Error).message);
@@ -364,7 +370,7 @@ Each suggestion should be a complete, ready-to-send reply that makes sense as th
         console.log("[AI Reply] Double unescape successful!");
       } catch {
         console.log(
-          "[AI Reply] Double unescape failed, trying regex extraction"
+          "[AI Reply] Double unescape failed, trying regex extraction",
         );
       }
     }
@@ -411,7 +417,7 @@ Each suggestion should be a complete, ready-to-send reply that makes sense as th
       if (finalText.startsWith('{"') || finalText.startsWith("{")) {
         try {
           console.log(
-            "[AI Reply] Detected JSON-like text, attempting to parse..."
+            "[AI Reply] Detected JSON-like text, attempting to parse...",
           );
           const innerParsed = JSON.parse(finalText);
 
@@ -423,7 +429,7 @@ Each suggestion should be a complete, ready-to-send reply that makes sense as th
             console.log(
               "[AI Reply] WARNING: Text field contains nested JSON with",
               innerParsed.suggestions.length,
-              "suggestions, extracting them all"
+              "suggestions, extracting them all",
             );
             return innerParsed.suggestions
               .filter((innerS: any) => innerS?.text)
@@ -431,7 +437,7 @@ Each suggestion should be a complete, ready-to-send reply that makes sense as th
               .map((innerS: any) => ({
                 text: String(innerS.text).slice(
                   0,
-                  context === "email" ? 2000 : 320
+                  context === "email" ? 2000 : 320,
                 ),
                 rationale: innerS.rationale,
                 confidence: innerS.confidence,
@@ -453,7 +459,7 @@ Each suggestion should be a complete, ready-to-send reply that makes sense as th
   console.log("[AI Reply] Parsed suggestions count:", suggestions.length);
   console.log(
     "[AI Reply] First suggestion:",
-    suggestions[0]?.text.substring(0, 100)
+    suggestions[0]?.text.substring(0, 100),
   );
 
   // Cache the results

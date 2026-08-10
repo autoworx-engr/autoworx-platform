@@ -68,7 +68,7 @@ export async function getSignedURL({
   const url = await getSignedUrl(
     s3Client,
     putObjectCommand,
-    { expiresIn: 60 } // 60 seconds
+    { expiresIn: 60 }, // 60 seconds
   );
 
   return { success: { url } };

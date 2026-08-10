@@ -65,8 +65,6 @@ export const resendTwoFactorCode = async (email: string) => {
       sessionId,
     },
   });
-    
-    
 
   // 5. Send Email
   await send2faOtpMail({

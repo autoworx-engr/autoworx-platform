@@ -8,8 +8,19 @@ import { getDateRanges } from "@/actions/dashboard/data/lib";
 import { db } from "@/lib/db";
 import { getCompanyId } from "@/lib/companyId";
 import { cn } from "@/lib/cn"; // Ensure cn utility is imported
+import { hasRouteAccess } from "@/lib/serverRouteGuard";
+import BoxRestricted from "./BoxRestricted";
 
 export default async function PerformanceBoxForSalesUser() {
+  // Gated on the route this box links to — Reporting & Analytics, which for the
+  // Sales role is the view-only column. Checked before fetching so a user
+  // without it never runs the lead queries.
+  if (!(await hasRouteAccess("/dashboard/reporting/teams"))) {
+    return (
+      <BoxRestricted title="Sales Performance" what="reporting & analytics" />
+    );
+  }
+
   const currentUser = await getUser();
   const companyTimezone = await getCompanyTimezone();
 
@@ -27,7 +38,7 @@ export default async function PerformanceBoxForSalesUser() {
   const winLossRate = parseFloat(winLossRateRaw.toFixed(2));
 
   const leadsConvertedRate = parseFloat(
-    (leadsConvertedData?.growth?.rate ?? 0).toFixed(2)
+    (leadsConvertedData?.growth?.rate ?? 0).toFixed(2),
   );
   const leadsConvertedIsPositive =
     leadsConvertedData?.growth?.isPositive ?? false;
@@ -62,7 +73,7 @@ export default async function PerformanceBoxForSalesUser() {
 
           // Hover effect for interactivity
           hover:shadow-xl hover:shadow-blue-500/10 dark:hover:shadow-indigo-500/10
-        `
+        `,
       )}
     >
       <BoxTitle

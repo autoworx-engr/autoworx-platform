@@ -9,11 +9,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import MailAttachment from "./MailAttachment";
 
 type TProps = {
-  messages: (MailgunEmail & { attachments: MailgunEmailAttachment[]; user?: {
+  messages: (MailgunEmail & {
+    attachments: MailgunEmailAttachment[];
+    user?: {
       firstName: string;
       lastName: string | null;
-    } | null; })[];
-  
+    } | null;
+  })[];
+
   newestFirst?: boolean; // optional: set true if your array is newest-first
 };
 
@@ -29,11 +32,22 @@ export default function MailGunConversation({
   messages,
   newestFirst = false,
 }: TProps) {
-  // If needed, normalize to chronological (oldest -> newest)
-  const data = useMemo(
-    () => (newestFirst ? [...messages].reverse() : messages),
-    [messages, newestFirst]
-  );
+  // Normalize to deterministic chronological order (oldest -> newest).
+  // This prevents wrong date orientation when source/query order varies.
+  const data = useMemo(() => {
+    const normalized = newestFirst ? [...messages].reverse() : [...messages];
+
+    return normalized.sort((a, b) => {
+      const aTime = new Date(a.createdAt).getTime();
+      const bTime = new Date(b.createdAt).getTime();
+
+      if (Number.isNaN(aTime) || Number.isNaN(bTime)) {
+        return 0;
+      }
+
+      return aTime - bTime;
+    });
+  }, [messages, newestFirst]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const bottomAnchorRef = useRef<HTMLDivElement>(null);
@@ -54,7 +68,7 @@ export default function MailGunConversation({
     el.addEventListener("scroll", onScroll, { passive: true });
     // initial snap to bottom
     requestAnimationFrame(() =>
-      bottomAnchorRef.current?.scrollIntoView({ block: "end" })
+      bottomAnchorRef.current?.scrollIntoView({ block: "end" }),
     );
     return () => el.removeEventListener("scroll", onScroll);
   }, [onScroll]);
@@ -92,7 +106,6 @@ export default function MailGunConversation({
             let lastDate: string | null = null;
 
             return data.map((message, index) => {
-              console.log("Rendering message:", message);
               const isIncoming = message.emailBy !== "Company";
               const messageDate = format(new Date(message.createdAt), "PPP");
               const messageTime = format(new Date(message.createdAt), "h:mm a");
@@ -103,9 +116,11 @@ export default function MailGunConversation({
               const showAvatar =
                 isIncoming && (!prev || prev.emailBy === "Company");
 
-                 const senderName = message.emailBy === "Company" 
-                ? message.user && `${message.user.firstName} ${message.user.lastName || ''}`.trim()
-                : null;
+              const senderName =
+                message.emailBy === "Company"
+                  ? message.user &&
+                    `${message.user.firstName} ${message.user.lastName || ""}`.trim()
+                  : null;
               return (
                 <div key={message.id} className="w-full">
                   {/* Date chip */}
@@ -114,8 +129,8 @@ export default function MailGunConversation({
                       <span className="inline-flex items-center rounded-full bg-zinc-100 px-3 py-1 text-[11px] font-medium text-zinc-600 ring-1 ring-zinc-200 dark:bg-zinc-800/60 dark:text-zinc-300 dark:ring-white/10">
                         {formatDate(
                           new Date(
-                            message?.createdAt ?? new Date()
-                          ).toDateString()
+                            message?.createdAt ?? new Date(),
+                          ).toDateString(),
                         )}
                       </span>
                     </div>
@@ -125,7 +140,7 @@ export default function MailGunConversation({
                   <div
                     className={cn(
                       "flex w-full items-start gap-2 px-1",
-                      isIncoming ? "justify-start" : "justify-end"
+                      isIncoming ? "justify-start" : "justify-end",
                     )}
                   >
                     {showAvatar ? (
@@ -143,18 +158,22 @@ export default function MailGunConversation({
                     <div
                       className={cn(
                         "max-w-[86%] sm:max-w-[70%]",
-                        !isIncoming && "ml-auto"
+                        !isIncoming && "ml-auto",
                       )}
                     >
                       {(message?.text?.trim() ||
                         message?.attachments?.length) && (
                         <div
                           className={cn(
-                            "group relative rounded-2xl px-3 py-2 text-[14px] shadow-sm ring-1 transition",
-                            "select-text hover:shadow-md",
-                            isIncoming
-                              ? "bg-zinc-200 text-zinc-900 ring-zinc-300 dark:bg-zinc-800 dark:text-zinc-100 dark:ring-white/10"
-                              : "bg-gradient-to-br from-[#0a8a95] to-[#006D77] text-white ring-white/20"
+                            "group relative w-fit text-[14px] transition select-text",
+                            !isIncoming && "ml-auto",
+                            message?.text?.trim() &&
+                              cn(
+                                "rounded-2xl px-3 py-2 shadow-sm ring-1 hover:shadow-md",
+                                isIncoming
+                                  ? "bg-zinc-200 text-zinc-900 ring-zinc-300 dark:bg-zinc-800 dark:text-zinc-100 dark:ring-white/10"
+                                  : "bg-gradient-to-br from-[#0a8a95] to-[#006D77] text-white ring-white/20",
+                              ),
                           )}
                         >
                           {/* Text */}
@@ -178,7 +197,7 @@ export default function MailGunConversation({
                       <div
                         className={cn(
                           "mt-1 flex flex-col gap-0 text-zinc-500",
-                          !isIncoming && "items-end"
+                          !isIncoming && "items-end",
                         )}
                       >
                         {senderName && (
@@ -188,7 +207,10 @@ export default function MailGunConversation({
                         )}
 
                         <div
-                          className={cn("text-[10px] leading-4", !isIncoming && "text-right")}
+                          className={cn(
+                            "text-[10px] leading-4",
+                            !isIncoming && "text-right",
+                          )}
                           title={new Date(message.createdAt).toLocaleString()}
                         >
                           {messageTime}
@@ -218,7 +240,7 @@ export default function MailGunConversation({
           className={cn(
             "absolute bottom-3 right-3 z-10 inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium",
             "bg-white/90 text-zinc-700 shadow-md ring-1 ring-zinc-200 backdrop-blur",
-            "hover:bg-white dark:bg-zinc-900/80 dark:text-zinc-200 dark:ring-white/10"
+            "hover:bg-white dark:bg-zinc-900/80 dark:text-zinc-200 dark:ring-white/10",
           )}
           aria-label="Jump to newest"
           title="Jump to newest"

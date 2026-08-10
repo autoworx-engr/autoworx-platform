@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from 'react';
-import { usePathname } from 'next/navigation';
+import { useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 
 /**
  * Hook to handle cleanup when navigating away from a page
@@ -15,7 +15,7 @@ export const useNavigationCleanup = () => {
   // Register a cleanup function
   const registerCleanup = (cleanupFn: () => void) => {
     cleanupFunctionsRef.current.add(cleanupFn);
-    
+
     // Return a function to unregister the cleanup
     return () => {
       cleanupFunctionsRef.current.delete(cleanupFn);
@@ -26,14 +26,14 @@ export const useNavigationCleanup = () => {
   useEffect(() => {
     if (previousPathnameRef.current !== pathname) {
       // Call all registered cleanup functions
-      cleanupFunctionsRef.current.forEach(cleanup => {
+      cleanupFunctionsRef.current.forEach((cleanup) => {
         try {
           cleanup();
         } catch (error) {
-          console.error('Error during cleanup:', error);
+          console.error("Error during cleanup:", error);
         }
       });
-      
+
       // Clear the cleanup functions after navigation
       cleanupFunctionsRef.current.clear();
       previousPathnameRef.current = pathname;
@@ -43,11 +43,11 @@ export const useNavigationCleanup = () => {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      cleanupFunctionsRef.current.forEach(cleanup => {
+      cleanupFunctionsRef.current.forEach((cleanup) => {
         try {
           cleanup();
         } catch (error) {
-          console.error('Error during unmount cleanup:', error);
+          console.error("Error during unmount cleanup:", error);
         }
       });
       cleanupFunctionsRef.current.clear();

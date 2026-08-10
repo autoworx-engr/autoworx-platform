@@ -1,7 +1,7 @@
 "use client";
 
-import { canAccessRoute } from "@/lib/routeAccess";
-import { FEATURE_PERMISSIONS_MAP } from "@/lib/routePermissionsMap";
+import { canAccessRoute, canAccessWithFeatureKey } from "@/lib/routeAccess";
+import { resolveRouteFeatureKey } from "@/lib/routePermissionsMap";
 import { useCompanyFeaturePermissionStore } from "@/stores/companyFeaturePermissionStore";
 import { usePermissionStore } from "@/stores/permissionStore";
 import { Spin } from "antd";
@@ -23,31 +23,15 @@ export default function PrivateRoute({ children, session }: TProps) {
   const { permissions } = usePermissionStore();
   const { companyFeaturePermission } = useCompanyFeaturePermissionStore();
 
-  // Helper: Check if company feature permission allows access to this route
-  function canAccessCompanyFeatureRoute(route: string): boolean {
-    if (!companyFeaturePermission || companyFeaturePermission.length === 0)
-      return true;
-    const routeWithoutQuery = route.split("?")[0];
-    const featureKey = FEATURE_PERMISSIONS_MAP[routeWithoutQuery];
-    if (!featureKey) return true;
-    if (Array.isArray(featureKey)) {
-      return featureKey.some((key) =>
-        companyFeaturePermission.some(
-          (perm) => perm.permission_name === key && perm.enabled
-        )
-      );
-    }
-    return companyFeaturePermission.some(
-      (perm) => perm.permission_name === featureKey && perm.enabled
-    );
-  }
-
   // Combine the pathname + search
   const params = searchParams?.toString() ? `?${searchParams.toString()}` : "";
   const fullPath = `${pathname}${params}`;
 
-  // 1. Check company feature permission first
-  if (!canAccessCompanyFeatureRoute(fullPath)) {
+  // 1. Check company feature permission first. `resolveRouteFeatureKey` returns
+  // undefined for routes gated at page level via entitlements (visualization,
+  // sales-agent settings) so users see the upgrade prompt instead of a 404.
+  const featureKey = resolveRouteFeatureKey(fullPath);
+  if (!canAccessWithFeatureKey(featureKey, companyFeaturePermission)) {
     router.replace("/404");
     return null;
   }

@@ -1,32 +1,39 @@
 "use client";
 
-import {
-  getWorkOrderData,
-  IWorkOrderData,
-} from "@/actions/estimate/invoice/getWorkOrderData";
+import type { IWorkOrderData } from "@/actions/estimate/invoice/getWorkOrderData";
 import {
   Dialog,
-  DialogTrigger,
   DialogContent,
   DialogOverlay,
   DialogPortal,
+  DialogTrigger,
 } from "@/components/Dialog";
 import { ImagesDialogContent } from "@/components/ImagesDialogContent";
-import { useServerGet } from "@/hooks/useServerGet";
 import { cn } from "@/lib/cn";
+import { queryKeys } from "@/lib/queryKeys";
+import { getWorkOrderData } from "@/service/work-order/api";
+import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
+import { useIsAdminOrManager } from "@/utils/useIsAdminOrManager";
+import { useQuery } from "@tanstack/react-query";
+import { Image as LucideImage } from "lucide-react";
 import moment from "moment";
 import Image from "next/image";
-import { Image as LucideImage } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import DueDate from "./DueDateInput";
 import { InvoiceItems } from "./InvoiceItems";
 import SaveWorkOrderBtn from "./SaveWorkOrderBtn";
-import { useQuery } from "@tanstack/react-query";
-import { queryKeys } from "@/lib/queryKeys";
-import { time } from "console";
-import { TechnicianImage } from "@prisma/client";
-import { useIsAdminOrManager } from "@/utils/useIsAdminOrManager";
+
+export type DraftOperation =
+  | {
+      type: "add";
+      invoiceItemId: number;
+      serviceId: number | null;
+      payload: any;
+      tempId: string;
+    }
+  | { type: "update"; techId: number; payload: any; invoiceItemId: number }
+  | { type: "delete"; techId: number; invoiceItemId: number };
 
 export interface TechnicianPhoto {
   id: number | string;
@@ -40,25 +47,147 @@ export default function WorkOrderModalBody({
   invoiceId,
   setOpen,
   onWorkOrderCreated,
+  open,
 }: {
   invoiceId: string;
   setOpen: (open: boolean) => void;
   onWorkOrderCreated?: () => void;
+  open?: boolean;
 }) {
   const [dueDate, setDueDate] = useState<string | null>("");
   const isAdminOrManager = useIsAdminOrManager();
+  const currentUser = useGetCurrentUser();
+  const companyId = currentUser?.companyId;
   const [openService, setOpenService] = useState<number | null>(null);
   const { data, error, isLoading, isFetched } = useQuery({
     queryKey: queryKeys.getWorkOrderDataKey(invoiceId),
-    queryFn: () => getWorkOrderData(invoiceId),
-    enabled: !!invoiceId,
+    queryFn: () => getWorkOrderData(companyId!, invoiceId),
+    enabled: !!invoiceId && !!companyId,
   });
+
+  const [localTechniciansPerItem, setLocalTechniciansPerItem] = useState<any>(
+    {},
+  );
+  const [draftOperations, setDraftOperations] = useState<DraftOperation[]>([]);
 
   useEffect(() => {
     if (isFetched && (data as IWorkOrderData)?.invoice?.dueDate) {
       setDueDate((data as IWorkOrderData)?.invoice?.dueDate ?? "");
     }
-  }, [data]);
+  }, [data, isFetched]);
+
+  useEffect(() => {
+    if (!open) {
+      // Reset state when the modal closes
+      setDraftOperations([]);
+      if ((data as IWorkOrderData)?.techniciansPerItem) {
+        setLocalTechniciansPerItem((data as IWorkOrderData).techniciansPerItem);
+      }
+    } else {
+      // Only set local data when opening if it isn't set yet (or just resync on open)
+      if ((data as IWorkOrderData)?.techniciansPerItem) {
+        setLocalTechniciansPerItem((data as IWorkOrderData).techniciansPerItem);
+      }
+    }
+  }, [open, data]);
+
+  const onAddTechnician = (
+    invoiceItemId: number,
+    serviceId: number | null,
+    payload: any,
+    employeeName: string,
+  ) => {
+    const tempId = `temp_${Date.now()}`;
+    const newTech = {
+      ...payload,
+      id: tempId,
+      isDraft: true,
+      name: employeeName,
+      hasPermission: true,
+      images: payload.imageUrls
+        ? payload.imageUrls.map((url: string) => ({ fileUrl: url }))
+        : [],
+    };
+
+    setLocalTechniciansPerItem((prev: any) => ({
+      ...prev,
+      [invoiceItemId]: [...(prev[invoiceItemId] || []), newTech],
+    }));
+
+    setDraftOperations((prev) => [
+      ...prev,
+      { type: "add", invoiceItemId, serviceId, payload, tempId },
+    ]);
+  };
+
+  const onUpdateTechnician = (
+    invoiceItemId: number,
+    techId: number | string,
+    payload: any,
+  ) => {
+    setLocalTechniciansPerItem((prev: any) => ({
+      ...prev,
+      [invoiceItemId]:
+        prev[invoiceItemId]?.map((t: any) =>
+          t.id === techId
+            ? {
+                ...t,
+                ...payload,
+                images: payload.imageUrls
+                  ? payload.imageUrls.map((url: string) => ({ fileUrl: url }))
+                  : t.images,
+              }
+            : t,
+        ) || [],
+    }));
+
+    if (typeof techId === "string" && techId.startsWith("temp_")) {
+      setDraftOperations((prev) =>
+        prev.map((op) =>
+          op.type === "add" && op.tempId === techId
+            ? { ...op, payload: { ...op.payload, ...payload } }
+            : op,
+        ),
+      );
+    } else {
+      setDraftOperations((prev) => {
+        const filtered = prev.filter(
+          (op) => !(op.type === "update" && op.techId === techId),
+        );
+        return [
+          ...filtered,
+          { type: "update", techId: techId as number, invoiceItemId, payload },
+        ];
+      });
+    }
+  };
+
+  const onDeleteTechnician = (
+    invoiceItemId: number,
+    techId: number | string,
+  ) => {
+    setLocalTechniciansPerItem((prev: any) => ({
+      ...prev,
+      [invoiceItemId]:
+        prev[invoiceItemId]?.filter((t: any) => t.id !== techId) || [],
+    }));
+
+    if (typeof techId === "string" && techId.startsWith("temp_")) {
+      setDraftOperations((prev) =>
+        prev.filter((op) => !(op.type === "add" && op.tempId === techId)),
+      );
+    } else {
+      setDraftOperations((prev) => {
+        const filtered = prev.filter(
+          (op) => !(op.type === "update" && op.techId === techId),
+        );
+        return [
+          ...filtered,
+          { type: "delete", techId: techId as number, invoiceItemId },
+        ];
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -67,7 +196,7 @@ export default function WorkOrderModalBody({
         <DialogContent className="h-full min-w-fit overflow-y-auto sm:max-w-[740px] lg:h-fit">
           <div className="flex h-full w-full items-center justify-center">
             <div className="text-center">
-              <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-[#6571FF] border-t-transparent"></div>
+              <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
               <p>Loading work order data...</p>
             </div>
           </div>
@@ -89,6 +218,7 @@ export default function WorkOrderModalBody({
     invoiceTechnicians,
     writePermission,
     techniciansPerItem,
+    redoPerService,
   } = data as IWorkOrderData;
 
   const getTechnicianPhotos = (): TechnicianPhoto[] => {
@@ -98,11 +228,11 @@ export default function WorkOrderModalBody({
       ? Object.values(techniciansPerItem).flat()
       : [];
 
-    allTechnicians.forEach(t => {
+    allTechnicians.forEach((t) => {
       const technicianName = t.name || "Unknown Technician";
 
       if (t.images && t.images.length > 0) {
-        t.images.forEach(image => {
+        t.images.forEach((image) => {
           finalPhotosArray.push({
             id: image.id,
             photo: image.fileUrl,
@@ -217,19 +347,24 @@ export default function WorkOrderModalBody({
           invoiceTechnicians={invoiceTechnicians}
           invoiceStatus={invoice?.column?.title}
           writePermission={writePermission}
-          techniciansPerItem={techniciansPerItem}
+          techniciansPerItem={localTechniciansPerItem}
+          redoPerService={redoPerService}
           openService={openService}
           setOpenService={setOpenService}
+          invoiceId={invoice?.id}
+          onAddTechnician={onAddTechnician}
+          onUpdateTechnician={onUpdateTechnician}
+          onDeleteTechnician={onDeleteTechnician}
         />
 
         {/* see images dialog trigger (uses its own internal state) */}
         {technicianPhotos.length > 0 && isAdminOrManager && (
-          <div className="absolute right-5 md:right-28 top-0">
+          <div className="">
             <Dialog>
               <DialogTrigger asChild>
-                <button className="md:bg-[#6571ff] md:text-white px-5 py-0.5 rounded-md">
+                <button className="md:bg-primary md:text-white px-5 py-0.5 rounded-md">
                   <span className="md:hidden">
-                    <LucideImage className="h-5 w-5 text-[#6571ff]" />
+                    <LucideImage className="h-5 w-5 text-primary" />
                   </span>
                   <span className="hidden md:inline">Attachments</span>
                 </button>
@@ -249,12 +384,14 @@ export default function WorkOrderModalBody({
 
       {writePermission && (
         <div>
-          <div className="flex">
+          <div className="flex mb-4">
             <SaveWorkOrderBtn
               invoiceId={invoice?.id}
               dueDate={dueDate}
               setOpen={setOpen}
               onWorkOrderCreated={onWorkOrderCreated}
+              draftOperations={draftOperations}
+              companyId={companyId}
             />
           </div>
           <div>

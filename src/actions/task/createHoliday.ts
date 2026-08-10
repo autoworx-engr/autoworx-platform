@@ -1,6 +1,5 @@
 "use server";
 import { db } from "@/lib/db";
-import { revalidatePath } from "next/cache";
 
 type THolidays = {
   year: number;
@@ -13,6 +12,7 @@ export async function createHoliday(
   selectedMonth: string,
   selectedYear: number,
 ) {
+  const companyId = holidays[0]?.companyId;
   try {
     const holidaysFromDB = await Promise.all(
       holidays.map(async (holiday) => {
@@ -40,6 +40,7 @@ export async function createHoliday(
     );
     await db.holiday.deleteMany({
       where: {
+        companyId,
         date: {
           notIn: holidaysFromDB.map((holiday) => holiday.date as string),
         },
@@ -47,13 +48,12 @@ export async function createHoliday(
         year: selectedYear,
       },
     });
-    // revalidatePath("/task/month");
     return {
       status: 200,
       success: true,
       data: holidaysFromDB,
     };
   } catch (err: any) {
-    throw new Error("Failed to create holiday: ", err);
+    throw new Error(`Failed to create holiday: ${err?.message ?? err}`);
   }
 }

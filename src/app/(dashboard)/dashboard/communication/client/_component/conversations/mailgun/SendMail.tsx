@@ -1,5 +1,7 @@
 "use client";
+import { getEntitlements } from "@/actions/platform-billing/entitlements";
 import { errorToast } from "@/lib/toast";
+import { useServerGet } from "@/hooks/useServerGet";
 import {
   clientListStore,
   useClientCommunicationStore,
@@ -7,9 +9,13 @@ import {
 import { MailgunEmail, MailgunEmailAttachment } from "@prisma/client";
 import { SendHorizontal } from "lucide-react";
 import Image from "next/image";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import AttachmentInput from "../AttachmentInput";
 import SmartReplyBar from "../sms/SmartReply";
+import { useMessageDraft } from "../../../../_hooks/useMessageDraft";
+import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
+import { ATTACHMENT_ACCEPT, mergeNewAttachments } from "../../../_utils";
 
 // Helper function to format attachment message
 const formatAttachmentMessage = (files: File[]) => {
@@ -24,7 +30,7 @@ const formatAttachmentMessage = (files: File[]) => {
   }
   if (otherFiles.length > 0) {
     parts.push(
-      otherFiles.length === 1 ? "1 file" : `${otherFiles.length} files`
+      otherFiles.length === 1 ? "1 file" : `${otherFiles.length} files`,
     );
   }
 
@@ -40,20 +46,34 @@ export default function SendMail({
   companyId: number;
   setConversations: React.Dispatch<
     React.SetStateAction<
-      (MailgunEmail & { attachments: MailgunEmailAttachment[], user?: {
-          firstName: string;
-          lastName: string | null;
-        } | null; })[] | undefined
+      | (MailgunEmail & {
+          attachments: MailgunEmailAttachment[];
+          user?: {
+            firstName: string;
+            lastName: string | null;
+          } | null;
+        })[]
+      | undefined
     >
   >;
 }) {
   const { clientList, setClientList } = clientListStore();
   const { clientConversationTrack, setClientConversationTrack } =
     useClientCommunicationStore();
+  const { data: entitlements } = useServerGet(getEntitlements, companyId);
   const [pending, startTransition] = React.useTransition();
-  const [messageInput, setMessageInput] = useState("");
+  const {
+    draftText: messageInput,
+    setDraftText: setMessageInput,
+    clearDraft,
+  } = useMessageDraft({
+    section: "client",
+    channel: "email",
+    targetId: clientId,
+  });
 
   const [files, setFiles] = useState<File[]>([]);
+  const router = useRouter();
 
   const fileRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -65,10 +85,14 @@ export default function SendMail({
     el.style.height = `${el.scrollHeight}px`;
   };
 
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [messageInput]);
+
   const handleSendMessage = async (
     e:
       | React.FormEvent<HTMLFormElement>
-      | React.KeyboardEvent<HTMLTextAreaElement>
+      | React.KeyboardEvent<HTMLTextAreaElement>,
   ) => {
     e.preventDefault();
 
@@ -122,15 +146,19 @@ export default function SendMail({
         if (!prev) return [result.data];
         return [...prev, result.data];
       });
-      setMessageInput("");
+      clearDraft();
       setFiles([]);
+
+      setTimeout(() => adjustTextareaHeight(), 0);
+
       const currentClient = clientList?.find(
-        (client) => client.id === clientId
+        (client) => client.id === clientId,
       );
       const filterCurrentClient = clientList?.filter(
-        (client) => client.id !== clientId
+        (client) => client.id !== clientId,
       );
       currentClient && setClientList([currentClient, ...filterCurrentClient]);
+      router.refresh();
     } catch (e) {
       errorToast("Failed to send message");
     }
@@ -139,7 +167,7 @@ export default function SendMail({
   const handleRemoveAttachment = (fileName: string) => {
     setFiles(
       (multiFiles) =>
-        multiFiles && multiFiles?.filter((file) => file?.name !== fileName)
+        multiFiles && multiFiles?.filter((file) => file?.name !== fileName),
     );
   };
   return (
@@ -156,6 +184,7 @@ export default function SendMail({
           companyId={companyId}
           draft={messageInput} // <-- pass the textarea value here
           onPick={(text) => setMessageInput(text)} // or append if you prefer
+          isAllowed={entitlements?.success && entitlements.data?.aiSmartReplies}
         />
       </div>
       <form
@@ -171,18 +200,23 @@ export default function SendMail({
         onDrop={(e) => {
           e.preventDefault();
           const dropped = Array.from(e.dataTransfer.files || []);
-          if (dropped.length) setFiles((prev) => [...prev, ...dropped]);
+          if (dropped.length) {
+            setFiles((prev) => mergeNewAttachments(prev, dropped));
+          }
         }}
       >
         {/* hidden file input */}
         <input
           onChange={(e) => {
-            const picked = Array.from(e.target.files || []);
-            if (picked.length) setFiles((prev) => [...prev, ...picked]); // append, don't replace
+            const picked = Array.from(e?.target?.files || []);
+            if (picked.length) {
+              setFiles((prev) => mergeNewAttachments(prev, picked));
+            }
             e.currentTarget.value = "";
           }}
           multiple
           type="file"
+          accept={ATTACHMENT_ACCEPT}
           className="hidden"
           ref={fileRef}
           aria-hidden

@@ -15,27 +15,43 @@ export const createFleetStatementValidationSchema = z.object({
 });
 
 // Make payment for fleet statement validation schema
-export const makeFleetStatementPaymentValidationSchema = z.object({
-  statementId: z.string({
-    required_error: "Statement ID is required",
-    invalid_type_error: "Statement ID must be a string",
-  }),
-  amount: z
-    .number({
-      required_error: "Payment amount is required",
-      invalid_type_error: "Payment amount must be a number",
-    })
-    .positive("Payment amount must be positive"),
-  paymentMethod: z.enum(["CASH", "CARD", "CHECK", "OTHER"], {
-    required_error: "Payment method is required",
-  }),
-  notes: z.string().optional(),
-  // Additional payment data based on method
-  checkNumber: z.string().optional(),
-  creditCard: z.string().optional(),
-  cardType: z.enum(["VISA", "MASTERCARD", "AMEX", "DISCOVER"]).optional(),
-  paymentMethodId: z.number().optional(),
-});
+export const makeFleetStatementPaymentValidationSchema = z
+  .object({
+    statementId: z.string({
+      required_error: "Statement ID is required",
+      invalid_type_error: "Statement ID must be a string",
+    }),
+    amount: z
+      .number({
+        required_error: "Payment amount is required",
+        invalid_type_error: "Payment amount must be a number",
+      })
+      .positive("Payment amount must be positive"),
+    paymentMethod: z.enum(["CASH", "CARD", "CHECK", "OTHER", "DEPOSIT"], {
+      required_error: "Payment method is required",
+    }),
+    notes: z.string().optional(),
+    date: z.date().optional(),
+    // Additional payment data based on method
+    checkNumber: z.string().optional(),
+    creditCard: z.string().optional(),
+    cardType: z.enum(["VISA", "MASTERCARD", "AMEX", "DISCOVER"]).optional(),
+    paymentMethodId: z.number().optional(),
+    receivedCash: z.string().optional(),
+    depositMethod: z.string().optional(),
+    depositNotes: z.string().optional(),
+  })
+  .refine(
+    (data) => data.paymentMethod !== "DEPOSIT" || !!data.depositMethod?.trim(),
+    {
+      message: "Deposit method is required",
+      path: ["depositMethod"],
+    },
+  );
 
-export type CreateFleetStatementInput = z.infer<typeof createFleetStatementValidationSchema>;
-export type MakeFleetStatementPaymentInput = z.infer<typeof makeFleetStatementPaymentValidationSchema>;
+export type CreateFleetStatementInput = z.infer<
+  typeof createFleetStatementValidationSchema
+>;
+export type MakeFleetStatementPaymentInput = z.infer<
+  typeof makeFleetStatementPaymentValidationSchema
+>;

@@ -2,7 +2,6 @@
 
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogFooter,
   DialogHeader,
@@ -44,18 +43,20 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
       statusSearch
         ? matchSorter(allStatuses, statusSearch, { keys: ["title"] })
         : allStatuses,
-    [allStatuses, statusSearch]
+    [allStatuses, statusSearch],
   );
 
   const [statuses, setStatuses] = useState<Column[] | null>([]);
   const [open, setOpen] = useState(false);
+
+  const isIncompleteDateRange = Boolean(start) !== Boolean(end);
 
   useEffect(() => {
     if (status) {
       const decodedStatuses = decodeURIComponent(status).split(",");
       const getStatuses = useListsStore.getState().statuses;
       const selectedStatuses = getStatuses.filter((s) =>
-        decodedStatuses.includes(s.id.toString())
+        decodedStatuses.includes(s.id.toString()),
       );
       // If no statuses are found, set to an empty array
       setStatuses(selectedStatuses);
@@ -76,7 +77,7 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
     }
     if (statuses && statuses.length > 0) {
       const encodedStatuses = encodeURIComponent(
-        statuses.map((x) => x.id).join(",")
+        statuses.map((x) => x.id).join(","),
       );
       searchParams.set("status", encodedStatuses);
     } else {
@@ -109,12 +110,11 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
       ? `${pathname}?${searchParams.toString()}`
       : pathname;
     router.push(newPath);
-    setOpen(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger className="hidden h-10 items-center gap-2 rounded-xl bg-white px-4 text-sm font-bold text-slate-500 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-50 hover:ring-[#6571FF]/30 active:scale-95 md:flex">
+      <DialogTrigger className="hidden h-10 items-center gap-2 rounded-xl bg-white px-4 text-sm font-bold text-slate-500 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-50 hover:ring-primary/30 active:scale-95 md:flex">
         <Image
           src="/icons/Filter.svg"
           alt="Filter"
@@ -125,7 +125,10 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
         Customize
       </DialogTrigger>
 
-      <DialogContent form className="max-w-xl overflow-hidden rounded-[1.5rem] border-none bg-white p-0 shadow-2xl">
+      <DialogContent
+        form
+        className="max-w-xl overflow-hidden rounded-[1.5rem] border-none bg-white p-0 shadow-2xl"
+      >
         <DialogHeader className="bg-slate-50/50 px-6 py-4">
           <DialogTitle className="text-lg font-bold tracking-tight text-slate-500">
             Customize
@@ -149,10 +152,13 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
                   setEnd(
                     moment(event.currentTarget.value)
                       .add(1, "day")
-                      .format("YYYY-MM-DD")
+                      .format("YYYY-MM-DD"),
                   );
                 }}
-                className={cn(slimInputClassName, "h-10 w-full rounded-lg border-none bg-slate-50 px-3 text-sm ring-1 ring-slate-200 transition-all focus:bg-white focus:ring-2 focus:ring-[#6571FF]/30 outline-none")}
+                className={cn(
+                  slimInputClassName,
+                  "h-10 w-full rounded-lg border-none bg-slate-50 px-3 text-sm ring-1 ring-slate-200 transition-all focus:bg-white focus:ring-2 focus:ring-primary/30 outline-none",
+                )}
               />
               <button
                 type="button"
@@ -177,7 +183,10 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
                 onChange={(event) => setEnd(event.currentTarget.value)}
                 value={end}
                 min={start}
-                className={cn(slimInputClassName, "h-10 w-full rounded-lg border-none bg-slate-50 px-3 text-sm ring-1 ring-slate-200 transition-all focus:bg-white focus:ring-2 focus:ring-[#6571FF]/30 outline-none")}
+                className={cn(
+                  slimInputClassName,
+                  "h-10 w-full rounded-lg border-none bg-slate-50 px-3 text-sm ring-1 ring-slate-200 transition-all focus:bg-white focus:ring-2 focus:ring-primary/30 outline-none",
+                )}
               />
               <button
                 type="button"
@@ -189,6 +198,13 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
             </div>
           </div>
 
+          {isIncompleteDateRange && (
+            <p className="col-span-full -mt-4 ml-1 text-xs font-medium text-rose-500">
+              Please select both a start date and an end date to filter by date
+              range.
+            </p>
+          )}
+
           {/* Status Section */}
           <div className="col-span-full space-y-2">
             <label className="ml-1 text-sm font-semibold tracking-wider text-slate-600">
@@ -197,12 +213,21 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
             <div className="relative rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
               <div className="flex flex-col gap-4">
                 <div className="relative flex items-center">
-                  <Search size={16} className="absolute left-3 text-slate-400 z-50" />
+                  <Search
+                    size={16}
+                    className="absolute left-3 text-slate-400 z-50"
+                  />
                   <input
                     type="search"
                     value={statusSearch}
-                    onChange={(event) => setStatusSearch(event.currentTarget.value)}
-                    className={cn(slimInputClassName, "h-9 w-1/2 rounded-lg border-none bg-white ps-9 text-sm ring-1 ring-slate-200 focus:ring-2 focus:ring-[#6571FF]/30 outline-none")}
+                    onChange={(event) =>
+                      setStatusSearch(event.currentTarget.value)
+                    }
+                    placeholder="Search Status"
+                    className={cn(
+                      slimInputClassName,
+                      "h-9 w-1/2 rounded-lg border-none bg-white ps-9 text-sm ring-1 ring-slate-200 focus:ring-2 focus:ring-primary/30 outline-none",
+                    )}
                   />
                 </div>
 
@@ -223,7 +248,7 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
                         onClick={(e) => {
                           e.stopPropagation();
                           setStatuses((prev) =>
-                            prev ? prev.filter((s) => s.id !== status.id) : []
+                            prev ? prev.filter((s) => s.id !== status.id) : [],
                           );
                         }}
                         size={16}
@@ -263,16 +288,18 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
         </div>
 
         <DialogFooter className="bg-slate-50/50 p-4 flex items-center justify-end gap-2">
-          <DialogClose
+          <button
+            type="button"
             className="w-fit flex h-10 items-center gap-2 rounded-xl px-8 text-sm font-medium text-red-500 border border-red-100 shadow-sm transition-all active:scale-95"
             onClick={clearFilters}
           >
             <XCircle size={16} />
             Clear Filters
-          </DialogClose>
+          </button>
           <Submit
-            className="mx-auto flex h-10 items-center gap-2 rounded-xl bg-[#6571FF] px-8 text-sm font-semibold text-white shadow-lg shadow-[#6571FF]/25 transition-all active:scale-95"
+            className="w-fit flex h-10 items-center gap-2 rounded-xl bg-primary px-8 text-sm font-semibold text-white shadow-lg shadow-primary/25 transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
             formAction={handleFilter}
+            disabled={isIncompleteDateRange}
           >
             <Funnel size={16} />
             Filter Results

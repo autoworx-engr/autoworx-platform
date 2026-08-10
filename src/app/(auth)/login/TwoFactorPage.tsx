@@ -20,7 +20,6 @@ import { useLoginStore } from "@/stores/LoginStore";
 import { TWO_FACTOR_CONFIG } from "@/types/two-factor";
 import { checkLoginWithTwoFactor } from "./actions/checkLoginWithTwoFactor";
 import { getSession, signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { resendTwoFactorCode } from "@/actions/two-factor/resendTwoFactorCode";
 import { successToast } from "@/lib/toast";
 
@@ -37,8 +36,6 @@ const TwoFactorVerification: React.FC = () => {
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
   const [cooldown, setCooldown] = useState<number>(59);
 
-  const router = useRouter();
-
   // Ref for an array of HTMLInputElement
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -54,7 +51,7 @@ const TwoFactorVerification: React.FC = () => {
     let timer: NodeJS.Timeout;
     if (cooldown > 0) {
       timer = setInterval(() => {
-        setCooldown(prev => prev - 1);
+        setCooldown((prev) => prev - 1);
       }, 1000);
     }
     return () => clearInterval(timer);
@@ -109,7 +106,7 @@ const TwoFactorVerification: React.FC = () => {
     e.preventDefault();
     const pastedData = e.clipboardData.getData("text").slice(0, 6).split("");
 
-    if (pastedData.every(char => !isNaN(Number(char)))) {
+    if (pastedData.every((char) => !isNaN(Number(char)))) {
       const newOtp = [...otp];
       pastedData.forEach((digit, i) => {
         if (i < 6) newOtp[i] = digit;
@@ -144,14 +141,9 @@ const TwoFactorVerification: React.FC = () => {
       });
       const session = await getSession();
       const isSuperAdmin = session?.user?.isSuperAdmin;
-      if (isSuperAdmin) {
-        router.push("/awx-dashboard");
-      } else {
-        router.push("/dashboard");
-      }
       setIsSuccess(true);
       setError("");
-      router.refresh();
+      window.location.href = isSuperAdmin ? "/awx-dashboard" : "/dashboard";
     } else {
       setError(res.message);
       setOtp(["", "", "", "", "", ""]);
@@ -209,14 +201,14 @@ const TwoFactorVerification: React.FC = () => {
                   {otp.map((digit, idx) => (
                     <input
                       key={idx}
-                      ref={el => {
+                      ref={(el) => {
                         inputRefs.current[idx] = el;
                       }}
                       type="text"
                       inputMode="numeric"
                       value={digit}
-                      onChange={e => handleChange(e, idx)}
-                      onKeyDown={e => handleKeyDown(e, idx)}
+                      onChange={(e) => handleChange(e, idx)}
+                      onKeyDown={(e) => handleKeyDown(e, idx)}
                       onFocus={() => setActiveIdx(idx)}
                       onPaste={handlePaste}
                       className={`

@@ -1,20 +1,21 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
-import { MessageCircleWarning } from "lucide-react";
-import { Card, CardContent } from "../ui/card";
-import { useGetAllBugReports } from "@/hooks/bug-reports/useGetAllBugReports";
-import { useGetAllBugReportsMessages } from "@/hooks/bug-reports-messages/useGetAllBugReportsMessages";
 import { createBugReportMessageBySuperAdmin } from "@/actions/bug-report-message/createBugReportMessageBySuperAdmin";
-import { errorHandler } from "@/error-boundary/globalErrorHandler";
-import { resolvedBugReport } from "@/actions/bug-report-message/resolvedBugReport";
-import { useBugReportAdminStore } from "@/stores/bugReportAdminStore";
 import { ReadMessage } from "@/actions/bug-report-message/ReadMessage";
-import { MessageCard } from "./MessageCard";
+import { resolvedBugReport } from "@/actions/bug-report-message/resolvedBugReport";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { useGetAllBugReportsMessages } from "@/hooks/bug-reports-messages/useGetAllBugReportsMessages";
+import { useGetAllBugReports } from "@/hooks/bug-reports/useGetAllBugReports";
+import { useBugReportAdminStore } from "@/stores/bugReportAdminStore";
+import { TBugReportMessage } from "@/types/BugReportMessage";
+import { MessageCircleWarning } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
+import { Card, CardContent } from "../ui/card";
+import { BugReportDropdownCard } from "./BugReportDropdownCard";
 import { ChatHeader } from "./ChatHeader";
 import { ChatInput } from "./ChatInput";
-import { BugReportDropdownCard } from "./BugReportDropdownCard";
 import { MessageBubbleSkeleton } from "./MessageBubbleSkeleton";
-import { TBugReportMessage } from "@/types/BugReportMessage";
+import { MessageCard } from "./MessageCard";
 import OptimisticMessageCard from "./OptimisticMessageCard";
 
 interface Contact {
@@ -32,6 +33,7 @@ const AWXBugReport = () => {
   const [message, setMessage] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const portalRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [reportMessage, setReportMessage] = useState<string>("");
@@ -44,10 +46,10 @@ const AWXBugReport = () => {
   } = useGetAllBugReports(50);
 
   const filteredContacts =
-    data?.filter((contact: any) =>
-      contact.BugReportMessage?.[contact.BugReportMessage?.length - 1]?.subject
+    data?.reports?.filter((contact: any) =>
+      contact.BugReportMessage?.[contact.BugReportMessage.length - 1]?.subject
         ?.toLowerCase()
-        ?.includes(searchQuery.toLowerCase())
+        ?.includes(searchQuery.toLowerCase()),
     ) ?? [];
 
   const {
@@ -62,20 +64,16 @@ const AWXBugReport = () => {
   }, [ReportMessages, refetch]);
 
   useEffect(() => {
-    setReportMessage("");
-  }, [ReportMessages, refetch]);
-
-  useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [ReportMessages]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       event.stopPropagation();
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+      const target = event.target as Node;
+      const clickedTrigger = dropdownRef.current?.contains(target);
+      const clickedPortal = portalRef.current?.contains(target);
+      if (!clickedTrigger && !clickedPortal) {
         setIsDropdownOpen(false);
       }
     };
@@ -87,6 +85,12 @@ const AWXBugReport = () => {
   }, [setIsDropdownOpen]);
 
   useEffect(() => {
+    if (!isDropdownOpen) {
+      setSearchQuery("");
+    }
+  }, [isDropdownOpen]);
+
+  useEffect(() => {
     if (!selectedContact) return;
     const readMessage = async () => {
       await ReadMessage({
@@ -96,7 +100,7 @@ const AWXBugReport = () => {
     };
 
     readMessage();
-  }, [selectedContact, setSelectedContact, ReadMessage]);
+  }, [selectedContact]);
 
   const handleContactSelect = (contact: Contact) => {
     setSelectedContact(contact);
@@ -115,7 +119,6 @@ const AWXBugReport = () => {
         companyId: selectedContact?.company?.id,
         content:
           "Your reported issue has been resolved, thanks for your patience. If you face any further problems, please don’t hesitate to create a new bug report.",
-        senderType: "super_admin",
       });
       setSelectedContact(null);
       setIsDropdownOpen(false);
@@ -141,8 +144,8 @@ const AWXBugReport = () => {
         (file) =>
           !selectedFiles.some(
             (existing) =>
-              existing.name === file.name && existing.size === file.size
-          )
+              existing.name === file.name && existing.size === file.size,
+          ),
       );
 
       setSelectedFiles((prevFiles) => [...prevFiles, ...newFiles]);
@@ -170,7 +173,9 @@ const AWXBugReport = () => {
         });
 
         if (!uploadRes.ok) {
-          console.error("File upload failed");
+          toast.error("File upload failed");
+          setMessage(currentMessage);
+          setLoading(false);
           return;
         }
 
@@ -191,7 +196,6 @@ const AWXBugReport = () => {
         bugReportId: selectedContact?.id,
         companyId: selectedContact?.company?.id,
         content: currentMessage,
-        senderType: "super_admin",
         attachments:
           uploadedAttachmentData.length > 0
             ? uploadedAttachmentData
@@ -221,12 +225,13 @@ const AWXBugReport = () => {
           }}
           className="flex items-center"
         >
-          <MessageCircleWarning className="mr-2 h-5 w-5 sm:h-7 sm:w-7 text-white sm:text-[#6571FF]" />
+          <MessageCircleWarning className="mr-2 h-5 w-5 sm:h-7 sm:w-7 text-white sm:text-primary" />
         </button>
 
         {/* Dropdown */}
         {isDropdownOpen && (
           <BugReportDropdownCard
+            ref={portalRef}
             isAdmin={true}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}

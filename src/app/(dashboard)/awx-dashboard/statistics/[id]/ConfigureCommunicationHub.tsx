@@ -6,7 +6,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
+  DialogTrigger,
 } from "@/components/Dialog";
 import { Button } from "@/components/ui/button";
 
@@ -17,7 +17,7 @@ export function ConfigureCommunicationHub() {
         <DialogTrigger asChild>
           <Button
             variant="outline"
-            className="bg-[#6571FF] hover:bg-indigo-600 focus:ring-blue-500 text-white hover:text-white"
+            className="bg-primary hover:bg-indigo-600 focus:ring-blue-500 text-white hover:text-white"
           >
             Configure Communication Hub
           </Button>
@@ -33,13 +33,6 @@ export function ConfigureCommunicationHub() {
           </DialogHeader>
 
           <SmsGatewayButton />
-
-          {/* <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
-            </DialogClose>
-            <Button type="submit">Save changes</Button>
-          </DialogFooter> */}
         </DialogContent>
       </form>
     </Dialog>

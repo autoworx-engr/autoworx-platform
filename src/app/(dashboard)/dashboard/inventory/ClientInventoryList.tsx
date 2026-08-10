@@ -1,17 +1,29 @@
 "use client";
 
-import { useEffect } from "react";
 import { useInventoryDatabaseSearchStore } from "@/stores/inventoryDatabaseSearchStore";
-import InventoryList from "./InventoryList";
+import {
+  Category,
+  InventoryProduct as PrismaInventoryProduct,
+  User,
+  Vendor,
+} from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import InventoryList from "./InventoryList";
+
+type InventoryProductWithRelations = PrismaInventoryProduct & {
+  category: Category | null;
+  vendor: Vendor | null;
+  User?: User | null;
+};
 
 type Props = {
-  supplies: any[];
-  products: any[];
+  supplies: InventoryProductWithRelations[];
+  products: InventoryProductWithRelations[];
   view: string;
   productId: number;
-  user: any;
-  inventoryCategories: any[];
+  user: User;
+  inventoryCategories: string[];
   totalSupplies: number;
   totalProducts: number;
   searchParams: {
@@ -59,7 +71,7 @@ export default function ClientInventoryList({
     resetFilters();
   }, []);
 
-  const { data, isLoading, isError } = useQuery<ProductsResponse>({
+  const { data, isLoading, isFetching, isError } = useQuery<ProductsResponse>({
     queryKey: ["inventory-database", search, categoryName, page, limit],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -69,7 +81,7 @@ export default function ClientInventoryList({
       params.set("limit", String(limit));
 
       const res = await fetch(
-        `/api/inventoryWirehouse/products?${params.toString()}`
+        `/api/inventoryWirehouse/products?${params.toString()}`,
       );
       if (!res.ok) throw new Error("Failed to fetch inventory products");
 
@@ -95,6 +107,7 @@ export default function ClientInventoryList({
       searchParams={searchParams}
       totalProducts={totalProducts}
       totalSupplies={totalSupplies}
+      isLoading={isLoading || isFetching}
       isFullWidth={view === "database"}
       databaseContent={data?.data || []}
       totalDatabaseItems={data?.meta.totalCount || 0}

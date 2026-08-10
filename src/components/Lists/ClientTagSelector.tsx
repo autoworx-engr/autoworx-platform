@@ -1,8 +1,16 @@
 "use client";
 
+import {
+  createClientTag,
+  deleteClientTag,
+  getClientTags,
+} from "@/actions/client/clientTag";
+import { cn } from "@/lib/cn";
 import { INVOICE_COLORS } from "@/lib/consts";
 import { useFormErrorStore } from "@/stores/form-error";
 import { Tag } from "@prisma/client";
+import { Popconfirm } from "antd";
+import { ChevronDown, ChevronUp, Palette, Search, X } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import {
   DropdownMenu,
@@ -11,12 +19,6 @@ import {
 } from "../DropdownMenu";
 import FormError from "../FormError";
 import Submit from "../Submit";
-import {
-  getClientTags,
-  createClientTag,
-  deleteClientTag,
-} from "@/actions/client/clientTag";
-import { ChevronDown, ChevronUp, Palette, Search, X } from "lucide-react";
 
 type SelectedColor = { textColor: string; bgColor: string } | null;
 
@@ -40,7 +42,7 @@ export function ClientTagSelector({
   const state = useState(value);
   const [tag, setTag] = setValue ? [value, setValue] : state;
   const [tags, setTags] = useState<Tag[]>([]);
-  const [filteredTagList, setFilteredTagList] = useState<Tag[]>(tags);
+  const [filteredTagList, setFilteredTagList] = useState<Tag[]>([]);
   const [search, setSearch] = useState<string>("");
   const [pickerOpen, setPickerOpen] = useState(false);
   const [selectedColor, setSelectedColor] = useState<SelectedColor>(null);
@@ -54,8 +56,8 @@ export function ClientTagSelector({
     if (search) {
       setFilteredTagList(
         tags.filter((tag) =>
-          tag.name.toLowerCase().includes(search.toLowerCase())
-        )
+          tag.name.toLowerCase().includes(search.toLowerCase()),
+        ),
       );
     } else {
       setFilteredTagList(tags);
@@ -87,8 +89,6 @@ export function ClientTagSelector({
       if (tag?.id === id) {
         setTag(undefined!);
       }
-
-      if (setOpen) setOpen(false);
     }
   }
 
@@ -104,58 +104,68 @@ export function ClientTagSelector({
   return (
     <>
       <input type="hidden" name={name} value={tag?.id ?? ""} />
-      <DropdownMenu
-        open={open}
-        onOpenChange={(open) => {
-          setOpen && setOpen(open);
-        }}
-      >
+      <DropdownMenu open={open} onOpenChange={(open) => setOpen?.(open)}>
         <DropdownMenuTrigger
-          className={`flex h-10 items-center gap-x-8 rounded-md border border-slate-300 bg-white px-3 py-2 ${customStyles}`}
+          className={cn(
+            "flex w-full h-10 items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 shadow-sm transition-all hover:shadow-md",
+            customStyles,
+          )}
           style={{
             backgroundColor: tag?.bgColor,
             color: tag?.textColor,
-            border: tag ? `1px solid ${tag.textColor}` : "",
+            border: tag ? `1px solid ${tag.textColor}` : undefined,
           }}
-          onClick={() => {
-            setOpen && setOpen(!open);
-          }}
+          onClick={() => setOpen?.(!open)}
         >
-          <span className="text-slate-600 text-sm font-medium">
+          <span className={cn("text-sm font-medium", !tag && "text-slate-500")}>
             {showPlaceholder ? (tag?.name ?? "Select Client Tag") : ""}
           </span>
-          <ChevronDown className="text-slate-500" />
+          <ChevronDown
+            size={16}
+            className={cn(
+              "shrink-0 transition-transform duration-200",
+              open ? "rotate-180" : "rotate-0",
+              tag ? "" : "text-slate-400",
+            )}
+          />
         </DropdownMenuTrigger>
 
         <DropdownMenuContent
+          ref={dropdownRef}
           side="bottom"
           align="start"
           sideOffset={8}
-          className="space-y-1 rounded-md border border-slate-300 bg-background p-0 shadow-md"
-          ref={dropdownRef}
+          avoidCollisions
+          collisionPadding={8}
+          className="z-50 w-full min-w-[280px] overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-2xl ring-1 ring-black/5"
         >
-          {/* Search */}
-          <div className="relative m-2">
+          {/* Search Header */}
+          <div className="relative border-b border-slate-100 bg-slate-50/50 p-2">
             <Search
-              size={18}
-              className="absolute left-2 top-1/2 -translate-y-1/2 transform text-slate-500"
+              size={16}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
             />
-            <Input search={search} setSearch={setSearch} key="search" />
+            <input
+              type="text"
+              placeholder="Search client tags"
+              className="h-9 w-full rounded-lg bg-white pl-9 pr-10 text-sm font-medium ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/30"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
             <button
-              onClick={() => {
-                setOpen && setOpen(!open);
-              }}
+              onClick={() => setOpen?.(false)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
             >
-              <ChevronUp className="absolute right-2 top-1/2 -translate-y-1/2 transform text-slate-500" />
+              <ChevronUp size={16} />
             </button>
           </div>
 
           {/* Tag List */}
-          <div className="thin-scrollbar max-h-28 space-y-1 overflow-y-auto">
+          <div className="thin-scrollbar my-1 max-h-[200px] overflow-y-auto px-2">
             {filteredTagList.map((tagItem) => (
               <div
                 key={tagItem.id}
-                className="mx-4 flex cursor-pointer items-center justify-between rounded-full px-4 py-2"
+                className="mb-1 flex cursor-pointer items-center justify-between rounded-lg px-3 py-1.5 text-sm font-medium transition-opacity hover:opacity-80"
                 style={{
                   backgroundColor: tagItem.bgColor,
                   color: tagItem.textColor,
@@ -165,81 +175,98 @@ export function ClientTagSelector({
                   className="w-full text-left"
                   onClick={() => {
                     setTag(tagItem);
-                    setOpen && setOpen(false);
+                    setOpen?.(false);
                   }}
                 >
                   {tagItem.name}
                 </button>
-                <button
-                  onClick={() => handleDelete(tagItem.id)}
-                  className="text-lg text-slate-600 hover:text-slate-800"
-                >
-                  <X size={20} />
-                </button>
+                <div onClick={(e) => e.stopPropagation()}>
+                  <Popconfirm
+                    title="Delete Tag"
+                    description="Are you sure you want to remove this tag?"
+                    okText="Delete"
+                    cancelText="Cancel"
+                    onConfirm={() => handleDelete(tagItem.id)}
+                    onPopupClick={(e) => e.stopPropagation()}
+                    overlayClassName="[&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800"
+                    okButtonProps={{
+                      className:
+                        "!rounded-lg !border-none !bg-[#6571ff] !font-semibold !shadow-sm !shadow-[#6571ff]/30 hover:!bg-[#525ceb]",
+                    }}
+                    cancelButtonProps={{
+                      className:
+                        "!rounded-lg !border-slate-200 !font-medium !text-slate-600 hover:!border-slate-300 hover:!bg-slate-50 hover:!text-slate-700",
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={(e) => e.stopPropagation()}
+                      className="ml-1.5 transition-transform hover:scale-110"
+                    >
+                      <div
+                        className={cn(
+                          "rounded-full p-0.5",
+                          tagItem.bgColor
+                            ? "bg-white/20 hover:bg-white/40"
+                            : "border border-slate-200 hover:bg-slate-100",
+                        )}
+                      >
+                        <X size={16} strokeWidth={2.5} />
+                      </div>
+                    </button>
+                  </Popconfirm>
+                </div>
               </div>
             ))}
           </div>
 
-          {/* Quick Add */}
           <FormError />
-          <QuickAddClientTagForm
-            onSuccess={(newTag) => {
-              setTags((prev) => [...prev, newTag]);
-              setTag(newTag);
-              setOpen && setOpen(false);
-            }}
-            setColorPickerVisible={setPickerOpen}
-            selectedColor={selectedColor}
-          />
 
-          {/* Color Picker */}
-          {pickerOpen && (
-            <div className="grid grid-cols-4 gap-2 p-2">
-              {INVOICE_COLORS.map((color, idx) => (
-                <button
-                  key={idx}
-                  onClick={() =>
-                    setSelectedColor({
-                      textColor: color.textColor,
-                      bgColor: color.bgColor,
-                    })
-                  }
-                  className="rounded-md p-2"
-                  style={{
-                    backgroundColor: color.bgColor,
-                    color: color.textColor,
-                    border:
+          {/* Quick Add Footer */}
+          <div className="border-t border-slate-100 bg-slate-50/50 p-3">
+            <QuickAddClientTagForm
+              onSuccess={(newTag) => {
+                setTags((prev) => [...prev, newTag]);
+                setTag(newTag);
+                setOpen && setOpen(false);
+              }}
+              setColorPickerVisible={setPickerOpen}
+              selectedColor={selectedColor}
+            />
+
+            {/* Color Picker */}
+            {pickerOpen && (
+              <div className="mt-3 grid grid-cols-5 gap-2 rounded-xl bg-white p-2 shadow-inner ring-1 ring-slate-200">
+                {INVOICE_COLORS.map((color, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() =>
+                      setSelectedColor({
+                        textColor: color.textColor,
+                        bgColor: color.bgColor,
+                      })
+                    }
+                    style={{
+                      backgroundColor: color.bgColor,
+                      color: color.textColor,
+                    }}
+                    className={cn(
+                      "flex h-8 items-center justify-center rounded-lg text-xs font-bold transition-all hover:scale-105",
                       selectedColor?.textColor === color.textColor
-                        ? `1px solid ${color.textColor}`
-                        : "none",
-                  }}
-                >
-                  Aa
-                </button>
-              ))}
-            </div>
-          )}
+                        ? "ring-2 ring-primary ring-offset-1"
+                        : "ring-1 ring-transparent",
+                    )}
+                  >
+                    Aa
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </DropdownMenuContent>
       </DropdownMenu>
     </>
-  );
-}
-
-function Input({
-  search,
-  setSearch,
-}: {
-  search: string;
-  setSearch: React.Dispatch<React.SetStateAction<string>>;
-}) {
-  return (
-    <input
-      type="text"
-      placeholder="Search client tags"
-      className="w-full rounded-md border border-slate-300 p-2 pl-8 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-slate-200"
-      value={search}
-      onChange={(e) => setSearch(e.target.value)}
-    />
   );
 }
 
@@ -257,7 +284,6 @@ function QuickAddClientTagForm({
 
   const handleSubmit = async (data: FormData) => {
     const name = data.get("name") as string;
-
     const res = await createClientTag({ name, ...selectedColor });
     if (res.type === "error") {
       showError({
@@ -266,35 +292,37 @@ function QuickAddClientTagForm({
       });
     } else {
       formRef.current?.reset();
-      if (res.data) {
-        onSuccess?.(res.data);
-      }
+      if (res.data) onSuccess?.(res.data);
     }
   };
 
   return (
-    <form ref={formRef} className="flex w-[200px] gap-2 p-2">
-      <input
-        name="name"
-        type="text"
-        required
-        placeholder="Client tag name"
-        className="w-[80%] flex-1 rounded-md border border-slate-300 p-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-200"
-      />
+    <form ref={formRef} className="flex items-center gap-2">
+      <div className="relative flex-1">
+        <input
+          name="name"
+          type="text"
+          required
+          placeholder="New Tag Name..."
+          className="h-10 w-full rounded-lg bg-white px-2 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-slate-400"
+          onKeyDown={(e) => e.stopPropagation()}
+        />
+      </div>
+
       <button
         type="button"
-        className="rounded bg-[#6470FF] p-2 text-white"
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600 transition-colors hover:bg-slate-200 hover:text-slate-900"
         onClick={() => setColorPickerVisible((prev) => !prev)}
+        title="Choose Color"
       >
-        <Palette size={18} />
+        <Palette size={18} strokeWidth={2.5} />
       </button>
+
       <Submit
-        className="rounded bg-slate-500 p-1 text-xs leading-3 text-white"
+        className="h-10 shrink-0 rounded-lg bg-primary px-3 text-[11px] font-bold uppercase tracking-wider text-white shadow-sm shadow-primary/30 transition-all hover:bg-[#525ceb] active:scale-95"
         formAction={handleSubmit}
       >
-        Quick
-        <br />
-        Add
+        Quick Add
       </Submit>
     </form>
   );

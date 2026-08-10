@@ -1,10 +1,11 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { useFormErrorStore } from "@/stores/form-error";
 import { Eye, EyeOff } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { slimInputClassName } from "./SlimInput";
-import { usePathname } from "next/navigation";
 
 export default function Input({
   name,
@@ -29,12 +30,16 @@ export default function Input({
   const isLoginPage = pathname === "/login" || pathname === "/register";
 
   return (
-    <div className="relative mt-1">
+    <div className="relative">
       <input
         type={showPassword ? "text" : "password"}
         name={name}
         id={name}
-        className={`${isLoginPage ? "w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-[#6571FF]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:focus:border-[#6571FF]" : `${slimInputClassName + "pr-10"}`}`}
+        className={
+          isLoginPage
+            ? "w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-primary/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:focus:border-primary"
+            : cn(slimInputClassName, "pr-10", className)
+        }
         required={required}
         value={value || inputValue}
         onChange={(e) => {
@@ -50,9 +55,9 @@ export default function Input({
         {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
       </button>
 
-      {error && error.field === name && (
+      {/* {error && error.field === name && (
         <p className="text-red-500">{error.message}</p>
-      )}
+      )} */}
     </div>
   );
 }

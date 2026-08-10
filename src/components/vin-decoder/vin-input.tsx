@@ -2,9 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import { CameraIcon } from "lucide-react";
-import VINScannerModal from "./vin-scanner-modal";
 import { useState } from "react";
-import { createPortal } from "react-dom";
+import VINScannerModal from "./vin-scanner-modal";
 
 interface VINInputProps {
   onVehicleInfo: (vehicleInfo: {
@@ -17,7 +16,7 @@ export default function VINInputCamera({ onVehicleInfo }: VINInputProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const handleScanComplete = (
     scannedVin: string,
-    data: Record<string, any>
+    data: Record<string, any>,
   ) => {
     onVehicleInfo({ vin: scannedVin, data });
   };
@@ -27,19 +26,15 @@ export default function VINInputCamera({ onVehicleInfo }: VINInputProps) {
   };
   return (
     <>
-      <div className="space-y-4">
-        <div className="relative flex items-center gap-2">
-          <Button
-            type="button"
-            onClick={onCameraClick}
-            size="icon"
-            className="bg-blue-700 text-white hover:bg-blue-600"
-            title="Open scanner"
-          >
-            <CameraIcon className="h-5 w-5" />
-          </Button>
-        </div>
-      </div>
+      <Button
+        type="button"
+        onClick={onCameraClick}
+        size="icon"
+        className="h-9 w-9 shrink-0 bg-primary text-white hover:bg-[#5a66ee]"
+        title="Open scanner"
+      >
+        <CameraIcon className="h-5 w-5" />
+      </Button>
       {/* {createPortal( */}
       <VINScannerModal
         isOpen={isModalOpen}

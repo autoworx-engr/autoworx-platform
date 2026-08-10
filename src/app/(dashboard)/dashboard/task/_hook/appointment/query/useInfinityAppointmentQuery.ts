@@ -37,12 +37,14 @@ const fetchAppointments = async ({ pageParam = 1 }) => {
   const typedAppointments = appointments as (Appointment & {
     appointmentUsers: (AppointmentUser & { user: User })[];
   })[];
-  
-  const transformedAppointments = typedAppointments.map(appointment => {
+
+  const transformedAppointments = typedAppointments.map((appointment) => {
     const { appointmentUsers, ...appointmentData } = appointment;
     return {
       ...appointmentData,
-      assignedUsers: appointmentUsers.map(appointmentUser => appointmentUser.user)
+      assignedUsers: appointmentUsers.map(
+        (appointmentUser) => appointmentUser.user,
+      ),
     };
   });
 

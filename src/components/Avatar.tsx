@@ -15,19 +15,24 @@ export default function Avatar({
   width?: number;
   height?: number;
   className?: string;
-  alt?:string;
+  alt?: string;
 }) {
   // Better handling of photo URL
   const getImageSrc = () => {
-    if (!photo || photo.trim() === "" || photo === "null" || photo === "undefined") {
+    if (
+      !photo ||
+      photo.trim() === "" ||
+      photo === "null" ||
+      photo === "undefined"
+    ) {
       return "/images/default.png";
     }
-    
+
     // If photo already contains default.png, use it as is
     if (photo.includes("/images/default.png")) {
       return "/images/default.png";
     }
-    
+
     // Return the actual photo URL
     return photo;
   };
@@ -45,6 +50,7 @@ export default function Avatar({
         alt={alt}
         className={"rounded-full object-cover"}
         fill
+        sizes="(max-width: 768px) 100vw, 50px"
         onError={(e) => {
           // Fallback to default image if loading fails
           (e.target as HTMLImageElement).src = "/images/default.png";

@@ -24,7 +24,7 @@ export async function GET() {
     if (!phoneNumber) {
       return NextResponse.json(
         { error: "Twilio phone number not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -33,7 +33,7 @@ export async function GET() {
     console.error("Error fetching Twilio phone number:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -1,13 +1,13 @@
 "use client";
-import React from "react";
-import { cn } from "@/lib/cn";
-import Image from "next/image";
-import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
-import { formatCurrency } from "@/utils/formatCurrency";
-import { useServerGet } from "@/hooks/useServerGet";
-import { getStripeAccount } from "@/app/(dashboard)/dashboard/settings/payments/stripe";
 import { getPaymentGatewayInfo } from "@/app/(dashboard)/dashboard/settings/payments/getPaymentGatewayInfo";
+import { getStripeAccount } from "@/app/(dashboard)/dashboard/settings/payments/stripe";
 import { StatementPaymentDialog } from "@/components/fleet-statement/StatementPaymentDialog";
+import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
+import { useServerGet } from "@/hooks/useServerGet";
+import { cn } from "@/lib/cn";
+import { formatCurrency } from "@/utils/formatCurrency";
+import Image from "next/image";
+import React from "react";
 
 interface FleetStatementModalBodyProps {
   statementId: string;
@@ -25,21 +25,21 @@ export const FleetStatementModalBody: React.FC<
   const invoices = statement?.invoice || [];
 
   const companyId = company?.id;
-  const { data: stripeAccountData } = useServerGet(getStripeAccount, companyId);
+  useServerGet(getStripeAccount, companyId);
   const { data: gatewayInfo } = useServerGet(getPaymentGatewayInfo, companyId);
 
   // Calculate totals
   const totalAmount = invoices.reduce(
     (sum: number, invoice: any) => sum + Number(invoice.grandTotal || 0),
-    0
+    0,
   );
   const totalPaid = invoices.reduce(
     (sum: number, invoice: any) => sum + Number(invoice.totalPayment || 0),
-    0
+    0,
   );
   const totalDue = invoices.reduce(
     (sum: number, invoice: any) => sum + Number(invoice.due || 0),
-    0
+    0,
   );
 
   const totals = {
@@ -49,7 +49,7 @@ export const FleetStatementModalBody: React.FC<
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto bg-white rounded-lg shadow-sm">
+    <div className="w-full max-w-5xl mx-auto bg-white border mt-4 rounded-lg shadow-sm overflow-y-auto">
       {/* Header Section with Company Info */}
       <div className="px-6 py-8 sm:px-10 border-b border-gray-200">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
@@ -59,7 +59,7 @@ export const FleetStatementModalBody: React.FC<
               "flex items-center justify-center rounded-lg overflow-hidden",
               company?.image
                 ? "w-24 h-24 sm:w-32 sm:h-32"
-                : "w-24 h-24 sm:w-32 sm:h-32 bg-slate-400"
+                : "w-24 h-24 sm:w-32 sm:h-32 bg-slate-400",
             )}
           >
             {company?.image ? (
@@ -122,116 +122,130 @@ export const FleetStatementModalBody: React.FC<
 
       {/* Invoice Table */}
       <div className="px-6 sm:px-10 pb-6">
-        <div className="overflow-x-auto rounded-lg border border-gray-200">
-          <table className="w-full min-w-full">
-            <thead>
-              <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+        <div className="thin-scrollbar max-h-[40vh] overflow-x-hidden overflow-y-auto rounded-xl border border-gray-200 shadow-sm">
+          <table className="w-full min-w-full text-sm">
+            <thead className="sticky top-0 z-10 bg-slate-50">
+              <tr className="border-b border-slate-200">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[#66738C]">
                   Invoice#
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[#66738C]">
                   Year
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[#66738C]">
                   Make
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[#66738C]">
                   Model
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[#66738C]">
                   VIN
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-[#66738C]">
                   Amount
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-[#66738C]">
                   Paid
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-[#66738C]">
                   Due
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-[#66738C]">
                   Status
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {invoices.map((invoice: any, index: number) => (
-                <tr
-                  key={invoice.id}
-                  className="hover:bg-gray-50 transition-colors"
-                >
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    <InvoiceModal
-                      invoiceId={invoice?.id}
-                      buttonChild={
-                        <button className="text-blue-600 hover:text-blue-800 font-medium hover:underline">
-                          {invoice?.id}
-                        </button>
-                      }
-                      buttonChildClassName="text-blue-600 hover:text-blue-800"
-                    />
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                    {invoice.vehicle?.year || "2015"}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                    {invoice.vehicle?.make || "Make"}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                    {invoice.vehicle?.model || "Model"}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                    {invoice.vehicle?.vin || "N/A"}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-900 font-medium text-right whitespace-nowrap">
-                    ${Number(invoice.grandTotal || 0).toFixed(2)}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-700 text-right whitespace-nowrap">
-                    ${Number(invoice.totalPayment || 0).toFixed(2)}
-                  </td>
-                  <td className="px-4 py-3 text-sm font-semibold text-right whitespace-nowrap">
-                    <span
-                      className={cn(
-                        invoice.due > 0 ? "text-red-600" : "text-green-600"
-                      )}
-                    >
-                      ${Number(invoice.due || 0).toFixed(2)}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-center whitespace-nowrap">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                      {invoice.column?.title || "Pending"}
-                    </span>
-                  </td>
-                </tr>
-              ))}
+            <tbody className="bg-white">
+              {invoices.map((invoice: any, idx: number) => {
+                const due = Number(invoice.due || 0);
+                const isPaid = due === 0;
+                return (
+                  <tr
+                    key={invoice.id}
+                    className={cn(
+                      "transition-colors hover:bg-slate-50",
+                      idx % 2 === 0 ? "bg-white" : "bg-slate-50/60",
+                    )}
+                  >
+                    <td className="border-b px-4 py-3 text-left">
+                      <InvoiceModal
+                        invoiceId={invoice?.id}
+                        buttonChild={
+                          <button className="text-primary hover:text-[#5a66ee] font-semibold hover:underline text-sm">
+                            #{invoice?.id}
+                          </button>
+                        }
+                        buttonChildClassName="text-primary"
+                      />
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">
+                      {invoice.vehicle?.year || "—"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">
+                      {invoice.vehicle?.make || "—"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">
+                      {invoice.vehicle?.model || "—"}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap font-mono">
+                      {invoice.vehicle?.vin || "—"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-800 font-medium text-right whitespace-nowrap">
+                      {formatCurrency(Number(invoice.grandTotal || 0))}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-emerald-700 font-medium text-right whitespace-nowrap">
+                      {formatCurrency(Number(invoice.totalPayment || 0))}
+                    </td>
+                    <td className="px-4 py-3 text-sm font-semibold text-right whitespace-nowrap">
+                      <span
+                        className={cn(
+                          isPaid ? "text-emerald-600" : "text-red-600",
+                        )}
+                      >
+                        {formatCurrency(due)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-center whitespace-nowrap">
+                      <span
+                        className={cn(
+                          "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold",
+                          isPaid
+                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                            : "bg-amber-50 text-amber-700 border border-amber-200",
+                        )}
+                      >
+                        {invoice.column?.title || (isPaid ? "Paid" : "Unpaid")}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       </div>
 
       {/* Footer Section */}
-      <div className="bg-gray-50 px-6 py-8 sm:px-10 border-t border-gray-200">
+      <div className="px-6 py-8 sm:px-10 border-t border-gray-200">
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-8">
           {/* Company Summary */}
           <div className="space-y-2">
-            <p className="text-base font-bold text-gray-900">
+            <p className="text-base font-bold text-gray-700">
               {company?.name || "BetaTest"}
             </p>
-            <p className="text-sm text-gray-700 font-medium">
+            <p className="text-sm text-gray-600 font-medium">
               {fleet?.fleetName || "Stephanie Kidd"}
             </p>
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-6 text-sm text-gray-600 pt-2">
               <span>
                 Total:{" "}
-                <strong className="text-gray-900">
+                <strong className="text-gray-600">
                   {formatCurrency(totals.totalAmount)}
                 </strong>
               </span>
               <span>
                 Paid:{" "}
-                <strong className="text-gray-900">
+                <strong className="text-gray-600">
                   {formatCurrency(totals.totalPaid)}
                 </strong>
               </span>
@@ -240,40 +254,45 @@ export const FleetStatementModalBody: React.FC<
 
           {/* Amount Due Card */}
           <div className="w-full lg:w-auto lg:min-w-[320px]">
-            <div className="rounded-xl bg-[#0D7C84] p-6 shadow-xl">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-lg font-semibold text-white">
-                  Amount Due
-                </span>
-                <span className="text-2xl font-bold text-white">
-                  {formatCurrency(totals.totalDue)}
-                </span>
-              </div>
-
-              <div className="bg-white rounded-lg px-6 py-4 text-center">
-                <span className="text-[#0D7C84] font-bold text-lg">
-                  Amount Due: {formatCurrency(totals.totalDue)}
-                </span>
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-[11px] font-black uppercase tracking-wider text-slate-500">
+                    Amount Due
+                  </p>
+                  <p className="text-2xl font-bold text-slate-600">
+                    {formatCurrency(totals.totalDue)}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-center text-sm font-semibold text-slate-700">
+                  {totals.totalDue > 0 ? "Balance Outstanding" : "Fully Paid ✓"}
+                </div>
               </div>
             </div>
 
-            <StatementPaymentDialog
-              statementId={statementId}
-              companyId={company.id}
-              totalDue={totals.totalDue}
-              isEnabled={
-                !!(
-                  gatewayInfo?.success &&
-                  (gatewayInfo?.hasStripe || gatewayInfo?.hasAuthorizeNet) &&
-                  parseFloat(Number(totals.totalDue ?? 0).toFixed(2)) > 0
-                )
-              }
-              gatewayInfo={{
-                paymentGateway: gatewayInfo?.paymentGateway || "STRIPE",
-                hasStripe: gatewayInfo?.hasStripe || false,
-                hasAuthorizeNet: gatewayInfo?.hasAuthorizeNet || false,
-              }}
-            />
+            <div className="mt-4">
+              <StatementPaymentDialog
+                statementId={statementId}
+                companyId={company.id}
+                totalDue={totals.totalDue}
+                isEnabled={
+                  !!(
+                    gatewayInfo?.success &&
+                    (gatewayInfo?.hasStripe || gatewayInfo?.hasAuthorizeNet) &&
+                    parseFloat(Number(totals.totalDue ?? 0).toFixed(2)) > 0
+                  )
+                }
+                gatewayInfo={{
+                  paymentGateway: (gatewayInfo?.paymentGateway || "STRIPE") as
+                    | "STRIPE"
+                    | "AUTHORIZE_NET"
+                    | "BOTH",
+                  hasStripe: gatewayInfo?.hasStripe || false,
+                  hasAuthorizeNet: gatewayInfo?.hasAuthorizeNet || false,
+                  tipEnabled: gatewayInfo?.tipEnabled ?? false,
+                }}
+              />
+            </div>
           </div>
         </div>
       </div>

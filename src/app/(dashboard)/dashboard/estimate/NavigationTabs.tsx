@@ -51,7 +51,7 @@ export default function NavigationTabs({
   };
 
   return (
-    <Tabs defaultValue={activeTab} className="mt-5 h-full md:overflow-hidden">
+    <Tabs value={activeTab} className="mt-5 md:overflow-hidden">
       {/* Mobile tab bar*/}
       <div className="flex gap-2 px-2 md:hidden overflow-x-auto thin-scrollbar">
         <MobileTabButton
@@ -92,9 +92,7 @@ export default function NavigationTabs({
       </div>
 
       {/* Desktop tabs */}
-      <TabsList
-        className="hidden md:flex   w-auto"
-      >
+      <TabsList className="hidden md:flex   w-auto">
         <Link href="/dashboard/estimate/templates">
           <TabsTrigger
             className=""
@@ -125,8 +123,8 @@ export default function NavigationTabs({
           </TabsTrigger>
         </Link>
       </TabsList>
-      <div className="flex-auto min-h-[calc(100vh-185px)] overflow-x-clip rounded-lg bg-background ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:p-4">
-        <TabsContent className="h-full" value={activeTab}>
+      <div className="flex-auto min-h-[70vh] flex flex-col overflow-x-clip rounded-lg bg-background ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:p-4">
+        <TabsContent value={activeTab} className="flex-1 flex flex-col">
           {children}
         </TabsContent>
       </div>

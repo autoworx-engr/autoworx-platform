@@ -1,10 +1,11 @@
 "use client";
 
+import CarLoading from "@/components/common/CarLoading";
 import { cn } from "@/lib/cn";
 import { useInventoryDatabaseSearchStore } from "@/stores/inventoryDatabaseSearchStore"; // Import Zustand store
 import { Pagination } from "antd"; // Importing the Pagination component from Ant Design
-import AddNewProduct from "./AddNewProduct";
 import { Search } from "lucide-react";
+import AddNewProduct from "./AddNewProduct";
 
 export interface DatabaseData {
   id: string;
@@ -19,9 +20,11 @@ const oddColor = "bg-[#F8FAFF]";
 export default function DatabaseTable({
   data,
   totalItems,
+  isLoading = true,
 }: {
   data: DatabaseData[];
   totalItems?: number;
+  isLoading?: boolean;
 }) {
   const { page, limit, setPage, setLimit } = useInventoryDatabaseSearchStore(); // Access Zustand store
 
@@ -33,19 +36,13 @@ export default function DatabaseTable({
   };
 
   return (
-    <div className="pb-2">
+    <div className="w-full p-4 bg-background dark:bg-slate-950 flex flex-col rounded-lg drop-shadow-[0_4px_4px_rgb(0_0_0_/_0.25)] h-full">
       {/* Desktop View */}
-      <div
-        // className="hidden overflow-hidden overflow-x-auto rounded-md bg-background md:block"
-        className="hidden rounded-md border border-slate-200 bg-background md:block"
-      >
-        <table
-          // className="w-full md:table-fixed"
-          className="w-full border-separate border-spacing-0 md:table-fixed"
-        >
+      <div className="hidden bg-background md:block flex-1 overflow-auto">
+        <table className="w-full border-separate border-spacing-0 md:table-fixed">
           {/* Database Header */}
-          <thead className="sticky top-0  bg-background">
-            <tr className="h-10">
+          <thead className="sticky top-0 z-10 bg-white shadow-sm">
+            <tr className="h-10 border-b">
               <th className="w-16 px-4 py-2 text-left">#</th>
               <th className="px-4 py-2 text-left">Name</th>
               <th className="px-4 py-2 text-left">Category</th>
@@ -53,16 +50,14 @@ export default function DatabaseTable({
               <th className="px-4 py-2 text-left"></th>
             </tr>
           </thead>
-
-          {/* Database List */}
-          <tbody className="w-full">
-            {data.length === 0 ? (
+          <tbody>
+            {isLoading ? (
               <tr>
-                <td colSpan={5} className="p-20 text-center">
-                  No data found
+                <td colSpan={5}>
+                  <CarLoading />
                 </td>
               </tr>
-            ) : (
+            ) : data.length > 0 ? (
               data.map((item, index) => (
                 <tr
                   key={item.id}
@@ -71,19 +66,23 @@ export default function DatabaseTable({
                   <td className="w-16 px-4 py-2 text-left">
                     <p className="block h-full">{item.id}</p>
                   </td>
+
                   <td className="px-4 py-2 text-left">
                     <p className="block h-full w-full truncate">
                       {item.productName}
                     </p>
                   </td>
+
                   <td className="px-4 py-2 text-left">
                     <p className="block h-full w-full truncate">
                       {item.category}
                     </p>
                   </td>
+
                   <td className="px-4 py-2 text-left">
                     <p className="block h-full w-full">{item.unit}</p>
                   </td>
+
                   <td className="px-4 py-2 text-center">
                     <p className="block h-full w-fit">
                       <AddNewProduct product={item} isDatabase={true} />
@@ -91,6 +90,12 @@ export default function DatabaseTable({
                   </td>
                 </tr>
               ))
+            ) : (
+              <tr>
+                <td colSpan={5}>
+                  <InventoryEmptyState />
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
@@ -100,77 +105,107 @@ export default function DatabaseTable({
       <div className="space-y-3 md:hidden px-2">
         {" "}
         {/* Added some horizontal padding for mobile */}
-        {data.map((item, index) => (
-          <div
-            key={item.id}
-            // Sleek Card Styling for mobile: Rounded, subtle ring, soft shadow, glassmorphism-like background
-            className={cn(
-              "rounded-xl ring-1 ring-slate-200/60 p-4 shadow-md",
-              "backdrop-blur-sm transition-all duration-300 ease-in-out", // Glassmorphism and subtle animation
-              index % 2 === 0
-                ? `bg-slate-50/70 ${evenColor}`
-                : `bg-white/70 ${oddColor}`, // Translucent backgrounds
-              "active:scale-[0.98] active:shadow-lg" // Subtle active state for touch
-            )}
-          >
-            <div className="flex flex-col gap-3">
-              {/* Product name and ID row */}
-              <div className="flex justify-between items-center pb-2 border-b border-slate-200/50">
-                {" "}
-                {/* Subtle divider */}
+        {isLoading ? (
+          <CarLoading />
+        ) : data.length > 0 ? (
+          data.map((item, index) => (
+            <div
+              key={item.id}
+              // Sleek Card Styling for mobile: Rounded, subtle ring, soft shadow, glassmorphism-like background
+              className={cn(
+                "rounded-xl ring-1 ring-slate-200/60 p-4 shadow-md",
+                "backdrop-blur-sm transition-all duration-300 ease-in-out", // Glassmorphism and subtle animation
+                index % 2 === 0
+                  ? `bg-slate-50/70 ${evenColor}`
+                  : `bg-white/70 ${oddColor}`, // Translucent backgrounds
+                "active:scale-[0.98] active:shadow-lg", // Subtle active state for touch
+              )}
+            >
+              <div className="flex flex-col gap-3">
+                {/* Product name and ID row */}
+                <div className="flex justify-between items-center pb-2 border-b border-slate-200/50">
+                  {" "}
+                  {/* Subtle divider */}
+                  <div>
+                    <div className="text-xs font-medium text-slate-500">
+                      Name
+                    </div>
+                    <div className="text-base font-semibold text-slate-800 truncate max-w-[220px]">
+                      {" "}
+                      {/* Truncate long names */}
+                      {item.productName}
+                    </div>
+                  </div>
+                  {/* Highlighted ID with subtle background and accent color */}
+                  <div className="bg-slate-100/80 px-3 py-1 rounded-full ring-1 ring-slate-200">
+                    <div className="text-sm font-bold text-primary">
+                      {" "}
+                      {/* Accent color for ID */}#{item.id}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Category */}
                 <div>
-                  <div className="text-xs font-medium text-slate-500">Name</div>
-                  <div className="text-base font-semibold text-slate-800 truncate max-w-[220px]">
-                    {" "}
-                    {/* Truncate long names */}
-                    {item.productName}
+                  <div className="text-xs font-medium text-slate-500">
+                    Category
                   </div>
+                  <div className="text-sm text-slate-700">{item.category}</div>
                 </div>
-                {/* Highlighted ID with subtle background and accent color */}
-                <div className="bg-slate-100/80 px-3 py-1 rounded-full ring-1 ring-slate-200">
-                  <div className="text-sm font-bold text-[#6571FF]">
-                    {" "}
-                    {/* Accent color for ID */}#{item.id}
-                  </div>
+
+                {/* Unit */}
+                <div>
+                  <div className="text-xs font-medium text-slate-500">Unit</div>
+                  <div className="text-sm text-slate-700">{item.unit}</div>
                 </div>
               </div>
 
-              {/* Category */}
-              <div>
-                <div className="text-xs font-medium text-slate-500">
-                  Category
-                </div>
-                <div className="text-sm text-slate-700">{item.category}</div>
-              </div>
-
-              {/* Unit */}
-              <div>
-                <div className="text-xs font-medium text-slate-500">Unit</div>
-                <div className="text-sm text-slate-700">{item.unit}</div>
+              {/* Action Button Section */}
+              <div className="mt-4 pt-4 border-t border-slate-200/50 w-full">
+                {" "}
+                {/* Refined divider */}
+                <AddNewProduct product={item} isDatabase={true} />
               </div>
             </div>
-
-            {/* Action Button Section */}
-            <div className="mt-4 pt-4 border-t border-slate-200/50 w-full">
-              {" "}
-              {/* Refined divider */}
-              <AddNewProduct product={item} isDatabase={true} />
-            </div>
+          ))
+        ) : (
+          <div className="py-8">
+            <InventoryEmptyState />
           </div>
-        ))}
+        )}
       </div>
 
-      <div className="mt-4 flex justify-end">
-        {data.length > 0 && <Pagination
-          className="custom-pagination"
-          current={page}
-          pageSize={limit}
-          total={totalItems || 0}
-          onChange={handlePageChange}
-          showSizeChanger
-          onShowSizeChange={handlePageChange}
-        />}
+      <div className="mt-auto flex shrink-0 justify-end bg-white px-4 py-2 shadow-[0_-1px_2px_rgba(0,0,0,0.04)]">
+        {!isLoading && data.length > 0 && (
+          <Pagination
+            className="custom-pagination"
+            current={page}
+            pageSize={limit}
+            total={totalItems || 0}
+            onChange={handlePageChange}
+            showSizeChanger
+            onShowSizeChange={handlePageChange}
+          />
+        )}
       </div>
+    </div>
+  );
+}
+
+function InventoryEmptyState() {
+  return (
+    <div className="flex min-h-[55vh] w-full flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-100 bg-slate-50/30 p-12 text-center">
+      <div className="relative mb-6 flex h-16 w-16 items-center justify-center rounded-3xl bg-white shadow-sm ring-1 ring-slate-200/50">
+        <Search size={24} className="text-slate-300" strokeWidth={1.5} />
+        <div className="absolute inset-0 animate-ping rounded-3xl bg-slate-100 opacity-20" />
+      </div>
+      <h3 className="mb-2 text-lg font-bold text-slate-500">
+        No Results Found
+      </h3>
+      <p className="max-w-[280px] text-sm font-medium leading-relaxed text-slate-400">
+        We couldn&apos;t find what you&apos;re looking for. Try adjusting your
+        filters or search terms.
+      </p>
     </div>
   );
 }

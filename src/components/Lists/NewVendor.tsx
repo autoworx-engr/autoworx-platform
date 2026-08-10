@@ -11,14 +11,15 @@ import {
   DialogTrigger,
 } from "@/components/Dialog";
 import FormError from "@/components/FormError";
+import { successToast } from "@/lib/toast";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import { Vendor } from "@prisma/client";
+import type { JSX } from "react";
 import { useRef, useState } from "react";
+import PhoneInput from "../PhoneInput";
 import { SlimInput } from "../SlimInput";
 import { SlimTextarea } from "../SlimTextarea";
-import { errorToast, successToast } from "@/lib/toast";
-import PhoneInput from "../PhoneInput";
 
 export default function NewVendor({
   bgShadow,
@@ -36,7 +37,7 @@ export default function NewVendor({
   const phoneDataRef = useRef({
     mobile: "",
     country: "",
-    countryIsoCode: ""
+    countryIsoCode: "",
   });
 
   const { mobile, country, countryIsoCode } = phoneDataRef.current;
@@ -49,7 +50,7 @@ export default function NewVendor({
     const company =
       document.querySelector<HTMLInputElement>("#companyName")?.value;
     // const phone = document.querySelector<HTMLInputElement>("#phone")?.value;
-    const phone = country && mobile ? `${country}${mobile}` : mobile || ""
+    const phone = country && mobile ? `${country}${mobile}` : mobile || "";
     const email = document.querySelector<HTMLInputElement>("#email")?.value;
     const address = document.querySelector<HTMLInputElement>("#address")?.value;
     const city = document.querySelector<HTMLInputElement>("#city")?.value;
@@ -101,6 +102,14 @@ export default function NewVendor({
       return;
     }
 
+    if (zip && !/^\d+$/.test(zip)) {
+      showError({
+        field: "zip",
+        message: "Zip code should contain only numbers.",
+      });
+      return;
+    }
+
     // Validate phone format if provided
     // if (phone && !/^\+?\d*$/.test(phone)) {
     //   showError({
@@ -114,7 +123,7 @@ export default function NewVendor({
     if (
       website &&
       !/^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/.test(
-        website
+        website,
       )
     ) {
       showError({
@@ -135,7 +144,7 @@ export default function NewVendor({
       zip,
       website,
       notes,
-      countryCode: countryIsoCode
+      countryCode: countryIsoCode,
     });
 
     if (res.type === "success") {
@@ -177,7 +186,10 @@ export default function NewVendor({
     >
       <DialogTrigger asChild>{button}</DialogTrigger>
 
-      <DialogContent className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]">
+      <DialogContent
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]"
+      >
         <DialogHeader>
           <DialogTitle className="text-slate-600">Add New Vendor</DialogTitle>
         </DialogHeader>
@@ -185,7 +197,11 @@ export default function NewVendor({
         <FormError />
 
         <div className="grid gap-2 overflow-y-auto sm:grid-cols-2 px-1">
-          <SlimInput id="contactName" name="contactName" placeholder="Enter contact name" />
+          <SlimInput
+            id="contactName"
+            name="contactName"
+            placeholder="Enter contact name"
+          />
           <div className="space-y-1">
             <SlimInput
               id="companyName"
@@ -248,9 +264,9 @@ export default function NewVendor({
               phoneDataRef.current = {
                 mobile: phone,
                 country: code,
-                countryIsoCode: isoCode || ""
+                countryIsoCode: isoCode || "",
               };
-              clearError()
+              clearError();
             }}
           />
           <SlimInput
@@ -270,9 +286,24 @@ export default function NewVendor({
               }
             }}
           />
-          <SlimInput id="address" name="address" required={false} placeholder="Street address" />
-          <SlimInput id="city" name="city" required={false} placeholder="City" />
-          <SlimInput id="state" name="state" required={false} placeholder="State" />
+          <SlimInput
+            id="address"
+            name="address"
+            required={false}
+            placeholder="Street address"
+          />
+          <SlimInput
+            id="city"
+            name="city"
+            required={false}
+            placeholder="City"
+          />
+          <SlimInput
+            id="state"
+            name="state"
+            required={false}
+            placeholder="State"
+          />
           <SlimInput
             id="zip"
             name="zip"
@@ -280,7 +311,8 @@ export default function NewVendor({
             required={false}
             onChange={(e) => {
               const value = e.target.value;
-              if (value && !/^\d*$/.test(value)) {
+              // value && !/^\d*$/.test(value)
+              if (value === "" || /^\d+$/.test(value)) {
                 showError({
                   field: "zip",
                   message: "Zip code should contain only numbers.",
@@ -302,7 +334,7 @@ export default function NewVendor({
                 if (
                   value &&
                   !/^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/.test(
-                    value
+                    value,
                   )
                 ) {
                   showError({
@@ -314,7 +346,12 @@ export default function NewVendor({
                 }
               }}
             />
-            <SlimTextarea id="notes" name="notes" required={false} placeholder="Additional notes" />
+            <SlimTextarea
+              id="notes"
+              name="notes"
+              required={false}
+              placeholder="Additional notes"
+            />
           </div>
         </div>
 
@@ -334,7 +371,7 @@ export default function NewVendor({
           <button
             className="
                 rounded-xl px-6 py-2.5 text-sm font-medium text-white
-                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                bg-gradient-to-r from-primary to-[#5a66ee]
                 shadow-lg shadow-indigo-500/30
                 hover:shadow-xl hover:shadow-indigo-500/40
                 hover:-translate-y-0.5 hover:scale-[1.02]

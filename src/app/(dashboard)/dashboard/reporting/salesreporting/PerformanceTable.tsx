@@ -38,7 +38,7 @@ export default function PerformanceTable({
   };
 
   const averageSalesCycleLength = dayHours(
-    data?.averageConversionTime as number
+    data?.averageConversionTime as number,
   );
 
   const metricData: MetricData[] = data
@@ -51,7 +51,7 @@ export default function PerformanceTable({
         },
         {
           label: "Average Deal Size",
-          value: `${data.averageDealSize} $`,
+          value: `$${(data.averageDealSize ?? 0).toFixed(2)}`,
           percentage: data.growthRates.averageDealSizeGR.rate,
           isPositive: data.growthRates.averageDealSizeGR.isPositive,
         },

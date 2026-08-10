@@ -9,8 +9,17 @@ export default function useAppointmentQueryByDate(date: string) {
     queryFn: async () => {
       const response = await getAppointments({
         where: {
-          date: `${date}T00:00:00.000Z`,
-          AND: [{ startTime: { not: null } }, { endTime: { not: null } }],
+          AND: [
+            { startTime: { not: null } },
+            { endTime: { not: null } },
+            { date: { lte: `${date}T23:59:59.999Z` } },
+            {
+              OR: [
+                { endDate: null, date: `${date}T00:00:00.000Z` },
+                { endDate: { gte: `${date}T00:00:00.000Z` } },
+              ],
+            },
+          ],
         },
         include: {
           appointmentUsers: {
@@ -31,7 +40,6 @@ export default function useAppointmentQueryByDate(date: string) {
               lastName: true,
               email: true,
               mobile: true,
-              
             },
           },
         },

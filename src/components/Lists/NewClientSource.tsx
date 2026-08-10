@@ -44,13 +44,14 @@ export default function NewClientSource({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button type="button" className="text-xs text-[#6571FF]">
+        <button type="button" className="text-xs text-primary">
           + Add Client Source
         </button>
       </DialogTrigger>
 
       <DialogContent
         className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]"
+        onOpenAutoFocus={(e) => e.preventDefault()}
         form
       >
         <DialogHeader>
@@ -77,7 +78,7 @@ export default function NewClientSource({
             Cancel
           </DialogClose>
           <Submit
-            className="rounded-lg border bg-[#6571FF] px-5 py-2 text-white"
+            className="rounded-lg border bg-primary px-5 py-2 text-white"
             formAction={handleSubmit}
           >
             Add

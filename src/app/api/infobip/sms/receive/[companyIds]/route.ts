@@ -1,6 +1,7 @@
 import { updatePipelineAutomationTriggerWithToken } from "@/actions/automation/pipeline/triggerPipelineAutomation";
 import { updateNewSMSChatTrack } from "@/actions/communication/client/chat-track";
 import { db } from "@/lib/db";
+import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
 import { sendClientMessageNotification } from "@/lib/notification/communication-notify";
 import sendClientMailOrSMSNotify from "@/lib/pusher/client-conversation-notify";
 import receiveTwiloMessage from "@/lib/pusher/receiveTwiloMessage";
@@ -43,7 +44,7 @@ const pusher = getPusherInstance();
  */
 export async function POST(
   req: NextRequest,
-  context: { params: Promise<{ companyIds: string }> }
+  context: { params: Promise<{ companyIds: string }> },
 ) {
   try {
     const { params } = context;
@@ -74,14 +75,14 @@ export async function POST(
       console.log("Infobip delivery report received:", results);
       return NextResponse.json(
         { message: "Delivery report processed" },
-        { status: 200 }
+        { status: 200 },
       );
     }
 
     if (!from || !to) {
       return NextResponse.json(
         { error: "Missing required fields: from or to" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -105,12 +106,19 @@ export async function POST(
           error:
             "No Infobip configuration found for the specified companies and phone number",
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     // Process for each matching company configuration
     for (const infobipConfig of infobipConfigs) {
+      const entitlements = await getCompanyEntitlements(
+        infobipConfig.companyId,
+      );
+      if (!entitlements.canUseSms) {
+        continue;
+      }
+
       let client = await db.client.findFirst({
         where: {
           mobile: {
@@ -135,6 +143,7 @@ export async function POST(
             lastName: " ",
             mobile: from,
             companyId: infobipConfig.companyId,
+            isSalesAgent: true,
           },
           include: {
             Lead: {
@@ -194,6 +203,7 @@ export async function POST(
           companyId: infobipConfig.companyId,
           clientId: client.id,
           clientName: client.firstName + " " + client.lastName,
+          message: messageText,
         });
 
         // Trigger Pusher notification
@@ -221,20 +231,20 @@ export async function POST(
         }
       } else {
         console.log(
-          `No client found for phone number ${from} in company ${infobipConfig.companyId}`
+          `No client found for phone number ${from} in company ${infobipConfig.companyId}`,
         );
       }
     }
 
     return NextResponse.json(
       { message: "Webhook processed successfully", data: body },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error: any) {
     console.error("Infobip webhook error:", error);
     return NextResponse.json(
       { message: "Webhook processing failed", error: error?.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -243,6 +253,6 @@ export async function POST(
 export async function GET() {
   return NextResponse.json(
     { message: "Infobip SMS receive webhook is active" },
-    { status: 200 }
+    { status: 200 },
   );
 }

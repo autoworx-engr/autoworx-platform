@@ -101,7 +101,7 @@ export default async function PaymentTab({
         : null;
 
       return { ...invoice, vehicle: vehicle?.model ?? "" };
-    })
+    }),
   );
 
   const invoicesWithFull: InvoiceWithFull[] = [];
@@ -141,14 +141,14 @@ export default async function PaymentTab({
   const sortedPayments = allPayments.sort(
     (a, b) =>
       new Date(a.date || a.createdAt).getTime() -
-      new Date(b.date || b.createdAt).getTime()
+      new Date(b.date || b.createdAt).getTime(),
   );
 
   for (let i = 0; i < sortedPayments.length; i++) {
     const payment = sortedPayments[i];
 
     const originalInvoice = invoices.find(
-      (inv) => inv.id === payment.invoiceId
+      (inv) => inv.id === payment.invoiceId,
     );
     if (!originalInvoice) continue;
 
@@ -173,7 +173,7 @@ export default async function PaymentTab({
 
     const actualRefundedAmount = payment.Refund.reduce(
       (sum, refund) => sum + Number(refund.amount),
-      0
+      0,
     );
     const originalAmount = Number(payment?.amount ?? 0);
     const netAmount = originalAmount - actualRefundedAmount;
@@ -192,14 +192,13 @@ export default async function PaymentTab({
         if (pmt.invoiceId === payment.invoiceId) {
           const refunds = pmt.Refund.reduce(
             (refundSum, refund) => refundSum + Number(refund.amount),
-            0
+            0,
           );
           return sum + Number(pmt.amount || 0) - refunds;
         }
         return sum;
       }, 0);
-      dueAfterPayment =
-        originalInvoiceGrandTotal - originalInvoiceDeposit - totalPaidUpToThis;
+      dueAfterPayment = originalInvoiceGrandTotal - totalPaidUpToThis;
     }
 
     invoicesWithFull.push({
@@ -261,7 +260,7 @@ export default async function PaymentTab({
   }
 
   allTransactionEntries.sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
   );
 
   const totalCustomerPaidAmount = allPayments.reduce((acc, payment) => {
@@ -273,7 +272,7 @@ export default async function PaymentTab({
   const totalRefundedAmount = allPayments.reduce((acc, payment) => {
     const actualRefundedAmount = payment.Refund.reduce(
       (sum, refund) => sum + Number(refund.amount),
-      0
+      0,
     );
     return acc + actualRefundedAmount;
   }, 0);
@@ -282,7 +281,7 @@ export default async function PaymentTab({
     (acc, invoice) =>
       acc +
       (invoice.grandTotal ? parseFloat(invoice.grandTotal.toString()) : 0),
-    0
+    0,
   );
 
   const totalServices = [] as (Service & { count: number })[];
@@ -333,7 +332,6 @@ export default async function PaymentTab({
 
   const mergedPaymentData = invoiceData.map((inv) => {
     const tx = transactionData.find((t) => t.paymentId === inv.paymentId);
-    console.log("transactionData", tx);
 
     return {
       id: inv.paymentId,
@@ -395,13 +393,13 @@ export default async function PaymentTab({
                   key={service.id}
                   className={cn(
                     "flex justify-between items-center gap-4 p-3 py-2 transition-colors border-b rounded-xl",
-                    index % 2 === 0 ? "bg-white" : "bg-slate-50"
+                    index % 2 === 0 ? "bg-white" : "bg-slate-50",
                   )}
                 >
                   <p className="truncate pr-2 font-semibold text-slate-600">
                     {service.name}
                   </p>
-                  <p className="text-nowrap text-sm font-medium text-[#6571FF] bg-[#6571FF]/5 px-1 py-o.5 rounded-lg">
+                  <p className="text-nowrap text-sm font-medium text-primary bg-primary/5 px-1 py-o.5 rounded-lg">
                     Ordered {service.count} times
                   </p>
                 </div>
@@ -426,14 +424,13 @@ export default async function PaymentTab({
                 <th className="px-10 text-left">Date</th>
                 <th className="text-nowrap px-10 text-left">Due</th>
                 <th className="text-nowrap px-10 text-left">Status</th>
-                <th className="px-10 text-left">Notes</th>
                 <th className="px-10 text-left">Actions</th>
               </tr>
             </thead>
             <tbody>
               {invoicesWithFull?.map((data, index) => {
                 const mergedPayment = mergedPaymentData.find(
-                  (m) => m.paymentId === data.paymentId
+                  (m) => m.paymentId === data.paymentId,
                 );
 
                 //  Calculate total paid for this specific invoice
@@ -445,14 +442,14 @@ export default async function PaymentTab({
                     key={data.id}
                     className={cn(
                       "py-3",
-                      index % 2 === 0 ? evenColor : oddColor
+                      index % 2 === 0 ? evenColor : oddColor,
                     )}
                   >
                     <td className="h-8 px-10 text-left">
                       <InvoiceModal
                         invoiceId={data.id}
                         buttonChild={
-                          <button className="text-[#6571FF]">{data.id}</button>
+                          <button className="text-primary">{data.id}</button>
                         }
                       />
                     </td>
@@ -485,7 +482,6 @@ export default async function PaymentTab({
                       {formatCurrency(Number(data.due))}
                     </td>
                     <td className="px-10 text-left">{data.column?.title}</td>
-                    <td className="px-10 text-left">{data.notes}</td>
                     <td className="px-10 text-left">
                       <EditPaymentModal
                         invoiceGrandTotal={Number(data.grandTotal)}
@@ -506,7 +502,7 @@ export default async function PaymentTab({
           {invoicesWithFull.slice(0, 4).map((data, index) => {
             //  Find the merged payment data for this payment
             const mergedPayment = mergedPaymentData.find(
-              (m) => m.paymentId === data.paymentId
+              (m) => m.paymentId === data.paymentId,
             );
 
             //  Calculate total paid for this specific invoice
@@ -519,20 +515,20 @@ export default async function PaymentTab({
                 key={data.id}
                 className={cn(
                   "rounded-lg p-4 shadow-sm transition-all duration-200",
-                  index % 2 === 0 ? "bg-background" : "bg-[#F8FAFF]"
+                  index % 2 === 0 ? "bg-background" : "bg-[#F8FAFF]",
                 )}
               >
                 <div className="flex items-center justify-between">
                   <InvoiceModal
                     invoiceId={data.id}
                     buttonChild={
-                      <button className="text-lg font-semibold text-[#6571FF]">
+                      <button className="text-lg font-semibold text-primary">
                         {data.id}
                       </button>
                     }
                   />
                   <div className="flex items-center gap-2">
-                    <p className="text-lg font-bold text-[#6571FF]">
+                    <p className="text-lg font-bold text-primary">
                       {formatCurrency(data.amountPaid)}
                       {data.refundedAmount > 0 && (
                         <span className="text-xs flex text-red-600 mt-1">
@@ -584,12 +580,12 @@ export default async function PaymentTab({
                     <p className="text-sm text-[#66738C]">Status</p>
                     <p className="text-sm font-medium">{data.column?.title}</p>
                   </div>
-                  {data.notes && (
+                  {/* {data.notes && (
                     <div className="pt-2">
                       <p className="text-sm text-[#66738C]">Notes</p>
                       <p className="text-sm font-medium">{data.notes}</p>
                     </div>
-                  )}
+                  )} */}
                 </div>
               </div>
             );
@@ -636,7 +632,7 @@ export default async function PaymentTab({
                     <InvoiceModal
                       invoiceId={transaction.invoiceId}
                       buttonChild={
-                        <button className="text-[#6571FF]">
+                        <button className="text-primary">
                           {transaction.invoiceId}
                         </button>
                       }
@@ -659,7 +655,7 @@ export default async function PaymentTab({
                     {moment(transaction.date).format("MM.DD.YYYY")}
                   </td>
                   <td className="px-10 text-left">{transaction.method}</td>
-                  <td className="px-10 text-left">{transaction.notes}</td>
+                  {/* <td className="px-10 text-left">{transaction.notes}</td> */}
                 </tr>
               ))}
             </tbody>
@@ -673,7 +669,7 @@ export default async function PaymentTab({
               key={transaction.id}
               className={cn(
                 "rounded-lg p-4 shadow-sm transition-all duration-200",
-                index % 2 === 0 ? "bg-background" : "bg-[#F8FAFF]"
+                index % 2 === 0 ? "bg-background" : "bg-[#F8FAFF]",
               )}
             >
               <div className="flex items-center justify-between">
@@ -690,7 +686,7 @@ export default async function PaymentTab({
                   <InvoiceModal
                     invoiceId={transaction.invoiceId}
                     buttonChild={
-                      <button className="text-lg font-semibold text-[#6571FF]">
+                      <button className="text-lg font-semibold text-primary">
                         {transaction.invoiceId}
                       </button>
                     }
@@ -701,7 +697,7 @@ export default async function PaymentTab({
                     className={`text-lg font-bold ${
                       transaction.type === "REFUND"
                         ? "text-red-600"
-                        : "text-[#6571FF]"
+                        : "text-primary"
                     }`}
                   >
                     ${Math.abs(transaction.amount).toFixed(2)}
@@ -733,12 +729,12 @@ export default async function PaymentTab({
                       : "N/A"}
                   </p>
                 </div>
-                {transaction.notes && (
+                {/* {transaction.notes && (
                   <div className="pt-2">
                     <p className="text-sm text-[#66738C]">Notes</p>
                     <p className="text-sm font-medium">{transaction.notes}</p>
                   </div>
-                )}
+                )} */}
               </div>
             </div>
           ))}

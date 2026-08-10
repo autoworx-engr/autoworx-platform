@@ -43,7 +43,7 @@ const VehicleAddPrompt: React.FC<TPromptProps> = ({
           <button
             type="button"
             onClick={onConfirm}
-            className="rounded-lg border bg-[#6571FF] px-5 py-2 text-white"
+            className="rounded-lg border bg-primary px-5 py-2 text-white"
           >
             Yes, add vehicle
           </button>

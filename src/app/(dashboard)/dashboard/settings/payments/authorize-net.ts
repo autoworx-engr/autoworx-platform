@@ -6,18 +6,10 @@ import { verifyAuthorizeNetCredentials } from "@/actions/payment/authorizeNetPay
 
 async function createAuthorizeNetWebhook(
   apiLoginId: string,
-  transactionKey: string
+  transactionKey: string,
 ) {
   try {
     const rawUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/authorize-net/webhook`;
-
-    if (!rawUrl) {
-      console.warn(
-        "AUTHORIZE_NET_WEBHOOK_URL or NEXT_PUBLIC_APP_URL not set; skipping auto webhook creation."
-      );
-      return;
-    }
-
     let webhookUrl: string;
     try {
       const parsed = new URL(rawUrl);
@@ -25,7 +17,7 @@ async function createAuthorizeNetWebhook(
       if (parsed.protocol !== "https:") {
         console.warn(
           "Authorize.Net webhook URL must be https; skipping creation for:",
-          rawUrl
+          rawUrl,
         );
         return;
       }
@@ -40,7 +32,7 @@ async function createAuthorizeNetWebhook(
     } catch (e) {
       console.warn(
         "Invalid AUTHORIZE_NET_WEBHOOK_URL/NEXT_PUBLIC_APP_URL:",
-        rawUrl
+        rawUrl,
       );
       return;
     }
@@ -52,7 +44,7 @@ async function createAuthorizeNetWebhook(
       : "https://apitest.authorize.net";
 
     const auth = Buffer.from(`${apiLoginId}:${transactionKey}`).toString(
-      "base64"
+      "base64",
     );
 
     const headers: Record<string, string> = {
@@ -74,7 +66,7 @@ async function createAuthorizeNetWebhook(
         console.error(
           "Authorize.Net eventtypes request failed (auth/config issue?):",
           evRes.status,
-          t
+          t,
         );
         // If auth fails here, don't attempt webhook creation.
         return;
@@ -98,14 +90,14 @@ async function createAuthorizeNetWebhook(
         const existing = (await listRes.json()) as Array<{ url?: string }>;
         hasExisting =
           existing?.some(
-            (w) => (w.url || "").replace(/\/+$/, "") === webhookUrl
+            (w) => (w.url || "").replace(/\/+$/, "") === webhookUrl,
           ) ?? false;
       } else {
         const text = await listRes.text();
         console.warn(
           "Authorize.Net list webhooks failed:",
           listRes.status,
-          text
+          text,
         );
       }
     } catch (err) {
@@ -115,7 +107,7 @@ async function createAuthorizeNetWebhook(
     if (hasExisting) {
       console.log(
         "Authorize.Net webhook already exists for URL, skipping creation:",
-        webhookUrl
+        webhookUrl,
       );
       return;
     }
@@ -146,7 +138,7 @@ async function createAuthorizeNetWebhook(
       console.error(
         "Authorize.Net create webhook failed:",
         res.status,
-        errorJson || errorText
+        errorJson || errorText,
       );
     } else {
       const json = await res.json();
@@ -159,22 +151,24 @@ async function createAuthorizeNetWebhook(
 
 export async function saveAuthorizeNetCredentials(
   apiLoginId: string,
-  transactionKey: string
+  transactionKey: string,
+  signatureKey: string,
 ) {
   try {
     const user = await getUser();
 
-    if (!apiLoginId || !transactionKey) {
+    if (!apiLoginId || !transactionKey || !signatureKey) {
       return {
         success: false,
-        message: "API Login ID and Transaction Key are required",
+        message:
+          "API Login ID, Transaction Key, and Signature Key are required",
       };
     }
 
     // Verify credentials first
     const verification = await verifyAuthorizeNetCredentials(
       apiLoginId,
-      transactionKey
+      transactionKey,
     );
 
     if (!verification.success) {
@@ -184,17 +178,7 @@ export async function saveAuthorizeNetCredentials(
       };
     }
 
-    try {
-      // Best-effort: create webhook subscription in Authorize.Net
-      await createAuthorizeNetWebhook(apiLoginId, transactionKey);
-    } catch (error) {
-      console.error("Error creating Authorize.Net webhook:", error);
-      // throw new Error("Failed to create Authorize.Net webhook");
-      return {
-        success: false,
-        message: "Failed to save credentials",
-      };
-    }
+    await createAuthorizeNetWebhook(apiLoginId, transactionKey);
 
     // Save credentials
     await db.company.update({
@@ -202,6 +186,7 @@ export async function saveAuthorizeNetCredentials(
       data: {
         authorizeNetApiLoginId: apiLoginId,
         authorizeNetTransactionKey: transactionKey,
+        authorizeNetSignatureKey: signatureKey,
       },
     });
 
@@ -215,15 +200,17 @@ export async function saveAuthorizeNetCredentials(
   }
 }
 
-export async function getAuthorizeNetStatus(companyId: number) {
+export async function getAuthorizeNetStatus() {
   try {
-    if (!companyId) throw new Error("Company ID not found");
+    const user = await getUser();
+    const companyId = user.companyId;
 
     const company = await db.company.findUnique({
       where: { id: companyId },
       select: {
         authorizeNetApiLoginId: true,
         authorizeNetTransactionKey: true,
+        authorizeNetSignatureKey: true,
         paymentGateway: true,
       },
     });
@@ -233,7 +220,9 @@ export async function getAuthorizeNetStatus(companyId: number) {
     }
 
     const isConfigured = !!(
-      company.authorizeNetApiLoginId && company.authorizeNetTransactionKey
+      company.authorizeNetApiLoginId &&
+      company.authorizeNetTransactionKey &&
+      company.authorizeNetSignatureKey
     );
 
     return {
@@ -241,6 +230,10 @@ export async function getAuthorizeNetStatus(companyId: number) {
       configured: isConfigured,
       paymentGateway: company.paymentGateway,
       hasApiLoginId: !!company.authorizeNetApiLoginId,
+      hasSignatureKey: !!company.authorizeNetSignatureKey,
+      apiLoginId: company.authorizeNetApiLoginId ?? "",
+      transactionKey: company.authorizeNetTransactionKey ?? "",
+      signatureKey: company.authorizeNetSignatureKey ?? "",
     };
   } catch (error: any) {
     return {
@@ -250,12 +243,32 @@ export async function getAuthorizeNetStatus(companyId: number) {
   }
 }
 
+export async function updateTipEnabled(enabled: boolean) {
+  try {
+    const user = await getUser();
+    const companyId = user.companyId;
+
+    await db.company.update({
+      where: { id: companyId },
+      data: { tipEnabled: enabled },
+    });
+
+    return { success: true, message: "Tip setting updated successfully" };
+  } catch (error: any) {
+    console.error("Update Tip Setting Error:", error);
+    return {
+      success: false,
+      message: error?.message ?? "Failed to update tip setting",
+    };
+  }
+}
+
 export async function updatePaymentGateway(
-  companyId: number,
-  gateway: "STRIPE" | "AUTHORIZE_NET" | "BOTH"
+  gateway: "STRIPE" | "AUTHORIZE_NET" | "BOTH",
 ) {
   try {
-    if (!companyId) throw new Error("Company ID not found");
+    const user = await getUser();
+    const companyId = user.companyId;
 
     await db.company.update({
       where: { id: companyId },
@@ -272,15 +285,17 @@ export async function updatePaymentGateway(
   }
 }
 
-export async function removeAuthorizeNetCredentials(companyId: number) {
+export async function removeAuthorizeNetCredentials() {
   try {
-    if (!companyId) throw new Error("Company ID not found");
+    const user = await getUser();
+    const companyId = user.companyId;
 
     await db.company.update({
       where: { id: companyId },
       data: {
         authorizeNetApiLoginId: null,
         authorizeNetTransactionKey: null,
+        authorizeNetSignatureKey: null,
       },
     });
 

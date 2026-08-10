@@ -73,7 +73,7 @@ export default function AssignTaskDropDown({
     const findUser = companyUsers.find((user) => user.id === userId);
     setUsers((prevUsers) => prevUsers.concat(findUser as User));
     setAssignedUsers((prevAssignUserId) =>
-      prevAssignUserId.filter((id) => id !== userId)
+      prevAssignUserId.filter((id) => id !== userId),
     );
   };
 
@@ -104,7 +104,7 @@ export default function AssignTaskDropDown({
                   key={userId}
                   className={cn(
                     //   buttonVariants({ variant: "outline" }),
-                    "flex items-center gap-x-2 rounded-sm border px-3 py-2 shadow-md"
+                    "flex items-center gap-x-2 rounded-sm border px-3 py-2 shadow-md",
                   )}
                 >
                   <span>{fullName}</span>
@@ -138,7 +138,7 @@ export default function AssignTaskDropDown({
                 className={cn(
                   "#no-visible-scrollbar mt-2 flex max-h-56 w-full flex-col gap-2 overflow-y-auto p-2 font-bold lg:w-[460px]",
                   "#overflow-hidden absolute top-[45px] z-50 min-w-[8rem] rounded-md border bg-popover p-1 text-popover-foreground shadow-md",
-                  "p-3 pt-6"
+                  "p-3 pt-6",
                 )}
               >
                 <button
@@ -148,14 +148,24 @@ export default function AssignTaskDropDown({
                 >
                   <CircleX size={30} className="text-red-300" />
                 </button>
-                {userForAssign
-                  .filter((user) => {
-                    const fullName = user.firstName + " " + user.lastName;
+                {(() => {
+                  const filtered = userForAssign.filter((user) => {
+                    const fullName =
+                      (user.firstName || "") + " " + (user.lastName || "");
                     return fullName
                       .toLowerCase()
                       .includes(searchTerm.toLowerCase());
-                  })
-                  .map((user) => (
+                  });
+
+                  if (filtered.length === 0) {
+                    return (
+                      <div className="py-6 text-center text-zinc-500">
+                        Result not found
+                      </div>
+                    );
+                  }
+
+                  return filtered.map((user) => (
                     <label
                       htmlFor={user?.id!.toString()}
                       key={user.id}
@@ -163,7 +173,7 @@ export default function AssignTaskDropDown({
                       onClick={() => {
                         setAssignedUsers([...assignedUsers, user?.id!]);
                         setUsers((prevUser) =>
-                          prevUser.filter((u) => user.id !== u.id)
+                          prevUser.filter((u) => user.id !== u.id),
                         );
                       }}
                     >
@@ -172,7 +182,8 @@ export default function AssignTaskDropDown({
                         {user.firstName} {user.lastName}
                       </span>
                     </label>
-                  ))}
+                  ));
+                })()}
               </div>
             )}
           </div>

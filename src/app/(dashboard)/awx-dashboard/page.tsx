@@ -1,11 +1,17 @@
 import { db } from "@/lib/db";
-import { Client, Company, User } from "@prisma/client";
 import React from "react";
 import AWXDashboard from "./statistics/AWXDashboard";
 
-export type ICompany = Company & { users: User[]; clients: Client[] };
-
-export type CompanyStat = ICompany & {
+export type CompanyStat = {
+  id: number;
+  name: string;
+  image: string | null;
+  email: string | null;
+  createdAt: Date;
+  enforcePlatformPlan: boolean;
+  adminEmail: string | null;
+  subscriptionStatus: string | null;
+  subscriptionPlanName: string | null;
   stats: {
     users: number;
     clients: number;
@@ -15,22 +21,90 @@ export type CompanyStat = ICompany & {
     others: number;
     sales: number;
   };
-  adminEmail?: string | null;
 };
+
+export type PlatformStats = {
+  totalActiveContracts: number;
+  monthlyRevenue: number;
+  churnRate: number;
+  growthRate: number;
+};
+
 const page = async () => {
-  let companies = await db.company.findMany({
-    include: {
-      users: true,
-      clients: true,
-    },
-  });
+  const now = new Date();
+  const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 
-  let companiesData: CompanyStat[] | [] = [];
+  const [
+    companies,
+    subscriptions,
+    newSubsThisMonth,
+    newSubsLastMonth,
+    cancelledCount,
+    totalSubCount,
+  ] = await Promise.all([
+    db.company.findMany({
+      select: {
+        id: true,
+        name: true,
+        image: true,
+        email: true,
+        createdAt: true,
+        enforcePlatformPlan: true,
+        users: {
+          select: { role: true, employeeType: true, email: true },
+        },
+        clients: { select: { id: true } },
+        platformSubscription: {
+          select: {
+            status: true,
+            plan: { select: { name: true, price: true } },
+          },
+        },
+      },
+    }),
+    db.platformSubscription.findMany({
+      where: { status: "ACTIVE" },
+      select: { plan: { select: { price: true } } },
+    }),
+    db.platformSubscription.count({
+      where: { createdAt: { gte: startOfThisMonth } },
+    }),
+    db.platformSubscription.count({
+      where: {
+        createdAt: { gte: startOfLastMonth, lt: startOfThisMonth },
+      },
+    }),
+    db.platformSubscription.count({
+      where: { status: "CANCELED" },
+    }),
+    db.platformSubscription.count(),
+  ]);
 
-  let ind = 0;
+  const monthlyRevenue = subscriptions.reduce(
+    (sum, s) => sum + Number(s.plan?.price ?? 0),
+    0,
+  );
+  const churnRate =
+    totalSubCount > 0 ? Math.round((cancelledCount / totalSubCount) * 100) : 0;
+  const growthRate =
+    newSubsLastMonth > 0
+      ? Math.round(
+          ((newSubsThisMonth - newSubsLastMonth) / newSubsLastMonth) * 100,
+        )
+      : newSubsThisMonth > 0
+        ? 100
+        : 0;
 
-  for (const company of companies) {
-    let adminUser = company.users.find((user) => user.role === "admin");
+  const platformStats: PlatformStats = {
+    totalActiveContracts: subscriptions.length,
+    monthlyRevenue,
+    churnRate,
+    growthRate,
+  };
+
+  const companiesData: CompanyStat[] = companies.map((company) => {
+    const adminUser = company.users.find((u) => u.role === "admin");
 
     let users = company.users.length,
       clients = company.clients.length,
@@ -54,29 +128,35 @@ const page = async () => {
         case "Other":
           others++;
           break;
-        default:
-          break;
       }
     }
+    employees = sales + managers + technicians + others;
 
-    companiesData[ind] = {
-      ...company,
+    return {
+      id: company.id,
+      name: company.name,
+      image: company.image,
+      email: company.email,
+      createdAt: company.createdAt,
+      enforcePlatformPlan: company.enforcePlatformPlan,
+      adminEmail: adminUser?.email ?? null,
+      subscriptionStatus: company.platformSubscription?.status ?? null,
+      subscriptionPlanName: company.platformSubscription?.plan?.name ?? null,
       stats: {
         users,
         clients,
-        employees: sales + managers + technicians + others,
+        employees,
         technicians,
         managers,
         others,
         sales,
       },
-      adminEmail: adminUser?.email,
     };
+  });
 
-    ind++;
-  }
-
-  return <AWXDashboard companies={companiesData} />;
+  return (
+    <AWXDashboard companies={companiesData} platformStats={platformStats} />
+  );
 };
 
 export default page;

@@ -1,12 +1,10 @@
-import React from "react";
 import Avatar from "@/components/Avatar";
-import InputDetails from "./InputDetails";
+import ResponsiveEmployeeCard from "@/components/mobile-responsive/employee/ResponsiveEmployeeCard";
+import { Client, Fleet, Invoice, Tag } from "@prisma/client";
+import { SquarePen } from "lucide-react";
 import FleetStatistics from "./FleetStatistics";
 import FleetSubHeading from "./FleetSubHeading";
 import NewFleet from "./NewFleet";
-import { Client, Fleet, Invoice, Tag } from "@prisma/client";
-import ResponsiveEmployeeCard from "@/components/mobile-responsive/employee/ResponsiveEmployeeCard";
-import { Settings } from "lucide-react";
 
 const InfoDetails = ({
   client,
@@ -17,28 +15,38 @@ const InfoDetails = ({
     tag: Tag | null;
   };
 }) => {
-  const DataField = ({ label, value }: { label: string; value?: string | number | null }) => (
+  const DataField = ({
+    label,
+    value,
+  }: {
+    label: string;
+    value?: string | number | null;
+  }) => (
     <div className="flex items-start py-2">
       <label className="block w-24 shrink-0 text-sm font-medium text-slate-500 lg:w-28">
         {label}
       </label>
       <div className="flex-1 text-sm font-semibold text-slate-600 leading-relaxed">
-        {value || <span className="text-slate-400 italic">N/A</span>}
+        {value || (
+          <span className="text-slate-600 ">
+            {label === "Address" ? "No Address Listed" : "N/A"}
+          </span>
+        )}
       </div>
     </div>
   );
   const unpaidInvoices = client?.Invoice?.filter(
     (invoice: any) =>
-      invoice?.grandTotal == 0 || (invoice?.grandTotal > 0 && invoice?.due > 0)
+      invoice?.grandTotal == 0 || (invoice?.grandTotal > 0 && invoice?.due > 0),
   );
 
   const paidInvoices = client?.Invoice?.filter(
-    (invoice: any) => invoice?.grandTotal > 0 && invoice?.due == 0
+    (invoice: any) => invoice?.grandTotal > 0 && invoice?.due == 0,
   );
 
   const totalValue = client.Invoice?.reduce(
     (sum, invoice: Invoice) => sum + Number(invoice?.grandTotal || 0),
-    0
+    0,
   );
 
   return (
@@ -47,7 +55,7 @@ const InfoDetails = ({
         <div className="absolute right-2 top-2">
           <NewFleet
             fleet={client}
-            buttonElement={<Settings size={14} />}
+            buttonElement={<SquarePen size={14} color="#6571ff" />}
             isEdit={true}
           />
         </div>
@@ -56,15 +64,14 @@ const InfoDetails = ({
 
       {/* Desktop Card */}
       <div className="hidden flex-[0.4] lg:block">
-        <div className="relative rounded-2xl bg-white p-6 shadow-md ring-1 ring-slate-900/5 transition-all duration-300 hover:shadow-2xl hover:shadow-[#6571FF]/10">
-
+        <div className="relative rounded-2xl bg-white p-6 shadow-md ring-1 ring-slate-900/5 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10">
           {/* Action Buttons (Top Right) */}
           <div className="absolute right-4 top-4">
             <div className="flex items-center gap-2">
               <div className="absolute right-4 top-4 cursor-pointer">
                 <NewFleet
                   fleet={client}
-                  buttonElement={<Settings size={16} />}
+                  buttonElement={<SquarePen size={16} color="#6571ff" />}
                   isEdit={true}
                 />
               </div>

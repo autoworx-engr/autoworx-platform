@@ -13,7 +13,7 @@ interface CompanyFeaturePermissionStore {
   setCompanyFeaturePermission: (
     companyFeaturePermission: CompanyFeaturePermission[],
   ) => void;
-  setLoading: (loading:boolean)=>void;
+  setLoading: (loading: boolean) => void;
   clearCompanyFeaturePermission: () => void;
 }
 
@@ -22,9 +22,8 @@ export const useCompanyFeaturePermissionStore =
     isLoading: false,
     companyFeaturePermission: [],
     setCompanyFeaturePermission: (companyFeaturePermission) =>
-      set({ companyFeaturePermission,
-        isLoading: false,
-       }),
-        setLoading: (isLoading) => set({ isLoading }),
-    clearCompanyFeaturePermission: () => set({ companyFeaturePermission: [], isLoading:false }),
+      set({ companyFeaturePermission, isLoading: false }),
+    setLoading: (isLoading) => set({ isLoading }),
+    clearCompanyFeaturePermission: () =>
+      set({ companyFeaturePermission: [], isLoading: false }),
   }));

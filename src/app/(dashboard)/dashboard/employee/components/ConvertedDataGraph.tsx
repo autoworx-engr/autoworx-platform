@@ -26,9 +26,9 @@ const CustomLabel = (props: any) => {
 };
 export default function ConvertedDataGraph({ data }: ConvertedDataGraphProps) {
   return (
-    <div className="chart-container">
+    <div className="flex h-full w-full flex-col justify-center px-2">
       <BarChartComponent
-        height={350}
+        height="100%"
         title="Leads Converted Per Month"
         data={data}
       >

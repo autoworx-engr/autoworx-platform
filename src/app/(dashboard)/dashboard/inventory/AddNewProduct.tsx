@@ -16,13 +16,14 @@ import Selector from "@/components/Selector";
 import { SlimInput } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { cn } from "@/lib/cn";
 import { errorToast, successToast } from "@/lib/toast";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import { Category, InventoryProductType, Vendor } from "@prisma/client";
 import { useEffect, useState } from "react";
 import { createProduct } from "../../../../actions/inventory/create";
-import { cn } from "@/lib/cn";
+import { ProductFormFields } from "./ProductFormFields";
 
 type ProductProps = {
   product?: {
@@ -59,7 +60,7 @@ export default function AddNewProduct({
   const [productType, setProductType] = useState<InventoryProductType>(
     view === "supply"
       ? InventoryProductType.Supply
-      : InventoryProductType.Product
+      : InventoryProductType.Product,
   );
 
   // New validation states for numeric fields
@@ -91,15 +92,6 @@ export default function AddNewProduct({
       showError({
         field: "productName",
         message: "Product Name is required.",
-      });
-      hasError = true;
-    }
-
-    // Category validation
-    if (!isDatabase && !category) {
-      showError({
-        field: "category",
-        message: "Category is required.",
       });
       hasError = true;
     }
@@ -249,7 +241,7 @@ export default function AddNewProduct({
       errorToast(
         formattedError.errorSource && formattedError.errorSource.length > 0
           ? formattedError.errorSource[0].message
-          : formattedError.message
+          : formattedError.message,
       );
     }
   }
@@ -265,7 +257,7 @@ export default function AddNewProduct({
     setProductType(
       view === "supplies"
         ? InventoryProductType.Supply
-        : InventoryProductType.Product
+        : InventoryProductType.Product,
     );
     setQuantity("");
     setPrice("");
@@ -360,7 +352,7 @@ export default function AddNewProduct({
           onClick={handleAddNewProduct}
           className="
           flex items-center justify-center gap-2 w-full text-center rounded-lg px-5 py-2.5 text-sm font-semibold text-white
-          bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+          bg-gradient-to-r from-primary to-[#5a66ee]
           shadow-[0_4px_14px_0_rgba(101,113,255,0.39)]
           hover:shadow-[0_6px_20px_rgba(101,113,255,0.23)]
           hover:-translate-y-0.5
@@ -385,7 +377,14 @@ export default function AddNewProduct({
           <div className="space-y-2 grid grid-cols-1 md:grid-cols-2 gap-x-5">
             {isDatabase ? (
               <div>
-                <label className={cn("block font-medium text-slate-600", `${product?.category && "py-1.5"}`)}>Category</label>
+                <label
+                  className={cn(
+                    "block font-medium text-slate-600",
+                    `${product?.category && "py-1.5"}`,
+                  )}
+                >
+                  Category
+                </label>
                 <div className="rounded-md border border-gray-300 bg-gray-100 px-3 py-2">
                   {product?.category || "No category selected"}
                 </div>
@@ -399,7 +398,7 @@ export default function AddNewProduct({
                 }}
                 categoryOpen={categoryOpen}
                 setCategoryOpen={setCategoryOpen}
-                required={true}
+                required={false}
               />
             )}
 
@@ -443,6 +442,7 @@ export default function AddNewProduct({
             <SlimInput
               name="productName"
               required
+              placeholder="Brake Pad Set"
               value={isDatabase ? databaseName : productName}
               onChange={(e) => {
                 const value = e.target.value;
@@ -481,7 +481,10 @@ export default function AddNewProduct({
                       clearError();
                     }}
                     button={
-                      <button type="button" className="text-xs text-[#6571FF] hover:underline">
+                      <button
+                        type="button"
+                        className="text-xs text-primary hover:underline"
+                      >
                         + New Vendor
                       </button>
                     }
@@ -498,8 +501,8 @@ export default function AddNewProduct({
                         ?.toLowerCase()
                         ?.includes(search.toLowerCase()) ||
                       (vendor?.name?.toLowerCase() || "").includes(
-                        search.toLowerCase()
-                      )
+                        search.toLowerCase(),
+                      ),
                   )
                 }
                 openState={[vendorOpen, setVendorOpen]}
@@ -520,73 +523,58 @@ export default function AddNewProduct({
             <textarea
               name="description"
               required={false}
+              placeholder="High-performance ceramic brake pads for front axle..."
               minLength={20}
               maxLength={250}
-              className={cn("h-20 w-full rounded-md border border-slate-300 outline-none bg-background px-2 py-0.5 leading-6 transition-all duration-300 thin-scrollbar",
+              className={cn(
+                "h-20 w-full rounded-md border border-slate-300 outline-none bg-background px-2 py-0.5 leading-6 transition-all duration-300 thin-scrollbar",
                 "bg-white/80 backdrop-blur-sm dark:bg-slate-900/50",
                 "text-slate-600 dark:text-slate-300 placeholder:text-slate-400",
-                "focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/40",
-                "disabled:opacity-50 disabled:cursor-not-allowed"
+                "focus:border-primary/60 focus:ring-2 focus:ring-primary/40",
+                "disabled:opacity-50 disabled:cursor-not-allowed",
               )}
             />
           </div>
 
-          {/* Desktop screen */}
-          <div className="md:grid grid-cols-1 hidden md:grid-cols-4 w-full gap-5">
+          <ProductFormFields cols={4}>
             <SlimInput
               name="quantity"
               type="number"
               required
+              placeholder="e.g. 100"
               value={quantity}
               onChange={handleQuantityChange}
             />
-
             <SlimInput
               name="price"
               type="number"
               required
+              placeholder="e.g. 49.99"
               value={price}
               onChange={handlePriceChange}
             />
-
             <SlimInput
               name="unit"
               required
+              placeholder="pcs, kg, ft"
               value={isDatabase ? databaseUnit : unit}
               onChange={handleUnitChange}
             />
-            <SlimInput name="lot" label="Lot#" required={false} />
-          </div>
-
-          {/* mobile screen */}
-          <div className="block md:hidden space-y-4">
             <SlimInput
-              name="quantity"
-              type="number"
-              required
-              value={quantity}
-              onChange={handleQuantityChange}
+              name="lot"
+              label="Lot#"
+              required={false}
+              placeholder="LOT-2024-001"
             />
-
-            <SlimInput
-              name="price"
-              type="number"
-              required
-              value={price}
-              onChange={handlePriceChange}
-            />
-
-            <SlimInput
-              name="unit"
-              required
-              value={isDatabase ? databaseUnit : unit}
-              onChange={handleUnitChange}
-            />
-            <SlimInput name="lot" label="Lot#" required={false} />
-          </div>
+          </ProductFormFields>
 
           <div>
-            <SlimInput name="receipt" label="Receipt#" required={false} />
+            <SlimInput
+              name="receipt"
+              label="Receipt#"
+              required={false}
+              placeholder="REC-00123"
+            />
           </div>
 
           <div className="mt-5 rounded-md bg-[#6571FF5E] p-2 md:mt-0">
@@ -596,23 +584,26 @@ export default function AddNewProduct({
               name="lowInventory"
               label={""}
               type="number"
+              placeholder="e.g. 10"
               required={false}
             />
           </div>
         </div>
 
         <DialogFooter>
-          <DialogClose className="
+          <DialogClose
+            className="
                 rounded-xl mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500 
                 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
                 transition-colors border
-              ">
+              "
+          >
             Cancel
           </DialogClose>
           <Submit
             className="
                 rounded-xl px-6 py-2.5 text-sm font-medium text-white
-                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                bg-gradient-to-r from-primary to-[#5a66ee]
                 shadow-lg shadow-indigo-500/30
                 hover:shadow-xl hover:shadow-indigo-500/40
                 hover:-translate-y-0.5 hover:scale-[1.02]

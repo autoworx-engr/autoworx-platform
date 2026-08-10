@@ -1,19 +1,19 @@
 "use client";
-import { format } from "date-fns";
-import { usePathname, useSearchParams, useRouter } from "next/navigation";
-import React, { useEffect, useRef, useState } from "react";
+import { format, isValid, parse } from "date-fns";
+import { Calendar } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { DateRangePicker } from "react-date-range";
 import "react-date-range/dist/styles.css"; // main style file
 import "react-date-range/dist/theme/default.css"; // theme css file
-import { TFilterModalState } from "../../(report)/revenue/FilterHeader";
-import { Calendar } from "lucide-react";
 type TProps = {
-  startDate: string;
-  endDate: string;
+  startDate?: string;
+  endDate?: string;
   modalName: string;
   closeModal: (modalName: string) => void;
   toggleModal: (modalName: string) => void;
-  activeModal: TFilterModalState;
+  activeModal: Record<string, boolean>;
+  queryDateFormat?: string;
 };
 export default function FilterDateRange({
   startDate,
@@ -22,11 +22,23 @@ export default function FilterDateRange({
   toggleModal,
   activeModal,
   modalName,
+  queryDateFormat = "MM/dd/yyyy",
 }: TProps) {
+  const parseFromQuery = (value?: string) => {
+    if (!value || value === "undefined") return null;
+    const parsed = parse(value, queryDateFormat, new Date());
+    return isValid(parsed) ? parsed : null;
+  };
+
+  const parsedStart = parseFromQuery(startDate);
+  const parsedEnd = parseFromQuery(endDate);
+  const initialStartDate = parsedStart || new Date();
+  const initialEndDate = parsedEnd || new Date();
+
   const [state, setState] = useState({
     selection: {
-      startDate: new Date(),
-      endDate: new Date(),
+      startDate: initialStartDate,
+      endDate: initialEndDate,
       key: "selection",
     },
   });
@@ -36,7 +48,9 @@ export default function FilterDateRange({
 
   // const [showPicker, setShowPicker] = useState(false);
   const [tempRange, setTempRange] = useState(state.selection);
-  const [isRangeSelected, setIsRangeSelected] = useState(false);
+  const [isRangeSelected, setIsRangeSelected] = useState(
+    Boolean(parsedStart && parsedEnd),
+  );
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -53,7 +67,7 @@ export default function FilterDateRange({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, []);
+  }, [closeModal, modalName]);
 
   const pathname = usePathname();
   const router = useRouter();
@@ -69,11 +83,11 @@ export default function FilterDateRange({
 
   const handleOk = () => {
     const searchParams = new URLSearchParams(params!);
-    const formattedStart = format(tempRange.startDate, "MM/dd/yyyy");
-    const formattedEnd = format(tempRange.endDate, "MM/dd/yyyy");
+    const formattedStart = format(tempRange.startDate, queryDateFormat);
+    const formattedEnd = format(tempRange.endDate, queryDateFormat);
     if (tempRange.startDate && tempRange.endDate) {
-      searchParams.set("startDate", encodeURIComponent(formattedStart));
-      searchParams.set("endDate", encodeURIComponent(formattedEnd));
+      searchParams.set("startDate", formattedStart);
+      searchParams.set("endDate", formattedEnd);
     } else {
       searchParams.delete("startDate");
       searchParams.delete("endDate");
@@ -86,15 +100,10 @@ export default function FilterDateRange({
   };
 
   const formatRange = (start: Date, end: Date) => {
-    const formattedStart = format(start, "MM/dd/yyyy");
-    const formattedEnd = format(end, "MM/dd/yyyy");
-    if (startDate !== "undefined" && endDate !== "undefined") {
-      return `${startDate} - ${endDate}`;
-    } else if (isRangeSelected) {
-      return `${formattedStart} - ${formattedEnd}`;
-    } else {
-      return "Date Range";
+    if (!isRangeSelected) {
+      return "Select Date Range";
     }
+    return `${format(start, "MM/dd/yyyy")} - ${format(end, "MM/dd/yyyy")}`;
   };
 
   const handleClear = () => {
@@ -113,7 +122,6 @@ export default function FilterDateRange({
 
     setState({ selection: resetSelection });
     setTempRange(resetSelection);
-    closeModal(modalName);
     setIsRangeSelected(false);
   };
   return (
@@ -124,8 +132,8 @@ export default function FilterDateRange({
         className={`
           flex w-full items-center justify-between gap-3 rounded-xl px-4 py-2.5 text-sm transition-all duration-300 ease-out
           ${
-            activeModal[modalName as keyof TFilterModalState]
-              ? "bg-white ring-2 ring-[#6571FF] shadow-md shadow-indigo-500/10 dark:bg-slate-900"
+            activeModal[modalName]
+              ? "bg-white ring-2 ring-primary shadow-md shadow-indigo-500/10 dark:bg-slate-900"
               : "bg-white ring-1 ring-slate-200 hover:ring-indigo-500/50 hover:shadow-sm dark:bg-slate-900 dark:ring-slate-700"
           }
         `}
@@ -138,7 +146,7 @@ export default function FilterDateRange({
         <Calendar className={`w-4 h-4`} />
       </button>
 
-      {activeModal[modalName as keyof TFilterModalState] && (
+      {activeModal[modalName] && (
         <div
           ref={dropdownRef}
           className="fixed left-1/2 right-auto top-[38%] z-50 mt-2 w-[338px] -translate-x-1/2 -translate-y-1/2 transform overflow-y-auto rounded-lg border border-gray-300 bg-background p-4 shadow-lg md:absolute md:left-auto md:right-auto md:top-full md:w-auto md:translate-x-0 md:translate-y-0 md:transform-none"
@@ -152,7 +160,7 @@ export default function FilterDateRange({
               direction="horizontal"
               preventSnapRefocus={true}
               calendarFocus="forwards"
-              className={`[&_.rdrDayStartPreview]:!color-transparent [&_.rdrDayEndPreview]:!color-transparent [&_.rdrDateDisplayItem]:p-2 [&_.rdrDateDisplayItem_input]:text-sm [&_.rdrDateDisplayWrapper]:!w-[300px] [&_.rdrDateDisplay]:text-sm [&_.rdrDayEndPreview]:!border-0 [&_.rdrDayHovered]:!border-0 [&_.rdrDayHovered]:!bg-transparent [&_.rdrDayInPreview]:!border-0 [&_.rdrDayInPreview]:!bg-transparent [&_.rdrDayNumber]:text-sm [&_.rdrDayStartPreview]:!border-0 [&_.rdrDayToday]:!bg-[#6571FF] [&_.rdrDayToday]:after:hidden [&_.rdrDayToday_.rdrDayNumber]:!text-white [&_.rdrDay]:!bg-transparent [&_.rdrDay_today]:!border-0 [&_.rdrDay_today]:!bg-transparent [&_.rdrDefinedRangesWrapper]:hidden md:[&_.rdrDefinedRangesWrapper]:block [&_.rdrMonthAndYearWrapper]:!w-[300px] [&_.rdrMonthName]:text-sm [&_.rdrMonthPicker]:text-sm [&_.rdrMonth]:!w-[300px] [&_.rdrMonths]:!w-[300px] [&_.rdrNextPrevButton]:h-8 [&_.rdrNextPrevButton]:w-8 [&_.rdrWeekDay]:text-xs [&_.rdrYearPicker]:text-sm`}
+              className={`[&_.rdrDayStartPreview]:!color-transparent [&_.rdrDayEndPreview]:!color-transparent [&_.rdrDateDisplayItem]:p-2 [&_.rdrDateDisplayItem_input]:text-sm [&_.rdrDateDisplayWrapper]:!w-[300px] [&_.rdrDateDisplay]:text-sm [&_.rdrDayEndPreview]:!border-0 [&_.rdrDayHovered]:!border-0 [&_.rdrDayHovered]:!bg-transparent [&_.rdrDayInPreview]:!border-0 [&_.rdrDayInPreview]:!bg-transparent [&_.rdrDayNumber]:text-sm [&_.rdrDayStartPreview]:!border-0 [&_.rdrDayToday]:!bg-primary [&_.rdrDayToday]:after:hidden [&_.rdrDayToday_.rdrDayNumber]:!text-white [&_.rdrDay]:!bg-transparent [&_.rdrDay_today]:!border-0 [&_.rdrDay_today]:!bg-transparent [&_.rdrDefinedRangesWrapper]:hidden md:[&_.rdrDefinedRangesWrapper]:block [&_.rdrMonthAndYearWrapper]:!w-[300px] [&_.rdrMonthName]:text-sm [&_.rdrMonthPicker]:text-sm [&_.rdrMonth]:!w-[300px] [&_.rdrMonths]:!w-[300px] [&_.rdrNextPrevButton]:h-8 [&_.rdrNextPrevButton]:w-8 [&_.rdrWeekDay]:text-xs [&_.rdrYearPicker]:text-sm`}
             />
           </div>
 
@@ -171,7 +179,7 @@ export default function FilterDateRange({
             </button>
             <button
               onClick={handleOk}
-              className="rounded-lg bg-gradient-to-r from-[#6571FF] to-[#5a66ee] px-6 py-2 text-sm font-bold text-white shadow-md shadow-indigo-500/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
+              className="rounded-lg bg-gradient-to-r from-primary to-[#5a66ee] px-6 py-2 text-sm font-bold text-white shadow-md shadow-indigo-500/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
             >
               Apply Filter
             </button>

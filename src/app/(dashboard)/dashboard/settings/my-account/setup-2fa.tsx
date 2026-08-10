@@ -5,130 +5,97 @@ import {
   disabled2fa,
   enabled2fa,
 } from "@/actions/settings/my-account/toggle2fa";
-import { getUserById } from "@/actions/user/getUserById";
 import { Switch } from "@/components/Switch";
 import { errorToast, successToast } from "@/lib/toast";
-import {
-  CheckCircle,
-  Loader2,
-  Mail,
-  ShieldCheck,
-  Smartphone,
-  XCircle,
-} from "lucide-react";
-import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { CheckCircle, Mail, Smartphone, XCircle } from "lucide-react";
+import { useState, useTransition } from "react";
 
-interface User {
-  id?: number;
-  email?: string;
-  emailVerified?: boolean;
-  twoFactorEnabled?: boolean;
+export interface Setup2FAProps {
+  email: string;
+  emailVerified: boolean;
+  twoFactorEnabled: boolean;
 }
 
-// header component
+// ─── Shared sub-component ────────────────────────────────────────────────────
+function VerificationBadge({ verified }: { verified: boolean }) {
+  if (verified) {
+    return (
+      <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full border border-emerald-100 shrink-0 whitespace-nowrap">
+        <CheckCircle className="w-3.5 h-3.5" />
+        Verified
+      </div>
+    );
+  }
+  return (
+    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-red-50 text-red-700 text-xs font-bold rounded-full border border-red-100 shrink-0 whitespace-nowrap">
+      <XCircle className="w-3.5 h-3.5" />
+      Not Verified
+    </div>
+  );
+}
+
+// ─── Header ──────────────────────────────────────────────────────────────────
 function Header() {
   return (
-    <div className="p-6 text-black border-b border-slate-200">
-      <div className="flex items-center gap-3 mb-2">
-        <ShieldCheck className="w-8 h-8 text-emerald-400" />
-        <h1 className="text-xl font-bold">Account Settings</h1>
-      </div>
-      <p className="text-slate-400 text-sm">
+    <div className="border-b border-slate-200 p-6">
+      {/* Downgraded from h1 — the page already has top-level headings */}
+      <h3 className="text-lg font-semibold text-slate-800">Account Settings</h3>
+      <p className="mt-1 text-sm text-slate-500">
         Manage your security preferences.
       </p>
     </div>
   );
 }
 
-// content component
-function Content() {
-  const session = useSession();
-  const userId = parseInt(session.data?.user?.id || "");
+// ─── Content ─────────────────────────────────────────────────────────────────
+function Content({
+  email,
+  emailVerified,
+  twoFactorEnabled: initialTwoFactorEnabled,
+}: Setup2FAProps) {
+  // Local state for optimistic 2FA toggle; seeded from SSR prop
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(
+    initialTwoFactorEnabled,
+  );
+  const [isPending2FA, startTransition2FA] = useTransition();
+  const [isPendingEmail, startTransitionEmail] = useTransition();
 
-  // Simulated User State
-  const [user, setUser] = useState<User | null>(null);
-
-  const [loading, setLoading] = useState(false);
-
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        setError("");
-        setLoading(true);
-        const { data, type } = (await getUserById(userId)) || {};
-
+  const handle2FAToggle = () => {
+    startTransition2FA(async () => {
+      if (twoFactorEnabled) {
+        const { type, message } = await disabled2fa();
         if (type === "fail") {
-          errorToast("Failed to fetch user");
+          errorToast(message);
           return;
         }
-
-        const transformedUser = {
-          id: data?.id,
-          email: data?.email,
-          emailVerified: data?.emailVerified,
-          twoFactorEnabled: data?.twoFactorEnabled,
-        };
-        setUser(transformedUser);
-      } catch (err) {
-        console.log(err);
-        setError("User data fetching failed");
-      } finally {
-        setLoading(false);
+        setTwoFactorEnabled(false);
+        successToast(message);
+      } else {
+        const outcome = await enabled2fa();
+        if (outcome.type === "fail") {
+          errorToast(outcome.message);
+          return;
+        }
+        setTwoFactorEnabled(true);
+        successToast(outcome.message);
       }
-    };
-    fetchUser();
-  }, [userId]);
+    });
+  };
 
-  const handle2FAToggle = async () => {
-    if (user?.twoFactorEnabled) {
-      // Logic to disable
-      const { type, message } = await disabled2fa();
+  const handleSendVerificationEmail = () => {
+    startTransitionEmail(async () => {
+      const { type, message } = await sendEmailVerificationMail();
       if (type === "fail") {
         errorToast(message);
         return;
       }
-      setUser(prev => ({ ...prev, twoFactorEnabled: false }));
       successToast(message);
-    } else {
-      // Logic to enable
-      const outcome = await enabled2fa();
-      if (outcome.type === "fail") {
-        errorToast(outcome.message);
-        return;
-      }
-      setUser(prev => ({ ...prev, twoFactorEnabled: true }));
-      successToast(outcome.message);
-    }
+    });
   };
 
-  const handleSendVerificationEmail = async () => {
-    const { type, message } = await sendEmailVerificationMail();
-    if (type === "fail") {
-      errorToast(message);
-      return;
-    }
-    successToast(message);
-  };
-
-  if (loading && !error) {
-    return (
-      <div className="flex items-center justify-center min-h-[200px] ">
-        <Loader2 className="w-8 h-8 animate-spin" />
-      </div>
-    );
-  } else if (!loading && error) {
-    return (
-      <div className="flex items-center justify-center min-h-[200px] ">
-        <p className="text-red-500">{error}</p>
-      </div>
-    );
-  }
   return (
     <div className="divide-y divide-slate-100">
-      {/* Email Section */}
+      {/* ── Email Section ── */}
       <div className="p-6 space-y-4">
         <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">
           Contact Information
@@ -141,54 +108,38 @@ function Content() {
                 <Mail className="w-5 h-5" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-slate-900 font-medium text-sm truncate">{user?.email}</p>
+                <p className="text-slate-900 font-medium text-sm truncate">
+                  {email}
+                </p>
                 <p className="text-slate-400 text-xs">Primary Email</p>
               </div>
             </div>
-
+            {/* Desktop badge */}
             <div className="hidden lg:block">
-              {user?.emailVerified ? (
-                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full border border-emerald-100 shrink-0 whitespace-nowrap">
-                  <CheckCircle className="w-3.5 h-3.5" />
-                  Verified
-                </div>
-              ) : (
-                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-red-50 text-red-700 text-xs font-bold rounded-full border border-red-100 shrink-0 whitespace-nowrap">
-                  <XCircle className="w-3.5 h-3.5" />
-                  Not Verified
-                </div>
-              )}
+              <VerificationBadge verified={emailVerified} />
             </div>
           </div>
 
+          {/* Mobile badge */}
           <div className="lg:hidden pl-12">
-            {user?.emailVerified ? (
-              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full border border-emerald-100 shrink-0 whitespace-nowrap">
-                <CheckCircle className="w-3.5 h-3.5" />
-                Verified
-              </div>
-            ) : (
-              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-red-50 text-red-700 text-xs font-bold rounded-full border border-red-100 shrink-0 whitespace-nowrap">
-                <XCircle className="w-3.5 h-3.5" />
-                Not Verified
-              </div>
-            )}
+            <VerificationBadge verified={emailVerified} />
           </div>
 
-          {!user?.emailVerified && (
+          {!emailVerified && (
             <div className="pl-12">
               <button
                 onClick={handleSendVerificationEmail}
-                className="text-sm text-blue-600 font-medium hover:text-blue-700 hover:underline flex items-center gap-1"
+                disabled={isPendingEmail}
+                className="text-sm text-blue-600 font-medium hover:text-blue-700 hover:underline flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Send Verification Email &rarr;
+                {isPendingEmail ? "Sending…" : "Send Verification Email →"}
               </button>
             </div>
           )}
         </div>
       </div>
 
-      {/* 2FA Section */}
+      {/* ── 2FA Section ── */}
       <div className="p-6 space-y-4">
         <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">
           Security
@@ -205,40 +156,51 @@ function Content() {
               </h3>
               <div className="flex items-center gap-2 mt-0.5">
                 <span
-                  className={`w-2 h-2 rounded-full ${user?.twoFactorEnabled ? "bg-emerald-500" : "bg-slate-300"}`}
-                ></span>
+                  className={`w-2 h-2 rounded-full ${twoFactorEnabled ? "bg-emerald-500" : "bg-slate-300"}`}
+                />
                 <p
-                  className={`text-xs font-medium ${user?.twoFactorEnabled ? "text-emerald-600" : "text-slate-400"}`}
+                  className={`text-xs font-medium ${twoFactorEnabled ? "text-emerald-600" : "text-slate-400"}`}
                 >
-                  {user?.twoFactorEnabled ? "Active" : "Inactive"}
+                  {twoFactorEnabled ? "Active" : "Inactive"}
                 </p>
               </div>
             </div>
           </div>
 
-          <Switch
-            checked={user?.twoFactorEnabled ?? false}
-            setChecked={handle2FAToggle}
-          />
+          {/* Disable pointer events while the toggle action is in-flight */}
+          <div className={isPending2FA ? "pointer-events-none opacity-60" : ""}>
+            <Switch checked={twoFactorEnabled} setChecked={handle2FAToggle} />
+          </div>
         </div>
 
         <p className="text-slate-500 text-sm leading-relaxed pl-12">
-          Add an extra layer of security. We'll verify your identity via a code
-          sent to your mobile device.
+          Add an extra layer of security. We&apos;ll verify your identity via a
+          code sent to your email.
         </p>
       </div>
     </div>
   );
 }
 
-export default function Setup2FA() {
+// ─── Public export ────────────────────────────────────────────────────────────
+export default function Setup2FA({
+  email,
+  emailVerified,
+  twoFactorEnabled,
+}: Setup2FAProps) {
   return (
-    <div className="w-full max-w-full bg-white rounded-xl shadow-xl overflow-hidden border border-slate-200 mt-8">
-      {/* Header */}
-      <Header />
-
-      {/* Content */}
-      <Content />
+    <div className="w-full">
+      <h3 className="mb-4 text-lg font-semibold text-slate-800">
+        Two-Factor Authentication
+      </h3>
+      <div className="w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <Header />
+        <Content
+          email={email}
+          emailVerified={emailVerified}
+          twoFactorEnabled={twoFactorEnabled}
+        />
+      </div>
     </div>
   );
 }

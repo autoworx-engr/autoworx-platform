@@ -1,1 +1,1 @@
-export type CalendarType = "day" | "week" | "month";
+export type CalendarType = "day" | "week" | "month" | "list";

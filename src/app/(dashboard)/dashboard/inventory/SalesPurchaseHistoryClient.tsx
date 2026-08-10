@@ -3,6 +3,7 @@
 import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
 import { cn } from "@/lib/cn";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { FormatUtcToTimezone } from "@/utils/FormatUtcToTimezone";
 import {
   Client,
   InventoryProduct,
@@ -12,12 +13,11 @@ import {
   Vendor,
 } from "@prisma/client";
 import * as Tabs from "@radix-ui/react-tabs";
+import { DollarSign, ShoppingCart, SquarePen } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import EditSalePurchaseList from "./EditSalePurchaseList";
-import { FormatUtcToTimezone } from "@/utils/FormatUtcToTimezone";
-import { SquarePen, ShoppingCart, Truck, DollarSign } from "lucide-react";
 
 enum Tab {
   Sales = "sales",
@@ -50,7 +50,7 @@ export default function SalesPurchaseHistoryClient({
   const view = searchParams?.get("view");
 
   return (
-    <div className="app-shadow mt-4 block min-h-[300px] overflow-y-auto rounded-lg bg-background p-4 lg:max-h-[52%] lg:min-h-[52%]">
+    <div className="app-shadow mt-4 flex-1 min-h-[300px] lg:min-h-0 overflow-y-auto rounded-lg bg-background p-4">
       <Tabs.Root value={tab} onValueChange={(value) => setTab(value as Tab)}>
         <Tabs.List className="w-fit flex gap-3 items-center p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 shadow-sm">
           <Tabs.Trigger
@@ -58,23 +58,43 @@ export default function SalesPurchaseHistoryClient({
             className={cn(
               "group relative flex items-center gap-2.5 rounded-lg px-4 py-2 text-sm 2xl:text-lg font-medium transition-all duration-300",
               tab === Tab.Sales
-                ? "text-white shadow-md shadow-indigo-500/25 ring-1 ring-black/5 translate-y-[-1px] bg-gradient-to-r from-[#6571FF] to-[#5a66ee]"
-                : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
+                ? "text-white shadow-md shadow-indigo-500/25 ring-1 ring-black/5 translate-y-[-1px] bg-gradient-to-r from-primary to-[#5a66ee]"
+                : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200",
             )}
           >
-            <DollarSign size={18} strokeWidth={2.5} className={cn("transition-colors duration-300", tab === Tab.Sales ? "text-white" : "text-slate-500 group-hover:text-[#6571FF]")} />
-            <span className="whitespace-nowrap">{view === "products" ? "Sales List" : "Use List"}</span>
+            <DollarSign
+              size={18}
+              strokeWidth={2.5}
+              className={cn(
+                "transition-colors duration-300",
+                tab === Tab.Sales
+                  ? "text-white"
+                  : "text-slate-500 group-hover:text-primary",
+              )}
+            />
+            <span className="whitespace-nowrap">
+              {view === "products" ? "Sales List" : "Use List"}
+            </span>
           </Tabs.Trigger>
           <Tabs.Trigger
             value={Tab.Purchase}
             className={cn(
               "group relative flex items-center gap-2.5 rounded-lg px-4 py-2 text-sm 2xl:text-lg font-medium transition-all duration-300",
               tab === Tab.Purchase
-                ? "text-white shadow-md shadow-indigo-500/25 ring-1 ring-black/5 translate-y-[-1px] bg-gradient-to-r from-[#6571FF] to-[#5a66ee]"
-                : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
+                ? "text-white shadow-md shadow-indigo-500/25 ring-1 ring-black/5 translate-y-[-1px] bg-gradient-to-r from-primary to-[#5a66ee]"
+                : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200",
             )}
           >
-            <ShoppingCart size={18} strokeWidth={2.5} className={cn("transition-colors duration-300", tab === Tab.Purchase ? "text-white" : "text-slate-500 group-hover:text-[#6571FF]")} />
+            <ShoppingCart
+              size={18}
+              strokeWidth={2.5}
+              className={cn(
+                "transition-colors duration-300",
+                tab === Tab.Purchase
+                  ? "text-white"
+                  : "text-slate-500 group-hover:text-primary",
+              )}
+            />
             <span className="whitespace-nowrap">Purchase List</span>
           </Tabs.Trigger>
         </Tabs.List>
@@ -92,7 +112,7 @@ export default function SalesPurchaseHistoryClient({
           <Tabs.Content value={Tab.Purchase}>
             <Table
               histories={histories.filter(
-                (history) => history.type === "Purchase"
+                (history) => history.type === "Purchase",
               )}
               user={user}
               type="Purchase"
@@ -160,7 +180,7 @@ function Table({
               className={cn("py-3", index % 2 === 0 ? evenColor : oddColor)}
             >
               {product?.type === "Product" && (
-                <td className="text-center text-[#6571FF]">
+                <td className="text-center text-primary">
                   {type === "Sale" ? (
                     history.invoiceId ? (
                       <InvoiceModal
@@ -189,12 +209,8 @@ function Table({
               <td className="text-center">{Number(history.quantity)}</td>
               <td className="text-center">
                 {formatCurrency(
-                  parseFloat(
-                    (
-                      parseFloat(history.price?.toString() ?? "0") *
-                      Number(history.quantity)
-                    ).toFixed(2)
-                  )
+                  parseFloat(history.price?.toString() ?? "0") *
+                    parseFloat(history.quantity?.toString() ?? "0"),
                 )}
               </td>
               <td className="text-center">
@@ -202,27 +218,27 @@ function Table({
               </td>
               {(user?.employeeType === "Admin" ||
                 user?.employeeType === "Manager") && (
-                  <td className="text-center">
-                    {history.invoiceId ? (
-                      // <EditSalesList
-                      // productId={history.productId}
-                      // invoiceIds={[history.invoiceId]}
-                      // cost={parseInt(history?.price?.toString() || "0")}
-                      // productType={product?.type || "Product"}
-                      // history = {history}
-                      // />
-                      <></>
-                    ) : (
-                      <EditSalePurchaseList
-                        productId={history.productId}
-                        user={user}
-                        history={history}
-                        product={product!}
-                        invoiceIds={invoiceIds}
-                      />
-                    )}
-                  </td>
-                )}
+                <td className="text-center">
+                  {history.invoiceId ? (
+                    // <EditSalesList
+                    // productId={history.productId}
+                    // invoiceIds={[history.invoiceId]}
+                    // cost={parseInt(history?.price?.toString() || "0")}
+                    // productType={product?.type || "Product"}
+                    // history = {history}
+                    // />
+                    <></>
+                  ) : (
+                    <EditSalePurchaseList
+                      productId={history.productId}
+                      user={user}
+                      history={history}
+                      product={product!}
+                      invoiceIds={invoiceIds}
+                    />
+                  )}
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
@@ -230,9 +246,11 @@ function Table({
 
       {/* Mobile Card View (Hidden on Desktop) */}
       <div className="space-y-4 md:hidden">
-        {histories.map((history: any, index: number) => {
+        {histories.map((history, index) => {
           const isSale = type === "Sale";
-          const total = parseFloat(history.price?.toString() ?? "0") * Number(history.quantity);
+          const total =
+            parseFloat(history.price?.toString() ?? "0") *
+            parseFloat(history.quantity?.toString() ?? "0");
 
           // Determine the record's main contact name
           const contactName = isSale
@@ -245,26 +263,32 @@ function Table({
               className={cn(
                 "rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm transition-shadow duration-200",
                 index % 2 === 0 ? evenColor : oddColor,
-                "hover:shadow-md dark:bg-slate-900/50" // Added dark mode and hover effect
+                "hover:shadow-md dark:bg-slate-900/50", // Added dark mode and hover effect
               )}
             >
               {/* Row 1: Type / Reference ID & Date */}
               <div className="flex items-center justify-between border-b border-dashed border-slate-200 pb-2 mb-2 dark:border-slate-700">
                 {/* Reference Link/Status */}
                 <div className="text-sm font-semibold">
-                  {product?.type === "Product" && isSale && history.invoiceId ? (
+                  {product?.type === "Product" &&
+                  isSale &&
+                  history.invoiceId ? (
                     <Link
                       href={`/dashboard/estimate/view/${history.invoiceId}`}
-                      className="text-[#6571FF] hover:underline"
+                      className="text-primary hover:underline"
                     >
                       {history.invoiceId}
                     </Link>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <span className={cn(
-                        "text-sm font-medium px-3 py-0.5 rounded-full",
-                        isSale ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"
-                      )}>
+                      <span
+                        className={cn(
+                          "text-sm font-medium px-3 py-0.5 rounded-full",
+                          isSale
+                            ? "bg-green-100 text-green-700"
+                            : "bg-blue-100 text-blue-700",
+                        )}
+                      >
                         {isSale ? "SALE" : "PURCHASE"}
                       </span>
                       {shouldShowActions && (
@@ -273,7 +297,7 @@ function Table({
                           {!isSale && history.invoiceId ? (
                             <Link
                               href={`/dashboard/estimate/edit/${history.invoiceId}?clientId=${history.client?.id}`}
-                              className="text-[#6571FF] hover:text-indigo-500 transition-colors"
+                              className="text-primary hover:text-indigo-500 transition-colors"
                             >
                               <SquarePen className="h-4 w-4" />
                             </Link>
@@ -305,13 +329,15 @@ function Table({
                   {isSale ? "Client" : "Vendor"} Name:
                 </span>
                 <span className="font-bold text-slate-600 dark:text-slate-200">
-                  {contactName ?? 'N/A'}
+                  {contactName ?? "N/A"}
                 </span>
               </div>
 
               {/* Row 3: Price */}
               <div className="flex justify-between items-center mt-2">
-                <span className="font-medium text-slate-500 dark:text-slate-400">Price:</span>
+                <span className="font-medium text-slate-500 dark:text-slate-400">
+                  Price:
+                </span>
                 <span className="text-lg font-semibold text-slate-600 dark:text-white">
                   {formatCurrency(parseFloat(history.price?.toString() ?? "0"))}
                 </span>
@@ -319,7 +345,9 @@ function Table({
 
               {/* Row 4: Quantity */}
               <div className="flex justify-between items-center -mt-1 text-sm">
-                <span className="font-medium text-slate-500 dark:text-slate-400">Quantity:</span>
+                <span className="font-medium text-slate-500 dark:text-slate-400">
+                  Quantity:
+                </span>
                 <span className="font-bold text-slate-600 dark:text-slate-200">
                   {Number(history.quantity)}
                 </span>
@@ -327,7 +355,9 @@ function Table({
 
               {/* Row 5: Total */}
               <div className="flex justify-between items-center border-t border-dashed border-slate-200 pt-2 mt-2 dark:border-slate-700">
-                <span className="font-semibold text-slate-600 dark:text-slate-300">Total:</span>
+                <span className="font-semibold text-slate-600 dark:text-slate-300">
+                  Total:
+                </span>
                 <span className="font-bold text-lg text-slate-600 dark:text-white">
                   {formatCurrency(total)}
                 </span>

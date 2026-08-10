@@ -14,7 +14,11 @@ export default async function sendClientMailOrSMSNotify(
     // Send Mail to user via pusher
     const channelName = `client-notify-${companyId}-${clientConversationTrack?.clientId}`;
     await pusher.trigger(channelName, "client-notify", clientConversationTrack);
-    await pusher.trigger(`client-notify-${companyId}`, "client-notify", clientConversationTrack);
+    await pusher.trigger(
+      `client-notify-${companyId}`,
+      "client-notify",
+      clientConversationTrack,
+    );
     return {
       type: "success",
     };

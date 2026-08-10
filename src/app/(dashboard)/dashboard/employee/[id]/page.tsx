@@ -4,10 +4,10 @@ import EmployeeInformation from "../components/EmployeeInformation";
 import EmployeeWorkInformation from "../components/EmployeeWorkInformation";
 import Header from "../components/Header";
 import { getCompanyId } from "@/lib/companyId";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import BackButton from "@/components/BackButton";
 
-export default async function Page({ params }: { params: { id: string } }) {
+export default async function Page(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const companyId = await getCompanyId();
   const employee = await db.user.findUnique({
     where: { id: parseInt(params.id), companyId },
@@ -82,10 +82,8 @@ export default async function Page({ params }: { params: { id: string } }) {
   }
   return (
     <div className="p-2">
-      <div className="w-fit rounded border p-1.5 md:hidden">
-        <Link href="/dashboard/employee">
-          <ArrowLeft className="w-5 h-5" />
-        </Link>
+      <div className="w-fit">
+        <BackButton href="/dashboard/employee" />
       </div>
       <Header />
       <EmployeeInformation employee={employee} info={technicians} />

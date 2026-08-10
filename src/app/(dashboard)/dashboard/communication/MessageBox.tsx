@@ -2,13 +2,19 @@ import { deleteUserFromGroup } from "@/actions/communication/internal/deleteUser
 import { getUserInGroup } from "@/actions/communication/internal/query";
 import { renameGroup } from "@/actions/communication/internal/renameGroup";
 import { updateChatTrack } from "@/actions/communication/internal/updateChatTrack";
+import {
+  GROUP_NAME_MAX_LENGTH,
+  normalizeGroupName,
+} from "@/lib/utils/groupName";
 import Avatar from "@/components/Avatar";
-import { Dialog, DialogContent, DialogFooter } from "@/components/Dialog";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { cn } from "@/lib/cn";
+import { successToast } from "@/lib/toast";
 import { useChatTrackStore } from "@/stores/chatTrackStore";
 import { sendType } from "@/types/Chat";
+import { useQueryClient } from "@tanstack/react-query";
 import { Attachment, Group, User } from "@prisma/client";
+import { Popconfirm } from "antd";
 import { format } from "date-fns";
 import {
   ArrowLeft,
@@ -22,14 +28,21 @@ import {
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import {
+  Fragment,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import toast from "react-hot-toast";
 import { formatDate } from "./client/_component/conversations/mailgun/MailgunConversation";
-import InvoiceEstimateModal from "./collaboration/InvoiceEstimateModal";
 import AddUsersInGroupModal from "./internal/AddUsersInGroupModal";
 import { Message as TMessage } from "./internal/UsersArea";
 import Message from "./Message";
-import { successToast } from "@/lib/toast";
+import MessageListSkeleton from "./MessageListSkeleton";
+import { useMessageDraft } from "./_hooks/useMessageDraft";
 
 type TSection = "collaboration" | "internal";
 
@@ -44,52 +57,114 @@ export default function MessageBox({
   setGroupsList,
   existingGroups,
   section,
+  isLoadingOlder = false,
+  isLoadingInitial = false,
+  onScrollContainerRef,
+  topSlot,
 }: {
   user?: User; // TODO: type this
   setUsersList?: React.Dispatch<React.SetStateAction<any[]>>;
   setGroupsList?: React.Dispatch<React.SetStateAction<any[]>>;
-  messages: (TMessage & { attachment: Attachment | null })[];
+  messages: (TMessage & {
+    attachment: Attachment | Attachment[] | null;
+  })[];
   totalMessageBox: number;
   setMessages: React.Dispatch<React.SetStateAction<any[]>>;
   fromGroup?: boolean;
   group?: Group & { users: User[] };
   existingGroups?: Array<Group & { users: User[] }>;
   section: TSection;
+  isLoadingOlder?: boolean;
+  isLoadingInitial?: boolean;
+  onScrollContainerRef?: (el: HTMLDivElement | null) => void;
+  topSlot?: React.ReactNode;
 }) {
   const { data: session } = useSession();
   const attachmentRef = useRef<HTMLInputElement>(null);
   const [pending, startTransition] = useTransition();
-  const [message, setMessage] = useState("");
+  const draftTargetId = fromGroup ? group?.id : receiverUser?.id;
+  const draftChannel =
+    section === "internal" ? (fromGroup ? "group" : "dm") : "";
+  const {
+    draftText: message,
+    setDraftText: setMessage,
+    clearDraft,
+  } = useMessageDraft({
+    section,
+    channel: draftChannel,
+    targetId: draftTargetId,
+  });
   const messageBoxRef = useRef<HTMLDivElement>(null);
   const [openSettings, setOpenSettings] = useState(false);
   const [multiAttachmentFile, setMultiAttachmentFile] = useState<File[] | null>(
-    null
+    null,
   );
 
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [showAttachment, setShowAttachment] = useState(false);
   const pathname = usePathname();
 
   const [isImageLoaded, setIsImageLoaded] = useState(false);
 
   const isEstimateAttachmentShow = pathname?.includes(
-    "/communication/collaboration"
+    "/communication/collaboration",
   );
 
   const { lastMessage, setLastMessage } = useChatTrackStore();
   const [groupName, setGroupName] = useState(group?.name || "");
   const [isGroupNameEdited, setIsGroupNameEdited] = useState(false);
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [userToDelete, setUserToDelete] = useState<User | null>(null);
-  let lastDate = "";
 
-  useEffect(() => {
-    if (messageBoxRef.current) {
-      messageBoxRef.current.scrollTop = messageBoxRef.current.scrollHeight;
-      // messageBoxRef.current.scrollIntoView({ behavior: "smooth" });
-      setIsImageLoaded(false);
+  // Track which last-message id we've already scrolled to. We scroll to the
+  // bottom only when a genuinely new last-message id appears (initial load /
+  // new outgoing or incoming real-time message). We must NOT scroll when older
+  // pages are prepended (scroll-up reverse pagination).
+  //
+  // Two guards:
+  //   1. `isLoadingOlder` (= isFetchingNextPage) — blocks while the fetch is
+  //      in flight.
+  //   2. `wasLoadingOlderRef` — blocks on the EXACT render where
+  //      `isLoadingOlder` flips true→false (i.e. the page just landed).
+  //      Without this the effect would fire with `isLoadingOlder = false` and
+  //      the stale `lastId` check might not save us in every edge case.
+  const lastSeenIdRef = useRef<unknown>(null);
+  const wasLoadingOlderRef = useRef(false);
+  useLayoutEffect(() => {
+    if (isLoadingOlder) {
+      wasLoadingOlderRef.current = true;
+      return;
     }
-  }, [messages, isImageLoaded]);
+    // Just finished loading an older page — skip this render so the parent's
+    // useLayoutEffect (adjustAfterPagesChange) can restore scroll position
+    // without us fighting it.
+    if (wasLoadingOlderRef.current) {
+      wasLoadingOlderRef.current = false;
+      return;
+    }
+
+    const last = messages[messages.length - 1] as any;
+    const lastId = last?.id ?? last?.createdAt ?? null;
+    if (lastId == null) return;
+    if (lastId === lastSeenIdRef.current && !isImageLoaded) return;
+    lastSeenIdRef.current = lastId;
+
+    const frame = requestAnimationFrame(() => {
+      if (messageBoxRef.current) {
+        messageBoxRef.current.scrollTop = messageBoxRef.current.scrollHeight;
+        setIsImageLoaded(false);
+      }
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [messages, isImageLoaded, totalMessageBox, isLoadingOlder]);
+
+  // Expose the inner scroll container to a parent that wants to wire up
+  // reverse-pagination on scroll-up.
+  useEffect(() => {
+    if (!onScrollContainerRef) return;
+    onScrollContainerRef(messageBoxRef.current);
+    return () => onScrollContainerRef(null);
+  }, [onScrollContainerRef]);
 
   async function handleSendMessage(e: any) {
     e.preventDefault();
@@ -119,6 +194,7 @@ export default function MessageBox({
       }
 
       const requestBody = {
+        sessionUserId: session?.user?.id,
         to: fromGroup ? group?.id : receiverUser?.id,
         type: fromGroup ? sendType.Group : sendType.User,
         message,
@@ -126,16 +202,16 @@ export default function MessageBox({
         attachmentFiles:
           attachmentFileUrl && attachmentFileUrl.length > 0
             ? (attachmentFileUrl as string[]).map((fileUrl, urlIndex) => {
-              const findFileIntoMultiFile = multiAttachmentFile?.find(
-                (_, fileIndex) => fileIndex === urlIndex
-              );
-              return {
-                fileName: findFileIntoMultiFile?.name,
-                fileType: findFileIntoMultiFile?.type,
-                fileUrl: fileUrl,
-                fileSize: findFileIntoMultiFile?.size,
-              };
-            })
+                const findFileIntoMultiFile = multiAttachmentFile?.find(
+                  (_, fileIndex) => fileIndex === urlIndex,
+                );
+                return {
+                  fileName: findFileIntoMultiFile?.name,
+                  fileType: findFileIntoMultiFile?.type,
+                  fileUrl: fileUrl,
+                  fileSize: findFileIntoMultiFile?.size,
+                };
+              })
             : null,
       };
 
@@ -157,9 +233,11 @@ export default function MessageBox({
           createdAt: new Date(),
         };
         setMessages((messages) => [...messages, newMessage]);
-        setMessage("");
+        clearDraft();
         setMultiAttachmentFile(null);
         setLastMessage(json.chatTrack);
+        queryClient.invalidateQueries({ queryKey: ["internal", "users"] });
+        queryClient.invalidateQueries({ queryKey: ["internal", "groups"] });
         router.refresh();
       } else {
         toast.error(json.message);
@@ -182,7 +260,7 @@ export default function MessageBox({
       }
       setUsersList &&
         setUsersList((usersList) =>
-          usersList.filter((u) => u.id !== receiverUser?.id)
+          usersList.filter((u) => u.id !== receiverUser?.id),
         );
     } catch (err) {
       const formattedError = errorHandler(err);
@@ -193,7 +271,7 @@ export default function MessageBox({
   const handleDeleteUserFromGroupList = async (userId: number) => {
     const isUserExistInGroup = await getUserInGroup(
       parseInt(session?.user?.id!),
-      group?.id!
+      group?.id!,
     );
     if (!isUserExistInGroup) {
       toast.error("You can not remove this User from this group");
@@ -214,28 +292,15 @@ export default function MessageBox({
                 };
               }
               return g;
-            })
+            }),
           );
         const removedUser = group?.users.find((user) => user.id === userId);
         const userName = removedUser
           ? `${removedUser.firstName} ${removedUser.lastName}`
           : "User";
-        successToast(`${userName} removed from group successfully!`)
+        successToast(`${userName} removed from group successfully!`);
       }
     }
-  };
-
-  const handleConfirmDeleteUser = () => {
-    if (userToDelete) {
-      startTransition(() => handleDeleteUserFromGroupList(userToDelete.id));
-      setDeleteConfirmOpen(false);
-      setUserToDelete(null);
-    }
-  };
-
-  const handleShowDeleteConfirmation = (user: User) => {
-    setUserToDelete(user);
-    setDeleteConfirmOpen(true);
   };
 
   const handleAttachment = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -266,14 +331,14 @@ export default function MessageBox({
   const handleRemoveAttachment = (fileName: string) => {
     setMultiAttachmentFile(
       (multiFiles) =>
-        multiFiles && multiFiles?.filter((file) => file?.name !== fileName)
+        multiFiles && multiFiles?.filter((file) => file?.name !== fileName),
     );
   };
   return (
     <div
       className={cn(
         "app-shadow flex h-[calc(100vh-50px)] w-full flex-col justify-between overflow-hidden border bg-background max-[1400px]:w-[100%] sm:h-full sm:rounded-lg",
-        totalMessageBox > 2 && "sm:h-[44vh]"
+        totalMessageBox > 2 && "sm:h-[44vh]",
       )}
     >
       {/* name and delete */}
@@ -289,7 +354,7 @@ export default function MessageBox({
 
       {/* Chat Header */}
       <div className="flex items-center justify-between gap-2 bg-gradient-to-r from-[#006D77] to-[#008c99] p-3 text-white sm:rounded-sm">
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-3">
           <button onClick={handleBack} className="flex-shrink-0 sm:hidden">
             <ArrowLeft size={20} className="font-bold" />
           </button>
@@ -303,7 +368,7 @@ export default function MessageBox({
                   height={50}
                   className={cn(
                     "rounded-full",
-                    index === 0 ? "ml-0" : "-ml-9 sm:-ml-8"
+                    index === 0 ? "ml-0" : "-ml-9 sm:-ml-8",
                   )}
                 />
               ))}
@@ -320,6 +385,7 @@ export default function MessageBox({
                       type="text"
                       value={groupName}
                       onChange={(e) => setGroupName(e.target.value)}
+                      maxLength={GROUP_NAME_MAX_LENGTH}
                       className="text-black rounded-md px-2 py-1 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-white"
                       autoFocus
                     ></input>
@@ -346,10 +412,15 @@ export default function MessageBox({
                       <CircleCheckBig
                         className="ml-3 size-6 cursor-pointer"
                         onClick={async () => {
-                          const trimmedName = groupName.trim();
-                          const currentName = group?.name?.trim() || "";
+                          const trimmedName = normalizeGroupName(groupName);
+                          const currentName = normalizeGroupName(
+                            group?.name ?? "",
+                          );
                           if (!trimmedName) return;
-                          if (trimmedName === currentName) {
+                          if (
+                            trimmedName.toLowerCase() ===
+                            currentName.toLowerCase()
+                          ) {
                             toast.error("Group name must be different.");
                             return;
                           }
@@ -357,29 +428,33 @@ export default function MessageBox({
                             existingGroups?.some(
                               (existingGroup) =>
                                 existingGroup.id !== group?.id &&
-                                existingGroup.name
-                                  ?.trim()
-                                  .toLowerCase() === trimmedName.toLowerCase()
+                                normalizeGroupName(
+                                  existingGroup.name ?? "",
+                                ).toLowerCase() === trimmedName.toLowerCase(),
                             ) ?? false;
                           if (hasDuplicateName) {
                             toast.error("Group name already exists.");
                             return;
                           }
-                          setIsGroupNameEdited(false);
-                          if (groupName !== group?.name) {
-                            setGroupName(trimmedName);
-                            if (group?.id) {
-                              const response = await renameGroup(
-                                trimmedName,
-                                group.id
+                          if (groupName !== group?.name && group?.id) {
+                            const response = await renameGroup(
+                              trimmedName,
+                              group.id,
+                            );
+                            if (response?.status === 200) {
+                              setIsGroupNameEdited(false);
+                              setGroupName(trimmedName);
+                              successToast(
+                                response?.message ||
+                                  "Group renamed successfully.",
                               );
-                              if (response?.status === 200) {
-                                successToast(
-                                  response?.message ||
-                                    "Group renamed successfully."
-                                );
-                              }
+                            } else {
+                              toast.error(
+                                response?.message || "Failed to rename group.",
+                              );
                             }
+                          } else {
+                            setIsGroupNameEdited(false);
                           }
                         }}
                       />
@@ -422,10 +497,16 @@ export default function MessageBox({
                 className="flex items-center justify-between space-x-1 rounded-full bg-[#006D77] px-2 py-1 text-white"
               >
                 <p className="text-sm">{user.firstName}</p>
-                <CircleX
-                  onClick={() => handleShowDeleteConfirmation(user)}
-                  className="size-4 cursor-pointer"
-                />
+                <Popconfirm
+                  title="Remove User"
+                  description={`Are you sure you want to remove ${user.firstName} ${user.lastName} from this group?`}
+                  onConfirm={() => handleDeleteUserFromGroupList(user.id)}
+                  disabled={pending}
+                  okText="Yes"
+                  cancelText="No"
+                >
+                  <CircleX className="size-4 cursor-pointer" />
+                </Popconfirm>
               </div>
             ))}
             <AddUsersInGroupModal
@@ -448,28 +529,55 @@ export default function MessageBox({
         id="messageBox"
         className={cn(
           "overflow-y-scroll",
-          totalMessageBox > 2 ? "h-[calc(100%-60px)]" : "h-[82%]"
+          totalMessageBox > 2 ? "h-[calc(100%-60px)]" : "h-[82%]",
         )}
         ref={messageBoxRef}
       >
+        {topSlot}
+        {isLoadingInitial && messages.length === 0 && <MessageListSkeleton />}
         {messages.map((message: TMessage, index: number) => {
+          const prev = index > 0 ? messages[index - 1] : null;
+          const currentTs = new Date(
+            message?.createdAt ?? new Date(),
+          ).getTime();
+          const prevTs = prev
+            ? new Date(prev.createdAt ?? new Date()).getTime()
+            : 0;
           const messageDate = format(
             new Date(message?.createdAt ?? new Date()),
-            "PPP"
-          ); // 'Jan 1, 2024'
-          const messageTime = format(
-            new Date(message?.createdAt ?? new Date()),
-            "h:mm a"
-          ); // '12:30 PM'
+            "PPP",
+          );
+          const prevDate = prev
+            ? format(new Date(prev.createdAt ?? new Date()), "PPP")
+            : null;
 
-          const showDateSeparator = messageDate !== lastDate;
-          lastDate = messageDate;
+          // Day chip only when the calendar day changes (WhatsApp / Messenger
+          // style). Previously this was reset to "" on every iteration so
+          // every message got a separator.
+          const showDateSeparator = !prev || messageDate !== prevDate;
+
+          // Group with previous when: same sender, same userId (for group
+          // chats), same calendar day, and within 5 minutes — collapses
+          // avatar + name + extra spacing on stacked replies.
+          const FIVE_MIN = 5 * 60 * 1000;
+          const groupedWithPrev =
+            !!prev &&
+            !showDateSeparator &&
+            prev.sender === message.sender &&
+            (prev.userId ?? null) === (message.userId ?? null) &&
+            currentTs - prevTs < FIVE_MIN;
+
           return (
-            <>
+            <Fragment
+              key={
+                message.userId ??
+                `${message.createdAt?.toISOString?.() ?? index}-${index}`
+              }
+            >
               {showDateSeparator && (
                 <div className="block py-2 text-center text-xs text-gray-500">
                   {formatDate(
-                    new Date(message?.createdAt ?? new Date()).toDateString()
+                    new Date(message?.createdAt ?? new Date()).toDateString(),
                   )}
                 </div>
               )}
@@ -477,10 +585,11 @@ export default function MessageBox({
                 key={index}
                 fromGroup={fromGroup}
                 message={message}
+                groupedWithPrev={groupedWithPrev}
                 onDownload={handleDownload}
                 setIsImageLoaded={setIsImageLoaded}
               />
-            </>
+            </Fragment>
           );
         })}
       </div>
@@ -490,7 +599,7 @@ export default function MessageBox({
         <div
           className={cn(
             "relative w-full rounded-lg border border-gray-200 bg-white shadow-md flex flex-col",
-            totalMessageBox > 2 ? "max-h-[120px]" : "max-h-64"
+            totalMessageBox > 2 ? "max-h-[120px]" : "max-h-64",
           )}
         >
           {/* Sticky header */}
@@ -572,7 +681,7 @@ export default function MessageBox({
       <form
         className={cn(
           "relative flex items-center gap-2 bg-[#D9D9D9] p-2",
-          totalMessageBox > 2 ? "h-[60px] min-h-[60px]" : "h-[8%] min-h-[50px]"
+          totalMessageBox > 2 ? "h-[60px] min-h-[60px]" : "h-[8%] min-h-[50px]",
         )}
         onSubmit={(e) => startTransition(() => handleSendMessage(e))}
       >
@@ -581,7 +690,7 @@ export default function MessageBox({
           <div
             className={cn(
               "absolute -top-[55px] space-y-1",
-              isEstimateAttachmentShow ? "-top-[55px]" : "-top-[27px]"
+              isEstimateAttachmentShow ? "-top-[55px]" : "-top-[27px]",
             )}
           >
             <p
@@ -590,13 +699,14 @@ export default function MessageBox({
             >
               Attach Document/Media
             </p>
-            {isEstimateAttachmentShow && (
+            {/* {isEstimateAttachmentShow && (
               <InvoiceEstimateModal
                 setShowAttachment={setShowAttachment}
                 setMessages={setMessages}
-                receiverUser={receiverUser!}
+                receiverCompany={receiverUser?.company!}
+                currentCompanyId={currentCompanyId}
               />
-            )}
+            )} */}
           </div>
         )}
         <Image
@@ -627,25 +737,6 @@ export default function MessageBox({
           <SendHorizontal className="text-[#006D77]" />
         </button>
       </form>
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-        <DialogContent>
-          <h2 className="mt-5 text-center text-xl font-semibold">
-            Are you sure you want to remove {userToDelete?.firstName}{" "}
-            {userToDelete?.lastName} from this group?
-          </h2>
-          <DialogFooter className="py-4">
-            <button
-              disabled={pending}
-              onClick={handleConfirmDeleteUser}
-              className="mx-auto rounded bg-[#6571FF] px-8 py-2 text-white disabled:opacity-50"
-            >
-              {pending ? "Removing..." : "Confirm Remove"}
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

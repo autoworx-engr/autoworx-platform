@@ -121,7 +121,7 @@ export default function EditSalePurchaseList({
   };
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setFormState((prev) => ({ ...prev, [name]: value }));
@@ -169,9 +169,11 @@ export default function EditSalePurchaseList({
     }
 
     // Calculate per-unit price from total price
+    // Use high precision (10dp) to avoid rounding errors when total is later
+    // recalculated as price * quantity (e.g. 5000/150 * 150 ≠ 5000 at 2dp)
     let perUnitPrice = parseFloat(price) / newQuantityValue;
     if (!perUnitPrice || !isFinite(perUnitPrice)) perUnitPrice = 0;
-    const roundedPerUnitPrice = parseFloat(perUnitPrice.toFixed(2));
+    const roundedPerUnitPrice = parseFloat(perUnitPrice.toFixed(10));
     const res = await UpdatePurchase({
       historyId: history?.id ?? 0,
       productId,
@@ -208,13 +210,14 @@ export default function EditSalePurchaseList({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="flex w-full items-center justify-end text-[#6571FF] md:justify-center">
+        <button className="flex w-full items-center justify-end text-primary md:justify-center">
           <SquarePen className="w-5 h-5" />
         </button>
       </DialogTrigger>
 
       <DialogContent
         className="max-h-[80%] w-[96%] max-w-xl grid-rows-[auto,1fr,auto] thin-scrollbar"
+        onOpenAutoFocus={(e) => e.preventDefault()}
         form
       >
         <DialogHeader>
@@ -231,6 +234,10 @@ export default function EditSalePurchaseList({
               name="date"
               type="date"
               label="Date"
+              onFocus={(e) => {
+                // Prevent the default focus behavior to avoid opening the calendar popup
+                e.preventDefault();
+              }}
               required={true}
               value={formState.date}
               onChange={handleInputChange}
@@ -257,7 +264,7 @@ export default function EditSalePurchaseList({
                     button={
                       <button
                         type="button"
-                        className="text-xs text-[#6571FF] hover:underline"
+                        className="text-xs text-primary hover:underline"
                       >
                         + New Vendor
                       </button>
@@ -274,7 +281,7 @@ export default function EditSalePurchaseList({
                       vendor.companyName
                         ?.toLowerCase()
                         ?.includes(search.toLowerCase()) ||
-                      vendor.name?.toLowerCase().includes(search.toLowerCase())
+                      vendor.name?.toLowerCase().includes(search.toLowerCase()),
                   )
                 }
                 openState={[vendorOpen, setVendorOpen]}
@@ -333,8 +340,8 @@ export default function EditSalePurchaseList({
                 "h-24 w-full rounded-md border border-slate-300 outline-none bg-background px-3 py-2 leading-6 transition-all duration-300 thin-scrollbar",
                 "bg-white/80 backdrop-blur-sm dark:bg-slate-900/50",
                 "text-slate-600 dark:text-slate-300 placeholder:text-slate-400",
-                "focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/40",
-                "disabled:opacity-50 disabled:cursor-not-allowed"
+                "focus:border-primary/60 focus:ring-2 focus:ring-primary/40",
+                "disabled:opacity-50 disabled:cursor-not-allowed",
               )}
             />
           </div>
@@ -353,7 +360,7 @@ export default function EditSalePurchaseList({
           <Submit
             className="
                 rounded-xl px-6 py-2.5 text-sm font-medium text-white
-                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                bg-gradient-to-r from-primary to-[#5a66ee]
                 shadow-lg shadow-indigo-500/30
                 hover:shadow-xl hover:shadow-indigo-500/40
                 hover:-translate-y-0.5 hover:scale-[1.02]

@@ -74,15 +74,15 @@ export default function NotificationPermissionAlert({
               viewBox="-1.28 -1.28 18.56 18.56"
               xmlns="http://www.w3.org/2000/svg"
               fill="currentColor"
-              className="h-7 w-7 text-[#6571FF]"
+              className="h-7 w-7 text-primary"
               stroke="currentColor"
-              stroke-width="0.41600000000000004"
+              strokeWidth="0.41600000000000004"
             >
-              <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+              <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
               <g
                 id="SVGRepo_tracerCarrier"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               ></g>
               <g id="SVGRepo_iconCarrier">
                 {" "}
@@ -100,7 +100,7 @@ export default function NotificationPermissionAlert({
             <Button
               disabled={pending}
               onClick={() => startTransition(handleRequestPermission)}
-              className="border border-gray-200 bg-[#6571FF] text-white hover:bg-gray-50 hover:text-gray-800 disabled:bg-gray-400"
+              className="border border-gray-200 bg-primary text-white hover:bg-gray-50 hover:text-gray-800 disabled:bg-gray-400"
             >
               {buttonText}
             </Button>

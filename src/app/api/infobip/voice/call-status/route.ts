@@ -1,3 +1,4 @@
+import { updateCallChatTrack } from "@/actions/communication/client/chat-track/callTrack";
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -72,12 +73,28 @@ export async function POST(request: NextRequest) {
       data: updateData,
     });
 
+    // Bump the thread so a missed call surfaces at the top of the client list.
+    const call = await db.clientCall.findFirst({
+      where: {
+        OR: [{ callSid: callId }, { callSid: { contains: callId } }],
+      },
+      select: { clientId: true, direction: true },
+    });
+
+    if (call?.clientId) {
+      await updateCallChatTrack({
+        clientId: call.clientId,
+        status: mappedStatus,
+        direction: call.direction === "outbound" ? "outbound" : "inbound",
+      });
+    }
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error updating call status:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

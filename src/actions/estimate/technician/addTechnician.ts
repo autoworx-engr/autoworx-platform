@@ -21,14 +21,14 @@ type TechnicianInput = {
   status: string;
   note: string;
   userId: number;
-  serviceId: number;
+  serviceId: number | null;
   invoiceId: string;
   invoiceItemId: number;
 };
 
 export async function addTechnician(
   payload: TechnicianInput,
-  vehicleParts: Partial<VehicleParts>[]
+  vehicleParts: Partial<VehicleParts>[],
 ): Promise<ServerAction | TErrorHandler> {
   const sessionUser = await getUserFromSession();
   const companyId = sessionUser.companyId;
@@ -54,7 +54,7 @@ export async function addTechnician(
       currentTime.getHours(),
       currentTime.getMinutes(),
       currentTime.getSeconds(),
-      currentTime.getMilliseconds()
+      currentTime.getMilliseconds(),
     );
 
     const newTechnician = await db.technician.create({

@@ -1,0 +1,191 @@
+.calendarScope :global(.fc-event) {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Match the week view's "today" highlight (#eff6ff) in month and day views. */
+.calendarScope :global(.fc-day-today) {
+  background-color: #eff6ff !important;
+}
+
+.calendarScope :global(.fc-daygrid-event-harness) {
+  margin-bottom: 2px;
+}
+
+.calendarScope :global(.fc-timegrid-slot) {
+  height: 2.5em !important;
+}
+
+.calendarScope :global(.fc-timegrid-col-bg .fc-non-business) {
+  background-color: rgba(241, 241, 241, 0.72) !important;
+}
+
+.calendarScope :global(.fc-timegrid-slot-lane).nonBusinessSlot {
+  border-top-color: #d5dbe5 !important;
+}
+
+.calendarScope :global(.fc-list-table) {
+  width: 100% !important;
+  table-layout: auto !important;
+}
+
+.calendarScope :global(.fc-list-day-cushion) {
+  padding: 6px 14px !important;
+}
+
+.calendarScope :global(.fc-list-event-time) {
+  padding: 5px 8px !important;
+  white-space: nowrap;
+  width: 1% !important;
+}
+
+.calendarScope :global(.fc-list-event-title) {
+  padding: 5px 8px 5px 0 !important;
+  width: 99% !important;
+}
+
+/* Desktop: flex row with justify-between */
+@media (min-width: 641px) {
+  .calendarScope :global(.fc-list-event) {
+    display: flex !important;
+    flex-grow: 1 !important;
+  }
+
+  .calendarScope :global(.fc-list-event-time) {
+    display: flex !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
+    flex-grow: 1 !important;
+    padding: 5px 16px !important;
+  }
+
+  .calendarScope :global(.fc-list-event-title) {
+    flex: 1 !important;
+    width: auto !important;
+    padding: 5px 16px 5px 0 !important;
+  }
+}
+
+.calendarScope :global(.fc-list-event-graphic) {
+  display: none !important;
+}
+
+.calendarScope :global(.fc-list-event td) {
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+}
+
+@media (max-width: 640px) {
+  .calendarScope :global(.fc-list-event-time) {
+    font-size: 11px !important;
+  }
+}
+
+.calendarScope :global(.fc-button-primary) {
+  background-color: #5a66ee !important;
+  border-color: #5a66ee !important;
+}
+
+.calendarScope :global(.fc-button-primary:hover) {
+  background-color: #5a66ee !important;
+  border-color: #5a66ee !important;
+}
+
+.calendarScope :global(.fc-button-primary:not(:disabled).fc-button-active),
+.calendarScope :global(.fc-button-primary:not(:disabled):active) {
+  background-color: #6573ee !important;
+  border-color: #6573ee !important;
+}
+
+.calendarScope :global(.fc-button:focus) {
+  box-shadow: none !important;
+}
+
+@media (max-width: 768px) {
+  .calendarScope :global(.fc-timegrid-slot-label-cushion),
+  .calendarScope :global(.fc-timegrid-axis-cushion) {
+    font-size: 10px !important;
+    text-transform: uppercase;
+  }
+}
+
+.calendarScope :global(.fc-timegrid-event) {
+  min-width: 50px !important;
+}
+.calendarScope :global(.fc-header-toolbar) {
+  display: none !important;
+}
+
+.calendarBody {
+  min-height: 60vh;
+  max-height: 70vh;
+}
+
+/* week/day view width fix */
+.calendarScope :global(.fc-timegrid .fc-scroller-harness),
+.calendarScope :global(.fc-timegrid .fc-timegrid-body),
+.calendarScope :global(.fc-timegrid .fc-timegrid-body table),
+.calendarScope :global(.fc-timegrid .fc-col-header) {
+  width: 100% !important;
+}
+
+/* month view width fix */
+.calendarScope :global(.fc-daygrid .fc-scroller-harness),
+.calendarScope :global(.fc-daygrid-body),
+.calendarScope :global(.fc-daygrid-body table),
+.calendarScope :global(.fc-daygrid .fc-col-header) {
+  width: 100% !important;
+}
+
+/*
+ * FullCalendar forces `overflow-y: scroll` on every scrollgrid section
+ * (header + body) to reserve a matching gutter for column alignment. On
+ * Windows that renders the header's empty gutter as a redundant native
+ * scrollbar (with up/down arrows). Custom thin scrollbars drop the arrows and
+ * keep the empty header track transparent, so only the body's thumb shows
+ * while the reserved width — and column alignment — stays intact.
+ */
+.calendarScope :global(.fc-scroller) {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.5) transparent;
+}
+
+.calendarScope :global(.fc-scroller)::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.calendarScope :global(.fc-scroller)::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.calendarScope :global(.fc-scroller)::-webkit-scrollbar-thumb {
+  background-color: rgba(148, 163, 184, 0.5);
+  border-radius: 9999px;
+}
+
+.calendarScope :global(.fc-scroller)::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(100, 116, 139, 0.6);
+}
+
+/*
+ * The header section keeps its reserved gutter (so columns stay aligned with
+ * the body) but its scrollbar must never be visible — hide the thumb there so
+ * the sticky-shim's 1px overflow can't render a tiny stray scrollbar next to
+ * the day header.
+ */
+.calendarScope
+  :global(.fc-scrollgrid-section-header .fc-scroller)::-webkit-scrollbar-thumb {
+  background-color: transparent;
+}
+
+.calendarScope :global(.fc-scrollgrid-section-header .fc-scroller) {
+  scrollbar-color: transparent transparent;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

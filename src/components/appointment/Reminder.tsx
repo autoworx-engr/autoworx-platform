@@ -1,16 +1,13 @@
 import { deleteTemplate } from "@/actions/appointment/deleteTemplate";
 import { emailTemplateQueryKey } from "@/app/(dashboard)/dashboard/task/_constant";
-import FormError from "@/components/FormError";
 import NewTemplate from "@/components/Lists/NewTemplate";
 import Selector from "@/components/Selector";
 import { Switch } from "@/components/Switch";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 import useTemplatesQuery from "@/hooks/query-hook/useTemplatesQuery";
 import { useFormErrorStore } from "@/stores/form-error";
 import type { Client, EmailTemplate, Vehicle } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
-import moment from "moment";
-import { useEffect, useState } from "react";
-import UpdateTemplate from "./UpdateTemplate";
 import {
   Bell,
   Calendar,
@@ -20,12 +17,16 @@ import {
   UserRoundX,
   X,
 } from "lucide-react";
+import moment from "moment-timezone";
+import { useEffect, useMemo, useRef, useState } from "react";
+import UpdateTemplate from "./UpdateTemplate";
 
 type TReminderProps = {
   client: Partial<Client> | null;
   vehicle: Partial<Vehicle> | null;
   startTime: string;
   date: string;
+  timezone?: string;
   times: { time: string; date: string }[];
   setTimes: (times: { time: string; date: string }[]) => void;
   confirmationTemplate: EmailTemplate | null;
@@ -65,29 +66,110 @@ export function Reminder({
   openReminder,
   setOpenReminder,
   setOpenConfirmation,
+  timezone,
 }: TReminderProps) {
   const [time, setTime] = useState<string>("");
   const [dateInput, setDateInput] = useState<string>("");
+  const initializedClientIdRef = useRef<number | null>(null);
+  const previousConfirmationTemplateIdRef = useRef<number | null>(null);
+  const previousReminderTemplateIdRef = useRef<number | null>(null);
 
   const { data: templates = [] } = useTemplatesQuery();
+
+  const confirmationTemplates = useMemo(
+    () => templates.filter((t: EmailTemplate) => t.type === "Confirmation"),
+    [templates],
+  );
+  const reminderTemplates = useMemo(
+    () => templates.filter((t: EmailTemplate) => t.type === "Reminder"),
+    [templates],
+  );
+
+  const [templateToDelete, setTemplateToDelete] = useState<{
+    id: number;
+    type: "Confirmation" | "Reminder";
+    subject: string;
+  } | null>(null);
+  const [isDeletingTemplate, setIsDeletingTemplate] = useState(false);
 
   const queryClient = useQueryClient();
   const { showError, clearError, error } = useFormErrorStore();
 
   useEffect(() => {
     return () => clearError();
-  }, []);
+  }, [clearError]);
 
   // Add state for minimum date and time validation
   const [minDate, setMinDate] = useState<string>("");
 
   useEffect(() => {
-    setOpenConfirmation(false);
-  }, [openReminder]);
+    if (openReminder) {
+      setOpenConfirmation(false);
+    }
+  }, [openReminder, setOpenConfirmation]);
 
   useEffect(() => {
-    setOpenReminder(false);
-  }, [openConfirmation]);
+    if (openConfirmation) {
+      setOpenReminder(false);
+    }
+  }, [openConfirmation, setOpenReminder]);
+
+  useEffect(() => {
+    if (!client?.id) {
+      initializedClientIdRef.current = null;
+      return;
+    }
+
+    if (initializedClientIdRef.current === client.id) {
+      return;
+    }
+
+    const firstConfirmationTemplate = templates.find(
+      (template: EmailTemplate) => template.type === "Confirmation",
+    );
+    const firstReminderTemplate = templates.find(
+      (template: EmailTemplate) => template.type === "Reminder",
+    );
+
+    setConfirmationTemplate(firstConfirmationTemplate ?? null);
+    setReminderTemplate(firstReminderTemplate ?? null);
+    setConfirmationTemplateStatus(Boolean(firstConfirmationTemplate));
+    setReminderTemplateStatus(Boolean(firstReminderTemplate));
+    initializedClientIdRef.current = client.id;
+  }, [
+    client?.id,
+    templates,
+    setConfirmationTemplate,
+    setReminderTemplate,
+    setConfirmationTemplateStatus,
+    setReminderTemplateStatus,
+  ]);
+
+  useEffect(() => {
+    const currentTemplateId = confirmationTemplate?.id ?? null;
+
+    if (
+      currentTemplateId !== null &&
+      currentTemplateId !== previousConfirmationTemplateIdRef.current
+    ) {
+      setConfirmationTemplateStatus(true);
+    }
+
+    previousConfirmationTemplateIdRef.current = currentTemplateId;
+  }, [confirmationTemplate?.id, setConfirmationTemplateStatus]);
+
+  useEffect(() => {
+    const currentTemplateId = reminderTemplate?.id ?? null;
+
+    if (
+      currentTemplateId !== null &&
+      currentTemplateId !== previousReminderTemplateIdRef.current
+    ) {
+      setReminderTemplateStatus(true);
+    }
+
+    previousReminderTemplateIdRef.current = currentTemplateId;
+  }, [reminderTemplate?.id, setReminderTemplateStatus]);
 
   // Set minimum date to today
   useEffect(() => {
@@ -124,14 +206,28 @@ export function Reminder({
     if (type === "Confirmation") {
       // remove this template from the array
       setConfirmationTemplate(null);
+      setConfirmationTemplateStatus(false);
     } else {
       // remove this template from the array
       setReminderTemplate(null);
+      setReminderTemplateStatus(false);
     }
 
     queryClient.invalidateQueries({
       queryKey: [emailTemplateQueryKey.templates],
     });
+  }
+
+  async function handleConfirmDeleteTemplate() {
+    if (!templateToDelete || isDeletingTemplate) return;
+
+    try {
+      setIsDeletingTemplate(true);
+      await handleDelete(templateToDelete);
+      setTemplateToDelete(null);
+    } finally {
+      setIsDeletingTemplate(false);
+    }
   }
 
   const handleAddReminder = () => {
@@ -160,11 +256,12 @@ export function Reminder({
     // }
 
     // Check if reminder is before the appointment
-    const appointmentDateTime = moment(
-      `${date} ${startTime}`,
-      "YYYY-MM-DD HH:mm",
-    );
-    const reminderDateTime = moment(`${dateInput} ${time}`, "YYYY-MM-DD HH:mm");
+    const appointmentDateTime = timezone
+      ? moment.tz(`${date} ${startTime}`, "YYYY-MM-DD HH:mm", timezone)
+      : moment(`${date} ${startTime}`, "YYYY-MM-DD HH:mm");
+    const reminderDateTime = timezone
+      ? moment.tz(`${dateInput} ${time}`, "YYYY-MM-DD HH:mm", timezone)
+      : moment(`${dateInput} ${time}`, "YYYY-MM-DD HH:mm");
 
     if (reminderDateTime.isAfter(appointmentDateTime)) {
       showError({
@@ -185,8 +282,8 @@ export function Reminder({
 
   if (!client) {
     return (
-      <div className="flex h-full min-h-[400px] w-full flex-col items-center justify-center gap-4 rounded-3xl bg-slate-50/50 p-8 text-center ring-1 ring-inset ring-slate-100 shadow-inner">
-        {/* Elevated Icon Conzzzzztainer */}
+      <div className="flex lg:h-full h-full lg:min-h-[400px] w-full flex-col items-center justify-center gap-4 rounded-3xl bg-slate-50/50 p-8 text-center ring-1 ring-inset ring-slate-100 shadow-inner">
+        {/* Elevated Icon Container */}
         <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-white shadow-xl shadow-slate-200/50 ring-1 ring-slate-100">
           <UserRoundX
             size={40}
@@ -209,14 +306,16 @@ export function Reminder({
         </div>
 
         {/* Optional Call to Action to make it feel functional */}
-        <div className="mt-2 h-1 w-12 rounded-full bg-[#6571FF]/20" />
+        <div className="mt-2 h-1 w-12 rounded-full bg-primary/20" />
       </div>
     );
   }
 
   return (
     <>
-      <div className="mx-auto w-[350px] space-y-4 p-2 md:w-full">
+      {/* No min-width: 350px overflowed narrow phones. Vertical-only padding
+          so the parent controls horizontal alignment. */}
+      <div className="w-full space-y-4 py-2">
         <div className="flex items-center">
           <h2 className="text-lg font-semibold text-slate-600">Confirmation</h2>
           <Switch
@@ -228,9 +327,9 @@ export function Reminder({
         </div>
 
         <Selector
-          className="max-w-full"
+          className="min-w-full"
           border
-          clickabled={false}
+          clickabled={true}
           label={(template: EmailTemplate | null) =>
             template ? template.subject : "Template"
           }
@@ -245,29 +344,23 @@ export function Reminder({
               startTime={startTime}
             />
           }
-          items={templates.filter(
-            (template: EmailTemplate) => template.type === "Confirmation",
-          )}
+          items={confirmationTemplates}
           displayList={(template: EmailTemplate) => (
             <div className="group relative flex items-center justify-between">
-              <button
-                className="flex flex-1 items-center gap-3 text-left outline-none"
-                onClick={() => {
-                  setConfirmationTemplate(template);
-                  setOpenConfirmation(false);
-                }}
-                type="button"
-              >
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-slate-200 group-hover:bg-[#6571FF]/10 group-hover:ring-[#6571FF]/20 transition-colors">
-                  <FileText className="h-4 w-4 text-slate-400 group-hover:text-[#6571FF]" />
+              <div className="flex items-center gap-3 text-left outline-none">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-slate-200 group-hover:bg-primary/10 group-hover:ring-primary/20 transition-colors">
+                  <FileText className="h-4 w-4 text-slate-400 group-hover:text-primary" />
                 </div>
                 <span className="text-sm font-semibold text-slate-600 transition-colors group-hover:text-slate-900">
                   {template.subject}
                 </span>
-              </button>
+              </div>
 
-              <div className="flex items-center gap-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                <div className="flex items-center gap-1.5 rounded-lg bg-slate-100/50 p-1 ring-1 ring-slate-200/50">
+              <div className="flex items-center gap-1 transition-opacity duration-200 group-hover:opacity-100">
+                <div
+                  className="flex items-center gap-1.5 rounded-lg bg-slate-100/50 p-1 ring-1 ring-slate-200/50"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <UpdateTemplate
                     id={template.id}
                     subject={template.subject}
@@ -279,9 +372,14 @@ export function Reminder({
                   <button
                     type="button"
                     className="flex h-7 w-7 items-center justify-center rounded-md transition-all bg-rose-50 text-rose-500"
-                    onClick={() =>
-                      handleDelete({ id: template.id, type: "Confirmation" })
-                    }
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setTemplateToDelete({
+                        id: template.id,
+                        type: "Confirmation",
+                        subject: template.subject,
+                      });
+                    }}
                   >
                     <X size={16} strokeWidth={2.5} />
                   </button>
@@ -290,16 +388,22 @@ export function Reminder({
             </div>
           )}
           selectedItem={confirmationTemplate}
-          setSelectedItem={setConfirmationTemplate}
+          onSelect={(template) => {
+            setConfirmationTemplate(template);
+            setConfirmationTemplateStatus(Boolean(template));
+            setOpenConfirmation(false);
+          }}
           onSearch={(search: string) =>
-            templates.filter((template) =>
+            confirmationTemplates.filter((template) =>
               template.subject.toLowerCase().includes(search.toLowerCase()),
             )
           }
           openState={[openConfirmation, setOpenConfirmation]}
         />
       </div>
-      <div className="mx-auto w-[350px] space-y-4 p-2 md:w-full">
+      {/* No min-width: 350px overflowed narrow phones. Vertical-only padding
+          so the parent controls horizontal alignment. */}
+      <div className="w-full space-y-4 py-2">
         <div className="flex items-center">
           <h2 className="text-lg font-semibold text-slate-600">Reminder</h2>
           <Switch
@@ -311,9 +415,9 @@ export function Reminder({
         </div>
 
         <Selector
-          className="max-w-full"
+          className="min-w-full"
           border
-          clickabled={false}
+          clickabled={true}
           label={(template: EmailTemplate | null) =>
             template ? template.subject : "Template"
           }
@@ -328,29 +432,23 @@ export function Reminder({
               startTime={startTime}
             />
           }
-          items={templates.filter(
-            (template: EmailTemplate) => template.type === "Reminder",
-          )}
+          items={reminderTemplates}
           displayList={(template: EmailTemplate) => (
             <div className="group relative flex items-center justify-between">
-              <button
-                className="flex flex-1 items-center gap-3 text-left outline-none"
-                onClick={() => {
-                  setReminderTemplate(template);
-                  setOpenReminder(false);
-                }}
-                type="button"
-              >
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-slate-200 group-hover:bg-[#6571FF]/10 group-hover:ring-[#6571FF]/20 transition-colors">
-                  <FileText className="h-4 w-4 text-slate-400 group-hover:text-[#6571FF]" />
+              <div className="flex items-center gap-3 text-left outline-none">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-slate-200 group-hover:bg-primary/10 group-hover:ring-primary/20 transition-colors">
+                  <FileText className="h-4 w-4 text-slate-400 group-hover:text-primary" />
                 </div>
                 <span className="text-sm font-semibold text-slate-600 transition-colors group-hover:text-slate-900">
                   {template.subject}
                 </span>
-              </button>
+              </div>
 
-              <div className="flex items-center gap-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                <div className="flex items-center gap-1.5 rounded-lg bg-slate-100/50 p-1 ring-1 ring-slate-200/50">
+              <div className="flex items-center gap-1 transition-opacity duration-200 group-hover:opacity-100">
+                <div
+                  className="flex items-center gap-1.5 rounded-lg bg-slate-100/50 p-1 ring-1 ring-slate-200/50"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <UpdateTemplate
                     id={template.id}
                     subject={template.subject}
@@ -362,9 +460,14 @@ export function Reminder({
                   <button
                     type="button"
                     className="flex h-7 w-7 items-center justify-center rounded-md transition-all bg-rose-50 text-rose-500"
-                    onClick={() =>
-                      handleDelete({ id: template.id, type: "Reminder" })
-                    }
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setTemplateToDelete({
+                        id: template.id,
+                        type: "Reminder",
+                        subject: template.subject,
+                      });
+                    }}
                   >
                     <X size={16} strokeWidth={2.5} />
                   </button>
@@ -373,9 +476,13 @@ export function Reminder({
             </div>
           )}
           selectedItem={reminderTemplate}
-          setSelectedItem={setReminderTemplate}
+          onSelect={(template) => {
+            setReminderTemplate(template);
+            setReminderTemplateStatus(Boolean(template));
+            setOpenReminder(false);
+          }}
           onSearch={(search: string) =>
-            templates.filter((template) =>
+            reminderTemplates.filter((template) =>
               template.subject.toLowerCase().includes(search.toLowerCase()),
             )
           }
@@ -383,8 +490,9 @@ export function Reminder({
         />
       </div>
 
+      {/* Custom/ad-hoc reminder scheduling — disabled for now. Only the
+          automated 24h/2h-before-appointment reminders are active.
       <div className="mx-auto my-4 w-full max-w-[500px] overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200 shadow-sm">
-        {/* Input Header Area */}
         <div className="flex flex-col gap-3 bg-slate-50/50 p-4 border-b border-slate-100 md:flex-row md:items-end">
           <div className="flex-1 space-y-1.5">
             <label className="text-base font-medium text-slate-600 ml-1">
@@ -392,7 +500,7 @@ export function Reminder({
             </label>
             <input
               type="time"
-              className="w-full h-10 rounded-lg border-none bg-white px-3 text-sm text-slate-600 ring-1 ring-slate-200 transition-all focus:ring-2 focus:ring-[#6571FF]/30 outline-none"
+              className="w-full h-10 min-h-[40px] appearance-none rounded-lg border-none bg-transparent px-3 text-sm text-slate-600 ring-1 ring-slate-200 transition-all focus:ring-2 focus:ring-primary/30 outline-none"
               value={time}
               onChange={(e) => setTime(e.target.value)}
             />
@@ -404,7 +512,7 @@ export function Reminder({
             </label>
             <input
               type="date"
-              className="w-full h-10 rounded-lg border-none bg-white px-3 text-sm text-slate-600 ring-1 ring-slate-200 transition-all focus:ring-2 focus:ring-[#6571FF]/30 outline-none"
+              className="w-full h-10 min-h-[40px] appearance-none rounded-lg border-none bg-transparent px-3 text-sm text-slate-600 ring-1 ring-slate-200 transition-all focus:ring-2 focus:ring-primary/30 outline-none"
               value={dateInput}
               onChange={(e) => setDateInput(e.target.value)}
               min={minDate}
@@ -413,15 +521,14 @@ export function Reminder({
 
           <button
             type="button"
-            className="h-10 rounded-lg bg-[#6571FF] px-6 text-sm font-bold text-white shadow-md shadow-[#6571FF]/20 transition-all hover:scale-[1.02] active:scale-95"
+            className="h-10 rounded-lg bg-primary px-6 text-sm font-bold text-white shadow-md shadow-primary/20 transition-all hover:scale-[1.02] active:scale-95"
             onClick={handleAddReminder}
           >
             Add
           </button>
         </div>
 
-        {/* Reminders List Area */}
-        <div className="no-visible-scrollbar h-[250px] overflow-y-auto bg-white md:h-[320px]">
+        <div className="no-visible-scrollbar h-[220px] overflow-y-auto bg-white">
           {times.length > 0 ? (
             <div className="space-y-1">
               {times.map((timeObj, index) => {
@@ -468,9 +575,9 @@ export function Reminder({
               })}
             </div>
           ) : (
-            <div className="flex h-full flex-col items-center justify-center text-center p-6">
-              <div className="mb-2 rounded-full bg-slate-50 p-3 text-slate-300">
-                <Calendar size={24} />
+            <div className="flex h-full flex-col items-center justify-center p-4 text-center">
+              <div className="mb-1.5 rounded-full bg-slate-50 p-2.5 text-slate-300">
+                <Calendar size={20} />
               </div>
               <p className="text-sm font-medium text-slate-400">
                 No reminders scheduled
@@ -482,8 +589,9 @@ export function Reminder({
           )}
         </div>
       </div>
+      */}
 
-      <div className="flex items-start gap-2 p-2 text-sm text-yellow-800">
+      <div className="flex items-start gap-2 py-2 text-sm text-yellow-800">
         <CircleAlert className="mt-1 h-5 w-5 flex-shrink-0 text-yellow-600" />
         <div className="flex-1 min-w-0">
           <p className="leading-relaxed break-words">
@@ -493,6 +601,23 @@ export function Reminder({
           </p>
         </div>
       </div>
+
+      <ConfirmModal
+        open={!!templateToDelete}
+        onOpenChange={(open) => {
+          if (!open && !isDeletingTemplate) setTemplateToDelete(null);
+        }}
+        title="Delete template?"
+        description={
+          templateToDelete
+            ? `"${templateToDelete.subject}" will be permanently deleted and can no longer be used as a ${templateToDelete.type.toLowerCase()} template on any appointment.`
+            : undefined
+        }
+        confirmText="Delete"
+        destructive
+        loading={isDeletingTemplate}
+        onConfirm={handleConfirmDeleteTemplate}
+      />
     </>
   );
 }

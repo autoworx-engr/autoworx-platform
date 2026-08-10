@@ -76,6 +76,7 @@ const Dashboard = () => {
   const [updateSuccess, setUpdateSuccess] = useState<string | null>(null);
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
+  const [hasManualDateRange, setHasManualDateRange] = useState(false);
 
   const params = useParams();
   const employeeId = Number(params?.id);
@@ -214,8 +215,8 @@ const Dashboard = () => {
 
     if (isCurrentlyEditing) {
       return (
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col items-center gap-2">
+          <div className="flex items-center justify-center gap-2">
             <input
               type="time"
               value={editingState.value}
@@ -250,7 +251,7 @@ const Dashboard = () => {
     }
 
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-center gap-2">
         <span className="min-w-[80px]">
           {typeof data[field] === "string"
             ? data[field]
@@ -283,13 +284,7 @@ const Dashboard = () => {
         return decimalHoursToHHMM(total);
       })(),
 
-      percentage: (() => {
-        const rate = attendanceInfo?.growthRateTotalHoursWorked?.rate;
-        if (rate === null || rate === undefined || isNaN(Number(rate))) {
-          return "0%";
-        }
-        return rate;
-      })(),
+      percentage: attendanceInfo?.growthRateTotalHoursWorked?.rate || "0%",
       isPositive:
         attendanceInfo?.growthRateTotalHoursWorked?.isPositive || false,
     },
@@ -303,11 +298,15 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="my-4 box-border flex flex-col lg:w-1/2">
+    <div className="my-4 box-border flex w-full flex-col lg:w-1/2">
       <h2 className="mb-2 text-xl font-bold">Attendance</h2>
-      <div className="relative flex h-auto w-full flex-col gap-8 rounded border bg-background p-1 lg:p-6">
+      <div className="relative flex flex-1 w-full flex-col gap-8 rounded-lg border bg-background p-1 lg:p-6">
         <div className="left-3 top-3 w-fit">
           <DateRange
+            dateRange={[
+              hasManualDateRange && startDate ? new Date(startDate) : null,
+              hasManualDateRange && endDate ? new Date(endDate) : null,
+            ]}
             onOk={(start: any, end: any) => {
               let startDateObj: Date;
               let endDateObj: Date;
@@ -369,9 +368,11 @@ const Dashboard = () => {
 
               setStartDate(formattedStartDate);
               setEndDate(formattedEndDate);
+              setHasManualDateRange(true);
             }}
             onCancel={() => {
-              // Reset to current week
+              // Clear manual filter in UI and keep fallback current week data
+              setHasManualDateRange(false);
               if (timezone) {
                 const currentWeekStart = moment.tz(timezone).startOf("week");
                 const currentWeekEnd = moment.tz(timezone).endOf("week");

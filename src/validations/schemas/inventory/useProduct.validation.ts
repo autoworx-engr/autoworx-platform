@@ -21,13 +21,13 @@ export const lossProductValidationSchema = z.object({
     .string()
     .max(7, "Quantity must be less than 8 characters")
     .refine(
-      val => {
+      (val) => {
         const num = Number(val);
         return !isNaN(num) && num >= 0;
       },
       {
         message: "Quantity must be a positive number",
-      }
+      },
     ),
   notes: z
     .string({
@@ -54,13 +54,13 @@ export const updateSalesInventoryHistorySchema = z.object({
     .string()
     .max(7, "Quantity must be less than 8 characters")
     .refine(
-      val => {
+      (val) => {
         const num = Number(val);
         return !isNaN(num) && num >= 0;
       },
       {
         message: "Quantity must be a positive number",
-      }
+      },
     ),
   notes: z.string().trim().max(500, "Notes cannot exceed 500 characters"),
 
@@ -95,13 +95,13 @@ export const updatePurchaseInventoryHistorySchema = z.object({
     .string()
     .max(7, "Quantity must be less than 8 characters")
     .refine(
-      val => {
+      (val) => {
         const num = Number(val);
         return !isNaN(num) && num >= 0;
       },
       {
         message: "Quantity must be a positive number",
-      }
+      },
     ),
 
   unit: z

@@ -6,16 +6,22 @@ type TProps = {
   incomingCall: Call | null;
   onAccept: () => void;
   onReject: () => void;
+  onEndCall?: () => void; // Optional end call handler for connected calls
   isConnected: boolean;
   callDuration: number;
+  isMuted?: boolean;
+  onToggleMute?: () => void;
 };
 
 export default function IncomingCallAlert({
   incomingCall,
   onAccept,
   onReject,
+  onEndCall,
   isConnected,
   callDuration,
+  isMuted = false,
+  onToggleMute,
 }: TProps) {
   const [callerNumber, setCallerNumber] = useState<string>("");
   const [callerName, setCallerName] = useState<string>("");
@@ -40,7 +46,7 @@ export default function IncomingCallAlert({
         setIsLoadingName(true);
         try {
           const response = await fetch(
-            `/api/client/by-phone?phone=${encodeURIComponent(from)}`
+            `/api/client/by-phone?phone=${encodeURIComponent(from)}`,
           );
           if (response.ok) {
             const data = await response.json();
@@ -124,12 +130,18 @@ export default function IncomingCallAlert({
             </h2>
 
             {/* Caller name with subtle background */}
-            {callerName && (
-              <div className="mb-2 inline-block px-4 py-1.5 rounded-full bg-gradient-to-r from-slate-50 to-slate-100 ring-1 ring-slate-900/5">
-                <p className="text-lg font-semibold text-slate-800">
-                  {callerName}
-                </p>
+            {isLoadingName ? (
+              <div className="mb-2 inline-block px-4 py-1.5 rounded-full bg-slate-100 ring-1 ring-slate-900/5">
+                <span className="inline-block h-4 w-24 animate-pulse rounded bg-slate-200" />
               </div>
+            ) : (
+              callerName && (
+                <div className="mb-2 inline-block px-4 py-1.5 rounded-full bg-gradient-to-r from-slate-50 to-slate-100 ring-1 ring-slate-900/5">
+                  <p className="text-lg font-semibold text-slate-800">
+                    {callerName}
+                  </p>
+                </div>
+              )
             )}
 
             {/* Phone number */}
@@ -203,27 +215,71 @@ export default function IncomingCallAlert({
                 </button>
               </>
             ) : (
-              <button
-                onClick={onReject}
-                className="group w-full relative overflow-hidden rounded-xl bg-gradient-to-br from-red-500 to-rose-600 px-6 py-4 text-lg font-semibold text-white shadow-lg shadow-red-500/30 transition-all duration-300 hover:shadow-xl hover:shadow-red-500/40 hover:-translate-y-0.5 active:scale-95"
-              >
-                <div className="relative flex items-center justify-center gap-2">
-                  <svg
-                    className="h-6 w-6 transition-transform duration-300 group-hover:rotate-90"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+              <>
+                {/* Mute / Unmute button */}
+                {onToggleMute && (
+                  <button
+                    type="button"
+                    aria-pressed={isMuted}
+                    aria-label={isMuted ? "Unmute call" : "Mute call"}
+                    onClick={onToggleMute}
+                    className={`group flex-1 relative overflow-hidden rounded-xl px-6 py-4 text-lg font-semibold shadow-lg transition-all duration-300 hover:-translate-y-0.5 active:scale-95 ${
+                      isMuted
+                        ? "bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-amber-500/30"
+                        : "bg-slate-100 text-slate-700 shadow-slate-200 hover:bg-slate-200"
+                    }`}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                  End Call
-                </div>
-              </button>
+                    <div className="relative flex items-center justify-center gap-2">
+                      <svg
+                        className="h-6 w-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        {isMuted ? (
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z M17 9l4 4m0-4l-4 4"
+                          />
+                        ) : (
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 11a7 7 0 01-14 0m7 7v3m-4 0h8M12 3a3 3 0 00-3 3v5a3 3 0 006 0V6a3 3 0 00-3-3z"
+                          />
+                        )}
+                      </svg>
+                      {isMuted ? "Unmute" : "Mute"}
+                    </div>
+                  </button>
+                )}
+
+                {/* End Call button */}
+                <button
+                  onClick={onEndCall ? onEndCall : onReject}
+                  className="group flex-1 relative overflow-hidden rounded-xl bg-gradient-to-br from-red-500 to-rose-600 px-6 py-4 text-lg font-semibold text-white shadow-lg shadow-red-500/30 transition-all duration-300 hover:shadow-xl hover:shadow-red-500/40 hover:-translate-y-0.5 active:scale-95"
+                >
+                  <div className="relative flex items-center justify-center gap-2">
+                    <svg
+                      className="h-6 w-6 transition-transform duration-300 group-hover:rotate-90"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                    End Call
+                  </div>
+                </button>
+              </>
             )}
           </div>
         </div>

@@ -21,9 +21,13 @@ export const companyPermissionModule = {
   INVENTORY_AUTOMATION: "inventoryAutomation",
   SERVICE_AUTOMATION: "serviceAutomation",
   TAG_AUTOMATION: "tagAutomation",
+  REPORTING_AUTOMATION: "reportingAutomation",
   SALES_PIPELINE: "salesPipeline",
+  TEAM_PIPELINE: "teamPipeline",
   BUSINESS_SETTINGS: "businessSettings",
   COMMUNICATION: "communication",
   WORKFORCE_MANAGEMENT: "workforceManagement",
   SERVICE_ESTIMATOR: "serviceEstimator",
+  MESSENGER: "messenger",
+  INSTAGRAM: "instagram",
 } as const;

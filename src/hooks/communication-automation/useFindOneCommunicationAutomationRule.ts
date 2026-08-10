@@ -6,6 +6,6 @@ export const useFindOneCommunicationAutomationRule = (id: number) => {
     queryKey: ["communication-automation", id],
     queryFn: async () => findOneCommunicationAutomationRules(id),
     enabled: !!id,
-    staleTime: 3600 * 1000
+    staleTime: 3600 * 1000,
   });
 };

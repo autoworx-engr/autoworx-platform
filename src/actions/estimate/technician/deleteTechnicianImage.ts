@@ -7,15 +7,16 @@ import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
 export async function deleteTechnicianImage(imageId: number) {
-  if (!imageId || typeof imageId !== 'number') {
-    return {success: false, message: "Invalid Image Id provided"}
+  if (!imageId || typeof imageId !== "number") {
+    return { success: false, message: "Invalid Image Id provided" };
   }
 
   try {
     const image = await db.technicianImage.findUnique({
       where: { id: imageId },
       include: {
-        technician: { select: { invoiceId: true } } },
+        technician: { select: { invoiceId: true } },
+      },
     });
 
     if (!image) return { success: false, message: "Image not found" };
@@ -35,7 +36,7 @@ export async function deleteTechnicianImage(imageId: number) {
 
     revalidatePath("/dashboard/estimate/workorder");
     revalidatePath(
-      `/dashboard/estimate/invoices/${image?.technician.invoiceId}`
+      `/dashboard/estimate/invoices/${image?.technician.invoiceId}`,
     );
   } catch (error) {
     console.error(error);

@@ -7,8 +7,10 @@ import { getServerSession } from "next-auth";
 
 export default async function newCategory({
   name,
+  color,
 }: {
   name: string;
+  color?: string;
 }): Promise<ServerAction> {
   const session = await getServerSession(authOptions);
   const companyId = session?.user.companyId;
@@ -36,6 +38,7 @@ export default async function newCategory({
     data: {
       companyId,
       name,
+      color,
     },
   });
 

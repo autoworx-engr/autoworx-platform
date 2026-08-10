@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     if (!data.success) {
       return NextResponse.json(
         { success: false, message: "Failed to create Infobip config" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     return NextResponse.json(
       { success: false, message: error.message },
-      { status: 400 }
+      { status: 400 },
     );
   }
 }

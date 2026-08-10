@@ -5,8 +5,8 @@ import { getCompanyId } from "@/lib/companyId";
 import CalculationWithTooltip from "@/app/(dashboard)/dashboard/reporting/components/CalculationWithTooltip";
 
 interface CalculationContainerProps {
-  startDate: string;
-  endDate: string;
+  startDate: string | undefined;
+  endDate: string | undefined;
   getType: string | string[];
   typeFilterApplied: boolean;
   purchasesData: { type: string; salePrice: number }[];
@@ -41,11 +41,11 @@ export default async function CalculationContainer({
       companyId,
       ...(start &&
         end && {
-        createdAt: {
-          gte: start,
-          lte: end,
-        },
-      }),
+          createdAt: {
+            gte: start,
+            lte: end,
+          },
+        }),
     },
     select: {
       price: true,
@@ -60,11 +60,11 @@ export default async function CalculationContainer({
       companyId,
       ...(start &&
         end && {
-        createdAt: {
-          gte: start,
-          lte: end,
-        },
-      }),
+          createdAt: {
+            gte: start,
+            lte: end,
+          },
+        }),
     },
     select: {
       price: true,
@@ -146,9 +146,8 @@ export default async function CalculationContainer({
 
   const showSupplyFilter =
     !hasTypeFilter || (Array.isArray(getType) && getType.includes("Supply"));
-
   return (
-    <div className="my-7 grid grid-cols-1 md:grid-cols-2 gap-4 xl:grid-cols-4">
+    <div className="mb-4 mt-1.5 grid grid-cols-1 md:grid-cols-2 gap-4 xl:grid-cols-4">
       <Calculation content="Total Products" amount={totalProductPrice} />
       <Calculation content="Total Supplies" amount={totalSuppliesPrice} />
 

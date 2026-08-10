@@ -1,6 +1,7 @@
 import "server-only";
-import { PrismaClient } from "@prisma/client";
-import { Decimal } from "@prisma/client/runtime/library";
+import "dotenv/config";
+import { PrismaClient, Prisma } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
 
 // Highly optimized serializer
 function serializeResult(input: any): any {
@@ -14,8 +15,14 @@ function serializeResult(input: any): any {
     return input;
   }
 
-  if (input instanceof Decimal) {
-    return input.toNumber();
+  // Handle Prisma Decimal and similar numeric wrapper types via duck-typing
+  if (
+    typeof input === "object" &&
+    input !== null &&
+    "toNumber" in input &&
+    typeof (input as any).toNumber === "function"
+  ) {
+    return (input as any).toNumber();
   }
 
   if (input instanceof Date) {
@@ -44,8 +51,12 @@ function serializeResult(input: any): any {
   return input;
 }
 
+const databaseUrl = process.env.DIRECT_URL || process.env.DATABASE_URL || "";
+
+const adapter = new PrismaPg({ connectionString: databaseUrl });
+
 // Extend Prisma to serialize Decimal in all model operations
-const extendedPrisma = new PrismaClient().$extends({
+const extendedPrisma = new PrismaClient({ adapter }).$extends({
   query: {
     $allModels: {
       $allOperations({ args, query }) {
@@ -57,14 +68,24 @@ const extendedPrisma = new PrismaClient().$extends({
 
 // Prevent multiple instances in dev
 const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient;
+  prisma: typeof extendedPrisma;
 };
 
-export const db = globalForPrisma.prisma || extendedPrisma;
+// Cast to PrismaClient so callers can use standard Prisma arg types (XxxFindManyArgs etc.)
+// without TypeScript "Excessive stack depth" errors caused by the $extends() InternalArgs mismatch.
+// The runtime still uses extendedPrisma (with Decimal serialization) via the cast.
+export const db = (globalForPrisma.prisma ||
+  extendedPrisma) as unknown as PrismaClient;
 
 if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = db;
+  globalForPrisma.prisma = extendedPrisma;
 }
+
+/**
+ * Transaction-callback client type. Use to type the `tx` parameter of
+ * `db.$transaction(async (tx) => ...)` callbacks.
+ */
+export type TransactionClient = Prisma.TransactionClient;
 
 // import "server-only";
 // import { PrismaClient } from "@prisma/client";

@@ -9,6 +9,7 @@ import { promisify } from "util";
 import os from "os";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/authOptions";
+import { revalidatePath } from "next/cache";
 
 const pump = promisify(pipeline);
 
@@ -346,7 +347,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         });
       }
     } catch {}
-
+    revalidatePath("/dashboard/communication/client/${clientId}");
     return NextResponse.json({ success: true, data: MailData });
   } catch (error: unknown) {
     console.error("Error sending email:", error);

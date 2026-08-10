@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 
 export default function useAutoScrollWhileDragging(
-  containerRef: React.RefObject<HTMLElement | null>
+  containerRef: React.RefObject<HTMLElement | null>,
 ) {
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {

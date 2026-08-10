@@ -1,9 +1,16 @@
 import { getColumnsByType } from "@/actions/pipelines/pipelinesColumn";
+import Title from "@/components/Title";
 import Leads from "../../components/Leads";
 import { Suspense } from "react";
 import CarLoading from "@/components/common/CarLoading";
+import { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Sales Leads",
+  description: "View and manage your sales leads",
+};
 
 // Loading component for better UX
 function LoadingLeads() {
@@ -11,29 +18,12 @@ function LoadingLeads() {
 }
 
 export default async function Page() {
-  try {
-    const columns = await getColumnsByType("sales");
-    return (
+  const columns = await getColumnsByType("sales");
+  return (
+    <div className="h-full w-full space-y-4 px-2">
       <Suspense fallback={<LoadingLeads />}>
         <Leads salesColumn={columns} />
       </Suspense>
-    );
-  } catch (error) {
-    console.error("Error loading leads page:", error);
-    return (
-      <div
-        className="flex w-full items-center justify-center"
-        style={{ height: "calc(100vh - 150px)" }}
-      >
-        <div className="text-center">
-          <h2 className="text-lg font-semibold text-red-600">
-            Error Loading Leads
-          </h2>
-          <p className="text-sm text-gray-500">
-            Please try refreshing the page
-          </p>
-        </div>
-      </div>
-    );
-  }
+    </div>
+  );
 }

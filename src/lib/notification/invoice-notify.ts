@@ -47,7 +47,7 @@ export const sendInvoiceConvertedNotification = async ({
     for (const user of getUsers) {
       sendUserNotifications({
         userId: user.id,
-        userName: `${user.firstName} ${user.lastName}`,
+        userName: `${user.firstName} ${user.lastName ? user.lastName : ""}`,
         userEmail: user.email || "",
         userPhoneNo: user.phone || "",
         companyId: companyUniqueId,
@@ -85,6 +85,10 @@ export const sendInvoiceAuthorizeNotification = async ({
     // get all company admins and managers
     const getUsers = await getUsersByRole(companyUniqueId, sendRoles, {
       id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      phone: true,
     });
 
     const vehicleInfo = await getVehicleByInvoiceId(invoiceId);
@@ -101,7 +105,7 @@ export const sendInvoiceAuthorizeNotification = async ({
     for (const user of getUsers) {
       sendUserNotifications({
         userId: user.id,
-        userName: `${user.firstName} ${user.lastName}`,
+        userName: `${user.firstName} ${user.lastName ? user.lastName : ""}`,
         userEmail: user.email || "",
         userPhoneNo: user.phone || "",
         companyId: companyUniqueId,
@@ -140,6 +144,10 @@ export const sendEstimateCreateNotification = async ({
     // get all company admins and managers
     const getUsers = await getUsersByRole(companyUniqueId, sendRoles, {
       id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      phone: true,
     });
 
     const redirectUrl = `/dashboard/estimate/view/${invoiceId}`;
@@ -186,6 +194,10 @@ export const sendInvoiceDeliveredNotification = async ({
     // get all company admins and managers
     const getUsers = await getUsersByRole(companyUniqueId, sendRoles, {
       id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      phone: true,
     });
 
     const vehicleInfo = await getVehicleByInvoiceId(invoiceId);

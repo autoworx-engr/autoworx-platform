@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { Client, Appointment } from "@prisma/client";
 import moment from "moment-timezone";
 import { sendNewAppointmentNotification } from "@/lib/notification/task-and-appointment-notify";
-import { scheduleRemindersInNest } from "../appointment/addAppointment";
+import { scheduleRemindersInNest } from "../appointment/appointmentReminderScheduler";
 import { sendInfobipEmail } from "../estimate/invoice/sendInfobipEmail";
 import { sendTwilioMessage } from "../communication/client/sendTwilioMessage";
 import { sendInfobipMessage } from "../communication/client/sendInfobipMessage";
@@ -12,7 +12,7 @@ import { getBookingFormById } from "../settings/bookingForm";
 
 export async function findClientByPhone(
   phone: string,
-  companyId: string
+  companyId: string,
 ): Promise<Client | null> {
   try {
     const client = await db.client.findFirst({
@@ -53,6 +53,7 @@ export async function createClient(data: {
         zip: data.zip || "",
         customerCompany: data.customerCompany || "",
         companyId: parseInt(data.companyId),
+        isSalesAgent: true,
       },
     });
     return client;
@@ -111,56 +112,56 @@ export async function createAppointment(data: {
       const clientName =
         appointment?.client?.firstName || appointment?.client?.lastName || "";
       const appointmentDate = moment(
-        `${data.date}T${data.startTime}:00`
+        `${data.date}T${data.startTime}:00`,
       ).format("dddd, MMMM DD, h:mm A");
 
       const confirmationTemplate = `Hi ${clientName}, your ${appointment?.company?.name} appt is on ${appointmentDate}. Reply YES to confirm, NO to cancel, or text here to reschedule. STOP to opt out.`;
 
       // Send confirmation email via Infobip
       try {
-        sendInfobipEmail({
+        await sendInfobipEmail({
           clientId: data.clientId,
           subject: "Appointment Confirmation",
           text: confirmationTemplate,
         });
       } catch (error) {
-        console.log("🚀 ~ error:", error);
+        console.error("sendInfobipEmail error:", error);
       }
 
       //send SMS confirmation
       try {
         if (appointment?.company?.smsGateway === "TWILIO") {
-          sendTwilioMessage({
+          await sendTwilioMessage({
             clientId: data.clientId,
             message: confirmationTemplate,
             attachments: [],
           });
         } else if (appointment?.company?.smsGateway === "INFOBIP") {
-          sendInfobipMessage({
+          await sendInfobipMessage({
             clientId: data.clientId,
             message: confirmationTemplate,
             attachments: [],
           });
         }
       } catch (error) {
-        console.log("🚀 ~ error:", error);
+        console.error("SMS send error:", error);
       }
     } catch (error) {
       console.log("🚀 ~ createAppointment ~ error:", error);
     }
 
     try {
-      appointment.date &&
-        appointment.startTime &&
-        scheduleRemindersInNest({
+      if (appointment.date && appointment.startTime) {
+        await scheduleRemindersInNest({
           id: appointment.id.toString(),
-          date: appointment.date, // e.g., "2025-07-20"
-          time: appointment.startTime, // e.g., "15:00"
+          date: appointment.date,
+          time: appointment.startTime,
           timezone:
             appointment?.company?.timezone || appointment.timezone || "Etc/UTC",
         });
+      }
     } catch (error) {
-      console.log("🚀 ~ error:", error);
+      console.error("scheduleRemindersInNest error:", error);
     }
 
     return appointment;
@@ -173,7 +174,7 @@ export async function createAppointment(data: {
 export async function getAppointmentByDateTime(
   companyId: number,
   date: string,
-  time?: string
+  time?: string,
 ) {
   try {
     const appointment = await db.appointment.findMany({
@@ -207,7 +208,7 @@ export async function processBooking(
     notes?: string; // Add notes to the formData type
   },
   companyId: string,
-  bookingId: number
+  bookingId: number,
 ) {
   try {
     // First, check if client exists by phone number
@@ -215,14 +216,14 @@ export async function processBooking(
     const alreadyBookedAppointment = await getAppointmentByDateTime(
       parseInt(companyId),
       formData.date,
-      formData.startTime
+      formData.startTime,
     );
     console.log("Already booked appointments:", alreadyBookedAppointment);
     const bookingForm = await getBookingFormById(bookingId);
     const stack = bookingForm?.stack ?? 6;
     if (alreadyBookedAppointment && alreadyBookedAppointment.length >= stack) {
       throw new Error(
-        "Selected time slot is fully booked. Please choose another time."
+        "Selected time slot is fully booked. Please choose another time.",
       );
     }
     if (!client) {
@@ -267,7 +268,7 @@ export async function processBooking(
 
     // Send notification after successful appointment creation
     try {
-      sendNewAppointmentNotification({
+      await sendNewAppointmentNotification({
         companyId: parseInt(companyId),
         clientName: `${client.firstName} ${client.lastName || ""}`,
         title: appointment.title,
@@ -275,11 +276,10 @@ export async function processBooking(
           ? appointment.date.toISOString().split("T")[0]
           : "",
         startTime: appointment.startTime || "",
-        assignSalesIds: [], // Empty array since processBooking doesn't assign specific users
+        assignSalesIds: [],
       });
     } catch (error) {
       console.error("Error sending appointment notification:", error);
-      // Don't fail the booking if notification fails
     }
 
     return {

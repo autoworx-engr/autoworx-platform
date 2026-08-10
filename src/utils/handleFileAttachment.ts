@@ -39,7 +39,7 @@ export const uploadAllAttachments = async (attachments: any[]) => {
 
   // Filter out files that need to be uploaded (have the isLocal flag)
   const filesToUpload = attachments.filter(
-    (attachment) => attachment.isLocal && attachment.file
+    (attachment) => attachment.isLocal && attachment.file,
   );
 
   if (filesToUpload.length === 0) {
@@ -57,8 +57,8 @@ export const uploadAllAttachments = async (attachments: any[]) => {
           maxSizeMB: 1,
           maxWidthOrHeight: 1920,
           useWebWorker: true,
-        })
-      )
+        }),
+      ),
     );
 
     // Convert compressed blobs back to File objects with original filenames
@@ -132,8 +132,8 @@ export const handleFileAttachmentUtils = async ({
           maxSizeMB: 1,
           maxWidthOrHeight: 1920,
           useWebWorker: true,
-        })
-      )
+        }),
+      ),
     );
 
     // Convert compressed blobs back to File objects with original filenames

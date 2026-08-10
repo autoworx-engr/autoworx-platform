@@ -16,7 +16,7 @@ type TUpdateTagAutomationTrigger = {
 };
 
 export async function updateTagAutomationTrigger(
-  payload: TUpdateTagAutomationTrigger
+  payload: TUpdateTagAutomationTrigger,
 ) {
   const { generatedToken, ...payloadData } = payload;
 
@@ -34,7 +34,7 @@ export async function updateTagAutomationTrigger(
         body: JSON.stringify({
           ...payloadData,
         }),
-      }
+      },
     );
     const data = await response.json();
 

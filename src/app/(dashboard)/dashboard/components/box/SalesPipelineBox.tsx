@@ -8,6 +8,8 @@ import {
 import BoxTitle from "./BoxTitle";
 import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 import { cn } from "@/lib/cn";
+import { hasRouteAccess } from "@/lib/serverRouteGuard";
+import BoxRestricted from "./BoxRestricted";
 
 type TSalesPipelineBoxProps = {
   className?: string;
@@ -16,6 +18,16 @@ type TSalesPipelineBoxProps = {
 export default async function SalesPipelineBox({
   className,
 }: TSalesPipelineBoxProps) {
+  if (!(await hasRouteAccess("/dashboard/reporting/revenue"))) {
+    return (
+      <BoxRestricted
+        title="Sales Pipeline"
+        what="reporting & analytics"
+        className={className}
+      />
+    );
+  }
+
   const company = await getCompanyTimezone();
   const timezone =
     company?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -53,7 +65,7 @@ export default async function SalesPipelineBox({
           hover:shadow-xl hover:shadow-blue-500/10 dark:hover:shadow-indigo-500/10
 
         `,
-        className
+        className,
       )}
     >
       {/* Title and Link (Always at the top) */}
@@ -72,15 +84,17 @@ export default async function SalesPipelineBox({
           number={currentTotalLeads ?? 0}
           noRate={true} // Leads coming in often doesn't need a rate of change
         />
+
         <ChartData
           heading="Leads Converted"
+          subHeading="/month"
           number={leadsConvertedData?.current ?? 0}
           isPositive={leadsConvertedData?.growth?.isPositive ?? false}
           rate={parseFloat(leadsConvertedData?.growth?.rate.toFixed(2) ?? "0")} // Ensure rate is a number
         />
         <ChartData
           heading="Conversion Rate"
-          subHeading="Leads Converted/Total Leads"
+          subHeading="Monthly Leads Converted/Total Leads"
           number={parseFloat(currentConversionRate.toFixed(2) ?? "0")} // Ensure number is parsed cleanly
           isPositive={conversionRateGrowth.isPositive ?? false}
           rate={parseFloat(conversionRateGrowth.rate.toFixed(2) ?? "0")} // Ensure rate is a number

@@ -3,39 +3,34 @@ import { getEmployees } from "@/actions/employee/get";
 import { updateInvoiceStatus } from "@/actions/estimate/invoice/updateInvoiceStatus";
 import { updateTechnicianStatustoComplete } from "@/actions/estimate/invoice/updateTechnicianStatustoComplete";
 import { updateAssignedTo } from "@/actions/pipelines/getWorkOrders";
+import { getWorkOrdersByColumn } from "@/actions/pipelines/getWorkOrdersPaginated";
 import {
   removeInvoiceTag,
   saveInvoiceTag,
 } from "@/actions/pipelines/invoiceTag";
 import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
-import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
-import WorkOrderModal from "@/components/workorder-modal/WorkOrderModal";
 import { errorToast, successToast } from "@/lib/toast";
 import { updateTagAutomationTrigger } from "@/service/tag-automation-trigger/api";
 import { Column, Employee, ShopPipelineData } from "@/types/invoiceLead";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
-import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
+import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
+import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { Tag, User } from "@prisma/client";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
-  ArrowRightLeft,
-  BookCheck,
-  Calendar,
-  CirclePlus,
-  MessageCircleMore,
-} from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { SetStateAction, useEffect, useRef, useState } from "react";
+  SetStateAction,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import toast from "react-hot-toast";
-import { EmployeeSelector } from "./EmployeeSelector";
-import { EmployeeTagSelector } from "./EmployeeTagSelector";
+import DroppableColumn from "./DroppableColumn";
 import PipelineLoadingSkeleton from "./PipelineLoadingSkeleton";
 import SearchScroll from "./SearchScroll";
-import ServiceSelector from "./ServiceSelector";
-import ShopColumnDropdown from "./ShopColumnDropdown";
-import TaskForm from "./TaskForm";
 
+const PIPELINE_PAGE_SIZE = 10;
 interface PipelinesProps {
   pipelinesTitle: string;
   columns?: Column[];
@@ -44,34 +39,66 @@ interface PipelinesProps {
   isTechnician?: boolean;
 }
 
-export default function Pipelines({
+type ColumnMeta = {
+  hasMore: boolean;
+  loadedCount: number;
+  isLoading: boolean;
+};
+
+export default function PipelinesCopy({
   pipelinesTitle: pipelineType,
   columns,
   loading = false,
   shopPipelineDataProp,
   isTechnician,
 }: PipelinesProps) {
-  const searchParams = useSearchParams();
   const router = useRouter();
-  const pathname = usePathname();
 
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
-  console.log("selectedClientId==>", selectedClientId);
   const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(
-    null
+    null,
   );
+  const [selectedAppointmentId, setSelectedAppointmentId] = useState<
+    number | null
+  >(null);
   const [pipelineData, setPipelineData] =
     useState<ShopPipelineData[]>(shopPipelineDataProp);
   const [companyUsers, setCompanyUsers] = useState<User[]>([]);
-
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  // References for scrolling to leads
+
   const columnRefs = useRef<(HTMLDivElement | null)[]>([]);
   const leadRefs = useRef<Map<string, HTMLLIElement>>(new Map());
+  const dragDropContextRef = useRef<HTMLDivElement | null>(null);
+  const loadingColumnsRef = useRef<Set<number>>(new Set());
   const [screenWidth, setScreenWidth] = useState<number>(window.innerWidth);
 
   const currentUser = useGetCurrentUser();
-  console.log("Current User:", currentUser);
+  const urlSearchParams = useSearchParams();
+  const searchTerm = urlSearchParams.get("search") ?? "";
+  const searchTermRef = useRef(searchTerm);
+  useEffect(() => {
+    searchTermRef.current = searchTerm;
+  }, [searchTerm]);
+  const [selectedSearchColumnId, setSelectedSearchColumnId] = useState<
+    number | null
+  >(null);
+
+  // Per-column pagination metadata keyed by column id
+  const [columnMeta, setColumnMeta] = useState<Record<number, ColumnMeta>>(
+    () => {
+      const initial: Record<number, ColumnMeta> = {};
+      for (const col of shopPipelineDataProp) {
+        if (col.id !== null) {
+          initial[col.id] = {
+            hasMore: col.hasMore ?? false,
+            loadedCount: col.leads.length,
+            isLoading: false,
+          };
+        }
+      }
+      return initial;
+    },
+  );
 
   function updateWidth() {
     setScreenWidth(window.innerWidth);
@@ -84,16 +111,25 @@ export default function Pipelines({
   }, []);
 
   useEffect(() => {
-    // setIsLoading(true);
     setPipelineData(shopPipelineDataProp);
-    // Reset refs when data changes
     columnRefs.current = new Array(shopPipelineDataProp.length).fill(null);
     leadRefs.current = new Map();
     setIsLoading(false);
+
+    const meta: Record<number, ColumnMeta> = {};
+    for (const col of shopPipelineDataProp) {
+      if (col.id !== null) {
+        meta[col.id] = {
+          hasMore: col.hasMore ?? false,
+          loadedCount: col.leads.length,
+          isLoading: false,
+        };
+      }
+    }
+    setColumnMeta(meta);
   }, [shopPipelineDataProp]);
 
   useEffect(() => {
-    // setIsLoading(true);
     const fetchCompanyUsers = async () => {
       const fetchedCompanyUsers = await getEmployees({
         excludeCurrentUser: true,
@@ -105,6 +141,69 @@ export default function Pipelines({
     fetchCompanyUsers();
   }, [router]);
 
+  const loadMoreForColumn = useCallback(
+    async (columnIndex: number) => {
+      const column = pipelineData[columnIndex];
+      if (!column?.id) return;
+
+      const meta = columnMeta[column.id];
+      if (!meta?.hasMore) return;
+
+      // Ref-based synchronous guard prevents duplicate in-flight requests
+      if (loadingColumnsRef.current.has(column.id)) return;
+      loadingColumnsRef.current.add(column.id);
+
+      setColumnMeta((prev) => ({
+        ...prev,
+        [column.id!]: { ...prev[column.id!], isLoading: true },
+      }));
+
+      try {
+        const result = await getWorkOrdersByColumn(
+          column.id,
+          meta.loadedCount,
+          PIPELINE_PAGE_SIZE,
+          isTechnician ? Number(currentUser?.id) : undefined,
+          searchTermRef.current || undefined,
+        );
+
+        setPipelineData((prev) => {
+          const next = [...prev];
+          next[columnIndex] = {
+            ...next[columnIndex],
+            leads: [...next[columnIndex].leads, ...result.leads],
+          };
+          return next;
+        });
+
+        setColumnMeta((prev) => ({
+          ...prev,
+          [column.id!]: {
+            hasMore: result.hasMore,
+            loadedCount: meta.loadedCount + result.leads.length,
+            isLoading: false,
+          },
+        }));
+      } catch {
+        setColumnMeta((prev) => ({
+          ...prev,
+          [column.id!]: { ...prev[column.id!], isLoading: false },
+        }));
+      } finally {
+        loadingColumnsRef.current.delete(column.id);
+      }
+    },
+    [pipelineData, columnMeta, isTechnician, currentUser],
+  );
+
+  // Filter pipeline data: search is server-side; only apply client-side column visibility filter
+  const filteredPipelineData = useMemo(() => {
+    if (selectedSearchColumnId === null) return pipelineData;
+    return pipelineData.map((column) =>
+      column.id !== selectedSearchColumnId ? { ...column, leads: [] } : column,
+    );
+  }, [pipelineData, selectedSearchColumnId]);
+
   const [selectedEmployees, setSelectedEmployees] = useState<{
     [key: string]: Employee | null;
   }>({});
@@ -113,7 +212,6 @@ export default function Pipelines({
     index: number;
   } | null>(null);
 
-  // State for appointment modal
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
 
   const [tag, setTag] = useState<Tag>();
@@ -133,45 +231,49 @@ export default function Pipelines({
     [key: string]: boolean;
   }>({});
 
-  
-  const handleSearchResult = (
-    result: { columnIndex: number; leadIndex: number } | null
-  ) => {
-    if (!result) return;
+  const handleSearchResult = useCallback(
+    (result: { columnIndex: number; leadIndex: number } | null) => {
+      if (!result) return;
 
-    const { columnIndex, leadIndex } = result;
+      const { columnIndex, leadIndex } = result;
 
-    // Scroll to the column first
-    if (columnRefs.current[columnIndex]) {
-      columnRefs.current[columnIndex]?.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
-        inline: "start",
-      });
+      if (columnRefs.current[columnIndex]) {
+        columnRefs.current[columnIndex]?.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: "start",
+        });
 
-      // Wait a bit for the column scroll to complete before scrolling to the lead
-      setTimeout(() => {
-        // Generate the key the same way we do when creating refs
-        const leadKey = `${columnIndex}-${leadIndex}`;
-        const leadElement = leadRefs.current.get(leadKey);
+        setTimeout(() => {
+          const leadKey = `${columnIndex}-${leadIndex}`;
+          const leadElement = leadRefs.current.get(leadKey);
 
-        if (leadElement) {
-          leadElement.scrollIntoView({
-            behavior: "smooth",
-            block: "nearest",
-          });
+          if (leadElement) {
+            leadElement.scrollIntoView({
+              behavior: "smooth",
+              block: "nearest",
+            });
 
-          // Highlight the found item temporarily
-          leadElement.classList.add("bg-yellow-100");
-          setTimeout(() => {
-            leadElement.classList.remove("bg-yellow-100");
-          }, 2000);
-        }
-      }, 300);
-    }
-  };
-
-  // ... Rest of your existing code ...
+            leadElement.classList.add(
+              "bg-yellow-200",
+              "border-yellow-300",
+              "scale-[1.02]",
+              "transition-transform",
+            );
+            setTimeout(() => {
+              leadElement.classList.remove(
+                "bg-yellow-200",
+                "border-yellow-300",
+                "scale-[1.02]",
+                "transition-transform",
+              );
+            }, 5000);
+          }
+        }, 300);
+      }
+    },
+    [],
+  );
 
   const handleDropdownToggle = (categoryIndex: number, leadIndex: number) => {
     if (
@@ -182,17 +284,6 @@ export default function Pipelines({
     } else {
       setOpenDropdownIndex({ category: categoryIndex, index: leadIndex });
     }
-
-    console.log(categoryIndex, leadIndex);
-  };
-
-  const getInitials = (employee: Employee | null) => {
-    if (employee) {
-      const firstNameInitial = employee.firstName.charAt(0).toUpperCase();
-      const lastNameInitial = employee.lastName?.charAt(0).toUpperCase();
-      return `${firstNameInitial}${lastNameInitial}`;
-    }
-    return "";
   };
 
   const createEmployeeSelectHandler =
@@ -202,13 +293,11 @@ export default function Pipelines({
       const resolvedValue =
         typeof value === "function" ? value(selectedEmployees[key]) : value;
 
-      // Update the selected employee in the state
       setSelectedEmployees((prevState) => ({
         ...prevState,
         [key]: resolvedValue,
       }));
 
-      // Close the dropdown
       setOpenDropdownIndex(null);
 
       const invoiceId = pipelineData[categoryIndex].leads[leadIndex].invoiceId;
@@ -217,16 +306,11 @@ export default function Pipelines({
         try {
           const response = await updateAssignedTo(invoiceId, resolvedValue.id);
           if (response.success) {
-            // Update pipelineData to persist the selected employee in the UI
             const updatedPipelineData = [...pipelineData];
             updatedPipelineData[categoryIndex].leads[leadIndex].assignedTo =
               resolvedValue;
-
             setPipelineData(updatedPipelineData);
           } else {
-            console.error("Failed to update assigned employee");
-          }
-          if (!response.success) {
             console.error("Failed to update assigned employee");
           }
         } catch (error) {
@@ -239,7 +323,7 @@ export default function Pipelines({
 
   const handleTagDropdownToggle = (
     categoryIndex: number,
-    leadIndex: number
+    leadIndex: number,
   ) => {
     const key = `${categoryIndex}-${leadIndex}`;
     setTagDropdownStates((prevState) => ({
@@ -247,14 +331,13 @@ export default function Pipelines({
       [key]: !prevState[key],
     }));
   };
-  //for tag handling
+
   const handleTagSelect = async (
     categoryIndex: number,
     leadIndex: number,
-    selectedTag: Tag | undefined
+    selectedTag: Tag | undefined,
   ) => {
     if (selectedTag) {
-      const key = `${categoryIndex}-${leadIndex}`;
       const invoiceId = pipelineData[categoryIndex].leads[leadIndex].invoiceId;
       try {
         const result = await saveInvoiceTag(invoiceId, selectedTag.id);
@@ -265,15 +348,6 @@ export default function Pipelines({
             tag: selectedTag,
           });
           setPipelineData(updatedPipelineData);
-
-          // // Optionally update the leadTags state (if needed)
-          // setLeadTags((prevState) => {
-          //   const existingTags = prevState[key] || [];
-          //   return {
-          //     ...prevState,
-          //     [key]: [...existingTags, selectedTag],
-          //   };
-          // });
 
           updateTagAutomationTrigger({
             columnId: result?.invoice?.columnId!,
@@ -288,46 +362,33 @@ export default function Pipelines({
       }
     }
   };
-  // Handle tag removal
+
   const handleTagRemove = async (
     categoryIndex: number,
     leadIndex: number,
-    tagToRemove: Tag
+    tagToRemove: Tag,
   ) => {
-    const key = `${categoryIndex}-${leadIndex}`;
     const invoiceId = pipelineData[categoryIndex].leads[leadIndex].invoiceId;
 
     try {
-      // Remove the tag from the database
       const result = await removeInvoiceTag(invoiceId, tagToRemove.id);
 
       if (result) {
-        // Update the UI after removing the tag
         const updatedPipelineData = [...pipelineData];
         updatedPipelineData[categoryIndex].leads[leadIndex].tags =
           updatedPipelineData[categoryIndex].leads[leadIndex].tags.filter(
-            (tag) => tag.tag.id !== tagToRemove.id
+            (tag) => tag.tag.id !== tagToRemove.id,
           );
         setPipelineData(updatedPipelineData);
-        // setLeadTags((prevState) => {
-        //   const existingTags =
-        //     prevState[key] || pipelineData[categoryIndex].leads[leadIndex].tags;
-        //   return {
-        //     ...prevState,
-        //     [key]: existingTags.filter((tag) => tag.id !== tagToRemove.id),
-        //   };
-        // });
       }
     } catch (error) {
       console.error("Error removing tag:", error);
     }
   };
 
-  //service
-
   const handleServiceDropdownToggle = (
     categoryIndex: number,
-    leadIndex: number
+    leadIndex: number,
   ) => {
     const key = `${categoryIndex}-${leadIndex}`;
     setOpenServiceDropdown((prevState) => ({
@@ -338,7 +399,7 @@ export default function Pipelines({
 
   const handleColumnDropdownToggle = (
     categoryIndex: number,
-    leadIndex: number
+    leadIndex: number,
   ) => {
     const key = `${categoryIndex}-${leadIndex}`;
     setShowColumnSelect((prevState) => ({
@@ -354,7 +415,7 @@ export default function Pipelines({
   const handleColumnChange = async (
     categoryIndex: number,
     leadIndex: number,
-    newColumnId: string
+    newColumnId: string,
   ) => {
     const key = `${categoryIndex}-${leadIndex}`;
     const lead = pipelineData[categoryIndex].leads[leadIndex];
@@ -374,7 +435,7 @@ export default function Pipelines({
         const completed = lead?.services?.incomplete?.length === 0;
         if (!completed && lead?.technicians?.length > 0) {
           toast.error(
-            "All services must be completed by Technicians before moving to delivered."
+            "All services must be completed by Technicians before moving to delivered.",
           );
           return;
         }
@@ -423,554 +484,206 @@ export default function Pipelines({
     }
   };
 
-  const handleDragEnd = async (result: any) => {
-    const { destination, source } = result;
+  useEffect(() => {
+    return monitorForElements({
+      onDrop({ source, location }) {
+        const destination = location.current.dropTargets[0];
+        if (!destination) return;
 
-    if (!destination) return;
+        const sourceData = source.data as {
+          columnIndex: number;
+          leadIndex: number;
+          invoiceId: number;
+        };
+        const destData = destination.data as {
+          columnIndex: number;
+          index?: number;
+        };
 
-    // If the item is dropped in the same position, do nothing
-    if (
-      destination.droppableId === source.droppableId &&
-      destination.index === source.index
-    ) {
-      return;
-    }
+        const sourceColIdx = sourceData.columnIndex;
+        const destColIdx = destData.columnIndex;
+        const sourceLeadIdx = sourceData.leadIndex;
+        const destLeadIdx = destData.index ?? 0;
 
-    // Handle drag-and-drop within the same column
-    if (destination.droppableId === source.droppableId) {
-      const columnIndex = parseInt(source.droppableId);
-      const columnItems = [...pipelineData[columnIndex].leads];
+        if (sourceColIdx === destColIdx && sourceLeadIdx === destLeadIdx)
+          return;
 
-      // Remove the item from the source index
-      const [removed] = columnItems.splice(source.index, 1);
+        setPipelineData((prevData) => {
+          const newData = [...prevData];
+          const sourceColumn = {
+            ...newData[sourceColIdx],
+            leads: [...newData[sourceColIdx].leads],
+          };
+          const [removed] = sourceColumn.leads.splice(sourceLeadIdx, 1);
 
-      // Re-insert the item at the destination index
-      columnItems.splice(destination.index, 0, removed);
+          const destinationColumn = newData[destColIdx];
+          if (destinationColumn.title === "Delivered") {
+            const completed = removed?.services?.incomplete?.length === 0;
+            const hasDue = removed.dueBalance !== 0;
 
-      // Update the state with the reordered column items
-      const updatedData = pipelineData.map((column, index) => {
-        if (index === columnIndex) {
-          return { ...column, leads: columnItems };
-        }
-        return column;
-      });
-      console.log(updatedData);
-      setPipelineData(updatedData);
-      return;
-    }
+            if ((!completed && removed?.technicians?.length > 0) || hasDue) {
+              if (hasDue)
+                toast.error(
+                  "Please clear due balance before moving to delivered.",
+                );
+              else
+                toast.error(
+                  "All services must be completed before moving to delivered.",
+                );
+              return prevData;
+            }
 
-    // Handle drag-and-drop between different columns
-    const sourceColumn = pipelineData[source.droppableId];
-    const destinationColumn = pipelineData[destination.droppableId];
+            updateTechnicianStatustoComplete(removed.invoiceId).catch(
+              console.error,
+            );
+          }
 
-    const sourceItems = [...sourceColumn.leads];
-    const destinationItems = [...destinationColumn.leads];
+          if (sourceColIdx === destColIdx) {
+            sourceColumn.leads.splice(destLeadIdx, 0, removed);
+            newData[sourceColIdx] = sourceColumn;
+          } else {
+            const destColumn = {
+              ...newData[destColIdx],
+              leads: [...newData[destColIdx].leads],
+            };
+            destColumn.leads.splice(destLeadIdx, 0, removed);
+            newData[sourceColIdx] = sourceColumn;
+            newData[destColIdx] = destColumn;
 
-    const [removed] = sourceItems.splice(source.index, 1);
+            const newStatusId = destColumn.id;
+            if (newStatusId) {
+              updateInvoiceStatus(removed.invoiceId, newStatusId)
+                .then((res) =>
+                  res.type === "success"
+                    ? successToast("Job moved successfully")
+                    : errorToast("Update failed"),
+                )
+                .catch(() => errorToast("Failed to update status"));
+            }
+          }
 
-    if (destinationColumn && destinationColumn.title === "Delivered") {
-      // Check if the due is 0 before moving to delivered
-      const completed = removed?.services?.incomplete?.length === 0;
-
-      if (!completed && removed?.technicians?.length > 0) {
-        toast.error(
-          "All services must be completed by Technicians before moving to delivered."
-        );
-        // Revert the item back to its original position
-        sourceItems.splice(source.index, 0, removed);
-        return;
-      }
-    }
-    if (destinationColumn && destinationColumn.title === "Delivered") {
-      // Check if the due is 0 before moving to delivered
-      if (removed.dueBalance !== 0) {
-        toast.error("Please clear due balance before moving to delivered.");
-        // Revert the item back to its original position
-        sourceItems.splice(source.index, 0, removed);
-        return;
-      }
-
-      // Update technician status to 'Complete' in the backend
-      try {
-        const response = await updateTechnicianStatustoComplete(
-          removed.invoiceId
-        );
-      } catch (error) {
-        console.error("Error updating technician status:", error);
-      }
-    }
-
-    destinationItems.splice(destination.index, 0, removed);
-
-    const updatedData = pipelineData.map((column, index) => {
-      if (index === parseInt(source.droppableId)) {
-        return { ...column, leads: sourceItems };
-      } else if (index === parseInt(destination.droppableId)) {
-        return { ...column, leads: destinationItems };
-      }
-      return column;
+          return newData;
+        });
+      },
     });
+  }, []);
 
-    setPipelineData(updatedData);
+  useEffect(() => {
+    const scrollContainer = dragDropContextRef.current;
+    if (!scrollContainer || screenWidth < 768) return;
 
-    const invoiceId = removed.invoiceId;
-    const newStatusId = destinationColumn.id;
-    if (newStatusId !== null) {
-      try {
-        const response = await updateInvoiceStatus(invoiceId, newStatusId);
-        if (response.type === "success") {
-          successToast("Job moved successfully");
-        } else {
-          errorToast("Failed to update invoice status");
-          console.error("Failed to update invoice status:", response.message);
-        }
-      } catch (error) {
-        errorToast("Failed to update invoice status");
-        console.error("Error updating invoice status:", error);
-      }
-    } else {
-      console.error("newStatusId is null");
-    }
-  };
-  
+    return autoScrollForElements({
+      element: scrollContainer,
+    });
+  }, [screenWidth]);
 
   return (
     <>
-      {/* Add the search component at the top */}
       <div className="mb-4 px-2">
         <SearchScroll
-          pipelineData={pipelineData}
+          pipelineData={filteredPipelineData}
           onSearchResult={handleSearchResult}
+          onColumnChange={(colId) => setSelectedSearchColumnId(colId)}
         />
       </div>
 
       {loading || isLoading ? (
         <PipelineLoadingSkeleton />
       ) : (
-        <DragDropContext onDragEnd={handleDragEnd}>
-          <div className="h-full w-full overflow-hidden px-2">
-            <div className="thin-scrollbar flex touch-pan-x snap-x snap-mandatory flex-nowrap justify-between gap-2 overflow-x-auto">
-              {pipelineData.map((item, categoryIndex) => (
-                <Droppable
-                  droppableId={`${categoryIndex}`}
-                  key={categoryIndex.toString() + 1}
-                  isDropDisabled={screenWidth < 768}
-                >
-                  {(provided) => (
-                    <div
-                      {...provided.droppableProps}
-                      ref={(el) => {
-                        provided.innerRef(el);
-                        columnRefs.current[categoryIndex] = el;
-                      }}
-                      className="mx-2 w-[calc(100vw-2rem)] flex-shrink-0 rounded-md border sm:min-w-80 sm:flex-1 lg:min-w-[calc(100%/3-1.5rem)] xl:min-w-[calc(100%/4-1.5rem)] 2xl:min-w-[calc(100%/6-1.5rem)]"
-                      style={{
-                        backgroundColor: "rgba(101, 113, 255, 0.15)",
-                        padding: "0",
-                      }}
-                    >
-                      <h2 className="rounded-lg bg-[#6571FF] px-4 py-3 text-center text-white">
-                        <p className="text-base font-bold">
-                          {item.title || ""}
-                          <span className="ml-2 rounded-lg bg-[#3F49B9] px-2">
-                            {item.leads.length}
-                          </span>
-                        </p>
-                      </h2>
-
-                      <ul
-                        className="thin-scrollbar mt-1 flex max-h-[70vh] min-h-[70vh] flex-col gap-1 overflow-y-auto p-1"
-                        style={{ maxHeight: "70vh" }}
-                      >
-                        {item.leads.map((lead, leadIndex) => {
-                          const key = `${categoryIndex}-${leadIndex}`;
-                          const isDropdownOpen =
-                            openDropdownIndex?.category === categoryIndex &&
-                            openDropdownIndex.index === leadIndex;
-                          const isTagDropdownOpen = tagDropdownStates[key];
-                          const isServiceDropdownOpen =
-                            openServiceDropdown[key] || false;
-                          const selectedEmployee = lead.assignedTo;
-
-                          
-                          return (
-                            <Draggable
-                              key={lead.invoiceId}
-                              draggableId={`${categoryIndex}-${leadIndex}`}
-                              index={leadIndex}
-                              isDragDisabled={screenWidth < 768}
-                            >
-                              {(provided) => (
-                                <li
-                                  {...provided.draggableProps}
-                                  {...provided.dragHandleProps}
-                                  ref={(el) => {
-                                    provided.innerRef(el);
-                                    // Store a reference to this lead element
-                                    if (el) leadRefs.current.set(key, el);
-                                  }}
-                                  key={lead.invoiceId}
-                                  className="max-w-auto relative mx-1 my-1 h-fit animate-none rounded-xl border bg-background p-1 duration-300 hover:bg-slate-100"
-                                >
-                                  {/* Lead content - same as your original code */}
-                                  <div className="flex items-center justify-between">
-                                    <h3 className="font-inter overflow-auto pb-2 font-semibold text-black">
-                                      {lead.name}
-                                    </h3>
-                                    <div className="flex items-center gap-2">
-                                      <button
-                                        onClick={() =>
-                                          handleColumnDropdownToggle(
-                                            categoryIndex,
-                                            leadIndex
-                                          )
-                                        }
-                                        className="cursor-pointer text-xl mr-2 hover:text-blue-600 transition-colors md:hidden"
-                                        title="Move to different column"
-                                      >
-                                        <ArrowRightLeft
-                                          size={24}
-                                          strokeWidth={2}
-                                          style={{ color: "#6571FFed" }}
-                                        />
-                                      </button>
-
-                                      {pipelineType === "Sales Pipelines" && (
-                                        <div>
-                                          {!isDropdownOpen && (
-                                            <div
-                                              role="button"
-                                              onClick={() =>
-                                                handleDropdownToggle(
-                                                  categoryIndex,
-                                                  leadIndex
-                                                )
-                                              }
-                                            >
-                                              {selectedEmployee ? (
-                                                <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-gray-600 bg-background text-xs text-black">
-                                                  {getInitials(
-                                                    selectedEmployee
-                                                  )}
-                                                </div>
-                                              ) : (
-                                                <CirclePlus size={26} />
-                                              )}
-                                            </div>
-                                          )}
-
-                                          {isDropdownOpen && (
-                                            <div className="absolute right-0 top-8 z-10">
-                                              <EmployeeSelector
-                                                name="employeeId"
-                                                value={selectedEmployee}
-                                                setValue={createEmployeeSelectHandler(
-                                                  categoryIndex,
-                                                  leadIndex
-                                                )}
-                                                openDropdown={true}
-                                                setOpenDropdown={() =>
-                                                  setOpenDropdownIndex(null)
-                                                }
-                                                companyUsers={companyUsers}
-                                              />
-                                            </div>
-                                          )}
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-
-                                  {showColumnSelect[
-                                    `${categoryIndex}-${leadIndex}`
-                                  ] && (
-                                    <ShopColumnDropdown
-                                      options={pipelineData
-                                        .filter(
-                                          (col, idx) => idx !== categoryIndex
-                                        )
-                                        .map((col, idx) => ({
-                                          id: col.id,
-                                          value: pipelineData
-                                            .findIndex((p) => p.id === col.id)
-                                            .toString(),
-                                          label: col.title || "Untitled Column",
-                                        }))}
-                                      onSelect={(columnId) =>
-                                        handleColumnChange(
-                                          categoryIndex,
-                                          leadIndex,
-                                          columnId
-                                        )
-                                      }
-                                      onClose={() => {
-                                        const key = `${categoryIndex}-${leadIndex}`;
-                                        setShowColumnSelect((prev) => ({
-                                          ...prev,
-                                          [key]: false,
-                                        }));
-                                        setColumnDropdownOpen((prev) => ({
-                                          ...prev,
-                                          [key]: false,
-                                        }));
-                                      }}
-                                      isOpen={
-                                        columnDropdownOpen[
-                                          `${categoryIndex}-${leadIndex}`
-                                        ] || false
-                                      }
-                                    />
-                                  )}
-
-                                  <div className="mb-1 flex flex-wrap items-center gap-1">
-                                    {pipelineData[categoryIndex].leads[
-                                      leadIndex
-                                    ].tags.map((invoiceTag) => (
-                                      <span
-                                        key={`tag-${invoiceTag.id}`}
-                                        className="mr-2 inline-flex h-[20px] items-center rounded bg-gray-300 px-1 py-1 text-xs font-semibold text-black"
-                                        style={{
-                                          backgroundColor:
-                                            invoiceTag.tag?.bgColor,
-                                          color: invoiceTag.tag?.textColor,
-                                        }}
-                                      >
-                                        {invoiceTag.tag.name}
-                                        <div
-                                          className="ml-1 cursor-pointer text-xs text-black"
-                                          onClick={() =>
-                                            handleTagRemove(
-                                              categoryIndex,
-                                              leadIndex,
-                                              invoiceTag.tag
-                                            )
-                                          }
-                                        >
-                                          ✕
-                                        </div>
-                                      </span>
-                                    ))}
-
-                                    <button
-                                      onClick={() =>
-                                        handleTagDropdownToggle(
-                                          categoryIndex,
-                                          leadIndex
-                                        )
-                                      }
-                                      className="inline-flex h-[20px] items-center justify-center rounded bg-[#6571FF] px-1 py-1 text-xs font-semibold text-white"
-                                    >
-                                      + Add
-                                    </button>
-                                  </div>
-                                  {isTagDropdownOpen && (
-                                    <div className="-left-100 absolute top-12 z-20">
-                                      <EmployeeTagSelector
-                                        employeeTags={pipelineData[
-                                          categoryIndex
-                                        ].leads[leadIndex].tags.map(
-                                          (invoiceTag) => invoiceTag.tag
-                                        )}
-                                        setValue={(selectedTag) =>
-                                          handleTagSelect(
-                                            categoryIndex,
-                                            leadIndex,
-                                            selectedTag
-                                          )
-                                        }
-                                        open={isTagDropdownOpen}
-                                        setOpen={() =>
-                                          handleTagDropdownToggle(
-                                            categoryIndex,
-                                            leadIndex
-                                          )
-                                        }
-                                        tagType="GENERAL"
-                                      />
-                                    </div>
-                                  )}
-                                  <div>
-                                    <p className="mb-2 overflow-auto text-xs">
-                                      {lead.vehicle}
-                                    </p>
-                                  </div>
-                                  {/* service code */}
-                                  <ServiceSelector
-                                    services={lead.services.completed
-                                      .concat(lead.services.incomplete)
-                                      .concat(lead.services.unAssigned)}
-                                    completedServices={lead.services.completed}
-                                    incompleteServices={
-                                      lead.services.incomplete
-                                    }
-                                    unAssignedServices={
-                                      lead.services.unAssigned
-                                    }
-                                    isServiceDropdownOpen={
-                                      isServiceDropdownOpen
-                                    }
-                                    handleServiceDropdownToggle={() =>
-                                      handleServiceDropdownToggle(
-                                        categoryIndex,
-                                        leadIndex
-                                      )
-                                    }
-                                    type={pipelineType}
-                                  />
-                                  {pipelineType === "Sales Pipelines" && (
-                                    <div>
-                                      <p className="overflow-auto pb-2 text-xs">
-                                        Lead Source
-                                      </p>
-                                    </div>
-                                  )}
-                                  <div className="flex justify-between">
-                                    <div className="flex items-center gap-2">
-                                      <Link
-                                        href={`/dashboard/communication/client/${lead.clientId}?chat=true`}
-                                        className={`group relative mt-1 ${isTechnician ? "hidden" : ""}`}
-                                      >
-                                        <MessageCircleMore size={20} />
-                                        <span className="invisible absolute bottom-full left-14 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-                                          Communications
-                                        </span>
-                                      </Link>
-
-                                      <div className="group relative mx-0 mt-1 p-0">
-                                        <WorkOrderModal
-                                          invoiceId={lead.invoiceId}
-                                          buttonChild={
-                                            <button className="group relative flex w-6 items-center justify-center">
-                                              <Image
-                                                src="/icons/invoicePipeline.png"
-                                                alt=""
-                                                width={14}
-                                                height={14}
-                                              />
-
-                                              <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-                                                View Work Order
-                                              </span>
-                                            </button>
-                                          }
-                                        />
-                                      </div>
-
-                                      <button
-                                        onClick={() => {
-                                          // removeClientIdFromParams();
-                                          if (!searchParams) return;
-                                          if (lead?.clientId) {
-                                            const params = new URLSearchParams(
-                                              searchParams.toString()
-                                            );
-                                            params.set(
-                                              "clientId",
-                                              lead?.clientId?.toString()
-                                            );
-                                            router.push(
-                                              `${pathname}?${params.toString()}`
-                                            );
-
-                                            setSelectedClientId(lead?.clientId);
-                                          }
-
-                                          if (lead?.vehicleId) {
-                                            setSelectedVehicleId(
-                                              lead?.vehicleId
-                                            );
-                                          }
-                                          setIsAppointmentModalOpen(true);
-                                        }}
-                                        className="group relative"
-                                      >
-                                        <Calendar
-                                          size={18}
-                                          className={`mt-1 ${isTechnician ? "hidden" : ""}`}
-                                        />
-                                        <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-                                          Appointment
-                                        </span>
-                                      </button>
-
-                                      <div className="group relative mt-1.5">
-                                        <TaskForm
-                                          companyUsers={companyUsers}
-                                          invoiceId={lead.invoiceId}
-                                          previousTasks={lead.tasks || []}
-                                          totalTasksCount={lead?.tasks?.length}
-                                          isTechnician={isTechnician}
-                                        />
-
-                                        <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-                                          Add Task
-                                        </span>
-                                      </div>
-                                    </div>
-                                    <div className="group relative">
-                                      {/* button */}
-                                      {/* <CirclePlus
-                                        size={24}
-                                        strokeWidth={1.5}
-                                        className="mt-1 cursor-pointer"
-                                      /> */}
-                                      {/* Invoice id */}
-                                      {(currentUser?.employeeType ===
-                                        "Manager" ||
-                                        currentUser?.employeeType === "Admin" ||
-                                        currentUser?.isSuperAdmin === true) && (
-                                        <div className="group relative mx-0 mt-1 p-0">
-                                          <InvoiceModal
-                                            invoiceId={lead.invoiceId}
-                                            buttonChild={
-                                              <button className="group relative flex w-6 items-center justify-center">
-                                                <BookCheck
-                                                  width={18}
-                                                  height={18}
-                                                />
-                                                <span className="invisible absolute bottom-full px-2 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C]  py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-                                                  View Invoice
-                                                </span>
-                                              </button>
-                                            }
-                                          />
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                </li>
-                              )}
-                            </Draggable>
-                          );
-                        })}
-                        {provided.placeholder}
-                      </ul>
-                    </div>
-                  )}
-                </Droppable>
-              ))}
-            </div>
+        <div className="h-full w-full overflow-hidden px-2">
+          <div
+            ref={dragDropContextRef}
+            className="thin-scrollbar flex touch-pan-x snap-x snap-mandatory flex-nowrap justify-between gap-2 overflow-x-auto"
+          >
+            {filteredPipelineData.map((item, categoryIndex) => {
+              if (
+                selectedSearchColumnId !== null &&
+                item.id !== selectedSearchColumnId
+              )
+                return null;
+              return (
+                <DroppableColumn
+                  key={categoryIndex}
+                  setColumnRef={(el) => {
+                    columnRefs.current[categoryIndex] = el;
+                  }}
+                  categoryIndex={categoryIndex}
+                  item={item}
+                  openDropdownIndex={openDropdownIndex}
+                  tagDropdownStates={tagDropdownStates}
+                  openServiceDropdown={openServiceDropdown}
+                  screenWidth={screenWidth}
+                  leadRefs={leadRefs}
+                  handleColumnDropdownToggle={handleColumnDropdownToggle}
+                  pipelineType={pipelineType}
+                  handleDropdownToggle={handleDropdownToggle}
+                  createEmployeeSelectHandler={createEmployeeSelectHandler}
+                  companyUsers={companyUsers}
+                  setOpenDropdownIndex={setOpenDropdownIndex}
+                  showColumnSelect={showColumnSelect}
+                  pipelineData={pipelineData}
+                  handleColumnChange={handleColumnChange}
+                  setShowColumnSelect={setShowColumnSelect}
+                  setColumnDropdownOpen={setColumnDropdownOpen}
+                  columnDropdownOpen={columnDropdownOpen}
+                  handleTagRemove={handleTagRemove}
+                  handleTagDropdownToggle={handleTagDropdownToggle}
+                  handleTagSelect={handleTagSelect}
+                  handleServiceDropdownToggle={handleServiceDropdownToggle}
+                  isTechnician={isTechnician}
+                  setSelectedClientId={setSelectedClientId}
+                  setSelectedVehicleId={setSelectedVehicleId}
+                  setSelectedAppointmentId={setSelectedAppointmentId}
+                  setIsAppointmentModalOpen={setIsAppointmentModalOpen}
+                  searchTerm={searchTerm}
+                  hasMore={
+                    item.id !== null
+                      ? (columnMeta[item.id]?.hasMore ?? false)
+                      : false
+                  }
+                  isLoadingMore={
+                    item.id !== null
+                      ? (columnMeta[item.id]?.isLoading ?? false)
+                      : false
+                  }
+                  onLoadMore={() => loadMoreForColumn(categoryIndex)}
+                />
+              );
+            })}
           </div>
-        </DragDropContext>
+        </div>
       )}
 
       {selectedClientId && (
         <AppointmentCreateOrEdit
+          key={`appt-${selectedClientId}-${selectedAppointmentId ?? "new"}`}
+          fromLead
+          fromEdit={!!selectedAppointmentId}
+          appointmentId={selectedAppointmentId ?? undefined}
           clientId={selectedClientId}
           vehicleId={selectedVehicleId}
           isModalOpen={isAppointmentModalOpen}
-          setIsModalOpen={setIsAppointmentModalOpen}
-          onAppointmentCreated={(appointment) => {
-            // Handle appointment created
-            setIsAppointmentModalOpen(false);
-            setSelectedClientId(null);
-            setSelectedVehicleId(null);
+          setIsModalOpen={(open) => {
+            setIsAppointmentModalOpen(open);
+            if (!open) {
+              setSelectedClientId(null);
+              setSelectedVehicleId(null);
+              setSelectedAppointmentId(null);
+            }
           }}
-          onAppointmentUpdated={(appointment) => {
-            // Handle appointment updated
+          onAppointmentCreated={() => {
             setIsAppointmentModalOpen(false);
             setSelectedClientId(null);
             setSelectedVehicleId(null);
+            setSelectedAppointmentId(null);
+            router.refresh();
+          }}
+          onAppointmentUpdated={() => {
+            setIsAppointmentModalOpen(false);
+            setSelectedClientId(null);
+            setSelectedVehicleId(null);
+            setSelectedAppointmentId(null);
+            router.refresh();
           }}
         />
       )}

@@ -12,12 +12,13 @@ import { ServerAction } from "@/types/action";
 import { TErrorHandler } from "@/types/globalError";
 import { InvoiceType } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { authorizedLeadsConvertion } from "./authorizedLeadsConvertion";
 
 export async function authorizeInvoice(
   invoiceId: string,
   authorizedName: string,
   url: string,
-  invoiceType: string
+  invoiceType: string,
 ): Promise<ServerAction | TErrorHandler> {
   try {
     const updatedInvoice = await db.invoice.update({
@@ -74,7 +75,7 @@ export async function authorizeInvoice(
             });
 
             throw new Error(
-              `The quantity of "${product.name}" is not enough in the inventory, You need ${product.quantity} but only have ${findInventoryProduct.quantity} quantity`
+              `The quantity of "${product.name}" is not enough in the inventory, You need ${product.quantity} but only have ${findInventoryProduct.quantity} quantity`,
             );
           }
           await db.inventoryProductHistory.create({
@@ -102,7 +103,7 @@ export async function authorizeInvoice(
               },
             },
           });
-        })
+        }),
       );
     }
 
@@ -128,14 +129,19 @@ export async function authorizeInvoice(
         authorizedName,
         companyId: updatedInvoice.companyId,
         clientName,
-      });
+      }).catch((err) =>
+        console.error("sendInvoiceAuthorizeNotification failed", err),
+      );
       sendInvoiceConvertedNotification({
         invoiceId: updatedInvoice.id,
         clientName,
         companyId: updatedInvoice.companyId,
         invoiceType: updatedInvoice.type,
-      });
+      }).catch((err) =>
+        console.error("sendInvoiceConvertedNotification failed", err),
+      );
 
+      await authorizedLeadsConvertion(updatedInvoice.id);
       // await updateServiceAutomationTrigger({
       //   companyId: updatedInvoice?.companyId,
       //   estimateId: updatedInvoice?.id,
@@ -160,7 +166,7 @@ export async function authorizeInvoice(
 }
 
 export async function deleteInvoiceAuthorize(
-  invoiceId: string
+  invoiceId: string,
 ): Promise<ServerAction | TErrorHandler> {
   try {
     await db.invoice.update({

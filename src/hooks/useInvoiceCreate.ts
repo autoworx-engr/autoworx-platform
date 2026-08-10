@@ -16,6 +16,7 @@ export function useInvoiceCreate(type: InvoiceType) {
     discount,
     tax,
     serviceFee,
+    vehicleExtraCost,
     grandTotal,
     due,
     internalNotes,
@@ -36,7 +37,7 @@ export function useInvoiceCreate(type: InvoiceType) {
   const pathaname = usePathname();
 
   async function handleSubmit(
-    fromPayment?: boolean
+    fromPayment?: boolean,
   ): Promise<ServerAction | TErrorHandler> {
     const clientId = client?.id;
     const vehicleId = vehicle?.id;
@@ -63,6 +64,7 @@ export function useInvoiceCreate(type: InvoiceType) {
           discount,
           tax: Number(tax) || 0,
           serviceFee: Number(serviceFee) || 0,
+          vehicleExtraCost: Number(vehicleExtraCost) || 0,
           grandTotal,
           due: Number(due) || 0,
           internalNotes,
@@ -81,7 +83,7 @@ export function useInvoiceCreate(type: InvoiceType) {
                   cost: Number(material?.cost) || 0,
                   sell: Number(material?.sell) || 0,
                   discount: Number(material?.discount) || 0,
-                  quantity: material?.quantity?.toString() || "0",
+                  quantity: Number(material?.quantity) || 0,
                 }))
               : null,
             labor: item.labor
@@ -98,7 +100,7 @@ export function useInvoiceCreate(type: InvoiceType) {
           inspections,
           damageNotes,
         },
-        fromPayment
+        fromPayment,
       );
 
       if (res.type === "success") {
@@ -119,6 +121,7 @@ export function useInvoiceCreate(type: InvoiceType) {
         discount,
         tax: Number(tax) || 0,
         serviceFee: Number(serviceFee) || 0,
+        vehicleExtraCost: Number(vehicleExtraCost) || 0,
         grandTotal,
         due,
         internalNotes,
@@ -136,7 +139,7 @@ export function useInvoiceCreate(type: InvoiceType) {
             cost: Number(material?.cost) || 0,
             sell: Number(material?.sell) || 0,
             discount: Number(material?.discount) || 0,
-            quantity: material?.quantity?.toString() || "0",
+            quantity: Number(material?.quantity) || 0,
           })),
           labor: item.labor
             ? {
@@ -154,7 +157,9 @@ export function useInvoiceCreate(type: InvoiceType) {
       });
 
       if (res.type === "success") {
-        await updateInventoryWhenInvoiceCreate({
+        // Fire-and-forget: server action runs to completion on the server even without await.
+        // Awaiting it was blocking the toast + redirect by several seconds in production.
+        updateInventoryWhenInvoiceCreate({
           items,
           invoiceType: res.data.type,
           companyId: res.data.companyId,
@@ -165,6 +170,7 @@ export function useInvoiceCreate(type: InvoiceType) {
       }
     }
 
+    console.log("useInvoiceCreate Hook response", res);
     return res;
   }
 

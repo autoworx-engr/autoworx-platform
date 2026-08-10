@@ -1,10 +1,25 @@
 import { cn } from "@/lib/cn";
-import { Attachment, RequestEstimate } from "@prisma/client";
+import {
+  Attachment,
+  Group,
+  Message as PrismaMessage,
+  RequestEstimate,
+  User,
+} from "@prisma/client";
 import { Session } from "next-auth";
 import React from "react";
 import GroupMessageBox from "./GroupMessageBox";
 import UserMessageBox from "./UserMessageBox";
 import EmptyMessageBox from "./EmptyMessageBox";
+
+type TUser = User & {
+  unreadCount: number;
+  latestMessage?: PrismaMessage | null;
+};
+type TGroup = Group & { users: User[] };
+export type ChatListItem =
+  | { id: string; type: "user"; data: TUser; timestamp: number }
+  | { id: string; type: "group"; data: TGroup; timestamp: number };
 
 export interface MessageQue {
   user: number;
@@ -23,6 +38,12 @@ export interface Message {
   attachment?: Attachment[] | null;
   requestEstimate?: RequestEstimate | null;
   createdAt: Date;
+  senderInfo?: {
+    id: number;
+    firstName: string | null;
+    lastName: string | null;
+    image: string | null;
+  } | null;
 }
 
 export default function UsersArea({
@@ -35,17 +56,12 @@ export default function UsersArea({
   chatList,
 }: {
   currentUser: Session["user"];
-  usersList: any[];
-  setUsersList: React.Dispatch<React.SetStateAction<any[]>>;
-  setGroupsList: React.Dispatch<React.SetStateAction<any[]>>;
-  groupsList: any;
+  usersList: TUser[];
+  setUsersList: React.Dispatch<React.SetStateAction<TUser[]>>;
+  setGroupsList: React.Dispatch<React.SetStateAction<TGroup[]>>;
+  groupsList: TGroup[];
   className?: string;
-  chatList?: Array<{
-    id: string;
-    type: 'user' | 'group';
-    data: any;
-    timestamp: number;
-  }>;
+  chatList?: ChatListItem[];
 }) {
   const totalMessageBoxLength = usersList.length + groupsList.length;
 
@@ -54,7 +70,7 @@ export default function UsersArea({
     if (chatList) {
       // Use the unified chat list which preserves the exact opening order
       return chatList.map((chat) => {
-        if (chat.type === 'user') {
+        if (chat.type === "user") {
           return (
             <UserMessageBox
               key={chat.id}
@@ -79,21 +95,19 @@ export default function UsersArea({
 
     // Fallback to old method if chatList is not available
     const allChats: React.JSX.Element[] = [];
-    
-    // Add users first (they maintain their order in usersList)
-    usersList.forEach((user: any) => {
+
+    usersList.forEach((user) => {
       allChats.push(
         <UserMessageBox
           key={`user-${user.id}`}
           user={user}
           setUsersList={setUsersList}
           totalMessageBoxLength={totalMessageBoxLength}
-        />
+        />,
       );
     });
-    
-    // Add groups after users (they maintain their order in groupsList)
-    groupsList.forEach((group: any) => {
+
+    groupsList.forEach((group) => {
       allChats.push(
         <GroupMessageBox
           key={`group-${group.id}`}
@@ -101,10 +115,10 @@ export default function UsersArea({
           setGroupsList={setGroupsList}
           totalMessageBox={totalMessageBoxLength}
           existingGroups={groupsList}
-        />
+        />,
       );
     });
-    
+
     return allChats;
   };
 
@@ -133,9 +147,7 @@ export default function UsersArea({
         />
       )}
 
-      {totalMessageBoxLength === 0 && (
-        <EmptyMessageBox  />
-      )}
+      {totalMessageBoxLength === 0 && <EmptyMessageBox />}
     </div>
   );
 }

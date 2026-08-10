@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import { updateLeadColumn } from "@/actions/pipelines/getLeads";
+import React, { useEffect, useRef, useState, useMemo } from "react";
+
 import { actionTypes } from "@/constants/lead.constant";
 import {
   useColumnDispatch,
@@ -14,10 +14,11 @@ import LeadCard from "./LeadCard";
 import LeadInfinityScroll from "./LeadInfinityScroll";
 
 export default function SalesPipelineSection() {
-  const pipelineColumns = useColumnState() || [];
+  const columnState = useColumnState();
+  const pipelineColumns = useMemo(() => columnState || [], [columnState]);
   const dispatch = useColumnDispatch();
   const [screenWidth, setScreenWidth] = useState<number>(
-    typeof window !== "undefined" ? window.innerWidth : 1200
+    typeof window !== "undefined" ? window.innerWidth : 1200,
   );
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -29,7 +30,6 @@ export default function SalesPipelineSection() {
     return () => window.removeEventListener("resize", updateWidth);
   }, []);
 
-  
   useEffect(() => {
     // Disable drag and drop on mobile
     if (screenWidth < 768) {
@@ -121,8 +121,16 @@ export default function SalesPipelineSection() {
           const newColumnId = pipelineColumns[destinationColumnIndex]?.id;
           if (newColumnId) {
             successToast("Lead column updated successfully");
-            updateLeadColumn(Number(dragData.leadId), newColumnId).catch(
-              (error) => {
+            fetch(`/api/pipeline/sales/leads/${dragData.leadId}/column`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ newColumnId }),
+            })
+              .then((res) => res.json())
+              .then((data) => {
+                if (!data.success) throw new Error(data.error);
+              })
+              .catch((error) => {
                 console.error("Failed to update lead column:", error);
                 // Revert the optimistic update on error
                 dispatch({
@@ -140,8 +148,7 @@ export default function SalesPipelineSection() {
                   },
                 });
                 errorToast("Failed to update lead column. Please try again.");
-              }
-            );
+              });
           }
         }
       },

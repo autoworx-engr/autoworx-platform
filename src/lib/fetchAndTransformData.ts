@@ -1,7 +1,7 @@
 "use server";
 import { getStatusPriority } from "@/utils/getStatusPriority";
 import { db } from "./db";
-import { InvoiceType } from "@prisma/client";
+import { InvoiceType, Prisma } from "@prisma/client";
 import moment from "moment-timezone";
 
 const defaultTake = 50;
@@ -17,7 +17,7 @@ export async function fetchAndTransformData(
     searchTerm?: string;
     take?: string;
   } = {},
-  timezone: string
+  timezone: string,
 ) {
   const page = Number(searchParams.page) || 1;
   const take = Number(searchParams.take) || defaultTake;
@@ -37,44 +37,80 @@ export async function fetchAndTransformData(
   const statusIds = decodedStatus
     ? decodedStatus
         .split(",")
-        .map((id) => {
-          if (isNaN(Number(id))) {
-            return undefined;
-          } else {
-            return Number(id);
-          }
-        })
-        .filter((id) => id !== undefined)
+        .map((id) => (isNaN(Number(id)) ? undefined : Number(id)))
+        .filter((id): id is number => id !== undefined)
     : undefined;
 
   const decodedSearchTerm = decodeURIComponent(searchTerm || "").trim();
 
   const dateFilter =
     convertedStart && convertedEnd
-      ? `AND (i."created_at" BETWEEN '${convertedStart.toISOString()}' AND '${convertedEnd.toISOString()}')`
-      : "";
+      ? Prisma.sql`AND (i."created_at" BETWEEN ${convertedStart} AND ${convertedEnd})`
+      : Prisma.empty;
 
   const statusFilter =
     statusIds && statusIds.length > 0
-      ? `AND i."column_id" IN (${statusIds.join(",")})`
-      : "";
+      ? Prisma.sql`AND i."column_id" IN (${Prisma.join(statusIds)})`
+      : Prisma.empty;
 
-  const searchFilter = decodedSearchTerm
-    ? `
-    AND (
-      i.id::text ILIKE '%${decodedSearchTerm}%'
-      OR LOWER(CONCAT(c."first_name", ' ', c."last_name")) ILIKE LOWER('%${decodedSearchTerm}%')
-      OR c.email ILIKE '%${decodedSearchTerm}%'
-      OR c.mobile ILIKE '%${decodedSearchTerm}%'
-      OR v.make ILIKE '%${decodedSearchTerm}%'
-      OR v.model ILIKE '%${decodedSearchTerm}%'
-      OR CAST(v.year AS TEXT) ILIKE '%${decodedSearchTerm}%'
-      OR col.title ILIKE '%${decodedSearchTerm}%'
-    )
-  `
-    : "";
+  const searchPattern = decodedSearchTerm
+    ? `%${decodedSearchTerm.replace(/\s+/g, " ")}%`
+    : null;
 
-  const query = `
+  // Match each typed word against first/last name independently (in either
+  // field, any order) so "ade ekram", "ekram", or extra whitespace in the
+  // stored name all still match "Ekram Ade" - not just an exact,
+  // contiguous "first_name last_name" substring.
+  const nameWords = decodedSearchTerm.split(/\s+/).filter(Boolean);
+  const nameCondition =
+    nameWords.length > 0
+      ? Prisma.sql`(${Prisma.join(
+          nameWords.map(
+            (word) =>
+              Prisma.sql`(c."first_name" ILIKE ${`%${word}%`} OR c."last_name" ILIKE ${`%${word}%`})`,
+          ),
+          " AND ",
+        )})`
+      : Prisma.sql`FALSE`;
+
+  const searchFilter = searchPattern
+    ? Prisma.sql`
+      AND (
+        i.id::text ILIKE ${searchPattern}
+        OR ${nameCondition}
+        OR c.email ILIKE ${searchPattern}
+        OR c.mobile ILIKE ${searchPattern}
+        OR v.make ILIKE ${searchPattern}
+        OR v.model ILIKE ${searchPattern}
+        OR CAST(v.year AS TEXT) ILIKE ${searchPattern}
+        OR col.title ILIKE ${searchPattern}
+        OR CONCAT(CAST(v.year AS TEXT), ' ', v.make, ' ', v.model) ILIKE ${searchPattern}
+        OR CONCAT(v.make, ' ', CAST(v.year AS TEXT), ' ', v.model) ILIKE ${searchPattern}
+        OR CONCAT(v.model, ' ', CAST(v.year AS TEXT), ' ', v.make) ILIKE ${searchPattern}
+      )
+    `
+    : Prisma.empty;
+
+  const paginationClause = decodedSearchTerm
+    ? Prisma.empty
+    : Prisma.sql`LIMIT ${take} OFFSET ${offset}`;
+
+  const joins = Prisma.sql`
+    FROM "Invoice" i
+    LEFT JOIN "Client" c ON i."customer_id" = c.id
+    LEFT JOIN "Vehicle" v ON i."vehicle_id" = v.id
+    LEFT JOIN "Column" col ON i."column_id" = col.id
+  `;
+
+  const baseWhere = Prisma.sql`
+    WHERE i."company_id" = ${companyId}
+      AND i.type::text = ${type}
+      ${dateFilter}
+      ${statusFilter}
+      ${searchFilter}
+  `;
+
+  const query = Prisma.sql`
     SELECT
       i.id,
       i."created_at" AS "createdAt",
@@ -89,46 +125,33 @@ export async function fetchAndTransformData(
       v.year,
       col.title AS status,
       col."textColor",
-      col."bgColor"
-    FROM "Invoice" i
-    LEFT JOIN "Client" c ON i."customer_id" = c.id
-    LEFT JOIN "Vehicle" v ON i."vehicle_id" = v.id
-    LEFT JOIN "Column" col ON i."column_id" = col.id
-    WHERE i."company_id" = ${companyId}
-      AND i.type = '${type}'
-      ${dateFilter}
-      ${statusFilter}
-      ${searchFilter}
-    ORDER BY i."created_at" DESC
-    LIMIT ${take} OFFSET ${offset};
+      col."bgColor",
+      i."is_shop_booking" AS "isShopBooking"
+    ${joins}
+    ${baseWhere}
+    ORDER BY i."updated_at" DESC
+    ${paginationClause}
   `;
 
-  const countQuery = `
+  const countQuery = Prisma.sql`
     SELECT COUNT(*)::int AS total
-    FROM "Invoice" i
-    LEFT JOIN "Client" c ON i."customer_id" = c.id
-    LEFT JOIN "Vehicle" v ON i."vehicle_id" = v.id
-    LEFT JOIN "Column" col ON i."column_id" = col.id
-    WHERE i."company_id" = ${companyId}
-      AND i.type = '${type}'
-      ${dateFilter}
-      ${statusFilter}
-      ${searchFilter};
+    ${joins}
+    ${baseWhere}
   `;
 
-  const data = await db.$queryRawUnsafe<any>(query);
-  const totalResult = await db.$queryRawUnsafe<{ total: number }[]>(countQuery);
+  const data = await db.$queryRaw<any>(query);
+  const totalResult = await db.$queryRaw<{ total: number }[]>(countQuery);
   const totalEstimate = Number(totalResult[0]?.total || 0);
 
   const sortedData = data.sort(
     (a: { status: string }, b: { status: string }) =>
-      getStatusPriority(a?.status) - getStatusPriority(b?.status)
+      getStatusPriority(a?.status) - getStatusPriority(b?.status),
   );
-
   return {
     totalEstimate,
     data: sortedData?.map((item: any) => ({
       id: item.id,
+      clientId: item.clientId ?? null,
       clientName: item.clientName?.trim() || "",
       vehicle: [item.year, item.make, item.model].filter(Boolean).join(" "),
       email: item.email || "",
@@ -139,6 +162,7 @@ export async function fetchAndTransformData(
       textColor: item.textColor,
       bgColor: item.bgColor,
       deliveredAt: item.deliveredAt,
+      isShopBooking: item.isShopBooking,
     })),
   };
 }

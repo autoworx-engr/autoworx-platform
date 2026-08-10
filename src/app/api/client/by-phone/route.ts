@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/authOptions";
+import { phoneLookupWhereClause } from "@/utils/normalizePhone";
 
 /**
  * @swagger
@@ -41,32 +42,33 @@ export async function GET(request: NextRequest) {
     if (!phone) {
       return NextResponse.json(
         { error: "Phone number is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    // Find client by phone number
-    const client = await db.client.findFirst({
-      where: {
-        companyId: session.user.companyId,
-        mobile: {
-          contains: phone.replace(/\D/g, ""), // Remove non-digits
-        },
-      },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        mobile: true,
-      },
-    });
+    // Find client by phone number using normalized lookup
+    const phoneLookup = phoneLookupWhereClause(phone);
+    const client = phoneLookup
+      ? await db.client.findFirst({
+          where: {
+            companyId: session.user.companyId,
+            OR: phoneLookup,
+          },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            mobile: true,
+          },
+        })
+      : null;
 
     return NextResponse.json({ client });
   } catch (error) {
     console.error("Error fetching client by phone:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

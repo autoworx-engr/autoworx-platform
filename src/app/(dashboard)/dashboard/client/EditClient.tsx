@@ -3,7 +3,7 @@
 import { Dialog, DialogTrigger } from "@/components/Dialog";
 import { useFormErrorStore } from "@/stores/form-error";
 import { Client, Source, Tag } from "@prisma/client";
-import { Edit, Settings, SquarePen } from "lucide-react";
+import { Edit, SquarePen } from "lucide-react";
 import { useState } from "react";
 import EditClientModalBody from "./EditClientModalBody";
 
@@ -21,8 +21,8 @@ export default function EditCustomer({
   const { clearError } = useFormErrorStore();
 
   const handleClose = () => {
-    clearError(); // ✅ Reset form errors when closing
-    // setProfilePic(null); // ✅ Reset profile picture
+    clearError(); //
+    // setProfilePic(null);
     setOpen(false);
   };
 
@@ -37,17 +37,21 @@ export default function EditCustomer({
       >
         <DialogTrigger asChild>
           <button
-            className={`${settingIcon ? "text-gray-600" : ""} text-[#6571FF]"`}
+            className={`${settingIcon ? "text-gray-600" : ""} text-primary"`}
           >
             {settingIcon ? (
-              <Edit className="w-4 h-4 text-[#6571FF]" />
+              <Edit className="w-4 h-4 text-primary" />
             ) : (
-              <SquarePen className="w-5 h-5 text-[#6571FF]" />
+              <SquarePen className="w-5 h-5 text-primary" />
             )}
           </button>
         </DialogTrigger>
         {open && (
-          <EditClientModalBody client={client} onClose={() => setOpen(false)} />
+          <EditClientModalBody
+            key={client.id}
+            client={client}
+            onClose={() => setOpen(false)}
+          />
         )}
       </Dialog>
     </>

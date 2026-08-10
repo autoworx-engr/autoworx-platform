@@ -7,7 +7,10 @@ export const Priority = {
 } as const;
 
 export const createTaskValidationSchema = z.object({
-  title: z.string().min(1, "Title is required"),
+  title: z
+    .string()
+    .min(1, "Title is required")
+    .max(100, "Title must be 100 characters or fewer"),
   description: z
     .string()
     .max(500, "Description must be 500 characters or less")
@@ -32,6 +35,7 @@ export const createTaskValidationSchema = z.object({
       return !isNaN(Date.parse(date));
     }, "Invalid date format"),
   timezone: z.string().optional(),
+  createdBy: z.enum(["user", "sales_agent"]),
 });
 
 export const updateTaskValidationSchema = z.object({

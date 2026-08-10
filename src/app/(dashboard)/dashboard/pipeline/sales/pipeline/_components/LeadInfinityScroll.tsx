@@ -1,16 +1,15 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useCallback } from "react";
-import { getLeads } from "@/actions/pipelines/getLeads";
 import { actionTypes } from "@/constants/lead.constant";
 import {
   useColumnDispatch,
+  useOrderBy,
   useSearchTerm,
 } from "@/context/sales-pipeline.context";
 import { LeadWithSalesUser } from "@/types/invoiceLead";
-import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
-import { useSearchParams } from "next/navigation";
+import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 type TProps = {
   columnTitle: string;
@@ -35,6 +34,7 @@ export default function LeadInfinityScroll({
 }: TProps) {
   const dispatch = useColumnDispatch();
   const searchTerm = useSearchTerm();
+  const orderBy = useOrderBy();
   const scrollRef = useRef<HTMLUListElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const loaderRef = useRef<HTMLDivElement>(null);
@@ -44,20 +44,26 @@ export default function LeadInfinityScroll({
   // const [screenWidth, setScreenWidth] = useState<number>(
   //   typeof window !== "undefined" ? window.innerWidth : 1200
   // );
-  const orderBy = useSearchParams().get("orderBy") as "asc" | "desc" | undefined;
 
   const leadsLength = leads?.length ?? 0;
 
   const fetchMoreLeads = useCallback(async () => {
     try {
       if (columnId) {
-        const getNextLeads = await getLeads({
-          columnId,
-          take: defaultTakeLeads,
-          skip: leadsLength,
-          searchTerm: searchTerm || undefined,
-          orderBy: orderBy,
-        });
+        const queryParams = new URLSearchParams();
+        if (columnId) queryParams.append("columnId", columnId.toString());
+        queryParams.append("take", defaultTakeLeads.toString());
+        queryParams.append("skip", leadsLength.toString());
+        if (searchTerm) queryParams.append("searchTerm", searchTerm);
+        if (orderBy) queryParams.append("orderBy", orderBy);
+
+        const response = await fetch(
+          `/api/pipeline/sales/leads?` + queryParams.toString(),
+        );
+        const data = await response.json();
+        if (!data.success) throw new Error(data.error);
+
+        const getNextLeads = data.data.leads;
         if (getNextLeads?.length < defaultTakeLeads) {
           setHasMore(false);
         }
@@ -75,21 +81,15 @@ export default function LeadInfinityScroll({
       console.error(err);
       setHasMore(false);
     }
-  }, [columnId, leadsLength, searchTerm, dispatch]);
+  }, [columnId, leadsLength, searchTerm, dispatch, orderBy]);
 
   useEffect(() => {
-    if (leadsLength >= defaultTakeLeads) {
-      setHasMore(true);
-    }
-  }, [leadsLength]);
-
-  useEffect(() => {
-    if (searchTerm) {
-      setHasMore(false);
-    } else if (leadsLength >= defaultTakeLeads) {
-      setHasMore(true);
-    }
-  }, [searchTerm, leadsLength]);
+    setHasMore(
+      totalLeads !== undefined
+        ? leadsLength < totalLeads
+        : leadsLength >= defaultTakeLeads,
+    );
+  }, [searchTerm, leadsLength, totalLeads]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -99,7 +99,7 @@ export default function LeadInfinityScroll({
           fetchMoreLeads().finally(() => setScrollLoading(false));
         }
       },
-      { threshold: 0.3 }
+      { threshold: 0.3 },
     );
 
     if (loaderRef.current) {
@@ -141,7 +141,7 @@ export default function LeadInfinityScroll({
         padding: "0",
       }}
     >
-      <h2 className="rounded-lg bg-[#6571FF] px-4 py-3 text-center text-white">
+      <h2 className="rounded-lg bg-primary px-4 py-3 text-center text-white">
         <p className="text-base font-bold">
           {columnTitle || ""}
           <span className="ml-2 rounded-lg bg-[#3F49B9] px-2">
@@ -155,7 +155,7 @@ export default function LeadInfinityScroll({
         style={{ maxHeight: "65vh" }}
       >
         {children(leads)}
-        {hasMore && !searchTerm && (
+        {hasMore && (
           <div ref={loaderRef} className="text-center">
             <div className="mx-auto h-6 w-6 animate-spin rounded-full border-4 border-dashed border-yellow-500"></div>
             <h2 className="mt-4 text-zinc-900 dark:text-white">Loading...</h2>

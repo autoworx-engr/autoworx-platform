@@ -35,10 +35,10 @@ const CustomLabel = (props: any) => {
 };
 export default function InvoicesBarChartContainer({ searchParams }: TProps) {
   const [startDate, setStartDate] = useState<string | undefined>(
-    searchParams?.startDate
+    searchParams?.startDate,
   );
   const [endDate, setEndDate] = useState<string | undefined>(
-    searchParams?.endDate
+    searchParams?.endDate,
   );
   // const [isFiltered, setIsFiltered] = useState<boolean>(false);
 
@@ -78,7 +78,7 @@ export default function InvoicesBarChartContainer({ searchParams }: TProps) {
         title="Lead Source Performance"
         data={data?.leadsBySource || []}
       >
-        <XAxis tickLine={false} dataKey={"source"} />
+        <XAxis tickLine={false} dataKey={"source"} interval={0} />
         <YAxis tick={false}>
           <Label
             angle={-360}

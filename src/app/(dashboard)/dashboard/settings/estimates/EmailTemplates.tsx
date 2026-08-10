@@ -1,13 +1,11 @@
 "use client";
 import {
   getEmailTemplate,
-  getOrCreateEmailTemplate,
   updateEmailTemplate,
 } from "@/actions/settings/emailTemplates";
 import { AppointmentTemplateVariable } from "@/components/Lists/NewTemplate";
 import { successToast } from "@/lib/toast";
 import { CompanyEmailTemplate } from "@prisma/client";
-import { Input } from "antd";
 import { Mail } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -42,7 +40,7 @@ export default function EstimateAndInvoicePage() {
         {
           subject: newSubject,
           message: newMessage,
-        }
+        },
       );
 
       successToast("Email Template Updated Successfully");
@@ -53,8 +51,10 @@ export default function EstimateAndInvoicePage() {
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-lg">
-      <div className="flex items-center mb-4">
-        <Mail className="w-6 h-6 text-[#6571FF] mr-3" />
+      <div className="flex items-center gap-3 mb-4">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-500 shadow-sm">
+          <Mail size={24} />
+        </div>
         <h2 className="text-xl font-bold ">
           Edit Draft Email for Sharing Estimate/Invoice
         </h2>
@@ -91,13 +91,16 @@ export default function EstimateAndInvoicePage() {
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               maxLength={maxLength} // ✅ hard cap
-              className={`h-32 w-full resize-none rounded-lg bg-gray-50 px-3 py-2 text-sm leading-6 outline-none transition duration-150 shadow-sm ${newMessage.length > maxLength
-                ? "border-2 border-red-500"
-                : "border border-gray-300 focus:border-indigo-500"
-                }`}
+              className={`h-32 w-full resize-none rounded-lg bg-gray-50 px-3 py-2 text-sm leading-6 outline-none transition duration-150 shadow-sm ${
+                newMessage.length > maxLength
+                  ? "border-2 border-red-500"
+                  : "border border-gray-300 focus:border-indigo-500"
+              }`}
             />
           </label>
-          <span className={`absolute -bottom-2.5 right-1 text-xs font-medium ${newMessage.length > maxLength ? "text-red-500" : "text-gray-500"}`}>
+          <span
+            className={`absolute -bottom-2.5 right-1 text-xs font-medium ${newMessage.length > maxLength ? "text-red-500" : "text-gray-500"}`}
+          >
             {newMessage.length}/{maxLength}
           </span>
         </div>
@@ -107,7 +110,7 @@ export default function EstimateAndInvoicePage() {
           <button
             type="button"
             onClick={handleUpdate}
-            className="rounded-lg bg-[#6571FF] px-8 py-2 text-base font-medium text-white shadow-md hover:bg-[#5661FF] transition duration-150"
+            className="rounded-lg bg-primary px-8 py-2 text-base font-medium text-white shadow-md hover:bg-[#5661FF] transition duration-150"
           >
             Save Template
           </button>

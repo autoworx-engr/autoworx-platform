@@ -81,7 +81,7 @@ export default function EmployeeInfoTable({
     if (service) {
       filtered = filtered.filter((row: any) => {
         const serviceName: string[] = row.invoice?.invoiceItems?.map(
-          (item: any) => item?.service?.name
+          (item: any) => item?.service?.name,
         );
         return !!serviceName.find((s) => s === service);
       });
@@ -191,52 +191,60 @@ export default function EmployeeInfoTable({
             </tr>
           </thead>
           <tbody>
-            {paginatedInfo.map((row, index) => (
-              <tr
-                key={index}
-                className={index % 2 === 0 ? "bg-background" : "bg-blue-100"}
-              >
-                <td className="border-b px-4 py-2 text-left">
-                  <WorkOrderModal
-                    invoiceId={row.invoice?.id!}
-                    buttonChild={
-                      <button className="text-blue-500">
-                        {row.invoice?.id}
-                      </button>
-                    }
-                  />
-                </td>
-                <td className="border-b px-4 py-2 text-left">
-                  {row.invoice?.client?.firstName}{" "}
-                  {row.invoice?.client?.lastName}
-                </td>
-                <td className="border-b px-4 py-2 text-left">
-                  {row.invoice?.vehicle?.make} {row.invoice?.vehicle?.model}{" "}
-                  {row.invoice?.vehicle?.other}
-                </td>
-                <td className="border-b px-4 py-2 text-left">
-                  {moment.tz(row.date, timezone).format("DD.MM.YYYY")}
-                </td>
-                <td className="border-b px-4 py-2 text-left">
-                  {row.dateClosed
-                    ? moment.tz(row.dateClosed, timezone).format("DD.MM.YYYY")
-                    : "-"}
-                </td>
-                <td className="backdrop border-b px-4 py-2 text-left">
-                  ${Number(row.amount)}
-                </td>
-                <td className="border-b py-2 text-center">
-                  <p
-                    style={{
-                      backgroundColor: WORK_ORDER_STATUS_COLOR[row.status!],
-                    }}
-                    className="rounded-full px-2 py-0.5 text-white"
-                  >
-                    {row.status}
-                  </p>
+            {paginatedInfo.length > 0 ? (
+              paginatedInfo.map((row, index) => (
+                <tr
+                  key={index}
+                  className={index % 2 === 0 ? "bg-background" : "bg-blue-100"}
+                >
+                  <td className="border-b px-4 py-2 text-left">
+                    <WorkOrderModal
+                      invoiceId={row.invoice?.id!}
+                      buttonChild={
+                        <button className="text-blue-500">
+                          {row.invoice?.id}
+                        </button>
+                      }
+                    />
+                  </td>
+                  <td className="border-b px-4 py-2 text-left">
+                    {row.invoice?.client?.firstName}{" "}
+                    {row.invoice?.client?.lastName}
+                  </td>
+                  <td className="border-b px-4 py-2 text-left">
+                    {row.invoice?.vehicle?.make} {row.invoice?.vehicle?.model}{" "}
+                    {row.invoice?.vehicle?.other}
+                  </td>
+                  <td className="border-b px-4 py-2 text-left">
+                    {moment.tz(row.date, timezone).format("DD.MM.YYYY")}
+                  </td>
+                  <td className="border-b px-4 py-2 text-left">
+                    {row.dateClosed
+                      ? moment.tz(row.dateClosed, timezone).format("DD.MM.YYYY")
+                      : "-"}
+                  </td>
+                  <td className="backdrop border-b px-4 py-2 text-left">
+                    ${Number(row.amount)}
+                  </td>
+                  <td className="border-b py-2 text-center">
+                    <p
+                      style={{
+                        backgroundColor: WORK_ORDER_STATUS_COLOR[row.status!],
+                      }}
+                      className="rounded-full px-2 py-0.5 text-white"
+                    >
+                      {row.status}
+                    </p>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={8} className="border-b px-4 py-2 text-center">
+                  No records found.
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
         {/* Desktop pagination  */}

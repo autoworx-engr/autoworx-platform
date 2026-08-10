@@ -6,6 +6,7 @@ import { ServerAction } from "@/types/action";
 import { TErrorHandler } from "@/types/globalError";
 import {
   TUpdateUserValidationSchema,
+  changePasswordValidationSchema,
   updateUserValidationSchema,
 } from "@/validations/schemas/settings/my-account/account.validation";
 import bcrypt from "bcryptjs";
@@ -35,13 +36,13 @@ export async function editMyAccountInfo({
       city,
       state,
       zip,
-      countryCode
+      countryCode,
     });
     const session = await getServerSession(authOptions);
     const userId = session?.user.id;
 
     if (!userId) {
-      throw new Error("User ID is required to create an email template.");
+      throw new Error("User ID is required to update account info.");
     }
     const updatedUser = await db.user.update({
       where: {
@@ -60,7 +61,7 @@ export async function editMyAccountInfo({
         countryCode,
       },
     });
-    revalidatePath("/settings/my-account");
+    revalidatePath("/dashboard/settings/my-account");
     return { type: "success", data: updatedUser };
   } catch (error) {
     return errorHandler(error);
@@ -73,11 +74,17 @@ export async function changePassword(
   confirmNewPassword: string,
 ): Promise<ServerAction | TErrorHandler> {
   try {
+    await changePasswordValidationSchema.parseAsync({
+      currentPassword,
+      newPassword,
+      confirmNewPassword,
+    });
+
     const session = await getServerSession(authOptions);
     const userId = session?.user.id;
 
     if (!userId) {
-      throw new Error("User ID is required to create an email template.");
+      throw new Error("User ID is required to change password.");
     }
     const user = await db.user.findUnique({
       where: {
@@ -93,10 +100,6 @@ export async function changePassword(
 
     if (!comparePassword) {
       throw new Error("Password is incorrect");
-    }
-
-    if (newPassword !== confirmNewPassword) {
-      throw new Error("Password don't match");
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);

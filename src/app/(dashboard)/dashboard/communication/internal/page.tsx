@@ -3,88 +3,32 @@ import { db } from "@/lib/db";
 import { User } from "@prisma/client";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
-import Body, { TBodyProps } from "./Body";
-import { fetchUsersWithLatestMessages } from "@/actions/communication/internal/fetchUsersWithLatestMessages";
+import Body from "./Body";
 
 export const metadata: Metadata = {
   title: "Communication Hub - Internal",
+  description: "Manage client and supplier collaboration",
 };
 
-export default async function InternalPage({
-  searchParams,
-}: {
-  searchParams: { id?: string };
+export default async function InternalPage(props: {
+  searchParams: Promise<{ id?: string; groupId?: string }>;
 }) {
-  const { id: selectedUserId } = searchParams;
+  const searchParams = await props.searchParams;
+  const { id: selectedUserId, groupId } = searchParams;
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new Error("Session ID is required");
   }
 
-  // Fetch users with their latest messages using the new action
-  const result = await fetchUsersWithLatestMessages();
-  
-  let usersWithLatestMessages: any[] = [];
-  let messages: any[] = [];
-  
-  if (result.success && result.data) {
-    usersWithLatestMessages = result.data.users;
-    messages = result.data.messages;
-  } else {
-    // Fallback to old method if the new action fails
-    const users = await db.user.findMany({
-      where: {
-        NOT: {
-          id: parseInt(session?.user?.id),
-        },
-        companyId: session?.user?.companyId,
-      },
-    });
+  // Both sidebar lists (users + groups) and per-pair chatTrack rows are now
+  // driven by paginated react-query hooks on the client
+  // (`useInfiniteUsersList` / `useInfiniteGroupsList` + the `userList` API
+  // route hydrates `chatTrack`). Server-side eager fetches removed.
+  const usersWithLatestMessages: any[] = [];
+  const messages: any[] = [];
+  const groups: any[] = [];
+  const userChatTrack: any[] = [];
 
-    // Calculate unread message counts per user
-    usersWithLatestMessages = users.map((user) => {
-      return {
-        ...user,
-        unreadCount: 0,
-        latestMessage: null,
-      };
-    });
-  }
-
-  // Fetch groups (this is still needed)
-  const groups = await db.group.findMany({
-    where: { users: { some: { id: parseInt(session?.user?.id!) } } },
-    include: {
-      users: true,
-    },
-  });
-
-  // Fetch userChatTrack for compatibility
-  const userChatTrack = await db.chatTrack.findMany({
-    where: {
-      OR: [
-        { senderId: parseInt(session?.user?.id!) },
-        { receiverId: parseInt(session?.user?.id!) },
-      ],
-    },
-    include: {
-      message: true,
-    },
-  });
-
-  // const usersWithUnreadCounts = users.map((user) => {
-  //   const unreadCount = userChatTrack.filter(
-  //     (chat) =>
-  //       chat.receiverId === parseInt(session?.user?.id!) &&
-  //       chat.senderId === user.id &&
-  //       !chat.isRead
-  //   ).length;
-
-  //   return {
-  //     ...user,
-  //     unreadCount,
-  //   };
-  // });
   const selectedUser = selectedUserId
     ? await db.user.findUnique({
         where: {
@@ -94,8 +38,18 @@ export default async function InternalPage({
       })
     : null;
 
+  const selectedGroup = groupId
+    ? await db.group.findUnique({
+        where: {
+          id: parseInt(groupId),
+          companyId: session?.user?.companyId,
+        },
+        include: { users: true },
+      })
+    : null;
+
   return (
-    <div className="flex max-h-[95%] gap-5 sm:mt-5">
+    <div className="flex gap-5 sm:mt-5">
       <Body
         users={usersWithLatestMessages}
         currentUser={session.user}
@@ -104,9 +58,14 @@ export default async function InternalPage({
         messages={messages}
         selectedUser={
           selectedUser
-            ? { ...selectedUser, unreadCount: 0, latestMessage: null } as (User & { unreadCount: number; latestMessage?: any })
+            ? ({
+                ...selectedUser,
+                unreadCount: 0,
+                latestMessage: null,
+              } as User & { unreadCount: number; latestMessage?: any })
             : null
         }
+        selectedGroup={selectedGroup}
       />
     </div>
   );

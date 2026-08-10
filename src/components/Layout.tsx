@@ -5,7 +5,6 @@ import { useSetPermissions } from "@/hooks/useSetPermissions";
 import { usePermissionStore } from "@/stores/permissionStore";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import { EmployeeType } from "@prisma/client";
-import { Spin } from "antd";
 import { Session } from "next-auth";
 import { redirect, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -18,142 +17,16 @@ import InitOneSignalProvider from "./InitOneSignalProvider";
 import { signOut } from "next-auth/react";
 import { useSetCompanyFeaturePermission } from "@/hooks/useSetCompanyFeaturePermission";
 import { superAdminNavList } from "@/app/(dashboard)/awx-dashboard/_utils/superAdminNavList";
+import {
+  mobileNavList,
+  mobileSuperAdminNavList,
+  navbarList,
+} from "@/app/(dashboard)/dashboard/_utils/dashboardNavList";
 import UserBugReport from "./bug-report/UserBugReport";
 import { VoiceDeviceProvider } from "@/context/VoiceDeviceContext";
 import VoiceAutoSetup from "./VoiceAutoSetup";
 import CarLoading from "./common/CarLoading";
-import path from "path";
 
-const navbarList = [
-  {
-    title: "Dashboard",
-    icon: "/icons/navbar/Dashboard.svg",
-    link: "/dashboard",
-    path: "/dashboard/dashboard",
-  },
-  {
-    title: "Communication Hub",
-    icon: "/icons/navbar/Community.svg",
-    path: "/dashboard/communication",
-    subnav: [
-      {
-        title: "Client",
-        link: "/dashboard/communication/client",
-      },
-      {
-        title: "Internal",
-        link: "/dashboard/communication/internal",
-      },
-      {
-        title: "Collaboration",
-        link: "/dashboard/communication/collaboration",
-      },
-    ],
-  },
-  {
-    title: "Pipelines",
-    icon: "/icons/navbar/Sales.svg",
-    path: "/dashboard/pipeline",
-
-    subnav: [
-      {
-        title: "Shop Pipeline",
-        link: "/dashboard/pipeline/shop/pipeline",
-      },
-      {
-        title: "Sales Pipeline",
-        link: "/dashboard/pipeline/sales/pipeline",
-      },
-    ],
-  },
-  {
-    title: "Task and Activity Management",
-    icon: "/icons/navbar/Task.svg",
-    link: "/dashboard/task/day",
-    path: "/dashboard/task",
-  },
-  {
-    title: "Analytics and Reporting",
-    icon: "/icons/navbar/Analytics.svg",
-    link: "/dashboard/reporting/revenue",
-    path: "/dashboard/reporting",
-  },
-  {
-    title: "Invoices",
-    icon: "/icons/navbar/Invoices.svg",
-    link: "/dashboard/estimate",
-    path: "/dashboard/estimate",
-  },
-  {
-    title: "Payments",
-    icon: "/icons/navbar/Payments.svg",
-    link: "/dashboard/payments",
-    path: "/dashboard/payments",
-  },
-  {
-    title: "Inventory",
-    icon: "/icons/navbar/Inventory.svg",
-    path: "/dashboard/inventory",
-
-    subnav: [
-      {
-        title: "Inventory List",
-        link: "/dashboard/inventory",
-      },
-      {
-        title: "Vendor List",
-        link: "/dashboard/inventory/vendor",
-      },
-      {
-        title: "Camera",
-        link: "/dashboard/inventory/camera",
-      },
-    ],
-  },
-  {
-    title: "Directory",
-    icon: "/icons/navbar/Employee.png",
-    path: "/dashboard/employee",
-
-    subnav: [
-      {
-        title: "Employee",
-        link: "/dashboard/employee",
-      },
-      {
-        title: "Client",
-        link: "/dashboard/client",
-      },
-      {
-        title: "Fleet",
-        link: "/dashboard/fleet",
-      },
-    ],
-  },
-
-  {
-    title: "Visualization",
-    icon: "/icons/navbar/visualization.svg",
-    link: "/dashboard/visualization",
-    path: "/dashboard/visualization",
-  },
-];
-
-const mobileNav = [
-  ...navbarList, // Existing navList
-  // {
-  //   title: "Visualization",
-  //   icon: "/icons/navbar/visualization.svg",
-  //   link: "/dashboard/visualization",
-  //   path: "/dashboard/visualization",
-  // },
-  {
-    title: "Settings", // Add settings here
-    icon: "/icons/navbar/Settings.svg", // Ensure this icon exists
-    link: "/dashboard/settings/my-account",
-    path: "/dashboard/settings",
-  },
-];
 /**
  * Layout component that wraps around page content.
  *
@@ -166,21 +39,14 @@ const mobileNav = [
  * @param {(Session & { user: { employeeType: string } }) | null} props.session - User session information.
  */
 
-const mobileSuperAdminNav = [
-  ...superAdminNavList, // Existing navList
-  {
-    title: "Settings", // Add settings here
-    icon: "/icons/navbar/Settings.svg", // Ensure this icon exists
-    link: "/awx-dashboard/settings/my-account",
-    path: "/awx-dashboard/settings",
-  },
-];
 export default function Layout({
   session,
   children,
+  canReceiveCalls = false,
 }: {
   session: Session | null;
   children: React.ReactNode;
+  canReceiveCalls?: boolean;
 }) {
   const pathname = usePathname(); // Get the current route path
   const isSuperAdminRoute = pathname?.startsWith("/awx-dashboard");
@@ -193,6 +59,7 @@ export default function Layout({
     "TWILIO",
   );
 
+  // console.log({ session });
   useEffect(() => {
     const uploadNotificationData = async () => {
       try {
@@ -247,10 +114,10 @@ export default function Layout({
       }
     };
 
-    if (session && currentUser?.companyId) {
+    if (session && currentUser?.companyId && canReceiveCalls) {
       fetchVoiceConfig();
     }
-  }, [session, currentUser?.companyId]);
+  }, [session, currentUser?.companyId, canReceiveCalls]);
 
   // onesignal icon moveable
   useEffect(() => {
@@ -323,16 +190,18 @@ export default function Layout({
   return (
     <VoiceDeviceProvider>
       <div className="w-full overflow-y-hidden">
-        <VoiceAutoSetup
-          phoneNumber={voicePhoneNumber}
-          provider={voiceProvider}
-        />
+        {canReceiveCalls && (
+          <VoiceAutoSetup
+            phoneNumber={voicePhoneNumber}
+            provider={voiceProvider}
+          />
+        )}
         <SideNavbar
           navList={isSuperAdminRoute ? superAdminNavList : navbarList}
           permissions={permissions}
         />
         <MobileNav
-          navList={isSuperAdminRoute ? mobileSuperAdminNav : mobileNav}
+          navList={isSuperAdminRoute ? mobileSuperAdminNavList : mobileNavList}
           permissions={permissions}
         />
         <div className="sm:ml-[5%]">

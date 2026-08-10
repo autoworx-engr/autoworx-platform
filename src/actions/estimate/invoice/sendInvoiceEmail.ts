@@ -64,7 +64,7 @@ export async function sendInvoiceEmail({ invoiceId }: { invoiceId: string }) {
               (invoice.vehicle.model || "") +
               " " +
               (invoice.vehicle.other || "")
-          : "No vehicle"
+          : "No vehicle",
       )
       .replace("<BUSINESS_NAME>", invoice?.company?.name || "No business name");
     const clientName =
@@ -77,11 +77,13 @@ export async function sendInvoiceEmail({ invoiceId }: { invoiceId: string }) {
       invoice.id,
       clientName,
       user.id,
-      user.companyId
+      user.companyId,
     );
 
-    let invoiceLink = shortLinkResult.originalUrl || `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoice.id}`; // fallback to original URL
-    
+    let invoiceLink =
+      shortLinkResult.originalUrl ||
+      `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoice.id}`; // fallback to original URL
+
     if (shortLinkResult.success && shortLinkResult.shortUrl) {
       invoiceLink = shortLinkResult.shortUrl;
       console.log("📧 Invoice Email - Short link:", {
@@ -90,14 +92,17 @@ export async function sendInvoiceEmail({ invoiceId }: { invoiceId: string }) {
         shortUrl: shortLinkResult.shortUrl,
         shortCode: shortLinkResult.shortCode,
         invoiceId: invoice.id,
-        clientName: clientName
+        clientName: clientName,
       });
     } else {
-      console.log("⚠️ Invoice Email - Failed to get/create short link, using original URL:", {
-        error: shortLinkResult.error,
-        originalUrl: shortLinkResult.originalUrl,
-        invoiceId: invoice.id
-      });
+      console.log(
+        "⚠️ Invoice Email - Failed to get/create short link, using original URL:",
+        {
+          error: shortLinkResult.error,
+          originalUrl: shortLinkResult.originalUrl,
+          invoiceId: invoice.id,
+        },
+      );
     }
 
     let variabledBody =
@@ -113,13 +118,12 @@ export async function sendInvoiceEmail({ invoiceId }: { invoiceId: string }) {
                 (invoice.vehicle.model || "") +
                 " " +
                 (invoice.vehicle.other || "")
-            : "No vehicle Found"
+            : "No vehicle Found",
         )
         .replace(
           "<BUSINESS_NAME>",
-          invoice?.company?.name || "No business found"
-        ) +
-      `\n\n${invoiceLink}`;
+          invoice?.company?.name || "No business found",
+        ) + `\n\n${invoiceLink}`;
 
     const res = await sendInfobipEmail({
       clientId: invoice.client.id,

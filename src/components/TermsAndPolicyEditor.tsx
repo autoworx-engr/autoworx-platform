@@ -1,17 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  getCompanyLeadTermsPolicy,
+  updateLeadTermsPolicy,
+} from "@/actions/settings/updateLeadTermsPolicy";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./Tabs";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
-import {
-  updateLeadTermsPolicy,
-  getCompanyLeadTermsPolicy,
-} from "@/actions/settings/updateLeadTermsPolicy";
+import { FileText } from "lucide-react";
+import dynamic from "next/dynamic";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import "react-quill-new/dist/quill.snow.css";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./Tabs";
+
+const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 
 export function TermsAndPolicyEditor() {
   const [termsContent, setTermsContent] = useState("");
@@ -24,7 +26,9 @@ export function TermsAndPolicyEditor() {
   useEffect(() => {
     const loadExistingData = async () => {
       try {
-        const existingData = await getCompanyLeadTermsPolicy();
+        const existingData: Awaited<
+          ReturnType<typeof getCompanyLeadTermsPolicy>
+        > = await getCompanyLeadTermsPolicy();
         if (existingData) {
           setTermsContent(existingData.leadTerms || "");
           setPolicyContent(existingData.leadPolicy || "");
@@ -84,7 +88,6 @@ export function TermsAndPolicyEditor() {
     "underline",
     "blockquote",
     "list",
-    "bullet",
     "indent",
     "link",
     "color",
@@ -93,100 +96,102 @@ export function TermsAndPolicyEditor() {
   ];
 
   return (
-    <div className="mx-auto w-full ">
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
+    <div className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200/60 bg-white p-4 shadow-sm md:p-6">
+      <div className="flex items-center gap-2 border-b border-slate-200/70 pb-3">
+        <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-300 text-slate-500">
+          <FileText className="h-4.5 w-4.5" />
+        </span>
+        <div>
+          <h4 className="text-lg font-semibold text-slate-600">
             Terms & Privacy Policy
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#6571FF]"></div>
-              <span className="ml-2">Loading...</span>
-            </div>
-          ) : (
-            <>
-              <Tabs
-                value={activeTab}
-                onValueChange={setActiveTab}
-                className="w-full"
-              >
-                <TabsList className="grid grid-cols-2 md:inline-flex -ml-[14px] rounded-bl-none">
-                  <TabsTrigger
-                    value="terms"
-                    className="text-sm md:text-base truncate"
-                  >
-                    Terms of Service
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="policy"
-                    className="text-sm md:text-base truncate"
-                  >
-                    Privacy Policy
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="terms" className="space-y-4 rounded-tl-none">
-                  <div className="space-y-2">
-                    <Label htmlFor="terms-editor">
-                      Terms of Service Content
-                    </Label>
-                    <div className="border rounded-md overflow-hidden">
-                      <ReactQuill
-                        theme="snow"
-                        value={termsContent}
-                        onChange={setTermsContent}
-                        modules={quillModules}
-                        formats={quillFormats}
-                        placeholder="Enter your terms of service content here. Use the toolbar to format headings, lists, links, and more..."
-                        style={{ height: "400px" }}
-                      />
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="policy" className="space-y-4 rounded-tl-none">
-                  <div className="space-y-2">
-                    <Label htmlFor="policy-editor">
-                      Privacy Policy Content
-                    </Label>
-                    <div className="border rounded-md overflow-hidden">
-                      <ReactQuill
-                        theme="snow"
-                        value={policyContent}
-                        onChange={setPolicyContent}
-                        modules={quillModules}
-                        formats={quillFormats}
-                        placeholder="Enter your privacy policy content here. Structure your policy with headings, bullet points, and professional formatting..."
-                        style={{ height: "400px" }}
-                      />
-                    </div>
-                  </div>
-                </TabsContent>
-              </Tabs>
-
-              <div className="flex justify-end mt-4">
-                <Button
-                  onClick={handleSave}
-                  disabled={isSaving}
-                  className="rounded-md bg-[#6571FF] px-10 py-1.5 text-white hover:bg-[#5561ef] disabled:opacity-50 disabled:cursor-not-allowed"
+          </h4>
+          <p className="text-sm text-slate-500">
+            Content shown to leads on your forms.
+          </p>
+        </div>
+      </div>
+      <div className="mt-5">
+        {isLoading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <span className="ml-2">Loading...</span>
+          </div>
+        ) : (
+          <>
+            <Tabs
+              value={activeTab}
+              onValueChange={setActiveTab}
+              className="w-full"
+            >
+              <TabsList className="grid grid-cols-2 md:inline-flex -ml-[14px] rounded-bl-none">
+                <TabsTrigger
+                  value="terms"
+                  className="text-sm md:text-base truncate"
                 >
-                  {isSaving ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Saving...
-                    </>
-                  ) : (
-                    "Save"
-                  )}
-                </Button>
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
+                  Terms of Service
+                </TabsTrigger>
+                <TabsTrigger
+                  value="policy"
+                  className="text-sm md:text-base truncate"
+                >
+                  Privacy Policy
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="terms" className="space-y-4 rounded-tl-none">
+                <div className="space-y-2">
+                  <Label htmlFor="terms-editor">Terms of Service Content</Label>
+                  <div className="border rounded-md overflow-hidden">
+                    <ReactQuill
+                      theme="snow"
+                      value={termsContent}
+                      onChange={setTermsContent}
+                      modules={quillModules}
+                      formats={quillFormats}
+                      placeholder="Enter your Terms of Service content here. Use the toolbar to format headings, lists, links, and more..."
+                      style={{ height: "400px" }}
+                    />
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="policy" className="space-y-4 rounded-tl-none">
+                <div className="space-y-2">
+                  <Label htmlFor="policy-editor">Privacy Policy Content</Label>
+                  <div className="border rounded-md overflow-hidden">
+                    <ReactQuill
+                      theme="snow"
+                      value={policyContent}
+                      onChange={setPolicyContent}
+                      modules={quillModules}
+                      formats={quillFormats}
+                      placeholder="Enter your Privacy Policy content here. Structure your policy with headings, bullet points, and professional formatting..."
+                      style={{ height: "400px" }}
+                    />
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
+
+            <div className="flex justify-end mt-4">
+              <Button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="rounded-md bg-primary px-10 py-1.5 text-white hover:bg-[#5561ef] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSaving ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Saving...
+                  </>
+                ) : (
+                  "Save"
+                )}
+              </Button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

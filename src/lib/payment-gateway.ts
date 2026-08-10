@@ -7,8 +7,20 @@ export interface PaymentParams {
   companyId: number;
   invoiceId?: string;
   statementId?: string;
+  shopBookingId?: string;
+  paymentId?: string;
+  giftCardSource?: "purchase" | "reload";
+  giftCardCode?: string;
+  giftCardId?: number;
   amount: string;
-  payType: "payment" | "deposit" | "statement";
+  tip?: string;
+  payType:
+    | "payment"
+    | "deposit"
+    | "statement"
+    | "virtual_shop_deposit"
+    | "virtual_shop_gift_card";
+  redirectUrl?: string;
 }
 
 export interface PaymentLink {
@@ -73,7 +85,7 @@ export interface CompanyWithGateway {
  */
 export function getPaymentGateway(
   company: CompanyWithGateway,
-  preferredGateway?: "STRIPE" | "AUTHORIZE_NET"
+  preferredGateway?: "STRIPE" | "AUTHORIZE_NET",
 ): "STRIPE" | "AUTHORIZE_NET" {
   // If preferred gateway is specified and available, use it
   if (preferredGateway) {
@@ -108,7 +120,7 @@ export function getPaymentGateway(
  * Check if a company has any payment gateway configured
  */
 export function hasPaymentGatewayConfigured(
-  company: CompanyWithGateway
+  company: CompanyWithGateway,
 ): boolean {
   return !!(company.stripeAccountId || company.authorizeNetApiLoginId);
 }
@@ -117,7 +129,7 @@ export function hasPaymentGatewayConfigured(
  * Get list of available payment gateways for a company
  */
 export function getAvailableGateways(
-  company: CompanyWithGateway
+  company: CompanyWithGateway,
 ): Array<"STRIPE" | "AUTHORIZE_NET"> {
   const gateways: Array<"STRIPE" | "AUTHORIZE_NET"> = [];
 

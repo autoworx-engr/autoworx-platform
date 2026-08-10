@@ -1,4 +1,5 @@
 import { cn } from "@/lib/cn";
+import { normalizeSearch } from "@/utils/normalizeSearch";
 import { VehicleParts as Parts } from "@prisma/client";
 import { Popconfirm } from "antd";
 import { CircleX, X } from "lucide-react";
@@ -158,12 +159,12 @@ export default function VehicleParts({
   // Search filtering
   const filteredParts = searchTerm
     ? parts.filter((part) =>
-      part.label.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+        normalizeSearch(part.label).includes(normalizeSearch(searchTerm)),
+      )
     : parts;
 
   const visibleParts = filteredParts.filter(
-    (part) => isWriteAccess || part.selected
+    (part) => isWriteAccess || part.selected,
   );
 
   return (
@@ -178,7 +179,7 @@ export default function VehicleParts({
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search parts..."
+            placeholder="Search Parts..."
             className="w-full rounded border border-gray-300 px-3 py-1.5 pr-8 text-[12px] outline-none"
           />
           {searchTerm && (
@@ -191,7 +192,7 @@ export default function VehicleParts({
           )}
         </div>
       </div>
-      <div className="thin-scrollbar mt-3 grid max-h-[120px] grid-cols-3 gap-2 overflow-y-auto p-2">
+      <div className="thin-scrollbar mt-3 flex max-h-[120px] flex-wrap gap-2 overflow-y-auto p-2">
         {visibleParts?.length > 0 ? (
           visibleParts?.map((part) => (
             <div key={part.id} className="relative">
@@ -208,7 +209,7 @@ export default function VehicleParts({
                   cancelText="No"
                 >
                   <button className="absolute -right-[4px] -top-[4px] z-20">
-                    <CircleX className="size-5 rounded-full bg-background text-[#6571FF]" />
+                    <CircleX className="size-5 rounded-full bg-background text-primary" />
                   </button>
                 </Popconfirm>
               )}
@@ -219,21 +220,21 @@ export default function VehicleParts({
                 }}
                 type="button"
                 className={cn(
-                  "relative w-full overflow-hidden text-nowrap rounded-full border border-gray-300 px-3 py-1.5 text-[12px]",
-                  part.selected ? "bg-[#6571FF] text-white" : "bg-background"
+                  "relative whitespace-nowrap rounded-full border border-gray-300 px-3 py-1.5 text-[12px]",
+                  part.selected ? "bg-primary text-white" : "bg-background",
                 )}
               >
-                <span className="w-full">{part.label}</span>
+                {part.label}
               </button>
             </div>
           ))
         ) : searchTerm ? (
-          <div className="col-span-3 py-4 text-center text-sm text-gray-500">
+          <div className="w-full py-4 text-center text-sm text-gray-500">
             No parts found matching &ldquo;{searchTerm}&ldquo;. Try a different
             search term.
           </div>
         ) : (
-          <div className="col-span-3 py-4 text-center text-sm text-gray-500">
+          <div className="w-full py-4 text-center text-sm text-gray-500">
             No parts available.
           </div>
         )}

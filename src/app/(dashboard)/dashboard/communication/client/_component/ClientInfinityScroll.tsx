@@ -4,6 +4,7 @@ import { pusher } from "@/lib/pusher/client";
 import { errorToast } from "@/lib/toast";
 import { useDemoClientFilterStore } from "@/stores/clientFilter";
 import { Client, ClientConversationTrack } from "@prisma/client";
+import { Users } from "lucide-react";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
@@ -34,7 +35,7 @@ export default function ClientInfinityScroll({
   const { filter, searchTerm } = useDemoClientFilterStore();
   const normalizedSearch = searchTerm?.trim();
   const resetClientData = useClientCommunicationStore(
-    (state) => state.resetClientData
+    (state) => state.resetClientData,
   );
   const [hasMore, setHasMore] = useState(true);
   const params = useParams();
@@ -84,7 +85,7 @@ export default function ClientInfinityScroll({
     return () => {
       pusher.unbind("client-notify").unsubscribe(`client-notify-${companyId}`);
     };
-  }, [pathname]);
+  }, [companyId, clientIdParams]);
 
   useEffect(() => {
     // Only refetch when user is actively filtering/searching
@@ -104,7 +105,7 @@ export default function ClientInfinityScroll({
         } catch (err) {
           console.error(
             "📋 ClientInfinityScroll: Error fetching clients:",
-            err
+            err,
           );
           errorToast("Failed to fetch clients");
         }
@@ -142,10 +143,13 @@ export default function ClientInfinityScroll({
         setHasMore(false);
       }
     }
+  }, [clients, isClientInitialPage]);
+
+  useEffect(() => {
     return () => {
       resetClientData();
     };
-  }, [clients, isClientInitialPage]);
+  }, [resetClientData]);
 
   const fetchData = async () => {
     try {
@@ -163,7 +167,7 @@ export default function ClientInfinityScroll({
       setClients((prev) => {
         const existingIds = new Set(prev.map((client) => client.id));
         const newClients = fetchClients.filter(
-          (client) => !existingIds.has(client.id)
+          (client) => !existingIds.has(client.id),
         );
         return [...prev, ...newClients];
       });
@@ -192,13 +196,31 @@ export default function ClientInfinityScroll({
         }
         scrollableTarget="scrollableDiv"
         endMessage={
-          <p className="mb-5 text-center">
-            {clients.length === 0 ? (
-              <b>Client Not Found</b>
-            ) : (
+          clients.length === 0 ? (
+            <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 px-6 text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50">
+                <Users className="h-8 w-8 text-emerald-600" strokeWidth={1.5} />
+              </div>
+              <div>
+                <p className="font-bold text-slate-700">No Clients Found</p>
+                <p className="mt-1 text-sm text-slate-500">
+                  {searchTerm
+                    ? `No clients match "${searchTerm}".`
+                    : filter === "All"
+                      ? "You don't have any clients yet."
+                      : `You don't have any ${
+                          filter === "Assigned"
+                            ? "clients assigned to you"
+                            : `${filter.toLowerCase()} clients`
+                        }.`}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <p className="mb-5 text-center">
               <b>Yay! You have seen it all</b>
-            )}
-          </p>
+            </p>
+          )
         }
       >
         {clients?.map((client: Client) => {

@@ -5,14 +5,15 @@ import { db } from "@/lib/db";
 
 export const searchCompanyQuery = async (searchTerm: string) => {
   const companyId = await getCompanyId();
+  const trimmedTerm = searchTerm?.trim() ?? "";
   try {
     const companies = await db.company.findMany({
       where: {
         NOT: [{ id: companyId }],
         OR: [
-          { name: { contains: searchTerm } },
-          { website: { contains: searchTerm } },
-          { phone: { contains: searchTerm } },
+          { name: { contains: trimmedTerm, mode: "insensitive" } },
+          { website: { contains: trimmedTerm, mode: "insensitive" } },
+          { phone: { contains: trimmedTerm, mode: "insensitive" } },
         ],
         isCollaborators: true,
       },
@@ -30,13 +31,34 @@ export const searchCompanyQuery = async (searchTerm: string) => {
             image: true,
           },
         },
+        companyJoinsAsOne: {
+          where: {
+            OR: [{ companyOneId: companyId }, { companyTwoId: companyId }],
+          },
+          select: {
+            status: true,
+            companyOneId: true,
+            companyTwoId: true,
+          },
+        },
+        companyJoinsAsTwo: {
+          where: {
+            OR: [{ companyOneId: companyId }, { companyTwoId: companyId }],
+          },
+          select: {
+            status: true,
+            companyOneId: true,
+            companyTwoId: true,
+          },
+        },
       },
     });
     return {
       success: true,
       data: companies,
+      companyId,
     };
-  } catch (err: any) {
-    throw new Error(err);
+  } catch (err) {
+    throw err;
   }
 };

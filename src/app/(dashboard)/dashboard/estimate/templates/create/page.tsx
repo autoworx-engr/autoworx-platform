@@ -16,12 +16,17 @@ import Create from "../../create/Create";
 import { TemplateBillSummary } from "../TemplateBillSummary";
 import SyncEstimate from "../../create/SyncEstimate";
 import Header from "../../create/Header";
+import { Metadata } from "next";
 
-export default async function Page({
-  searchParams,
-}: {
-  searchParams: { templateId?: string; isEdit?: boolean };
+export const metadata: Metadata = {
+  title: "Invoices - Create Template",
+  description: "Create a new template",
+};
+
+export default async function Page(props: {
+  searchParams: Promise<{ templateId?: string; isEdit?: boolean }>;
 }) {
+  const searchParams = await props.searchParams;
   const isEdit = searchParams?.isEdit;
   // console.log("isEdit", isEdit, "templateId", searchParams?.templateId);
   const companyId = await getCompanyId();
@@ -92,17 +97,17 @@ export default async function Page({
 
       const technicians =
         item.service?.Technician?.filter(
-          (tech: any) => tech.invoiceId === invoice.id
+          (tech: any) => tech.invoiceId === invoice.id,
         ) || [];
 
       if (technicians.length) {
         if (Array.isArray(technicians) && technicians.length > 0) {
           const statuses = technicians.map((tech) =>
-            tech.status?.toLowerCase().trim()
+            tech.status?.toLowerCase().trim(),
           );
 
           const isServiceComplete = statuses.every(
-            (status) => status === "complete"
+            (status) => status === "complete",
           );
 
           if (isServiceComplete) {
@@ -126,7 +131,7 @@ export default async function Page({
       items.sort(
         (
           a: InvoiceItem & { service: Service },
-          b: InvoiceItem & { service: Service }
+          b: InvoiceItem & { service: Service },
         ) => {
           const indexA =
             a.service?.id !== undefined
@@ -138,7 +143,7 @@ export default async function Page({
               : Infinity;
 
           return indexA - indexB;
-        }
+        },
       );
     }
 
@@ -187,7 +192,7 @@ export default async function Page({
   // spread all `tag` objects into `tags` array
   products.forEach((product) => {
     (product as unknown as { tags: Tag[] }).tags = product.tags.map(
-      (tag) => tag.tag
+      (tag) => tag.tag,
     );
   });
 
@@ -205,7 +210,7 @@ export default async function Page({
   // spread all `tag` objects into `tags` array
   labors.forEach((labor) => {
     (labor as unknown as { tags: Tag[] }).tags = labor.tags.map(
-      (tag) => tag.tag
+      (tag) => tag.tag,
     );
   });
 
@@ -221,11 +226,11 @@ export default async function Page({
       cost: product.price,
       tags: product.tags,
       productId: product.id,
-    }))
+    })),
   );
   return (
-    <div className="gap-3 space-y-4 overflow-clip py-2 md:-my-2 md:min-h-[93vh] xl:flex xl:space-y-0">
-      <div className="w-full xl:min-w-[68%] flex flex-col gap-4">
+    <div className="gap-3 space-y-4 overflow-clip py-2 md:-my-2 md:min-h-[93vh] xl:flex xl:space-y-0 px-1">
+      <div className="w-full xl:min-w-[68%] flex flex-col gap-3">
         <Title>Template</Title>
 
         <SyncLists
@@ -298,6 +303,8 @@ export default async function Page({
           isEdit={isEdit}
           isEstimateServiceFee={Number(invoice?.serviceFee) > 0}
           isEstimateTax={Number(invoice?.tax) > 0}
+          storedTax={isEdit ? Number(invoice?.tax) : undefined}
+          storedServiceFee={isEdit ? Number(invoice?.serviceFee) : undefined}
         />
       </div>
     </div>

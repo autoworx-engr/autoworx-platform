@@ -2,34 +2,18 @@
 
 import { db } from "@/lib/db";
 import { ServerAction } from "@/types/action";
-import { Priority } from "@prisma/client";
-import { google } from "googleapis";
-import { env } from "next-runtime-env";
-import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
-import { AppointmentToAdd } from "../appointment/addAppointment";
-import { AppointmentToUpdate } from "../appointment/editAppointment";
 
-import createGoogleCalendarEvent from "./google-calendar/createGoogleCalendarEvent";
-import updateGoogleCalendarEvent from "./google-calendar/updateGoogleCalendarEvent";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { sendNewTaskAssignNotification } from "@/lib/notification/task-and-appointment-notify";
 import { TErrorHandler } from "@/types/globalError";
 import {
   TUpdateTaskValidationSchema,
   updateTaskValidationSchema,
 } from "@/validations/schemas/task/task.validation";
 import { getGoogleCalendarToken } from "../calendar-settings/getGoogleCalendarAuth";
-
-interface TaskType {
-  title: string;
-  description: string;
-  assignedUsers: number[];
-  priority: Priority;
-  startTime?: string;
-  endTime?: string;
-  date?: string;
-  timezone: string;
-}
+import createGoogleCalendarEvent from "./google-calendar/createGoogleCalendarEvent";
+import updateGoogleCalendarEvent from "./google-calendar/updateGoogleCalendarEvent";
+import { revalidatePath } from "next/cache";
 
 export async function editTask({
   id,
@@ -55,29 +39,38 @@ export async function editTask({
       (userId) => !taskUsers.find((taskUser) => taskUser.userId === userId),
     );
 
-    // Remove the users
-    for (const user of toRemove) {
-      // TODO: Remove the task from the user's Google Calendar
+    await db.$transaction([
+      ...toRemove.map((user) => db.taskUser.delete({ where: { id: user.id } })),
+      ...(Array.isArray(toAdd) && toAdd.length > 0
+        ? [
+            db.taskUser.createMany({
+              data: toAdd.map((userId) => ({
+                taskId: id,
+                userId,
+                eventId: null,
+              })),
+            }),
+          ]
+        : []),
+    ]);
 
-      await db.taskUser.delete({
-        where: {
-          id: user.id,
+    if (Array.isArray(toAdd) && toAdd.length > 0) {
+      const addedUsers = await db.user.findMany({
+        where: { id: { in: toAdd } },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          companyId: true,
+          phone: true,
         },
       });
-    }
-
-    if (Array.isArray(toAdd)) {
-      // Add the users
-      for (const user of toAdd) {
-        // TODO: Add the task to the user's Google Calendar
-
-        // Create the task user
-        await db.taskUser.create({
-          data: {
-            taskId: id,
-            userId: user,
-            eventId: "null-for-now",
-          },
+      for (const assignedUser of addedUsers) {
+        sendNewTaskAssignNotification({
+          taskTitle: task.title,
+          taskDate: task.date,
+          assignTaskUser: assignedUser,
         });
       }
     }
@@ -135,10 +128,7 @@ export async function editTask({
     } catch (error) {
       console.log("🚀 ~ error:", error);
     }
-
-    // revalidatePath("/task");
-    // revalidatePath("/communication/client");
-
+    revalidatePath("/dashboard/communication/client/${clientId}");
     return {
       type: "success",
       data: updatedTask,

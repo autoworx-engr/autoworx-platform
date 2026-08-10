@@ -1,28 +1,13 @@
-import FleetSubHeading from "./FleetSubHeading";
 import InfoDetails from "./InfoDetails";
+import { Client, Fleet, Invoice, Tag } from "@prisma/client";
 
-export type fleetType = {
-  fleetName: string;
-  contactName: string;
-  email: string;
-  phone: string;
-  address: string;
-  isVip: boolean;
-  behaviorTag: string;
+type FleetDetailsProps = {
+  fleet: Client & { fleet: Fleet | null; Invoice: Invoice[]; tag: Tag | null };
 };
-export type InfoType = Record<string, number>;
 
-export default async function FleetDetails({
-  fleet,
-  info,
-}: {
-  fleet: any;
-  info: InfoType;
-}) {
+export default async function FleetDetails({ fleet }: FleetDetailsProps) {
   return (
     <div className="">
-      {/* <FleetSubHeading text="Fleet Details" className="md:ml-6" /> */}
-
       <InfoDetails client={fleet} />
     </div>
   );

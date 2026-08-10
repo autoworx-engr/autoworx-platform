@@ -1,10 +1,7 @@
-import React from 'react'
-import { isNull } from 'util'
+import React from "react";
 
-type Props = {}
+const Default = () => {
+  return null;
+};
 
-const Default = (props: Props) => {
-  return null
-}
-
-export default Default
+export default Default;

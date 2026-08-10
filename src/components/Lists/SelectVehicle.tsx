@@ -1,13 +1,18 @@
 "use client";
 
 import Selector from "@/components/Selector";
+import { cn } from "@/lib/cn";
 import { useListsStore } from "@/stores/lists";
 import { Vehicle } from "@prisma/client";
+import { Plus } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
+import ClearSelectionButton from "./ClearSelectionButton";
 import NewVehicle from "./NewVehicle";
 import { SelectProps } from "./select-props";
-import { cn } from "@/lib/cn";
+
+const firstVehicleOf = (vehicles: Vehicle[] | undefined, clientId: string) =>
+  vehicles?.find((vehicle) => vehicle.clientId === +clientId) ?? null;
 
 export function SelectVehicle({
   name = "vehicleId",
@@ -26,29 +31,63 @@ export function SelectVehicle({
   const search = useSearchParams();
   const clientId = search?.get("clientId");
 
+  // Mirrors the current selection so the effect below can read it without
+  // depending on it — a dependency would make a manual "Clear Vehicle"
+  // immediately re-select the client's first vehicle.
+  const vehicleRef = useRef(vehicle);
+  // Declared before the effect below so the ref is already up to date by the
+  // time that one runs in the same commit.
   useEffect(() => {
-    const clientVehicles = clientId
-      ? vehicleList?.filter((vehicle) => vehicle.clientId === +clientId)
-      : [];
+    vehicleRef.current = vehicle;
+  });
+  // Set when a client switch left us with nothing to select because the new
+  // client's vehicles hadn't arrived from the server yet.
+  const awaitingClientRef = useRef<string | null>(null);
 
-    const selectedVehicle = newAddedVehicle ?? clientVehicles?.[0];
+  useEffect(() => {
+    if (!clientId || Number.isNaN(+clientId)) return;
 
-    if (clientId) {
-      if (clientVehicles?.length > 0 && !value) {
-        if (isEdit == false) {
-          setVehicle(selectedVehicle);
-          useListsStore.setState({ vehicle: selectedVehicle });
-        }
-      } else {
-        const matchedVehicle = clientVehicles?.find(
-          (vehicle) => vehicle.id === value?.id
-        );
-        const finalVehicle = matchedVehicle ?? selectedVehicle;
-        setVehicle(finalVehicle);
-        useListsStore.setState({ vehicle: finalVehicle });
-      }
+    const applyVehicle = (next: Vehicle | null) => {
+      setVehicle(next);
+      useListsStore.setState({ vehicle: next });
+    };
+
+    if (newAddedVehicle) {
+      awaitingClientRef.current = null;
+      applyVehicle(newAddedVehicle);
+      return;
     }
-  }, [newAddedVehicle, clientId, vehicleList]);
+
+    const current = vehicleRef.current;
+
+    // Selection still belongs to the selected client — leave it alone.
+    if (current && current.clientId === +clientId) {
+      awaitingClientRef.current = null;
+      return;
+    }
+
+    const first = firstVehicleOf(vehicleList, clientId);
+
+    // A vehicle belongs to exactly one client, so a selection pointing at a
+    // different client means the user just switched clients. Drop it and take
+    // one of the new client's instead.
+    if (current) {
+      // `vehicleList` is refetched server-side for the new client and may still
+      // be the previous client's — remember the switch so the pick can happen
+      // once the right list lands.
+      awaitingClientRef.current = first ? null : clientId;
+      applyVehicle(first);
+      return;
+    }
+
+    // Nothing selected: fill in from the client's vehicles once they arrive
+    // after a switch, or on a create page. On an edit page we never invent a
+    // vehicle the record didn't have.
+    if (first && (awaitingClientRef.current === clientId || !isEdit)) {
+      awaitingClientRef.current = null;
+      applyVehicle(first);
+    }
+  }, [newAddedVehicle, clientId, vehicleList, isEdit, setVehicle]);
 
   useEffect(() => {
     return () => {
@@ -56,7 +95,7 @@ export function SelectVehicle({
         useListsStore.setState({ newAddedVehicle: null });
       }
     };
-  }, []);
+  }, [newAddedVehicle]);
 
   const handleClear = () => {
     setVehicle(null);
@@ -76,28 +115,38 @@ export function SelectVehicle({
             : "Vehicle"
         }
         newButton={
-          clientId && <NewVehicle
-            clientId={Number(clientId)}
-            onAdd={(vehicle: Vehicle) => {
-              setVehicle(vehicle);
-              useListsStore.setState({ vehicle });
-              useListsStore.setState(({ vehicles }) => ({
-                vehicles: [...vehicles, vehicle],
-                newAddedVehicle: vehicle,
-              }));
-              vehicle && setOpenDropdown && setOpenDropdown(false);
-            }}
-          />
+          clientId && (
+            <NewVehicle
+              clientId={Number(clientId)}
+              newButton={
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-[#5A65F0]"
+                >
+                  <Plus className="w-4 h-4" /> New Vehicle
+                </button>
+              }
+              onAdd={(vehicle: Vehicle) => {
+                setVehicle(vehicle);
+                useListsStore.setState({ vehicle });
+                useListsStore.setState(({ vehicles }) => ({
+                  vehicles: [...vehicles, vehicle],
+                  newAddedVehicle: vehicle,
+                }));
+                vehicle && setOpenDropdown && setOpenDropdown(false);
+              }}
+            />
+          )
         }
         items={vehicleList?.filter(
-          (vehicle) => vehicle.clientId === +clientId!
+          (vehicle) => vehicle.clientId === +clientId!,
         )}
         onSearch={(search: string) =>
           vehicleList.filter(
             (vehicle) =>
               vehicle.make?.toLowerCase().includes(search.toLowerCase()) ||
               vehicle.model?.toLowerCase().includes(search.toLowerCase()) ||
-              vehicle.other?.toLowerCase().includes(search.toLowerCase())
+              vehicle.other?.toLowerCase().includes(search.toLowerCase()),
           )
         }
         openState={[
@@ -114,16 +163,13 @@ export function SelectVehicle({
         )}
         footer={
           isClear && vehicle ? (
-            <button
-              type="button"
-              onClick={() => {
+            <ClearSelectionButton
+              label="Clear Vehicle"
+              onClear={() => {
                 handleClear();
                 setOpenDropdown && setOpenDropdown(false);
               }}
-              className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
-            >
-              Clear Vehicle
-            </button>
+            />
           ) : null
         }
       />

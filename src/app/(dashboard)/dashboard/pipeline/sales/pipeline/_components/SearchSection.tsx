@@ -3,7 +3,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { cn } from "@/lib/cn";
 import { Search, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type TSearchSectionProps = {
   searchValue?: string;
@@ -16,35 +16,48 @@ export default function SearchSection({
   const router = useRouter();
   const pathname = usePathname() || "";
   const params = useSearchParams();
+
+  // Always-current params ref so the debounce callback never reads a stale closure
+  const paramsRef = useRef(params);
   useEffect(() => {
-    if (searchValue == "") {
-      setSearchTerm("");
+    paramsRef.current = params;
+  }, [params]);
+
+  // Track the last value we pushed to the URL so we can tell the difference
+  // between our own URL updates and external ones (e.g. "Clear all filters")
+  const lastPushedRef = useRef(searchValue);
+
+  useEffect(() => {
+    // Only sync URL → input when the change came from outside this component
+    if (searchValue !== lastPushedRef.current) {
+      setSearchTerm(searchValue);
+      lastPushedRef.current = searchValue;
     }
-  }, [searchValue])
+  }, [searchValue]);
 
   const handleSearchChange = useDebounce((value: string) => {
-    const searchParams = new URLSearchParams(params.toString());
-    searchParams.set("searchTerm", value);
-
-    if (value.trim() === "" && searchParams.has("searchTerm")) {
+    const searchParams = new URLSearchParams(paramsRef.current.toString());
+    if (value.trim() === "") {
       searchParams.delete("searchTerm");
+    } else {
+      searchParams.set("searchTerm", value);
     }
+    lastPushedRef.current = value.trim();
     router.push(`${pathname}?${searchParams.toString()}`);
   }, 500);
 
   const handleClearSearch = () => {
     setSearchTerm("");
-    const searchParams = new URLSearchParams(params.toString());
-    if (searchParams.has("searchTerm")) {
-      searchParams.delete("searchTerm");
-    }
+    const searchParams = new URLSearchParams(paramsRef.current.toString());
+    searchParams.delete("searchTerm");
+    lastPushedRef.current = "";
     router.push(`${pathname}?${searchParams.toString()}`);
   };
   return (
     <div className="relative group flex flex-1 h-10 max-w-lg items-center rounded-md sm:w-auto ml-2">
       <Search
         size={18}
-        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-[#6571FF]"
+        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-primary"
       />
       <input
         type="text"
@@ -60,7 +73,7 @@ export default function SearchSection({
           "text-sm font-medium text-slate-700 placeholder:text-slate-400 outline-none",
           "transition-all duration-300 ease-in-out",
           "hover:border-slate-200 hover:bg-slate-50/30",
-          "focus:border-[#6571FF]/40 focus:bg-white focus:ring-4 focus:ring-[#6571FF]/10",
+          "focus:border-primary/40 focus:bg-white focus:ring-4 focus:ring-primary/10",
         )}
       />
       {searchTerm && (
