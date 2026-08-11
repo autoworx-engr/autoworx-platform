@@ -1,6 +1,7 @@
 import getTasks from "@/actions/task/getTasks";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { taskQueryKey } from "../../../_constant";
+import { clientNameFilter } from "../../../_utils/clientNameSearch";
 import { Task } from "@prisma/client";
 
 export const TASK_SEARCH_PAGE_SIZE = 10;
@@ -21,6 +22,7 @@ export default function useTaskSearchQuery(searchTerm: string) {
   // Surrounding whitespace must never reach the `contains` filter — " test"
   // matches nothing in the DB even when "test" does.
   const term = searchTerm.trim();
+  const nameFilter = clientNameFilter(term);
 
   return useInfiniteQuery({
     queryKey: [taskQueryKey.allTasks, "search", term],
@@ -28,7 +30,10 @@ export default function useTaskSearchQuery(searchTerm: string) {
     queryFn: async ({ pageParam = 0 }) => {
       const response = await getTasks({
         where: {
-          OR: [{ title: { contains: term, mode: "insensitive" } }],
+          OR: [
+            { title: { contains: term, mode: "insensitive" } },
+            ...(nameFilter ? [{ client: nameFilter }] : []),
+          ],
         },
         include: {
           client: { select: { id: true, firstName: true, lastName: true } },

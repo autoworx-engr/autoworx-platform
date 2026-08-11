@@ -8,6 +8,7 @@ import FormError from "@/components/FormError";
 import NewClientSource from "@/components/Lists/NewClientSource";
 import SelectClientSource from "@/components/Lists/SelectClientSource";
 import { SelectClientTags } from "@/components/Lists/SelectClientTags";
+import { useClientSourcePicker } from "@/components/Lists/useClientSourcePicker";
 import PhoneInput from "@/components/PhoneInput";
 import { SlimInput } from "@/components/SlimInput";
 import { DEFAULT_IMAGE_URL, isDefaultClientSourceName } from "@/lib/consts";
@@ -16,11 +17,10 @@ import { useClientFilterStore } from "@/stores/clientFilter";
 import { useFormErrorStore } from "@/stores/form-error";
 import { Client, Source, Tag } from "@prisma/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { SquarePen, CircleUserRound as UserIcon, X } from "lucide-react";
+import { PencilLineIcon, CircleUserRound as UserIcon, X } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { RotatingLines } from "react-loader-spinner";
-import { useClientSourcePicker } from "@/components/Lists/useClientSourcePicker";
 import { CLIENT_LIST_KEY } from "./_hook/useClientQuery";
 import useClientByIdQuery, {
   CLIENT_DETAIL_KEY,
@@ -258,7 +258,7 @@ export default function EditClientModalBody({
               htmlFor="profilePicture"
               className="absolute bottom-0 right-0 p-1 bg-primary rounded-full shadow-sm cursor-pointer  transition-colors"
             >
-              <SquarePen className="w-3 h-3 text-white" />
+              <PencilLineIcon className="w-3 h-3 text-white" />
             </label>
             <input
               type="file"

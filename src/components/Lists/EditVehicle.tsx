@@ -22,7 +22,7 @@ import {
 } from "@/hooks/useCarData";
 import { useFormErrorStore } from "@/stores/form-error";
 import { Vehicle, VehicleColor } from "@prisma/client";
-import { SquarePen } from "lucide-react";
+import { PencilLineIcon } from "lucide-react";
 import { useState } from "react";
 import { extractVinFields, useVinDecode } from "../vin-decoder/useVinDecode";
 import VINInputCamera from "../vin-decoder/vin-input";
@@ -163,7 +163,7 @@ export default function EditVehicle({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button type="button" className="text-xs text-primary">
-          <SquarePen className="w-4 h-4 cursor-pointer" />
+          <PencilLineIcon className="w-4 h-4 cursor-pointer" />
         </button>
       </DialogTrigger>
 

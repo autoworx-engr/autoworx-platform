@@ -4,7 +4,7 @@ import { Dialog, DialogTrigger } from "@/components/Dialog";
 import { useState } from "react";
 import TaskContentModal from "./TaskContentModal";
 import { Task } from "@prisma/client";
-import { Plus, SquarePen } from "lucide-react";
+import { Plus, PencilLineIcon } from "lucide-react";
 import { Button } from "../ui/button";
 
 type NewTaskProps = {
@@ -64,8 +64,8 @@ export default function TaskCreateOrEdit({
     openButtonIcon = (
       <Button className="w-full rounded-lg">
         {fromEdit ? (
-          // Icon for edit action (using SquarePen, with subtle color change to match theme)
-          <SquarePen className="h-5 w-5 text-white" />
+          // Icon for edit action (using PencilLineIcon, with subtle color change to match theme)
+          <PencilLineIcon className="h-5 w-5 text-white" />
         ) : (
           <Plus size={20} />
         )}
@@ -74,9 +74,13 @@ export default function TaskCreateOrEdit({
     );
   }
 
+  // When the parent fully controls open state (setIsModalOpen) without giving
+  // us a triggerIcon, it opens the modal itself and doesn't want a visible button.
+  const showTrigger = Boolean(triggerIcon) || !setIsModalOpen;
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      {!setIsModalOpen && (
+      {showTrigger && (
         <DialogTrigger
           asChild
           onClick={(e) => {

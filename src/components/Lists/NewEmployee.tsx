@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { errorToast } from "@/lib/toast";
 import { useFormErrorStore } from "@/stores/form-error";
 import { EmployeeType, SalaryType, User } from "@prisma/client";
-import { SquarePen, CircleUserRound as UserIcon } from "lucide-react";
+import { PencilLineIcon, CircleUserRound as UserIcon } from "lucide-react";
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import PhoneInput from "../PhoneInput";
@@ -302,7 +302,7 @@ export default function AddNewEmployee({
                 htmlFor="profilePicture"
                 className="absolute bottom-0 right-0 p-1 bg-primary rounded-full shadow-sm cursor-pointer transition-colors"
               >
-                <SquarePen className="w-3 h-3 text-white" />
+                <PencilLineIcon className="w-3 h-3 text-white" />
               </label>
               <input
                 type="file"

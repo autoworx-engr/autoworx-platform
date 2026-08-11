@@ -2,7 +2,7 @@
 import { deleteCoupon } from "@/actions/coupon/new";
 import { Coupon } from "@prisma/client";
 import { Pagination, Popconfirm } from "antd"; // Importing the Pagination component from Ant Design
-import { SquarePen, X } from "lucide-react";
+import { PencilLineIcon, X } from "lucide-react";
 import moment from "moment";
 import React, { useEffect, useState } from "react";
 import { useMediaQuery } from "react-responsive";
@@ -157,7 +157,7 @@ const CuponComponet = ({ coupons, setCoupons }: CouponTableProps) => {
                           className="text-left text-2xl text-blue-600"
                           onClick={(e) => handleEdit(e, coupon)}
                         >
-                          <SquarePen className="w-5 h-5 text-primary" />
+                          <PencilLineIcon className="w-5 h-5 text-primary" />
                         </button>
                         <Popconfirm
                           title="Delete the Coupon"
@@ -200,7 +200,7 @@ const CuponComponet = ({ coupons, setCoupons }: CouponTableProps) => {
                         className="text-left text-2xl text-blue-600"
                         onClick={(e) => handleEdit(e, coupon)}
                       >
-                        <SquarePen className="w-5 h-5 text-primary" />
+                        <PencilLineIcon className="w-5 h-5 text-primary" />
                       </button>
                       <Popconfirm
                         title="Delete the Coupon"

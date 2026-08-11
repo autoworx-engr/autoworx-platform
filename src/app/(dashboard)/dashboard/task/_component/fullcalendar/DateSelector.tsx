@@ -6,6 +6,7 @@ import moment from "moment";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
+  getWeekInfoFromDate,
   getWeekInfoFromWeekStr,
   getWeekStartNumber,
 } from "../../_utils/utils.DateSelector";
@@ -59,13 +60,19 @@ function DateSelector({ type, weekStart = 1 }: DateSelectorProps) {
     });
   }, [weekStart]);
 
+  useEffect(() => {
+    if (type !== "week" || !date) return;
+    const { weekStr } = getWeekInfoFromDate(date, weekStart);
+    if (weekStr !== week) setWeek(weekStr);
+  }, [type, date, weekStart, week, setWeek]);
+
   // Close dropdown when clicking outside
   useOnClickOutside(dropdownRef, () => setIsOpen(false));
 
   // Get display value based on type
   const getDisplayValue = () => {
-    if (type === "week" && week) {
-      const { displayRange } = getWeekInfoFromWeekStr(week, weekStart);
+    if (type === "week") {
+      const { displayRange } = getWeekInfoFromDate(date, weekStart);
       return displayRange;
     }
     if (type === "month" && month) {

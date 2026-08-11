@@ -4,7 +4,15 @@ import { Group, User } from "@prisma/client";
 import { Users } from "lucide-react";
 import { useDraftPreview } from "../../_hooks/useDraftPreview";
 
-type TGroup = Group & { users: User[]; unreadCount?: number };
+type TGroup = Group & {
+  users: User[];
+  unreadCount?: number;
+  latestMessage?: {
+    message: string;
+    senderName: string | null;
+    updatedAt: Date;
+  } | null;
+};
 
 const MAX_VISIBLE_AVATARS = 1;
 

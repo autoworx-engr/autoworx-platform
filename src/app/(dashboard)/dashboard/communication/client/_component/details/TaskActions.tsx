@@ -4,7 +4,7 @@ import { completeTask } from "@/actions/task/completeTask";
 import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
 import { errorToast, successToast } from "@/lib/toast";
 import { Task, User } from "@prisma/client";
-import { CircleCheckBig, SquarePen } from "lucide-react";
+import { CircleCheckBig, PencilLineIcon } from "lucide-react";
 import { useTransition } from "react";
 
 type TaskWithAssignedUsers = Task & {
@@ -26,7 +26,7 @@ export default function TaskActions({ task, color, onTaskRemoved }: TProps) {
         fromEdit
         taskId={task.id}
         triggerIcon={
-          <SquarePen
+          <PencilLineIcon
             className="w-4 h-4 opacity-70 hover:opacity-100 cursor-pointer"
             style={color ? { color } : undefined}
           />

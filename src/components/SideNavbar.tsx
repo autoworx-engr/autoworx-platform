@@ -14,7 +14,7 @@ import { ClientConversationTrack } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useCallback, useEffect, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -75,6 +75,9 @@ export default function SideNavbar({ navList, permissions }: TProps) {
 
   const clientConversationTrack = useClientCommunicationStore(
     (state) => state.clientConversationTrack,
+  );
+  const clientTrackUpdate = useClientCommunicationStore(
+    (state) => state.clientTrackUpdate,
   );
 
   const { data: unreadInternalMessageCountData } = useServerGet(
@@ -242,22 +245,40 @@ export default function SideNavbar({ navList, permissions }: TProps) {
     }
   }, [companyId]);
 
-  useEffect(() => {
-    if (clientConversationTrack) {
+  // Opening a conversation marks it read, and any sidebar row can be marked
+  // read or unread by hand — the badge has to follow both.
+  const applyTrackChange = useCallback(
+    (track: ClientConversationTrack | null) => {
+      if (!track) return;
+      const { clientId, smsIsRead, emailIsRead } = track;
+      const isRead = smsIsRead && emailIsRead;
+
       setClientConversations((prevClients) => {
-        return prevClients.filter((client) => {
-          if (
-            client.clientId === clientConversationTrack.clientId &&
-            clientConversationTrack.smsIsRead &&
-            clientConversationTrack.emailIsRead
-          ) {
-            return false;
-          }
-          return true;
-        });
+        const isCounted = prevClients.some(
+          (client) => client.clientId === clientId,
+        );
+
+        if (isRead) {
+          return isCounted
+            ? prevClients.filter((client) => client.clientId !== clientId)
+            : prevClients;
+        }
+
+        // Newly unread — the badge has to grow too, not just shrink, or
+        // marking a thread unread only shows up after a reload.
+        return isCounted ? prevClients : [...prevClients, track];
       });
-    }
-  }, [clientConversationTrack]);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    applyTrackChange(clientConversationTrack);
+  }, [clientConversationTrack, applyTrackChange]);
+
+  useEffect(() => {
+    applyTrackChange(clientTrackUpdate);
+  }, [clientTrackUpdate, applyTrackChange]);
 
   const totalMessageCount =
     (hasClientCommunicationPermission ? unReadClientCount : 0) +

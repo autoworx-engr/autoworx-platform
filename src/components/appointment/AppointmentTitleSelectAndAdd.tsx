@@ -22,6 +22,7 @@ export interface AppointmentTitleSelectAndAddProps {
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
+  error?: string;
 }
 
 // Predefined appointment titles
@@ -39,6 +40,7 @@ const AppointmentTitleSelectAndAdd = ({
   value,
   onChange,
   disabled = false,
+  error,
 }: AppointmentTitleSelectAndAddProps) => {
   // Get data from store for authenticated users
   const { appointmentTitles } = useListsStore();
@@ -248,6 +250,7 @@ const AppointmentTitleSelectAndAdd = ({
       placeholder="Free Consultation, Design Consultation..."
       disabled={disabled}
       required={true}
+      error={error}
     />
   );
 };

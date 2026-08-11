@@ -90,11 +90,10 @@ export default function UserTaskList({ user }: UserTaskListProps) {
   } else if (!isLoading && !isError && taskUser && taskUser.length === 0) {
     content = (
       <div className="flex flex-col items-center justify-center py-10 text-center">
-        <div className="mb-4 h-12 w-12 rounded-full bg-gray-300"></div>
-        <h3 className="text-lg font-semibold text-gray-700 md:text-[#797979]">
-          No tasks found for this user
+        <h3 className="font-medium text-gray-700 md:text-[#797979]">
+          No tasks
         </h3>
-        <p className="text-sm text-gray-500">
+        <p className="text-xs text-gray-500">
           You can assign tasks to this user.
         </p>
       </div>
@@ -134,7 +133,7 @@ export default function UserTaskList({ user }: UserTaskListProps) {
           })
         }
       >
-        + Assign Task
+        + Assign/Unassign Task
       </button>
 
       {/* Shared calendar detail sheet — opened on task click */}

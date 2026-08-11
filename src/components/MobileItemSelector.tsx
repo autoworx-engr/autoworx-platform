@@ -2,7 +2,7 @@
 import { cn } from "@/lib/cn";
 import { Item } from "@/stores/estimate-create";
 import { useEstimatePopupStore } from "@/stores/estimate-popup";
-import { ChevronDown, Plus, Search, SquarePen, X } from "lucide-react";
+import { ChevronDown, PencilLineIcon, Plus, Search, X } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
@@ -193,7 +193,7 @@ export default function MobileItemSelector<T>({
                   onEdit();
                 }}
               >
-                <SquarePen className="w-3 h-3" />
+                <PencilLineIcon className="w-3 h-3" />
               </button>
             )}
             {onDelete && (alwaysShowDeleteButton || selected) && (

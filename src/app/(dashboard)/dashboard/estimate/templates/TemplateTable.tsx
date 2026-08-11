@@ -7,7 +7,7 @@ import { errorToast } from "@/lib/toast";
 import { useActionStoreCreateEdit } from "@/stores/createEditStore";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { Pagination, Popconfirm } from "antd";
-import { Copy, Search, SquarePen, Trash2 } from "lucide-react";
+import { Copy, Search, PencilLineIcon, Trash2 } from "lucide-react";
 import moment from "moment-timezone";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -205,7 +205,7 @@ export default function TemplateTable({ take, page, data }: TTableProps) {
                           className="text-2xl text-blue-600"
                           onClick={() => setActionType("edit")}
                         >
-                          <SquarePen size={18} className="text-primary" />
+                          <PencilLineIcon size={18} className="text-primary" />
                         </Link>
 
                         <Popconfirm

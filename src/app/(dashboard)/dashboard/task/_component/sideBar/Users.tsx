@@ -34,6 +34,7 @@ export default function Users() {
   } = useInfinityUsersQuery(searchTerm);
 
   const users = data?.pages?.flatMap((page) => page.data) || [];
+  const totalUsers = data?.pages?.[0]?.total ?? 0;
 
   const queryClient = useQueryClient();
   const [selectedUser, setSelectedUser] = useState<number | null>(null);
@@ -202,7 +203,7 @@ export default function Users() {
             ) : hasNextPage ? (
               "Scroll to load more"
             ) : (
-              users.length !== 0 && "No more Users"
+              users.length !== 0 && totalUsers >= 20 && "No more Users"
             )}
           </div>
         </div>

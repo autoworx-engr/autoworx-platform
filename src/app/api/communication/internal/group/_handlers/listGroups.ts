@@ -8,6 +8,72 @@ import { NextRequest, NextResponse } from "next/server";
 const ALLOWED_SORT_FIELDS = new Set(["name", "createdAt", "updatedAt"]);
 const ALLOWED_SORT_ORDERS = new Set(["asc", "desc"]);
 
+type GroupWithUsers = Prisma.GroupGetPayload<{ include: { users: true } }>;
+
+/**
+ * Attach each group's newest message so the list can preview it the way
+ * direct-message rows do. Shaped as `chatTrack` — the field the app already
+ * reads for one-to-one conversations — so both row types render the same way.
+ *
+ * Two batched queries: `distinct` on `groupId` takes one row per group, then
+ * the senders are resolved in a single lookup.
+ */
+async function attachLastMessages(
+  currentUserId: number,
+  groups: GroupWithUsers[],
+) {
+  if (groups.length === 0) return groups;
+  const groupIds = groups.map((g) => g.id);
+
+  const messages = await db.message.findMany({
+    where: { groupId: { in: groupIds } },
+    distinct: ["groupId"],
+    orderBy: [{ groupId: "asc" }, { createdAt: "desc" }],
+    select: {
+      id: true,
+      message: true,
+      from: true,
+      groupId: true,
+      createdAt: true,
+    },
+  });
+
+  const senderIds = [
+    ...new Set(
+      messages.map((m) => m.from).filter((id) => id !== currentUserId),
+    ),
+  ];
+  const senders = senderIds.length
+    ? await db.user.findMany({
+        where: { id: { in: senderIds } },
+        select: { id: true, firstName: true },
+      })
+    : [];
+  const nameById = new Map(senders.map((s) => [s.id, s.firstName]));
+
+  const trackByGroup = new Map<number, Record<string, unknown>>();
+  for (const m of messages) {
+    if (m.groupId == null) continue;
+    trackByGroup.set(m.groupId, {
+      id: m.id,
+      lastMessage: m.message,
+      senderId: m.from,
+      // `receiverId` is what the app compares against the row id to decide
+      // whether to prefix with "You" — set it for the viewer's own messages.
+      receiverId: m.from === currentUserId ? m.groupId : null,
+      senderName:
+        m.from === currentUserId ? null : (nameById.get(m.from) ?? null),
+      isRead: true,
+      createdAt: m.createdAt,
+    });
+  }
+
+  return groups.map((g) => ({
+    ...g,
+    chatTrack: trackByGroup.get(g.id) ?? null,
+  }));
+}
+
 export async function listGroupsHandler(req: NextRequest) {
   try {
     const principal = await getAuthPrincipal(req);
@@ -50,10 +116,12 @@ export async function listGroupsHandler(req: NextRequest) {
       db.group.count({ where }),
     ]);
 
+    const data = await attachLastMessages(principal.userId, groups);
+
     return NextResponse.json(
       {
         success: true,
-        data: groups,
+        data,
         message: "Groups fetched successfully",
         meta: {
           totalRecords: totalGroups,

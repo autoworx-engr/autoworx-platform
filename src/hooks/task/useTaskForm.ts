@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import moment from "moment";
 import { Priority, Task } from "@prisma/client";
@@ -9,7 +9,6 @@ import { editTask } from "@/actions/task/editTask";
 import { deleteTask } from "@/actions/task/deleteTask";
 import useTaskById from "@/hooks/query-hook/useTaskById";
 import { useCalendarStore } from "@/stores/calendarStore";
-import { useFormErrorStore } from "@/stores/form-error";
 import { taskQueryKey } from "@/app/(dashboard)/dashboard/task/_constant";
 import { queryKeys } from "@/lib/queryKeys";
 import { errorToast, successToast } from "@/lib/toast";
@@ -43,7 +42,29 @@ export function useTaskForm({
 }: UseTaskFormProps) {
   const queryClient = useQueryClient();
   const { setUpdateVariable } = useCalendarStore();
-  const { showError, clearError } = useFormErrorStore();
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const showError = useCallback(
+    ({ field, message }: { field: string; message: string }) => {
+      if (field === "title") {
+        setFieldErrors((prev) => ({ ...prev, title: message }));
+      } else {
+        errorToast(message);
+      }
+    },
+    [],
+  );
+  const clearError = useCallback(() => setFieldErrors({}), []);
+  const clearFieldError = useCallback(
+    (field: string) =>
+      setFieldErrors((prev) => {
+        if (!(field in prev)) return prev;
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      }),
+    [],
+  );
 
   const {
     data: taskData,
@@ -61,6 +82,14 @@ export function useTaskForm({
   const [endTime, setEndTime] = useState<string>("");
   const [date, setDate] = useState<string>("");
   const [isLoading, setIsLoading] = useState(fromEdit && !!taskId);
+
+  const handleDateChange = (value: string) => {
+    setDate(value);
+    if (!value.trim()) {
+      setStartTime("");
+      setEndTime("");
+    }
+  };
 
   const prevStartTimeRef = useRef<string>("");
 
@@ -293,13 +322,15 @@ export function useTaskForm({
       isError,
       isFetched,
       taskData,
+      fieldErrors,
     },
     actions: {
       setTitle,
+      clearFieldError,
       setDescription,
       setAssignedUsers,
       setPriority,
-      setDate,
+      setDate: handleDateChange,
       handleTimeChange,
       handleSubmit,
       handleDeleteTask,

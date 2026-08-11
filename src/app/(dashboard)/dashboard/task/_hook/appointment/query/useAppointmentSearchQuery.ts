@@ -1,6 +1,7 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import getAppointments from "@/actions/task/getAppointments";
 import { appointmentQueryKey } from "../../../_constant";
+import { clientNameFilter } from "../../../_utils/clientNameSearch";
 import { Appointment } from "@prisma/client";
 
 export const APPOINTMENT_SEARCH_PAGE_SIZE = 10;
@@ -18,6 +19,7 @@ export default function useAppointmentSearchQuery(searchTerm: string = "") {
   // Surrounding whitespace must never reach the `contains` filters — " test"
   // matches nothing in the DB even when "test" does.
   const term = searchTerm.trim();
+  const nameFilter = clientNameFilter(term);
 
   return useInfiniteQuery({
     queryKey: [appointmentQueryKey.allAppointments, "search", term],
@@ -27,16 +29,7 @@ export default function useAppointmentSearchQuery(searchTerm: string = "") {
         where: {
           OR: [
             { title: { contains: term, mode: "insensitive" } },
-            {
-              client: {
-                firstName: { contains: term, mode: "insensitive" },
-              },
-            },
-            {
-              client: {
-                lastName: { contains: term, mode: "insensitive" },
-              },
-            },
+            ...(nameFilter ? [{ client: nameFilter }] : []),
             {
               vehicle: { make: { contains: term, mode: "insensitive" } },
             },

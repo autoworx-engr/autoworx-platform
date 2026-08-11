@@ -1,6 +1,5 @@
 import TaskError from "@/app/(dashboard)/dashboard/task/_component/ui/TaskError";
 import EmptyMsg from "@/components/common/EmptyMsg";
-import TaskSpinner from "@/app/(dashboard)/dashboard/task/_component/ui/TaskSpinner";
 import useEmployeeQuery from "@/hooks/query-hook/useEmployeeQuery";
 import { EmployeeType, User } from "@prisma/client";
 import { Search, X } from "lucide-react";
@@ -9,8 +8,9 @@ import Avatar from "../Avatar";
 
 type TAssignedUser = {
   title: string;
-  employeeType: EmployeeType;
+  employeeType?: EmployeeType;
   assignedUsers: User[];
+  emptyMessage?: string;
   onAssignUser?: (user: User) => void;
   onRemoveAssignedUser?: (user: User) => void;
 };
@@ -19,9 +19,12 @@ export default function AssignUsers({
   title,
   employeeType,
   assignedUsers,
+  emptyMessage,
   onAssignUser,
   onRemoveAssignedUser,
 }: TAssignedUser) {
+  // "employee" reads correctly for the unfiltered list; a type narrows it.
+  const employeeLabel = employeeType ?? "employee";
   const {
     data: employees = [],
     isLoading,
@@ -74,18 +77,33 @@ export default function AssignUsers({
 
   let content = null;
   if (isLoading && !isError) {
-    content = <TaskSpinner />;
+    // Skeleton rows mirror the real employee rows below, so the box keeps its
+    // shape instead of collapsing around a lone spinner.
+    content = (
+      <div className="space-y-0.5 p-1" aria-busy="true" aria-live="polite">
+        <span className="sr-only">Loading employees…</span>
+        {[0, 1, 2].map((row) => (
+          <div key={row} className="flex items-center gap-3 px-2.5 py-2">
+            <div className="h-8 w-8 flex-shrink-0 animate-pulse rounded-full bg-slate-200" />
+            <div
+              className="h-3.5 animate-pulse rounded bg-slate-200"
+              style={{ width: `${55 - row * 10}%` }}
+            />
+          </div>
+        ))}
+      </div>
+    );
   } else if (!isLoading && isError) {
     content = (
-      <TaskError message={`Failed to load ${employeeType} user data`} />
+      <TaskError message={`Failed to load ${employeeLabel} user data`} />
     );
   } else if (!isLoading && !isError && visibleEmployees.length === 0) {
     content = (
       <EmptyMsg
         message={
           normalizedSearch
-            ? `No ${employeeType} user matches "${assignedEmployeeSearch.trim()}"`
-            : `No ${employeeType} user found`
+            ? `No ${employeeLabel} user matches "${assignedEmployeeSearch.trim()}"`
+            : `No ${employeeLabel} user found`
         }
       />
     );
@@ -161,9 +179,10 @@ export default function AssignUsers({
 
         {assignedUsers.length === 0 && (
           <p className="ml-1 text-xs italic text-slate-400">
-            {employeeType === "Sales"
-              ? "No sales person assigned yet."
-              : "No Technician assigned yet."}
+            {emptyMessage ??
+              (employeeType === "Sales"
+                ? "No sales person assigned yet."
+                : "No Technician assigned yet.")}
           </p>
         )}
       </div>

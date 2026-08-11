@@ -16,7 +16,13 @@ import { formatCurrency } from "@/utils/formatCurrency";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import { pdf } from "@react-pdf/renderer";
 import { Popconfirm } from "antd";
-import { Mail, SquarePen, FileDown, MessageCircle, Copy } from "lucide-react";
+import {
+  Mail,
+  PencilLineIcon,
+  FileDown,
+  MessageCircle,
+  Copy,
+} from "lucide-react";
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import EditFleetStatementModal from "./EditFleetStatementModal"; // Add this import
@@ -298,7 +304,7 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
                     : "Edit statement"
                 }
               >
-                <SquarePen className="h-4 w-4" />
+                <PencilLineIcon className="h-4 w-4" />
                 <span className="hidden md:inline">
                   {editLoading ? "Loading..." : "Edit"}
                 </span>

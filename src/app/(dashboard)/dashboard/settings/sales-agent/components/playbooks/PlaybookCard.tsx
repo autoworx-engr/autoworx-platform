@@ -1,19 +1,5 @@
-import { ServicePlaybook, ServiceCategory } from "@/types/ai-settings";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  MoreVertical,
-  Edit,
-  Trash2,
-  ToggleLeft,
-  ToggleRight,
-  DollarSign,
-  HelpCircle,
-  ArrowUpRight,
-  Clock,
-  X,
-} from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,7 +7,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
+import { ServicePlaybook } from "@/types/ai-settings";
 import { Popconfirm } from "antd";
+import {
+  ArrowUpRight,
+  Clock,
+  DollarSign,
+  HelpCircle,
+  MoreVertical,
+  PencilLineIcon,
+  ToggleLeft,
+  ToggleRight,
+  Trash2,
+} from "lucide-react";
 
 interface PlaybookCardProps {
   playbook: ServicePlaybook;
@@ -103,7 +102,7 @@ export function PlaybookCard({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onSelect={() => onEdit?.()}>
-              <Edit className="mr-2 h-4 w-4" />
+              <PencilLineIcon className="mr-2 h-4 w-4" />
               Edit
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => onToggle?.()}>

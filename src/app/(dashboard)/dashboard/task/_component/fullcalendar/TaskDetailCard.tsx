@@ -1,6 +1,13 @@
 "use client";
 
-import { CalendarDays, Clock3, Zap, Users, Edit } from "lucide-react";
+import {
+  CalendarDays,
+  Clock3,
+  Zap,
+  Users,
+  Edit,
+  PencilLineIcon,
+} from "lucide-react";
 
 interface TaskDetailCardProps {
   dateLabel?: string;
@@ -86,7 +93,7 @@ export function TaskDetailCard({
 
       <div className="flex items-start gap-3">
         <div className={`p-2 rounded-lg shrink-0 ${taskIconClass}`}>
-          <Edit className="size-4" />
+          <PencilLineIcon className="size-4" />
         </div>
         <div>
           <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-0.5">
