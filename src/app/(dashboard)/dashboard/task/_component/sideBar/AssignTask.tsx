@@ -1,6 +1,12 @@
 import { assignTask } from "@/actions/task/assignTask";
 import FormError from "@/components/FormError";
-import Popup from "@/components/Popup";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/Dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -11,7 +17,7 @@ import { usePopupStore } from "@/stores/popup";
 import { Task, User } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useInView } from "framer-motion";
-import { ListCheck, Loader2, UserCog, X } from "lucide-react";
+import { ListCheck, Loader2, UserCog } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import EmptyMsg from "../../../../../../components/common/EmptyMsg";
 import { taskQueryKey } from "../../_constant";
@@ -40,9 +46,11 @@ export default function AssignTask() {
   const tasks = data?.pages?.flatMap((page) => page.data) ?? [];
 
   const queryClient = useQueryClient();
-  const { data: popupData, close } = usePopupStore();
-  const user = popupData.user as User;
-  const assignedUserTasks = popupData.userTasks as Task[];
+  const { popup, data: popupData, close } = usePopupStore();
+  // close() nulls the store data, so read defensively — the dialog can still
+  // render a frame while Radix plays its close animation.
+  const user = popupData?.user as User | undefined;
+  const assignedUserTasks = (popupData?.userTasks as Task[]) ?? [];
 
   const [taskDataInput, setTaskDataInput] = useState<
     { taskId: number; assigned: boolean }[]
@@ -70,6 +78,7 @@ export default function AssignTask() {
   }, [inView, hasNextPage, isFetchingNextPage]);
 
   async function handleSubmit() {
+    if (!user) return;
     setIsSubmitting(true);
     try {
       const result = await assignTask({
@@ -137,44 +146,46 @@ export default function AssignTask() {
   }
 
   return (
-    <Popup>
-      <div className="w-[36rem] max-w-[92vw] rounded-2xl bg-background p-6 shadow-2xl">
+    <Dialog open={popup === "ASSIGN_TASK"} onOpenChange={close}>
+      <DialogContent className="w-[36rem] max-w-[92vw] rounded-2xl p-6 shadow-2xl">
         {/* Header */}
-        <div className="flex items-center gap-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-            <UserCog className="h-5 w-5 text-primary" />
-          </span>
-          <h2 className="text-lg font-bold text-foreground">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-lg font-bold text-foreground">
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+              <UserCog className="h-5 w-5 text-primary" />
+            </span>
             Assign Tasks to User
-          </h2>
-        </div>
+          </DialogTitle>
+        </DialogHeader>
 
         <Separator className="my-2" />
 
         <FormError />
 
         {/* User card */}
-        <div className="flex items-center gap-3 rounded-full border bg-muted/40 p-3 w-fit">
-          <Avatar className="h-12 w-12">
-            <AvatarImage
-              src={user.image ?? undefined}
-              alt={`${user.firstName} ${user.lastName}`}
-            />
-            <AvatarFallback>
-              {(user.firstName?.[0] ?? "") + (user.lastName?.[0] ?? "")}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex min-w-0 flex-col">
-            <p className="truncate text-base font-bold text-foreground">
-              {user.firstName} {user.lastName}
-            </p>
-            {user.email && (
-              <p className="truncate text-sm text-muted-foreground">
-                {user.email}
+        {user && (
+          <div className="flex items-center gap-3 rounded-full border bg-muted/40 p-3 w-fit">
+            <Avatar className="h-12 w-12">
+              <AvatarImage
+                src={user.image ?? undefined}
+                alt={`${user.firstName} ${user.lastName}`}
+              />
+              <AvatarFallback>
+                {(user.firstName?.[0] ?? "") + (user.lastName?.[0] ?? "")}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex min-w-0 flex-col">
+              <p className="truncate text-base font-bold text-foreground">
+                {user.firstName} {user.lastName}
               </p>
-            )}
+              {user.email && (
+                <p className="truncate text-sm text-muted-foreground">
+                  {user.email}
+                </p>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Task selection */}
         <div className="mb-2 mt-6 flex items-center gap-2">
@@ -203,7 +214,7 @@ export default function AssignTask() {
         </div>
 
         {/* Actions */}
-        <div className="mt-6 flex justify-end gap-3">
+        <DialogFooter className="mt-6 gap-3">
           <Button variant="outline" onClick={close} disabled={isSubmitting}>
             Cancel
           </Button>
@@ -211,8 +222,8 @@ export default function AssignTask() {
             {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
             Save
           </Button>
-        </div>
-      </div>
-    </Popup>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
