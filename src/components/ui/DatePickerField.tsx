@@ -31,6 +31,10 @@ type DatePickerFieldProps = {
   minDate?: Date;
   /** Latest selectable date; later days are disabled in the calendar. */
   maxDate?: Date;
+  /** Years before the current one to offer in the year dropdown. */
+  yearsBack?: number;
+  /** Years after the current one to offer in the year dropdown. */
+  yearsForward?: number;
 };
 
 const FORMAT = "yyyy-MM-dd";
@@ -52,6 +56,11 @@ export function DatePickerField({
   clearable = false,
   minDate,
   maxDate,
+  // These fields hold scheduling and record dates, so the year dropdown starts
+  // near today instead of spanning a century the user has to scroll through.
+  // Widen per call site if a field ever needs distant years (a birth date, say).
+  yearsBack = 5,
+  yearsForward = 10,
 }: DatePickerFieldProps) {
   const [open, setOpen] = useState(false);
 
@@ -67,6 +76,17 @@ export function DatePickerField({
     setInternal(next);
     onChange?.(next);
   };
+
+  // Stretch the dropdown range to cover an already-selected date and any
+  // min/max bounds, so editing an older record can still show its own year.
+  const currentYear = new Date().getFullYear();
+  const boundYears = [selected, minDate, maxDate]
+    .filter((d): d is Date => !!d)
+    .map((d) => d.getFullYear());
+  const startYear = Math.min(currentYear - yearsBack, ...boundYears);
+  const endYear = Math.max(currentYear + yearsForward, ...boundYears);
+  const startMonth = new Date(startYear, 0);
+  const endMonth = new Date(endYear, 11);
 
   return (
     <div className={cn("flex w-full flex-col gap-1.5", rootClassName)}>
@@ -130,8 +150,8 @@ export function DatePickerField({
             }
             // Month + year dropdowns for quick navigation (like the native input).
             captionLayout="dropdown"
-            startMonth={new Date(1950, 0)}
-            endMonth={new Date(2050, 11)}
+            startMonth={startMonth}
+            endMonth={endMonth}
             defaultMonth={selected}
             autoFocus
           />
