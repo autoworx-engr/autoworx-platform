@@ -608,14 +608,14 @@ const Leads = ({ salesColumn }: TProps) => {
                                           size={20}
                                           className="duration-300 hover:text-primary"
                                         />
-                                        <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                                        <span className="invisible absolute top-full left-14 z-20 mt-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
                                           Communications
                                         </span>
                                       </Link>
                                     ) : (
                                       <span className="group relative cursor-not-allowed opacity-40">
                                         <MessageCircleMore size={20} />
-                                        <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                                        <span className="invisible absolute top-full left-14 z-20 mt-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
                                           Communications
                                         </span>
                                       </span>
@@ -626,7 +626,7 @@ const Leads = ({ salesColumn }: TProps) => {
                                         <PipelineInvoiceModal
                                           invoiceId={lead.invoiceId}
                                         />
-                                        <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                                        <span className="invisible absolute top-full left-14 z-20 mt-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
                                           Draft estimate
                                         </span>
                                       </span>
@@ -653,7 +653,7 @@ const Leads = ({ salesColumn }: TProps) => {
                                             loading="lazy"
                                           />
                                         </div>
-                                        <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                                        <span className="invisible absolute top-full left-14 z-20 mt-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
                                           Draft estimate
                                         </span>
                                       </button>
@@ -684,7 +684,7 @@ const Leads = ({ salesColumn }: TProps) => {
                                                 />
                                               )}
 
-                                              <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                                              <span className="invisible absolute top-full left-14 z-20 mt-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
                                                 Appointment
                                               </span>
                                             </button>
@@ -723,7 +723,7 @@ const Leads = ({ salesColumn }: TProps) => {
                                         previousTasks={lead.tasks || []}
                                         totalTasksCount={lead.taskCount ?? 0}
                                       />
-                                      <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                                      <span className="invisible absolute top-full left-14 z-20 mt-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
                                         Add Task
                                       </span>
                                     </div>
