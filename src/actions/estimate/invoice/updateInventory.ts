@@ -9,6 +9,7 @@ type TUpdateInventoryProps = {
   invoiceId: string;
   companyId: number;
   materials: Material[];
+  allowInsufficientInventory?: boolean;
 };
 
 // this function is used to update the inventory when the invoice is updated and create sales history
@@ -19,6 +20,7 @@ export async function updateInventoryOrCreateHistory({
   invoiceId,
   companyId,
   materials,
+  allowInsufficientInventory = false,
 }: TUpdateInventoryProps) {
   try {
     await db.$transaction(async (db) => {
@@ -140,7 +142,7 @@ export async function updateInventoryOrCreateHistory({
           }
 
           //  low inventory check
-          if (updatedQuantity <= 0) {
+          if (updatedQuantity <= 0 && !allowInsufficientInventory) {
             throw new Error(
               `The quantity of "${product.name}" is not enough in the inventory`,
             );
@@ -225,11 +227,13 @@ type updateInventoryOnEstimateConversionProps = {
   }[];
   invoiceId: string;
   companyId: number;
+  allowInsufficientInventory?: boolean;
 };
 export async function updateInventoryOnEstimateConversion({
   productsWithQuantity,
   invoiceId,
   companyId,
+  allowInsufficientInventory = false,
 }: updateInventoryOnEstimateConversionProps) {
   try {
     // Collect updated products outside the transaction so lowInventoryNotification
@@ -291,7 +295,10 @@ export async function updateInventoryOnEstimateConversion({
               },
             });
           }
-          if (product.quantity > Number(findInventoryProduct?.quantity || 0)) {
+          if (
+            product.quantity > Number(findInventoryProduct?.quantity || 0) &&
+            !allowInsufficientInventory
+          ) {
             throw new Error(
               `The quantity "${product.name}" is not enough in the inventory`,
             );
@@ -399,6 +406,7 @@ type TUpdateInventoryWhenInvoiceCreate = {
   invoiceId: string;
   invoiceType: InvoiceType;
   companyId: number;
+  allowInsufficientInventory?: boolean;
 };
 
 export async function updateInventoryWhenInvoiceCreate({
@@ -406,6 +414,7 @@ export async function updateInventoryWhenInvoiceCreate({
   invoiceType,
   invoiceId,
   companyId,
+  allowInsufficientInventory = false,
 }: TUpdateInventoryWhenInvoiceCreate) {
   try {
     // step 11: check invoice status and then inventory update without status pending
@@ -428,6 +437,7 @@ export async function updateInventoryWhenInvoiceCreate({
         companyId,
         invoiceId,
         productsWithQuantity,
+        allowInsufficientInventory,
       });
     }
   } catch (err) {

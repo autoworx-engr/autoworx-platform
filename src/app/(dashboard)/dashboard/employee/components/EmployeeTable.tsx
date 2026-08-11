@@ -6,7 +6,7 @@ import { padId } from "@/lib/padId";
 import { useEmployeeFilterStore } from "@/stores/employeeFilter";
 import { SalaryHistory, User } from "@prisma/client";
 import { Pagination } from "antd"; // Importing the Pagination component from Ant Design
-import { Search, UserIcon } from "lucide-react";
+import { Search } from "lucide-react";
 import moment from "moment";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -16,6 +16,7 @@ import EditEmployee from "../EditEmployee";
 import { EmployeeTableSkeleton } from "./EmployeeTableSkeleton";
 import { useSession } from "next-auth/react";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
+import Avatar from "@/components/Avatar";
 
 const defaultPageSize = 20;
 const evenColor = "bg-background";
@@ -224,8 +225,8 @@ function DesktopTable({
                   className="h-full w-full flex items-center gap-3 group "
                   href={`/dashboard/employee/${employee.id}?view=details`}
                 >
-                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-primary/80 ring-1 ring-indigo-100 dark:ring-indigo-900/30">
-                    <UserIcon size={16} />
+                  <div className="rounded-full  bg-white dark:bg-slate-900 shadow-sm ring-1 ring-slate-200 dark:ring-slate-700">
+                    <Avatar photo={employee.image} width={44} height={44} />
                   </div>
                   <div>
                     <div className="font-medium text-slate-500 dark:text-slate-200 transition-colors">
