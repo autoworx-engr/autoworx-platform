@@ -32,7 +32,7 @@ export default function MailAttachment({ message, onDownload }: TProps) {
     <div
       className={cn(
         "mt-2 flex w-full flex-wrap items-start gap-2",
-        message.emailBy === "Company" && "justify-end"
+        message.emailBy === "Company" && "justify-end",
       )}
     >
       {attachments.map((att, i) => {
@@ -48,7 +48,7 @@ export default function MailAttachment({ message, onDownload }: TProps) {
               href={`/dashboard/communication/photo?urls=${urlsParam}&index=${currentImageIndex}`}
               className={cn(
                 "group relative inline-flex overflow-hidden rounded-md ring-1 ring-zinc-200 transition",
-                "hover:ring-emerald-400 dark:ring-white/10"
+                "hover:ring-emerald-400 dark:ring-white/10",
               )}
               title={att.name}
             >
@@ -57,7 +57,7 @@ export default function MailAttachment({ message, onDownload }: TProps) {
                 alt={att.name || "image attachment"}
                 width={96}
                 height={96}
-                className="h-20 w-24 object-cover"
+                className="h-24 w-24 object-cover"
               />
               <span className="pointer-events-none absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100 bg-black/10" />
             </Link>
@@ -72,7 +72,7 @@ export default function MailAttachment({ message, onDownload }: TProps) {
             className={cn(
               "inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm",
               "ring-1 ring-zinc-200 bg-white hover:ring-emerald-400 transition",
-              "dark:bg-zinc-900 dark:ring-white/10"
+              "dark:bg-zinc-900 dark:ring-white/10",
             )}
             title={att.name}
           >

@@ -37,8 +37,8 @@ function MessengerAttachments({
   return (
     <div
       className={cn(
-        "flex w-full flex-col gap-1",
-        isOutgoing ? "items-end" : "items-start",
+        "flex w-full flex-wrap gap-1.5",
+        isOutgoing ? "justify-end" : "justify-start",
       )}
     >
       {attachments.map((att, index) => {
@@ -49,16 +49,22 @@ function MessengerAttachments({
             <Link
               key={att.id ?? index}
               href={`/dashboard/communication/photo?urls=${urlsParam}&index=${currentIndex}`}
-              className="mx-1 mt-1 cursor-pointer rounded-md border border-gray-200 px-2 py-1"
+              className="block cursor-pointer overflow-hidden rounded-lg ring-1 ring-black/10 transition hover:ring-black/20 dark:ring-white/15 dark:hover:ring-white/30"
             >
-              <Image src={att.url} alt="attachment" width={70} height={100} />
+              <Image
+                src={att.url}
+                alt="attachment"
+                width={96}
+                height={96}
+                className="h-24 w-24 object-cover"
+              />
             </Link>
           );
         }
 
         if (att.attachmentType === "audio") {
           return (
-            <div key={att.id ?? index} className="mt-1">
+            <div key={att.id ?? index} className="w-full">
               <VoiceNotePlayer src={att.url} isOutgoing={isOutgoing} />
             </div>
           );
@@ -71,7 +77,7 @@ function MessengerAttachments({
               href={att.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="mx-1 mt-1 flex cursor-pointer items-center gap-2 rounded-md border border-gray-200 px-2 py-1"
+              className="flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 dark:border-white/10"
             >
               <File className="h-5 w-5 flex-shrink-0" />
               <span className="text-sm">{att.name ?? "video"}</span>
@@ -88,7 +94,7 @@ function MessengerAttachments({
         return (
           <button
             key={att.id ?? index}
-            className="mx-1 mt-1 flex cursor-pointer items-center gap-2 rounded-md border border-gray-200 px-2 py-1"
+            className="flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 dark:border-white/10"
             onClick={() =>
               window.open(att.url, "_blank", "noopener,noreferrer")
             }
@@ -144,13 +150,19 @@ export default function MessengerMessage({ message }: { message: TMessage }) {
       <div
         className={cn("max-w-[85%] sm:max-w-[70%]", isOutgoing && "ml-auto")}
       >
+        {/* Attachment-only messages skip the colored bubble entirely so the
+            images float on their own instead of sitting inside a solid background. */}
         {(!!text || hasAttachments) && (
           <div
             className={cn(
-              "group relative rounded-2xl px-3 py-2 text-[14px] shadow-sm ring-1 transition select-text hover:shadow-md",
-              isIncoming
-                ? "bg-zinc-200 text-zinc-900 ring-zinc-300 dark:bg-zinc-800 dark:text-zinc-100 dark:ring-white/10"
-                : "bg-gradient-to-br from-[#0866FF] to-[#0057d9] text-white ring-white/20",
+              "group relative text-[14px] transition select-text",
+              text &&
+                cn(
+                  "rounded-2xl px-3 py-2 shadow-sm ring-1 hover:shadow-md",
+                  isIncoming
+                    ? "bg-zinc-200 text-zinc-900 ring-zinc-300 dark:bg-zinc-800 dark:text-zinc-100 dark:ring-white/10"
+                    : "bg-gradient-to-br from-[#0866FF] to-[#0057d9] text-white ring-white/20",
+                ),
             )}
           >
             {text && (
