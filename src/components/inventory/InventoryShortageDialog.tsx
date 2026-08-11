@@ -35,9 +35,7 @@ export default function InventoryShortageDialog({
       title="Not enough inventory"
       description={`${shortages
         .map(describeShortage)
-        .join(
-          ", ",
-        )}. Continuing will take the stock below zero. Do you want to proceed?`}
+        .join(", ")}. Do you want to proceed?`}
       confirmText="Proceed anyway"
       cancelText="Cancel"
       loading={loading}
