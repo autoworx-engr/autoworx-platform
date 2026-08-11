@@ -67,16 +67,21 @@ export default function SmsMessage({
       <div
         className={cn("max-w-[85%] sm:max-w-[70%]", !isIncoming && "ml-auto")}
       >
-        {/* Bubble — only render when there's text or attachments */}
+        {/* Bubble — only render when there's text or attachments. Attachment-only
+            messages skip the colored bubble entirely so the images float on
+            their own instead of sitting inside a solid background. */}
         {(!!text || hasAttachments) && (
           <div
             className={cn(
-              "group relative w-fit rounded-2xl px-3 py-2 text-[14px] shadow-sm ring-1 transition",
-              "select-text hover:shadow-md",
+              "group relative w-fit text-[14px] transition select-text",
               !isIncoming && "ml-auto",
-              isIncoming
-                ? "bg-zinc-200 text-zinc-900 ring-zinc-300 dark:bg-zinc-800 dark:text-zinc-100 dark:ring-white/10"
-                : "bg-gradient-to-br from-[#0a8a95] to-[#006D77] text-white ring-white/20",
+              text &&
+                cn(
+                  "rounded-2xl px-3 py-2 shadow-sm ring-1 hover:shadow-md",
+                  isIncoming
+                    ? "bg-zinc-200 text-zinc-900 ring-zinc-300 dark:bg-zinc-800 dark:text-zinc-100 dark:ring-white/10"
+                    : "bg-gradient-to-br from-[#0a8a95] to-[#006D77] text-white ring-white/20",
+                ),
             )}
           >
             {/* Text */}

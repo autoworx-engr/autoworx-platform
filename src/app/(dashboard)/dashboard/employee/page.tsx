@@ -23,7 +23,7 @@ export default async function Page() {
         <div>
           {/* /reporting/workforce */}
           <Link // Change to <Link> if using Next.js/React Router
-            href="/dashboard/reporting/teams"
+            href="/dashboard/reporting/teams?view=teams"
             className="
             group relative flex items-center gap-3 pl-3 pr-4 py-2 rounded-xl
             bg-gradient-to-b from-white to-slate-50 dark:from-slate-800 dark:to-slate-900
