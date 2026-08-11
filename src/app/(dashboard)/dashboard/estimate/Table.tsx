@@ -1,9 +1,12 @@
 "use client";
 
+import { checkInventoryForConversion } from "@/actions/estimate/invoice/checkInventory";
 import { convertInvoice } from "@/actions/estimate/invoice/convert";
+import InventoryShortageDialog from "@/components/inventory/InventoryShortageDialog";
 import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
 import ResponsiveEstimateCard from "@/components/mobile-responsive/estimate/ResponsiveEstimateCard";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
+import { useInventoryConfirm } from "@/hooks/useInventoryConfirm";
 import { cn } from "@/lib/cn";
 import { errorToast, successToast } from "@/lib/toast";
 import { updateServiceAutomationTrigger } from "@/service/service-maintenance-automation-trigger/api";
@@ -113,9 +116,11 @@ export default function Table({
     [pageSize, params, pathname, router],
   );
 
+  const { runWithInventoryCheck, dialogProps } = useInventoryConfirm();
+
   // Handler for converting an invoice to an estimate or invoice
-  const handleConvertedInvoice = async (id: string) => {
-    const res = await convertInvoice(id);
+  const convert = async (id: string, allowInsufficientInventory: boolean) => {
+    const res = await convertInvoice(id, undefined, allowInsufficientInventory);
     if (res.type === "success") {
       const checkEstimateOrInvoice =
         res.data.type === "Estimate" ? "Invoice" : "Estimate";
@@ -133,6 +138,13 @@ export default function Table({
     } else if (res.type === "globalError") {
       errorToast(res.message);
     }
+  };
+
+  const handleConvertedInvoice = async (id: string) => {
+    await runWithInventoryCheck(
+      () => checkInventoryForConversion(id),
+      (allowInsufficientInventory) => convert(id, allowInsufficientInventory),
+    );
   };
 
   return (
@@ -276,7 +288,11 @@ export default function Table({
                           onConvert={() => handleConvertedInvoice(data.id)}
                         />
                         <Link
-                          href={`/dashboard/estimate/edit/${data.id}?clientId=${data.clientId}`}
+                          href={
+                            data.clientId != null
+                              ? `/dashboard/estimate/edit/${data.id}?clientId=${data.clientId}`
+                              : `/dashboard/estimate/edit/${data.id}`
+                          }
                           className="text-2xl text-blue-600"
                           onClick={() => setActionType("edit")}
                         >
@@ -309,6 +325,8 @@ export default function Table({
           />
         </div>
       )}
+
+      <InventoryShortageDialog {...dialogProps} />
     </div>
   );
 }

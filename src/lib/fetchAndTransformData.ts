@@ -151,6 +151,7 @@ export async function fetchAndTransformData(
     totalEstimate,
     data: sortedData?.map((item: any) => ({
       id: item.id,
+      clientId: item.clientId ?? null,
       clientName: item.clientName?.trim() || "",
       vehicle: [item.year, item.make, item.model].filter(Boolean).join(" "),
       email: item.email || "",
