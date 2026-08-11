@@ -65,7 +65,9 @@ export const sendNewAppointmentNotification = async ({
       title: "New Appointment",
       companyId: companyUniqueId,
       type: "task",
-      redirectUrl: `/dashboard/task/day?date=${formattedDate}`,
+      redirectUrl: `/dashboard/task/day?date=${formattedDate}${
+        timeMoment.isValid() ? `&time=${timeMoment.format("HH:mm")}` : ""
+      }`,
       description: description,
     };
 
@@ -145,7 +147,9 @@ export const sendNewTaskNotification = async ({
       title: "New Task",
       companyId: companyUniqueId,
       type: "task",
-      redirectUrl: `/dashboard/task/day?date=${formattedDate}`,
+      redirectUrl: `/dashboard/task/day?date=${formattedDate}${
+        timeMoment.isValid() ? `&time=${timeMoment.format("HH:mm")}` : ""
+      }`,
       description: description,
     };
 
@@ -215,7 +219,9 @@ export const sendAppointmentUpdateNotification = async ({
       title: "Update Appointment",
       companyId: companyId,
       type: "task",
-      redirectUrl: `/dashboard/task/day?date=${formattedDate}`,
+      redirectUrl: `/dashboard/task/day?date=${formattedDate}${
+        timeMoment.isValid() ? `&time=${timeMoment.format("HH:mm")}` : ""
+      }`,
       description: clientName
         ? `Appointment with ${clientName} on ${formattedDate}${timeText} has been created. Check your Autoworx calendar.`
         : `Appointment ${title} on ${formattedDate}${timeText} has been updated. Check your Autoworx calendar.`,

@@ -13,7 +13,7 @@ import {
   Vendor,
 } from "@prisma/client";
 import * as Tabs from "@radix-ui/react-tabs";
-import { DollarSign, ShoppingCart, SquarePen } from "lucide-react";
+import { DollarSign, ShoppingCart, PencilLineIcon } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
@@ -299,7 +299,7 @@ function Table({
                               href={`/dashboard/estimate/edit/${history.invoiceId}?clientId=${history.client?.id}`}
                               className="text-primary hover:text-indigo-500 transition-colors"
                             >
-                              <SquarePen className="h-4 w-4" />
+                              <PencilLineIcon className="h-4 w-4" />
                             </Link>
                           ) : (
                             // Check 2: Otherwise, show the inline Edit/Delete component

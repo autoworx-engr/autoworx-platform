@@ -10,7 +10,12 @@ import {
 } from "@/app/(dashboard)/dashboard/task/_constant";
 import { errorToast, successToast } from "@/lib/toast";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { CheckCircle, Edit, MessageSquare, Trash2 } from "lucide-react";
+import {
+  CheckCircle,
+  PencilLineIcon,
+  MessageSquare,
+  Trash2,
+} from "lucide-react";
 import { Popconfirm } from "antd";
 import moment from "moment";
 import { useRouter } from "next/navigation";
@@ -325,7 +330,7 @@ export const EventDetailsSheet = ({
                   className="flex-1 justify-center shadow-sm"
                   onClick={onEditTask}
                 >
-                  <Edit className="mr-2 h-4 w-4" />
+                  <PencilLineIcon className="h-4 w-4" />
                   Edit Task
                 </Button>
               ) : null}
@@ -336,7 +341,7 @@ export const EventDetailsSheet = ({
                   className="flex-1 justify-center shadow-sm"
                   onClick={onEditAppointment}
                 >
-                  <Edit className="mr-2 h-4 w-4" />
+                  <PencilLineIcon className="h-4 w-4" />
                   Edit Appointment
                 </Button>
               ) : null}
@@ -368,7 +373,7 @@ export const EventDetailsSheet = ({
                 className="w-full justify-center shadow-sm"
                 onClick={handleMessageClient}
               >
-                <MessageSquare className="mr-2 h-4 w-4" />
+                <MessageSquare className="h-4 w-4" />
                 Message Client
               </Button>
             )}

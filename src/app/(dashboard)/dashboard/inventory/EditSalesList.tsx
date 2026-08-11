@@ -21,7 +21,7 @@ import {
   InventoryProductType,
   Vendor,
 } from "@prisma/client";
-import { SquarePen } from "lucide-react";
+import { PencilLineIcon } from "lucide-react";
 import moment from "moment-timezone";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useProduct as productUse } from "../../../../actions/inventory/useProduct";
@@ -158,7 +158,7 @@ export default function EditSalesList({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button className="flex w-full items-center justify-end text-primary md:justify-center">
-          <SquarePen size={20} />
+          <PencilLineIcon size={20} />
         </button>
       </DialogTrigger>
 

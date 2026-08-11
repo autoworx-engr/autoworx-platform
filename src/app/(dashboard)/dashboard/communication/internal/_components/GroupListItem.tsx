@@ -4,7 +4,15 @@ import { Group, User } from "@prisma/client";
 import { Users } from "lucide-react";
 import { useDraftPreview } from "../../_hooks/useDraftPreview";
 
-type TGroup = Group & { users: User[]; unreadCount?: number };
+type TGroup = Group & {
+  users: User[];
+  unreadCount?: number;
+  latestMessage?: {
+    message: string;
+    senderName: string | null;
+    updatedAt: Date;
+  } | null;
+};
 
 const MAX_VISIBLE_AVATARS = 1;
 
@@ -24,6 +32,7 @@ export function GroupListItem({
   const showBadge = unreadCount > 0;
   const unreadLabel = unreadCount > 9 ? "9+" : String(unreadCount);
   const isUnread = unreadCount > 0 && !isSelectedGroup;
+  const latestMessage = group.latestMessage;
   const draftText = useDraftPreview("internal", "group", group.id);
 
   return (
@@ -112,12 +121,22 @@ export function GroupListItem({
               ? "italic text-amber-600 dark:text-amber-500"
               : isSelectedGroup
                 ? "text-white/80"
-                : "text-zinc-500 dark:text-zinc-400",
+                : isUnread
+                  ? "font-semibold text-zinc-700 dark:text-zinc-200"
+                  : "text-zinc-500 dark:text-zinc-400",
           )}
         >
-          {draftText
-            ? `Draft: ${draftText}`
-            : `${memberCount} ${memberCount === 1 ? "member" : "members"}`}
+          {draftText ? (
+            `Draft: ${draftText}`
+          ) : latestMessage ? (
+            <>
+              {latestMessage.senderName ?? "You"}: {latestMessage.message}
+            </>
+          ) : (
+            // Nothing said yet — the member count is more useful than a
+            // blank line.
+            `${memberCount} ${memberCount === 1 ? "member" : "members"}`
+          )}
         </p>
       </div>
     </button>

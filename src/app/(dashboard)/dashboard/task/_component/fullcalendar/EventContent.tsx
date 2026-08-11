@@ -11,7 +11,10 @@ export const EventContent = ({
   eventInfo: EventContentArg;
   session: any;
 }) => {
-  const { event, view } = eventInfo;
+  const { event, view, isStart, isEnd } = eventInfo;
+  // Middle days of a multi-day event are neither the start nor the end
+  // segment, so they have no meaningful time of their own.
+  const isMultiDayContinuation = !isStart && !isEnd;
   const props = event.extendedProps as CustomEventProps;
   const serviceType = props.serviceType || "Appointment";
   const originalData = props.originalData;
@@ -21,7 +24,7 @@ export const EventContent = ({
     serviceType,
     serviceType === "Appointment" ? categoryColor : undefined,
   );
-  const isAdmin = session?.user.employeeType === EmployeeType.Admin;
+  const isAdmin = session?.user?.employeeType === EmployeeType.Admin;
   // console.log("Rendering event:", {
   //   event: event.extendedProps.originalData,
   // });
@@ -206,6 +209,11 @@ export const EventContent = ({
         }}
         className="cursor-pointer hover:opacity-90 transition-opacity text-xs leading-snug"
       >
+        {isMultiDayContinuation && (
+          <p className="text-[9px] font-bold uppercase tracking-wide text-gray-500">
+            All day
+          </p>
+        )}
         {eventBody}
       </div>
     );

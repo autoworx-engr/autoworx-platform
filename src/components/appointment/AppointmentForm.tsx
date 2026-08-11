@@ -1,16 +1,8 @@
 "use client";
 
-import FormError from "@/components/FormError";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DatePickerField } from "@/components/ui/DatePickerField";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { TimeScrollPicker } from "@/components/ui/TimeScrollPicker";
@@ -50,6 +42,7 @@ export default function AppointmentForm({
   setTab,
   title,
   setTitle,
+  fieldErrors,
   date,
   setDate,
   endDate,
@@ -68,6 +61,8 @@ export default function AppointmentForm({
   vehicle,
   setVehicle,
   vehicleOpenDropdown,
+  serviceCategoryOpen,
+  setServiceCategoryOpen,
   setVehicleOpenDropdown,
   serviceCategoryId,
   setServiceCategoryId,
@@ -82,8 +77,6 @@ export default function AppointmentForm({
   draftOptionsLoading,
   assignedUsers,
   setAssignedUsers,
-  times,
-  setTimes,
   confirmationTemplate,
   setConfirmationTemplate,
   reminderTemplate,
@@ -101,16 +94,14 @@ export default function AppointmentForm({
   containerRef,
   settings,
   handleDate,
-  timezone,
 }: AppointmentFormProps) {
   return (
     <div className="h-full sm:h-full overflow-y-auto thin-scrollbar max-h-[80vh] lg:max-h-none">
       <div className="space-y-2 p-4 sm:p-6">
-        <FormError />
-
         <AppointmentTitleSelectAndAdd
           value={title}
           onChange={(value) => setTitle(value)}
+          error={fieldErrors?.title}
         />
 
         <div className="grid grid-cols-2 items-end gap-3 lg:grid-cols-4">
@@ -188,26 +179,12 @@ export default function AppointmentForm({
           </Label>
         </div>
 
+        {/* One list for the whole company — every employee type is assignable
+            here, so Sales and Technician are no longer split apart. */}
         <AssignUsers
-          assignedUsers={assignedUsers.filter(
-            (user) => user.employeeType === "Sales",
-          )}
-          title="+ Assign Sales Person"
-          employeeType="Sales"
-          onAssignUser={(user: User) =>
-            setAssignedUsers((prev) => [...prev, user])
-          }
-          onRemoveAssignedUser={(user: User) =>
-            setAssignedUsers((prev) => prev.filter((u) => u.id !== user.id))
-          }
-        />
-
-        <AssignUsers
-          assignedUsers={assignedUsers.filter(
-            (user) => user.employeeType === "Technician",
-          )}
-          title="+ Assign Technician"
-          employeeType="Technician"
+          assignedUsers={assignedUsers}
+          title="+ Assign Team Mate"
+          emptyMessage="No team mate assigned yet."
           onAssignUser={(user: User) =>
             setAssignedUsers((prev) => [...prev, user])
           }
@@ -241,6 +218,8 @@ export default function AppointmentForm({
           <SelectAppointmentServiceCategory
             value={serviceCategoryId}
             setValue={setServiceCategoryId}
+            openDropdown={serviceCategoryOpen}
+            setOpenDropdown={setServiceCategoryOpen}
           />
 
           <div className="w-full">
@@ -468,9 +447,6 @@ export default function AppointmentForm({
             vehicle={vehicle}
             startTime={startTime!}
             date={date!}
-            timezone={timezone}
-            times={times}
-            setTimes={setTimes}
             confirmationTemplate={confirmationTemplate}
             setConfirmationTemplate={setConfirmationTemplate}
             reminderTemplate={reminderTemplate}
@@ -483,6 +459,8 @@ export default function AppointmentForm({
             openReminder={openReminder}
             setOpenReminder={setOpenReminder}
             setOpenConfirmation={setOpenConfirmation}
+            fromEdit={fromEdit}
+            hasAssignedUsers={assignedUsers.length > 0}
           />
         ) : null}
       </div>

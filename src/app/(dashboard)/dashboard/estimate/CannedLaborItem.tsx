@@ -3,10 +3,10 @@ import { deleteLabor } from "@/actions/estimate/labor/deleteLabor";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/cn";
-import { Category, Labor } from "@prisma/client";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { Category, Labor } from "@prisma/client";
 import { Popconfirm } from "antd";
-import { SquarePen, Trash2 } from "lucide-react";
+import { PencilLineIcon, Trash2 } from "lucide-react";
 import CannedLaborEditDialog from "./CannedLaborEditDialog";
 
 const EditTrigger = (
@@ -14,7 +14,7 @@ const EditTrigger = (
     className="text-xl text-indigo-500 hover:text-indigo-600 transition-colors"
     title="Edit"
   >
-    <SquarePen className="w-5 h-5" />
+    <PencilLineIcon className="w-5 h-5" />
   </button>
 );
 
