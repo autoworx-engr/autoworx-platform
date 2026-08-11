@@ -171,10 +171,18 @@ export default function ClientItem({
     }
   };
 
-  const draftEmail = useDraftPreview("client", "email", client?.id);
-  const draftSms = useDraftPreview("client", "sms", client?.id);
-  const draftMessenger = useDraftPreview("client", "messenger", client?.id);
-  const draftInstagram = useDraftPreview("client", "instagram", client?.id);
+  // Suppress the draft preview for the row that's currently open — you're
+  // already looking at that text in the compose box, so re-showing it here
+  // on every keystroke is just noise (WhatsApp only shows drafts for chats
+  // you're NOT currently in).
+  const draftEmailLive = useDraftPreview("client", "email", client?.id);
+  const draftSmsLive = useDraftPreview("client", "sms", client?.id);
+  const draftMessengerLive = useDraftPreview("client", "messenger", client?.id);
+  const draftInstagramLive = useDraftPreview("client", "instagram", client?.id);
+  const draftEmail = selected ? "" : draftEmailLive;
+  const draftSms = selected ? "" : draftSmsLive;
+  const draftMessenger = selected ? "" : draftMessengerLive;
+  const draftInstagram = selected ? "" : draftInstagramLive;
 
   const conversationsTrack = client?.conversationsTrack as
     | (NonNullable<typeof client>["conversationsTrack"] & {
@@ -323,9 +331,12 @@ export default function ClientItem({
               }
             >
               {draftEmail ? (
-                <span className="italic text-amber-600 dark:text-amber-500">
-                  Draft: {draftEmail}
-                </span>
+                <>
+                  <span className="font-semibold text-black dark:text-white">
+                    Draft:
+                  </span>{" "}
+                  {draftEmail}
+                </>
               ) : (
                 <>
                   {client?.conversationsTrack?.lastEmailBy === "Company"
@@ -357,9 +368,12 @@ export default function ClientItem({
               }
             >
               {draftSms ? (
-                <span className="italic text-amber-600 dark:text-amber-500">
-                  Draft: {draftSms}
-                </span>
+                <>
+                  <span className="font-semibold text-black dark:text-white">
+                    Draft:
+                  </span>{" "}
+                  {draftSms}
+                </>
               ) : (
                 <>
                   {client?.conversationsTrack?.lastMessageBy === "Company"
@@ -391,9 +405,12 @@ export default function ClientItem({
               }
             >
               {draftMessenger ? (
-                <span className="italic text-amber-600 dark:text-amber-500">
-                  Draft: {draftMessenger}
-                </span>
+                <>
+                  <span className="font-semibold text-black dark:text-white">
+                    Draft:
+                  </span>{" "}
+                  {draftMessenger}
+                </>
               ) : (
                 <>
                   {conversationsTrack?.messengerLastBy === "Company"
@@ -428,9 +445,12 @@ export default function ClientItem({
               }
             >
               {draftInstagram ? (
-                <span className="italic text-amber-600 dark:text-amber-500">
-                  Draft: {draftInstagram}
-                </span>
+                <>
+                  <span className="font-semibold text-black dark:text-white">
+                    Draft:
+                  </span>{" "}
+                  {draftInstagram}
+                </>
               ) : (
                 <>
                   {client?.conversationsTrack?.instagramLastBy === "Company"

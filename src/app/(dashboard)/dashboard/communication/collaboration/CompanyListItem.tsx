@@ -22,7 +22,10 @@ export default function CompanyListItem({
   const unread = useCompanyUnreadCounts(currentCompanyId, company.id);
   const isSelected = selectedCompanyId === company.id;
   const unreadLabel = unread > 9 ? "9+" : String(unread);
-  const draftText = useDraftPreview("collaboration", "", company.id);
+  // Suppressed while this row is open — you're already looking at that text
+  // in the compose box, so re-showing it here on every keystroke is noise.
+  const draftTextLive = useDraftPreview("collaboration", "", company.id);
+  const draftText = isSelected ? "" : draftTextLive;
 
   return (
     <button
@@ -74,16 +77,19 @@ export default function CompanyListItem({
           <p
             className={cn(
               "mt-0.5 line-clamp-1 text-xs",
-              draftText
-                ? "italic text-amber-600 dark:text-amber-500"
-                : isSelected
-                  ? "text-white/80"
-                  : "text-zinc-500 dark:text-zinc-400",
+              isSelected ? "text-white/80" : "text-zinc-500 dark:text-zinc-400",
             )}
           >
-            {draftText
-              ? `Draft: ${draftText}`
-              : `${company.users.length} ${company.users.length === 1 ? "member" : "members"}`}
+            {draftText ? (
+              <>
+                <span className="font-semibold text-black dark:text-white">
+                  Draft:
+                </span>{" "}
+                {draftText}
+              </>
+            ) : (
+              `${company.users.length} ${company.users.length === 1 ? "member" : "members"}`
+            )}
           </p>
         )}
       </div>

@@ -24,7 +24,10 @@ export function GroupListItem({
   const showBadge = unreadCount > 0;
   const unreadLabel = unreadCount > 9 ? "9+" : String(unreadCount);
   const isUnread = unreadCount > 0 && !isSelectedGroup;
-  const draftText = useDraftPreview("internal", "group", group.id);
+  // Suppressed while this row is open — you're already looking at that text
+  // in the compose box, so re-showing it here on every keystroke is noise.
+  const draftTextLive = useDraftPreview("internal", "group", group.id);
+  const draftText = isSelectedGroup ? "" : draftTextLive;
 
   return (
     <button
@@ -108,16 +111,21 @@ export function GroupListItem({
         <p
           className={cn(
             "mt-0.5 line-clamp-1 text-xs",
-            draftText
-              ? "italic text-amber-600 dark:text-amber-500"
-              : isSelectedGroup
-                ? "text-white/80"
-                : "text-zinc-500 dark:text-zinc-400",
+            isSelectedGroup
+              ? "text-white/80"
+              : "text-zinc-500 dark:text-zinc-400",
           )}
         >
-          {draftText
-            ? `Draft: ${draftText}`
-            : `${memberCount} ${memberCount === 1 ? "member" : "members"}`}
+          {draftText ? (
+            <>
+              <span className="font-semibold text-black dark:text-white">
+                Draft:
+              </span>{" "}
+              {draftText}
+            </>
+          ) : (
+            `${memberCount} ${memberCount === 1 ? "member" : "members"}`
+          )}
         </p>
       </div>
     </button>
