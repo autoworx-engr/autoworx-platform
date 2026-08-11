@@ -14,7 +14,7 @@ import {
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   useCallback,
   useEffect,
@@ -75,8 +75,13 @@ export default function CompanyMessageBox({
   const [multiAttachmentFile, setMultiAttachmentFile] = useState<File[] | null>(
     null,
   );
-  const searchParams = useSearchParams();
-  const companyId = searchParams.get("companyId");
+  // Source this from the company prop (parent-managed selection state), not
+  // the URL — the ?companyId= search param can get dropped by navigation
+  // (e.g. leaving via the nav bar and returning via the sidebar) while this
+  // component's `company` prop still correctly reflects the selected
+  // conversation. Reading it from the URL caused messages to fetch for
+  // `undefined` while the header still showed the right company name.
+  const companyId = company.id;
   const {
     draftText: message,
     setDraftText: setMessage,
@@ -84,7 +89,7 @@ export default function CompanyMessageBox({
   } = useMessageDraft({
     section: "collaboration",
     channel: "",
-    targetId: companyId ? Number(companyId) : undefined,
+    targetId: companyId,
   });
   const [showAttachment, setShowAttachment] = useState(false);
   const currentCompanyId = session?.user?.companyId;
@@ -99,10 +104,7 @@ export default function CompanyMessageBox({
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
-  } = useInfinityCollaborationMessages(
-    currentCompanyId,
-    companyId ? Number(companyId) : undefined,
-  );
+  } = useInfinityCollaborationMessages(currentCompanyId, companyId);
 
   // Each page is newest-first; flatten then reverse so display is oldest -> newest.
   const fetchedMessages = useMemo(() => {
@@ -355,7 +357,7 @@ export default function CompanyMessageBox({
     >
       {/* 🔹 Header */}
       <div
-        className={`flex items-center justify-between bg-[#006D77] p-3 text-white ${onBack && "sticky top-0 right-0 left-0"}`}
+        className={`flex items-center justify-between bg-[#006D77] p-3 text-white ${onBack && "sticky top-0 right-0 left-0 z-30"}`}
       >
         {/* Left Side */}
         <div className="flex items-center gap-2">
