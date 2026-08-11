@@ -56,7 +56,7 @@ export default function ClientList({
         <div className="relative flex flex-1 h-full flex-col overflow-hidden rounded-md bg-background">
           <div className="flex-1 overflow-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {/* Mobile View */}
-            <div className="lg:hidden p-4 space-y-4">
+            <div className="lg:hidden space-y-4">
               {isLoading ? (
                 <ClientCardSkeleton />
               ) : isError ? (

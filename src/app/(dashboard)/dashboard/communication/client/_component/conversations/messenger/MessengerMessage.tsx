@@ -33,35 +33,41 @@ function MessengerAttachments({
   const allImageUrls = attachments
     .filter((a) => a.attachmentType === "image" && a.url)
     .map((a) => a.url);
+  const images = attachments.filter((a) => a.attachmentType === "image");
+  const nonImages = attachments.filter((a) => a.attachmentType !== "image");
 
   return (
     <div
       className={cn(
-        "flex w-full flex-wrap gap-1.5",
-        isOutgoing ? "justify-end" : "justify-start",
+        "flex w-full flex-col gap-1.5",
+        isOutgoing ? "items-end" : "items-start",
       )}
     >
-      {attachments.map((att, index) => {
-        if (att.attachmentType === "image") {
-          const currentIndex = allImageUrls.indexOf(att.url);
-          const urlsParam = encodeURIComponent(JSON.stringify(allImageUrls));
-          return (
-            <Link
-              key={att.id ?? index}
-              href={`/dashboard/communication/photo?urls=${urlsParam}&index=${currentIndex}`}
-              className="block cursor-pointer overflow-hidden rounded-lg ring-1 ring-black/10 transition hover:ring-black/20 dark:ring-white/15 dark:hover:ring-white/30"
-            >
-              <Image
-                src={att.url}
-                alt="attachment"
-                width={96}
-                height={96}
-                className="h-24 w-24 object-cover"
-              />
-            </Link>
-          );
-        }
+      {images.length > 0 && (
+        <div className="grid w-fit grid-cols-3 gap-1.5">
+          {images.map((att, index) => {
+            const currentIndex = allImageUrls.indexOf(att.url);
+            const urlsParam = encodeURIComponent(JSON.stringify(allImageUrls));
+            return (
+              <Link
+                key={att.id ?? index}
+                href={`/dashboard/communication/photo?urls=${urlsParam}&index=${currentIndex}`}
+                className="block cursor-pointer overflow-hidden rounded-lg ring-1 ring-black/10 transition hover:ring-black/20 dark:ring-white/15 dark:hover:ring-white/30"
+              >
+                <Image
+                  src={att.url}
+                  alt="attachment"
+                  width={96}
+                  height={96}
+                  className="h-24 w-24 object-cover"
+                />
+              </Link>
+            );
+          })}
+        </div>
+      )}
 
+      {nonImages.map((att, index) => {
         if (att.attachmentType === "audio") {
           return (
             <div key={att.id ?? index} className="w-full">

@@ -441,64 +441,98 @@ export default function CompanyMessageBox({
                     )}
                   >
                     {/* Attachments */}
-                    {msg?.attachments &&
-                      msg?.attachments.length > 0 &&
-                      msg?.attachments.map((attachment: any) => {
-                        const currentImageIndex = allImageUrls?.indexOf(
-                          attachment.fileUrl,
-                        );
-                        return (
-                          <div
-                            key={attachment.fileUrl}
-                            className={cn(
-                              "flex items-center gap-2",
-                              isOwn ? "flex-row-reverse" : "flex-row",
-                            )}
-                          >
-                            {attachment.fileType?.includes("image") ? (
-                              <Link
-                                href={`/dashboard/communication/photo?urls=${encodeURIComponent(
-                                  JSON.stringify(allImageUrls),
-                                )}&index=${currentImageIndex}`}
-                              >
-                                <Image
-                                  src={attachment.fileUrl}
-                                  alt=""
-                                  width={200}
-                                  height={200}
-                                  className="rounded-md border cursor-pointer"
-                                />
-                              </Link>
-                            ) : attachment.fileType?.includes("video") ? (
-                              <video
-                                src={attachment.fileUrl}
-                                className="h-40 w-60 rounded-md border cursor-pointer"
-                                controls
-                              />
-                            ) : (
-                              <div className="rounded-md bg-[#006D77] px-4 py-2 text-white">
-                                <p className="text-sm">
-                                  {attachment?.fileName}
-                                </p>
-                                <p className="text-xs">
-                                  {attachment?.fileSize && attachment?.fileSize}
-                                </p>
-                              </div>
-                            )}
+                    {msg?.attachments && msg?.attachments.length > 0 && (
+                      <>
+                        {/* Image attachments — compact wrapping grid, matching the client inbox */}
+                        {(() => {
+                          const images = msg.attachments.filter((a: any) =>
+                            a.fileType?.includes("image"),
+                          );
+                          if (images.length === 0) return null;
+                          return (
+                            <div className="grid w-fit grid-cols-3 gap-1.5">
+                              {images.map((attachment: any) => {
+                                const currentImageIndex = allImageUrls?.indexOf(
+                                  attachment.fileUrl,
+                                );
+                                return (
+                                  <div
+                                    key={attachment.fileUrl}
+                                    className="relative"
+                                  >
+                                    <Link
+                                      href={`/dashboard/communication/photo?urls=${encodeURIComponent(
+                                        JSON.stringify(allImageUrls),
+                                      )}&index=${currentImageIndex}`}
+                                      className="block overflow-hidden rounded-lg ring-1 ring-black/10 transition hover:ring-black/20 dark:ring-white/15 dark:hover:ring-white/30"
+                                    >
+                                      <Image
+                                        src={attachment.fileUrl}
+                                        alt=""
+                                        width={96}
+                                        height={96}
+                                        className="h-24 w-24 object-cover"
+                                      />
+                                    </Link>
+                                    <button
+                                      onClick={() =>
+                                        handleDownload(attachment?.fileUrl)
+                                      }
+                                      aria-label="Download attachment"
+                                      className="absolute right-1 top-1 rounded-full bg-black/50 p-1 text-white"
+                                    >
+                                      <CloudDownload size={14} />
+                                    </button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          );
+                        })()}
 
-                            <button
-                              onClick={() =>
-                                handleDownload(attachment?.fileUrl)
-                              }
+                        {/* Video and file attachments — one per row */}
+                        {msg.attachments
+                          .filter((a: any) => !a.fileType?.includes("image"))
+                          .map((attachment: any) => (
+                            <div
+                              key={attachment.fileUrl}
+                              className={cn(
+                                "flex items-center gap-2",
+                                isOwn ? "flex-row-reverse" : "flex-row",
+                              )}
                             >
-                              <CloudDownload
-                                size={22}
-                                className="cursor-pointer text-gray-400"
-                              />
-                            </button>
-                          </div>
-                        );
-                      })}
+                              {attachment.fileType?.includes("video") ? (
+                                <video
+                                  src={attachment.fileUrl}
+                                  className="h-40 w-60 rounded-md border cursor-pointer"
+                                  controls
+                                />
+                              ) : (
+                                <div className="rounded-md bg-[#006D77] px-4 py-2 text-white">
+                                  <p className="text-sm">
+                                    {attachment?.fileName}
+                                  </p>
+                                  <p className="text-xs">
+                                    {attachment?.fileSize &&
+                                      attachment?.fileSize}
+                                  </p>
+                                </div>
+                              )}
+
+                              <button
+                                onClick={() =>
+                                  handleDownload(attachment?.fileUrl)
+                                }
+                              >
+                                <CloudDownload
+                                  size={22}
+                                  className="cursor-pointer text-gray-400"
+                                />
+                              </button>
+                            </div>
+                          ))}
+                      </>
+                    )}
 
                     {/* Request Estimate */}
                     {msg?.requestEstimate && (
@@ -750,7 +784,7 @@ export default function CompanyMessageBox({
           placeholder="Type message..."
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          className="flex-1 rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#006D77]"
+          className="h-10 flex-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#006D77] focus:border-transparent"
         />
         <button disabled={pending} type="submit">
           <SendHorizontal className="text-[#006D77]" />
