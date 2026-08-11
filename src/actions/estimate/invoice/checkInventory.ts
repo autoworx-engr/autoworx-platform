@@ -5,6 +5,7 @@ import { getProductWithQuantity } from "@/lib/getProductWithQuantity";
 import { InvoiceType, Material } from "@prisma/client";
 
 export type InventoryShortage = {
+  productId: number;
   name: string;
   required: number;
   available: number;
@@ -89,6 +90,7 @@ export async function checkInventoryShortages({
 
         if (available + alreadyTaken - product.quantity <= 0) {
           shortages.push({
+            productId: inventoryProduct.id,
             name: inventoryProduct.name,
             required: product.quantity,
             available,
@@ -96,6 +98,7 @@ export async function checkInventoryShortages({
         }
       } else if (product.quantity > available) {
         shortages.push({
+          productId: inventoryProduct.id,
           name: inventoryProduct.name,
           required: product.quantity,
           available,
