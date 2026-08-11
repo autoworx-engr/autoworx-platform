@@ -147,9 +147,15 @@ export async function PATCH(
       );
     }
 
-    const result = await authorizeInvoice(id, authorizedName, url, invoiceType);
+    const result = await authorizeInvoice(
+      id,
+      authorizedName,
+      url,
+      invoiceType,
+      body.allowInsufficientInventory === true,
+    );
 
-    if (result?.type === "error") {
+    if (result?.type === "error" || result?.type === "globalError") {
       return NextResponse.json(
         { success: false, message: (result as any).message },
         { status: 500 },

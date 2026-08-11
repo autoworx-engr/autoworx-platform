@@ -99,6 +99,7 @@ export async function updateInvoice(
   data: UpdateEstimateInput,
   fromPayment: boolean = false,
   retryCount: number = 0,
+  allowInsufficientInventory: boolean = false,
 ): Promise<ServerAction | TErrorHandler> {
   const MAX_RETRIES = 2;
   try {
@@ -134,6 +135,7 @@ export async function updateInvoice(
             materials,
             companyId,
             invoiceId: invoice.id,
+            allowInsufficientInventory,
           });
         } else if (
           invoice?.type === "Estimate" &&
@@ -144,6 +146,7 @@ export async function updateInvoice(
             productsWithQuantity,
             companyId,
             invoiceId: invoice.id,
+            allowInsufficientInventory,
           });
         }
 
@@ -733,7 +736,12 @@ export async function updateInvoice(
             setTimeout(resolve, Math.pow(2, retryCount) * 1000),
           );
 
-          return updateInvoice(data, fromPayment, retryCount + 1);
+          return updateInvoice(
+            data,
+            fromPayment,
+            retryCount + 1,
+            allowInsufficientInventory,
+          );
         }
 
         console.log({
