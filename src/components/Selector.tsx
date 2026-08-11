@@ -24,6 +24,8 @@ interface SelectorProps<T> {
   newButton?: React.ReactNode;
   displayList: (item: T) => JSX.Element;
   onSearch?: (search: string) => T[];
+  /** Every search-box change, including clearing it. */
+  onSearchChange?: (search: string) => void;
   onSelect?: (item: T) => void;
   openState?: [boolean, React.Dispatch<React.SetStateAction<boolean>>];
   selectedItem?: T | null | undefined;
@@ -50,6 +52,7 @@ export default function Selector<T>({
   newButton,
   displayList,
   onSearch,
+  onSearchChange,
   onSelect,
   openState,
   footer,
@@ -132,6 +135,7 @@ export default function Selector<T>({
     const searchQuery = e.target.value;
     setSearchTerm(searchQuery);
     setFilteredItems(applySearch(searchQuery));
+    if (onSearchChange) onSearchChange(searchQuery);
   }
 
   function handleSelectItem(item: T) {

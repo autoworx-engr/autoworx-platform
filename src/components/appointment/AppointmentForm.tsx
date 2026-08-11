@@ -61,6 +61,8 @@ export default function AppointmentForm({
   vehicle,
   setVehicle,
   vehicleOpenDropdown,
+  serviceCategoryOpen,
+  setServiceCategoryOpen,
   setVehicleOpenDropdown,
   serviceCategoryId,
   setServiceCategoryId,
@@ -216,6 +218,8 @@ export default function AppointmentForm({
           <SelectAppointmentServiceCategory
             value={serviceCategoryId}
             setValue={setServiceCategoryId}
+            openDropdown={serviceCategoryOpen}
+            setOpenDropdown={setServiceCategoryOpen}
           />
 
           <div className="w-full">

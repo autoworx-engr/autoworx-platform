@@ -175,6 +175,7 @@ export function useAppointmentFormState({
   const [draftOpen, setDraftOpen] = useState(false);
   const [clientOpenDropdown, setClientOpenDropdown] = useState(false);
   const [vehicleOpenDropdown, setVehicleOpenDropdown] = useState(false);
+  const [serviceCategoryOpen, setServiceCategoryOpen] = useState(false);
   const [openConfirmation, setOpenConfirmation] = useState(false);
   const [openReminder, setOpenReminder] = useState(false);
   const [formChanged, setFormChanged] = useState(false);
@@ -495,61 +496,50 @@ export function useAppointmentFormState({
     originalValues,
   ]);
 
+  // Only one picker may be open at a time. Tracking which flag turned on last
+  // and closing the rest scales to new pickers, unlike an if/else chain that
+  // needed a branch per pair.
+  const openFlags = useMemo(
+    () => ({
+      client: clientOpenDropdown,
+      vehicle: vehicleOpenDropdown,
+      draft: draftOpen,
+      confirmation: openConfirmation,
+      reminder: openReminder,
+      serviceCategory: serviceCategoryOpen,
+    }),
+    [
+      clientOpenDropdown,
+      vehicleOpenDropdown,
+      draftOpen,
+      openConfirmation,
+      openReminder,
+      serviceCategoryOpen,
+    ],
+  );
+
+  const closers = useRef({
+    client: setClientOpenDropdown,
+    vehicle: setVehicleOpenDropdown,
+    draft: setDraftOpen,
+    confirmation: setOpenConfirmation,
+    reminder: setOpenReminder,
+    serviceCategory: setServiceCategoryOpen,
+  });
+  const prevOpenFlags = useRef(openFlags);
+
   useEffect(() => {
-    if (
-      clientOpenDropdown &&
-      (vehicleOpenDropdown || draftOpen || openConfirmation || openReminder)
-    ) {
-      setVehicleOpenDropdown(false);
-      setDraftOpen(false);
-      setOpenConfirmation(false);
-      setOpenReminder(false);
-    } else if (
-      vehicleOpenDropdown &&
-      (clientOpenDropdown || draftOpen || openConfirmation || openReminder)
-    ) {
-      setClientOpenDropdown(false);
-      setDraftOpen(false);
-      setOpenConfirmation(false);
-      setOpenReminder(false);
-    } else if (
-      draftOpen &&
-      (clientOpenDropdown ||
-        vehicleOpenDropdown ||
-        openConfirmation ||
-        openReminder)
-    ) {
-      setClientOpenDropdown(false);
-      setVehicleOpenDropdown(false);
-      setOpenConfirmation(false);
-      setOpenReminder(false);
-    } else if (
-      openConfirmation &&
-      (clientOpenDropdown || vehicleOpenDropdown || draftOpen || openReminder)
-    ) {
-      setClientOpenDropdown(false);
-      setVehicleOpenDropdown(false);
-      setDraftOpen(false);
-      setOpenReminder(false);
-    } else if (
-      openReminder &&
-      (clientOpenDropdown ||
-        vehicleOpenDropdown ||
-        draftOpen ||
-        openConfirmation)
-    ) {
-      setClientOpenDropdown(false);
-      setVehicleOpenDropdown(false);
-      setDraftOpen(false);
-      setOpenConfirmation(false);
-    }
-  }, [
-    draftOpen,
-    clientOpenDropdown,
-    vehicleOpenDropdown,
-    openConfirmation,
-    openReminder,
-  ]);
+    const keys = Object.keys(openFlags) as (keyof typeof openFlags)[];
+    const justOpened = keys.find(
+      (key) => openFlags[key] && !prevOpenFlags.current[key],
+    );
+    prevOpenFlags.current = openFlags;
+    if (!justOpened) return;
+
+    keys.forEach((key) => {
+      if (key !== justOpened && openFlags[key]) closers.current[key](false);
+    });
+  }, [openFlags]);
 
   useEffect(() => {
     if (!draftOpen) setDraftSearch("");
@@ -888,6 +878,8 @@ export function useAppointmentFormState({
     setClientOpenDropdown,
     vehicleOpenDropdown,
     setVehicleOpenDropdown,
+    serviceCategoryOpen,
+    setServiceCategoryOpen,
     openConfirmation,
     setOpenConfirmation,
     openReminder,
