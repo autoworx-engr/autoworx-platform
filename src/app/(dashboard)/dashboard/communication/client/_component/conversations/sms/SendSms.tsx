@@ -12,11 +12,12 @@ import { CirclePause, Mic, MicOff, SendHorizontal } from "lucide-react";
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import useSmsSendMutation from "../../../_hooks/useSmsSendMutation";
+import { useMessageDraft } from "../../../../_hooks/useMessageDraft";
 import AttachmentInput from "../AttachmentInput";
 import SmartReplyBar from "./SmartReply";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import UpgradePlanBanner from "@/components/UpgradePlanBanner";
-import toast from "react-hot-toast";
+import { ATTACHMENT_ACCEPT, mergeNewAttachments } from "../../../_utils";
 
 // Helper function to format attachment message
 const formatAttachmentMessage = (files: File[]) => {
@@ -58,7 +59,15 @@ export default function SendSms({
   const { data: entitlements } = useServerGet(getEntitlements, companyId);
   const currentUser = useGetCurrentUser();
   const [files, setFiles] = useState<File[]>([]);
-  const [messageInput, setMessageInput] = useState("");
+  const {
+    draftText: messageInput,
+    setDraftText: setMessageInput,
+    clearDraft,
+  } = useMessageDraft({
+    section: "client",
+    channel: "sms",
+    targetId: clientId,
+  });
   const fileRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -189,7 +198,7 @@ export default function SendSms({
       });
     }
 
-    setMessageInput("");
+    clearDraft();
     setFiles([]);
     setTimeout(() => adjustTextareaHeight(), 0);
 
@@ -254,41 +263,23 @@ export default function SendSms({
           e.preventDefault();
           const dropped = Array.from(e.dataTransfer.files || []);
           if (!canUseSms) return;
-          if (dropped.length) setFiles((prev) => [...prev, ...dropped]);
+          if (dropped.length) {
+            setFiles((prev) => mergeNewAttachments(prev, dropped));
+          }
         }}
       >
         {/* hidden file input */}
         <input
           onChange={(e) => {
             const picked = Array.from(e?.target?.files || []);
-
             if (picked.length) {
-              setFiles((prev) => {
-                const duplicates: string[] = [];
-                const newFiles = picked.filter((file) => {
-                  const exists = prev.some(
-                    (f) =>
-                      f.name === file.name &&
-                      f.size === file.size &&
-                      f.lastModified === file.lastModified,
-                  );
-
-                  if (exists) duplicates.push(file.name);
-                  return !exists;
-                });
-
-                if (duplicates.length) {
-                  toast.error(`Already uploaded: ${duplicates.join(", ")}`);
-                }
-
-                return [...prev, ...newFiles];
-              });
+              setFiles((prev) => mergeNewAttachments(prev, picked));
             }
-
             e.currentTarget.value = "";
           }}
           multiple
           type="file"
+          accept={ATTACHMENT_ACCEPT}
           className="hidden"
           ref={fileRef}
           aria-hidden

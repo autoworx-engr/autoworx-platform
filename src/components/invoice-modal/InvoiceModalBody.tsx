@@ -830,18 +830,24 @@ export default function InvoiceModalBody({
                     <h2 className="font-bold text-slate-500">
                       Vehicle Details:
                     </h2>
-                    <div className="flex flex-row flex-wrap gap-2">
-                      <p>{vehicle?.year || ""}</p>
-                      <p>{vehicle?.make}</p>
-                      <p>{vehicle?.model}</p>
-                      {vehicle?.other && <p>{vehicle?.other}</p>}
+                    <div>
+                      <p>
+                        {[
+                          vehicle?.year,
+                          vehicle?.make,
+                          vehicle?.model,
+                          vehicle?.other,
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
+                      </p>
                     </div>
-                    <p>{vehicle?.submodel}</p>
-                    <p>{vehicle?.type}</p>
+                    {vehicle?.submodel && <p>{vehicle.submodel}</p>}
+                    {vehicle?.type && <p>{vehicle.type}</p>}
                     {vehicle?.vin && (
                       <>
                         <p>Vin Number</p>
-                        <p>{vehicle?.vin}</p>
+                        <p>{vehicle.vin}</p>
                       </>
                     )}
                   </div>
@@ -971,7 +977,7 @@ export default function InvoiceModalBody({
               {(
                 [
                   ["subtotal", invoice.subtotal],
-                  ["discount", invoice.discount],
+                  ["total discount", invoice.discount],
                   ["tax", invoice.tax],
                   // ["vehicle extra cost", invoice.vehicleExtraCost],
                   ["shop supplies", invoice?.serviceFee],

@@ -24,6 +24,8 @@ const TemplateAttachmentTab = () => {
         <TasksInput tasks={tasks} />
       </div>
 
+      <h2 className="mb-3 font-bold">Internal Job Notes</h2>
+
       <NotesTextArea
         value={internalNotes}
         onChange={setInternalNotes}
@@ -32,7 +34,7 @@ const TemplateAttachmentTab = () => {
       />
 
       <div>
-        <h2 className="mb-3 font-bold">Customer</h2>
+        <h2 className="mb-3 font-bold">Customer Notes</h2>
         <NotesTextArea
           value={customerNotes}
           onChange={setCustomerNotes}

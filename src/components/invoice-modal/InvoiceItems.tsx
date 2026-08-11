@@ -40,16 +40,18 @@ export function InvoiceItems({ items, isPrinting = false }: InvoiceItemsProps) {
     const laborCost = item.labor?.charge
       ? parseFloat(item.labor?.charge.toString()) * Number(item.labor?.hours)
       : 0;
-    const totalDiscount =
-      item.materials.reduce((acc, material) => {
-        return (
-          acc +
-          (material && material.discount
-            ? parseFloat(material.discount.toString())
-            : 0)
-        );
-      }, 0) +
-      (item.labor?.discount ? parseFloat(item.labor?.discount.toString()) : 0);
+    const materialDiscount = item.materials.reduce((acc, material) => {
+      return (
+        acc +
+        (material && material.discount
+          ? parseFloat(material.discount.toString())
+          : 0)
+      );
+    }, 0);
+    const laborDiscount = item.labor?.discount
+      ? parseFloat(item.labor?.discount.toString())
+      : 0;
+    const totalDiscount = materialDiscount + laborDiscount;
     const serviceTotal = materialCost + laborCost - totalDiscount;
     const isLaborOnly = !item.service;
 
@@ -82,38 +84,54 @@ export function InvoiceItems({ items, isPrinting = false }: InvoiceItemsProps) {
               <div className="mt-2 text-primary">
                 {item.materials.map((material, index) => {
                   if (!material) return null;
+                  const materialLineDiscount = material.discount
+                    ? parseFloat(material.discount.toString())
+                    : 0;
                   return (
-                    <div key={index} className="flex justify-between">
-                      <p>{material.name}</p>
-                      <p>
-                        {formatCurrency(
-                          material.sell
-                            ? parseFloat(material.sell.toString()) *
-                                Number(material.quantity ?? 0)
-                            : 0,
-                        )}
-                      </p>
+                    <div key={index} className={index > 0 ? "mt-2" : ""}>
+                      <div className="flex justify-between">
+                        <p>{material.name}</p>
+                        <p>
+                          {formatCurrency(
+                            material.sell
+                              ? parseFloat(material.sell.toString()) *
+                                  Number(material.quantity ?? 0)
+                              : 0,
+                          )}
+                        </p>
+                      </div>
+                      {material.notes && (
+                        <p className="my-1 whitespace-pre-wrap rounded-lg border border-slate-100 bg-slate-50 px-2 py-1.5 text-sm text-slate-500">
+                          {material.notes}
+                        </p>
+                      )}
+                      {materialLineDiscount > 0 && (
+                        <div className="flex justify-between text-sm text-slate-500">
+                          <p>Discount</p>
+                          <p>{formatCurrency(materialLineDiscount)}</p>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
               </div>
               {item.labor && (
-                <div className="mt-2">
+                <div className="mt-2 border-t border-slate-100 pt-2">
                   <div className="flex justify-between text-primary">
                     <p>Labor Cost</p>
                     <p>{formatCurrency(laborCost)}</p>
                   </div>
                   {item.labor.notes && (
-                    <p className="text-sm text-slate-500">{item.labor.notes}</p>
+                    <p className="my-1 whitespace-pre-wrap rounded-lg border border-slate-100 bg-slate-50 px-2 py-1.5 text-sm text-slate-500">
+                      {item.labor.notes}
+                    </p>
                   )}
-                </div>
-              )}
-              {totalDiscount > 0 && (
-                <div>
-                  <div className="flex justify-between text-primary">
-                    <p>Discount</p>
-                    <p>{formatCurrency(totalDiscount)}</p>
-                  </div>
+                  {laborDiscount > 0 && (
+                    <div className="flex justify-between text-sm text-slate-500">
+                      <p>Discount</p>
+                      <p>{formatCurrency(laborDiscount)}</p>
+                    </div>
+                  )}
                 </div>
               )}
             </>
@@ -148,12 +166,14 @@ export function InvoiceItems({ items, isPrinting = false }: InvoiceItemsProps) {
               {item.serviceDesc || item.service!.description}
             </p>
             <div className="mt-2 text-primary">
-              <div>
-                {item.materials.map((material, index) => {
-                  if (!material) return null;
-
-                  return (
-                    <div key={index} className="flex justify-between">
+              {item.materials.map((material, index) => {
+                if (!material) return null;
+                const materialLineDiscount = material.discount
+                  ? parseFloat(material.discount.toString())
+                  : 0;
+                return (
+                  <div key={index} className={index > 0 ? "mt-2" : ""}>
+                    <div className="flex justify-between">
                       <p>{material.name}</p>
                       <p>
                         {formatCurrency(
@@ -164,12 +184,23 @@ export function InvoiceItems({ items, isPrinting = false }: InvoiceItemsProps) {
                         )}
                       </p>
                     </div>
-                  );
-                })}
-              </div>
+                    {material.notes && (
+                      <p className="my-1 whitespace-pre-wrap rounded-lg border border-slate-100 bg-slate-50 px-2 py-1.5 text-sm text-slate-500">
+                        {material.notes}
+                      </p>
+                    )}
+                    {materialLineDiscount > 0 && (
+                      <div className="flex justify-between text-sm text-slate-500">
+                        <p>Discount</p>
+                        <p>{formatCurrency(materialLineDiscount)}</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
-            <div className="mt-2 ">
+            <div className="mt-2 border-t border-slate-100 pt-2">
               <div className="flex justify-between text-primary">
                 <p>{item.labor ? item.labor.name : "Labor"}</p>
                 <p>
@@ -181,13 +212,17 @@ export function InvoiceItems({ items, isPrinting = false }: InvoiceItemsProps) {
                   )}
                 </p>
               </div>
-              <p>{item.labor?.notes}</p>
-            </div>
-            <div>
-              <div className="flex justify-between text-primary">
-                <p>Discount</p>
-                <p>{formatCurrency(totalDiscount)}</p>
-              </div>
+              {item.labor?.notes && (
+                <p className="my-1 whitespace-pre-wrap rounded-lg border border-slate-100 bg-slate-50 px-2 py-1.5 text-sm text-slate-500">
+                  {item.labor.notes}
+                </p>
+              )}
+              {laborDiscount > 0 && (
+                <div className="flex justify-between text-sm text-slate-500">
+                  <p>Discount</p>
+                  <p>{formatCurrency(laborDiscount)}</p>
+                </div>
+              )}
             </div>
           </>
         )}

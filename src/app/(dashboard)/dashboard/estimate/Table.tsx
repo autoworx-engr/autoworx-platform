@@ -276,7 +276,11 @@ export default function Table({
                           onConvert={() => handleConvertedInvoice(data.id)}
                         />
                         <Link
-                          href={`/dashboard/estimate/edit/${data.id}?clientId=${data.clientId}`}
+                          href={
+                            data.clientId != null
+                              ? `/dashboard/estimate/edit/${data.id}?clientId=${data.clientId}`
+                              : `/dashboard/estimate/edit/${data.id}`
+                          }
                           className="text-2xl text-blue-600"
                           onClick={() => setActionType("edit")}
                         >

@@ -27,6 +27,7 @@ import { ChevronDown } from "lucide-react";
 import { useCompanyFeaturePermissionStore } from "@/stores/companyFeaturePermissionStore";
 import { companyPermissionModule } from "@/constants/company-permission";
 import { isCallLive } from "@/lib/twilio/callDisplay";
+import { useDraftPreview } from "../../_hooks/useDraftPreview";
 
 type TClient = Client & {
   conversationsTrack?: ClientConversationTrack | null;
@@ -190,6 +191,11 @@ export default function ClientItem({
     }
   };
 
+  const draftEmail = useDraftPreview("client", "email", client?.id);
+  const draftSms = useDraftPreview("client", "sms", client?.id);
+  const draftMessenger = useDraftPreview("client", "messenger", client?.id);
+  const draftInstagram = useDraftPreview("client", "instagram", client?.id);
+
   const conversationsTrack = client?.conversationsTrack as
     | (NonNullable<typeof client>["conversationsTrack"] & {
         messengerUnReadCount?: number;
@@ -316,73 +322,143 @@ export default function ClientItem({
         )}
 
         {/* Email preview */}
-        {!callPreview && client?.conversationsTrack?.emailLastMessage && (
-          <p
-            onClick={(e) => {
-              e.stopPropagation();
-              handleRedirect("EMAIL");
-            }}
-            className={cn(
-              "mt-2 line-clamp-1 text-xs cursor-pointer",
-              selected ? "text-white/95" : "text-zinc-600 dark:text-zinc-300",
-              client?.conversationsTrack?.emailIsRead
-                ? "font-normal"
-                : "font-semibold",
-            )}
-            title={client?.conversationsTrack?.emailLastMessage}
-          >
-            {client?.conversationsTrack?.lastEmailBy === "Company"
-              ? "You (Email)"
-              : "Client (Email)"}{" "}
-            — {client?.conversationsTrack?.emailLastMessage}
-          </p>
-        )}
+        {!callPreview &&
+          (draftEmail || client?.conversationsTrack?.emailLastMessage) && (
+            <p
+              onClick={(e) => {
+                e.stopPropagation();
+                handleRedirect("EMAIL");
+              }}
+              className={cn(
+                "mt-2 line-clamp-1 text-xs cursor-pointer",
+                selected ? "text-white/95" : "text-zinc-600 dark:text-zinc-300",
+                draftEmail || client?.conversationsTrack?.emailIsRead
+                  ? "font-normal"
+                  : "font-semibold",
+              )}
+              title={
+                draftEmail || client?.conversationsTrack?.emailLastMessage || ""
+              }
+            >
+              {draftEmail ? (
+                <span className="italic text-amber-600 dark:text-amber-500">
+                  Draft: {draftEmail}
+                </span>
+              ) : (
+                <>
+                  {client?.conversationsTrack?.lastEmailBy === "Company"
+                    ? "You (Email)"
+                    : "Client (Email)"}{" "}
+                  — {client?.conversationsTrack?.emailLastMessage}
+                </>
+              )}
+            </p>
+          )}
 
         {/* SMS preview */}
-        {!callPreview && client?.conversationsTrack?.smsLastMessage && (
-          <p
-            onClick={(e) => {
-              e.stopPropagation();
-              handleRedirect("SMS");
-            }}
-            className={cn(
-              "mt-1.5 line-clamp-1 text-xs cursor-pointer",
-              selected ? "text-white/95" : "text-zinc-600 dark:text-zinc-300",
-              client?.conversationsTrack?.smsIsRead
-                ? "font-normal"
-                : "font-semibold",
-            )}
-            title={client?.conversationsTrack?.smsLastMessage}
-          >
-            {client?.conversationsTrack?.lastMessageBy === "Company"
-              ? "You (SMS)"
-              : "Client (SMS)"}{" "}
-            — {client?.conversationsTrack?.smsLastMessage}
-          </p>
-        )}
+        {!callPreview &&
+          (draftSms || client?.conversationsTrack?.smsLastMessage) && (
+            <p
+              onClick={(e) => {
+                e.stopPropagation();
+                handleRedirect("SMS");
+              }}
+              className={cn(
+                "mt-1.5 line-clamp-1 text-xs cursor-pointer",
+                selected ? "text-white/95" : "text-zinc-600 dark:text-zinc-300",
+                draftSms || client?.conversationsTrack?.smsIsRead
+                  ? "font-normal"
+                  : "font-semibold",
+              )}
+              title={
+                draftSms || client?.conversationsTrack?.smsLastMessage || ""
+              }
+            >
+              {draftSms ? (
+                <span className="italic text-amber-600 dark:text-amber-500">
+                  Draft: {draftSms}
+                </span>
+              ) : (
+                <>
+                  {client?.conversationsTrack?.lastMessageBy === "Company"
+                    ? "You (SMS)"
+                    : "Client (SMS)"}{" "}
+                  — {client?.conversationsTrack?.smsLastMessage}
+                </>
+              )}
+            </p>
+          )}
 
         {/* Messenger preview */}
-        {!callPreview && conversationsTrack?.messengerLastMessage && (
-          <p
-            onClick={(e) => {
-              e.stopPropagation();
-              handleRedirect("MESSENGER");
-            }}
-            className={cn(
-              "mt-1.5 line-clamp-1 text-xs cursor-pointer",
-              selected ? "text-white/95" : "text-zinc-600 dark:text-zinc-300",
-              conversationsTrack?.messengerIsRead
-                ? "font-normal"
-                : "font-semibold",
-            )}
-            title={conversationsTrack?.messengerLastMessage}
-          >
-            {conversationsTrack?.messengerLastBy === "Company"
-              ? "You (Messenger)"
-              : "Client (Messenger)"}{" "}
-            — {conversationsTrack?.messengerLastMessage}
-          </p>
-        )}
+        {!callPreview &&
+          (draftMessenger || conversationsTrack?.messengerLastMessage) && (
+            <p
+              onClick={(e) => {
+                e.stopPropagation();
+                handleRedirect("MESSENGER");
+              }}
+              className={cn(
+                "mt-1.5 line-clamp-1 text-xs cursor-pointer",
+                selected ? "text-white/95" : "text-zinc-600 dark:text-zinc-300",
+                draftMessenger || conversationsTrack?.messengerIsRead
+                  ? "font-normal"
+                  : "font-semibold",
+              )}
+              title={
+                draftMessenger || conversationsTrack?.messengerLastMessage || ""
+              }
+            >
+              {draftMessenger ? (
+                <span className="italic text-amber-600 dark:text-amber-500">
+                  Draft: {draftMessenger}
+                </span>
+              ) : (
+                <>
+                  {conversationsTrack?.messengerLastBy === "Company"
+                    ? "You (Messenger)"
+                    : "Client (Messenger)"}{" "}
+                  — {conversationsTrack?.messengerLastMessage}
+                </>
+              )}
+            </p>
+          )}
+
+        {/* Instagram preview */}
+        {!callPreview &&
+          (draftInstagram ||
+            client?.conversationsTrack?.instagramLastMessage) && (
+            <p
+              onClick={(e) => {
+                e.stopPropagation();
+                handleRedirect("INSTAGRAM");
+              }}
+              className={cn(
+                "mt-1.5 line-clamp-1 text-xs cursor-pointer",
+                selected ? "text-white/95" : "text-zinc-600 dark:text-zinc-300",
+                draftInstagram || client?.conversationsTrack?.instagramIsRead
+                  ? "font-normal"
+                  : "font-semibold",
+              )}
+              title={
+                draftInstagram ||
+                client?.conversationsTrack?.instagramLastMessage ||
+                ""
+              }
+            >
+              {draftInstagram ? (
+                <span className="italic text-amber-600 dark:text-amber-500">
+                  Draft: {draftInstagram}
+                </span>
+              ) : (
+                <>
+                  {client?.conversationsTrack?.instagramLastBy === "Company"
+                    ? "You (Instagram)"
+                    : "Client (Instagram)"}{" "}
+                  — {client?.conversationsTrack?.instagramLastMessage}
+                </>
+              )}
+            </p>
+          )}
       </div>
 
       {/* notification indicator */}

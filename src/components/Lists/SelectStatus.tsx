@@ -162,7 +162,7 @@ export function SelectStatus({
                   /* Logic remains untouched */
                   if (statusItem.title === "Delivered" && due > 0)
                     return errorToast(
-                      "You cannot update this order to Delivered until all dues are cleared.",
+                      "Clear all dues before changing this invoice as Delivered.",
                     );
                   if (
                     statusItem.title === "Delivered" &&

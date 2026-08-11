@@ -2,6 +2,7 @@ import Avatar from "@/components/Avatar";
 import { cn } from "@/lib/cn";
 import { Group, User } from "@prisma/client";
 import { Users } from "lucide-react";
+import { useDraftPreview } from "../../_hooks/useDraftPreview";
 
 type TGroup = Group & {
   users: User[];
@@ -32,6 +33,7 @@ export function GroupListItem({
   const unreadLabel = unreadCount > 9 ? "9+" : String(unreadCount);
   const isUnread = unreadCount > 0 && !isSelectedGroup;
   const latestMessage = group.latestMessage;
+  const draftText = useDraftPreview("internal", "group", group.id);
 
   return (
     <button
@@ -115,14 +117,18 @@ export function GroupListItem({
         <p
           className={cn(
             "mt-0.5 line-clamp-1 text-xs",
-            isSelectedGroup
-              ? "text-white/80"
-              : isUnread
-                ? "font-semibold text-zinc-700 dark:text-zinc-200"
-                : "text-zinc-500 dark:text-zinc-400",
+            draftText
+              ? "italic text-amber-600 dark:text-amber-500"
+              : isSelectedGroup
+                ? "text-white/80"
+                : isUnread
+                  ? "font-semibold text-zinc-700 dark:text-zinc-200"
+                  : "text-zinc-500 dark:text-zinc-400",
           )}
         >
-          {latestMessage ? (
+          {draftText ? (
+            `Draft: ${draftText}`
+          ) : latestMessage ? (
             <>
               {latestMessage.senderName ?? "You"}: {latestMessage.message}
             </>

@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "mcp__plugin_context-mode_context-mode__ctx_execute_file",
-      "Bash(npx tsc:*)",
-      "Bash(find /mnt/E430B43730B41312/webdev/projects/autoworx-platform/src -type f \\\\\\( -name \"*.tsx\" -o -name \"*.ts\" \\\\\\) -exec grep -l \"tip\" {} \\\\;)"
-    ]
-  }
-}

@@ -3,9 +3,11 @@ import { SendHorizontal } from "lucide-react";
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import useMessengerSendMutation from "../../../_hooks/useMessengerSendMutation";
+import { useMessageDraft } from "../../../../_hooks/useMessageDraft";
 import AttachmentInput from "../AttachmentInput";
 import { useClientCommunicationStore } from "@/stores/client-store";
 import { errorToast } from "@/lib/toast";
+import { ATTACHMENT_ACCEPT, mergeNewAttachments } from "../../../_utils";
 
 type TProps = { clientId: number };
 
@@ -14,7 +16,15 @@ export default function SendMessenger({ clientId }: TProps) {
   const { clientConversationTrack, setClientConversationTrack } =
     useClientCommunicationStore();
 
-  const [messageInput, setMessageInput] = useState("");
+  const {
+    draftText: messageInput,
+    setDraftText: setMessageInput,
+    clearDraft,
+  } = useMessageDraft({
+    section: "client",
+    channel: "messenger",
+    targetId: clientId,
+  });
   const [files, setFiles] = useState<File[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -77,7 +87,7 @@ export default function SendMessenger({ clientId }: TProps) {
       });
     }
 
-    setMessageInput("");
+    clearDraft();
     setFiles([]);
     setTimeout(adjustHeight, 0);
 
@@ -107,11 +117,14 @@ export default function SendMessenger({ clientId }: TProps) {
         <input
           type="file"
           multiple
+          accept={ATTACHMENT_ACCEPT}
           className="hidden"
           ref={fileRef}
           onChange={(e) => {
             const picked = Array.from(e.target.files || []);
-            if (picked.length) setFiles((prev) => [...prev, ...picked]);
+            if (picked.length) {
+              setFiles((prev) => mergeNewAttachments(prev, picked));
+            }
             e.currentTarget.value = "";
           }}
         />

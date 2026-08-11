@@ -103,7 +103,7 @@ export default function CannedServices({
               paramKey="serviceSearch"
             />
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <CannedFilterBySelection
               selectedItem={selectedCategory}
               items={uniqueCategories}
@@ -116,7 +116,7 @@ export default function CannedServices({
             <NewService
               newButton={
                 <button
-                  className="rounded-lg bg-gradient-to-r from-primary to-[#5a66ee] w-full min-w-32 md:w-36 p-2 text-white font-medium shadow-indigo-500/30
+                  className="rounded-lg bg-gradient-to-r from-primary to-[#5a66ee] w-full md:min-w-32 md:w-36 p-2 text-white font-medium shadow-indigo-500/30
                 hover:shadow-xl hover:shadow-indigo-500/40
                 hover:-translate-y-0.5 hover:scale-[1.02]
                 active:translate-y-0 active:scale-100
@@ -172,7 +172,7 @@ export default function CannedServices({
         </Table>
       </div>
       {/* Mobile View */}
-      <div className="grid h-full gap-4 pb-4 md:hidden mt-4">
+      <div className="grid grid-cols-1 h-full gap-4 pb-4 md:hidden mt-4">
         {services.length > 0 ? (
           services.map((service, i) => (
             <CannedServiceItem

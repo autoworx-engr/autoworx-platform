@@ -3,9 +3,11 @@
 import ResponsiveEmployeeCard from "@/components/mobile-responsive/employee/ResponsiveEmployeeCard";
 import { Client, Fleet, Source, Tag } from "@prisma/client";
 import { Pagination } from "antd";
-import { Search } from "lucide-react";
+import { Search, SquarePen } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import DeleteFleet from "./DeleteFleet";
 import FleetListTable from "./FleetListTable";
+import NewFleet from "./NewFleet";
 
 export default function FleetList({
   clients,
@@ -41,7 +43,7 @@ export default function FleetList({
   const showPagination = total > take;
 
   return (
-    <div className="w-full p-4 bg-background dark:bg-slate-950 min-h-[65vh] flex flex-col rounded-lg drop-shadow-[0_4px_4px_rgb(0_0_0_/_0.25)]">
+    <div className="w-full p-2 sm:p-4 bg-background dark:bg-slate-950 min-h-[65vh] flex flex-col rounded-lg drop-shadow-[0_4px_4px_rgb(0_0_0_/_0.25)]">
       <div className="mx-auto flex-1 flex flex-col space-y-6 w-full">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-bold text-slate-600 dark:text-slate-100">
@@ -53,7 +55,7 @@ export default function FleetList({
         <div className="relative flex flex-1 h-full flex-col overflow-hidden rounded-md bg-background">
           <div className="flex-1 overflow-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {/* Mobile View */}
-            <div className="lg:hidden p-4 space-y-4">
+            <div className="lg:hidden px-2 py-4 space-y-4">
               {clients.length === 0 ? (
                 <EmptyState search={params.get("search")} />
               ) : (
@@ -63,6 +65,18 @@ export default function FleetList({
                     data={employee as any}
                     isFleet={true}
                     index={index}
+                    actions={
+                      <>
+                        <NewFleet
+                          fleet={employee as any}
+                          isEdit={true}
+                          buttonElement={
+                            <SquarePen className="w-5 h-5 cursor-pointer text-primary" />
+                          }
+                        />
+                        <DeleteFleet id={employee.fleet?.clientId as number} />
+                      </>
+                    }
                   />
                 ))
               )}

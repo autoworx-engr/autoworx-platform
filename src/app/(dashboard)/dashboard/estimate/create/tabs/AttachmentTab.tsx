@@ -22,16 +22,22 @@ export function AttachmentTab() {
     tasks,
   } = useEstimateCreateStore();
 
-   // const { photos, setPhotos } = useEstimateCreateStore();
+  // const { photos, setPhotos } = useEstimateCreateStore();
   return (
     <>
       <h2 className="mb-3 font-bold">Internal</h2>
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         <ImagesInput photos={photos} setPhotos={setPhotos} />
-        <TasksInput tasks={tasks}/>
+        <TasksInput tasks={tasks} />
 
-        
-        <NotesTextArea value={internalNotes} onChange={setInternalNotes} placeholder="Internal Job Notes..." name="internal-notes"/>
+        <h2 className="font-bold">Internal Job Notes</h2>
+
+        <NotesTextArea
+          value={internalNotes}
+          onChange={setInternalNotes}
+          placeholder="Internal Job Notes..."
+          name="internal-notes"
+        />
 
         {/* <textarea
           className="rounded border border-solid border-slate-500 p-2"
@@ -52,11 +58,15 @@ export function AttachmentTab() {
         /> */}
       </div>
 
-      <h2 className="mb-3 font-bold">Customer</h2>
+      <h2 className="mb-3 font-bold">Customer Notes</h2>
 
       <div className="grid grid-cols-1 gap-3">
-       
- <NotesTextArea value={customerNotes} onChange={setCustomerNotes} placeholder="Notes..." name="customer-notes"/>
+        <NotesTextArea
+          value={customerNotes}
+          onChange={setCustomerNotes}
+          placeholder="Notes..."
+          name="customer-notes"
+        />
         {/* <textarea
           className="rounded border border-solid border-slate-500 p-2"
           name="customer-comments"
