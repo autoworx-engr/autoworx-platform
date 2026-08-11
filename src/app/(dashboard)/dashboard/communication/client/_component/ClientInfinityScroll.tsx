@@ -6,7 +6,7 @@ import { useDemoClientFilterStore } from "@/stores/clientFilter";
 import { Client, ClientConversationTrack } from "@prisma/client";
 import { Users } from "lucide-react";
 import { useParams, usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { getClientByScroll } from "../_actions/getClientByScroll";
 import { getClients } from "../_actions/getClients";
@@ -38,6 +38,10 @@ export default function ClientInfinityScroll({
     (state) => state.resetClientData,
   );
   const [hasMore, setHasMore] = useState(true);
+  // The very first render already has the correct data from the server
+  // (initialsClients) — skip the redundant refetch that would otherwise
+  // fire on mount for the default "All"/no-search view.
+  const isFirstRun = useRef(true);
   const params = useParams();
 
   const clientIdParams = params?.id;
@@ -88,39 +92,42 @@ export default function ClientInfinityScroll({
   }, [companyId, clientIdParams]);
 
   useEffect(() => {
-    // Only refetch when user is actively filtering/searching
-    // For 'All' filter with no search, rely on initial clients + infinite scroll
-    if (normalizedSearch || (filter && filter !== "All")) {
-      const fetchFilteredClients = async () => {
-        try {
-          const fetchedClients = await getClients({
-            companyId: companyId,
-            // pass trimmed search so server-side doesn't receive whitespace-only strings
-            search: normalizedSearch,
-            filter,
-          });
-
-          setClients(fetchedClients);
-          setHasMore(false); // Disable infinite scroll for search/filter results
-        } catch (err) {
-          console.error(
-            "📋 ClientInfinityScroll: Error fetching clients:",
-            err,
-          );
-          errorToast("Failed to fetch clients");
-        }
-      };
-      fetchFilteredClients();
-    } else if (filter === "All" && !searchTerm) {
-      console.log("📋 ClientInfinityScroll: Resetting to initial clients:", {
-        initialCount: initialsClients.length,
-      });
-
-      // For 'All' filter with no search, use initial clients and enable infinite scroll
-      setClients(initialsClients);
-      setHasMore(initialsClients.length >= defaultTakeData); // Re-enable infinite scroll if we have enough initial data
+    if (isFirstRun.current && filter === "All" && !normalizedSearch) {
+      // Skip the redundant refetch on mount — initialsClients already has
+      // the correct data for the default view.
+      isFirstRun.current = false;
+      return;
     }
-  }, [filter, searchTerm, companyId, initialsClients, defaultTakeData]);
+    isFirstRun.current = false;
+
+    // Always hit the server for the current filter/search state, "All" with
+    // no search included. Restoring from any in-memory snapshot (the initial
+    // SSR prop, or a client-captured one) can drift from what the server
+    // would return right now — e.g. once real-time activity reorders things
+    // — and only a fresh reload was reflecting the correct order. Refetching
+    // here makes "clear search" match a reload exactly, every time.
+    const fetchCurrentView = async () => {
+      try {
+        const fetchedClients = await getClients({
+          companyId,
+          // pass trimmed search so server-side doesn't receive whitespace-only strings
+          search: normalizedSearch,
+          filter,
+          take: defaultTakeData,
+        });
+
+        setClients(fetchedClients);
+        // Infinite scroll only applies to the plain "All" view with no
+        // search — filtered/searched result sets are already complete.
+        const isDefaultView = filter === "All" && !normalizedSearch;
+        setHasMore(isDefaultView && fetchedClients.length >= defaultTakeData);
+      } catch (err) {
+        console.error("📋 ClientInfinityScroll: Error fetching clients:", err);
+        errorToast("Failed to fetch clients");
+      }
+    };
+    fetchCurrentView();
+  }, [filter, searchTerm, normalizedSearch, companyId, defaultTakeData]);
 
   // const [page, setPage] = useState(1);
   useEffect(() => {
