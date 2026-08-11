@@ -44,7 +44,12 @@ function MessengerAttachments({
       )}
     >
       {images.length > 0 && (
-        <div className="grid w-fit grid-cols-3 gap-1.5">
+        <div
+          className="grid w-fit gap-1.5"
+          style={{
+            gridTemplateColumns: `repeat(${Math.min(images.length, 3)}, 6rem)`,
+          }}
+        >
           {images.map((att, index) => {
             const currentIndex = allImageUrls.indexOf(att.url);
             const urlsParam = encodeURIComponent(JSON.stringify(allImageUrls));

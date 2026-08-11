@@ -32,7 +32,12 @@ export default function SMSAttachment({ message, handleDownload }: TProps) {
       className={`flex w-full flex-col gap-1.5 ${isOutgoing ? "items-end" : "items-start"}`}
     >
       {images.length > 0 && (
-        <div className="grid w-fit grid-cols-3 gap-1.5">
+        <div
+          className="grid w-fit gap-1.5"
+          style={{
+            gridTemplateColumns: `repeat(${Math.min(images.length, 3)}, 6rem)`,
+          }}
+        >
           {images.map((attachment: any, index: number) => {
             const currentImageIndex = allImageUrls.indexOf(attachment.url);
             const urlsParam = encodeURIComponent(JSON.stringify(allImageUrls));

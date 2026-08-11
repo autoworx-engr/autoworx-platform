@@ -38,7 +38,12 @@ export default function MailAttachment({ message, onDownload }: TProps) {
       )}
     >
       {images.length > 0 && (
-        <div className="grid w-fit grid-cols-3 gap-2">
+        <div
+          className="grid w-fit gap-2"
+          style={{
+            gridTemplateColumns: `repeat(${Math.min(images.length, 3)}, 6rem)`,
+          }}
+        >
           {images.map((att, i) => {
             const currentImageIndex = allImageUrls.indexOf(att.url);
             const urlsParam = encodeURIComponent(JSON.stringify(allImageUrls));

@@ -88,7 +88,12 @@ export default function Message({
                 );
                 if (images.length === 0) return null;
                 return (
-                  <div className="grid w-fit grid-cols-3 gap-1.5">
+                  <div
+                    className="grid w-fit gap-1.5"
+                    style={{
+                      gridTemplateColumns: `repeat(${Math.min(images.length, 3)}, 6rem)`,
+                    }}
+                  >
                     {images.map((attachment) => {
                       const originalIndex =
                         message.attachment!.indexOf(attachment);
