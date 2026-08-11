@@ -5,6 +5,7 @@ import {
   AUDIO_EXTENSIONS,
   IMAGE_EXTENSIONS,
   MAX_ATTACHMENT_SIZE_MB,
+  SUPPORTED_ATTACHMENT_FORMATS_LABEL,
 } from "./attachmentExtensions";
 
 export { MAX_ATTACHMENT_SIZE_MB };
@@ -26,8 +27,8 @@ export const isAudio = (fileName: string = "") => {
 };
 
 // For the file inputs' `accept` attribute — a first line of defense only;
-// it doesn't affect drag-and-drop, so getAttachmentValidationError below is
-// the actual enforcement.
+// it doesn't affect drag-and-drop, so mergeNewAttachments below is the
+// actual enforcement.
 export const ATTACHMENT_ACCEPT = ALLOWED_ATTACHMENT_EXTENSIONS.map(
   (ext) => `.${ext}`,
 ).join(",");
@@ -35,17 +36,6 @@ export const ATTACHMENT_ACCEPT = ALLOWED_ATTACHMENT_EXTENSIONS.map(
 export const isAllowedAttachment = (file: File) => {
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
   return ALLOWED_ATTACHMENT_EXTENSIONS.includes(ext);
-};
-
-/** Returns a user-facing error message if the file can't be attached, or null if it's fine. */
-export const getAttachmentValidationError = (file: File): string | null => {
-  if (!isAllowedAttachment(file)) {
-    return `"${file.name}" is not a supported file type`;
-  }
-  if (file.size > MAX_ATTACHMENT_SIZE_MB * 1024 * 1024) {
-    return `"${file.name}" exceeds the ${MAX_ATTACHMENT_SIZE_MB}MB limit`;
-  }
-  return null;
 };
 
 /**
@@ -56,7 +46,8 @@ export const getAttachmentValidationError = (file: File): string | null => {
  */
 export const mergeNewAttachments = (prev: File[], picked: File[]): File[] => {
   const duplicates: string[] = [];
-  const invalid: string[] = [];
+  const unsupported: string[] = [];
+  const oversized: string[] = [];
 
   const validNewFiles = picked.filter((file) => {
     const isDuplicate = prev.some(
@@ -70,9 +61,12 @@ export const mergeNewAttachments = (prev: File[], picked: File[]): File[] => {
       return false;
     }
 
-    const validationError = getAttachmentValidationError(file);
-    if (validationError) {
-      invalid.push(validationError);
+    if (!isAllowedAttachment(file)) {
+      unsupported.push(file.name);
+      return false;
+    }
+    if (file.size > MAX_ATTACHMENT_SIZE_MB * 1024 * 1024) {
+      oversized.push(file.name);
       return false;
     }
 
@@ -82,8 +76,23 @@ export const mergeNewAttachments = (prev: File[], picked: File[]): File[] => {
   if (duplicates.length) {
     errorToast(`Already uploaded: ${duplicates.join(", ")}`);
   }
-  if (invalid.length) {
-    errorToast(invalid.join(". "));
+  // One toast per rejection *reason*, not per file — otherwise attaching
+  // several unsupported files at once repeats the full format list each time.
+  if (unsupported.length) {
+    errorToast(
+      `${unsupported.map((name) => `"${name}"`).join(", ")} ${
+        unsupported.length > 1
+          ? "are not supported file types"
+          : "is not a supported file type"
+      }. Supported formats: ${SUPPORTED_ATTACHMENT_FORMATS_LABEL}`,
+    );
+  }
+  if (oversized.length) {
+    errorToast(
+      `${oversized.map((name) => `"${name}"`).join(", ")} exceed${
+        oversized.length > 1 ? "" : "s"
+      } the ${MAX_ATTACHMENT_SIZE_MB}MB limit`,
+    );
   }
 
   return [...prev, ...validNewFiles];

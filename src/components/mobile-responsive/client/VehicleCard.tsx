@@ -15,11 +15,11 @@ export default function VehicleCard({
 }) {
   const router = useRouter();
   return (
-    <div className="lg:hidden">
+    <div className="lg:hidden mx-2">
       {vehicles.map((vehicle: any, index: number) => (
         <Card
           key={index}
-          className="w-full text-[#66738C] transition-shadow hover:shadow-lg"
+          className="w-full mb-2 text-[#66738C] transition-shadow hover:shadow-lg"
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 py-3">
             <CardTitle

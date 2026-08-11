@@ -100,13 +100,35 @@ const EmployeeTable = ({
               ) : employees.length === 0 ? (
                 <EmptyState />
               ) : (
-                employees.map((employee: any, index: number) => (
-                  <ResponsiveEmployeeCard
-                    key={index}
-                    data={employee}
-                    index={index}
-                  />
-                ))
+                employees.map((employee: any, index: number) => {
+                  const isAdmin = currentUser?.employeeType === "Admin";
+                  const isManager = currentUser?.employeeType === "Manager";
+                  const isSelf =
+                    currentUser?.id && Number(currentUser.id) === employee.id;
+                  const isTargetAdmin = employee.employeeType === "Admin";
+                  const canEdit =
+                    isAdmin || (isManager && !isTargetAdmin) || isSelf;
+                  const canDelete =
+                    isAdmin || (isManager && !isTargetAdmin && !isSelf);
+
+                  return (
+                    <ResponsiveEmployeeCard
+                      key={index}
+                      data={employee}
+                      index={index}
+                      actions={
+                        (canEdit || canDelete) && (
+                          <>
+                            {canEdit && <EditEmployee employee={employee} />}
+                            {canDelete && (
+                              <DeleteEmployee employee={employee} />
+                            )}
+                          </>
+                        )
+                      }
+                    />
+                  );
+                })
               )}
             </div>
 

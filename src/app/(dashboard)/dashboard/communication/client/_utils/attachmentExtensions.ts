@@ -55,3 +55,12 @@ export const ALLOWED_ATTACHMENT_EXTENSIONS = [
 ];
 
 export const MAX_ATTACHMENT_SIZE_MB = 25;
+
+// Human-readable, grouped-by-kind list for the "unsupported file" toast, so
+// users know what they *can* attach instead of just what failed.
+export const SUPPORTED_ATTACHMENT_FORMATS_LABEL = [
+  `Images (${IMAGE_EXTENSIONS.map((ext) => ext.toUpperCase()).join(", ")})`,
+  `Documents (${DOCUMENT_EXTENSIONS.map((ext) => ext.toUpperCase()).join(", ")})`,
+  `Audio (${AUDIO_EXTENSIONS.map((ext) => ext.toUpperCase()).join(", ")})`,
+  `Video (${VIDEO_EXTENSIONS.map((ext) => ext.toUpperCase()).join(", ")})`,
+].join(", ");
