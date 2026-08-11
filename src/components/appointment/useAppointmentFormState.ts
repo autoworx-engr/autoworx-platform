@@ -305,9 +305,7 @@ export function useAppointmentFormState({
       setTimes((appointment?.times as any) ?? []);
       setConfirmationTemplate(appointment?.confirmationEmailTemplate ?? null);
       setReminderTemplate(appointment?.reminderEmailTemplate ?? null);
-      setConfirmationTemplateStatus(
-        appointment?.confirmationEmailTemplateStatus ?? false,
-      );
+      setConfirmationTemplateStatus(false);
       setReminderTemplateStatus(
         appointment?.reminderEmailTemplateStatus ?? false,
       );
@@ -333,8 +331,7 @@ export function useAppointmentFormState({
         notes: appointment?.notes ?? "",
         confirmationTemplate: appointment?.confirmationEmailTemplate ?? null,
         reminderTemplate: appointment?.reminderEmailTemplate ?? null,
-        confirmationTemplateStatus:
-          appointment?.confirmationEmailTemplateStatus ?? false,
+        confirmationTemplateStatus: false,
         reminderTemplateStatus:
           appointment?.reminderEmailTemplateStatus ?? false,
         times: (appointment?.times as any) ?? [],
@@ -407,11 +404,19 @@ export function useAppointmentFormState({
     }
   }, [today, fromEdit, selectedDate]);
 
+  // Reset only on real unmount. Keying this on `resetAll` re-ran the cleanup
+  // whenever that callback's identity changed, which wiped already-hydrated
+  // state — most visibly the saved confirmation/reminder templates, which then
+  // had to be picked again.
+  const resetAllRef = useRef(resetAll);
+  useEffect(() => {
+    resetAllRef.current = resetAll;
+  }, [resetAll]);
   useEffect(() => {
     return () => {
-      resetAll();
+      resetAllRef.current();
     };
-  }, [resetAll]);
+  }, []);
 
   useEffect(() => {
     const calendarSettings = (settings as any)?.data ?? settings;
@@ -641,7 +646,10 @@ export function useAppointmentFormState({
           message: "No confirmation template is selected",
         });
         return;
-      } else if (client && reminderTemplateStatus && !reminderTemplate) {
+        // Reminders also go to assigned team mates, so this is validated even
+        // when no client is attached — unlike the confirmation above, which is
+        // a client-only email.
+      } else if (reminderTemplateStatus && !reminderTemplate) {
         setIsSubmitting(false);
         showError({
           field: "all",
@@ -669,15 +677,10 @@ export function useAppointmentFormState({
       //   return;
       // }
 
-      if (client && reminderTemplateStatus && reminderTemplate && !timezone) {
-        setIsSubmitting(false);
-        showError({
-          field: "all",
-          message:
-            "Set company timezone in Settings > Business Profile to send client reminders.",
-        });
-        return;
-      }
+      // No timezone guard here: `useCompanyTimezone` falls back to
+      // `moment.tz.guess()`, so `timezone` is never empty and the old check
+      // could never fire. The scheduler resolves its own fallback chain
+      // (company timezone -> appointment timezone -> Etc/UTC).
 
       let res;
       const selectedClientId = client?.id ?? undefined;
