@@ -2,6 +2,7 @@ import {
   checkInventoryForPayment,
   type InventoryCheckResult,
 } from "@/actions/estimate/invoice/checkInventoryForPayment";
+import { notifyInventoryShortage } from "@/actions/estimate/invoice/notifyInventoryShortage";
 import { paymentLeadsConvertion } from "@/actions/estimate/invoice/paymentLeadsConvertion";
 import { newPayment } from "@/actions/payment/newPayment";
 import { newPaymentMethod } from "@/actions/payment/newPaymentMethod";
@@ -265,6 +266,17 @@ export default function MakePayment() {
                 ", ",
               )}. The estimate was not converted and the inventory was not updated.`,
             { id: "inventory-shortage" },
+          );
+
+          // The conversion was skipped, so the server never ran its own
+          // lowInventoryNotification — tell the admins/managers here instead,
+          // otherwise nobody learns these products need restocking.
+          // Fire-and-forget: the server action completes even without awaiting.
+          notifyInventoryShortage({
+            invoiceId,
+            shortages: inventory.shortages,
+          }).catch((err) =>
+            console.error("notifyInventoryShortage failed", err),
           );
         }
         reset();

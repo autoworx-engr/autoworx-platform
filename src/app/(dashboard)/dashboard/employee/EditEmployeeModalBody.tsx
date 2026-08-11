@@ -20,6 +20,7 @@ import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { EMPLOYEE_LIST_KEY } from "./_hook/useEmployeeQuery";
 import SelectEmployeeType from "./SelectEmployeeType";
+import Avatar from "@/components/Avatar";
 
 type TEditClientModalBodyProps = {
   employee: User;
@@ -186,7 +187,7 @@ export default function EditClientModalBody({
       }
 
       const res = await updateEmployee({
-        id: employee?.id,
+        id: employee.id,
         firstName,
         lastName,
         email,
@@ -235,7 +236,7 @@ export default function EditClientModalBody({
     [
       currentPage,
       dateRange,
-      employee?.id,
+      employee.id,
       employee.image,
       employeeType,
       newProfilePic,
@@ -273,14 +274,14 @@ export default function EditClientModalBody({
         {profilePic ? (
           <div className="relative group">
             <div className="relative h-16 w-16 rounded-full overflow-hidden ring-4 ring-white dark:ring-slate-800 shadow-md transition-transform group-hover:scale-105">
-              <Image
-                src={profilePic}
+              <Avatar
+                photo={profilePic}
                 width={64}
                 height={64}
                 alt="profile"
                 className="h-full w-full object-cover"
-                unoptimized={newProfilePic !== null}
-                crossOrigin="anonymous"
+                // unoptimized={newProfilePic !== null}
+                // crossOrigin="anonymous"
               />
             </div>
             <label
