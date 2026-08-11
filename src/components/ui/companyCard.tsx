@@ -4,12 +4,12 @@ import Image from "next/image";
 export function CompanyCard({ company, rightSlot }: any) {
   return (
     <div className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white px-3.5 py-3 shadow-sm hover:border-primary/30 hover:shadow-md transition-all duration-150">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-50 ring-1 ring-indigo-100">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full p-1.5 bg-slate-50 ring-1 ring-indigo-100">
         <Image
-          src="/icons/business.png"
+          src={company?.image ?? "/icons/business.png"}
           alt={company.name}
-          width={20}
-          height={20}
+          width={company?.image ? 32 : 20}
+          height={company?.image ? 32 : 20}
           className="opacity-70"
         />
       </div>
