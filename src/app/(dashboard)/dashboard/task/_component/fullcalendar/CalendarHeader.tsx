@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import moment from "moment";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { RefObject } from "react";
 import { Button } from "../../../../../../components/ui/button";
 import {
@@ -96,13 +96,38 @@ export function CalendarHeader({
     queryFn: () => getCalenderSettings(),
   });
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { setDate, setMonth, setWeek } = useCalendarStore();
+
+  // A `?date=` param (from a notification link) is re-applied to the store for
+  // as long as it stays in the URL, which pinned the calendar to that date on
+  // every prev/next click. Drop it as soon as the user navigates.
+  const clearDateParam = () => {
+    if (!searchParams.get("date") && !searchParams.get("time")) return;
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("date");
+    params.delete("time");
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, {
+      scroll: false,
+    });
+  };
 
   const handleTodayClick = () => {
     const today = moment();
     setDate(today.format("YYYY-MM-DD"));
     setMonth(today.format("YYYY-MM"));
     setWeek(today.format("YYYY-[W]WW"));
+
+    // "Today" means today's day, so land on the Day view from whichever view
+    // the user is currently in. Pushing the bare path also drops any `?date=`.
+    if (type !== "day") {
+      router.push("/dashboard/task/day");
+      return;
+    }
+
+    clearDateParam();
     calendarRef.current?.getApi().today();
   };
 
@@ -113,6 +138,7 @@ export function CalendarHeader({
     setDate(next.format("YYYY-MM-DD"));
     setMonth(next.format("YYYY-MM"));
     setWeek(next.format("YYYY-[W]WW"));
+    clearDateParam();
   };
   const handlePrev = () => step(-1);
   const handleNext = () => step(1);
@@ -121,9 +147,9 @@ export function CalendarHeader({
     router.push(`/dashboard/task/${value}`);
     const fcView =
       VIEW_OPTIONS.find((v) => v.value === value)?.fcView ?? "timeGridDay";
-    const targetDate = moment().format("YYYY-MM-DD");
-
-    calendarRef.current?.getApi().changeView(fcView, targetDate);
+    // Keep the date the user is looking at when switching views — jumping to
+    // today here silently discarded their current position.
+    calendarRef.current?.getApi().changeView(fcView, dateFormat);
   };
 
   const handleAppointmentCreate = async (
