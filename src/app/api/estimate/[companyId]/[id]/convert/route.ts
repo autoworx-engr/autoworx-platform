@@ -25,6 +25,17 @@ import { NextRequest, NextResponse } from "next/server";
  *           type: string
  *           example: "clxyz123"
  *         description: Invoice/estimate ID (cuid)
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               allowInsufficientInventory:
+ *                 type: boolean
+ *                 example: false
+ *                 description: When true, the conversion proceeds even if the inventory does not hold enough stock, taking quantities to or below zero. Omit the body entirely to keep the default (false).
  *     responses:
  *       200:
  *         description: Estimate converted successfully
@@ -65,17 +76,33 @@ export async function PATCH(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const converted = await convertInvoice(id, jwtCompanyId);
+    const body = await req.json().catch(() => ({}) as Record<string, unknown>);
+
+    const converted = await convertInvoice(
+      id,
+      jwtCompanyId,
+      (body as Record<string, unknown>)?.allowInsufficientInventory === true,
+    );
+
+    if (converted?.type === "error" || converted?.type === "globalError") {
+      return NextResponse.json(
+        { success: false, message: (converted as any).message },
+        { status: 500 },
+      );
+    }
 
     return NextResponse.json({
       success: true,
       message: "Estimate/Invoice converted successfully",
       data: converted,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("ESTIMATE/INVOICE converted ERROR:", error);
     return NextResponse.json(
-      { success: false, message: "Failed to convert estimate/invoice" },
+      {
+        success: false,
+        message: error?.message || "Failed to convert estimate/invoice",
+      },
       { status: 500 },
     );
   }

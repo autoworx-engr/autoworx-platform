@@ -1,12 +1,12 @@
-import { DialogClose, DialogContent, DialogFooter } from "@/components/Dialog";
-import FormError from "@/components/FormError";
-import { SlimInput } from "@/components/SlimInput";
-import Submit from "@/components/Submit";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { updateEmployee } from "@/actions/employee/update";
+import Avatar from "@/components/Avatar";
+import { DialogClose, DialogContent, DialogFooter } from "@/components/Dialog";
 import SlimSalaryManagement from "@/components/employee/SlimSalaryManagement";
+import FormError from "@/components/FormError";
 import Password from "@/components/Password";
 import PhoneInput from "@/components/PhoneInput";
+import { SlimInput } from "@/components/SlimInput";
+import Submit from "@/components/Submit";
 import { DEFAULT_IMAGE_URL } from "@/lib/consts";
 import { successToast } from "@/lib/toast";
 import { useEmployeeFilterStore } from "@/stores/employeeFilter";
@@ -16,7 +16,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { PencilLineIcon, CircleUserRound as UserIcon, X } from "lucide-react";
 import moment from "moment";
 import { useSession } from "next-auth/react";
-import Image from "next/image";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EMPLOYEE_LIST_KEY } from "./_hook/useEmployeeQuery";
 import SelectEmployeeType from "./SelectEmployeeType";
 
@@ -185,7 +185,7 @@ export default function EditClientModalBody({
       }
 
       const res = await updateEmployee({
-        id: employee?.id,
+        id: employee.id,
         firstName,
         lastName,
         email,
@@ -271,14 +271,14 @@ export default function EditClientModalBody({
         {profilePic ? (
           <div className="relative group">
             <div className="relative h-16 w-16 rounded-full overflow-hidden ring-4 ring-white dark:ring-slate-800 shadow-md transition-transform group-hover:scale-105">
-              <Image
-                src={profilePic}
+              <Avatar
+                photo={profilePic}
                 width={64}
                 height={64}
                 alt="profile"
                 className="h-full w-full object-cover"
-                unoptimized={newProfilePic !== null}
-                crossOrigin="anonymous"
+                // unoptimized={newProfilePic !== null}
+                // crossOrigin="anonymous"
               />
             </div>
             <label
