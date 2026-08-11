@@ -71,6 +71,7 @@ type TCreateInvoiceProps = {
   damageNotes: string | null;
 
   forceCompanyId?: number;
+  allowInsufficientInventory?: boolean;
 };
 
 export async function createInvoice({
@@ -106,6 +107,7 @@ export async function createInvoice({
   isShopBooking = false,
 
   forceCompanyId,
+  allowInsufficientInventory = false,
 }: TCreateInvoiceProps): Promise<ServerAction | TErrorHandler> {
   try {
     // Step 1: Validate input data using Zod schema
@@ -303,7 +305,10 @@ export async function createInvoice({
         );
       }
       // Check if inventory product quantities are available when status is not "Pending"
-      if (newInvoice.type === InvoiceType.Invoice) {
+      if (
+        newInvoice.type === InvoiceType.Invoice &&
+        !allowInsufficientInventory
+      ) {
         // merge all the same products and sum the quantity
         let materials: Material[] = [];
 

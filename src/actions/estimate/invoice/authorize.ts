@@ -19,6 +19,7 @@ export async function authorizeInvoice(
   authorizedName: string,
   url: string,
   invoiceType: string,
+  allowInsufficientInventory: boolean = false,
 ): Promise<ServerAction | TErrorHandler> {
   try {
     const updatedInvoice = await db.invoice.update({
@@ -53,7 +54,10 @@ export async function authorizeInvoice(
 
           if (!findInventoryProduct) return;
 
-          if (product.quantity > Number(findInventoryProduct?.quantity ?? 0)) {
+          if (
+            product.quantity > Number(findInventoryProduct?.quantity ?? 0) &&
+            !allowInsufficientInventory
+          ) {
             // low inventory send notification to all admins and managers
             console.log("convert to estimate", invoiceId);
             await db.invoice.update({
@@ -141,27 +145,22 @@ export async function authorizeInvoice(
         console.error("sendInvoiceConvertedNotification failed", err),
       );
 
-      await authorizedLeadsConvertion(updatedInvoice.id);
-      // await updateServiceAutomationTrigger({
-      //   companyId: updatedInvoice?.companyId,
-      //   estimateId: updatedInvoice?.id,
-      //   columnId: updatedInvoice?.columnId!,
-      // });
-      // if authorized invoice automation trigger
-      //  updateInvoiceAutomationTrigger({
-      //   companyId: updatedInvoice?.companyId!,
-      //   invoiceId: updatedInvoice?.id!,
-      //   columnId: updatedInvoice?.columnId!,
-      // });
+      await authorizedLeadsConvertion(updatedInvoice.id).catch((err) =>
+        console.error("authorizedLeadsConvertion failed", err),
+      );
     }
 
-    revalidatePath("/estimate");
-  } catch (err) {
-    return errorHandler(err);
-  } finally {
+    try {
+      revalidatePath("/estimate");
+    } catch {
+      // no-op: cache revalidation is best-effort outside request context
+    }
+
     return {
       type: "success",
     };
+  } catch (err) {
+    return errorHandler(err);
   }
 }
 

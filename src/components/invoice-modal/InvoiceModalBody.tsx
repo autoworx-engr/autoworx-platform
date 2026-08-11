@@ -1,5 +1,6 @@
 "use client";
 import { authorizeInvoice } from "@/actions/estimate/invoice/authorize";
+import { checkInventoryForConversion } from "@/actions/estimate/invoice/checkInventory";
 import { getInvoiceModalData } from "@/actions/estimate/invoice/getInvoiceModalData";
 import { getIsWorkorderCreated } from "@/actions/estimate/invoice/getworkorderCreated";
 import { sendInvoiceEmail } from "@/actions/estimate/invoice/sendInvoiceEmail";
@@ -12,6 +13,8 @@ import {
   DialogOverlay,
   DialogPortal,
 } from "@/components/Dialog";
+import InventoryShortageDialog from "@/components/inventory/InventoryShortageDialog";
+import { useInventoryConfirm } from "@/hooks/useInventoryConfirm";
 import { useServerGet } from "@/hooks/useServerGet";
 import { queryKeys } from "@/lib/queryKeys";
 import { errorToast, successToast } from "@/lib/toast";
@@ -139,6 +142,8 @@ export default function InvoiceModalBody({
   const [sigImageURL, setSigImageURL] = useState(null);
   const [showSignaturePad, setShowSignaturePad] = useState(false);
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
+  const { runWithInventoryCheck, dialogProps: inventoryShortageDialogProps } =
+    useInventoryConfirm();
   const [activeTab, setActiveTab] = useState<
     "estimate" | "attachments" | "inspections"
   >("estimate");
@@ -343,15 +348,11 @@ export default function InvoiceModalBody({
     }
   };
 
-  const handleSaveSignature = async (invoiceId: string) => {
-    if (!sigCanvas.current) return;
-
+  const authorizeWithSignature = async (
+    file: File,
+    allowInsufficientInventory: boolean,
+  ) => {
     try {
-      const file = getFileFromCanvas(
-        sigCanvas.current.getCanvas(),
-        `signature-${invoiceId}.png`,
-      );
-
       const formData = new FormData();
       formData.append("file", file);
 
@@ -375,6 +376,7 @@ export default function InvoiceModalBody({
         authorizedNameInput,
         data[0],
         invoice.type,
+        allowInsufficientInventory,
       );
 
       if (response?.type === "success") {
@@ -393,9 +395,34 @@ export default function InvoiceModalBody({
             : prev,
         );
       } else {
-        errorToast("Signature upload failed");
-        console.error("Signature upload failed:");
+        errorToast(
+          (response as { message?: string })?.message ||
+            "Invoice authorization failed",
+        );
+        console.error("Invoice authorization failed:", response);
       }
+    } catch (err) {
+      errorToast("Signature upload failed");
+      console.error("Signature upload failed:", err);
+    }
+  };
+
+  const handleSaveSignature = async (invoiceId: string) => {
+    if (!sigCanvas.current) return;
+
+    try {
+      const file = getFileFromCanvas(
+        sigCanvas.current.getCanvas(),
+        `signature-${invoiceId}.png`,
+      );
+
+      // Warn about a stock shortage before the signature is uploaded or the
+      // estimate is converted, so cancelling leaves everything untouched.
+      await runWithInventoryCheck(
+        () => checkInventoryForConversion(invoice.id),
+        (allowInsufficientInventory) =>
+          authorizeWithSignature(file, allowInsufficientInventory),
+      );
     } catch (err) {
       errorToast("Signature upload failed");
       console.error("Signature upload failed:", err);
@@ -1576,6 +1603,8 @@ export default function InvoiceModalBody({
             </>
           )}
         </div>
+
+        <InventoryShortageDialog {...inventoryShortageDialogProps} />
       </DialogContentBlank>
     </DialogPortal>
   );
