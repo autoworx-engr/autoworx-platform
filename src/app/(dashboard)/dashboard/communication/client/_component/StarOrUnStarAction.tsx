@@ -8,7 +8,7 @@ type TProps = {
   onStarChange: (
     event: React.MouseEvent<HTMLButtonElement>,
     isStarred: boolean,
-    clientId: number
+    clientId: number,
   ) => void;
 };
 

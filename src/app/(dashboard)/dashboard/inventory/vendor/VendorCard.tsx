@@ -8,7 +8,14 @@ import { Vendor } from "@prisma/client";
 import moment from "moment";
 import VendorListStore from "@/stores/vendorListStore";
 import { Popconfirm } from "antd";
-import { Building2, Calendar, Link, Phone, SquarePen, X } from "lucide-react";
+import {
+  Building2,
+  Calendar,
+  Link,
+  Phone,
+  PencilLineIcon,
+  X,
+} from "lucide-react";
 import { useDemoVendorFilterStore } from "@/stores/vendorFilter";
 
 const SHADOW_COLOR = "shadow-lg shadow-slate-900/10 dark:shadow-white/5";
@@ -99,7 +106,7 @@ const VendorCard = ({
                         // Consistent edit button style: soft background, primary icon color
                         className={`rounded-full transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-700 group`}
                       >
-                        <SquarePen
+                        <PencilLineIcon
                           className={`w-5 h-5 text-[${ACCENT_COLOR}] group-hover:scale-[1.05] transition-transform`}
                           style={{ color: ACCENT_COLOR }} // Ensure dynamic color application
                         />

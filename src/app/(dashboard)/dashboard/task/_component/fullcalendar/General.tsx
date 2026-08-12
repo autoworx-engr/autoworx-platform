@@ -41,8 +41,8 @@ export default function General({
   onClose,
   authUser,
 }: TGeneralProps) {
-  const isAdmin = authUser?.user.employeeType === EmployeeType?.Admin;
-  const isManager = authUser?.user.employeeType === EmployeeType?.Manager;
+  const isAdmin = authUser?.user?.employeeType === EmployeeType?.Admin;
+  const isManager = authUser?.user?.employeeType === EmployeeType?.Manager;
 
   const [error, setError] = useState<string | null>(null);
   const [weekStart, setWeekStart] = useState(settings?.weekStart ?? "Monday");
@@ -102,24 +102,13 @@ export default function General({
 
       {isAdmin || isManager ? (
         <form className="flex flex-col gap-6">
-          {/* Row 1: Week Starts · Day starts · Day ends.
-              items-end keeps all three input boxes on one baseline even if a
-              label wraps to a different height than its neighbours. */}
           <div className="grid grid-cols-1 items-end gap-4 sm:grid-cols-3">
             {/* Week Starts */}
             <div className="flex min-w-0 flex-col gap-1.5">
-              {/* text-base matches the TimeScrollPicker labels beside it, so
-                  all three columns share the same label height and the inputs
-                  land on one baseline. */}
               <Label htmlFor="week-start" className="text-base">
                 Week Starts
               </Label>
               <Select value={weekStart} onValueChange={setWeekStart}>
-                {/* Matches the TimeScrollPicker triggers beside it: the
-                    size="md" default is rounded-lg, px-2.5 and shadowless.
-                    `!w-full` beats the base `w-fit`, which otherwise lets the
-                    trigger shrink to its content ("Tuesday") and read narrower
-                    than the time fields. */}
                 <SelectTrigger
                   size="md"
                   id="week-start"
@@ -127,8 +116,6 @@ export default function General({
                 >
                   <SelectValue />
                 </SelectTrigger>
-                {/* align/sideOffset match TimeScrollPicker so this dropdown
-                    opens below the trigger instead of centered over it. */}
                 <SelectContent align="start" sideOffset={4}>
                   {WEEK_DAYS.map((day) => (
                     <SelectItem key={day} value={day}>

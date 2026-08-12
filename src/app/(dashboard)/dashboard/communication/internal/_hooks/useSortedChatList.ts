@@ -2,7 +2,14 @@ import type { ChatTrack, Group, Message, User } from "@prisma/client";
 import { useCallback } from "react";
 
 type TUser = User & { unreadCount: number; latestMessage?: Message | null };
-type TGroup = Group & { users: User[] };
+type TGroup = Group & {
+  users: User[];
+  latestMessage?: {
+    message: string;
+    senderName: string | null;
+    updatedAt: Date;
+  } | null;
+};
 type LastMessageState =
   | (ChatTrack & { message?: Message | null })
   | null
@@ -60,6 +67,20 @@ export function useSortedChatList(
     [messagesState],
   );
 
+  /**
+   * Live messages win, but fall back to the latest message the server sent
+   * with the group — otherwise a group nobody has messaged this session
+   * scores 0 and sinks below every user.
+   */
+  const timestampForGroup = useCallback(
+    (group: TGroup) => {
+      const live = messageForGroup(group);
+      const stamp = live?.updatedAt ?? group.latestMessage?.updatedAt;
+      return stamp ? new Date(stamp).getTime() : 0;
+    },
+    [messageForGroup],
+  );
+
   const applyLiveLastMessageBoost = useCallback(
     (item: CombinedItem) => {
       if (!lastMessage?.message || sessionUserId == null) return item.timestamp;
@@ -99,12 +120,11 @@ export function useSortedChatList(
           };
         }),
         ...groupsToSort.map((g) => {
-          const lm = messageForGroup(g);
           return {
             type: "group" as const,
             data: g,
-            latestMessage: lm,
-            timestamp: lm ? new Date(lm.updatedAt).getTime() : 0,
+            latestMessage: messageForGroup(g),
+            timestamp: timestampForGroup(g),
           };
         }),
       ];
@@ -130,19 +150,23 @@ export function useSortedChatList(
 
       return { sortedUsers, sortedGroups };
     },
-    [messageForUser, messageForGroup, applyLiveLastMessageBoost],
+    [
+      messageForUser,
+      messageForGroup,
+      timestampForGroup,
+      applyLiveLastMessageBoost,
+    ],
   );
 
   const buildCombinedSortedList = useCallback(
     (usersToSort: TUser[], groupsToSort: TGroup[]): CombinedItem[] => {
       const combined: CombinedItem[] = [
         ...groupsToSort.map((g) => {
-          const lm = messageForGroup(g);
           return {
             type: "group" as const,
             data: g,
-            latestMessage: lm,
-            timestamp: lm ? new Date(lm.updatedAt).getTime() : 0,
+            latestMessage: messageForGroup(g),
+            timestamp: timestampForGroup(g),
           };
         }),
         ...usersToSort.map((u) => {
@@ -164,7 +188,12 @@ export function useSortedChatList(
         compareTimestamps(a.timestamp, b.timestamp),
       );
     },
-    [messageForUser, messageForGroup, applyLiveLastMessageBoost],
+    [
+      messageForUser,
+      messageForGroup,
+      timestampForGroup,
+      applyLiveLastMessageBoost,
+    ],
   );
 
   return { sortLists, buildCombinedSortedList };

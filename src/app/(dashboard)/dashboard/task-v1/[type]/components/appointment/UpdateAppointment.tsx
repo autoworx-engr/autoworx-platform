@@ -13,6 +13,7 @@ import { SelectClient } from "@/components/Lists/SelectClient";
 import { SelectVehicle } from "@/components/Lists/SelectVehicle";
 import Selector from "@/components/Selector";
 import { SlimInput, slimInputClassName } from "@/components/SlimInput";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 import { cn } from "@/lib/cn";
 import { useListsStore } from "@/stores/lists";
 import { usePopupStore } from "@/stores/popup";
@@ -115,6 +116,11 @@ export function UpdateAppointment() {
 
   const [openConfirmation, setOpenConfirmation] = useState(false);
   const [openReminder, setOpenReminder] = useState(false);
+  // When confirmation is OFF, saving is gated behind a prompt — the toggle
+  // always opens OFF, so skipping the client email would otherwise be a silent
+  // side effect of editing something unrelated.
+  const [saveConfirmOpen, setSaveConfirmOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [addSalesPersonOpen, setAddSalesPersonOpen] = useState(false);
   const [addTechnicianOpen, setAddTechnicianOpen] = useState(false);
 
@@ -198,27 +204,28 @@ export function UpdateAppointment() {
     return `${endHours.toString().padStart(2, "0")}:${endMinutes.toString().padStart(2, "0")}`;
   };
 
-  const handleSubmit = async (data: FormData) => {
-    // Add validation for date and time for new appointments or changed dates
-    const isDateChanged =
-      date !== moment.utc(appointment.date).format("YYYY-MM-DD");
-    const isStartTimeChanged = startTime !== appointment.startTime;
-
+  // Runs before the save prompt so the user is never asked to confirm an edit
+  // that is going to be rejected anyway. Returns false once it has toasted.
+  const validateForm = () => {
     // Add validation for date and time
     if (!title.trim()) {
-      return errorToast("Appointment title is required!");
+      errorToast("Appointment title is required!");
+      return false;
     }
 
     if (date && (!startTime || !endTime)) {
-      return errorToast(
+      errorToast(
         "Start time and End time are required when a date is selected!",
       );
+      return false;
     }
 
     if (client && confirmationTemplateStatus && !confirmationTemplate) {
-      return errorToast("No confirmation template is selected");
+      errorToast("No confirmation template is selected");
+      return false;
     } else if (client && reminderTemplateStatus && !reminderTemplate) {
-      return errorToast("No reminder template is selected");
+      errorToast("No reminder template is selected");
+      return false;
     }
 
     // An enabled reminder with no scheduled times would silently send nothing,
@@ -229,9 +236,10 @@ export function UpdateAppointment() {
       reminderTemplate &&
       !times?.length
     ) {
-      return errorToast(
+      errorToast(
         "Add at least one reminder time and date, or turn the reminder off.",
       );
+      return false;
     }
 
     if (
@@ -240,44 +248,69 @@ export function UpdateAppointment() {
       reminderTemplate &&
       !company?.timezone
     ) {
-      return errorToast(
+      errorToast(
         "Set company timezone in Settings > Business Profile to send client reminders.",
       );
+      return false;
     }
 
-    const res = await editAppointment({
-      id: appointment.id,
-      appointment: {
-        title,
-        date: date as string,
-        startTime: startTime as string,
-        endTime: endTime as string,
-        assignedUsers: assignedUsers.map((user) => user.id),
-        clientId: client ? client.id : undefined,
-        vehicleId: vehicle ? vehicle.id : undefined,
-        draftEstimate: draft,
-        notes,
-        confirmationEmailTemplateId: confirmationTemplate?.id,
-        reminderEmailTemplateId: reminderTemplate?.id,
-        confirmationEmailTemplateStatus: confirmationTemplateStatus,
-        reminderEmailTemplateStatus: reminderTemplateStatus,
-        times,
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      },
-    });
+    return true;
+  };
 
-    if (res.type === "globalError") {
-      showError({
-        field: res.field,
-        message:
-          res.errorSource && res.errorSource.length > 0
-            ? res.errorSource[0].message
-            : res.message,
+  const handleSubmit = async () => {
+    setIsSaving(true);
+    try {
+      const res = await editAppointment({
+        id: appointment.id,
+        appointment: {
+          title,
+          date: date as string,
+          startTime: startTime as string,
+          endTime: endTime as string,
+          assignedUsers: assignedUsers.map((user) => user.id),
+          clientId: client ? client.id : undefined,
+          vehicleId: vehicle ? vehicle.id : undefined,
+          draftEstimate: draft,
+          notes,
+          confirmationEmailTemplateId: confirmationTemplate?.id,
+          reminderEmailTemplateId: reminderTemplate?.id,
+          confirmationEmailTemplateStatus: confirmationTemplateStatus,
+          reminderEmailTemplateStatus: reminderTemplateStatus,
+          times,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        },
       });
+
+      if (res.type === "globalError") {
+        // Keep the prompt closed but the edit modal open so the error is
+        // actionable and the user's input isn't lost.
+        setSaveConfirmOpen(false);
+        showError({
+          field: res.field,
+          message:
+            res.errorSource && res.errorSource.length > 0
+              ? res.errorSource[0].message
+              : res.message,
+        });
+        return;
+      }
+
+      setSaveConfirmOpen(false);
+      close();
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveClick = () => {
+    if (!validateForm()) return;
+    // Only warn when confirmation is OFF — turning it on needs no prompt, since
+    // sending the email is the expected outcome.
+    if (confirmationTemplateStatus) {
+      handleSubmit();
       return;
     }
-
-    close();
+    setSaveConfirmOpen(true);
   };
 
   // Add state to track if form has changed
@@ -982,17 +1015,31 @@ export function UpdateAppointment() {
               Cancel
             </DialogClose>
             <button
+              type="button"
               className={`rounded-md border px-4 py-1 text-white ${
                 formChanged ? "bg-primary" : "cursor-not-allowed bg-gray-400"
               }`}
-              formAction={handleSubmit}
-              disabled={!formChanged}
+              onClick={handleSaveClick}
+              disabled={!formChanged || isSaving}
             >
               Save
             </button>
           </DialogFooter>
         </div>
       </DialogContent>
+
+      {/* The confirmation switch always opens OFF on edit, so warn before a
+          save silently skips the client's confirmation email. */}
+      <ConfirmModal
+        open={saveConfirmOpen}
+        onOpenChange={setSaveConfirmOpen}
+        title="Save without confirmation?"
+        description="Appointment Confirmation is OFF, so no confirmation will be sent to the client or team. Turn it on before saving if you want the client notified."
+        confirmText="Save"
+        cancelText="Go back"
+        loading={isSaving}
+        onConfirm={handleSubmit}
+      />
     </Dialog>
   );
 }

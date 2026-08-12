@@ -2,10 +2,9 @@
 
 import { useCalendarStore } from "@/stores/calendarStore";
 import { Appointment, Client, User, Vehicle } from "@prisma/client";
+import { Calendar, Car, Clock, Info, User as UserIcon } from "lucide-react";
 import moment from "moment-timezone";
 import { useRouter } from "next/navigation";
-import { Clock, User as UserIcon, Calendar, Info, Car } from "lucide-react";
-import React from "react";
 
 type TAppointmentDetailsProps = {
   appointment: Appointment & {

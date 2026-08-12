@@ -36,10 +36,10 @@ import {
   FileText,
   Image as ImageIcon,
   Loader2,
+  PencilLineIcon,
   Plus,
   Send,
   ShieldCheck,
-  SquarePen,
   Tag,
   Trash2,
 } from "lucide-react";
@@ -1060,7 +1060,7 @@ export default function GiftCardsTab({ shopId }: GiftCardsTabProps) {
                         onClick={() => openEditPromoDialog(promo)}
                         className="text-gray-400 hover:text-gray-600 transition-colors"
                       >
-                        <SquarePen size={16} color={"#6571FF"} />
+                        <PencilLineIcon size={16} color={"#6571FF"} />
                       </button>
                       <Popconfirm
                         title="Delete promo code"

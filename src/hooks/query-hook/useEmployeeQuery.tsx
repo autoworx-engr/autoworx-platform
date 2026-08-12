@@ -3,17 +3,19 @@ import { userQueryKey } from "@/app/(dashboard)/dashboard/task/_constant";
 import { EmployeeType } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 
+/**
+ * Company employees, optionally narrowed to a single employee type. Pass no
+ * type to get every employee in the company regardless of type.
+ */
 export default function useEmployeeQuery(
-  type: EmployeeType,
+  type?: EmployeeType,
   options?: { enabled?: boolean },
 ) {
   return useQuery({
-    queryKey: [userQueryKey.employees, type],
+    queryKey: [userQueryKey.employees, type ?? "all"],
     queryFn: async () => {
       return getCompanyUser({
-        where: {
-          employeeType: type,
-        },
+        where: type ? { employeeType: type } : {},
         select: {
           id: true,
           firstName: true,

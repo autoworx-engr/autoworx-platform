@@ -7,7 +7,7 @@ import { useDemoVendorFilterStore } from "@/stores/vendorFilter";
 import VendorListStore from "@/stores/vendorListStore";
 import { Vendor } from "@prisma/client";
 import { Popconfirm } from "antd";
-import { SquarePen, X } from "lucide-react";
+import { PencilLineIcon, X } from "lucide-react";
 import moment from "moment-timezone";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -95,7 +95,7 @@ export default function Table({
                   <EditVendor
                     button={
                       <button className="text-2xl text-blue-600">
-                        <SquarePen className="w-5 h-5 text-primary" />
+                        <PencilLineIcon className="w-5 h-5 text-primary" />
                       </button>
                     }
                     vendor={vendor}

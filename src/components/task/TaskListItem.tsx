@@ -2,12 +2,12 @@
 import { completeTask } from "@/actions/task/completeTask";
 import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
 import { cn } from "@/lib/cn";
-import { errorToast, successToast } from "@/lib/toast";
 import { taskPriorityStyles } from "@/lib/taskPriorityStyles";
+import { errorToast, successToast } from "@/lib/toast";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { Task } from "@prisma/client";
-import { Popconfirm, Tooltip } from "antd";
-import { CircleCheckBig, Clock, SquarePen } from "lucide-react";
+import { Popconfirm } from "antd";
+import { CircleCheckBig, Clock, PencilLineIcon } from "lucide-react";
 import moment from "moment-timezone";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -41,10 +41,6 @@ const TaskListItem = ({
     ? moment.utc(task.startTime, "HH:mm").format("h:mmA")
     : null;
   const datePart = task.date ? moment.utc(task.date).format("MMM DD") : null;
-
-  const tooltipLabel = datePart
-    ? `${task.title} — Due ${datePart}${timePart ? `, ${timePart}` : ""}`
-    : task.title;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -97,7 +93,7 @@ const TaskListItem = ({
       className={cn(
         `flex cursor-pointer items-center justify-between gap-x-2
          rounded-lg py-1.5 md:py-2 px-3 md:px-4 text-sm
-         transition-all duration-300 ease-in-out h-auto min-h-[44px] max-h-[56px] select-none`,
+         transition-all duration-300 ease-in-out h-auto min-h-[44px] max-h-[64px] select-none`,
         isDragging && "opacity-70",
       )}
       style={{ ...priorityStyle, cursor: canDrag ? "move" : "pointer" }}
@@ -113,43 +109,33 @@ const TaskListItem = ({
       onDragEnd={handleDragEnd}
       onClick={handleClick}
     >
-      {/* Task Title */}
+      {/* Task Title + Date/Time */}
       <div className="min-w-0 flex-1">
-        <Tooltip title={tooltipLabel} placement="topLeft">
-          <div
-            style={{ color: priorityStyle.color }}
-            className="truncate text-left text-xs font-semibold leading-tight md:text-sm"
-          >
-            {task.title}
+        <div
+          style={{ color: priorityStyle.color }}
+          className="truncate text-left text-xs font-semibold leading-tight md:text-sm"
+        >
+          {task.title}
+        </div>
+
+        {(datePart || timePart) && (
+          <div className="mt-0.5 flex items-center gap-1 text-[11px] font-medium opacity-80 transition-opacity hover:opacity-100">
+            <Clock className="h-3 w-3 flex-shrink-0" />
+            <span>
+              {datePart}
+              {timePart && `, ${timePart}`}
+            </span>
           </div>
-        </Tooltip>
+        )}
       </div>
 
-      {/* Date/Time summary + action icons */}
+      {/* Action icons */}
       <span className="flex flex-shrink-0 items-center gap-x-2 md:gap-x-3">
-        {(datePart || timePart) && (
-          <Tooltip
-            title={
-              timePart ? `Due: ${datePart} at ${timePart}` : `Due: ${datePart}`
-            }
-            placement="top"
-          >
-            <div className="flex items-center gap-1 text-xs font-semibold opacity-90 transition-opacity hover:opacity-100">
-              <Clock className="h-3 w-3 flex-shrink-0" />
-              <span className="hidden sm:inline">
-                {datePart}
-                {timePart && `, ${timePart}`}
-              </span>
-              <span className="sm:hidden">{timePart || datePart}</span>
-            </div>
-          </Tooltip>
-        )}
-
         {/* Edit */}
         <TaskCreateOrEdit
           triggerIcon={
             <span onClick={(e) => e.stopPropagation()} className="inline-flex">
-              <SquarePen
+              <PencilLineIcon
                 style={{ color: priorityStyle.color }}
                 className="h-4 w-4 cursor-pointer opacity-70 transition-opacity hover:opacity-100 md:h-5 md:w-5"
               />

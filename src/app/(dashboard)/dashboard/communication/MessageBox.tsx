@@ -2,27 +2,27 @@ import { deleteUserFromGroup } from "@/actions/communication/internal/deleteUser
 import { getUserInGroup } from "@/actions/communication/internal/query";
 import { renameGroup } from "@/actions/communication/internal/renameGroup";
 import { updateChatTrack } from "@/actions/communication/internal/updateChatTrack";
-import {
-  GROUP_NAME_MAX_LENGTH,
-  normalizeGroupName,
-} from "@/lib/utils/groupName";
 import Avatar from "@/components/Avatar";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { cn } from "@/lib/cn";
 import { successToast } from "@/lib/toast";
+import {
+  GROUP_NAME_MAX_LENGTH,
+  normalizeGroupName,
+} from "@/lib/utils/groupName";
 import { useChatTrackStore } from "@/stores/chatTrackStore";
 import { sendType } from "@/types/Chat";
-import { useQueryClient } from "@tanstack/react-query";
 import { Attachment, Group, User } from "@prisma/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { Popconfirm } from "antd";
 import { format } from "date-fns";
 import {
   ArrowLeft,
   CircleCheckBig,
   CircleX,
+  PencilLineIcon,
   SendHorizontal,
   Settings,
-  SquarePen,
   X,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -235,9 +235,20 @@ export default function MessageBox({
         setMessages((messages) => [...messages, newMessage]);
         clearDraft();
         setMultiAttachmentFile(null);
-        setLastMessage(json.chatTrack);
-        queryClient.invalidateQueries({ queryKey: ["internal", "users"] });
-        queryClient.invalidateQueries({ queryKey: ["internal", "groups"] });
+        if (json.chatTrack) {
+          setLastMessage(json.chatTrack);
+        } else if (json.newMessage) {
+          setLastMessage({ message: json.newMessage } as Parameters<
+            typeof setLastMessage
+          >[0]);
+        }
+        // Keys carry companyId + search, so match by prefix rather than
+        // guessing the exact tuple.
+        queryClient.invalidateQueries({
+          predicate: (query) =>
+            query.queryKey[0] === "internal" &&
+            (query.queryKey[1] === "users" || query.queryKey[1] === "groups"),
+        });
         router.refresh();
       } else {
         toast.error(json.message);
@@ -461,7 +472,7 @@ export default function MessageBox({
                     </>
                   ) : (
                     <>
-                      <SquarePen
+                      <PencilLineIcon
                         className="ml-3 size-6 cursor-pointer"
                         onClick={() => setIsGroupNameEdited(true)}
                       />

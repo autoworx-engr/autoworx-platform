@@ -26,7 +26,7 @@ import {
   User,
   Vendor,
 } from "@prisma/client";
-import { SquarePen } from "lucide-react";
+import { PencilLineIcon } from "lucide-react";
 import moment from "moment-timezone";
 import { useEffect, useRef, useState } from "react";
 import { UpdatePurchase } from "../../../../actions/inventory/updatePurchase";
@@ -211,7 +211,7 @@ export default function EditSalePurchaseList({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button className="flex w-full items-center justify-end text-primary md:justify-center">
-          <SquarePen className="w-5 h-5" />
+          <PencilLineIcon className="w-5 h-5" />
         </button>
       </DialogTrigger>
 

@@ -14,7 +14,7 @@ import { useActionStoreCreateEdit } from "@/stores/createEditStore";
 import { useListsStore } from "@/stores/lists";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { Pagination } from "antd"; // Importing the Pagination component from Ant Design
-import { Search, SquarePen } from "lucide-react";
+import { Search, PencilLineIcon } from "lucide-react";
 import moment from "moment-timezone";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -296,7 +296,7 @@ export default function Table({
                           className="text-2xl text-blue-600"
                           onClick={() => setActionType("edit")}
                         >
-                          <SquarePen size={18} className="text-primary" />
+                          <PencilLineIcon size={18} className="text-primary" />
                         </Link>
                       </td>
                     </tr>
