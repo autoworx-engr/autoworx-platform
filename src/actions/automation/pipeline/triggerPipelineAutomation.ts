@@ -42,7 +42,12 @@ export async function updatePipelineAutomationTrigger({
 
     const data = await response.json();
     // Revalidate the specific path or use tag-based revalidation if applicable
-    console.log("pipeline automation triggered", data);
+    console.log("pipeline automation triggered", {
+      condition,
+      companyId,
+      leadId,
+      columnId,
+    });
     if (
       condition === "MESSAGE_SENT_CLIENT" ||
       condition === "MESSAGE_RECEIVED_CLIENT"

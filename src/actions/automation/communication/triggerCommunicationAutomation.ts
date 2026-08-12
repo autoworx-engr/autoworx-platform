@@ -35,7 +35,11 @@ export async function updateCommunicationAutomationTrigger({
       },
     );
     const data = await response.json();
-    console.log("communication automation triggered", data);
+    console.log("communication automation triggered", {
+      companyId,
+      leadId,
+      columnId,
+    });
     return {
       success: "ok",
       data: data.data,
