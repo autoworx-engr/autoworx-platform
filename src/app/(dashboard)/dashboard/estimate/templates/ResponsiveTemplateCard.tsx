@@ -44,7 +44,7 @@ export default function ResponsiveTemplateCard({ template, index }: TProps) {
           <p className="text-2xl text-blue-600">${grandTotal}</p>
         </div>
       </CardContent>
-      <CardFooter className="flex justify-between">
+      <CardFooter className="flex justify-end">
         <Button variant="outline">
           <Link
             href={`/dashboard/estimate/templates/create?isEdit=true&templateId=${id}`}
