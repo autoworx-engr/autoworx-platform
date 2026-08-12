@@ -53,6 +53,13 @@ const formatDisplayName = (name?: string | null) => {
   return cleanedName || "N/A";
 };
 
+const toLocalDateStr = (d: Date) => {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 const Leads = ({ salesColumn }: TProps) => {
   const [initialLeads, setInitialLeads] = useState<LeadWithSalesUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -137,9 +144,9 @@ const Leads = ({ salesColumn }: TProps) => {
         if (filter.service) queryParams.append("service", filter.service);
         if (filter.status) queryParams.append("status", filter.status);
         if (dateRange?.[0])
-          queryParams.append("startDate", dateRange[0].toISOString());
+          queryParams.append("startDate", toLocalDateStr(dateRange[0]));
         if (dateRange?.[1])
-          queryParams.append("endDate", dateRange[1].toISOString());
+          queryParams.append("endDate", toLocalDateStr(dateRange[1]));
 
         const fetchPromise = fetch(
           `/api/pipeline/sales/leads?${queryParams.toString()}`,
@@ -506,9 +513,9 @@ const Leads = ({ salesColumn }: TProps) => {
                       <tbody>
                         {leads &&
                           leads.map((lead, index) => {
-                            const timeCreated = moment
-                              .utc(lead.createdAt)
-                              .format("MM/DD/YYYY");
+                            const timeCreated = moment(lead.createdAt).format(
+                              "MM/DD/YYYY",
+                            );
 
                             return (
                               <tr
