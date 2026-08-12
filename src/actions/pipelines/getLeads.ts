@@ -695,7 +695,6 @@ export async function updateLeadColumn(leadId: number, newColumnId: number) {
         column: true,
       },
     });
-    revalidatePath("/dashboard/pipeline/sales/pipeline");
 
     if (updatedLead.column?.title === "Converted") {
       sendLeadStageChangeOrCloseNotification({
@@ -732,6 +731,7 @@ export async function updateLeadColumn(leadId: number, newColumnId: number) {
         columnId: newColumnId,
       });
     } catch (error) {
+      console.log("error", error);
       console.log("updateCommunicationAutomationTrigger error", error);
     }
 
@@ -742,6 +742,8 @@ export async function updateLeadColumn(leadId: number, newColumnId: number) {
       leadId: leadId,
       conditionType: "post_tag",
     });
+
+    revalidatePath("/dashboard/pipeline/sales/pipeline");
 
     // if (response?.success) {
     //   console.log("response", response?.data);
