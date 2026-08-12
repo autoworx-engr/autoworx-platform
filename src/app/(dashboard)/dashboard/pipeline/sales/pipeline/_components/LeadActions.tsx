@@ -312,14 +312,7 @@ export default function LeadActions({ lead }: TProps) {
             disabled={isPending || !canCreateEstimate}
             type="button"
             onClick={() => {
-              if (lead.isEstimateCreated) {
-                if (!invoiceId) {
-                  errorToast(
-                    "Invoice is missing. Please refresh and try again.",
-                  );
-                }
-                return;
-              } else {
+              if (!lead.isEstimateCreated || !invoiceId) {
                 handleCreateDraftEstimate({
                   columnId: lead.columnId!,
                   leadId: lead.id,
