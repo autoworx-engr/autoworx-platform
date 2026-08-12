@@ -1244,31 +1244,7 @@ export default function InvoiceModalBody({
                       <X size={20} className="text-white p-1" />
                     </button>
                   </div>
-                  <button
-                    // onClick={async () => {
-                    //   const res = await authorizeInvoice(
-                    //     invoice.id,
-                    //     authorizedNameInput,
-                    //     invoice.type
-                    //   );
-                    //   if (res?.type === "success") {
-                    //     successToast("Invoice Authorized");
-                    //     await authorizedLeadsConvertion(invoice.id);
-                    //     setAuthorizedName(authorizedNameInput);
-
-                    //     // Update the invoice object in state to reflect the change
-                    //     setInvoice((prev) => {
-                    //       if (!prev) return prev;
-                    //       return {
-                    //         ...prev,
-                    //         authorizedName: authorizedNameInput,
-                    //       };
-                    //     });
-                    //   }
-                    //   setShowAuthorizedName(false);
-                    // }}
-                    className="text-md rounded bg-green-500 px-1.5 pb-1 text-center text-white print:hidden"
-                  >
+                  <button className="text-md rounded bg-green-500 px-1.5 pb-1 text-center text-white print:hidden">
                     Authorize
                   </button>
                 </div>
@@ -1282,37 +1258,6 @@ export default function InvoiceModalBody({
                     <span className="rounded-sm border border-primary px-4 py-1 text-sm text-primary">
                       Authorized
                     </span>
-                    {/* <button
-                      className="text-lg text-primary print:hidden"
-                      onClick={async () => {
-                        setShowAuthorizedName(true);
-                      }}
-                    >
-                      <MdEdit />
-                    </button>
-                    <button
-                      className="text-lg text-red-500 print:hidden"
-                      onClick={async () => {
-                        const res = await deleteInvoiceAuthorize(invoice.id);
-                        if (res?.type === "success") {
-                          successToast("Deleted Invoice Authorize");
-
-                          // Update the invoice object in state to reflect the change
-                          setInvoice((prev) => {
-                            if (!prev) return prev;
-                            return {
-                              ...prev,
-                              authorizedName: "",
-                            };
-                          });
-
-                          setAuthorizedName("");
-                          setAuthorizedNameInput("");
-                        }
-                      }}
-                    >
-                      <MdOutlineDelete />
-                    </button> */}
                   </div>
                 </div>
               )}
@@ -1396,7 +1341,7 @@ export default function InvoiceModalBody({
                 </div>
               </div>
             )}
-            {sigImageURL && (
+            {sigImageURL ? (
               <div className="mt-2 text-center flex flex-col items-end gap-2">
                 <Image
                   src={sigImageURL}
@@ -1409,8 +1354,7 @@ export default function InvoiceModalBody({
                   Authorized
                 </span>
               </div>
-            )}
-            {invoice?.signatureImage && (
+            ) : invoice?.signatureImage ? (
               <div className="mt-2 text-center flex flex-col items-end gap-2">
                 <Image
                   src={invoice?.signatureImage}
@@ -1423,6 +1367,8 @@ export default function InvoiceModalBody({
                   Authorized
                 </span>
               </div>
+            ) : (
+              <></>
             )}
           </div>
           {!isPrinting && (
