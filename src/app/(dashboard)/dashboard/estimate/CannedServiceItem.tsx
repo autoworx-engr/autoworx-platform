@@ -19,7 +19,7 @@ import { useEstimateCreateStore } from "@/stores/estimate-create";
 import { useListsStore } from "@/stores/lists";
 import { Category, Service } from "@prisma/client";
 import { Popconfirm } from "antd";
-import { SquarePen, Trash2 } from "lucide-react";
+import { PencilLineIcon, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -109,7 +109,7 @@ export const CannedServiceItem = ({
                     className="text-2xl text-indigo-500 hover:text-indigo-600 transition-colors"
                     title="Edit"
                   >
-                    <SquarePen className="w-5 h-5" />
+                    <PencilLineIcon className="w-5 h-5" />
                   </button>
                 </DialogTrigger>
                 <DialogContent onOpenAutoFocus={(e) => e.preventDefault()}>
@@ -263,7 +263,7 @@ export const CannedServiceItem = ({
               className="text-xl text-indigo-500 hover:text-indigo-600 transition-colors"
               title="Edit"
             >
-              <SquarePen className="w-5 h-5" />
+              <PencilLineIcon className="w-5 h-5" />
             </button>
           </DialogTrigger>
           <DialogContent

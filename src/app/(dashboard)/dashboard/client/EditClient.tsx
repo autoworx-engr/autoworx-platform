@@ -3,7 +3,7 @@
 import { Dialog, DialogTrigger } from "@/components/Dialog";
 import { useFormErrorStore } from "@/stores/form-error";
 import { Client, Source, Tag } from "@prisma/client";
-import { Edit, SquarePen } from "lucide-react";
+import { PencilLineIcon } from "lucide-react";
 import { useState } from "react";
 import EditClientModalBody from "./EditClientModalBody";
 
@@ -40,9 +40,9 @@ export default function EditCustomer({
             className={`${settingIcon ? "text-gray-600" : ""} text-primary"`}
           >
             {settingIcon ? (
-              <Edit className="w-4 h-4 text-primary" />
+              <PencilLineIcon className="w-4 h-4 text-primary" />
             ) : (
-              <SquarePen className="w-5 h-5 text-primary" />
+              <PencilLineIcon className="w-5 h-5 text-primary" />
             )}
           </button>
         </DialogTrigger>

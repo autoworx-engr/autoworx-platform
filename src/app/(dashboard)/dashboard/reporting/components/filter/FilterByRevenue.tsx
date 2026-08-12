@@ -23,7 +23,6 @@ export default function FilterByRevenue({
 }: TProps) {
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
-  // const [show, setShow] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const params = useSearchParams();
@@ -66,7 +65,7 @@ export default function FilterByRevenue({
         ref={buttonRef}
         onClick={() => toggleModal(modalName)}
         className={cn(
-          "w-full flex items-center justify-center gap-x-1 text-base lg:gap-x-2",
+          "w-full flex items-center justify-center gap-x-2 text-base lg:gap-x-2",
           "rounded-xl px-3 py-2 transition-transform duration-500 ease-out transform hover:scale-[1.02]",
           "bg-white dark:bg-slate-900",
           "ring-1 ring-slate-900/5 dark:ring-slate-700/20 hover:ring-[#6470fd]/50 hover:shadow-sm",
@@ -74,9 +73,10 @@ export default function FilterByRevenue({
             ? "ring-2 ring-[#6470fd] shadow-[0_20px_40px_-12px_rgba(100,112,253,0.10)]"
             : "",
           "md:w-44",
-          // keep rounded corners adjustments consistent with previous behavior
-          activeModal ? "rounded-md" : "rounded-xl",
-          selectedItem ? "border-2 border-[#6470fd]" : "border"
+          activeModal[modalName as keyof TFilterModalState]
+            ? "rounded-md"
+            : "rounded-xl",
+          selectedItem ? "border-2 border-[#6470fd]" : "border",
         )}
       >
         <span className="truncate max-w-[10rem] text-slate-600 dark:text-slate-200">
@@ -89,7 +89,12 @@ export default function FilterByRevenue({
           height="14"
           aria-hidden="true"
           role="img"
-          className={cn("ml-2 text-slate-500 dark:text-slate-300 transition-transform duration-200", activeModal[modalName as keyof TFilterModalState] ? "text-[#6470fd]" : "")}
+          className={cn(
+            "ml-2 text-slate-500 dark:text-slate-300 transition-transform duration-200",
+            activeModal[modalName as keyof TFilterModalState]
+              ? "text-[#6470fd]"
+              : "",
+          )}
         >
           <path d="M12 15.5L5 8.5h14l-7 7z" fill="currentColor" />
         </svg>
@@ -100,7 +105,7 @@ export default function FilterByRevenue({
           ref={dropdownRef}
           className={cn(
             "absolute left-0 right-0 z-50 flex max-h-52 w-full flex-col space-y-1 overflow-y-auto bg-white dark:bg-slate-900 rounded-2xl p-2 shadow-lg border-transparent md:w-44",
-            "ring-1 ring-slate-900/5 dark:ring-slate-700/20 transition-all duration-200"
+            "ring-1 ring-slate-900/5 dark:ring-slate-700/20 transition-all duration-200",
           )}
         >
           {items.map((item) => (
@@ -111,7 +116,7 @@ export default function FilterByRevenue({
                 "group flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors duration-200",
                 item === selectedItem
                   ? "bg-[#6470fd] text-white shadow-[0_8px_30px_rgba(100,112,253,0.12)]"
-                  : "text-slate-600 border dark:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-slate-800/60"
+                  : "text-slate-600 border dark:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-slate-800/60",
               )}
             >
               <span className="truncate">{item}</span>
@@ -121,7 +126,10 @@ export default function FilterByRevenue({
             <button
               disabled={!selectedItem}
               onClick={handleClear}
-              className={cn("w-full text-left px-3 py-2 text-sm text-white bg-[#de5967] rounded-lg", !selectedItem && "opacity-50 cursor-not-allowed")}
+              className={cn(
+                "w-full text-left px-3 py-2 text-sm text-white bg-[#de5967] rounded-lg",
+                !selectedItem && "opacity-50 cursor-not-allowed",
+              )}
             >
               Clear
             </button>

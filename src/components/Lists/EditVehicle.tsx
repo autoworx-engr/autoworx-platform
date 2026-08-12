@@ -22,7 +22,7 @@ import {
 } from "@/hooks/useCarData";
 import { useFormErrorStore } from "@/stores/form-error";
 import { Vehicle, VehicleColor } from "@prisma/client";
-import { SquarePen } from "lucide-react";
+import { PencilLineIcon } from "lucide-react";
 import { useState } from "react";
 import { extractVinFields, useVinDecode } from "../vin-decoder/useVinDecode";
 import VINInputCamera from "../vin-decoder/vin-input";
@@ -93,10 +93,11 @@ export default function EditVehicle({
   };
 
   async function handleSubmit(data: FormData) {
+    const other = data.get("other") as string;
+
     if (
-      !formData.vehicleYear ||
-      !formData.vehicleMake ||
-      !formData.vehicleModel
+      !other &&
+      (!formData.vehicleYear || !formData.vehicleMake || !formData.vehicleModel)
     ) {
       showError({
         field: !formData.vehicleYear
@@ -124,11 +125,9 @@ export default function EditVehicle({
     const license = data.get("license") as string;
     const vin = data.get("vin") as string;
     const notes = data.get("notes") as string;
-    const other = data.get("other") as string;
 
     if (!vehicle?.clientId) return;
 
-    console.log("other", other);
     const res = await editVehicle({
       year,
       make,
@@ -146,7 +145,6 @@ export default function EditVehicle({
       vehicleId: vehicle.id,
     });
 
-    console.log("response", res);
     if (res.type === "globalError") {
       showError({
         field: res.field,
@@ -165,7 +163,7 @@ export default function EditVehicle({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button type="button" className="text-xs text-primary">
-          <SquarePen className="w-4 h-4 cursor-pointer" />
+          <PencilLineIcon className="w-4 h-4 cursor-pointer" />
         </button>
       </DialogTrigger>
 

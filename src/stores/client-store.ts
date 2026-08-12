@@ -8,10 +8,14 @@ interface ClientCommunicationState {
   selectedConversation: TConversationType;
   selectedVehicleIndex: number;
   clientConversationTrack: ClientConversationTrack | null;
+  clientTrackUpdate: ClientConversationTrack | null;
   upcomingAppointmentCount: number | null;
   pendingTaskCount: number | null;
   setClientConversationTrack: (
     clientConversationTrack?: ClientConversationTrack | null,
+  ) => void;
+  setClientTrackUpdate: (
+    clientTrackUpdate?: ClientConversationTrack | null,
   ) => void;
   setClient: (client: Client | null) => void;
   setSelectedConversation: (selectedConversation: TConversationType) => void;
@@ -26,11 +30,13 @@ export const useClientCommunicationStore = create<ClientCommunicationState>(
     client: null,
     selectedConversation: "SMS",
     clientConversationTrack: null,
+    clientTrackUpdate: null,
     selectedVehicleIndex: 0,
     upcomingAppointmentCount: null,
     pendingTaskCount: null,
     setClientConversationTrack: (clientConversationTrack) =>
       set({ clientConversationTrack }),
+    setClientTrackUpdate: (clientTrackUpdate) => set({ clientTrackUpdate }),
     setClient: (client) => set({ client }),
     setSelectedConversation: (selectedConversation) =>
       set({ selectedConversation }),
@@ -48,6 +54,7 @@ export const useClientCommunicationStore = create<ClientCommunicationState>(
         selectedConversation: "SMS",
         selectedVehicleIndex: 0,
         clientConversationTrack: null,
+        clientTrackUpdate: null,
         upcomingAppointmentCount: null,
         pendingTaskCount: null,
       }),

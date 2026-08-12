@@ -19,6 +19,7 @@ import {
   Globe,
   Hash,
   Mail,
+  PencilLineIcon,
   Phone,
   User,
 } from "lucide-react";
@@ -306,7 +307,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
                   <button
                     className={`flex items-center gap-1 rounded-lg bg-[${ACCENT_COLOR}] text-white font-medium px-4 py-2 text-sm shadow-md shadow-[${ACCENT_COLOR}]/30 hover:-translate-y-0.5 ${TRANSITION_UTILITY}`}
                   >
-                    <Edit size={16} />
+                    <PencilLineIcon size={16} />
                     Edit
                   </button>
                 }

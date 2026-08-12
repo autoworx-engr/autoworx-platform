@@ -9,6 +9,7 @@ type TUpdateCommunicationAutomationTrigger = {
 export const updateCommunicationAutomationTrigger = async function (
   payload: TUpdateCommunicationAutomationTrigger,
 ) {
+  console.log("update communication automation trigger");
   try {
     const response = await axiosInstance.patch(
       "/communication-automation-trigger",

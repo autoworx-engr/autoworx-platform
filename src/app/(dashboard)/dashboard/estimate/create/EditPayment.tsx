@@ -20,7 +20,7 @@ import { useEstimateCreateStore } from "@/stores/estimate-create";
 import { useListsStore } from "@/stores/lists";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { PaymentMethod } from "@prisma/client";
-import { SquarePen } from "lucide-react";
+import { PencilLineIcon } from "lucide-react";
 import moment from "moment-timezone";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
@@ -333,7 +333,7 @@ export default function EditPaymentModal({
         onClick={() => setOpen(true)}
         className="flex items-center gap-1 text-primary underline"
       >
-        <SquarePen className="h-5 w-5" />
+        <PencilLineIcon className="h-5 w-5" />
       </button>
 
       <DialogContent className="max-w-xl">

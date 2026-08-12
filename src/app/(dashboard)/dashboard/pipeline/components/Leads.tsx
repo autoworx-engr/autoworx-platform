@@ -53,6 +53,13 @@ const formatDisplayName = (name?: string | null) => {
   return cleanedName || "N/A";
 };
 
+const toLocalDateStr = (d: Date) => {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 const Leads = ({ salesColumn }: TProps) => {
   const [initialLeads, setInitialLeads] = useState<LeadWithSalesUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -137,9 +144,9 @@ const Leads = ({ salesColumn }: TProps) => {
         if (filter.service) queryParams.append("service", filter.service);
         if (filter.status) queryParams.append("status", filter.status);
         if (dateRange?.[0])
-          queryParams.append("startDate", dateRange[0].toISOString());
+          queryParams.append("startDate", toLocalDateStr(dateRange[0]));
         if (dateRange?.[1])
-          queryParams.append("endDate", dateRange[1].toISOString());
+          queryParams.append("endDate", toLocalDateStr(dateRange[1]));
 
         const fetchPromise = fetch(
           `/api/pipeline/sales/leads?${queryParams.toString()}`,
@@ -506,9 +513,9 @@ const Leads = ({ salesColumn }: TProps) => {
                       <tbody>
                         {leads &&
                           leads.map((lead, index) => {
-                            const timeCreated = moment
-                              .utc(lead.createdAt)
-                              .format("MM/DD/YYYY");
+                            const timeCreated = moment(lead.createdAt).format(
+                              "MM/DD/YYYY",
+                            );
 
                             return (
                               <tr
@@ -608,14 +615,14 @@ const Leads = ({ salesColumn }: TProps) => {
                                           size={20}
                                           className="duration-300 hover:text-primary"
                                         />
-                                        <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                                        <span className="invisible absolute top-full left-14 z-20 mt-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
                                           Communications
                                         </span>
                                       </Link>
                                     ) : (
                                       <span className="group relative cursor-not-allowed opacity-40">
                                         <MessageCircleMore size={20} />
-                                        <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                                        <span className="invisible absolute top-full left-14 z-20 mt-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
                                           Communications
                                         </span>
                                       </span>
@@ -626,7 +633,7 @@ const Leads = ({ salesColumn }: TProps) => {
                                         <PipelineInvoiceModal
                                           invoiceId={lead.invoiceId}
                                         />
-                                        <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                                        <span className="invisible absolute top-full left-14 z-20 mt-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
                                           Draft estimate
                                         </span>
                                       </span>
@@ -653,7 +660,7 @@ const Leads = ({ salesColumn }: TProps) => {
                                             loading="lazy"
                                           />
                                         </div>
-                                        <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                                        <span className="invisible absolute top-full left-14 z-20 mt-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
                                           Draft estimate
                                         </span>
                                       </button>
@@ -684,7 +691,7 @@ const Leads = ({ salesColumn }: TProps) => {
                                                 />
                                               )}
 
-                                              <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                                              <span className="invisible absolute top-full left-14 z-20 mt-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
                                                 Appointment
                                               </span>
                                             </button>
@@ -723,7 +730,7 @@ const Leads = ({ salesColumn }: TProps) => {
                                         previousTasks={lead.tasks || []}
                                         totalTasksCount={lead.taskCount ?? 0}
                                       />
-                                      <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                                      <span className="invisible absolute top-full left-14 z-20 mt-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
                                         Add Task
                                       </span>
                                     </div>

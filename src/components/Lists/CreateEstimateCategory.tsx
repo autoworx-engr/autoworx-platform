@@ -1,5 +1,6 @@
 import newCategory from "@/actions/category/newCategory";
 import Selector from "@/components/Selector";
+import { CATEGORY_NAME_MAX_LENGTH } from "@/lib/categoryConstants";
 import { cn } from "@/lib/cn";
 import { useListsStore } from "@/stores/lists";
 import { Category } from "@prisma/client";
@@ -102,6 +103,7 @@ export default function SelectCategory({
               <input
                 type="text"
                 placeholder="New Category..."
+                maxLength={CATEGORY_NAME_MAX_LENGTH}
                 value={categoryInput}
                 onChange={(e) => setCategoryInput(e.target.value)}
                 onKeyDown={(e) => {

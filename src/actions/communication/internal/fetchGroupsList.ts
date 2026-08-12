@@ -14,9 +14,19 @@ type Params = {
   search?: string;
 };
 
+export type GroupLatestMessage = {
+  id: number;
+  message: string;
+  from: number;
+  createdAt: Date;
+  updatedAt: Date;
+  /** Sender's display name, or null when the viewer sent it. */
+  senderName: string | null;
+};
+
 export type GroupListItemData = Prisma.GroupGetPayload<{
   include: { users: true };
-}> & { unreadCount: number };
+}> & { unreadCount: number; latestMessage: GroupLatestMessage | null };
 
 export type FetchGroupsPage = {
   data: GroupListItemData[];
@@ -71,7 +81,8 @@ export async function fetchGroupsList({
     db.group.count({ where }),
   ]);
 
-  const data = await attachUnreadCounts(currentUserId, groups);
+  const withUnread = await attachUnreadCounts(currentUserId, groups);
+  const data = await attachLatestMessages(currentUserId, withUnread);
   const hasMore = skip + data.length < total;
   return {
     data,
@@ -91,10 +102,14 @@ export async function fetchGroupsList({
  * sidebar still renders. The badge simply won't light up until the
  * migration runs.
  */
+type GroupWithUnread = Prisma.GroupGetPayload<{ include: { users: true } }> & {
+  unreadCount: number;
+};
+
 async function attachUnreadCounts(
   currentUserId: number,
   groups: Prisma.GroupGetPayload<{ include: { users: true } }>[],
-): Promise<GroupListItemData[]> {
+): Promise<GroupWithUnread[]> {
   if (groups.length === 0) return [];
   const groupIds = groups.map((g) => g.id);
 
@@ -132,4 +147,65 @@ async function attachUnreadCounts(
   );
 
   return groups.map((g, i) => ({ ...g, unreadCount: unreadCounts[i] }));
+}
+
+/**
+ * Attach the newest message of each group so the sidebar can preview it the
+ * way the users list does. Two batched queries: `distinct` on `groupId` picks
+ * one row per group, then the senders are resolved in a single lookup.
+ */
+async function attachLatestMessages(
+  currentUserId: number,
+  groups: GroupWithUnread[],
+): Promise<GroupListItemData[]> {
+  if (groups.length === 0) return [];
+  const groupIds = groups.map((g) => g.id);
+
+  const messages = await db.message.findMany({
+    where: { groupId: { in: groupIds } },
+    distinct: ["groupId"],
+    orderBy: [{ groupId: "asc" }, { createdAt: "desc" }],
+    select: {
+      id: true,
+      message: true,
+      from: true,
+      groupId: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  // Resolve sender names in one go. The viewer is left out — their messages
+  // render as "You", matching the users list.
+  const senderIds = [
+    ...new Set(
+      messages.map((m) => m.from).filter((id) => id !== currentUserId),
+    ),
+  ];
+  const senders = senderIds.length
+    ? await db.user.findMany({
+        where: { id: { in: senderIds } },
+        select: { id: true, firstName: true },
+      })
+    : [];
+  const nameById = new Map(senders.map((s) => [s.id, s.firstName]));
+
+  const latestByGroup = new Map<number, GroupLatestMessage>();
+  for (const m of messages) {
+    if (m.groupId == null) continue;
+    latestByGroup.set(m.groupId, {
+      id: m.id,
+      message: m.message,
+      from: m.from,
+      createdAt: m.createdAt,
+      updatedAt: m.updatedAt,
+      senderName:
+        m.from === currentUserId ? null : (nameById.get(m.from) ?? null),
+    });
+  }
+
+  return groups.map((g) => ({
+    ...g,
+    latestMessage: latestByGroup.get(g.id) ?? null,
+  }));
 }

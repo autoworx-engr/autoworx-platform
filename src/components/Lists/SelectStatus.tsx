@@ -162,7 +162,7 @@ export function SelectStatus({
                   /* Logic remains untouched */
                   if (statusItem.title === "Delivered" && due > 0)
                     return errorToast(
-                      "Clear all dues before changing this invoice as Delivered.",
+                      "Outstanding balance detected. Please clear all dues before changing the invoice status to Delivered.",
                     );
                   if (
                     statusItem.title === "Delivered" &&

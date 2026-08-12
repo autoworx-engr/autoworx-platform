@@ -1,10 +1,31 @@
 import Avatar from "@/components/Avatar";
 import ResponsiveEmployeeCard from "@/components/mobile-responsive/employee/ResponsiveEmployeeCard";
 import { Client, Fleet, Invoice, Tag } from "@prisma/client";
-import { SquarePen } from "lucide-react";
+import { PencilLineIcon } from "lucide-react";
 import FleetStatistics from "./FleetStatistics";
 import FleetSubHeading from "./FleetSubHeading";
 import NewFleet from "./NewFleet";
+
+const DataField = ({
+  label,
+  value,
+}: {
+  label: string;
+  value?: string | number | null;
+}) => (
+  <div className="flex items-start py-2">
+    <label className="block w-24 shrink-0 text-sm font-medium text-slate-500 lg:w-28">
+      {label}
+    </label>
+    <div className="flex-1 text-sm font-semibold text-slate-600 leading-relaxed">
+      {value || (
+        <span className="text-slate-600 ">
+          {label === "Address" ? "No Address Listed" : "N/A"}
+        </span>
+      )}
+    </div>
+  </div>
+);
 
 const InfoDetails = ({
   client,
@@ -15,26 +36,6 @@ const InfoDetails = ({
     tag: Tag | null;
   };
 }) => {
-  const DataField = ({
-    label,
-    value,
-  }: {
-    label: string;
-    value?: string | number | null;
-  }) => (
-    <div className="flex items-start py-2">
-      <label className="block w-24 shrink-0 text-sm font-medium text-slate-500 lg:w-28">
-        {label}
-      </label>
-      <div className="flex-1 text-sm font-semibold text-slate-600 leading-relaxed">
-        {value || (
-          <span className="text-slate-600 ">
-            {label === "Address" ? "No Address Listed" : "N/A"}
-          </span>
-        )}
-      </div>
-    </div>
-  );
   const unpaidInvoices = client?.Invoice?.filter(
     (invoice: any) =>
       invoice?.grandTotal == 0 || (invoice?.grandTotal > 0 && invoice?.due > 0),
@@ -55,7 +56,7 @@ const InfoDetails = ({
         <div className="absolute right-2 top-2">
           <NewFleet
             fleet={client}
-            buttonElement={<SquarePen size={14} color="#6571ff" />}
+            buttonElement={<PencilLineIcon size={14} color="#6571ff" />}
             isEdit={true}
           />
         </div>
@@ -71,7 +72,7 @@ const InfoDetails = ({
               <div className="absolute right-4 top-4 cursor-pointer">
                 <NewFleet
                   fleet={client}
-                  buttonElement={<SquarePen size={16} color="#6571ff" />}
+                  buttonElement={<PencilLineIcon size={16} color="#6571ff" />}
                   isEdit={true}
                 />
               </div>
