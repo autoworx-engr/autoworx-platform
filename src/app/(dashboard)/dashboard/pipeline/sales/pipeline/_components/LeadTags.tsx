@@ -8,6 +8,7 @@ import { cn } from "@/lib/cn";
 import { updateTagAutomationTrigger } from "@/service/tag-automation-trigger/api";
 import { LeadWithSalesUser } from "@/types/invoiceLead";
 import { Tag } from "@prisma/client";
+import { Popconfirm } from "antd";
 import { useState } from "react";
 import { SalesTagSelector } from "../../../components/SalesTagSelector";
 
@@ -106,21 +107,41 @@ export default function LeadTags({ leadTags, lead }: TLeadTagsProps) {
             }}
           >
             {leadTag.tag.name}
-            <button
-              type="button"
-              className={cn(
-                "ml-1 cursor-pointer text-xs text-black disabled:cursor-not-allowed disabled:opacity-50",
-              )}
-              onClick={() => {
-                handleRemoveTag({
-                  leadId: lead.id,
-                  columnId: lead.columnId!,
-                  tagId: leadTag.id,
-                });
-              }}
-            >
-              ✕
-            </button>
+            <span onClick={(e) => e.stopPropagation()}>
+              <Popconfirm
+                title="Delete Tag"
+                description="Are you sure you want to remove this tag?"
+                okText="Delete"
+                cancelText="Cancel"
+                onConfirm={() =>
+                  handleRemoveTag({
+                    leadId: lead.id,
+                    columnId: lead.columnId!,
+                    tagId: leadTag.id,
+                  })
+                }
+                onPopupClick={(e) => e.stopPropagation()}
+                overlayClassName="[&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800"
+                okButtonProps={{
+                  className:
+                    "!rounded-lg !border-none !bg-[#6571ff] !font-semibold !shadow-sm !shadow-[#6571ff]/30 hover:!bg-[#525ceb]",
+                }}
+                cancelButtonProps={{
+                  className:
+                    "!rounded-lg !border-slate-200 !font-medium !text-slate-600 hover:!border-slate-300 hover:!bg-slate-50 hover:!text-slate-700",
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={(e) => e.stopPropagation()}
+                  className={cn(
+                    "ml-1 cursor-pointer text-xs text-black disabled:cursor-not-allowed disabled:opacity-50",
+                  )}
+                >
+                  ✕
+                </button>
+              </Popconfirm>
+            </span>
           </span>
         );
       })}
