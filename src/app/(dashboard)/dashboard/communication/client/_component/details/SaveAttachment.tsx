@@ -131,10 +131,7 @@ export default function SaveAttachment({
       )}
 
       {isOpen && (
-        <div
-          className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
-          onClick={(e) => e.target === e.currentTarget && closeModal()}
-        >
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 backdrop-blur-sm">
           {/* Top Controls */}
           <div className="absolute right-4 top-4 flex items-center gap-2">
             {isCurrentImage && (

@@ -112,7 +112,10 @@ export default function UserSelectButton({
     lastMessageHistory?.lastMessage || user.latestMessage?.message;
   const previewPrefix = participants === "sender" ? "You" : user.firstName;
   const isUnreadPreview = unreadCount > 0 && !isSelectedUser;
-  const draftText = useDraftPreview("internal", "dm", user.id);
+  // Suppressed while this row is open — you're already looking at that text
+  // in the compose box, so re-showing it here on every keystroke is noise.
+  const draftTextLive = useDraftPreview("internal", "dm", user.id);
+  const draftText = isSelectedUser ? "" : draftTextLive;
 
   return (
     <button
@@ -162,18 +165,23 @@ export default function UserSelectButton({
           <p
             className={cn(
               "mt-0.5 line-clamp-1 text-xs",
-              draftText
-                ? "italic text-amber-600 dark:text-amber-500"
-                : isSelectedUser
-                  ? "text-white/80"
-                  : isUnreadPreview
-                    ? "font-semibold text-zinc-700 dark:text-zinc-200"
-                    : "text-zinc-500 dark:text-zinc-400",
+              isSelectedUser
+                ? "text-white/80"
+                : isUnreadPreview
+                  ? "font-semibold text-zinc-700 dark:text-zinc-200"
+                  : "text-zinc-500 dark:text-zinc-400",
             )}
           >
-            {draftText
-              ? `Draft: ${draftText}`
-              : `${previewPrefix}: ${messageText}`}
+            {draftText ? (
+              <>
+                <span className="font-semibold text-black dark:text-white">
+                  Draft:
+                </span>{" "}
+                {draftText}
+              </>
+            ) : (
+              `${previewPrefix}: ${messageText}`
+            )}
           </p>
         )}
       </div>
