@@ -312,7 +312,7 @@ export default function LeadActions({ lead }: TProps) {
             disabled={isPending || !canCreateEstimate}
             type="button"
             onClick={() => {
-              if (!lead.isEstimateCreated || !invoiceId) {
+              if (!!lead.isEstimateCreated || !!invoiceId) {
                 handleCreateDraftEstimate({
                   columnId: lead.columnId!,
                   leadId: lead.id,
@@ -320,6 +320,7 @@ export default function LeadActions({ lead }: TProps) {
                   vehicleId: lead?.vehicleId,
                 });
               }
+              // otherwise show estimate modal
             }}
             className="group relative disabled:cursor-not-allowed disabled:opacity-50"
           >
