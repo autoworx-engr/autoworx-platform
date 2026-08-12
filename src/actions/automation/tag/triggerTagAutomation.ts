@@ -23,6 +23,7 @@ export async function updateTagAutomationTrigger(
   try {
     const session = await getServerSession(authOptions);
     const token = session?.accessToken || generatedToken;
+
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_API_BASE_URL}/tag-automation-trigger`,
       {
@@ -37,7 +38,7 @@ export async function updateTagAutomationTrigger(
       },
     );
     const data = await response.json();
-
+    console.log("tag automation triggered", payloadData);
     return {
       success: "ok",
       data: data.data,
