@@ -51,6 +51,18 @@ function getEnvironment() {
   return SDKConstants.endpoint.sandbox;
 }
 
+// Authorize.Net can return multiple messages on one response (e.g. a generic
+// "one or more missing or invalid required fields" plus a second, specific
+// message naming the actual field) — reading only getMessage()[0] silently
+// throws away that detail, which is exactly what we need to diagnose this
+// class of error.
+function formatAuthNetMessages(response: any): string {
+  const messages = response?.getMessages?.()?.getMessage?.() || [];
+  return messages
+    .map((m: any) => `[${m.getCode?.() || "?"}] ${m.getText?.() || ""}`)
+    .join(" | ");
+}
+
 function extractNumericIdFromErrorText(errorText: string): string | null {
   const matches = errorText.match(/\b(\d{5,})\b/g);
   if (!matches || matches.length === 0) return null;
@@ -65,6 +77,24 @@ function readPaymentProfileId(profile: any): string | undefined {
   return profile.customerPaymentProfileId || profile.paymentProfileId;
 }
 
+// Authorize.Net requires billing address/city/state/zip on a $0 auth, which
+// is exactly what ValidateCustomerPaymentProfileRequest does in LIVEMODE —
+// sandbox/testMode doesn't enforce this, which is why this only ever broke
+// in production. Attach whatever address the company has on file.
+export type TBillingAddress = {
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip?: string | null;
+};
+
+function applyBillingAddress(billTo: any, billingAddress?: TBillingAddress) {
+  if (billingAddress?.address) billTo.setAddress(billingAddress.address);
+  if (billingAddress?.city) billTo.setCity(billingAddress.city);
+  if (billingAddress?.state) billTo.setState(billingAddress.state);
+  if (billingAddress?.zip) billTo.setZip(billingAddress.zip);
+}
+
 /**
  * 1. Create Customer Profile and Payment Profile (CIM)
  * This uses a payment nonce from Accept.js/Accept Hosted
@@ -75,6 +105,7 @@ export async function createPlatformCustomerProfile(
   firstName: string,
   lastName: string,
   opaqueData: { dataDescriptor: string; dataValue: string },
+  billingAddress?: TBillingAddress,
 ) {
   const merchantAuthenticationType = getPlatformAuthNetCredentials();
 
@@ -94,6 +125,7 @@ export async function createPlatformCustomerProfile(
   const billTo = new ApiContracts.CustomerAddressType();
   billTo.setFirstName(firstName);
   billTo.setLastName(lastName);
+  applyBillingAddress(billTo, billingAddress);
   customerPaymentProfileType.setBillTo(billTo);
 
   const paymentProfileList = [customerPaymentProfileType];
@@ -190,6 +222,7 @@ export async function createPlatformPaymentProfile(
   lastName: string,
   opaqueData: { dataDescriptor: string; dataValue: string },
   attemptedLimitRecovery = false,
+  billingAddress?: TBillingAddress,
 ) {
   const merchantAuthenticationType = getPlatformAuthNetCredentials();
 
@@ -202,6 +235,7 @@ export async function createPlatformPaymentProfile(
   const billTo = new ApiContracts.CustomerAddressType();
   billTo.setFirstName(firstName);
   billTo.setLastName(lastName);
+  applyBillingAddress(billTo, billingAddress);
 
   const customerPaymentProfileType =
     new ApiContracts.CustomerPaymentProfileType();
@@ -335,6 +369,7 @@ export async function createPlatformPaymentProfile(
                     lastName,
                     opaqueData,
                     true,
+                    billingAddress,
                   );
                   return resolve(retried);
                 }
@@ -408,10 +443,11 @@ export async function validateCustomerPaymentProfile(
       ) {
         resolve();
       } else {
-        const error = response?.getMessages().getMessage()[0];
-        reject(
-          new Error(error?.getText() || "Payment profile validation failed"),
+        const allMessages = formatAuthNetMessages(response);
+        console.error(
+          `Authorize.Net payment profile validation failed (customerProfileId=${customerProfileId}, customerPaymentProfileId=${customerPaymentProfileId}, mode=${isLiveValidation ? "LIVE" : "TEST"}): ${allMessages}`,
         );
+        reject(new Error(allMessages || "Payment profile validation failed"));
       }
     });
   });
@@ -479,10 +515,11 @@ export async function createPlatformARBSubscription({
       ) {
         resolve({ subscriptionId: response.getSubscriptionId() });
       } else {
-        const error = response?.getMessages().getMessage()[0];
-        reject(
-          new Error(error?.getText() || "Failed to create ARB subscription"),
+        const allMessages = formatAuthNetMessages(response);
+        console.error(
+          `Authorize.Net ARB subscription creation failed (customerProfileId=${customerProfileId}, customerPaymentProfileId=${customerPaymentProfileId}, amount=${amount}, startDate=${startDate.toISOString().substring(0, 10)}, planName=${planName}): ${allMessages}`,
         );
+        reject(new Error(allMessages || "Failed to create ARB subscription"));
       }
     });
   });
