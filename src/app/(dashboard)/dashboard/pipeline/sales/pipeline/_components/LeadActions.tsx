@@ -312,7 +312,7 @@ export default function LeadActions({ lead }: TProps) {
             disabled={isPending || !canCreateEstimate}
             type="button"
             onClick={() => {
-              if (!!lead.isEstimateCreated || !!invoiceId) {
+              if (!hasDraftEstimate) {
                 handleCreateDraftEstimate({
                   columnId: lead.columnId!,
                   leadId: lead.id,
