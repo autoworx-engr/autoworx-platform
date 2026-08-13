@@ -39,9 +39,9 @@ export default async function AiTrainOverview() {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-3">
+    <div className="grid gap-6 lg:grid-cols-3 min-w-0">
       {/* LEFT MAIN CONTENT */}
-      <div className="lg:col-span-2 space-y-6">
+      <div className="lg:col-span-2 space-y-6 min-w-0">
         <Card className="border-primary/20 bg-primary/5">
           <CardContent className="flex items-center justify-between p-6">
             <div className="flex items-center gap-4">
@@ -111,7 +111,7 @@ export default async function AiTrainOverview() {
       </div>
 
       {/* RIGHT SIDE PERMISSION PANEL */}
-      <div className="space-y-6">
+      <div className="space-y-6 min-w-0">
         <SalesAgentPermissionPanel companyId={companyId} />
       </div>
     </div>

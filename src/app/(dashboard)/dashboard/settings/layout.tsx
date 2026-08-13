@@ -18,7 +18,7 @@ const layout = async ({ children }: Props) => {
   const isLegacy = company ? !company.enforcePlatformPlan : false;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div className="min-h-full bg-gray-50 p-4 pb-8">
       <h1 className="mb-6 ml-1 text-3xl font-bold">Settings</h1>
 
       {/* Main content area: Sidebar and Page Content */}
