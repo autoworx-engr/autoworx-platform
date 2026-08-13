@@ -29,19 +29,26 @@ export default function NewClientSource({
   const [open, setOpen] = useState(false);
   const { showError, clearError } = useFormErrorStore();
   const [source, setSource] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (data: FormData) => {
+    if (submitting) return;
+    setSubmitting(true);
     clearError();
-    const res = await newSource(source);
+    try {
+      const res = await newSource(source);
 
-    if (res.type === "success") {
-      setClientSources((prev) => [...prev, res.data]);
-      setSource("");
-      setOpen(false);
-      setOpenClientSource(false);
-      setClientSource(res.data);
-    } else {
-      showError({ message: res.message || "Failed to add source" });
+      if (res.type === "success") {
+        setClientSources((prev) => [...prev, res.data]);
+        setSource("");
+        setOpen(false);
+        setOpenClientSource(false);
+        setClientSource(res.data);
+      } else {
+        showError({ message: res.message || "Failed to add source" });
+      }
+    } finally {
+      setSubmitting(false);
     }
   };
   return (
