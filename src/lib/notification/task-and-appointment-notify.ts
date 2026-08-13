@@ -223,7 +223,7 @@ export const sendAppointmentUpdateNotification = async ({
         timeMoment.isValid() ? `&time=${timeMoment.format("HH:mm")}` : ""
       }`,
       description: clientName
-        ? `Appointment with ${clientName} on ${formattedDate}${timeText} has been created. Check your Autoworx calendar.`
+        ? `Appointment with ${clientName} on ${formattedDate}${timeText} has been updated. Check your Autoworx calendar.`
         : `Appointment ${title} on ${formattedDate}${timeText} has been updated. Check your Autoworx calendar.`,
     };
 
