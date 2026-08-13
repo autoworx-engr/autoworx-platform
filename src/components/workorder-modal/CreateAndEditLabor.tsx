@@ -60,13 +60,13 @@ type TProps = {
   };
   technicianList?: Technician[];
   writePermission: boolean;
-  onAddTechnician: (
+  onAddTechnician?: (
     invoiceItemId: number,
     serviceId: number | null,
     payload: any,
     employeeName: string,
   ) => void;
-  onUpdateTechnician: (
+  onUpdateTechnician?: (
     invoiceItemId: number,
     techId: number | string,
     payload: any,
@@ -285,13 +285,33 @@ export default function CreateAndEditLabor({
           } as TechnicianImage;
         });
 
-        onUpdateTechnician(invoiceItemId, technician.id, {
-          ...updatedPayload,
-          vehicleParts: isTechnician
-            ? technician.vehicleParts || []
-            : selectedVehicleParts,
-          imageUrls: finalImageUrls,
-        });
+        if (onUpdateTechnician) {
+          onUpdateTechnician(invoiceItemId, technician.id, {
+            ...updatedPayload,
+            vehicleParts: isTechnician
+              ? technician.vehicleParts || []
+              : selectedVehicleParts,
+            imageUrls: finalImageUrls,
+          });
+        } else {
+          await updateTechnician(companyId!, invoiceId, technician.id, {
+            ...updatedPayload,
+            vehicleParts: isTechnician
+              ? technician.vehicleParts || []
+              : selectedVehicleParts,
+            imageUrls: finalImageUrls,
+          });
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.getInvoiceModalDataKey(invoiceId),
+          });
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.getWorkOrderDataKey(invoiceId),
+          });
+          const event = new CustomEvent("invoice-updated", {
+            detail: { invoiceId },
+          });
+          window.dispatchEvent(event);
+        }
 
         setFormData({ attachments: newImages });
         setOpen(false);
@@ -313,15 +333,32 @@ export default function CreateAndEditLabor({
           technicianNote: technicianNote,
         };
 
-        onAddTechnician(
-          invoiceItemId,
-          serviceId ?? null,
-          {
+        if (onAddTechnician) {
+          onAddTechnician(
+            invoiceItemId,
+            serviceId ?? null,
+            {
+              ...payload,
+              vehicleParts: selectedVehicleParts,
+            },
+            `${employee?.firstName} ${employee?.lastName}`,
+          );
+        } else {
+          await addTechnician(companyId!, invoiceId, {
             ...payload,
             vehicleParts: selectedVehicleParts,
-          },
-          `${employee?.firstName} ${employee?.lastName}`,
-        );
+          });
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.getInvoiceModalDataKey(invoiceId),
+          });
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.getWorkOrderDataKey(invoiceId),
+          });
+          const event = new CustomEvent("invoice-updated", {
+            detail: { invoiceId },
+          });
+          window.dispatchEvent(event);
+        }
 
         setOpen(false);
         setSelectedVehicleParts([]);
