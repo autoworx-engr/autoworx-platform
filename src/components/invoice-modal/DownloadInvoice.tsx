@@ -40,6 +40,7 @@ type DownloadInvoiceProps = {
     })[];
     photos: InvoicePhoto[];
     user: User;
+    Refund: Refund[];
     payments: (Payment & {
       card: CardPayment | null;
       check: CheckPayment | null;
