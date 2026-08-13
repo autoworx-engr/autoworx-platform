@@ -223,6 +223,11 @@ export async function register({
               enabled: true,
             },
             {
+              title: "Tag Automation",
+              permission_name: "tagAutomation",
+              enabled: true,
+            },
+            {
               title: "Reporting Automation",
               permission_name: "reportingAutomation",
               enabled: true,
