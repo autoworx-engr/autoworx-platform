@@ -126,6 +126,8 @@ export default function MaterialCreate() {
           };
         });
         toast.success("Vendor deleted successfully");
+      } else {
+        toast.error(res.message || "Failed to delete vendor");
       }
     } catch (err: any) {
       errorToast("Failed to delete vendor. It may be in use.");

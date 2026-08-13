@@ -61,21 +61,25 @@ export default function SelectCategory({
   }
 
   async function handleDeleteCategory(categoryId: number) {
-    const res = await deleteCategory({ categoryId });
+    try {
+      const res = await deleteCategory({ categoryId });
 
-    if (res.type === "success") {
-      if (category?.id === categoryId) {
-        setCategory(null);
+      if (res.type === "success") {
+        if (category?.id === categoryId) {
+          setCategory(null);
+        }
+        useListsStore.setState((state) => {
+          return {
+            categories: state.categories.filter((cat) => cat.id !== categoryId),
+          };
+        });
+
+        toast.success("Category deleted successfully");
+      } else {
+        toast.error(res.message || "Failed to delete category");
       }
-      useListsStore.setState((state) => {
-        return {
-          categories: state.categories.filter((cat) => cat.id !== categoryId),
-        };
-      });
-
-      toast.success("Category deleted successfully");
-    } else {
-      toast.error(res.message || "Failed to delete category");
+    } catch {
+      toast.error("Failed to delete category");
     }
 
     setCategoryInput("");
