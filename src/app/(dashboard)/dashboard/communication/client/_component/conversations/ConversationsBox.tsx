@@ -83,9 +83,11 @@ export default async function ConversationsBox({
 
             <Image
               src={
-                client?.photo?.includes("autoworx-production")
-                  ? client.photo
-                  : "/images/default.png"
+                !client?.photo
+                  ? "/images/default.png"
+                  : client.photo.includes("/images/default.png")
+                    ? "/images/default.png"
+                    : client.photo
               }
               alt="client"
               width={48}
