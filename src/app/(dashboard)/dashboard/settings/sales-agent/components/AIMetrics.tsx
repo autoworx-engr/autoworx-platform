@@ -28,7 +28,7 @@ export default function AIMetrics({ companyId }: { companyId: number }) {
   });
 
   return (
-    <section className="min-w-0 overflow-hidden">
+    <section className="min-w-0">
       <h2 className="my-4 text-lg font-semibold text-foreground">
         Performance Metrics
       </h2>

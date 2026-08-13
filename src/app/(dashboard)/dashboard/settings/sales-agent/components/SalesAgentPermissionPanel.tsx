@@ -100,7 +100,10 @@ export default function SalesAgentPermissionPanel({ companyId }: Props) {
                   className="flex items-center justify-between gap-3 rounded-md border p-2 bg-white"
                 >
                   <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">
+                    <p
+                      className="text-sm font-medium truncate"
+                      title={`${client.firstName} ${client.lastName || ""}`.trim()}
+                    >
                       {client.firstName} {client.lastName || ""}
                     </p>
                     {/* <p className="text-xs text-muted-foreground">
