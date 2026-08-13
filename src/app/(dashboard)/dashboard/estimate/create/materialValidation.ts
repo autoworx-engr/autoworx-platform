@@ -40,7 +40,7 @@ export function validateMaterial(
   const errors: MaterialFieldErrors = {};
 
   if (!values.name.trim()) {
-    errors.name = "Material / Parts Name is required";
+    errors.name = "Name/Title is required";
   }
 
   if (isBlank(values.quantity)) {

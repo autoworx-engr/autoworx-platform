@@ -483,7 +483,7 @@ export default function MaterialCreate() {
             htmlFor="name"
             className="min-w-20 max-w-24 sm:min-w-0 sm:max-w-24 text-sm font-semibold tracking-wider text-slate-500"
           >
-            Material / Parts Name <span className="text-red-500">*</span>
+            Name/Title <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
