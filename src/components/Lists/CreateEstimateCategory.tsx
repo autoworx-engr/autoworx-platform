@@ -159,12 +159,12 @@ export default function SelectCategory({
           }
           items={categories}
           displayList={(category: Category) => (
-            <div className="flex items-center justify-between group py-0.5">
-              <p className="text-sm font-medium text-slate-700 group-hover:text-primary transition-colors">
+            <div className="flex items-center justify-between group py-0.5 gap-2 overflow-hidden">
+              <p className="text-sm font-medium text-slate-700 group-hover:text-primary transition-colors truncate flex-1">
                 {category.name}
               </p>
 
-              <div onClick={(e) => e.stopPropagation()}>
+              <div onClick={(e) => e.stopPropagation()} className="shrink-0">
                 <Popconfirm
                   title="Delete Category"
                   description="Are you sure you want to remove this?"
