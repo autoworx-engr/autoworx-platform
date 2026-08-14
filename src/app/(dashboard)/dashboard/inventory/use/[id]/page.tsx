@@ -17,14 +17,13 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
 
   const { id } = params;
 
-  console.log({ id });
   if (!id) return notFound();
 
   const companyId = await getCompanyId();
 
   const productId = parseInt(id);
   const product = await db.inventoryProduct.findUnique({
-    where: { id: productId },
+    where: { id: productId, companyId },
   });
   const invoices = await db.invoice.findMany({
     where: { companyId, type: "Invoice" },
@@ -46,8 +45,6 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
   //   where: { productId },
   //   orderBy: { date: "desc" },
   // });
-
-  console.log({ product });
 
   if (!product) return notFound();
 

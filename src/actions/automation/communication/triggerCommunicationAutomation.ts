@@ -18,6 +18,7 @@ export async function updateCommunicationAutomationTrigger({
   try {
     const session = await getServerSession(authOptions);
     const token = session?.accessToken || generatedToken;
+
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_API_BASE_URL}/communication-automation-trigger`,
       {
@@ -34,6 +35,11 @@ export async function updateCommunicationAutomationTrigger({
       },
     );
     const data = await response.json();
+    console.log("communication automation triggered", {
+      companyId,
+      leadId,
+      columnId,
+    });
     return {
       success: "ok",
       data: data.data,

@@ -1,5 +1,9 @@
+import { updateCommunicationAutomationTrigger } from "@/actions/automation/communication/triggerCommunicationAutomation";
+import { updatePipelineAutomationTrigger } from "@/actions/automation/pipeline/triggerPipelineAutomation";
+import { updateTagAutomationTrigger } from "@/actions/automation/tag/triggerTagAutomation";
 import { db } from "@/lib/db";
 import { getAuthPrincipal } from "@/lib/getAuthPrincipal";
+import { sendLeadStageChangeOrCloseNotification } from "@/lib/notification/pipeline-notify";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -85,6 +89,53 @@ export async function PUT(
       where: { id: leadId },
       data: { columnId: parseInt(finalColumnId), columnChangedAt: new Date() },
       include: { column: true },
+    });
+
+    if (updatedLead.column?.title === "Converted") {
+      sendLeadStageChangeOrCloseNotification({
+        companyId,
+        description: `Lead "${updatedLead.clientName}" has been closed. Track it in your pipeline.`,
+        title: "Lead Closed",
+        notificationType: "LEADS_CLOSED",
+      });
+    }
+
+    sendLeadStageChangeOrCloseNotification({
+      companyId,
+      description: `Lead "${updatedLead.clientName}" moved to "${updatedLead?.column?.title}". Track progress in Autoworx.`,
+      title: "Lead Stage Changed",
+      notificationType: "STAGE",
+    });
+
+    try {
+      await updatePipelineAutomationTrigger({
+        companyId: companyId,
+        condition: "TIME_DELAY",
+        leadId: leadId,
+        columnId: newColumnId,
+      });
+    } catch (error) {
+      console.log("updatePipelineAutomationTrigger error", error);
+    }
+
+    // communication automation trigger
+    try {
+      await updateCommunicationAutomationTrigger({
+        companyId: companyId,
+        leadId: leadId,
+        columnId: newColumnId,
+      });
+    } catch (error) {
+      console.log("error", error);
+      console.log("updateCommunicationAutomationTrigger error", error);
+    }
+
+    const response = await updateTagAutomationTrigger({
+      columnId: newColumnId,
+      companyId: companyId,
+      pipelineType: "SALES",
+      leadId: leadId,
+      conditionType: "post_tag",
     });
 
     return NextResponse.json({ success: true, data: updatedLead });

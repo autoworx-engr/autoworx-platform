@@ -14,6 +14,7 @@ import {
   DialogPortal,
 } from "@/components/Dialog";
 import InventoryShortageDialog from "@/components/inventory/InventoryShortageDialog";
+import ComponentsLightbox from "@/components/common/LightBox";
 import { useCanAccessRoute } from "@/hooks/useCanAccessRoute";
 import { useInventoryConfirm } from "@/hooks/useInventoryConfirm";
 import { useServerGet } from "@/hooks/useServerGet";
@@ -150,6 +151,13 @@ export default function InvoiceModalBody({
   const [desktopActiveTab, setDesktopActiveTab] = useState<
     "attachments" | "inspections"
   >("attachments");
+  // This modal is reused on pages outside /dashboard/estimate/ (e.g.
+  // /dashboard/payments), where /dashboard/estimate/photo's intercepting
+  // route doesn't apply — navigating there is a real page transition that
+  // unmounts this modal's plain `open` state, so closing the photo lands
+  // back on a flat list page instead of the modal. Render the lightbox
+  // inline instead of routing to it.
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const params = new URLSearchParams(searchParams!);
   const isSuccess = params.get("success") ?? false;
 
@@ -953,23 +961,31 @@ export default function InvoiceModalBody({
                           const urlsParam = encodeURIComponent(
                             JSON.stringify(allImageUrls),
                           );
-                          return (
+                          const image = (
+                            <Image
+                              src={x.photo}
+                              alt="attachment"
+                              fill
+                              className="cursor-pointer rounded-md object-cover"
+                            />
+                          );
+                          return isPublic ? (
                             <Link
-                              href={
-                                isPublic
-                                  ? `/public-invoice/${invoiceId}/photo?urls=${urlsParam}&index=${index}`
-                                  : `/dashboard/estimate/photo?urls=${urlsParam}&index=${index}`
-                              }
+                              href={`/public-invoice/${invoiceId}/photo?urls=${urlsParam}&index=${index}`}
                               key={x.id}
                               className="relative mx-auto aspect-square w-full max-w-[120px]"
                             >
-                              <Image
-                                src={x.photo}
-                                alt="attachment"
-                                fill
-                                className="cursor-pointer rounded-md object-cover"
-                              />
+                              {image}
                             </Link>
+                          ) : (
+                            <button
+                              type="button"
+                              key={x.id}
+                              onClick={() => setLightboxIndex(index)}
+                              className="relative mx-auto aspect-square w-full max-w-[120px]"
+                            >
+                              {image}
+                            </button>
                           );
                         })}
                       </div>
@@ -1244,31 +1260,7 @@ export default function InvoiceModalBody({
                       <X size={20} className="text-white p-1" />
                     </button>
                   </div>
-                  <button
-                    // onClick={async () => {
-                    //   const res = await authorizeInvoice(
-                    //     invoice.id,
-                    //     authorizedNameInput,
-                    //     invoice.type
-                    //   );
-                    //   if (res?.type === "success") {
-                    //     successToast("Invoice Authorized");
-                    //     await authorizedLeadsConvertion(invoice.id);
-                    //     setAuthorizedName(authorizedNameInput);
-
-                    //     // Update the invoice object in state to reflect the change
-                    //     setInvoice((prev) => {
-                    //       if (!prev) return prev;
-                    //       return {
-                    //         ...prev,
-                    //         authorizedName: authorizedNameInput,
-                    //       };
-                    //     });
-                    //   }
-                    //   setShowAuthorizedName(false);
-                    // }}
-                    className="text-md rounded bg-green-500 px-1.5 pb-1 text-center text-white print:hidden"
-                  >
+                  <button className="text-md rounded bg-green-500 px-1.5 pb-1 text-center text-white print:hidden">
                     Authorize
                   </button>
                 </div>
@@ -1282,37 +1274,6 @@ export default function InvoiceModalBody({
                     <span className="rounded-sm border border-primary px-4 py-1 text-sm text-primary">
                       Authorized
                     </span>
-                    {/* <button
-                      className="text-lg text-primary print:hidden"
-                      onClick={async () => {
-                        setShowAuthorizedName(true);
-                      }}
-                    >
-                      <MdEdit />
-                    </button>
-                    <button
-                      className="text-lg text-red-500 print:hidden"
-                      onClick={async () => {
-                        const res = await deleteInvoiceAuthorize(invoice.id);
-                        if (res?.type === "success") {
-                          successToast("Deleted Invoice Authorize");
-
-                          // Update the invoice object in state to reflect the change
-                          setInvoice((prev) => {
-                            if (!prev) return prev;
-                            return {
-                              ...prev,
-                              authorizedName: "",
-                            };
-                          });
-
-                          setAuthorizedName("");
-                          setAuthorizedNameInput("");
-                        }
-                      }}
-                    >
-                      <MdOutlineDelete />
-                    </button> */}
                   </div>
                 </div>
               )}
@@ -1396,7 +1357,7 @@ export default function InvoiceModalBody({
                 </div>
               </div>
             )}
-            {sigImageURL && (
+            {sigImageURL ? (
               <div className="mt-2 text-center flex flex-col items-end gap-2">
                 <Image
                   src={sigImageURL}
@@ -1409,8 +1370,7 @@ export default function InvoiceModalBody({
                   Authorized
                 </span>
               </div>
-            )}
-            {invoice?.signatureImage && (
+            ) : invoice?.signatureImage ? (
               <div className="mt-2 text-center flex flex-col items-end gap-2">
                 <Image
                   src={invoice?.signatureImage}
@@ -1423,6 +1383,8 @@ export default function InvoiceModalBody({
                   Authorized
                 </span>
               </div>
+            ) : (
+              <></>
             )}
           </div>
           {!isPrinting && (
@@ -1497,23 +1459,31 @@ export default function InvoiceModalBody({
                     const urlsParam = encodeURIComponent(
                       JSON.stringify(allImageUrls),
                     );
-                    return (
+                    const image = (
+                      <Image
+                        src={x.photo}
+                        alt="attachment"
+                        fill
+                        className="cursor-pointer object-cover object-center"
+                      />
+                    );
+                    return isPublic ? (
                       <Link
-                        href={
-                          isPublic
-                            ? `/public-invoice/${invoiceId}/photo?urls=${urlsParam}&index=${index}`
-                            : `/dashboard/estimate/photo?urls=${urlsParam}&index=${index}`
-                        }
+                        href={`/public-invoice/${invoiceId}/photo?urls=${urlsParam}&index=${index}`}
                         key={x.id}
                         className="relative aspect-square size-36 md:h-full md:w-full"
                       >
-                        <Image
-                          src={x.photo}
-                          alt="attachment"
-                          fill
-                          className="cursor-pointer object-cover object-center"
-                        />
+                        {image}
                       </Link>
+                    ) : (
+                      <button
+                        type="button"
+                        key={x.id}
+                        onClick={() => setLightboxIndex(index)}
+                        className="relative aspect-square size-36 md:h-full md:w-full"
+                      >
+                        {image}
+                      </button>
                     );
                   })}
                   {invoice.photos.length === 0 && (
@@ -1523,6 +1493,16 @@ export default function InvoiceModalBody({
                   )}
                 </div>
               </>
+            )}
+
+            {!isPublic && lightboxIndex !== null && (
+              <ComponentsLightbox
+                getItems={invoice.photos.map((photo) => ({
+                  src: photo.photo,
+                }))}
+                startIndex={lightboxIndex}
+                onClose={() => setLightboxIndex(null)}
+              />
             )}
 
             {/* Inspections Tab Content - Desktop */}

@@ -305,7 +305,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
                 button={
                   // Primary Button Style for Edit Action
                   <button
-                    className={`flex items-center gap-1 rounded-lg bg-[${ACCENT_COLOR}] text-white font-medium px-4 py-2 text-sm shadow-md shadow-[${ACCENT_COLOR}]/30 hover:-translate-y-0.5 ${TRANSITION_UTILITY}`}
+                    className={`flex items-center gap-1 rounded-lg bg-[${ACCENT_COLOR}] text-black font-medium px-4 py-2 text-sm shadow-md shadow-[${ACCENT_COLOR}]/30 hover:-translate-y-0.5 ${TRANSITION_UTILITY}`}
                   >
                     <PencilLineIcon size={16} />
                     Edit

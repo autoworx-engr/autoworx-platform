@@ -131,7 +131,7 @@ const InvoiceListTable = ({
                 <th className="border-b px-4 py-2 text-left">
                   {" "}
                   <div className="flex items-center gap-2">
-                    Status
+                    Invoice Status
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button className="h-6 w-6 p-0">

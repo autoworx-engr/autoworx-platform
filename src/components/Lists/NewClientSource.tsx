@@ -27,18 +27,28 @@ export default function NewClientSource({
   setOpenClientSource: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const [open, setOpen] = useState(false);
-  const { showError } = useFormErrorStore();
+  const { showError, clearError } = useFormErrorStore();
   const [source, setSource] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (data: FormData) => {
-    const res = await newSource(source);
+    if (submitting) return;
+    setSubmitting(true);
+    clearError();
+    try {
+      const res = await newSource(source);
 
-    if (res.type === "success") {
-      setClientSources((prev) => [...prev, res.data]);
-      setSource("");
-      setOpen(false);
-      setOpenClientSource(false);
-      setClientSource(res.data);
+      if (res.type === "success") {
+        setClientSources((prev) => [...prev, res.data]);
+        setSource("");
+        setOpen(false);
+        setOpenClientSource(false);
+        setClientSource(res.data);
+      } else {
+        showError({ message: res.message || "Failed to add source" });
+      }
+    } finally {
+      setSubmitting(false);
     }
   };
   return (

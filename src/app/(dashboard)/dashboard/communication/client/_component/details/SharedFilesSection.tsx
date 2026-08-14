@@ -15,7 +15,7 @@ type TabId = "email" | "sms" | "messenger" | "instagram" | "docs" | "audio";
 const TABS: { id: TabId; label: string }[] = [
   { id: "email", label: "Email" },
   { id: "sms", label: "SMS" },
-  { id: "messenger", label: "Msngr" },
+  { id: "messenger", label: "FB" },
   { id: "instagram", label: "IG" },
   { id: "docs", label: "Docs" },
   { id: "audio", label: "Audio" },

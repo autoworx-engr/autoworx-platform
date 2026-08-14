@@ -93,7 +93,7 @@ const EmployeeTable = ({
         <div className="relative flex flex-1 h-full flex-col overflow-hidden rounded-md bg-background">
           <div className="flex-1 overflow-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {/* Mobile View */}
-            <div className="lg:hidden p-4 space-y-4">
+            <div className="lg:hidden space-y-4">
               {isLoading ? (
                 <EmployeeTableSkeleton />
               ) : isError ? (
@@ -101,13 +101,35 @@ const EmployeeTable = ({
               ) : employees.length === 0 ? (
                 <EmptyState />
               ) : (
-                employees.map((employee: any, index: number) => (
-                  <ResponsiveEmployeeCard
-                    key={index}
-                    data={employee}
-                    index={index}
-                  />
-                ))
+                employees.map((employee: any, index: number) => {
+                  const isAdmin = currentUser?.employeeType === "Admin";
+                  const isManager = currentUser?.employeeType === "Manager";
+                  const isSelf =
+                    currentUser?.id && Number(currentUser.id) === employee.id;
+                  const isTargetAdmin = employee.employeeType === "Admin";
+                  const canEdit =
+                    isAdmin || (isManager && !isTargetAdmin) || isSelf;
+                  const canDelete =
+                    isAdmin || (isManager && !isTargetAdmin && !isSelf);
+
+                  return (
+                    <ResponsiveEmployeeCard
+                      key={index}
+                      data={employee}
+                      index={index}
+                      actions={
+                        (canEdit || canDelete) && (
+                          <>
+                            {canEdit && <EditEmployee employee={employee} />}
+                            {canDelete && (
+                              <DeleteEmployee employee={employee} />
+                            )}
+                          </>
+                        )
+                      }
+                    />
+                  );
+                })
               )}
             </div>
 

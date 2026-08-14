@@ -23,6 +23,10 @@ type SubscribeToPlatformPlanInput = {
   email: string;
   firstName: string;
   lastName: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
   opaqueData: { dataDescriptor: string; dataValue: string };
 };
 
@@ -41,6 +45,10 @@ export async function subscribeToPlatformPlan({
   email,
   firstName,
   lastName,
+  address,
+  city,
+  state,
+  zip,
   opaqueData,
 }: SubscribeToPlatformPlanInput) {
   try {
@@ -56,6 +64,14 @@ export async function subscribeToPlatformPlan({
     });
 
     if (!plan) throw new Error("Plan not found");
+
+    // Authorize.Net requires billing address/city/state/zip on a $0 auth —
+    // which is exactly what payment profile validation runs in production
+    // (LIVEMODE) but not in sandbox/testMode. Collected directly from the
+    // payer at checkout rather than the company's on-file business address,
+    // since that may be missing/stale and isn't necessarily the cardholder's
+    // billing address anyway.
+    const billingAddress = { address, city, state, zip };
 
     // 1. Create or Get Billing Customer
     let billingCustomer = await db.platformBillingCustomer.findUnique({
@@ -73,6 +89,7 @@ export async function subscribeToPlatformPlan({
         firstName,
         lastName,
         opaqueData,
+        billingAddress,
       );
       customerProfileId = cim.customerProfileId;
       customerPaymentProfileId = cim.customerPaymentProfileId;
@@ -102,6 +119,7 @@ export async function subscribeToPlatformPlan({
           firstName,
           lastName,
           opaqueData,
+          billingAddress,
         );
         customerProfileId = recreated.customerProfileId;
         customerPaymentProfileId = recreated.customerPaymentProfileId;
@@ -122,6 +140,8 @@ export async function subscribeToPlatformPlan({
             firstName,
             lastName,
             opaqueData,
+            false,
+            billingAddress,
           );
           customerPaymentProfileId = pp.customerPaymentProfileId;
         } catch (paymentProfileErr: any) {
@@ -139,6 +159,7 @@ export async function subscribeToPlatformPlan({
             firstName,
             lastName,
             opaqueData,
+            billingAddress,
           );
 
           customerProfileId = recreated.customerProfileId;
