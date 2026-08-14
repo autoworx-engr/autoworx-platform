@@ -196,9 +196,10 @@ const TagRuleForm = ({
         setInitialFormData(initialData);
 
         setActiveTemplate(
-          tagAutomationCommunication?.communicationType === "BOTH"
+          tagAutomationCommunication?.communicationType === "BOTH" ||
+            !tagAutomationCommunication?.communicationType
             ? "SMS"
-            : tagAutomationCommunication?.communicationType,
+            : tagAutomationCommunication.communicationType,
         );
       } else {
         const initialData: Rule = {
@@ -364,6 +365,10 @@ const TagRuleForm = ({
     if (field === "communicationType") {
       if (value === "EMAIL") setActiveTemplate("EMAIL");
       else if (value === "SMS") setActiveTemplate("SMS");
+    }
+
+    if (field === "condition_type" && value === "communication") {
+      setActiveTemplate((prev) => (prev === "EMAIL" ? "EMAIL" : "SMS"));
     }
 
     if (error[field]) {
