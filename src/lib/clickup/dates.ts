@@ -15,14 +15,29 @@ export function toDate(value: string | null): Date | null {
   return Number.isFinite(ms) ? new Date(ms) : null;
 }
 
-export function isCompletedStatus(type: string): boolean {
-  const normalized = type.toLowerCase();
-  return normalized === "closed" || normalized === "done";
+/** Status labels that mean "done" for reporting purposes even though ClickUp
+ * itself doesn't mark them as a closed/done status type (e.g. handoff stages
+ * like "Dev Done" or "QA Check" — the dev's part of the bug is finished). */
+const EXTRA_COMPLETED_STATUS_LABELS = ["dev done", "qa check"];
+
+export function isCompletedStatus(status: {
+  status: string;
+  type: string;
+}): boolean {
+  const normalizedType = status.type.toLowerCase();
+  if (normalizedType === "closed" || normalizedType === "done") return true;
+  return EXTRA_COMPLETED_STATUS_LABELS.includes(
+    status.status.trim().toLowerCase(),
+  );
 }
 
 export function completedAt(task: ClickupTask): Date | null {
-  if (!isCompletedStatus(task.status.type)) return null;
-  return toDate(task.date_closed) ?? toDate(task.date_done);
+  if (!isCompletedStatus(task.status)) return null;
+  return (
+    toDate(task.date_closed) ??
+    toDate(task.date_done) ??
+    toDate(task.date_updated)
+  );
 }
 
 export function createdAt(task: ClickupTask): Date | null {
