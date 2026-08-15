@@ -242,6 +242,19 @@ export default function CreateAndEditLabor({
       setLoading(false); // Hide spinner
       return;
     }
+
+    // Frontend date validation (mirrors backend Zod schema)
+    if (!isTechnician) {
+      const assignedDate = inputValues.date ? new Date(inputValues.date) : null;
+      const dueDateVal = inputValues.due ? new Date(inputValues.due) : null;
+
+      if (assignedDate && dueDateVal && assignedDate > dueDateVal) {
+        setError("Assigned date cannot be after due date");
+        setLoading(false);
+        return;
+      }
+    }
+
     let finalImageUrls: string[] = [];
     try {
       finalImageUrls = await uploadAllAttachments(formData.attachments);
