@@ -9,11 +9,13 @@ import { useListsStore } from "@/stores/lists";
 import { Category, Tag, Vendor } from "@prisma/client";
 import React, { useEffect, useState } from "react";
 import { newMaterial } from "@/actions/estimate/material/newMaterial";
+import { deleteVendor } from "@/actions/vendor/deleteVendor";
 import Close from "./CloseEstimate";
-import { errorToast } from "@/lib/toast";
+import { errorToast, successToast } from "@/lib/toast";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import Decimal from "decimal.js";
-import { Plus } from "lucide-react";
+import { Popconfirm } from "antd";
+import { Plus, X } from "lucide-react";
 import { slimInputClassName } from "@/components/SlimInput";
 import { cn } from "@/lib/cn";
 import {
@@ -113,6 +115,31 @@ export default function MaterialCreate() {
   // const [vendorSearch, setVendorSearch] = useState("");
   const [vendorOpen, setVendorOpen] = useState(false);
   const [categoryOpen, setCategoryOpen] = useState(false);
+
+  async function handleDeleteVendor(vendorId: number) {
+    try {
+      const res = await deleteVendor(vendorId);
+
+      if (res.type === "success") {
+        if (vendor?.id === vendorId) {
+          setVendor(null);
+        }
+        useListsStore.setState((state) => ({
+          vendors: state.vendors.filter((ven) => ven.id !== vendorId),
+        }));
+        successToast("Vendor deleted successfully");
+      } else {
+        errorToast(res.message || "Failed to delete vendor");
+      }
+    } catch (err) {
+      const formattedError = errorHandler(err);
+      errorToast(
+        formattedError?.errorSource?.length
+          ? formattedError.errorSource[0].message
+          : formattedError.message,
+      );
+    }
+  }
 
   // const { actionType } = useActionStoreCreateEdit();
 
@@ -559,9 +586,38 @@ export default function MaterialCreate() {
               )
             }
             displayList={(vendor: Vendor) => (
-              <p className="text-sm font-medium">
-                {vendor?.companyName || vendor.name}
-              </p>
+              <div className="flex items-center justify-between group py-0.5">
+                <p className="text-sm font-medium">
+                  {vendor?.companyName || vendor.name}
+                </p>
+
+                <div onClick={(e) => e.stopPropagation()}>
+                  <Popconfirm
+                    title="Delete Vendor"
+                    description="Are you sure you want to remove this?"
+                    okText="Delete"
+                    cancelText="Cancel"
+                    onConfirm={() => handleDeleteVendor(vendor.id)}
+                    onPopupClick={(e) => e.stopPropagation()}
+                    overlayClassName="[&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800"
+                    okButtonProps={{
+                      className:
+                        "!rounded-lg !border-none !bg-[#6571ff] !font-semibold !shadow-sm !shadow-[#6571ff]/30 hover:!bg-[#525ceb]",
+                    }}
+                    cancelButtonProps={{
+                      className:
+                        "!rounded-lg !border-slate-200 !font-medium !text-slate-600 hover:!border-slate-300 hover:!bg-slate-50 hover:!text-slate-700",
+                    }}
+                  >
+                    <div
+                      className="rounded-lg p-1.5 hover:bg-red-50 text-slate-300 hover:text-red-500 transition-all cursor-pointer"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <X size={16} strokeWidth={2.5} />
+                    </div>
+                  </Popconfirm>
+                </div>
+              </div>
             )}
             openState={[vendorOpen, setVendorOpen]}
             selectedItem={vendor}
