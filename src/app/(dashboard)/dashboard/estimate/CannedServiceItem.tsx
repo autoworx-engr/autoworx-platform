@@ -173,7 +173,7 @@ export const CannedServiceItem = ({
                           setDescriptionError("");
                         }}
                         className={cn(
-                          "min-h-[100px] w-full rounded-lg border p-2 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors",
+                          "min-h-[100px] w-full rounded-lg border p-2 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors resize-none",
                           descriptionError
                             ? "border-red-500"
                             : "border-gray-300",
@@ -324,7 +324,7 @@ export const CannedServiceItem = ({
                     setDescriptionError("");
                   }}
                   className={cn(
-                    "min-h-[100px] thin-scrollbar w-full rounded-lg border p-2 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors",
+                    "min-h-[100px] thin-scrollbar w-full rounded-lg border p-2 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors resize-none",
                     descriptionError ? "border-red-500" : "border-gray-300",
                   )}
                 />
