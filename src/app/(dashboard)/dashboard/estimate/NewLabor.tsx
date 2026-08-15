@@ -472,7 +472,7 @@ export default function NewLabor({
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={3}
-                className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg outline-none transition-all placeholder:text-slate-400 focus:border-blue-500 resize-none"
+                className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg outline-none transition-all placeholder:text-slate-400 focus:border-blue-500 min-h-[100px] max-h-[200px]"
                 placeholder="Add any additional notes or details..."
               />
             </div>
