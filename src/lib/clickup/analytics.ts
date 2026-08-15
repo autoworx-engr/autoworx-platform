@@ -92,7 +92,7 @@ export function summarizeClickupTasks(
   let resolutionCount = 0;
 
   for (const task of tasks) {
-    if (!isCompletedStatus(task.status.type)) {
+    if (!isCompletedStatus(task.status)) {
       totalOpen += 1;
       bumpBreakdown(statusCounts, task.status.status, task.status.status);
       const priorityKey = task.priority?.priority ?? "none";

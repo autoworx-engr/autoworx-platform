@@ -4,7 +4,9 @@ import { AlertTriangle, RefreshCw } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
+  describeFilterRange,
   filtersToParams,
+  getDefaultFilters,
   parseFiltersFromParams,
 } from "@/lib/clickup/filterParams";
 import { buildInsight } from "@/lib/clickup/insight";
@@ -38,6 +40,11 @@ export default function ClickupReportingClient({
   const [summary, setSummary] = useState<ClickupBugSummary | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const clearFilters = () => {
+    setFilters(getDefaultFilters());
+    router.replace(pathname, { scroll: false });
+  };
 
   const updateFilters = (next: ClickupFilterState) => {
     setFilters(next);
@@ -106,10 +113,20 @@ export default function ClickupReportingClient({
         insight={insight}
       />
 
+      <div>
+        <h2 className="text-xl font-bold tracking-tight">
+          {describeFilterRange(filters)}
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          Bug activity for this range
+        </p>
+      </div>
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <ClickupFilterBar
           value={filters}
           onChange={updateFilters}
+          onClear={clearFilters}
           assignableUsers={summary?.assignableUsers ?? []}
         />
         {loading && (

@@ -13,6 +13,7 @@ export interface ClickupTask {
   date_created: string;
   date_closed: string | null;
   date_done: string | null;
+  date_updated: string | null;
   creator: ClickupUser;
   assignees: ClickupUser[];
 }
