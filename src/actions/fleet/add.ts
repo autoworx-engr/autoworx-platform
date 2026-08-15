@@ -5,6 +5,10 @@ import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
 import { ServerAction } from "@/types/action";
 import { TErrorHandler } from "@/types/globalError";
+import {
+  normalizePhoneForStorage,
+  phoneLookupWhereClause,
+} from "@/utils/normalizePhone";
 import { createFleetValidationSchema } from "@/validations/schemas/fleet/fleet.validation";
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
@@ -67,9 +71,10 @@ export async function addFleet(data: {
       }
     }
 
-    if (data.mobile) {
+    const phoneLookup = phoneLookupWhereClause(data.mobile);
+    if (phoneLookup) {
       const existingCustomerByMobile = await db.client.findFirst({
-        where: { companyId, mobile: data.mobile },
+        where: { companyId, OR: phoneLookup },
         include: {
           fleet: true,
         },
@@ -81,7 +86,7 @@ export async function addFleet(data: {
       ) {
         return {
           type: "globalError",
-          message: `The mobile number is already used for an existing client ${existingCustomerByMobile.firstName + " " + existingCustomerByMobile.lastName}. Please go to the client page and set 'Premium' to true to update the client as a fleet.`,
+          message: `The mobile number is already used for an existing client ${existingCustomerByMobile.firstName + " " + existingCustomerByMobile.lastName}. Please go to the client page and check "Add as a Fleet" to update the client as a fleet.`,
         };
       }
       if (
@@ -102,7 +107,9 @@ export async function addFleet(data: {
         data: {
           firstName,
           lastName: lastName || " ",
-          mobile: data.mobile,
+          mobile: data.mobile
+            ? normalizePhoneForStorage(data.mobile)
+            : data.mobile,
           email: data.email,
           companyId: companyId,
           tagId: data.tagId || null,

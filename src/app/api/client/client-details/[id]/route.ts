@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import {
+  normalizePhoneForStorage,
+  phoneLookupWhereClause,
+} from "@/utils/normalizePhone";
 import { z } from "zod";
 
 /**
@@ -557,9 +561,37 @@ export async function PATCH(
       );
     }
 
+    if (validatedData.mobile) {
+      const phoneLookup = phoneLookupWhereClause(validatedData.mobile);
+      if (phoneLookup) {
+        const existingClientByMobile = await db.client.findFirst({
+          where: {
+            OR: phoneLookup,
+            companyId: existingClient.companyId,
+            id: { not: clientId },
+          },
+        });
+
+        if (existingClientByMobile) {
+          return NextResponse.json(
+            {
+              success: false,
+              message: "A customer with this mobile already exists.",
+            },
+            { status: 409 },
+          );
+        }
+      }
+    }
+
     const updatedClient = await db.client.update({
       where: { id: clientId },
-      data: validatedData,
+      data: {
+        ...validatedData,
+        mobile: validatedData.mobile
+          ? normalizePhoneForStorage(validatedData.mobile)
+          : validatedData.mobile,
+      },
     });
 
     return NextResponse.json({
