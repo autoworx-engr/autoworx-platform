@@ -13,6 +13,7 @@ import {
 import Script from "next/script";
 import React, { useState } from "react";
 import { toast } from "react-hot-toast";
+import { BillingAddressFields } from "./BillingAddressFields";
 
 type CheckoutPlan = {
   id: string;
@@ -42,6 +43,10 @@ export function CheckoutForm({
   const [cardData, setCardData] = useState({
     firstName: "",
     lastName: "",
+    address: "",
+    city: "",
+    state: "",
+    zip: "",
     cardNumber: "",
     month: "",
     year: "",
@@ -83,6 +88,10 @@ export function CheckoutForm({
     const billTo = {
       firstName: cardData.firstName ?? "",
       lastName: cardData.lastName ?? "",
+      address: cardData.address ?? "",
+      city: cardData.city ?? "",
+      state: cardData.state ?? "",
+      zip: cardData.zip ?? "",
     };
     const secureData = { authData, cardData: cardDetails, billTo };
 
@@ -100,6 +109,10 @@ export function CheckoutForm({
             email,
             firstName: cardData.firstName,
             lastName: cardData.lastName,
+            address: cardData.address,
+            city: cardData.city,
+            state: cardData.state,
+            zip: cardData.zip,
             opaqueData: response.opaqueData,
           });
 
@@ -214,6 +227,13 @@ export function CheckoutForm({
               />
             </div>
           </div>
+
+          <BillingAddressFields
+            value={cardData}
+            onChange={(field, fieldValue) =>
+              setCardData({ ...cardData, [field]: fieldValue })
+            }
+          />
 
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-slate-500 ml-1">

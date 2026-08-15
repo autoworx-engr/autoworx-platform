@@ -95,25 +95,25 @@ export default async function ConversationsBox({
               className="size-12 rounded-full object-cover ring-2 ring-white/70"
             />
 
-            <div className="ml-3 flex min-w-0 flex-col">
-              <p className="flex items-center gap-1 text-sm font-semibold leading-5">
-                <span className="truncate">
-                  {client?.firstName} {client?.lastName}
-                </span>
+            <div className="ml-3 flex min-w-0 flex-1 flex-col">
+              <p className="min-w-0 truncate text-sm font-semibold leading-5">
+                {client?.firstName} {client?.lastName}
+              </p>
+
+              <div className="flex items-center gap-2">
+                <p className="truncate text-[11px] opacity-90">
+                  {client?.customerCompany}
+                </p>
                 {client?.isStarred && (
                   <span
-                    className="inline-flex items-center rounded-full bg-white/15 px-1.5 py-0.5 text-[10px] leading-none text-yellow-300 ring-1 ring-white/30 ml-2"
+                    className="mt-0.5 inline-flex w-fit shrink-0 items-center rounded-full bg-white/15 px-1.5 py-0.5 text-[10px] leading-none text-yellow-300 ring-1 ring-white/30"
                     title="Favorite client"
                   >
                     <Star className="mr-0.5 w-2.5 h-2.5 fill-yellow-400" />
                     Starred
                   </span>
                 )}
-              </p>
-
-              <p className="truncate text-[11px] opacity-90">
-                {client?.customerCompany}
-              </p>
+              </div>
             </div>
           </div>
 

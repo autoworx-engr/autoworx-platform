@@ -19,6 +19,20 @@ export async function newSource(
     }
     await sourceValidationSchema.parseAsync({ name });
 
+    const existingSource = await db.source.findFirst({
+      where: {
+        companyId,
+        name: { equals: name, mode: "insensitive" },
+      },
+    });
+
+    if (existingSource) {
+      return {
+        type: "error",
+        message: `Source "${existingSource.name}" already exists`,
+      };
+    }
+
     const source = await db.source.create({
       data: {
         name,

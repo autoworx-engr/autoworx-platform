@@ -5,7 +5,6 @@ A web based software for managing car repair shops.
 ## Technologies
 
 - Next.js (frontend + backend)
-
 - NextAuth (authentication)
 - Tailwind CSS
 - Prisma (ORM)
@@ -14,6 +13,9 @@ A web based software for managing car repair shops.
 - Pusher (real-time chat)
 - Radix-UI (design system)
 - react-icons (icons)
+- Stripe
+- Authorize.net
+- Twilio
 
 ## Pages
 

@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 // import { isImageFile } from "@/utils/isImageFile";
 import { getSignedURL } from "@/actions/s3/signedURL";
 import { deleteObject } from "@/actions/s3/deleteObject";
+import { transcodeToMp3IfNeeded } from "@/utils/transcodeAudio";
 // const pump = promisify(pipeline);
 
 /**
@@ -63,7 +64,8 @@ export async function POST(req: NextRequest) {
     // }
 
     const formData = await req.formData();
-    const files = formData.getAll("file") as File[];
+    const rawFiles = formData.getAll("file") as File[];
+    const files = await Promise.all(rawFiles.map(transcodeToMp3IfNeeded));
     const uploadPromises = files.map(async (file) => {
       const response = await getSignedURL({
         fileType: file.type,

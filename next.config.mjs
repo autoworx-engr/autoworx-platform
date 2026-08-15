@@ -34,7 +34,7 @@ const nextConfig = {
       },
     ],
   },
-  serverExternalPackages: ["pg-boss"],
+  serverExternalPackages: ["pg-boss", "fluent-ffmpeg", "@ffmpeg-installer/ffmpeg"],
   reactStrictMode: false,
   productionBrowserSourceMaps: process.env.NODE_ENV === "development",
   allowedDevOrigins: [

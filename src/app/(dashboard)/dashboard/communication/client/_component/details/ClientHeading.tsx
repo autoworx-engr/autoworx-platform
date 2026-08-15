@@ -33,9 +33,6 @@ export default async function ClientHeading({ client, vehicles = [] }: TProps) {
 
   const fullName =
     `${client.firstName ?? ""} ${client.lastName ?? ""}`.trim() || "Client";
-  const initials =
-    `${client.firstName?.[0] ?? ""}${client.lastName?.[0] ?? ""}`.toUpperCase() ||
-    "?";
   const hasPhoto =
     !!client.photo &&
     client.photo.trim() !== "" &&

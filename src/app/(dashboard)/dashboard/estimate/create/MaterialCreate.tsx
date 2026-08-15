@@ -112,6 +112,27 @@ export default function MaterialCreate() {
     return { quantity: quantity as number };
   };
 
+  async function handleDeleteVendor(vendorId: number) {
+    try {
+      const res = await deleteVendor(vendorId);
+      if (res.type === "success") {
+        if (vendor?.id === vendorId) {
+          setVendor(null);
+        }
+        useListsStore.setState((state) => {
+          return {
+            vendors: state.vendors.filter((ven) => ven.id !== vendorId),
+          };
+        });
+        toast.success("Vendor deleted successfully");
+      } else {
+        toast.error(res.message || "Failed to delete vendor");
+      }
+    } catch (err: any) {
+      errorToast("Failed to delete vendor. It may be in use.");
+    }
+  }
+
   // const [vendorSearch, setVendorSearch] = useState("");
   const [vendorOpen, setVendorOpen] = useState(false);
   const [categoryOpen, setCategoryOpen] = useState(false);

@@ -13,18 +13,24 @@ export function useCalendarStoreSync(
   const searchParams = useSearchParams();
   const requestedDate = searchParams.get("date");
   const requestedTime = searchParams.get("time");
+  const appliedDateRef = useRef<string | null>(null);
   const appliedTimeRef = useRef<string | null>(null);
 
   useEffect(() => {
     const normalizedDate = normalizeCalendarDateParam(requestedDate);
-    if (normalizedDate && normalizedDate !== date) {
+
+    if (!normalizedDate) {
+      appliedDateRef.current = null;
+      return;
+    }
+    if (appliedDateRef.current === normalizedDate) return;
+
+    appliedDateRef.current = normalizedDate;
+    if (normalizedDate !== date) {
       setDate(normalizedDate);
     }
   }, [date, requestedDate, setDate]);
 
-  // A `&time=` param (notification links) scrolls the day view to that hour, the
-  // same way clicking a task in the sidebar does. Applied once per value —
-  // `setStartTime(null)` after scrolling would otherwise re-trigger it forever.
   useEffect(() => {
     if (!requestedTime) return;
     if (appliedTimeRef.current === requestedTime) return;

@@ -352,17 +352,6 @@ export default function MessageBox({
         totalMessageBox > 2 && "sm:h-[44vh]",
       )}
     >
-      {/* name and delete */}
-      <div className="hidden items-center justify-between rounded-md bg-background px-2 py-1 sm:flex">
-        <p className="text-sm">
-          {fromGroup ? "Group Message" : "User Message"}
-        </p>
-        <X
-          className="cursor-pointer w-5 h-5"
-          onClick={fromGroup ? handleGroupClose : handleUserClose}
-        />
-      </div>
-
       {/* Chat Header */}
       <div className="flex items-center justify-between gap-2 bg-gradient-to-r from-[#006D77] to-[#008c99] p-3 text-white sm:rounded-sm">
         <div className="flex items-center gap-3">
@@ -489,13 +478,14 @@ export default function MessageBox({
           )}
         </div>
 
-        {/* <div className="flex items-center gap-x-4">
-          <div className="rounded-full bg-[#579FA5] p-1">
-            <FiMessageCircle className="size-6" />
-          </div>
-          <Image src="/icons/Email.png" alt="email" width={24} height={24} />
-          <Image src="/icons/Phone.png" alt="phone" width={20} height={15} />
-        </div> */}
+        <button
+          type="button"
+          onClick={fromGroup ? handleGroupClose : handleUserClose}
+          className="flex-shrink-0 rounded-full p-1 text-white transition-colors hover:bg-white/15"
+          aria-label="Close chat"
+        >
+          <X className="size-5" />
+        </button>
       </div>
 
       {/* group user setting */}
@@ -691,7 +681,7 @@ export default function MessageBox({
       {/* Input */}
       <form
         className={cn(
-          "relative flex items-center gap-2 bg-[#D9D9D9] p-2",
+          "relative flex items-center gap-2 border-t bg-gray-100 p-3",
           totalMessageBox > 2 ? "h-[60px] min-h-[60px]" : "h-[8%] min-h-[50px]",
         )}
         onSubmit={(e) => startTransition(() => handleSendMessage(e))}
@@ -739,7 +729,7 @@ export default function MessageBox({
         <input
           type="text"
           placeholder="Send Message..."
-          className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#006D77] focus:border-transparent"
+          className="h-10 flex-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#006D77] focus:border-transparent"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
         />

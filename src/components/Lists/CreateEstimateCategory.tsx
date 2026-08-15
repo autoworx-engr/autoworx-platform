@@ -61,21 +61,25 @@ export default function SelectCategory({
   }
 
   async function handleDeleteCategory(categoryId: number) {
-    const res = await deleteCategory({ categoryId });
+    try {
+      const res = await deleteCategory({ categoryId });
 
-    if (res.type === "success") {
-      if (category?.id === categoryId) {
-        setCategory(null);
+      if (res.type === "success") {
+        if (category?.id === categoryId) {
+          setCategory(null);
+        }
+        useListsStore.setState((state) => {
+          return {
+            categories: state.categories.filter((cat) => cat.id !== categoryId),
+          };
+        });
+
+        toast.success("Category deleted successfully");
+      } else {
+        toast.error(res.message || "Failed to delete category");
       }
-      useListsStore.setState((state) => {
-        return {
-          categories: state.categories.filter((cat) => cat.id !== categoryId),
-        };
-      });
-
-      toast.success("Category deleted successfully");
-    } else {
-      toast.error(res.message || "Failed to delete category");
+    } catch {
+      toast.error("Failed to delete category");
     }
 
     setCategoryInput("");
@@ -159,28 +163,20 @@ export default function SelectCategory({
           }
           items={categories}
           displayList={(category: Category) => (
-            <div className="flex items-center justify-between group py-0.5">
-              <p className="text-sm font-medium text-slate-700 group-hover:text-primary transition-colors">
+            <div className="flex items-center justify-between group py-0.5 gap-2 overflow-hidden">
+              <p className="text-sm font-medium text-slate-700 group-hover:text-primary transition-colors truncate flex-1">
                 {category.name}
               </p>
 
-              <div onClick={(e) => e.stopPropagation()}>
+              <div onClick={(e) => e.stopPropagation()} className="shrink-0">
                 <Popconfirm
                   title="Delete Category"
                   description="Are you sure you want to remove this?"
                   okText="Delete"
                   cancelText="Cancel"
+                  placement="topLeft"
                   onConfirm={() => handleDeleteCategory(category?.id)}
                   onPopupClick={(e) => e.stopPropagation()}
-                  overlayClassName="[&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800"
-                  okButtonProps={{
-                    className:
-                      "!rounded-lg !border-none !bg-[#6571ff] !font-semibold !shadow-sm !shadow-[#6571ff]/30 hover:!bg-[#525ceb]",
-                  }}
-                  cancelButtonProps={{
-                    className:
-                      "!rounded-lg !border-slate-200 !font-medium !text-slate-600 hover:!border-slate-300 hover:!bg-slate-50 hover:!text-slate-700",
-                  }}
                 >
                   <div
                     className="rounded-lg p-1.5 hover:bg-red-50 text-slate-300 hover:text-red-500 transition-all cursor-pointer"

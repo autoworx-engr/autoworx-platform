@@ -559,6 +559,7 @@ export type PDFComponentProps = {
     })[];
     photos: InvoicePhoto[];
     user: User;
+    Refund: Refund[];
     payments: (Payment & {
       card: CardPayment | null;
       check: CheckPayment | null;
@@ -592,6 +593,7 @@ const PDFComponent = function PDF({
   const [photoDataUrls, setPhotoDataUrls] = useState<Record<number, string>>(
     {},
   );
+  const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
 
   useEffect(() => {
     // Fetch inspection data and damage notes from the backend
@@ -653,6 +655,41 @@ const PDFComponent = function PDF({
   }, [id]);
 
   useEffect(() => {
+    // Same react-pdf remote-fetch unreliability as the photos above applies
+    // to the company logo, so route it through the same proxy + data URI.
+    if (!companyDetails?.image) {
+      setLogoDataUrl(null);
+      return;
+    }
+    let cancelled = false;
+
+    const loadLogo = async () => {
+      try {
+        const res = await fetch(
+          `/api/proxy-image?url=${encodeURIComponent(companyDetails.image!)}`,
+        );
+        if (!res.ok) return;
+        const blob = await res.blob();
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = () => reject(reader.error);
+          reader.readAsDataURL(blob);
+        });
+        if (!cancelled) setLogoDataUrl(dataUrl);
+      } catch {
+        // Keep the placeholder if the logo fails to load.
+      }
+    };
+
+    loadLogo();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [companyDetails?.image]);
+
+  useEffect(() => {
     if (invoice.damageNotes) {
       setDamageNotes(invoice.damageNotes);
     }
@@ -678,11 +715,10 @@ const PDFComponent = function PDF({
     0,
   );
 
-  const refundAmount =
-    (invoice as any).Refund?.reduce(
-      (acc: number, r: { amount: number }) => acc + (Number(r?.amount) || 0),
-      0,
-    ) || 0;
+  const refundAmount = (invoice.Refund ?? []).reduce(
+    (acc, r) => acc + (Number(r?.amount) || 0),
+    0,
+  );
 
   const totals = [
     ["subtotal", invoice.subtotal],
@@ -751,10 +787,10 @@ const PDFComponent = function PDF({
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.logoContainer}>
-            {companyDetails?.image ? (
+            {logoDataUrl ? (
               /* eslint-disable-next-line jsx-a11y/alt-text */
               <Image
-                src={companyDetails?.image}
+                src={logoDataUrl}
                 style={{ width: 100, height: 80, objectFit: "contain" }}
               />
             ) : (

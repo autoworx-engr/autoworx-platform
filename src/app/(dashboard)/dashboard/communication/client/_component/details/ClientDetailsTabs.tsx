@@ -105,6 +105,13 @@ export default function ClientDetailsTabs({
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = active === tab.id;
+          // Tasks/Appointments keep their own active/inactive badge state
+          // (on top of the red highlight); every other tab's badge is
+          // always teal, active or not.
+          const keepsActiveBadgeState =
+            tab.id === "tasks" || tab.id === "appointments";
+          const showTealBadge =
+            !tab.highlight && (!keepsActiveBadgeState || isActive);
           return (
             <button
               key={tab.id}
@@ -130,7 +137,7 @@ export default function ClientDetailsTabs({
                       "relative rounded-full px-2 py-0.5 text-[9px] font-bold",
                       tab.highlight
                         ? "bg-red-500 text-white shadow-sm shadow-red-500/40 dark:bg-red-600"
-                        : isActive
+                        : showTealBadge
                           ? "bg-[#006D77]/10 text-[#006D77] dark:bg-emerald-900/20 dark:text-emerald-500"
                           : "bg-zinc-100 text-zinc-500 dark:bg-white/10 dark:text-zinc-400",
                     )}

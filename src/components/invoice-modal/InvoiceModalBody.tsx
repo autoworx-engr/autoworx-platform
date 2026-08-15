@@ -14,6 +14,7 @@ import {
   DialogPortal,
 } from "@/components/Dialog";
 import InventoryShortageDialog from "@/components/inventory/InventoryShortageDialog";
+import ComponentsLightbox from "@/components/common/LightBox";
 import { useCanAccessRoute } from "@/hooks/useCanAccessRoute";
 import { useInventoryConfirm } from "@/hooks/useInventoryConfirm";
 import { useServerGet } from "@/hooks/useServerGet";
@@ -98,6 +99,7 @@ type InvoiceData = Invoice & {
   user: User;
   client: Client;
   vehicle: Vehicle;
+  Refund: Refund[];
   payments: (Payment & {
     card: CardPayment | null;
     check: CheckPayment | null;
@@ -150,6 +152,13 @@ export default function InvoiceModalBody({
   const [desktopActiveTab, setDesktopActiveTab] = useState<
     "attachments" | "inspections"
   >("attachments");
+  // This modal is reused on pages outside /dashboard/estimate/ (e.g.
+  // /dashboard/payments), where /dashboard/estimate/photo's intercepting
+  // route doesn't apply — navigating there is a real page transition that
+  // unmounts this modal's plain `open` state, so closing the photo lands
+  // back on a flat list page instead of the modal. Render the lightbox
+  // inline instead of routing to it.
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const params = new URLSearchParams(searchParams!);
   const isSuccess = params.get("success") ?? false;
 
@@ -953,23 +962,31 @@ export default function InvoiceModalBody({
                           const urlsParam = encodeURIComponent(
                             JSON.stringify(allImageUrls),
                           );
-                          return (
+                          const image = (
+                            <Image
+                              src={x.photo}
+                              alt="attachment"
+                              fill
+                              className="cursor-pointer rounded-md object-cover"
+                            />
+                          );
+                          return isPublic ? (
                             <Link
-                              href={
-                                isPublic
-                                  ? `/public-invoice/${invoiceId}/photo?urls=${urlsParam}&index=${index}`
-                                  : `/dashboard/estimate/photo?urls=${urlsParam}&index=${index}`
-                              }
+                              href={`/public-invoice/${invoiceId}/photo?urls=${urlsParam}&index=${index}`}
                               key={x.id}
                               className="relative mx-auto aspect-square w-full max-w-[120px]"
                             >
-                              <Image
-                                src={x.photo}
-                                alt="attachment"
-                                fill
-                                className="cursor-pointer rounded-md object-cover"
-                              />
+                              {image}
                             </Link>
+                          ) : (
+                            <button
+                              type="button"
+                              key={x.id}
+                              onClick={() => setLightboxIndex(index)}
+                              className="relative mx-auto aspect-square w-full max-w-[120px]"
+                            >
+                              {image}
+                            </button>
                           );
                         })}
                       </div>
@@ -1443,23 +1460,31 @@ export default function InvoiceModalBody({
                     const urlsParam = encodeURIComponent(
                       JSON.stringify(allImageUrls),
                     );
-                    return (
+                    const image = (
+                      <Image
+                        src={x.photo}
+                        alt="attachment"
+                        fill
+                        className="cursor-pointer object-cover object-center"
+                      />
+                    );
+                    return isPublic ? (
                       <Link
-                        href={
-                          isPublic
-                            ? `/public-invoice/${invoiceId}/photo?urls=${urlsParam}&index=${index}`
-                            : `/dashboard/estimate/photo?urls=${urlsParam}&index=${index}`
-                        }
+                        href={`/public-invoice/${invoiceId}/photo?urls=${urlsParam}&index=${index}`}
                         key={x.id}
                         className="relative aspect-square size-36 md:h-full md:w-full"
                       >
-                        <Image
-                          src={x.photo}
-                          alt="attachment"
-                          fill
-                          className="cursor-pointer object-cover object-center"
-                        />
+                        {image}
                       </Link>
+                    ) : (
+                      <button
+                        type="button"
+                        key={x.id}
+                        onClick={() => setLightboxIndex(index)}
+                        className="relative aspect-square size-36 md:h-full md:w-full"
+                      >
+                        {image}
+                      </button>
                     );
                   })}
                   {invoice.photos.length === 0 && (
@@ -1469,6 +1494,16 @@ export default function InvoiceModalBody({
                   )}
                 </div>
               </>
+            )}
+
+            {!isPublic && lightboxIndex !== null && (
+              <ComponentsLightbox
+                getItems={invoice.photos.map((photo) => ({
+                  src: photo.photo,
+                }))}
+                startIndex={lightboxIndex}
+                onClose={() => setLightboxIndex(null)}
+              />
             )}
 
             {/* Inspections Tab Content - Desktop */}
