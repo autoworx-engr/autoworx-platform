@@ -5,9 +5,8 @@ import React, { useEffect, useRef, useState } from "react";
 
 // Decorative waveform bar heights (percent of container height)
 const WAVE_HEIGHTS = [
-  30, 55, 75, 45, 85, 60, 95, 50, 40, 70,
-  80, 55, 65, 40, 75, 90, 50, 45, 60, 80,
-  95, 60, 50, 38, 70, 88, 55, 42, 58, 78,
+  30, 55, 75, 45, 85, 60, 95, 50, 40, 70, 80, 55, 65, 40, 75, 90, 50, 45, 60,
+  80, 95, 60, 50, 38, 70, 88, 55, 42, 58, 78,
 ];
 
 interface VoiceNotePlayerProps {
@@ -69,14 +68,19 @@ export default function VoiceNotePlayer({
     const audio = audioRef.current;
     if (!audio || !duration) return;
     const rect = e.currentTarget.getBoundingClientRect();
-    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const ratio = Math.max(
+      0,
+      Math.min(1, (e.clientX - rect.left) / rect.width),
+    );
     audio.currentTime = ratio * duration;
   };
 
   const formatTime = (secs: number) => {
     if (!isFinite(secs) || isNaN(secs) || secs < 0) return "0:00";
     const m = Math.floor(secs / 60);
-    const s = Math.floor(secs % 60).toString().padStart(2, "0");
+    const s = Math.floor(secs % 60)
+      .toString()
+      .padStart(2, "0");
     return `${m}:${s}`;
   };
 
@@ -86,7 +90,11 @@ export default function VoiceNotePlayer({
     <div
       className={`flex items-center gap-2.5 rounded-2xl px-3 py-2.5 min-w-[210px] max-w-[280px] ${
         isOutgoing
-          ? "bg-white/10 text-white"
+          ? // Voice notes render without a wrapping bubble (SmsMessage.tsx only
+            // applies its teal bubble when there's text), so this needs its own
+            // real background rather than a translucent tint meant to sit on
+            // top of that bubble.
+            "bg-gradient-to-br from-[#0a8a95] to-[#006D77] text-white shadow-sm"
           : "bg-white border border-gray-100 shadow-sm text-zinc-800"
       }`}
     >
