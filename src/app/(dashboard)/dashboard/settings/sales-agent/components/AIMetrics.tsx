@@ -28,7 +28,7 @@ export default function AIMetrics({ companyId }: { companyId: number }) {
   });
 
   return (
-    <section>
+    <section className="min-w-0">
       <h2 className="my-4 text-lg font-semibold text-foreground">
         Performance Metrics
       </h2>
@@ -38,7 +38,7 @@ export default function AIMetrics({ companyId }: { companyId: number }) {
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           <StatsCard
             title="Clients Contacted"
             value={data?.totalClients ?? 0}

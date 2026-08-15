@@ -47,8 +47,8 @@ export default function SalesAgentPermissionPanel({ companyId }: Props) {
 
       <CardContent className="space-y-5">
         {/* Company Toggle */}
-        <div className="flex items-center justify-between rounded-lg border p-3 bg-white">
-          <div>
+        <div className="flex items-center justify-between gap-3 rounded-lg border p-3 bg-white">
+          <div className="min-w-0">
             <p className="text-sm font-medium">Company Access</p>
             <p className="text-xs text-muted-foreground">
               Master control for all clients
@@ -97,10 +97,13 @@ export default function SalesAgentPermissionPanel({ companyId }: Props) {
               filteredClients.map((client: any) => (
                 <div
                   key={client.id}
-                  className="flex items-center justify-between rounded-md border p-2 bg-white"
+                  className="flex items-center justify-between gap-3 rounded-md border p-2 bg-white"
                 >
-                  <div>
-                    <p className="text-sm font-medium">
+                  <div className="min-w-0">
+                    <p
+                      className="text-sm font-medium truncate"
+                      title={`${client.firstName} ${client.lastName || ""}`.trim()}
+                    >
                       {client.firstName} {client.lastName || ""}
                     </p>
                     {/* <p className="text-xs text-muted-foreground">

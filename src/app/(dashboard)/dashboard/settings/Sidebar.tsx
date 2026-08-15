@@ -220,7 +220,7 @@ const Sidebar = ({ isLegacy = false }: Props) => {
   return (
     <div>
       {/* Mobile Menu Button */}
-      <div className="mb-4 flex items-center lg:hidden bg-white p-3 rounded-xl shadow-sm border">
+      <div className="mb-4 flex items-center xl:hidden bg-white p-3 rounded-xl shadow-sm border">
         <button
           className="rounded-lg p-2 text-gray-700 hover:bg-gray-100"
           onClick={toggleSidebar}
@@ -239,7 +239,7 @@ const Sidebar = ({ isLegacy = false }: Props) => {
         ref={sidebarRef}
         className={cn(
           // Base styles for mobile sidebar
-          `fixed left-0 top-0 z-40 h-[calc(100vh-64px)] w-64 transform transition-transform duration-300 lg:hidden`,
+          `fixed left-0 top-0 z-40 h-[calc(100vh-64px)] w-64 transform transition-transform duration-300 xl:hidden`,
           // Glassmorphism effect: uses backdrop-filter
           `bg-white backdrop-blur-xl border border-slate-100 shadow-2xl overflow-y-auto`,
           {
@@ -263,7 +263,7 @@ const Sidebar = ({ isLegacy = false }: Props) => {
       {/* Desktop Sidebar (Sticky) - Added Glassmorphism here */}
       <div
         className={cn(
-          "hidden lg:block w-full rounded-2xl p-0 shadow-lg border max-h-[calc(100vh-120px)] overflow-y-auto",
+          "hidden xl:block w-full rounded-2xl p-0 shadow-lg border max-h-[calc(100vh-120px)] overflow-y-auto",
           // Glassmorphism effect for desktop
           "bg-white backdrop-blur-xl border-slate-100",
         )}

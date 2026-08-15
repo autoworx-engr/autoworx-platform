@@ -100,7 +100,7 @@ export function SelectStatus({
     "Completed",
     "Delivered",
   ];
-  const { due } = useEstimateCreateStore();
+  const { due, setPaymentModalOpen } = useEstimateCreateStore();
 
   return (
     <div className="relative">
@@ -160,10 +160,18 @@ export function SelectStatus({
                 key={statusItem.id}
                 onClick={() => {
                   /* Logic remains untouched */
-                  if (statusItem.title === "Delivered" && due > 0)
-                    return errorToast(
+                  if (statusItem.title === "Delivered" && due > 0) {
+                    errorToast(
                       "Outstanding balance detected. Please clear all dues before changing the invoice status to Delivered.",
                     );
+                    setOpen && setOpen(false);
+                    // Let the dropdown finish closing before the payment dialog
+                    // takes over the focus trap, otherwise Radix leaves the
+                    // page with pointer-events disabled.
+                    setTimeout(() => setPaymentModalOpen(true), 150);
+                    return;
+                  }
+
                   if (
                     statusItem.title === "Delivered" &&
                     !isAllServicesCompleted

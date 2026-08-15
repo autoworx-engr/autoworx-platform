@@ -1,9 +1,12 @@
+import deleteCategory from "@/actions/category/deleteCategory";
 import newCategory from "@/actions/category/newCategory";
 import Selector from "@/components/Selector";
 import { CATEGORY_NAME_MAX_LENGTH } from "@/lib/categoryConstants";
 import { cn } from "@/lib/cn";
 import { useListsStore } from "@/stores/lists";
 import { Category } from "@prisma/client";
+import { Popconfirm } from "antd";
+import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import ClearSelectionButton from "./ClearSelectionButton";
@@ -55,6 +58,31 @@ export default function SelectCategory({
     } else {
       toast.error(res.message || "Failed to create category");
     }
+  }
+
+  async function handleDeleteCategory(categoryId: number) {
+    try {
+      const res = await deleteCategory({ categoryId });
+
+      if (res.type === "success") {
+        if (category?.id === categoryId) {
+          setCategory(null);
+        }
+        useListsStore.setState((state) => {
+          return {
+            categories: state.categories.filter((cat) => cat.id !== categoryId),
+          };
+        });
+
+        toast.success("Category deleted successfully");
+      } else {
+        toast.error(res.message || "Failed to delete category");
+      }
+    } catch {
+      toast.error("Failed to delete category");
+    }
+
+    setCategoryInput("");
   }
 
   useEffect(() => {
@@ -135,9 +163,30 @@ export default function SelectCategory({
           }
           items={categories}
           displayList={(category: Category) => (
-            <p className="text-sm font-medium text-slate-700 group-hover:text-primary transition-colors">
-              {category.name}
-            </p>
+            <div className="flex items-center justify-between group py-0.5 gap-2 overflow-hidden">
+              <p className="text-sm font-medium text-slate-700 group-hover:text-primary transition-colors truncate flex-1">
+                {category.name}
+              </p>
+
+              <div onClick={(e) => e.stopPropagation()} className="shrink-0">
+                <Popconfirm
+                  title="Delete Category"
+                  description="Are you sure you want to remove this?"
+                  okText="Delete"
+                  cancelText="Cancel"
+                  placement="topLeft"
+                  onConfirm={() => handleDeleteCategory(category?.id)}
+                  onPopupClick={(e) => e.stopPropagation()}
+                >
+                  <div
+                    className="rounded-lg p-1.5 hover:bg-red-50 text-slate-300 hover:text-red-500 transition-all cursor-pointer"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <X size={16} strokeWidth={2.5} />
+                  </div>
+                </Popconfirm>
+              </div>
+            </div>
           )}
           onSearch={(search: string) =>
             categories.filter((cat) =>
