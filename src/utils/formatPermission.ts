@@ -39,7 +39,7 @@ export function formatPermissions(permissions: any[]) {
 
     "invoiceAutomation",
     "tagAutomation",
-    "reportingAutomation"
+    "reportingAutomation",
   ];
 
   const communicationHubChildren = [

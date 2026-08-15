@@ -99,6 +99,7 @@ type InvoiceData = Invoice & {
   user: User;
   client: Client;
   vehicle: Vehicle;
+  Refund: Refund[];
   payments: (Payment & {
     card: CardPayment | null;
     check: CheckPayment | null;
