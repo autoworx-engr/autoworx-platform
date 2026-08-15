@@ -12,6 +12,7 @@ import { newMaterial } from "@/actions/estimate/material/newMaterial";
 import { deleteVendor } from "@/actions/vendor/deleteVendor";
 import Close from "./CloseEstimate";
 import { errorToast, successToast } from "@/lib/toast";
+import { toast } from "react-hot-toast";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import Decimal from "decimal.js";
 import { Popconfirm } from "antd";
@@ -72,9 +73,9 @@ export default function MaterialCreate() {
   const [addToInventory, setAddToInventory] = useState<boolean>(false);
   const [inventoryError, setInventoryError] = useState<string | null>(null);
   const [errors, setErrors] = useState<MaterialFieldErrors>({});
+  const [vendorOpen, setVendorOpen] = useState(false);
+  const [categoryOpen, setCategoryOpen] = useState(false);
 
-  // Drop a field's error as soon as the user edits it, so the form stops
-  // shouting about something that's already been fixed.
   const clearFieldError = (field: MaterialField) =>
     setErrors((prev) => {
       if (!prev[field]) return prev;
@@ -87,13 +88,6 @@ export default function MaterialCreate() {
   const itemId = data?.itemId;
   const materialIndex = data?.materialIndex;
 
-  /**
-   * Returns null when the form is invalid. The offending fields get a red
-   * border, and the first problem is surfaced as a toast — validateMaterial
-   * returns its errors in field order, so the toast follows the visual order.
-   * On success it returns the narrowed values, so callers don't have to
-   * re-assert that the required numbers are actually present.
-   */
   const validateForm = () => {
     const nextErrors = validateMaterial(
       { name, quantity, cost, sell },
@@ -111,31 +105,6 @@ export default function MaterialCreate() {
     // submit, same as before this change.
     return { quantity: quantity as number };
   };
-
-  async function handleDeleteVendor(vendorId: number) {
-    try {
-      const res = await deleteVendor(vendorId);
-      if (res.type === "success") {
-        if (vendor?.id === vendorId) {
-          setVendor(null);
-        }
-        useListsStore.setState((state) => {
-          return {
-            vendors: state.vendors.filter((ven) => ven.id !== vendorId),
-          };
-        });
-        toast.success("Vendor deleted successfully");
-      } else {
-        toast.error(res.message || "Failed to delete vendor");
-      }
-    } catch (err: any) {
-      errorToast("Failed to delete vendor. It may be in use.");
-    }
-  }
-
-  // const [vendorSearch, setVendorSearch] = useState("");
-  const [vendorOpen, setVendorOpen] = useState(false);
-  const [categoryOpen, setCategoryOpen] = useState(false);
 
   async function handleDeleteVendor(vendorId: number) {
     try {
