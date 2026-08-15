@@ -55,15 +55,46 @@ const InventoryResponsiveCard: React.FC<InventoryResponsiveCardProps> = ({
         }
       }}
       className={cn(
-        "group min-h-[110px] cursor-pointer rounded-lg border border-[#BFC4FF] px-4 py-3 shadow-sm transition-all duration-200",
+        "group relative min-h-[110px] cursor-pointer rounded-lg border border-[#BFC4FF] px-4 py-3 shadow-sm transition-all duration-200",
         "hover:-translate-y-0.5 hover:border-primary hover:shadow-md",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
         (index + 1) % 2 === 0 ? evenColor : oddColor,
       )}
     >
+      {/* Actions */}
+      {canManage && (
+        <div
+          className="flex items-center z-10 gap-3 absolute right-2 top-2"
+          onClick={stopClick}
+        >
+          <span className="text-blue-600" title="Edit">
+            <EditProduct productData={product as any} />
+          </span>
+          <Popconfirm
+            title={`Are you sure you want to delete this ${
+              viewTab === "products" ? "product" : "supply"
+            }?`}
+            onConfirm={async () => {
+              await deleteInventory(product.id);
+              router.push(`/dashboard/inventory?view=${search?.get("view")}`);
+            }}
+            okText="Yes"
+            cancelText="No"
+          >
+            <button
+              type="button"
+              className="text-red-400 transition-colors hover:text-red-600"
+              title="Delete"
+            >
+              <X size={20} strokeWidth={3} />
+            </button>
+          </Popconfirm>
+        </div>
+      )}
+
       <div className="flex flex-col gap-3 text-[#66738C]">
         {/* Name + category */}
-        <div className="min-w-0">
+        <div className="min-w-0 pr-14">
           <div className="flex items-center gap-1.5">
             {isOutOfStock ? (
               <Tooltip title="Product is out of stock" placement="top">
@@ -96,34 +127,6 @@ const InventoryResponsiveCard: React.FC<InventoryResponsiveCardProps> = ({
             </span>
           </p>
         </div>
-
-        {/* Actions */}
-        {canManage && (
-          <div className="flex items-center gap-3" onClick={stopClick}>
-            <span className="text-blue-600" title="Edit">
-              <EditProduct productData={product as any} />
-            </span>
-            <Popconfirm
-              title={`Are you sure you want to delete this ${
-                viewTab === "products" ? "product" : "supply"
-              }?`}
-              onConfirm={async () => {
-                await deleteInventory(product.id);
-                router.push(`/dashboard/inventory?view=${search?.get("view")}`);
-              }}
-              okText="Yes"
-              cancelText="No"
-            >
-              <button
-                type="button"
-                className="text-red-400 transition-colors hover:text-red-600"
-                title="Delete"
-              >
-                <X size={20} strokeWidth={3} />
-              </button>
-            </Popconfirm>
-          </div>
-        )}
       </div>
     </Card>
   );
