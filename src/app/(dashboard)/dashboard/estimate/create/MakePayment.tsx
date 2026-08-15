@@ -33,7 +33,7 @@ import { CreditCard } from "lucide-react";
 import moment from "moment-timezone";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import React, { useState, useTransition } from "react";
+import React, { useEffect, useState, useTransition } from "react";
 
 function TabTrigger({
   value,
@@ -77,6 +77,8 @@ export default function MakePayment() {
     setTotalPayment,
     totalPayment: currentTotalPayment,
     items,
+    paymentModalOpen,
+    setPaymentModalOpen,
   } = useEstimateCreateStore();
   const createInvoice = useInvoiceCreate("Invoice");
   const router = useRouter();
@@ -253,7 +255,7 @@ export default function MakePayment() {
 
       if (res2?.type === "success" || res3?.type === "success") {
         await paymentLeadsConvertion(invoiceId);
-        setOpen(false);
+        handleOpenChange(false);
         successToast("Payment recorded successfully");
         if (!inventory.sufficient) {
           errorToast(
@@ -381,8 +383,22 @@ export default function MakePayment() {
     setDeposit(isNaN(dueAmount) ? "" : dueAmount);
   };
 
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (!next) setPaymentModalOpen(false);
+  }
+
+  // Other parts of the page (e.g. blocking a "Delivered" status change while
+  // there is an outstanding balance) ask for this dialog through the store.
+  useEffect(() => {
+    if (!paymentModalOpen) return;
+    openMakePaymentDialog();
+    setOpen(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paymentModalOpen]);
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <button
           onClick={openMakePaymentDialog}
@@ -868,7 +884,7 @@ export default function MakePayment() {
                 className="rounded-xl mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500 
                 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
                 transition-colors border"
-                onClick={() => setOpen(false)}
+                onClick={() => handleOpenChange(false)}
               >
                 Cancel
               </button>
