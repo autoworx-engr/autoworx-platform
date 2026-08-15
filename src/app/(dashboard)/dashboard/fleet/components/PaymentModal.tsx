@@ -2,6 +2,7 @@
 
 import { makeFleetStatementPayment } from "@/actions/fleet/statement";
 import { newPaymentMethod } from "@/actions/payment/newPaymentMethod";
+import { deletePaymentMethod } from "@/actions/payment/deletePaymentMethod";
 import {
   Dialog,
   DialogClose,
@@ -233,6 +234,30 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     }
   }
 
+  async function handleRemovePaymentMethod(
+    item: PaymentMethod,
+    e: React.MouseEvent,
+  ) {
+    try {
+      const res = await deletePaymentMethod(item.id);
+      if (res.type === "success") {
+        useListsStore.setState((state) => ({
+          paymentMethods: state.paymentMethods.filter((m) => m.id !== item.id),
+        }));
+        if (paymentMethod?.id === item.id) {
+          setPaymentMethod(null);
+        }
+        successToast("Payment method deleted");
+      } else if (res.type === "globalError") {
+        errorToast(
+          res?.errorSource?.length ? res.errorSource[0].message : res.message,
+        );
+      }
+    } catch (err) {
+      errorToast("Failed to delete payment method");
+    }
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-full max-w-xl">
@@ -421,7 +446,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   <textarea
                     name="notes"
                     id="notes"
-                    className="h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none"
+                    className="min-h-[100px] max-h-[200px] w-full rounded-md border-2 border-slate-400 p-2 outline-none"
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                   />
@@ -478,7 +503,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 <textarea
                   name="notes"
                   id="notes"
-                  className="h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none"
+                  className="min-h-[100px] max-h-[200px] w-full rounded-md border-2 border-slate-400 p-2 outline-none"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                 />
@@ -534,7 +559,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 <textarea
                   name="notes"
                   id="notes"
-                  className="h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none"
+                  className="min-h-[100px] max-h-[200px] w-full rounded-md border-2 border-slate-400 p-2 outline-none"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                 />
@@ -567,7 +592,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                         onClick={handleNewPaymentMethod}
                         className={cn(
                           "text-nowrap rounded-md px-2 text-white",
-                          paymentMethodInput ? "bg-slate-700" : "bg-slate-400",
+                          paymentMethodInput ? "bg-primary" : "bg-slate-400",
                         )}
                         type="button"
                         disabled={!paymentMethodInput}
@@ -588,6 +613,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   openState={[openPaymentMethod, setOpenPaymentMethod]}
                   selectedItem={paymentMethod}
                   setSelectedItem={setPaymentMethod}
+                  onRemoveItem={handleRemovePaymentMethod}
                 />
               </div>
 
@@ -628,7 +654,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 <textarea
                   name="notes"
                   id="notes"
-                  className="h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none"
+                  className="min-h-[100px] max-h-[200px] w-full rounded-md border-2 border-slate-400 p-2 outline-none"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                 />
@@ -688,7 +714,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 <textarea
                   name="depositNotes"
                   id="depositNotes"
-                  className="h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none"
+                  className="min-h-[100px] max-h-[200px] w-full rounded-md border-2 border-slate-400 p-2 outline-none"
                   value={depositNotes}
                   onChange={(e) => setDepositNotes(e.target.value)}
                 />
