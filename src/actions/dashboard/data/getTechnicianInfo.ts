@@ -179,6 +179,7 @@ export async function getPerformance(timezone: string, currentUserId?: number) {
   const currentMonthJobs = await db.technician.findMany({
     where: {
       userId,
+      status: TECHNICIAN_STATUS.COMPLETE,
       date: {
         gte: currentMonthStart,
         lte: currentMonthEnd,

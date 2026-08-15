@@ -11,12 +11,12 @@ import React, { useEffect, useState } from "react";
 import { newMaterial } from "@/actions/estimate/material/newMaterial";
 import { deleteVendor } from "@/actions/vendor/deleteVendor";
 import Close from "./CloseEstimate";
-import { errorToast } from "@/lib/toast";
-import toast from "react-hot-toast";
+import { errorToast, successToast } from "@/lib/toast";
+import { toast } from "react-hot-toast";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import Decimal from "decimal.js";
-import { Plus, X } from "lucide-react";
 import { Popconfirm } from "antd";
+import { Plus, X } from "lucide-react";
 import { slimInputClassName } from "@/components/SlimInput";
 import { cn } from "@/lib/cn";
 import {
@@ -73,9 +73,9 @@ export default function MaterialCreate() {
   const [addToInventory, setAddToInventory] = useState<boolean>(false);
   const [inventoryError, setInventoryError] = useState<string | null>(null);
   const [errors, setErrors] = useState<MaterialFieldErrors>({});
+  const [vendorOpen, setVendorOpen] = useState(false);
+  const [categoryOpen, setCategoryOpen] = useState(false);
 
-  // Drop a field's error as soon as the user edits it, so the form stops
-  // shouting about something that's already been fixed.
   const clearFieldError = (field: MaterialField) =>
     setErrors((prev) => {
       if (!prev[field]) return prev;
@@ -88,13 +88,6 @@ export default function MaterialCreate() {
   const itemId = data?.itemId;
   const materialIndex = data?.materialIndex;
 
-  /**
-   * Returns null when the form is invalid. The offending fields get a red
-   * border, and the first problem is surfaced as a toast — validateMaterial
-   * returns its errors in field order, so the toast follows the visual order.
-   * On success it returns the narrowed values, so callers don't have to
-   * re-assert that the required numbers are actually present.
-   */
   const validateForm = () => {
     const nextErrors = validateMaterial(
       { name, quantity, cost, sell },
@@ -116,27 +109,27 @@ export default function MaterialCreate() {
   async function handleDeleteVendor(vendorId: number) {
     try {
       const res = await deleteVendor(vendorId);
+
       if (res.type === "success") {
         if (vendor?.id === vendorId) {
           setVendor(null);
         }
-        useListsStore.setState((state) => {
-          return {
-            vendors: state.vendors.filter((ven) => ven.id !== vendorId),
-          };
-        });
-        toast.success("Vendor deleted successfully");
+        useListsStore.setState((state) => ({
+          vendors: state.vendors.filter((ven) => ven.id !== vendorId),
+        }));
+        successToast("Vendor deleted successfully");
       } else {
-        toast.error(res.message || "Failed to delete vendor");
+        errorToast(res.message || "Failed to delete vendor");
       }
-    } catch (err: any) {
-      errorToast("Failed to delete vendor. It may be in use.");
+    } catch (err) {
+      const formattedError = errorHandler(err);
+      errorToast(
+        formattedError?.errorSource?.length
+          ? formattedError.errorSource[0].message
+          : formattedError.message,
+      );
     }
   }
-
-  // const [vendorSearch, setVendorSearch] = useState("");
-  const [vendorOpen, setVendorOpen] = useState(false);
-  const [categoryOpen, setCategoryOpen] = useState(false);
 
   // const { actionType } = useActionStoreCreateEdit();
 
@@ -583,20 +576,28 @@ export default function MaterialCreate() {
               )
             }
             displayList={(vendor: Vendor) => (
-              <div className="flex items-center justify-between group py-0.5 gap-2 overflow-hidden">
-                <p className="text-sm font-medium text-slate-700 group-hover:text-primary transition-colors truncate flex-1">
+              <div className="flex items-center justify-between group py-0.5">
+                <p className="text-sm font-medium">
                   {vendor?.companyName || vendor.name}
                 </p>
 
-                <div onClick={(e) => e.stopPropagation()} className="shrink-0">
+                <div onClick={(e) => e.stopPropagation()}>
                   <Popconfirm
                     title="Delete Vendor"
-                    description="Are you sure you want to remove this vendor?"
+                    description="Are you sure you want to remove this?"
                     okText="Delete"
                     cancelText="Cancel"
-                    placement="topLeft"
                     onConfirm={() => handleDeleteVendor(vendor.id)}
                     onPopupClick={(e) => e.stopPropagation()}
+                    overlayClassName="[&_.ant-popover-inner]:rounded-2xl [&_.ant-popover-inner]:p-4 [&_.ant-popover-message-title]:font-semibold [&_.ant-popover-message-title]:text-slate-800"
+                    okButtonProps={{
+                      className:
+                        "!rounded-lg !border-none !bg-[#6571ff] !font-semibold !shadow-sm !shadow-[#6571ff]/30 hover:!bg-[#525ceb]",
+                    }}
+                    cancelButtonProps={{
+                      className:
+                        "!rounded-lg !border-slate-200 !font-medium !text-slate-600 hover:!border-slate-300 hover:!bg-slate-50 hover:!text-slate-700",
+                    }}
                   >
                     <div
                       className="rounded-lg p-1.5 hover:bg-red-50 text-slate-300 hover:text-red-500 transition-all cursor-pointer"

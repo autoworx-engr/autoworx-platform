@@ -4,15 +4,15 @@ type TemplateVariable = {
 };
 
 // Template variables
- export const TEMPLATE_VARIABLES: TemplateVariable[] = [
+export const TEMPLATE_VARIABLES: TemplateVariable[] = [
   { name: "<CLIENT>", description: "Client name" },
   { name: "<VEHICLE>", description: "Vehicle details" },
   { name: "<BUSINESS_NAME>", description: "Your business name" },
   { name: "<PHONE>", description: "Your business phone number" },
   { name: "<ADDRESS>", description: "Your business address" },
   { name: "<DATE>", description: "Date" },
-  { name: "<VIDEO_DIRECTIONS>", description: "Video directions" },
-  { name: "<GOOGLE_MAP_LINK>", description: "Google Maps link" },
+  // { name: "<VIDEO_DIRECTIONS>", description: "Video directions" },
+  // { name: "<GOOGLE_MAP_LINK>", description: "Google Maps link" },
   { name: "<GOOGLE_REVIEW_LINK>", description: "Google review link" },
 ];
 const TemplateVariable = ({
