@@ -133,6 +133,15 @@ export default function ClientItem({
     }
   }, [conversationTrack, client?.id]);
 
+  // Bring the row into view when it becomes the selected client (e.g. after
+  // navigating in from a pipeline card or notification), since the list can
+  // be scrolled past it.
+  useEffect(() => {
+    if (selected) {
+      buttonRef.current?.scrollIntoView({ block: "nearest" });
+    }
+  }, [selected]);
+
   const filter = useDemoClientFilterStore((state) => state.filter);
 
   const handleRedirect = async (channel?: string) => {
