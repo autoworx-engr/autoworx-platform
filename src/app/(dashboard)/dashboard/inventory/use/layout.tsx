@@ -3,8 +3,8 @@ import { requireRouteAccess } from "@/lib/serverRouteGuard";
 export const dynamic = "force-dynamic";
 
 /**
- * Use Product is Admin / Manager only, and still needs the Inventory module —
- * Sales, Technician and Other are refused regardless of their Inventory
+ * Use Product is open to Admin / Manager / Other and still needs the Inventory
+ * module — Sales and Technician are refused regardless of their Inventory
  * permission (see ROLE_RESTRICTED_ROUTE_PREFIXES).
  */
 export default async function UseProductLayout({

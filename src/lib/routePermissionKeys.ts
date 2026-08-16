@@ -69,11 +69,11 @@ export function isAdminOnlyRoute(route: string): boolean {
  * the role narrows who is eligible, the key still has to allow it. Use this
  * when a module is shared but one destructive corner of it is not.
  *
- * Sales / Technician / Other are excluded from Use Product no matter what their
+ * Sales and Technician are excluded from Use Product no matter what their
  * Inventory permission says.
  */
 const ROLE_RESTRICTED_ROUTE_PREFIXES: [string, string[]][] = [
-  ["/dashboard/inventory/use", ["Admin", "Manager"]],
+  ["/dashboard/inventory/use", ["Admin", "Manager", "Other"]],
 ];
 
 export function allowedRolesForRoute(route: string): string[] | undefined {
