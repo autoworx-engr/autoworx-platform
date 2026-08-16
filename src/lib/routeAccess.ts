@@ -5,7 +5,7 @@ import {
   resolveRoutePermissionKey,
 } from "./routePermissionsMap";
 import type { RoutePermissionKey } from "./routePermissionKeys";
-import { isAdminOnlyRoute } from "./routePermissionKeys";
+import { allowedRolesForRoute, isAdminOnlyRoute } from "./routePermissionKeys";
 import type { RouteFeatureKey } from "./routeFeatureKeys";
 import type { CompanyFeaturePermission } from "@/stores/companyFeaturePermissionStore";
 
@@ -98,6 +98,18 @@ export function canAccessRoute(
   // the permission-key lookup — those routes have no key to fall back on.
   if (isAdminOnlyRoute(routeWithoutQuery)) {
     return permissions.role === "Admin" || Boolean(permissions.isSuperAdmin);
+  }
+
+  // Role-restricted subtrees narrow *who* is eligible; the permission key below
+  // still applies. Must run before the blanket Admin allow so the role list is
+  // authoritative for everyone else.
+  const allowedRoles = allowedRolesForRoute(routeWithoutQuery);
+  if (
+    allowedRoles &&
+    !allowedRoles.includes(permissions.role) &&
+    !permissions.isSuperAdmin
+  ) {
+    return false;
   }
 
   if (permissions.role === "Admin") return true;

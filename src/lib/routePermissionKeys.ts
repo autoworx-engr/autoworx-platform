@@ -64,6 +64,25 @@ export function isAdminOnlyRoute(route: string): boolean {
   return matchesPrefix(route.split("?")[0], ADMIN_ONLY_ROUTE_PREFIXES);
 }
 
+/**
+ * Subtrees limited to specific roles *in addition to* their permission key —
+ * the role narrows who is eligible, the key still has to allow it. Use this
+ * when a module is shared but one destructive corner of it is not.
+ *
+ * Sales / Technician / Other are excluded from Use Product no matter what their
+ * Inventory permission says.
+ */
+const ROLE_RESTRICTED_ROUTE_PREFIXES: [string, string[]][] = [
+  ["/dashboard/inventory/use", ["Admin", "Manager"]],
+];
+
+export function allowedRolesForRoute(route: string): string[] | undefined {
+  const routeWithoutQuery = route.split("?")[0];
+  return ROLE_RESTRICTED_ROUTE_PREFIXES.find(([prefix]) =>
+    matchesPrefix(routeWithoutQuery, [prefix]),
+  )?.[1];
+}
+
 export const ROUTE_PERMISSIONS_MAP: Record<string, RoutePermissionKey> = {
   "/dashboard/communication/client": "communicationHubClients",
   "/dashboard/communication/collaboration": "communicationHubCollaboration",
@@ -118,6 +137,8 @@ const ROUTE_PERMISSION_PREFIXES: [string, RoutePermissionKey][] = [
   ["/dashboard/pipeline/shop", "shopPipeline"],
   ["/dashboard/pipeline/team", "teamPipeline"],
   ["/dashboard/pipeline", ["salesPipeline", "shopPipeline", "teamPipeline"]],
+  // Using stock is a write — the view-only variant must not grant it.
+  ["/dashboard/inventory/use", "inventoryAll"],
   ["/dashboard/inventory", ["inventoryAll", "inventoryAllViewOnly"]],
   ["/dashboard/client", "clientDirectory"],
   ["/dashboard/employee", "employeeDirectory"],
