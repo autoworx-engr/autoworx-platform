@@ -1,5 +1,9 @@
 import { updateCallChatTrack } from "@/actions/communication/client/chat-track/callTrack";
 import { db } from "@/lib/db";
+import {
+  normalizePhoneForStorage,
+  phoneLookupWhereClause,
+} from "@/utils/normalizePhone";
 import { NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 
@@ -59,12 +63,13 @@ export async function POST(request: Request) {
     }
 
     // Try to find the client
+    const phoneLookup = phoneLookupWhereClause(from);
     let client = await db.client.findFirst({
       where: {
         companyId: infobipConfig?.companyId,
-        mobile: {
-          contains: from.replace("+", ""),
-        },
+        ...(phoneLookup
+          ? { OR: phoneLookup }
+          : { mobile: { contains: from.replace("+", "") } }),
       },
     });
 
@@ -74,7 +79,7 @@ export async function POST(request: Request) {
         data: {
           firstName: "Unknown",
           lastName: "Caller",
-          mobile: from,
+          mobile: normalizePhoneForStorage(from),
           companyId: infobipConfig.companyId,
           isSalesAgent: true,
         },

@@ -6,6 +6,10 @@ import { revalidatePath } from "next/cache";
 import { ServerAction } from "@/types/action";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { TErrorHandler } from "@/types/globalError";
+import {
+  normalizePhoneForStorage,
+  phoneLookupWhereClause,
+} from "@/utils/normalizePhone";
 import { updateFleetValidationSchema } from "@/validations/schemas/fleet/fleet.validation";
 
 export async function editFleet(data: {
@@ -42,9 +46,29 @@ export async function editFleet(data: {
       };
     }
 
-    // if (existingFleet.mobile !== data.mobile) {
-    //   throw new Error("Mobile number cannot be changed for an existing fleet.");
-    // }
+    if (data.mobile) {
+      const phoneLookup = phoneLookupWhereClause(data.mobile);
+      if (phoneLookup) {
+        const existingClientByMobile = await db.client.findFirst({
+          where: {
+            OR: phoneLookup,
+            companyId: existingFleet.companyId,
+            id: { not: data.clientId },
+          },
+        });
+
+        if (existingClientByMobile) {
+          return {
+            type: "globalError",
+            message: "A customer with this mobile already exists.",
+          };
+        }
+      }
+    }
+
+    const normalizedMobile = data.mobile
+      ? normalizePhoneForStorage(data.mobile)
+      : data.mobile;
 
     const updatedFleet = await db.$transaction(async (tsx) => {
       await tsx.client.update({
@@ -53,7 +77,7 @@ export async function editFleet(data: {
         },
         data: {
           email: data.email || existingFleet.email,
-          mobile: data.mobile || existingFleet.mobile,
+          mobile: normalizedMobile || existingFleet.mobile,
           address: data.address || existingFleet.address,
           city: data.city || existingFleet.city,
           state: data.state || existingFleet.state,

@@ -6,7 +6,10 @@ import { revalidatePath } from "next/cache";
 import { ServerAction } from "@/types/action";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { TErrorHandler } from "@/types/globalError";
-import { normalizePhoneForStorage } from "@/utils/normalizePhone";
+import {
+  normalizePhoneForStorage,
+  phoneLookupWhereClause,
+} from "@/utils/normalizePhone";
 import { updateClientValidationSchema } from "@/validations/schemas/client/client.validation";
 
 export async function editClient(data: {
@@ -30,11 +33,17 @@ export async function editClient(data: {
   try {
     await updateClientValidationSchema.parseAsync(data);
 
+    const currentClient = await db.client.findUnique({
+      where: { id: data.id },
+      select: { companyId: true },
+    });
+
     // Skip email check if skipEmailCheck is true
     if (!data.skipEmailCheck && data.email) {
       const existingClient = await db.client.findFirst({
         where: {
           email: data.email,
+          companyId: currentClient?.companyId,
           id: { not: data.id },
         },
       });
@@ -51,6 +60,26 @@ export async function editClient(data: {
     const normalizedMobile = data.mobile
       ? normalizePhoneForStorage(data.mobile)
       : data.mobile;
+
+    if (data.mobile) {
+      const phoneLookup = phoneLookupWhereClause(data.mobile);
+      if (phoneLookup) {
+        const existingClientByMobile = await db.client.findFirst({
+          where: {
+            OR: phoneLookup,
+            companyId: currentClient?.companyId,
+            id: { not: data.id },
+          },
+        });
+
+        if (existingClientByMobile) {
+          return {
+            type: "globalError",
+            message: "A customer with this mobile already exists.",
+          };
+        }
+      }
+    }
 
     const updatedClientInfo = await db.client.update({
       where: {
