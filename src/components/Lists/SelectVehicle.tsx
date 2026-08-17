@@ -60,9 +60,11 @@ export function SelectVehicle({
 
     const current = vehicleRef.current;
 
-    // Selection still belongs to the selected client — leave it alone.
     if (current && current.clientId === +clientId) {
       awaitingClientRef.current = null;
+      if (useListsStore.getState().vehicle?.id !== current.id) {
+        useListsStore.setState({ vehicle: current });
+      }
       return;
     }
 
