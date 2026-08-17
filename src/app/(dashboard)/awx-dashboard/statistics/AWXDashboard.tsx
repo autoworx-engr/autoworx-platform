@@ -166,6 +166,9 @@ const AWXDashboard = ({ companies, platformStats }: Props) => {
                 onChange={handleSearch}
                 placeholder="Search by Company Name or Admin Email..."
                 className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 p-2.5 pl-10 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck="false"
               />
             </div>
 

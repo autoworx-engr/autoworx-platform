@@ -246,6 +246,9 @@ export default function SearchScroll({
             "hover:border-slate-200 hover:bg-slate-50/30",
             "focus:border-primary/40 focus:bg-white focus:ring-4 focus:ring-primary/10",
           )}
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck="false"
         />
         {searchTerm && (
           <button
