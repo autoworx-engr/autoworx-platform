@@ -103,6 +103,9 @@ const containsInsensitive = (value: string) => ({
   mode: "insensitive" as const,
 });
 
+const parseVehicleYear = (value: string) =>
+  /^\d{4}$/.test(value) ? Number(value) : null;
+
 function sanitizePagination(input: GetPaymentsPaginatedInput) {
   const page = Number.isFinite(input.page)
     ? Math.max(DEFAULT_PAGE, Math.floor(input.page as number))
@@ -231,8 +234,8 @@ function buildWhereInput(
       },
     ];
 
-    const searchAsYear = Number(normalizedSearch);
-    if (Number.isInteger(searchAsYear)) {
+    const searchAsYear = parseVehicleYear(normalizedSearch);
+    if (searchAsYear !== null) {
       searchConditions.push({
         invoice: {
           is: {
@@ -271,15 +274,13 @@ function buildWhereInput(
             vehicle: {
               is: {
                 AND: searchTerms.map((term) => {
-                  const termAsYear = Number(term);
+                  const termAsYear = parseVehicleYear(term);
                   return {
                     OR: [
                       { make: containsInsensitive(term) },
                       { model: containsInsensitive(term) },
                       { other: containsInsensitive(term) },
-                      ...(Number.isInteger(termAsYear)
-                        ? [{ year: termAsYear }]
-                        : []),
+                      ...(termAsYear !== null ? [{ year: termAsYear }] : []),
                     ],
                   };
                 }),
