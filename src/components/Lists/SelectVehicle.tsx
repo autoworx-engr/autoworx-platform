@@ -60,10 +60,6 @@ export function SelectVehicle({
 
     const current = vehicleRef.current;
 
-    // Selection still belongs to the selected client — leave it alone, but make
-    // sure it's actually in the store: on an edit page's initial load, this is
-    // the only branch that ever runs for the invoice's existing vehicle, so
-    // skipping the sync here left submits going out with no vehicleId at all.
     if (current && current.clientId === +clientId) {
       awaitingClientRef.current = null;
       if (useListsStore.getState().vehicle?.id !== current.id) {
