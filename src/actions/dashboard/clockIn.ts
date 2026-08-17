@@ -1,5 +1,6 @@
 "use server";
 
+import { companyNow } from "@/lib/companyTime";
 import { db } from "@/lib/db";
 import getUser from "@/lib/getUser";
 import moment from "moment-timezone";
@@ -10,12 +11,15 @@ export async function clockIn({ timezone }: { timezone: string }) {
     console.log("Clocking in with timezone:", timezone);
     const user = await getUser();
     console.log("User info:", user);
+    const now = companyNow(timezone);
     const clockedIn = await db.clockInOut.create({
       data: {
         userId: user?.id,
         companyId: user?.companyId,
-        clockIn: new Date(),
+        clockIn: now,
         timezone,
+        createdAt: now,
+        updatedAt: now,
       },
     });
     console.log("Clock-in record created:", clockedIn);

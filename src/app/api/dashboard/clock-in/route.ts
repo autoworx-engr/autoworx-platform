@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { companyNow } from "@/lib/companyTime";
 import { db } from "@/lib/db";
 import moment from "moment-timezone";
 
@@ -98,12 +99,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const now = companyNow(timezone);
     const clockedIn = await db.clockInOut.create({
       data: {
         userId: user.id,
         companyId: user.companyId,
-        clockIn: new Date(),
+        clockIn: now,
         timezone,
+        createdAt: now,
+        updatedAt: now,
       },
     });
 
