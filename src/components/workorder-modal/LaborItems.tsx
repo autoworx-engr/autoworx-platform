@@ -1,13 +1,13 @@
 "use client";
 import { queryKeys } from "@/lib/queryKeys";
 import { cn } from "@/lib/utils";
-import { deleteTechnician, getTechnicians } from "@/service/work-order/api";
+import { deleteTechnician } from "@/service/work-order/api";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import { Technician, TechnicianImage, VehicleParts } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { Popconfirm } from "antd";
 import { CircleX } from "lucide-react";
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import CreateAndEditLabor from "./CreateAndEditLabor";
 
 export default function LaborItems({
@@ -31,24 +31,47 @@ export default function LaborItems({
     images: TechnicianImage[];
     isDraft?: boolean;
   })[];
-  onAddTechnician: (
+  onAddTechnician?: (
     invoiceItemId: number,
     serviceId: number | null,
     payload: any,
     employeeName: string,
   ) => void;
-  onUpdateTechnician: (
+  onUpdateTechnician?: (
     invoiceItemId: number,
     techId: number | string,
     payload: any,
   ) => void;
-  onDeleteTechnician: (invoiceItemId: number, techId: number | string) => void;
+  onDeleteTechnician?: (invoiceItemId: number, techId: number | string) => void;
 }) {
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
+  const queryClient = useQueryClient();
+  const currentUser = useGetCurrentUser();
+  const companyId = currentUser?.companyId;
 
   const handleTechnicianDelete = async (technicianId: number | string) => {
-    onDeleteTechnician(invoiceItemId, technicianId);
+    if (onDeleteTechnician) {
+      onDeleteTechnician(invoiceItemId, technicianId);
+    } else {
+      if (!companyId) return;
+      try {
+        await deleteTechnician(companyId, invoiceId, technicianId as number);
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.getInvoiceModalDataKey(invoiceId),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.getWorkOrderDataKey(invoiceId),
+        });
+        setError("");
+        const event = new CustomEvent("invoice-updated", {
+          detail: { invoiceId },
+        });
+        window.dispatchEvent(event);
+      } catch (err: any) {
+        setError(err.message);
+      }
+    }
   };
 
   return (
