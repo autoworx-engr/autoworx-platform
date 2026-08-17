@@ -32,6 +32,13 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+const GATEWAY_LABELS: Record<string, string> = {
+  STRIPE: "Stripe (tenant)",
+  AUTHORIZE_NET: "Authorize.Net (tenant)",
+  PLATFORM_STRIPE: "Stripe (platform)",
+  PLATFORM_AUTHORIZE_NET: "Authorize.Net (platform)",
+};
+
 export default function WebhookEventsTable({
   initialEvents,
   total,
@@ -94,8 +101,12 @@ export default function WebhookEventsTable({
           className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary/30"
         >
           <option value="">All Gateways</option>
-          <option value="STRIPE">Stripe</option>
-          <option value="AUTHORIZE_NET">Authorize.Net</option>
+          <option value="STRIPE">Stripe (tenant)</option>
+          <option value="AUTHORIZE_NET">Authorize.Net (tenant)</option>
+          <option value="PLATFORM_STRIPE">Stripe (platform)</option>
+          <option value="PLATFORM_AUTHORIZE_NET">
+            Authorize.Net (platform)
+          </option>
         </select>
 
         <span className="ml-auto text-sm text-gray-400 self-center">
@@ -139,7 +150,7 @@ export default function WebhookEventsTable({
                   </td>
                   <td className="px-4 py-3">
                     <span className="text-xs font-medium text-gray-600">
-                      {event.gateway === "STRIPE" ? "Stripe" : "Authorize.Net"}
+                      {GATEWAY_LABELS[event.gateway] || event.gateway}
                     </span>
                   </td>
                   <td className="px-4 py-3">

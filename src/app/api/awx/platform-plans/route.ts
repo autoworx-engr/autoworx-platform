@@ -4,6 +4,7 @@ import {
   assertSuperAdmin,
   requireBillingSession,
 } from "@/lib/platform-billing/guards";
+import { syncPlatformPlanToStripe } from "@/lib/platform-billing/stripe/catalog";
 import { PlatformFeatureType, PlatformPlanInterval } from "@prisma/client";
 
 const allowedIntervals = new Set(Object.values(PlatformPlanInterval));
@@ -114,6 +115,14 @@ export async function POST(req: NextRequest) {
       },
       include: { features: true, _count: { select: { subscriptions: true } } },
     });
+
+    // Best-effort — a plan not yet synced to Stripe still works via the
+    // legacy Authorize.Net path; it just can't be used for checkout yet.
+    try {
+      await syncPlatformPlanToStripe(plan.id);
+    } catch (err) {
+      console.error("Failed to sync new plan to Stripe:", err);
+    }
 
     return NextResponse.json({ success: true, plan });
   } catch (error: any) {

@@ -2,10 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { createCustomPlatformPlan } from "@/actions/platform-billing/custom-plan";
 import { db } from "@/lib/db";
 import { updatePlatformARBSubscriptionAmount } from "@/lib/platform-billing/authorize-net";
+import { syncPlatformPlanToStripe } from "@/lib/platform-billing/stripe/catalog";
+import { changePlatformStripeSubscriptionPrice } from "@/lib/platform-billing/stripe/subscription";
 import {
   assertSuperAdmin,
   requireBillingSession,
 } from "@/lib/platform-billing/guards";
+
+const LIVE_STATUSES = new Set(["ACTIVE", "PAST_DUE", "TRIALING"]);
 
 export async function POST(req: NextRequest) {
   try {
@@ -27,9 +31,19 @@ export async function POST(req: NextRequest) {
       throw new Error("Failed to create custom plan");
     }
 
-    // If the company already has a platform subscription, re-point it to this plan
-    // and update the ARB subscription amount so the new price is used from the
-    // next billing cycle.
+    // Best-effort: mirror the new plan into Stripe's catalog so it's ready
+    // to use for a Stripe checkout/price-swap. Not fatal if Stripe isn't
+    // configured yet — the plan still works for the legacy ARB path below.
+    let stripePriceId: string | null = null;
+    try {
+      const synced = await syncPlatformPlanToStripe(result.plan.id);
+      stripePriceId = synced.priceId;
+    } catch (err) {
+      console.error("Failed to sync custom plan to Stripe:", err);
+    }
+
+    // If the company already has a platform subscription, re-point it to this
+    // plan and push the new price to whichever gateway it's actually on.
     if (companyId) {
       const existingSub = await db.platformSubscription.findUnique({
         where: { companyId },
@@ -43,9 +57,25 @@ export async function POST(req: NextRequest) {
           },
         });
 
-        // Only attempt to update ARB amount for active or past-due
-        // subscriptions that still have a remote id.
         if (
+          existingSub.stripeSubscriptionId &&
+          LIVE_STATUSES.has(existingSub.status)
+        ) {
+          if (stripePriceId) {
+            try {
+              await changePlatformStripeSubscriptionPrice({
+                stripeSubscriptionId: existingSub.stripeSubscriptionId,
+                newStripePriceId: stripePriceId,
+                newPlanId: result.plan.id,
+              });
+            } catch (err) {
+              console.error(
+                "Failed to swap Stripe subscription price for custom plan:",
+                err,
+              );
+            }
+          }
+        } else if (
           existingSub.authNetSubscriptionId &&
           (existingSub.status === "ACTIVE" || existingSub.status === "PAST_DUE")
         ) {

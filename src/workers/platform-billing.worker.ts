@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { getPlatformTransactionDetails } from "@/lib/platform-billing/authorize-net";
+import { processPlatformStripeEvent } from "@/workers/platform-stripe.worker";
 import { PlatformSubscriptionStatus } from "@prisma/client";
 
 export async function processPlatformBillingEvent(eventId: string) {
@@ -9,6 +10,15 @@ export async function processPlatformBillingEvent(eventId: string) {
 
   if (!webhookEvent) throw new Error(`WebhookEvent not found: ${eventId}`);
   if (webhookEvent.status === "PROCESSED") return;
+
+  if (webhookEvent.gateway === "PLATFORM_STRIPE") {
+    await processPlatformStripeEvent(webhookEvent);
+    await db.webhookEvent.update({
+      where: { eventId },
+      data: { status: "PROCESSED", processedAt: new Date() },
+    });
+    return;
+  }
 
   const event = webhookEvent.payload as Record<string, any>;
 

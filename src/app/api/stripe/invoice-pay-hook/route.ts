@@ -4,7 +4,9 @@ import { QUEUE_STRIPE } from "@/lib/queue-names";
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+  apiVersion: "2026-07-29.dahlia",
+});
 
 export async function POST(req: NextRequest) {
   const signature = req.headers.get("stripe-signature");

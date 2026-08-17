@@ -50,7 +50,7 @@ export async function retryWebhookEvent(eventId: string, gateway: string) {
   const queue =
     gateway === "STRIPE"
       ? QUEUE_STRIPE
-      : gateway === "PLATFORM_AUTHORIZE_NET"
+      : gateway === "PLATFORM_AUTHORIZE_NET" || gateway === "PLATFORM_STRIPE"
         ? QUEUE_PLATFORM_BILLING
         : QUEUE_AUTHORIZE_NET;
   await boss.send(queue, { eventId });

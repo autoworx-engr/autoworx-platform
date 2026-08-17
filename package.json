@@ -148,7 +148,7 @@
     "shadcn": "^3.7.0",
     "sharp": "^0.34.2",
     "simplebar-react": "^3.3.0",
-    "stripe": "^17.5.0",
+    "stripe": "22.5.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-react": "^5.31.0",
     "switch": "^0.0.0",

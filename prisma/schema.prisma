@@ -2779,6 +2779,8 @@ model PlatformPlan {
   displayOrder    Int                  @default(0)
   isActive        Boolean              @default(true)
   companyId       Int?
+  stripeProductId String?              @unique // Stripe Product id
+  stripePriceId   String?              @unique // Active Stripe Price id; repoint on price change
   createdAt       DateTime             @default(now())
   updatedAt       DateTime             @updatedAt
 
@@ -2803,6 +2805,7 @@ model PlatformBillingCustomer {
   id               String    @id @default(cuid())
   companyId        Int       @unique
   authNetProfileId String?   @unique // Authorize.net customerProfileId
+  stripeCustomerId String?   @unique // Stripe Customer id
   email            String?
   taxId            String?
   trialConsumedAt  DateTime?
@@ -2824,6 +2827,7 @@ model PlatformSubscription {
   billingAnchor         DateTime? // next charge date
   cancelAtPeriodEnd     Boolean                    @default(false)
   authNetSubscriptionId String?                    @unique
+  stripeSubscriptionId  String?                    @unique // Stripe Subscription id
   currentPeriodStart    DateTime                   @default(now())
   currentPeriodEnd      DateTime?
   createdAt             DateTime                   @default(now())
@@ -2851,7 +2855,8 @@ model PlatformSubscriptionItem {
 model PlatformPaymentMethod {
   id                      String   @id @default(cuid())
   billingCustomerId       String
-  authNetPaymentProfileId String   @unique // Authorize.net paymentProfileId
+  authNetPaymentProfileId String?  @unique // Authorize.net paymentProfileId
+  stripePaymentMethodId   String?  @unique // Stripe PaymentMethod id
   cardType                String? // e.g. "Visa"
   last4                   String?
   expiry                  String?
@@ -2869,6 +2874,7 @@ model PlatformInvoice {
   amount            Decimal  @db.Decimal(10, 2)
   status            String // e.g. "PAID", "OPEN", "VOID"
   authNetTransId    String?  @unique // Linking to a specific capture trans
+  stripeInvoiceId   String?  @unique // Stripe Invoice id
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
@@ -2877,12 +2883,13 @@ model PlatformInvoice {
 }
 
 model PlatformPayment {
-  id                String   @id @default(cuid())
-  platformInvoiceId String
-  amount            Decimal  @db.Decimal(10, 2)
-  status            String
-  authNetTransId    String?  @unique
-  createdAt         DateTime @default(now())
+  id                    String   @id @default(cuid())
+  platformInvoiceId     String
+  amount                Decimal  @db.Decimal(10, 2)
+  status                String
+  authNetTransId        String?  @unique
+  stripePaymentIntentId String?  @unique // Stripe PaymentIntent id
+  createdAt             DateTime @default(now())
 
   invoice PlatformInvoice @relation(fields: [platformInvoiceId], references: [id], onDelete: Cascade)
 }

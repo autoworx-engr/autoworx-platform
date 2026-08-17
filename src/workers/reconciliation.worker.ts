@@ -73,8 +73,14 @@ export async function registerReconciliationWorker(boss: PgBoss) {
       events.map((e) => ({ data: { eventId: e.eventId } }));
 
     const stripeJobs = toJobs(stuck.filter((e) => e.gateway === "STRIPE"));
+    // Both platform billing gateways (legacy Authorize.Net and the new
+    // Stripe integration) share QUEUE_PLATFORM_BILLING.
     const platformJobs = toJobs(
-      stuck.filter((e) => e.gateway === "PLATFORM_AUTHORIZE_NET"),
+      stuck.filter(
+        (e) =>
+          e.gateway === "PLATFORM_AUTHORIZE_NET" ||
+          e.gateway === "PLATFORM_STRIPE",
+      ),
     );
     const authNetJobs = toJobs(
       stuck.filter((e) => e.gateway === "AUTHORIZE_NET"),

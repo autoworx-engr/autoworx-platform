@@ -4,6 +4,7 @@ import {
   assertSuperAdmin,
   requireBillingSession,
 } from "@/lib/platform-billing/guards";
+import { syncPlatformPlanToStripe } from "@/lib/platform-billing/stripe/catalog";
 import { PlatformFeatureType, PlatformPlanInterval } from "@prisma/client";
 
 const allowedIntervals = new Set(Object.values(PlatformPlanInterval));
@@ -168,6 +169,14 @@ export async function PATCH(req: NextRequest, props: Params) {
         { success: false, message: "Plan not found" },
         { status: 404 },
       );
+    }
+
+    // Best-effort — idempotent, and a no-op in Stripe if nothing that
+    // affects the Product/Price actually changed.
+    try {
+      await syncPlatformPlanToStripe(plan.id);
+    } catch (err) {
+      console.error("Failed to sync updated plan to Stripe:", err);
     }
 
     return NextResponse.json({ success: true, plan });
