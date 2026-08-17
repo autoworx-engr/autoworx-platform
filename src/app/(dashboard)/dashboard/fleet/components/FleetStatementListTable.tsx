@@ -185,12 +185,14 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
                 <td className={`${tDataCommonClasses}`}>
                   <div className="flex items-center justify-center gap-4">
                     <Popconfirm
-                      title="Are you sure you want to delete this statement?"
+                      title="Delete this statement?"
+                      description="Are you sure you want to delete this statement?"
                       onConfirm={(e) => {
                         e?.stopPropagation();
                         handleDeleteStatement(statement.id);
                       }}
                       onCancel={(e) => e?.stopPropagation()}
+                      placement="topLeft"
                       okText="Yes"
                       cancelText="No"
                     >
@@ -297,12 +299,14 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
                 {/* Action Buttons for Mobile */}
                 <div className="flex items-center justify-end gap-3 pt-2 border-t">
                   <Popconfirm
-                    title="Are you sure you want to delete this statement?"
+                    title="Delete this statement?"
+                    description="Are you sure you want to delete this statement?"
                     onConfirm={(e) => {
                       e?.stopPropagation();
                       handleDeleteStatement(statement.id);
                     }}
                     onCancel={(e) => e?.stopPropagation()}
+                    placement="topLeft"
                     okText="Yes"
                     cancelText="No"
                   >
