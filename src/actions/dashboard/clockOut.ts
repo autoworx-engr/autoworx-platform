@@ -1,12 +1,20 @@
 "use server";
 
+import { companyNow } from "@/lib/companyTime";
 import { db } from "@/lib/db";
 import getUser from "@/lib/getUser";
 import { revalidatePath } from "next/cache";
 
-export async function clockOut({ clockInOutId }: { clockInOutId: number }) {
+export async function clockOut({
+  clockInOutId,
+  timezone,
+}: {
+  clockInOutId: number;
+  timezone?: string;
+}) {
   try {
     const user = await getUser();
+    const now = companyNow(timezone);
     const clockedOut = await db.clockInOut.update({
       where: {
         id: clockInOutId,
@@ -14,7 +22,8 @@ export async function clockOut({ clockInOutId }: { clockInOutId: number }) {
         companyId: user.companyId,
       },
       data: {
-        clockOut: new Date(),
+        clockOut: now,
+        updatedAt: now,
       },
       include: {
         ClockBreak: true,
@@ -31,7 +40,8 @@ export async function clockOut({ clockInOutId }: { clockInOutId: number }) {
             id: lastClockBreak.id,
           },
           data: {
-            breakEnd: new Date(),
+            breakEnd: now,
+            updatedAt: now,
           },
         });
       }

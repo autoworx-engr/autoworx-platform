@@ -127,7 +127,10 @@ export default function AttendanceButtonsBox({
             onClick={async () => {
               if (!canClockOut || !lastClockInOut) return;
 
-              const res = await clockOut({ clockInOutId: lastClockInOut.id });
+              const res = await clockOut({
+                clockInOutId: lastClockInOut.id,
+                timezone: companyTimezone,
+              });
               if (res.success) {
                 successToast("Clocked Out Successfully");
               }

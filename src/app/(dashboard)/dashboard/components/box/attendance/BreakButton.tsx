@@ -33,7 +33,10 @@ export default function BreakButton({
     return (
       <button
         onClick={async () => {
-          const res = await stopBreak({ clockBreakId: lastBreak.id });
+          const res = await stopBreak({
+            clockBreakId: lastBreak.id,
+            timezone,
+          });
           if (res.success) {
             successToast("Break Ended");
           }
@@ -57,7 +60,10 @@ export default function BreakButton({
       onClick={async () => {
         if (!isClockedIn || !lastClockInOut || lastClockInOut.clockOut) return;
 
-        const res = await takeBreak({ clockInOutId: lastClockInOut.id });
+        const res = await takeBreak({
+          clockInOutId: lastClockInOut.id,
+          timezone,
+        });
         if (res?.success) {
           successToast("Break Started");
         }

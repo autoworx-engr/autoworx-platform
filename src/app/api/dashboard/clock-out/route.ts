@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { companyNow } from "@/lib/companyTime";
 import { db } from "@/lib/db";
 
 /**
@@ -27,6 +28,10 @@ import { db } from "@/lib/db";
  *                 type: integer
  *                 example: 12
  *                 description: User ID
+ *               timezone:
+ *                 type: string
+ *                 example: America/New_York
+ *                 description: Optional company timezone used to stamp clockOut/updatedAt. Falls back to the timezone stored on the clock-in record.
  *     responses:
  *       200:
  *         description: User clocked out successfully
@@ -88,7 +93,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    const { clockInOutId, userId } = body;
+    const { clockInOutId, userId, timezone } = body;
 
     if (!clockInOutId || !userId) {
       return NextResponse.json(
@@ -114,6 +119,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const existing = await db.clockInOut.findUnique({
+      where: { id: clockInOutId },
+      select: { timezone: true },
+    });
+
+    const now = companyNow(timezone || existing?.timezone);
+
     const clockedOut = await db.clockInOut.update({
       where: {
         id: clockInOutId,
@@ -121,7 +133,8 @@ export async function POST(req: NextRequest) {
         companyId: user.companyId,
       },
       data: {
-        clockOut: new Date(),
+        clockOut: now,
+        updatedAt: now,
       },
       include: {
         ClockBreak: true,
@@ -140,7 +153,8 @@ export async function POST(req: NextRequest) {
           id: lastBreakId,
         },
         data: {
-          breakEnd: new Date(),
+          breakEnd: now,
+          updatedAt: now,
         },
       });
     }
