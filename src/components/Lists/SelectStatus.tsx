@@ -156,7 +156,10 @@ export function SelectStatus({
           {/* List Area */}
           <div className="max-h-[250px] overflow-y-auto thin-scrollbar p-2 space-y-1">
             {filteredShopStatus.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-6 px-4">
+              <div
+                role="status"
+                className="flex flex-col items-center justify-center py-6 px-4"
+              >
                 <Search size={18} className="text-slate-300 mb-1.5" />
                 <p className="text-center text-sm text-slate-400">
                   No results found
