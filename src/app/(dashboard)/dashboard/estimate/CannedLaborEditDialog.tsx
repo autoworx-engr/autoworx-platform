@@ -231,7 +231,7 @@ export default function CannedLaborEditDialog({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
-              className={cn(INPUT_CLASS, "resize-none")}
+              className={cn(INPUT_CLASS, "min-h-[100px] max-h-[200px]")}
               placeholder="Add any notes about this labor item..."
             />
           </div>
