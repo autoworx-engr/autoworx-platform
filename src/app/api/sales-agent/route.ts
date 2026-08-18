@@ -14,7 +14,7 @@ import { segmentMessage } from "@/lib/sms/segmentMessage";
  * to the message body to carry sequence info (no "(1/7)" labels), because the
  * body is exactly what the client reads.
  */
-const SEGMENT_SEND_DELAY_MS = 1500;
+const SEGMENT_SEND_DELAY_MS = 3000;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
