@@ -33,6 +33,10 @@ export const removeLeadTag = async (leadId: number, tagId: number) => {
       },
     });
 
+    if (result.count === 0) {
+      throw new Error("Tag not found on this lead");
+    }
+
     revalidatePath("/dashboard/pipeline/sales/pipeline");
     return result;
   } catch (error) {
