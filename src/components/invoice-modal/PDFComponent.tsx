@@ -3,6 +3,7 @@ import { getInspections } from "@/actions/estimate/invoice/getInspections";
 import { calculateDue } from "@/utils/calculateDue";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { getInvoiceItemTitle } from "@/utils/invoiceItemTitle";
+import { stripHtml } from "@/utils/stripHtml";
 import {
   Client,
   Column,
@@ -1237,7 +1238,8 @@ const PDFInvoiceItems = ({
 
         {(item.service?.description || item.serviceDesc) && (
           <Text style={styles.itemDesc}>
-            Description - {item.service?.description || item.serviceDesc}
+            Description -{" "}
+            {stripHtml(item.service?.description || item.serviceDesc)}
           </Text>
         )}
 
