@@ -30,7 +30,7 @@ const ClientListTable = ({
           <th className="px-4 py-2 text-left">Email</th>
           <th className="px-4 py-2 text-left">Phone</th>
           {needCompanyName && <th className="px-4 py-2 text-left">Company</th>}
-          <th className="px-4 py-2 text-left">Date Joined</th>
+          <th className="px-4 py-2 text-left"> Joined</th>
           <th className="px-4 py-2 text-center">Edit</th>
         </tr>
       </thead>
