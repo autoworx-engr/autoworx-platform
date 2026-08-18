@@ -5,6 +5,24 @@ import { sendTwilioMessageSalesAgent } from "@/actions/communication/client/send
 import { segmentMessage } from "@/lib/sms/segmentMessage";
 
 /**
+ * Gap between two segment sends. Carriers give no ordering guarantee between
+ * independently-submitted texts, so back-to-back sends regularly arrive (and
+ * get persisted) out of order on the recipient's side. Spacing the sends keeps
+ * the delivery order — and therefore the reading order — intact.
+ *
+ * This delay is the ONLY ordering mechanism on the wire: nothing may be added
+ * to the message body to carry sequence info (no "(1/7)" labels), because the
+ * body is exactly what the client reads.
+ */
+const SEGMENT_SEND_DELAY_MS = 1500;
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// The inter-segment delays put a many-segment reply past the default function
+// timeout, so give the route room for the whole loop.
+export const maxDuration = 60;
+
+/**
  * @swagger
  * /api/sales-agent:
  *   post:
@@ -84,7 +102,9 @@ export async function POST(req: NextRequest) {
 
     // Carriers flag long single texts as spam, so a long AI-agent reply is
     // split into sentence-bounded chunks and sent as separate messages
-    // instead of relying on the agent's prompt to self-limit length.
+    // instead of relying on the agent's prompt to self-limit length. The
+    // chunks carry no sequence label — the client must read plain, unmarked
+    // texts, so ordering is handled by SEGMENT_SEND_DELAY_MS instead.
     const segments = segmentMessage(body.message);
     const attachments = body.attachments ?? [];
 
@@ -141,6 +161,8 @@ export async function POST(req: NextRequest) {
         );
         return NextResponse.json({ ...data });
       }
+
+      if (!isLastSegment) await sleep(SEGMENT_SEND_DELAY_MS);
     }
 
     console.log(`${tag} reply sent successfully`);
