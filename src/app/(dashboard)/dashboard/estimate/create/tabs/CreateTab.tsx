@@ -114,13 +114,20 @@ export function CreateTab() {
                                   serviceDesc: item.serviceDesc,
                                 })
                               }
-                              onSelect={(service) =>
+                              onSelect={(service) => {
                                 useEstimateCreateStore.setState((x) =>
                                   create(x, (x) => {
                                     x.items[i].service = service;
                                   }),
-                                )
-                              }
+                                );
+
+                                open("SERVICE", {
+                                  itemId: item.id,
+                                  edit: true,
+                                  service,
+                                  serviceDesc: item.serviceDesc,
+                                });
+                              }}
                               onSearch={(search) => {
                                 const validServices = services.filter(
                                   (service) =>

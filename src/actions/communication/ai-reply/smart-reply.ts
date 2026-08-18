@@ -1,11 +1,14 @@
 "use server";
 
 import { db } from "@/lib/db";
-import Groq from "groq-sdk";
+import OpenAI from "openai";
 import crypto from "crypto";
 import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY! });
+const deepseek = new OpenAI({
+  apiKey: process.env.DEEPSEEK_API_KEY!,
+  baseURL: "https://api.deepseek.com",
+});
 
 export type SmartSuggestion = {
   text: string;
@@ -325,17 +328,21 @@ DO NOT:
 
 Each suggestion should be a complete, ready-to-send reply that makes sense as the next message.`;
 
-  // 4) Call Groq (OpenAI-compatible chat API)
-  const completion = await groq.chat.completions.create({
-    model: "llama-3.3-70b-versatile", // Higher quality model for better context understanding
+  // 4) Call DeepSeek (OpenAI-compatible chat API)
+  // Thinking mode is on by default on deepseek-v4-flash, which ignores
+  // `temperature` and adds chain-of-thought latency neither reply suggestions
+  // nor draft edits need — disable it for fast, temperature-controlled output.
+  const completion = await deepseek.chat.completions.create({
+    model: "deepseek-v4-flash",
     temperature: isEnhance ? 0.4 : 0.7, // Slightly higher temperature for more creative, context-aware suggestions
     max_tokens: 400, // Reduced from 512 to save costs (sufficient for 3 suggestions)
     response_format: { type: "json_object" },
+    thinking: { type: "disabled" },
     messages: [
       { role: "system", content: system },
       { role: "user", content: userBlock },
     ],
-  });
+  } as OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming);
 
   const raw =
     completion.choices?.[0]?.message?.content?.toString() ??

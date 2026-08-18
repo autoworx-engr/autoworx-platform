@@ -262,17 +262,7 @@ export default function AllCards({
               {type == "marketing" ? "Campaigns" : "Rules"}
             </p>
 
-            {!items?.length ? (
-              <div className="flex h-[450px] flex-col items-center justify-center text-center text-gray-500">
-                <Inbox className="mb-3 text-4xl text-indigo-400" />
-                <p className="text-lg font-medium capitalize">
-                  No {`${type} Automation`}
-                </p>
-                <p className="text-sm text-gray-400">
-                  You haven’t added anything yet.
-                </p>
-              </div>
-            ) : getCurrentLoadingState() ? (
+            {getCurrentLoadingState() ? (
               <div className="h-[450px] space-y-5">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
                   <div
@@ -287,6 +277,16 @@ export default function AllCards({
                     </div>
                   </div>
                 ))}
+              </div>
+            ) : !items?.length ? (
+              <div className="flex h-[450px] flex-col items-center justify-center text-center text-gray-500">
+                <Inbox className="mb-3 text-4xl text-indigo-400" />
+                <p className="text-lg font-medium capitalize">
+                  No {`${type} Automation`}
+                </p>
+                <p className="text-sm text-gray-400">
+                  You haven’t added anything yet.
+                </p>
               </div>
             ) : (
               <div className="h-[450px] space-y-5 overflow-y-auto py-3">

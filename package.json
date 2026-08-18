@@ -116,6 +116,7 @@
     "next-auth": "^4.24.14",
     "nextjs-toploader": "^3.9.17",
     "nprogress": "^0.2.0",
+    "openai": "^7.5.0",
     "pg-boss": "^12.18.2",
     "prisma": "^7.5.0",
     "pusher": "^5.2.0",
