@@ -422,6 +422,7 @@ export default function EditPaymentModal({
             <SlimInput
               label="Cash Received"
               name="cash"
+              placeholder="Enter received by"
               value={cash}
               onChange={(e) => setCash(e.target.value)}
             />
