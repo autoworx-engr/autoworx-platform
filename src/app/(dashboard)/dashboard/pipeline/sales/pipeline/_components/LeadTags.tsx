@@ -9,6 +9,7 @@ import { updateTagAutomationTrigger } from "@/service/tag-automation-trigger/api
 import { LeadWithSalesUser } from "@/types/invoiceLead";
 import { Tag } from "@prisma/client";
 import { Popconfirm } from "antd";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { SalesTagSelector } from "../../../components/SalesTagSelector";
 
@@ -38,6 +39,7 @@ type TRemoveTag = {
 export default function LeadTags({ leadTags, lead }: TLeadTagsProps) {
   const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
   const dispatch = useColumnDispatch();
+  const router = useRouter();
   const { mutateAsync: addTag } = useAddLeadTagMutation();
   const { mutateAsync: removeTag } = useRemoveLeadTagMutation();
 
@@ -50,14 +52,17 @@ export default function LeadTags({ leadTags, lead }: TLeadTagsProps) {
       const result = await addTag({ leadId, tagId: selectedTag.id });
 
       if (result?.success) {
+        // `result.data.id` is the real LeadTags join-row id (not the Tag id) —
+        // removal later depends on this being the actual persisted row id.
         dispatch({
           type: actionTypes.ADD_TAG,
           payload: {
             columnId,
             leadId,
-            tag: selectedTag,
+            tag: { ...selectedTag, id: result.data.id },
           },
         });
+        router.refresh();
 
         const response = await updateTagAutomationTrigger({
           columnId: columnId,
@@ -90,6 +95,7 @@ export default function LeadTags({ leadTags, lead }: TLeadTagsProps) {
         type: actionTypes.REMOVE_TAG,
         payload: { columnId, leadId, tagId },
       });
+      router.refresh();
     } catch (error) {
       console.error("Error removing tag:", error);
     }

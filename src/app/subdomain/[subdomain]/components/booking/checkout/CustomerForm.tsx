@@ -170,7 +170,7 @@ export const CustomerForm = ({
               onChange={(e) => onFieldChange("notes", e.target.value)}
               placeholder="Any special requests..."
               rows={3}
-              className="text-sm font-normal rounded-md"
+              className="text-sm font-normal rounded-md resize-y min-h-[80px] max-h-[200px]"
             />
           </div>
           {(shopTerms || shopPrivacy) && (

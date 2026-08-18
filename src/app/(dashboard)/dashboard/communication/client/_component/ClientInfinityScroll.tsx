@@ -8,12 +8,13 @@ import { Users } from "lucide-react";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
-import { getClientByScroll } from "../_actions/getClientByScroll";
 import { getClients } from "../_actions/getClients";
 import { clientSortByUpdatedMessage } from "../_utils";
 import ClientItem from "./ClientItem";
 import { useClientCommunicationStore } from "@/stores/client-store";
 import { isIosPwa } from "@/utils/isIosPwa";
+import { useAutoLoadSelectedClient } from "../../_hooks/useAutoLoadSelectedClient";
+import { useClientPageFetcher } from "../_hooks/useClientPageFetcher";
 
 type TClient = Client & {
   conversationsTrack?: ClientConversationTrack | null;
@@ -158,32 +159,21 @@ export default function ClientInfinityScroll({
     };
   }, [resetClientData]);
 
-  const fetchData = async () => {
-    try {
-      const fetchClients = await getClientByScroll({
-        skip: clients.length,
-        take: defaultTakeData,
-      });
+  const fetchData = useClientPageFetcher({
+    clients,
+    setClients,
+    setHasMore,
+    defaultTakeData,
+  });
 
-      if (fetchClients.length < defaultTakeData) {
-        setHasMore(false);
-      }
-
-      // Prevent duplicate clients when fetching more data
-      // Note: getClientByScroll already returns sorted data
-      setClients((prev) => {
-        const existingIds = new Set(prev.map((client) => client.id));
-        const newClients = fetchClients.filter(
-          (client) => !existingIds.has(client.id),
-        );
-        return [...prev, ...newClients];
-      });
-    } catch (err) {
-      console.error("📋 ClientInfinityScroll fetchData: Error:", err);
-      setHasMore(false);
-      errorToast("Failed to fetch clients");
-    }
-  };
+  const isDefaultView = filter === "All" && !normalizedSearch;
+  useAutoLoadSelectedClient({
+    selectedId: clientIdParams ? parseInt(clientIdParams as string) : null,
+    clients,
+    hasMore,
+    isDefaultView,
+    fetchNextPage: fetchData,
+  });
 
   return (
     <div

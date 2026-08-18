@@ -18,7 +18,7 @@ export default function ShopListPage({ companyId }: { companyId: number }) {
   return (
     <section className="space-y-6 px-4 py-5 sm:px-6 sm:py-6">
       {/* Header */}
-      <div className="rounded-2xl border bg-white p-4 shadow-sm sm:p-6">
+      {/* <div className="rounded-2xl border bg-white p-4 shadow-sm sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
             <h1 className="text-2xl font-semibold tracking-tight text-slate-800">
@@ -39,7 +39,7 @@ export default function ShopListPage({ companyId }: { companyId: number }) {
             </Button>
           </Link>
         </div>
-      </div>
+      </div> */}
 
       {/* Shop Grid */}
       {data?.length > 0 ? (
