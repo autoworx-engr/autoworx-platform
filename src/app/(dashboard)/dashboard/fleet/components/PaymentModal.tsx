@@ -535,6 +535,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     name="cash"
                     type="text"
                     label="Cash Received"
+                    placeholder="Enter received by"
                     value={cash}
                     onChange={(e) => setCash(e.target.value)}
                   />
