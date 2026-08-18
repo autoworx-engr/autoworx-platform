@@ -503,6 +503,7 @@ export default function ClientItem({
         <StarOrUnStarAction
           isStarred={!!client?.isStarred}
           clientId={client?.id}
+          selected={selected}
           onStarChange={handleStarUnStarClient}
         />
 
