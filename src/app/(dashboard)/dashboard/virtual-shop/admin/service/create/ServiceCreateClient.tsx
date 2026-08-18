@@ -56,12 +56,14 @@ function ServiceBillSummary({
   isSaving,
   isImageUploading,
   isEditMode,
+  isDirty,
   validationError,
 }: {
   onSave: () => void;
   isSaving: boolean;
   isImageUploading: boolean;
   isEditMode: boolean;
+  isDirty: boolean;
   validationError?: string;
 }) {
   const {
@@ -137,7 +139,7 @@ function ServiceBillSummary({
   );
 
   const isSubmitting = isSaving || isImageUploading;
-  const isSaveDisabled = isSubmitting;
+  const isSaveDisabled = isSubmitting || (isEditMode && !isDirty);
 
   return (
     <>
@@ -234,6 +236,10 @@ export default function ServiceCreateClient({
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [isImageUploading, setIsImageUploading] = useState(false);
   const isSubmittingRef = useRef(false);
+  const [initialSnapshot, setInitialSnapshot] = useState<{
+    serviceInfo: ServiceInfoState;
+    items: any[];
+  } | null>(null);
   const [validationErrors, setValidationErrors] = useState<{
     serviceTitle?: string;
     shortDescription?: string;
@@ -243,6 +249,7 @@ export default function ServiceCreateClient({
 
   useEffect(() => {
     if (!initialServiceData) {
+      setInitialSnapshot(null);
       reset();
       setServiceInfo(INITIAL_SERVICE_INFO);
       setSelectedImageFile(null);
@@ -250,6 +257,10 @@ export default function ServiceCreateClient({
       return;
     }
 
+    setInitialSnapshot({
+      serviceInfo: initialServiceData.serviceInfo,
+      items: initialServiceData.items,
+    });
     setServiceInfo(initialServiceData.serviceInfo);
 
     useEstimateCreateStore.setState({
@@ -265,6 +276,17 @@ export default function ServiceCreateClient({
     setSelectedImageFile(null);
     setValidationErrors({});
   }, [initialServiceData, reset]);
+
+  const isDirty = useMemo(() => {
+    if (!isEditMode || !initialSnapshot) return true;
+    if (selectedImageFile) return true;
+
+    return (
+      JSON.stringify(serviceInfo) !==
+        JSON.stringify(initialSnapshot.serviceInfo) ||
+      JSON.stringify(items) !== JSON.stringify(initialSnapshot.items)
+    );
+  }, [isEditMode, serviceInfo, items, selectedImageFile, initialSnapshot]);
 
   const handleImageSelect = (file: File | null) => {
     setSelectedImageFile(file);
@@ -625,6 +647,7 @@ export default function ServiceCreateClient({
           isSaving={isSaving || isUpdating}
           isImageUploading={isImageUploading}
           isEditMode={isEditMode}
+          isDirty={isDirty}
           validationError={validationErrors.items}
         />
       </div>

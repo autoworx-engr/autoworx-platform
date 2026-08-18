@@ -1,5 +1,9 @@
 import { db } from "@/lib/db";
 import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
+import {
+  normalizePhoneForStorage,
+  phoneLookupWhereClause,
+} from "@/utils/normalizePhone";
 import { NextRequest, NextResponse } from "next/server";
 import { sendPushNotification } from "@/actions/notification/sendPushNotification";
 
@@ -73,12 +77,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Find or create client
+    const phoneLookup = phoneLookupWhereClause(from);
     let client = await db.client.findFirst({
       where: {
         companyId: infobipConfig.companyId,
-        mobile: {
-          contains: from.replace("+", ""),
-        },
+        ...(phoneLookup
+          ? { OR: phoneLookup }
+          : { mobile: { contains: from.replace("+", "") } }),
       },
     });
 
@@ -87,7 +92,7 @@ export async function POST(request: NextRequest) {
         data: {
           firstName: "Unknown",
           lastName: "Caller",
-          mobile: from,
+          mobile: normalizePhoneForStorage(from),
           companyId: infobipConfig.companyId,
           isSalesAgent: true,
         },

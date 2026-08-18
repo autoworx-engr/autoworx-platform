@@ -14,6 +14,10 @@ import {
   GiftCardPurchaseType,
 } from "@prisma/client";
 import { type TransactionClient } from "@/lib/db";
+import {
+  normalizePhoneForStorage,
+  phoneLookupWhereClause,
+} from "@/utils/normalizePhone";
 import { nanoid } from "nanoid";
 import { z } from "zod";
 
@@ -322,12 +326,15 @@ async function sendGiftCardNotifications(
       const lastName =
         finalRecipientName.split(" ").slice(1).join(" ") || undefined;
 
-      let recipientClient = await tx.client.findFirst({
-        where: {
-          mobile: finalRecipientPhone,
-          companyId: context.shop.companyId,
-        },
-      });
+      const recipientPhoneLookup = phoneLookupWhereClause(finalRecipientPhone);
+      let recipientClient = recipientPhoneLookup
+        ? await tx.client.findFirst({
+            where: {
+              OR: recipientPhoneLookup,
+              companyId: context.shop.companyId,
+            },
+          })
+        : null;
 
       if (!recipientClient) {
         const clientResult = await addCustomer({
@@ -465,11 +472,12 @@ async function ensurePurchaserClientRecord(
       })
     : null;
 
-  if (!existingClient && purchaserMobile) {
+  const purchaserPhoneLookup = phoneLookupWhereClause(purchaserMobile);
+  if (!existingClient && purchaserPhoneLookup) {
     existingClient = await tx.client.findFirst({
       where: {
         companyId,
-        mobile: purchaserMobile,
+        OR: purchaserPhoneLookup,
       },
     });
   }
@@ -486,7 +494,9 @@ async function ensurePurchaserClientRecord(
       firstName,
       lastName,
       email: purchaserEmail,
-      mobile: purchaserMobile,
+      mobile: purchaserMobile
+        ? normalizePhoneForStorage(purchaserMobile)
+        : purchaserMobile,
       isSalesAgent: true,
     },
   });

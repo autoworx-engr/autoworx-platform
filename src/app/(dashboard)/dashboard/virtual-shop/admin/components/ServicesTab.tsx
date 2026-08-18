@@ -33,7 +33,11 @@ export default function ServicesTab({
   const shopId = shopConfig?.id;
   const meta = servicesResponse?.meta;
 
+  const lastPushedSearchRef = useRef(currentSearch);
+
   useEffect(() => {
+    if (currentSearch === lastPushedSearchRef.current) return;
+    lastPushedSearchRef.current = currentSearch;
     setSearchInput(currentSearch);
   }, [currentSearch]);
 
@@ -68,6 +72,7 @@ export default function ServicesTab({
       params.set("page", "1");
 
       const nextQuery = params.toString();
+      lastPushedSearchRef.current = nextSearch;
       searchRouterRef.current.replace(
         nextQuery ? `${pathnameRef.current}?${nextQuery}` : pathnameRef.current,
       );
