@@ -65,7 +65,7 @@ const InfoDetails = ({
 
       {/* Desktop Card */}
       <div className="hidden flex-[0.4] lg:block">
-        <div className="relative rounded-2xl bg-white p-6 shadow-md ring-1 ring-slate-900/5 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10">
+        <div className="relative rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-md ring-1  transition-all duration-300 hover:shadow-xl hover:-translate-y-1  ring-slate-200 dark:ring-slate-800">
           {/* Action Buttons (Top Right) */}
           <div className="absolute right-4 top-4">
             <div className="flex items-center gap-2">

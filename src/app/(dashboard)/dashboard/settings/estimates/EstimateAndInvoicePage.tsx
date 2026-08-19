@@ -267,12 +267,14 @@ export default function EstimateAndInvoicePage() {
                   val: termPolicy.terms,
                   key: "terms",
                   len: currentTermsLength,
+                  placeholder: "Enter your terms and conditions here...",
                 },
                 {
                   label: "Privacy Policy",
                   val: termPolicy.policy,
                   key: "policy",
                   len: currentPolicyLength,
+                  placeholder: "Enter your privacy policy here...",
                 },
               ].map((field) => (
                 <div key={field.key} className="space-y-2">
@@ -296,6 +298,7 @@ export default function EstimateAndInvoicePage() {
                           [field.key]: e.target.value,
                         })
                       }
+                      placeholder={field.placeholder}
                     />
                     <div
                       className={cn(
